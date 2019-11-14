@@ -211,6 +211,8 @@ local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw
   end
 
   local len_s = length(s)
+
+  
   local ns = normal({}, s, half_width / len_s)
 
   local r, q = Vector(coords[1], coords[2]), Vector(0, 0)

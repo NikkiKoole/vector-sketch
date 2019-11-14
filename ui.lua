@@ -16,8 +16,8 @@ function imgbutton(id, img, x, y, scale)
    local clicked = false
    
    if (pointInRect(mx, my, x, y, w*scale, h*scale)) then
+      mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,.5)
-		     
       love.mouse.setCursor(cursors.hand)
       if (mouseState.click) then
 	 clicked = true
