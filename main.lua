@@ -172,7 +172,7 @@ function love.draw()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
    love.graphics.clear(34/255, 30/255, 30/255)
-   
+   --love.graphics.clear(250/255,199/255,0/255)
 
    love.graphics.push()
    love.graphics.scale(camera.scale, camera.scale  )

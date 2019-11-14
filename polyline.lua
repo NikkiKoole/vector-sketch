@@ -116,7 +116,7 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
     vertices[i + offset] = {vertices[i][1], vertices[i][2]}
     local length = length(normals[i])
     vertices[i + offset + 1] = {
-      vertices[i][1] + normals[i].x * (pixel_size / length),
+       vertices[i][1] + normals[i].x * (pixel_size / length),
       vertices[i][2] + normals[i].y * (pixel_size / length)
     }
   end
