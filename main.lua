@@ -181,7 +181,7 @@ function love.draw()
    love.graphics.setColor(1,1,1, 0.5)
    love.graphics.draw(image, quad, 0, 0)
 
-
+   love.graphics.setColor(0,0,0)
    if (#points >= 3 ) then
       local scale = 1
       local coords = {}
@@ -190,40 +190,45 @@ function love.draw()
 	 table.insert(coords, points[i].y)
       end
       love.graphics.setLineStyle('rough')
-      love.graphics.setLineJoin('miter')
+      love.graphics.setLineJoin('bevel')
       love.graphics.setLineWidth(3)
+      --love.graphics.line(coords)
       local vertices, indices, draw_mode = polyline(
-	 love.graphics.getLineJoin(),
-	 coords, love.graphics.getLineWidth() / 2,
-	 1/scale,
-	 love.graphics.getLineStyle() == 'smooth')
+      	 love.graphics.getLineJoin(),
+      	 coords, love.graphics.getLineWidth() / 2,
+      	 1/scale,
+      	 love.graphics.getLineStyle() == 'smooth')
       mesh:setVertices(vertices)
       mesh:setDrawMode(draw_mode)
       mesh:setVertexMap(indices)
       if indices then
-	 mesh:setDrawRange(1, #indices)
+      	 mesh:setDrawRange(1, #indices)
       else
-	 mesh:setDrawRange(1, #vertices)
+      	 mesh:setDrawRange(1, #vertices)
       end
       love.graphics.draw(mesh)
+      love.graphics.setLineWidth(1)
    end
    
 
    
    love.graphics.setColor(1,1,1,1)
 
-   
-   love.graphics.setLineWidth(2.0  / camera.scale )
-   local p_size = 10
-   local p_h  = p_size/2
-   for i=1, #points do
-      love.graphics.rectangle("line",
-			      points[i].x - p_h/camera.scale,
-			      points[i].y - p_h/camera.scale,
-			      p_size / camera.scale,
-			      p_size / camera.scale)
+   if editingMode == 'polyline' then
+      love.graphics.setLineWidth(2.0  / camera.scale )
+      local p_size = 10
+      local p_h  = p_size/2
+      
+      for i=1, #points do
+	 love.graphics.rectangle("line",
+				 points[i].x - p_h/camera.scale,
+				 points[i].y - p_h/camera.scale,
+				 p_size / camera.scale,
+				 p_size / camera.scale)
+      end
+      love.graphics.setLineWidth(1)
    end
-   love.graphics.setLineWidth(1)
+   
    
    love.graphics.pop()
    

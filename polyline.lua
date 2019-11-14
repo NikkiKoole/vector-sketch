@@ -216,9 +216,11 @@ local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw
   local ns = normal({}, s, half_width / len_s)
 
   local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
+  local hw = half_width
   for i=1,#coords-2,2 do
     q.x, q.y = r.x, r.y
     r.x, r.y = coords[i + 2], coords[i + 3]
+    half_width = hw + (i % 4)/4  -- the bibbering
     len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, half_width)
   end
 
