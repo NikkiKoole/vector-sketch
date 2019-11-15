@@ -1,19 +1,53 @@
+inspect = require 'inspect'
 require 'ui'
 polyline = require 'polyline'
 
 function love.keypressed(key)
    if key == "escape" then
-      love.event.quit()
+      if (editingModeSub ~= 'nil') then
+	 editingModeSub = 'nil'
+      elseif (editingMode ~= 'nil') then
+	 editingMode = 'nil'
+      else
+	 if (quitDialog == true) then
+	    love.event.quit()
+	 elseif (quitDialog == false) then
+	    quitDialog = true
+	 end
+      end
+   else
+      if (quitDialog) then
+	 quitDialog = false
+      end
+      
    end
+   
 end
+
+function toWorldPos(x, y)
+   return (x / camera.scale) - camera.x, (y / camera.scale) - camera.y
+end
+
 
 function love.mousepressed(x,y, button)
    if editingMode == 'nil' then
       editingMode = 'move'
    end
-   if editingMode == 'polyline'  and not mouseState.hoveredSomething  then
-      table.insert(points, {x=(x / camera.scale) - camera.x,
-			    y=(y / camera.scale) - camera.y})
+   if editingMode == 'polyline'  then
+      if (editingModeSub == 'polyline-add') then
+	 if not mouseState.hoveredSomething  then
+	    local wx, wy = toWorldPos(x, y)
+	    table.insert(points, {x=wx, y=wy})
+	 end
+      end
+      if (editingModeSub == 'polyline-remove') then
+	 if overPolyLineIndex then table.remove (points, overPolyLineIndex) end
+      end
+      if (editingModeSub == 'polyline-edit') then
+	 if overPolyLineIndex then
+	    draggingPointOfPolyLineIndex = overPolyLineIndex
+	 end
+      end
    end
    
 end
@@ -21,12 +55,28 @@ function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = 'nil'
    end
+
+   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
+      draggingPointOfPolyLineIndex = 0
+      overPolyLineIndex = 0
+   end
+   
 end
-function love.mousemoved(x,y,dx, dy)
+function love.mousemoved(x,y, dx, dy)
    if editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
    end
+   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
+      if draggingPointOfPolyLineIndex > 0 then
+	 local wx, wy = toWorldPos(x, y)
+	 points[draggingPointOfPolyLineIndex].x = wx
+	 points[draggingPointOfPolyLineIndex].y = wy
+      end
+      
+   end
+   
+
 end
 
 
@@ -52,6 +102,7 @@ function love.load()
    quad = love.graphics.newQuad(0, 0, image:getWidth(), image:getHeight(), image:getWidth(), image:getHeight())
    camera = {x=0, y=0, scale=1}
    editingMode = 'nil'
+   editingModeSub = 'nil'
    grid = {cellsize=100} -- cellsize is in px
    medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 32)
    light = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Light.ttf", 32)
@@ -117,7 +168,20 @@ function love.load()
       click = false
    }
 
+   
    mesh = love.graphics.newMesh(1000)
+
+   backdrop_visible = true
+   backdrop_alpha = 0.5
+
+   bg_color = {34/255,30/255,30/255}
+   overPointOfPolyLineIndex = 0
+
+   draggingPointOfPolyLineIndex = 0
+
+   lastDraggedElement = {}
+
+   quitDialog = false
 end
 
 function drawGrid()
@@ -168,26 +232,31 @@ end
 
 
 function love.draw()
+   local mx,my = love.mouse.getPosition()
+   local wx, wy = toWorldPos(mx, my)
    handleMouseClickStart()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
-   love.graphics.clear(34/255, 30/255, 30/255)
+   love.graphics.clear(bg_color[1], bg_color[2], bg_color[3])
    --love.graphics.clear(250/255,199/255,0/255)
 
    love.graphics.push()
    love.graphics.scale(camera.scale, camera.scale  )
    love.graphics.translate( camera.x, camera.y )
-  
-   love.graphics.setColor(1,1,1, 0.5)
-   love.graphics.draw(image, quad, 0, 0)
 
+   if  backdrop_visible then
+      love.graphics.setColor(1,1,1, backdrop_alpha)
+      love.graphics.draw(image, quad, 0, 0)
+   end
+   
    love.graphics.setColor(0,0,0)
-   if (#points >= 3 ) then
+   if (#points >= 2 ) then
       local scale = 1
       local coords = {}
       for i=1, #points do
 	 table.insert(coords, points[i].x)
 	 table.insert(coords, points[i].y)
+	 love.graphics.circle("fill", points[i].x, points[i].y, 1.5 + (i%4)/4, 10 + (i%3))
       end
       love.graphics.setLineStyle('rough')
       love.graphics.setLineJoin('bevel')
@@ -216,15 +285,20 @@ function love.draw()
 
    if editingMode == 'polyline' then
       love.graphics.setLineWidth(2.0  / camera.scale )
-      local p_size = 10
-      local p_h  = p_size/2
-      
+      overPointOfPolyLineIndex = 0
       for i=1, #points do
-	 love.graphics.rectangle("line",
-				 points[i].x - p_h/camera.scale,
-				 points[i].y - p_h/camera.scale,
-				 p_size / camera.scale,
-				 p_size / camera.scale)
+	 local dot_x = points[i].x - 5/camera.scale
+	 local dot_y = points[i].y - 5/camera.scale
+	 local dot_size = 10 / camera.scale
+	 local kind = "line"
+	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
+	    if (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
+	       kind= "fill"
+	       overPolyLineIndex = i
+	    end
+	 end
+	 
+	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
       love.graphics.setLineWidth(1)
    end
@@ -237,15 +311,69 @@ function love.draw()
    love.graphics.push()
    local s = 0.5
    local buttons = {
-      'move', 'polyline', 'polygon', 'pen', 'pencil', 'palette'
+      'move', 'polyline', 'polygon', 'pen', 'pencil', 'palette', 'backdrop'
    }
+   local calcY = function(i, s)
+      return (64 * i * s) + (10*i*s)
+   end
+   local calcX = function(i, s)
+      return 16 + (64 * i * s) + (10*i*s)
+   end
+   
    for i = 1, #buttons do
-      if imgbutton(buttons[i], ui[buttons[i]], 16, 64*i*s, s).clicked then
-	 editingMode = buttons[i]
+      if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
+	 if (editingMode == buttons[i]) then
+	    editingMode = 'nil'
+	 else
+	    editingMode = buttons[i]
+	 end
+	 
+	 if (buttons[i] == 'polyline') then
+	    editingModeSub = 'polyline-add'
+	 end
       end
    end
+   if (editingMode == 'polyline') then
+      if imgbutton('polyline-add', ui.polyline_add, calcX(1, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-add'
+      end
+      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(2, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-remove'
+       end
+      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-edit'
+      end
+   end
+   if (editingMode == 'palette') then
+      for i = 1, #palette.colors do
+	 local rgb = palette.colors[i].rgb
+	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(6, s) ,s).clicked then
+	    bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+	 end
+	 
 
+      end
+      
+   end
+   
+   if (editingMode == 'backdrop') then
+      if imgbutton('backdrop_visibility', backdrop_visible and ui.visible or ui.not_visible,
+		   calcX(1, s), calcY(7, s), s).clicked then
+	 backdrop_visible = not backdrop_visible
+      end
+       local v =  h_slider("backdrop_alpha", calcX(2, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
+   if (v.value ~= nil) then backdrop_alpha = v.value end
+      
+   end
+  
    love.graphics.pop()
+
+   if quitDialog then
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.scale(0.5)
+      love.graphics.print("Sure you want to quit ? [ESC] ", 32, 16)
+   end
+   
 
 end
 
