@@ -1,6 +1,10 @@
 inspect = require 'inspect'
 require 'ui'
 polyline = require 'polyline'
+poly = require 'poly'
+local Delaunay = require 'Delaunay'
+local Point    = Delaunay.Point
+
 
 function love.keypressed(key)
    if key == "escape" then
@@ -274,21 +278,61 @@ function love.draw()
 	 
 	 local scale = 1
 	 local coords = {}
+	 local ps = {}
 	 for i=1, #points do
 	    table.insert(coords, points[i].x)
 	    table.insert(coords, points[i].y)
+	    --table.insert(ps, Point(points[i].x, points[i].y))
 	 end
 
 
 	 if (shapes[i].color) then
 	    local c = shapes[i].color
 	    love.graphics.setColor(c[1], c[2], c[3])
-	    convex = love.math.isConvex( coords )
-	    if not convex then
-	       print('this isnt convex, issues!')
+	    
+	    --local polys = decompose_complex_poly(coords, {})
+	    -- for j = 1, #polys do
+	    --    local p = polys[j]
+	    --    local ps = {}
+	    --    for k = 1, #p, 2 do
+	    -- 	  table.insert(ps, Point(p[k], p[k+1]))
+	    --    end
+	    --    print(inspect(ps))
+	    --    local triangles = Delaunay.triangulate(unpack(ps))
+	    --    for j = 1, #triangles do
+	    --    local t = triangles[j]
+	    --    love.graphics.polygon('fill', {t.p1.x, t.p1.y, t.p2.x, t.p2.y, t.p3.x, t.p3.y})
+	    --    end
+	    -- end
+	    
+
+
+	    -- take a look at this
+	    -- https://github.com/AlexarJING/polygon/blob/master/polygon.lua
+	    
+	    
+	    local polys = coords
+	    --if not convex then
+	    polys = decompose_complex_poly(coords, {})
+	    local result = {}
+	    for i=1 , #polys do
+	       local p = polys[i]
+	       --local convex = love.math.isConvex( p )
+	       local ps = {}
+	       
+	       local triangles = love.math.triangulate(p)
+	       for j = 1, #triangles do
+	    	  local t = triangles[j]
+	    	  local cx, cy = getCentroid(t)
+	    	  if isPointInPath(cx,cy, p) then
+	    	     table.insert(result, t)
+	    	  end
+	       end
+	    end
+	    for j = 1, #result do
+	       love.graphics.polygon('fill', result[j])
 	    end
 	    
-	    love.graphics.polygon('fill', coords)
 	 end
 	 love.graphics.setColor(0,0,0,1)
 	 
