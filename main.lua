@@ -34,9 +34,26 @@ function love.mousepressed(x,y, button)
    
    if editingMode == 'polyline'  then
       if (editingModeSub == 'polyline-add') then
-	 if not mouseState.hoveredSomething  then
+	 local connect_to_first = false
+	 if overPolyLineIndex == 1 then
+	    local points = shapes[current_shape_index].points
+	    local dot_x = points[1].x - 5/camera.scale
+	    local dot_y = points[1].y - 5/camera.scale
+	    local dot_size = 10 / camera.scale
 	    local wx, wy = toWorldPos(x, y)
-	    table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
+	    
+	    if (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
+	       connect_to_first = true
+	       table.insert(shapes[current_shape_index].points, shapes[current_shape_index].points[1])
+	    else
+	       overPolyLineIndex = 0
+	    end
+	 end
+	 if not  connect_to_first  then
+	    if not mouseState.hoveredSomething  then
+	       local wx, wy = toWorldPos(x, y)
+	       table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
+	    end
 	 end
       end
       if (editingModeSub == 'polyline-remove') then
@@ -47,6 +64,7 @@ function love.mousepressed(x,y, button)
 	    draggingPointOfPolyLineIndex = overPolyLineIndex
 	 end
       end
+      
    end
    
 end
@@ -72,6 +90,7 @@ function love.mousemoved(x,y, dx, dy)
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if draggingPointOfPolyLineIndex > 0 then
 	 local wx, wy = toWorldPos(x, y)
+	 local points = shapes[current_shape_index].points
 	 points[draggingPointOfPolyLineIndex].x = wx
 	 points[draggingPointOfPolyLineIndex].y = wy
       end
@@ -168,8 +187,8 @@ function love.load()
 
 
    shapes = { {
-      points = {},
-      mesh = {}
+	 points = {},
+	 mesh = {}
    }}
    current_shape_index = 1 
 
@@ -178,6 +197,7 @@ function love.load()
 
    bg_color = {34/255,30/255,30/255}
    overPointOfPolyLineIndex = 0
+   overPolyLineIndex = 0
 
    draggingPointOfPolyLineIndex = 0
 
@@ -227,7 +247,7 @@ function handleMouseClickStart()
          mouseState.click  = true
       end
    end
-    mouseState.lastDown =  mouseState.down
+   mouseState.lastDown =  mouseState.down
 end
 
 function love.draw()
@@ -237,7 +257,6 @@ function love.draw()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
    love.graphics.clear(bg_color[1], bg_color[2], bg_color[3])
-   
    love.graphics.push()
    love.graphics.scale(camera.scale, camera.scale  )
    love.graphics.translate( camera.x, camera.y )
@@ -255,7 +274,6 @@ function love.draw()
 	 for i=1, #points do
 	    table.insert(coords, points[i].x)
 	    table.insert(coords, points[i].y)
-	    --love.graphics.circle("fill", points[i].x, points[i].y, 1.5 + (i%4)/4, 10 + (i%3))
 	 end
 	 love.graphics.setLineStyle('rough')
 	 love.graphics.setLineJoin('bevel')
@@ -298,6 +316,13 @@ function love.draw()
 	       overPolyLineIndex = i
 	    end
 	 end
+	 if (editingModeSub == 'polyline-add') then
+	    if i == 1  and #points > 1 and (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
+	       kind= "fill"
+	       overPolyLineIndex = 1
+	    end
+	 end
+	 
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
       love.graphics.setLineWidth(1)
@@ -339,22 +364,21 @@ function love.draw()
       end
       if imgbutton('polyline-remove', ui.polyline_remove,  calcX(2, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-remove'
-       end
+      end
       if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-edit'
       end
       if imgbutton('polyline-next', ui.next,  calcX(4, s), calcY(2, s), s).clicked then
-	  current_shape_index = current_shape_index + 1
+	 current_shape_index = current_shape_index + 1
 	 if  current_shape_index > #shapes then
-	     current_shape_index = 1
+	    current_shape_index = 1
 	 end
       end
       if imgbutton('polyline-previous', ui.previous,  calcX(5, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index - 1
 	 if  current_shape_index < 1 then
-	     current_shape_index = #shapes
+	    current_shape_index = #shapes
 	 end
-	 
       end
       if imgbutton('polyline-add-new', ui.add,  calcX(6, s), calcY(2, s), s).clicked then
 	 local shape = {
@@ -384,7 +408,7 @@ function love.draw()
       local v =  h_slider("backdrop_alpha", calcX(2, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
       if (v.value ~= nil) then backdrop_alpha = v.value end
    end
-  
+   
    love.graphics.pop()
 
    if quitDialog then
