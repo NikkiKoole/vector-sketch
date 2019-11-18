@@ -269,12 +269,29 @@ function love.draw()
    for i = 1, #shapes do
       local points = shapes[i].points 
       if (#points >= 2 ) then
+
+
+	 
 	 local scale = 1
 	 local coords = {}
 	 for i=1, #points do
 	    table.insert(coords, points[i].x)
 	    table.insert(coords, points[i].y)
 	 end
+
+
+	 if (shapes[i].color) then
+	    local c = shapes[i].color
+	    love.graphics.setColor(c[1], c[2], c[3])
+	    convex = love.math.isConvex( coords )
+	    if not convex then
+	       print('this isnt convex, issues!')
+	    end
+	    
+	    love.graphics.polygon('fill', coords)
+	 end
+	 love.graphics.setColor(0,0,0,1)
+	 
 	 love.graphics.setLineStyle('rough')
 	 love.graphics.setLineJoin('bevel')
 	 love.graphics.setLineWidth(3)
@@ -296,6 +313,7 @@ function love.draw()
 	 end
 	 love.graphics.draw(mesh)
 	 love.graphics.setLineWidth(1)
+	 
       end
    end
    
@@ -368,19 +386,22 @@ function love.draw()
       if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-edit'
       end
-      if imgbutton('polyline-next', ui.next,  calcX(4, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-palette', ui.palette,  calcX(4, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-palette'
+      end
+      if imgbutton('polyline-next', ui.next,  calcX(5, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index + 1
 	 if  current_shape_index > #shapes then
 	    current_shape_index = 1
 	 end
       end
-      if imgbutton('polyline-previous', ui.previous,  calcX(5, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-previous', ui.previous,  calcX(6, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index - 1
 	 if  current_shape_index < 1 then
 	    current_shape_index = #shapes
 	 end
       end
-      if imgbutton('polyline-add-new', ui.add,  calcX(6, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-add-new', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
 	 local shape = {
 	    points = {},
 	    mesh = {}
@@ -396,6 +417,15 @@ function love.draw()
 	 local rgb = palette.colors[i].rgb
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(6, s) ,s).clicked then
 	    bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+	 end
+      end
+   end
+   if (editingModeSub == 'polyline-palette') then
+      for i = 1, #palette.colors do
+	 local rgb = palette.colors[i].rgb
+	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(6, s) ,s).clicked then
+	    --bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+	    shapes[current_shape_index].color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	 end
       end
    end
