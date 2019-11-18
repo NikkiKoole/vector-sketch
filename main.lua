@@ -19,9 +19,7 @@ function love.keypressed(key)
       if (quitDialog) then
 	 quitDialog = false
       end
-      
    end
-   
 end
 
 function toWorldPos(x, y)
@@ -33,15 +31,16 @@ function love.mousepressed(x,y, button)
    if editingMode == 'nil' then
       editingMode = 'move'
    end
+   
    if editingMode == 'polyline'  then
       if (editingModeSub == 'polyline-add') then
 	 if not mouseState.hoveredSomething  then
 	    local wx, wy = toWorldPos(x, y)
-	    table.insert(points, {x=wx, y=wy})
+	    table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
 	 end
       end
       if (editingModeSub == 'polyline-remove') then
-	 if overPolyLineIndex then table.remove (points, overPolyLineIndex) end
+	 if overPolyLineIndex then table.remove (shapes[current_shape_index].points, overPolyLineIndex) end
       end
       if (editingModeSub == 'polyline-edit') then
 	 if overPolyLineIndex then
@@ -51,6 +50,7 @@ function love.mousepressed(x,y, button)
    end
    
 end
+
 function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = 'nil'
@@ -62,27 +62,24 @@ function love.mousereleased(x,y, button)
    end
    
 end
+
 function love.mousemoved(x,y, dx, dy)
    if editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
    end
+   
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if draggingPointOfPolyLineIndex > 0 then
 	 local wx, wy = toWorldPos(x, y)
 	 points[draggingPointOfPolyLineIndex].x = wx
 	 points[draggingPointOfPolyLineIndex].y = wy
       end
-      
    end
-   
-
 end
-
 
 function love.wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
-   
    local wx = camera.x + ( posx / camera.scale)
    local wy = camera.y + ( posy / camera.scale)
    
@@ -97,16 +94,15 @@ end
 
 function love.load()
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
-   points = {}
-   image = love.graphics.newImage("test.png")
+   
+   image = love.graphics.newImage("test2.jpg")
    quad = love.graphics.newQuad(0, 0, image:getWidth(), image:getHeight(), image:getWidth(), image:getHeight())
    camera = {x=0, y=0, scale=1}
    editingMode = 'nil'
    editingModeSub = 'nil'
    grid = {cellsize=100} -- cellsize is in px
    medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 32)
-   light = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Light.ttf", 32)
-
+   --light = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Light.ttf", 32)
    love.graphics.setFont(medium)
    
    ui = {
@@ -134,6 +130,8 @@ function love.load()
       object_group = love.graphics.newImage("resources/ui/object-group.png"),
       rotate = love.graphics.newImage("resources/ui/rotate.png"),
       transform = love.graphics.newImage("resources/ui/transform.png"),
+      next = love.graphics.newImage("resources/ui/next.png"),
+      previous = love.graphics.newImage("resources/ui/previous.png"),
    }
 
    cursors = {
@@ -168,8 +166,12 @@ function love.load()
       click = false
    }
 
-   
-   mesh = love.graphics.newMesh(1000)
+
+   shapes = { {
+      points = {},
+      mesh = {}
+   }}
+   current_shape_index = 1 
 
    backdrop_visible = true
    backdrop_alpha = 0.5
@@ -215,7 +217,6 @@ function drawPalette(palette, x, y)
    end
 end
 
-
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
    mouseState.down = love.mouse.isDown(1 )
@@ -227,9 +228,7 @@ function handleMouseClickStart()
       end
    end
     mouseState.lastDown =  mouseState.down
-
 end
-
 
 function love.draw()
    local mx,my = love.mouse.getPosition()
@@ -238,52 +237,54 @@ function love.draw()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
    love.graphics.clear(bg_color[1], bg_color[2], bg_color[3])
-   --love.graphics.clear(250/255,199/255,0/255)
-
+   
    love.graphics.push()
    love.graphics.scale(camera.scale, camera.scale  )
    love.graphics.translate( camera.x, camera.y )
-
    if  backdrop_visible then
       love.graphics.setColor(1,1,1, backdrop_alpha)
       love.graphics.draw(image, quad, 0, 0)
    end
    
    love.graphics.setColor(0,0,0)
-   if (#points >= 2 ) then
-      local scale = 1
-      local coords = {}
-      for i=1, #points do
-	 table.insert(coords, points[i].x)
-	 table.insert(coords, points[i].y)
-	 love.graphics.circle("fill", points[i].x, points[i].y, 1.5 + (i%4)/4, 10 + (i%3))
-      end
-      love.graphics.setLineStyle('rough')
-      love.graphics.setLineJoin('bevel')
-      love.graphics.setLineWidth(3)
-      --love.graphics.line(coords)
-      local vertices, indices, draw_mode = polyline(
-      	 love.graphics.getLineJoin(),
-      	 coords, love.graphics.getLineWidth() / 2,
-      	 1/scale,
-      	 love.graphics.getLineStyle() == 'smooth')
-      mesh:setVertices(vertices)
-      mesh:setDrawMode(draw_mode)
-      mesh:setVertexMap(indices)
-      if indices then
-      	 mesh:setDrawRange(1, #indices)
-      else
-      	 mesh:setDrawRange(1, #vertices)
-      end
-      love.graphics.draw(mesh)
-      love.graphics.setLineWidth(1)
-   end
-   
+   for i = 1, #shapes do
+      local points = shapes[i].points 
+      if (#points >= 2 ) then
+	 local scale = 1
+	 local coords = {}
+	 for i=1, #points do
+	    table.insert(coords, points[i].x)
+	    table.insert(coords, points[i].y)
+	    --love.graphics.circle("fill", points[i].x, points[i].y, 1.5 + (i%4)/4, 10 + (i%3))
+	 end
+	 love.graphics.setLineStyle('rough')
+	 love.graphics.setLineJoin('bevel')
+	 love.graphics.setLineWidth(3)
+	 --love.graphics.line(coords)
+	 local vertices, indices, draw_mode = polyline(
+	    love.graphics.getLineJoin(),
+	    coords, love.graphics.getLineWidth() / 2,
+	    1/scale,
+	    love.graphics.getLineStyle() == 'smooth')
 
+	 mesh = love.graphics.newMesh(#coords * 2)
+	 mesh:setVertices(vertices)
+	 mesh:setDrawMode(draw_mode)
+	 mesh:setVertexMap(indices)
+	 if indices then
+	    mesh:setDrawRange(1, #indices)
+	 else
+	    mesh:setDrawRange(1, #vertices)
+	 end
+	 love.graphics.draw(mesh)
+	 love.graphics.setLineWidth(1)
+      end
+   end
    
    love.graphics.setColor(1,1,1,1)
 
    if editingMode == 'polyline' then
+      local points = shapes[current_shape_index].points 
       love.graphics.setLineWidth(2.0  / camera.scale )
       overPointOfPolyLineIndex = 0
       for i=1, #points do
@@ -297,16 +298,14 @@ function love.draw()
 	       overPolyLineIndex = i
 	    end
 	 end
-	 
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
       love.graphics.setLineWidth(1)
    end
    
-   
    love.graphics.pop()
-   
    love.graphics.setColor(1,1,1, 0.1)
+   
    drawGrid()
    love.graphics.push()
    local s = 0.5
@@ -333,6 +332,7 @@ function love.draw()
 	 end
       end
    end
+   
    if (editingMode == 'polyline') then
       if imgbutton('polyline-add', ui.polyline_add, calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-add'
@@ -343,17 +343,37 @@ function love.draw()
       if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-edit'
       end
+      if imgbutton('polyline-next', ui.next,  calcX(4, s), calcY(2, s), s).clicked then
+	  current_shape_index = current_shape_index + 1
+	 if  current_shape_index > #shapes then
+	     current_shape_index = 1
+	 end
+      end
+      if imgbutton('polyline-previous', ui.previous,  calcX(5, s), calcY(2, s), s).clicked then
+	 current_shape_index = current_shape_index - 1
+	 if  current_shape_index < 1 then
+	     current_shape_index = #shapes
+	 end
+	 
+      end
+      if imgbutton('polyline-add-new', ui.add,  calcX(6, s), calcY(2, s), s).clicked then
+	 local shape = {
+	    points = {},
+	    mesh = {}
+	 }
+	 table.insert(shapes, current_shape_index+1, shape)
+	 current_shape_index = current_shape_index + 1
+      end
+
    end
+   
    if (editingMode == 'palette') then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(6, s) ,s).clicked then
 	    bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	 end
-	 
-
       end
-      
    end
    
    if (editingMode == 'backdrop') then
@@ -361,9 +381,8 @@ function love.draw()
 		   calcX(1, s), calcY(7, s), s).clicked then
 	 backdrop_visible = not backdrop_visible
       end
-       local v =  h_slider("backdrop_alpha", calcX(2, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
-   if (v.value ~= nil) then backdrop_alpha = v.value end
-      
+      local v =  h_slider("backdrop_alpha", calcX(2, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
+      if (v.value ~= nil) then backdrop_alpha = v.value end
    end
   
    love.graphics.pop()
@@ -373,58 +392,6 @@ function love.draw()
       love.graphics.scale(0.5)
       love.graphics.print("Sure you want to quit ? [ESC] ", 32, 16)
    end
-   
-
 end
 
 
-function old()
-       
-   love.graphics.draw(ui.polyline, 0, 0)
-   love.graphics.draw(ui.polyline_edit, 64*1, 0)
-   love.graphics.draw(ui.polyline_add, 64*2, 0)
-   love.graphics.draw(ui.polyline_remove, 64*3, 0)
-   love.graphics.draw(ui.backdrop, 0, 64*1)
-   love.graphics.draw(ui.grid, 0, 64*2)
-   love.graphics.draw(ui.palette, 0, 64*3)
-   love.graphics.draw(ui.pen, 0, 64*4)
-   love.graphics.draw(ui.polygon, 0, 64*5)
-   love.graphics.draw(ui.add, 0, 64*6)
-   love.graphics.draw(ui.remove, 64, 64*6)
-   love.graphics.draw(ui.delete, 64*2, 64*6)
-   love.graphics.setColor(1,1,1, 1)
-   love.graphics.draw(ui.move, 0, 64*7)
-   love.graphics.setColor(1,1,1, .1)
-   love.graphics.draw(ui.resize, 0, 64*8)
-
-   love.graphics.draw(ui.visible, 0, 64*9)
-   love.graphics.draw(ui.not_visible, 64, 64*9)
-
-   love.graphics.draw(ui.opacity, 0, 64*10)
-   love.graphics.draw(ui.settings, 0, 64*11)
-   love.graphics.draw(ui.badge, 0, 64*12)
-
-   love.graphics.draw(ui.layer_group, 0, 64*13)
-   love.graphics.draw(ui.object_group, 0, 64*14)
-   love.graphics.draw(ui.rotate, 0, 64*15)
-   love.graphics.draw(ui.transform, 64, 64*15)
-
-
-   love.graphics.setColor(1,1,1, 1)
-   love.graphics.setColor(250/255, 199/255, 0/255)
-   --love.graphics.setColor(149/255, 164/255, 151/255, 0.5)
-   --love.graphics.rectangle("fill", 0, 0, 64, h )
-   --love.graphics.rectangle("fill", 64, 0, w-64, 20 )
-   --love.graphics.rectangle("fill", w-100, 0, 100, h )
-   love.graphics.print("Test 123 miffy nijntje Sesamstraat")
-   --love.graphics.print("█░▒▓□▪▫▭▮△▽◊○◯★", 100, 200)
-   --love.graphics.print("≒≓≔≕≖≗≙≚≜≟≠≡≢≤≥≦≨≩≪≫≬≭≮≯≰≱≲≳≴≵≶≷≸≹≺≻≼≽≾≿⊀⊁⊂⊃⊄⊅⊆⊇⊈⊉⊊⊋⊍⊎⊏⊐⊑⊒⊓⊔⊕⊖⊗⊘", 100, 200)
-    --love.graphics.print("⊕⊖⊗⊘⊙⊚⊛⊝⊞⊟⊠⊡⊢⊣⊤⊥⊧⊨⊩⊪⊫⊬⊭⊮⊯⊰⊲⊳⊴⊵⊶⊷⊸⊹⊺⊻⊽⊾⊿⋀⋁⋂⋃⋄⋅⋆⋇⋈⋉⋊⋋⋌⋍⋎⋏⋐⋑⋒⋓⋔⋕⋖⋗⋘⋙", 100, 200)
-     --love.graphics.print("⎱⎴⎵⎶⏜⏝⏞⏟⏢⏧␣Ⓢ─│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬▀▄", 100, 200)
-    --print("█░▒▓□▪▫▭▮▱△▴▵▸▹▽▾▿◂◃◊○◬◯◸◹◺◻◼★")
-   --print"≒≓≔≕≖≗≙≚≜≟≠≡≢≤≥≦≨≩≪≫≬≭≮≯≰≱≲≳≴≵≶≷≸≹≺≻≼≽≾≿⊀⊁⊂⊃⊄⊅⊆⊇⊈⊉⊊⊋⊍⊎⊏⊐⊑⊒⊓⊔⊕⊖⊗⊘"
-   --print"⊙⊚⊛⊝⊞⊟⊠⊡⊢⊣⊤⊥⊧⊨⊩⊪⊫⊬⊭⊮⊯⊰⊲⊳⊴⊵⊶⊷⊸⊹⊺⊻⊽⊾⊿⋀⋁⋂⋃⋄⋅⋆⋇⋈⋉⋊⋋⋌⋍⋎⋏⋐⋑⋒⋓⋔⋕⋖⋗⋘⋙"
-   --print"⋚⋛⋞⋟⋠⋡⋢⋣⋦⋧⋨⋩⋪⋫⋬⋭⋮⋯⋰⋱⋲⋳⋴⋵⋶⋷⋹⋺⋻⋼⋽⋾⌅⌆⌈⌉⌊⌋⌌⌍⌎⌏⌐⌒⌓⌕⌖⌜⌝⌞⌟⌢⌣⌭⌮⌶⌽⌿⍼⎰"
-   --print"⎱⎴⎵⎶⏜⏝⏞⏟⏢⏧␣Ⓢ─│┌┐└┘├┤┬┴┼═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬▀▄"
-
-end
