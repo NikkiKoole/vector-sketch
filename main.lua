@@ -309,7 +309,8 @@ function love.draw()
 
 	    -- take a look at this
 	    -- https://github.com/AlexarJING/polygon/blob/master/polygon.lua
-	    
+	    -- or this
+	    -- https://github.com/vrld/HC/blob/master/polygon.lua
 	    
 	    local polys = coords
 	    --if not convex then
