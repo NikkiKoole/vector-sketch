@@ -33,7 +33,7 @@ function love.mousepressed(x,y, button)
    if editingMode == 'nil' then
       editingMode = 'move'
    end
-   
+
    if editingMode == 'polyline'  then
       if (editingModeSub == 'polyline-add') then
 	 local connect_to_first = false
@@ -43,7 +43,7 @@ function love.mousepressed(x,y, button)
 	    local dot_y = points[1].y - 5/camera.scale
 	    local dot_size = 10 / camera.scale
 	    local wx, wy = toWorldPos(x, y)
-	    
+
 	    if (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
 	       connect_to_first = true
 	       table.insert(shapes[current_shape_index].points, shapes[current_shape_index].points[1])
@@ -67,9 +67,9 @@ function love.mousepressed(x,y, button)
 	    draggingPointOfPolyLineIndex = overPolyLineIndex
 	 end
       end
-      
+
    end
-   
+
 end
 
 function love.mousereleased(x,y, button)
@@ -81,7 +81,7 @@ function love.mousereleased(x,y, button)
       draggingPointOfPolyLineIndex = 0
       overPolyLineIndex = 0
    end
-   
+
 end
 
 function love.mousemoved(x,y, dx, dy)
@@ -89,7 +89,7 @@ function love.mousemoved(x,y, dx, dy)
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
    end
-   
+
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if draggingPointOfPolyLineIndex > 0 then
 	 local wx, wy = toWorldPos(x, y)
@@ -98,7 +98,7 @@ function love.mousemoved(x,y, dx, dy)
 	    points[draggingPointOfPolyLineIndex].x = wx
 	    points[draggingPointOfPolyLineIndex].y = wy
 	 end
-	 
+
       end
    end
 end
@@ -107,19 +107,19 @@ function love.wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
    local wx = camera.x + ( posx / camera.scale)
    local wy = camera.y + ( posy / camera.scale)
-   
+
    camera.scale =  camera.scale * ((y>0) and 1.1 or 0.9)
 
    local wx2 = camera.x + ( posx / camera.scale)
    local wy2 = camera.y + ( posy / camera.scale)
-   
+
    camera.x = camera.x - (wx-wx2)
    camera.y = camera.y - (wy-wy2)
 end
 
 function love.load()
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
-   
+
    image = love.graphics.newImage("test2.jpg")
    quad = love.graphics.newQuad(0, 0, image:getWidth(), image:getHeight(), image:getWidth(), image:getHeight())
    camera = {x=0, y=0, scale=1}
@@ -129,7 +129,7 @@ function love.load()
    medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 32)
    --light = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Light.ttf", 32)
    love.graphics.setFont(medium)
-   
+
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
       polyline_add = love.graphics.newImage("resources/ui/polyline-add.png"),
@@ -162,9 +162,9 @@ function love.load()
    cursors = {
       hand= love.mouse.getSystemCursor("hand"),
       arrow= love.mouse.getSystemCursor("arrow")
-   } 
-   
-   palette = {
+   }
+
+   palette2 = {
       name='miffy',
       colors={
 	 {name="green", rgb={48,112,47}},
@@ -183,6 +183,67 @@ function love.load()
 	 {name="grey2", rgb={149,164,151}},
       }
    }
+   palette1 = {
+      name='lego-classic',
+      colors={
+	 {name="bright red", rgb={196,40,27}},
+	 {name="bright blue", rgb={13,105,171}},
+	 {name="bright yellow", rgb={245,205,47}},
+	 {name="dark green", rgb={40,127,70}},
+	 {name="white", rgb={242,243,242}},
+	 {name="grey", rgb={161,165,162}},
+	 {name="dark grey", rgb={109,110,108}},
+	 {name="black", rgb={27,42,52}},
+      }
+   }
+   palette3 = {
+      name='fabuland',
+      colors={
+	 {name="fabuland red", rgb={255, 128, 20}},
+	 {name="fabuland green", rgb={120,252,120}},
+	 {name="brick yellow", rgb={215,197,153}},
+	 {name="nougat", rgb={204,142,104}},
+	 {name="light orange brown", rgb={203,132,60}},
+	 {name="fabuland orange", rgb={207, 138, 71}},
+	 {name="fabuland brown", rgb={242, 112, 94}},
+	 {name="earth orange", rgb={98, 71, 50}},
+      }
+   }
+   palette = {
+      name='mix-and-match', -- nijntje , classic lego & fabuland
+      colors={
+	 {name="green", rgb={48,112,47}},
+	 {name="blue", rgb={27,84,154}},
+	 {name="yellow", rgb={250,199,0}},
+	 {name="orange1", rgb={233,100,14}},
+	 {name="orange2", rgb={237,76,6}},
+	 {name="orange3", rgb={221,61,14}},
+	 {name="black1", rgb={34,30,30}},
+	 {name="black2", rgb={24,26,23}},
+	 {name="black2", rgb={24,26,23}},
+	 {name="brown1", rgb={145,77,35}},
+	 {name="brown2", rgb={114,65,11}},
+	 {name="brown3", rgb={136,95,62}},
+	 {name="grey1", rgb={147,142,114}},
+	 {name="grey2", rgb={149,164,151}},
+	 {name="bright red", rgb={196,40,27}},
+	 {name="bright blue", rgb={13,105,171}},
+	 {name="bright yellow", rgb={245,205,47}},
+	 {name="dark green", rgb={40,127,70}},
+	 {name="white", rgb={242,243,242}},
+	 {name="grey", rgb={161,165,162}},
+	 {name="dark grey", rgb={109,110,108}},
+	 {name="black", rgb={27,42,52}},
+	 {name="fabuland red", rgb={255, 128, 20}},
+	 {name="fabuland green", rgb={120,252,120}},
+	 {name="brick yellow", rgb={215,197,153}},
+	 {name="nougat", rgb={204,142,104}},
+	 {name="light orange brown", rgb={203,132,60}},
+	 {name="fabuland orange", rgb={207, 138, 71}},
+	 {name="fabuland brown", rgb={242, 112, 94}},
+	 {name="earth orange", rgb={98, 71, 50}},
+      }
+   }
 
    mouseState = {
       hoveredSomething = false,
@@ -196,7 +257,7 @@ function love.load()
 	 points = {},
 	 mesh = {}
    }}
-   current_shape_index = 1 
+   current_shape_index = 1
 
    backdrop_visible = true
    backdrop_alpha = 0.5
@@ -215,7 +276,7 @@ end
 function drawGrid()
    local w, h = love.graphics.getDimensions( )
    local size = grid.cellsize * camera.scale
-   if (size < 10) then return end 
+   if (size < 10) then return end
    local vlines = math.floor(w/size)
    local hlines = math.floor(h/size)
    local xOffset = (camera.x*camera.scale) % size
@@ -226,20 +287,6 @@ function drawGrid()
    end
    for y =0, hlines do
       love.graphics.line( 0, yOffset + y*size, w, yOffset +  y*size)
-   end
-end
-
-function drawPalette(palette, x, y)
-   local w = #(palette.colors) * 64
-   local h = 64
-   love.graphics.setColor(1,1,1,1)
-   local strw = medium:getWidth(palette.name)
-   love.graphics.print(palette.name, x, y)
-   love.graphics.rectangle("fill", x+strw,y, w,h )
-   for i = 1, #(palette.colors) do
-      local rgb = palette.colors[i].rgb
-      love.graphics.setColor(rgb[1]/255,rgb[2]/255,rgb[3]/255)
-      love.graphics.rectangle("fill", x+strw+(i-1)*64, y , 64, 64)
    end
 end
 
@@ -270,30 +317,25 @@ function love.draw()
       love.graphics.setColor(1,1,1, backdrop_alpha)
       love.graphics.draw(image, quad, 0, 0)
    end
-   
+
    love.graphics.setColor(0,0,0)
    for i = 1, #shapes do
-      local points = shapes[i].points 
+      local points = shapes[i].points
       if (#points >= 2 ) then
 
-
-	 
 	 local scale = 1
 	 local coords = {}
 	 local ps = {}
 	 for i=1, #points do
 	    table.insert(coords, points[i].x)
 	    table.insert(coords, points[i].y)
-	    --table.insert(ps, Point(points[i].x, points[i].y))
 	 end
 
 
 	 if (shapes[i].color) then
 	    local c = shapes[i].color
 	    love.graphics.setColor(c[1], c[2], c[3])
-	    
-
-	    -- duplicate end and beginp oints are nice or my outline
+	    -- duplicate end and beginp oints are nice for my outline
 	    -- they break the polygon triangulation however ;)
 	    -- TODO double points after each other brak the triangulation too!
 	    local without_double_end = {}
@@ -305,7 +347,7 @@ function love.draw()
 	    else
 	       without_double_end = coords
 	    end
-	    
+
 	    local polys = decompose_complex_poly(without_double_end, {})
 	    local result = {}
 	    for i=1 , #polys do
@@ -324,10 +366,10 @@ function love.draw()
 	    for j = 1, #result do
 	       love.graphics.polygon('fill', result[j])
 	    end
-	    
+
 	 end
 	 love.graphics.setColor(0,0,0,1)
-	 
+
 	 love.graphics.setLineStyle('rough')
 	 love.graphics.setLineJoin('bevel')
 	 love.graphics.setLineWidth(2)
@@ -349,14 +391,14 @@ function love.draw()
 	 end
 	 love.graphics.draw(mesh)
 	 love.graphics.setLineWidth(1)
-	 
+
       end
    end
-   
+
    love.graphics.setColor(1,1,1,1)
 
    if editingMode == 'polyline' then
-      local points = shapes[current_shape_index].points 
+      local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
       overPointOfPolyLineIndex = 0
       for i=1, #points do
@@ -376,15 +418,15 @@ function love.draw()
 	       overPolyLineIndex = 1
 	    end
 	 end
-	 
+
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
       love.graphics.setLineWidth(1)
    end
-   
+
    love.graphics.pop()
    love.graphics.setColor(1,1,1, 0.1)
-   
+
    drawGrid()
    love.graphics.push()
    local s = 0.5
@@ -397,7 +439,7 @@ function love.draw()
    local calcX = function(i, s)
       return 16 + (64 * i * s) + (10*i*s)
    end
-   
+
    for i = 1, #buttons do
       if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
 	 if (editingMode == buttons[i]) then
@@ -408,13 +450,13 @@ function love.draw()
 	    editingModeSub = 'nil'
 
 	 end
-	 
+
 	 if (buttons[i] == 'polyline') then
 	    editingModeSub = 'polyline-add'
 	 end
       end
    end
-   
+
    if (editingMode == 'polyline') then
       if imgbutton('polyline-add', ui.polyline_add, calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-add'
@@ -450,7 +492,7 @@ function love.draw()
       end
 
    end
-   
+
    if (editingMode == 'palette') then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
@@ -467,7 +509,7 @@ function love.draw()
 	 end
       end
    end
-   
+
    if (editingMode == 'backdrop') then
       if imgbutton('backdrop_visibility', backdrop_visible and ui.visible or ui.not_visible,
 		   calcX(1, s), calcY(7, s), s).clicked then
@@ -476,7 +518,7 @@ function love.draw()
       local v =  h_slider("backdrop_alpha", calcX(2, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
       if (v.value ~= nil) then backdrop_alpha = v.value end
    end
-   
+
    love.graphics.pop()
 
    if quitDialog then
@@ -485,5 +527,3 @@ function love.draw()
       love.graphics.print("Sure you want to quit ? [ESC] ", 32, 16)
    end
 end
-
-

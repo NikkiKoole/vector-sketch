@@ -19,9 +19,9 @@ function rgbbutton(id, rgb, x, y, scale)
    local w, h = 64, 64
    local clicked = false
 
-   love.graphics.setColor(rgb[1] ,rgb[2],rgb[3],.75)
+   love.graphics.setColor(rgb[1] ,rgb[2],rgb[3], 1)
    love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
-   
+
    if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
       mouseState.hoveredSomething = true
       love.mouse.setCursor(cursors.hand)
@@ -53,7 +53,7 @@ function imgbutton(id, img, x, y, scale)
    love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
    love.graphics.setColor(1,1,1,1)
    love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
-   
+
    if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
       mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,.5)
@@ -70,7 +70,7 @@ function imgbutton(id, img, x, y, scale)
    if (editingModeSub == id) then
       love.graphics.setColor(1,1,1,1)
    end
-   
+
    love.graphics.draw(img, x, y, 0, scale, scale)
 
    return {
@@ -104,7 +104,7 @@ function h_slider(id, x, y, width, v, min, max)
 	 mouseState.hoveredSomething = true
       end
    end
-  
+
    if love.mouse.isDown(1 ) then
       if lastDraggedElement and lastDraggedElement.id == id then
 	 mouseState.hoveredSomething = true
@@ -115,11 +115,11 @@ function h_slider(id, x, y, width, v, min, max)
 	 if result < min then
 	    result = nil
 	 else
-	    
+
          result = math.max(result, min)
          result = math.min(result, max)
 	 end
-	 
+
       end
    end
    return {
