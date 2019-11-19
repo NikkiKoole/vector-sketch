@@ -30,6 +30,7 @@ end
 
 
 function love.mousepressed(x,y, button)
+   lastDraggedElement = nil
    if editingMode == 'nil' then
       editingMode = 'move'
    end
@@ -89,6 +90,11 @@ function love.mousemoved(x,y, dx, dy)
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
    end
+   if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
+      backdrop_x = backdrop_x + dx / camera.scale
+      backdrop_y = backdrop_y + dy / camera.scale
+   end
+
 
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if draggingPointOfPolyLineIndex > 0 then
@@ -120,8 +126,8 @@ end
 function love.load()
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
 
-   image = love.graphics.newImage("test2.jpg")
-   quad = love.graphics.newQuad(0, 0, image:getWidth(), image:getHeight(), image:getWidth(), image:getHeight())
+
+
    camera = {x=0, y=0, scale=1}
    editingMode = 'nil'
    editingModeSub = 'nil'
@@ -254,13 +260,18 @@ function love.load()
 
 
    shapes = { {
+	 alpha = 1,
 	 points = {},
 	 mesh = {}
    }}
    current_shape_index = 1
 
+   backdrop_image = love.graphics.newImage("test2.jpg")
    backdrop_visible = true
    backdrop_alpha = 0.5
+   backdrop_x = 0
+   backdrop_y = 0
+   backdrop_scale = 1
 
    bg_color = {34/255,30/255,30/255}
    overPointOfPolyLineIndex = 0
@@ -315,7 +326,7 @@ function love.draw()
    love.graphics.translate( camera.x, camera.y )
    if  backdrop_visible then
       love.graphics.setColor(1,1,1, backdrop_alpha)
-      love.graphics.draw(image, quad, 0, 0)
+      love.graphics.draw(backdrop_image, backdrop_x, backdrop_y, 0, backdrop_scale, backdrop_scale)
    end
 
    love.graphics.setColor(0,0,0)
@@ -334,7 +345,7 @@ function love.draw()
 
 	 if (shapes[i].color) then
 	    local c = shapes[i].color
-	    love.graphics.setColor(c[1], c[2], c[3])
+	    love.graphics.setColor(c[1], c[2], c[3], shapes[i].alpha or 1)
 	    -- duplicate end and beginp oints are nice for my outline
 	    -- they break the polygon triangulation however ;)
 	    -- TODO double points after each other brak the triangulation too!
@@ -484,6 +495,7 @@ function love.draw()
       end
       if imgbutton('polyline-add-new', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
 	 local shape = {
+	    alpha= 1,
 	    points = {},
 	    mesh = {}
 	 }
@@ -508,15 +520,38 @@ function love.draw()
 	    shapes[current_shape_index].color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	 end
       end
+      local v =  h_slider("polyline_alpha", calcX(1, s), calcY(4, s)+ 12*s, 100,  shapes[current_shape_index].alpha , 0, 1)
+      if (v.value ~= nil) then
+	  shapes[current_shape_index].alpha = v.value
+      end
+
+
    end
 
    if (editingMode == 'backdrop') then
+      if imgbutton('backdrop-move', ui.move, calcX(1, s), calcY(7,s), s).clicked then
+	 if (editingModeSub == 'backdrop-move') then
+	    editingModeSub = 'nil'
+	 else
+	    editingModeSub = 'backdrop-move'
+	 end
+      end
+
       if imgbutton('backdrop_visibility', backdrop_visible and ui.visible or ui.not_visible,
-		   calcX(1, s), calcY(7, s), s).clicked then
+		   calcX(2, s), calcY(7, s), s).clicked then
+	 editingModeSub = 'nil'
 	 backdrop_visible = not backdrop_visible
       end
-      local v =  h_slider("backdrop_alpha", calcX(2, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
-      if (v.value ~= nil) then backdrop_alpha = v.value end
+      local v =  h_slider("backdrop_alpha", calcX(3, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
+      if (v.value ~= nil) then
+	 backdrop_alpha = v.value
+	 editingModeSub = 'nil'
+      end
+      local s =  h_slider("backdrop_scale", calcX(1, s), calcY(8, s)+ 12*s, 100, backdrop_scale, 0, 5)
+      if (s.value ~= nil) then
+	 backdrop_scale = s.value
+	 editingModeSub = 'nil'
+      end
    end
 
    love.graphics.pop()
