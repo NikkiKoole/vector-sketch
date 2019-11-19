@@ -402,8 +402,11 @@ function love.draw()
       if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
 	 if (editingMode == buttons[i]) then
 	    editingMode = 'nil'
+	    editingModeSub = 'nil'
 	 else
 	    editingMode = buttons[i]
+	    editingModeSub = 'nil'
+
 	 end
 	 
 	 if (buttons[i] == 'polyline') then
@@ -459,8 +462,7 @@ function love.draw()
    if (editingModeSub == 'polyline-palette') then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
-	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(6, s) ,s).clicked then
-	    --bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
 	    shapes[current_shape_index].color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	 end
       end
