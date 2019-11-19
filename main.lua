@@ -38,8 +38,9 @@ function love.mousepressed(x,y, button)
    if editingMode == 'polyline'  then
       if (editingModeSub == 'polyline-add') then
 	 local connect_to_first = false
-	 if overPolyLineIndex == 1 then
-	    local points = shapes[current_shape_index].points
+	 local points = shapes[current_shape_index].points
+	 if overPolyLineIndex == 1  and #points > 0 then
+	    
 	    local dot_x = points[1].x - 5/camera.scale
 	    local dot_y = points[1].y - 5/camera.scale
 	    local dot_size = 10 / camera.scale
@@ -81,6 +82,7 @@ function love.mousereleased(x,y, button)
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       draggingPointOfPolyLineIndex = 0
       overPolyLineIndex = 0
+      print("yes!")
    end
 
 end
@@ -94,7 +96,6 @@ function love.mousemoved(x,y, dx, dy)
       backdrop_x = backdrop_x + dx / camera.scale
       backdrop_y = backdrop_y + dy / camera.scale
    end
-
 
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if draggingPointOfPolyLineIndex > 0 then
@@ -379,6 +380,7 @@ function love.draw()
 	    end
 
 	 end
+	 --love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3])
 	 love.graphics.setColor(0,0,0,1)
 
 	 love.graphics.setLineStyle('rough')
@@ -442,7 +444,7 @@ function love.draw()
    love.graphics.push()
    local s = 0.5
    local buttons = {
-      'move', 'polyline', 'polygon', 'pen', 'pencil', 'palette', 'backdrop'
+      'move', 'polyline', 'palette', 'backdrop'
    }
    local calcY = function(i, s)
       return (64 * i * s) + (10*i*s)
@@ -508,7 +510,7 @@ function love.draw()
    if (editingMode == 'palette') then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
-	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(6, s) ,s).clicked then
+	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
 	    bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	 end
       end
@@ -529,7 +531,7 @@ function love.draw()
    end
 
    if (editingMode == 'backdrop') then
-      if imgbutton('backdrop-move', ui.move, calcX(1, s), calcY(7,s), s).clicked then
+      if imgbutton('backdrop-move', ui.move, calcX(1, s), calcY(4,s), s).clicked then
 	 if (editingModeSub == 'backdrop-move') then
 	    editingModeSub = 'nil'
 	 else
@@ -538,16 +540,16 @@ function love.draw()
       end
 
       if imgbutton('backdrop_visibility', backdrop_visible and ui.visible or ui.not_visible,
-		   calcX(2, s), calcY(7, s), s).clicked then
+		   calcX(2, s), calcY(4, s), s).clicked then
 	 editingModeSub = 'nil'
 	 backdrop_visible = not backdrop_visible
       end
-      local v =  h_slider("backdrop_alpha", calcX(3, s), calcY(7, s)+ 12*s, 100, backdrop_alpha, 0, 1)
+      local v =  h_slider("backdrop_alpha", calcX(3, s), calcY(4, s)+ 12*s, 100, backdrop_alpha, 0, 1)
       if (v.value ~= nil) then
 	 backdrop_alpha = v.value
 	 editingModeSub = 'nil'
       end
-      local s =  h_slider("backdrop_scale", calcX(1, s), calcY(8, s)+ 12*s, 100, backdrop_scale, 0, 5)
+      local s =  h_slider("backdrop_scale", calcX(1, s), calcY(5, s)+ 12*s, 100, backdrop_scale, 0, 5)
       if (s.value ~= nil) then
 	 backdrop_scale = s.value
 	 editingModeSub = 'nil'
