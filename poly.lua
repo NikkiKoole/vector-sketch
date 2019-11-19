@@ -114,7 +114,6 @@ function decompose_complex_poly(poly, result)
       result = TableConcat(result, {poly})
    end
    if #intersections > 1 then
-      print(#intersections)
       local p1, p2 = split_poly(poly, intersections[1])
       local p1c, p2c = get_collisions(p1),get_collisions(p2)
       if (#p1c > 0) then

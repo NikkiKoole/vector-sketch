@@ -2,8 +2,6 @@ inspect = require 'inspect'
 require 'ui'
 polyline = require 'polyline'
 poly = require 'poly'
-local Delaunay = require 'Delaunay'
-local Point    = Delaunay.Point
 
 
 function love.keypressed(key)
@@ -56,6 +54,7 @@ function love.mousepressed(x,y, button)
 	 if not  connect_to_first  then
 	    if not mouseState.hoveredSomething  then
 	       local wx, wy = toWorldPos(x, y)
+	       -- TODO dont add the same point as the last then you dont need to get it out later in life.
 	       table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
 	    end
 	 end
@@ -95,8 +94,11 @@ function love.mousemoved(x,y, dx, dy)
       if draggingPointOfPolyLineIndex > 0 then
 	 local wx, wy = toWorldPos(x, y)
 	 local points = shapes[current_shape_index].points
-	 points[draggingPointOfPolyLineIndex].x = wx
-	 points[draggingPointOfPolyLineIndex].y = wy
+	 if (draggingPointOfPolyLineIndex <= #points) then
+	    points[draggingPointOfPolyLineIndex].x = wx
+	    points[draggingPointOfPolyLineIndex].y = wy
+	 end
+	 
       end
    end
 end
@@ -290,44 +292,33 @@ function love.draw()
 	    local c = shapes[i].color
 	    love.graphics.setColor(c[1], c[2], c[3])
 	    
-	    --local polys = decompose_complex_poly(coords, {})
-	    -- for j = 1, #polys do
-	    --    local p = polys[j]
-	    --    local ps = {}
-	    --    for k = 1, #p, 2 do
-	    -- 	  table.insert(ps, Point(p[k], p[k+1]))
-	    --    end
-	    --    print(inspect(ps))
-	    --    local triangles = Delaunay.triangulate(unpack(ps))
-	    --    for j = 1, #triangles do
-	    --    local t = triangles[j]
-	    --    love.graphics.polygon('fill', {t.p1.x, t.p1.y, t.p2.x, t.p2.y, t.p3.x, t.p3.y})
-	    --    end
-	    -- end
-	    
 
-
-	    -- take a look at this
-	    -- https://github.com/AlexarJING/polygon/blob/master/polygon.lua
-	    -- or this
-	    -- https://github.com/vrld/HC/blob/master/polygon.lua
+	    -- duplicate end and beginp oints are nice or my outline
+	    -- they break the polygon triangulation however ;)
+	    -- TODO double points after each other brak the triangulation too!
+	    local without_double_end = {}
+	    if (coords[1] == coords[#coords-1] and coords[2] == coords[#coords]) then
+	       for i = 1, #coords -2, 2 do
+		  table.insert(without_double_end, coords[i])
+		  table.insert(without_double_end, coords[i+1])
+	       end
+	    else
+	       without_double_end = coords
+	    end
 	    
-	    local polys = coords
-	    --if not convex then
-	    polys = decompose_complex_poly(coords, {})
+	    local polys = decompose_complex_poly(without_double_end, {})
 	    local result = {}
 	    for i=1 , #polys do
 	       local p = polys[i]
-	       --local convex = love.math.isConvex( p )
-	       local ps = {}
-	       
-	       local triangles = love.math.triangulate(p)
-	       for j = 1, #triangles do
-	    	  local t = triangles[j]
-	    	  local cx, cy = getCentroid(t)
-	    	  if isPointInPath(cx,cy, p) then
-	    	     table.insert(result, t)
-	    	  end
+	       if (#p >= 6) then
+		  local triangles = love.math.triangulate(p)
+		  for j = 1, #triangles do
+		     local t = triangles[j]
+		     local cx, cy = getCentroid(t)
+		     if isPointInPath(cx,cy, p) then
+			table.insert(result, t)
+		     end
+		  end
 	       end
 	    end
 	    for j = 1, #result do
@@ -339,7 +330,7 @@ function love.draw()
 	 
 	 love.graphics.setLineStyle('rough')
 	 love.graphics.setLineJoin('bevel')
-	 love.graphics.setLineWidth(3)
+	 love.graphics.setLineWidth(2)
 	 --love.graphics.line(coords)
 	 local vertices, indices, draw_mode = polyline(
 	    love.graphics.getLineJoin(),
