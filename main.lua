@@ -428,6 +428,15 @@ function love.draw()
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
       love.graphics.setLineWidth(1)
+
+      if editingModeSub == 'polyline-rotate' then
+	 local pivot = points[1]
+	 local rotator = {x=pivot.x + 100, y=pivot.y}
+	 love.graphics.line(pivot.x, pivot.y, rotator.x, rotator.y)
+	 love.graphics.circle("fill", pivot.x, pivot.y , 5)
+	 love.graphics.circle("fill", rotator.x, rotator.y , 5)
+      end
+      
    end
 
    love.graphics.pop()
@@ -479,22 +488,25 @@ function love.draw()
       if imgbutton('polyline-palette', ui.palette,  calcX(5, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-palette'
       end
-      if imgbutton('polyline-next', ui.next,  calcX(6, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-rotate', ui.rotate,  calcX(6, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-rotate'
+      end
+      if imgbutton('polyline-next', ui.next,  calcX(7, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index + 1
 	 if  current_shape_index > #shapes then
 	    current_shape_index = 1
 	 end
       end
-      if imgbutton('polyline-previous', ui.previous,  calcX(7, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-previous', ui.previous,  calcX(8, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index - 1
 	 if  current_shape_index < 1 then
 	    current_shape_index = #shapes
 	 end
       end
-      if imgbutton('polyline-move', ui.move,  calcX(8, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-move', ui.move,  calcX(9, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-move'
       end
-      if imgbutton('polyline-add-new', ui.add,  calcX(9, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-add-new', ui.add,  calcX(10, s), calcY(2, s), s).clicked then
 	 local shape = {
 	    alpha= 1,
 	    points = {},
