@@ -1,6 +1,7 @@
 inspect = require 'inspect'
 require 'ui'
 require 'palettes'
+require 'util'
 polyline = require 'polyline'
 poly = require 'poly'
 
@@ -48,6 +49,19 @@ function getIndexOfHoveredPolyPoint(mx, my, points)
    return 0
    
 end
+function getClosestEdgeIndex(wx, wy, points)
+   local closestEdgeIndex = 0
+   local closestDistance = 99999999999999
+   for j = 1, #points-1 do
+
+      local d = distancePointSegment(wx, wy, points[j].x, points[j].y, points[j+1].x, points[j+1].y)
+      if (d < closestDistance) then
+	 closestDistance = d
+	 closestEdgeIndex = j
+      end
+   end
+   return closestEdgeIndex
+end
 
 
 function love.mousepressed(x,y, button)
@@ -56,19 +70,19 @@ function love.mousepressed(x,y, button)
       editingMode = 'move'
    end
    local points = shapes[current_shape_index].points
-   if editingMode == 'polyline'  then
+   local wx, wy = toWorldPos(x, y)
+   if editingMode == 'polyline' and not mouseState.hoveredSomething   then
       if (editingModeSub == 'polyline-add') then
 	 local connect_to_first = false
 	 if #points > 0 and (mouseOverPolyPoint(x, y, points[1].x, points[1].y)) then
 	    connect_to_first = true
-	    table.insert(shapes[current_shape_index].points, shapes[current_shape_index].points[1])
+	    local first = shapes[current_shape_index].points[1]
+	    table.insert(shapes[current_shape_index].points, first)
 	 end
 	 if not  connect_to_first  then
-	    if not mouseState.hoveredSomething  then
-	       local wx, wy = toWorldPos(x, y)
-	       -- TODO dont add the same point as the last then you dont need to get it out later in life.
-	       table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
-	    end
+	    --if not mouseState.hoveredSomething  then
+	    table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
+	    --end
 	 end
       end
       local index =  getIndexOfHoveredPolyPoint(x, y, points)
@@ -80,6 +94,12 @@ function love.mousepressed(x,y, button)
 	    lastDraggedElement = {id='polyline', index=index}
 	 end
       end
+      
+      if (editingModeSub == 'polyline-insert') then
+	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
+	 table.insert(shapes[current_shape_index].points, closestEdgeIndex+1, {x=wx, y=wy})
+      end
+      
    end
 
 end
@@ -101,18 +121,36 @@ function love.mousemoved(x,y, dx, dy)
       backdrop.y = backdrop.y + dy / camera.scale
    end
 
+   if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
+      local points = shapes[current_shape_index].points
+      local beginIndex = 2 -- if first and last arent identical
+      if points[1] == points[#points] then
+      else
+	 beginIndex = 1
+      end
+      
+      
+      for i = beginIndex, #points do
+	 local p = shapes[current_shape_index].points[i]
+	 shapes[current_shape_index].points[i].x = p.x + dx / camera.scale
+	 shapes[current_shape_index].points[i].y = p.y + dy / camera.scale
+      end
+
+   end
+   
+
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
-	 local dragIndex = lastDraggedElement.index
-	 if dragIndex > 0 then
-	    local wx, wy = toWorldPos(x, y)
-	    local points = shapes[current_shape_index].points
-	    if (dragIndex <= #points) then
-	       points[dragIndex].x = wx
-	       points[dragIndex].y = wy
-	    end
+   	 local dragIndex = lastDraggedElement.index
+   	 if dragIndex > 0 then
+   	    local wx, wy = toWorldPos(x, y)
+   	    local points = shapes[current_shape_index].points
+   	    if (dragIndex <= #points) then
+   	       points[dragIndex].x = wx
+   	       points[dragIndex].y = wy
+   	    end
 
-	 end
+   	 end
       end
    end
 end
@@ -147,6 +185,7 @@ function love.load()
       polyline_add = love.graphics.newImage("resources/ui/polyline-add.png"),
       polyline_edit = love.graphics.newImage("resources/ui/polyline-edit.png"),
       polyline_remove = love.graphics.newImage("resources/ui/polyline-remove.png"),
+      insert_link = love.graphics.newImage("resources/ui/insert-link.png"),
       backdrop = love.graphics.newImage("resources/ui/backdrop.png"),
       grid = love.graphics.newImage("resources/ui/grid.png"),
       palette = love.graphics.newImage("resources/ui/palette.png"),
@@ -205,7 +244,7 @@ function love.load()
    current_shape_index = 1
 
    backdrop = {
-      image = love.graphics.newImage("test2.jpg"),
+      image = love.graphics.newImage("763.jpg"),
       visible = true,
       alpha = 0.5,
       x = 0,
@@ -318,27 +357,33 @@ function love.draw()
 	 end
 	 --love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3])
 	 love.graphics.setColor(0,0,0,1)
+	 --if (shapes[i].color) then
+	 --   local c = shapes[i].color
+	 --   love.graphics.setColor(c[1], c[2], c[3], 1)
+	 --end
+	 
 
 	 love.graphics.setLineStyle('rough')
 	 love.graphics.setLineJoin('bevel')
 	 love.graphics.setLineWidth(2)
-	 --love.graphics.line(coords)
-	 local vertices, indices, draw_mode = polyline(
-	    love.graphics.getLineJoin(),
-	    coords, love.graphics.getLineWidth() / 2,
-	    1/scale,
-	    love.graphics.getLineStyle() == 'smooth')
+	 love.graphics.line(coords)
+	 
+	 -- local vertices, indices, draw_mode = polyline(
+	 --    love.graphics.getLineJoin(),
+	 --    coords, love.graphics.getLineWidth() / 2,
+	 --    1/scale,
+	 --    love.graphics.getLineStyle() == 'smooth')
 
-	 mesh = love.graphics.newMesh(#coords * 2)
-	 mesh:setVertices(vertices)
-	 mesh:setDrawMode(draw_mode)
-	 mesh:setVertexMap(indices)
-	 if indices then
-	    mesh:setDrawRange(1, #indices)
-	 else
-	    mesh:setDrawRange(1, #vertices)
-	 end
-	 love.graphics.draw(mesh)
+	 -- mesh = love.graphics.newMesh(#coords * 2)
+	 -- mesh:setVertices(vertices)
+	 -- mesh:setDrawMode(draw_mode)
+	 -- mesh:setVertexMap(indices)
+	 -- if indices then
+	 --    mesh:setDrawRange(1, #indices)
+	 -- else
+	 --    mesh:setDrawRange(1, #vertices)
+	 -- end
+	 -- love.graphics.draw(mesh)
 	 love.graphics.setLineWidth(1)
 
       end
@@ -362,6 +407,17 @@ function love.draw()
 	    end
 	    if (editingModeSub == 'polyline-add') and i == 1 and  #points > 1 then
 	       kind= "fill"
+	    end
+	    
+	 end
+	 if (editingModeSub == 'polyline-add') and i == #points then
+	    kind = 'fill'
+	 end
+	 
+	 if editingModeSub == 'polyline-insert' then
+	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
+	    if i == closestEdgeIndex or i == closestEdgeIndex+1 then
+	       kind = 'fill'
 	    end
 	    
 	 end
@@ -407,31 +463,38 @@ function love.draw()
    end
 
    if (editingMode == 'polyline') then
-      if imgbutton('polyline-add', ui.polyline_add, calcX(1, s), calcY(2, s), s).clicked then
+            if imgbutton('polyline-insert', ui.insert_link,  calcX(1, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-insert'
+      end
+
+      if imgbutton('polyline-add', ui.polyline_add, calcX(2, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-add'
       end
-      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(2, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(3, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-remove'
       end
-      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(4, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-edit'
       end
-      if imgbutton('polyline-palette', ui.palette,  calcX(4, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-palette', ui.palette,  calcX(5, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-palette'
       end
-      if imgbutton('polyline-next', ui.next,  calcX(5, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-next', ui.next,  calcX(6, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index + 1
 	 if  current_shape_index > #shapes then
 	    current_shape_index = 1
 	 end
       end
-      if imgbutton('polyline-previous', ui.previous,  calcX(6, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-previous', ui.previous,  calcX(7, s), calcY(2, s), s).clicked then
 	 current_shape_index = current_shape_index - 1
 	 if  current_shape_index < 1 then
 	    current_shape_index = #shapes
 	 end
       end
-      if imgbutton('polyline-add-new', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-move', ui.move,  calcX(8, s), calcY(2, s), s).clicked then
+	 editingModeSub = 'polyline-move'
+      end
+      if imgbutton('polyline-add-new', ui.add,  calcX(9, s), calcY(2, s), s).clicked then
 	 local shape = {
 	    alpha= 1,
 	    points = {},
@@ -440,7 +503,7 @@ function love.draw()
 	 table.insert(shapes, current_shape_index+1, shape)
 	 current_shape_index = current_shape_index + 1
       end
-
+      
    end
 
    if (editingMode == 'palette') then
