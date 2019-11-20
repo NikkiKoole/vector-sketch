@@ -1,15 +1,16 @@
 inspect = require 'inspect'
 require 'ui'
+require 'palettes'
 polyline = require 'polyline'
 poly = require 'poly'
 
 
 function love.keypressed(key)
    if key == "escape" then
-      if (editingModeSub ~= 'nil') then
-	 editingModeSub = 'nil'
-      elseif (editingMode ~= 'nil') then
-	 editingMode = 'nil'
+      if (editingModeSub ~= nil) then
+	 editingModeSub = nil
+      elseif (editingMode ~= nil) then
+	 editingMode = nil
       else
 	 if (quitDialog == true) then
 	    love.event.quit()
@@ -27,31 +28,40 @@ end
 function toWorldPos(x, y)
    return (x / camera.scale) - camera.x, (y / camera.scale) - camera.y
 end
+function mouseOverPolyPoint(mx, my, ppx, ppy)
+   local wx, wy = toWorldPos(mx, my)
+   local dot_x = ppx - 5/camera.scale
+   local dot_y = ppy - 5/camera.scale
+   local dot_size = 10 / camera.scale
+   return pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)
+end
+function getIndexOfHoveredPolyPoint(mx, my, points)
+   local wx, wy = toWorldPos(mx, my)
+   for i = 1, #points do
+      local dot_x = points[i].x - 5/camera.scale
+      local dot_y = points[i].y - 5/camera.scale
+      local dot_size = 10 / camera.scale
+      if pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size) then
+	 return i
+      end
+   end
+   return 0
+   
+end
 
 
 function love.mousepressed(x,y, button)
    lastDraggedElement = nil
-   if editingMode == 'nil' then
+   if editingMode == nil then
       editingMode = 'move'
    end
-
+   local points = shapes[current_shape_index].points
    if editingMode == 'polyline'  then
       if (editingModeSub == 'polyline-add') then
 	 local connect_to_first = false
-	 local points = shapes[current_shape_index].points
-	 if overPolyLineIndex == 1  and #points > 0 then
-	    
-	    local dot_x = points[1].x - 5/camera.scale
-	    local dot_y = points[1].y - 5/camera.scale
-	    local dot_size = 10 / camera.scale
-	    local wx, wy = toWorldPos(x, y)
-
-	    if (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
-	       connect_to_first = true
-	       table.insert(shapes[current_shape_index].points, shapes[current_shape_index].points[1])
-	    else
-	       overPolyLineIndex = 0
-	    end
+	 if #points > 0 and (mouseOverPolyPoint(x, y, points[1].x, points[1].y)) then
+	    connect_to_first = true
+	    table.insert(shapes[current_shape_index].points, shapes[current_shape_index].points[1])
 	 end
 	 if not  connect_to_first  then
 	    if not mouseState.hoveredSomething  then
@@ -61,30 +71,24 @@ function love.mousepressed(x,y, button)
 	    end
 	 end
       end
-      if (editingModeSub == 'polyline-remove') then
-	 if overPolyLineIndex then table.remove (shapes[current_shape_index].points, overPolyLineIndex) end
-      end
-      if (editingModeSub == 'polyline-edit') then
-	 if overPolyLineIndex then
-	    draggingPointOfPolyLineIndex = overPolyLineIndex
+      local index =  getIndexOfHoveredPolyPoint(x, y, points)
+      if (index > 0) then
+	 if (editingModeSub == 'polyline-remove') then
+	    table.remove (shapes[current_shape_index].points, index)
+	 end
+	 if (editingModeSub == 'polyline-edit') then
+	    lastDraggedElement = {id='polyline', index=index}
 	 end
       end
-
    end
 
 end
 
 function love.mousereleased(x,y, button)
    if editingMode == 'move' then
-      editingMode = 'nil'
+      editingMode = nil
    end
-
-   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
-      draggingPointOfPolyLineIndex = 0
-      overPolyLineIndex = 0
-      print("yes!")
-   end
-
+   lastDraggedElement = nil
 end
 
 function love.mousemoved(x,y, dx, dy)
@@ -93,19 +97,22 @@ function love.mousemoved(x,y, dx, dy)
       camera.y = camera.y + dy / camera.scale
    end
    if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
-      backdrop_x = backdrop_x + dx / camera.scale
-      backdrop_y = backdrop_y + dy / camera.scale
+      backdrop.x = backdrop.x + dx / camera.scale
+      backdrop.y = backdrop.y + dy / camera.scale
    end
 
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
-      if draggingPointOfPolyLineIndex > 0 then
-	 local wx, wy = toWorldPos(x, y)
-	 local points = shapes[current_shape_index].points
-	 if (draggingPointOfPolyLineIndex <= #points) then
-	    points[draggingPointOfPolyLineIndex].x = wx
-	    points[draggingPointOfPolyLineIndex].y = wy
-	 end
+      if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
+	 local dragIndex = lastDraggedElement.index
+	 if dragIndex > 0 then
+	    local wx, wy = toWorldPos(x, y)
+	    local points = shapes[current_shape_index].points
+	    if (dragIndex <= #points) then
+	       points[dragIndex].x = wx
+	       points[dragIndex].y = wy
+	    end
 
+	 end
       end
    end
 end
@@ -127,11 +134,9 @@ end
 function love.load()
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
 
-
-
    camera = {x=0, y=0, scale=1}
-   editingMode = 'nil'
-   editingModeSub = 'nil'
+   editingMode = nil
+   editingModeSub = nil
    grid = {cellsize=100} -- cellsize is in px
    medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 32)
    --light = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Light.ttf", 32)
@@ -171,95 +176,27 @@ function love.load()
       arrow= love.mouse.getSystemCursor("arrow")
    }
 
-   palette2 = {
-      name='miffy',
-      colors={
-	 {name="green", rgb={48,112,47}},
-	 {name="blue", rgb={27,84,154}},
-	 {name="yellow", rgb={250,199,0}},
-	 {name="orange1", rgb={233,100,14}},
-	 {name="orange2", rgb={237,76,6}},
-	 {name="orange3", rgb={221,61,14}},
-	 {name="black1", rgb={34,30,30}},
-	 {name="black2", rgb={24,26,23}},
-	 {name="black2", rgb={24,26,23}},
-	 {name="brown1", rgb={145,77,35}},
-	 {name="brown2", rgb={114,65,11}},
-	 {name="brown3", rgb={136,95,62}},
-	 {name="grey1", rgb={147,142,114}},
-	 {name="grey2", rgb={149,164,151}},
-      }
-   }
-   palette1 = {
-      name='lego-classic',
-      colors={
-	 {name="bright red", rgb={196,40,27}},
-	 {name="bright blue", rgb={13,105,171}},
-	 {name="bright yellow", rgb={245,205,47}},
-	 {name="dark green", rgb={40,127,70}},
-	 {name="white", rgb={242,243,242}},
-	 {name="grey", rgb={161,165,162}},
-	 {name="dark grey", rgb={109,110,108}},
-	 {name="black", rgb={27,42,52}},
-      }
-   }
-   palette3 = {
-      name='fabuland',
-      colors={
-	 {name="fabuland red", rgb={255, 128, 20}},
-	 {name="fabuland green", rgb={120,252,120}},
-	 {name="brick yellow", rgb={215,197,153}},
-	 {name="nougat", rgb={204,142,104}},
-	 {name="light orange brown", rgb={203,132,60}},
-	 {name="fabuland orange", rgb={207, 138, 71}},
-	 {name="fabuland brown", rgb={242, 112, 94}},
-	 {name="earth orange", rgb={98, 71, 50}},
-      }
-   }
    palette = {
       name='mix-and-match', -- nijntje , classic lego & fabuland
-      colors={
-	 {name="green", rgb={48,112,47}},
-	 {name="blue", rgb={27,84,154}},
-	 {name="yellow", rgb={250,199,0}},
-	 {name="orange1", rgb={233,100,14}},
-	 {name="orange2", rgb={237,76,6}},
-	 {name="orange3", rgb={221,61,14}},
-	 {name="black1", rgb={34,30,30}},
-	 {name="black2", rgb={24,26,23}},
-	 {name="black2", rgb={24,26,23}},
-	 {name="brown1", rgb={145,77,35}},
-	 {name="brown2", rgb={114,65,11}},
-	 {name="brown3", rgb={136,95,62}},
-	 {name="grey1", rgb={147,142,114}},
-	 {name="grey2", rgb={149,164,151}},
-	 {name="bright red", rgb={196,40,27}},
-	 {name="bright blue", rgb={13,105,171}},
-	 {name="bright yellow", rgb={245,205,47}},
-	 {name="dark green", rgb={40,127,70}},
-	 {name="white", rgb={242,243,242}},
-	 {name="grey", rgb={161,165,162}},
-	 {name="dark grey", rgb={109,110,108}},
-	 {name="black", rgb={27,42,52}},
-	 {name="fabuland red", rgb={255, 128, 20}},
-	 {name="fabuland green", rgb={120,252,120}},
-	 {name="brick yellow", rgb={215,197,153}},
-	 {name="nougat", rgb={204,142,104}},
-	 {name="light orange brown", rgb={203,132,60}},
-	 {name="fabuland orange", rgb={207, 138, 71}},
-	 {name="fabuland brown", rgb={242, 112, 94}},
-	 {name="earth orange", rgb={98, 71, 50}},
-      }
+      colors={}
    }
-
+   for i = 1, #miffy.colors do
+      table.insert(palette.colors, miffy.colors[i])
+   end
+   for i = 1, #lego.colors do
+      table.insert(palette.colors, lego.colors[i])
+   end
+   for i = 1, #fabuland.colors do
+      table.insert(palette.colors, fabuland.colors[i])
+   end
+   
    mouseState = {
       hoveredSomething = false,
       down = false,
       lastDown = false,
       click = false
    }
-
-
+   
    shapes = { {
 	 alpha = 1,
 	 points = {},
@@ -267,19 +204,17 @@ function love.load()
    }}
    current_shape_index = 1
 
-   backdrop_image = love.graphics.newImage("test2.jpg")
-   backdrop_visible = true
-   backdrop_alpha = 0.5
-   backdrop_x = 0
-   backdrop_y = 0
-   backdrop_scale = 1
-
+   backdrop = {
+      image = love.graphics.newImage("test2.jpg"),
+      visible = true,
+      alpha = 0.5,
+      x = 0,
+      y = 0,
+      scale = 1
+   }
+  
    bg_color = {34/255,30/255,30/255}
-   overPointOfPolyLineIndex = 0
-   overPolyLineIndex = 0
-
-   draggingPointOfPolyLineIndex = 0
-
+   
    lastDraggedElement = {}
 
    quitDialog = false
@@ -315,6 +250,7 @@ function handleMouseClickStart()
    mouseState.lastDown =  mouseState.down
 end
 
+
 function love.draw()
    local mx,my = love.mouse.getPosition()
    local wx, wy = toWorldPos(mx, my)
@@ -325,9 +261,9 @@ function love.draw()
    love.graphics.push()
    love.graphics.scale(camera.scale, camera.scale  )
    love.graphics.translate( camera.x, camera.y )
-   if  backdrop_visible then
-      love.graphics.setColor(1,1,1, backdrop_alpha)
-      love.graphics.draw(backdrop_image, backdrop_x, backdrop_y, 0, backdrop_scale, backdrop_scale)
+   if  backdrop.visible then
+      love.graphics.setColor(1,1,1, backdrop.alpha)
+      love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
    end
 
    love.graphics.setColor(0,0,0)
@@ -410,27 +346,28 @@ function love.draw()
 
    love.graphics.setColor(1,1,1,1)
 
+
+  
+   
+   
    if editingMode == 'polyline' then
       local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
-      overPointOfPolyLineIndex = 0
+      
       for i=1, #points do
-	 local dot_x = points[i].x - 5/camera.scale
-	 local dot_y = points[i].y - 5/camera.scale
-	 local dot_size = 10 / camera.scale
 	 local kind = "line"
-	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-	    if (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
+	 if mouseOverPolyPoint(mx, my, points[i].x, points[i].y) then
+	    if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
 	       kind= "fill"
-	       overPolyLineIndex = i
 	    end
-	 end
-	 if (editingModeSub == 'polyline-add') then
-	    if i == 1  and #points > 1 and (pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)) then
+	    if (editingModeSub == 'polyline-add') and i == 1 and  #points > 1 then
 	       kind= "fill"
-	       overPolyLineIndex = 1
 	    end
+	    
 	 end
+	 local dot_x = points[i].x - 5/camera.scale
+	 local dot_y =  points[i].y - 5/camera.scale
+	 local dot_size = 10 / camera.scale
 
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
@@ -456,12 +393,11 @@ function love.draw()
    for i = 1, #buttons do
       if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
 	 if (editingMode == buttons[i]) then
-	    editingMode = 'nil'
-	    editingModeSub = 'nil'
+	    editingMode = nil
+	    editingModeSub = nil
 	 else
 	    editingMode = buttons[i]
-	    editingModeSub = 'nil'
-
+	    editingModeSub = nil
 	 end
 
 	 if (buttons[i] == 'polyline') then
@@ -533,26 +469,26 @@ function love.draw()
    if (editingMode == 'backdrop') then
       if imgbutton('backdrop-move', ui.move, calcX(1, s), calcY(4,s), s).clicked then
 	 if (editingModeSub == 'backdrop-move') then
-	    editingModeSub = 'nil'
+	    editingModeSub = nil
 	 else
 	    editingModeSub = 'backdrop-move'
 	 end
       end
 
-      if imgbutton('backdrop_visibility', backdrop_visible and ui.visible or ui.not_visible,
+      if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,
 		   calcX(2, s), calcY(4, s), s).clicked then
-	 editingModeSub = 'nil'
-	 backdrop_visible = not backdrop_visible
+	 editingModeSub = nil
+	 backdrop.visible = not backdrop.visible
       end
-      local v =  h_slider("backdrop_alpha", calcX(3, s), calcY(4, s)+ 12*s, 100, backdrop_alpha, 0, 1)
+      local v =  h_slider("backdrop_alpha", calcX(3, s), calcY(4, s)+ 12*s, 100, backdrop.alpha, 0, 1)
       if (v.value ~= nil) then
-	 backdrop_alpha = v.value
-	 editingModeSub = 'nil'
+	 backdrop.alpha = v.value
+	 editingModeSub = nil
       end
-      local s =  h_slider("backdrop_scale", calcX(1, s), calcY(5, s)+ 12*s, 100, backdrop_scale, 0, 5)
+      local s =  h_slider("backdrop_scale", calcX(1, s), calcY(5, s)+ 12*s, 100, backdrop.scale, 0, 5)
       if (s.value ~= nil) then
-	 backdrop_scale = s.value
-	 editingModeSub = 'nil'
+	 backdrop.scale = s.value
+	 editingModeSub = nil
       end
    end
 
