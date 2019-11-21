@@ -87,7 +87,7 @@ end
 
 function drawBlock(thing)
    local d = thing.fixture:getDensity()
-   love.graphics.setColor(0.20*(d*3), 0.20, 0.20)
+   love.graphics.setColor(0.20*(d*3), 1.0 - d*5, 0.20)
    love.graphics.polygon("fill", thing.body:getWorldPoints(thing.shape:getPoints()))
    love.graphics.setColor(1, 0.5, 0.20)
    love.graphics.setLineWidth(3)
