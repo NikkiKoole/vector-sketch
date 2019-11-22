@@ -45,7 +45,10 @@ function love.load()
 	    world,
 	    50 + love.math.random()*600,
 	    50 + love.math.random()*600, "dynamic"),
-	 shape = love.physics.newRectangleShape(0, 0, 25, 25)
+	 --shape = love.physics.newRectangleShape(0, 0, 25, 25)
+	 shape = love.physics.newPolygonShape( 0,-10, 10,10 , -10, 10)
+	 --shape = love.physics.newPolygonShape(capsule(20, 30, 4))
+
       }
       block.fixture = love.physics.newFixture(block.body, block.shape, love.math.random()*1)
       table.insert(objects.blocks, block)
@@ -56,6 +59,27 @@ function love.load()
 
    ppm = 64
 end
+
+function capsule(w, h, cs)
+   -- cs == cornerSize
+   local w2 = w/2
+   local h2 = h/2
+   local bt = -h2 + cs
+   local bb = h2 - cs
+   local result = {
+	 -w2, bt,
+	 -w2 + cs, -h2,
+      w2 - cs, -h2,
+      w2, bt,
+      w2, bb,
+      w2 - cs, h2,
+	 -w2 + cs, h2,
+	 -w2, h2 - cs
+   }
+   return result
+
+end
+
 
 
 function love.update(dt)

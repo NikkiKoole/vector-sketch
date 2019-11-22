@@ -47,7 +47,7 @@ function getIndexOfHoveredPolyPoint(mx, my, points)
       end
    end
    return 0
-   
+
 end
 function getClosestEdgeIndex(wx, wy, points)
    local closestEdgeIndex = 0
@@ -94,12 +94,12 @@ function love.mousepressed(x,y, button)
 	    lastDraggedElement = {id='polyline', index=index}
 	 end
       end
-      
+
       if (editingModeSub == 'polyline-insert') then
 	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
 	 table.insert(shapes[current_shape_index].points, closestEdgeIndex+1, {x=wx, y=wy})
       end
-      
+
    end
 
 end
@@ -128,8 +128,8 @@ function love.mousemoved(x,y, dx, dy)
       else
 	 beginIndex = 1
       end
-      
-      
+
+
       for i = beginIndex, #points do
 	 local p = shapes[current_shape_index].points[i]
 	 shapes[current_shape_index].points[i].x = p.x + dx / camera.scale
@@ -137,7 +137,7 @@ function love.mousemoved(x,y, dx, dy)
       end
 
    end
-   
+
 
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
@@ -228,14 +228,14 @@ function love.load()
    for i = 1, #fabuland.colors do
       table.insert(palette.colors, fabuland.colors[i])
    end
-   
+
    mouseState = {
       hoveredSomething = false,
       down = false,
       lastDown = false,
       click = false
    }
-   
+
    shapes = { {
 	 alpha = 1,
 	 points = {},
@@ -251,9 +251,9 @@ function love.load()
       y = 0,
       scale = 1
    }
-  
+
    bg_color = {34/255,30/255,30/255}
-   
+
    lastDraggedElement = {}
 
    quitDialog = false
@@ -361,29 +361,29 @@ function love.draw()
 	 --   local c = shapes[i].color
 	 --   love.graphics.setColor(c[1], c[2], c[3], 1)
 	 --end
-	 
+
 
 	 love.graphics.setLineStyle('rough')
 	 love.graphics.setLineJoin('bevel')
 	 love.graphics.setLineWidth(2)
-	 love.graphics.line(coords)
-	 
-	 -- local vertices, indices, draw_mode = polyline(
-	 --    love.graphics.getLineJoin(),
-	 --    coords, love.graphics.getLineWidth() / 2,
-	 --    1/scale,
-	 --    love.graphics.getLineStyle() == 'smooth')
+	 --love.graphics.line(coords)
 
-	 -- mesh = love.graphics.newMesh(#coords * 2)
-	 -- mesh:setVertices(vertices)
-	 -- mesh:setDrawMode(draw_mode)
-	 -- mesh:setVertexMap(indices)
-	 -- if indices then
-	 --    mesh:setDrawRange(1, #indices)
-	 -- else
-	 --    mesh:setDrawRange(1, #vertices)
-	 -- end
-	 -- love.graphics.draw(mesh)
+	 local vertices, indices, draw_mode = polyline(
+	    love.graphics.getLineJoin(),
+	    coords, love.graphics.getLineWidth() / 2,
+	    1/scale,
+	    love.graphics.getLineStyle() == 'smooth')
+
+	 mesh = love.graphics.newMesh(#coords * 2)
+	 mesh:setVertices(vertices)
+	 mesh:setDrawMode(draw_mode)
+	 mesh:setVertexMap(indices)
+	 if indices then
+	    mesh:setDrawRange(1, #indices)
+	 else
+	    mesh:setDrawRange(1, #vertices)
+	 end
+	 love.graphics.draw(mesh)
 	 love.graphics.setLineWidth(1)
 
       end
@@ -392,13 +392,13 @@ function love.draw()
    love.graphics.setColor(1,1,1,1)
 
 
-  
-   
-   
+
+
+
    if editingMode == 'polyline' then
       local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
-      
+
       for i=1, #points do
 	 local kind = "line"
 	 if mouseOverPolyPoint(mx, my, points[i].x, points[i].y) then
@@ -408,18 +408,18 @@ function love.draw()
 	    if (editingModeSub == 'polyline-add') and i == 1 and  #points > 1 then
 	       kind= "fill"
 	    end
-	    
+
 	 end
 	 if (editingModeSub == 'polyline-add') and i == #points then
 	    kind = 'fill'
 	 end
-	 
+
 	 if editingModeSub == 'polyline-insert' then
 	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
 	    if i == closestEdgeIndex or i == closestEdgeIndex+1 then
 	       kind = 'fill'
 	    end
-	    
+
 	 end
 	 local dot_x = points[i].x - 5/camera.scale
 	 local dot_y =  points[i].y - 5/camera.scale
@@ -436,7 +436,7 @@ function love.draw()
 	 love.graphics.circle("fill", pivot.x, pivot.y , 5)
 	 love.graphics.circle("fill", rotator.x, rotator.y , 5)
       end
-      
+
    end
 
    love.graphics.pop()
@@ -515,7 +515,7 @@ function love.draw()
 	 table.insert(shapes, current_shape_index+1, shape)
 	 current_shape_index = current_shape_index + 1
       end
-      
+
    end
 
    if (editingMode == 'palette') then
