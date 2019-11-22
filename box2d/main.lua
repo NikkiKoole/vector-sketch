@@ -37,7 +37,7 @@ function love.load()
    -- let's create a couple blocks to play around with
 
    objects.blocks = {}
-   for i=1, 50 do
+   for i=1, 150 do
       local block = {
 	 body = love.physics.newBody(
 	    world,
@@ -103,22 +103,43 @@ function love.update(dt)
       love.event.quit()
    end
 
-
+   -- local contacts = world:getContacts( )
+   -- for i = 1, #contacts do
+   --    local indexA, indexB =  contacts[i]:getChildren( )
+   --    local touching = contacts[i]:isTouching( )
+   --    print(indexA, indexB, touching)
+   -- end
 
 
 end
 
-function drawPolygon(body, fixture, shape, hit)
+function drawBlock(thing)
+   local d = thing.fixture:getDensity()
+   love.graphics.setColor(0.20*(d*3), 1.0 - d*5, 0.20)
+   love.graphics.polygon("fill", thing.body:getWorldPoints(thing.shape:getPoints()))
+   love.graphics.setColor(1, 0.5, 0.20)
+   love.graphics.setLineWidth(3)
+   love.graphics.polygon("line", thing.body:getWorldPoints(thing.shape:getPoints()))
+
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.setLineWidth(2)
+   local topLeftX, topLeftY, bottomRightX, bottomRightY = thing.fixture:getBoundingBox(1 )
+   love.graphics.rectangle("line", topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY)
+
+end
+
+function drawPolygon(body, fixture, shape)
    local d = fixture:getDensity()
    love.graphics.setColor(0.20*(d*3), 1.0 - d*5, 0.20)
    love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
    love.graphics.setColor(1, 0.5, 0.20)
-   if hit then
-      love.graphics.setColor(1, 1, 1)
-   end
-
    love.graphics.setLineWidth(3)
    love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
+
+   -- love.graphics.setColor(0, 0, 0)
+   -- love.graphics.setLineWidth(2)
+   -- local topLeftX, topLeftY, bottomRightX, bottomRightY = thing.fixture:getBoundingBox(1 )
+   -- love.graphics.rectangle("line", topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY)
 end
 
 function drawCircle(body, shape)
@@ -129,40 +150,15 @@ function drawCircle(body, shape)
    love.graphics.circle("line", body:getX(), body:getY(), shape:getRadius())
 end
 
-function addToSet(set, key)
-    set[key] = true
-end
-
-function removeFromSet(set, key)
-    set[key] = nil
-end
-
-function setContains(set, key)
-    return set[key] ~= nil
-end
-
-
 function love.draw()
-   local contacts = world:getContacts( )
-   local fixturesInContact = {}
 
-   for i = 1, #contacts do
-      local fixtureA, fixtureB = contacts[i]:getFixtures( )
-      addToSet(fixturesInContact, fixtureA)
-      addToSet(fixturesInContact, fixtureB)
+
+   drawBlock(objects.top)
+   drawBlock(objects.ground)
+   drawBlock(objects.left)
+   drawBlock(objects.right)
+   drawCircle(objects.ball.body, objects.ball.shape)
+   for i =1, #objects.blocks do
+       drawBlock(objects.blocks[i])
    end
-
-   for _, body in pairs(world:getBodies()) do
-      for _, fixture in pairs(body:getFixtures()) do
-	 local shape = fixture:getShape()
-	 local type = shape:getType()
-	 if (type == 'polygon') then
-
-	    drawPolygon(body, fixture, shape,  setContains(fixturesInContact, fixture) )
-	 elseif type == "circle" then
-	    drawCircle(body, shape)
-	 end
-      end
-   end
-
 end
