@@ -4,7 +4,7 @@ function love.load()
    -- the height of a meter our worlds will be 64px
    love.physics.setMeter(64)
    world = love.physics.newWorld(0, 9.81*64, true)
-
+   world:setCallbacks(beginContact, endContact, preSolve, postSolve)
    objects = {}
    objects.ground = {}
    objects.ground.body = love.physics.newBody(world, 650/2, 650-50/2)
@@ -56,6 +56,25 @@ function love.load()
    love.window.setMode(650, 650) -- set the window dimensions to 650 by 650
 
    ppm = 64
+end
+
+-- https://love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks
+
+function beginContact(a, b, coll)
+   local x,y = coll:getNormal()
+   --print(a, b)
+end
+
+function endContact(a, b, coll)
+
+end
+
+function preSolve(a, b, coll)
+
+end
+
+function postSolve(a, b, coll, normalimpulse, tangentimpulse)
+
 end
 
 function capsule(w, h, cs)
@@ -153,6 +172,7 @@ end
 function love.draw()
 
 
+
    drawBlock(objects.top)
    drawBlock(objects.ground)
    drawBlock(objects.left)
@@ -160,5 +180,18 @@ function love.draw()
    drawCircle(objects.ball.body, objects.ball.shape)
    for i =1, #objects.blocks do
        drawBlock(objects.blocks[i])
+   end
+
+   local contacts = world:getContacts( )
+   love.graphics.setColor(1, 1, 1)
+   for i=1, #contacts do
+      x1, y1, x2, y2 = contacts[i]:getPositions( )
+      if (x1 and y1) then
+	 love.graphics.circle("fill", x1 , y1 , 2)
+      end
+      if (x2 and y2) then
+	 love.graphics.circle("fill", x2 , y2 , 2)
+      end
+
    end
 end
