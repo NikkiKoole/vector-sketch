@@ -46,8 +46,8 @@ function love.load()
 	    50 + love.math.random()*600,
 	    50 + love.math.random()*600, "dynamic"),
 	 --shape = love.physics.newRectangleShape(0, 0, 25, 25)
-	 shape = love.physics.newPolygonShape( 0,-10, 10,10 , -10, 10)
-	 --shape = love.physics.newPolygonShape(capsule(20, 30, 4))
+	 --shape = love.physics.newPolygonShape( 0,-10, 10,10 , -10, 10)
+	 shape = love.physics.newPolygonShape(capsule(20, 40, 5))
 
       }
       block.fixture = love.physics.newFixture(block.body, block.shape, love.math.random()*1)
@@ -66,15 +66,18 @@ function capsule(w, h, cs)
    local h2 = h/2
    local bt = -h2 + cs
    local bb = h2 - cs
+   local bl = -w2 + cs
+   local br = w2 - cs
+
    local result = {
 	 -w2, bt,
-	 -w2 + cs, -h2,
-      w2 - cs, -h2,
-      w2, bt,
-      w2, bb,
-      w2 - cs, h2,
-	 -w2 + cs, h2,
-	 -w2, h2 - cs
+	 bl, -h2,
+	 br, -h2,
+	 w2, bt,
+	 w2, bb,
+	 br, h2,
+	 bl, h2,
+	 -w2, bb
    }
    return result
 
