@@ -47,13 +47,12 @@ function getIndexOfHoveredPolyPoint(mx, my, points)
       end
    end
    return 0
-
 end
+
 function getClosestEdgeIndex(wx, wy, points)
    local closestEdgeIndex = 0
    local closestDistance = 99999999999999
    for j = 1, #points-1 do
-
       local d = distancePointSegment(wx, wy, points[j].x, points[j].y, points[j+1].x, points[j+1].y)
       if (d < closestDistance) then
 	 closestDistance = d
@@ -72,23 +71,27 @@ function love.mousepressed(x,y, button)
    local points = shapes[current_shape_index].points
    local wx, wy = toWorldPos(x, y)
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      if (editingModeSub == 'polyline-add') then
+      if (editingModeSub == 'polyline-add' and shapes[current_shape_index].closed == false) then
 	 local connect_to_first = false
 	 if #points > 0 and (mouseOverPolyPoint(x, y, points[1].x, points[1].y)) then
 	    connect_to_first = true
 	    local first = shapes[current_shape_index].points[1]
+	    shapes[current_shape_index].closed = true
 	    table.insert(shapes[current_shape_index].points, first)
 	 end
 	 if not  connect_to_first  then
-	    --if not mouseState.hoveredSomething  then
 	    table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
-	    --end
 	 end
       end
       local index =  getIndexOfHoveredPolyPoint(x, y, points)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
 	    table.remove (shapes[current_shape_index].points, index)
+	    local s = shapes[current_shape_index]
+	    if s.points[1] == s.points[#s.points] then
+	    else
+	       shapes[current_shape_index].closed = false
+	    end
 	 end
 	 if (editingModeSub == 'polyline-edit') then
 	    lastDraggedElement = {id='polyline', index=index}
@@ -99,7 +102,6 @@ function love.mousepressed(x,y, button)
 	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
 	 table.insert(shapes[current_shape_index].points, closestEdgeIndex+1, {x=wx, y=wy})
       end
-
    end
 
 end
@@ -129,15 +131,12 @@ function love.mousemoved(x,y, dx, dy)
 	 beginIndex = 1
       end
 
-
       for i = beginIndex, #points do
 	 local p = shapes[current_shape_index].points[i]
 	 shapes[current_shape_index].points[i].x = p.x + dx / camera.scale
 	 shapes[current_shape_index].points[i].y = p.y + dy / camera.scale
       end
-
    end
-
 
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
@@ -149,7 +148,6 @@ function love.mousemoved(x,y, dx, dy)
    	       points[dragIndex].x = wx
    	       points[dragIndex].y = wy
    	    end
-
    	 end
       end
    end
@@ -175,11 +173,9 @@ function love.load()
    camera = {x=0, y=0, scale=1}
    editingMode = nil
    editingModeSub = nil
-   grid = {cellsize=100} -- cellsize is in px
-   medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 32)
-   --light = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Light.ttf", 32)
+   medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 16)
    love.graphics.setFont(medium)
-
+   
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
       polyline_add = love.graphics.newImage("resources/ui/polyline-add.png"),
@@ -237,13 +233,15 @@ function love.load()
    }
 
    shapes = { {
+	 closed = false,
 	 alpha = 1,
 	 points = {},
-	 mesh = {}
    }}
    current_shape_index = 1
 
    backdrop = {
+      grid = {cellsize=100}, -- cellsize is in px
+      bg_color = {34/255,30/255,30/255},
       image = love.graphics.newImage("763.jpg"),
       visible = true,
       alpha = 0.5,
@@ -251,22 +249,19 @@ function love.load()
       y = 0,
       scale = 1
    }
-
-   bg_color = {34/255,30/255,30/255}
-
+   
    lastDraggedElement = {}
-
    quitDialog = false
 end
 
 function drawGrid()
    local w, h = love.graphics.getDimensions( )
-   local size = grid.cellsize * camera.scale
+   local size = backdrop.grid.cellsize * camera.scale
    if (size < 10) then return end
    local vlines = math.floor(w/size)
    local hlines = math.floor(h/size)
-   local xOffset = (camera.x*camera.scale) % size
-   local yOffset = (camera.y*camera.scale) % size
+   local xOffset = (camera.x * camera.scale) % size
+   local yOffset = (camera.y * camera.scale) % size
 
    for x =0, vlines do
       love.graphics.line(xOffset + x*size, 0,xOffset +  x*size, h)
@@ -296,7 +291,7 @@ function love.draw()
    handleMouseClickStart()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
-   love.graphics.clear(bg_color[1], bg_color[2], bg_color[3])
+   love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
    love.graphics.push()
    love.graphics.scale(camera.scale, camera.scale  )
    love.graphics.translate( camera.x, camera.y )
@@ -374,7 +369,7 @@ function love.draw()
 	    1/scale,
 	    love.graphics.getLineStyle() == 'smooth')
 
-	 mesh = love.graphics.newMesh(#coords * 2)
+	 local mesh = love.graphics.newMesh(#coords * 2)
 	 mesh:setVertices(vertices)
 	 mesh:setDrawMode(draw_mode)
 	 mesh:setVertexMap(indices)
@@ -408,8 +403,8 @@ function love.draw()
 	    if (editingModeSub == 'polyline-add') and i == 1 and  #points > 1 then
 	       kind= "fill"
 	    end
-
 	 end
+	 
 	 if (editingModeSub == 'polyline-add') and i == #points then
 	    kind = 'fill'
 	 end
@@ -429,14 +424,17 @@ function love.draw()
       end
       love.graphics.setLineWidth(1)
 
-      if editingModeSub == 'polyline-rotate' then
+      if editingModeSub == 'polyline-rotate'  and #points > 0 then
 	 local pivot = points[1]
 	 local rotator = {x=pivot.x + 100, y=pivot.y}
+	 love.graphics.setColor(1,1,1)
 	 love.graphics.line(pivot.x, pivot.y, rotator.x, rotator.y)
 	 love.graphics.circle("fill", pivot.x, pivot.y , 5)
 	 love.graphics.circle("fill", rotator.x, rotator.y , 5)
+	 love.graphics.setColor(0,0,0)
+	 love.graphics.circle("line", pivot.x, pivot.y , 5)
+	 love.graphics.circle("line", rotator.x, rotator.y , 5)
       end
-
    end
 
    love.graphics.pop()
@@ -446,7 +444,7 @@ function love.draw()
    love.graphics.push()
    local s = 0.5
    local buttons = {
-      'move', 'polyline', 'palette', 'backdrop'
+      'move', 'polyline', 'backdrop'
    }
    local calcY = function(i, s)
       return (64 * i * s) + (10*i*s)
@@ -472,11 +470,10 @@ function love.draw()
    end
 
    if (editingMode == 'polyline') then
-            if imgbutton('polyline-insert', ui.insert_link,  calcX(1, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-insert', ui.insert_link,  calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-insert'
       end
-
-      if imgbutton('polyline-add', ui.polyline_add, calcX(2, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-add', ui.polyline_add, calcX(2, s), calcY(2, s), s, shapes[current_shape_index].closed == true).clicked then
 	 editingModeSub = 'polyline-add'
       end
       if imgbutton('polyline-remove', ui.polyline_remove,  calcX(3, s), calcY(2, s), s).clicked then
@@ -510,7 +507,7 @@ function love.draw()
 	 local shape = {
 	    alpha= 1,
 	    points = {},
-	    mesh = {}
+
 	 }
 	 table.insert(shapes, current_shape_index+1, shape)
 	 current_shape_index = current_shape_index + 1
@@ -518,14 +515,7 @@ function love.draw()
 
    end
 
-   if (editingMode == 'palette') then
-      for i = 1, #palette.colors do
-	 local rgb = palette.colors[i].rgb
-	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
-	    bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
-	 end
-      end
-   end
+   
    if (editingModeSub == 'polyline-palette') then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
@@ -535,10 +525,8 @@ function love.draw()
       end
       local v =  h_slider("polyline_alpha", calcX(1, s), calcY(4, s)+ 12*s, 100,  shapes[current_shape_index].alpha , 0, 1)
       if (v.value ~= nil) then
-	  shapes[current_shape_index].alpha = v.value
+	 shapes[current_shape_index].alpha = v.value
       end
-
-
    end
 
    if (editingMode == 'backdrop') then
@@ -555,11 +543,23 @@ function love.draw()
 	 editingModeSub = nil
 	 backdrop.visible = not backdrop.visible
       end
-      local v =  h_slider("backdrop_alpha", calcX(3, s), calcY(4, s)+ 12*s, 100, backdrop.alpha, 0, 1)
+      if imgbutton('polyline-palette', ui.palette,  calcX(3, s), calcY(4, s), s).clicked then
+	 editingModeSub = 'backdrop-palette'
+      end
+      local v =  h_slider("backdrop_alpha", calcX(4, s), calcY(4, s)+ 12*s, 100, backdrop.alpha, 0, 1)
       if (v.value ~= nil) then
 	 backdrop.alpha = v.value
 	 editingModeSub = nil
       end
+      if (editingModeSub == 'backdrop-palette') then
+	 for i = 1, #palette.colors do
+	    local rgb = palette.colors[i].rgb
+	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
+	       backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+	    end
+	 end
+      end
+      
       local s =  h_slider("backdrop_scale", calcX(1, s), calcY(5, s)+ 12*s, 100, backdrop.scale, 0, 5)
       if (s.value ~= nil) then
 	 backdrop.scale = s.value
@@ -567,11 +567,19 @@ function love.draw()
       end
    end
 
+   -- now lets render the list of items on screen,
+   -- i want this to be right alligned
+   for i=1, #shapes do
+      if iconlabelbutton('backdrop-move', ui.object_group, "abcdefghiklmnopqrstuvw",  w - (64 + 400+ 10)/2, calcY(1,s), s).clicked then
+      end
+      
+   end
+   
+   
    love.graphics.pop()
 
    if quitDialog then
       love.graphics.setColor(1,1,1, 1)
-      love.graphics.scale(0.5)
       love.graphics.print("Sure you want to quit ? [ESC] ", 32, 16)
    end
 end
