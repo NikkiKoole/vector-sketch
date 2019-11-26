@@ -83,6 +83,11 @@ function love.mousepressed(x,y, button)
 	    table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
 	 end
       end
+      if editingModeSub == 'polyline-add' and shapes[current_shape_index].closed == true and getIndexOfHoveredPolyPoint(x, y, points) == 0  then
+	 editingModeSub = nil
+	 editingMode = nil
+      end
+
       local index =  getIndexOfHoveredPolyPoint(x, y, points)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
@@ -175,7 +180,7 @@ function love.load()
    editingModeSub = nil
    medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 16)
    love.graphics.setFont(medium)
-   
+
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
       polyline_add = love.graphics.newImage("resources/ui/polyline-add.png"),
@@ -204,6 +209,11 @@ function love.load()
       transform = love.graphics.newImage("resources/ui/transform.png"),
       next = love.graphics.newImage("resources/ui/next.png"),
       previous = love.graphics.newImage("resources/ui/previous.png"),
+      lines = love.graphics.newImage("resources/ui/lines.png"),
+      lines2 = love.graphics.newImage("resources/ui/lines2.png"),
+      move_up = love.graphics.newImage("resources/ui/move-up.png"),
+      move_down = love.graphics.newImage("resources/ui/move-down.png"),
+
    }
 
    cursors = {
@@ -229,11 +239,13 @@ function love.load()
       hoveredSomething = false,
       down = false,
       lastDown = false,
-      click = false
+      click = false,
+
    }
 
    shapes = { {
 	 closed = false,
+	 outline = true,
 	 alpha = 1,
 	 points = {},
    }}
@@ -243,13 +255,13 @@ function love.load()
       grid = {cellsize=100}, -- cellsize is in px
       bg_color = {34/255,30/255,30/255},
       image = love.graphics.newImage("offshore-707.jpg"),
-      visible = true,
+      visible = false,
       alpha = 0.5,
       x = 0,
       y = 0,
       scale = 1
    }
-   
+
    lastDraggedElement = {}
    quitDialog = false
 end
@@ -357,29 +369,33 @@ function love.draw()
 	 --   love.graphics.setColor(c[1], c[2], c[3], 1)
 	 --end
 
+	 if (shapes[i].outline) then
+	    love.graphics.setLineStyle('rough')
+	    love.graphics.setLineJoin('bevel')
+	    love.graphics.setLineWidth(2)
+	    --love.graphics.line(coords)
 
-	 love.graphics.setLineStyle('rough')
-	 love.graphics.setLineJoin('bevel')
-	 love.graphics.setLineWidth(2)
-	 --love.graphics.line(coords)
+	    local vertices, indices, draw_mode = polyline(
+	       love.graphics.getLineJoin(),
+	       coords, love.graphics.getLineWidth() / 2,
+	       1/scale,
+	       love.graphics.getLineStyle() == 'smooth')
 
-	 local vertices, indices, draw_mode = polyline(
-	    love.graphics.getLineJoin(),
-	    coords, love.graphics.getLineWidth() / 2,
-	    1/scale,
-	    love.graphics.getLineStyle() == 'smooth')
+	    local mesh = love.graphics.newMesh(#coords * 2)
+	    mesh:setVertices(vertices)
+	    mesh:setDrawMode(draw_mode)
+	    mesh:setVertexMap(indices)
+	    if indices then
+	       mesh:setDrawRange(1, #indices)
+	    else
+	       mesh:setDrawRange(1, #vertices)
+	    end
+	    love.graphics.draw(mesh)
 
-	 local mesh = love.graphics.newMesh(#coords * 2)
-	 mesh:setVertices(vertices)
-	 mesh:setDrawMode(draw_mode)
-	 mesh:setVertexMap(indices)
-	 if indices then
-	    mesh:setDrawRange(1, #indices)
-	 else
-	    mesh:setDrawRange(1, #vertices)
 	 end
-	 love.graphics.draw(mesh)
+
 	 love.graphics.setLineWidth(1)
+
 
       end
    end
@@ -404,7 +420,7 @@ function love.draw()
 	       kind= "fill"
 	    end
 	 end
-	 
+
 	 if (editingModeSub == 'polyline-add') and i == #points then
 	    kind = 'fill'
 	 end
@@ -423,18 +439,28 @@ function love.draw()
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
       love.graphics.setLineWidth(1)
-
+      love.graphics.setLineWidth(4/ camera.scale)
       if editingModeSub == 'polyline-rotate'  and #points > 0 then
+	 local radius = 12  / camera.scale
 	 local pivot = points[1]
 	 local rotator = {x=pivot.x + 100, y=pivot.y}
 	 love.graphics.setColor(1,1,1)
+
 	 love.graphics.line(pivot.x, pivot.y, rotator.x, rotator.y)
-	 love.graphics.circle("fill", pivot.x, pivot.y , 5)
-	 love.graphics.circle("fill", rotator.x, rotator.y , 5)
+	 love.graphics.setLineWidth(2/ camera.scale)
+	 love.graphics.circle("fill", pivot.x, pivot.y , radius)
 	 love.graphics.setColor(0,0,0)
-	 love.graphics.circle("line", pivot.x, pivot.y , 5)
-	 love.graphics.circle("line", rotator.x, rotator.y , 5)
+	 love.graphics.circle("line", pivot.x, pivot.y , radius)
+
+	 love.graphics.setColor(0,0,0)
+
+	 love.graphics.circle("fill", rotator.x, rotator.y , radius)
+
+	  love.graphics.setColor(1,1,1)
+	 love.graphics.circle("line", rotator.x, rotator.y , radius)
       end
+
+      love.graphics.setLineWidth(1)
    end
 
    love.graphics.pop()
@@ -488,34 +514,17 @@ function love.draw()
       if imgbutton('polyline-rotate', ui.rotate,  calcX(6, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-rotate'
       end
-      -- if imgbutton('polyline-next', ui.next,  calcX(7, s), calcY(2, s), s).clicked then
-      -- 	 current_shape_index = current_shape_index + 1
-      -- 	 if  current_shape_index > #shapes then
-      -- 	    current_shape_index = 1
-      -- 	 end
-      -- end
-      -- if imgbutton('polyline-previous', ui.previous,  calcX(8, s), calcY(2, s), s).clicked then
-      -- 	 current_shape_index = current_shape_index - 1
-      -- 	 if  current_shape_index < 1 then
-      -- 	    current_shape_index = #shapes
-      -- 	 end
-      -- end
+
       if imgbutton('polyline-move', ui.move,  calcX(7, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-move'
       end
-      if imgbutton('polyline-add-new', ui.add,  calcX(8, s), calcY(2, s), s).clicked then
-	 local shape = {
-	    alpha= 1,
-	    points = {},
-
-	 }
-	 table.insert(shapes, current_shape_index+1, shape)
-	 current_shape_index = current_shape_index + 1
+      if imgbutton('polyline-outside', shapes[current_shape_index].outline and ui.lines or ui.lines2,  calcX(8, s), calcY(2, s), s).clicked then
+	 shapes[current_shape_index].outline = not shapes[current_shape_index].outline
       end
 
    end
 
-   
+
    if (editingModeSub == 'polyline-palette') then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
@@ -559,7 +568,7 @@ function love.draw()
 	    end
 	 end
       end
-      
+
       local s =  h_slider("backdrop_scale", calcX(1, s), calcY(5, s)+ 12*s, 100, backdrop.scale, 0, 5)
       if (s.value ~= nil) then
 	 backdrop.scale = s.value
@@ -569,15 +578,37 @@ function love.draw()
 
    -- now lets render the list of items on screen,
    -- i want this to be right alligned
+   if iconlabelbutton('add-object', ui.add, nil, false,  'add shape',  w - (64 + 400+ 10)/2, calcY(1,s)+1*8*s, s).clicked then
+      local shape = {
+	 alpha= 1,
+	 outline = true,
+	 points = {},
+      }
+      table.insert(shapes, current_shape_index+1, shape)
+      current_shape_index = current_shape_index + 1
+      editingMode = 'polyline'
+      editingModeSub = 'polyline-add'
+   end
+
    for i=1, #shapes do
-      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, "p-"..i,  w - (64 + 400+ 10)/2, calcY(i,s)+i*8*s, s).clicked then
+      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, "p-"..i,  w - (64 + 400+ 10)/2, calcY((i+1),s)+(i+1)*8*s, s).clicked then
 	 current_shape_index = i
 	 editingMode = 'polyline'
       end
-      
    end
-   
-   
+   if (#shapes > 1) then
+      if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(2, s), s).clicked then
+	 local taken_out = table.remove(shapes, current_shape_index)
+	 current_shape_index =  current_shape_index - 1
+	 table.insert(shapes, current_shape_index, taken_out)
+      end
+      if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(3, s) + 8, s).clicked then
+	 local taken_out = table.remove(shapes, current_shape_index)
+	 current_shape_index =  current_shape_index + 1
+	 table.insert(shapes, current_shape_index, taken_out)
+      end
+   end
+
    love.graphics.pop()
 
    if quitDialog then

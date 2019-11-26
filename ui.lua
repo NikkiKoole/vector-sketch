@@ -42,7 +42,7 @@ function rgbbutton(id, rgb, x, y, scale)
    }
 end
 
-function iconlabelbutton(id, img, color, label, x, y, scale)
+function iconlabelbutton(id, img, color, active, label, x, y, scale)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
    local w, h = img:getDimensions()
@@ -78,15 +78,19 @@ function iconlabelbutton(id, img, color, label, x, y, scale)
    if (editingModeSub == id) then
       love.graphics.setColor(1,1,1,1)
    end
+   if (active) then
+      love.graphics.setColor(1,1,1,1)
+
+   end
+
    if (disabled) then
       love.graphics.setColor(1,0,1,.5)
       clicked = false
-
    end
-   
+
    love.graphics.print(label,  x-4*scale + 64*scale + 16*scale, y-4*scale + 8*scale)
    love.graphics.draw(img, x, y, 0, scale, scale)
-   
+
    return {
       clicked = clicked
    }
@@ -126,9 +130,9 @@ function imgbutton(id, img, x, y, scale, disabled)
       clicked = false
 
    end
-   
+
    love.graphics.draw(img, x, y, 0, scale, scale)
-   
+
    return {
       clicked = clicked
    }
