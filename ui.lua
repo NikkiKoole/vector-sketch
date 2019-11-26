@@ -42,7 +42,7 @@ function rgbbutton(id, rgb, x, y, scale)
    }
 end
 
-function iconlabelbutton(id, img, label, x, y, scale)
+function iconlabelbutton(id, img, color, label, x, y, scale)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
    local w, h = img:getDimensions()
@@ -53,21 +53,24 @@ function iconlabelbutton(id, img, label, x, y, scale)
    --love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
    love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w + 400)*scale,(8+ h)*scale)
    love.graphics.setColor(1,1,1,1)
-   --love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
+   --
    love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w + 400)*scale,(8+ h)*scale)
+   if color then
+      love.graphics.setColor(color[1],color[2],color[3],1)
+      love.graphics.rectangle("fill", x, y, (w*scale),( h * scale))
+       love.graphics.setColor(1,1,1,1)
+   end
 
-   love.graphics.print(label,  x-4*scale + 64*scale + 16*scale, y-4*scale + 8*scale)
 
-
-   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
+   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w + 400)*scale,(8+ h)*scale)) then
       mouseState.hoveredSomething = true
-      love.graphics.setColor(1,1,1,.5)
+      love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
       if (mouseState.click) then
 	 clicked = true
       end
    else
-      love.graphics.setColor(1,1,1, .3)
+      love.graphics.setColor(1,1,1, .5)
    end
    if (editingMode == id) then
       love.graphics.setColor(1,1,1,1)
@@ -76,11 +79,12 @@ function iconlabelbutton(id, img, label, x, y, scale)
       love.graphics.setColor(1,1,1,1)
    end
    if (disabled) then
-      love.graphics.setColor(1,0,1,.3)
+      love.graphics.setColor(1,0,1,.5)
       clicked = false
 
    end
    
+   love.graphics.print(label,  x-4*scale + 64*scale + 16*scale, y-4*scale + 8*scale)
    love.graphics.draw(img, x, y, 0, scale, scale)
    
    return {

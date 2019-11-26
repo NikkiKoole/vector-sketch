@@ -71,7 +71,7 @@ function love.mousepressed(x,y, button)
    local points = shapes[current_shape_index].points
    local wx, wy = toWorldPos(x, y)
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      if (editingModeSub == 'polyline-add' and shapes[current_shape_index].closed == false) then
+      if (editingModeSub == 'polyline-add' and shapes[current_shape_index].closed ~= true) then
 	 local connect_to_first = false
 	 if #points > 0 and (mouseOverPolyPoint(x, y, points[1].x, points[1].y)) then
 	    connect_to_first = true
@@ -242,7 +242,7 @@ function love.load()
    backdrop = {
       grid = {cellsize=100}, -- cellsize is in px
       bg_color = {34/255,30/255,30/255},
-      image = love.graphics.newImage("763.jpg"),
+      image = love.graphics.newImage("offshore-707.jpg"),
       visible = true,
       alpha = 0.5,
       x = 0,
@@ -488,22 +488,22 @@ function love.draw()
       if imgbutton('polyline-rotate', ui.rotate,  calcX(6, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-rotate'
       end
-      if imgbutton('polyline-next', ui.next,  calcX(7, s), calcY(2, s), s).clicked then
-	 current_shape_index = current_shape_index + 1
-	 if  current_shape_index > #shapes then
-	    current_shape_index = 1
-	 end
-      end
-      if imgbutton('polyline-previous', ui.previous,  calcX(8, s), calcY(2, s), s).clicked then
-	 current_shape_index = current_shape_index - 1
-	 if  current_shape_index < 1 then
-	    current_shape_index = #shapes
-	 end
-      end
-      if imgbutton('polyline-move', ui.move,  calcX(9, s), calcY(2, s), s).clicked then
+      -- if imgbutton('polyline-next', ui.next,  calcX(7, s), calcY(2, s), s).clicked then
+      -- 	 current_shape_index = current_shape_index + 1
+      -- 	 if  current_shape_index > #shapes then
+      -- 	    current_shape_index = 1
+      -- 	 end
+      -- end
+      -- if imgbutton('polyline-previous', ui.previous,  calcX(8, s), calcY(2, s), s).clicked then
+      -- 	 current_shape_index = current_shape_index - 1
+      -- 	 if  current_shape_index < 1 then
+      -- 	    current_shape_index = #shapes
+      -- 	 end
+      -- end
+      if imgbutton('polyline-move', ui.move,  calcX(7, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-move'
       end
-      if imgbutton('polyline-add-new', ui.add,  calcX(10, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-add-new', ui.add,  calcX(8, s), calcY(2, s), s).clicked then
 	 local shape = {
 	    alpha= 1,
 	    points = {},
@@ -570,7 +570,9 @@ function love.draw()
    -- now lets render the list of items on screen,
    -- i want this to be right alligned
    for i=1, #shapes do
-      if iconlabelbutton('backdrop-move', ui.object_group, "abcdefghiklmnopqrstuvw",  w - (64 + 400+ 10)/2, calcY(1,s), s).clicked then
+      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, "p-"..i,  w - (64 + 400+ 10)/2, calcY(i,s)+i*8*s, s).clicked then
+	 current_shape_index = i
+	 editingMode = 'polyline'
       end
       
    end
