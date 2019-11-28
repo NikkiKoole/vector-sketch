@@ -8,31 +8,44 @@ function love.load()
    world = love.physics.newWorld(0, 9.81*100, true)
    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
    objects = {}
-   objects.ground = {}
-   objects.ground.body = love.physics.newBody(world, width/2, height-50/2)
-   objects.ground.shape = love.physics.newRectangleShape(width, 50)
-   objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape)
-   objects.ground.fixture:setUserData("wall")
+   objects.border = {}
+   objects.border.body = love.physics.newBody(world,0,0)
+   local margin = 20
+   objects.border.shape = love.physics.newChainShape( true,
+						      margin,margin,
+						      width-margin,margin,
+						      width-margin,height-margin,
+						      margin,height-margin )
+   --objects.border.shape = love.physics.newChainShape( true, 0,0, width,0, width,height, 0,height )
+   objects.border.fixture = love.physics.newFixture(objects.border.body, objects.border.shape)
+   objects.border.fixture:setUserData("wall")
+
+
+   -- objects.ground = {}
+   -- objects.ground.body = love.physics.newBody(world, width/2, height-50/2)
+   -- objects.ground.shape = love.physics.newRectangleShape(width, 50)
+   -- objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape)
+   -- objects.ground.fixture:setUserData("wall")
    
-   objects.top = {}
-   objects.top.body = love.physics.newBody(world, width/2, 0)
-   objects.top.shape = love.physics.newRectangleShape(width, 50)
-   objects.top.fixture = love.physics.newFixture(objects.top.body, objects.top.shape)
-   objects.top.fixture:setUserData("wall")
+   -- objects.top = {}
+   -- objects.top.body = love.physics.newBody(world, width/2, 0)
+   -- objects.top.shape = love.physics.newRectangleShape(width, 50)
+   -- objects.top.fixture = love.physics.newFixture(objects.top.body, objects.top.shape)
+   -- objects.top.fixture:setUserData("wall")
 
    
-   objects.left = {}
-   objects.left.body = love.physics.newBody(world, 0, height/2)
-   objects.left.shape = love.physics.newRectangleShape(50, height)
-   objects.left.fixture = love.physics.newFixture(objects.left.body, objects.left.shape)
-   objects.left.fixture:setUserData("wall")
+   -- objects.left = {}
+   -- objects.left.body = love.physics.newBody(world, 0, height/2)
+   -- objects.left.shape = love.physics.newRectangleShape(50, height)
+   -- objects.left.fixture = love.physics.newFixture(objects.left.body, objects.left.shape)
+   -- objects.left.fixture:setUserData("wall")
 
    
-   objects.right = {}
-   objects.right.body = love.physics.newBody(world, width, height/2)
-   objects.right.shape = love.physics.newRectangleShape(50, height)
-   objects.right.fixture = love.physics.newFixture(objects.right.body, objects.right.shape)
-   objects.right.fixture:setUserData("wall")
+   -- objects.right = {}
+   -- objects.right.body = love.physics.newBody(world, width, height/2)
+   -- objects.right.shape = love.physics.newRectangleShape(50, height)
+   -- objects.right.fixture = love.physics.newFixture(objects.right.body, objects.right.shape)
+   -- objects.right.fixture:setUserData("wall")
 
    
    objects.ball = {}
@@ -54,9 +67,13 @@ function love.load()
 	 --shape = love.physics.newRectangleShape(0, 0, 25, 25)
 	 --shape = love.physics.newPolygonShape( 0,-10, 10,10 , -10, 10)
 	 shape = love.physics.newPolygonShape(capsule(20 + love.math.random() * 20, 10 + love.math.random() * 20, 5))
+	 --shape = love.physics.newCircleShape(20)
 
       }
-      block.fixture = love.physics.newFixture(block.body, block.shape, love.math.random()*1)
+      block.fixture = love.physics.newFixture(block.body,
+					      block.shape,
+					      love.math.random()*10)
+      
       table.insert(objects.blocks, block)
    end
 
@@ -69,7 +86,38 @@ function love.load()
    sound = love.audio.newSource(soundData, 'static')
    local soundData2 = love.sound.newSoundData( 'mallet2-c2.wav' )
    sound2 = love.audio.newSource(soundData2, 'static')
+
+   joint = nil 
 end
+
+function love.mousereleased()
+   if (joint) then
+      joint:destroy()
+       joint = nil
+   end
+   
+end
+
+
+function love.mousepressed(x,y)
+   local bx, by = objects.ball.body:getPosition()
+   local dx, dy = x-bx, y-by
+   local distance = math.sqrt(dx*dx + dy*dy)
+   if (distance < 20) then
+      joint = love.physics.newMouseJoint( objects.ball.body, x, y )
+      joint:setDampingRatio( 1 )
+   else
+      if (joint) then
+	 joint:destroy()
+	 joint = nil
+      end
+   end
+   --print(x,y, objects.ball.body:getPosition())
+   
+   
+end
+
+
 
 -- https://love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks
 
@@ -142,27 +190,37 @@ end
 
 
 function love.update(dt)
+   if (joint) then
+      joint:setTarget(love.mouse.getPosition())
+
+   end
+   
    world:update(dt) -- this puts the world into motion
 
    -- here we are going to create some keyboard events
    -- press the right arrow key to push the ball to the right
-   if love.keyboard.isDown("right") then
-      objects.ball.body:applyForce(400, 0)
-   end
-   if love.keyboard.isDown("left") then
-      objects.ball.body:applyForce(-400, 0)
-   end
+   -- if love.keyboard.isDown("right") then
+   --    objects.ball.body:applyForce(400, 0)
+   -- end
+   -- if love.keyboard.isDown("left") then
+   --    objects.ball.body:applyForce(-400, 0)
+   -- end
 
-   if love.keyboard.isDown("up") then
-      objects.ball.body:applyForce(0, -400)
-   end
+   -- if love.keyboard.isDown("up") then
+   --    objects.ball.body:applyForce(0, -400)
+   -- end
 
-   if love.keyboard.isDown("down") then
-      objects.ball.body:applyForce(0, 400)
-   end
+   -- if love.keyboard.isDown("down") then
+   --    objects.ball.body:applyForce(0, 400)
+   -- end
 
    if love.keyboard.isDown("p") then
       local x,y  = world:getGravity()
+      for i = 1, #objects.blocks do
+	 local b = objects.blocks[i].body
+	 b:setAwake(true) -- this solves the objects sticking
+      end
+      
       world:setGravity(0, y*-1)
    end
 
@@ -218,16 +276,33 @@ function drawCircle(body, shape)
 end
 
 function love.draw()
+   local width, height = love.graphics.getDimensions()
+   local m = 20
 
-   drawBlock(objects.top)
-   drawBlock(objects.ground)
-   drawBlock(objects.left)
-   drawBlock(objects.right)
+   love.graphics.setColor(14/255,100/255,14/255)
+   love.graphics.rectangle("fill", 0,0, width, m)
+   love.graphics.rectangle("fill", 0,height-m, width, m)
+   love.graphics.rectangle("fill", 0,0, m, height)
+   love.graphics.rectangle("fill", width-m,0, m, height)
+   
+   -- drawBlock(objects.top)
+   -- drawBlock(objects.ground)
+   -- drawBlock(objects.left)
+   -- drawBlock(objects.right)
+  
    drawCircle(objects.ball.body, objects.ball.shape)
    for i =1, #objects.blocks do
        drawBlock(objects.blocks[i])
    end
-
+   if (joint) then
+      love.graphics.setColor(0,0,0)
+      love.graphics.setLineWidth(2)
+      local mx, my = love.mouse.getPosition()
+      local bx, by = objects.ball.body:getPosition()
+      love.graphics.line(mx,my,bx,by)
+   end
+   
+   
    -- local contacts = world:getContacts( )
    -- love.graphics.setColor(1, 1, 1)
    -- for i=1, #contacts do
