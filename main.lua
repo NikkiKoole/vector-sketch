@@ -403,9 +403,6 @@ function love.draw()
    love.graphics.setColor(1,1,1,1)
 
 
-
-
-
    if editingMode == 'polyline' then
       local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
@@ -442,7 +439,7 @@ function love.draw()
       love.graphics.setLineWidth(4/ camera.scale)
       if editingModeSub == 'polyline-rotate'  and #points > 0 then
 	 local radius = 12  / camera.scale
-	 local pivot = points[1]
+	 local pivot = points[1] 
 	 local rotator = {x=pivot.x + 100, y=pivot.y}
 	 love.graphics.setColor(1,1,1)
 

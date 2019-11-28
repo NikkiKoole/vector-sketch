@@ -12,32 +12,39 @@ function love.load()
    objects.ground.body = love.physics.newBody(world, width/2, height-50/2)
    objects.ground.shape = love.physics.newRectangleShape(width, 50)
    objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape)
-
+   objects.ground.fixture:setUserData("wall")
+   
    objects.top = {}
    objects.top.body = love.physics.newBody(world, width/2, 0)
    objects.top.shape = love.physics.newRectangleShape(width, 50)
    objects.top.fixture = love.physics.newFixture(objects.top.body, objects.top.shape)
+   objects.top.fixture:setUserData("wall")
 
+   
    objects.left = {}
    objects.left.body = love.physics.newBody(world, 0, height/2)
    objects.left.shape = love.physics.newRectangleShape(50, height)
    objects.left.fixture = love.physics.newFixture(objects.left.body, objects.left.shape)
+   objects.left.fixture:setUserData("wall")
 
+   
    objects.right = {}
    objects.right.body = love.physics.newBody(world, width, height/2)
    objects.right.shape = love.physics.newRectangleShape(50, height)
    objects.right.fixture = love.physics.newFixture(objects.right.body, objects.right.shape)
+   objects.right.fixture:setUserData("wall")
 
+   
    objects.ball = {}
    objects.ball.body = love.physics.newBody(world, width/2, height/2, "dynamic")
    objects.ball.shape = love.physics.newCircleShape(20)
    objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
    objects.ball.fixture:setRestitution(0.4) -- let the ball bounce
-
+   objects.ball.fixture:setUserData("ball")
    -- let's create a couple blocks to play around with
 
    objects.blocks = {}
-   for i=1, 150 do
+   for i=1, 50 do
       local block = {
 	 body = love.physics.newBody(
 	    world,
@@ -56,17 +63,44 @@ function love.load()
    love.window.setMode(width, height) -- set the window dimensions to 650 by 650
 
    ppm = 64
+
+   local soundData = love.sound.newSoundData( 'mallet2-c4.wav' )
+   sound = love.audio.newSource(soundData, 'static')
+   local soundData2 = love.sound.newSoundData( 'mallet2-c2.wav' )
+   sound2 = love.audio.newSource(soundData2, 'static')
 end
 
 -- https://love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks
 
 function beginContact(a, b, coll)
-   local x,y = coll:getNormal()
-   --print(a, b)
+   --
+   local x1, y1 = a:getBody():getLinearVelocity()
+   local x2, y2 = b:getBody():getLinearVelocity()
+   local total = math.abs(x1+x2+y1+y2)
+   if total > 100 then
+      local s 
+      if (a:getUserData() == 'ball' or b:getUserData() == 'ball' ) then
+	 s = sound2:clone()
+	 
+      else 
+      
+	 s = sound:clone()
+	 s:setVolume(0.5)
+      end
+      local p = 1
+      
+
+      p = 1 + math.random()/(2000/total)
+      s:setPitch(p)
+      local x,y = coll:getNormal()
+      s:setPosition( -x,y,0 )
+      love.audio.play(s)
+   end
+    --end
 end
 
 function endContact(a, b, coll)
-
+  
 end
 
 function preSolve(a, b, coll)
@@ -149,10 +183,10 @@ function drawBlock(thing)
    love.graphics.setLineWidth(3)
    love.graphics.polygon("line", thing.body:getWorldPoints(thing.shape:getPoints()))
 
-   love.graphics.setColor(0, 0, 0)
-   love.graphics.setLineWidth(2)
-   local topLeftX, topLeftY, bottomRightX, bottomRightY = thing.fixture:getBoundingBox(1 )
-   love.graphics.rectangle("line", topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY)
+   --love.graphics.setColor(0, 0, 0)
+   --love.graphics.setLineWidth(2)
+   --local topLeftX, topLeftY, bottomRightX, bottomRightY = thing.fixture:getBoundingBox(1 )
+   --love.graphics.rectangle("line", topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY)
 
 end
 
@@ -171,7 +205,7 @@ function drawPolygon(body, fixture, shape)
 end
 
 function drawCircle(body, shape)
-   love.graphics.setColor(0.20, 0.20, 0.20)
+   love.graphics.setColor(233/255,100/255,14/255)
    love.graphics.circle("fill", body:getX(), body:getY(), shape:getRadius())
    love.graphics.setColor(1, 0.5, 0.20)
    love.graphics.setLineWidth(3)
@@ -179,8 +213,6 @@ function drawCircle(body, shape)
 end
 
 function love.draw()
-
-
 
    drawBlock(objects.top)
    drawBlock(objects.ground)
@@ -191,16 +223,16 @@ function love.draw()
        drawBlock(objects.blocks[i])
    end
 
-   local contacts = world:getContacts( )
-   love.graphics.setColor(1, 1, 1)
-   for i=1, #contacts do
-      x1, y1, x2, y2 = contacts[i]:getPositions( )
-      if (x1 and y1) then
-	 love.graphics.circle("fill", x1 , y1 , 2)
-      end
-      if (x2 and y2) then
-	 love.graphics.circle("fill", x2 , y2 , 2)
-      end
+   -- local contacts = world:getContacts( )
+   -- love.graphics.setColor(1, 1, 1)
+   -- for i=1, #contacts do
+   --    x1, y1, x2, y2 = contacts[i]:getPositions( )
+   --    if (x1 and y1) then
+   -- 	 love.graphics.circle("fill", x1 , y1 , 2)
+   --    end
+   --    if (x2 and y2) then
+   -- 	 love.graphics.circle("fill", x2 , y2 , 2)
+   --    end
 
-   end
+   -- end
 end
