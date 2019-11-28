@@ -58,7 +58,7 @@ function love.load()
    -- let's create a couple blocks to play around with
 
    objects.blocks = {}
-   for i=1, 50 do
+   for i=1, 500 do
       local block = {
 	 body = love.physics.newBody(
 	    world,
@@ -72,7 +72,7 @@ function love.load()
       }
       block.fixture = love.physics.newFixture(block.body,
 					      block.shape,
-					      love.math.random()*10)
+					      love.math.random()*5)
       
       table.insert(objects.blocks, block)
    end
@@ -87,29 +87,48 @@ function love.load()
    local soundData2 = love.sound.newSoundData( 'mallet2-c2.wav' )
    sound2 = love.audio.newSource(soundData2, 'static')
 
-   joint = nil 
+   joint = nil
+   jointBody = nil
 end
 
 function love.mousereleased()
    if (joint) then
       joint:destroy()
-       joint = nil
+      joint = nil
+      jointBody = nil
    end
    
 end
 
 
 function love.mousepressed(x,y)
+   -- todo change it to move any body/ficture using
+   -- this isInside = Fixture:testPoint( x, y )
+
+   for i = 1, #objects.blocks do
+      local o = objects.blocks[i]
+      local isInside = o.fixture:testPoint( x, y )
+      if (isInside) then
+	 jointBody = objects.blocks[i].body 
+	 joint = love.physics.newMouseJoint( jointBody, x, y )
+	 joint:setDampingRatio( 1 )
+	 return
+		  
+      end
+   end
+   
    local bx, by = objects.ball.body:getPosition()
    local dx, dy = x-bx, y-by
    local distance = math.sqrt(dx*dx + dy*dy)
    if (distance < 20) then
-      joint = love.physics.newMouseJoint( objects.ball.body, x, y )
+      jointBody =  objects.ball.body
+      joint = love.physics.newMouseJoint(jointBody, x, y )
       joint:setDampingRatio( 1 )
    else
       if (joint) then
 	 joint:destroy()
 	 joint = nil
+	 jointBody  = nil
       end
    end
    --print(x,y, objects.ball.body:getPosition())
@@ -126,7 +145,7 @@ function beginContact(a, b, coll)
    local x1, y1 = a:getBody():getLinearVelocity()
    local x2, y2 = b:getBody():getLinearVelocity()
    local total = math.abs(x1+x2+y1+y2)
-   if total > 100 then
+   if total > 200 then
       local s
       local p = 1
       if (a:getUserData() == 'ball' or b:getUserData() == 'ball' ) then
@@ -199,20 +218,20 @@ function love.update(dt)
 
    -- here we are going to create some keyboard events
    -- press the right arrow key to push the ball to the right
-   -- if love.keyboard.isDown("right") then
-   --    objects.ball.body:applyForce(400, 0)
-   -- end
-   -- if love.keyboard.isDown("left") then
-   --    objects.ball.body:applyForce(-400, 0)
-   -- end
+   if love.keyboard.isDown("right") then
+      objects.ball.body:applyForce(400, 0)
+   end
+   if love.keyboard.isDown("left") then
+      objects.ball.body:applyForce(-400, 0)
+   end
 
-   -- if love.keyboard.isDown("up") then
-   --    objects.ball.body:applyForce(0, -400)
-   -- end
+   if love.keyboard.isDown("up") then
+      objects.ball.body:applyForce(0, -400)
+   end
 
-   -- if love.keyboard.isDown("down") then
-   --    objects.ball.body:applyForce(0, 400)
-   -- end
+   if love.keyboard.isDown("down") then
+      objects.ball.body:applyForce(0, 400)
+   end
 
    if love.keyboard.isDown("p") then
       local x,y  = world:getGravity()
@@ -279,7 +298,7 @@ function love.draw()
    local width, height = love.graphics.getDimensions()
    local m = 20
 
-   love.graphics.setColor(14/255,100/255,14/255)
+   love.graphics.setColor(14/255,60/255,14/255)
    love.graphics.rectangle("fill", 0,0, width, m)
    love.graphics.rectangle("fill", 0,height-m, width, m)
    love.graphics.rectangle("fill", 0,0, m, height)
@@ -298,7 +317,7 @@ function love.draw()
       love.graphics.setColor(0,0,0)
       love.graphics.setLineWidth(2)
       local mx, my = love.mouse.getPosition()
-      local bx, by = objects.ball.body:getPosition()
+      local bx, by = jointBody:getPosition()
       love.graphics.line(mx,my,bx,by)
    end
    
