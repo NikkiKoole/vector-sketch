@@ -4,8 +4,8 @@ function love.load()
    local width = 1024
    local height = 768
    -- the height of a meter our worlds will be 64px
-   love.physics.setMeter(128)
-   world = love.physics.newWorld(0, 9.81*64, true)
+   love.physics.setMeter(100)
+   world = love.physics.newWorld(0, 9.81*100, true)
    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
    objects = {}
    objects.ground = {}
@@ -39,8 +39,9 @@ function love.load()
    objects.ball.body = love.physics.newBody(world, width/2, height/2, "dynamic")
    objects.ball.shape = love.physics.newCircleShape(20)
    objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
-   objects.ball.fixture:setRestitution(0.4) -- let the ball bounce
+   --objects.ball.fixture:setRestitution(0.5) -- let the ball bounce
    objects.ball.fixture:setUserData("ball")
+   objects.ball.fixture:setDensity(3)
    -- let's create a couple blocks to play around with
 
    objects.blocks = {}
@@ -78,20 +79,24 @@ function beginContact(a, b, coll)
    local x2, y2 = b:getBody():getLinearVelocity()
    local total = math.abs(x1+x2+y1+y2)
    if total > 100 then
-      local s 
+      local s
+      local p = 1
       if (a:getUserData() == 'ball' or b:getUserData() == 'ball' ) then
 	 s = sound2:clone()
-	 
+	 p = 1 + math.random()/(2000/total)
+	 s:setPitch(p)
       else 
       
 	 s = sound:clone()
 	 s:setVolume(0.5)
+	 p = 1 + math.random()/(3000/total)
+	 s:setPitch(p)
+
       end
-      local p = 1
+      
       
 
-      p = 1 + math.random()/(2000/total)
-      s:setPitch(p)
+     
       local x,y = coll:getNormal()
       s:setPosition( -x,y,0 )
       love.audio.play(s)
