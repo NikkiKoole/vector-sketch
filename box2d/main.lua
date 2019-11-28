@@ -58,12 +58,12 @@ function love.load()
    -- let's create a couple blocks to play around with
 
    objects.blocks = {}
-   for i=1, 500 do
+   for i=1, 400 do
       local block = {
 	 body = love.physics.newBody(
 	    world,
-	    50 + love.math.random()*width,
-	    50 + love.math.random()*height, "dynamic"),
+	    100 + love.math.random()*(width - 200),
+	    100 + love.math.random()*(height - 200), "dynamic"),
 	 --shape = love.physics.newRectangleShape(0, 0, 25, 25)
 	 --shape = love.physics.newPolygonShape( 0,-10, 10,10 , -10, 10)
 	 shape = love.physics.newPolygonShape(capsule(20 + love.math.random() * 20, 10 + love.math.random() * 20, 5))
@@ -72,7 +72,7 @@ function love.load()
       }
       block.fixture = love.physics.newFixture(block.body,
 					      block.shape,
-					      love.math.random()*5)
+					      0.5 + love.math.random()*1)
       
       table.insert(objects.blocks, block)
    end
@@ -287,7 +287,7 @@ function drawPolygon(body, fixture, shape)
 end
 
 function drawCircle(body, shape)
-   love.graphics.setColor(233/255,100/255,14/255)
+   love.graphics.setColor(233/255,255/255,14/255)
    love.graphics.circle("fill", body:getX(), body:getY(), shape:getRadius())
    love.graphics.setColor(1, 0.5, 0.20)
    love.graphics.setLineWidth(3)
