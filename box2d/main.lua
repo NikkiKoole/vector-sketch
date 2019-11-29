@@ -30,36 +30,8 @@ function love.load()
 						      width-margin,margin,
 						      width-margin,height-margin,
 						      margin,height-margin )
-   --objects.border.shape = love.physics.newChainShape( true, 0,0, width,0, width,height, 0,height )
    objects.border.fixture = love.physics.newFixture(objects.border.body, objects.border.shape)
    objects.border.fixture:setUserData("wall")
-
-
-   -- objects.ground = {}
-   -- objects.ground.body = love.physics.newBody(world, width/2, height-50/2)
-   -- objects.ground.shape = love.physics.newRectangleShape(width, 50)
-   -- objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape)
-   -- objects.ground.fixture:setUserData("wall")
-   
-   -- objects.top = {}
-   -- objects.top.body = love.physics.newBody(world, width/2, 0)
-   -- objects.top.shape = love.physics.newRectangleShape(width, 50)
-   -- objects.top.fixture = love.physics.newFixture(objects.top.body, objects.top.shape)
-   -- objects.top.fixture:setUserData("wall")
-
-   
-   -- objects.left = {}
-   -- objects.left.body = love.physics.newBody(world, 0, height/2)
-   -- objects.left.shape = love.physics.newRectangleShape(50, height)
-   -- objects.left.fixture = love.physics.newFixture(objects.left.body, objects.left.shape)
-   -- objects.left.fixture:setUserData("wall")
-
-   
-   -- objects.right = {}
-   -- objects.right.body = love.physics.newBody(world, width, height/2)
-   -- objects.right.shape = love.physics.newRectangleShape(50, height)
-   -- objects.right.fixture = love.physics.newFixture(objects.right.body, objects.right.shape)
-   -- objects.right.fixture:setUserData("wall")
 
    
    objects.ball = {}
@@ -71,6 +43,12 @@ function love.load()
    objects.ball.fixture:setDensity(3)
    -- let's create a couple blocks to play around with
 
+   objects.carousel = {}
+   objects.carousel.body = love.physics.newBody(world, width/2, height/2, "kinematic")
+   --objects.carousel.shape = love.physics.newCircleShape(20)
+   objects.carousel.shape = love.physics.newRectangleShape( 20, 500 )
+objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
+   objects.carousel.body:setAngularVelocity( 2 )
    objects.blocks = {}
    for i=1, 400 do
       local block = {
@@ -335,6 +313,8 @@ function love.draw()
       love.graphics.line(mx,my,bx,by)
       
    end
+   drawBlock(objects.carousel)
+--   drawCircle(objects.carousel.body, objects.carousel.shape)
    
    
    -- local contacts = world:getContacts( )
