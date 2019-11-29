@@ -1,5 +1,19 @@
 inspect = require "inspect"
 
+
+function love.resize(w, h)
+   local margin = 20
+   objects.border.body:destroy();
+   objects.border.body = love.physics.newBody(world,0,0)
+   objects.border.shape = love.physics.newChainShape( true,
+						      margin,margin,
+						      w-margin,margin,
+						      w-margin,h-margin,
+						      margin,h-margin )
+   objects.border.fixture = love.physics.newFixture(objects.border.body, objects.border.shape)
+   objects.border.fixture:setUserData("wall")
+end
+
 function love.load()
    local width = 1024
    local height = 768
@@ -78,7 +92,7 @@ function love.load()
    end
 
    love.graphics.setBackgroundColor(0.41, 0.53, 0.97)
-   love.window.setMode(width, height) -- set the window dimensions to 650 by 650
+   love.window.setMode(width, height,  {resizable=true}) -- set the window dimensions to 650 by 650
 
    ppm = 64
 
@@ -319,6 +333,7 @@ function love.draw()
       local mx, my = love.mouse.getPosition()
       local bx, by = jointBody:getPosition()
       love.graphics.line(mx,my,bx,by)
+      
    end
    
    
