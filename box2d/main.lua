@@ -19,12 +19,13 @@ function love.load()
    local height = 768
    -- the height of a meter our worlds will be 64px
    love.physics.setMeter(100)
-   world = love.physics.newWorld(0, 9.81*100, true)
+   world = love.physics.newWorld(0, 2*9.81*100, true)
    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
    objects = {}
    objects.border = {}
    objects.border.body = love.physics.newBody(world,0,0)
    local margin = 20
+   angularVelocity = 5
    objects.border.shape = love.physics.newChainShape( true,
 						      margin,margin,
 						      width-margin,margin,
@@ -44,13 +45,43 @@ function love.load()
    -- let's create a couple blocks to play around with
 
    objects.carousel = {}
-   objects.carousel.body = love.physics.newBody(world, width/2, height/2, "kinematic")
+   objects.carousel.body = love.physics.newBody(world, 100 + width/2, height/2, "kinematic")
    --objects.carousel.shape = love.physics.newCircleShape(20)
-   objects.carousel.shape = love.physics.newRectangleShape( 20, 500 )
+   objects.carousel.shape = love.physics.newRectangleShape( 20, 660 )
 objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
-   objects.carousel.body:setAngularVelocity( 2 )
+objects.carousel.body:setAngularVelocity(  angularVelocity )
+objects.carousel.fixture:setUserData("wall")
+
+
+
+   objects.carousel2 = {}
+   objects.carousel2.body = love.physics.newBody(world, -100 + width/2, height/2, "kinematic")
+   --objects.carousel.shape = love.physics.newCircleShape(20)
+   objects.carousel2.shape = love.physics.newRectangleShape( 20, 660 )
+objects.carousel2.fixture = love.physics.newFixture(objects.carousel2.body, objects.carousel2.shape, 1)
+objects.carousel2.body:setAngularVelocity( -angularVelocity     )
+objects.carousel2.fixture:setUserData("wall")
+
+
+objects.carousel3 = {}
+   objects.carousel3.body = love.physics.newBody(world, 0+25, height-25, "kinematic")
+   --objects.carousel.shape = love.physics.newCircleShape(20)
+   objects.carousel3.shape = love.physics.newRectangleShape( 20, 100 )
+objects.carousel3.fixture = love.physics.newFixture(objects.carousel3.body, objects.carousel3.shape, 1)
+objects.carousel3.body:setAngularVelocity( angularVelocity )
+objects.carousel3.fixture:setUserData("wall")
+
+
+objects.carousel4 = {}
+   objects.carousel4.body = love.physics.newBody(world, width-25, height-25, "kinematic")
+   --objects.carousel.shape = love.physics.newCircleShape(20)
+   objects.carousel4.shape = love.physics.newRectangleShape( 20, 100 )
+objects.carousel4.fixture = love.physics.newFixture(objects.carousel4.body, objects.carousel4.shape, 1)
+objects.carousel4.body:setAngularVelocity( -angularVelocity )
+objects.carousel4.fixture:setUserData("wall")
+
    objects.blocks = {}
-   for i=1, 400 do
+   for i=1, 100 do
       local block = {
 	 body = love.physics.newBody(
 	    world,
@@ -198,6 +229,20 @@ function capsule(w, h, cs)
 
 end
 
+function love.keypressed(key)
+
+   if (key == ',') then
+      angularVelocity = angularVelocity/2
+   end
+   if (key == '.') then
+      angularVelocity = angularVelocity*2
+
+   end
+   objects.carousel.body:setAngularVelocity(  angularVelocity )
+   objects.carousel2.body:setAngularVelocity(  -angularVelocity )
+   objects.carousel3.body:setAngularVelocity(  angularVelocity )
+   objects.carousel4.body:setAngularVelocity(  -angularVelocity )
+end
 
 
 function love.update(dt)
@@ -314,6 +359,9 @@ function love.draw()
       
    end
    drawBlock(objects.carousel)
+   drawBlock(objects.carousel2)
+   drawBlock(objects.carousel3)
+    drawBlock(objects.carousel4)
 --   drawCircle(objects.carousel.body, objects.carousel.shape)
    
    
