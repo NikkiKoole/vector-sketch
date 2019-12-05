@@ -120,7 +120,6 @@ function love.mousereleased()
       joint = nil
       jointBody = nil
    end
-   
 end
 
 
@@ -295,12 +294,17 @@ function love.update(dt)
 end
 
 function drawBlock(thing)
+   local cx, cy = thing.body:getWorldCenter()
+   
    local d = thing.fixture:getDensity()
    love.graphics.setColor(0.20*(d*3), 1.0 - d*5, 0.20)
    love.graphics.polygon("fill", thing.body:getWorldPoints(thing.shape:getPoints()))
    love.graphics.setColor(1, 0.5, 0.20)
    love.graphics.setLineWidth(3)
    love.graphics.polygon("line", thing.body:getWorldPoints(thing.shape:getPoints()))
+   love.graphics.setColor(1, 1, 1)
+   love.graphics.rectangle("line", cx, cy, 1 ,1)
+   
 
    --love.graphics.setColor(0, 0, 0)
    --love.graphics.setLineWidth(2)

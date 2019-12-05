@@ -6,6 +6,10 @@ polyline = require 'polyline'
 poly = require 'poly'
 
 
+-- for the boyonce i prolly need thi algo:
+-- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
+-- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
+
 function love.keypressed(key)
    if key == "escape" then
       if (editingModeSub ~= nil) then
@@ -313,6 +317,12 @@ function love.draw()
    end
 
    love.graphics.setColor(0,0,0)
+
+
+
+
+   
+   
    for i = 1, #shapes do
       local points = shapes[i].points
       if (#points >= 2 ) then
@@ -343,6 +353,7 @@ function love.draw()
 	    end
 
 	    local polys = decompose_complex_poly(without_double_end, {})
+	    print(inspect(polys))
 	    local result = {}
 	    for i=1 , #polys do
 	       local p = polys[i]
