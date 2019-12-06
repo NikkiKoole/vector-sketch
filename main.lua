@@ -10,6 +10,35 @@ poly = require 'poly'
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
 
+
+
+function getPolygonCentroid(pts)
+
+   local first = {pts[1], pts[2]}
+   local last = {pts[#pts-1], pts[#pts]}
+   if (first[1] ~= last[1] or first[2] ~= last[2]) then
+      table.insert(pts, first[1], first[2])
+   end
+
+   local twicearea = 0
+   local x = 0
+   local y = 0
+   for i = 1, #pts, 2 do
+      local prev = i == 1 and #pts-1 or i - 2
+      local p1 = {pts[i], pts[i+1]}
+      local p2 = {pts[prev], pts[prev+1]}
+      local f = (p1[2] - first[2]) * (p2[1] - first[1]) - (p2[2] - first[2]) * (p1[1] - first[1]);
+      twicearea = twicearea + f
+      x = x +  (p1[1] + p2[1] - 2 * first[1]) * f
+      y = y +  (p1[2] + p2[2] - 2 * first[2]) * f;
+   end
+
+   f = twicearea * 3
+
+   return {x/f + first[1], y/f + first[2]}
+
+end
+
 function love.keypressed(key)
    if key == "escape" then
       if (editingModeSub ~= nil) then
@@ -321,8 +350,8 @@ function love.draw()
 
 
 
-   
-   
+
+
    for i = 1, #shapes do
       local points = shapes[i].points
       if (#points >= 2 ) then
@@ -337,11 +366,13 @@ function love.draw()
 
 
 	 if (shapes[i].color) then
+
 	    local c = shapes[i].color
 	    love.graphics.setColor(c[1], c[2], c[3], shapes[i].alpha or 1)
 	    -- duplicate end and beginp oints are nice for my outline
 	    -- they break the polygon triangulation however ;)
 	    -- TODO double points after each other brak the triangulation too!
+
 	    local without_double_end = {}
 	    if (coords[1] == coords[#coords-1] and coords[2] == coords[#coords]) then
 	       for i = 1, #coords -2, 2 do
@@ -351,9 +382,10 @@ function love.draw()
 	    else
 	       without_double_end = coords
 	    end
+	    local c,a = getPolygonCentroid(coords)
 
 	    local polys = decompose_complex_poly(without_double_end, {})
-	    print(inspect(polys))
+
 	    local result = {}
 	    for i=1 , #polys do
 	       local p = polys[i]
@@ -371,6 +403,9 @@ function love.draw()
 	    for j = 1, #result do
 	       love.graphics.polygon('fill', result[j])
 	    end
+
+	    love.graphics.setColor(1,1,1)
+	    love.graphics.circle("fill", c[1], c[2], 10)
 
 	 end
 	 --love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3])
@@ -450,7 +485,7 @@ function love.draw()
       love.graphics.setLineWidth(4/ camera.scale)
       if editingModeSub == 'polyline-rotate'  and #points > 0 then
 	 local radius = 12  / camera.scale
-	 local pivot = points[1] 
+	 local pivot = points[1]
 	 local rotator = {x=pivot.x + 100, y=pivot.y}
 	 love.graphics.setColor(1,1,1)
 
