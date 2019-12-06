@@ -13,7 +13,7 @@ poly = require 'poly'
 
 
 function getPolygonCentroid(pts)
-
+   -- https://stackoverflow.com/questions/9692448/how-can-you-find-the-centroid-of-a-concave-irregular-polygon-in-javascript
    local first = {pts[1], pts[2]}
    local last = {pts[#pts-1], pts[#pts]}
    if (first[1] ~= last[1] or first[2] ~= last[2]) then
@@ -277,10 +277,22 @@ function love.load()
    }
 
    shapes = { {
-	 closed = false,
+	 closed = true,
+	 outline = true,
+	 alpha = 0.8,
+	 color = {1,0,0},
+	 points = {{x=100,y=100},{x=200,y=100},{x=200,y=200},{x=100,y=200}, {x=100, y=100}},
+   }, {
+	 closed = true,
+	 outline = true,
+	 alpha = 0.8,
+	 color = {1,1,0},
+	 points = {{x=150,y=100},{x=250,y=100},{x=250,y=200},{x=150,y=200}, {x=150, y=100}},
+      }, {
+	 closed = true,
 	 outline = true,
 	 alpha = 1,
-	 points = {},
+	 points = {}
    }}
    current_shape_index = 1
 
