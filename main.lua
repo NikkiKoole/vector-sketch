@@ -6,102 +6,6 @@ polyline = require 'polyline'
 poly = require 'poly'
 
 
--- for the boyonce i prolly need thi algo:
--- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
--- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
-
-function inside(p, cp1, cp2)
-  return (cp2.x-cp1.x)*(p.y-cp1.y) > (cp2.y-cp1.y)*(p.x-cp1.x)
-end
- 
-function intersection(cp1, cp2, s, e)
-  local dcx, dcy = cp1.x-cp2.x, cp1.y-cp2.y
-  local dpx, dpy = s.x-e.x, s.y-e.y
-  local n1 = cp1.x*cp2.y - cp1.y*cp2.x
-  local n2 = s.x*e.y - s.y*e.x
-  local n3 = 1 / (dcx*dpy - dcy*dpx)
-  local x = (n1*dpx - n2*dcx) * n3
-  local y = (n1*dpy - n2*dcy) * n3
-  return {x=x, y=y}
-end
-
-function polygonClip(a, b)
-   local aList = {}
-   local aEnd = (a.points[#a.points].x == a.points[1].x) and (a.points[#a.points].y == a.points[1].y) and #a.points -1 or  #a.points
-   for i = 1, aEnd do
-      table.insert(aList, {x=a.points[i].x, y=a.points[i].y})
-   end
-
-   local bList = {}
-   local bEnd = (b.points[#b.points].x == b.points[1].x) and (b.points[#b.points].y == b.points[1].y) and #b.points -1 or  #b.points
-   for i = 1, bEnd do
-      table.insert(bList, {x=b.points[i].x, y=b.points[i].y})
-   end
-   
-   local outputList = aList
-   local cp1 = bList[#bList]
-   for _, cp2 in ipairs(bList) do  -- WP clipEdge is cp1,cp2 here
-      local inputList = outputList
-      outputList = {}
-      local s = inputList[#inputList]
-      for _, e in ipairs(inputList) do
-	 if inside(e, cp1, cp2) then
-	    if not inside(s, cp1, cp2) then
-	       outputList[#outputList+1] = intersection(cp1, cp2, s, e)
-	    end
-	    outputList[#outputList+1] = e
-	 elseif inside(s, cp1, cp2) then
-	    outputList[#outputList+1] = intersection(cp1, cp2, s, e)
-	 end
-	 s = e
-      end
-      cp1 = cp2
-   end
-   --print(inspect(outputList))
-   return outputList
-   
-end
-
-
-function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...} 
-   -- https://stackoverflow.com/questions/9692448/how-can-you-find-the-centroid-of-a-concave-irregular-polygon-in-javascript
-   local first = {pts[1], pts[2]}
-   local last = {pts[#pts-1], pts[#pts]}
-   if (first[1] ~= last[1] or first[2] ~= last[2]) then
-      table.insert(pts, first[1], first[2])
-   end
-
-   local twicearea = 0
-   local x = 0
-   local y = 0
-   for i = 1, #pts, 2 do
-      local prev = (i == 1 and #pts-1) or i - 2
-      local p1 = {pts[i], pts[i+1]}
-      local p2 = {pts[prev], pts[prev+1]}
-
-      assert(prev >= 1)
-      assert(p1)
-      assert(p1[1])
-      assert(p1[2])
-      assert(p2)
-      assert(p2[1])
-      assert(p2[2])
-      assert(first)
-      assert(first[1])
-      assert(first[2])
-
-      local f = (p1[2] - first[2]) * (p2[1] - first[1]) - (p2[2] - first[2]) * (p1[1] - first[1])
-      twicearea = twicearea + f
-      x = x +  (p1[1] + p2[1] - 2 * first[1]) * f
-      y = y +  (p1[2] + p2[2] - 2 * first[2]) * f;
-   end
-
-   f = twicearea * 3
-
-   return {x/f + first[1], y/f + first[2]}
-
-end
-
 function love.keypressed(key)
    if key == "escape" then
       if (editingModeSub ~= nil) then
@@ -169,32 +73,14 @@ function love.mousepressed(x,y, button)
    local points = shapes[current_shape_index].points
    local wx, wy = toWorldPos(x, y)
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      if (editingModeSub == 'polyline-add' and shapes[current_shape_index].closed ~= true) then
-	 local connect_to_first = false
-	 if #points > 0 and (mouseOverPolyPoint(x, y, points[1].x, points[1].y)) then
-	    connect_to_first = true
-	    local first = shapes[current_shape_index].points[1]
-	    shapes[current_shape_index].closed = true
-	    table.insert(shapes[current_shape_index].points, first)
-	 end
-	 if not  connect_to_first  then
-	    table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
-	 end
-      end
-      if editingModeSub == 'polyline-add' and shapes[current_shape_index].closed == true and getIndexOfHoveredPolyPoint(x, y, points) == 0  then
-	 editingModeSub = nil
-	 editingMode = nil
+      if (editingModeSub == 'polyline-add' ) then
+	 table.insert(shapes[current_shape_index].points, {x=wx, y=wy})
       end
 
       local index =  getIndexOfHoveredPolyPoint(x, y, points)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
 	    table.remove (shapes[current_shape_index].points, index)
-	    local s = shapes[current_shape_index]
-	    if s.points[1] == s.points[#s.points] then
-	    else
-	       shapes[current_shape_index].closed = false
-	    end
 	 end
 	 if (editingModeSub == 'polyline-edit') then
 	    lastDraggedElement = {id='polyline', index=index}
@@ -342,19 +228,16 @@ function love.load()
    }
 
    shapes = { {
-	 closed = false,
 	 outline = true,
 	 alpha = 0.8,
 	 color = {1,0,0},
-	 points = {{x=100,y=100},{x=200,y=100},{x=200,y=200},{x=100,y=200}, {x=100, y=100}},
+	 points = {{x=100,y=100},{x=200,y=100},{x=200,y=200},{x=100,y=200}},
    }, {
-	 closed = false,
 	 outline = true,
 	 alpha = 0.8,
 	 color = {1,1,0},
-	 points = {{x=150,y=100},{x=250,y=100},{x=250,y=200},{x=150,y=200}, {x=150, y=100}},
+	 points = {{x=150,y=100},{x=250,y=100},{x=250,y=200},{x=150,y=200}},
       }, {
-	 closed = true,
 	 outline = true,
 	 alpha = 1,
 	 points = {}
@@ -432,33 +315,26 @@ function love.draw()
 
 	 local scale = 1
 	 local coords = {}
+	 local coordsRound = {}
 	 local ps = {}
 	 for i=1, #points do
 	    table.insert(coords, points[i].x)
 	    table.insert(coords, points[i].y)
+	    table.insert(coordsRound, points[i].x)
+	    table.insert(coordsRound, points[i].y)
 	 end
-
+	 
+	 table.insert(coordsRound, points[1].x)
+	 table.insert(coordsRound, points[1].y)
 
 	 if (shapes[i].color) then
 
 	    local c = shapes[i].color
 	    love.graphics.setColor(c[1], c[2], c[3], shapes[i].alpha or 1)
-	    -- duplicate end and beginp oints are nice for my outline
-	    -- they break the polygon triangulation however ;)
-	    -- TODO double points after each other brak the triangulation too!
 
-	    local without_double_end = {}
-	    if (coords[1] == coords[#coords-1] and coords[2] == coords[#coords]) then
-	       for i = 1, #coords -2, 2 do
-		  table.insert(without_double_end, coords[i])
-		  table.insert(without_double_end, coords[i+1])
-	       end
-	    else
-	       without_double_end = coords
-	    end
-	    local c,a = getPolygonCentroid(coords)
+	    local c,a = poly.getPolygonCentroid(coordsRound)
 
-	    local polys = decompose_complex_poly(without_double_end, {})
+	    local polys = decompose_complex_poly(coords, {})
 
 	    local result = {}
 	    for i=1 , #polys do
@@ -467,7 +343,7 @@ function love.draw()
 		  local triangles = love.math.triangulate(p)
 		  for j = 1, #triangles do
 		     local t = triangles[j]
-		     local cx, cy = getCentroid(t)
+		     local cx, cy = getTriangleCentroid(t)
 		     if isPointInPath(cx,cy, p) then
 			table.insert(result, t)
 		     end
@@ -493,15 +369,16 @@ function love.draw()
 	    love.graphics.setLineStyle('rough')
 	    love.graphics.setLineJoin('bevel')
 	    love.graphics.setLineWidth(2)
-	    --love.graphics.line(coords)
-
+	    
 	    local vertices, indices, draw_mode = polyline(
 	       love.graphics.getLineJoin(),
-	       coords, love.graphics.getLineWidth() / 2,
+	       coordsRound, love.graphics.getLineWidth() / 2,
 	       1/scale,
 	       love.graphics.getLineStyle() == 'smooth')
 
-	    local mesh = love.graphics.newMesh(#coords * 2)
+	    
+	    local mesh = love.graphics.newMesh(#coordsRound * 2)
+	    --print(indices, #coordsRound * 2)
 	    mesh:setVertices(vertices)
 	    mesh:setDrawMode(draw_mode)
 	    mesh:setVertexMap(indices)
@@ -518,46 +395,33 @@ function love.draw()
       end
    end
 
-   if (#shapes >= 2) then
+   if (#shapes >= 2 ) then
       love.graphics.setColor(0,0,1,1)
-      local region = polygonClip(shapes[1], shapes[2])
+      local region = poly.polygonClip(shapes[1], shapes[2])
       local coords = {}
       for i=1, #region do
-	 table.insert(coords, region[i].x)
-	 table.insert(coords, region[i].y)
+      	 table.insert(coords, region[i].x)
+      	 table.insert(coords, region[i].y)
       end
 
-      local without_double_end = {}
-      if (coords[1] == coords[#coords-1] and coords[2] == coords[#coords]) then
-	 for i = 1, #coords -2, 2 do
-	    table.insert(without_double_end, coords[i])
-	    table.insert(without_double_end, coords[i+1])
-	 end
-      else
-	 without_double_end = coords
-      end
-      
-      local polys = decompose_complex_poly( without_double_end, {})
-      --print(#polys)
+      local polys = decompose_complex_poly(coords, {})
       local result = {}
       for i=1 , #polys do
-	 local p = polys[i]
-	 if (#p >= 6) then
-	    local triangles = love.math.triangulate(p)
-	    for j = 1, #triangles do
-	       local t = triangles[j]
-	       local cx, cy = getCentroid(t)
-	       if isPointInPath(cx,cy, p) then
-		  table.insert(result, t)
-	       end
-	    end
-	 end
+      	 local p = polys[i]
+      	 if (#p >= 6) then
+      	    local triangles = love.math.triangulate(p)
+      	    for j = 1, #triangles do
+      	       local t = triangles[j]
+      	       local cx, cy = getTriangleCentroid(t)
+      	       if isPointInPath(cx,cy, p) then
+      		  table.insert(result, t)
+      	       end
+      	    end
+      	 end
       end
       for j = 1, #result do
-	 love.graphics.polygon('fill', result[j])
+      	 love.graphics.polygon('fill', result[j])
       end
-      --love.graphics.polygon('fill', coords)
-      --print(inspect(region))
    end
    
    
@@ -658,7 +522,7 @@ function love.draw()
       if imgbutton('polyline-insert', ui.insert_link,  calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-insert'
       end
-      if imgbutton('polyline-add', ui.polyline_add, calcX(2, s), calcY(2, s), s, shapes[current_shape_index].closed == true).clicked then
+      if imgbutton('polyline-add', ui.polyline_add, calcX(2, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-add'
       end
       if imgbutton('polyline-remove', ui.polyline_remove,  calcX(3, s), calcY(2, s), s).clicked then
@@ -784,6 +648,6 @@ function love.draw()
 
    if quitDialog then
       love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("Sure you want to quit ? [ESC] ", 32, 16)
+      love.graphics.print("Sure you want to quit ? [ESC] ", 16, 4)
    end
 end
