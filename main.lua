@@ -10,9 +10,60 @@ poly = require 'poly'
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
 
+function inside(p, cp1, cp2)
+  return (cp2.x-cp1.x)*(p.y-cp1.y) > (cp2.y-cp1.y)*(p.x-cp1.x)
+end
+ 
+function intersection(cp1, cp2, s, e)
+  local dcx, dcy = cp1.x-cp2.x, cp1.y-cp2.y
+  local dpx, dpy = s.x-e.x, s.y-e.y
+  local n1 = cp1.x*cp2.y - cp1.y*cp2.x
+  local n2 = s.x*e.y - s.y*e.x
+  local n3 = 1 / (dcx*dpy - dcy*dpx)
+  local x = (n1*dpx - n2*dcx) * n3
+  local y = (n1*dpy - n2*dcy) * n3
+  return {x=x, y=y}
+end
+
+function polygonClip(a, b)
+   local aList = {}
+   local aEnd = (a.points[#a.points].x == a.points[1].x) and (a.points[#a.points].y == a.points[1].y) and #a.points -1 or  #a.points
+   for i = 1, aEnd do
+      table.insert(aList, {x=a.points[i].x, y=a.points[i].y})
+   end
+
+   local bList = {}
+   local bEnd = (b.points[#b.points].x == b.points[1].x) and (b.points[#b.points].y == b.points[1].y) and #b.points -1 or  #b.points
+   for i = 1, bEnd do
+      table.insert(bList, {x=b.points[i].x, y=b.points[i].y})
+   end
+   
+   local outputList = aList
+   local cp1 = bList[#bList]
+   for _, cp2 in ipairs(bList) do  -- WP clipEdge is cp1,cp2 here
+      local inputList = outputList
+      outputList = {}
+      local s = inputList[#inputList]
+      for _, e in ipairs(inputList) do
+	 if inside(e, cp1, cp2) then
+	    if not inside(s, cp1, cp2) then
+	       outputList[#outputList+1] = intersection(cp1, cp2, s, e)
+	    end
+	    outputList[#outputList+1] = e
+	 elseif inside(s, cp1, cp2) then
+	    outputList[#outputList+1] = intersection(cp1, cp2, s, e)
+	 end
+	 s = e
+      end
+      cp1 = cp2
+   end
+   --print(inspect(outputList))
+   return outputList
+   
+end
 
 
-function getPolygonCentroid(pts)
+function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...} 
    -- https://stackoverflow.com/questions/9692448/how-can-you-find-the-centroid-of-a-concave-irregular-polygon-in-javascript
    local first = {pts[1], pts[2]}
    local last = {pts[#pts-1], pts[#pts]}
@@ -24,10 +75,22 @@ function getPolygonCentroid(pts)
    local x = 0
    local y = 0
    for i = 1, #pts, 2 do
-      local prev = i == 1 and #pts-1 or i - 2
+      local prev = (i == 1 and #pts-1) or i - 2
       local p1 = {pts[i], pts[i+1]}
       local p2 = {pts[prev], pts[prev+1]}
-      local f = (p1[2] - first[2]) * (p2[1] - first[1]) - (p2[2] - first[2]) * (p1[1] - first[1]);
+
+      assert(prev >= 1)
+      assert(p1)
+      assert(p1[1])
+      assert(p1[2])
+      assert(p2)
+      assert(p2[1])
+      assert(p2[2])
+      assert(first)
+      assert(first[1])
+      assert(first[2])
+
+      local f = (p1[2] - first[2]) * (p2[1] - first[1]) - (p2[2] - first[2]) * (p1[1] - first[1])
       twicearea = twicearea + f
       x = x +  (p1[1] + p2[1] - 2 * first[1]) * f
       y = y +  (p1[2] + p2[2] - 2 * first[2]) * f;
@@ -101,6 +164,8 @@ function love.mousepressed(x,y, button)
    if editingMode == nil then
       editingMode = 'move'
    end
+   if (current_shape_index == 0 ) then return end
+   
    local points = shapes[current_shape_index].points
    local wx, wy = toWorldPos(x, y)
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
@@ -277,13 +342,13 @@ function love.load()
    }
 
    shapes = { {
-	 closed = true,
+	 closed = false,
 	 outline = true,
 	 alpha = 0.8,
 	 color = {1,0,0},
 	 points = {{x=100,y=100},{x=200,y=100},{x=200,y=200},{x=100,y=200}, {x=100, y=100}},
    }, {
-	 closed = true,
+	 closed = false,
 	 outline = true,
 	 alpha = 0.8,
 	 color = {1,1,0},
@@ -359,11 +424,8 @@ function love.draw()
 
    love.graphics.setColor(0,0,0)
 
-
-
-
-
-
+   
+   
    for i = 1, #shapes do
       local points = shapes[i].points
       if (#points >= 2 ) then
@@ -453,15 +515,57 @@ function love.draw()
 	 end
 
 	 love.graphics.setLineWidth(1)
-
-
       end
    end
+
+   if (#shapes >= 2) then
+      love.graphics.setColor(0,0,1,1)
+      local region = polygonClip(shapes[1], shapes[2])
+      local coords = {}
+      for i=1, #region do
+	 table.insert(coords, region[i].x)
+	 table.insert(coords, region[i].y)
+      end
+
+      local without_double_end = {}
+      if (coords[1] == coords[#coords-1] and coords[2] == coords[#coords]) then
+	 for i = 1, #coords -2, 2 do
+	    table.insert(without_double_end, coords[i])
+	    table.insert(without_double_end, coords[i+1])
+	 end
+      else
+	 without_double_end = coords
+      end
+      
+      local polys = decompose_complex_poly( without_double_end, {})
+      --print(#polys)
+      local result = {}
+      for i=1 , #polys do
+	 local p = polys[i]
+	 if (#p >= 6) then
+	    local triangles = love.math.triangulate(p)
+	    for j = 1, #triangles do
+	       local t = triangles[j]
+	       local cx, cy = getCentroid(t)
+	       if isPointInPath(cx,cy, p) then
+		  table.insert(result, t)
+	       end
+	    end
+	 end
+      end
+      for j = 1, #result do
+	 love.graphics.polygon('fill', result[j])
+      end
+      --love.graphics.polygon('fill', coords)
+      --print(inspect(region))
+   end
+   
+   
 
    love.graphics.setColor(1,1,1,1)
 
 
-   if editingMode == 'polyline' then
+   if editingMode == 'polyline' and  current_shape_index > 0  then
       local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
 
@@ -550,7 +654,7 @@ function love.draw()
       end
    end
 
-   if (editingMode == 'polyline') then
+   if (editingMode == 'polyline') and current_shape_index > 0  then
       if imgbutton('polyline-insert', ui.insert_link,  calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-insert'
       end
@@ -652,17 +756,29 @@ function love.draw()
       end
    end
    if (#shapes > 1) then
-      if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(2, s), s).clicked then
+      if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(2, s) + 16, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
 	 current_shape_index =  current_shape_index - 1
 	 table.insert(shapes, current_shape_index, taken_out)
       end
-      if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(3, s) + 8, s).clicked then
+      if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(3, s) + 24, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
 	 current_shape_index =  current_shape_index + 1
 	 table.insert(shapes, current_shape_index, taken_out)
       end
    end
+   if #shapes > 0 then
+      if imgbutton('delete', ui.delete,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(1, s) + 8, s).clicked then
+	 local taken_out = table.remove(shapes, current_shape_index)
+	 if current_shape_index  > #shapes then
+	    current_shape_index = #shapes
+	 end
+	 if #shapes == 0 then
+	    current_shape_index = 0
+	 end
+      end
+   end
+   
 
    love.graphics.pop()
 
