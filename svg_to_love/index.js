@@ -53,19 +53,17 @@ fs.readFile( url, function (err, data) {
                 var contours = getContours(parsed, opt.scale)
                 contours =  removeConsecutiveDuplications(contours)
                 //if (groupIndex == 0) {
-                    makeLoveShape(fill, opacity, contours)
+                   
                 //}
-                //console.log(contours)
-                
                 
                 if (opt.simplify > 0 && typeof opt.simplify === 'number') {
                     for (i = 0; i < contours.length; i++) {
                         contours[i] = simplify(contours[i], opt.simplify)
                     }
                 }
-                // I think the contours here are fine to work with, but lets go the extra mile and see where we end up.
-                //console.log(contours)
-                //console.log(contours)
+
+                makeLoveShape(fill, opacity, contours)
+                
                 var polyline = denestPolyline(contours)
                 var loops = polyline.edges
                 var positions = polyline.positions
@@ -95,12 +93,17 @@ fs.readFile( url, function (err, data) {
 
 });
 
+function toFixed(n) {
+    
+    return  Number.parseFloat(n).toFixed(2)
+} 
+
 function makeLoveShape(fill, opacity, contours) {
     let rgb = hexRgb(fill)
     // a single path can become many many contours
     // each contour needs to become its own shape
     contours.forEach(c => {
-        let color = `{${rgb.red/255},${rgb.green/255},${rgb.blue/255}}`
+        let color = `{${toFixed(rgb.red/255)},${toFixed(rgb.green/255)},${toFixed(rgb.blue/255)}}`
         let alpha = opacity
         let points = "{"
         let first = c[0]
@@ -109,13 +112,13 @@ function makeLoveShape(fill, opacity, contours) {
             let p = c[i];
             if (i == c.length - 1) {
                 if (p[0] == first[0] && p[1] == first[1]) {
-                    //console.log('last is same as first')
                 } else {
-                    points += `{x=${p[0]},y=${p[1]}}`
+                   
+                    points += `{x=${toFixed(p[0])},y=${toFixed(p[1])}}`
 
                 }
             } else {
-                points += `{x=${p[0]},y=${p[1]}}`
+                points += `{x=${toFixed(p[0])},y=${toFixed(p[1])}}`
             }
             if (i < c.length -1) {
                  points += ', '
