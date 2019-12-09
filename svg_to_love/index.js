@@ -48,7 +48,7 @@ fs.readFile( url, function (err, data) {
         var groupIndex  = 0
         groups.forEach(g => {
             var gMeta = g['$']
-            
+            //console.log(gMeta, g)
             var paths = g.path
             paths.forEach(p => {
 
@@ -67,8 +67,8 @@ fs.readFile( url, function (err, data) {
 
                 //contours = normalizeContours(contours, metaWidth, metaHeight, newWidth, newHeight)
                 
-                makeLoveShape(fill, opacity, contours)
-                
+                var str = makeLoveShape(fill, opacity, contours)
+                console.log(str)
                 // var polyline = denestPolyline(contours)
                 // var loops = polyline.edges
                 // var positions = polyline.positions
@@ -116,6 +116,7 @@ function toFixed(n) {
 } 
 
 function makeLoveShape(fill, opacity, contours) {
+    let totalResult = ""
     let rgb = hexRgb(fill)
     // a single path can become many many contours
     // each contour needs to become its own shape
@@ -143,9 +144,10 @@ function makeLoveShape(fill, opacity, contours) {
 color=${color},
 points=${points}
 },`
-        console.log(result)
+        //console.log(result)
+        totalResult += result
     })
-    
+    return totalResult
 }
 
 function removeConsecutiveDuplications(contours) {
