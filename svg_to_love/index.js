@@ -39,10 +39,16 @@ fs.readFile( url, function (err, data) {
        
         var metaInfo = result.svg['$'];
         //console.log(metaInfo)
+        var metaWidth = parseInt(metaInfo.width)
+        var metaHeight = parseInt(metaInfo.height)
+        var newWidth = 1200
+        var newHeight = 1200
+
         var groups = result.svg.g;
         var groupIndex  = 0
         groups.forEach(g => {
             var gMeta = g['$']
+            
             var paths = g.path
             paths.forEach(p => {
 
@@ -52,9 +58,6 @@ fs.readFile( url, function (err, data) {
                 var parsed = parseSVGPath(d)
                 var contours = getContours(parsed, opt.scale)
                 contours =  removeConsecutiveDuplications(contours)
-                //if (groupIndex == 0) {
-                   
-                //}
                 
                 if (opt.simplify > 0 && typeof opt.simplify === 'number') {
                     for (i = 0; i < contours.length; i++) {
@@ -62,39 +65,53 @@ fs.readFile( url, function (err, data) {
                     }
                 }
 
+                //contours = normalizeContours(contours, metaWidth, metaHeight, newWidth, newHeight)
+                
                 makeLoveShape(fill, opacity, contours)
                 
-                var polyline = denestPolyline(contours)
-                var loops = polyline.edges
-                var positions = polyline.positions
-                var edges = []
-                for (i = 0; i < loops.length; ++i) {
-                    var loop = loops[i]
-                    for (var j = 0; j < loop.length; ++j) {
-                        edges.push([loop[j], loop[(j + 1) % loop.length]])
-                    }
-                }
+                // var polyline = denestPolyline(contours)
+                // var loops = polyline.edges
+                // var positions = polyline.positions
+                // var edges = []
+                // for (i = 0; i < loops.length; ++i) {
+                //     var loop = loops[i]
+                //     for (var j = 0; j < loop.length; ++j) {
+                //         edges.push([loop[j], loop[(j + 1) % loop.length]])
+                //     }
+                // }
                 
-                // this updates points/edges so that they now form a valid PSLG 
-                if (opt.clean !== false) {
-                   cleanPSLG(positions, edges)
-                }
+                // // this updates points/edges so that they now form a valid PSLG 
+                // if (opt.clean !== false) {
+                //    cleanPSLG(positions, edges)
+                // }
                 
-                // triangulation
-                var cells = cdt2d(positions, edges, opt)
-                total += cells.length
+                // // triangulation
+                // var cells = cdt2d(positions, edges, opt)
+                // total += cells.length
 
                
             })
             groupIndex += 1
         })
     });
-    //console.log('total triangles =', total);
+    
 
 });
 
+function normalizeContours(contours, width, height, newWidth, newHeight) {
+    var result = []
+   
+    contours.forEach(c => {
+        var newContour = []
+        c.forEach( point => {
+            newContour.push([(point[0]/width)*newWidth, (point[1]/height) * newHeight])
+        })
+        result.push(newContour)
+    })
+    return result;
+}
+
 function toFixed(n) {
-    
     return  Number.parseFloat(n).toFixed(2)
 } 
 
@@ -103,34 +120,26 @@ function makeLoveShape(fill, opacity, contours) {
     // a single path can become many many contours
     // each contour needs to become its own shape
     contours.forEach(c => {
-        let color = `{${toFixed(rgb.red/255)},${toFixed(rgb.green/255)},${toFixed(rgb.blue/255)}}`
-        let alpha = opacity
+        let color = `{${toFixed(rgb.red/255)},${toFixed(rgb.green/255)},${toFixed(rgb.blue/255)},${opacity}}`
         let points = "{"
         let first = c[0]
         for (let i = 0; i < c.length; i++) {
-            //console.log(c[i])
             let p = c[i];
             if (i == c.length - 1) {
                 if (p[0] == first[0] && p[1] == first[1]) {
                 } else {
-                   
-                    points += `{x=${toFixed(p[0])},y=${toFixed(p[1])}}`
-
+                    points += `{${toFixed(p[0])},${toFixed(p[1])}}`
                 }
             } else {
-                points += `{x=${toFixed(p[0])},y=${toFixed(p[1])}}`
+                points += `{${toFixed(p[0])},${toFixed(p[1])}}`
             }
             if (i < c.length -1) {
                  points += ', '
             }
         }
         points += '}'
-        //console.log(points)
-        //console.log(color, alpha)
         let result =
 `{
-outline=false,
-alpha=${alpha},
 color=${color},
 points=${points}
 },`
