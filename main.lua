@@ -52,8 +52,9 @@ end
 function getClosestEdgeIndex(wx, wy, points)
    local closestEdgeIndex = 0
    local closestDistance = 99999999999999
-   for j = 1, #points-1 do
-      local d = distancePointSegment(wx, wy, points[j].x, points[j].y, points[j+1].x, points[j+1].y)
+   for j = 1, #points do
+      local next = (j == #points and 1) or j+1
+      local d = distancePointSegment(wx, wy, points[j].x, points[j].y, points[next].x, points[next].y)
       if (d < closestDistance) then
 	 closestDistance = d
 	 closestEdgeIndex = j
@@ -224,7 +225,6 @@ function love.load()
       down = false,
       lastDown = false,
       click = false,
-
    }
 
    shapes = { {
@@ -358,12 +358,8 @@ function love.draw()
 	    love.graphics.circle("fill", c[1], c[2], 10)
 
 	 end
-	 --love.graphics.setColor(bg_color[1], bg_color[2], bg_color[3])
+
 	 love.graphics.setColor(0,0,0,1)
-	 --if (shapes[i].color) then
-	 --   local c = shapes[i].color
-	 --   love.graphics.setColor(c[1], c[2], c[3], 1)
-	 --end
 
 	 if (shapes[i].outline) then
 	    love.graphics.setLineStyle('rough')
@@ -375,10 +371,8 @@ function love.draw()
 	       coordsRound, love.graphics.getLineWidth() / 2,
 	       1/scale,
 	       love.graphics.getLineStyle() == 'smooth')
-
 	    
 	    local mesh = love.graphics.newMesh(#coordsRound * 2)
-	    --print(indices, #coordsRound * 2)
 	    mesh:setVertices(vertices)
 	    mesh:setDrawMode(draw_mode)
 	    mesh:setVertexMap(indices)
@@ -388,14 +382,13 @@ function love.draw()
 	       mesh:setDrawRange(1, #vertices)
 	    end
 	    love.graphics.draw(mesh)
-
 	 end
 
 	 love.graphics.setLineWidth(1)
       end
    end
 
-   if (#shapes >= 2 ) then
+   if (#shapes >= 2 and #shapes[1].points > 0  and #shapes[2].points > 0) then
       love.graphics.setColor(0,0,1,1)
       local region = poly.polygonClip(shapes[1], shapes[2])
       local coords = {}
@@ -423,16 +416,13 @@ function love.draw()
       	 love.graphics.polygon('fill', result[j])
       end
    end
-   
-   
 
    love.graphics.setColor(1,1,1,1)
-
 
    if editingMode == 'polyline' and  current_shape_index > 0  then
       local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
-
+      
       for i=1, #points do
 	 local kind = "line"
 	 if mouseOverPolyPoint(mx, my, points[i].x, points[i].y) then
@@ -450,7 +440,8 @@ function love.draw()
 
 	 if editingModeSub == 'polyline-insert' then
 	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
-	    if i == closestEdgeIndex or i == closestEdgeIndex+1 then
+	    local nextIndex = (closestEdgeIndex == #points and 1) or closestEdgeIndex+1
+	    if i == closestEdgeIndex or i == nextIndex then
 	       kind = 'fill'
 	    end
 
@@ -513,7 +504,7 @@ function love.draw()
 	 end
 
 	 if (buttons[i] == 'polyline') then
-	    editingModeSub = 'polyline-add'
+	    editingModeSub = 'polyline-edit'
 	 end
       end
    end
@@ -617,6 +608,7 @@ function love.draw()
       if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, "p-"..i,  w - (64 + 400+ 10)/2, calcY((i+1),s)+(i+1)*8*s, s).clicked then
 	 current_shape_index = i
 	 editingMode = 'polyline'
+	  editingModeSub = 'polyline-edit'
       end
    end
    if (#shapes > 1) then
