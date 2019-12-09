@@ -50,6 +50,7 @@ fs.readFile( url, function (err, data) {
             var gMeta = g['$']
             //console.log(gMeta, g)
             var paths = g.path
+            var pathIndex = 0
             paths.forEach(p => {
 
                 var fill = p['$'].fill
@@ -67,7 +68,7 @@ fs.readFile( url, function (err, data) {
 
                 //contours = normalizeContours(contours, metaWidth, metaHeight, newWidth, newHeight)
                 
-                var str = makeLoveShape(fill, opacity, contours)
+                var str = makeLoveShape(fill, opacity, contours, groupIndex, pathIndex)
                 console.log(str)
                 // var polyline = denestPolyline(contours)
                 // var loops = polyline.edges
@@ -88,7 +89,7 @@ fs.readFile( url, function (err, data) {
                 // // triangulation
                 // var cells = cdt2d(positions, edges, opt)
                 // total += cells.length
-
+                pathIndex += 1
                
             })
             groupIndex += 1
@@ -115,11 +116,12 @@ function toFixed(n) {
     return  Number.parseFloat(n).toFixed(2)
 } 
 
-function makeLoveShape(fill, opacity, contours) {
+function makeLoveShape(fill, opacity, contours, groupIndex, pathIndex) {
     let totalResult = ""
     let rgb = hexRgb(fill)
     // a single path can become many many contours
     // each contour needs to become its own shape
+    let contourIndex = 0
     contours.forEach(c => {
         let color = `{${toFixed(rgb.red/255)},${toFixed(rgb.green/255)},${toFixed(rgb.blue/255)},${opacity}}`
         let points = "{"
@@ -138,13 +140,17 @@ function makeLoveShape(fill, opacity, contours) {
                  points += ', '
             }
         }
+        
         points += '}'
         let result =
 `{
+name="${groupIndex+'-'+pathIndex+'-'+contourIndex}",
 color=${color},
 points=${points}
+
 },`
         //console.log(result)
+        contourIndex += 1
         totalResult += result
     })
     return totalResult
