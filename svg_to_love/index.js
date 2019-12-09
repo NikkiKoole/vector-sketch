@@ -1,0 +1,178 @@
+//https://github.com/mattdesl/svg-mesh-3d/blob/master/index.js
+
+var fs = require('fs');
+var parseString = require('xml2js').parseString;
+var parseSVGPath = require('parse-svg-path')
+var getContours = require('svg-path-contours')
+var assign = require('object-assign')
+var simplify = require('simplify-path')
+//var normalize = require('normalize-path-scale')
+//var getBounds = require('bound-points')
+var cleanPSLG = require('clean-pslg')
+var cdt2d = require('cdt2d')
+var hexRgb = require('hex-rgb');
+
+if (!process.argv[2] || !process.argv[2].endsWith('.svg') ) {
+    console.log('give me a svg file to convert!')
+    console.log('node index.js ./file.svg')
+    return
+}
+
+var url = process.argv[2]
+
+fs.readFile( url, function (err, data) {
+    if (err) {
+        throw err; 
+    }
+    var xml = data.toString()
+    var total = 0
+    parseString(xml, function (err, result) {
+        var opt =  {
+            delaunay: true,
+            clean: true,
+            exterior: false,
+            randomization: 0,
+            simplify: 0,
+            scale: 1,
+
+        }
+       
+        var metaInfo = result.svg['$'];
+        //console.log(metaInfo)
+        var groups = result.svg.g;
+        var groupIndex  = 0
+        groups.forEach(g => {
+            var gMeta = g['$']
+            var paths = g.path
+            paths.forEach(p => {
+
+                var fill = p['$'].fill
+                var opacity = p['$'].opacity
+                var d = p['$'].d
+                var parsed = parseSVGPath(d)
+                var contours = getContours(parsed, opt.scale)
+                contours =  removeConsecutiveDuplications(contours)
+                //if (groupIndex == 0) {
+                    makeLoveShape(fill, opacity, contours)
+                //}
+                //console.log(contours)
+                
+                
+                if (opt.simplify > 0 && typeof opt.simplify === 'number') {
+                    for (i = 0; i < contours.length; i++) {
+                        contours[i] = simplify(contours[i], opt.simplify)
+                    }
+                }
+                // I think the contours here are fine to work with, but lets go the extra mile and see where we end up.
+                //console.log(contours)
+                //console.log(contours)
+                var polyline = denestPolyline(contours)
+                var loops = polyline.edges
+                var positions = polyline.positions
+                var edges = []
+                for (i = 0; i < loops.length; ++i) {
+                    var loop = loops[i]
+                    for (var j = 0; j < loop.length; ++j) {
+                        edges.push([loop[j], loop[(j + 1) % loop.length]])
+                    }
+                }
+                
+                // this updates points/edges so that they now form a valid PSLG 
+                if (opt.clean !== false) {
+                   cleanPSLG(positions, edges)
+                }
+                
+                // triangulation
+                var cells = cdt2d(positions, edges, opt)
+                total += cells.length
+
+               
+            })
+            groupIndex += 1
+        })
+    });
+    //console.log('total triangles =', total);
+
+});
+
+function makeLoveShape(fill, opacity, contours) {
+    let rgb = hexRgb(fill)
+    // a single path can become many many contours
+    // each contour needs to become its own shape
+    contours.forEach(c => {
+        let color = `{${rgb.red/255},${rgb.green/255},${rgb.blue/255}}`
+        let alpha = opacity
+        let points = "{"
+        let first = c[0]
+        for (let i = 0; i < c.length; i++) {
+            //console.log(c[i])
+            let p = c[i];
+            if (i == c.length - 1) {
+                if (p[0] == first[0] && p[1] == first[1]) {
+                    //console.log('last is same as first')
+                } else {
+                    points += `{x=${p[0]},y=${p[1]}}`
+
+                }
+            } else {
+                points += `{x=${p[0]},y=${p[1]}}`
+            }
+            if (i < c.length -1) {
+                 points += ', '
+            }
+        }
+        points += '}'
+        //console.log(points)
+        //console.log(color, alpha)
+        let result =
+`{
+outline=false,
+alpha=${alpha},
+color=${color},
+points=${points}
+},`
+        console.log(result)
+    })
+    
+}
+
+function removeConsecutiveDuplications(contours) {
+    var result = []
+    contours.forEach(c => {
+        var arr = [];
+        var last = undefined
+        c.forEach(inner => {
+            if (last == undefined || (last[0] != inner[0] || last[1] != inner[1])) {
+                arr.push(inner)
+            }
+            last = inner
+        })
+        result.push(arr)
+    })
+    
+    return result
+}
+
+function denestPolyline (nested) {
+  var positions = []
+  var edges = []
+
+  for (var i = 0; i < nested.length; i++) {
+    var path = nested[i]
+    var loop = []
+    for (var j = 0; j < path.length; j++) {
+      var pos = path[j]
+      var idx = positions.indexOf(pos)
+      if (idx === -1) {
+        positions.push(pos)
+        idx = positions.length - 1
+      }
+      loop.push(idx)
+    }
+    edges.push(loop)
+  }
+  return {
+    positions: positions,
+    edges: edges
+  }
+}
