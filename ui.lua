@@ -88,7 +88,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
       clicked = false
    end
 
-   love.graphics.print(label,  x-4*scale + 64*scale + 16*scale, y-4*scale + 8*scale)
+   love.graphics.print(label,  x-4*scale + 64*scale + 16*scale, y-4*scale )
    love.graphics.draw(img, x, y, 0, scale, scale)
 
    return {

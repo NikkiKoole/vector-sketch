@@ -169,7 +169,9 @@ function love.load()
    camera = {x=0, y=0, scale=1}
    editingMode = nil
    editingModeSub = nil
-   medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 16)
+   --medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 16)
+   medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
+
    love.graphics.setFont(medium)
 
    ui = {
@@ -1099,7 +1101,9 @@ function love.draw()
    love.graphics.pop()
    love.graphics.print(triangleCount, 2,2)
    if quitDialog then
-      love.graphics.setColor(1,1,1, 1)
+      love.graphics.setColor(1,0,1, 1)
       love.graphics.print("Sure you want to quit ? [ESC] ", 16, 4)
+       love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("Sure you want to quit ? [ESC] ", 15, 3)
    end
 end
