@@ -11,6 +11,7 @@ var simplify = require('simplify-path')
 var cleanPSLG = require('clean-pslg')
 var cdt2d = require('cdt2d')
 var hexRgb = require('hex-rgb');
+var decomp = require('poly-decomp');
 
 if (!process.argv[2] || !process.argv[2].endsWith('.svg') ) {
     console.log('give me a svg file to convert!')
@@ -32,7 +33,7 @@ fs.readFile( url, function (err, data) {
             clean: true,
             exterior: false,
             randomization: 0,
-            simplify: 0,
+            simplify: 5,
             scale: 1,
 
         }
@@ -58,42 +59,71 @@ fs.readFile( url, function (err, data) {
                 var d = p['$'].d
                 var parsed = parseSVGPath(d)
                 var contours = getContours(parsed, opt.scale)
-                contours =  removeConsecutiveDuplications(contours)
-                
+		//console.log(contours)
+                //contours =  removeConsecutiveDuplications(contours)
+
+		
+		//contours.forEach(c => {
+		//    decomp.makeCCW(c);
+		//})
+
+		
                 if (opt.simplify > 0 && typeof opt.simplify === 'number') {
                     for (i = 0; i < contours.length; i++) {
                         contours[i] = simplify(contours[i], opt.simplify)
                     }
                 }
+		// for (i=0; i<contours.length;i++) {
+		//     //console.log('durp', contours[i])
+		    
+		//     console.log('before ', JSON.stringify(contours[i]))
+		//     console.log(i, decomp.isSimple(contours[i]))
+		//     decomp.makeCCW(contours[i]);
+		//     var convexPolygons = decomp.quickDecomp(contours[i]);
+		//     console.log(convexPolygons)
+		//     //contours[i] = decomp.quickDecomp(contours[i]);
+		//     console.log('after ', JSON.stringify(contours[i]))
 
+		// }
                 //contours = normalizeContours(contours, metaWidth, metaHeight, newWidth, newHeight)
-                
-                var str = makeLoveShape(fill, opacity, contours, groupIndex, pathIndex)
-                console.log(str)
-                // var polyline = denestPolyline(contours)
-                // var loops = polyline.edges
-                // var positions = polyline.positions
-                // var edges = []
-                // for (i = 0; i < loops.length; ++i) {
-                //     var loop = loops[i]
-                //     for (var j = 0; j < loop.length; ++j) {
-                //         edges.push([loop[j], loop[(j + 1) % loop.length]])
-                //     }
-                // }
+		//console.log(contours)
+		//decomp.decomp(contours);
+		//decomp.makeCCW(contours)
+		var cCount = 0
+		contours.forEach(c => {
+		    cCount += c.length
+		})
+		
+		 var polyline = denestPolyline(contours)
+                 var loops = polyline.edges
+                 var positions = polyline.positions
+                 var edges = []
+                 for (i = 0; i < loops.length; ++i) {
+                     var loop = loops[i]
+                     for (var j = 0; j < loop.length; ++j) {
+                         edges.push([loop[j], loop[(j + 1) % loop.length]])
+                     }
+                 }
                 
                 // // this updates points/edges so that they now form a valid PSLG 
-                // if (opt.clean !== false) {
-                //    cleanPSLG(positions, edges)
-                // }
-                
+                 if (opt.clean !== false) {
+                    cleanPSLG(positions, edges)
+                 }
+		//var str = makeLoveShapePositions(fill, opacity, positions, groupIndex, pathIndex)
+		//console.log("POSITION OUTPUT: ", str)
+		var str = makeLoveShape(fill, opacity, contours, groupIndex, pathIndex)
+		console.log(str)
+		
+                //console.log(positions.length, cCount)
                 // // triangulation
-                // var cells = cdt2d(positions, edges, opt)
-                // total += cells.length
+                 var cells = cdt2d(positions, edges, opt)
+                 total += cells.length
                 pathIndex += 1
                
             })
             groupIndex += 1
         })
+	console.log("toal cells: ", total)
     });
     
 
@@ -114,7 +144,33 @@ function normalizeContours(contours, width, height, newWidth, newHeight) {
 
 function toFixed(n) {
     return  Number.parseFloat(n).toFixed(2)
-} 
+}
+
+function makeLoveShapePositions(fill, opacity, contours, groupIndex, pathIndex) {
+
+    let totalResult = ""
+    let rgb = hexRgb(fill)
+    let contourIndex = 0
+    let first = contours[0]
+    let points = "{"
+    let color = `{${toFixed(rgb.red/255)},${toFixed(rgb.green/255)},${toFixed(rgb.blue/255)},${opacity}}`
+    for (let j =0; j< contours.length; j++) {
+	let p = contours[j]
+	points += `{${toFixed(p[0])},${toFixed(p[1])}}, `
+    }
+    points += "}";
+    let result =
+`{
+name="${groupIndex+'-'+pathIndex+'-'+contourIndex}",
+color=${color},
+points=${points}
+},
+`
+    contourIndex += 1
+    totalResult += result
+    return totalResult
+}
+
 
 function makeLoveShape(fill, opacity, contours, groupIndex, pathIndex) {
     let totalResult = ""
@@ -123,6 +179,7 @@ function makeLoveShape(fill, opacity, contours, groupIndex, pathIndex) {
     // each contour needs to become its own shape
     let contourIndex = 0
     contours.forEach(c => {
+	
         let color = `{${toFixed(rgb.red/255)},${toFixed(rgb.green/255)},${toFixed(rgb.blue/255)},${opacity}}`
         let points = "{"
         let first = c[0]
@@ -147,8 +204,8 @@ function makeLoveShape(fill, opacity, contours, groupIndex, pathIndex) {
 name="${groupIndex+'-'+pathIndex+'-'+contourIndex}",
 color=${color},
 points=${points}
-
-},`
+},
+`
         //console.log(result)
         contourIndex += 1
         totalResult += result
