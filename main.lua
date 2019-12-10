@@ -698,7 +698,7 @@ points={{169.21,242.54}, {169.47,237.46}, }
 
 
    }
-    
+
    current_shape_index = 1
 
    backdrop = {
@@ -732,6 +732,7 @@ function drawGrid()
       love.graphics.line( 0, yOffset + y*size, w, yOffset +  y*size)
    end
 end
+
 
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
