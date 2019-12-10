@@ -171,6 +171,8 @@ function love.load()
    editingModeSub = nil
    --medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 16)
    medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
+   large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 64)
+   condensed = medium --love.graphics.newFont( "resources/fonts/DomaineDispNar-Medium.otf", 32)
 
    love.graphics.setFont(medium)
 
@@ -1065,7 +1067,7 @@ function love.draw()
       editingMode = 'polyline'
       editingModeSub = 'polyline-add'
    end
-
+    love.graphics.setFont(condensed)
    for i=1, #shapes do
       if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i,  w - (64 + 400+ 10)/2, calcY((i+1),s)+(i+1)*8*s, s).clicked then
 	 current_shape_index = i
@@ -1073,6 +1075,8 @@ function love.draw()
 	  editingModeSub = 'polyline-edit'
       end
    end
+   love.graphics.setFont(medium)
+
    if (#shapes > 1) then
       if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(2, s) + 16, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
@@ -1101,9 +1105,12 @@ function love.draw()
    love.graphics.pop()
    love.graphics.print(triangleCount, 2,2)
    if quitDialog then
-      love.graphics.setColor(1,0,1, 1)
-      love.graphics.print("Sure you want to quit ? [ESC] ", 16, 4)
-       love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("Sure you want to quit ? [ESC] ", 15, 3)
+      love.graphics.setFont(large)
+      love.graphics.setColor(1,0.5,0.5, 1)
+      love.graphics.print("Sure you want to quit ? [ESC] ", 116, 14)
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("Sure you want to quit ? [ESC] ", 115, 13)
+      love.graphics.setFont(medium)
    end
+
 end
