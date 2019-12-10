@@ -173,7 +173,8 @@ function love.load()
    medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
    large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 64)
    condensed = medium --love.graphics.newFont( "resources/fonts/DomaineDispNar-Medium.otf", 32)
-
+   introSound = love.audio.newSource("resources/sounds/supermarket.wav", "static")
+   introSound:play()
    love.graphics.setFont(medium)
 
    ui = {
