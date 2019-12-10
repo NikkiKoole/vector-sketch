@@ -261,6 +261,7 @@ function love.load()
    --large = love.graphics.newFont( "resources/fonts/adlib.ttf", 64)
    introSound = love.audio.newSource("resources/sounds/supermarket.wav", "static")
    introSound:setVolume(0.1)
+   introSound:setPitch(0.9 + 0.2*love.math.random())
    introSound:play()
    love.graphics.setFont(medium)
 
