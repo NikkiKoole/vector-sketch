@@ -5,6 +5,12 @@ require 'util'
 polyline = require 'polyline'
 poly = require 'poly'
 
+-- todo
+-- rename the individual shapes
+-- copy shapes
+-- save load file
+-- have parent child relations between shapes
+-- have a vertical scrollview for the shapes
 
 function love.keypressed(key)
    if key == "escape" then
@@ -698,7 +704,7 @@ points={{169.21,242.54}, {169.47,237.46}, }
    backdrop = {
       grid = {cellsize=100}, -- cellsize is in px
       bg_color = {34/255,30/255,30/255},
-      image = love.graphics.newImage("offshore-707.jpg"),
+      image = love.graphics.newImage("resources/backdrops/offshore-707.jpg"),
       visible = false,
       alpha = 0.5,
       x = 0,
