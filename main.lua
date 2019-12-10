@@ -5,10 +5,8 @@ require 'util'
 polyline = require 'polyline'
 poly = require 'poly'
 local utf8 = require("utf8")
-
+ProFi = require 'ProFi'
 -- todo
--- rename the individual shapes
--- copy shapes
 -- save load file
 -- have parent child relations between shapes
 -- have a vertical scrollview for the shapes
@@ -20,17 +18,36 @@ function love.textedited(text, start, length)
 end
 
 function love.textinput(t)
-   local str = shapes[current_shape_index].name or ""
-   local a,b = split(str, changeNameCursor+1)
-   local r = table.concat{a, t, b}
-   changeNameCursor = changeNameCursor + 1
-   shapes[current_shape_index].name = r
+   if (changeName) then
+      local str = shapes[current_shape_index].name or ""
+      if (changeNameCursor > #str) then
+	 changeNameCursor = #str
+      end
+
+      local a,b = split(str, changeNameCursor+1)
+      local r = table.concat{a, t, b}
+      changeNameCursor = changeNameCursor + 1
+      shapes[current_shape_index].name = r
+   end
 end
 function split(str, pos)
    local offset = utf8.offset(str, pos) or 0
    return str:sub(1, offset-1), str:sub(offset)
 end
-
+function copyShape(shape)
+   local result = {
+      name = shape.name or "",
+      color = {},
+      points = {}
+   }
+   for i=1, #shape.color do
+      result.color[i] = shape.color[i]
+   end
+   for i=1, #shape.points do
+      result.points[i]= {shape.points[i][1], shape.points[i][2]}
+   end
+   return result
+end
 
 
 
@@ -52,6 +69,15 @@ function love.keypressed(key)
 	 quitDialog = false
       end
    end
+   if (key == 'p' and not changeName) then
+      if not profiling then
+	 ProFi:start()
+      else
+	 ProFi:stop()
+	 ProFi:writeReport( 'MyProfilingReport.txt' )
+      end
+      profiling = not profiling
+   end
 
    if (changeName) then
       if (key == 'backspace') then
@@ -63,7 +89,11 @@ function love.keypressed(key)
       if (key == 'delete') then
 	 local str = shapes[current_shape_index].name or ""
 	 local a,b = split(str, changeNameCursor+2)
-	 shapes[current_shape_index].name = table.concat{split(a,utf8.len(a)), b}
+
+	 if (#b > 0) then
+	    shapes[current_shape_index].name = table.concat{split(a,utf8.len(a)), b}
+	    changeNameCursor = math.min(#(shapes[current_shape_index].name), changeNameCursor)
+	 end
       end
       if (key == 'left') then
 	 if (changeNameCursor > 0) then
@@ -218,7 +248,7 @@ end
 
 function love.load()
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
-
+   love.keyboard.setKeyRepeat( true )
    camera = {x=0, y=0, scale=1}
    editingMode = nil
    editingModeSub = nil
@@ -233,6 +263,11 @@ function love.load()
    introSound:setVolume(0.1)
    introSound:play()
    love.graphics.setFont(medium)
+
+
+   profiling = false
+
+
 
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
@@ -266,6 +301,7 @@ function love.load()
       lines2 = love.graphics.newImage("resources/ui/lines2.png"),
       move_up = love.graphics.newImage("resources/ui/move-up.png"),
       move_down = love.graphics.newImage("resources/ui/move-down.png"),
+      mesh = love.graphics.newImage("resources/ui/mesh.png"),
 
    }
 
@@ -307,7 +343,190 @@ function love.load()
    	 points = {}
    }}
 
+   shapes = {
+      {
+name="0-0-0",
+color={0.00,0.00,0.00,1.00},
+points={{17.77,8.80}, {58.22,2.07}, {100.37,8.41}, {108.86,29.63}, {112.33,90.89}, {87.93,88.25}, {55.81,100.90}, {15.93,90.87}, {5.34,75.79}, {4.67,36.67}, }
+},
+{
+name="0-0-1",
+color={0.00,0.00,0.00,1.00},
+points={{33.74,5.96}, {8.93,21.97}, {5.12,68.19}, {12.43,84.12}, {23.02,94.73}, {19.22,46.61}, {24.74,29.52}, {47.42,9.78}, {62.98,9.10}, {96.39,30.28}, {100.55,57.42}, {91.77,84.28}, {109.02,90.43}, {112.42,66.95}, {103.56,13.10}, {98.54,7.50}, }
+},
+{
+name="0-0-2",
+color={0.00,0.00,0.00,1.00},
+points={{51.42,10.40}, {24.80,32.38}, {20.16,52.87}, {28.70,90.21}, {50.31,99.78}, {86.32,87.63}, {100.01,51.95}, {86.99,20.53}, }
+},
 
+{
+name="0-1-0",
+color={0.00,0.00,0.00,1.00},
+points={{45.35,54.18}, {44.44,23.90}, {45.80,49.61}, {59.90,53.60}, {63.73,19.71}, {65.24,53.15}, {77.41,59.64}, {73.88,90.90}, {46.30,88.76}, {32.59,66.12}, }
+},
+{
+name="0-1-1",
+color={0.00,0.00,0.00,1.00},
+points={{43.36,56.41}, {60.02,68.35}, {63.61,58.25}, }
+},
+{
+name="0-1-2",
+color={0.00,0.00,0.00,1.00},
+points={{65.03,53.98}, {63.99,67.66}, {73.52,67.60}, {74.62,57.79}, }
+},
+{
+name="0-1-3",
+color={0.00,0.00,0.00,1.00},
+points={{41.54,56.22}, {34.18,61.64}, {44.13,71.34}, {52.54,62.14}, }
+},
+{
+name="0-1-4",
+color={0.00,0.00,0.00,1.00},
+points={{41.10,72.89}, {55.52,91.06}, {71.95,88.58}, {68.76,70.34}, }
+},
+
+{
+name="0-2-0",
+color={0.00,0.00,0.00,1.00},
+points={{71.44,26.26}, {82.13,34.29}, {76.32,36.40}, }
+},
+{
+name="0-2-1",
+color={0.00,0.00,0.00,1.00},
+points={{72.46,27.31}, {80.22,35.28}, }
+},
+
+{
+name="0-3-0",
+color={0.00,0.00,0.00,1.00},
+points={{31.21,29.47}, {39.74,38.30}, {32.18,38.93}, }
+},
+{
+name="0-3-1",
+color={0.00,0.00,0.00,1.00},
+points={{32.42,30.30}, {36.69,38.89}, }
+},
+
+{
+name="0-4-0",
+color={0.00,0.00,0.00,1.00},
+points={{75.68,31.24}, }
+},
+
+{
+name="0-5-0",
+color={0.00,0.00,0.00,1.00},
+points={{34.17,34.17}, }
+},
+
+{
+name="0-6-0",
+color={0.00,0.00,0.00,1.00},
+points={{60.33,70.45}, {69.02,78.41}, {64.70,83.18}, {45.55,80.22}, }
+},
+{
+name="0-6-1",
+color={0.00,0.00,0.00,1.00},
+points={{61.59,72.15}, }
+},
+{
+name="0-6-2",
+color={0.00,0.00,0.00,1.00},
+points={{50.17,74.80}, }
+},
+
+{
+name="1-0-0",
+color={0.67,0.32,0.21,1.00},
+points={{33.74,5.96}, {98.54,7.50}, {108.51,27.31}, {110.26,88.80}, {94.16,86.69}, {100.90,45.99}, {92.32,24.19}, {56.78,8.85}, {41.85,12.34}, {21.69,34.93}, {23.83,92.32}, {18.50,90.83}, {6.28,73.76}, {5.87,37.46}, {12.21,17.31}, }
+},
+
+{
+name="1-1-0",
+color={0.67,0.32,0.21,1.00},
+points={{41.10,72.89}, {66.39,69.61}, {72.86,84.24}, {61.84,90.80}, {46.61,86.08}, }
+},
+{
+name="1-1-1",
+color={0.67,0.32,0.21,1.00},
+points={{60.33,70.45}, {45.96,81.81}, {67.84,80.88}, }
+},
+
+{
+name="2-0-0",
+color={1.00,0.64,0.00,1.00},
+points={{51.42,10.40}, {86.99,20.53}, {100.01,51.95}, {86.32,87.63}, {53.78,99.85}, {28.70,90.21}, {20.16,52.87}, {24.80,32.38}, }
+},
+{
+name="2-0-1",
+color={1.00,0.64,0.00,1.00},
+points={{45.35,54.18}, {32.29,62.33}, {46.30,88.76}, {72.68,90.55}, {76.61,57.91}, {65.39,44.77}, {63.73,19.71}, {64.23,53.70}, {45.80,49.61}, {45.62,19.67}, }
+},
+{
+name="2-0-2",
+color={1.00,0.64,0.00,1.00},
+points={{71.44,26.26}, {77.96,36.50}, {80.69,30.25}, }
+},
+{
+name="2-0-3",
+color={1.00,0.64,0.00,1.00},
+points={{31.21,29.47}, {37.11,39.65}, {40.12,34.31}, }
+},
+
+{
+name="3-0-0",
+color={1.00,0.83,0.72,1.00},
+points={{72.46,27.31}, {79.49,31.01}, {75.32,34.72}, }
+},
+{
+name="3-0-1",
+color={1.00,0.83,0.72,1.00},
+points={{75.68,31.24}, }
+},
+
+{
+name="3-1-0",
+color={1.00,0.83,0.72,1.00},
+points={{32.42,30.30}, {36.69,38.89}, }
+},
+{
+name="3-1-1",
+color={1.00,0.83,0.72,1.00},
+points={{34.17,34.17}, }
+},
+
+{
+name="3-2-0",
+color={1.00,0.83,0.72,1.00},
+points={{65.03,53.98}, {76.52,61.21}, {73.52,67.60}, {63.22,63.74}, }
+},
+
+{
+name="3-3-0",
+color={1.00,0.83,0.72,1.00},
+points={{41.54,56.22}, {49.55,61.10}, {44.13,71.34}, {32.14,63.94}, }
+},
+
+{
+name="3-4-0",
+color={1.00,0.83,0.72,1.00},
+points={{61.59,72.15}, }
+},
+
+{
+name="3-5-0",
+color={1.00,0.83,0.72,1.00},
+points={{50.17,74.80}, }
+},
+
+{
+name="4-0-0",
+color={0.49,0.15,0.33,1.00},
+points={{43.36,56.41}, {62.30,55.72}, {61.70,66.20}, }
+},
+
+   }
 
    current_shape_index = 1
 
@@ -421,6 +640,7 @@ function love.draw()
 		  end
 	       end
 	    end
+
 	    for j = 1, #result do
 	       love.graphics.polygon('fill', result[j])
 	    end
@@ -459,34 +679,17 @@ function love.draw()
       end
    end
 
-   -- if (#shapes >= 2 and #shapes[1].points > 0  and #shapes[2].points > 0) then
-   --    love.graphics.setColor(0,0,1,1)
-   --    local region = poly.polygonClip(shapes[1], shapes[2])
-   --    local coords = {}
-   --    for i=1, #region do
-   --    	 table.insert(coords, region[i].x)
-   --    	 table.insert(coords, region[i].y)
-   --    end
 
-   --    local polys = decompose_complex_poly(coords, {})
-   --    local result = {}
-   --    for i=1 , #polys do
-   --    	 local p = polys[i]
-   --    	 if (#p >= 6) then
-   --    	    local triangles = love.math.triangulate(p)
-   --    	    for j = 1, #triangles do
-   --    	       local t = triangles[j]
-   --    	       local cx, cy = getTriangleCentroid(t)
-   --    	       if isPointInPath(cx,cy, p) then
-   --    		  table.insert(result, t)
-   --    	       end
-   --    	    end
-   --    	 end
-   --    end
-   --    for j = 1, #result do
-   --    	 love.graphics.polygon('fill', result[j])
-   --    end
-   -- end
+
+   love.graphics.setColor(1,0,0,1)
+
+   local simple_format = {
+      {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+   }
+   local vertices = {{100,100},{ 200,100},{ 200,200},{ 10,200}, {50, 200}, {30, 400}}
+   local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+
+   love.graphics.draw(mesh,  0, 0)
 
    love.graphics.setColor(1,1,1,1)
 
@@ -606,6 +809,14 @@ function love.draw()
       if imgbutton('polyline-outside', shapes[current_shape_index].outline and ui.lines or ui.lines2,  calcX(8, s), calcY(2, s), s).clicked then
 	 shapes[current_shape_index].outline = not shapes[current_shape_index].outline
       end
+      if imgbutton('polyline-shape', ui.mesh,  calcX(9, s), calcY(2, s), s).clicked then
+      end
+
+      if imgbutton('polyline-clone', ui.add,  calcX(10, s), calcY(2, s), s).clicked then
+	 local cloned = copyShape(shapes[current_shape_index])
+	 cloned.name = (cloned.name or "")..' copy'
+	 table.insert(shapes, current_shape_index+1, cloned)
+      end
 
    end
 
@@ -663,7 +874,7 @@ function love.draw()
 
    -- now lets render the list of items on screen,
    -- i want this to be right alligned
-   if iconlabelbutton('add-object', ui.add, nil, false,  'add shape',  w - (64 + 400+ 10)/2, calcY(1,s)+1*8*s, s).clicked then
+   if iconlabelbutton('add-object', ui.add, nil, false,  'add shape',  w - (64 + 500+ 10)/2, calcY(1,s)+1*8*s, s).clicked then
       local shape = {
 	 color = {0,0,0,1},
 	 outline = true,
@@ -676,7 +887,7 @@ function love.draw()
    end
 
    for i=1, #shapes do
-      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i,  w - (64 + 400+ 10)/2, calcY((i+1),s)+(i+1)*8*s, s).clicked then
+      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i,  w - (64 + 500+ 10)/2, calcY((i+1),s)+(i+1)*8*s, s).clicked then
 	 current_shape_index = i
 	 editingMode = 'polyline'
 	 editingModeSub = 'polyline-edit'
@@ -684,19 +895,19 @@ function love.draw()
    end
 
    if (#shapes > 1) then
-      if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(2, s) + 16, s).clicked then
+      if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  w - (64 + 500+ 10 + 80 + 20)/2, calcY(2, s) + 16, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
 	 current_shape_index =  current_shape_index - 1
 	 table.insert(shapes, current_shape_index, taken_out)
       end
-      if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(3, s) + 24, s).clicked then
+      if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  w - (64 + 500+ 10 + 80 + 20)/2, calcY(3, s) + 24, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
 	 current_shape_index =  current_shape_index + 1
 	 table.insert(shapes, current_shape_index, taken_out)
       end
    end
    if #shapes > 0 then
-      if imgbutton('delete', ui.delete,  w - (64 + 400+ 10 + 80 + 20)/2, calcY(1, s) + 8, s).clicked then
+      if imgbutton('delete', ui.delete,  w - (64 + 500+ 10 + 80 + 20)/2, calcY(1, s) + 8, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
 	 if current_shape_index  > #shapes then
 	    current_shape_index = #shapes
@@ -705,7 +916,7 @@ function love.draw()
 	    current_shape_index = 0
 	 end
       end
-      if imgbutton('badge', ui.badge,  w - (64 + 400+ 10 + 80 + 20 )/2, calcY(4, s) + 8*4, s).clicked then
+      if imgbutton('badge', ui.badge,  w - (64 + 500+ 10 + 80 + 20 )/2, calcY(4, s) + 8*4, s).clicked then
 	 changeName = not changeName
 	 local name = shapes[current_shape_index].name
 	 changeNameCursor = name and utf8.len(name) or 1
@@ -716,25 +927,23 @@ function love.draw()
 	 local cursorX = (love.graphics.getFont():getWidth(substr))
 	 local cursorH = (love.graphics.getFont():getHeight(str))
 	 love.graphics.setColor(1,1,1,0.5)
-	 love.graphics.rectangle('fill', w-600 - 10, calcY(4, s) + 8*4 - 10, 300 + 20,  cursorH + 20 )
+	 love.graphics.rectangle('fill', w-700 - 10, calcY(4, s) + 8*4 - 10, 300 + 20,  cursorH + 20 )
 	 love.graphics.setColor(1,1,1)
-	 love.graphics.print(shapes[current_shape_index].name or "", w - 600, calcY(4, s) + 8*4)
-	 love.graphics.rectangle('fill', w- 600 + cursorX, calcY(4, s) + 8*4, 2, cursorH)
+	 love.graphics.print(shapes[current_shape_index].name or "", w - 700, calcY(4, s) + 8*4)
+	 love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4, s) + 8*4, 2, cursorH)
       end
-
-
    end
-
-
 
    love.graphics.pop()
    love.graphics.print(triangleCount, 2,2)
+
    if quitDialog then
+      local quitStr = "Sure you want to quit ? [ESC] "
       love.graphics.setFont(large)
       love.graphics.setColor(1,0.5,0.5, 1)
-      love.graphics.print("Sure you want to quit ? [ESC] ", 116, 14)
+      love.graphics.print(quitStr, 116, 14)
       love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("Sure you want to quit ? [ESC] ", 115, 13)
+      love.graphics.print(quitStr, 115, 13)
       love.graphics.setFont(medium)
    end
 

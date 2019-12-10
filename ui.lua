@@ -51,10 +51,10 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
 
    love.graphics.setColor(0,0,0,.75)
    --love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
-   love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w + 400)*scale,(8+ h)*scale)
+   love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)
    love.graphics.setColor(1,1,1,1)
    --
-   love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w + 400)*scale,(8+ h)*scale)
+   love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)
    if color then
       love.graphics.setColor(color[1],color[2],color[3],1)
       love.graphics.rectangle("fill", x, y, (w*scale),( h * scale))
@@ -62,7 +62,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
    end
 
 
-   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w + 400)*scale,(8+ h)*scale)) then
+   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)) then
       mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
