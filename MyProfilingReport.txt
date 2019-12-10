@@ -1,67 +1,69 @@
 ###############################################################################################################
-#####  ProFi, a lua profiler. This profile was generated on: Tue Dec 10 16:15:02 2019
+#####  ProFi, a lua profiler. This profile was generated on: Tue Dec 10 19:28:33 2019
 #####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
 #####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
 #####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
 ###############################################################################################################
 
 
-| TOTAL TIME = 5.879141
+| TOTAL TIME = 0.532733
 | FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
-| [string "boot.lua"]                               : anonymous                               :  493                : 5.847       : 99.46%      :    1580     |
-| main.lua                                          : draw                                    :  579                : 5.275       : 89.73%      :    1580     |
-| ui.lua                                            : iconlabelbutton                         :   45                : 2.456       : 41.78%      :   53720     |
-| ui.lua                                            : imgbutton                               :  100                : 0.348       : 5.92%       :    9480     |
-| main.lua                                          : calcY                                   :  778                : 0.180       : 3.07%       :   63200     |
-| ui.lua                                            : pointInRect                             :    4                : 0.155       : 2.64%       :   63200     |
-| main.lua                                          : drawGrid                                :  547                : 0.111       : 1.88%       :    1580     |
-| poly.lua                                          : TableConcat                             :   36                : 0.098       : 1.67%       :   39500     |
-| main.lua                                          : calcX                                   :  781                : 0.013       : 0.23%       :    4740     |
-| main.lua                                          : handleMouseClickStart                   :  565                : 0.010       : 0.17%       :    1580     |
-| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.006       : 0.10%       :    1580     |
-| main.lua                                          : toWorldPos                              :  118                : 0.004       : 0.07%       :    1580     |
+| [string "boot.lua"]                               : anonymous                               :  493                : 0.521       : 97.84%      :     100     |
+| main.lua                                          : draw                                    :  431                : 0.443       : 83.11%      :     100     |
+| ui.lua                                            : imgbutton                               :  107                : 0.046       : 8.62%       :     600     |
+| poly.lua                                          : TableConcat                             :   36                : 0.011       : 2.13%       :    2300     |
+| ui.lua                                            : h_slider                                :  149                : 0.008       : 1.47%       :     100     |
+| main.lua                                          : drawGrid                                :  399                : 0.005       : 0.98%       :     100     |
+| main.lua                                          : calcY                                   :  614                : 0.004       : 0.72%       :     700     |
+| ui.lua                                            : pointInRect                             :    4                : 0.004       : 0.67%       :     700     |
+| main.lua                                          : calcX                                   :  617                : 0.002       : 0.33%       :     300     |
+| main.lua                                          : handleMouseClickStart                   :  417                : 0.001       : 0.23%       :     100     |
+| ui.lua                                            : iconlabelbutton                         :   45                : 0.001       : 0.12%       :     100     |
+| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.001       : 0.12%       :     100     |
+| main.lua                                          : toWorldPos                              :  152                : 0.001       : 0.12%       :     100     |
+| ui.lua                                            : mapInto                                 :   12                : 0.001       : 0.11%       :     100     |
 | [string "boot.lua"]                               : anonymous                               :  149                : 0.000       : 0.00%       :       1     |
-| ProFi.lua                                         : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
 | main.lua                                          : anonymous                               :   20                : 0.000       : 0.00%       :       1     |
-| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :    3160     |
-| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :    3160     |
-| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :  178540     |
-| [C]                                               : line                                    :   -1                : 0.000       : 0.00%       :   34760     |
+| ProFi.lua                                         : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
+| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :     200     |
+| [C]                                               : line                                    :   -1                : 0.000       : 0.00%       :     500     |
+| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :     200     |
+| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :    1500     |
 | ProFi.lua                                         : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
-| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :   55300     |
-| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :    1580     |
+| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :     700     |
+| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :     100     |
 | [string "boot.lua"]                               : anonymous                               :  146                : 0.000       : 0.00%       :       1     |
 | ProFi.lua                                         : stop                                    :   88                : 0.000       : 0.00%       :       1     |
-| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :   63200     |
-| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :    1580     |
-| poly.lua                                          : isPointInPath                           :  146                : 0.000       : 0.00%       :       0     |
-| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :   39500     |
-| [C]                                               : triangulate                             :   -1                : 0.000       : 0.00%       :   34760     |
+| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : newMesh                                 :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : polygon                                 :   -1                : 0.000       : 0.00%       :   18500     |
 | ProFi.lua                                         : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
-| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :    3160     |
-| [string "boot.lua"]                               : anonymous                               :  152                : 0.000       : 0.00%       :       1     |
-| main.lua                                          : anonymous                               :   54                : 0.000       : 0.00%       :       1     |
-| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :    1583     |
+| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :     200     |
+| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :     800     |
+| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :     103     |
 | [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :       2     |
+| [string "boot.lua"]                               : anonymous                               :  152                : 0.000       : 0.00%       :       1     |
 | ProFi.lua                                         : start                                   :   70                : 0.000       : 0.00%       :       0     |
-| [C]                                               : polygon                                 :   -1                : 0.000       : 0.00%       :  135880     |
-| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :   64780     |
-| [C]                                               : setCursor                               :   -1                : 0.000       : 0.00%       :    3160     |
-| poly.lua                                          : getPolygonCentroid                      :  343                : 0.000       : 0.00%       :   39500     |
-| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :   93220     |
+| main.lua                                          : anonymous                               :   76                : 0.000       : 0.00%       :       1     |
+| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :    2300     |
+| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :     200     |
+| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :     800     |
 | poly.lua                                          : get_collisions                          :   63                : 0.000       : 0.00%       :       0     |
+| poly.lua                                          : getPolygonCentroid                      :  343                : 0.000       : 0.00%       :    2300     |
 | poly.lua                                          : decompose_complex_poly                  :  111                : 0.000       : 0.00%       :       0     |
-| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :  379200     |
-| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :    1580     |
-| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :   66360     |
-| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :    3160     |
+| [C]                                               : triangulate                             :   -1                : 0.000       : 0.00%       :    2300     |
+| [C]                                               : setCursor                               :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :   19400     |
+| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :    7100     |
+| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :     200     |
+| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :     100     |
 | [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |

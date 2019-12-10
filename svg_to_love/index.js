@@ -16,10 +16,12 @@ var decomp = require('poly-decomp');
 if (!process.argv[2] || !process.argv[2].endsWith('.svg') ) {
     console.log('give me a svg file to convert!')
     console.log('node index.js ./file.svg')
+    console.log('optionally you can put a float simplify value as last')
     return
 }
 
 var url = process.argv[2]
+var simplifyValue = parseFloat(process.argv[3])
 
 fs.readFile( url, function (err, data) {
     if (err) {
@@ -28,16 +30,16 @@ fs.readFile( url, function (err, data) {
     var xml = data.toString()
     var total = 0
     parseString(xml, function (err, result) {
-        var opt =  {
+        var opt = {
             delaunay: true,
             clean: true,
             exterior: false,
             randomization: 0,
-            simplify: 5,
-            scale: 1,
+            simplify: simplifyValue || 0.2,
+            scale:  1,
 
         }
-       
+
         var metaInfo = result.svg['$'];
         //console.log(metaInfo)
         var metaWidth = parseInt(metaInfo.width)
@@ -60,7 +62,7 @@ fs.readFile( url, function (err, data) {
                 var parsed = parseSVGPath(d)
                 var contours = getContours(parsed, opt.scale)
 		//console.log(contours)
-                //contours =  removeConsecutiveDuplications(contours)
+                contours =  removeConsecutiveDuplications(contours)
 
 		
 		//contours.forEach(c => {
@@ -123,7 +125,7 @@ fs.readFile( url, function (err, data) {
             })
             groupIndex += 1
         })
-	console.log("toal cells: ", total)
+	//console.log("toal cells: ", total)
     });
     
 

@@ -42,7 +42,10 @@ function rgbbutton(id, rgb, x, y, scale)
    }
 end
 
+
+
 function iconlabelbutton(id, img, color, active, label, x, y, scale)
+  
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
    local w, h = img:getDimensions()
@@ -137,7 +140,53 @@ function imgbutton(id, img, x, y, scale, disabled)
       clicked = clicked
    }
 end
+function v_slider(id, x, y, height, v, min, max)
+   love.graphics.setColor(0.3, 0.3, 0.3)
+   love.graphics.rectangle('fill',x+8,y,3,height )
+   love.graphics.setColor(0, 0, 0)
+   local yOffset = mapInto(v, min, max, 0, height)
+   love.graphics.rectangle('fill',x, yOffset + y,20,20 )
+   love.graphics.setColor(1,1,1,1)
+   love.graphics.rectangle("line", x,yOffset + y,20,20)
 
+   local result= nil
+   local draggedResult = false
+   local mx, my = love.mouse.getPosition( )
+   local hover = false
+   if pointInRect(mx,my, x, yOffset +y,20,20) then
+      hover = true
+   end
+
+   if hover then
+      mouseState.hoveredSomething = true
+      love.mouse.setCursor(cursors.hand)
+      if mouseState.click then
+         lastDraggedElement = {id=id}
+	 mouseState.hoveredSomething = true
+      end
+   end
+
+   if love.mouse.isDown(1 ) then
+      if lastDraggedElement and lastDraggedElement.id == id then
+	 mouseState.hoveredSomething = true
+	 love.mouse.setCursor(cursors.hand)
+
+         local mx, my = love.mouse.getPosition( )
+         result = mapInto(my, y, y+height, min, max)
+	 if result < min then
+	    result = min
+	 else
+
+         result = math.max(result, min)
+         result = math.min(result, max)
+	 end
+
+      end
+   end
+   return {
+      value=result
+   }
+end
 
 function h_slider(id, x, y, width, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
