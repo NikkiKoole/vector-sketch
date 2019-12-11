@@ -6,14 +6,9 @@ polyline = require 'polyline'
 poly = require 'poly'
 local utf8 = require("utf8")
 ProFi = require 'ProFi'
+
 -- todo
 -- have parent child relations between shapes
-
-function love.textedited(text, start, length)
-     -- print('text edited', text, start, length)
-
---    Hammer:handle_textedited(text, start, length)
-end
 
 function love.textinput(t)
    if (changeName) then
@@ -35,10 +30,12 @@ end
 local function ends_with(str, ending)
    return ending == "" or str:sub(-#ending) == ending
 end
+
 function split(str, pos)
    local offset = utf8.offset(str, pos) or 0
    return str:sub(1, offset-1), str:sub(offset)
 end
+
 function copyShape(shape)
    local result = {
       name = shape.name or "",
@@ -68,6 +65,8 @@ function love.filedropped(file)
       scrollviewOffset = 0
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
+      editingMode = nil
+      editingModeSub = nil
    end
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
@@ -77,6 +76,9 @@ function love.filedropped(file)
       scrollviewOffset = 0
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
+      editingMode = nil
+      editingModeSub = nil
+
    end
    
 end
@@ -111,7 +113,6 @@ function love.keypressed(key)
       profiling = not profiling
    end
    if (key == 's' and not changeName) then
-      print(love.filesystem.getSaveDirectory())
       local path = shapeName..".polygons.txt"
       local info = love.filesystem.getInfo( path )
       if (info) then
@@ -122,19 +123,7 @@ function love.keypressed(key)
       love.filesystem.write(path, inspect(shapes, {indent=""}))
       love.system.openURL("file://"..love.filesystem.getSaveDirectory())
    end
-   
-   -- if (key == 's' and not changeName) then
-   --    local p = io.popen('node '..'svg_to_love/index.js svg_to_love/Sprite-0004.svg')
-   --    local str = p:read('*all')
-   --    p:close()
-
-   --    local obj = ('{'..str..'}')
-   --    local tab = (loadstring("return ".. obj)())
-   --    print(inspect(tab))
-   --    shapes = tab
-    
-   -- end
-   
+  
 
    if (changeName) then
       if (key == 'backspace') then
@@ -315,8 +304,6 @@ function love.load()
    medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
    large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 48)
 
-   condensed = medium --love.graphics.newFont( "resources/fonts/DomaineDispNar-Medium.otf", 32)
-   --condensed = love.graphics.newFont( "resources/fonts/adlib.ttf", 32)
    --large = love.graphics.newFont( "resources/fonts/adlib.ttf", 64)
    introSound = love.audio.newSource("resources/sounds/supermarket.wav", "static")
    introSound:setVolume(0.1)
@@ -324,11 +311,7 @@ function love.load()
    introSound:play()
    love.graphics.setFont(medium)
 
-
-   profiling = false
-   simplifyValue = 0.2
-   scrollviewOffset = 0
-
+  
 
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
@@ -416,7 +399,10 @@ function love.load()
       y = 0,
       scale = 1
    }
-
+   
+   profiling = false
+   simplifyValue = 0.2
+   scrollviewOffset = 0
    lastDraggedElement = {}
    quitDialog = false
 end
@@ -495,8 +481,7 @@ function love.draw()
 	    local c = shapes[i].color
 	    love.graphics.setColor(c[1], c[2], c[3], c[4] or 1)
 
-	    local c,a = poly.getPolygonCentroid(coordsRound)
-
+	    --local c,a = poly.getPolygonCentroid(coordsRound)
 	    local polys = decompose_complex_poly(coords, {})
 
 	    local result = {}
@@ -520,10 +505,6 @@ function love.draw()
 	    for j = 1, #result do
 	       love.graphics.polygon('fill', result[j])
 	    end
-
-	    --love.graphics.setColor(1,1,1)
-	    --love.graphics.circle("fill", c[1], c[2], 10)
-
 	 end
 
 	 love.graphics.setColor(0,0,0,1)
@@ -565,7 +546,7 @@ function love.draw()
    local vertices = {{100,100},{ 200,100},{ 200,200},{ 10,200}, {50, 200}, {30, 400}}
    local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
 
-   love.graphics.draw(mesh,  0, 0)
+   --love.graphics.draw(mesh,  0, 0)
 
    love.graphics.setColor(1,1,1,1)
 
@@ -753,10 +734,13 @@ function love.draw()
    
    local rightX = w - (64 + 500+ 10)/2
    for i=1, #shapes do
-      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i, rightX ,  -scrollviewOffset + calcY((i+1),s)+(i+1)*8*s, s).clicked then
+      local yPos = -scrollviewOffset + calcY((i+1),s)+(i+1)*8*s
+      if (yPos >=0 and yPos <= h) then
+      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i, rightX , yPos , s).clicked then
 	 current_shape_index = i
 	 editingMode = 'polyline'
 	 editingModeSub = 'polyline-edit'
+      end
       end
    end
 
@@ -818,22 +802,25 @@ function love.draw()
        love.graphics.print(simplifyValue, w-200, 0)
     end
     if (#shapes * 50 > h) then
-       local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, #shapes*40)
+       local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, #shapes*50)
        if (v2.value ~= nil) then
 	  scrollviewOffset= v2.value
        end
     end
-
-   love.graphics.pop()
-   love.graphics.print(triangleCount, 2,2)
-   love.graphics.print(shapeName, 100, 2)
+    love.graphics.pop()
+    
+    if not quitDialog then
+       love.graphics.print(triangleCount.." "..tostring(love.timer.getFPS( )), 2,2)
+       love.graphics.print(shapeName, 200, 2)
+    end
+    
    if quitDialog then
       local quitStr = "Quit? Seriously?! [ESC] "
       love.graphics.setFont(large)
       love.graphics.setColor(1,0.5,0.5, 1)
-      love.graphics.print(quitStr, 116, 14)
+      love.graphics.print(quitStr, 116, 13)
       love.graphics.setColor(1,1,1, 1)
-      love.graphics.print(quitStr, 115, 13)
+      love.graphics.print(quitStr, 115, 12)
       love.graphics.setFont(medium)
    end
 

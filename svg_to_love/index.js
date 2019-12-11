@@ -93,8 +93,11 @@ fs.readFile( url, function (err, data) {
 		//decomp.makeCCW(contours)
 		var cCount = 0
 		contours.forEach(c => {
+		   // console.log(c.length-1)
 		    cCount += c.length
 		})
+
+		contours = contours.filter((c) => c.length>3)
 		
 		 var polyline = denestPolyline(contours)
                  var loops = polyline.edges
@@ -116,8 +119,7 @@ fs.readFile( url, function (err, data) {
 		var str = makeLoveShape(fill, opacity, contours, groupIndex, pathIndex)
 		console.log(str)
 		
-                //console.log(positions.length, cCount)
-                // // triangulation
+
                  var cells = cdt2d(positions, edges, opt)
                  total += cells.length
                 pathIndex += 1
