@@ -8,288 +8,62 @@ utf8 = require("utf8")
 ProFi = require 'ProFi'
 
 -- todo
--- have parent child relations between shapes
+-- make index a path
 
-function love.textinput(t)
-   if (changeName) then
-      local str = shapes[current_shape_index].name or ""
-      if (changeNameCursor > #str) then
-	 changeNameCursor = #str
-      end
 
-      local a,b = split(str, changeNameCursor+1)
-      local r = table.concat{a, t, b}
-      changeNameCursor = changeNameCursor + 1
-      shapes[current_shape_index].name = r
-   end
+function shapeAtIndex(index)
+   return shapes[index]
 end
-local function starts_with(str, start)
-   return str:sub(1, #start) == start
+function nameAtIndex(index)
+   return shapes[index].name or ""
 end
-
-local function ends_with(str, ending)
-   return ending == "" or str:sub(-#ending) == ending
+function pointsAtIndex(index)
+   return shapes[index].points
+end
+function colorAtIndex(index)  -- cant use this to set
+   return shapes[index].color
+end
+function indexValidShape(index)
+   return index > 0 and not shapes[index].folder 
 end
 
-function split(str, pos)
-   local offset = utf8.offset(str, pos) or 0
-   return str:sub(1, offset-1), str:sub(offset)
-end
-
-function copyShape(shape)
-   local result = {
-      name = shape.name or "",
-      color = {},
-      points = {}
-   }
-   if (shape.color) then
-      for i=1, #shape.color do
-	 result.color[i] = shape.color[i]
-      end
-   else
-      result.color = {0,0,0,0}
-   end
-   
-   for i=1, #shape.points do
-      result.points[i]= {shape.points[i][1], shape.points[i][2]}
-   end
-   return result
-end
 
 function meshAllShapes(shapes)
    for i=1, #shapes do
-      shapes[i].mesh = makeMeshFromVertices(makeTriangles(shapes[i]))
+      if (not shapes[i].folder) then
+	 shapes[i].mesh = makeMeshFromVertices(makeTriangles(shapes[i]))
+      end
    end
 end
 function updateMesh(index)
-   if (index > 0) then
-   shapes[index].mesh= makeMeshFromVertices(makeTriangles(shapes[index]))
-   end
-end
-
-function makeTriangles(shape)
-   local triangles = {}
-   local vertices = {}
-   local points = shape.points
-   if (#points >= 2 ) then
-
-      local scale = 1
-      local coords = {}
-      --local coordsRound = {}
-      local ps = {}
-      for l=1, #points do
-	 table.insert(coords, points[l][1])
-	 table.insert(coords, points[l][2])
-      end
-      
-      if (shape.color) then
-	 local polys = decompose_complex_poly(coords, {})
-	 local result = {}
-	 for k=1 , #polys do
-	    local p = polys[k]
-	    if (#p >= 6) then
-	       -- if a import breaks on triangulation errors uncomment this
-	       --print(shapes[i].name, #p, inspect(p))
-	       local triangles = love.math.triangulate(p)
-	       for j = 1, #triangles do
-		  local t = triangles[j]
-		  local cx, cy = getTriangleCentroid(t)
-		  if isPointInPath(cx,cy, p) then
-		     table.insert(result, t)
-		  end
-	       end
-	    end
-	 end
-	 
-	 for j = 1, #result do
-	    table.insert(vertices, {result[j][1], result[j][2]})
-	    table.insert(vertices, {result[j][3], result[j][4]})
-	    table.insert(vertices, {result[j][5], result[j][6]})
-	 end
-	 
-      end
-   end
-   return vertices
-end
-
-local simple_format = {
-   {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-}
-
-function makeMeshFromVertices(vertices)
-   if (vertices and vertices[1] and vertices[1][1]) then
-      local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
-      return mesh
-   end
-   return nil
-end
-
-
-function love.filedropped(file)
-   local filename = file:getFilename()
-   if ends_with(filename, '.svg') then
-      local command = 'node '..'svg_to_love/index.js '..filename..' '..simplifyValue
-      print(command)
-      local p = io.popen(command)
-      local str = p:read('*all')
-      p:close()
-      local obj = ('{'..str..'}')
-      local tab = (loadstring("return ".. obj)())
-      shapes = tab
-      current_shape_index = 0
-      scrollviewOffset = 0
-      local index = string.find(filename, "/[^/]*$")
-      shapeName = filename:sub(index+1, -5) -- cutting off .svg
-      editingMode = nil
-      editingModeSub = nil
-      meshAllShapes(shapes)
-   end
-   if ends_with(filename, 'polygons.txt') then
-      local str = file:read('string')
-      local tab = (loadstring("return ".. str)())
-      shapes = tab
-      current_shape_index = 0
-      scrollviewOffset = 0
-      local index = string.find(filename, "/[^/]*$")
-      shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
-      editingMode = nil
-      editingModeSub = nil
-      meshAllShapes(shapes)
+   if (index > 0 and shapes[index] and not shapes[index].folder) then
+      shapes[index].mesh= makeMeshFromVertices(makeTriangles(shapes[index]))
    end
 end
 
 
-
-function love.keypressed(key)
-   if key == "escape" then
-      if (editingModeSub ~= nil) then
-	 editingModeSub = nil
-      elseif (editingMode ~= nil) then
-	 editingMode = nil
-      else
-	 if (quitDialog == true) then
-	    love.event.quit()
-	 elseif (quitDialog == false) then
-	    quitDialog = true
-	 end
-      end
-   else
-      if (quitDialog) then
-	 quitDialog = false
-      end
-   end
-   if (key == 'p' and not changeName) then
-      if not profiling then
-	 ProFi:start()
-      else
-	 ProFi:stop()
-	 ProFi:writeReport( 'MyProfilingReport.txt' )
-      end
-      profiling = not profiling
-   end
-   if (key == 's' and not changeName) then
-      local path = shapeName..".polygons.txt"
-      local info = love.filesystem.getInfo( path )
-      if (info) then
-	 shapeName = shapeName..'_' 
-	 path =  shapeName..".polygons.txt"
-      end
-      local toSave = {}
-      for i=1 , #shapes do
-	 table.insert(toSave, copyShape(shapes[i]))
-      end
-      
-      love.filesystem.write(path, inspect(toSave, {indent=""}))
-      love.system.openURL("file://"..love.filesystem.getSaveDirectory())
-   end
-   
-
-   if (changeName) then
-      if (key == 'backspace') then
-	 local str = shapes[current_shape_index].name or ""
-	 local a,b = split(str, changeNameCursor+1)
-	 shapes[current_shape_index].name = table.concat{split(a,utf8.len(a)), b}
-	 changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
-      end
-      if (key == 'delete') then
-	 local str = shapes[current_shape_index].name or ""
-	 local a,b = split(str, changeNameCursor+2)
-
-	 if (#b > 0) then
-	    shapes[current_shape_index].name = table.concat{split(a,utf8.len(a)), b}
-	    changeNameCursor = math.min(#(shapes[current_shape_index].name), changeNameCursor)
-	 end
-      end
-      if (key == 'left') then
-	 if (changeNameCursor > 0) then
-	    changeNameCursor = changeNameCursor - 1
-	 end
-      end
-      if (key == 'right' ) then
-	 local str = shapes[current_shape_index].name or ""
-	 if (changeNameCursor < utf8.len(str)) then
-	    changeNameCursor = changeNameCursor + 1
-	 end
-      end
-      if (key == 'return') then
-	 changeName = false
-      end
-   end
-end
 
 function toWorldPos(x, y)
    return (x / camera.scale) - camera.x, (y / camera.scale) - camera.y
 end
-function mouseOverPolyPoint(mx, my, ppx, ppy)
-   local wx, wy = toWorldPos(mx, my)
-   local dot_x = ppx - 5/camera.scale
-   local dot_y = ppy - 5/camera.scale
-   local dot_size = 10 / camera.scale
-   return pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)
-end
-function getIndexOfHoveredPolyPoint(mx, my, points)
-   local wx, wy = toWorldPos(mx, my)
-   for i = 1, #points do
-      local dot_x = points[i][1] - 5/camera.scale
-      local dot_y = points[i][2] - 5/camera.scale
-      local dot_size = 10 / camera.scale
-      if pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size) then
-	 return i
-      end
-   end
-   return 0
-end
-
-function getClosestEdgeIndex(wx, wy, points)
-   local closestEdgeIndex = 0
-   local closestDistance = 99999999999999
-   for j = 1, #points do
-      local next = (j == #points and 1) or j+1
-      local d = distancePointSegment(wx, wy, points[j][1], points[j][2], points[next][1], points[next][2])
-      if (d < closestDistance) then
-	 closestDistance = d
-	 closestEdgeIndex = j
-      end
-   end
-   return closestEdgeIndex
-end
-
 
 function love.mousepressed(x,y, button)
    lastDraggedElement = nil
    if editingMode == nil then
       editingMode = 'move'
    end
-   if (current_shape_index > #shapes) then current_shape_index = 0 end
-   if (current_shape_index == 0 ) then return end
+   if (indexPath > #shapes) then indexPath = 0 end
+   if (indexPath == 0 ) then return end
+
+   local points = pointsAtIndex(indexPath)
+   if not points then return end
    
-   local points = shapes[current_shape_index].points
    local wx, wy = toWorldPos(x, y)
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
       local index =  getIndexOfHoveredPolyPoint(x, y, points)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
-	    table.remove (shapes[current_shape_index].points, index)
+	    table.remove (pointsAtIndex(indexPath), index)
 	 end
 	 if (editingModeSub == 'polyline-edit') then
 	    lastDraggedElement = {id='polyline', index=index}
@@ -298,7 +72,7 @@ function love.mousepressed(x,y, button)
 
       if (editingModeSub == 'polyline-insert') then
 	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
-	 table.insert(shapes[current_shape_index].points, closestEdgeIndex+1, {wx, wy})
+	 table.insert(pointsAtIndex(indexPath), closestEdgeIndex+1, {wx, wy})
       end
    end
 
@@ -322,7 +96,7 @@ function love.mousemoved(x,y, dx, dy)
    end
 
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
-      local points = shapes[current_shape_index].points
+      local points = pointsAtIndex(indexPath)
       local beginIndex = 2 -- if first and last arent identical
       if points[1] == points[#points] then
       else
@@ -330,9 +104,9 @@ function love.mousemoved(x,y, dx, dy)
       end
 
       for i = beginIndex, #points do
-	 local p = shapes[current_shape_index].points[i]
-	 shapes[current_shape_index].points[i][1] = p[1] + dx / camera.scale
-	 shapes[current_shape_index].points[i][2] = p[2] + dy / camera.scale
+	 local p = pointsAtIndex(indexPath)[i]
+	 pointsAtIndex(indexPath)[i][1] = p[1] + dx / camera.scale
+	 pointsAtIndex(indexPath)[i][2] = p[2] + dy / camera.scale
       end
    end
 
@@ -341,7 +115,7 @@ function love.mousemoved(x,y, dx, dy)
    	 local dragIndex = lastDraggedElement.index
    	 if dragIndex > 0 then
    	    local wx, wy = toWorldPos(x, y)
-   	    local points = shapes[current_shape_index].points
+   	    local points = pointsAtIndex(indexPath)
    	    if (dragIndex <= #points) then
    	       points[dragIndex][1] = wx
    	       points[dragIndex][2] = wy
@@ -382,6 +156,10 @@ function love.load()
    introSound:play()
    love.graphics.setFont(medium)
 
+   simple_format = {
+      {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+   }
+   
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
       polyline_add = love.graphics.newImage("resources/ui/polyline-add.png"),
@@ -415,6 +193,9 @@ function love.load()
       move_up = love.graphics.newImage("resources/ui/move-up.png"),
       move_down = love.graphics.newImage("resources/ui/move-down.png"),
       mesh = love.graphics.newImage("resources/ui/mesh.png"),
+      parent = love.graphics.newImage("resources/ui/parent.png"),
+      folder = love.graphics.newImage("resources/ui/folder.png"),
+      folder_open = love.graphics.newImage("resources/ui/folderopen.png"),
 
    }
 
@@ -446,6 +227,17 @@ function love.load()
 
    shapes = {
       {
+	 folder=true,
+	 name="parent",
+	 children ={
+	    {
+	       name="child ",
+	       color = {1,1,0, 0.8},
+	       points = {{10,10},{20,100},{200,200},{100,200}},
+	    },
+	 } 
+      },
+      {
 	 name="Yes hi ",
    	 color = {1,0,0, 0.8},
    	 points = {{100,100},{200,100},{200,200},{100,200}},
@@ -456,7 +248,7 @@ function love.load()
       },
    }
    
-   current_shape_index = 1
+   indexPath = 1
 
    backdrop = {
       grid = {cellsize=100}, -- cellsize is in px
@@ -530,31 +322,33 @@ function love.draw()
 
    love.graphics.setWireframe(wireframe )
    for i = 1, #shapes do
-      if i ~= current_shape_index then
-	 if (shapes[i].mesh) then
-	    love.graphics.setColor(shapes[i].color)
-	    love.graphics.draw(shapes[i].mesh,  0,0)
+      local shape = shapeAtIndex(i) --todo this might become kinda heafty here...
+      if i ~= indexPath then
+	 if (shape.mesh) then
+	    love.graphics.setColor(shape.color)
+	    love.graphics.draw(shape.mesh,  0,0)
 	 end
       end
-      if i == current_shape_index then
-	 local editing = makeTriangles(shapes[i])
-	 if (#editing > 0) then
+      if i == indexPath then
+	 local editing = makeTriangles(shape)
+	 if (editing and #editing > 0) then
 	    local editingMesh = makeMeshFromVertices(editing)
-	    love.graphics.setColor(shapes[i].color)
+	    love.graphics.setColor(shape.color)
 	    love.graphics.draw(editingMesh,  0,0)
 	 end
       end
    end
    love.graphics.setWireframe( false )
 
-   if editingMode == 'polyline' and  current_shape_index > 0  then
-      local points = shapes[current_shape_index].points
+   if editingMode == 'polyline' and indexValidShape(indexPath)  then
+      
+      local points = pointsAtIndex(indexPath)
       love.graphics.setLineWidth(2.0  / camera.scale )
       love.graphics.setColor(1,1,1)
       for i=1, #points do
 	 local kind = "line"
-	  if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-	     if mouseOverPolyPoint(mx, my, points[i][1], points[i][2]) then
+	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
+	    if mouseOverPolyPoint(mx, my, points[i][1], points[i][2]) then
 	       kind= "fill"
 	    end
 	 end
@@ -634,7 +428,7 @@ function love.draw()
    end
    
    
-   if (editingMode == 'polyline') and current_shape_index > 0  then
+   if (editingMode == 'polyline') and indexValidShape(indexPath)  then
       if imgbutton('polyline-insert', ui.polyline_add,  calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-insert'
       end
@@ -654,9 +448,9 @@ function love.draw()
 	 editingModeSub = 'polyline-move'
       end
       if imgbutton('polyline-clone', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
-	 local cloned = copyShape(shapes[current_shape_index])
-	 cloned.name = (cloned.name or "")..' copy'
-	 table.insert(shapes, current_shape_index+1, cloned)
+	 local cloned = copyShape(shapeAtIndex(indexPath))
+	 cloned.name = (cloned.name)..' copy'
+	 table.insert(shapes, indexPath+1, cloned)
       end
    end
 
@@ -665,12 +459,12 @@ function love.draw()
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
-	    shapes[current_shape_index].color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, shapes[current_shape_index].color[4] or 1}
+	    shapeAtIndex(indexPath).color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, colorAtIndex(indexPath)[4] or 1}
 	 end
       end
-      local v =  h_slider("polyline_alpha", calcX(1, s), calcY(4, s)+ 12*s, 100,  shapes[current_shape_index].color[4] , 0, 1)
+      local v =  h_slider("polyline_alpha", calcX(1, s), calcY(4, s)+ 12*s, 100,  colorAtIndex(indexPath)[4] , 0, 1)
       if (v.value ~= nil) then
-	 shapes[current_shape_index].color[4] = v.value
+	 shapeAtIndex(indexPath).color[4] = v.value
       end
    end
 
@@ -719,9 +513,13 @@ function love.draw()
    for i=1, #shapes do
       local yPos = -scrollviewOffset + calcY((i+1),s)+(i+1)*8*s
       if (yPos >=0 and yPos <= h) then
-	 if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i, rightX , yPos , s).clicked then
-	    updateMesh(current_shape_index)
-	    current_shape_index = i
+	 if iconlabelbutton('object-group', shapeAtIndex(i).folder and ui.folder or ui.object_group,
+			    colorAtIndex(i),
+			    indexPath == i,
+			    nameAtIndex(i) or "p-"..i,
+			    rightX , yPos , s).clicked then
+	    updateMesh(indexPath)
+	    indexPath = i
 	    editingMode = 'polyline'
 	    editingModeSub = 'polyline-edit'
 	 end
@@ -734,46 +532,46 @@ function love.draw()
 	 outline = true,
 	 points = {},
       }
-      table.insert(shapes, current_shape_index+1, shape)
-      updateMesh(current_shape_index)
-      current_shape_index = current_shape_index + 1
+      table.insert(shapes, indexPath+1, shape)
+      updateMesh(indexPath)
+      indexPath = indexPath + 1
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
    end
 
    if (#shapes > 1) then
-      if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
-	 local taken_out = table.remove(shapes, current_shape_index)
-	 --updateMesh(current_shape_index)
-	 current_shape_index =  current_shape_index - 1
-	 table.insert(shapes, current_shape_index, taken_out)
+      if indexPath > 1 and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
+	 local taken_out = table.remove(shapes, indexPath)
+	 --updateMesh(indexPath)
+	 indexPath =  indexPath - 1
+	 table.insert(shapes, indexPath, taken_out)
       end
-      if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
-	 local taken_out = table.remove(shapes, current_shape_index)
-	 --updateMesh(current_shape_index)
-	 current_shape_index =  current_shape_index + 1
-	 table.insert(shapes, current_shape_index, taken_out)
+      if (indexPath < #shapes) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
+	 local taken_out = table.remove(shapes, indexPath)
+	 --updateMesh(indexPath)
+	 indexPath =  indexPath + 1
+	 table.insert(shapes, indexPath, taken_out)
       end
    end
    if #shapes > 0 then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
-	 local taken_out = table.remove(shapes, current_shape_index)
-	 if current_shape_index  > #shapes then
-	    updateMesh(current_shape_index)
-	    current_shape_index = #shapes
+	 local taken_out = table.remove(shapes, indexPath)
+	 if indexPath  > #shapes then
+	    updateMesh(indexPath)
+	    indexPath = #shapes
 	 end
 	 if #shapes == 0 then
-	    updateMesh(current_shape_index)
-	    current_shape_index = 0
+	    updateMesh(indexPath)
+	    indexPath = 0
 	 end
       end
       if imgbutton('badge', ui.badge, rightX - 50, calcY(4, s) + 8*4, s).clicked then
 	 changeName = not changeName
-	 local name = shapes[current_shape_index].name
+	 local name = nameAtIndex(indexPath)
 	 changeNameCursor = name and utf8.len(name) or 1
       end
       if (changeName) then
-	 local str = shapes[current_shape_index].name or ""
+	 local str = nameAtIndex(indexPath) or ""
 	 local substr = string.sub(str, 1, changeNameCursor)
 	 
 	 local cursorX = (love.graphics.getFont():getWidth(substr))
@@ -781,7 +579,7 @@ function love.draw()
 	 love.graphics.setColor(1,1,1,0.5)
 	 love.graphics.rectangle('fill', w-700 - 10, calcY(4, s) + 8*4 - 10, 300 + 20,  cursorH + 20 )
 	 love.graphics.setColor(1,1,1)
-	 love.graphics.print(shapes[current_shape_index].name or "", w - 700, calcY(4, s) + 8*4)
+	 love.graphics.print(nameAtIndex(indexPath) , w - 700, calcY(4, s) + 8*4)
 	 love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4, s) + 8*4, 2, cursorH)
       end
    end
@@ -813,4 +611,133 @@ function love.draw()
       love.graphics.setFont(medium)
    end
 
+end
+
+
+
+function love.textinput(t)
+   if (changeName) then
+      local str = nameAtIndex(indexPath)
+      if (changeNameCursor > #str) then
+	 changeNameCursor = #str
+      end
+
+      local a,b = split(str, changeNameCursor+1)
+      local r = table.concat{a, t, b}
+      changeNameCursor = changeNameCursor + 1
+      shapeAtIndex(indexPath).name = r
+   end
+end
+
+
+function love.filedropped(file)
+   local filename = file:getFilename()
+   if ends_with(filename, '.svg') then
+      local command = 'node '..'svg_to_love/index.js '..filename..' '..simplifyValue
+      print(command)
+      local p = io.popen(command)
+      local str = p:read('*all')
+      p:close()
+      local obj = ('{'..str..'}')
+      local tab = (loadstring("return ".. obj)())
+      shapes = tab
+      indexPath = 0
+      scrollviewOffset = 0
+      local index = string.find(filename, "/[^/]*$")
+      shapeName = filename:sub(index+1, -5) -- cutting off .svg
+      editingMode = nil
+      editingModeSub = nil
+      meshAllShapes(shapes)
+   end
+   if ends_with(filename, 'polygons.txt') then
+      local str = file:read('string')
+      local tab = (loadstring("return ".. str)())
+      shapes = tab
+      indexPath = 0
+      scrollviewOffset = 0
+      local index = string.find(filename, "/[^/]*$")
+      shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
+      editingMode = nil
+      editingModeSub = nil
+      meshAllShapes(shapes)
+   end
+end
+
+
+
+function love.keypressed(key)
+   if key == "escape" then
+      if (editingModeSub ~= nil) then
+	 editingModeSub = nil
+      elseif (editingMode ~= nil) then
+	 editingMode = nil
+      else
+	 if (quitDialog == true) then
+	    love.event.quit()
+	 elseif (quitDialog == false) then
+	    quitDialog = true
+	 end
+      end
+   else
+      if (quitDialog) then
+	 quitDialog = false
+      end
+   end
+   if (key == 'p' and not changeName) then
+      if not profiling then
+	 ProFi:start()
+      else
+	 ProFi:stop()
+	 ProFi:writeReport( 'MyProfilingReport.txt' )
+      end
+      profiling = not profiling
+   end
+   if (key == 's' and not changeName) then
+      local path = shapeName..".polygons.txt"
+      local info = love.filesystem.getInfo( path )
+      if (info) then
+	 shapeName = shapeName..'_' 
+	 path =  shapeName..".polygons.txt"
+      end
+      local toSave = {}
+      for i=1 , #shapes do
+	 table.insert(toSave, copyShape(shapeAtIndex(i)))
+      end
+      
+      love.filesystem.write(path, inspect(toSave, {indent=""}))
+      love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+   end
+   
+
+   if (changeName) then
+      if (key == 'backspace') then
+	 local str = nameAtIndex(indexPath)
+	 local a,b = split(str, changeNameCursor+1)
+	 shapeAtIndex(indexPath).name = table.concat{split(a,utf8.len(a)), b}
+	 changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
+      end
+      if (key == 'delete') then
+	 local str = nameAtIndex(indexPath)
+	 local a,b = split(str, changeNameCursor+2)
+
+	 if (#b > 0) then
+	    shapeAtIndex(indexPath).name = table.concat{split(a,utf8.len(a)), b}
+	    changeNameCursor = math.min(#(nameAtIndex(indexPath)), changeNameCursor)
+	 end
+      end
+      if (key == 'left') then
+	 if (changeNameCursor > 0) then
+	    changeNameCursor = changeNameCursor - 1
+	 end
+      end
+      if (key == 'right' ) then
+	 local str = nameAtIndex(indexPath)
+	 if (changeNameCursor < utf8.len(str)) then
+	    changeNameCursor = changeNameCursor + 1
+	 end
+      end
+      if (key == 'return') then
+	 changeName = false
+      end
+   end
 end
