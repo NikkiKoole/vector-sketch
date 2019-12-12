@@ -8,24 +8,50 @@ utf8 = require("utf8")
 ProFi = require 'ProFi'
 
 -- todo
--- make index a path
-
 
 function shapeAtIndex(index)
-   return shapes[index]
+   if (#index == 1) then
+      return shapes[index[1]]
+   end
 end
 function nameAtIndex(index)
-   return shapes[index].name or ""
+   return shapeAtIndex(index).name or ""
 end
 function pointsAtIndex(index)
-   return shapes[index].points
+   return shapeAtIndex(index).points
 end
 function colorAtIndex(index)  -- cant use this to set
-   return shapes[index].color
+   return shapeAtIndex(index).color
 end
 function indexValidShape(index)
-   return index > 0 and not shapes[index].folder 
+   if (#index == 1) then
+      return index[1] > 0 and not shapes[index[1]].folder 
+   end
 end
+function canMoveShapeUp(path)
+   return path[1] > 1
+end
+function canMoveShapeDown(path)
+   return path[1] < #shapes
+end
+function addShapeAtPath(shape, path)
+   table.insert(shapes, path[1], shape)
+end
+function removeShapeAtPath(path)
+   return table.remove(shapes, path[1])
+end
+function increaseIndexPath()
+   if (#indexPath == 1) then
+      indexPath =  {indexPath[1] + 1}
+   end
+end
+function decreaseIndexPath()
+   if (#indexPath == 1) then
+      indexPath =  {indexPath[1] - 1}
+      if indexPath[1] == 0  and #shapes > 0 then indexPath[1] = 1 end
+   end
+end
+
 
 
 function meshAllShapes(shapes)
@@ -36,8 +62,8 @@ function meshAllShapes(shapes)
    end
 end
 function updateMesh(index)
-   if (index > 0 and shapes[index] and not shapes[index].folder) then
-      shapes[index].mesh= makeMeshFromVertices(makeTriangles(shapes[index]))
+   if (indexValidShape(index)) then
+      shapes[index[1]].mesh= makeMeshFromVertices(makeTriangles(shapes[index[1]]))
    end
 end
 
@@ -52,10 +78,8 @@ function love.mousepressed(x,y, button)
    if editingMode == nil then
       editingMode = 'move'
    end
-   if (indexPath > #shapes) then indexPath = 0 end
-   if (indexPath == 0 ) then return end
 
-   local points = pointsAtIndex(indexPath)
+   local points = indexValidShape(indexPath) and pointsAtIndex(indexPath)
    if not points then return end
    
    local wx, wy = toWorldPos(x, y)
@@ -248,7 +272,8 @@ function love.load()
       },
    }
    
-   indexPath = 1
+   indexPath = {1}
+   hoverPath = {}
 
    backdrop = {
       grid = {cellsize=100}, -- cellsize is in px
@@ -291,6 +316,7 @@ end
 
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
+   
    mouseState.down = love.mouse.isDown(1 )
    mouseState.click = false
 
@@ -321,15 +347,24 @@ function love.draw()
 
 
    love.graphics.setWireframe(wireframe )
+
    for i = 1, #shapes do
-      local shape = shapeAtIndex(i) --todo this might become kinda heafty here...
-      if i ~= indexPath then
+      local shape = shapeAtIndex({i}) --todo this might become kinda heafty here...
+      if (i == hoverPath[1]) then
+	 love.graphics.setWireframe(true)
+	 hoverPath = {}
+      else
+	 love.graphics.setWireframe(wireframe)
+      end
+      
+      
+      if i ~= indexPath[1] then
 	 if (shape.mesh) then
 	    love.graphics.setColor(shape.color)
 	    love.graphics.draw(shape.mesh,  0,0)
 	 end
       end
-      if i == indexPath then
+      if i == indexPath[1] then
 	 local editing = makeTriangles(shape)
 	 if (editing and #editing > 0) then
 	    local editingMesh = makeMeshFromVertices(editing)
@@ -337,6 +372,7 @@ function love.draw()
 	    love.graphics.draw(editingMesh,  0,0)
 	 end
       end
+
    end
    love.graphics.setWireframe( false )
 
@@ -450,7 +486,9 @@ function love.draw()
       if imgbutton('polyline-clone', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
 	 local cloned = copyShape(shapeAtIndex(indexPath))
 	 cloned.name = (cloned.name)..' copy'
-	 table.insert(shapes, indexPath+1, cloned)
+	 increaseIndexPath()
+	 addShapeAtPath(cloned, indexPath)
+
       end
    end
 
@@ -508,23 +546,44 @@ function love.draw()
 
    -- now lets render the list of items on screen,
    -- i want this to be right alligned
+
+
+   function recursivePathMaker()
+      
+   end
+   
+
+
    
    local rightX = w - (64 + 500+ 10)/2
+   local nested = 0
    for i=1, #shapes do
+      if (shapes[i].folder) then
+--	 print(inspect(shapes[i].children))
+      end
+      
       local yPos = -scrollviewOffset + calcY((i+1),s)+(i+1)*8*s
       if (yPos >=0 and yPos <= h) then
-	 if iconlabelbutton('object-group', shapeAtIndex(i).folder and ui.folder or ui.object_group,
-			    colorAtIndex(i),
-			    indexPath == i,
-			    nameAtIndex(i) or "p-"..i,
-			    rightX , yPos , s).clicked then
+	 local b = iconlabelbutton('object-group', shapeAtIndex({i}).folder and ui.folder or ui.object_group,
+			    colorAtIndex({i}),
+			    indexPath[1] == i,
+			    nameAtIndex({i}) or "p-"..i,
+			    rightX , yPos , s)
+	 if b.clicked then
 	    updateMesh(indexPath)
-	    indexPath = i
+	    indexPath = {i}
 	    editingMode = 'polyline'
 	    editingModeSub = 'polyline-edit'
 	 end
+	 if b.hover then
+	    hoverPath = {i}
+	 end
+	 
       end
    end
+
+
+   
 
    if iconlabelbutton('add-object', ui.add, nil, false,  'add shape',  rightX, calcY(1,s)+1*8*s, s).clicked then
       local shape = {
@@ -532,38 +591,33 @@ function love.draw()
 	 outline = true,
 	 points = {},
       }
-      table.insert(shapes, indexPath+1, shape)
       updateMesh(indexPath)
-      indexPath = indexPath + 1
+      increaseIndexPath()
+      addShapeAtPath(shape, indexPath)
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
    end
 
+
+
+   
    if (#shapes > 1) then
-      if indexPath > 1 and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
-	 local taken_out = table.remove(shapes, indexPath)
-	 --updateMesh(indexPath)
-	 indexPath =  indexPath - 1
-	 table.insert(shapes, indexPath, taken_out)
+      if canMoveShapeUp(indexPath) and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
+	 local taken_out = removeShapeAtPath(indexPath)
+	 decreaseIndexPath()
+	 addShapeAtPath(taken_out, indexPath)
       end
-      if (indexPath < #shapes) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
-	 local taken_out = table.remove(shapes, indexPath)
-	 --updateMesh(indexPath)
-	 indexPath =  indexPath + 1
-	 table.insert(shapes, indexPath, taken_out)
+      if (canMoveShapeDown(indexPath)) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
+	 local taken_out =  removeShapeAtPath(indexPath)
+	 increaseIndexPath()
+	 addShapeAtPath(taken_out, indexPath)
+
       end
    end
    if #shapes > 0 then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
-	 local taken_out = table.remove(shapes, indexPath)
-	 if indexPath  > #shapes then
-	    updateMesh(indexPath)
-	    indexPath = #shapes
-	 end
-	 if #shapes == 0 then
-	    updateMesh(indexPath)
-	    indexPath = 0
-	 end
+	 local taken_out = removeShapeAtPath(indexPath)
+	 decreaseIndexPath()
       end
       if imgbutton('badge', ui.badge, rightX - 50, calcY(4, s) + 8*4, s).clicked then
 	 changeName = not changeName
@@ -597,7 +651,7 @@ function love.draw()
    love.graphics.pop()
    triangleCount = 0
    if not quitDialog then
-      love.graphics.print(triangleCount.." "..tostring(love.timer.getFPS( )), 2,2)
+      love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
       love.graphics.print(shapeName, 200, 2)
    end
    
@@ -641,7 +695,7 @@ function love.filedropped(file)
       local obj = ('{'..str..'}')
       local tab = (loadstring("return ".. obj)())
       shapes = tab
-      indexPath = 0
+      indexPath = {0}
       scrollviewOffset = 0
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
@@ -653,7 +707,7 @@ function love.filedropped(file)
       local str = file:read('string')
       local tab = (loadstring("return ".. str)())
       shapes = tab
-      indexPath = 0
+      indexPath = {0}
       scrollviewOffset = 0
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
