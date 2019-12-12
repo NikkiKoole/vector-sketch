@@ -1,11 +1,11 @@
-inspect = require 'inspect'
+inspect = require 'vendor.inspect'
 require 'ui'
 require 'palettes'
 require 'util'
 polyline = require 'polyline'
 poly = require 'poly'
 utf8 = require("utf8")
-ProFi = require 'ProFi'
+ProFi = require 'vendor.ProFi'
 
 -- todo
 
@@ -742,7 +742,7 @@ function love.keypressed(key)
 	 ProFi:start()
       else
 	 ProFi:stop()
-	 ProFi:writeReport( 'MyProfilingReport.txt' )
+	 ProFi:writeReport( 'log/MyProfilingReport.txt' )
       end
       profiling = not profiling
    end
