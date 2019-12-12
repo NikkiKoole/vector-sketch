@@ -366,6 +366,7 @@ function love.wheelmoved(x,y)
 end
 
 function love.load()
+   
    shapeName = 'untitled'
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
    love.keyboard.setKeyRepeat( true )
@@ -467,7 +468,8 @@ function love.load()
       y = 0,
       scale = 1
    }
-   
+
+   wireframe = false
    profiling = false
    simplifyValue = 0.2
    scrollviewOffset = 0
@@ -525,7 +527,8 @@ function love.draw()
       love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
    end
 
-   
+
+   love.graphics.setWireframe(wireframe )
    for i = 1, #shapes do
       if i ~= current_shape_index then
 	 if (shapes[i].mesh) then
@@ -542,7 +545,7 @@ function love.draw()
 	 end
       end
    end
-
+   love.graphics.setWireframe( false )
 
    if editingMode == 'polyline' and  current_shape_index > 0  then
       local points = shapes[current_shape_index].points
@@ -626,7 +629,11 @@ function love.draw()
 	 end
       end
    end
-
+   if imgbutton('polyline-wireframe', ui.lines,  calcX(0, s), calcY(4, s), s).clicked then
+      wireframe = not wireframe
+   end
+   
+   
    if (editingMode == 'polyline') and current_shape_index > 0  then
       if imgbutton('polyline-insert', ui.polyline_add,  calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-insert'
