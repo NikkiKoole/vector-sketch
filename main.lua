@@ -687,7 +687,7 @@ end
 function love.filedropped(file)
    local filename = file:getFilename()
    if ends_with(filename, '.svg') then
-      local command = 'node '..'svg_to_love/index.js '..filename..' '..simplifyValue
+      local command = 'node '..'resources/svg_to_love/index.js '..filename..' '..simplifyValue
       print(command)
       local p = io.popen(command)
       local str = p:read('*all')
