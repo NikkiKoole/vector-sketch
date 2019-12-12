@@ -4,7 +4,7 @@ require 'palettes'
 require 'util'
 polyline = require 'polyline'
 poly = require 'poly'
-local utf8 = require("utf8")
+utf8 = require("utf8")
 ProFi = require 'ProFi'
 
 -- todo
@@ -42,14 +42,89 @@ function copyShape(shape)
       color = {},
       points = {}
    }
-   for i=1, #shape.color do
-      result.color[i] = shape.color[i]
+   if (shape.color) then
+      for i=1, #shape.color do
+	 result.color[i] = shape.color[i]
+      end
+   else
+      result.color = {0,0,0,0}
    end
+   
    for i=1, #shape.points do
       result.points[i]= {shape.points[i][1], shape.points[i][2]}
    end
    return result
 end
+
+function meshAllShapes(shapes)
+   for i=1, #shapes do
+      shapes[i].mesh = makeMeshFromVertices(makeTriangles(shapes[i]))
+   end
+end
+function updateMesh(index)
+   if (index > 0) then
+   shapes[index].mesh= makeMeshFromVertices(makeTriangles(shapes[index]))
+   end
+end
+
+function makeTriangles(shape)
+   local triangles = {}
+   local vertices = {}
+   local points = shape.points
+   if (#points >= 2 ) then
+
+      local scale = 1
+      local coords = {}
+      --local coordsRound = {}
+      local ps = {}
+      for l=1, #points do
+	 table.insert(coords, points[l][1])
+	 table.insert(coords, points[l][2])
+      end
+      
+      if (shape.color) then
+	 local polys = decompose_complex_poly(coords, {})
+	 local result = {}
+	 for k=1 , #polys do
+	    local p = polys[k]
+	    if (#p >= 6) then
+	       -- if a import breaks on triangulation errors uncomment this
+	       --print(shapes[i].name, #p, inspect(p))
+	       local triangles = love.math.triangulate(p)
+	       for j = 1, #triangles do
+		  local t = triangles[j]
+		  local cx, cy = getTriangleCentroid(t)
+		  if isPointInPath(cx,cy, p) then
+		     table.insert(result, t)
+		  end
+	       end
+	    end
+	 end
+	 
+	 for j = 1, #result do
+	    table.insert(vertices, {result[j][1], result[j][2]})
+	    table.insert(vertices, {result[j][3], result[j][4]})
+	    table.insert(vertices, {result[j][5], result[j][6]})
+	 end
+	 
+      end
+   end
+   return vertices
+end
+
+local simple_format = {
+   {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+}
+
+function makeMeshFromVertices(vertices)
+   if (vertices and vertices[1] and vertices[1][1]) then
+      local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+      return mesh
+   end
+   return nil
+end
+
+
 function love.filedropped(file)
    local filename = file:getFilename()
    if ends_with(filename, '.svg') then
@@ -67,6 +142,7 @@ function love.filedropped(file)
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
       editingMode = nil
       editingModeSub = nil
+      meshAllShapes(shapes)
    end
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
@@ -78,9 +154,8 @@ function love.filedropped(file)
       shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
       editingMode = nil
       editingModeSub = nil
-
+      meshAllShapes(shapes)
    end
-   
 end
 
 
@@ -119,11 +194,15 @@ function love.keypressed(key)
 	 shapeName = shapeName..'_' 
 	 path =  shapeName..".polygons.txt"
       end
+      local toSave = {}
+      for i=1 , #shapes do
+	 table.insert(toSave, copyShape(shapes[i]))
+      end
       
-      love.filesystem.write(path, inspect(shapes, {indent=""}))
+      love.filesystem.write(path, inspect(toSave, {indent=""}))
       love.system.openURL("file://"..love.filesystem.getSaveDirectory())
    end
-  
+   
 
    if (changeName) then
       if (key == 'backspace') then
@@ -155,10 +234,7 @@ function love.keypressed(key)
       if (key == 'return') then
 	 changeName = false
       end
-
    end
-
-
 end
 
 function toWorldPos(x, y)
@@ -210,10 +286,6 @@ function love.mousepressed(x,y, button)
    local points = shapes[current_shape_index].points
    local wx, wy = toWorldPos(x, y)
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      if (editingModeSub == 'polyline-add' ) then
-	 table.insert(shapes[current_shape_index].points, {wx, wy})
-      end
-
       local index =  getIndexOfHoveredPolyPoint(x, y, points)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
@@ -300,18 +372,14 @@ function love.load()
    camera = {x=0, y=0, scale=1}
    editingMode = nil
    editingModeSub = nil
-   --medium = love.graphics.newFont( "resources/fonts/MPLUSRounded1c-Medium.ttf", 16)
    medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
    large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 48)
-
-   --large = love.graphics.newFont( "resources/fonts/adlib.ttf", 64)
+   
    introSound = love.audio.newSource("resources/sounds/supermarket.wav", "static")
    introSound:setVolume(0.1)
    introSound:setPitch(0.9 + 0.2*love.math.random())
    introSound:play()
    love.graphics.setFont(medium)
-
-  
 
    ui = {
       polyline = love.graphics.newImage("resources/ui/polyline.png"),
@@ -375,18 +443,18 @@ function love.load()
       click = false,
    }
 
-   shapes = { {
+   shapes = {
+      {
 	 name="Yes hi ",
    	 color = {1,0,0, 0.8},
    	 points = {{100,100},{200,100},{200,200},{100,200}},
-   }, {
+      },
+      {
    	 color = {1,1,0, 0.8},
    	 points = {{150,100},{250,100},{250,200},{150,200}},
-      }, {
-   	 outline = true,
-   	 points = {}
-   }}
-  
+      },
+   }
+   
    current_shape_index = 1
 
    backdrop = {
@@ -405,6 +473,8 @@ function love.load()
    scrollviewOffset = 0
    lastDraggedElement = {}
    quitDialog = false
+
+   meshAllShapes(shapes)
 end
 
 function drawGrid()
@@ -438,8 +508,9 @@ function handleMouseClickStart()
    mouseState.lastDown =  mouseState.down
 end
 
-
+local step = 0 
 function love.draw()
+   step = step + 1
    local mx,my = love.mouse.getPosition()
    local wx, wy = toWorldPos(mx, my)
    handleMouseClickStart()
@@ -454,119 +525,35 @@ function love.draw()
       love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
    end
 
-   love.graphics.setColor(0,0,0)
-
-
-   local triangleCount = 0
+   
    for i = 1, #shapes do
-      local points = shapes[i].points
-      if (#points >= 2 ) then
-
-	 local scale = 1
-	 local coords = {}
-	 local coordsRound = {}
-	 local ps = {}
-	 for l=1, #points do
-	    table.insert(coords, points[l][1])
-	    table.insert(coords, points[l][2])
-	    table.insert(coordsRound, points[l][1])
-	    table.insert(coordsRound, points[l][2])
+      if i ~= current_shape_index then
+	 if (shapes[i].mesh) then
+	    love.graphics.setColor(shapes[i].color)
+	    love.graphics.draw(shapes[i].mesh,  0,0)
 	 end
-
-	 table.insert(coordsRound, points[1][1])
-	 table.insert(coordsRound, points[1][2])
-
-	 if (shapes[i].color) then
-
-	    local c = shapes[i].color
-	    love.graphics.setColor(c[1], c[2], c[3], c[4] or 1)
-
-	    --local c,a = poly.getPolygonCentroid(coordsRound)
-	    local polys = decompose_complex_poly(coords, {})
-
-	    local result = {}
-	    for k=1 , #polys do
-	       local p = polys[k]
-	       if (#p >= 6) then
-		  -- if a import breaks on triangulation errors uncomment this
-		  --print(shapes[i].name, #p, inspect(p))
-		  local triangles = love.math.triangulate(p)
-		  for j = 1, #triangles do
-		     local t = triangles[j]
-		     local cx, cy = getTriangleCentroid(t)
-		     if isPointInPath(cx,cy, p) then
-			triangleCount = triangleCount+1
-			table.insert(result, t)
-		     end
-		  end
-	       end
-	    end
-
-	    for j = 1, #result do
-	       love.graphics.polygon('fill', result[j])
-	    end
+      end
+      if i == current_shape_index then
+	 local editing = makeTriangles(shapes[i])
+	 if (#editing > 0) then
+	    local editingMesh = makeMeshFromVertices(editing)
+	    love.graphics.setColor(shapes[i].color)
+	    love.graphics.draw(editingMesh,  0,0)
 	 end
-
-	 love.graphics.setColor(0,0,0,1)
-
-	 if (shapes[i].outline) then
-	    love.graphics.setLineStyle('rough')
-	    love.graphics.setLineJoin('bevel')
-	    love.graphics.setLineWidth(2)
-
-	    local vertices, indices, draw_mode = polyline(
-	       love.graphics.getLineJoin(),
-	       coordsRound, love.graphics.getLineWidth() / 2,
-	       1/scale,
-	       love.graphics.getLineStyle() == 'smooth')
-
-	    local mesh = love.graphics.newMesh(#coordsRound * 2)
-	    mesh:setVertices(vertices)
-	    mesh:setDrawMode(draw_mode)
-	    mesh:setVertexMap(indices)
-	    if indices then
-	       mesh:setDrawRange(1, #indices)
-	    else
-	       mesh:setDrawRange(1, #vertices)
-	    end
-	    love.graphics.draw(mesh)
-	 end
-
-	 love.graphics.setLineWidth(1)
       end
    end
 
 
-
-   love.graphics.setColor(1,0,0,1)
-
-   local simple_format = {
-      {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-   }
-   local vertices = {{100,100},{ 200,100},{ 200,200},{ 10,200}, {50, 200}, {30, 400}}
-   local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
-
-   --love.graphics.draw(mesh,  0, 0)
-
-   love.graphics.setColor(1,1,1,1)
-
    if editingMode == 'polyline' and  current_shape_index > 0  then
       local points = shapes[current_shape_index].points
       love.graphics.setLineWidth(2.0  / camera.scale )
-
+      love.graphics.setColor(1,1,1)
       for i=1, #points do
 	 local kind = "line"
-	 if mouseOverPolyPoint(mx, my, points[i][1], points[i][2]) then
-	    if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
+	  if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
+	     if mouseOverPolyPoint(mx, my, points[i][1], points[i][2]) then
 	       kind= "fill"
 	    end
-	    if (editingModeSub == 'polyline-add') and i == 1 and  #points > 1 then
-	       kind= "fill"
-	    end
-	 end
-
-	 if (editingModeSub == 'polyline-add') and i == #points then
-	    kind = 'fill'
 	 end
 
 	 if editingModeSub == 'polyline-insert' then
@@ -575,8 +562,8 @@ function love.draw()
 	    if i == closestEdgeIndex or i == nextIndex then
 	       kind = 'fill'
 	    end
-
 	 end
+	 
 	 local dot_x = points[i][1] - 5/camera.scale
 	 local dot_y =  points[i][2] - 5/camera.scale
 	 local dot_size = 10 / camera.scale
@@ -601,7 +588,7 @@ function love.draw()
 
 	 love.graphics.circle("fill", rotator.x, rotator.y , radius)
 
-	  love.graphics.setColor(1,1,1)
+	 love.graphics.setColor(1,1,1)
 	 love.graphics.circle("line", rotator.x, rotator.y , radius)
       end
 
@@ -641,40 +628,29 @@ function love.draw()
    end
 
    if (editingMode == 'polyline') and current_shape_index > 0  then
-      if imgbutton('polyline-insert', ui.insert_link,  calcX(1, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-insert', ui.polyline_add,  calcX(1, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-insert'
       end
-      if imgbutton('polyline-add', ui.polyline_add, calcX(2, s), calcY(2, s), s).clicked then
-	 editingModeSub = 'polyline-add'
-      end
-      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(3, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(2, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-remove'
       end
-      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(4, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-edit'
       end
-      if imgbutton('polyline-palette', ui.palette,  calcX(5, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-palette', ui.palette,  calcX(4, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-palette'
       end
-      if imgbutton('polyline-rotate', ui.rotate,  calcX(6, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-rotate', ui.rotate,  calcX(5, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-rotate'
       end
-
-      if imgbutton('polyline-move', ui.move,  calcX(7, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-move', ui.move,  calcX(6, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-move'
       end
-      if imgbutton('polyline-outside', shapes[current_shape_index].outline and ui.lines or ui.lines2,  calcX(8, s), calcY(2, s), s).clicked then
-	 shapes[current_shape_index].outline = not shapes[current_shape_index].outline
-      end
-      if imgbutton('polyline-shape', ui.mesh,  calcX(9, s), calcY(2, s), s).clicked then
-      end
-
-      if imgbutton('polyline-clone', ui.add,  calcX(10, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-clone', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
 	 local cloned = copyShape(shapes[current_shape_index])
 	 cloned.name = (cloned.name or "")..' copy'
 	 table.insert(shapes, current_shape_index+1, cloned)
       end
-
    end
 
 
@@ -736,11 +712,12 @@ function love.draw()
    for i=1, #shapes do
       local yPos = -scrollviewOffset + calcY((i+1),s)+(i+1)*8*s
       if (yPos >=0 and yPos <= h) then
-      if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i, rightX , yPos , s).clicked then
-	 current_shape_index = i
-	 editingMode = 'polyline'
-	 editingModeSub = 'polyline-edit'
-      end
+	 if iconlabelbutton('object-group', ui.object_group, shapes[i].color, current_shape_index == i, shapes[i].name or "p-"..i, rightX , yPos , s).clicked then
+	    updateMesh(current_shape_index)
+	    current_shape_index = i
+	    editingMode = 'polyline'
+	    editingModeSub = 'polyline-edit'
+	 end
       end
    end
 
@@ -751,19 +728,22 @@ function love.draw()
 	 points = {},
       }
       table.insert(shapes, current_shape_index+1, shape)
+      updateMesh(current_shape_index)
       current_shape_index = current_shape_index + 1
       editingMode = 'polyline'
-      editingModeSub = 'polyline-add'
+      editingModeSub = 'polyline-insert'
    end
 
    if (#shapes > 1) then
       if current_shape_index > 1 and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
+	 --updateMesh(current_shape_index)
 	 current_shape_index =  current_shape_index - 1
 	 table.insert(shapes, current_shape_index, taken_out)
       end
       if (current_shape_index < #shapes) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
+	 --updateMesh(current_shape_index)
 	 current_shape_index =  current_shape_index + 1
 	 table.insert(shapes, current_shape_index, taken_out)
       end
@@ -772,9 +752,11 @@ function love.draw()
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
 	 local taken_out = table.remove(shapes, current_shape_index)
 	 if current_shape_index  > #shapes then
+	    updateMesh(current_shape_index)
 	    current_shape_index = #shapes
 	 end
 	 if #shapes == 0 then
+	    updateMesh(current_shape_index)
 	    current_shape_index = 0
 	 end
       end
@@ -797,23 +779,23 @@ function love.draw()
       end
    end
    local v =  h_slider("simplify_value", w-150, 5, 100,  simplifyValue , 0, 10)
-    if (v.value ~= nil) then
-       simplifyValue= v.value
-       love.graphics.print(simplifyValue, w-200, 0)
-    end
-    if (#shapes * 50 > h) then
-       local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, #shapes*50)
-       if (v2.value ~= nil) then
-	  scrollviewOffset= v2.value
-       end
-    end
-    love.graphics.pop()
-    
-    if not quitDialog then
-       love.graphics.print(triangleCount.." "..tostring(love.timer.getFPS( )), 2,2)
-       love.graphics.print(shapeName, 200, 2)
-    end
-    
+   if (v.value ~= nil) then
+      simplifyValue= v.value
+      love.graphics.print(simplifyValue, w-200, 0)
+   end
+   if (#shapes * 50 > h) then
+      local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, #shapes*50)
+      if (v2.value ~= nil) then
+	 scrollviewOffset= v2.value
+      end
+   end
+   love.graphics.pop()
+   triangleCount = 0
+   if not quitDialog then
+      love.graphics.print(triangleCount.." "..tostring(love.timer.getFPS( )), 2,2)
+      love.graphics.print(shapeName, 200, 2)
+   end
+   
    if quitDialog then
       local quitStr = "Quit? Seriously?! [ESC] "
       love.graphics.setFont(large)
