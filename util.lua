@@ -105,7 +105,7 @@ function copyShape(shape)
    
 end
 
-function makeTriangles(shape)
+function makeVertices(shape)
    local triangles = {}
    local vertices = {}
    if (shape.folder) then return end

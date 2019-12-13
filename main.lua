@@ -30,7 +30,9 @@ function addShapeAfter(shape, after)
 end
 
 function removeCurrentNode()
-   return table.remove(currentNode._parent.children, getIndex(currentNode))
+   if (currentNode) then
+      return table.remove(currentNode._parent.children, getIndex(currentNode))
+   end
 end
 
 function removeShapeAtPath(path)
@@ -40,7 +42,7 @@ end
 function meshAllShapes(shapes) -- this needs to be done recursive
    for i=1, #root.children do
       if (not root.children[i].folder) then
-	 root.children[i].mesh = makeMeshFromVertices(makeTriangles(root.children[i]))
+	 root.children[i].mesh = makeMeshFromVertices(makeVertices(root.children[i]))
       end
    end
 end
@@ -127,6 +129,69 @@ function love.mousemoved(x,y, dx, dy)
       end
    end
 end
+local calcY = function(i, s)
+   return (64 * i * s) + (10*i*s)
+end
+local calcX = function(i, s)
+   return 16 + (64 * i * s) + (10*i*s)
+end
+
+
+function renderGraphNodes(node, level, startY)
+   local w, h = love.graphics.getDimensions( )
+   local rightX = w - (64 + 500+ 10)/2 + level*20
+   local nested = 0
+   local s = 0.4
+   local runningY = 0
+   
+   for i=1, #node.children do
+      runningY = runningY + 32
+      local yPos = -scrollviewOffset + startY  + runningY
+      
+      if (yPos >=0 and yPos <= h) then
+	 local child = node.children[i]
+	 local icon = ui.object_group
+	 --print(inspect(node.children), inspect(child))
+	 if (child.folder ) then
+	    if (child.open) then
+	       icon = ui.folder_open
+	    else
+	       icon = ui.folder
+	    end
+	 end
+	 
+	 local b = iconlabelbutton('object-group', icon, child.color, child == currentNode, child.name or "", rightX , yPos , s)
+	 
+	 if (child.folder and child.open) then
+	    local add = renderGraphNodes(child, level + 1, runningY + startY)
+	    runningY = runningY + add
+	 end
+	 
+	 if b.clicked then
+	    if currentNode and not currentNode.folder then
+	       currentNode.mesh= makeMeshFromVertices(makeVertices(currentNode))
+	    end
+	    if (child.folder) then
+	       child.open = not child.open
+	    end
+	    if not child.folder then
+	       editingMode = 'polyline'
+	       editingModeSub = 'polyline-edit'
+	    end
+	    currentNode = child
+	 end
+	 
+	 if b.hover then
+	    currentlyHoveredUINode = node.children[i]
+	 end
+	 
+      end
+   end
+   return runningY
+   --return #node.children
+end
+
+
 
 function love.wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
@@ -157,6 +222,7 @@ function love.load()
    camera = {x=0, y=0, scale=1}
    editingMode = nil
    editingModeSub = nil
+   small = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 24)
    medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
    large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 48)
    
@@ -241,10 +307,10 @@ function love.load()
       children = {
 	 {
 	    folder=true,
-	    name="parent",
+	    name="PARENT",
 	    children ={
 	       {
-		  name="child ",
+		  name="child1 ",
 		  color = {1,1,0, 0.8},
 		  points = {{10,10},{20,100},{200,200},{100,200}},
 	       },
@@ -259,6 +325,38 @@ function love.load()
 	    color = {1,1,0, 0.8},
 	    points = {{150,100},{250,100},{250,200},{150,200}},
 	 },
+	 {
+	    folder=true,
+	    name="PARENT2",
+	    children ={
+	       {
+		  name="child2 ",
+		  color = {1,1,0, 0.8},
+		  points = {{10,10},{20,100},{200,200},{100,200}},
+	       },
+	       {
+	    folder=true,
+	    name="PARENT3",
+	    children ={
+	       {
+		  name="child3a ",
+		  color = {1,1,0, 0.8},
+		  points = {{10,10},{20,100},{200,200},{100,200}},
+	       },
+	       {
+		  name="child3b ",
+		  color = {1,1,0, 0.8},
+		  points = {{10,10},{20,100},{200,200},{100,200}},
+	       },
+	       {
+		  name="child3c ",
+		  color = {1,1,0, 0.8},
+		  points = {{10,10},{20,100},{200,200},{100,200}},
+	       },
+	    } 
+	 },
+	    } 
+	 },
       }
    }
    parentize(root)
@@ -267,7 +365,7 @@ function love.load()
 
    currentNode = nil
    currentlyHoveredUINode = nil
-   indexPath = {1}
+
 
 
    backdrop = {
@@ -355,7 +453,7 @@ function love.draw()
 	 end
       end
       if currentNode == shape then
-	 local editing = makeTriangles(shape)
+	 local editing = makeVertices(shape)
 	 if (editing and #editing > 0) then
 	    local editingMesh = makeMeshFromVertices(editing)
 	    love.graphics.setColor(shape.color)
@@ -363,17 +461,20 @@ function love.draw()
 	 end
       end
 
-      if (currentlyHoveredUINode == shape ) then
-	 local alpha = math.sin((step % 150)/150)
-	 love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
-	 local editing = makeTriangles(shape)
-	 if (editing and #editing > 0) then
-	    local editingMesh = makeMeshFromVertices(editing)
-	    love.graphics.draw(editingMesh,  0,0)
-	 end
-      end
 
    end
+
+   if (false and currentlyHoveredUINode) then
+      local alpha = 0.5 + math.sin(step/100)
+      love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
+      local editing = makeVertices(currentlyHoveredUINode)
+      if (editing and #editing > 0) then
+	 local editingMesh = makeMeshFromVertices(editing)
+	 love.graphics.draw(editingMesh,  0,0)
+      end
+   end
+
+   
    love.graphics.setWireframe( false )
 
    if editingMode == 'polyline' and currentNode  then
@@ -407,7 +508,7 @@ function love.draw()
       
       love.graphics.setLineWidth(1)
       love.graphics.setLineWidth(4/ camera.scale)
-      if editingModeSub == 'polyline-rotate'  and #points > 0 then
+      if editingModeSub == 'polyline-rotate'  and #points > 0 and false then
 	 local radius = 12  / camera.scale
 	 local pivot = points[1]
 	 local rotator = {x=pivot.x + 100, y=pivot.y}
@@ -439,12 +540,7 @@ function love.draw()
    local buttons = {
       'move', 'polyline', 'backdrop'
    }
-   local calcY = function(i, s)
-      return (64 * i * s) + (10*i*s)
-   end
-   local calcX = function(i, s)
-      return 16 + (64 * i * s) + (10*i*s)
-   end
+  
 
    for i = 1, #buttons do
       if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
@@ -496,7 +592,7 @@ function love.draw()
    end
 
 
-   if (editingModeSub == 'polyline-palette') then
+   if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
@@ -551,46 +647,14 @@ function love.draw()
    -- i want this to be right alligned
 
 
-   function recursivePathMaker()
-      
-   end
-   
-
-
-   
+   love.graphics.setFont(small)
+   renderGraphNodes(root, 0, 50)
+   love.graphics.setFont(medium)
    local rightX = w - (64 + 500+ 10)/2
-   local nested = 0
-   for i=1, #root.children do
-      
-      local yPos = -scrollviewOffset + calcY((i+1),s)+(i+1)*8*s
-      if (yPos >=0 and yPos <= h) then
-	 local child = root.children[i]
-	 local b = iconlabelbutton('object-group', child.folder and ui.folder or ui.object_group,
-			    child.color,
-			    child == currentNode,
-			    child.name or "",
-			    rightX , yPos , s)
-	 if b.clicked then
-	    if currentNode and not currentNode.folder then
-	       currentNode.mesh= makeMeshFromVertices(makeTriangles(currentNode))
-	    end
-
-	    indexPath = {i}
-	    editingMode = 'polyline'
-	    editingModeSub = 'polyline-edit'
-	    currentNode = root.children[i]
-	 end
-	 if b.hover then
-	    currentlyHoveredUINode = root.children[i]
-	 end
-	 
-      end
-   end
-
 
    
 
-   if iconlabelbutton('add-object', ui.add, nil, false,  'add shape',  rightX, calcY(1,s)+1*8*s, s).clicked then
+   if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, calcY(1,s)+1*8*s, s).clicked then
       local shape = {
 	 color = {0,0,0,1},
 	 outline = true,
@@ -598,7 +662,7 @@ function love.draw()
       }
       
       if currentNode and not currentNode.folder then
-	 currentNode.mesh= makeMeshFromVertices(makeTriangles(currentNode))
+	 currentNode.mesh= makeMeshFromVertices(makeVertices(currentNode))
       end
       if (currentNode) then
 	 shape._parent = currentNode and currentNode._parent
@@ -616,21 +680,23 @@ function love.draw()
 
 
    
-   if (#root.children > 1) then
+   if (#root.children > 1 and currentNode ) then
       local index = getIndex(currentNode)
       if index > 1 and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
-	 local taken_out = removeCurrentNode() --removeShapeAtPath(indexPath)
+	 local taken_out = removeCurrentNode()
 	 table.insert(taken_out._parent.children, index-1, taken_out)
 
       end
       
       if (index < #root.children) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
 
-	 local taken_out = removeCurrentNode() -- removeShapeAtPath(indexPath)
-	 table.insert(taken_out._parent.children, index+1, taken_out)
+	 local taken_out = removeCurrentNode()
+	 if (taken_out) then
+	    table.insert(taken_out._parent.children, index+1, taken_out)
+	    end
       end
    end
-   if #root.children > 0 then
+   if #root.children > 0 and currentNode then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
 	 local index = getIndex(currentNode)
 	 local taken_out = removeCurrentNode() 
@@ -720,7 +786,6 @@ function love.filedropped(file)
       local tab = (loadstring("return ".. obj)())
       root.children = tab
       parentize(root)
-      indexPath = {0}
       scrollviewOffset = 0
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
@@ -734,7 +799,6 @@ function love.filedropped(file)
       local tab = (loadstring("return ".. str)())
       root.children = tab
       parentize(root)
-      indexPath = {0}
       scrollviewOffset = 0
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
