@@ -102,16 +102,18 @@ function love.mousemoved(x,y, dx, dy)
 
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
       local points = currentNode and currentNode.points
-      local beginIndex = 2 -- if first and last arent identical
-      if points[1] == points[#points] then
-      else
-	 beginIndex = 1
-      end
+      if (points) then
+	 local beginIndex = 2 -- if first and last arent identical
+	 if points[1] == points[#points] then
+	 else
+	    beginIndex = 1
+	 end
 
-      for i = beginIndex, #points do
-	 local p = points[i]
-	 p[1] = p[1] + dx / camera.scale
-	 p[2] = p[2] + dy / camera.scale
+	 for i = beginIndex, #points do
+	    local p = points[i]
+	    p[1] = p[1] + dx / camera.scale
+	    p[2] = p[2] + dy / camera.scale
+	 end
       end
    end
 
@@ -148,7 +150,7 @@ function renderGraphNodes(node, level, startY)
       runningY = runningY + 32
       local yPos = -scrollviewOffset + startY  + runningY
       
-      if (yPos >=0 and yPos <= h) then
+      
 	 local child = node.children[i]
 	 local icon = ui.object_group
 	 --print(inspect(node.children), inspect(child))
@@ -159,9 +161,10 @@ function renderGraphNodes(node, level, startY)
 	       icon = ui.folder
 	    end
 	 end
-	 
-	 local b = iconlabelbutton('object-group', icon, child.color, child == currentNode, child.name or "", rightX , yPos , s)
-	 
+	 local b = {}
+	 if (yPos >=0 and yPos <= h) then
+	 b = iconlabelbutton('object-group', icon, child.color, child == currentNode, child.name or "", rightX , yPos , s)
+	 end
 	 if (child.folder and child.open) then
 	    local add = renderGraphNodes(child, level + 1, runningY + startY)
 	    runningY = runningY + add
@@ -173,6 +176,8 @@ function renderGraphNodes(node, level, startY)
 	    end
 	    if (child.folder) then
 	       child.open = not child.open
+	       editingMode = nil
+	       editingModeSub = nil
 	    end
 	    if not child.folder then
 	       editingMode = 'polyline'
@@ -184,8 +189,12 @@ function renderGraphNodes(node, level, startY)
 	 if b.hover then
 	    currentlyHoveredUINode = node.children[i]
 	 end
+	 if b.released then
+	    print("released over this!")
+	 end
 	 
-      end
+	 
+
    end
    return runningY
    --return #node.children
@@ -412,14 +421,30 @@ function handleMouseClickStart()
    
    mouseState.down = love.mouse.isDown(1 )
    mouseState.click = false
-
+   mouseState.released = false
    if mouseState.down ~= mouseState.lastDown then
       if mouseState.down  then
          mouseState.click  = true
+      else
+	 mouseState.released = true
       end
+      
    end
    mouseState.lastDown =  mouseState.down
 end
+
+function countNestedChildren(node, total)
+   for i=1, #node.children do
+      if (node.children[i].children) then
+	 local r = countNestedChildren(node.children[i], 0)
+	 total = total + r
+      end
+      
+      total = total+1
+   end
+   return total
+end
+
 
 local step = 0 
 function love.draw()
@@ -648,7 +673,7 @@ function love.draw()
 
 
    love.graphics.setFont(small)
-   renderGraphNodes(root, 0, 50)
+   renderGraphNodes(root, 0, 100)
    love.graphics.setFont(medium)
    local rightX = w - (64 + 500+ 10)/2
 
@@ -676,7 +701,27 @@ function love.draw()
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
    end
-
+   if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, calcY(2,s)+1*8*s, s).clicked then
+      local shape = {
+	 folder=true,
+	 children = {}
+      }
+      
+      if currentNode and not currentNode.folder then
+	 currentNode.mesh= makeMeshFromVertices(makeVertices(currentNode))
+      end
+      if (currentNode) then
+	 shape._parent = currentNode and currentNode._parent
+	 addShapeAfter(shape, currentNode)
+      else
+	 shape._parent = root
+	 addShapeAtRoot(shape)
+      end
+      
+      
+      editingMode = 'polyline'
+      editingModeSub = 'polyline-insert'
+   end
 
 
    
@@ -688,7 +733,7 @@ function love.draw()
 
       end
       
-      if (index < #root.children) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
+      if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
 
 	 local taken_out = removeCurrentNode()
 	 if (taken_out) then
@@ -732,10 +777,12 @@ function love.draw()
       simplifyValue= v.value
       love.graphics.print(simplifyValue, w-200, 0)
    end
-   if (#root.children * 50 > h) then
-      local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, #root.children*50)
+
+   local count = countNestedChildren(root, 0)
+   if (count * 50 > h) then
+      local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, count * 50)
       if (v2.value ~= nil) then
-	 scrollviewOffset= v2.value
+	 scrollviewOffset = v2.value
       end
    end
    love.graphics.pop()
