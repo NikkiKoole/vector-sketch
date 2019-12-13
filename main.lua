@@ -18,6 +18,10 @@ function getIndex(item)
    return -1
 end
 
+function addShapeAtRoot(shape)
+   table.insert(root.children, #root.children + 1, shape)
+end
+
 function addShapeAfter(shape, after)
    local index = getIndex(after)
    if (index > 0) then
@@ -26,8 +30,7 @@ function addShapeAfter(shape, after)
 end
 
 function removeCurrentNode()
-   local index = getIndex(currentNode)
-   return table.remove(currentNode._parent.children, index)
+   return table.remove(currentNode._parent.children, getIndex(currentNode))
 end
 
 function removeShapeAtPath(path)
@@ -85,6 +88,7 @@ function love.mousereleased(x,y, button)
 end
 
 function love.mousemoved(x,y, dx, dy)
+   currentlyHoveredUINode = nil
    if lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
@@ -258,7 +262,7 @@ function love.load()
       }
    }
    parentize(root)
-   print(inspect(root))
+--   print(inspect(root))
    
 
    currentNode = nil
@@ -341,16 +345,10 @@ function love.draw()
 
    for i = 1, #root.children do
       local shape = root.children[i]
-      if (currentlyHoveredUINode == shape ) then
-	 love.graphics.setWireframe(true)
-	 currentlyHoveredUINode = nil
-      else
-	 love.graphics.setWireframe(wireframe)
-      end
+      
       
       
       if currentNode ~= shape then
-	 --print(shape)
 	 if (shape.mesh) then
 	    love.graphics.setColor(shape.color)
 	    love.graphics.draw(shape.mesh,  0,0)
@@ -361,6 +359,16 @@ function love.draw()
 	 if (editing and #editing > 0) then
 	    local editingMesh = makeMeshFromVertices(editing)
 	    love.graphics.setColor(shape.color)
+	    love.graphics.draw(editingMesh,  0,0)
+	 end
+      end
+
+      if (currentlyHoveredUINode == shape ) then
+	 local alpha = math.sin((step % 150)/150)
+	 love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
+	 local editing = makeTriangles(shape)
+	 if (editing and #editing > 0) then
+	    local editingMesh = makeMeshFromVertices(editing)
 	    love.graphics.draw(editingMesh,  0,0)
 	 end
       end
@@ -592,8 +600,14 @@ function love.draw()
       if currentNode and not currentNode.folder then
 	 currentNode.mesh= makeMeshFromVertices(makeTriangles(currentNode))
       end
-      shape._parent = currentNode and currentNode._parent
-      addShapeAfter(shape, currentNode)
+      if (currentNode) then
+	 shape._parent = currentNode and currentNode._parent
+	 addShapeAfter(shape, currentNode)
+      else
+	 shape._parent = root
+	 addShapeAtRoot(shape)
+      end
+      
       
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
@@ -622,7 +636,12 @@ function love.draw()
 	 local taken_out = removeCurrentNode() 
 	 if (index > 1) then
 	    currentNode = currentNode._parent.children[index -1]
+	 elseif (index == 1 and #(currentNode._parent.children) > 0 ) then
+	    currentNode = currentNode._parent.children[index]
+	 else
+	    currentNode = nil
 	 end
+	 
 	 
       end
       if imgbutton('badge', ui.badge, rightX - 50, calcY(4, s) + 8*4, s).clicked then
