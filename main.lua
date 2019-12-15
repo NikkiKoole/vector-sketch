@@ -88,6 +88,17 @@ function love.mousepressed(x,y, button)
 
 end
 
+function nodeIsMyOwnOffspring(me, node)
+   if (node._parent == me) then
+      return true
+   end
+   if (node._parent.name == 'root') then
+      return false
+   end
+   return nodeIsMyOwnOffspring(me, node._parent)
+end
+
+
 function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = nil
@@ -98,9 +109,13 @@ function love.mousereleased(x,y, button)
 	 if (currentNode and currentlyHoveredUINode.folder) then
 
 	    -- also figure out if you wont end up adding yourself to one of your own children
+	    if (nodeIsMyOwnOffspring(   currentNode, currentlyHoveredUINode)) then
+	       print("wowzers node was my offspring!")
+	    else
 	    
-	    local toRemove = removeCurrentNode()
-	    addThingAtEnd(toRemove, currentlyHoveredUINode)
+	       local toRemove = removeCurrentNode()
+	       addThingAtEnd(toRemove, currentlyHoveredUINode)
+	    end
 	 end
       else
 	  local toRemove = removeCurrentNode()
