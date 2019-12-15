@@ -92,6 +92,8 @@ function love.mousepressed(x,y, button)
 end
 
 function nodeIsMyOwnOffspring(me, node)
+   if (me == node) then return true end
+   
    if (node._parent == me) then
       return true
    end
