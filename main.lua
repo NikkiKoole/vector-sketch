@@ -760,6 +760,11 @@ function love.draw()
 	 local name = currentNode and currentNode.name
 	 changeNameCursor = name and utf8.len(name) or 1
       end
+      if imgbutton('connector', ui.parent, rightX - 50, calcY(5,s)+ 8*5, s).clicked then
+	 lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
+      end
+      
+      
       if (changeName) then
 	 local str =  currentNode and currentNode.name  or ""
 	 local substr = string.sub(str, 1, changeNameCursor)
@@ -780,7 +785,7 @@ function love.draw()
 
    local count = countNestedChildren(root, 0)
    if (count * 50 > h) then
-      local v2 = v_slider("scrollview", rightX - 50, calcY(6, s) , 100, scrollviewOffset, 0, count * 50)
+      local v2 = v_slider("scrollview", w - 50, calcY(4, s) , 100, scrollviewOffset, 0, count * 50)
       if (v2.value ~= nil) then
 	 scrollviewOffset = v2.value
       end
@@ -791,6 +796,11 @@ function love.draw()
       love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
       love.graphics.print(shapeName, 200, 2)
    end
+
+   if lastDraggedElement and lastDraggedElement.id == 'connector' then
+      love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
+   end
+   
    
    if quitDialog then
       local quitStr = "Quit? Seriously?! [ESC] "

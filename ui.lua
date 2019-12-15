@@ -54,11 +54,23 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
    local hover = false
    local released = false
 
-   love.graphics.setColor(0,0,0,.75)
+   if (active) then
+      love.graphics.setColor(0.2,0.2,0.2,.75)
+   else
+      love.graphics.setColor(0,0,0,.75)
+    end
+   
    --love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
    love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)
    love.graphics.setColor(1,1,1,1)
    --
+    if (active) then
+       love.graphics.setLineWidth(3)
+       
+    else
+       love.graphics.setLineWidth(1)
+    end
+    
    love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)
    if color then
       love.graphics.setColor(color[1],color[2],color[3],1)
