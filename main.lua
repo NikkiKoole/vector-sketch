@@ -45,11 +45,14 @@ function removeShapeAtPath(path)
    return table.remove(root.children, path[1])
 end
 
-function meshAllShapes(shapes) -- this needs to be done recursive
+function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
       if (not root.children[i].folder) then
 	 root.children[i].mesh = makeMeshFromVertices(makeVertices(root.children[i]))
+      else
+	 meshAll(root.children[i])
       end
+      
    end
 end
 
@@ -428,7 +431,7 @@ function love.load()
    lastDraggedElement = {}
    quitDialog = false
 
-   meshAllShapes(root.children)
+   meshAll(root)
 end
 
 function drawGrid()
@@ -479,7 +482,37 @@ function countNestedChildren(node, total)
 end
 
 
-local step = 0 
+local step = 0
+
+function renderThings(root)
+     for i = 1, #root.children do
+	local shape = root.children[i]
+	if shape.folder then
+	   renderThings(shape)
+	end
+      
+      if currentNode ~= shape then
+	 if (shape.mesh) then
+	    love.graphics.setColor(shape.color)
+	    love.graphics.draw(shape.mesh,  0,0)
+	 end
+      end
+      if currentNode == shape then
+	 local editing = makeVertices(shape)
+	 if (editing and #editing > 0) then
+	    local editingMesh = makeMeshFromVertices(editing)
+	    love.graphics.setColor(shape.color)
+	    love.graphics.draw(editingMesh,  0,0)
+	 end
+      end
+
+      
+
+
+   end
+end
+
+
 function love.draw()
    step = step + 1
    local mx,my = love.mouse.getPosition()
@@ -499,28 +532,7 @@ function love.draw()
 
    love.graphics.setWireframe(wireframe )
 
-   for i = 1, #root.children do
-      local shape = root.children[i]
-      
-      
-      
-      if currentNode ~= shape then
-	 if (shape.mesh) then
-	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(shape.mesh,  0,0)
-	 end
-      end
-      if currentNode == shape then
-	 local editing = makeVertices(shape)
-	 if (editing and #editing > 0) then
-	    local editingMesh = makeMeshFromVertices(editing)
-	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(editingMesh,  0,0)
-	 end
-      end
-
-
-   end
+   renderThings(root)
 
    if (false and currentlyHoveredUINode) then
       local alpha = 0.5 + math.sin(step/100)
@@ -884,7 +896,7 @@ function love.filedropped(file)
       editingMode = nil
       editingModeSub = nil
       currentNode = nil
-      meshAllShapes(root.children)
+      meshAll(root)
    end
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
@@ -897,7 +909,7 @@ function love.filedropped(file)
       editingMode = nil
       editingModeSub = nil
       currentNode = nil
-      meshAllShapes(root.children)
+      meshAll(root)
    end
 end
 

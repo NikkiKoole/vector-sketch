@@ -82,6 +82,10 @@ function copyShape(shape)
 	 name = shape.name or "",
 	 children = {}
       }
+      for i=1, #shape.children do
+	 result.children[i] = copyShape(shape.children[i])
+      end
+      
       return result
    else
 	 local result = {
