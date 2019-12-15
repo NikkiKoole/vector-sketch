@@ -18,6 +18,12 @@ function getIndex(item)
    return -1
 end
 
+
+function addThingAtEnd(thing, parent)
+   thing._parent = parent
+   table.insert(parent.children, #parent.children + 1, thing)
+end
+
 function addShapeAtRoot(shape)
    table.insert(root.children, #root.children + 1, shape)
 end
@@ -86,7 +92,25 @@ function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = nil
    end
+
+   if lastDraggedElement and lastDraggedElement.id == 'connector' then
+      if (currentlyHoveredUINode) then
+	 if (currentNode and currentlyHoveredUINode.folder) then
+
+	    -- also figure out if you wont end up adding yourself to one of your own children
+	    
+	    local toRemove = removeCurrentNode()
+	    addThingAtEnd(toRemove, currentlyHoveredUINode)
+	 end
+      else
+	  local toRemove = removeCurrentNode()
+	  addThingAtEnd(toRemove, root)
+      end
+      
+      
+   end
    lastDraggedElement = nil
+   
 end
 
 function love.mousemoved(x,y, dx, dy)
@@ -189,15 +213,9 @@ function renderGraphNodes(node, level, startY)
 	 if b.hover then
 	    currentlyHoveredUINode = node.children[i]
 	 end
-	 if b.released then
-	    print("released over this!")
-	 end
-	 
-	 
-
+	
    end
    return runningY
-   --return #node.children
 end
 
 
@@ -724,24 +742,28 @@ function love.draw()
    end
 
 
-   
-   if (#root.children > 1 and currentNode ) then
+   if (currentNode) then
+      local index = getIndex(currentNode)
+   if (currentNode and index > 1) then
       local index = getIndex(currentNode)
       if index > 1 and imgbutton('polyline-move-up', ui.move_up,  rightX - 50, calcY(2, s) + 16, s).clicked then
 	 local taken_out = removeCurrentNode()
 	 table.insert(taken_out._parent.children, index-1, taken_out)
 
       end
+   end
       
-      if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
+   if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  rightX - 50, calcY(3, s) + 24, s).clicked then
 
-	 local taken_out = removeCurrentNode()
-	 if (taken_out) then
-	    table.insert(taken_out._parent.children, index+1, taken_out)
-	    end
+      local taken_out = removeCurrentNode()
+      if (taken_out) then
+	 table.insert(taken_out._parent.children, index+1, taken_out)
       end
    end
-   if #root.children > 0 and currentNode then
+
+  end
+
+   if (currentNode) then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
 	 local index = getIndex(currentNode)
 	 local taken_out = removeCurrentNode() 
@@ -763,8 +785,6 @@ function love.draw()
       if imgbutton('connector', ui.parent, rightX - 50, calcY(5,s)+ 8*5, s).clicked then
 	 lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
       end
-      
-      
       if (changeName) then
 	 local str =  currentNode and currentNode.name  or ""
 	 local substr = string.sub(str, 1, changeNameCursor)

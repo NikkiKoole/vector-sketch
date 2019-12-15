@@ -52,7 +52,6 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
 
    local clicked = false
    local hover = false
-   local released = false
 
    if (active) then
       love.graphics.setColor(0.2,0.2,0.2,.75)
@@ -87,9 +86,6 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
       if (mouseState.click) then
 	 clicked = true
       end
-      if (mouseState.released) then
-	 released = true
-      end
    else
       love.graphics.setColor(1,1,1, .5)
    end
@@ -114,8 +110,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
 
    return {
       clicked = clicked,
-      hover = hover,
-      released = released
+      hover = hover
    }
 end
 
