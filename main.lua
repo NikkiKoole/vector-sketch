@@ -577,9 +577,16 @@ function love.draw()
 	 if editingModeSub == 'polyline-insert' then
 	    local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( wx, wy )
 	    print(globalX, globalY)
-	    print("TODO this is broken!")
+	    print("TODO this is broken!", inspect(points))
 	    local closestEdgeIndex = getClosestEdgeIndex(globalY, globalY, transformedPoints)
 	    local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
+	    for i=1, #transformedPoints do
+	       love.graphics.rectangle("fill", transformedPoints[i][1],transformedPoints[i][2], 10, 10)
+	    end
+
+	    love.graphics.rectangle("fill", globalX, globalY, 10, 10)
+
+	    print(i,  i == closestEdgeIndex or i == nextIndex)
 	    if i == closestEdgeIndex or i == nextIndex then
 	       kind = 'fill'
 	    end
