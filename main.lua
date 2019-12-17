@@ -49,7 +49,6 @@ function meshAll(root) -- this needs to be done recursive
       else
 	 meshAll(root.children[i])
       end
-
    end
 end
 
@@ -331,6 +330,8 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT",
+	    transforms =  {g={0,0,0,1,1,50,50},
+			   l={0,0,0,1,1,50,50}},
 	    children ={
 	       {
 		  name="child1 ",
@@ -351,6 +352,8 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT2",
+	    transforms =  {g={0,0,0,1,1,50,50},
+			    l={0,0,0,1,1,50,50}},
 	    children ={
 	       {
 		  name="child2 ",
@@ -360,6 +363,8 @@ function love.load()
 	       {
 		  folder=true,
 		  name="PARENT3",
+		  transforms =  {g={0,0,0,1,1,50,50},
+				 l={0,0,0,1,1,50,50}},
 		  children ={
 		     {
 			name="child3a ",
