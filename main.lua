@@ -76,6 +76,7 @@ function love.mousepressed(x,y, button)
    local globalX, globalY = t:inverseTransformPoint( wx, wy )
 
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
+      print("BROKEN!")
       local index =  getIndexOfHoveredPolyPoint(x, y, transformedPoints)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
@@ -523,6 +524,7 @@ function love.draw()
    step = step + 1
    local mx,my = love.mouse.getPosition()
    local wx, wy = toWorldPos(mx, my)
+
    handleMouseClickStart()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
@@ -573,7 +575,10 @@ function love.draw()
 	 end
 
 	 if editingModeSub == 'polyline-insert' then
-	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
+	    local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( wx, wy )
+	    print(globalX, globalY)
+	    print("TODO this is broken!")
+	    local closestEdgeIndex = getClosestEdgeIndex(globalY, globalY, transformedPoints)
 	    local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
 	    if i == closestEdgeIndex or i == nextIndex then
 	       kind = 'fill'
