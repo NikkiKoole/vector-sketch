@@ -60,7 +60,6 @@ function meshAll(root) -- this needs to be done recursive
       else
 	 meshAll(root.children[i])
       end
-
    end
 end
 
@@ -338,10 +337,14 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
+      transforms =  {g={0,0,0,1,1,0,0},
+		     l={0,0,0,1,1,0,0}},
       children = {
 	 {
 	    folder=true,
 	    name="PARENT",
+	    transforms =  {g={0,0,0,1,1,0,0},
+			   l={0,0,0,1,1,0,0}},
 	    children ={
 	       {
 		  name="child1 ",
@@ -362,6 +365,8 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT2",
+	    transforms =  {g={0,0,0,1,1,50,50},
+			    l={0,0,0,1,1,50,50}},
 	    children ={
 	       {
 		  name="child2 ",
@@ -371,6 +376,8 @@ function love.load()
 	       {
 		  folder=true,
 		  name="PARENT3",
+		  transforms =  {g={0,0,0,1,1,50,50},
+				 l={0,0,0,1,1,50,50}},
 		  children ={
 		     {
 			name="child3a ",
@@ -473,7 +480,9 @@ function renderThings(root)
       if currentNode ~= shape then
 	 if (shape.mesh) then
 	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(shape.mesh,  0,0)
+	    local tl = shape._parent.transforms.l
+	    local transformlocal = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7])
+	    love.graphics.draw(shape.mesh, transformlocal)
 	 end
       end
       if currentNode == shape then
@@ -708,6 +717,8 @@ function love.draw()
    if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, calcY(2,s)+1*8*s, s).clicked then
       local shape = {
 	 folder=true,
+	 transforms =  {g={0,0,0,1,1,0,0},
+			l={0,0,0,1,1,0,0}},
 	 children = {}
       }
 

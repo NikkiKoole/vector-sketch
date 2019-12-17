@@ -80,6 +80,7 @@ function copyShape(shape)
       local result = {
 	 folder = true,
 	 name = shape.name or "",
+	 transforms = {l=shape.transforms.l, g = shape.transforms.g},
 	 children = {}
       }
       for i=1, #shape.children do
