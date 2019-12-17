@@ -7,6 +7,17 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
+
+-----------------------------------------------------------------------
+-- todo						      		     --
+-- * add the acual transformation stuff to the folders 		     --
+-- 								     --
+-- 								     --
+-- 								     --
+-- 								     --
+-- 								     --
+-----------------------------------------------------------------------
+
 function getIndex(item)
    if (item) then
       for k,v in ipairs(item._parent.children) do
