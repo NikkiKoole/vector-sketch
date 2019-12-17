@@ -88,7 +88,8 @@ function love.mousepressed(x,y, button)
       end
 
       if (editingModeSub == 'polyline-insert') then
-	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
+	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, transformedPoints)
+	 --local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
 	 table.insert(points, closestEdgeIndex+1, {globalX, globalY})
       end
    end
@@ -129,6 +130,9 @@ function love.mousemoved(x,y, dx, dy)
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
+      --root.transforms.l[1] = root.transforms.l[1] + dx/camera.scale
+      --root.transforms.l[2] = root.transforms.l[2] + dy/camera.scale
+
    end
    if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
       backdrop.x = backdrop.x + dx / camera.scale
@@ -356,12 +360,12 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,100,100}},
 	    children ={
 	       {
 		  name="child1 ",
 		  color = {1,1,0, 0.8},
-		  points = {{10,10},{20,100},{200,200},{100,200}},
+		  points = {{0,0},{200,0},{200,200},{0,200}},
 	       },
 	    }
 	 },
@@ -522,6 +526,11 @@ end
 local step = 0
 function love.draw()
    step = step + 1
+
+   --if (root.children[1]._localTransform) then
+--   root.children[1].transforms.l[3] = step/1000
+   --end
+   
    local mx,my = love.mouse.getPosition()
    local wx, wy = toWorldPos(mx, my)
 
@@ -576,22 +585,14 @@ function love.draw()
 
 	 if editingModeSub == 'polyline-insert' then
 	    local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( wx, wy )
-	    print(globalX, globalY)
-	    print("TODO this is broken!", inspect(points))
-	    local closestEdgeIndex = getClosestEdgeIndex(globalY, globalY, transformedPoints)
+	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, transformedPoints)
 	    local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
-	    for i=1, #transformedPoints do
-	       love.graphics.rectangle("fill", transformedPoints[i][1],transformedPoints[i][2], 10, 10)
-	    end
 
-	    love.graphics.rectangle("fill", globalX, globalY, 10, 10)
-
-	    print(i,  i == closestEdgeIndex or i == nextIndex)
 	    if i == closestEdgeIndex or i == nextIndex then
 	       kind = 'fill'
 	    end
 	 end
-
+	 love.graphics.setColor(1,1,1)
 	 local dot_x = transformedPoints[i][1] - 5/camera.scale
 	 local dot_y =  transformedPoints[i][2] - 5/camera.scale
 	 local dot_size = 10 / camera.scale
