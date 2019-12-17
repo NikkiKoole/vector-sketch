@@ -7,17 +7,6 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
-
------------------------------------------------------------------------
--- todo						      		     --
--- * add the acual transformation stuff to the folders 		     --
--- 								     --
--- 								     --
--- 								     --
--- 								     --
--- 								     --
------------------------------------------------------------------------
-
 function getIndex(item)
    if (item) then
       for k,v in ipairs(item._parent.children) do
@@ -127,7 +116,7 @@ end
 
 function love.mousemoved(x,y, dx, dy)
    currentlyHoveredUINode = nil
-   if lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
+   if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       camera.x = camera.x + dx / camera.scale
       camera.y = camera.y + dy / camera.scale
    end
@@ -135,6 +124,20 @@ function love.mousemoved(x,y, dx, dy)
       backdrop.x = backdrop.x + dx / camera.scale
       backdrop.y = backdrop.y + dy / camera.scale
    end
+
+   if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
+      --local t = currentNode.transforms.l
+      --local trans = love.math.newTransform( t[1], t[2], t[3], t[4], t[5], 0,0)
+      --local gx, gy = trans:inverseTransformPoint( dx, dy )
+      --print('hi there!', dx, dy, gx, gy)
+      currentNode.transforms.l[1]= currentNode.transforms.l[1] + dx
+      currentNode.transforms.l[2]= currentNode.transforms.l[2] + dy
+
+
+
+      --print(inspect(currentNode.transforms.g))
+   end
+
 
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
       local points = currentNode and currentNode.points
@@ -337,14 +340,12 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},
-		     l={0,0,0,1,1,0,0}},
+      transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
       children = {
 	 {
 	    folder=true,
 	    name="PARENT",
-	    transforms =  {g={0,0,0,1,1,0,0},
-			   l={0,0,0,1,1,0,0}},
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 	    children ={
 	       {
 		  name="child1 ",
@@ -365,8 +366,7 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT2",
-	    transforms =  {g={0,0,0,1,1,50,50},
-			    l={0,0,0,1,1,50,50}},
+	    transforms =  {g={0,0,0,1,1,50,50},  l={0,0,0,1,1,50,50}},
 	    children ={
 	       {
 		  name="child2 ",
@@ -376,8 +376,7 @@ function love.load()
 	       {
 		  folder=true,
 		  name="PARENT3",
-		  transforms =  {g={0,0,0,1,1,50,50},
-				 l={0,0,0,1,1,50,50}},
+		  transforms =  {g={0,0,0,1,1,50,50}, l={0,0,0,1,1,50,50}},
 		  children ={
 		     {
 			name="child3a ",
