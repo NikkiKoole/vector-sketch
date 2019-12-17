@@ -65,9 +65,18 @@ function love.mousepressed(x,y, button)
    local points = currentNode and currentNode.points
    if not points then return end
 
+   local transformedPoints = {}
+   local t = currentNode._parent._globalTransform
+   for i=1, #points do
+      local lx, ly = t:transformPoint( points[i][1], points[i][2] )
+      table.insert(transformedPoints, {lx, ly})
+   end
+
    local wx, wy = toWorldPos(x, y)
+   local globalX, globalY = t:inverseTransformPoint( wx, wy )
+
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      local index =  getIndexOfHoveredPolyPoint(x, y, points)
+      local index =  getIndexOfHoveredPolyPoint(x, y, transformedPoints)
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
 	    table.remove(points, index)
@@ -79,7 +88,7 @@ function love.mousepressed(x,y, button)
 
       if (editingModeSub == 'polyline-insert') then
 	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
-	 table.insert(points, closestEdgeIndex+1, {wx, wy})
+	 table.insert(points, closestEdgeIndex+1, {globalX, globalY})
       end
    end
 
@@ -126,12 +135,11 @@ function love.mousemoved(x,y, dx, dy)
    end
 
    if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-      --local t = currentNode.transforms.l
+      --local t = currentNode.transforms.g
       --local trans = love.math.newTransform( t[1], t[2], t[3], t[4], t[5], 0,0)
       --local gx, gy = trans:inverseTransformPoint( dx, dy )
-      --print('hi there!', dx, dy, gx, gy)
-      currentNode.transforms.l[1]= currentNode.transforms.l[1] + dx
-      currentNode.transforms.l[2]= currentNode.transforms.l[2] + dy
+      currentNode.transforms.l[1]= currentNode.transforms.l[1] + dx/camera.scale
+      currentNode.transforms.l[2]= currentNode.transforms.l[2] + dy/camera.scale
 
 
 
@@ -160,9 +168,11 @@ function love.mousemoved(x,y, dx, dy)
    	 if dragIndex > 0 then
    	    local wx, wy = toWorldPos(x, y)
 	    local points = currentNode and currentNode.points
+	    local t = currentNode._parent._globalTransform
+	    local globalX, globalY = t:inverseTransformPoint( wx, wy )
    	    if (dragIndex <= #points) then
-   	       points[dragIndex][1] = wx
-   	       points[dragIndex][2] = wy
+   	       points[dragIndex][1] = globalX
+   	       points[dragIndex][2] = globalY
    	    end
    	 end
       end
@@ -366,7 +376,7 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT2",
-	    transforms =  {g={0,0,0,1,1,50,50},  l={0,0,0,1,1,50,50}},
+	    transforms =  {g={0,0,0,1,1,0,0},  l={0,0,0,1,1,0,0}},
 	    children ={
 	       {
 		  name="child2 ",
@@ -376,7 +386,7 @@ function love.load()
 	       {
 		  folder=true,
 		  name="PARENT3",
-		  transforms =  {g={0,0,0,1,1,50,50}, l={0,0,0,1,1,50,50}},
+		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 		  children ={
 		     {
 			name="child3a ",
@@ -471,17 +481,30 @@ function countNestedChildren(node, total)
 end
 
 function renderThings(root)
+
+   ---- these calculations are only needed when some local transforms have changed
+   local tg = root.transforms.g
+   local tl = root.transforms.l
+   local pg = nil
+   if (root._parent) then
+      pg = root._parent._globalTransform
+   end
+
+   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+   root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
+   ----
+
    for i = 1, #root.children do
+
       local shape = root.children[i]
+
       if shape.folder then
 	 renderThings(shape)
       end
       if currentNode ~= shape then
 	 if (shape.mesh) then
 	    love.graphics.setColor(shape.color)
-	    local tl = shape._parent.transforms.l
-	    local transformlocal = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7])
-	    love.graphics.draw(shape.mesh, transformlocal)
+	    love.graphics.draw(shape.mesh, shape._parent._globalTransform)
 	 end
       end
       if currentNode == shape then
@@ -489,7 +512,7 @@ function renderThings(root)
 	 if (editing and #editing > 0) then
 	    local editingMesh = makeMeshFromVertices(editing)
 	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(editingMesh,  0,0)
+	    love.graphics.draw(editingMesh,  shape._parent._globalTransform)
 	 end
       end
    end
@@ -531,49 +554,56 @@ function love.draw()
    if editingMode == 'polyline' and currentNode  then
 
       local points =  currentNode and currentNode.points or {}
+      local transformedPoints = {}
+      local t = currentNode._parent._globalTransform
+      for i=1, #points do
+	 local lx, ly = t:transformPoint( points[i][1], points[i][2] )
+	 table.insert(transformedPoints, {lx, ly})
+      end
+
       love.graphics.setLineWidth(2.0  / camera.scale )
       love.graphics.setColor(1,1,1)
 
       for i=1, #points do
 	 local kind = "line"
 	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-	    if mouseOverPolyPoint(mx, my, points[i][1], points[i][2]) then
+	    if mouseOverPolyPoint(mx, my, transformedPoints[i][1], transformedPoints[i][2]) then
 	       kind= "fill"
 	    end
 	 end
 
 	 if editingModeSub == 'polyline-insert' then
 	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
-	    local nextIndex = (closestEdgeIndex == #points and 1) or closestEdgeIndex+1
+	    local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
 	    if i == closestEdgeIndex or i == nextIndex then
 	       kind = 'fill'
 	    end
 	 end
 
-	 local dot_x = points[i][1] - 5/camera.scale
-	 local dot_y =  points[i][2] - 5/camera.scale
+	 local dot_x = transformedPoints[i][1] - 5/camera.scale
+	 local dot_y =  transformedPoints[i][2] - 5/camera.scale
 	 local dot_size = 10 / camera.scale
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
 
       love.graphics.setLineWidth(4/ camera.scale)
-      if editingModeSub == 'polyline-rotate'  and #points > 0 and false then
-	 local radius = 12  / camera.scale
-	 local pivot = points[1]
-	 local rotator = {x=pivot.x + 100, y=pivot.y}
-	 love.graphics.setColor(1,1,1)
+      -- if editingModeSub == 'polyline-rotate'  and #points > 0 and false then
+      -- 	 local radius = 12  / camera.scale
+      -- 	 local pivot = points[1]
+      -- 	 local rotator = {x=pivot.x + 100, y=pivot.y}
+      -- 	 love.graphics.setColor(1,1,1)
 
-	 love.graphics.line(pivot.x, pivot.y, rotator.x, rotator.y)
-	 love.graphics.setLineWidth(2/ camera.scale)
-	 love.graphics.circle("fill", pivot.x, pivot.y , radius)
-	 love.graphics.setColor(0,0,0)
-	 love.graphics.circle("line", pivot.x, pivot.y , radius)
+      -- 	 love.graphics.line(pivot.x, pivot.y, rotator.x, rotator.y)
+      -- 	 love.graphics.setLineWidth(2/ camera.scale)
+      -- 	 love.graphics.circle("fill", pivot.x, pivot.y , radius)
+      -- 	 love.graphics.setColor(0,0,0)
+      -- 	 love.graphics.circle("line", pivot.x, pivot.y , radius)
 
-	 love.graphics.setColor(0,0,0)
-	 love.graphics.circle("fill", rotator.x, rotator.y , radius)
-	 love.graphics.setColor(1,1,1)
-	 love.graphics.circle("line", rotator.x, rotator.y , radius)
-      end
+      -- 	 love.graphics.setColor(0,0,0)
+      -- 	 love.graphics.circle("fill", rotator.x, rotator.y , radius)
+      -- 	 love.graphics.setColor(1,1,1)
+      -- 	 love.graphics.circle("line", rotator.x, rotator.y , radius)
+      -- end
 
       love.graphics.setLineWidth(1)
    end
