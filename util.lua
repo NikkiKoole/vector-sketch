@@ -28,26 +28,6 @@ function distancePointSegment(x,y, x1,y1, x2, y2)
    return math.sqrt(dx * dx + dy*dy)
 end
 
-function mouseOverPolyPoint(mx, my, ppx, ppy)
-   local wx, wy = toWorldPos(mx, my)
-   local dot_x = ppx - 5/camera.scale
-   local dot_y = ppy - 5/camera.scale
-   local dot_size = 10 / camera.scale
-   return pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size)
-end
-function getIndexOfHoveredPolyPoint(mx, my, points)
-   local wx, wy = toWorldPos(mx, my)
-   for i = 1, #points do
-      local dot_x = points[i][1] - 5/camera.scale
-      local dot_y = points[i][2] - 5/camera.scale
-      local dot_size = 10 / camera.scale
-      if pointInRect(wx,wy, dot_x, dot_y, dot_size, dot_size) then
-	 return i
-      end
-   end
-   return 0
-end
-
 function getClosestEdgeIndex(wx, wy, points)
    local closestEdgeIndex = 0
    local closestDistance = 99999999999999

@@ -7,6 +7,23 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
+
+function getLocalDelta(transform, dx, dy)
+    local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
+    local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
+    local dx3 = dx2 - dx1
+    local dy3 = dy2 - dy1
+    return dx3, dy3
+end
+function getGlobalDelta(transform, dx, dy)
+   -- this one is only used in the wheel moved offset stuff
+    local dx1, dy1 = transform:transformPoint( 0, 0 )
+    local dx2, dy2 = transform:transformPoint( dx, dy )
+    local dx3 = dx2 - dx1
+    local dy3 = dy2 - dy1
+    return dx3, dy3
+end
+
 function getIndex(item)
    if (item) then
       for k,v in ipairs(item._parent.children) do
@@ -52,10 +69,6 @@ function meshAll(root) -- this needs to be done recursive
    end
 end
 
-function toWorldPos(x, y)
-   return (x / camera.scale) - camera.x, (y / camera.scale) - camera.y
-end
-
 function love.mousepressed(x,y, button)
    lastDraggedElement = nil
    if editingMode == nil then
@@ -65,19 +78,20 @@ function love.mousepressed(x,y, button)
    local points = currentNode and currentNode.points
    if not points then return end
 
-   local transformedPoints = {}
    local t = currentNode._parent._globalTransform
-   for i=1, #points do
-      local lx, ly = t:transformPoint( points[i][1], points[i][2] )
-      table.insert(transformedPoints, {lx, ly})
-   end
-
-   local wx, wy = toWorldPos(x, y)
-   local globalX, globalY = t:inverseTransformPoint( wx, wy )
-
+   local px, py = t:inverseTransformPoint( x, y )
+   local scale = root.transforms.l[4]
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      print("BROKEN!")
-      local index =  getIndexOfHoveredPolyPoint(x, y, transformedPoints)
+
+      local index =  0 
+      for i = 1, #points do
+	 if pointInRect(px,py,
+			points[i][1] - 5/scale, points[i][2] - 5/scale,
+			10/scale, 10/scale) then
+	    index = i
+	 end
+      end
+
       if (index > 0) then
 	 if (editingModeSub == 'polyline-remove') then
 	    table.remove(points, index)
@@ -88,12 +102,10 @@ function love.mousepressed(x,y, button)
       end
 
       if (editingModeSub == 'polyline-insert') then
-	 local closestEdgeIndex = getClosestEdgeIndex(wx, wy, transformedPoints)
-	 --local closestEdgeIndex = getClosestEdgeIndex(wx, wy, points)
-	 table.insert(points, closestEdgeIndex+1, {globalX, globalY})
+	 local closestEdgeIndex = getClosestEdgeIndex(px, py, points)
+	 table.insert(points, closestEdgeIndex+1, {px, py})
       end
    end
-
 end
 
 function nodeIsMyOwnOffspring(me, node)
@@ -128,10 +140,8 @@ end
 function love.mousemoved(x,y, dx, dy)
    currentlyHoveredUINode = nil
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
-      camera.x = camera.x + dx / camera.scale
-      camera.y = camera.y + dy / camera.scale
-      --root.transforms.l[1] = root.transforms.l[1] + dx/camera.scale
-      --root.transforms.l[2] = root.transforms.l[2] + dy/camera.scale
+      root.transforms.l[1] = root.transforms.l[1] + dx 
+      root.transforms.l[2] = root.transforms.l[2] + dy 
 
    end
    if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
@@ -140,20 +150,15 @@ function love.mousemoved(x,y, dx, dy)
    end
 
    if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-      --local t = currentNode.transforms.g
-      --local trans = love.math.newTransform( t[1], t[2], t[3], t[4], t[5], 0,0)
-      --local gx, gy = trans:inverseTransformPoint( dx, dy )
-      currentNode.transforms.l[1]= currentNode.transforms.l[1] + dx/camera.scale
-      currentNode.transforms.l[2]= currentNode.transforms.l[2] + dy/camera.scale
-
-
-
-      --print(inspect(currentNode.transforms.g))
+      local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+      currentNode.transforms.l[1]= currentNode.transforms.l[1] + ddx 
+      currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy 
    end
 
 
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
       local points = currentNode and currentNode.points
+      local dx3, dy3 = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
       if (points) then
 	 local beginIndex = 2 -- if first and last arent identical
 	 if not (points[1] == points[#points]) then
@@ -161,8 +166,8 @@ function love.mousemoved(x,y, dx, dy)
 	 end
 	 for i = beginIndex, #points do
 	    local p = points[i]
-	    p[1] = p[1] + dx / camera.scale
-	    p[2] = p[2] + dy / camera.scale
+	    p[1] = p[1] + dx3 
+	    p[2] = p[2] + dy3 
 	 end
       end
    end
@@ -171,10 +176,9 @@ function love.mousemoved(x,y, dx, dy)
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
    	 local dragIndex = lastDraggedElement.index
    	 if dragIndex > 0 then
-   	    local wx, wy = toWorldPos(x, y)
 	    local points = currentNode and currentNode.points
 	    local t = currentNode._parent._globalTransform
-	    local globalX, globalY = t:inverseTransformPoint( wx, wy )
+	    local globalX, globalY = t:inverseTransformPoint( x, y )
    	    if (dragIndex <= #points) then
    	       points[dragIndex][1] = globalX
    	       points[dragIndex][2] = globalY
@@ -243,17 +247,32 @@ end
 
 
 function love.wheelmoved(x,y)
+
+   local scale = root.transforms.l[4]
+
    local posx, posy = love.mouse.getPosition()
-   local wx = camera.x + ( posx / camera.scale)
-   local wy = camera.y + ( posy / camera.scale)
+   local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
+   
+   root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9) 
+   root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)  
 
-   camera.scale =  camera.scale * ((y>0) and 1.1 or 0.9)
 
-   local wx2 = camera.x + ( posx / camera.scale)
-   local wy2 = camera.y + ( posy / camera.scale)
+   --- ugh
+   local tg = root.transforms.g
+   local tl = root.transforms.l
+   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+   root._globalTransform = root._localTransform
+   ---
+   
+   
+   local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
+   local dx = ix1 - ix2
+   local dy = iy1 - iy2
 
-   camera.x = camera.x - (wx-wx2)
-   camera.y = camera.y - (wy-wy2)
+
+   local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
+   root.transforms.l[1] = root.transforms.l[1] - dx3
+   root.transforms.l[2] = root.transforms.l[2] - dy3
 end
 
 function parentize(node)
@@ -440,14 +459,15 @@ function love.load()
 end
 
 function drawGrid()
-   local size = backdrop.grid.cellsize * camera.scale
+   local scale = root.transforms.l[4]
+   local size = backdrop.grid.cellsize * scale
    if (size < 10) then return end
 
    local w, h = love.graphics.getDimensions( )
    local vlines = math.floor(w/size)
    local hlines = math.floor(h/size)
-   local xOffset = (camera.x * camera.scale) % size
-   local yOffset = (camera.y * camera.scale) % size
+   local xOffset = (root.transforms.l[1]) % size
+   local yOffset = (root.transforms.l[2]) % size
 
    for x =0, vlines do
       love.graphics.line(xOffset + x*size, 0,xOffset +  x*size, h)
@@ -527,20 +547,14 @@ local step = 0
 function love.draw()
    step = step + 1
 
-   --if (root.children[1]._localTransform) then
---   root.children[1].transforms.l[3] = step/1000
-   --end
    
    local mx,my = love.mouse.getPosition()
-   local wx, wy = toWorldPos(mx, my)
+   --local wx, wy = toWorldPos(mx, my)
 
    handleMouseClickStart()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
    love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
-   love.graphics.push()
-   love.graphics.scale(camera.scale, camera.scale  )
-   love.graphics.translate( camera.x, camera.y )
 
    if  backdrop.visible then
       love.graphics.setColor(1,1,1, backdrop.alpha)
@@ -565,6 +579,7 @@ function love.draw()
    if editingMode == 'polyline' and currentNode  then
 
       local points =  currentNode and currentNode.points or {}
+      local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( mx, my )
       local transformedPoints = {}
       local t = currentNode._parent._globalTransform
       for i=1, #points do
@@ -572,20 +587,24 @@ function love.draw()
 	 table.insert(transformedPoints, {lx, ly})
       end
 
-      love.graphics.setLineWidth(2.0  / camera.scale )
+      love.graphics.setLineWidth(2.0  )
       love.graphics.setColor(1,1,1)
 
       for i=1, #points do
 	 local kind = "line"
 	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-	    if mouseOverPolyPoint(mx, my, transformedPoints[i][1], transformedPoints[i][2]) then
+	    
+	    local scale = root.transforms.l[4] 
+	    if pointInRect(globalX,globalY,
+			   points[i][1] - 5/scale, points[i][2] - 5/scale,
+			   10/scale, 10/scale) then
+	       
 	       kind= "fill"
 	    end
 	 end
 
 	 if editingModeSub == 'polyline-insert' then
-	    local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( wx, wy )
-	    local closestEdgeIndex = getClosestEdgeIndex(wx, wy, transformedPoints)
+	    local closestEdgeIndex = getClosestEdgeIndex(globalX, globalY, points)
 	    local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
 
 	    if i == closestEdgeIndex or i == nextIndex then
@@ -593,13 +612,13 @@ function love.draw()
 	    end
 	 end
 	 love.graphics.setColor(1,1,1)
-	 local dot_x = transformedPoints[i][1] - 5/camera.scale
-	 local dot_y =  transformedPoints[i][2] - 5/camera.scale
-	 local dot_size = 10 / camera.scale
+	 local dot_x = transformedPoints[i][1] - 5 
+	 local dot_y =  transformedPoints[i][2] - 5 
+	 local dot_size = 10 
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
 
-      love.graphics.setLineWidth(4/ camera.scale)
+     -- love.graphics.setLineWidth(4/ camer)
       -- if editingModeSub == 'polyline-rotate'  and #points > 0 and false then
       -- 	 local radius = 12  / camera.scale
       -- 	 local pivot = points[1]
@@ -621,10 +640,10 @@ function love.draw()
       love.graphics.setLineWidth(1)
    end
 
-   love.graphics.pop()
-   love.graphics.setColor(1,1,1, 0.1)
 
+   love.graphics.setColor(1,1,1, 0.1)
    drawGrid()
+   
    love.graphics.push()
 
    local s = 0.5
@@ -636,6 +655,11 @@ function love.draw()
 	 if (editingMode == buttons[i]) then
 	    editingMode = nil
 	    editingModeSub = nil
+	    if (currentNode and currentNode.points) then
+	       currentNode.mesh= makeMeshFromVertices(makeVertices(currentNode))
+	    end
+	    
+	    currentNode = nil
 	 else
 	    editingMode = buttons[i]
 	    editingModeSub = nil
@@ -844,7 +868,7 @@ function love.draw()
 	 scrollviewOffset = v2.value
       end
    end
-   love.graphics.pop()
+  love.graphics.pop()
 
    if not quitDialog then
       love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
