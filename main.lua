@@ -228,6 +228,8 @@ function renderGraphNodes(node, level, startY)
 	    child.open = not child.open
 	    editingMode = nil
 	    editingModeSub = nil
+	    --editingMode = 'folder'
+	    --editingModeSub = 'folder-pivot'
 	 end
 	 if not child.folder then
 	    editingMode = 'polyline'
@@ -341,6 +343,7 @@ function love.load()
       parent = love.graphics.newImage("resources/ui/parent.png"),
       folder = love.graphics.newImage("resources/ui/folder.png"),
       folder_open = love.graphics.newImage("resources/ui/folderopen.png"),
+      pivot = love.graphics.newImage("resources/ui/pivot.png"),
 
    }
 
@@ -378,7 +381,7 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,100,100}},
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 	    children ={
 	       {
 		  name="child1 ",
@@ -546,7 +549,7 @@ local step = 0
 function love.draw()
    step = step + 1
 
-   
+   root.transforms.l[3] = step/1000
    local mx,my = love.mouse.getPosition()
    --local wx, wy = toWorldPos(mx, my)
 
@@ -575,7 +578,21 @@ function love.draw()
 
    love.graphics.setWireframe( false )
 
-   if editingMode == 'polyline' and currentNode  then
+
+   if currentNode and currentNode.folder then
+      --print("I ama folder, where is my origin?")
+      local t= currentNode._parent.transforms.g
+      local pivotX, pivotY = currentNode._parent._globalTransform:transformPoint( t[6], t[7] )
+      love.graphics.setColor(0,0,0)
+      love.graphics.circle("line", pivotX-1, pivotY, 10)
+      love.graphics.setColor(1,1,1)
+      love.graphics.circle("line", pivotX, pivotY, 10)
+
+      --love.graphics.rectangle("fill", pivotX, pivotY, 10, 10)
+   end
+   
+   
+   if editingMode == 'polyline' and currentNode and currentNode.points then
 
       local points =  currentNode and currentNode.points or {}
       local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( mx, my )
