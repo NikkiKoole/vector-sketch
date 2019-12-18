@@ -289,7 +289,7 @@ end
 function love.load()
 
    shapeName = 'untitled'
-   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
+   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=2, highdpi=true})
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
@@ -381,7 +381,7 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,60,160}},
 	    children ={
 	       {
 		  name="child1 ",
@@ -402,7 +402,7 @@ function love.load()
 	 {
 	    folder=true,
 	    name="PARENT2",
-	    transforms =  {g={0,0,0,1,1,0,0},  l={0,0,0,1,1,0,0}},
+	    transforms =  {g={0,0,0,1,1,0,0},  l={0,0,0,1,1,100,100}},
 	    children ={
 	       {
 		  name="child2 ",
@@ -412,7 +412,7 @@ function love.load()
 	       {
 		  folder=true,
 		  name="PARENT3",
-		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
+		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,100,200}},
 		  children ={
 		     {
 			name="child3a ",
@@ -506,7 +506,7 @@ function countNestedChildren(node, total)
    end
    return total
 end
-
+local step = 0
 function renderThings(root)
 
    ---- these calculations are only needed when some local transforms have changed
@@ -521,6 +521,7 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
+  root.transforms.l[3] = step/14000
    for i = 1, #root.children do
 
       local shape = root.children[i]
@@ -545,11 +546,11 @@ function renderThings(root)
    end
 end
 
-local step = 0
+
 function love.draw()
    step = step + 1
 
-   root.transforms.l[3] = step/1000
+   --root.transforms.l[3] = step/20000
    local mx,my = love.mouse.getPosition()
    --local wx, wy = toWorldPos(mx, my)
 
@@ -627,10 +628,14 @@ function love.draw()
 	       kind = 'fill'
 	    end
 	 end
-	 love.graphics.setColor(1,1,1)
+	 
 	 local dot_x = transformedPoints[i][1] - 5 
 	 local dot_y =  transformedPoints[i][2] - 5 
-	 local dot_size = 10 
+	 local dot_size = 10
+	 love.graphics.setColor(0,0,0)
+	 love.graphics.rectangle(kind, dot_x-1, dot_y, dot_size, dot_size)
+
+	 love.graphics.setColor(1,1,1)
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
 
@@ -898,6 +903,8 @@ function love.draw()
    if quitDialog then
       local quitStr = "Quit? Seriously?! [ESC] "
       love.graphics.setFont(large)
+      love.graphics.setColor(0,0,0, 1)
+      love.graphics.print(quitStr, 114, 11)
       love.graphics.setColor(1,0.5,0.5, 1)
       love.graphics.print(quitStr, 116, 13)
       love.graphics.setColor(1,1,1, 1)
