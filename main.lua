@@ -145,8 +145,8 @@ function love.mousemoved(x,y, dx, dy)
 
    end
    if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
-      backdrop.x = backdrop.x + dx / camera.scale
-      backdrop.y = backdrop.y + dy / camera.scale
+      backdrop.x = backdrop.x + dx / root.transforms.l[4]
+      backdrop.y = backdrop.y + dy / root.transforms.l[4]
    end
 
    if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
@@ -289,7 +289,6 @@ function love.load()
    shapeName = 'untitled'
    love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
    love.keyboard.setKeyRepeat( true )
-   camera = {x=0, y=0, scale=1}
    editingMode = nil
    editingModeSub = nil
    small = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 24)
