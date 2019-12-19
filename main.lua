@@ -90,12 +90,13 @@ function love.mousepressed(x,y, button)
    local px, py = t:inverseTransformPoint( x, y )
    local scale = root.transforms.l[4]
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
+      local w, h = getLocalDelta(t, 10, 10)
 
       local index =  0
       for i = 1, #points do
 	 if pointInRect(px,py,
-			points[i][1] - 5/scale, points[i][2] - 5/scale,
-			10/scale, 10/scale) then
+			points[i][1] - w/2, points[i][2] - h/2,
+			w, h) then
 	    index = i
 	 end
       end
@@ -166,11 +167,10 @@ function love.mousemoved(x,y, dx, dy)
    end
    if (editingMode == 'folder' and editingModeSub ==  'folder-pivot') then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-	 --print('doing something here')
 	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
 	 currentNode.transforms.l[6]= currentNode.transforms.l[6] + ddx
 	 currentNode.transforms.l[7]= currentNode.transforms.l[7] + ddy
-	 print( currentNode.transforms.l[6])
+--	 print( currentNode.transforms.l[6])
       end
    end
 
@@ -397,7 +397,7 @@ function love.load()
       children = {
 	 {
 	    folder=true,
-	    name="PARENT",
+	    name="PARENT-60-100",
 	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,60,160}},
 	    children ={
 	       {
@@ -412,13 +412,10 @@ function love.load()
 	    color = {1,0,0, 0.8},
 	    points = {{100,100},{200,100},{200,200},{100,200}},
 	 },
-	 {
-	    color = {1,1,0, 0.8},
-	    points = {{150,100},{250,100},{250,200},{150,200}},
-	 },
+
 	 {
 	    folder=true,
-	    name="PARENT2",
+	    name="PARENT2-100-100",
 	    transforms =  {g={0,0,0,1,1,0,0},  l={0,0,0,1,1,100,100}},
 	    children ={
 	       {
@@ -428,7 +425,7 @@ function love.load()
 	       },
 	       {
 		  folder=true,
-		  name="PARENT3",
+		  name="PARENT3-100-200",
 		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,100,200}},
 		  children ={
 		     {
@@ -436,16 +433,7 @@ function love.load()
 			color = {1,1,0, 0.8},
 			points = {{10,10},{20,100},{200,200},{100,200}},
 		     },
-		     {
-			name="child3b ",
-			color = {1,1,0, 0.8},
-			points = {{10,10},{20,100},{200,200},{100,200}},
-		     },
-		     {
-			name="child3c ",
-			color = {1,1,0, 0.8},
-			points = {{10,10},{20,100},{200,200},{100,200}},
-		     },
+
 		  }
 	       },
 	    }
@@ -538,7 +526,7 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
-  root.transforms.l[3] = step/4000
+--  root.transforms.l[3] = step/4000
    for i = 1, #root.children do
 
       local shape = root.children[i]
@@ -597,9 +585,9 @@ function love.draw()
    love.graphics.setWireframe( false )
 
    if currentNode and currentNode.folder then
-      local t= currentNode.transforms.l
+      local t = currentNode.transforms.g
       local pivotX, pivotY = currentNode._parent._globalTransform:transformPoint( t[6], t[7] )
-      --print(pivotX, pivotY)
+--      print(pivotX, pivotY)
       love.graphics.setColor(0,0,0)
       love.graphics.circle("line", pivotX-1, pivotY, 10)
       love.graphics.setColor(1,1,1)
@@ -621,14 +609,16 @@ function love.draw()
       love.graphics.setLineWidth(2.0  )
       love.graphics.setColor(1,1,1)
 
+      local w, h = getLocalDelta(t, 10, 10)
+
       for i=1, #points do
 	 local kind = "line"
 	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
 
 	    local scale = root.transforms.l[4]
 	    if pointInRect(globalX,globalY,
-			   points[i][1] - 5/scale, points[i][2] - 5/scale,
-			   10/scale, 10/scale) then
+			   points[i][1] - w/2, points[i][2] - h/2,
+			   w, h) then
 
 	       kind= "fill"
 	    end
@@ -705,13 +695,31 @@ function love.draw()
       wireframe = not wireframe
    end
 
-   if (editingMode == 'folder' and currentNode) then
+   if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
       if imgbutton('folder-move', ui.move,  calcX(1, s), calcY(3, s), s).clicked then
 	 editingModeSub = 'folder-move'
       end
        if imgbutton('folder-pivot', ui.pivot,  calcX(2, s), calcY(3, s), s).clicked then
 	 editingModeSub = 'folder-pivot'
+       end
+
+       local v =  h_slider("folder-rotate", calcX(4, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , 0, 2 * math.pi)
+       if (v.value ~= nil) then
+	  currentNode.transforms.l[3] = v.value
+	  editingModeSub = 'folder-rotate'
+
+	  love.graphics.print(	  string.format("%0.1f", v.value), calcX(4, s)-20, calcY(3, s)+ 12*s - 20)
       end
+
+       local v =  h_slider("folder-scale", calcX(7, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[4] , 0, 10)
+       if (v.value ~= nil) then
+	  currentNode.transforms.l[4] = v.value
+	  currentNode.transforms.l[5] = v.value
+	  editingModeSub = 'folder-scale'
+	  love.graphics.print(	  string.format("%0.1f", v.value), calcX(7, s)-20, calcY(3, s)+ 12*s - 20)
+
+      end
+
 
    end
 
