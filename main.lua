@@ -91,7 +91,7 @@ function love.mousepressed(x,y, button)
    local scale = root.transforms.l[4]
    if editingMode == 'polyline' and not mouseState.hoveredSomething   then
 
-      local index =  0 
+      local index =  0
       for i = 1, #points do
 	 if pointInRect(px,py,
 			points[i][1] - 5/scale, points[i][2] - 5/scale,
@@ -148,8 +148,8 @@ end
 function love.mousemoved(x,y, dx, dy)
    currentlyHoveredUINode = nil
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
-      root.transforms.l[1] = root.transforms.l[1] + dx 
-      root.transforms.l[2] = root.transforms.l[2] + dy 
+      root.transforms.l[1] = root.transforms.l[1] + dx
+      root.transforms.l[2] = root.transforms.l[2] + dy
 
    end
    if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
@@ -157,10 +157,21 @@ function love.mousemoved(x,y, dx, dy)
       backdrop.y = backdrop.y + dy / root.transforms.l[4]
    end
 
-   if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-      local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
-      currentNode.transforms.l[1]= currentNode.transforms.l[1] + ddx 
-      currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy 
+   if (editingMode == 'folder' and editingModeSub ==  'folder-move') then
+      if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
+	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+	 currentNode.transforms.l[1]= currentNode.transforms.l[1] + ddx
+	 currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy
+      end
+   end
+   if (editingMode == 'folder' and editingModeSub ==  'folder-pivot') then
+      if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
+	 --print('doing something here')
+	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+	 currentNode.transforms.l[6]= currentNode.transforms.l[6] + ddx
+	 currentNode.transforms.l[7]= currentNode.transforms.l[7] + ddy
+	 print( currentNode.transforms.l[6])
+      end
    end
 
 
@@ -174,8 +185,8 @@ function love.mousemoved(x,y, dx, dy)
 	 end
 	 for i = beginIndex, #points do
 	    local p = points[i]
-	    p[1] = p[1] + dx3 
-	    p[2] = p[2] + dy3 
+	    p[1] = p[1] + dx3
+	    p[2] = p[2] + dy3
 	 end
       end
    end
@@ -231,10 +242,10 @@ function renderGraphNodes(node, level, startY)
       if b.clicked then
 	 if (child.folder) then
 	    child.open = not child.open
-	    editingMode = nil
-	    editingModeSub = nil
-	    --editingMode = 'folder'
-	    --editingModeSub = 'folder-pivot'
+	    --editingMode = nil
+	    --editingModeSub = nil
+	    editingMode = 'folder'
+	    editingModeSub = 'folder-move'
 	 end
 	 if not child.folder then
 	    editingMode = 'polyline'
@@ -260,9 +271,9 @@ function love.wheelmoved(x,y)
 
    local posx, posy = love.mouse.getPosition()
    local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
-   
-   root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9) 
-   root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)  
+
+   root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9)
+   root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
 
 
    --- ugh
@@ -271,8 +282,8 @@ function love.wheelmoved(x,y)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = root._localTransform
    ---
-   
-   
+
+
    local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
    local dx = ix1 - ix2
    local dy = iy1 - iy2
@@ -295,7 +306,7 @@ end
 function love.load()
 
    shapeName = 'untitled'
-   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=2, highdpi=true})
+   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=16, highdpi=true})
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
@@ -527,7 +538,7 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
-  root.transforms.l[3] = step/14000
+  root.transforms.l[3] = step/4000
    for i = 1, #root.children do
 
       local shape = root.children[i]
@@ -556,7 +567,7 @@ end
 function love.draw()
    step = step + 1
 
-   --root.transforms.l[3] = step/20000
+   --root.transforms.l[3] = step/10000
    local mx,my = love.mouse.getPosition()
    --local wx, wy = toWorldPos(mx, my)
 
@@ -586,15 +597,16 @@ function love.draw()
    love.graphics.setWireframe( false )
 
    if currentNode and currentNode.folder then
-      local t= currentNode._parent.transforms.g
+      local t= currentNode.transforms.l
       local pivotX, pivotY = currentNode._parent._globalTransform:transformPoint( t[6], t[7] )
+      --print(pivotX, pivotY)
       love.graphics.setColor(0,0,0)
       love.graphics.circle("line", pivotX-1, pivotY, 10)
       love.graphics.setColor(1,1,1)
       love.graphics.circle("line", pivotX, pivotY, 10)
    end
-   
-   
+
+
    if editingMode == 'polyline' and currentNode and currentNode.points then
 
       local points =  currentNode and currentNode.points or {}
@@ -612,12 +624,12 @@ function love.draw()
       for i=1, #points do
 	 local kind = "line"
 	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-	    
-	    local scale = root.transforms.l[4] 
+
+	    local scale = root.transforms.l[4]
 	    if pointInRect(globalX,globalY,
 			   points[i][1] - 5/scale, points[i][2] - 5/scale,
 			   10/scale, 10/scale) then
-	       
+
 	       kind= "fill"
 	    end
 	 end
@@ -630,9 +642,9 @@ function love.draw()
 	       kind = 'fill'
 	    end
 	 end
-	 
-	 local dot_x = transformedPoints[i][1] - 5 
-	 local dot_y =  transformedPoints[i][2] - 5 
+
+	 local dot_x = transformedPoints[i][1] - 5
+	 local dot_y =  transformedPoints[i][2] - 5
 	 local dot_size = 10
 	 love.graphics.setColor(0,0,0)
 	 love.graphics.rectangle(kind, dot_x-1, dot_y, dot_size, dot_size)
@@ -666,12 +678,12 @@ function love.draw()
 
    love.graphics.setColor(1,1,1, 0.1)
    drawGrid()
-   
+
    love.graphics.push()
 
    local s = 0.5
    local buttons = {
-      'move', 'polyline', 'backdrop'
+      'move', 'polyline', 'folder', 'backdrop'
    }
    for i = 1, #buttons do
       if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
@@ -689,8 +701,18 @@ function love.draw()
 	 end
       end
    end
-   if imgbutton('polyline-wireframe', ui.lines,  calcX(0, s), calcY(4, s), s).clicked then
+   if imgbutton('polyline-wireframe', ui.lines,  calcX(0, s), calcY(5, s), s).clicked then
       wireframe = not wireframe
+   end
+
+   if (editingMode == 'folder' and currentNode) then
+      if imgbutton('folder-move', ui.move,  calcX(1, s), calcY(3, s), s).clicked then
+	 editingModeSub = 'folder-move'
+      end
+       if imgbutton('folder-pivot', ui.pivot,  calcX(2, s), calcY(3, s), s).clicked then
+	 editingModeSub = 'folder-pivot'
+      end
+
    end
 
 
