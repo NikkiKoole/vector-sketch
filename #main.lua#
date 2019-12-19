@@ -72,7 +72,7 @@ function meshAll(root) -- this needs to be done recursive
       if (not root.children[i].folder) then
 	 root.children[i].mesh = makeMeshFromVertices(makeVertices(root.children[i]))
       else
-	 meshAll(root.children[i])
+	 meshAll(root.children[i]
       end
    end
 end
