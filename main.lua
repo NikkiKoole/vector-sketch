@@ -7,7 +7,6 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
-
 function getLocalDelta(transform, dx, dy)
     local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
     local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
@@ -23,6 +22,14 @@ function getGlobalDelta(transform, dx, dy)
     local dy3 = dy2 - dy1
     return dx3, dy3
 end
+
+function setCurrentNode(newNode)
+   if currentNode and not currentNode.folder then
+      currentNode.mesh = makeMeshFromVertices(makeVertices(currentNode))
+   end
+   currentNode = newNode
+end
+
 
 function getIndex(item)
    if (item) then
@@ -58,6 +65,7 @@ end
 function removeShapeAtPath(path)
    return table.remove(root.children, path[1])
 end
+
 
 function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
@@ -221,9 +229,6 @@ function renderGraphNodes(node, level, startY)
       end
 
       if b.clicked then
-	 if currentNode and not currentNode.folder then
-	    currentNode.mesh= makeMeshFromVertices(makeVertices(currentNode))
-	 end
 	 if (child.folder) then
 	    child.open = not child.open
 	    editingMode = nil
@@ -235,7 +240,8 @@ function renderGraphNodes(node, level, startY)
 	    editingMode = 'polyline'
 	    editingModeSub = 'polyline-edit'
 	 end
-	 currentNode = child
+	 setCurrentNode(child)
+
       end
 
       if b.hover then
@@ -579,17 +585,13 @@ function love.draw()
 
    love.graphics.setWireframe( false )
 
-
    if currentNode and currentNode.folder then
-      --print("I ama folder, where is my origin?")
       local t= currentNode._parent.transforms.g
       local pivotX, pivotY = currentNode._parent._globalTransform:transformPoint( t[6], t[7] )
       love.graphics.setColor(0,0,0)
       love.graphics.circle("line", pivotX-1, pivotY, 10)
       love.graphics.setColor(1,1,1)
       love.graphics.circle("line", pivotX, pivotY, 10)
-
-      --love.graphics.rectangle("fill", pivotX, pivotY, 10, 10)
    end
    
    
@@ -676,11 +678,7 @@ function love.draw()
 	 if (editingMode == buttons[i]) then
 	    editingMode = nil
 	    editingModeSub = nil
-	    if (currentNode and currentNode.points) then
-	       currentNode.mesh= makeMeshFromVertices(makeVertices(currentNode))
-	    end
-	    
-	    currentNode = nil
+	    setCurrentNode(nil)
 	 else
 	    editingMode = buttons[i]
 	    editingModeSub = nil
@@ -720,7 +718,7 @@ function love.draw()
 	 cloned._parent = currentNode._parent
 	 cloned.name = (cloned.name)..' copy'
 	 addShapeAfter(cloned, currentNode)
-	 currentNode = cloned
+	 setCurrentNode(cloned)
       end
    end
 
@@ -849,11 +847,11 @@ function love.draw()
 	 local index = getIndex(currentNode)
 	 local taken_out = removeCurrentNode()
 	 if (index > 1) then
-	    currentNode = currentNode._parent.children[index -1]
+	    setCurrentNode(currentNode._parent.children[index -1])
 	 elseif (index == 1 and #(currentNode._parent.children) > 0 ) then
-	    currentNode = currentNode._parent.children[index]
+	    setCurrentNode(currentNode._parent.children[index])
 	 else
-	    currentNode = nil
+	    setCurrentNode(nil)
 	 end
       end
 
