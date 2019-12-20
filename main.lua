@@ -526,7 +526,7 @@ function getDirectChildrenBBox(node)
       end
    end
 
-   --print(tlx, tly, brx, bry)
+
    return tlx, tly, brx, bry
 end
 
@@ -557,7 +557,6 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
---  root.transforms.l[3] = step/4000
    for i = 1, #root.children do
 
       local shape = root.children[i]
@@ -585,10 +584,7 @@ end
 
 function love.draw()
    step = step + 1
-
-   --root.transforms.l[3] = step/10000
    local mx,my = love.mouse.getPosition()
-   --local wx, wy = toWorldPos(mx, my)
 
    handleMouseClickStart()
    love.mouse.setCursor(cursors.arrow)
@@ -618,18 +614,13 @@ function love.draw()
    if currentNode and currentNode.folder then
       local t = currentNode.transforms.l
       local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
---      print(pivotX, pivotY)
       love.graphics.setColor(0,0,0)
       love.graphics.circle("line", pivotX-1, pivotY, 10)
       love.graphics.setColor(1,1,1)
       love.graphics.circle("line", pivotX, pivotY, 10)
-
-      --getDirectChildrenBBox(currentNode)
    end
 
-
    if editingMode == 'polyline' and currentNode and currentNode.points then
-
       local points =  currentNode and currentNode.points or {}
       local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( mx, my )
       local transformedPoints = {}
@@ -677,25 +668,6 @@ function love.draw()
 	 love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
       end
 
-     -- love.graphics.setLineWidth(4/ camer)
-      -- if editingModeSub == 'polyline-rotate'  and #points > 0 and false then
-      -- 	 local radius = 12  / camera.scale
-      -- 	 local pivot = points[1]
-      -- 	 local rotator = {x=pivot.x + 100, y=pivot.y}
-      -- 	 love.graphics.setColor(1,1,1)
-
-      -- 	 love.graphics.line(pivot.x, pivot.y, rotator.x, rotator.y)
-      -- 	 love.graphics.setLineWidth(2/ camera.scale)
-      -- 	 love.graphics.circle("fill", pivot.x, pivot.y , radius)
-      -- 	 love.graphics.setColor(0,0,0)
-      -- 	 love.graphics.circle("line", pivot.x, pivot.y , radius)
-
-      -- 	 love.graphics.setColor(0,0,0)
-      -- 	 love.graphics.circle("fill", rotator.x, rotator.y , radius)
-      -- 	 love.graphics.setColor(1,1,1)
-      -- 	 love.graphics.circle("line", rotator.x, rotator.y , radius)
-      -- end
-
       love.graphics.setLineWidth(1)
    end
 
@@ -735,36 +707,39 @@ function love.draw()
       end
        if imgbutton('folder-pivot', ui.pivot,  calcX(2, s), calcY(3, s), s).clicked then
 	  editingModeSub = nil
-	  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-	  local mx = tlx + (brx - tlx)/2
-	  local my = tly + (bry - tly)/2
 
-	  local nx = currentNode.transforms.l[6]
-	  local ny = currentNode.transforms.l[7]
+	  if (#currentNode.children > 0) then
+	     local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+	     local mx = tlx + (brx - tlx)/2
+	     local my = tly + (bry - tly)/2
 
-	  if (nx == tlx and ny == tly) then
-	     currentNode.transforms.l[6]= brx
-	     currentNode.transforms.l[7]= tly
+	     local nx = currentNode.transforms.l[6]
+	     local ny = currentNode.transforms.l[7]
 
-	  elseif (nx == brx and ny == tly) then
-	     currentNode.transforms.l[6]= brx
-	     currentNode.transforms.l[7]= bry
+	     if (nx == tlx and ny == tly) then
+		currentNode.transforms.l[6]= brx
+		currentNode.transforms.l[7]= tly
 
-	  elseif (nx == brx and ny == bry) then
-	     currentNode.transforms.l[6]= tlx
-	     currentNode.transforms.l[7]= bry
+	     elseif (nx == brx and ny == tly) then
+		currentNode.transforms.l[6]= brx
+		currentNode.transforms.l[7]= bry
 
-	  elseif (nx == tlx and ty == bry) then
-	     currentNode.transforms.l[6]= tlx
-	     currentNode.transforms.l[7]= tly
+	     elseif (nx == brx and ny == bry) then
+		currentNode.transforms.l[6]= tlx
+		currentNode.transforms.l[7]= bry
 
-	  elseif (nx == mx and ny == my) then
-	     currentNode.transforms.l[6]= tlx
-	     currentNode.transforms.l[7]= tly
-	  else
-	     currentNode.transforms.l[6]= mx
-	     currentNode.transforms.l[7]= my
+	     elseif (nx == tlx and ty == bry) then
+		currentNode.transforms.l[6]= tlx
+		currentNode.transforms.l[7]= tly
 
+	     elseif (nx == mx and ny == my) then
+		currentNode.transforms.l[6]= tlx
+		currentNode.transforms.l[7]= tly
+	     else
+		currentNode.transforms.l[6]= mx
+		currentNode.transforms.l[7]= my
+
+	     end
 	  end
        end
        if imgbutton('folder-pan-pivot', ui.pan,  calcX(3, s), calcY(3, s), s).clicked then
@@ -1027,6 +1002,8 @@ end
 
 function love.filedropped(file)
    local filename = file:getFilename()
+   local tab
+
    if ends_with(filename, '.svg') then
       local command = 'node '..'resources/svg_to_love/index.js '..filename..' '..simplifyValue
       print(command)
@@ -1034,30 +1011,27 @@ function love.filedropped(file)
       local str = p:read('*all')
       p:close()
       local obj = ('{'..str..'}')
-      local tab = (loadstring("return ".. obj)())
-      root.children = tab
-      parentize(root)
-      scrollviewOffset = 0
+      tab = (loadstring("return ".. obj)())
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
-      editingMode = nil
-      editingModeSub = nil
-      currentNode = nil
-      meshAll(root)
    end
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
-      local tab = (loadstring("return ".. str)())
+      tab = (loadstring("return ".. str)())
+      local index = string.find(filename, "/[^/]*$")
+      shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
+   end
+
+   if tab then
       root.children = tab
       parentize(root)
       scrollviewOffset = 0
-      local index = string.find(filename, "/[^/]*$")
-      shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
       editingMode = nil
       editingModeSub = nil
       currentNode = nil
       meshAll(root)
    end
+
 end
 
 
