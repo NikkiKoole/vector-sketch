@@ -16,13 +16,13 @@ end
 function rgbbutton(id, rgb, x, y, scale)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
-   local w, h = 64, 64
+   local w, h = 48, 48
    local clicked = false
 
    love.graphics.setColor(rgb[1] ,rgb[2],rgb[3], 1)
-   love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
+   love.graphics.rectangle("fill", x*scale, y*scale, (w)*scale,( h)*scale)
 
-   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
+   if (pointInRect(mx, my,  x*scale, y*scale, (w)*scale,( h)*scale)) then
       mouseState.hoveredSomething = true
       love.mouse.setCursor(cursors.hand)
       if (mouseState.click) then
@@ -30,7 +30,7 @@ function rgbbutton(id, rgb, x, y, scale)
       end
 
       love.graphics.setColor(1,1,1,1)
-      love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
+      love.graphics.rectangle("line", x*scale, y*scale, (8)*scale,(8)*scale)
    end
    if (editingMode == id) then
    end

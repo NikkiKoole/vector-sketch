@@ -382,6 +382,9 @@ function love.load()
    for i = 1, #fabuland.colors do
       table.insert(palette.colors, fabuland.colors[i])
    end
+   for i = 1, #james.colors do
+      table.insert(palette.colors, james.colors[i])
+   end
 
    mouseState = {
       hoveredSomething = false,
@@ -747,7 +750,7 @@ function love.draw()
        end
 
 
-       local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , 0, 2 * math.pi)
+       local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[3] = v.value
 	  editingModeSub = 'folder-rotate'
@@ -799,7 +802,19 @@ function love.draw()
    if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
-	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
+	 local x = calcX(i, s)
+	 local y = calcY(3, s)
+	 
+
+	 if (x > w) then
+	    y = y + math.floor(x/w) * 50
+	    x = x % w
+	    x = x + 100
+	 end
+	 y = y + 300
+		    
+	 
+	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	    currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
 	 end
       end
@@ -833,7 +848,17 @@ function love.draw()
       if (editingModeSub == 'backdrop-palette') then
 	 for i = 1, #palette.colors do
 	    local rgb = palette.colors[i].rgb
-	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, calcX(i, s),calcY(3, s) ,s).clicked then
+	    local x = calcX(i, s)
+	    local y = calcY(3, s)
+	    if (x > w) then
+	       y = y + math.floor(x/w) * 50
+	       x = x % w
+	       x = x + 100
+	       
+	    end
+	    y = y + 300
+
+	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	       backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	    end
 	 end

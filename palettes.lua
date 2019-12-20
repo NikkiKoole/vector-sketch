@@ -1,3 +1,8 @@
+function hex2rgb(hex)
+    hex = hex:gsub("#","")
+    return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
+end
+
 miffy = {
    name='miffy',
    colors={
@@ -45,3 +50,96 @@ fabuland = {
       {name="earth orange", rgb={98, 71, 50}},
    }
 }
+
+
+
+local jamesGulliverHancock = {'d44553',
+'e36f73',
+'d2797b',
+'cd8aa4',
+'cc6b8f',
+'df5a91',
+'ec71a5',
+'e595ab',
+'dca9ac',
+'ecbcc7',
+'b5abac',
+'a89ea1',
+'996164',
+'797073',
+'796870',
+'7f968c',
+'39875e',
+'2388a2',
+'2599ab',
+'205667',
+'5b6b73',
+'539693',
+'5d9398',
+'76a3ae',
+'a4c6cd',
+'aaaeaa',
+'9fc84b',
+'869048',
+'676766',
+'757066',
+'937f64',
+'947a60',
+'9f7956',
+'a98343',
+'c0ab4e',
+'af9d50',
+'af9f5e',
+'9e9c79',
+'abaf85',
+'a5a4a2',
+'c1b6ac',
+'cab39d',
+'cdae9a',
+'d9ad76',
+'cfab60',
+'cdbb6e',
+'d9c054',
+'dfc54b',
+'e3ca57',
+'ded869',
+'d4d29d',
+'c7c66f',
+'bcc092',
+'bdba94',
+'bebcb2',
+'b6af9b',
+'baaf8d',
+'b99b75',
+'b99974',
+'cb9370',
+'bc7d5e',
+'bd7151',
+'c6735d',
+'e17b55',
+'e58f61',
+'ed8b60',
+'f0b364',
+'f7d0b2',
+'f2e3d9',
+'dfdcd9',
+'e6e5e2',
+'ede8d5',
+'e0dcbd',
+'e9d22b',
+'e1e1c0',
+'d0cccc',
+'c19490',
+'995555',}
+
+
+james = {
+   name="james",
+   colors = {}
+}
+
+for i = 1, #jamesGulliverHancock do
+   local r,g,b = hex2rgb(jamesGulliverHancock[i])
+   table.insert(james.colors, {name='unknown', rgb={r,g,b}})
+end
+
