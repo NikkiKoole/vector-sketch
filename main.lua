@@ -159,6 +159,7 @@ function love.mousemoved(x,y, dx, dy)
       backdrop.y = backdrop.y + dy / root.transforms.l[4]
    end
 
+
    if (editingMode == 'folder' and editingModeSub ==  'folder-move') then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
 	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
@@ -168,9 +169,11 @@ function love.mousemoved(x,y, dx, dy)
    end
    if (editingMode == 'folder' and editingModeSub ==  'folder-pivot') then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
-	 currentNode.transforms.l[6]= currentNode.transforms.l[6] + ddx
-	 currentNode.transforms.l[7]= currentNode.transforms.l[7] + ddy
+	 --local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+	 --print()
+	 --local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+	 --currentNode.transforms.l[6]= tlx--currentNode.transforms.l[6] + ddx
+	 --currentNode.transforms.l[7]= tly--currentNode.transforms.l[7] + ddy
 --	 print( currentNode.transforms.l[6])
       end
    end
@@ -307,7 +310,7 @@ end
 function love.load()
 
    shapeName = 'untitled'
-   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=16, highdpi=true})
+   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=2, highdpi=true})
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
@@ -398,9 +401,10 @@ function love.load()
       children = {
 	 {
 	    folder=true,
-	    name="PARENT-60-100",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,60,160}},
+	    name="PARENT-0-0",
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 	    children ={
+
 	       {
 		  name="child1 ",
 		  color = {1,1,0, 0.8},
@@ -409,36 +413,42 @@ function love.load()
 	    }
 	 },
 	 {
-	    name="Yes hi ",
-	    color = {1,0,0, 0.8},
-	    points = {{100,100},{200,100},{200,200},{100,200}},
-	 },
-
-	 {
 	    folder=true,
-	    name="PARENT2-100-100",
-	    transforms =  {g={0,0,0,1,1,0,0},  l={0,0,0,1,1,100,100}},
+	    name="PARENT-200-0",
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,200,0}},
 	    children ={
 	       {
-		  name="child2 ",
-		  color = {1,1,0, 0.8},
-		  points = {{10,10},{20,100},{200,200},{100,200}},
-	       },
-	       {
-		  folder=true,
-		  name="PARENT3-100-200",
-		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,100,200}},
-		  children ={
-		     {
-			name="child3a ",
-			color = {1,1,0, 0.8},
-			points = {{10,10},{20,100},{200,200},{100,200}},
-		     },
-
-		  }
+		  name="child1 ",
+		  color = {1,0,0, 0.8},
+		  points = {{0,0},{200,0},{200,200},{0,200}},
 	       },
 	    }
 	 },
+	 {
+	    folder=true,
+	    name="PARENT-200-200",
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,200,200}},
+	    children ={
+	       {
+		  name="child1 ",
+		  color = {0,0,1, 0.8},
+		  points = {{0,0},{200,0},{200,200},{0,200}},
+	       },
+	    }
+	 },
+	 {
+	    folder=true,
+	    name="PARENT-0-200",
+	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,200}},
+	    children ={
+	       {
+		  name="child1 ",
+		  color = {0,1,0, 0.8},
+		  points = {{0,0},{200,0},{200,200},{0,200}},
+	       },
+	    }
+	 },
+
       }
    }
    parentize(root)
@@ -501,6 +511,30 @@ function handleMouseClickStart()
    end
    mouseState.lastDown =  mouseState.down
 end
+
+function getDirectChildrenBBox(node)
+   local tlx = 9999999999
+   local tly = 9999999999
+   local brx = -9999999999
+   local bry = -9999999999
+
+   for i=1, #node.children do
+      local points = node.children[i].points
+      if points then
+	 for ip=1, #points do
+	    if points[ip][1] < tlx then tlx = points[ip][1] end
+	    if points[ip][1] > brx then brx = points[ip][1] end
+	    if points[ip][2] < tly then tly = points[ip][2] end
+	    if points[ip][2] > bry then bry = points[ip][2] end
+	 end
+      end
+   end
+
+   --print(tlx, tly, brx, bry)
+   return tlx, tly, brx, bry
+end
+
+
 
 function countNestedChildren(node, total)
    for i=1, #node.children do
@@ -586,13 +620,15 @@ function love.draw()
    love.graphics.setWireframe( false )
 
    if currentNode and currentNode.folder then
-      local t = currentNode.transforms.g
-      local pivotX, pivotY = currentNode._parent._globalTransform:transformPoint( t[6], t[7] )
+      local t = currentNode.transforms.l
+      local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
 --      print(pivotX, pivotY)
       love.graphics.setColor(0,0,0)
       love.graphics.circle("line", pivotX-1, pivotY, 10)
       love.graphics.setColor(1,1,1)
       love.graphics.circle("line", pivotX, pivotY, 10)
+
+      --getDirectChildrenBBox(currentNode)
    end
 
 
@@ -702,7 +738,45 @@ function love.draw()
 	 editingModeSub = 'folder-move'
       end
        if imgbutton('folder-pivot', ui.pivot,  calcX(2, s), calcY(3, s), s).clicked then
-	 editingModeSub = 'folder-pivot'
+	  editingModeSub = 'folder-pivot'
+	  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+	  local mx = tlx + (brx - tlx)/2
+	  local my = tly + (bry - tly)/2
+
+	  local nx = currentNode.transforms.l[6]
+	  local ny = currentNode.transforms.l[7]
+
+	  if (nx == tlx and ny == tly) then
+	     currentNode.transforms.l[6]= brx
+	     currentNode.transforms.l[7]= tly
+
+	  elseif (nx == brx and ny == tly) then
+	     currentNode.transforms.l[6]= brx
+	     currentNode.transforms.l[7]= bry
+
+	  elseif (nx == brx and ny == bry) then
+	     currentNode.transforms.l[6]= tlx
+	     currentNode.transforms.l[7]= bry
+
+	  elseif (nx == tlx and ty == bry) then
+	     currentNode.transforms.l[6]= tlx
+	     currentNode.transforms.l[7]= tly
+
+	  elseif (nx == mx and ny == my) then
+	     currentNode.transforms.l[6]= tlx
+	     currentNode.transforms.l[7]= tly
+	  else
+	     currentNode.transforms.l[6]= mx
+	     currentNode.transforms.l[7]= my
+
+	  end
+
+
+
+
+
+
+
        end
 
        local v =  h_slider("folder-rotate", calcX(4, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , 0, 2 * math.pi)
