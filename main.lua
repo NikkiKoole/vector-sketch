@@ -167,17 +167,13 @@ function love.mousemoved(x,y, dx, dy)
 	 currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy
       end
    end
-   if (editingMode == 'folder' and editingModeSub ==  'folder-pivot') then
+   if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot') then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-	 --local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-	 --print()
-	 --local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
-	 --currentNode.transforms.l[6]= tlx--currentNode.transforms.l[6] + ddx
-	 --currentNode.transforms.l[7]= tly--currentNode.transforms.l[7] + ddy
---	 print( currentNode.transforms.l[6])
+	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+	 currentNode.transforms.l[6]= currentNode.transforms.l[6] - ddx
+	 currentNode.transforms.l[7]= currentNode.transforms.l[7] - ddy
       end
    end
-
 
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
       local points = currentNode and currentNode.points
@@ -365,7 +361,7 @@ function love.load()
       folder = love.graphics.newImage("resources/ui/folder.png"),
       folder_open = love.graphics.newImage("resources/ui/folderopen.png"),
       pivot = love.graphics.newImage("resources/ui/pivot.png"),
-
+      pan = love.graphics.newImage("resources/ui/pan.png"),
    }
 
    cursors = {
@@ -392,6 +388,7 @@ function love.load()
       down = false,
       lastDown = false,
       click = false,
+      offset = {x=0, y=0}
    }
 
    root = {
@@ -501,7 +498,6 @@ function handleMouseClickStart()
    mouseState.down = love.mouse.isDown(1 )
    mouseState.click = false
    mouseState.released = false
-
    if mouseState.down ~= mouseState.lastDown then
       if mouseState.down  then
          mouseState.click  = true
@@ -738,7 +734,7 @@ function love.draw()
 	 editingModeSub = 'folder-move'
       end
        if imgbutton('folder-pivot', ui.pivot,  calcX(2, s), calcY(3, s), s).clicked then
-	  editingModeSub = 'folder-pivot'
+	  editingModeSub = nil
 	  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
 	  local mx = tlx + (brx - tlx)/2
 	  local my = tly + (bry - tly)/2
@@ -770,16 +766,13 @@ function love.draw()
 	     currentNode.transforms.l[7]= my
 
 	  end
-
-
-
-
-
-
-
+       end
+       if imgbutton('folder-pan-pivot', ui.pan,  calcX(3, s), calcY(3, s), s).clicked then
+	  editingModeSub = 'folder-pan-pivot'
        end
 
-       local v =  h_slider("folder-rotate", calcX(4, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , 0, 2 * math.pi)
+
+       local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , 0, 2 * math.pi)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[3] = v.value
 	  editingModeSub = 'folder-rotate'
@@ -787,7 +780,7 @@ function love.draw()
 	  love.graphics.print(	  string.format("%0.1f", v.value), calcX(4, s)-20, calcY(3, s)+ 12*s - 20)
       end
 
-       local v =  h_slider("folder-scale", calcX(7, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[4] , 0.00001, 10)
+       local v =  h_slider("folder-scale", calcX(8, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[4] , 0.00001, 10)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[4] = v.value
 	  currentNode.transforms.l[5] = v.value
