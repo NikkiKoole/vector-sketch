@@ -168,7 +168,7 @@ function v_slider(id, x, y, height, v, min, max)
    local draggedResult = false
    local mx, my = love.mouse.getPosition( )
    local hover = false
-   if pointInRect(mx,my, x, yOffset +y,20,20) then
+   if pointInRect(mx,my, x, (yOffset +y),20,20) then
       hover = true
    end
 
@@ -178,7 +178,7 @@ function v_slider(id, x, y, height, v, min, max)
       if mouseState.click then
          lastDraggedElement = {id=id}
 	 mouseState.hoveredSomething = true
-	 mouseState.offset = {x=x - mx, y=(yOffset+y)-y}
+	 mouseState.offset = {x=x - mx, y=(yOffset+y)-my}
       end
    end
 
