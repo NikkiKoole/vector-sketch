@@ -169,7 +169,7 @@ function love.mousemoved(x,y, dx, dy)
    end
    if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot') then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+	 local ddx, ddy = getLocalDelta(currentNode._globalTransform, dx, dy)
 	 currentNode.transforms.l[6]= currentNode.transforms.l[6] - ddx
 	 currentNode.transforms.l[7]= currentNode.transforms.l[7] - ddy
       end
@@ -750,20 +750,20 @@ function love.draw()
        end
 
 
-       local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
+       local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[3] = v.value
 	  editingModeSub = 'folder-rotate'
 
-	  love.graphics.print(	  string.format("%0.1f", v.value), calcX(4, s)-20, calcY(3, s)+ 12*s - 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(4, s)-20, calcY(3, s)+ 12*s - 20)
       end
 
-       local v =  h_slider("folder-scale", calcX(8, s), calcY(3, s)+ 12*s, 100,  currentNode.transforms.l[4] , 0.00001, 10)
+       local v =  h_slider("folder-scale", calcX(12, s), calcY(3, s)+ 12*s, 200,  currentNode.transforms.l[4] , 0.00001, 10)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[4] = v.value
 	  currentNode.transforms.l[5] = v.value
 	  editingModeSub = 'folder-scale'
-	  love.graphics.print(	  string.format("%0.1f", v.value), calcX(7, s)-20, calcY(3, s)+ 12*s - 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(7, s)-20, calcY(3, s)+ 12*s - 20)
 
       end
 
