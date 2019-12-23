@@ -7,6 +7,11 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
+-- todo
+-- make a joysticks and slider keyframe lerp kinda thingie
+-- undo oh yea..
+-- make holes in polygons maybe stenciltest too ?
+
 function getLocalDelta(transform, dx, dy)
     local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
     local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
@@ -159,15 +164,16 @@ function love.mousemoved(x,y, dx, dy)
       backdrop.y = backdrop.y + dy / root.transforms.l[4]
    end
 
-
-   if (editingMode == 'folder' and editingModeSub ==  'folder-move') then
+   local isConnecting = lastDraggedElement and lastDraggedElement.id == 'connector'
+   
+   if (editingMode == 'folder' and editingModeSub ==  'folder-move' and mouseState.hoveredSomething == false and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
 	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
 	 currentNode.transforms.l[1]= currentNode.transforms.l[1] + ddx
 	 currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy
       end
    end
-   if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot') then
+   if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot' and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
 	 local ddx, ddy = getLocalDelta(currentNode._globalTransform, dx, dy)
 	 currentNode.transforms.l[6]= currentNode.transforms.l[6] - ddx
@@ -230,9 +236,17 @@ function renderGraphNodes(node, level, startY)
       if (child.folder ) then
 	 icon = child.open and ui.folder_open or ui.folder
       end
+      local color = child.color
+
+      if child.mask then
+	 icon = ui.mask
+	 color = {0,0,0}
+      end
+
+      
       local b = {}
       if (yPos >=0 and yPos <= h) then
-	 b = iconlabelbutton('object-group', icon, child.color, child == currentNode, child.name or "", rightX , yPos , s)
+	 b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos , s)
       end
       if (child.folder and child.open) then
 	 local add = renderGraphNodes(child, level + 1, runningY + startY)
@@ -306,7 +320,7 @@ end
 function love.load()
 
    shapeName = 'untitled'
-   love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=2, highdpi=true})
+   --love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=2, highdpi=true})
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
@@ -362,6 +376,7 @@ function love.load()
       folder_open = love.graphics.newImage("resources/ui/folderopen.png"),
       pivot = love.graphics.newImage("resources/ui/pivot.png"),
       pan = love.graphics.newImage("resources/ui/pan.png"),
+      mask = love.graphics.newImage("resources/ui/mask.png"),
    }
 
    cursors = {
@@ -511,6 +526,21 @@ function handleMouseClickStart()
    mouseState.lastDown =  mouseState.down
 end
 
+function getPointsBBox(points)
+   local tlx = 9999999999
+   local tly = 9999999999
+   local brx = -9999999999
+   local bry = -9999999999
+   for ip=1, #points do
+       if points[ip][1] < tlx then tlx = points[ip][1] end
+       if points[ip][1] > brx then brx = points[ip][1] end
+       if points[ip][2] < tly then tly = points[ip][2] end
+       if points[ip][2] > bry then bry = points[ip][2] end
+   end
+   return tlx, tly, brx, bry
+end
+
+
 function getDirectChildrenBBox(node)
    local tlx = 9999999999
    local tly = 9999999999
@@ -529,8 +559,13 @@ function getDirectChildrenBBox(node)
       end
    end
 
-
-   return tlx, tly, brx, bry
+   if ( tlx == 9999999999 and tly == 9999999999 and brx == -9999999999 and bry == -9999999999) then
+      print('no direct children you pancake!')
+      return 0,0,0,0
+      else
+	 return tlx, tly, brx, bry
+   end
+   
 end
 
 
@@ -545,6 +580,12 @@ function countNestedChildren(node, total)
    end
    return total
 end
+
+local function myStencilFunction()
+   love.graphics.rectangle("fill", 225, 200, 350, 300)
+end
+ 
+
 local step = 0
 function renderThings(root)
 
@@ -559,16 +600,32 @@ function renderThings(root)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
-
+   --love.graphics.stencil(myStencilFunction, "replace", 1)
+   --love.graphics.setStencilTest("equal", 0)
    for i = 1, #root.children do
 
       local shape = root.children[i]
-
+      if shape.mask then
+	 local mesh
+	 if currentNode ~= shape then
+	    mesh = shape.mesh -- the standard way of rendering
+	 else
+	    mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
+	 end
+	 
+	 love.graphics.stencil(
+	    function()
+	       love.graphics.draw(mesh, shape._parent._globalTransform)
+	    end, "replace", 1)
+	 love.graphics.setStencilTest("equal", 1)
+      end
+      
+      
       if shape.folder then
 	 renderThings(shape)
       end
-      if currentNode ~= shape then
-	 if (shape.mesh) then
+      if currentNode ~= shape then 
+	 if (shape.mesh and not shape.mask) then
 	    love.graphics.setColor(shape.color)
 	    love.graphics.draw(shape.mesh, shape._parent._globalTransform)
 	 end
@@ -582,6 +639,7 @@ function renderThings(root)
 	 end
       end
    end
+   love.graphics.setStencilTest()
 end
 
 
@@ -602,18 +660,28 @@ function love.draw()
    love.graphics.setWireframe(wireframe )
    renderThings(root)
 
-   if (false and currentlyHoveredUINode) then
+   if (currentlyHoveredUINode) then
       local alpha = 0.5 + math.sin(step/100)
       love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
       local editing = makeVertices(currentlyHoveredUINode)
       if (editing and #editing > 0) then
 	 local editingMesh = makeMeshFromVertices(editing)
-	 love.graphics.draw(editingMesh,  0,0)
+	 love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent._globalTransform)
       end
    end
 
    love.graphics.setWireframe( false )
 
+   if currentNode then
+      local t = root._localTransform
+      local x,y = t:transformPoint(0,0)
+      love.graphics.setColor(1,1,1)
+      love.graphics.line(x-5, y, x+5, y)
+      love.graphics.line(x, y-5, x, y+5)
+
+   end
+   
+   
    if currentNode and currentNode.folder then
       local t = currentNode.transforms.l
       local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
@@ -797,6 +865,24 @@ function love.draw()
 	 addShapeAfter(cloned, currentNode)
 	 setCurrentNode(cloned)
       end
+      if imgbutton('polyline-recenter', ui.pivot, calcX(8,s), calcY(2, s), s).clicked then
+	 local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+	 local w2 = (brx - tlx)/2
+	 local h2 = (bry - tly)/2
+
+	 
+	 --print(tlx + w2, brx - w2)
+	
+	 for i=1, #currentNode.points do
+	    currentNode.points[i][1] = currentNode.points[i][1] -  (tlx + w2)
+	    currentNode.points[i][2] = currentNode.points[i][2] -  (tly + h2)
+	 end
+	 
+	 --print(inspect(currentNode.points))
+	 
+      end
+      
+	 --pivot = love.graphics.newImage("resources/ui/pivot.png"),
    end
 
    if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
@@ -860,6 +946,7 @@ function love.draw()
 
 	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	       backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+	       print("bg_color: ", rgb[1]/255,rgb[2]/255,rgb[3]/255)
 	    end
 	 end
       end
@@ -961,6 +1048,12 @@ function love.draw()
       end
       if imgbutton('connector', ui.parent, rightX - 50, calcY(5,s)+ 8*5, s).clicked then
 	 lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
+      end
+      if currentNode and currentNode.points then
+	 if imgbutton('mask', ui.mask, rightX - 50, calcY(6,s)+ 8*6, s).clicked then
+	    currentNode.mask = not currentNode.mask
+	    --lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
+	 end
       end
       if (changeName) then
 	 local str =  currentNode and currentNode.name  or ""

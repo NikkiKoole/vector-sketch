@@ -74,10 +74,6 @@ function copyShape(shape)
 	    color = {},
 	    points = {}
 	 }
-	 if shape.mask then
-	    result.mask = true
-	 end
-	 
 	 if (shape.color) then
 	    for i=1, #shape.color do
 	       result.color[i] = shape.color[i]
@@ -139,6 +135,11 @@ function makeVertices(shape)
    end
    return vertices
 end
+
+simple_format = {
+   {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+}
+
 
 function makeMeshFromVertices(vertices)
    if (vertices and vertices[1] and vertices[1][1]) then

@@ -83,6 +83,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
       love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
       hover = true
+      
       if (mouseState.click) then
 	 clicked = true
       end
