@@ -332,7 +332,7 @@ function love.load()
    introSound:setVolume(0.1)
    introSound:setPitch(0.9 + 0.2*love.math.random())
    introSound:play()
-   love.graphics.setFont(medium)
+   --love.graphics.setFont(medium)
 
    simple_format = {
       {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
@@ -377,6 +377,7 @@ function love.load()
       pivot = love.graphics.newImage("resources/ui/pivot.png"),
       pan = love.graphics.newImage("resources/ui/pan.png"),
       mask = love.graphics.newImage("resources/ui/mask.png"),
+      clone = love.graphics.newImage("resources/ui/clone.png"),
    }
 
    cursors = {
@@ -817,21 +818,24 @@ function love.draw()
 	  editingModeSub = 'folder-pan-pivot'
        end
 
-
+       love.graphics.setColor(1,1,1, 1)
+       love.graphics.print("rotate", calcX(5, s), calcY(3, s)+ 12*s - 20 )
        local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
+       
        if (v.value ~= nil) then
 	  currentNode.transforms.l[3] = v.value
 	  editingModeSub = 'folder-rotate'
 
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(4, s)-20, calcY(3, s)+ 12*s - 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(5, s), calcY(3, s)+ 12*s + 20)
       end
-
+       love.graphics.setColor(1,1,1, 1)
+       love.graphics.print("scale",  calcX(12, s), calcY(3, s)+ 12*s - 20 )
        local v =  h_slider("folder-scale", calcX(12, s), calcY(3, s)+ 12*s, 200,  currentNode.transforms.l[4] , 0.00001, 10)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[4] = v.value
 	  currentNode.transforms.l[5] = v.value
 	  editingModeSub = 'folder-scale'
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(7, s)-20, calcY(3, s)+ 12*s - 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(12, s), calcY(3, s)+ 12*s + 20)
 
       end
 
@@ -852,13 +856,13 @@ function love.draw()
       if imgbutton('polyline-palette', ui.palette,  calcX(4, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-palette'
       end
-      if imgbutton('polyline-rotate', ui.rotate,  calcX(5, s), calcY(2, s), s).clicked then
-	 editingModeSub = 'polyline-rotate'
-      end
+      --if imgbutton('polyline-rotate', ui.rotate,  calcX(5, s), calcY(2, s), s).clicked then
+	-- editingModeSub = 'polyline-rotate'
+      --end
       if imgbutton('polyline-move', ui.move,  calcX(6, s), calcY(2, s), s).clicked then
 	 editingModeSub = 'polyline-move'
       end
-      if imgbutton('polyline-clone', ui.add,  calcX(7, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-clone', ui.clone,  calcX(7, s), calcY(2, s), s).clicked then
 	 local cloned = copyShape(currentNode)
 	 cloned._parent = currentNode._parent
 	 cloned.name = (cloned.name)..' copy'
@@ -886,19 +890,16 @@ function love.draw()
    end
 
    if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
+
+      local colorsInRow = 10
+      
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
-	 local x = calcX(i, s)
-	 local y = calcY(3, s)
-	 
+	 local x = ((i-1) % colorsInRow)*50
+	 local y = math.ceil((i) / colorsInRow)*50
 
-	 if (x > w) then
-	    y = y + math.floor(x/w) * 50
-	    x = x % w
-	    x = x + 100
-	 end
-	 y = y + 300
-		    
+	 y = y + 350
+	 x = x + 150
 	 
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	    currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
@@ -911,57 +912,76 @@ function love.draw()
    end
 
    if (editingMode == 'backdrop') then
-      if imgbutton('backdrop-move', ui.move, calcX(1, s), calcY(4,s), s).clicked then
-	 if (editingModeSub == 'backdrop-move') then
-	    editingModeSub = nil
-	 else
-	    editingModeSub = 'backdrop-move'
-	 end
+      
+      if imgbutton('polyline-palette', ui.palette,  calcX(1, s), calcY(4, s), s).clicked then
+	 editingModeSub = 'backdrop-palette'
       end
       if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,
 		   calcX(2, s), calcY(4, s), s).clicked then
 	 editingModeSub = nil
 	 backdrop.visible = not backdrop.visible
       end
-      if imgbutton('polyline-palette', ui.palette,  calcX(3, s), calcY(4, s), s).clicked then
-	 editingModeSub = 'backdrop-palette'
-      end
-      local v =  h_slider("backdrop_alpha", calcX(4, s), calcY(4, s)+ 12*s, 100, backdrop.alpha, 0, 1)
+
+       love.graphics.setColor(1,1,1, 1)
+       love.graphics.print("simplify svg",  calcX(3, s), calcY(4, s)- 20 )
+      local v =  h_slider("simplify_value", calcX(3, s), calcY(4, s), 200,  simplifyValue , 0, 10)
       if (v.value ~= nil) then
-	 backdrop.alpha = v.value
-	 editingModeSub = nil
+	 simplifyValue= v.value
+	 love.graphics.print(simplifyValue, calcX(3, s), calcY(4, s))
+      end
+
+
+      if (backdrop.visible) then
+
+	 if imgbutton('backdrop-move', ui.move, calcX(3, s), calcY(4,s), s).clicked then
+	    if (editingModeSub == 'backdrop-move') then
+	       editingModeSub = nil
+	    else
+	       editingModeSub = 'backdrop-move'
+	    end
+	 end
+	 
+	 love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("alpha",  calcX(1, s), calcY(6, s)+ 12*s - 20 )
+	 local v =  h_slider("backdrop_alpha", calcX(1, s), calcY(6, s)+ 12*s, 200, backdrop.alpha, 0, 1)
+	 if (v.value ~= nil) then
+	    backdrop.alpha = v.value
+	    editingModeSub = nil
+	    love.graphics.print(string.format("%0.2f", v.value),  calcX(1, s), calcY(6, s)+ 12*s)
+
+	 end
+	 love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("scale",  calcX(1, s), calcY(8, s)+ 12*s - 20 )
+	 local h =  h_slider("backdrop_scale", calcX(1, s), calcY(8, s)+ 12*s, 200, backdrop.scale, 0, 5)
+	 if (h.value ~= nil) then
+	    backdrop.scale = h.value
+	    editingModeSub = nil
+	    love.graphics.print(	  string.format("%0.2f", h.value),  calcX(1, s), calcY(8, s)+ 12*s)
+	 end
       end
       if (editingModeSub == 'backdrop-palette') then
+	 local colorsInRow = 10
 	 for i = 1, #palette.colors do
 	    local rgb = palette.colors[i].rgb
-	    local x = calcX(i, s)
-	    local y = calcY(3, s)
-	    if (x > w) then
-	       y = y + math.floor(x/w) * 50
-	       x = x % w
-	       x = x + 100
-	       
-	    end
-	    y = y + 300
+	    local x = ((i-1) % colorsInRow)*50
+	 local y = math.ceil((i) / colorsInRow)*50
 
+	 y = y + 350
+	 x = x + 150
 	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	       backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	       print("bg_color: ", rgb[1]/255,rgb[2]/255,rgb[3]/255)
 	    end
 	 end
       end
-
-      local s =  h_slider("backdrop_scale", calcX(1, s), calcY(5, s)+ 12*s, 100, backdrop.scale, 0, 5)
-      if (s.value ~= nil) then
-	 backdrop.scale = s.value
-	 editingModeSub = nil
-      end
+      
+      
    end
 
 
    love.graphics.setFont(small)
    renderGraphNodes(root, 0, 100)
-   love.graphics.setFont(medium)
+   --love.graphics.setFont(medium)
    local rightX = w - (64 + 500+ 10)/2
 
    if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, calcY(1,s)+1*8*s, s).clicked then
@@ -1067,11 +1087,6 @@ function love.draw()
 	 love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4, s) + 8*4, 2, cursorH)
       end
    end
-   local v =  h_slider("simplify_value", w-150, 5, 100,  simplifyValue , 0, 10)
-   if (v.value ~= nil) then
-      simplifyValue= v.value
-      love.graphics.print(simplifyValue, w-200, 0)
-   end
    local count = countNestedChildren(root, 0)
    if (count * 50 > h) then
       local v2 = v_slider("scrollview", w - 50, calcY(4, s) , 100, scrollviewOffset, 0, count * 50)
@@ -1080,10 +1095,10 @@ function love.draw()
       end
    end
   love.graphics.pop()
-
+  love.graphics.setFont(small)
    if not quitDialog then
       love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
-      love.graphics.print(shapeName, 200, 2)
+      love.graphics.print(shapeName, 64, 0)
    end
 
    if lastDraggedElement and lastDraggedElement.id == 'connector' then
@@ -1099,7 +1114,7 @@ function love.draw()
       love.graphics.print(quitStr, 116, 13)
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print(quitStr, 115, 12)
-      love.graphics.setFont(medium)
+      --love.graphics.setFont(medium)
    end
 end
 
