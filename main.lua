@@ -248,25 +248,30 @@ function renderGraphNodes(node, level, startY)
       if (yPos >=0 and yPos <= h) then
 	 b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos , s)
       end
-      if (child.folder and child.open) then
+      if (child.folder and child.open ) then
 	 local add = renderGraphNodes(child, level + 1, runningY + startY)
 	 runningY = runningY + add
       end
 
       if b.clicked then
-	 if (child.folder) then
-	    child.open = not child.open
-	    --editingMode = nil
-	    --editingModeSub = nil
-	    editingMode = 'folder'
-	    editingModeSub = 'folder-move'
+	 if currentNode == child then
+	    setCurrentNode(nil)
+	    editingMode = nil
+	    editingModeSub = nil
+	    if (child.folder) then
+	       child.open = false
+	    end
+	 else
+	    setCurrentNode(child)
+	    if (child.folder) then
+	       child.open = true
+	       editingMode = 'folder'
+	       editingModeSub = 'folder-move'
+	    else
+	       editingMode = 'polyline'
+	       editingModeSub = 'polyline-edit'
+	    end
 	 end
-	 if not child.folder then
-	    editingMode = 'polyline'
-	    editingModeSub = 'polyline-edit'
-	 end
-	 setCurrentNode(child)
-
       end
 
       if b.hover then
@@ -750,34 +755,35 @@ function love.draw()
    love.graphics.push()
 
    local s = 0.5
-   local buttons = {
-      'move', 'polyline', 'folder', 'backdrop'
-   }
-   for i = 1, #buttons do
-      if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
-	 if (editingMode == buttons[i]) then
-	    editingMode = nil
-	    editingModeSub = nil
-	    setCurrentNode(nil)
-	 else
-	    editingMode = buttons[i]
-	    editingModeSub = nil
-	 end
+   --local buttons = {
+   --   'backdrop'
+   --}
+  
+   -- for i = 1, #buttons do
+   --    if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
+   -- 	 if (editingMode == buttons[i]) then
+   -- 	    editingMode = nil
+   -- 	    editingModeSub = nil
+   -- 	    setCurrentNode(nil)
+   -- 	 else
+   -- 	    editingMode = buttons[i]
+   -- 	    editingModeSub = nil
+   -- 	 end
 
-	 if (buttons[i] == 'polyline') then
-	    editingModeSub = 'polyline-edit'
-	 end
-      end
-   end
-   if imgbutton('polyline-wireframe', ui.lines,  calcX(0, s), calcY(5, s), s).clicked then
+   -- 	 if (buttons[i] == 'polyline') then
+   -- 	    editingModeSub = 'polyline-edit'
+   -- 	 end
+   --    end
+   -- end
+   if imgbutton('polyline-wireframe', ui.lines,  calcX(0,s), h-40, s).clicked then
       wireframe = not wireframe
    end
 
    if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
-      if imgbutton('folder-move', ui.move,  calcX(1, s), calcY(3, s), s).clicked then
+      if imgbutton('folder-move', ui.move,  calcX(6, s), 10, s).clicked then
 	 editingModeSub = 'folder-move'
       end
-       if imgbutton('folder-pivot', ui.pivot,  calcX(2, s), calcY(3, s), s).clicked then
+      if imgbutton('folder-pivot', ui.pivot,  calcX(7, s), 10, s).clicked then
 	  editingModeSub = nil
 
 	  if (#currentNode.children > 0) then
@@ -814,28 +820,29 @@ function love.draw()
 	     end
 	  end
        end
-       if imgbutton('folder-pan-pivot', ui.pan,  calcX(3, s), calcY(3, s), s).clicked then
+       if imgbutton('folder-pan-pivot', ui.pan,  calcX(8, s), 10, s).clicked then
 	  editingModeSub = 'folder-pan-pivot'
        end
 
        love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("rotate", calcX(5, s), calcY(3, s)+ 12*s - 20 )
-       local v =  h_slider("folder-rotate", calcX(5, s), calcY(3, s)+ 12*s, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
+       love.graphics.print("rotate", calcX(10, s), 0 )
+       
+       local v =  h_slider("folder-rotate", calcX(10, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
        
        if (v.value ~= nil) then
 	  currentNode.transforms.l[3] = v.value
 	  editingModeSub = 'folder-rotate'
 
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(5, s), calcY(3, s)+ 12*s + 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(10, s), 20)
       end
        love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("scale",  calcX(12, s), calcY(3, s)+ 12*s - 20 )
-       local v =  h_slider("folder-scale", calcX(12, s), calcY(3, s)+ 12*s, 200,  currentNode.transforms.l[4] , 0.00001, 10)
+       love.graphics.print("scale",  calcX(16, s), 0 )
+       local v =  h_slider("folder-scale", calcX(16, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[4] = v.value
 	  currentNode.transforms.l[5] = v.value
 	  editingModeSub = 'folder-scale'
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(12, s), calcY(3, s)+ 12*s + 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(16, s), 20)
 
       end
 
@@ -844,49 +851,43 @@ function love.draw()
 
 
    if (editingMode == 'polyline') and currentNode  then
-      if imgbutton('polyline-insert', ui.polyline_add,  calcX(1, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-insert', ui.polyline_add,  calcX(6, s), 10, s).clicked then
 	 editingModeSub = 'polyline-insert'
       end
-      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(2, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = 'polyline-remove'
       end
-      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(3, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-edit', ui.polyline_edit,  calcX(8, s), 10, s).clicked then
 	 editingModeSub = 'polyline-edit'
       end
-      if imgbutton('polyline-palette', ui.palette,  calcX(4, s), calcY(2, s), s).clicked then
-	 editingModeSub = 'polyline-palette'
+      if imgbutton('polyline-palette', ui.palette,  calcX(9, s), 10, s).clicked then
+	    editingModeSub = 'polyline-palette'
+
+	 
       end
       --if imgbutton('polyline-rotate', ui.rotate,  calcX(5, s), calcY(2, s), s).clicked then
 	-- editingModeSub = 'polyline-rotate'
       --end
-      if imgbutton('polyline-move', ui.move,  calcX(6, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-move', ui.move,  calcX(10, s), 10, s).clicked then
 	 editingModeSub = 'polyline-move'
       end
-      if imgbutton('polyline-clone', ui.clone,  calcX(7, s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-clone', ui.clone,  calcX(11, s), 10, s).clicked then
 	 local cloned = copyShape(currentNode)
 	 cloned._parent = currentNode._parent
 	 cloned.name = (cloned.name)..' copy'
 	 addShapeAfter(cloned, currentNode)
 	 setCurrentNode(cloned)
       end
-      if imgbutton('polyline-recenter', ui.pivot, calcX(8,s), calcY(2, s), s).clicked then
+      if imgbutton('polyline-recenter', ui.pivot, calcX(12,s), 10, s).clicked then
+	 editingModeSub = 'polyline-recenter'
 	 local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
 	 local w2 = (brx - tlx)/2
 	 local h2 = (bry - tly)/2
-
-	 
-	 --print(tlx + w2, brx - w2)
-	
 	 for i=1, #currentNode.points do
 	    currentNode.points[i][1] = currentNode.points[i][1] -  (tlx + w2)
 	    currentNode.points[i][2] = currentNode.points[i][2] -  (tly + h2)
 	 end
-	 
-	 --print(inspect(currentNode.points))
-	 
       end
-      
-	 --pivot = love.graphics.newImage("resources/ui/pivot.png"),
    end
 
    if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
@@ -898,42 +899,45 @@ function love.draw()
 	 local x = ((i-1) % colorsInRow)*50
 	 local y = math.ceil((i) / colorsInRow)*50
 
-	 y = y + 350
-	 x = x + 150
+	 y = y + 50
+	 x = x + 50
 	 
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	    currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
 	 end
       end
-      local v =  h_slider("polyline_alpha", calcX(1, s), calcY(4, s)+ 12*s, 100,  currentNode.color[4] , 0, 1)
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("alpha",  calcX(0, s), calcY(10, s) - 20)
+      local v =  h_slider("polyline_alpha", calcX(0, s), calcY(10, s), 100,  currentNode.color[4] , 0, 1)
       if (v.value ~= nil) then
 	 currentNode.color[4] = v.value
+	 love.graphics.print(currentNode.color[4], calcX(0, s), calcY(10, s))
       end
    end
 
    if (editingMode == 'backdrop') then
       
-      if imgbutton('polyline-palette', ui.palette,  calcX(1, s), calcY(4, s), s).clicked then
+      if imgbutton('polyline-palette', ui.palette,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = 'backdrop-palette'
       end
       if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,
-		   calcX(2, s), calcY(4, s), s).clicked then
+		   calcX(8, s), 10, s).clicked then
 	 editingModeSub = nil
 	 backdrop.visible = not backdrop.visible
       end
 
        love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("simplify svg",  calcX(3, s), calcY(4, s)- 20 )
-      local v =  h_slider("simplify_value", calcX(3, s), calcY(4, s), 200,  simplifyValue , 0, 10)
+       love.graphics.print("simplify svg",  calcX(1, s), 0 )
+      local v =  h_slider("simplify_value", calcX(1, s), 20, 200,  simplifyValue , 0, 10)
       if (v.value ~= nil) then
 	 simplifyValue= v.value
-	 love.graphics.print(simplifyValue, calcX(3, s), calcY(4, s))
+	 love.graphics.print(simplifyValue, calcX(1, s), 20)
       end
 
 
       if (backdrop.visible) then
 
-	 if imgbutton('backdrop-move', ui.move, calcX(3, s), calcY(4,s), s).clicked then
+	 if imgbutton('backdrop-move', ui.move, calcX(9, s), 10, s).clicked then
 	    if (editingModeSub == 'backdrop-move') then
 	       editingModeSub = nil
 	    else
@@ -942,21 +946,21 @@ function love.draw()
 	 end
 	 
 	 love.graphics.setColor(1,1,1, 1)
-	 love.graphics.print("alpha",  calcX(1, s), calcY(6, s)+ 12*s - 20 )
-	 local v =  h_slider("backdrop_alpha", calcX(1, s), calcY(6, s)+ 12*s, 200, backdrop.alpha, 0, 1)
+	 love.graphics.print("alpha",  calcX(10, s), 0 )
+	 local v =  h_slider("backdrop_alpha", calcX(10, s), 20, 200, backdrop.alpha, 0, 1)
 	 if (v.value ~= nil) then
 	    backdrop.alpha = v.value
 	    editingModeSub = nil
-	    love.graphics.print(string.format("%0.2f", v.value),  calcX(1, s), calcY(6, s)+ 12*s)
+	    love.graphics.print(string.format("%0.2f", v.value),  calcX(10, s), 20)
 
 	 end
 	 love.graphics.setColor(1,1,1, 1)
-	 love.graphics.print("scale",  calcX(1, s), calcY(8, s)+ 12*s - 20 )
-	 local h =  h_slider("backdrop_scale", calcX(1, s), calcY(8, s)+ 12*s, 200, backdrop.scale, 0, 5)
+	 love.graphics.print("scale",  calcX(16, s), 0 )
+	 local h =  h_slider("backdrop_scale", calcX(16, s), 20, 200, backdrop.scale, 0, 5)
 	 if (h.value ~= nil) then
 	    backdrop.scale = h.value
 	    editingModeSub = nil
-	    love.graphics.print(	  string.format("%0.2f", h.value),  calcX(1, s), calcY(8, s)+ 12*s)
+	    love.graphics.print(	  string.format("%0.2f", h.value),  calcX(16, s), 20)
 	 end
       end
       if (editingModeSub == 'backdrop-palette') then
@@ -966,8 +970,8 @@ function love.draw()
 	    local x = ((i-1) % colorsInRow)*50
 	 local y = math.ceil((i) / colorsInRow)*50
 
-	 y = y + 350
-	 x = x + 150
+	 y = y + 50
+	 x = x + 50
 	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	       backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	       print("bg_color: ", rgb[1]/255,rgb[2]/255,rgb[3]/255)
@@ -980,11 +984,22 @@ function love.draw()
 
 
    love.graphics.setFont(small)
-   renderGraphNodes(root, 0, 100)
+   renderGraphNodes(root, 0, 60)
    --love.graphics.setFont(medium)
    local rightX = w - (64 + 500+ 10)/2
 
-   if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, calcY(1,s)+1*8*s, s).clicked then
+    if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
+      if (editingMode == 'backdrop') then
+	 editingMode = nil
+      else
+	 editingMode = 'backdrop'
+      end
+      editingModeSub = nil
+   end
+   
+
+   
+   if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10, s).clicked then
       local shape = {
 	 color = {0,0,0,1},
 	 outline = true,
@@ -1005,7 +1020,7 @@ function love.draw()
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
    end
-   if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, calcY(2,s)+1*8*s, s).clicked then
+   if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, 50, s).clicked then
       local shape = {
 	 folder=true,
 	 transforms =  {g={0,0,0,1,1,0,0},
