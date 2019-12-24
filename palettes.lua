@@ -53,13 +53,8 @@ fabuland = {
 
 
 
-local jamesGulliverHancock = {'d44553',
-'e36f73',
-'d2797b',
-'cd8aa4',
-'cc6b8f',
-'df5a91',
-'ec71a5',
+local jamesGulliverHancock = {'d44553','e36f73','d2797b','cd8aa4',
+'cc6b8f','df5a91','ec71a5',
 'e595ab',
 'dca9ac',
 'ecbcc7',

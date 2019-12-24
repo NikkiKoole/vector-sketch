@@ -383,6 +383,7 @@ function love.load()
       pan = love.graphics.newImage("resources/ui/pan.png"),
       mask = love.graphics.newImage("resources/ui/mask.png"),
       clone = love.graphics.newImage("resources/ui/clone.png"),
+      joystick = love.graphics.newImage("resources/ui/joystick.png"),
    }
 
    cursors = {
@@ -775,9 +776,6 @@ function love.draw()
    -- 	 end
    --    end
    -- end
-   if imgbutton('polyline-wireframe', ui.lines,  calcX(0,s), h-40, s).clicked then
-      wireframe = not wireframe
-   end
 
    if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
       if imgbutton('folder-move', ui.move,  calcX(6, s), 10, s).clicked then
@@ -823,29 +821,41 @@ function love.draw()
        if imgbutton('folder-pan-pivot', ui.pan,  calcX(8, s), 10, s).clicked then
 	  editingModeSub = 'folder-pan-pivot'
        end
+       if imgbutton('folder-clone', ui.clone,calcX(9, s), 10, s).clicked then
+	  local cloned = copyShape(currentNode)
+	  cloned._parent = currentNode._parent
+	  parentize(cloned)
+	  cloned.name = (cloned.name)..' copy'
+	  addShapeAfter(cloned, currentNode)
+	  meshAll(cloned)
+
+	  setCurrentNode(cloned)
+	  
+	  --lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
+       end
 
        love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("rotate", calcX(10, s), 0 )
+       love.graphics.print("rotate", calcX(11, s), 0 )
        
-       local v =  h_slider("folder-rotate", calcX(10, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
+       local v =  h_slider("folder-rotate", calcX(11, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
        
        if (v.value ~= nil) then
 	  currentNode.transforms.l[3] = v.value
 	  editingModeSub = 'folder-rotate'
 
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(10, s), 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(11, s), 20)
       end
        love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("scale",  calcX(16, s), 0 )
-       local v =  h_slider("folder-scale", calcX(16, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
+       love.graphics.print("scale",  calcX(17, s), 0 )
+       local v =  h_slider("folder-scale", calcX(17, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
        if (v.value ~= nil) then
 	  currentNode.transforms.l[4] = v.value
 	  currentNode.transforms.l[5] = v.value
 	  editingModeSub = 'folder-scale'
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(16, s), 20)
+	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(17, s), 20)
 
-      end
-
+       end
+      
 
    end
 
@@ -916,7 +926,10 @@ function love.draw()
    end
 
    if (editingMode == 'backdrop') then
-      
+      if imgbutton('polyline-wireframe', ui.lines,  calcX(0,s), 10, s).clicked then
+	 wireframe = not wireframe
+      end
+
       if imgbutton('polyline-palette', ui.palette,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = 'backdrop-palette'
       end
@@ -1084,6 +1097,8 @@ function love.draw()
       if imgbutton('connector', ui.parent, rightX - 50, calcY(5,s)+ 8*5, s).clicked then
 	 lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
       end
+    
+      
       if currentNode and currentNode.points then
 	 if imgbutton('mask', ui.mask, rightX - 50, calcY(6,s)+ 8*6, s).clicked then
 	    currentNode.mask = not currentNode.mask

@@ -160,7 +160,7 @@ function v_slider(id, x, y, height, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill',x+8,y,3,height )
    love.graphics.setColor(0, 0, 0)
-   local yOffset = mapInto(v, min, max, 0, height)
+   local yOffset = mapInto(v, min, max, 0, height-20)
    love.graphics.rectangle('fill',x, yOffset + y,20,20 )
    love.graphics.setColor(1,1,1,1)
    love.graphics.rectangle("line", x,yOffset + y,20,20)
@@ -189,7 +189,7 @@ function v_slider(id, x, y, height, v, min, max)
 	 love.mouse.setCursor(cursors.hand)
 
          local mx, my = love.mouse.getPosition( )
-         result = mapInto(my + mouseState.offset.y, y, y+height, min, max)
+         result = mapInto(my + mouseState.offset.y, y, y+height-20, min, max)
 	 if result < min then
 	    result = min
 	 else
@@ -209,7 +209,7 @@ function h_slider(id, x, y, width, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill',x,y+8,width,3 )
    love.graphics.setColor(0, 0, 0)
-   local xOffset = mapInto(v, min, max, 0, width)
+   local xOffset = mapInto(v, min, max, 0, width-20)
    love.graphics.rectangle('fill',xOffset + x,y,20,20 )
    love.graphics.setColor(1,1,1,1)
    love.graphics.rectangle("line", xOffset + x,y,20,20)
@@ -228,7 +228,9 @@ function h_slider(id, x, y, width, v, min, max)
       if mouseState.click then
          lastDraggedElement = {id=id}
 	 mouseState.hoveredSomething = true
+	 
 	 mouseState.offset = {x=(xOffset+x) - mx, y=my-y}
+	 
       end
    end
 
@@ -237,7 +239,7 @@ function h_slider(id, x, y, width, v, min, max)
 	 mouseState.hoveredSomething = true
 	 love.mouse.setCursor(cursors.hand)
          local mx, my = love.mouse.getPosition( )
-         result = mapInto(mx + mouseState.offset.x, x, x+width, min, max)
+         result = mapInto(mx + mouseState.offset.x, x, x+width-20, min, max)
 	 if result < min then
 	    result = nil
 	 else

@@ -55,12 +55,24 @@ function split(str, pos)
    return str:sub(1, offset-1), str:sub(offset)
 end
 
+function copyArray(original)
+   local result = {}
+   for i=1, #original do
+      table.insert(result, original[i])
+   end
+   return result
+end
+
+
 function copyShape(shape)
    if (shape.folder) then
       local result = {
 	 folder = true,
 	 name = shape.name or "",
-	 transforms = {l=shape.transforms.l, g = shape.transforms.g},
+	 transforms = {
+	    l = copyArray(shape.transforms.l),
+	    g = copyArray(shape.transforms.g)
+	 },
 	 children = {}
       }
       for i=1, #shape.children do
