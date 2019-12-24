@@ -8,24 +8,23 @@ utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
 -- todo
--- make a joysticks and slider keyframe lerp kinda thingie
--- undo oh yea..
--- make holes in polygons maybe stenciltest too ?
+-- i think i am relying to much on the parent global
+-- instead my own global should reflect that already
 
 function getLocalDelta(transform, dx, dy)
-    local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
-    local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
-    local dx3 = dx2 - dx1
-    local dy3 = dy2 - dy1
-    return dx3, dy3
+   local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
+   local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
+   local dx3 = dx2 - dx1
+   local dy3 = dy2 - dy1
+   return dx3, dy3
 end
 function getGlobalDelta(transform, dx, dy)
    -- this one is only used in the wheel moved offset stuff
-    local dx1, dy1 = transform:transformPoint( 0, 0 )
-    local dx2, dy2 = transform:transformPoint( dx, dy )
-    local dx3 = dx2 - dx1
-    local dy3 = dy2 - dy1
-    return dx3, dy3
+   local dx1, dy1 = transform:transformPoint( 0, 0 )
+   local dx2, dy2 = transform:transformPoint( dx, dy )
+   local dx3 = dx2 - dx1
+   local dy3 = dy2 - dy1
+   return dx3, dy3
 end
 
 function setCurrentNode(newNode)
@@ -34,7 +33,6 @@ function setCurrentNode(newNode)
    end
    currentNode = newNode
 end
-
 
 function getIndex(item)
    if (item) then
@@ -286,10 +284,7 @@ function renderGraphNodes(node, level, startY)
    return runningY
 end
 
-
-
 function love.wheelmoved(x,y)
-
    local scale = root.transforms.l[4]
 
    local posx, posy = love.mouse.getPosition()
@@ -298,19 +293,16 @@ function love.wheelmoved(x,y)
    root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9)
    root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
 
-
    --- ugh
    local tg = root.transforms.g
    local tl = root.transforms.l
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = root._localTransform
    ---
-
-
+   
    local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
    local dx = ix1 - ix2
    local dy = iy1 - iy2
-
 
    local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
    root.transforms.l[1] = root.transforms.l[1] - dx3
@@ -327,9 +319,7 @@ function parentize(node)
 end
 
 function love.load()
-
    shapeName = 'untitled'
-   --love.window.setMode(1024+300, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=2, highdpi=true})
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
@@ -341,7 +331,6 @@ function love.load()
    introSound:setVolume(0.1)
    introSound:setPitch(0.9 + 0.2*love.math.random())
    introSound:play()
-   --love.graphics.setFont(medium)
 
    simple_format = {
       {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
@@ -419,9 +408,6 @@ function love.load()
       click = false,
       offset = {x=0, y=0}
    }
-
-
-
    
    root = {
       folder = true,
@@ -436,60 +422,87 @@ function love.load()
 	    name="2 poses",
 	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 	    children ={
-	        {
-	       folder=true,
-	       name="PARENT-0-0",
-	       transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
-	       children ={
+	       {
+		  folder=true,
+		  name="PARENT-0-0",
+		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
+		  children ={
 
-		  {
-		     name="child1 ",
-		     color = {1,1,0, 0.8},
-		     points = {{0,0},{200,0},{200,200},{0,200}},
-		  },
-		   {
-		     name="child1 ",
-		     color = {1,1,0, 0.8},
-		     points = {{200,0},{200,0},{400,200},{0,200}},
-		  },
-	       }
-	    },
-	        {
-	       folder=true,
-	       name="PARENT-0-0",
-	       transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
-	       children ={
+		     {
+			name="child1 ",
+			color = {1,1,0, 0.8},
+			points = {{0,0},{200,0},{200,200},{0,200}},
+		     },
+		     {
+			name="child1 ",
+			color = {1,1,0, 0.8},
+			points = {{200,0},{200,0},{400,200},{0,200}},
+		     },
+		     {
+			folder=true,
+			name="PARENT-0-0",
+			transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
+			children ={
 
-		  {
-		     name="child1 ",
-		     color = {1,0,1, 0.8},
-		     points = {{0,0},{200,0},{200,200},{0,200}},
-		  },
-		   {
-		     name="child1 ",
-		     color = {1,0,1, 0.8},
-		     points = {{0,0},{200,0},{200,200},{600,200}},
-		  },
-	       }
-	    },
-	       -- {
-	       -- 	  name="child1 ",
-	       -- 	  color = {0,1,0, 0.8},
-	       -- 	  points = {{0,0},{200,0},{200,200},{0,200}},
-	       -- },
-	       -- {
-	       -- 	  name="child1 ",
-	       -- 	  color = {1,1,0, 0.8},
-	       -- 	  points = {{0,0},{200,0},{200,200},{0,200}},
-	       -- },
-	       -- {
-	       -- 	  name="child1 ",
-	       -- 	  color = {0,1,1, 0.8},
-	       -- 	  points = {{0,0},{200,0},{200,200},{0,200}},
-	       -- },
+			   {
+			      name="child1 ",
+			      color = {1,0,1, 0.8},
+			      points = {{0,0},{200,0},{200,200},{0,200}},
+			   },
+			   
+			   {
+			      name="child1 ",
+			      color = {1,0,1, 0.8},
+			      points = {{0,0},{200,0},{200,200},{600,200}},
+			   },
+			   
+			}
+		     },
+		  }
+	       },
+	       {
+		  folder=true,
+		  name="PARENT-0-0",
+		  transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
+		  children ={
+
+		     {
+			name="child1 ",
+			color = {1,0,1, 0.8},
+			points = {{0,0},{200,0},{200,200},{0,200}},
+		     },
+		     
+		     {
+			name="child1 ",
+			color = {1,0,1, 0.8},
+			points = {{0,0},{200,0},{200,200},{600,200}},
+		     },
+		     {
+			folder=true,
+			name="PARENT-0-0",
+			transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
+			children ={
+
+			   {
+			      name="child1 ",
+			      color = {1,0,1, 0.8},
+			      points = {{0,0},{200,0},{200,200},{0,200}},
+			   },
+			   
+			   {
+			      name="child1 ",
+			      color = {1,0,1, 0.8},
+			      points = {{0,0},{200,0},{200,200},{600,200}},
+			   },
+			   
+			}
+		     },
+		     
+		  }
+	       },
 	    }
 	 },
-	
+	 
 
       }
    }
@@ -537,7 +550,6 @@ function drawGrid()
    end
 end
 
-
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
    mouseState.down = love.mouse.isDown(1 )
@@ -559,14 +571,13 @@ function getPointsBBox(points)
    local brx = -9999999999
    local bry = -9999999999
    for ip=1, #points do
-       if points[ip][1] < tlx then tlx = points[ip][1] end
-       if points[ip][1] > brx then brx = points[ip][1] end
-       if points[ip][2] < tly then tly = points[ip][2] end
-       if points[ip][2] > bry then bry = points[ip][2] end
+      if points[ip][1] < tlx then tlx = points[ip][1] end
+      if points[ip][1] > brx then brx = points[ip][1] end
+      if points[ip][2] < tly then tly = points[ip][2] end
+      if points[ip][2] > bry then bry = points[ip][2] end
    end
    return tlx, tly, brx, bry
 end
-
 
 function getDirectChildrenBBox(node)
    local tlx = 9999999999
@@ -589,13 +600,10 @@ function getDirectChildrenBBox(node)
    if ( tlx == 9999999999 and tly == 9999999999 and brx == -9999999999 and bry == -9999999999) then
       print('no direct children you pancake!')
       return 0,0,0,0
-      else
-	 return tlx, tly, brx, bry
+   else
+      return tlx, tly, brx, bry
    end
-   
 end
-
-
 
 function countNestedChildren(node, total)
    for i=1, #node.children do
@@ -611,10 +619,8 @@ end
 local function myStencilFunction()
    love.graphics.rectangle("fill", 225, 200, 350, 300)
 end
- 
 
 local step = 0
-
 
 function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
@@ -630,7 +636,7 @@ function handleChild(shape)
       
       love.graphics.stencil(
 	 function()
-	    love.graphics.draw(mesh, shape._parent._globalTransform)
+	    love.graphics.draw(mesh, shape._parent._globalTransform )
 	 end, "replace", 1)
       love.graphics.setStencilTest("equal", 1)
    end
@@ -640,7 +646,7 @@ function handleChild(shape)
    if currentNode ~= shape then 
       if (shape.mesh and not shape.mask) then
 	 love.graphics.setColor(shape.color)
-	 love.graphics.draw(shape.mesh, shape._parent._globalTransform)
+	 love.graphics.draw(shape.mesh, shape._parent._globalTransform )
       end
    end
    if currentNode == shape then
@@ -648,7 +654,7 @@ function handleChild(shape)
       if (editing and #editing > 0) then
 	 local editingMesh = makeMeshFromVertices(editing)
 	 love.graphics.setColor(shape.color)
-	 love.graphics.draw(editingMesh,  shape._parent._globalTransform)
+	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
       end
    end
 end
@@ -668,7 +674,6 @@ function lerpArray(a1, a2, t)
    end
    return result
 end
-
 
 function lerpPoints(p1, p2, t)
    assert(#p1 == #p2)
@@ -707,15 +712,11 @@ function lerpNodes(left, right, root, t)
       root._parent = left._parent
       root.mesh = makeMeshFromVertices(makeVertices(root))
    end
-      
    
    return root
 end
 
-
-
 function createLerpedChild(ex1, ex2, t)
-
    if (ex1.points and ex2.points) then
       local result = {}
       result.color = lerpColor(ex1.color, ex2.color, t)
@@ -724,14 +725,10 @@ function createLerpedChild(ex1, ex2, t)
       result.mesh = makeMeshFromVertices(makeVertices(result))
       return result
    elseif ex1.folder and ex2.folder then
-
       local result = {}
-
       lerpNodes(ex1, ex2, result, t)
-      print(inspect(result))
       return result
    end
-   
 end
 
 function renderThings(root)
@@ -747,8 +744,7 @@ function renderThings(root)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
-   --love.graphics.stencil(myStencilFunction, "replace", 1)
-   --love.graphics.setStencilTest("equal", 0)
+   
    if (root.keyframes) then
       if currentNode == root then
 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
@@ -756,18 +752,15 @@ function renderThings(root)
       else
 	 handleChild(root.children[root.frame])
       end
-      
    else
-   
       for i = 1, #root.children do
 	 local shape = root.children[i]
 	 handleChild(shape)   
       end
    end
-   love.graphics.setStencilTest()
    
+   love.graphics.setStencilTest()
 end
-
 
 function love.draw()
    step = step + 1
@@ -804,10 +797,8 @@ function love.draw()
       love.graphics.setColor(1,1,1)
       love.graphics.line(x-5, y, x+5, y)
       love.graphics.line(x, y-5, x, y+5)
-
    end
-   
-   
+  
    if currentNode and currentNode.folder then
       local t = currentNode.transforms.l
       local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
@@ -829,19 +820,13 @@ function love.draw()
 
       love.graphics.setLineWidth(2.0  )
       love.graphics.setColor(1,1,1)
-
       local w, h = getLocalDelta(t, 10, 10)
       w = math.max(math.abs(w), math.abs(h))
-
       for i=1, #points do
 	 local kind = "line"
 	 if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-
 	    local scale = root.transforms.l[4]
-	    if pointInRect(globalX,globalY,
-			   points[i][1] - w/2, points[i][2] - w/2,
-			   w, w) then
-
+	    if pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
 	       kind= "fill"
 	    end
 	 end
@@ -868,97 +853,81 @@ function love.draw()
       love.graphics.setLineWidth(1)
    end
 
-
    love.graphics.setColor(1,1,1, 0.1)
    drawGrid()
 
    love.graphics.push()
 
    local s = 0.5
-  
-
+   
    if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
       if imgbutton('folder-move', ui.move,  calcX(6, s), 10, s).clicked then
 	 editingModeSub = 'folder-move'
       end
-      if imgbutton('folder-pivot', ui.pivot,  calcX(7, s), 10, s).clicked then
-	  editingModeSub = nil
-
-	  if (#currentNode.children > 0) then
-	     local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-	     local mx = tlx + (brx - tlx)/2
-	     local my = tly + (bry - tly)/2
-
-	     local nx = currentNode.transforms.l[6]
-	     local ny = currentNode.transforms.l[7]
-
-	     if (nx == tlx and ny == tly) then
-		currentNode.transforms.l[6]= brx
-		currentNode.transforms.l[7]= tly
-
-	     elseif (nx == brx and ny == tly) then
-		currentNode.transforms.l[6]= brx
-		currentNode.transforms.l[7]= bry
-
-	     elseif (nx == brx and ny == bry) then
-		currentNode.transforms.l[6]= tlx
-		currentNode.transforms.l[7]= bry
-
-	     elseif (nx == tlx and ty == bry) then
-		currentNode.transforms.l[6]= tlx
-		currentNode.transforms.l[7]= tly
-
-	     elseif (nx == mx and ny == my) then
-		currentNode.transforms.l[6]= tlx
-		currentNode.transforms.l[7]= tly
-	     else
-		currentNode.transforms.l[6]= mx
-		currentNode.transforms.l[7]= my
-
-	     end
-	  end
-       end
-       if imgbutton('folder-pan-pivot', ui.pan,  calcX(8, s), 10, s).clicked then
-	  editingModeSub = 'folder-pan-pivot'
-       end
-       if imgbutton('folder-clone', ui.clone,calcX(9, s), 10, s).clicked then
-	  local cloned = copyShape(currentNode)
-	  cloned._parent = currentNode._parent
-	  parentize(cloned)
-	  cloned.name = (cloned.name)..' copy'
-	  addShapeAfter(cloned, currentNode)
-	  meshAll(cloned)
-
-	  setCurrentNode(cloned)
-	  
-	  --lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
-       end
-
-       love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("rotate", calcX(11, s), 0 )
-       
-       local v =  h_slider("folder-rotate", calcX(11, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
-       
-       if (v.value ~= nil) then
-	  currentNode.transforms.l[3] = v.value
-	  editingModeSub = 'folder-rotate'
-
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(11, s), 20)
-      end
-       love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("scale",  calcX(17, s), 0 )
-       local v =  h_slider("folder-scale", calcX(17, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
-       if (v.value ~= nil) then
-	  currentNode.transforms.l[4] = v.value
-	  currentNode.transforms.l[5] = v.value
-	  editingModeSub = 'folder-scale'
-	  love.graphics.print(	  string.format("%0.2f", v.value), calcX(17, s), 20)
-
-       end
       
+      if imgbutton('folder-pivot', ui.pivot,  calcX(7, s), 10, s).clicked then
+	 editingModeSub = nil
+	 if (#currentNode.children > 0) then
+	    local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+	    local mx = tlx + (brx - tlx)/2
+	    local my = tly + (bry - tly)/2
+	    local nx = currentNode.transforms.l[6]
+	    local ny = currentNode.transforms.l[7]
 
+	    if (nx == tlx and ny == tly) then
+	       currentNode.transforms.l[6]= brx
+	       currentNode.transforms.l[7]= tly
+	    elseif (nx == brx and ny == tly) then
+	       currentNode.transforms.l[6]= brx
+	       currentNode.transforms.l[7]= bry
+	    elseif (nx == brx and ny == bry) then
+	       currentNode.transforms.l[6]= tlx
+	       currentNode.transforms.l[7]= bry
+	    elseif (nx == tlx and ty == bry) then
+	       currentNode.transforms.l[6]= tlx
+	       currentNode.transforms.l[7]= tly
+	    elseif (nx == mx and ny == my) then
+	       currentNode.transforms.l[6]= tlx
+	       currentNode.transforms.l[7]= tly
+	    else
+	       currentNode.transforms.l[6]= mx
+	       currentNode.transforms.l[7]= my
+	    end
+	 end
+      end
+      
+      if imgbutton('folder-pan-pivot', ui.pan,  calcX(8, s), 10, s).clicked then
+	 editingModeSub = 'folder-pan-pivot'
+      end
+      if imgbutton('folder-clone', ui.clone,calcX(9, s), 10, s).clicked then
+	 local cloned = copyShape(currentNode)
+	 cloned._parent = currentNode._parent
+	 parentize(cloned)
+	 cloned.name = (cloned.name)..' copy'
+	 addShapeAfter(cloned, currentNode)
+	 meshAll(cloned)
+	 setCurrentNode(cloned)
+      end
+
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("rotate", calcX(11, s), 0 )
+      
+      local v =  h_slider("folder-rotate", calcX(11, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
+      if (v.value ~= nil) then
+	 currentNode.transforms.l[3] = v.value
+	 editingModeSub = 'folder-rotate'
+	 love.graphics.print(string.format("%0.2f", v.value), calcX(11, s), 20)
+      end
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("scale",  calcX(17, s), 0 )
+      local v =  h_slider("folder-scale", calcX(17, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
+      if (v.value ~= nil) then
+	 currentNode.transforms.l[4] = v.value
+	 currentNode.transforms.l[5] = v.value
+	 editingModeSub = 'folder-scale'
+	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 20)
+      end
    end
-
 
    if (editingMode == 'polyline') and currentNode  then
       if (not currentNode._parent.keyframes) then
@@ -973,16 +942,13 @@ function love.draw()
 	 editingModeSub = 'polyline-edit'
       end
       if imgbutton('polyline-palette', ui.palette,  calcX(9, s), 10, s).clicked then
-	    editingModeSub = 'polyline-palette'
-
-	 
+	 editingModeSub = 'polyline-palette'
       end
-      --if imgbutton('polyline-rotate', ui.rotate,  calcX(5, s), calcY(2, s), s).clicked then
-	-- editingModeSub = 'polyline-rotate'
-      --end
+
       if imgbutton('polyline-move', ui.move,  calcX(10, s), 10, s).clicked then
 	 editingModeSub = 'polyline-move'
       end
+
       if imgbutton('polyline-clone', ui.clone,  calcX(11, s), 10, s).clicked then
 	 local cloned = copyShape(currentNode)
 	 cloned._parent = currentNode._parent
@@ -990,6 +956,7 @@ function love.draw()
 	 addShapeAfter(cloned, currentNode)
 	 setCurrentNode(cloned)
       end
+      
       if imgbutton('polyline-recenter', ui.pivot, calcX(12,s), 10, s).clicked then
 	 editingModeSub = 'polyline-recenter'
 	 local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
@@ -1003,17 +970,13 @@ function love.draw()
    end
 
    if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
-
       local colorsInRow = 10
-      
       for i = 1, #palette.colors do
 	 local rgb = palette.colors[i].rgb
 	 local x = ((i-1) % colorsInRow)*50
 	 local y = math.ceil((i) / colorsInRow)*50
-
 	 y = y + 50
 	 x = x + 50
-	 
 	 if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	    currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
 	 end
@@ -1031,27 +994,23 @@ function love.draw()
       if imgbutton('polyline-wireframe', ui.lines,  calcX(0,s), 10, s).clicked then
 	 wireframe = not wireframe
       end
-
       if imgbutton('polyline-palette', ui.palette,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = 'backdrop-palette'
       end
-      if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,
-		   calcX(8, s), 10, s).clicked then
+      if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,  calcX(8, s), 10, s).clicked then
 	 editingModeSub = nil
 	 backdrop.visible = not backdrop.visible
       end
 
-       love.graphics.setColor(1,1,1, 1)
-       love.graphics.print("simplify svg",  calcX(1, s), 0 )
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("simplify svg",  calcX(1, s), 0 )
       local v =  h_slider("simplify_value", calcX(1, s), 20, 200,  simplifyValue , 0, 10)
       if (v.value ~= nil) then
 	 simplifyValue= v.value
 	 love.graphics.print(simplifyValue, calcX(1, s), 20)
       end
 
-
       if (backdrop.visible) then
-
 	 if imgbutton('backdrop-move', ui.move, calcX(9, s), 10, s).clicked then
 	    if (editingModeSub == 'backdrop-move') then
 	       editingModeSub = nil
@@ -1078,32 +1037,29 @@ function love.draw()
 	    love.graphics.print(	  string.format("%0.2f", h.value),  calcX(16, s), 20)
 	 end
       end
+      
       if (editingModeSub == 'backdrop-palette') then
 	 local colorsInRow = 10
 	 for i = 1, #palette.colors do
 	    local rgb = palette.colors[i].rgb
 	    local x = ((i-1) % colorsInRow)*50
-	 local y = math.ceil((i) / colorsInRow)*50
+	    local y = math.ceil((i) / colorsInRow)*50
 
-	 y = y + 50
-	 x = x + 50
+	    y = y + 50
+	    x = x + 50
 	    if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
 	       backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
 	       print("bg_color: ", rgb[1]/255,rgb[2]/255,rgb[3]/255)
 	    end
 	 end
       end
-      
-      
    end
-
 
    love.graphics.setFont(small)
    renderGraphNodes(root, 0, 60)
-   --love.graphics.setFont(medium)
    local rightX = w - (64 + 500+ 10)/2
 
-    if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
+   if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
       if (editingMode == 'backdrop') then
 	 editingMode = nil
       else
@@ -1111,8 +1067,6 @@ function love.draw()
       end
       editingModeSub = nil
    end
-   
-
    
    if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10, s).clicked then
       local shape = {
@@ -1137,9 +1091,8 @@ function love.draw()
    end
    if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, 50, s).clicked then
       local shape = {
-	 folder=true,
-	 transforms =  {g={0,0,0,1,1,0,0},
-			l={0,0,0,1,1,0,0}},
+	 folder = true,
+	 transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
 	 children = {}
       }
 
@@ -1154,11 +1107,9 @@ function love.draw()
 	 addShapeAtRoot(shape)
       end
 
-
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
    end
-
 
    if (currentNode) then
       local index = getIndex(currentNode)
@@ -1184,11 +1135,8 @@ function love.draw()
 	 if v.value then
 	    currentNode.lerpValue = v.value
 	 end
-	 
       end
-      
    end
-   
    
    if (currentNode) then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
@@ -1208,17 +1156,17 @@ function love.draw()
 	 local name = currentNode and currentNode.name
 	 changeNameCursor = name and utf8.len(name) or 1
       end
+      
       if imgbutton('connector', ui.parent, rightX - 50, calcY(5,s)+ 8*5, s).clicked then
 	 lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
       end
-    
       
       if currentNode and currentNode.points then
 	 if imgbutton('mask', ui.mask, rightX - 50, calcY(6,s)+ 8*6, s).clicked then
 	    currentNode.mask = not currentNode.mask
-	    --lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
 	 end
       end
+      
       if (changeName) then
 	 local str =  currentNode and currentNode.name  or ""
 	 local substr = string.sub(str, 1, changeNameCursor)
@@ -1238,8 +1186,9 @@ function love.draw()
 	 scrollviewOffset = v2.value
       end
    end
-  love.graphics.pop()
-  love.graphics.setFont(small)
+   
+   love.graphics.pop()
+   love.graphics.setFont(small)
    if not quitDialog then
       love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
       love.graphics.print(shapeName, 64, 0)
@@ -1258,7 +1207,6 @@ function love.draw()
       love.graphics.print(quitStr, 116, 13)
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print(quitStr, 115, 12)
-      --love.graphics.setFont(medium)
    end
 end
 
@@ -1292,6 +1240,7 @@ function love.filedropped(file)
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
    end
+   
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
       tab = (loadstring("return ".. str)())
@@ -1313,6 +1262,7 @@ end
 
 
 function love.keypressed(key)
+   
    if key == "escape" then
       if (editingModeSub ~= nil) then
 	 editingModeSub = nil
@@ -1330,6 +1280,7 @@ function love.keypressed(key)
 	 quitDialog = false
       end
    end
+   
    if (key == 'p' and not changeName) then
       if not profiling then
 	 ProFi:start()
@@ -1339,6 +1290,7 @@ function love.keypressed(key)
       end
       profiling = not profiling
    end
+   
    if (key == 's' and not changeName) then
       local path = shapeName..".polygons.txt"
       local info = love.filesystem.getInfo( path )
@@ -1362,26 +1314,29 @@ function love.keypressed(key)
 	 currentNode.name = table.concat{split(a,utf8.len(a)), b}
 	 changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
       end
+      
       if (key == 'delete') then
 	 local str = currentNode and currentNode.name or ""
 	 local a,b = split(str, changeNameCursor+2)
-
 	 if (#b > 0) then
 	    currentNode.name = table.concat{split(a,utf8.len(a)), b}
 	    changeNameCursor = math.min(#currentNode.name, changeNameCursor)
 	 end
       end
+
       if (key == 'left') then
 	 if (changeNameCursor > 0) then
 	    changeNameCursor = changeNameCursor - 1
 	 end
       end
+
       if (key == 'right' ) then
 	 local str =  currentNode and currentNode.name or ""
 	 if (changeNameCursor < utf8.len(str)) then
 	    changeNameCursor = changeNameCursor + 1
 	 end
       end
+      
       if (key == 'return') then
 	 changeName = false
       end
