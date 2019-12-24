@@ -420,6 +420,9 @@ function love.load()
       offset = {x=0, y=0}
    }
 
+
+
+   
    root = {
       folder = true,
       name = 'root',
@@ -433,16 +436,42 @@ function love.load()
 	    name="2 poses",
 	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 	    children ={
-	       {
-		  name="pose1 ",
-		  color = {1,0,0, 0.8},
-		  points = {{0,0},{200,0},{200,200},{0,200}},
-	       },
-	       {
-		  name="pose2 ",
-		  color = {0,0,1, 0.8},
-		  points = {{100,0},{200,0},{200,400},{100,200}},
-	       },
+	        {
+	       folder=true,
+	       name="PARENT-0-0",
+	       transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
+	       children ={
+
+		  {
+		     name="child1 ",
+		     color = {1,1,0, 0.8},
+		     points = {{0,0},{200,0},{200,200},{0,200}},
+		  },
+		   {
+		     name="child1 ",
+		     color = {1,1,0, 0.8},
+		     points = {{200,0},{200,0},{400,200},{0,200}},
+		  },
+	       }
+	    },
+	        {
+	       folder=true,
+	       name="PARENT-0-0",
+	       transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
+	       children ={
+
+		  {
+		     name="child1 ",
+		     color = {1,0,1, 0.8},
+		     points = {{0,0},{200,0},{200,200},{0,200}},
+		  },
+		   {
+		     name="child1 ",
+		     color = {1,0,1, 0.8},
+		     points = {{0,0},{200,0},{200,200},{600,200}},
+		  },
+	       }
+	    },
 	       -- {
 	       -- 	  name="child1 ",
 	       -- 	  color = {0,1,0, 0.8},
@@ -588,6 +617,9 @@ local step = 0
 
 
 function handleChild(shape)
+   -- TODO i dont want to directly depend on my parents global transform that is not correct
+   -- this gets in the way of lerping between nodes...
+   
    if shape.mask then
       local mesh
       if currentNode ~= shape then
@@ -629,6 +661,15 @@ function lerpColor(c1, c2, t)
 	   lerp(c1[4], c2[4], t)}
 end
 
+function lerpArray(a1, a2, t)
+   local result = {}
+   for i =1, #a1 do
+      table.insert(result, lerp(a1[i], a2[i], t))
+   end
+   return result
+end
+
+
 function lerpPoints(p1, p2, t)
    assert(#p1 == #p2)
    local result = {}
@@ -642,6 +683,37 @@ function lerpPoints(p1, p2, t)
 end
 
 
+
+function lerpNodes(left, right, root, t)
+   if (left.folder and right.folder) then
+      root.folder = true
+      root.transforms = {
+	 l = lerpArray(left.transforms.l, right.transforms.l, t),
+	 g = lerpArray(left.transforms.g, right.transforms.g, t)
+      }
+      root.children = {}
+      assert(#left.children == #right.children)
+      for i=1, #left.children do
+	 root.children[i] = {}
+	 lerpNodes(left.children[i], right.children[i], root.children[i], t)
+      end
+   elseif (left.points and right.points) then
+      if (left.mask and right.mask) then
+	 root.mask = true
+      end
+      
+      root.color = lerpColor(left.color, right.color, t)
+      root.points = lerpPoints(left.points, right.points, t)
+      root._parent = left._parent
+      root.mesh = makeMeshFromVertices(makeVertices(root))
+   end
+      
+   
+   return root
+end
+
+
+
 function createLerpedChild(ex1, ex2, t)
 
    if (ex1.points and ex2.points) then
@@ -652,8 +724,12 @@ function createLerpedChild(ex1, ex2, t)
       result.mesh = makeMeshFromVertices(makeVertices(result))
       return result
    elseif ex1.folder and ex2.folder then
-      print("NOT YET SUPPORTING FOLDER LERPING", ex1, ex2, t)
 
+      local result = {}
+
+      lerpNodes(ex1, ex2, result, t)
+      print(inspect(result))
+      return result
    end
    
 end
@@ -676,7 +752,7 @@ function renderThings(root)
    if (root.keyframes) then
       if currentNode == root then
 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
-	 handleChild(lerped)
+	 if lerped then handleChild(lerped) end
       else
 	 handleChild(root.children[root.frame])
       end
