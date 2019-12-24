@@ -262,6 +262,10 @@ function renderGraphNodes(node, level, startY)
 	       child.open = false
 	    end
 	 else
+	    if (child._parent.keyframes) then
+	       child._parent.frame = getIndex(child)
+	    end
+	    
 	    setCurrentNode(child)
 	    if (child.folder) then
 	       child.open = true
@@ -423,53 +427,40 @@ function love.load()
       children = {
 	 {
 	    folder=true,
-	    name="PARENT-0-0",
+	    keyframes= 2,
+	    lerpValue=0.5,
+	    frame=1,
+	    name="2 poses",
 	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
 	    children ={
-
 	       {
-		  name="child1 ",
-		  color = {1,1,0, 0.8},
-		  points = {{0,0},{200,0},{200,200},{0,200}},
-	       },
-	    }
-	 },
-	 {
-	    folder=true,
-	    name="PARENT-200-0",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,200,0}},
-	    children ={
-	       {
-		  name="child1 ",
+		  name="pose1 ",
 		  color = {1,0,0, 0.8},
 		  points = {{0,0},{200,0},{200,200},{0,200}},
 	       },
-	    }
-	 },
-	 {
-	    folder=true,
-	    name="PARENT-200-200",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,200,200}},
-	    children ={
 	       {
-		  name="child1 ",
+		  name="pose2 ",
 		  color = {0,0,1, 0.8},
-		  points = {{0,0},{200,0},{200,200},{0,200}},
+		  points = {{100,0},{200,0},{200,400},{100,200}},
 	       },
+	       -- {
+	       -- 	  name="child1 ",
+	       -- 	  color = {0,1,0, 0.8},
+	       -- 	  points = {{0,0},{200,0},{200,200},{0,200}},
+	       -- },
+	       -- {
+	       -- 	  name="child1 ",
+	       -- 	  color = {1,1,0, 0.8},
+	       -- 	  points = {{0,0},{200,0},{200,200},{0,200}},
+	       -- },
+	       -- {
+	       -- 	  name="child1 ",
+	       -- 	  color = {0,1,1, 0.8},
+	       -- 	  points = {{0,0},{200,0},{200,200},{0,200}},
+	       -- },
 	    }
 	 },
-	 {
-	    folder=true,
-	    name="PARENT-0-200",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,200}},
-	    children ={
-	       {
-		  name="child1 ",
-		  color = {0,1,0, 0.8},
-		  points = {{0,0},{200,0},{200,200},{0,200}},
-	       },
-	    }
-	 },
+	
 
       }
    }
@@ -594,6 +585,79 @@ end
  
 
 local step = 0
+
+
+function handleChild(shape)
+   if shape.mask then
+      local mesh
+      if currentNode ~= shape then
+	 mesh = shape.mesh -- the standard way of rendering
+      else
+	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
+      end
+      
+      love.graphics.stencil(
+	 function()
+	    love.graphics.draw(mesh, shape._parent._globalTransform)
+	 end, "replace", 1)
+      love.graphics.setStencilTest("equal", 1)
+   end
+   if shape.folder then
+      renderThings(shape)
+   end
+   if currentNode ~= shape then 
+      if (shape.mesh and not shape.mask) then
+	 love.graphics.setColor(shape.color)
+	 love.graphics.draw(shape.mesh, shape._parent._globalTransform)
+      end
+   end
+   if currentNode == shape then
+      local editing = makeVertices(shape)
+      if (editing and #editing > 0) then
+	 local editingMesh = makeMeshFromVertices(editing)
+	 love.graphics.setColor(shape.color)
+	 love.graphics.draw(editingMesh,  shape._parent._globalTransform)
+      end
+   end
+end
+-- https://answers.unity.com/questions/1252260/lerp-color-between-4-corners.html
+
+function lerpColor(c1, c2, t)
+   return {lerp(c1[1], c2[1], t),
+	   lerp(c1[2], c2[2], t),
+	   lerp(c1[3], c2[3], t),
+	   lerp(c1[4], c2[4], t)}
+end
+
+function lerpPoints(p1, p2, t)
+   assert(#p1 == #p2)
+   local result = {}
+   for i=1, #p1 do
+      table.insert(result, {
+		      lerp(p1[i][1], p2[i][1], t),
+		      lerp(p1[i][2], p2[i][2], t)
+      })
+   end
+   return result
+end
+
+
+function createLerpedChild(ex1, ex2, t)
+
+   if (ex1.points and ex2.points) then
+      local result = {}
+      result.color = lerpColor(ex1.color, ex2.color, t)
+      result.points = lerpPoints(ex1.points, ex2.points, t)
+      result._parent = ex1._parent
+      result.mesh = makeMeshFromVertices(makeVertices(result))
+      return result
+   elseif ex1.folder and ex2.folder then
+      print("NOT YET SUPPORTING FOLDER LERPING", ex1, ex2, t)
+
+   end
+   
+end
+
 function renderThings(root)
 
    ---- these calculations are only needed when some local transforms have changed
@@ -609,44 +673,23 @@ function renderThings(root)
    ----
    --love.graphics.stencil(myStencilFunction, "replace", 1)
    --love.graphics.setStencilTest("equal", 0)
-   for i = 1, #root.children do
-
-      local shape = root.children[i]
-      if shape.mask then
-	 local mesh
-	 if currentNode ~= shape then
-	    mesh = shape.mesh -- the standard way of rendering
-	 else
-	    mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
-	 end
-	 
-	 love.graphics.stencil(
-	    function()
-	       love.graphics.draw(mesh, shape._parent._globalTransform)
-	    end, "replace", 1)
-	 love.graphics.setStencilTest("equal", 1)
+   if (root.keyframes) then
+      if currentNode == root then
+	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+	 handleChild(lerped)
+      else
+	 handleChild(root.children[root.frame])
       end
       
-      
-      if shape.folder then
-	 renderThings(shape)
-      end
-      if currentNode ~= shape then 
-	 if (shape.mesh and not shape.mask) then
-	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(shape.mesh, shape._parent._globalTransform)
-	 end
-      end
-      if currentNode == shape then
-	 local editing = makeVertices(shape)
-	 if (editing and #editing > 0) then
-	    local editingMesh = makeMeshFromVertices(editing)
-	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(editingMesh,  shape._parent._globalTransform)
-	 end
+   else
+   
+      for i = 1, #root.children do
+	 local shape = root.children[i]
+	 handleChild(shape)   
       end
    end
    love.graphics.setStencilTest()
+   
 end
 
 
@@ -756,26 +799,7 @@ function love.draw()
    love.graphics.push()
 
    local s = 0.5
-   --local buttons = {
-   --   'backdrop'
-   --}
   
-   -- for i = 1, #buttons do
-   --    if imgbutton(buttons[i], ui[buttons[i]], calcX(0, s), calcY(i, s), s).clicked then
-   -- 	 if (editingMode == buttons[i]) then
-   -- 	    editingMode = nil
-   -- 	    editingModeSub = nil
-   -- 	    setCurrentNode(nil)
-   -- 	 else
-   -- 	    editingMode = buttons[i]
-   -- 	    editingModeSub = nil
-   -- 	 end
-
-   -- 	 if (buttons[i] == 'polyline') then
-   -- 	    editingModeSub = 'polyline-edit'
-   -- 	 end
-   --    end
-   -- end
 
    if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
       if imgbutton('folder-move', ui.move,  calcX(6, s), 10, s).clicked then
@@ -861,11 +885,13 @@ function love.draw()
 
 
    if (editingMode == 'polyline') and currentNode  then
-      if imgbutton('polyline-insert', ui.polyline_add,  calcX(6, s), 10, s).clicked then
-	 editingModeSub = 'polyline-insert'
-      end
-      if imgbutton('polyline-remove', ui.polyline_remove,  calcX(7, s), 10, s).clicked then
-	 editingModeSub = 'polyline-remove'
+      if (not currentNode._parent.keyframes) then
+	 if imgbutton('polyline-insert', ui.polyline_add,  calcX(6, s), 10, s).clicked then
+	    editingModeSub = 'polyline-insert'
+	 end
+	 if imgbutton('polyline-remove', ui.polyline_remove,  calcX(7, s), 10, s).clicked then
+	    editingModeSub = 'polyline-remove'
+	 end
       end
       if imgbutton('polyline-edit', ui.polyline_edit,  calcX(8, s), 10, s).clicked then
 	 editingModeSub = 'polyline-edit'
@@ -1076,6 +1102,18 @@ function love.draw()
       end
    end
 
+   if currentNode and currentNode.keyframes then
+      if (currentNode.keyframes == 2) then
+	 local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
+	 if v.value then
+	    currentNode.lerpValue = v.value
+	 end
+	 
+      end
+      
+   end
+   
+   
    if (currentNode) then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
 	 local index = getIndex(currentNode)

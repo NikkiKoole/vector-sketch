@@ -1,3 +1,12 @@
+
+function clamp(x, min, max)
+  return x < min and min or (x > max and max or x)
+end
+function lerp(a, b, amount)
+  return a + (b - a) * clamp(amount, 0, 1)
+end
+
+
 function distancePointSegment(x,y, x1,y1, x2, y2)
    local A = x - x1
    local B = y - y1
