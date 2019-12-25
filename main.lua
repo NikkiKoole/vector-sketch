@@ -643,6 +643,7 @@ function handleChild(shape)
    if shape.folder then
       renderThings(shape)
    end
+
    if currentNode ~= shape then 
       if (shape.mesh and not shape.mask) then
 	 love.graphics.setColor(shape.color)
@@ -702,6 +703,7 @@ function lerpNodes(left, right, root, t)
 	 root.children[i] = {}
 	 lerpNodes(left.children[i], right.children[i], root.children[i], t)
       end
+      --root._parent = left._parent
    elseif (left.points and right.points) then
       if (left.mask and right.mask) then
 	 root.mask = true
@@ -709,7 +711,7 @@ function lerpNodes(left, right, root, t)
       
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
-      root._parent = left._parent
+      --root._parent = left._parent
       root.mesh = makeMeshFromVertices(makeVertices(root))
    end
    
@@ -727,6 +729,8 @@ function createLerpedChild(ex1, ex2, t)
    elseif ex1.folder and ex2.folder then
       local result = {}
       lerpNodes(ex1, ex2, result, t)
+      result._parent = ex1._parent
+      parentize(result)
       return result
    end
 end
@@ -740,7 +744,6 @@ function renderThings(root)
    if (root._parent) then
       pg = root._parent._globalTransform
    end
-
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
@@ -748,6 +751,7 @@ function renderThings(root)
    if (root.keyframes) then
       if currentNode == root then
 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+	  
 	 if lerped then handleChild(lerped) end
       else
 	 handleChild(root.children[root.frame])
