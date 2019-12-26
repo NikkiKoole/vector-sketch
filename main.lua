@@ -7,10 +7,6 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 
--- todo
--- i think i am relying to much on the parent global
--- instead my own global should reflect that already
-
 function getLocalDelta(transform, dx, dy)
    local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
    local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
@@ -310,11 +306,13 @@ function love.wheelmoved(x,y)
 end
 
 function parentize(node)
+   if (node.children) then
    for i = 1, #node.children do
       node.children[i]._parent = node
       if (node.children[i].folder) then
 	 parentize(node.children[i])
       end
+   end
    end
 end
 
@@ -408,6 +406,42 @@ function love.load()
       click = false,
       offset = {x=0, y=0}
    }
+
+
+   
+   root2 = {
+      folder = true,
+      name = 'root',
+      
+      transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
+      children = {
+   	 {
+   	    folder=true,
+   	    name="PARENT",
+	    keyframes= 2,
+	    lerpValue=0.5,
+	    frame=1,
+   	    transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
+   	     children = {
+   	    {
+   	       name="child1 ",
+   	       color = {1,1,0, 0.8},
+   	       points = {{0,0},{200,0},{200,200},{0,200}},
+   	    },
+   	    {
+   	       name="child2 ",
+   	       color = {1,1,0, 0.8},
+   	       points = {{200,0},{200,0},{400,200},{0,200}},
+   	    },
+   	 }      
+	     
+	   
+   	    
+   	 },
+      }
+	
+   }
+
    
    root = {
       folder = true,
@@ -603,7 +637,19 @@ function getDirectChildrenBBox(node)
    else
       return tlx, tly, brx, bry
    end
+
 end
+
+
+function isPartOfKeyframePose(node)
+   if (node.keyframes) then return true end
+   if (node._parent == root) then return false end
+   if (node._parent) then
+      return isPartOfKeyframePose(node._parent)
+   end
+end
+   
+   
 
 function countNestedChildren(node, total)
    for i=1, #node.children do
@@ -719,25 +765,19 @@ function lerpNodes(left, right, root, t)
 end
 
 function createLerpedChild(ex1, ex2, t)
-   if (ex1.points and ex2.points) then
-      local result = {}
-      result.color = lerpColor(ex1.color, ex2.color, t)
-      result.points = lerpPoints(ex1.points, ex2.points, t)
-      result._parent = ex1._parent
-      result.mesh = makeMeshFromVertices(makeVertices(result))
-      return result
-   elseif ex1.folder and ex2.folder then
-      local result = {}
-      lerpNodes(ex1, ex2, result, t)
-      result._parent = ex1._parent
-      parentize(result)
-      return result
-   end
+
+   local result = {}
+   lerpNodes(ex1, ex2, result, t)
+   result._parent = ex1._parent
+   parentize(result)
+   return result
+
 end
 
 function renderThings(root)
 
    ---- these calculations are only needed when some local transforms have changed
+
    local tg = root.transforms.g
    local tl = root.transforms.l
    local pg = nil
@@ -933,8 +973,10 @@ function love.draw()
       end
    end
 
+  
+   
    if (editingMode == 'polyline') and currentNode  then
-      if (not currentNode._parent.keyframes) then
+      if (not isPartOfKeyframePose(currentNode)) then
 	 if imgbutton('polyline-insert', ui.polyline_add,  calcX(6, s), 10, s).clicked then
 	    editingModeSub = 'polyline-insert'
 	 end
