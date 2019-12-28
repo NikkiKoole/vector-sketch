@@ -2,6 +2,7 @@
 function clamp(x, min, max)
   return x < min and min or (x > max and max or x)
 end
+
 function lerp(a, b, amount)
   return a + (b - a) * clamp(amount, 0, 1)
 end
@@ -84,6 +85,12 @@ function copyShape(shape)
 	 },
 	 children = {}
       }
+      if (shape.keyframes) then
+	 result.frame = shape.frame
+	 result.keyframes = shape.keyframes
+	 result.lerpValue = shape.lerpValue
+      end
+      
       for i=1, #shape.children do
 	 result.children[i] = copyShape(shape.children[i])
       end

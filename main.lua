@@ -375,6 +375,7 @@ function love.load()
       mask = love.graphics.newImage("resources/ui/mask.png"),
       clone = love.graphics.newImage("resources/ui/clone.png"),
       joystick = love.graphics.newImage("resources/ui/joystick.png"),
+      transition = love.graphics.newImage("resources/ui/transition.png"),
    }
 
    cursors = {
@@ -843,7 +844,7 @@ function love.draw()
       love.graphics.line(x, y-5, x, y+5)
    end
   
-   if currentNode and currentNode.folder then
+   if currentNode and currentNode.folder and  currentNode._globalTransform then
       local t = currentNode.transforms.l
       local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
       love.graphics.setColor(0,0,0)
@@ -1212,6 +1213,21 @@ function love.draw()
 	    currentNode.mask = not currentNode.mask
 	 end
       end
+
+      if currentNode and currentNode.folder and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+	 if (imgbutton('transition', ui.transition, rightX - 50, calcY(7,s)+ 8*7, s)).clicked then
+	    if (currentNode.keyframes) then
+	       currentNode.keyframes = nil
+	       currentNode.lerpValue = nil
+	        currentNode.frame = nil
+	    else
+	       currentNode.keyframes = 2
+	       currentNode.lerpValue = 0.5
+	       currentNode.frame = 1
+	    end
+	 end
+      end
+      
       
       if (changeName) then
 	 local str =  currentNode and currentNode.name  or ""
