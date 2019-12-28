@@ -672,7 +672,7 @@ local step = 0
 function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
-   
+   if not shape then return end
    if shape.mask then
       local mesh
       if currentNode ~= shape then
@@ -1214,7 +1214,7 @@ function love.draw()
 	 end
       end
 
-      if currentNode and currentNode.folder and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+      if currentNode and currentNode.folder and #currentNode.children >= 2 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
 	 if (imgbutton('transition', ui.transition, rightX - 50, calcY(7,s)+ 8*7, s)).clicked then
 	    if (currentNode.keyframes) then
 	       currentNode.keyframes = nil
