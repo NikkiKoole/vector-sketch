@@ -125,7 +125,20 @@ local jamesGulliverHancock = {'d44553','e36f73','d2797b','cd8aa4',
 'e1e1c0',
 'd0cccc',
 'c19490',
-'995555',}
+'995555',
+'a19e9c',
+'e5e3df',
+'cb5f63',
+'dfcaa7',
+'ca3135',
+'9a5e61',
+'ad898a',
+'454546',
+
+}
+
+
+
 
 
 james = {
@@ -138,3 +151,31 @@ for i = 1, #jamesGulliverHancock do
    table.insert(james.colors, {name='unknown', rgb={r,g,b}})
 end
 
+
+picoColors = {
+'000000',
+'1D2B53',
+'7E2553',
+'008751',
+'AB5236',
+'5F574F',
+'C2C3C7',
+'FFF1E8',
+'FF004D',
+'FFA300',
+'FFEC27',
+'00E436',
+'29ADFF',
+'83769C',
+'FF77A8',
+'FFCCAA',
+}
+
+pico = {
+   name='pico',
+   colors = {}
+}
+for i = 1, #picoColors do
+   local r,g,b = hex2rgb(picoColors[i])
+   table.insert(pico.colors, {name='unknown', rgb={r,g,b}})
+end

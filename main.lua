@@ -39,6 +39,24 @@ function getIndex(item)
    return -1
 end
 
+function removeGroupOfThings(group)
+   local root =  currentNode or root 
+   for i = 1, #group do
+      table.remove(root.children, getIndex(group[i]))
+   end
+   
+   
+end
+function addGroupAtEnd(group, parent)
+   for i = 1, #group do
+      local thing = group[i]
+      thing._parent = parent
+      table.insert(parent.children, #parent.children + 1, thing)
+   end
+   
+end
+
+
 function addThingAtEnd(thing, parent)
    thing._parent = parent
    table.insert(parent.children, #parent.children + 1, thing)
@@ -82,9 +100,13 @@ function love.mousepressed(x,y, button)
       editingMode = 'move'
    end
 
+   if editingMode == 'rectangle-select' then
+      rectangleSelect.startP = {x=x, y=y}
+   end
+   
    local points = currentNode and currentNode.points
    if not points then return end
-
+   
    local t = currentNode._parent._globalTransform
    local px, py = t:inverseTransformPoint( x, y )
    local scale = root.transforms.l[4]
@@ -133,7 +155,45 @@ function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = nil
    end
+   if (editingMode == 'rectangle-select') then
+      if (rectangleSelect.startP and rectangleSelect.endP) then
+	 local root = currentNode or root
+	 
+	 local t = not currentNode and  root._localTransform or root._globalTransform
+	 local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
+	 local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
+	 local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
+	 local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
+	 local childrenInRect = {}
+	 print(tl.x, tl.y, br.x, br.y)
+	 for i=1, #root.children do
+	    local child = root.children[i]
+	    if (child.points) then
+	       local failed = false
+	       for pi = 1, #child.points do
+		  local p = child.points[pi]
+		  if p[1] < tl.x or p[1] > br.x then failed = true end
+		  if p[2] < tl.y or p[2] > br.y then failed = true end
+	       end
 
+	       if not failed then
+		  --print('child aadded')
+		  table.insert(childrenInRect, child)
+	       end
+	       --print(inspect(child.points))
+	    end
+	 end
+	 if #childrenInRect > 0 then
+	    childrenInRectangleSelect = childrenInRect
+	 else
+	    childrenInRectangleSelect = {}
+	 end
+	  editingMode = nil
+      end
+     
+      rectangleSelect = {}
+   end
+   
    if lastDraggedElement and lastDraggedElement.id == 'connector' then
       if (currentNode and currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
 	 if not (nodeIsMyOwnOffspring(   currentNode, currentlyHoveredUINode)) then
@@ -141,6 +201,19 @@ function love.mousereleased(x,y, button)
 	 end
       else
 	 addThingAtEnd(removeCurrentNode(), root)
+      end
+   end
+    if lastDraggedElement and lastDraggedElement.id == 'connector-group' then
+      if (currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
+	 --if not (nodeIsMyOwnOffspring(   currentNode, currentlyHoveredUINode)) then
+	 --   addThingAtEnd( removeCurrentNode(), currentlyHoveredUINode)
+	 --end
+      --else
+	 --addThingAtEnd(removeCurrentNode(), root)
+	 --addGroupOfThings
+	 removeGroupOfThings(childrenInRectangleSelect)
+	 addGroupAtEnd(childrenInRectangleSelect, currentlyHoveredUINode)
+	 childrenInRectangleSelect = {}
       end
    end
    lastDraggedElement = nil
@@ -159,6 +232,12 @@ function love.mousemoved(x,y, dx, dy)
    end
 
    local isConnecting = lastDraggedElement and lastDraggedElement.id == 'connector'
+
+   if editingMode == 'rectangle-select' and rectangleSelect.startP then
+      rectangleSelect.endP = {x=x, y=y}
+   end
+   
+
    
    if (editingMode == 'folder' and editingModeSub ==  'folder-move' and mouseState.hoveredSomething == false and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
@@ -376,6 +455,7 @@ function love.load()
       clone = love.graphics.newImage("resources/ui/clone.png"),
       joystick = love.graphics.newImage("resources/ui/joystick.png"),
       transition = love.graphics.newImage("resources/ui/transition.png"),
+      select = love.graphics.newImage("resources/ui/select.png"),
    }
 
    cursors = {
@@ -389,6 +469,9 @@ function love.load()
    }
    for i = 1, #miffy.colors do
       table.insert(palette.colors, miffy.colors[i])
+   end
+   for i = 1, #pico.colors do
+      table.insert(palette.colors, pico.colors[i])
    end
    for i = 1, #lego.colors do
       table.insert(palette.colors, lego.colors[i])
@@ -409,138 +492,32 @@ function love.load()
    }
 
 
-   
-   root2 = {
-      folder = true,
-      name = 'root',
-      
-      transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
-      children = {
-   	 {
-   	    folder=true,
-   	    name="PARENT",
-	    keyframes= 2,
-	    lerpValue=0.5,
-	    frame=1,
-   	    transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
-   	     children = {
-   	    {
-   	       name="child1 ",
-   	       color = {1,1,0, 0.8},
-   	       points = {{0,0},{200,0},{200,200},{0,200}},
-   	    },
-   	    {
-   	       name="child2 ",
-   	       color = {1,1,0, 0.8},
-   	       points = {{200,0},{200,0},{400,200},{0,200}},
-   	    },
-   	 }      
-	     
-	   
-   	    
-   	 },
-      }
-	
-   }
-
+  
    
    root = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
+      transforms =  {l={100,100,0,1,1,0,0}},
       children = {
 	 {
-	    folder=true,
-	    keyframes= 2,
-	    lerpValue=0.5,
-	    frame=1,
-	    name="2 poses",
-	    transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
-	    children ={
-	       {
-		  folder=true,
-		  name="PARENT-0-0",
-		  transforms =  {g={0,0,0,1,1,0,0}, l={0,0,0,1,1,0,0}},
-		  children ={
-
-		     {
-			name="child1 ",
-			color = {1,1,0, 0.8},
-			points = {{0,0},{200,0},{200,200},{0,200}},
-		     },
-		     {
-			name="child1 ",
-			color = {1,1,0, 0.8},
-			points = {{200,0},{200,0},{400,200},{0,200}},
-		     },
-		     {
-			folder=true,
-			name="PARENT-0-0",
-			transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
-			children ={
-
-			   {
-			      name="child1 ",
-			      color = {1,0,1, 0.8},
-			      points = {{0,0},{200,0},{200,200},{0,200}},
-			   },
-			   
-			   {
-			      name="child1 ",
-			      color = {1,0,1, 0.8},
-			      points = {{0,0},{200,0},{200,200},{600,200}},
-			   },
-			   
-			}
-		     },
-		  }
-	       },
-	       {
-		  folder=true,
-		  name="PARENT-0-0",
-		  transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
-		  children ={
-
-		     {
-			name="child1 ",
-			color = {1,0,1, 0.8},
-			points = {{0,0},{200,0},{200,200},{0,200}},
-		     },
-		     
-		     {
-			name="child1 ",
-			color = {1,0,1, 0.8},
-			points = {{0,0},{200,0},{200,200},{600,200}},
-		     },
-		     {
-			folder=true,
-			name="PARENT-0-0",
-			transforms =  {g={0,0,0,1,1,0,0}, l={100,0,0,1,1,0,0}},
-			children ={
-
-			   {
-			      name="child1 ",
-			      color = {1,0,1, 0.8},
-			      points = {{0,0},{200,0},{200,200},{0,200}},
-			   },
-			   
-			   {
-			      name="child1 ",
-			      color = {1,0,1, 0.8},
-			      points = {{0,0},{200,0},{200,200},{600,200}},
-			   },
-			   
-			}
-		     },
-		     
-		  }
-	       },
-	    }
+	    folder = true,
+	    transforms =  {l={0,0,0,1,1,0,0}},
+	    name="group ",
+	    children ={},
 	 },
-	 
-
-      }
+	 {
+	    name="child1 ",
+	    color = {1,1,0, 0.8},
+	    points = {{0,0},{200,0},{200,200},{0,200}},
+	 },
+	 {
+	    name="child2 ",
+	    color = {1,1,0, 0.8},
+	    points = {{500,0},{500,200},{300,200}},
+	 },
+      },
    }
+   
    parentize(root)
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -562,7 +539,8 @@ function love.load()
    scrollviewOffset = 0
    lastDraggedElement = {}
    quitDialog = false
-
+   rectangleSelect = {}
+   childrenInRectangleSelect = {}
    meshAll(root)
 end
 
@@ -742,7 +720,7 @@ function lerpNodes(left, right, root, t)
       root.folder = true
       root.transforms = {
 	 l = lerpArray(left.transforms.l, right.transforms.l, t),
-	 g = lerpArray(left.transforms.g, right.transforms.g, t)
+	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
       }
       root.children = {}
       assert(#left.children == #right.children)
@@ -898,6 +876,16 @@ function love.draw()
       love.graphics.setLineWidth(1)
    end
 
+   love.graphics.setColor(1,1,1, 1)
+
+   if editingMode == 'rectangle-select' and rectangleSelect.startP and rectangleSelect.endP then
+      love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.startP.y)
+      love.graphics.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
+        love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
+	love.graphics.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
+
+   end
+   
    love.graphics.setColor(1,1,1, 0.1)
    drawGrid()
 
@@ -938,6 +926,7 @@ function love.draw()
 	       currentNode.transforms.l[6]= mx
 	       currentNode.transforms.l[7]= my
 	    end
+	    editingModeSub = 'folder-move'
 	 end
       end
       
@@ -1114,6 +1103,21 @@ function love.draw()
       end
       editingModeSub = nil
    end
+   if not currentNode or not currentNode.points then
+      if imgbutton('select', ui.select, rightX - 100, 10, s).clicked then
+	 editingMode = 'rectangle-select'
+      end
+      if #childrenInRectangleSelect > 0 then
+	 if imgbutton('connector-group', ui.parent, rightX - 150, 10, s).clicked then
+	    lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
+	 end
+	 
+      end
+      
+   end
+   
+
+
    
    if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10, s).clicked then
       local shape = {
@@ -1256,7 +1260,7 @@ function love.draw()
       love.graphics.print(shapeName, 64, 0)
    end
 
-   if lastDraggedElement and lastDraggedElement.id == 'connector' then
+   if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
       love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
    end
 

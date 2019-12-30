@@ -1,4 +1,3 @@
-
 function clamp(x, min, max)
   return x < min and min or (x > max and max or x)
 end
@@ -65,32 +64,14 @@ function split(str, pos)
    return str:sub(1, offset-1), str:sub(offset)
 end
 
-function copyArray(original)
-   local result = {}
-   for i=1, #original do
-      table.insert(result, round2(original[i], 3))
-   end
-   return result
-end
-
-
 function copyShape(shape)
    if (shape.folder) then
       local result = {
 	 folder = true,
 	 name = shape.name or "",
-	 transforms = {
-	    l = copyArray(shape.transforms.l),
-	    --g = copyArray(shape.transforms.g)
-	 },
+	 transforms = {l=shape.transforms.l},
 	 children = {}
       }
-      if (shape.keyframes) then
-	 result.frame = shape.frame
-	 result.keyframes = shape.keyframes
-	 result.lerpValue = shape.lerpValue
-      end
-      
       for i=1, #shape.children do
 	 result.children[i] = copyShape(shape.children[i])
       end
@@ -102,35 +83,29 @@ function copyShape(shape)
 	    color = {},
 	    points = {}
 	 }
-	 if shape.mask then
-	    result.mask = true
-	 end
-	 
 	 if (shape.color) then
 	    for i=1, #shape.color do
-	       result.color[i] = round2(shape.color[i],3)
+	       result.color[i] = shape.color[i]
 	    end
 	 else
 	    result.color = {0,0,0,0}
 	 end
 	 
 	 for i=1, #shape.points do
-	    result.points[i]= {round2(shape.points[i][1], 3), round2(shape.points[i][2], 3)}
+	    result.points[i]= {shape.points[i][1], shape.points[i][2]}
 	 end
 	 return result
    end
    
 end
 
-function round2(num, numDecimalPlaces)
-  return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
-end
-
 function makeVertices(shape)
    local triangles = {}
    local vertices = {}
    if (shape.folder) then return end
+   if (not shape.points) then return end
    local points = shape.points
+   --print(inspect(shape))
    if (#points >= 2 ) then
 
       local scale = 1
@@ -171,6 +146,11 @@ function makeVertices(shape)
    end
    return vertices
 end
+
+simple_format = {
+   {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+}
+
 
 function makeMeshFromVertices(vertices)
    if (vertices and vertices[1] and vertices[1][1]) then
