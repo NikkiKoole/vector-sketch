@@ -38,28 +38,69 @@ function love.draw()
    renderThings(root)
 end
 
+
+function blinkEyes(index)
+   local linkerOog = findNodeByName(tomatoes[index], 'linkeroog')
+   local rechterOog = findNodeByName(tomatoes[index], 'rechteroog')
+   local linkerPupil = findNodeByName(linkerOog, 'pupil')
+   local rechterPupil = findNodeByName(rechterOog, 'pupil')
+ 
+   flux.to(linkerPupil.transforms.l, 0.1, {[5]=0.01}):after(linkerPupil.transforms.l, 0.1, {[5]=1}):delay(0.1)
+   flux.to(rechterPupil.transforms.l, 0.1, {[5]=0.01}):after(rechterPupil.transforms.l, 0.1, {[5]=1}):delay(0.1)
+end
+
+function growKroontje(index)
+   local kroontje = findNodeByName(tomatoes[index], 'kroontje')
+   flux.to(kroontje.transforms.l, 0.1, {[5]=1.2, [4]=1.2}):after(kroontje.transforms.l, 0.1, {[5]=1, [4]=1}):delay(0.1)
+end
+
+
+function onHitHead(index)
+   local firstMouth = findNodeByName(tomatoes[index], 'mond')
+   firstMouth.needsLerp = true
+   local tween = flux.to(firstMouth, 0.1, {lerpValue=1})
+      :after(firstMouth, 0.1, {lerpValue=0}):delay(0.1)
+   :oncomplete(function() firstMouth.needsLerp = false end)
+
+   blinkEyes(index)
+   growKroontje(index)
+   
+end
+
+function onHitXylofoonChild(index)
+   local child = xylofoon.children[index]
+   child.needsLerp = true
+
+   local tween = flux.to(child.transforms.l, 0.05, {[4]=1.1, [5]=1.1})
+      :after(child.transforms.l, 0.2, {[4]=1, [5]=1}):delay(0.05)
+   :oncomplete(function() child.needsLerp = false end)
+end
+
+
+
 function love.update(dt)
    flux.update(dt)
 
-   if love.math.random() < 0.09 then
-      --for i = 1, #tomatoes do
-      local index = math.floor((love.math.random() * #root.children + 1))
-      local firstMouth = findNodeByName(root.children[index], 'mond')
+   if love.math.random() < 0.05 then
+      local index = math.floor((love.math.random() * #tomatoes + 1))
+      local firstMouth = findNodeByName(tomatoes[index], 'mond')
       if firstMouth.needsLerp == false or firstMouth.needsLerp == nil then
 	 firstMouth.needsLerp = true
 	 local d1 = 0.1 + love.math.random()*0.2
 	 local d2 = 0.1 + love.math.random()*0.2
-	 local close = love.math.random() * 0.2 + 0.1
-	 local open = love.math.random() * 0.2 + 0.1
+	 local close = love.math.random() * 0.6 + 0.1
+	 local open = love.math.random() * 0.6 + 0.1
 
-	 local tween = flux.to(firstMouth, close, {lerpValue=1}):delay(d1)
-	    :after(firstMouth, open, {lerpValue=0}):delay(d2)
+	 local tween = flux.to(firstMouth, close, {lerpValue=0.7}):delay(d1)
+	    :after(firstMouth, open, {lerpValue=0.3}):delay(d2)
 
 	 :oncomplete(function() firstMouth.needsLerp = false end)
       end
-   --end
-   
-      
+   end
+
+   if (love.math.random() < 0.1) then
+      local index = math.floor((love.math.random() * #tomatoes + 1))
+      blinkEyes(index)
    end
    
 end
@@ -91,6 +132,7 @@ end
 function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
+  -- print(inspect(shape))
    if not shape then return end
    if shape.mask then
       local mesh
@@ -243,40 +285,118 @@ end
 ----
 
 function love.mousemoved(x,y)
-   local tomatoes = root.children
+   --local tomatoes = root.children
    for i =1, #tomatoes do
-   --local i = 6
-   local body = tomatoes[i]
+   --local i = 1
+      local body = tomatoes[i]
+      
    if body._globalTransform then
       
       local linkerOog = findNodeByName(tomatoes[i], 'linkeroog')
       local linkerPupil = findNodeByName(linkerOog, 'pupil')
+      local linkerWenkbrauw = findNodeByName(linkerOog, 'wenkbrauw')
+      if  (linkerWenkbrauw._globalTransform) then
+	 local lx, ly =  (body._globalTransform):inverseTransformPoint(x, y)
+	 local distance = math.sqrt((lx *lx) + (ly * ly))
+	 local r2 = mapInto(distance, 0, 100,  -.03, .03)
+	 linkerWenkbrauw.transforms.l[3] = r2
+      end
+      
       if (linkerPupil._globalTransform) then
 	 local lx, ly =  (linkerPupil._globalTransform):inverseTransformPoint(x, y)
 	 local r = math.atan2 (ly, lx)
 	 local distance = math.sqrt((lx *lx) + (ly * ly))
-	 local radius = math.min(3, distance)
-	 local dx = radius * math.cos(r)
-	 local dy = radius * math.sin(r)
-	 linkerPupil.transforms.l[1] = startPos[i].leftEye[1]+dx
-	 linkerPupil.transforms.l[2] = startPos[i].leftEye[2]+dy
+	 if (distance > 2) then
+	    local radius = math.min(2, distance)
+	    local dx = radius * math.cos(r)
+	    local dy = radius * math.sin(r)
+	    linkerPupil.transforms.l[1] = startPos[i].leftEye[1]+dx
+	    linkerPupil.transforms.l[2] = startPos[i].leftEye[2]+dy
+	 end
+	    
+	 
       end
       local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
       local rechterPupil = findNodeByName(rechterOog, 'pupil')
+      local rechterWenkbrauw = findNodeByName(rechterOog, 'wenkbrauw')
+      if  (rechterWenkbrauw._globalTransform) then
+	 local lx, ly =  (rechterWenkbrauw._globalTransform):inverseTransformPoint(x, y)
+	 local distance = math.sqrt((lx *lx) + (ly * ly))
+	 local r2 = mapInto(distance, 0, 100,  .03, -.03)
+	 rechterWenkbrauw.transforms.l[3] = r2
+      end
       if (rechterPupil._globalTransform) then
 	 local lx, ly =  (rechterPupil._globalTransform):inverseTransformPoint(x, y)
 	 local r = math.atan2 (ly, lx)
 	 local distance = math.sqrt((lx *lx) + (ly * ly))
-	 local radius = math.min(3, distance)
-	 local dx = radius * math.cos(r)
-	 local dy = radius * math.sin(r)
-	 rechterPupil.transforms.l[1] = startPos[i].rightEye[1]+dx
-	 rechterPupil.transforms.l[2] = startPos[i].rightEye[2]+dy
+
+	 
+	 if distance > 2 then
+	    local radius = math.min(3, distance)
+	    local dx = radius * math.cos(r)
+	    local dy = radius * math.sin(r)
+	    rechterPupil.transforms.l[1] = startPos[i].rightEye[1]+dx
+	    rechterPupil.transforms.l[2] = startPos[i].rightEye[2]+dy
+	 end
       end
    end
  
    end
 end
+
+
+
+function love.mousepressed(x,y)
+   for i = 1, #tomatoes do
+      local body =  findNodeByName(tomatoes[i], 'lichaam')
+      local mesh = body.children[1].mesh
+      
+      if isMouseInMesh(x,y, body, mesh) then
+	 --print("hit body", i)
+	 onHitHead(i)
+      end
+   end
+
+   for i= 3, #xylofoon.children do
+      local body = xylofoon.children[i]
+      local mesh = body.children[1].mesh
+      if isMouseInMesh(x,y, body, mesh) then
+	 print('hit', body.name)
+	 onHitXylofoonChild(i)
+      end
+      
+      --print((xylofoon.children[i].name))
+   end
+   
+end
+
+function signT(p1, p2, p3)
+   return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
+end
+
+function pointInTriangle(p, t1, t2, t3)
+   local b1, b2, b3
+   b1 = signT(p, t1, t2) < 0.0
+   b2 = signT(p, t2, t3) < 0.0
+   b3 = signT(p, t3, t1) < 0.0
+
+   return ((b1 == b2) and (b2 == b3))
+end
+
+
+function isMouseInMesh(mx, my, body, mesh)
+   local count = mesh:getVertexCount()
+   local px,py = body._globalTransform:inverseTransformPoint(mx, my)
+   for i = 1, count, 3 do
+      
+      if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
+	 return true
+      end
+      
+   end
+   return false
+end
+
 
 
 function love.load()
@@ -285,19 +405,32 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},l={600,800,0,4,4,0,0}},
-      
+      transforms =  {g={0,0,0,1,1,0,0},l={700,800,0,4,4,0,0}},
+      children ={}
    }
 
-   local tomatoes = parseFile('tomatoes.txt')
-   root.children = tomatoes
+   tomatoes = parseFile('tomatoes.txt')
+   xylofoon = parseFile('xylofoon.txt')[1]
+   
+   table.insert(root.children, xylofoon)
+   xylofoon.transforms.l[1] = - 100
+   xylofoon.transforms.l[2] = - 150
+   print(xylofoon)
+   for i = 1, #tomatoes do
+      table.insert(root.children, tomatoes[i])
+   end
 
    startPos = {}
    for i =1, #tomatoes do
       local linkerOog = findNodeByName(tomatoes[i], 'linkeroog')
-      local linkerPupil = findNodeByName(linkerOog, 'pupil')
       local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
+      
+      local linkerPupil = findNodeByName(linkerOog, 'pupil')
       local rechterPupil = findNodeByName(rechterOog, 'pupil')
+
+      --local linkerWenkbrauw = findNodeByName(linkerOog, 'wenkbrauw')
+      --local rechterWenkbrauw = findNodeByName(rechterOog, 'wenkbrauw')
+      --print(inspect(linkerWenkbrauw), inspect(rechterWenkbrauw))
       startPos[i] = {leftEye = {linkerPupil.transforms.l[1], linkerPupil.transforms.l[2]},
 		     rightEye = {rechterPupil.transforms.l[1], rechterPupil.transforms.l[2]}}
    end
@@ -306,4 +439,6 @@ function love.load()
 
    parentize(root)
    meshAll(root)
+   renderThings(root)
+ 
 end
