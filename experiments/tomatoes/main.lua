@@ -405,17 +405,22 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},l={700,800,0,4,4,0,0}},
+      transforms =  {g={0,0,0,1,1,0,0},l={650,800,0,4,4,0,0}},
       children ={}
    }
 
    tomatoes = parseFile('tomatoes.txt')
    xylofoon = parseFile('xylofoon.txt')[1]
+   cr78 = parseFile('cr78.txt')[1]
    
    table.insert(root.children, xylofoon)
-   xylofoon.transforms.l[1] = - 100
+   xylofoon.transforms.l[1] = - 90
    xylofoon.transforms.l[2] = - 150
-   print(xylofoon)
+
+   table.insert(root.children, cr78)
+   cr78.transforms.l[1] = 50
+   cr78.transforms.l[2] = - 165
+    
    for i = 1, #tomatoes do
       table.insert(root.children, tomatoes[i])
    end
