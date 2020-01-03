@@ -220,6 +220,11 @@ end
 
 function love.mousemoved(x,y, dx, dy)
    currentlyHoveredUINode = nil
+   local snap = false
+   if  love.keyboard.isDown( 'r' ) then
+      snap = true
+   end
+   
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       root.transforms.l[1] = root.transforms.l[1] + dx
       root.transforms.l[2] = root.transforms.l[2] + dy
@@ -241,6 +246,10 @@ function love.mousemoved(x,y, dx, dy)
    if (editingMode == 'folder' and editingModeSub ==  'folder-move' and mouseState.hoveredSomething == false and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
 	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+	 if snap then
+	     ddx = round2(ddx, 0)
+	     ddy = round2(ddy, 0)
+	  end
 	 currentNode.transforms.l[1]= currentNode.transforms.l[1] + ddx
 	 currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy
       end
@@ -248,6 +257,10 @@ function love.mousemoved(x,y, dx, dy)
    if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot' and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
 	 local ddx, ddy = getLocalDelta(currentNode._globalTransform, dx, dy)
+	  if snap then
+	     ddx = round2(ddx, 0)
+	     ddy = round2(ddy, 0)
+	  end
 	 currentNode.transforms.l[6]= currentNode.transforms.l[6] - ddx
 	 currentNode.transforms.l[7]= currentNode.transforms.l[7] - ddy
       end
@@ -256,6 +269,11 @@ function love.mousemoved(x,y, dx, dy)
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
       local points = currentNode and currentNode.points
       local dx3, dy3 = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+      if snap then
+	 dx3 = round2(dx3, 0)
+	 dy3 = round2(dy3, 0)
+      end
+      
       if (points) then
 	 local beginIndex = 2 -- if first and last arent identical
 	 if not (points[1] == points[#points]) then
@@ -266,6 +284,7 @@ function love.mousemoved(x,y, dx, dy)
 	    p[1] = p[1] + dx3
 	    p[2] = p[2] + dy3
 	 end
+	
       end
    end
 
@@ -278,7 +297,7 @@ function love.mousemoved(x,y, dx, dy)
 	    local globalX, globalY = t:inverseTransformPoint( x, y )
 	   
    	    if (dragIndex <= #points) then
-	       if  love.keyboard.isDown( 'r' ) then
+	       if  snap then
 		  points[dragIndex][1] = round2(globalX,0)
 		  points[dragIndex][2] = round2(globalY,0)
 		else
