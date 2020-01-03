@@ -165,7 +165,6 @@ function love.mousereleased(x,y, button)
 	 local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
 	 local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
 	 local childrenInRect = {}
-	 print(tl.x, tl.y, br.x, br.y)
 	 for i=1, #root.children do
 	    local child = root.children[i]
 	    if (child.points) then
@@ -277,9 +276,17 @@ function love.mousemoved(x,y, dx, dy)
 	    local points = currentNode and currentNode.points
 	    local t = currentNode._parent._globalTransform
 	    local globalX, globalY = t:inverseTransformPoint( x, y )
+	   
    	    if (dragIndex <= #points) then
-   	       points[dragIndex][1] = globalX
-   	       points[dragIndex][2] = globalY
+	       if  love.keyboard.isDown( 'r' ) then
+		  points[dragIndex][1] = round2(globalX,0)
+		  points[dragIndex][2] = round2(globalY,0)
+		else
+		   points[dragIndex][1] = globalX
+		   points[dragIndex][2] = globalY
+		end
+	    
+   	       
    	    end
    	 end
       end
@@ -851,6 +858,7 @@ function love.draw()
 	    local scale = root.transforms.l[4]
 	    if pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
 	       kind= "fill"
+	       love.graphics.print(round2(points[i][1],3)..", "..round2(points[i][2],3), 8, love.graphics.getHeight()-32)
 	    end
 	 end
 
