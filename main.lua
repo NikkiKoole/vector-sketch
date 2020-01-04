@@ -341,7 +341,11 @@ function renderGraphNodes(node, level, startY)
 	 icon = ui.mask
 	 color = {0,0,0}
       end
-
+      if child.hole then
+	 icon = ui.hole
+	 color = {0,0,0}
+      end
+	 
       
       local b = {}
       if (yPos >=0 and yPos <= h) then
@@ -482,6 +486,7 @@ function love.load()
       joystick = love.graphics.newImage("resources/ui/joystick.png"),
       transition = love.graphics.newImage("resources/ui/transition.png"),
       select = love.graphics.newImage("resources/ui/select.png"),
+      hole = love.graphics.newImage("resources/ui/keyhole.png"),
    }
 
    cursors = {
@@ -673,7 +678,7 @@ function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
    if not shape then return end
-   if shape.mask then
+   if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
 	 mesh = shape.mesh -- the standard way of rendering
@@ -685,8 +690,16 @@ function handleChild(shape)
 	 function()
 	    love.graphics.draw(mesh, shape._parent._globalTransform )
 	 end, "replace", 1, true)
-      love.graphics.setStencilTest("equal", 1)
+
+      -- this isnt 100%, havinga  mask and a hole in one folder doenst really work but that is for another time
+      if shape.hole then
+	 love.graphics.setStencilTest("equal", 0)
+      else
+	 love.graphics.setStencilTest("equal", 1)
+      end
    end
+
+   
    if shape.folder then
       renderThings(shape)
    end
@@ -755,6 +768,9 @@ function lerpNodes(left, right, root, t)
    elseif (left.points and right.points) then
       if (left.mask and right.mask) then
 	 root.mask = true
+      end
+      if (left.hole and right.hole) then
+	 root.hole = true
       end
       
       root.color = lerpColor(left.color, right.color, t)
@@ -1240,6 +1256,9 @@ function love.draw()
       if currentNode and currentNode.points then
 	 if imgbutton('mask', ui.mask, rightX - 50, calcY(6,s)+ 8*6, s).clicked then
 	    currentNode.mask = not currentNode.mask
+	 end
+	 if imgbutton('hole', ui.hole, rightX - 50, calcY(7,s)+ 8*7, s).clicked then
+	    currentNode.hole = not currentNode.hole
 	 end
       end
 
