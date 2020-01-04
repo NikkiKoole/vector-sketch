@@ -667,10 +667,6 @@ function countNestedChildren(node, total)
    return total
 end
 
-local function myStencilFunction()
-   love.graphics.rectangle("fill", 225, 200, 350, 300)
-end
-
 local step = 0
 
 function handleChild(shape)
@@ -684,16 +680,17 @@ function handleChild(shape)
       else
 	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
       end
-      
+
       love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent._globalTransform )
-	 end, "replace", 1)
+	 end, "replace", 1, true)
       love.graphics.setStencilTest("equal", 1)
    end
    if shape.folder then
       renderThings(shape)
    end
+
 
    if currentNode ~= shape then 
       if (shape.mesh and not shape.mask) then
@@ -802,6 +799,7 @@ function renderThings(root)
 	 handleChild(root.children[root.frame])
       end
    else
+
       for i = 1, #root.children do
 	 local shape = root.children[i]
 	 handleChild(shape)   
