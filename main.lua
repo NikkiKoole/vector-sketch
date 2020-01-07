@@ -40,12 +40,12 @@ function getIndex(item)
 end
 
 function removeGroupOfThings(group)
-   local root =  currentNode or root 
+   local root =  currentNode or root
    for i = 1, #group do
       table.remove(root.children, getIndex(group[i]))
    end
-   
-   
+
+
 end
 function addGroupAtEnd(group, parent)
    for i = 1, #group do
@@ -53,7 +53,7 @@ function addGroupAtEnd(group, parent)
       thing._parent = parent
       table.insert(parent.children, #parent.children + 1, thing)
    end
-   
+
 end
 
 
@@ -103,10 +103,10 @@ function love.mousepressed(x,y, button)
    if editingMode == 'rectangle-select' then
       rectangleSelect.startP = {x=x, y=y}
    end
-   
+
    local points = currentNode and currentNode.points
    if not points then return end
-   
+
    local t = currentNode._parent._globalTransform
    local px, py = t:inverseTransformPoint( x, y )
    local scale = root.transforms.l[4]
@@ -158,7 +158,7 @@ function love.mousereleased(x,y, button)
    if (editingMode == 'rectangle-select') then
       if (rectangleSelect.startP and rectangleSelect.endP) then
 	 local root = currentNode or root
-	 
+
 	 local t = not currentNode and  root._localTransform or root._globalTransform
 	 local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
 	 local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
@@ -189,10 +189,10 @@ function love.mousereleased(x,y, button)
 	 end
 	  editingMode = nil
       end
-     
+
       rectangleSelect = {}
    end
-   
+
    if lastDraggedElement and lastDraggedElement.id == 'connector' then
       if (currentNode and currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
 	 if not (nodeIsMyOwnOffspring(   currentNode, currentlyHoveredUINode)) then
@@ -224,7 +224,7 @@ function love.mousemoved(x,y, dx, dy)
    if  love.keyboard.isDown( 'r' ) then
       snap = true
    end
-   
+
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
       root.transforms.l[1] = root.transforms.l[1] + dx
       root.transforms.l[2] = root.transforms.l[2] + dy
@@ -240,9 +240,9 @@ function love.mousemoved(x,y, dx, dy)
    if editingMode == 'rectangle-select' and rectangleSelect.startP then
       rectangleSelect.endP = {x=x, y=y}
    end
-   
 
-   
+
+
    if (editingMode == 'folder' and editingModeSub ==  'folder-move' and mouseState.hoveredSomething == false and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
 	 local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
@@ -273,7 +273,7 @@ function love.mousemoved(x,y, dx, dy)
 	 dx3 = round2(dx3, 0)
 	 dy3 = round2(dy3, 0)
       end
-      
+
       if (points) then
 	 local beginIndex = 2 -- if first and last arent identical
 	 if not (points[1] == points[#points]) then
@@ -284,7 +284,7 @@ function love.mousemoved(x,y, dx, dy)
 	    p[1] = p[1] + dx3
 	    p[2] = p[2] + dy3
 	 end
-	
+
       end
    end
 
@@ -295,7 +295,7 @@ function love.mousemoved(x,y, dx, dy)
 	    local points = currentNode and currentNode.points
 	    local t = currentNode._parent._globalTransform
 	    local globalX, globalY = t:inverseTransformPoint( x, y )
-	   
+
    	    if (dragIndex <= #points) then
 	       if  snap then
 		  points[dragIndex][1] = round2(globalX,0)
@@ -304,8 +304,8 @@ function love.mousemoved(x,y, dx, dy)
 		   points[dragIndex][1] = globalX
 		   points[dragIndex][2] = globalY
 		end
-	    
-   	       
+
+
    	    end
    	 end
       end
@@ -345,8 +345,8 @@ function renderGraphNodes(node, level, startY)
 	 icon = ui.hole
 	 color = {0,0,0}
       end
-	 
-      
+
+
       local b = {}
       if (yPos >=0 and yPos <= h) then
 	 b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos , s)
@@ -368,7 +368,7 @@ function renderGraphNodes(node, level, startY)
 	    if (child._parent.keyframes) then
 	       child._parent.frame = getIndex(child)
 	    end
-	    
+
 	    setCurrentNode(child)
 	    if (child.folder) then
 	       child.open = true
@@ -404,7 +404,7 @@ function love.wheelmoved(x,y)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = root._localTransform
    ---
-   
+
    local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
    local dx = ix1 - ix2
    local dy = iy1 - iy2
@@ -523,8 +523,8 @@ function love.load()
    }
 
 
-  
-   
+
+
    root = {
       folder = true,
       name = 'root',
@@ -548,7 +548,7 @@ function love.load()
 	 },
       },
    }
-   
+
    parentize(root)
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -658,8 +658,8 @@ function isPartOfKeyframePose(node)
       return isPartOfKeyframePose(node._parent)
    end
 end
-   
-   
+
+
 
 function countNestedChildren(node, total)
    for i=1, #node.children do
@@ -686,26 +686,45 @@ function handleChild(shape)
 	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
       end
 
-      love.graphics.stencil(
+      local parentIndex = getIndex(shape._parent)
+      if shape.hole then
+	 love.graphics.stencil(
+	 function()
+	    love.graphics.draw(mesh, shape._parent._globalTransform )
+	 end, "replace", parentIndex, true)
+
+      end
+      if shape.mask then
+	  love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent._globalTransform )
 	 end, "replace", 1, true)
+      end
+
+
+
+
 
       -- this isnt 100%, havinga  mask and a hole in one folder doenst really work but that is for another time
       if shape.hole then
-	 love.graphics.setStencilTest("equal", 0)
+	 love.graphics.setStencilTest("notequal", parentIndex)
       else
 	 love.graphics.setStencilTest("equal", 1)
       end
    end
 
-   
+
    if shape.folder then
       renderThings(shape)
+      love.graphics.setStencilTest()
    end
+   --if ( shape.hole) then
+   --   love.graphics.setStencilTest()
+   --end
 
 
-   if currentNode ~= shape then 
+
+   if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(shape.mesh, shape._parent._globalTransform )
@@ -772,13 +791,13 @@ function lerpNodes(left, right, root, t)
       if (left.hole and right.hole) then
 	 root.hole = true
       end
-      
+
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
       root.mesh = makeMeshFromVertices(makeVertices(root))
    end
-   
+
    return root
 end
 
@@ -805,24 +824,26 @@ function renderThings(root)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
-   
+
    if (root.keyframes) then
       if currentNode == root then
 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
-	  
+
 	 if lerped then handleChild(lerped) end
       else
 	 handleChild(root.children[root.frame])
       end
    else
-
+      love.graphics.setStencilTest()
       for i = 1, #root.children do
 	 local shape = root.children[i]
-	 handleChild(shape)   
+	 handleChild(shape)
       end
+      --love.graphics.setStencilTest()
    end
-   
    love.graphics.setStencilTest()
+
+
 end
 
 function love.draw()
@@ -861,7 +882,7 @@ function love.draw()
       love.graphics.line(x-5, y, x+5, y)
       love.graphics.line(x, y-5, x, y+5)
    end
-  
+
    if currentNode and currentNode.folder and  currentNode._globalTransform then
       local t = currentNode.transforms.l
       local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
@@ -926,19 +947,19 @@ function love.draw()
 	love.graphics.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
 
    end
-   
+
    love.graphics.setColor(1,1,1, 0.1)
    drawGrid()
 
    love.graphics.push()
 
    local s = 0.5
-   
+
    if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
       if imgbutton('folder-move', ui.move,  calcX(6, s), 10, s).clicked then
 	 editingModeSub = 'folder-move'
       end
-      
+
       if imgbutton('folder-pivot', ui.pivot,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = nil
 	 if (#currentNode.children > 0) then
@@ -970,7 +991,7 @@ function love.draw()
 	    editingModeSub = 'folder-move'
 	 end
       end
-      
+
       if imgbutton('folder-pan-pivot', ui.pan,  calcX(8, s), 10, s).clicked then
 	 editingModeSub = 'folder-pan-pivot'
       end
@@ -986,7 +1007,7 @@ function love.draw()
 
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("rotate", calcX(11, s), 0 )
-      
+
       local v =  h_slider("folder-rotate", calcX(11, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
       if (v.value ~= nil) then
 	 currentNode.transforms.l[3] = v.value
@@ -1004,8 +1025,8 @@ function love.draw()
       end
    end
 
-  
-   
+
+
    if (editingMode == 'polyline') and currentNode  then
       if (not isPartOfKeyframePose(currentNode)) then
 	 if imgbutton('polyline-insert', ui.polyline_add,  calcX(6, s), 10, s).clicked then
@@ -1033,7 +1054,7 @@ function love.draw()
 	 addShapeAfter(cloned, currentNode)
 	 setCurrentNode(cloned)
       end
-      
+
       if imgbutton('polyline-recenter', ui.pivot, calcX(12,s), 10, s).clicked then
 	 editingModeSub = 'polyline-recenter'
 	 local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
@@ -1095,7 +1116,7 @@ function love.draw()
 	       editingModeSub = 'backdrop-move'
 	    end
 	 end
-	 
+
 	 love.graphics.setColor(1,1,1, 1)
 	 love.graphics.print("alpha",  calcX(10, s), 0 )
 	 local v =  h_slider("backdrop_alpha", calcX(10, s), 20, 200, backdrop.alpha, 0, 1)
@@ -1114,7 +1135,7 @@ function love.draw()
 	    love.graphics.print(	  string.format("%0.2f", h.value),  calcX(16, s), 20)
 	 end
       end
-      
+
       if (editingModeSub == 'backdrop-palette') then
 	 local colorsInRow = 10
 	 for i = 1, #palette.colors do
@@ -1152,14 +1173,14 @@ function love.draw()
 	 if imgbutton('connector-group', ui.parent, rightX - 150, 10, s).clicked then
 	    lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
 	 end
-	 
+
       end
-      
+
    end
-   
 
 
-   
+
+
    if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10, s).clicked then
       local shape = {
 	 color = {0,0,0,1},
@@ -1229,7 +1250,7 @@ function love.draw()
 	 end
       end
    end
-   
+
    if (currentNode) then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
 	 local index = getIndex(currentNode)
@@ -1248,11 +1269,11 @@ function love.draw()
 	 local name = currentNode and currentNode.name
 	 changeNameCursor = name and utf8.len(name) or 1
       end
-      
+
       if imgbutton('connector', ui.parent, rightX - 50, calcY(5,s)+ 8*5, s).clicked then
 	 lastDraggedElement = {id = 'connector', pos = {rightX - 50, calcY(5,s)+ 8*5} }
       end
-      
+
       if currentNode and currentNode.points then
 	 if imgbutton('mask', ui.mask, rightX - 50, calcY(6,s)+ 8*6, s).clicked then
 	    currentNode.mask = not currentNode.mask
@@ -1275,8 +1296,8 @@ function love.draw()
 	    end
 	 end
       end
-      
-      
+
+
       if (changeName) then
 	 local str =  currentNode and currentNode.name  or ""
 	 local substr = string.sub(str, 1, changeNameCursor)
@@ -1296,7 +1317,7 @@ function love.draw()
 	 scrollviewOffset = v2.value
       end
    end
-   
+
    love.graphics.pop()
    love.graphics.setFont(small)
    if not quitDialog then
@@ -1350,7 +1371,7 @@ function love.filedropped(file)
       local index = string.find(filename, "/[^/]*$")
       shapeName = filename:sub(index+1, -5) -- cutting off .svg
    end
-   
+
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
       tab = (loadstring("return ".. str)())
@@ -1372,7 +1393,7 @@ end
 
 
 function love.keypressed(key)
-   
+
    if key == "escape" then
       if (editingModeSub ~= nil) then
 	 editingModeSub = nil
@@ -1390,7 +1411,7 @@ function love.keypressed(key)
 	 quitDialog = false
       end
    end
-   
+
    if (key == 'p' and not changeName) then
       if not profiling then
 	 ProFi:start()
@@ -1400,7 +1421,7 @@ function love.keypressed(key)
       end
       profiling = not profiling
    end
-   
+
    if (key == 's' and not changeName) then
       local path = shapeName..".polygons.txt"
       local info = love.filesystem.getInfo( path )
@@ -1424,7 +1445,7 @@ function love.keypressed(key)
 	 currentNode.name = table.concat{split(a,utf8.len(a)), b}
 	 changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
       end
-      
+
       if (key == 'delete') then
 	 local str = currentNode and currentNode.name or ""
 	 local a,b = split(str, changeNameCursor+2)
@@ -1446,7 +1467,7 @@ function love.keypressed(key)
 	    changeNameCursor = changeNameCursor + 1
 	 end
       end
-      
+
       if (key == 'return') then
 	 changeName = false
       end

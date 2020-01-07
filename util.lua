@@ -90,11 +90,11 @@ function copyShape(shape)
 	 result.keyframes = shape.keyframes
 	 result.lerpValue = shape.lerpValue
       end
-      
+
       for i=1, #shape.children do
 	 result.children[i] = copyShape(shape.children[i])
       end
-      
+
       return result
    else
 	 local result = {
@@ -105,7 +105,9 @@ function copyShape(shape)
 	 if shape.mask then
 	    result.mask = true
 	 end
-	 
+	 if shape.hole then
+	    result.hole = true
+	 end
 	 if (shape.color) then
 	    for i=1, #shape.color do
 	       result.color[i] = round2(shape.color[i],3)
@@ -113,13 +115,13 @@ function copyShape(shape)
 	 else
 	    result.color = {0,0,0,0}
 	 end
-	 
+
 	 for i=1, #shape.points do
 	    result.points[i]= {round2(shape.points[i][1], 3), round2(shape.points[i][2], 3)}
 	 end
 	 return result
    end
-   
+
 end
 
 function round2(num, numDecimalPlaces)
@@ -141,7 +143,7 @@ function makeVertices(shape)
 	 table.insert(coords, points[l][1])
 	 table.insert(coords, points[l][2])
       end
-      
+
       if (shape.color) then
 	 local polys = decompose_complex_poly(coords, {})
 	 local result = {}
@@ -160,13 +162,13 @@ function makeVertices(shape)
 	       end
 	    end
 	 end
-	 
+
 	 for j = 1, #result do
 	    table.insert(vertices, {result[j][1], result[j][2]})
 	    table.insert(vertices, {result[j][3], result[j][4]})
 	    table.insert(vertices, {result[j][5], result[j][6]})
 	 end
-	 
+
       end
    end
    return vertices
@@ -179,4 +181,3 @@ function makeMeshFromVertices(vertices)
    end
    return nil
 end
-
