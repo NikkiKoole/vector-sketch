@@ -698,18 +698,13 @@ function handleChild(shape)
 	  love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent._globalTransform )
-	 end, "replace", 1, true)
+	 end, "replace", 255, true)
       end
 
-
-
-
-
-      -- this isnt 100%, havinga  mask and a hole in one folder doenst really work but that is for another time
       if shape.hole then
 	 love.graphics.setStencilTest("notequal", parentIndex)
       else
-	 love.graphics.setStencilTest("equal", 1)
+	 love.graphics.setStencilTest("equal", 255)
       end
    end
 

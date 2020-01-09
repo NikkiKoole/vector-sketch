@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Kids & Toddler Apps | Learning and Playing | Small Simulations </title>
+    <title>Kids & Toddler Apps | Learning and Playing | Pompelu </title>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -9,6 +9,18 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
+
+    <script>
+      var repeater;
+
+      function a() {
+	  var colors = [ '#e3ca57','#ded869','#d4d29d',  '#d44553','#ec71a5','#e595ab','#dca9ac','#ecbcc7'];
+	  var x = document.getElementsByTagName("H1")[0];
+	  //x.style.color = colors[Math.floor(Math.random() * colors.length)]
+      }
+    </script>
+
+    <div ></div>
     <style>
       @font-face {
 	  font-family: 'VoltaT';
@@ -40,26 +52,37 @@
        }
        @media screen and (min-width: 600px) {
 	   body {
-	       padding-left: 6rem;
-	       padding-right: 6rem;
+	       
 	   }
        }
        body {
-	   background: beige
+	   background: beige;
+       }
+       *, html {
+	   margin:0;
+	   padding:0;  
        }
       h1 {
 	  font-family: SansSerifShaded;
-	  font-size: 4em;
+	  font-size: 4.5em;
 	  color: #e9d22b;
 	  display: inline-block;
 	  margin: 0;
+	  margin-top: 1rem;
+	  margin-left: 2rem;
+	  transform: rotate(1deg);
+			  
       }
       h2 {
 	  font-family: SansSerifShaded;
-	  font-size: 2em;
+	  font-size: 2.5em;
 	  color: #f0b364;
+
 	  display: inline-block;
 	  margin: 0;
+	  margin-bottom: 0.5em;
+	  margin-top: 0.5em;
+	  transform: rotate(-1deg);
       }
       h3 {
 	  font-family: VoltaT;
@@ -71,7 +94,7 @@
       }
       h4 {
 	   font-family: VoltaT;
-	   font-size: 1.25em;
+	   font-size: 3em;
 	   color: #454546;
 	   opacity: 0.8;
 	   display: inline-block;
@@ -80,15 +103,14 @@
       header {
 	  display: flex;
 	  margin-bottom: 2rem;
-	  margin-top: 1rem;
-
       }
       .topbar {
+
 	  display: inline-flex;
       }
       .topbar option {
 	   font-family: VoltaT;
-	   font-size: 1.5em;
+	   font-size: 2em;
 	   margin: 0;
 	   margin-left: 32px;
 	   cursor: pointer;
@@ -96,11 +118,26 @@
 	   display: table;
 	   top: 50%;
 	   transform: translateY(50%);
-
-
+      }
+      .topbar option:after {
+	  content: ""; 
+	  position: absolute;
+	  top: 0;
+	  left: 0;
+	  width: 0%;
+	  height: 100%;
+	  background-color: #000;
+	  opacity: .05;
+	  transition-timing-function: ease-out;
+	  -webkit-transition: width .2s; /* Safari prior 6.1 */
+	  transition: width .2s;
+	  z-index: -1;
       }
       .topbar option:hover {
-	  color: #fb6530
+	  color: #000
+      }
+      .topbar option:hover:after {
+	  width: 100%
       }
       .panel {
 	  min-width: 100px;
@@ -110,6 +147,7 @@
 	  border-radius: 20px;
 	  box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
 	  padding: 1rem;
+	  margin-bottom: 1rem;
 	  border-opacity: 0.2;
       }
 
@@ -131,10 +169,33 @@
 	  transition: all ease 0.3s;
 	  letter-spacing: 1.5px
       }
+ 
+		  
       .button:hover {
 	  background-color: #4CAF50;
+	  font-weight: 600;
+      }
+       p {
+	  font-family: helvetica;
+	  font-family: VoltaT;
+	  font-size: 1.25em;
+	  color: #454546
       }
 
+      .appstore {
+	  cursor: pointer;
+	  -webkit-transition: all ease 0.13s;
+	  -moz-transition: all ease 0.13s;
+	  transition: all ease 0.13s;
+      }
+      .appstore:hover {
+	  transform: scale(1.1, 1.1)
+      }
+
+      section {
+	  padding-left: 6rem;
+	  padding-right: 6rem;
+      }
 
       palette {
 
@@ -239,45 +300,63 @@
 
       }
 
-      p {
-	  font-family: helvetica;
-	  font-family: VoltaT;
-	  color: #454546
-      }
+     
+      
       </style>
   </head>
   <body>
+   
     <header>
-    <h1>Moma Spel</h1>
+    <h1 onmouseover="repeater=setInterval(a(), 100);" onmouseout="clearInterval(repeater);">Pompelu</h1>
     <div class="topbar">
       <option>storytime</option>
       <option>apps</option>
       <option>contact</option>
     </div>
     </header>
+    
 
+    <section>
     <h4>storytime </h4>
     <p>
       Do you dream about toys coming to live when not looking?
     </p>
     <p>
-      I know i do.
-      No adds, no micropayments, no generic illustrations.</br>
+      I know i did.
+      Not anymore, it doesnt happen when looking, it does takes alot of ellbow grease.</br>
+      Anyway, no adds, no micropayments, no generic illustrations.</br>
       Just nonsense art to play with by you and your little one(s).</br>
      </br>
     </p>
 
 
-
+    <div class="allPanels">
     <div class="panel">
       <h2>Singing Tomatoes</h2>
-      <p>This is a wld kinda test</p>
-      <div class="button">get it</div>
-    </div>
+      <p>
+	These tomatoes feel kinda jazzy, matter of fact, </br>
+	their helplesness makes them more bluesy if anything.</br>
+	Anyway, they sing, or try to sing. </br>
+	and you can play the vibes. </br>
+	All good art comes from pain they say dont they? </br>
+      </p>
+      
+      <div style="background-image: url(tomatoes.gif);  height: 400px; width: 400px; margin-top: 1rem; margin-bottom: 1rem"> </div>
 
+      <img class="appstore" src="appstore.svg" />
+    </div>
+    
+     <div class="panel">
+      <h2>Float my Boat</h2>
+      <p>This is a wld kinda test</p>
+      
+      <img  class="appstore"  src="appstore.svg" />
+    </div>
+     </div>
 
     <div>
 
     </div>
+    </section>
   </body>
 </html>
