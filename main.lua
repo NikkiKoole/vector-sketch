@@ -30,6 +30,19 @@ function setCurrentNode(newNode)
    currentNode = newNode
 end
 
+function deleteNode(node)
+ local index = getIndex(node)
+ local taken_out = removeCurrentNode()
+ if (index > 1) then
+    setCurrentNode(node._parent.children[index -1])
+ elseif (index == 1 and #(node._parent.children) > 0 ) then
+    setCurrentNode(node._parent.children[index])
+ else
+    setCurrentNode(nil)
+ end
+end
+
+
 function getIndex(item)
    if (item) then
       for k,v in ipairs(item._parent.children) do
@@ -1248,15 +1261,8 @@ function love.draw()
 
    if (currentNode) then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
-	 local index = getIndex(currentNode)
-	 local taken_out = removeCurrentNode()
-	 if (index > 1) then
-	    setCurrentNode(currentNode._parent.children[index -1])
-	 elseif (index == 1 and #(currentNode._parent.children) > 0 ) then
-	    setCurrentNode(currentNode._parent.children[index])
-	 else
-	    setCurrentNode(nil)
-	 end
+	 deleteNode(currentNode)
+	
       end
 
       if imgbutton('badge', ui.badge, rightX - 50, calcY(4, s) + 8*4, s).clicked then
@@ -1432,7 +1438,13 @@ function love.keypressed(key)
       love.filesystem.write(path, inspect(toSave, {indent=""}))
       love.system.openURL("file://"..love.filesystem.getSaveDirectory())
    end
-
+   if not changeName and currentNode then
+      if (key == 'delete') then
+	 deleteNode(currentNode)
+      end
+      
+   end
+   
    if (changeName) then
       if (key == 'backspace') then
 	 local str = currentNode and currentNode.name or ""
