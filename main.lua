@@ -6,6 +6,7 @@ polyline = require 'polyline'
 poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
+json = require 'vendor.json'
 
 function getLocalDelta(transform, dx, dy)
    local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
@@ -1262,7 +1263,7 @@ function love.draw()
    if (currentNode) then
       if imgbutton('delete', ui.delete,  rightX - 50, calcY(1, s) + 8, s).clicked then
 	 deleteNode(currentNode)
-	
+
       end
 
       if imgbutton('badge', ui.badge, rightX - 50, calcY(4, s) + 8*4, s).clicked then
@@ -1438,13 +1439,28 @@ function love.keypressed(key)
       love.filesystem.write(path, inspect(toSave, {indent=""}))
       love.system.openURL("file://"..love.filesystem.getSaveDirectory())
    end
+   if (key == 'j' and not changeName) then
+      local path = shapeName..".polygons.txt.json"
+      local info = love.filesystem.getInfo( path )
+      if (info) then
+	 shapeName = shapeName..'_'
+	 path =  shapeName..".polygons.txt.json"
+      end
+      local toSave = {}
+      for i=1 , #root.children do
+	 table.insert(toSave, copyShape(root.children[i]))
+      end
+
+      love.filesystem.write(path, json.encode(toSave, {indent=""}))
+      love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+   end
    if not changeName and currentNode then
       if (key == 'delete') then
 	 deleteNode(currentNode)
       end
-      
+
    end
-   
+
    if (changeName) then
       if (key == 'backspace') then
 	 local str = currentNode and currentNode.name or ""

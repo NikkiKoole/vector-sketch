@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+
+        @font-face {
+	  font-family: 'VoltaT';
+	  src: url('fonts/VoltaT-Regu.svg#VoltaT-Regu') format('svg'),
+	       url('fonts/VoltaT-Regu.ttf') format('truetype'),
+	       url('fonts/VoltaT-Regu.woff') format('woff');
+	  font-weight: normal;
+	  font-style: normal;
+	}
+	*, html {
+	    margin:0;
+	    padding:0;
+	}
+      body {
+	  margin: 0;
+	  padding: 0;
+	  background-color: pink
+      }
+      #drop_zone {
+	  background-color: grey;
+	  width:  200px;
+	  height: 100px;
+	  margin-bottom: 10px;
+      }
+
+      p {
+	  font-family: helvetica;
+	  font-family: VoltaT;
+	  font-size: 1.25em;
+	  color: white
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.2.0/pixi.js"> </script>
+    <script src="main.js"></script>
+  </head>
+  <body>
+    <div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+      <p>Drop file...</p>
+    </div>
+  </body>
+</html>
