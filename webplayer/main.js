@@ -1,9 +1,10 @@
 const app = new PIXI.Application({backgroundColor:0x000000, width: 1024, height: 768});
 var root ;
+var dragging = false;
+var lastPos = undefined;
 
 function dropHandler(ev) {
     ev.preventDefault();
-
     if (ev.dataTransfer.items) {
         for (var i = 0; i < ev.dataTransfer.items.length; i++) {
             if (ev.dataTransfer.items[i].kind === 'file') {
@@ -17,10 +18,8 @@ function dropHandler(ev) {
 }
 
 function dragOverHandler(ev) {
-    // Prevent default behavior (Prevent file from being opened)a
     ev.preventDefault();
 }
-
 
 const loadJSON = (url, callback) => {
     let xobj = new XMLHttpRequest();
@@ -42,36 +41,61 @@ function resetAndLoadJSON(url) {
     });
 }
 
-
-
 window.onload = function() {
     document.body.appendChild(app.view);
-    
     root = new PIXI.Container();
-    loadJSON('enfieldagain____.polygons.txt.json', (response) => {
-        let json = JSON.parse(response);
-        buildStuff(json, root)
+    app.stage.hitArea = app.screen;
+    app.stage.interactive = true;
+    app.stage.on('mousedown', (d)=> {
+        dragging = true;
+        lastPos = {x:d.data.global.x, y:d.data.global.y};
+    })
+    document.onmouseup = ()=> {
+        dragging = false;
+    }
+    app.stage.on('mouseup', ()=> {
+        dragging = false;
+    })
+    app.stage.on('mousemove', (d)=> {
+        if (dragging) {
+            let delta = {x: d.data.global.x - lastPos.x,y: d.data.global.y - lastPos.y}
+            root.x += delta.x
+            root.y += delta.y
+            lastPos = {x:d.data.global.x, y:d.data.global.y};
+        }
     });
+    app.view.onwheel = function(d) {
+        let scale = root.scale.x;
+        if (d.deltaY > 0) {
+            root.scale = {x:scale*0.9, y:scale*0.9}
+        }else {
+            root.scale = {x:scale*1.1, y:scale*1.1}
+        }
+        let x = (root.x - d.offsetX) * (root.scale.x/scale) + d.offsetX
+        let y = (root.y - d.offsetY) * (root.scale.y/scale) + d.offsetY
+        root.x = x
+        root.y = y
 
+    }
+    resetAndLoadJSON('enfieldagain____.polygons.txt.json')
     app.stage.addChild(root)
 }
 
 function buildStuff(node, container) {
     node.forEach(d => {
         if (d.points) {
-            let thing = buildShape(d);
-            container.addChild(thing);
+            container.addChild(buildShape(d));
         }
         if (d.children) {
-            let folder = new PIXI.Container()
-            folder.name = d.name;
-            folder.x = d.transforms.l[0];
-            folder.y = d.transforms.l[1];
-            folder.scale = {x:d.transforms.l[3], y:d.transforms.l[4]};
-            folder.pivot = {x:d.transforms.l[5], y:d.transforms.l[6]}
-            folder.rotation = d.transforms.l[2];
-            buildStuff(d.children, folder);
-            container.addChild(folder);
+            let parent = new PIXI.Container()
+            parent.name = d.name;
+            parent.x = d.transforms.l[0];
+            parent.y = d.transforms.l[1];
+            parent.scale = {x:d.transforms.l[3], y:d.transforms.l[4]};
+            parent.pivot = {x:d.transforms.l[5], y:d.transforms.l[6]}
+            parent.rotation = d.transforms.l[2];
+            buildStuff(d.children, parent);
+            container.addChild(parent);
         }
     })
 }
