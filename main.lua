@@ -413,7 +413,7 @@ function love.wheelmoved(x,y)
    root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
 
    --- ugh
-   local tg = root.transforms.g
+   --local tg = root.transforms.g
    local tl = root.transforms.l
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = root._localTransform
@@ -542,19 +542,19 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
-      transforms =  {l={100,100,0,1,1,0,0}},
+      transforms =  {l={100,100,0,1,1,0,0,0,0}},
       children = {
 	 {
 	    folder = true,
-	    transforms =  {l={0,0,0,1,1,0,0}},
+	    transforms =  {l={0,0,0,1,1,0,0,0,0}},
 	    name="group ",
-	    children ={},
-	 },
-	 {
+	    children ={{
 	    name="child1 ",
 	    color = {1,1,0, 0.8},
 	    points = {{0,0},{200,0},{200,200},{0,200}},
+	 },},
 	 },
+	 
 	 {
 	    name="child2 ",
 	    color = {1,1,0, 0.8},
@@ -824,13 +824,13 @@ function renderThings(root)
 
    ---- these calculations are only needed when some local transforms have changed
 
-   local tg = root.transforms.g
+   --local tg = root.transforms.g
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
       pg = root._parent._globalTransform
    end
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
@@ -1025,13 +1025,35 @@ function love.draw()
       end
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("scale",  calcX(17, s), 0 )
-      local v =  h_slider("folder-scale", calcX(17, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
+      local v =  h_slider("folder-scale-x", calcX(17, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
       if (v.value ~= nil) then
 	 currentNode.transforms.l[4] = v.value
+	 --currentNode.transforms.l[5] = v.value
+	 editingModeSub = 'folder-scale'
+	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 20)
+      end
+       local v =  h_slider("folder-scale-y", calcX(20, s), 20, 200,  currentNode.transforms.l[5] , 0.00001, 10)
+      if (v.value ~= nil) then
+	 --currentNode.transforms.l[4] = v.value
 	 currentNode.transforms.l[5] = v.value
 	 editingModeSub = 'folder-scale'
 	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 20)
       end
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("skew x",  calcX(11, s), 30 )
+      local v = h_slider('folder_skew_x', calcX(11,s), 50, 200, currentNode.transforms.l[8] or 0,  -2 * math.pi, 2 * math.pi )
+      if (v.value ~= nil) then
+	 currentNode.transforms.l[8] = v.value
+	 love.graphics.print(string.format("%0.2f", v.value), calcX(11, s), 50)
+      end
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.print("skew y",  calcX(17, s), 30 )
+      local v = h_slider('folder_skew_y', calcX(17,s), 50, 200, currentNode.transforms.l[9] or 0,  -2 * math.pi, 2 * math.pi )
+      if (v.value ~= nil) then
+	 currentNode.transforms.l[9] = v.value
+	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 50)
+      end
+      
    end
 
 
@@ -1214,7 +1236,7 @@ function love.draw()
    if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, 50, s).clicked then
       local shape = {
 	 folder = true,
-	 transforms =  {g={0,0,0,1,1,0,0},l={0,0,0,1,1,0,0}},
+	 transforms =  {l={0,0,0,1,1,0,0, 0,0}},
 	 children = {}
       }
 

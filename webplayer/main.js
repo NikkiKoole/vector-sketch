@@ -77,7 +77,7 @@ window.onload = function() {
         root.y = y
 
     }
-    resetAndLoadJSON('enfieldagain____.polygons.txt.json')
+    resetAndLoadJSON('bootje.polygons.txt.json')
     app.stage.addChild(root)
 }
 
@@ -116,12 +116,18 @@ var fullColorHex = function(r,g,b) {
 function buildShape(shape) {
     let g = new PIXI.Graphics();
     let color =  '0x' + fullColorHex(shape.color[0], shape.color[1], shape.color[2]);
+    
     g.beginFill(color, shape.color[3]);
     let points = []
     shape.points.forEach(p => {
         points.push(p[0])
         points.push(p[1])
     })
+    if (shape.hole) {
+	console.log('hole yeah!')
+    }
+   
+    
     g.name = shape.name
     g.drawPolygon(points)
     return g;
