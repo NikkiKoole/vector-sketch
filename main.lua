@@ -31,6 +31,7 @@ function setCurrentNode(newNode)
    currentNode = newNode
 end
 
+
 function deleteNode(node)
  local index = getIndex(node)
  local taken_out = removeCurrentNode()
@@ -501,6 +502,7 @@ function love.load()
       transition = love.graphics.newImage("resources/ui/transition.png"),
       select = love.graphics.newImage("resources/ui/select.png"),
       hole = love.graphics.newImage("resources/ui/keyhole.png"),
+      change = love.graphics.newImage("resources/ui/change.png"),
    }
 
    cursors = {
@@ -554,7 +556,7 @@ function love.load()
 	    points = {{0,0},{200,0},{200,200},{0,200}},
 	 },},
 	 },
-	 
+
 	 {
 	    name="child2 ",
 	    color = {1,1,0, 0.8},
@@ -856,6 +858,7 @@ function renderThings(root)
 end
 
 function love.draw()
+
    step = step + 1
    local mx,my = love.mouse.getPosition()
 
@@ -1013,47 +1016,69 @@ function love.draw()
 	 meshAll(cloned)
 	 setCurrentNode(cloned)
       end
+      --if imgbutton('folder-change', ui.change,calcX(10, s), 10, s).clicked then
+--	 editingModeSub = 'folder-change'
+  --    end
+
+      --if (editingModeSub == 'folder-change' or editingModeSub == 'folder-rotate' or editingModeSub == 'folder-scale') then
+
 
       love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("rotate", calcX(11, s), 0 )
+	 love.graphics.print("scale x and y",  calcX(1, s), calcY(2,s) - 20 )
+	 if (currentNode.transforms.l[4] == currentNode.transforms.l[5]) then
+	    local v =  h_slider("folder-scale-xy", calcX(1, s), calcY(2,s), 200,  currentNode.transforms.l[5] , 0.00001, 10)
+	    if (v.value ~= nil) then
+	       currentNode.transforms.l[4] = v.value
+	       currentNode.transforms.l[5] = v.value
+	       editingModeSub = 'folder-scale'
+	       love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(2,s))
+	    end
+	 end
 
-      local v =  h_slider("folder-rotate", calcX(11, s), 20, 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
-      if (v.value ~= nil) then
-	 currentNode.transforms.l[3] = v.value
-	 editingModeSub = 'folder-rotate'
-	 love.graphics.print(string.format("%0.2f", v.value), calcX(11, s), 20)
-      end
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("scale",  calcX(17, s), 0 )
-      local v =  h_slider("folder-scale-x", calcX(17, s), 20, 100,  currentNode.transforms.l[4] , 0.00001, 10)
-      if (v.value ~= nil) then
-	 currentNode.transforms.l[4] = v.value
-	 --currentNode.transforms.l[5] = v.value
-	 editingModeSub = 'folder-scale'
-	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 20)
-      end
-       local v =  h_slider("folder-scale-y", calcX(20, s), 20, 100,  currentNode.transforms.l[5] , 0.00001, 10)
-      if (v.value ~= nil) then
-	 --currentNode.transforms.l[4] = v.value
-	 currentNode.transforms.l[5] = v.value
-	 editingModeSub = 'folder-scale'
-	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 20)
-      end
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("skew x",  calcX(11, s), 30 )
-      local v = h_slider('folder_skew_x', calcX(11,s), 50, 200, currentNode.transforms.l[8] or 0,  -2 * math.pi, 2 * math.pi )
-      if (v.value ~= nil) then
-	 currentNode.transforms.l[8] = v.value
-	 love.graphics.print(string.format("%0.2f", v.value), calcX(11, s), 50)
-      end
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("skew y",  calcX(17, s), 30 )
-      local v = h_slider('folder_skew_y', calcX(17,s), 50, 200, currentNode.transforms.l[9] or 0,  -2 * math.pi, 2 * math.pi )
-      if (v.value ~= nil) then
-	 currentNode.transforms.l[9] = v.value
-	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 50)
-      end
-      
+	 love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("scale x",  calcX(1, s), calcY(3,s) - 20 )
+	 local v =  h_slider("folder-scale-x", calcX(1, s),  calcY(3,s) , 200,  currentNode.transforms.l[4] , 0.00001, 10)
+	 if (v.value ~= nil) then
+	    currentNode.transforms.l[4] = v.value
+	    --currentNode.transforms.l[5] = v.value
+	    editingModeSub = 'folder-scale'
+	    love.graphics.print(string.format("%0.2f", v.value), calcX(1, s),  calcY(3,s))
+	 end
+	 love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("scale y",  calcX(1, s), calcY(4,s) - 20 )
+
+	 local v =  h_slider("folder-scale-y", calcX(1, s), calcY(4,s), 200,  currentNode.transforms.l[5] , 0.00001, 10)
+	 if (v.value ~= nil) then
+	    --currentNode.transforms.l[4] = v.value
+	    currentNode.transforms.l[5] = v.value
+	    editingModeSub = 'folder-scale'
+	    love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(4,s))
+	 end
+	 love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("skew x",  calcX(1, s), calcY(5,s) - 20 )
+	 local v = h_slider('folder_skew_x', calcX(1,s), calcY(5,s), 200, currentNode.transforms.l[8] or 0,  -2 * math.pi, 2 * math.pi )
+	 if (v.value ~= nil) then
+	    currentNode.transforms.l[8] = v.value
+	    love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(5,s))
+	 end
+	 love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("skew y",  calcX(1, s), calcY(6,s) - 20 )
+	 local v = h_slider('folder_skew_y', calcX(1,s), calcY(6,s), 200, currentNode.transforms.l[9] or 0,  -2 * math.pi, 2 * math.pi )
+	 if (v.value ~= nil) then
+	    currentNode.transforms.l[9] = v.value
+	    love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(6,s))
+	 end
+
+	  love.graphics.setColor(1,1,1, 1)
+	 love.graphics.print("rotate", calcX(1, s), calcY(7,s)-20 )
+
+	 local v =  h_slider("folder-rotate", calcX(1, s),  calcY(7,s) , 200,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
+	 if (v.value ~= nil) then
+	    currentNode.transforms.l[3] = v.value
+	    editingModeSub = 'folder-rotate'
+	    love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(7,s))
+	 end
+      --end
    end
 
 
