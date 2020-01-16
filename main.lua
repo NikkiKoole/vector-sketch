@@ -1025,14 +1025,14 @@ function love.draw()
       end
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("scale",  calcX(17, s), 0 )
-      local v =  h_slider("folder-scale-x", calcX(17, s), 20, 200,  currentNode.transforms.l[4] , 0.00001, 10)
+      local v =  h_slider("folder-scale-x", calcX(17, s), 20, 100,  currentNode.transforms.l[4] , 0.00001, 10)
       if (v.value ~= nil) then
 	 currentNode.transforms.l[4] = v.value
 	 --currentNode.transforms.l[5] = v.value
 	 editingModeSub = 'folder-scale'
 	 love.graphics.print(string.format("%0.2f", v.value), calcX(17, s), 20)
       end
-       local v =  h_slider("folder-scale-y", calcX(20, s), 20, 200,  currentNode.transforms.l[5] , 0.00001, 10)
+       local v =  h_slider("folder-scale-y", calcX(20, s), 20, 100,  currentNode.transforms.l[5] , 0.00001, 10)
       if (v.value ~= nil) then
 	 --currentNode.transforms.l[4] = v.value
 	 currentNode.transforms.l[5] = v.value
