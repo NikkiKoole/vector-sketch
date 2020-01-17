@@ -88,7 +88,16 @@ function copyShape(shape)
       if (shape.keyframes) then
 	 result.frame = shape.frame
 	 result.keyframes = shape.keyframes
+	 if shape.keyframes == 2 then
 	 result.lerpValue = shape.lerpValue
+	 end
+	 if shape.keyframes == 4 or shape.keyframes == 5 then
+	    result.lerpX = shape.lerpX
+	    result.lerpY = shape.lerpY
+
+	 end
+
+
       end
 
       for i=1, #shape.children do

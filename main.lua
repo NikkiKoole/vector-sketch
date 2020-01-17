@@ -767,7 +767,7 @@ function handleChild(shape)
       end
    end
 end
--- https://answers.unity.com/questions/1252260/lerp-color-between-4-corners.html
+
 
 function lerpColor(c1, c2, t)
    return {lerp(c1[1], c2[1], t),
@@ -865,7 +865,7 @@ function renderThings(root)
       end
 
 
-
+      -- https://answers.unity.com/questions/1252260/lerp-color-between-4-corners.html
       --[[
 
  assuming a coordinate system something like this,
@@ -910,8 +910,8 @@ function renderThings(root)
       end
       if (root.keyframes == 5) then
 	 if currentNode == root then
-	    local lerpX = root.lerpX
-	    local lerpY = root.lerpY
+	    local lerpX = root.lerpX or 0.5
+	    local lerpY = root.lerpY or 0.5
 	    local newLerpX =0
 	    local newLerpY =0
 	    if lerpX == .5 and lerpY == .5 then
@@ -1425,7 +1425,7 @@ function love.draw()
 	 end
       end
       if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
-	 local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX,currentNode.lerpY, 0, 1)
+	 local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
 	 if v.value then
 	    currentNode.lerpX = v.value.x
 	    currentNode.lerpY = v.value.y
