@@ -445,6 +445,7 @@ function love.load()
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
+   smallest = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 16)
    small = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 24)
    medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
    large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 48)
@@ -554,7 +555,23 @@ function love.load()
 	    name="child1 ",
 	    color = {1,1,0, 0.8},
 	    points = {{0,0},{200,0},{200,200},{0,200}},
-	 },},
+	 },{
+	    name="child1 ",
+	    color = {1,0,0, 0.8},
+	    points = {{0,0},{200,0},{200,200},{0,200}},
+	 },{
+	    name="child1 ",
+	    color = {0,0,1, 0.8},
+	    points = {{0,0},{200,0},{200,200},{0,200}},
+	 },{
+	    name="child1 ",
+	    color = {1,0,1, 0.8},
+	    points = {{0,0},{200,0},{200,200},{0,200}},
+	 },{
+	    name="child1 ",
+	    color = {0,1,0, 0.8},
+	    points = {{0,0},{200,0},{200,200},{0,200}},
+	 },}
 	 },
 
 	 {
@@ -1016,12 +1033,8 @@ function love.draw()
 	 meshAll(cloned)
 	 setCurrentNode(cloned)
       end
-      --if imgbutton('folder-change', ui.change,calcX(10, s), 10, s).clicked then
---	 editingModeSub = 'folder-change'
-  --    end
 
-      --if (editingModeSub == 'folder-change' or editingModeSub == 'folder-rotate' or editingModeSub == 'folder-scale') then
-
+      love.graphics.setFont(smallest)
 
       love.graphics.setColor(1,1,1, 1)
 	 love.graphics.print("scale x and y",  calcX(1, s), calcY(2,s) - 20 )
@@ -1080,6 +1093,7 @@ function love.draw()
 	 end
       --end
    end
+   love.graphics.setFont(small)
 
 
 
@@ -1305,6 +1319,10 @@ function love.draw()
 	    currentNode.lerpValue = v.value
 	 end
       end
+      if (currentNode.keyframes == 5) then
+
+      end
+
    end
 
    if (currentNode) then
@@ -1332,14 +1350,27 @@ function love.draw()
 	 end
       end
 
-      if currentNode and currentNode.folder and #currentNode.children >= 2 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+      if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
 	 if (imgbutton('transition', ui.transition, rightX - 50, calcY(7,s)+ 8*7, s)).clicked then
+	    if (currentNode.keyframes) then
+	       currentNode.keyframes = nil
+	       currentNode.lerpValue = nil
+	       currentNode.frame = nil
+	    else
+	       currentNode.keyframes = 2
+	       currentNode.lerpValue = 0.5
+	       currentNode.frame = 1
+	    end
+	 end
+      end
+       if currentNode and currentNode.folder and #currentNode.children >= 5 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+	 if (imgbutton('joystick', ui.joystick, rightX - 50, calcY(8,s)+ 8*8, s)).clicked then
 	    if (currentNode.keyframes) then
 	       currentNode.keyframes = nil
 	       currentNode.lerpValue = nil
 	        currentNode.frame = nil
 	    else
-	       currentNode.keyframes = 2
+	       currentNode.keyframes = 5
 	       currentNode.lerpValue = 0.5
 	       currentNode.frame = 1
 	    end
