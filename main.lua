@@ -853,13 +853,60 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
-   if (root.keyframes == 2) then
-      if currentNode == root then
-	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+   if (root.keyframes) then
+      if (root.keyframes == 2) then
+	 if currentNode == root then
+	    local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
 
-	 if lerped then handleChild(lerped) end
-      else
-	 handleChild(root.children[root.frame])
+	    if lerped then handleChild(lerped) end
+	 else
+	    handleChild(root.children[root.frame])
+	 end
+      end
+
+
+
+      --[[
+
+ assuming a coordinate system something like this,
+ with a different color at each corner,
+ what's the color at u, v ?
+
+
+   0, 1                     1, 1
+     *-----------------------*
+     |                       |
+     |                       |
+     |             *         |
+     |             u, v      |
+     |                       |
+     |                       |
+     |                       |
+     |                       |
+     *-----------------------*
+   0, 0                     1, 0
+
+	 Color bilinear(Color[,] corners, Vector2 uv) {
+	 Color cTop = Color.lerp(corners[0, 1], corners[1, 1], uv.x);
+	 Color cBot = Color.lerp(corners[0, 0], corners[1, 0], uv.x);
+	 Color cUV  = Color.lerp(cBot, cTop, uv.y);
+	 return cUV;
+	 }
+
+      ]]--
+
+      if (root.keyframes == 5) then
+	 if currentNode == root then
+	    local cTop = createLerpedChild(root.children[1], root.children[2], root.lerpX)
+	    local cBot = createLerpedChild(root.children[3], root.children[4], root.lerpX)
+	    local lerped = createLerpedChild(cTop, cBot, root.lerpY)
+	    --print(root.lerpX, root.lerpY)
+	    --local lerped = createLerpedChild(root.children[1], root.children[2], 0.5)
+
+	    if lerped then handleChild(lerped) end
+	 else
+	    handleChild(root.children[root.frame])
+	 end
       end
    else
       love.graphics.setStencilTest()
