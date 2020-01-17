@@ -853,7 +853,7 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
-   if (root.keyframes) then
+   if (root.keyframes == 2) then
       if currentNode == root then
 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
 
@@ -1320,6 +1320,12 @@ function love.draw()
 	 end
       end
       if (currentNode.keyframes == 5) then
+	 local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX,currentNode.lerpY, 0, 1)
+	 if v.value then
+	    currentNode.lerpX = v.value.x
+	    currentNode.lerpY = v.value.y
+
+	 end
 
       end
 
@@ -1368,10 +1374,13 @@ function love.draw()
 	    if (currentNode.keyframes) then
 	       currentNode.keyframes = nil
 	       currentNode.lerpValue = nil
+	       currentNode.lerpX = nil
+	       currentNode.lerpY = nil
 	        currentNode.frame = nil
 	    else
 	       currentNode.keyframes = 5
-	       currentNode.lerpValue = 0.5
+	       currentNode.lerpX = 0.5
+	       currentNode.lerpY = 0.5
 	       currentNode.frame = 1
 	    end
 	 end

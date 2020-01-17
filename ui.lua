@@ -83,7 +83,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
       love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
       hover = true
-      
+
       if (mouseState.click) then
 	 clicked = true
       end
@@ -205,6 +205,77 @@ function v_slider(id, x, y, height, v, min, max)
    }
 end
 
+function joystick(id, x, y, size, vx, vy, min, max)
+   love.graphics.setColor(0.3, 0.3, 0.3)
+   love.graphics.rectangle('fill',x,y,size,size )
+   local result = nil
+
+   local thumbX =  mapInto(vx, min, max, 0, size-20)
+   local thumbY =  mapInto(vy, min, max, 0, size-20)
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.rectangle('fill',thumbX + x, thumbY + y,20,20 )
+   love.graphics.setColor(1,1,1,1)
+   love.graphics.rectangle("line", thumbX + x, thumbY + y,20,20)
+
+   local result= nil
+   local draggedResult = false
+   local mx, my = love.mouse.getPosition( )
+   local hover = false
+
+   if pointInRect(mx,my,  thumbX + x, thumbY + y,20,20) then
+      hover = true
+   end
+
+
+   if hover then
+      mouseState.hoveredSomething = true
+      love.mouse.setCursor(cursors.hand)
+      if mouseState.click then
+         lastDraggedElement = {id=id}
+	 mouseState.hoveredSomething = true
+
+	 mouseState.offset = {x=( thumbX + x) - mx, y=( thumbY + y) - my}
+      end
+   end
+
+   if love.mouse.isDown(1 ) then
+      if lastDraggedElement and lastDraggedElement.id == id then
+	 mouseState.hoveredSomething = true
+	 love.mouse.setCursor(cursors.hand)
+         local mx, my = love.mouse.getPosition( )
+         local resultX = mapInto(mx + mouseState.offset.x, x, x+size-20, min, max)
+	 local resultY = mapInto(my + mouseState.offset.y, y, y+size-20, min, max)
+
+	 if resultX < min then
+	    resultX = min
+	 else
+
+	    resultX = math.max(resultX, min)
+	    resultX = math.min(resultX, max)
+	 end
+
+	 if resultY < min then
+	    resultY = min
+	 else
+
+	    resultY = math.max(resultY, min)
+	    resultY = math.min(resultY, max)
+	 end
+	 result = {
+	    x = resultX, y= resultY
+	 }
+
+      end
+
+   end
+
+
+return {
+      value=result
+   }
+end
+
+
 function h_slider(id, x, y, width, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill',x,y+8,width,3 )
@@ -228,9 +299,9 @@ function h_slider(id, x, y, width, v, min, max)
       if mouseState.click then
          lastDraggedElement = {id=id}
 	 mouseState.hoveredSomething = true
-	 
+
 	 mouseState.offset = {x=(xOffset+x) - mx, y=my-y}
-	 
+
       end
    end
 
