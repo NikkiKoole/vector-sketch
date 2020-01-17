@@ -895,7 +895,7 @@ function renderThings(root)
 
       ]]--
 
-      if (root.keyframes == 5) then
+      if (root.keyframes == 4) then
 	 if currentNode == root then
 	    local cTop = createLerpedChild(root.children[1], root.children[2], root.lerpX)
 	    local cBot = createLerpedChild(root.children[3], root.children[4], root.lerpX)
@@ -903,6 +903,64 @@ function renderThings(root)
 	    --print(root.lerpX, root.lerpY)
 	    --local lerped = createLerpedChild(root.children[1], root.children[2], 0.5)
 
+	    if lerped then handleChild(lerped) end
+	 else
+	    handleChild(root.children[root.frame])
+	 end
+      end
+      if (root.keyframes == 5) then
+	 if currentNode == root then
+	    local lerpX = root.lerpX
+	    local lerpY = root.lerpY
+	    local newLerpX =0
+	    local newLerpY =0
+	    if lerpX == .5 and lerpY == .5 then
+	       handleChild(root.children[1])
+	    else
+	       local tl, tr, bl, br
+	       if (lerpX < 0.5 and lerpY < 0.5) then
+		  tl = root.children[2]
+		  tr = createLerpedChild(root.children[2], root.children[3], 0.5)
+		  bl = createLerpedChild(root.children[2], root.children[4], 0.5)
+		  br =  root.children[1]
+		  newLerpX = lerpX *2
+		  newLerpY = lerpY *2
+
+	       end
+	       if (lerpX >= 0.5 and lerpY < 0.5) then
+		  tl = createLerpedChild(root.children[2], root.children[3], 0.5)
+		  tr = root.children[3]
+		  bl =  root.children[1]
+		  br = createLerpedChild(root.children[3], root.children[5], 0.5)
+		  newLerpX = (lerpX-0.5) *2
+		  newLerpY = lerpY *2
+
+	       end
+	       if (lerpX < 0.5 and lerpY >= 0.5) then
+		  tl =  createLerpedChild(root.children[2], root.children[4], 0.5)
+		  tr = root.children[1]
+		  bl = root.children[4]
+		  br =  createLerpedChild(root.children[4], root.children[5], 0.5)
+
+		  newLerpX = (lerpX) *2
+		  newLerpY = (lerpY-0.5) *2
+
+	       end
+	       if (lerpX >= 0.5 and lerpY >= 0.5) then
+		  tl =   root.children[1]
+		  tr = createLerpedChild(root.children[3], root.children[5], 0.5)
+		  bl =  createLerpedChild(root.children[4], root.children[5], 0.5)
+		  br =  root.children[5]
+
+		  newLerpX = (lerpX-0.5) *2
+		  newLerpY = (lerpY-0.5) *2
+
+	       end
+	       local cTop = createLerpedChild(tl, tr, newLerpX)
+	       local cBot = createLerpedChild(bl, br, newLerpX)
+	       local lerped = createLerpedChild(cTop, cBot, newLerpY)
+	       if lerped then handleChild(lerped) end
+	    end
 	    if lerped then handleChild(lerped) end
 	 else
 	    handleChild(root.children[root.frame])
@@ -1366,7 +1424,7 @@ function love.draw()
 	    currentNode.lerpValue = v.value
 	 end
       end
-      if (currentNode.keyframes == 5) then
+      if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
 	 local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX,currentNode.lerpY, 0, 1)
 	 if v.value then
 	    currentNode.lerpX = v.value.x
@@ -1416,7 +1474,7 @@ function love.draw()
 	    end
 	 end
       end
-       if currentNode and currentNode.folder and #currentNode.children >= 5 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+       if currentNode and currentNode.folder and #currentNode.children >= 4 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
 	 if (imgbutton('joystick', ui.joystick, rightX - 50, calcY(8,s)+ 8*8, s)).clicked then
 	    if (currentNode.keyframes) then
 	       currentNode.keyframes = nil
@@ -1425,7 +1483,8 @@ function love.draw()
 	       currentNode.lerpY = nil
 	        currentNode.frame = nil
 	    else
-	       currentNode.keyframes = 5
+	       assert(#currentNode.children == 4 or #currentNode.children == 5)
+	       currentNode.keyframes = #currentNode.children
 	       currentNode.lerpX = 0.5
 	       currentNode.lerpY = 0.5
 	       currentNode.frame = 1
