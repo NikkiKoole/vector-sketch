@@ -1,17 +1,20 @@
+require 'basics'
 
+function handleMouseClickStart()
+   mouseState.hoveredSomething = false
+   mouseState.down = love.mouse.isDown(1 )
+   mouseState.click = false
+   mouseState.released = false
+   if mouseState.down ~= mouseState.lastDown then
+      if mouseState.down  then
+         mouseState.click  = true
+      else
+	 mouseState.released = true
+      end
+   end
+   mouseState.lastDown =  mouseState.down
+end
 
-
-function pointInRect(x,y, rx, ry, rw, rh)
-   if x < rx or y < ry then return false end
-   if x > rx+rw or y > ry+rh then return false end
-   return true
-end
-function lerp(a, b, t)
-   return a + (b - a) * t
-end
-function mapInto(x, in_min, in_max, out_min, out_max)
-   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-end
 
 function rgbbutton(id, rgb, x, y, scale)
    scale = scale or 1
@@ -41,8 +44,6 @@ function rgbbutton(id, rgb, x, y, scale)
       clicked = clicked
    }
 end
-
-
 
 function iconlabelbutton(id, img, color, active, label, x, y, scale)
 

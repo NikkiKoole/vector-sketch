@@ -243,9 +243,6 @@ function triangulate(type, poly)
 
       for i=1 , #polys do
          local p = polys[i]
-         --print(type)
-         --printArray(p)
-         --print(#p)
 
          local triangles = love.math.triangulate(p)
          for j = 1, #triangles do
@@ -257,30 +254,10 @@ function triangulate(type, poly)
          end
       end
    end
-   --print("abba", #result)
    return result
 end
 
 
-function printArray(a)
-   -- just print 10 values on a row
-
-   print("Array: #",#a)
-
-   for i=1, #a, 10 do
-      local str = ""
-      for j=0, math.min((#a-i),9) do
-         --print(i,j,i+j)
-         str = str..a[i+j]
-         str = str..", "
-      end
-      print(str)
-   end
-   print()
-   print()
-
-
-end
 
 -- for the boyonce i prolly need thi algo:
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
@@ -289,7 +266,7 @@ end
 function inside(p, cp1, cp2)
   return (cp2.x-cp1.x)*(p.y-cp1.y) > (cp2.y-cp1.y)*(p.x-cp1.x)
 end
- 
+
 function intersection(cp1, cp2, s, e)
   local dcx, dcy = cp1.x-cp2.x, cp1.y-cp2.y
   local dpx, dpy = s.x-e.x, s.y-e.y
@@ -302,7 +279,7 @@ function intersection(cp1, cp2, s, e)
 end
 
 function polygonClip(a, b) -- accepts 2 lists like {{x=1,y=y}, ...} with possible duplicated end
-   
+
    local aList = {}
    local aEnd = (a.points[#a.points].x == a.points[1].x) and (a.points[#a.points].y == a.points[1].y) and #a.points -1 or  #a.points
    for i = 1, aEnd do
@@ -314,7 +291,7 @@ function polygonClip(a, b) -- accepts 2 lists like {{x=1,y=y}, ...} with possibl
    for i = 1, bEnd do
       table.insert(bList, {x=b.points[i].x, y=b.points[i].y})
    end
-   
+
    local outputList = aList
    local cp1 = bList[#bList]
    for _, cp2 in ipairs(bList) do  -- WP clipEdge is cp1,cp2 here
@@ -336,11 +313,11 @@ function polygonClip(a, b) -- accepts 2 lists like {{x=1,y=y}, ...} with possibl
    end
    --print(inspect(outputList))
    return outputList
-   
+
 end
 
 
-function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...} 
+function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
    -- https://stackoverflow.com/questions/9692448/how-can-you-find-the-centroid-of-a-concave-irregular-polygon-in-javascript
 
    local first = {pts[1], pts[2]}
@@ -381,8 +358,56 @@ function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
 
 end
 
+function makeVertices(shape)
+   local triangles = {}
+   local vertices = {}
+   if (shape.folder) then return end
+   local points = shape.points
+   if (#points >= 2 ) then
+
+      local scale = 1
+      local coords = {}
+      --local coordsRound = {}
+      local ps = {}
+      for l=1, #points do
+	 table.insert(coords, points[l][1])
+	 table.insert(coords, points[l][2])
+      end
+
+      if (shape.color) then
+	 local polys = decompose_complex_poly(coords, {})
+	 local result = {}
+	 for k=1 , #polys do
+	    local p = polys[k]
+	    if (#p >= 6) then
+	       -- if a import breaks on triangulation errors uncomment this
+	       --print(shapes[i].name, #p, inspect(p))
+	       local triangles = love.math.triangulate(p)
+	       for j = 1, #triangles do
+		  local t = triangles[j]
+		  local cx, cy = getTriangleCentroid(t)
+		  if isPointInPath(cx,cy, p) then
+		     table.insert(result, t)
+		  end
+	       end
+	    end
+	 end
+
+	 for j = 1, #result do
+	    table.insert(vertices, {result[j][1], result[j][2]})
+	    table.insert(vertices, {result[j][3], result[j][4]})
+	    table.insert(vertices, {result[j][5], result[j][6]})
+	 end
+
+      end
+   end
+   return vertices
+end
+
+
 return {
    polygonClip = polygonClip,
    getPolygonCentroid = getPolygonCentroid,
-   triangulate=triangulate
+   triangulate=triangulate,
+   makeVertices = makeVertices
 }
