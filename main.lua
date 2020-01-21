@@ -31,6 +31,22 @@ function setCurrentNode(newNode)
    currentNode = newNode
 end
 
+function resizeGroup(children, scale)
+
+   for i=1, #children do
+      if children[i].points then
+	 local scaledPoints = {}
+	 for p=1, #children[i].points do
+
+	    scaledPoints[p] = {children[i].points[p][1] * scale, children[i].points[p][2] * scale}
+	 end
+	 children[i].points = scaledPoints
+	 children[i].mesh= makeMeshFromVertices(makeVertices(children[i]))
+      end
+   end
+
+end
+
 
 function deleteNode(node)
  local index = getIndex(node)
@@ -1348,6 +1364,14 @@ function love.draw()
 	 if imgbutton('connector-group', ui.parent, rightX - 150, 10, s).clicked then
 	    lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
 	 end
+
+	 if imgbutton('children-scale', ui.resize, rightX - 250, 10, s).clicked  then
+	    resizeGroup(childrenInRectangleSelect, 0.95)
+	 end
+	 if imgbutton('children-scale', ui.resize, rightX - 200, 10, s).clicked  then
+	    resizeGroup(childrenInRectangleSelect, 1.05)
+	 end
+
 
       end
 
