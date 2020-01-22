@@ -293,7 +293,7 @@ function love.mousereleased(x,y, button)
 
    if lastDraggedElement and lastDraggedElement.id == 'connector' then
       if (currentNode and currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
-	 if not (nodeIsMyOwnOffspring(   currentNode, currentlyHoveredUINode)) then
+	 if not (nodeIsMyOwnOffspring(currentNode, currentlyHoveredUINode)) then
 	    addThingAtEnd( removeCurrentNode(), currentlyHoveredUINode)
 	 end
       else
@@ -566,6 +566,7 @@ function love.load()
       select = love.graphics.newImage("resources/ui/select.png"),
       hole = love.graphics.newImage("resources/ui/keyhole.png"),
       change = love.graphics.newImage("resources/ui/change.png"),
+      add_to_list = love.graphics.newImage("resources/ui/add-to-list.png"),
    }
 
    cursors = {
@@ -983,6 +984,7 @@ function love.draw()
       if imgbutton('polyline-wireframe', ui.lines,  calcX(0,s), 10, s).clicked then
 	 wireframe = not wireframe
       end
+      
       if imgbutton('polyline-palette', ui.palette,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = 'backdrop-palette'
       end
@@ -990,7 +992,10 @@ function love.draw()
 	 editingModeSub = nil
 	 backdrop.visible = not backdrop.visible
       end
-
+      if imgbutton('add-to-list', ui.add_to_list, calcX(9,s), 10, s).clicked then
+	 editingModeSub = 'add-to-list'
+      end
+      
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("simplify svg",  calcX(1, s), 0 )
       local v =  h_slider("simplify_value", calcX(1, s), 20, 200,  simplifyValue , 0, 10)
@@ -1270,6 +1275,7 @@ end
 
 
 function love.filedropped(file)
+
    local filename = file:getFilename()
    local tab
 
@@ -1293,7 +1299,15 @@ function love.filedropped(file)
    end
 
    if tab then
-      root.children = tab
+      if editingMode == 'backdrop' and editingModeSub == 'add-to-list' then --append
+
+	 root.children = TableConcat(root.children, tab)
+      else
+	 root.children = tab
+
+      end
+      
+      
       parentize(root)
       scrollviewOffset = 0
       editingMode = nil
@@ -1303,6 +1317,7 @@ function love.filedropped(file)
    end
 
 end
+
 
 
 function love.keypressed(key)
@@ -1334,7 +1349,7 @@ function love.keypressed(key)
       end
       profiling = not profiling
    end
-
+   
    if (key == 's' and not changeName) then
       local path = shapeName..".polygons.txt"
       local info = love.filesystem.getInfo( path )
@@ -1369,7 +1384,6 @@ function love.keypressed(key)
       if (key == 'delete') then
 	 deleteNode(currentNode)
       end
-
    end
 
    if (changeName) then
