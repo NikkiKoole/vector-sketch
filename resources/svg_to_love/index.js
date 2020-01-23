@@ -29,6 +29,7 @@ fs.readFile( url, function (err, data) {
     }
     var xml = data.toString()
     var total = 0
+
     parseString(xml, function (err, result) {
         var opt = {
             delaunay: true,
