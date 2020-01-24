@@ -65,7 +65,18 @@ function resizeGroup(children, scale)
    end
 
 end
-
+function flipGroup(children, xaxis, yaxis)
+    for i=1, #children do
+      if children[i].points then
+	 local scaledPoints = {}
+	 for p=1, #children[i].points do
+	    scaledPoints[p] = {children[i].points[p][1] * (xaxis ), children[i].points[p][2] * (yaxis )}
+	 end
+	 children[i].points = scaledPoints
+	 children[i].mesh= makeMeshFromVertices(poly.makeVertices(children[i]))
+      end
+    end
+end
 
 function deleteNode(node)
  local index = getIndex(node)
@@ -567,6 +578,8 @@ function love.load()
       hole = love.graphics.newImage("resources/ui/keyhole.png"),
       change = love.graphics.newImage("resources/ui/change.png"),
       add_to_list = love.graphics.newImage("resources/ui/add-to-list.png"),
+      flip_vertical = love.graphics.newImage("resources/ui/flip-vertical.png"),
+      flip_horizontal = love.graphics.newImage("resources/ui/flip-horizontal.png"),
    }
 
    cursors = {
@@ -984,7 +997,7 @@ function love.draw()
       if imgbutton('polyline-wireframe', ui.lines,  calcX(0,s), 10, s).clicked then
 	 wireframe = not wireframe
       end
-      
+
       if imgbutton('polyline-palette', ui.palette,  calcX(7, s), 10, s).clicked then
 	 editingModeSub = 'backdrop-palette'
       end
@@ -995,7 +1008,7 @@ function love.draw()
       if imgbutton('add-to-list', ui.add_to_list, calcX(9,s), 10, s).clicked then
 	 editingModeSub = 'add-to-list'
       end
-      
+
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("simplify svg",  calcX(1, s), 0 )
       local v =  h_slider("simplify_value", calcX(1, s), 20, 200,  simplifyValue , 0, 10)
@@ -1068,6 +1081,13 @@ function love.draw()
       if #childrenInRectangleSelect > 0 then
 	 if imgbutton('connector-group', ui.parent, rightX - 150, 10, s).clicked then
 	    lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
+	 end
+
+	 if imgbutton('children-flip-vertical', ui.flip_vertical, rightX - 350, 10, s).clicked  then
+	    flipGroup(childrenInRectangleSelect, 1,-1)
+	 end
+	 if imgbutton('children-fliph-horizontal', ui.flip_horizontal, rightX - 300, 10, s).clicked  then
+	    flipGroup(childrenInRectangleSelect, -1,1)
 	 end
 
 	 if imgbutton('children-scale', ui.resize, rightX - 250, 10, s).clicked  then
@@ -1306,8 +1326,8 @@ function love.filedropped(file)
 	 root.children = tab
 
       end
-      
-      
+
+
       parentize(root)
       scrollviewOffset = 0
       editingMode = nil
@@ -1349,7 +1369,7 @@ function love.keypressed(key)
       end
       profiling = not profiling
    end
-   
+
    if (key == 's' and not changeName) then
       local path = shapeName..".polygons.txt"
       local info = love.filesystem.getInfo( path )
