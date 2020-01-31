@@ -185,6 +185,13 @@ function getDirectChildrenBBox(node)
    end
 
 end
+function movePoints(node, dx, dy)
+   for i = 1, #childrenInRectangleSelect do
+      local index = childrenInRectangleSelect[i]
+      node.points[index] = {node.points[index][1] + dx, node.points[index][2] + dy}
+      node.mesh = makeMeshFromVertices(poly.makeVertices(node))
+   end
+end
 
 function isPartOfKeyframePose(node)
    if (node.keyframes) then return true end
@@ -222,7 +229,7 @@ function love.mousepressed(x,y, button)
       editingMode = 'move'
    end
 
-   if editingMode == 'rectangle-select' then
+   if editingMode == 'rectangle-select' or editingModeSub == 'rectangle-point-select'  then
       rectangleSelect.startP = {x=x, y=y}
    end
 
@@ -266,6 +273,27 @@ function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = nil
    end
+   if editingModeSub == 'rectangle-point-select' then
+      if  (rectangleSelect.startP and rectangleSelect.endP) then
+	 childrenInRect = {}
+	 local parent = currentNode._parent or root
+	 local t = not  currentNode._parent and  parent._localTransform or parent._globalTransform
+	 local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
+	 local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
+	 local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
+	 local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
+	 local childrenInRect = {}
+	 for i=1, #currentNode.points do
+	     local p = currentNode.points[i]
+	     if p[1] >= tl.x and p[1] <= br.x  and  p[2] >= tl.y and p[2] <= br.y then
+		table.insert(childrenInRect, i)
+	     end
+	 end
+	 childrenInRectangleSelect = childrenInRect
+	 rectangleSelect = {}
+      end
+   end
+
    if (editingMode == 'rectangle-select') then
       if (rectangleSelect.startP and rectangleSelect.endP) then
 	 local root = currentNode or root
@@ -341,6 +369,9 @@ function love.mousemoved(x,y, dx, dy)
    local isConnecting = lastDraggedElement and lastDraggedElement.id == 'connector'
 
    if editingMode == 'rectangle-select' and rectangleSelect.startP then
+      rectangleSelect.endP = {x=x, y=y}
+   end
+   if editingModeSub == 'rectangle-point-select' and rectangleSelect.startP then
       rectangleSelect.endP = {x=x, y=y}
    end
 
@@ -655,6 +686,20 @@ function love.load()
 	    color = {1,1,0, 0.8},
 	    points = {{500,0},{500,200},{300,200}},
 	 },
+
+
+	 {
+	    folder = true,
+	    transforms =  {l={0,0,0,1,1,0,0,0,0}},
+	    name="group ",
+	    children ={{
+		  name="child1 ",
+		  color = {1,1,0, 0.8},
+		  points = {{600,0},{700,0},{200,800},{1000,200}},
+	    }}
+	 },
+
+
       },
    }
 
@@ -710,13 +755,14 @@ local step = 0
 
 
 function love.draw()
-
    step = step + 1
    local mx,my = love.mouse.getPosition()
 
    handleMouseClickStart()
    love.mouse.setCursor(cursors.arrow)
    local w, h = love.graphics.getDimensions( )
+   local rightX = w - (64 + 500+ 10)/2
+
    love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
 
    if  backdrop.visible then
@@ -804,7 +850,7 @@ function love.draw()
 
    love.graphics.setColor(1,1,1, 1)
 
-   if editingMode == 'rectangle-select' and rectangleSelect.startP and rectangleSelect.endP then
+   if (editingMode == 'rectangle-select' or  editingModeSub =='rectangle-point-select')  and rectangleSelect.startP and rectangleSelect.endP then
       love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.startP.y)
       love.graphics.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
         love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
@@ -970,6 +1016,14 @@ function love.draw()
 	    currentNode.points[i][2] = currentNode.points[i][2] -  (tly + h2)
 	 end
       end
+
+
+      if currentNode and currentNode.points then
+	 if imgbutton('rectangle-point-select', ui.select, calcX(13, s), 10, s).clicked then
+	    editingModeSub = 'rectangle-point-select'
+	 end
+      end
+
    end
 
    if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
@@ -1064,7 +1118,7 @@ function love.draw()
 
    love.graphics.setFont(small)
    renderGraphNodes(root, 0, 60)
-   local rightX = w - (64 + 500+ 10)/2
+
 
    if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
       if (editingMode == 'backdrop') then
@@ -1098,6 +1152,7 @@ function love.draw()
 	 end
       end
    end
+
 
    if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10, s).clicked then
       local shape = {
@@ -1405,6 +1460,24 @@ function love.keypressed(key)
 	 deleteNode(currentNode)
       end
    end
+   if editingModeSub == 'rectangle-point-select' and #childrenInRectangleSelect then
+      local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+      if (key == 'left') then
+	 movePoints(currentNode, shift and -10 or -1, 0)
+      end
+      if (key == 'right') then
+	 movePoints(currentNode, shift and 10 or 1, 0)
+      end
+      if (key == 'up') then
+	 movePoints(currentNode, 0, shift and -10 or -1)
+      end
+      if (key == 'down') then
+	 movePoints(currentNode, 0, shift and 10 or 1)
+      end
+
+   end
+
+
 
    if (changeName) then
       if (key == 'backspace') then
