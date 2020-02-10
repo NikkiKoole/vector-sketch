@@ -189,9 +189,35 @@ function movePoints(node, dx, dy)
    for i = 1, #childrenInRectangleSelect do
       local index = childrenInRectangleSelect[i]
       node.points[index] = {node.points[index][1] + dx, node.points[index][2] + dy}
-      node.mesh = makeMeshFromVertices(poly.makeVertices(node))
+      
    end
+   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
 end
+
+local function arrayHas(tab, val)
+    for index, value in ipairs(tab) do
+        if value == val then
+            return true
+        end
+    end
+
+    return false
+end
+   
+function deletePoints(node)
+   local newPoints = {}
+   for i = 1, #node.points do
+      if not arrayHas(childrenInRectangleSelect, i) then
+	 table.insert(newPoints, {node.points[i][1], node.points[i][2]})
+      end
+      
+     -- if i isnt in childreninrectangelselct the n add
+   end
+   node.points = newPoints
+   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
+   
+end
+
 
 function isPartOfKeyframePose(node)
    if (node.keyframes) then return true end
@@ -1455,7 +1481,7 @@ function love.keypressed(key)
       love.filesystem.write(path, json.encode(toSave, {indent=""}))
       love.system.openURL("file://"..love.filesystem.getSaveDirectory())
    end
-   if not changeName and currentNode then
+   if not changeName and currentNode and not #childrenInRectangleSelect then
       if (key == 'delete') then
 	 deleteNode(currentNode)
       end
@@ -1474,7 +1500,10 @@ function love.keypressed(key)
       if (key == 'down') then
 	 movePoints(currentNode, 0, shift and 10 or 1)
       end
-
+      if key == 'delete' then
+	 deletePoints(currentNode)
+      end
+      
    end
 
 
