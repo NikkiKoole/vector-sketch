@@ -7,16 +7,16 @@ function love.keypressed(key)
    end
 
    if key == 'left' then
-      pxPerSeconds = pxPerSeconds - 100
+      pxPerSeconds = pxPerSeconds - 10
    end
    if key == 'right' then
-      pxPerSeconds = pxPerSeconds + 100
+      pxPerSeconds = pxPerSeconds + 10
    end
    if key == 'up' then
-      amplitude = amplitude + 5
+      amplitude = amplitude + 2
    end
    if key == 'down' then
-      amplitude = amplitude - 5
+      amplitude = amplitude - 2
    end
    if key == 'w' then
       waves = waves + 1
@@ -58,10 +58,10 @@ local function sortPointsOnX(a,b)
 end
 
 
-function drawPoints(counter, delta)
+function drawPoints(counter, delta, middleY, scale, waveMultiplier)
    local coords = {}
    --local waves = 7
-   local middleY = 400
+   --local middleY = 400
    --local amplitude = 15
    --local speed = 150
    local screenWidth = love.graphics.getWidth()
@@ -69,7 +69,7 @@ function drawPoints(counter, delta)
 
    ---- begin part moving with speed through water
    --local pxPerSeconds = 100
-   local velocity = delta * pxPerSeconds
+   local velocity = delta * pxPerSeconds  / scale
    for i=1, #points do
       points[i][1] = points[i][1] - velocity
    end
@@ -96,10 +96,10 @@ function drawPoints(counter, delta)
 
    -- begin part waves moving
    for i = 1, #points do
-      local x = (points[i][1]) + counter*speed
-      local x2 = (x / screenWidth) * math.pi * waves
+      local x = (points[i][1]) + counter*speed*scale
+      local x2 = (x / screenWidth) * math.pi * waves * waveMultiplier
       local r  =  math.sin(x2)
-      points[i][2] = middleY + r * amplitude
+      points[i][2] = middleY + r * amplitude*scale
       coords[i*2 - 1] = points[i][1]
       coords[i*2 ] = points[i][2]
    end
@@ -121,5 +121,6 @@ function love.update(dt)
 end
 
 function love.draw()
-   drawPoints(waveCounter, delta)
+   drawPoints(waveCounter, delta, 400, 3, 1)
+   drawPoints(waveCounter, delta, 100, 1, 12)
 end
