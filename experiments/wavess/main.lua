@@ -5,6 +5,14 @@ function love.keypressed(key)
    if key == 'escape' then
       love.event.quit()
    end
+
+   if key == 'left' then
+      pxPerSeconds = pxPerSeconds - 100
+   end
+   if key == 'right' then
+      pxPerSeconds = pxPerSeconds + 100
+   end
+   print(pxPerSeconds)
 end
 
 function love.load()
@@ -12,34 +20,57 @@ function love.load()
    love.window.setMode(screenwidth, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
    points = {}
 
-   local count = 18
-   local space = (screenwidth+200)/count
+   waveOverflow = screenwidth/2
+   pxPerSeconds = 100
+
+   local count = 47
+   local space = (screenwidth+waveOverflow*2)/count
 
    for i=1, count do
-      local x = -100 + i * space + (love.math.random()*(space/1.3) - (space/4))
+      local x = -waveOverflow + i * space + (love.math.random()*(space/1.3) - (space/4))
       points[i] = {x, 100}
    end
 end
 
+local function sortPointsOnX(a,b)
+   return a[1] < b[1]
+end
+
+
 function drawPoints(counter, delta)
    local coords = {}
    local waves = 7
-   local middleY = 100
+   local middleY = 400
    local amplitude = 15
-   local speed = 300
+   local speed = 150
    local screenWidth = love.graphics.getWidth()
 
 
    ---- begin part moving with speed through water
-   local velocity = delta * 100
+   --local pxPerSeconds = 100
+   local velocity = delta * pxPerSeconds
    for i=1, #points do
       points[i][1] = points[i][1] - velocity
    end
-   if (points[1][1] < -100) then
-      points[1][1] = points[1][1] + screenWidth + 200
-      local p = table.remove(points, 1)
-      table.insert(points, p)
+
+   if (pxPerSeconds >= 0) then
+      if (points[1][1] < -waveOverflow/2) then
+	 points[1][1] = points[1][1] + screenWidth + waveOverflow*2
+	 local p = table.remove(points, 1)
+	 table.insert(points, p)
+      end
    end
+
+   if (pxPerSeconds <= 0) then
+      if (points[#points][1] > screenWidth+waveOverflow/2) then
+	 points[#points][1] =  points[#points][1] -(screenWidth+waveOverflow*2)
+	 local p = table.remove(points, #points)
+	 table.insert(points, 1, p)
+
+      end
+   end
+   table.sort( points, sortPointsOnX)
+
    ---- end part moving with speed through water
 
    -- begin part waves moving
