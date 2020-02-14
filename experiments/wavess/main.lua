@@ -12,7 +12,26 @@ function love.keypressed(key)
    if key == 'right' then
       pxPerSeconds = pxPerSeconds + 100
    end
-   print(pxPerSeconds)
+   if key == 'up' then
+      amplitude = amplitude + 5
+   end
+   if key == 'down' then
+      amplitude = amplitude - 5
+   end
+   if key == 'w' then
+      waves = waves + 1
+   end
+   if key == 's' then
+      waves = waves - 1
+   end
+   if key == 'a' then
+      speed = speed + 10
+   end
+   if key == 'd' then
+      speed = speed - 10
+   end
+
+
 end
 
 function love.load()
@@ -22,7 +41,9 @@ function love.load()
 
    waveOverflow = screenwidth/2
    pxPerSeconds = 100
-
+   amplitude = 15
+   waves = 7
+   speed = 150
    local count = 47
    local space = (screenwidth+waveOverflow*2)/count
 
@@ -39,10 +60,10 @@ end
 
 function drawPoints(counter, delta)
    local coords = {}
-   local waves = 7
+   --local waves = 7
    local middleY = 400
-   local amplitude = 15
-   local speed = 150
+   --local amplitude = 15
+   --local speed = 150
    local screenWidth = love.graphics.getWidth()
 
 
