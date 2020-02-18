@@ -40,10 +40,10 @@ function love.load()
    points = {}
 
    waveOverflow = screenwidth/2
-   pxPerSeconds = 100
+   pxPerSeconds = 0
    amplitude = 15
    waves = 7
-   speed = 150
+   speed = 0
    local count = 47
    local space = (screenwidth+waveOverflow*2)/count
 
@@ -69,7 +69,7 @@ function drawPoints(counter, delta, middleY, scale, waveMultiplier)
 
    ---- begin part moving with speed through water
    --local pxPerSeconds = 100
-   local velocity = delta * pxPerSeconds  / scale
+   local velocity = delta * pxPerSeconds  * scale
    for i=1, #points do
       points[i][1] = points[i][1] - velocity
    end
