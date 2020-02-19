@@ -44,13 +44,24 @@ function love.load()
    amplitude = 15
    waves = 7
    speed = 0
-   local count = 47
+   local count = 32
    local space = (screenwidth+waveOverflow*2)/count
-
    for i=1, count do
       local x = -waveOverflow + i * space + (love.math.random()*(space/1.3) - (space/4))
       points[i] = {x, 100}
    end
+
+
+   points2 = {}
+   count = 74
+   space = (screenwidth+waveOverflow*2)/count
+   for i=1, count do
+      local x = -waveOverflow + i * space + (love.math.random()*(space/1.3) - (space/4))
+      points2[i] = {x, 100}
+   end
+
+
+
 end
 
 local function sortPointsOnX(a,b)
@@ -58,12 +69,8 @@ local function sortPointsOnX(a,b)
 end
 
 
-function drawPoints(counter, delta, middleY, scale, waveMultiplier)
+function drawPoints(points, counter, delta, middleY, scale, waveMultiplier, alpha)
    local coords = {}
-   --local waves = 7
-   --local middleY = 400
-   --local amplitude = 15
-   --local speed = 150
    local screenWidth = love.graphics.getWidth()
 
 
@@ -106,10 +113,34 @@ function drawPoints(counter, delta, middleY, scale, waveMultiplier)
    -- end part waves moving
 
    for i =1, #points do
-      love.graphics.rectangle("fill", points[i][1],  points[i][2], 2, 2)
+      --love.graphics.rectangle("fill", points[i][1],  points[i][2], 2, 2)
    end
 
-   love.graphics.line(coords)
+
+    -- now make it a closed shape please
+   local lastX = coords[#coords-1]
+   local lastY = coords[#coords]
+
+
+   table.insert(coords, lastX)
+   table.insert(coords, lastY+1200)
+   table.insert(coords, coords[1])
+   table.insert(coords, lastY+1200)
+   table.insert(coords, coords[1])
+   table.insert(coords, coords[2])
+
+   love.graphics.setColor(0.145,0.6,0.670, alpha)
+   local polys = decompose_complex_poly(coords, {})
+    for i=1 , #polys do
+       local p = polys[i]
+       local triangles = love.math.triangulate(p)
+       for j = 1, #triangles do
+	  --print(triangles[j])
+	  love.graphics.polygon('fill', triangles[j])
+       end
+    end
+
+   --love.graphics.line(coords)
 end
 
 
@@ -121,6 +152,11 @@ function love.update(dt)
 end
 
 function love.draw()
-   drawPoints(waveCounter, delta, 400, 3, 1)
-   drawPoints(waveCounter, delta, 100, 1, 12)
+   drawPoints(points2, waveCounter, delta, 100, 0.6, 12, 0.95)
+
+    love.graphics.setColor(1, 1, 0.670)
+    love.graphics.rectangle("fill", 200, 200, 300, 300)
+
+   drawPoints(points, waveCounter, delta, 400, 3, 1, 0.9)
+
 end
