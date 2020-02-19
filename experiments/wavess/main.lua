@@ -13,10 +13,10 @@ function love.keypressed(key)
       pxPerSeconds = pxPerSeconds + 10
    end
    if key == 'up' then
-      amplitude = amplitude + 2
+      amplitude = amplitude + 0.25
    end
    if key == 'down' then
-      amplitude = amplitude - 2
+      amplitude = amplitude - 0.25
    end
    if key == 'w' then
       waves = waves + 1
@@ -31,6 +31,7 @@ function love.keypressed(key)
       speed = speed - 10
    end
 
+   print("pxPerSeconds", pxPerSeconds, "amplitude", amplitude, "waves", waves, "speed", speed)
 
 end
 
@@ -40,10 +41,14 @@ function love.load()
    points = {}
 
    waveOverflow = screenwidth/2
-   pxPerSeconds = 0
-   amplitude = 15
-   waves = 7
-   speed = 0
+
+--   pxPerSeconds	70	amplitude	3	waves	11	speed	20
+   --pxPerSeconds	60	amplitude	1	waves	23	speed	40
+
+   pxPerSeconds = 60
+   amplitude = 1.2
+   waves = 23
+   speed = 40
    local count = 32
    local space = (screenwidth+waveOverflow*2)/count
    for i=1, count do
@@ -139,6 +144,8 @@ function drawPoints(points, counter, delta, middleY, scale, waveMultiplier, alph
 	  love.graphics.polygon('fill', triangles[j])
        end
     end
+
+   love.graphics.setColor(1,1,1, alpha)
 
    --love.graphics.line(coords)
 end
