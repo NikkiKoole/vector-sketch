@@ -44,11 +44,11 @@ function love.load()
 
 --   pxPerSeconds	70	amplitude	3	waves	11	speed	20
    --pxPerSeconds	60	amplitude	1	waves	23	speed	40
-
-   pxPerSeconds = 60
-   amplitude = 1.2
-   waves = 23
-   speed = 40
+--pxPerSeconds	30	amplitude	-0.55	waves	17	speed	0
+   pxPerSeconds = 30
+   amplitude = 0.55
+   waves = 17
+   speed = 0
    local count = 32
    local space = (screenwidth+waveOverflow*2)/count
    for i=1, count do
@@ -159,7 +159,9 @@ function love.update(dt)
 end
 
 function love.draw()
-   drawPoints(points2, waveCounter, delta, 100, 0.6, 12, 0.95)
+--   drawPoints(points2, waveCounter, delta, 100, 0.6, 12, 0.95)
+
+   drawPoints(points, waveCounter, delta, 300, 3, 1, 0.9)
 
     love.graphics.setColor(1, 1, 0.670)
     love.graphics.rectangle("fill", 200, 200, 300, 300)
