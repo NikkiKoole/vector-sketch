@@ -20,19 +20,17 @@ function love.load()
    love.window.setMode(screenwidth, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
    boat_velocity = 0
    boat_world_pos = 0
-
    local endI = ((screenwidth+ 80)/20)
    wave_offsets = {}
    for i=1, endI do
       table.insert(wave_offsets, love.math.random() * 4 - 2)
    end
-
 end
 
 
 local waveCounter = 0
 function love.update(dt)
-   flux.update(dt)
+
    waveCounter = waveCounter + dt
    boat_world_pos =  boat_world_pos + (boat_velocity * dt)
 end
