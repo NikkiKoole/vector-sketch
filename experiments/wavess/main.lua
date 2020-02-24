@@ -1,6 +1,6 @@
 require 'util'
 require 'poly'
---flux = require "flux"
+flux = require "flux"
 
 
 function love.keypressed(key)
@@ -8,22 +8,26 @@ function love.keypressed(key)
       love.event.quit()
    end
    if key == 'left' then
-      boat_velocity = boat_velocity - 1
+      local newV = boat.velocity - 1
+      flux.to(boat, 1, {velocity=newV})
    end
    if key == 'right' then
-      boat_velocity = boat_velocity + 1
+      local newV = boat.velocity + 1
+      flux.to(boat, 1, {velocity=newV})
    end
 end
 
 function love.load()
    local screenwidth = 1204
    love.window.setMode(screenwidth, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
-   boat_velocity = 0
-   boat_world_pos = 0
+   boat = {
+      velocity = 0,
+      world_pos = 0
+   }
    local endI = ((screenwidth+ 80)/20)
    wave_offsets = {}
    for i=1, endI do
-      table.insert(wave_offsets, love.math.random() * 4 - 2)
+      table.insert(wave_offsets, love.math.random() * 10 - 5)
    end
 end
 
@@ -32,7 +36,8 @@ local waveCounter = 0
 function love.update(dt)
 
    waveCounter = waveCounter + dt
-   boat_world_pos =  boat_world_pos + (boat_velocity * dt)
+   boat.world_pos =  boat.world_pos + (boat.velocity * dt)
+   flux.update(dt)
 end
 
 
@@ -44,7 +49,7 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude)
    for i =1, endI do
       local x = (i*20) - 40
       local x2 = ( x + (waveCounter * 100))
-      local y =  boat_world_pos + ((x2 / screenWidth) * math.pi * waves)
+      local y =  boat.world_pos + ((x2 / screenWidth) * math.pi * waves)
       local y2 = middleY + math.sin(y) * amplitude
       coords[i*2 - 1] = x + wave_offsets[i]
       coords[i*2 ] = y2
@@ -73,12 +78,51 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude)
 
 end
 
+function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alpha)
+   local screenWidth = love.graphics.getWidth()
+   local width = endX - startX
+   local coords = {}
+   local endI = ((width+ 80)/20)
+
+   love.graphics.setColor(1,1,1, alpha)
+
+   for i =1, endI do
+      local x = (i*20) - 40 + startX
+      local x2 = ( x + (waveCounter * 100))
+      local y =  boat.world_pos + ((x2 / screenWidth) * math.pi * waves)
+      local y2 = middleY + math.sin(y) * amplitude
+      coords[i*2 - 1] = x + wave_offsets[i]
+      coords[i*2 ] = y2
+
+      --love.graphics.rectangle("fill", x + wave_offsets[i], y2, 4,4)
+   end
+   love.graphics.setLineWidth(2 * (width/50) * math.sin(waveCounter*(width/50))/20)
+   --love.graphics.setLineWidth(5)
+   love.graphics.line(coords)
+   love.graphics.setLineWidth(1)
+
+end
+
+
 
 function love.draw()
+   local extraY = math.sin(boat.world_pos  + waveCounter * 2) * 2
    love.graphics.clear(180/255, 211/255, 230/255)
-   love.graphics.print(boat_world_pos, 10,10)
-   anotherWaveFunction(waveCounter, 350, 28, 6)
-   love.graphics.setColor(1,1,1,1)
-   love.graphics.rectangle("fill", 200,300 + math.sin(boat_world_pos  + waveCounter * 2) * 5,500,200)
-   anotherWaveFunction(waveCounter, 400, 24, 10)
+   love.graphics.print(boat.world_pos, 10,10)
+
+   anotherWaveFunction(waveCounter, 350 + extraY/2, 28, 1.5)
+
+   foamFunction(waveCounter, 370+ extraY, 26, 2, 0, 200, boat.velocity/10 )
+   foamFunction(waveCounter, 380+ extraY, 25.5, 2, 0, 250, boat.velocity/5 )
+   foamFunction(waveCounter, 390+ extraY, 25, 2, 0, 300, boat.velocity/3)
+
+   love.graphics.setColor(4/255,0,90/255,1)
+   love.graphics.rectangle("fill", 200,300 + extraY,500,200)
+
+   anotherWaveFunction(waveCounter, 400+ extraY, 24, 3)
+
+   foamFunction(waveCounter, 405+ extraY, 24, 2, 0, 300, boat.velocity/2.5)
+   foamFunction(waveCounter, 415+ extraY, 24.5, 2, 0, 250, boat.velocity/4)
+   foamFunction(waveCounter, 425+ extraY, 25, 2, 0, 200, boat.velocity/8)
+
 end
