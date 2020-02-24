@@ -1,6 +1,6 @@
 require 'util'
 require 'poly'
-flux = require "flux"
+--flux = require "flux"
 
 
 function love.keypressed(key)
@@ -13,8 +13,6 @@ function love.keypressed(key)
    if key == 'right' then
       boat_velocity = boat_velocity + 1
    end
-
-
 end
 
 function love.load()
@@ -52,8 +50,6 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude)
       local y2 = middleY + math.sin(y) * amplitude
       coords[i*2 - 1] = x + wave_offsets[i]
       coords[i*2 ] = y2
-
-      --love.graphics.rectangle("fill", x, y2 , 5, 5)
    end
 
    --- drawing the filled wave
