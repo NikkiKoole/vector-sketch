@@ -27,7 +27,7 @@ function love.load()
    local endI = ((screenwidth+ 80)/20)
    wave_offsets = {}
    for i=1, endI do
-      table.insert(wave_offsets, love.math.random() * 10 - 5)
+      table.insert(wave_offsets, love.math.random() * 15 - 7.5)
    end
 end
 
@@ -78,7 +78,7 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude)
 
 end
 
-function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alpha)
+function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alpha, ydiff)
    local screenWidth = love.graphics.getWidth()
    local width = endX - startX
    local coords = {}
@@ -92,10 +92,13 @@ function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alph
       local y =  boat.world_pos + ((x2 / screenWidth) * math.pi * waves)
       local y2 = middleY + math.sin(y) * amplitude
       coords[i*2 - 1] = x + wave_offsets[i]
-      coords[i*2 ] = y2
+      coords[i*2 ] = y2 + ((i*ydiff*0.3)/endI)
+
 
       --love.graphics.rectangle("fill", x + wave_offsets[i], y2, 4,4)
    end
+
+
    love.graphics.setLineWidth(2 * (width/50) * math.sin(waveCounter*(width/50))/20)
    --love.graphics.setLineWidth(5)
    love.graphics.line(coords)
@@ -112,17 +115,17 @@ function love.draw()
 
    anotherWaveFunction(waveCounter, 350 + extraY/2, 28, 1.5)
 
-   foamFunction(waveCounter, 370+ extraY, 26, 2, 0, 200, boat.velocity/10 )
-   foamFunction(waveCounter, 380+ extraY, 25.5, 2, 0, 250, boat.velocity/5 )
-   foamFunction(waveCounter, 390+ extraY, 25, 2, 0, 300, boat.velocity/3)
+   foamFunction(waveCounter, 370+ extraY, 26, 2, 0, 200, boat.velocity/10, 20 )
+   foamFunction(waveCounter, 380+ extraY, 25.5, 2, 0, 250, boat.velocity/5, 15 )
+   foamFunction(waveCounter, 390+ extraY, 25, 2, 0, 300, boat.velocity/3, 5)
 
    love.graphics.setColor(4/255,0,90/255,1)
    love.graphics.rectangle("fill", 200,300 + extraY,500,200)
 
    anotherWaveFunction(waveCounter, 400+ extraY, 24, 3)
 
-   foamFunction(waveCounter, 405+ extraY, 24, 2, 0, 300, boat.velocity/2.5)
-   foamFunction(waveCounter, 415+ extraY, 24.5, 2, 0, 250, boat.velocity/4)
-   foamFunction(waveCounter, 425+ extraY, 25, 2, 0, 200, boat.velocity/8)
+   foamFunction(waveCounter, 405+ extraY, 24, 2, 0, 300, boat.velocity/2.5, -5)
+   foamFunction(waveCounter, 415+ extraY, 24.5, 2, 0, 250, boat.velocity/4, -15)
+   foamFunction(waveCounter, 425+ extraY, 25, 2, 0, 200, boat.velocity/8, -20)
 
 end
