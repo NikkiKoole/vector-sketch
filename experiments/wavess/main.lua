@@ -113,8 +113,26 @@ function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alph
       coords[i*2 ] = y2 + ((i*ydiff*0.3)/endI)
       --love.graphics.rectangle("fill", x + wave_offsets[i], y2, 4,4)
    end
+   --love.graphics.setLineStyle( 'rough')
 
-   love.graphics.setLineWidth((200-width)/50)
+--   love.graphics.setColor(1,1,1, 1)
+   -- local splits = {}
+   -- local index = 1
+   -- for i = 1, #coords-4,4 do
+   --    splits[index] = {coords[i], coords[i+1], coords[i+2], coords[i+3]}
+   --    if (coords[i+4] and coords[i+5]) then
+   -- 	 splits[index+1] = {coords[i+2], coords[i+3], coords[i+4], coords[i+5]}
+   --    end
+   --    index = index + 2
+   -- end
+   -- for i = 1, #splits do
+   --    love.graphics.setColor(1,1,1, 1.0 - (i/#splits))
+   --    --love.graphics.setLineWidth(#splits/(i*1.3))
+   --    love.graphics.line(splits[i])
+   -- end
+
+
+   --love.graphics.setLineWidth((200-width)/50)
    love.graphics.line(coords)
    love.graphics.setLineWidth(2)
 
