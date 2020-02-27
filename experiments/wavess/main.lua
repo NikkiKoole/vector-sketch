@@ -1,6 +1,9 @@
 require 'util'
 require 'poly'
 flux = require "flux"
+require 'main-utils'
+inspect = require 'inspect'
+
 
 
 function love.keypressed(key)
@@ -18,8 +21,8 @@ function love.keypressed(key)
 end
 
 function love.load()
-   local screenwidth = 1204
-   love.window.setMode(screenwidth, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
+   local screenwidth = 1024
+   --love.window.setMode(screenwidth, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
    boat = {
       velocity = 0,
       world_pos = 0
@@ -29,6 +32,19 @@ function love.load()
    for i=1, endI do
       table.insert(wave_offsets, love.math.random() * 6 - 3)
    end
+
+
+   root = {
+      folder = true,
+      name = 'root',
+      transforms =  {g={0,0,0,1,1,0,0},l={1024/2,700,0,1.25,1.25,0,0}},
+      children ={}
+   }
+   justboat = parseFile('justboat.txt')[1]
+   table.insert(root.children, justboat)
+   parentize(root)
+   meshAll(root)
+
 end
 
 
@@ -41,7 +57,7 @@ function love.update(dt)
 end
 
 
-function anotherWaveFunction(waveCounter, middleY, waves, amplitude)
+function anotherWaveFunction(waveCounter, middleY, waves, amplitude, alpha)
    local screenWidth = love.graphics.getWidth()
    local coords = {}
    local endI = ((screenWidth+ 80)/20)
@@ -64,7 +80,7 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude)
    table.insert(coords, lastY+1200)
    table.insert(coords, coords[1])
    table.insert(coords, coords[2])
-   love.graphics.setColor(0,0.4,0.58, 0.7)
+   love.graphics.setColor(0,0.4,0.58, alpha)
    local polys = decompose_complex_poly(coords, {})
     for i=1 , #polys do
        local p = polys[i]
@@ -98,49 +114,44 @@ function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alph
       --love.graphics.rectangle("fill", x + wave_offsets[i], y2, 4,4)
    end
 
-   -- local splits = {}
-   -- local index = 1
-   -- for i = 1, #coords-4,4 do
-   --    splits[index] = {coords[i], coords[i+1], coords[i+2], coords[i+3]}
-   --    if (coords[i+4] and coords[i+5]) then
-   -- 	 splits[index+1] = {coords[i+2], coords[i+3], coords[i+4], coords[i+5]}
-   --    end
-   --    index = index + 2
-   -- end
-   -- for i = 1, #splits do
-   --    love.graphics.setLineWidth(#splits/(i*1.3))
-   --    love.graphics.line(splits[i])
-   -- en
-
    love.graphics.setLineWidth((200-width)/50)
    love.graphics.line(coords)
+   love.graphics.setLineWidth(2)
 
 end
 
 
 
 function love.draw()
+   local waveAmplitude = 1
    local extraY = math.sin(boat.world_pos  + waveCounter * 2) * 2
+   local startY = 500
    love.graphics.clear(180/255, 211/255, 230/255)
-   love.graphics.print(boat.world_pos, 10,10)
 
-   anotherWaveFunction(waveCounter, 350 + extraY/2, 28, 1.5)
 
-   anotherWaveFunction(waveCounter, 375 + extraY/1.5, 26, 1.5)
+   anotherWaveFunction(waveCounter, startY + 50 + extraY/2, 32, .9 * waveAmplitude, 0.9)
+   anotherWaveFunction(waveCounter, startY + 65 + extraY/1.25, 29, 1.15 * waveAmplitude, 0.8)
+   anotherWaveFunction(waveCounter, startY + 85 + extraY/1.15, 28, 1.25 * waveAmplitude, 0.7)
 
-   foamFunction(waveCounter, 370+ extraY, 26, 2, 0, 200, boat.velocity/20, 30 )
-   foamFunction(waveCounter, 380+ extraY, 25.5, 2, 0, 250, boat.velocity/10, 20 )
-   foamFunction(waveCounter, 390+ extraY, 25, 2, 0, 300, boat.velocity/6, 5)
+   foamFunction(waveCounter, startY + 70+ extraY, 26, 2 * waveAmplitude , 0, 200, boat.velocity/20, 30 )
+   foamFunction(waveCounter, startY + 80+ extraY, 25.5, 2 * waveAmplitude, 0, 250, boat.velocity/10, 20 )
+   foamFunction(waveCounter, startY + 90+ extraY, 25, 2 * waveAmplitude, 0, 300, boat.velocity/6, 5)
 
-   love.graphics.setColor(4/255,0,90/255,1)
-   love.graphics.rectangle("fill", 200,300 + extraY,500,200)
 
-   anotherWaveFunction(waveCounter, 400+ extraY, 24, 3)
+   --love.graphics.setColor(4/255,0,90/255,1)
+   --love.graphics.rectangle("fill", 200,300 + extraY,700,200)
+   root.children[1].transforms.l[2] = 0 +  extraY
+   renderThings(root)
 
-   anotherWaveFunction(waveCounter, 425+ extraY, 21, 4)
+   anotherWaveFunction(waveCounter, startY+105+ extraY/0.9, 26, 1.5 * waveAmplitude, 0.4)
+   anotherWaveFunction(waveCounter, startY+135+ extraY/0.8, 24, 2.0 * waveAmplitude, 0.4)
+   anotherWaveFunction(waveCounter, startY+165+ extraY/0.7, 21, 2.5 * waveAmplitude, 0.4)
 
-   foamFunction(waveCounter, 405+ extraY, 24, 2, 0, 300, boat.velocity/6, -5)
-   foamFunction(waveCounter, 415+ extraY, 24.5, 2, 0, 250, boat.velocity/10, -20)
-   foamFunction(waveCounter, 425+ extraY, 25, 2, 0, 200, boat.velocity/20, -30)
+   foamFunction(waveCounter, startY+105+ extraY, 24, 2 * waveAmplitude, 0, 300, boat.velocity/6, -5)
+   foamFunction(waveCounter, startY+115+ extraY, 24.5, 2 * waveAmplitude, 0, 250, boat.velocity/10, -20)
+   foamFunction(waveCounter, startY+125+ extraY, 25, 2 * waveAmplitude, 0, 200, boat.velocity/20, -30)
+
+   love.graphics.setColor(0,0,0)
+   love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 
 end

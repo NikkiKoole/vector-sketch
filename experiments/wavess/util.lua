@@ -133,6 +133,7 @@ function makeVertices(shape)
    local vertices = {}
    if (shape.folder) then return end
    local points = shape.points
+
    if (#points >= 2 ) then
 
       local scale = 1
@@ -173,6 +174,9 @@ function makeVertices(shape)
    end
    return vertices
 end
+simple_format = {
+   {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+}
 
 function makeMeshFromVertices(vertices)
    if (vertices and vertices[1] and vertices[1][1]) then
