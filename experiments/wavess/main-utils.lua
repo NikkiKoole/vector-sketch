@@ -6,7 +6,6 @@ function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
       if (not root.children[i].folder) then
 	 if ( root.children[i].points) then
-
 	    root.children[i].mesh = makeMeshFromVertices(makeVertices(root.children[i]))
 	 end
       else
@@ -14,7 +13,6 @@ function meshAll(root) -- this needs to be done recursive
       end
    end
 end
-
 
 function getIndex(item)
    if (item) then
@@ -25,12 +23,39 @@ function getIndex(item)
    return -1
 end
 
-
-
 function parseFile(url)
    local contents, size = love.filesystem.read( url)
    local parsed = (loadstring("return ".. contents)())
    return parsed
+end
+
+
+
+function signT(p1, p2, p3)
+   return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
+end
+
+function pointInTriangle(p, t1, t2, t3)
+   local b1, b2, b3
+   b1 = signT(p, t1, t2) < 0.0
+   b2 = signT(p, t2, t3) < 0.0
+   b3 = signT(p, t3, t1) < 0.0
+
+   return ((b1 == b2) and (b2 == b3))
+end
+
+
+function isMouseInMesh(mx, my, transform, mesh)
+   local count = mesh:getVertexCount()
+   local px,py = transform:inverseTransformPoint(mx, my)
+   for i = 1, count, 3 do
+
+      if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
+	 return true
+      end
+
+   end
+   return false
 end
 
 
@@ -205,6 +230,7 @@ function renderThings(root)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
+   --print(root.name)
 
    if (root.keyframes) then
       if (root.keyframes == 2) then

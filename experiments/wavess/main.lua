@@ -59,7 +59,9 @@ function love.load()
    meshAll(root)
 
    schroef = findNodeByName(justboat, 'schroef')
-   print(schroef)
+
+   kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
+
 end
 
 function randomSign()
@@ -135,6 +137,26 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude, alpha)
 
 
 end
+
+
+function love.mousepressed(x,y)
+
+   local body = kajuitdeur.children[3]
+   local mesh = kajuitdeur.children[3].mesh
+   if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+      --print('kajuitdeur baby!')
+      --print(kajuitdeur.transforms.l[1])
+      if (kajuitdeur.transforms.l[1]  < - 400) then
+	 flux.to(kajuitdeur.transforms.l, .1, {[1]=-390.81})
+      else
+	 flux.to(kajuitdeur.transforms.l, .1, {[1]=-455})
+      end
+
+   end
+
+
+end
+
 
 function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alpha, ydiff)
    local screenWidth = love.graphics.getWidth()
