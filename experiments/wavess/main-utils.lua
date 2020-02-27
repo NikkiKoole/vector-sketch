@@ -1,5 +1,7 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
+
+-- was missing these
 function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
       if (not root.children[i].folder) then
@@ -33,6 +35,7 @@ end
 
 
 -- was missing these
+
 function findNodeByName(root, name)
    if (root.name == name) then
       return root
