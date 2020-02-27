@@ -144,14 +144,11 @@ function love.mousepressed(x,y)
    local body = kajuitdeur.children[3]
    local mesh = kajuitdeur.children[3].mesh
    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-      --print('kajuitdeur baby!')
-      --print(kajuitdeur.transforms.l[1])
       if (kajuitdeur.transforms.l[1]  < - 400) then
-	 flux.to(kajuitdeur.transforms.l, .1, {[1]=-390.81})
+	 flux.to(kajuitdeur.transforms.l, .3, {[1]=-390.81}):ease("circinout")
       else
-	 flux.to(kajuitdeur.transforms.l, .1, {[1]=-455})
+	 flux.to(kajuitdeur.transforms.l, .3, {[1]=-455}):ease("circinout")
       end
-
    end
 
 
