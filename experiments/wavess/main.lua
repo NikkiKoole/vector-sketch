@@ -70,21 +70,26 @@ function randomSign()
 end
 
 function updateFishes()
-
     for i = 1, #fishes.children do
-       fishes.children[i].transforms.l[1] =  fishes.children[i].transforms.l[1] +  fishes.children[i].velocity
-
+       fishes.children[i].transforms.l[1] =  fishes.children[i].transforms.l[1] +  fishes.children[i].velocity - (boat.velocity*0.1)
        if (fishes.children[i].transforms.l[1] > 1000 ) then
-	  fishes.children[i].velocity =  -1 * (0.25 + math.random() * 0.25)
-	  fishes.children[i].transforms.l[4] = 1
+	  if love.math.random() < 0.5 then
+	     fishes.children[i].transforms.l[1]  = -100
+	  else
+	     fishes.children[i].velocity =  -1 * (0.25 + math.random() * 0.25)
+	     fishes.children[i].transforms.l[4] = 1
+	  end
        end
        if (fishes.children[i].transforms.l[1] < -100) then
-	  fishes.children[i].velocity =  1 * (0.25 + math.random() * 0.25)
-	  fishes.children[i].transforms.l[4] = -1
+	  if love.math.random() < 0.5 then
+	      fishes.children[i].transforms.l[1]  = 1000
+	  else
+	     fishes.children[i].velocity =  1 * (0.25 + math.random() * 0.25)
+	     fishes.children[i].transforms.l[4] = -1
+	  end
        end
    end
 end
-
 
 
 local waveCounter = 0
