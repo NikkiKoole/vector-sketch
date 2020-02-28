@@ -95,9 +95,18 @@ end
 
 function updateRook()
    for i = 1, #rook do
+      rook[i].transforms.l[4] = 0.5
+      rook[i].transforms.l[5] = 0.5
+      rook[i].transforms.l[3] = 0
+      rook[i].children[1].color[4] = 1
+
       flux.to(rook[i].transforms.l, 2, {[4]=1, [5]=1, [3]=love.math.random() * math.pi}):ease("circout")
       flux.to(rook[i].children[1].color, 2, {[4]=0}):ease("circout")
    end
+
+
+   local d = {a=1}
+   flux.to(d, 3, {a=0}):oncomplete(updateRook)
 end
 
 
