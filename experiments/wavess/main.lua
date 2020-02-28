@@ -23,7 +23,7 @@ end
 
 function love.load()
    local screenwidth = 1024
-   --love.window.setMode(screenwidth, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
+
    boat = {
       velocity = 0,
       world_pos = 0
@@ -90,7 +90,16 @@ function love.load()
 
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
 
+   updateRook()
 end
+
+function updateRook()
+   for i = 1, #rook do
+      flux.to(rook[i].transforms.l, 2, {[4]=1, [5]=1, [3]=love.math.random() * math.pi}):ease("circout")
+      flux.to(rook[i].children[1].color, 2, {[4]=0}):ease("circout")
+   end
+end
+
 
 function randomSign()
    return love.math.random() < 0.5 and 1 or -1
