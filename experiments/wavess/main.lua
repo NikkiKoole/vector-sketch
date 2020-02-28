@@ -23,7 +23,7 @@ end
 
 function love.load()
    local screenwidth = 1024
-   --love.window.setMode(screenwidth, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
+
    boat = {
       velocity = 0,
       world_pos = 0
@@ -42,8 +42,33 @@ function love.load()
       children ={}
    }
 
+
+   wolken = parseFile('wolken.txt')
+   for i = 1, #wolken do
+      wolken[i].speedMultiplier = (1 + love.math.random()* 3) / 1000
+      wolken[i].transforms.l[1] = -500 + love.math.random() * 1024
+      wolken[i].transforms.l[2] = -500 + love.math.random()*100
+      wolken[i].children[1].color[4] = 0.25
+      wolken[i].children[2].color[4] = 0.25
+      table.insert(root.children, wolken[i])
+   end
+
    justboat = parseFile('justboat.txt')[1]
    table.insert(root.children, justboat)
+
+   rook = parseFile('rook.txt')
+   for i = 1, #rook do
+      rook[i].speedMultiplier = (1 + love.math.random()* 3) / 1000
+      rook[i].transforms.l[1] = -500 + love.math.random() * 1024
+      rook[i].transforms.l[2] = -500 + love.math.random()*100
+
+      rook[i].transforms.l[4] = 0.5
+      rook[i].transforms.l[5] = 0.5
+
+      rook[i].children[1].color[4] = 0.5
+
+      table.insert(root.children, rook[i])
+   end
 
    fishes = parseFile('visjes.txt')[1]
    for i = 1, #fishes.children do
@@ -55,6 +80,9 @@ function love.load()
    end
 
    table.insert(root.children, fishes)
+
+
+
    parentize(root)
    meshAll(root)
 
@@ -62,7 +90,25 @@ function love.load()
 
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
 
+   updateRook()
 end
+
+function updateRook()
+   for i = 1, #rook do
+      rook[i].transforms.l[4] = 0.5
+      rook[i].transforms.l[5] = 0.5
+      rook[i].transforms.l[3] = 0
+      rook[i].children[1].color[4] = 1
+
+      flux.to(rook[i].transforms.l, 2, {[4]=1, [5]=1, [3]=love.math.random() * math.pi}):ease("circout")
+      flux.to(rook[i].children[1].color, 2, {[4]=0}):ease("circout")
+   end
+
+
+   local d = {a=1}
+   flux.to(d, 3, {a=0}):oncomplete(updateRook)
+end
+
 
 function randomSign()
    return love.math.random() < 0.5 and 1 or -1
@@ -92,6 +138,25 @@ function updateFishes()
 end
 
 
+
+function updateWolken()
+
+    for i = 1, #wolken do
+       wolken[i].transforms.l[1] =  wolken[i].transforms.l[1] - boat.velocity* wolken[i].speedMultiplier
+
+       if ( wolken[i].transforms.l[1] < - 1000) then
+	  wolken[i].transforms.l[1] = 1300
+       end
+       if ( wolken[i].transforms.l[1] > 1300) then
+	  wolken[i].transforms.l[1] = -1000
+       end
+
+    end
+
+end
+
+
+
 local waveCounter = 0
 function love.update(dt)
 
@@ -101,6 +166,7 @@ function love.update(dt)
 
    schroef.transforms.l[3] = schroef.transforms.l[3] + (boat.velocity * dt * 2)
    updateFishes()
+   updateWolken()
 end
 
 
@@ -202,7 +268,7 @@ function love.draw()
    foamFunction(waveCounter, 90+startY+120+ extraY, 25, 2 * waveAmplitude, 0, 140, boat.velocity/20, -30)
 
 
-   root.children[1].transforms.l[2] = 0 +  extraY
+   justboat.transforms.l[2] = 0 +  extraY
    renderThings(root)
 
    anotherWaveFunction(waveCounter, startY+105+ extraY/0.9, 26, 1.5 * waveAmplitude, 0.4)
