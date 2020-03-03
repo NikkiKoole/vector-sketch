@@ -50,7 +50,7 @@ function love.load()
 
    wolken = parseFile('wolken.txt')
    for i = 1, #wolken do
-      wolken[i].speedMultiplier = (1 + love.math.random()* 3) / 1000
+      wolken[i].speedMultiplier = (1 + love.math.random()* 3) / 700
       wolken[i].transforms.l[1] = -500 + love.math.random() * 1024
       wolken[i].transforms.l[2] = -500 + love.math.random()*100
       wolken[i].children[1].color[4] = 0.25
@@ -92,11 +92,9 @@ function love.load()
    parentize(root)
    meshAll(root)
 
+   schoorsteentje = findNodeByName(justboat, 'schoorsteentje')
    schroef = findNodeByName(justboat, 'schroef')
-
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
-
-
 end
 
 
@@ -151,22 +149,22 @@ function updateWolken()
 end
 
 function doRookspawn()
+
+   flux.to(schoorsteentje.transforms.l, 0.2, {[5]=1.075}):after(schoorsteentje.transforms.l, 0.1, {[5]=1})
    local last = table.remove(rookEmitter)
    last.transforms.l[1] = -200
-   last.transforms.l[2] = -400
+   last.transforms.l[2] = -425
    last.transforms.l[4] = 0.5
    last.transforms.l[5] = 0.5
    last.transforms.l[3] = 0
    last.children[1].color[4] = 0.25
-
    flux.to(last.transforms.l, 4, {
-
 	      [2]=-600 + love.math.random()*100,
 	      [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
    flux.to(last.children[1].color, 2, {[4]=0}):ease("backinout")
-
    table.insert(rookEmitter, 1, last)
 end
+
 function updateRookParticles(dt)
    for i = 1, #rookEmitter do
       rookEmitter[i].transforms.l[1] = rookEmitter[i].transforms.l[1] +  -30*(boat.velocity * dt)
