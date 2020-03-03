@@ -73,7 +73,7 @@ function love.load()
    end
 
 
-   rookspawntimerTick = .4
+   rookspawntimerTick = 0
    rookspawntimer = rookspawntimerTick
 
 
@@ -160,12 +160,17 @@ function doRookspawn()
    last.children[1].color[4] = 0.25
 
    flux.to(last.transforms.l, 4, {
-	      [1]=-600 + love.math.random()*100,
+
 	      [2]=-600 + love.math.random()*100,
 	      [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
    flux.to(last.children[1].color, 2, {[4]=0}):ease("backinout")
 
    table.insert(rookEmitter, 1, last)
+end
+function updateRookParticles(dt)
+   for i = 1, #rookEmitter do
+      rookEmitter[i].transforms.l[1] = rookEmitter[i].transforms.l[1] +  -30*(boat.velocity * dt)
+   end
 end
 
 
@@ -179,12 +184,14 @@ function love.update(dt)
    schroef.transforms.l[3] = schroef.transforms.l[3] + (boat.velocity * dt * 2)
    updateFishes()
    updateWolken()
-
-   rookspawntimer = rookspawntimer - dt
-   if rookspawntimer <= 0 then
-      doRookspawn()
-      local leftover = math.abs(rookspawntimer)
-      rookspawntimer = rookspawntimerTick - leftover
+   updateRookParticles(dt)
+   if (rookspawntimerTick > 0) then
+      rookspawntimer = rookspawntimer - dt
+      if rookspawntimer <= 0 then
+	 doRookspawn()
+	 local leftover = math.abs(rookspawntimer)
+	 rookspawntimer = rookspawntimerTick - leftover
+      end
    end
 end
 
