@@ -12,14 +12,19 @@ function love.keypressed(key)
    end
    if key == 'left' then
       local newV = boat.velocity - 1
+      rookspawntimerTick = 2.0/boat.velocity
+      rookspawntimer = 0
       flux.to(boat, 1, {velocity=newV})
    end
    if key == 'right' then
       local newV = boat.velocity + 1
+      rookspawntimerTick = 2.0/boat.velocity
+      rookspawntimer = 0
       flux.to(boat, 1, {velocity=newV})
    end
-   --root.children[1].transforms.l[8] = boat.velocity/100
 end
+
+
 
 function love.load()
    local screenwidth = 1024
@@ -57,18 +62,21 @@ function love.load()
    table.insert(root.children, justboat)
 
    rook = parseFile('rook.txt')
-   for i = 1, #rook do
-      rook[i].speedMultiplier = (1 + love.math.random()* 3) / 1000
-      rook[i].transforms.l[1] = -500 + love.math.random() * 1024
-      rook[i].transforms.l[2] = -500 + love.math.random()*100
-
-      rook[i].transforms.l[4] = 0.5
-      rook[i].transforms.l[5] = 0.5
-
-      rook[i].children[1].color[4] = 0.5
-
-      table.insert(root.children, rook[i])
+   rookEmitter = {}
+   for j = 1, #rook*3 do
+      local i = math.ceil(j/3)
+      rook[i].children[1].color[4] = 0
+      table.insert(rookEmitter, deepcopy(rook[i]))
    end
+   for i = 1, #rookEmitter do
+      table.insert(root.children, rookEmitter[i])
+   end
+
+
+   rookspawntimerTick = .4
+   rookspawntimer = rookspawntimerTick
+
+
 
    fishes = parseFile('visjes.txt')[1]
    for i = 1, #fishes.children do
@@ -81,8 +89,6 @@ function love.load()
 
    table.insert(root.children, fishes)
 
-
-
    parentize(root)
    meshAll(root)
 
@@ -90,24 +96,13 @@ function love.load()
 
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
 
-   updateRook()
+
 end
 
-function updateRook()
-   for i = 1, #rook do
-      rook[i].transforms.l[4] = 0.5
-      rook[i].transforms.l[5] = 0.5
-      rook[i].transforms.l[3] = 0
-      rook[i].children[1].color[4] = 1
-
-      flux.to(rook[i].transforms.l, 2, {[4]=1, [5]=1, [3]=love.math.random() * math.pi}):ease("circout")
-      flux.to(rook[i].children[1].color, 2, {[4]=0}):ease("circout")
-   end
 
 
-   local d = {a=1}
-   flux.to(d, 3, {a=0}):oncomplete(updateRook)
-end
+
+
 
 
 function randomSign()
@@ -155,6 +150,23 @@ function updateWolken()
 
 end
 
+function doRookspawn()
+   local last = table.remove(rookEmitter)
+   last.transforms.l[1] = -200
+   last.transforms.l[2] = -400
+   last.transforms.l[4] = 0.5
+   last.transforms.l[5] = 0.5
+   last.transforms.l[3] = 0
+   last.children[1].color[4] = 0.25
+
+   flux.to(last.transforms.l, 4, {
+	      [1]=-600 + love.math.random()*100,
+	      [2]=-600 + love.math.random()*100,
+	      [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
+   flux.to(last.children[1].color, 2, {[4]=0}):ease("backinout")
+
+   table.insert(rookEmitter, 1, last)
+end
 
 
 local waveCounter = 0
@@ -167,6 +179,13 @@ function love.update(dt)
    schroef.transforms.l[3] = schroef.transforms.l[3] + (boat.velocity * dt * 2)
    updateFishes()
    updateWolken()
+
+   rookspawntimer = rookspawntimer - dt
+   if rookspawntimer <= 0 then
+      doRookspawn()
+      local leftover = math.abs(rookspawntimer)
+      rookspawntimer = rookspawntimerTick - leftover
+   end
 end
 
 
