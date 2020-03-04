@@ -12,16 +12,18 @@ function love.keypressed(key)
    end
    if key == 'left' then
       local newV = boat.velocity - 1
-      rookspawntimerTick = 2.0/boat.velocity
+      rookspawntimerTick = 1.5/boat.velocity
       rookspawntimer = 0
       flux.to(boat, 1, {velocity=newV})
    end
    if key == 'right' then
       local newV = boat.velocity + 1
-      rookspawntimerTick = 2.0/boat.velocity
+      rookspawntimerTick = 1.5/boat.velocity
       rookspawntimer = 0
       flux.to(boat, 1, {velocity=newV})
    end
+   justboat.transforms.l[8] = 0 + (boat.velocity/150)
+   print(1.0 + (boat.velocity/10000))
 end
 
 
@@ -63,12 +65,14 @@ function love.load()
 
    rook = parseFile('rook.txt')
    rookEmitter = {}
-   for j = 1, #rook*3 do
-      local i = math.ceil(j/3)
-      rook[i].children[1].color[4] = 0
-      table.insert(rookEmitter, deepcopy(rook[i]))
+
+   for j = 1, 3 do 
+      for i = 1, #rook do
+	 table.insert(rookEmitter, deepcopy(rook[i]))
+      end
    end
    for i = 1, #rookEmitter do
+      rookEmitter[i].children[1].color[4] = 0
       table.insert(root.children, rookEmitter[i])
    end
 
@@ -152,7 +156,7 @@ function doRookspawn()
 
    flux.to(schoorsteentje.transforms.l, 0.2, {[5]=1.075}):after(schoorsteentje.transforms.l, 0.1, {[5]=1})
    local last = table.remove(rookEmitter)
-   last.transforms.l[1] = -200
+   last.transforms.l[1] = -200 - (boat.velocity*2) -- the boat velocity and the skew of the boat cancel each other out
    last.transforms.l[2] = -425
    last.transforms.l[4] = 0.5
    last.transforms.l[5] = 0.5
