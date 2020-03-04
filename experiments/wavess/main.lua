@@ -24,7 +24,8 @@ function love.keypressed(key)
    end
    justboat.transforms.l[8] = 0 + (boat.velocity/150)
    walter.transforms.l[8] = 0 - (boat.velocity/150)
-
+   olivia.transforms.l[8] = 0 - (boat.velocity/150)
+   
 end
 
 function love.load()
@@ -281,7 +282,32 @@ function love.mousepressed(x,y)
    end
 
 
-   print(inspect(walter))
+   for i = 1, #walter.children do
+      if (walter.children[i].children) then
+	 if ( walter.children[i].children[1].points) then
+	    local body = walter.children[i].children[1]
+	    local mesh = body.mesh
+	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+	       flux.to(walter.transforms.l, .05, {[4]= walter.transforms.l[4] * -1}):ease("circinout")
+	    end
+	 end
+      end
+   end
+
+
+   for i = 1, #olivia.children do
+      if (olivia.children[i].children) then
+	 if ( olivia.children[i].children[1].points) then
+	    local body = olivia.children[i].children[1]
+	    local mesh = body.mesh
+	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+	       flux.to(olivia.transforms.l, .05, {[4]= olivia.transforms.l[4] * -1}):ease("circinout")
+	    end
+	 end
+      end
+   end
+   
+
 
 
 end
