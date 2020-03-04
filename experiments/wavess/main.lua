@@ -14,19 +14,18 @@ function love.keypressed(key)
       local newV = boat.velocity - 1
       rookspawntimerTick = 1.5/boat.velocity
       rookspawntimer = 0
-      flux.to(boat, 1, {velocity=newV})
+      flux.to(boat, 3, {velocity=newV})
    end
    if key == 'right' then
       local newV = boat.velocity + 1
       rookspawntimerTick = 1.5/boat.velocity
       rookspawntimer = 0
-      flux.to(boat, 1, {velocity=newV})
+      flux.to(boat, 3, {velocity=newV})
    end
    justboat.transforms.l[8] = 0 + (boat.velocity/150)
-   print(1.0 + (boat.velocity/10000))
+   walter.transforms.l[8] = 0 - (boat.velocity/150)
+
 end
-
-
 
 function love.load()
    local screenwidth = 1024
@@ -60,7 +59,7 @@ function love.load()
       table.insert(root.children, wolken[i])
    end
 
-   justboat = parseFile('justboat.txt')[1]
+   justboat = parseFile('justboat.polygons.txt')[1]
    table.insert(root.children, justboat)
 
    rook = parseFile('rook.txt')
@@ -93,15 +92,46 @@ function love.load()
 
    table.insert(root.children, fishes)
 
+   
+   waltert =  parseFile('waltert.polygons.txt')[1]
+   table.insert(root.children, waltert)
+
+   olivia = parseFile('olivia.polygons.txt')[1]
+   table.insert(root.children, olivia)
+
+   
    parentize(root)
    meshAll(root)
 
    schoorsteentje = findNodeByName(justboat, 'schoorsteentje')
    schroef = findNodeByName(justboat, 'schroef')
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
+   kajuitvoor = findNodeByName(justboat, 'kajuit voor')
+   --
+   local w = table.remove(root.children, getIndex(waltert))
+   w.transforms.l[1]= -300
+   w.transforms.l[2]= 200
+   addAfterNode(w, kajuitvoor)
+
+   local o = table.remove(root.children, getIndex(olivia))
+   o.transforms.l[1]= -100
+   o.transforms.l[2]= 200
+   addAfterNode(o, kajuitvoor)
+   
+   walter = findNodeByName(justboat, 'walter de walrus')
 end
 
 
+function addAfterNode(element, after)
+   element._parent = after._parent
+   table.insert(after._parent.children, getIndex(after), element)
+   --addAfterNode(element, after)
+   
+   --print(getIndex(after))
+   --element._parent = after._parent
+   --table.insert(after._parent.children, getIndex(after)+1, element)
+   
+end
 
 
 
@@ -249,6 +279,9 @@ function love.mousepressed(x,y)
 	 flux.to(kajuitdeur.transforms.l, .3, {[1]=-455}):ease("circinout")
       end
    end
+
+
+   print(inspect(walter))
 
 
 end
