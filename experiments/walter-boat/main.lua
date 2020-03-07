@@ -22,9 +22,10 @@ function love.keypressed(key)
       rookspawntimer = 0
       flux.to(boat, 3, {velocity=newV})
    end
-   justboat.transforms.l[8] = 0 + (boat.velocity/150)
-   walter.transforms.l[8] = 0 - (boat.velocity/150)
-   olivia.transforms.l[8] = 0 - (boat.velocity/150)
+   justboat.transforms.l[8] = 0 + (boat.velocity/15)
+
+   walter.transforms.l[8] = 0 - (boat.velocity/15) * walter.transforms.l[4]  -- when mirrored it needs to be skewed the other way
+   olivia.transforms.l[8] = 0 - (boat.velocity/15) * olivia.transforms.l[4] -- "
    
 end
 
@@ -94,8 +95,8 @@ function love.load()
    table.insert(root.children, fishes)
 
    
-   waltert =  parseFile('assets/waltert.polygons.txt')[1]
-   table.insert(root.children, waltert)
+   walter =  parseFile('assets/waltert.polygons.txt')[1]
+   table.insert(root.children, walter)
 
    olivia = parseFile('assets/olivia.polygons.txt')[1]
    table.insert(root.children, olivia)
@@ -109,17 +110,20 @@ function love.load()
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
    kajuitvoor = findNodeByName(justboat, 'kajuit voor')
    --
-   local w = removeNodeFrom(waltert, root)
-   w.transforms.l[1]= -300
-   w.transforms.l[2]= 200
-   addAfterNode(w, kajuitvoor)
 
-   local o = removeNodeFrom(olivia, root)
+    local o = removeNodeFrom(olivia, root)
    o.transforms.l[1]= -100
    o.transforms.l[2]= 200
    addAfterNode(o, kajuitvoor)
    
-   walter = findNodeByName(justboat, 'walter de walrus')
+   local w = removeNodeFrom(walter, root)
+   w.transforms.l[1]= -300
+   w.transforms.l[2]= 200
+   addAfterNode(w, kajuitvoor)
+
+  
+   
+   --walter = findNodeByName(justboat, 'walter de walrus')
 end
 
 
@@ -271,8 +275,15 @@ function love.mousepressed(x,y)
 	 if ( walter.children[i].children[1].points) then
 	    local body = walter.children[i].children[1]
 	    local mesh = body.mesh
+	    
+	    
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-	       flux.to(walter.transforms.l, .05, {[4]= walter.transforms.l[4] * -1}):ease("circinout")
+	       flux.to(walter.transforms.l, .05,
+		       {
+			  [4]= walter.transforms.l[4] * -1,
+			  [8]=0 - (boat.velocity/15) * (walter.transforms.l[4]*-1)
+		       }
+	       ):ease("circinout")
 	    end
 	 end
       end
@@ -284,8 +295,13 @@ function love.mousepressed(x,y)
 	 if ( olivia.children[i].children[1].points) then
 	    local body = olivia.children[i].children[1]
 	    local mesh = body.mesh
+
+
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-	       flux.to(olivia.transforms.l, .05, {[4]= olivia.transforms.l[4] * -1}):ease("circinout")
+	       flux.to(olivia.transforms.l, .05, {
+			  [4]= olivia.transforms.l[4] * -1,
+			  [8]=0 - (boat.velocity/15) * (olivia.transforms.l[4]*-1)
+	       }):ease("circinout")
 	    end
 	 end
       end
