@@ -10,7 +10,13 @@ end
 
    
 
--- scene graph related 
+-- scene graph related
+
+function addNodeInGroup(node, group)
+   node._parent = group
+   table.insert(group.children, node)
+end
+
 function addAfterNode(element, after)
    element._parent = after._parent
    table.insert(after._parent.children, getIndex(after), element)

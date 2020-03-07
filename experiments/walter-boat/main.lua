@@ -54,6 +54,14 @@ function love.load()
       children ={}
    }
 
+   overlayer = {
+      folder = true,
+      name = 'overLayer',
+      transforms =  {g={0,0,0,1,1,0,0},l={1024/2,650,0,1.25,1.25,0,0}},
+      children ={}
+   }
+
+
 
    wolken = parseFile('assets/wolken.polygons.txt')
    for i = 1, #wolken do
@@ -110,7 +118,8 @@ function love.load()
    
    parentize(root)
    meshAll(root)
-
+   parentize(overlayer)
+   
    schoorsteentje = findNodeByName(justboat, 'schoorsteentje')
    schroef = findNodeByName(justboat, 'schroef')
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
@@ -267,7 +276,11 @@ function love.mousemoved(x,y,dx,dy)
 end
 
 function love.mousereleased()
-   dragged = nil
+   if (dragged) then
+      --removeNodeFrom(dragged, dragged._parent)
+      --addNodeInGroup(dragged, kajuitvoor)
+      dragged = nil
+      end
 end
 
 
@@ -293,6 +306,21 @@ function love.mousepressed(x,y)
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
 
 	       dragged = walter
+	       -- TODO figure out how to get it at the same location in another container
+	       local gx, gy = walter._globalTransform:inverseTransformPoint(0,0)
+	       print('todo')
+	       print('walterlayer', gx, gy)
+	       --print(gx,gy)
+	       removeNodeFrom(walter, walter._parent)
+
+	       --walter.transforms.l[1] = walter.transforms.l[1]  + 225
+	       --walter.transforms.l[2] = walter.transforms.l[2]  - 225
+	       --print(walter.transforms.l[1]  + 250, walter.transforms.l[1] ,250, gx)
+
+
+	       local gx2, gy2 = overlayer._globalTransform:inverseTransformPoint(0,0)
+	       print('overlayer', gx2, gy2)
+	       addNodeInGroup(walter, overlayer)
 
 	       flux.to(walter.transforms.l, .05,
 	       	       {
@@ -377,6 +405,8 @@ function love.draw()
 
    anotherWaveFunction(waveCounter, startY+105+ extraY/0.9, 26, 1.5 * waveAmplitude, 0.4)
    anotherWaveFunction(waveCounter, startY+135+ extraY/0.8, 24, 2.0 * waveAmplitude, 0.4)
+
+   renderThings(overlayer)
    anotherWaveFunction(waveCounter, startY+165+ extraY/0.7, 21, 2.5 * waveAmplitude, 0.4)
 
    love.graphics.setColor(0,0,0)
