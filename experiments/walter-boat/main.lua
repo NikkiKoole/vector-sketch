@@ -4,6 +4,9 @@ flux = require "flux"
 require 'main-utils'
 inspect = require 'inspect'
 
+function herman()
+   return  (boat.velocity/150)
+end
 
 
 function love.keypressed(key)
@@ -22,10 +25,10 @@ function love.keypressed(key)
       rookspawntimer = 0
       flux.to(boat, 3, {velocity=newV})
    end
-   justboat.transforms.l[8] = 0 + (boat.velocity/15)
 
-   walter.transforms.l[8] = 0 - (boat.velocity/15) * walter.transforms.l[4]  -- when mirrored it needs to be skewed the other way
-   olivia.transforms.l[8] = 0 - (boat.velocity/15) * olivia.transforms.l[4] -- "
+   justboat.transforms.l[8] = 0 + (herman())
+   walter.transforms.l[8] = 0 - (herman()) * walter.transforms.l[4]  -- when mirrored it needs to be skewed the other way
+   olivia.transforms.l[8] = 0 - (herman()) * olivia.transforms.l[4] -- "
    
 end
 
@@ -42,6 +45,7 @@ function love.load()
       table.insert(wave_offsets, love.math.random() * 6 - 3)
    end
 
+   dragged = nil
 
    root = {
       folder = true,
@@ -66,6 +70,9 @@ function love.load()
 
    rook = parseFile('assets/rook.polygons.txt')
    rookEmitter = {}
+   rookspawntimerTick = 0
+   rookspawntimer = rookspawntimerTick
+   
 
    for j = 1, 3 do 
       for i = 1, #rook do
@@ -78,8 +85,7 @@ function love.load()
    end
 
 
-   rookspawntimerTick = 0
-   rookspawntimer = rookspawntimerTick
+   
 
 
 
@@ -111,7 +117,7 @@ function love.load()
    kajuitvoor = findNodeByName(justboat, 'kajuit voor')
    --
 
-    local o = removeNodeFrom(olivia, root)
+   local o = removeNodeFrom(olivia, root)
    o.transforms.l[1]= -100
    o.transforms.l[2]= 200
    addAfterNode(o, kajuitvoor)
@@ -121,14 +127,7 @@ function love.load()
    w.transforms.l[2]= 200
    addAfterNode(w, kajuitvoor)
 
-  
-   
-   --walter = findNodeByName(justboat, 'walter de walrus')
 end
-
-
-
-
 
 
 function updateFishes()
@@ -159,14 +158,12 @@ function updateWolken()
 
     for i = 1, #wolken do
        wolken[i].transforms.l[1] =  wolken[i].transforms.l[1] - boat.velocity* wolken[i].speedMultiplier
-
        if ( wolken[i].transforms.l[1] < - 1000) then
 	  wolken[i].transforms.l[1] = 1300
        end
        if ( wolken[i].transforms.l[1] > 1300) then
 	  wolken[i].transforms.l[1] = -1000
        end
-
     end
 
 end
@@ -257,6 +254,22 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude, alpha)
 end
 
 
+function love.mousemoved(x,y,dx,dy)
+   if (dragged) then
+     -- if (dragged == walter) then
+	 local ddx, ddy = dragged._parent._globalTransform:inverseTransformPoint(dx,dy)
+	 local cx, cy = dragged._parent._globalTransform:inverseTransformPoint(0,0)
+	 dragged.transforms.l[1] = dragged.transforms.l[1] + ddx-cx
+	 dragged.transforms.l[2] = dragged.transforms.l[2] + ddy-cy
+     -- end
+      
+   end
+   
+end
+
+function love.mousereleased()
+dragged = nil
+end
 function love.mousepressed(x,y)
 
    local body = kajuitdeur.children[3]
@@ -276,13 +289,15 @@ function love.mousepressed(x,y)
 	    local body = walter.children[i].children[1]
 	    local mesh = body.mesh
 	    
-	    
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+
+	       dragged = walter
+
 	       flux.to(walter.transforms.l, .05,
-		       {
-			  [4]= walter.transforms.l[4] * -1,
-			  [8]=0 - (boat.velocity/15) * (walter.transforms.l[4]*-1)
-		       }
+	       	       {
+	       		  [4]= walter.transforms.l[4] * -1,
+	       		  [8]=0 - (herman()) * (walter.transforms.l[4]*-1)
+	       	       }
 	       ):ease("circinout")
 	    end
 	 end
@@ -298,9 +313,10 @@ function love.mousepressed(x,y)
 
 
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+	       dragged = olivia
 	       flux.to(olivia.transforms.l, .05, {
-			  [4]= olivia.transforms.l[4] * -1,
-			  [8]=0 - (boat.velocity/15) * (olivia.transforms.l[4]*-1)
+	       		  [4]= olivia.transforms.l[4] * -1,
+	       		  [8]=0 - (herman()) * (olivia.transforms.l[4]*-1)
 	       }):ease("circinout")
 	    end
 	 end
