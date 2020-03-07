@@ -1,5 +1,15 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
+
+function getLocalizedDelta(element, dx, dy)
+   local x1,y1 = element._parent._globalTransform:inverseTransformPoint(dx,dy)
+   local x0, y0 = element._parent._globalTransform:inverseTransformPoint(0,0)
+
+   return x1-x0, y1-y0
+end
+
+   
+
 -- scene graph related 
 function addAfterNode(element, after)
    element._parent = after._parent
@@ -10,7 +20,6 @@ function removeNodeFrom(element, from)
    assert(getIndex(element))
    return table.remove(from.children, getIndex(element))
 end
-
 -- end scene garph related
 
 -- was missing these

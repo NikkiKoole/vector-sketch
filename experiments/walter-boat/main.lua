@@ -256,20 +256,21 @@ end
 
 function love.mousemoved(x,y,dx,dy)
    if (dragged) then
-     -- if (dragged == walter) then
-	 local ddx, ddy = dragged._parent._globalTransform:inverseTransformPoint(dx,dy)
-	 local cx, cy = dragged._parent._globalTransform:inverseTransformPoint(0,0)
-	 dragged.transforms.l[1] = dragged.transforms.l[1] + ddx-cx
-	 dragged.transforms.l[2] = dragged.transforms.l[2] + ddy-cy
-     -- end
+      -- if (dragged == walter) then
+      local dx2, dy2 = getLocalizedDelta(dragged, dx,dy)
+      dragged.transforms.l[1] = dragged.transforms.l[1] + dx2
+      dragged.transforms.l[2] = dragged.transforms.l[2] + dy2
+      -- end
       
    end
    
 end
 
 function love.mousereleased()
-dragged = nil
+   dragged = nil
 end
+
+
 function love.mousepressed(x,y)
 
    local body = kajuitdeur.children[3]
