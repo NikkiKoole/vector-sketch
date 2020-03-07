@@ -1,5 +1,17 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
+-- scene graph related 
+function addAfterNode(element, after)
+   element._parent = after._parent
+   table.insert(after._parent.children, getIndex(after), element)
+end
+
+function removeNodeFrom(element, from)
+   assert(getIndex(element))
+   return table.remove(from.children, getIndex(element))
+end
+
+-- end scene garph related
 
 -- was missing these
 function meshAll(root) -- this needs to be done recursive

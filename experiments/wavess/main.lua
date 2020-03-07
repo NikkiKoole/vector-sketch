@@ -50,7 +50,7 @@ function love.load()
    }
 
 
-   wolken = parseFile('wolken.txt')
+   wolken = parseFile('assets/wolken.polygons.txt')
    for i = 1, #wolken do
       wolken[i].speedMultiplier = (1 + love.math.random()* 3) / 700
       wolken[i].transforms.l[1] = -500 + love.math.random() * 1024
@@ -60,10 +60,10 @@ function love.load()
       table.insert(root.children, wolken[i])
    end
 
-   justboat = parseFile('justboat.polygons.txt')[1]
+   justboat = parseFile('assets/justboat.polygons.txt')[1]
    table.insert(root.children, justboat)
 
-   rook = parseFile('rook.txt')
+   rook = parseFile('assets/rook.polygons.txt')
    rookEmitter = {}
 
    for j = 1, 3 do 
@@ -82,7 +82,7 @@ function love.load()
 
 
 
-   fishes = parseFile('visjes.txt')[1]
+   fishes = parseFile('assets/visjes.polygons.txt')[1]
    for i = 1, #fishes.children do
       local dir = randomSign()
       fishes.children[i].velocity =  dir  * (0.25 + math.random() * 0.25)
@@ -94,10 +94,10 @@ function love.load()
    table.insert(root.children, fishes)
 
    
-   waltert =  parseFile('waltert.polygons.txt')[1]
+   waltert =  parseFile('assets/waltert.polygons.txt')[1]
    table.insert(root.children, waltert)
 
-   olivia = parseFile('olivia.polygons.txt')[1]
+   olivia = parseFile('assets/olivia.polygons.txt')[1]
    table.insert(root.children, olivia)
 
    
@@ -109,12 +109,12 @@ function love.load()
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
    kajuitvoor = findNodeByName(justboat, 'kajuit voor')
    --
-   local w = table.remove(root.children, getIndex(waltert))
+   local w = removeNodeFrom(waltert, root)
    w.transforms.l[1]= -300
    w.transforms.l[2]= 200
    addAfterNode(w, kajuitvoor)
 
-   local o = table.remove(root.children, getIndex(olivia))
+   local o = removeNodeFrom(olivia, root)
    o.transforms.l[1]= -100
    o.transforms.l[2]= 200
    addAfterNode(o, kajuitvoor)
@@ -123,25 +123,9 @@ function love.load()
 end
 
 
-function addAfterNode(element, after)
-   element._parent = after._parent
-   table.insert(after._parent.children, getIndex(after), element)
-   --addAfterNode(element, after)
-   
-   --print(getIndex(after))
-   --element._parent = after._parent
-   --table.insert(after._parent.children, getIndex(after)+1, element)
-   
-end
 
 
 
-
-
-function randomSign()
-   return love.math.random() < 0.5 and 1 or -1
-
-end
 
 function updateFishes()
     for i = 1, #fishes.children do

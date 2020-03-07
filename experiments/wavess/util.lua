@@ -8,6 +8,10 @@ function lerp(a, b, amount)
 end
 
 
+function randomSign()
+   return love.math.random() < 0.5 and 1 or -1
+end
+
 function deepcopy(orig)
     local orig_type = type(orig)
     local copy
