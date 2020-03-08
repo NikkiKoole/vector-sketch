@@ -92,11 +92,6 @@ function love.load()
       table.insert(root.children, rookEmitter[i])
    end
 
-
-   
-
-
-
    fishes = parseFile('assets/visjes.polygons.txt')[1]
    for i = 1, #fishes.children do
       local dir = randomSign()
@@ -132,8 +127,8 @@ function love.load()
    addAfterNode(o, kajuitvoor)
    
    local w = removeNodeFrom(walter, root)
-   w.transforms.l[1]= -300
-   w.transforms.l[2]= 200
+   w.transforms.l[1]= 0
+   w.transforms.l[2]= 0
    addAfterNode(w, kajuitvoor)
 
 end
@@ -306,21 +301,28 @@ function love.mousepressed(x,y)
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
 
 	       dragged = walter
+	       -- what is the screen position of walter ?
+	       
+
+	       
 	       -- TODO figure out how to get it at the same location in another container
-	       local gx, gy = walter._globalTransform:inverseTransformPoint(0,0)
-	       print('todo')
-	       print('walterlayer', gx, gy)
+	       --local a,b,c,d,e,f,g,h,i,j,k,l  = walter._globalTransform:getMatrix()
+	       --print(a,b,c,d,e,f,g,h,i,j,k,l)
+	       --print(walter.transforms.l[1], walter.transforms.l[2] )
+	       print(walter._localTransform:transformPoint(0,0))
+	       --print('todo')
+	       --print('walterlayer', gx, gy)
 	       --print(gx,gy)
-	       removeNodeFrom(walter, walter._parent)
+	       --removeNodeFrom(walter, walter._parent)
 
 	       --walter.transforms.l[1] = walter.transforms.l[1]  + 225
 	       --walter.transforms.l[2] = walter.transforms.l[2]  - 225
 	       --print(walter.transforms.l[1]  + 250, walter.transforms.l[1] ,250, gx)
 
 
-	       local gx2, gy2 = overlayer._globalTransform:inverseTransformPoint(0,0)
-	       print('overlayer', gx2, gy2)
-	       addNodeInGroup(walter, overlayer)
+	       --local gx2, gy2 = overlayer._globalTransform:inverseTransformPoint(0,0)
+	       --print('overlayer', gx2, gy2)
+	       --addNodeInGroup(walter, overlayer)
 
 	       flux.to(walter.transforms.l, .05,
 	       	       {

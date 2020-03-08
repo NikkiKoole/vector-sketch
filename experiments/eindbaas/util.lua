@@ -7,6 +7,7 @@ function lerp(a, b, amount)
   return a + (b - a) * clamp(amount, 0, 1)
 end
 
+
 function randomSign()
    return love.math.random() < 0.5 and 1 or -1
 end
