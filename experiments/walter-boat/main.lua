@@ -272,7 +272,7 @@ end
 
 function love.mousereleased()
    if (dragged) then
-      moveNodeBetweenParentsAndPosition(walter, kajuitvoor)
+      moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
       dragged = nil
       end
 end
@@ -294,6 +294,30 @@ function moveNodeBetweenParentsAndPosition(node, newParent)
 end
 
 
+function recursiveHitCheck(x,y, node)
+   -- you want to check the first child IF IT HAS POINTS
+
+   if node.points then
+      local body = node
+      local mesh = body.mesh
+      if (body and mesh) then
+	 if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+	    return true
+	 end
+      end
+   else
+      if node.children then
+	 for i = 1, #node.children do
+	    local r =  recursiveHitCheck(x,y, node.children[i])
+	    if r then return true end
+	 end
+      end
+   end
+   return false
+
+end
+
+
 function love.mousepressed(x,y)
 
    local body = kajuitdeur.children[3]
@@ -305,52 +329,29 @@ function love.mousepressed(x,y)
 	 flux.to(kajuitdeur.transforms.l, .3, {[1]=-455}):ease("circinout")
       end
    end
-
-   -- todo extract this to some general usage function
-   for i = 1, #walter.children[1].children do
-      if (walter.children[1].children[i].children) then
-	 if ( walter.children[1].children[i].children[1].points) then
-	    local body = walter.children[1].children[i].children[1]
-	    local mesh = body.mesh
-	    
-	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-
-	       dragged = walter
-	       moveNodeBetweenParentsAndPosition(walter, overlayer)
-
-
-	       flux.to(walter.children[1].transforms.l, .05,
-	       	       {
-	       		  [4]= walter.children[1].transforms.l[4] * -1,
-	       		  [8]=0 - (herman()) * (walter.children[1].transforms.l[4]*-1)
-	       	       }
-	       ):ease("circinout")
-	    end
-	 end
-      end
-   end
-
-
-   for i = 1, #olivia.children do
-      if (olivia.children[i].children) then
-	 if ( olivia.children[i].children[1].points) then
-	    local body = olivia.children[i].children[1]
-	    local mesh = body.mesh
-
-
-	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-	       dragged = olivia
-	       flux.to(olivia.transforms.l, .05, {
-	       		  [4]= olivia.transforms.l[4] * -1,
-	       		  [8]=0 - (herman()) * (olivia.transforms.l[4]*-1)
-	       }):ease("circinout")
-	    end
-	 end
-      end
+   
+   if recursiveHitCheck(x,y, walter) then
+      dragged = walter
+      moveNodeBetweenParentsAndPosition(walter, overlayer)
+      flux.to(walter.children[1].transforms.l, .05,
+	      {
+		 [4]= walter.children[1].transforms.l[4] * -1,
+		 [8]=0 - (herman()) * (walter.children[1].transforms.l[4]*-1)
+	      }
+      ):ease("circinout")
    end
    
-
-
+   if recursiveHitCheck(x,y, olivia) then
+      dragged = olivia
+      moveNodeBetweenParentsAndPosition(olivia, overlayer)
+       flux.to(olivia.children[1].transforms.l, .05,
+	      {
+		 [4]= olivia.children[1].transforms.l[4] * -1,
+		 [8]=0 - (herman()) * (olivia.children[1].transforms.l[4]*-1)
+	      }
+      ):ease("circinout")
+      
+   end
 
 end
 
