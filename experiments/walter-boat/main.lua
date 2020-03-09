@@ -127,8 +127,8 @@ function love.load()
    addAfterNode(o, kajuitvoor)
    
    local w = removeNodeFrom(walter, root)
-   w.transforms.l[1]= 0
-   w.transforms.l[2]= 0
+   w.transforms.l[1]= -200
+   w.transforms.l[2]= 200
    addAfterNode(w, kajuitvoor)
 
 end
@@ -272,10 +272,25 @@ end
 
 function love.mousereleased()
    if (dragged) then
-      --removeNodeFrom(dragged, dragged._parent)
-      --addNodeInGroup(dragged, kajuitvoor)
+      moveNodeBetweenParentsAndPosition(walter, kajuitvoor)
       dragged = nil
       end
+end
+
+
+function moveNodeBetweenParentsAndPosition(node, newParent)
+   -- this will keep the position intact
+   
+   local x1,y1 = node._globalTransform:transformPoint(0,0)
+   removeNodeFrom(node, node._parent)
+   addNodeInGroup(node, newParent)
+   renderThings(newParent)
+   local x2,y2 = node._globalTransform:transformPoint(0,0)
+   local dx, dy = x1-x2, y1-y2
+   local x0,y0 = node._globalTransform:inverseTransformPoint(0,0)
+   local dx1, dy1 =  node._globalTransform:inverseTransformPoint(dx,dy)
+   node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
+   node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
 end
 
 
@@ -291,43 +306,23 @@ function love.mousepressed(x,y)
       end
    end
 
-
-   for i = 1, #walter.children do
-      if (walter.children[i].children) then
-	 if ( walter.children[i].children[1].points) then
-	    local body = walter.children[i].children[1]
+   -- todo extract this to some general usage function
+   for i = 1, #walter.children[1].children do
+      if (walter.children[1].children[i].children) then
+	 if ( walter.children[1].children[i].children[1].points) then
+	    local body = walter.children[1].children[i].children[1]
 	    local mesh = body.mesh
 	    
 	    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
 
 	       dragged = walter
-	       -- what is the screen position of walter ?
-	       
-
-	       
-	       -- TODO figure out how to get it at the same location in another container
-	       --local a,b,c,d,e,f,g,h,i,j,k,l  = walter._globalTransform:getMatrix()
-	       --print(a,b,c,d,e,f,g,h,i,j,k,l)
-	       --print(walter.transforms.l[1], walter.transforms.l[2] )
-	       print(walter._localTransform:transformPoint(0,0))
-	       --print('todo')
-	       --print('walterlayer', gx, gy)
-	       --print(gx,gy)
-	       --removeNodeFrom(walter, walter._parent)
-
-	       --walter.transforms.l[1] = walter.transforms.l[1]  + 225
-	       --walter.transforms.l[2] = walter.transforms.l[2]  - 225
-	       --print(walter.transforms.l[1]  + 250, walter.transforms.l[1] ,250, gx)
+	       moveNodeBetweenParentsAndPosition(walter, overlayer)
 
 
-	       --local gx2, gy2 = overlayer._globalTransform:inverseTransformPoint(0,0)
-	       --print('overlayer', gx2, gy2)
-	       --addNodeInGroup(walter, overlayer)
-
-	       flux.to(walter.transforms.l, .05,
+	       flux.to(walter.children[1].transforms.l, .05,
 	       	       {
-	       		  [4]= walter.transforms.l[4] * -1,
-	       		  [8]=0 - (herman()) * (walter.transforms.l[4]*-1)
+	       		  [4]= walter.children[1].transforms.l[4] * -1,
+	       		  [8]=0 - (herman()) * (walter.children[1].transforms.l[4]*-1)
 	       	       }
 	       ):ease("circinout")
 	    end
