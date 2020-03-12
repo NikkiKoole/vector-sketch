@@ -322,24 +322,30 @@ end
 function love.mousereleased()
    if (dragged) then
 
-      --if nodeIsAboveOtherNode(dragged,bootdek ) then
-      --end
       if elemIsAboveAnother(dragged, bootdak) then
-	 print("bootdak here i come!")
 	 moveNodeBetweenParentsAndPosition(dragged, bootdak)
-	 flux.to(dragged.transforms.l, .3, {[2]=20}):ease("circin")
+	 local dist = math.abs(dragged.transforms.l[2] - 20)
+	 local d = dist/800
+	 flux.to(dragged.transforms.l, d, {[2]=20}):ease("circin")
       elseif elemIsAboveAnother(dragged, bootdek) then
-	 print("bootdek here i come!")
-	 -- kajuitdeur and kajouitvoor to toggle in and out the kajuit...
 	 moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
-	 flux.to(dragged.transforms.l, .3, {[2]=200}):ease("circin")
+	 -- when the x < - 200 the deck is a bit lower
+	 local offset = 200
+	 if dragged.transforms.l[1] < - 200 then
+	    offset = 230
+	 end
+	 if dragged.transforms.l[1] < - 530 then
+	    offset = 200
+	 end
+	 
+	 local dist = math.abs(dragged.transforms.l[2] - 200)
+	 local d = dist/800
+	 flux.to(dragged.transforms.l, d, {[2]=offset}):ease("circin")
       else
-	 print('sea here i come')
 	 moveNodeBetweenParentsAndPosition(dragged, overlayer)
 	 local dist = math.abs(dragged.transforms.l[2] - 50)
-	 flux.to(dragged.transforms.l, .3, {[2]=50}):ease("circin")
-
---	 print(overlayer._globalTransform:transformPoint(0,0))
+	 local d = dist/800
+	 flux.to(dragged.transforms.l, d, {[2]=50}):ease("backout")
       end
       
 
