@@ -1,3 +1,4 @@
+require 'basics'
 require 'util'
 require 'poly'
 flux = require "flux"
@@ -119,6 +120,8 @@ function love.load()
    schroef = findNodeByName(justboat, 'schroef')
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
    kajuitvoor = findNodeByName(justboat, 'kajuit voor')
+   bootdak = findNodeByName(justboat, 'dak')
+   bootdek = findNodeByName(justboat, 'dek')
    --
 
    local o = removeNodeFrom(olivia, root)
@@ -270,8 +273,40 @@ function love.mousemoved(x,y,dx,dy)
    
 end
 
+
+function bboxOfPoints(points)
+   local smallestX =  math.huge
+   local largestX  = -math.huge
+   local smallestY =  math.huge
+   local largestY  = -math.huge
+
+   for i = 1, #points do
+      if points[i][1] < smallestX then
+	 smallestX = points[i][1] 
+      end
+      if points[i][1] > largestX then
+	 largestX = points[i][1] 
+      end
+      if points[i][2] < smallestY then
+	 smallestY = points[i][2] 
+      end
+      if points[i][2] > largestY then
+	 largestY = points[i][2] 
+      end
+   end
+
+   return {smallestX, smallestY},{largestX, largestY}
+end
+
+
 function love.mousereleased()
    if (dragged) then
+      -- figure out if you should go to the overlayer or to another layer.
+      local tl, br = bboxOfPoints(bootdek.children[1].points)
+      print(inspect(tl), inspect(br))
+      print(bootdek._globalTransform:transformPoint(tl[1], tl[2]))
+      print(bootdek._globalTransform:transformPoint(br[1], br[2]))
+      print(dragged._globalTransform:transformPoint(0,0))
       moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
       dragged = nil
       end

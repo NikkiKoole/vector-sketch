@@ -4,6 +4,11 @@ require 'main-utils'
 inspect = require 'inspect'
 
 
+function getDeltaWhenMovingBetweenContainers(elem, fromContainer, toContainer)
+end
+
+
+
 function love.keypressed(key)
    if key == 'escape' then
       love.event.quit()
