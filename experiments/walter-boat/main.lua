@@ -185,10 +185,12 @@ function doRookspawn()
    last.transforms.l[5] = 0.5
    last.transforms.l[3] = 0
    last.children[1].color[4] = 0.25
-   flux.to(last.transforms.l, 4, {
-	      [2]=-600 + love.math.random()*100,
-	      [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
-   flux.to(last.children[1].color, 2, {[4]=0}):ease("backinout")
+   flux.to(last.transforms.l, 3, {
+   	      [2]=-600 + love.math.random()*100,
+   	      [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
+      
+   flux.to(last.children[1].color, 3, {[4]=0}):ease("backinout")
+   flux.to(last.transforms.l, 1, {[4]=.15, [5]=.15}):delay(1)
    table.insert(rookEmitter, 1, last)
 end
 
@@ -299,15 +301,49 @@ function bboxOfPoints(points)
 end
 
 
+function elemIsAboveAnother(elem,  another)
+   assert(another.children[1].points)
+   local px,py = elem._globalTransform:transformPoint(0,0)
+   local tl, br = bboxOfPoints(another.children[1].points)
+
+   local tlx, tly = another._globalTransform:transformPoint(tl[1], tl[2])
+   local brx, bry = another._globalTransform:transformPoint(br[1], br[2])
+
+   if (px >= tlx and px < brx) then
+      if (py < bry) then
+	 return true
+      end
+      
+   end
+   return false
+end
+
+
 function love.mousereleased()
    if (dragged) then
-      -- figure out if you should go to the overlayer or to another layer.
-      local tl, br = bboxOfPoints(bootdek.children[1].points)
-      print(inspect(tl), inspect(br))
-      print(bootdek._globalTransform:transformPoint(tl[1], tl[2]))
-      print(bootdek._globalTransform:transformPoint(br[1], br[2]))
-      print(dragged._globalTransform:transformPoint(0,0))
-      moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
+
+      --if nodeIsAboveOtherNode(dragged,bootdek ) then
+      --end
+      if elemIsAboveAnother(dragged, bootdak) then
+	 print("bootdak here i come!")
+	 moveNodeBetweenParentsAndPosition(dragged, bootdak)
+	 flux.to(dragged.transforms.l, .3, {[2]=20}):ease("circin")
+      elseif elemIsAboveAnother(dragged, bootdek) then
+	 print("bootdek here i come!")
+	 -- kajuitdeur and kajouitvoor to toggle in and out the kajuit...
+	 moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
+	 flux.to(dragged.transforms.l, .3, {[2]=200}):ease("circin")
+      else
+	 print('sea here i come')
+	 moveNodeBetweenParentsAndPosition(dragged, overlayer)
+	 local dist = math.abs(dragged.transforms.l[2] - 50)
+	 flux.to(dragged.transforms.l, .3, {[2]=50}):ease("circin")
+
+--	 print(overlayer._globalTransform:transformPoint(0,0))
+      end
+      
+
+      
       dragged = nil
       end
 end
@@ -368,23 +404,23 @@ function love.mousepressed(x,y)
    if recursiveHitCheck(x,y, walter) then
       dragged = walter
       moveNodeBetweenParentsAndPosition(walter, overlayer)
-      flux.to(walter.children[1].transforms.l, .05,
-	      {
-		 [4]= walter.children[1].transforms.l[4] * -1,
-		 [8]=0 - (herman()) * (walter.children[1].transforms.l[4]*-1)
-	      }
-      ):ease("circinout")
+      -- flux.to(walter.children[1].transforms.l, .05,
+      -- 	      {
+      -- 		 [4]= walter.children[1].transforms.l[4] * -1,
+      -- 		 [8]=0 - (herman()) * (walter.children[1].transforms.l[4]*-1)
+      -- 	      }
+      -- ):ease("circinout")
    end
    
    if recursiveHitCheck(x,y, olivia) then
       dragged = olivia
       moveNodeBetweenParentsAndPosition(olivia, overlayer)
-       flux.to(olivia.children[1].transforms.l, .05,
-	      {
-		 [4]= olivia.children[1].transforms.l[4] * -1,
-		 [8]=0 - (herman()) * (olivia.children[1].transforms.l[4]*-1)
-	      }
-      ):ease("circinout")
+      --  flux.to(olivia.children[1].transforms.l, .05,
+      -- 	      {
+      -- 		 [4]= olivia.children[1].transforms.l[4] * -1,
+      -- 		 [8]=0 - (herman()) * (olivia.children[1].transforms.l[4]*-1)
+      -- 	      }
+      -- ):ease("circinout")
       
    end
 
@@ -437,9 +473,10 @@ function love.draw()
    renderThings(root)
 
    anotherWaveFunction(waveCounter, startY+105+ extraY/0.9, 26, 1.5 * waveAmplitude, 0.4)
+   renderThings(overlayer)
    anotherWaveFunction(waveCounter, startY+135+ extraY/0.8, 24, 2.0 * waveAmplitude, 0.4)
 
-   renderThings(overlayer)
+   
    anotherWaveFunction(waveCounter, startY+165+ extraY/0.7, 21, 2.5 * waveAmplitude, 0.4)
 
    love.graphics.setColor(0,0,0)

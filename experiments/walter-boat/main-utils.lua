@@ -1,4 +1,4 @@
--- these utils are used when you wanna use the shapes and all in another application
+-- these utils are used when you wanna use the shapes and all in another applicaxtion
 
 
 function getLocalizedDelta(element, dx, dy)
