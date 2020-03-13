@@ -138,7 +138,8 @@ end
 
 
 function updateFishes()
-    for i = 1, #fishes.children do
+   for i = 1, #fishes.children do
+      if dragged ~= fishes.children[i] then
        fishes.children[i].transforms.l[1] =  fishes.children[i].transforms.l[1] +  fishes.children[i].velocity - (boat.velocity*0.1)
        if (fishes.children[i].transforms.l[1] > 1000 ) then
 	  if love.math.random() < 0.5 then
@@ -156,6 +157,7 @@ function updateFishes()
 	     fishes.children[i].transforms.l[4] = -1
 	  end
        end
+      end
    end
 end
 
@@ -373,7 +375,8 @@ end
 
 function recursiveHitCheck(x,y, node)
    -- you want to check the first child IF IT HAS POINTS
-
+   if not node then return false end
+   
    if node.points then
       local body = node
       local mesh = body.mesh
@@ -429,6 +432,15 @@ function love.mousepressed(x,y)
       -- ):ease("circinout")
       
    end
+
+   for i =1, #fishes.children do
+      if recursiveHitCheck(x,y, fishes.children[i]) then
+	 print('fosk')
+	 dragged = fishes.children[i] 
+	 moveNodeBetweenParentsAndPosition(fishes.children[i], overlayer)
+      end
+   end
+      
 
 end
 
