@@ -189,7 +189,7 @@ function movePoints(node, dx, dy)
    for i = 1, #childrenInRectangleSelect do
       local index = childrenInRectangleSelect[i]
       node.points[index] = {node.points[index][1] + dx, node.points[index][2] + dy}
-      
+
    end
    node.mesh = makeMeshFromVertices(poly.makeVertices(node))
 end
@@ -203,19 +203,19 @@ local function arrayHas(tab, val)
 
     return false
 end
-   
+
 function deletePoints(node)
    local newPoints = {}
    for i = 1, #node.points do
       if not arrayHas(childrenInRectangleSelect, i) then
 	 table.insert(newPoints, {node.points[i][1], node.points[i][2]})
       end
-      
+
      -- if i isnt in childreninrectangelselct the n add
    end
    node.points = newPoints
    node.mesh = makeMeshFromVertices(poly.makeVertices(node))
-   
+
 end
 
 
@@ -1395,7 +1395,15 @@ function love.filedropped(file)
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
       tab = (loadstring("return ".. str)())
+
+
+
       local index = string.find(filename, "/[^/]*$")
+      if index == nil then
+         index = string.find(filename, "\\[^\\]*$")
+      end
+
+      print(index, filename)
       shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
    end
 
@@ -1503,7 +1511,7 @@ function love.keypressed(key)
       if key == 'delete' then
 	 deletePoints(currentNode)
       end
-      
+
    end
 
 

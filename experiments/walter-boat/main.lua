@@ -30,7 +30,7 @@ function love.keypressed(key)
    justboat.transforms.l[8] = 0 + (herman())
    walter.transforms.l[8] = 0 - (herman()) * walter.transforms.l[4]  -- when mirrored it needs to be skewed the other way
    olivia.transforms.l[8] = 0 - (herman()) * olivia.transforms.l[4] -- "
-   
+
 end
 
 function love.load()
@@ -81,11 +81,11 @@ function love.load()
    rookEmitter = {}
    rookspawntimerTick = 0
    rookspawntimer = rookspawntimerTick
-   
 
-   for j = 1, 3 do 
+
+   for j = 1, 3 do
       for i = 1, #rook do
-	 table.insert(rookEmitter, deepcopy(rook[i]))
+         table.insert(rookEmitter, deepcopy(rook[i]))
       end
    end
    for i = 1, #rookEmitter do
@@ -94,28 +94,31 @@ function love.load()
    end
 
    fishes = parseFile('assets/visjes.polygons.txt')[1]
+   fishRefs = {}
    for i = 1, #fishes.children do
+      fishRefs[i] = fishes.children[i]
       local dir = randomSign()
+      fishes.children[i].type = 'fish'
       fishes.children[i].velocity =  dir  * (0.25 + math.random() * 0.25)
       fishes.children[i].transforms.l[1] = love.math.random() * 500
       fishes.children[i].transforms.l[2] = 20 + love.math.random() * 40
-      fishes.children[i].transforms.l[4] = dir * -1
+      fishes.children[i].children[1].transforms.l[4] = dir * -1
    end
 
    table.insert(root.children, fishes)
 
-   
+
    walter =  parseFile('assets/waltert.polygons.txt')[1]
    table.insert(root.children, walter)
 
    olivia = parseFile('assets/olivia.polygons.txt')[1]
    table.insert(root.children, olivia)
 
-   
+
    parentize(root)
    meshAll(root)
    parentize(overlayer)
-   
+
    schoorsteentje = findNodeByName(justboat, 'schoorsteentje')
    schroef = findNodeByName(justboat, 'schroef')
    kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
@@ -128,7 +131,7 @@ function love.load()
    o.transforms.l[1]= -100
    o.transforms.l[2]= 200
    addAfterNode(o, kajuitvoor)
-   
+
    local w = removeNodeFrom(walter, root)
    w.transforms.l[1]= -200
    w.transforms.l[2]= 200
@@ -140,23 +143,23 @@ end
 function updateFishes()
    for i = 1, #fishes.children do
       if dragged ~= fishes.children[i] then
-       fishes.children[i].transforms.l[1] =  fishes.children[i].transforms.l[1] +  fishes.children[i].velocity - (boat.velocity*0.1)
-       if (fishes.children[i].transforms.l[1] > 1000 ) then
-	  if love.math.random() < 0.5 then
-	     fishes.children[i].transforms.l[1]  = -100
-	  else
-	     fishes.children[i].velocity =  -1 * (0.25 + math.random() * 0.25)
-	     fishes.children[i].transforms.l[4] = 1
-	  end
-       end
-       if (fishes.children[i].transforms.l[1] < -100) then
-	  if love.math.random() < 0.5 then
-	      fishes.children[i].transforms.l[1]  = 1000
-	  else
-	     fishes.children[i].velocity =  1 * (0.25 + math.random() * 0.25)
-	     fishes.children[i].transforms.l[4] = -1
-	  end
-       end
+         fishes.children[i].transforms.l[1] =  fishes.children[i].transforms.l[1] +  fishes.children[i].velocity - (boat.velocity*0.1)
+         if (fishes.children[i].transforms.l[1] > 1000 ) then
+            if love.math.random() < 0.5 then
+               fishes.children[i].transforms.l[1]  = -100
+            else
+               fishes.children[i].velocity =  -1 * (0.25 + math.random() * 0.25)
+               fishes.children[i].children[1].transforms.l[4] = 1
+            end
+         end
+         if (fishes.children[i].transforms.l[1] < -100) then
+            if love.math.random() < 0.5 then
+               fishes.children[i].transforms.l[1]  = 1000
+            else
+               fishes.children[i].velocity =  1 * (0.25 + math.random() * 0.25)
+               fishes.children[i].children[1].transforms.l[4] = -1
+            end
+         end
       end
    end
 end
@@ -165,15 +168,15 @@ end
 
 function updateWolken()
 
-    for i = 1, #wolken do
-       wolken[i].transforms.l[1] =  wolken[i].transforms.l[1] - boat.velocity* wolken[i].speedMultiplier
-       if ( wolken[i].transforms.l[1] < - 1000) then
-	  wolken[i].transforms.l[1] = 1300
-       end
-       if ( wolken[i].transforms.l[1] > 1300) then
-	  wolken[i].transforms.l[1] = -1000
-       end
-    end
+   for i = 1, #wolken do
+      wolken[i].transforms.l[1] =  wolken[i].transforms.l[1] - boat.velocity* wolken[i].speedMultiplier
+      if ( wolken[i].transforms.l[1] < - 1000) then
+         wolken[i].transforms.l[1] = 1300
+      end
+      if ( wolken[i].transforms.l[1] > 1300) then
+         wolken[i].transforms.l[1] = -1000
+      end
+   end
 
 end
 
@@ -188,9 +191,9 @@ function doRookspawn()
    last.transforms.l[3] = 0
    last.children[1].color[4] = 0.25
    flux.to(last.transforms.l, 3, {
-   	      [2]=-600 + love.math.random()*100,
-   	      [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
-      
+              [2]=-600 + love.math.random()*100,
+              [4]=1.5, [5]=1.5, [3]=love.math.random() * math.pi}):ease("circout")
+
    flux.to(last.children[1].color, 3, {[4]=0}):ease("backinout")
    flux.to(last.transforms.l, 1, {[4]=.15, [5]=.15}):delay(1)
    table.insert(rookEmitter, 1, last)
@@ -217,11 +220,13 @@ function love.update(dt)
    if (rookspawntimerTick > 0) then
       rookspawntimer = rookspawntimer - dt
       if rookspawntimer <= 0 then
-	 doRookspawn()
-	 local leftover = math.abs(rookspawntimer)
-	 rookspawntimer = rookspawntimerTick - leftover
+         doRookspawn()
+         local leftover = math.abs(rookspawntimer)
+         rookspawntimer = rookspawntimerTick - leftover
       end
    end
+
+
 end
 
 
@@ -250,15 +255,15 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude, alpha)
    table.insert(coords, coords[2])
    love.graphics.setColor(0,0.4,0.58, alpha)
    local polys = decompose_complex_poly(coords, {})
-    for i=1 , #polys do
-       local p = polys[i]
-       local triangles = love.math.triangulate(p)
-       for j = 1, #triangles do
-	  love.graphics.polygon('fill', triangles[j])
-       end
-    end
-    love.graphics.setColor(0, 0.3,0.48, 0.9)
-    love.graphics.line(coords)
+   for i=1 , #polys do
+      local p = polys[i]
+      local triangles = love.math.triangulate(p)
+      for j = 1, #triangles do
+         love.graphics.polygon('fill', triangles[j])
+      end
+   end
+   love.graphics.setColor(0, 0.3,0.48, 0.9)
+   love.graphics.line(coords)
    --- end drawing the filled wave
 
 
@@ -267,14 +272,10 @@ end
 
 function love.mousemoved(x,y,dx,dy)
    if (dragged) then
-      -- if (dragged == walter) then
       local dx2, dy2 = getLocalizedDelta(dragged, dx,dy)
       dragged.transforms.l[1] = dragged.transforms.l[1] + dx2
       dragged.transforms.l[2] = dragged.transforms.l[2] + dy2
-      -- end
-      
    end
-   
 end
 
 
@@ -286,16 +287,16 @@ function bboxOfPoints(points)
 
    for i = 1, #points do
       if points[i][1] < smallestX then
-	 smallestX = points[i][1] 
+         smallestX = points[i][1]
       end
       if points[i][1] > largestX then
-	 largestX = points[i][1] 
+         largestX = points[i][1]
       end
       if points[i][2] < smallestY then
-	 smallestY = points[i][2] 
+         smallestY = points[i][2]
       end
       if points[i][2] > largestY then
-	 largestY = points[i][2] 
+         largestY = points[i][2]
       end
    end
 
@@ -305,17 +306,17 @@ end
 
 function elemIsAboveAnother(elem,  another)
    assert(another.children[1].points)
+
    local px,py = elem._globalTransform:transformPoint(0,0)
    local tl, br = bboxOfPoints(another.children[1].points)
-
    local tlx, tly = another._globalTransform:transformPoint(tl[1], tl[2])
    local brx, bry = another._globalTransform:transformPoint(br[1], br[2])
 
    if (px >= tlx and px < brx) then
       if (py < bry) then
-	 return true
+         return true
       end
-      
+
    end
    return false
 end
@@ -325,43 +326,43 @@ function love.mousereleased()
    if (dragged) then
 
       if elemIsAboveAnother(dragged, bootdak) then
-	 moveNodeBetweenParentsAndPosition(dragged, bootdak)
-	 local dist = math.abs(dragged.transforms.l[2] - 20)
-	 local d = dist/800
-	 flux.to(dragged.transforms.l, d, {[2]=20}):ease("circin")
+         moveNodeBetweenParentsAndPosition(dragged, bootdak)
+         local dist = math.abs(dragged.transforms.l[2] - 20)
+         local d = dist/800
+         flux.to(dragged.transforms.l, d, {[2]=20}):ease("circin")
       elseif elemIsAboveAnother(dragged, bootdek) then
-	 moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
-	 -- when the x < - 200 the deck is a bit lower
-	 local offset = 200
-	 if dragged.transforms.l[1] < - 200 then
-	    offset = 230
-	 end
-	 if dragged.transforms.l[1] < - 530 then
-	    offset = 200
-	 end
-	 
-	 local dist = math.abs(dragged.transforms.l[2] - 200)
-	 local d = dist/800
-	 flux.to(dragged.transforms.l, d, {[2]=offset}):ease("circin")
-      else
-	 moveNodeBetweenParentsAndPosition(dragged, overlayer)
-	 local dist = math.abs(dragged.transforms.l[2] - 50)
-	 local d = dist/800
-	 flux.to(dragged.transforms.l, d, {[2]=50}):ease("backout")
-      end
-      
+         moveNodeBetweenParentsAndPosition(dragged, kajuitvoor)
+         -- when the x < - 200 the deck is a bit lower
+         local offset = 200
+         if dragged.transforms.l[1] < - 200 then
+            offset = 230
+         end
+         if dragged.transforms.l[1] < - 530 then
+            offset = 200
+         end
 
-      
-      dragged = nil
+         local dist = math.abs(dragged.transforms.l[2] - 200)
+         local d = dist/800
+         flux.to(dragged.transforms.l, d, {[2]=offset}):ease("circin")
+      else
+         moveNodeBetweenParentsAndPosition(dragged, overlayer)
+         local dist = math.abs(dragged.transforms.l[2] - 50)
+         local d = dist/800
+         flux.to(dragged.transforms.l, d, {[2]=50}):ease("backout")
       end
+
+      dragged = nil
+   end
 end
 
 
 function moveNodeBetweenParentsAndPosition(node, newParent)
    -- this will keep the position intact
-   
+
    local x1,y1 = node._globalTransform:transformPoint(0,0)
    removeNodeFrom(node, node._parent)
+   print("removing from: ", node._parent.name, newParent.name)
+
    addNodeInGroup(node, newParent)
    renderThings(newParent)
    local x2,y2 = node._globalTransform:transformPoint(0,0)
@@ -370,27 +371,28 @@ function moveNodeBetweenParentsAndPosition(node, newParent)
    local dx1, dy1 =  node._globalTransform:inverseTransformPoint(dx,dy)
    node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
    node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
+   print("delta", (x0-dx1), (y0-dy1))
 end
 
 
 function recursiveHitCheck(x,y, node)
    -- you want to check the first child IF IT HAS POINTS
    if not node then return false end
-   
+
    if node.points then
       local body = node
       local mesh = body.mesh
       if (body and mesh) then
-	 if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-	    return true
-	 end
+         if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+            return true
+         end
       end
    else
       if node.children then
-	 for i = 1, #node.children do
-	    local r =  recursiveHitCheck(x,y, node.children[i])
-	    if r then return true end
-	 end
+         for i = 1, #node.children do
+            local r =  recursiveHitCheck(x,y, node.children[i])
+            if r then return true end
+         end
       end
    end
    return false
@@ -404,12 +406,12 @@ function love.mousepressed(x,y)
    local mesh = kajuitdeur.children[3].mesh
    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
       if (kajuitdeur.transforms.l[1]  < - 400) then
-	 flux.to(kajuitdeur.transforms.l, .3, {[1]=-390.81}):ease("circinout")
+         flux.to(kajuitdeur.transforms.l, .3, {[1]=-390.81}):ease("circinout")
       else
-	 flux.to(kajuitdeur.transforms.l, .3, {[1]=-455}):ease("circinout")
+         flux.to(kajuitdeur.transforms.l, .3, {[1]=-455}):ease("circinout")
       end
    end
-   
+
    if recursiveHitCheck(x,y, walter) then
       dragged = walter
       moveNodeBetweenParentsAndPosition(walter, overlayer)
@@ -420,7 +422,7 @@ function love.mousepressed(x,y)
       -- 	      }
       -- ):ease("circinout")
    end
-   
+
    if recursiveHitCheck(x,y, olivia) then
       dragged = olivia
       moveNodeBetweenParentsAndPosition(olivia, overlayer)
@@ -430,18 +432,28 @@ function love.mousepressed(x,y)
       -- 		 [8]=0 - (herman()) * (olivia.children[1].transforms.l[4]*-1)
       -- 	      }
       -- ):ease("circinout")
-      
+
    end
 
-   for i =1, #fishes.children do
-      if recursiveHitCheck(x,y, fishes.children[i]) then
-	 print('fosk')
-	 dragged = fishes.children[i] 
-	 moveNodeBetweenParentsAndPosition(fishes.children[i], overlayer)
+   for i = 1, #fishRefs do
+      if recursiveHitCheck(x,y, fishRefs[i]) then
+         dragged = fishRefs[i]
+         moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[getIndex(fishRefs[i])], overlayer)
+      end
+
+   end
+
+   for i =1, #overlayer.children do
+      if overlayer.children[i].type == 'fish' then
+         if recursiveHitCheck(x,y, overlayer.children[i]) then
+            dragged = nil
+            moveNodeBetweenParentsAndPosition(overlayer.children[i], fishes)
+         end
       end
    end
-      
 
+
+   print("overlayer: ", #overlayer.children)
 end
 
 
@@ -494,7 +506,7 @@ function love.draw()
    renderThings(overlayer)
    anotherWaveFunction(waveCounter, startY+135+ extraY/0.8, 24, 2.0 * waveAmplitude, 0.4)
 
-   
+
    anotherWaveFunction(waveCounter, startY+165+ extraY/0.7, 21, 2.5 * waveAmplitude, 0.4)
 
    love.graphics.setColor(0,0,0)
