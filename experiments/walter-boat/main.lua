@@ -4,6 +4,7 @@ require 'poly'
 flux = require "flux"
 require 'main-utils'
 inspect = require 'inspect'
+ProFi = require 'ProFi'
 
 function herman()
    return  (boat.velocity/150)
@@ -27,6 +28,16 @@ function love.keypressed(key)
       flux.to(boat, 3, {velocity=newV})
    end
 
+ if (key == 'p') then
+    if not profiling then
+	 ProFi:start()
+      else
+	 ProFi:stop()
+	 ProFi:writeReport( 'rofilingReport.txt' )
+      end
+      profiling = not profiling
+   end
+
    justboat.transforms.l[8] = 0 + (herman())
    walter.transforms.l[8] = 0 - (herman()) * walter.transforms.l[4]  -- when mirrored it needs to be skewed the other way
    olivia.transforms.l[8] = 0 - (herman()) * olivia.transforms.l[4] -- "
@@ -35,11 +46,17 @@ end
 
 function love.load()
    local screenwidth = 1024
+   profiling = false
+
+   renderInfoForElement = nil
 
    boat = {
       velocity = 0,
       world_pos = 0
    }
+   font = love.graphics.newFont( "WindsorBT-Roman.otf", 16)
+   love.graphics.setFont(font)
+
    local endI = ((screenwidth+ 80)/20)
    wave_offsets = {}
    for i=1, endI do
@@ -106,14 +123,11 @@ function love.load()
    end
 
    table.insert(root.children, fishes)
-
-
    walter =  parseFile('assets/waltert.polygons.txt')[1]
    table.insert(root.children, walter)
 
    olivia = parseFile('assets/olivia.polygons.txt')[1]
    table.insert(root.children, olivia)
-
 
    parentize(root)
    meshAll(root)
@@ -208,7 +222,6 @@ end
 
 local waveCounter = 0
 function love.update(dt)
-
    waveCounter = waveCounter + dt
    boat.world_pos =  boat.world_pos + (boat.velocity * dt)
    flux.update(dt)
@@ -225,8 +238,6 @@ function love.update(dt)
          rookspawntimer = rookspawntimerTick - leftover
       end
    end
-
-
 end
 
 
@@ -361,8 +372,6 @@ function moveNodeBetweenParentsAndPosition(node, newParent)
 
    local x1,y1 = node._globalTransform:transformPoint(0,0)
    removeNodeFrom(node, node._parent)
-   print("removing from: ", node._parent.name, newParent.name)
-
    addNodeInGroup(node, newParent)
    renderThings(newParent)
    local x2,y2 = node._globalTransform:transformPoint(0,0)
@@ -371,7 +380,7 @@ function moveNodeBetweenParentsAndPosition(node, newParent)
    local dx1, dy1 =  node._globalTransform:inverseTransformPoint(dx,dy)
    node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
    node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
-   print("delta", (x0-dx1), (y0-dy1))
+
 end
 
 
@@ -401,7 +410,7 @@ end
 
 
 function love.mousepressed(x,y)
-
+   renderInfoForElement = nil
    local body = kajuitdeur.children[3]
    local mesh = kajuitdeur.children[3].mesh
    if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
@@ -410,11 +419,16 @@ function love.mousepressed(x,y)
       else
          flux.to(kajuitdeur.transforms.l, .3, {[1]=-455}):ease("circinout")
       end
+      renderInfoForElement = body
    end
 
    if recursiveHitCheck(x,y, walter) then
       dragged = walter
       moveNodeBetweenParentsAndPosition(walter, overlayer)
+      renderInfoForElement = walter
+         --walter.children[1].transforms.l[4] = walter.children[1].transforms.l[4] * -1
+
+
       -- flux.to(walter.children[1].transforms.l, .05,
       -- 	      {
       -- 		 [4]= walter.children[1].transforms.l[4] * -1,
@@ -426,6 +440,8 @@ function love.mousepressed(x,y)
    if recursiveHitCheck(x,y, olivia) then
       dragged = olivia
       moveNodeBetweenParentsAndPosition(olivia, overlayer)
+      renderInfoForElement = olivia
+
       --  flux.to(olivia.children[1].transforms.l, .05,
       -- 	      {
       -- 		 [4]= olivia.children[1].transforms.l[4] * -1,
@@ -439,21 +455,24 @@ function love.mousepressed(x,y)
       if recursiveHitCheck(x,y, fishRefs[i]) then
          dragged = fishRefs[i]
          moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[getIndex(fishRefs[i])], overlayer)
+         renderInfoForElement = dragged
+         dragged.children[1].transforms.l[3] = 0.5
       end
-
    end
 
    for i =1, #overlayer.children do
-      if overlayer.children[i].type == 'fish' then
+      if #overlayer.children and overlayer.children[i] and  overlayer.children[i].type == 'fish' then
          if recursiveHitCheck(x,y, overlayer.children[i]) then
             dragged = nil
             moveNodeBetweenParentsAndPosition(overlayer.children[i], fishes)
+            renderInfoForElement = overlayer.children[i]
+
          end
       end
    end
 
 
-   print("overlayer: ", #overlayer.children)
+
 end
 
 
@@ -479,6 +498,24 @@ function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alph
 
 end
 
+
+function getNamesForElementRecurive(node, tabs, str)
+   local spaces = ""
+   for i = 0, tabs do
+      spaces = spaces.."   "
+   end
+   if node.children then
+      str = str..(spaces..node.name).."\n"
+   end
+   if node.children then
+      for i = 1, #node.children do
+         str = getNamesForElementRecurive(node.children[i], tabs+1, str)
+      end
+
+   end
+   return str
+
+end
 
 
 function love.draw()
@@ -510,5 +547,18 @@ function love.draw()
    anotherWaveFunction(waveCounter, startY+165+ extraY/0.7, 21, 2.5 * waveAmplitude, 0.4)
 
    love.graphics.setColor(0,0,0)
-   love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+   love.graphics.print(tostring(love.timer.getFPS( )), 10, 10)
+
+
+   if renderInfoForElement ~= nil then
+      if renderInfoForElement._globalTransform then
+      local str = getNamesForElementRecurive(renderInfoForElement, 0, "")
+      local px,py = renderInfoForElement._globalTransform:transformPoint(0,0)
+      love.graphics.print(str, px, 0)
+      love.graphics.setColor(1,1,1)
+      love.graphics.print(str, px+1, 0+1)
+
+      end
+   end
+
 end
