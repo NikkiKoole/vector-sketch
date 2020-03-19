@@ -570,7 +570,8 @@ function love.wheelmoved(x,y)
 end
 
 
-function love.load()
+function love.load(arg)
+   print(inspect(arg))
    shapeName = 'untitled'
    love.keyboard.setKeyRepeat( true )
    editingMode = nil

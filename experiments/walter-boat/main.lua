@@ -12,6 +12,7 @@ end
 
 
 function love.keypressed(key)
+
    if key == 'escape' then
       love.event.quit()
    end
@@ -121,8 +122,14 @@ function love.load()
       fishes.children[i].transforms.l[2] = 20 + love.math.random() * 40
       fishes.children[i].children[1].transforms.l[4] = dir * -1
    end
-
    table.insert(root.children, fishes)
+
+   boei = parseFile('assets/boei.polygons.txt')[1]
+   table.insert(root.children, boei)
+
+   hengel = parseFile('assets/hengel.polygons.txt')[1]
+   table.insert(root.children, hengel)
+
    walter =  parseFile('assets/waltert.polygons.txt')[1]
    table.insert(root.children, walter)
 
@@ -456,7 +463,7 @@ function love.mousepressed(x,y)
          dragged = fishRefs[i]
          moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[getIndex(fishRefs[i])], overlayer)
          renderInfoForElement = dragged
-         dragged.children[1].transforms.l[3] = 0.5
+         --dragged.children[1].transforms.l[3] = 0.5
       end
    end
 
