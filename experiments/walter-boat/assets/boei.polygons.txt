@@ -1,5 +1,6 @@
 { {
 children = { {
+children = { {
 color = { 1, 0.467, 0.659, 1 },
 hole = true,
 name = "",
@@ -45,5 +46,11 @@ folder = true,
 name = "boei 1",
 transforms = {
 l = { 2.763, 2.251, 0, 1, 1, 353.26, 243.83, 0, 0 }
+}
+} },
+folder = true,
+name = "",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
 }
 } }

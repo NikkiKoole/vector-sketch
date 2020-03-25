@@ -429,6 +429,17 @@ function love.mousepressed(x,y)
       renderInfoForElement = body
    end
 
+   if recursiveHitCheck(x,y, boei) then
+      dragged = boei
+      moveNodeBetweenParentsAndPosition(boei, overlayer)
+      renderInfoForElement = boei
+   end
+   if recursiveHitCheck(x,y, hengel) then
+      dragged = hengel
+      moveNodeBetweenParentsAndPosition(hengel, overlayer)
+      renderInfoForElement = hengel
+   end
+
    if recursiveHitCheck(x,y, walter) then
       dragged = walter
       moveNodeBetweenParentsAndPosition(walter, overlayer)
@@ -443,6 +454,7 @@ function love.mousepressed(x,y)
       -- 	      }
       -- ):ease("circinout")
    end
+
 
    if recursiveHitCheck(x,y, olivia) then
       dragged = olivia
