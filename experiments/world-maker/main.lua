@@ -25,47 +25,61 @@ function love.load()
       arrow= love.mouse.getSystemCursor("arrow")
    }
    activeButton = nil
+
+   types = {
+      ["add"] = {"room", "actor", "object", "decal"},
+      ["world"]=  {"edit", "load", "save"},
+   }
+   order = {"add", "world"}
 end
 
 function love.mousereleased()
    if mouseState.hoveredSomething == false then
       activeButton = nil
    end
-   
 end
 
-function love.draw()
-   handleMouseClickStart()
-   love.graphics.clear(bgColor.r, bgColor.g, bgColor.b)
+function eventBus(event)
+   local calls = {
+      ["add room"] = function() print("poep!") end
+   }
+   if calls[event] then calls[event]() end
+end
 
-   local types = {"file", "prop", "backdrop", "vehicle", "room"}
+
+function drawUI()
    local buttonMarginSide = 20
    local buttonHeight = 40
    local runningX = 10
    
-   for i = 1, #types do
-      if labelbutton(types[i], types[i], runningX, 10, font:getWidth(types[i]) + buttonMarginSide, buttonHeight).clicked then
-	 if activeButton == types[i] then
-	    activeButton = nil
-	 else
-	    activeButton = types[i]
-	 end
+   for i=1, #order do
+      local str = order[i]
+      local w = font:getWidth(str) + buttonMarginSide
+      if labelbutton(str, str, runningX, 10,w , buttonHeight).clicked then
+      	 if activeButton == str then
+      	    activeButton = nil
+      	 else
+      	    activeButton = str
+      	 end
       end
 
-      if activeButton == types[i] then
-	 local internalTypes = {"new", "load", "edit", "preferences"}
-	 for j = 1, #internalTypes do
-	    local id = types[i].." "..internalTypes[j]
-	    local width =  math.max( font:getWidth(internalTypes[j]), font:getWidth(types[i])  )+ buttonMarginSide
-	    if labelbutton(id, internalTypes[j], runningX, 10+j*buttonHeight, width, buttonHeight).clicked then
-	       print(id)
+      if activeButton == str then
+      	 for j = 1, #types[str] do
+	    local id = str.." "..types[str][j]
+	    local width =  math.max( font:getWidth(types[str][j]), font:getWidth(str)  )+ buttonMarginSide
+	    if labelbutton(id, types[str][j], runningX, 10+j*buttonHeight, width, buttonHeight).clicked then
+	       eventBus(id)
 	    end
-	 end
+      	 end
       end
-      
-
-      runningX = runningX + font:getWidth(types[i]) + buttonMarginSide + buttonMarginSide
+      runningX = runningX + w + buttonMarginSide
    end
+end
 
+
+function love.draw()
+   handleMouseClickStart()
+   love.graphics.clear(bgColor.r, bgColor.g, bgColor.b)
+   drawUI()
 end
 
