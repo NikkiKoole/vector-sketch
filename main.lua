@@ -1463,12 +1463,20 @@ function love.keypressed(key)
       end
       profiling = not profiling
    end
-   if key == '-' then
+   if key == '-' and not changeName then
       love.wheelmoved(0,-1)
    end
-   if key == '=' then
+   if key == '=' and not changeName then
       love.wheelmoved(0,1)
    end
+   if key == '0' and not changeName then
+      root.transforms.l[1] = 0
+      root.transforms.l[2] = 0
+
+
+   end
+
+
 
    if (key == 's' and not changeName) then
       local path = shapeName..".polygons.txt"

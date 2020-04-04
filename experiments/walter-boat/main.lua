@@ -571,12 +571,13 @@ function love.draw()
 
    if renderInfoForElement ~= nil then
       if renderInfoForElement._globalTransform then
-      local str = getNamesForElementRecurive(renderInfoForElement, 0, "")
-      local px,py = renderInfoForElement._globalTransform:transformPoint(0,0)
-      love.graphics.print(str, px, 0)
-      love.graphics.setColor(1,1,1)
-      love.graphics.print(str, px+1, 0+1)
-
+         local str = getNamesForElementRecurive(renderInfoForElement, 0, "")
+         local px, py = renderInfoForElement._globalTransform:transformPoint(0,0)
+         love.graphics.print(str, px, 0)
+         love.graphics.setColor(1,1,1)
+         love.graphics.print(str, px+1, 0+1)
+         love.graphics.setColor(1,0,0)
+         love.graphics.circle("fill", px, py, 5)
       end
    end
 
