@@ -162,9 +162,13 @@ function drawGrid(width, height)
    for y = -height/2 * m2cm, height/2 * m2cm, m2cm do
       local x, sy = root._globalTransform:transformPoint(0,y)
       if sy >= 0 and sy <= 768 then
-         love.graphics.line(0,sy, 1024,sy)
+          love.graphics.line(0,sy, 1024,sy)
       end
    end
+
+   local cx,cy = root._globalTransform:transformPoint(0,0)
+   love.graphics.rectangle("fill", cx-5, cy-5, 10, 10)
+
    love.graphics.setLineWidth(1)
 end
 
@@ -174,10 +178,7 @@ function love.draw()
    handleMouseClickStart()
    love.graphics.clear(bgColor.r, bgColor.g, bgColor.b)
 
-   drawGrid(10, 10)
-
-   local cx,cy = root._globalTransform:transformPoint(0,0)
-   love.graphics.rectangle("fill", cx-5, cy-5, 10, 10)
+   drawGrid(100, 10)
 
    renderThings(root)
 
