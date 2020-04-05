@@ -51,7 +51,7 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0}, l={1024/2,768/2,0,1.0,1.0,0,0}},
+      transforms =  {g={0,0,0,1,1,0,0}, l={1024/2,768/2,0,4.0,4.0,0,0}},
       children ={}
    }
 
@@ -72,6 +72,44 @@ function love.mousereleased()
    if mouseState.hoveredSomething == false then
       activeButton = nil
    end
+end
+
+function love.wheelmoved(x,y)
+   local scale = root.transforms.l[4]
+
+   local posx, posy = love.mouse.getPosition()
+   local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
+
+   root.transforms.l[4] = scale *  ((y>0) and 1.05 or 0.95)
+   root.transforms.l[5] = scale *  ((y>0) and 1.05 or 0.95)
+
+   --- ugh
+   local tl = root.transforms.l
+   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+   root._globalTransform = root._localTransform
+   ---
+
+   local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
+   local dx = ix1 - ix2
+   local dy = iy1 - iy2
+
+   local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
+   root.transforms.l[1] = root.transforms.l[1] - dx3
+   root.transforms.l[2] = root.transforms.l[2] - dy3
+
+   -- do it again
+   tl = root.transforms.l
+   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+   root._globalTransform = root._localTransform
+end
+
+function getGlobalDelta(transform, dx, dy)
+   -- this one is only used in the wheel moved offset stuff
+   local dx1, dy1 = transform:transformPoint( 0, 0 )
+   local dx2, dy2 = transform:transformPoint( dx, dy )
+   local dx3 = dx2 - dx1
+   local dy3 = dy2 - dy1
+   return dx3, dy3
 end
 
 function eventBus(event)
@@ -111,35 +149,35 @@ function drawUI()
    end
 end
 
-
-function love.draw()
-
-
-
-   handleMouseClickStart()
-   love.graphics.clear(bgColor.r, bgColor.g, bgColor.b)
-
+function drawGrid(width, height)
    love.graphics.setColor(1,1,1)
-   local cx,cy = root._globalTransform:transformPoint(0,0)
-
-
-   for x = -1000, 1000, 100 do
+   love.graphics.setLineWidth(root.transforms.l[5])
+   local m2cm = 100
+   for x = -width/2 * m2cm, width/2 * m2cm, m2cm do
       local sx, y = root._globalTransform:transformPoint(x,0)
       if sx >= 0 and sx <= 1024 then
          love.graphics.line(sx,0, sx, 768)
       end
    end
-   for y = -1000, 1000, 100 do
+   for y = -height/2 * m2cm, height/2 * m2cm, m2cm do
       local x, sy = root._globalTransform:transformPoint(0,y)
       if sy >= 0 and sy <= 768 then
          love.graphics.line(0,sy, 1024,sy)
       end
    end
+   love.graphics.setLineWidth(1)
+end
 
-   local tlx, tly = root._globalTransform:inverseTransformPoint(0,0)
-   local brx, bry = root._globalTransform:inverseTransformPoint(1024,768)
+
+function love.draw()
+
+   handleMouseClickStart()
+   love.graphics.clear(bgColor.r, bgColor.g, bgColor.b)
+
+   drawGrid(10, 10)
+
+   local cx,cy = root._globalTransform:transformPoint(0,0)
    love.graphics.rectangle("fill", cx-5, cy-5, 10, 10)
-
 
    renderThings(root)
 
