@@ -476,13 +476,13 @@ end
 
 function renderGraphNodes(node, level, startY)
    local w, h = love.graphics.getDimensions( )
-   local rightX = w - (64 + 500+ 10)/2 + level*20
+   local rightX = w - 280 + level*16
    local nested = 0
-   local s = 0.4
+
    local runningY = 0
 
    for i=1, #node.children do
-      runningY = runningY + 32
+      
       local yPos = -scrollviewOffset + startY  + runningY
       local child = node.children[i]
       local icon = ui.object_group
@@ -504,10 +504,10 @@ function renderGraphNodes(node, level, startY)
 
       local b = {}
       if (yPos >=0 and yPos <= h) then
-         b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos , s)
+         b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos)
       end
       if (child.folder and child.open ) then
-         local add = renderGraphNodes(child, level + 1, runningY + startY)
+         local add = renderGraphNodes(child, level + 1, runningY + startY + 32)
          runningY = runningY + add
       end
 
@@ -539,7 +539,7 @@ function renderGraphNodes(node, level, startY)
       if b.hover then
          currentlyHoveredUINode = node.children[i]
       end
-
+      runningY = runningY + 32
    end
    return runningY
 end
@@ -744,6 +744,8 @@ function love.load(arg)
       y = 0,
       scale = 1
    }
+
+   fileDropPopup = nil
 
    wireframe = false
    profiling = false
@@ -958,7 +960,7 @@ function love.draw()
 
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("scale x",  calcX(1, s), calcY(3,s) - 20 )
-      local v =  h_slider("folder-scale-x", calcX(1, s),  calcY(3,s) , 200,  currentNode.transforms.l[4] , 0.00001, 10)
+      local v =  h_slider("folder-scale-x", calcX(1, s),  calcY(3,s) , 200,  currentNode.transforms.l[4] , -2, 2)
       if (v.value ~= nil) then
          currentNode.transforms.l[4] = v.value
          --currentNode.transforms.l[5] = v.value
@@ -968,7 +970,7 @@ function love.draw()
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("scale y",  calcX(1, s), calcY(4,s) - 20 )
 
-      local v =  h_slider("folder-scale-y", calcX(1, s), calcY(4,s), 200,  currentNode.transforms.l[5] , 0.00001, 10)
+      local v =  h_slider("folder-scale-y", calcX(1, s), calcY(4,s), 200,  currentNode.transforms.l[5] , -2, 2)
       if (v.value ~= nil) then
          --currentNode.transforms.l[4] = v.value
          currentNode.transforms.l[5] = v.value
@@ -977,14 +979,14 @@ function love.draw()
       end
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("skew x",  calcX(1, s), calcY(5,s) - 20 )
-      local v = h_slider('folder_skew_x', calcX(1,s), calcY(5,s), 200, currentNode.transforms.l[8] or 0,  -2 * math.pi, 2 * math.pi )
+      local v = h_slider('folder_skew_x', calcX(1,s), calcY(5,s), 200, currentNode.transforms.l[8] or 0,  -.5 * math.pi, .5 * math.pi )
       if (v.value ~= nil) then
          currentNode.transforms.l[8] = v.value
          love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(5,s))
       end
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("skew y",  calcX(1, s), calcY(6,s) - 20 )
-      local v = h_slider('folder_skew_y', calcX(1,s), calcY(6,s), 200, currentNode.transforms.l[9] or 0,  -2 * math.pi, 2 * math.pi )
+      local v = h_slider('folder_skew_y', calcX(1,s), calcY(6,s), 200, currentNode.transforms.l[9] or 0,  -.5 * math.pi, .5 * math.pi )
       if (v.value ~= nil) then
          currentNode.transforms.l[9] = v.value
          love.graphics.print(string.format("%0.2f", v.value), calcX(1, s), calcY(6,s))
@@ -1086,9 +1088,7 @@ function love.draw()
          editingModeSub = nil
          backdrop.visible = not backdrop.visible
       end
-      if imgbutton('add-to-list', ui.add_to_list, calcX(9,s), 10, s).clicked then
-         editingModeSub = 'add-to-list'
-      end
+     
 
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("simplify svg",  calcX(1, s), 0 )
@@ -1143,9 +1143,24 @@ function love.draw()
       end
    end
 
+   love.graphics.setFont(smallest)
+   local totalHeightGraphNodes = renderGraphNodes(root, 0, 90)
+   --print(totalHeightGraphNodes)
    love.graphics.setFont(small)
-   renderGraphNodes(root, 0, 60)
 
+   love.graphics.setColor(1,1,1)
+   love.graphics.setLineWidth(2)
+   local w, h = love.graphics.getDimensions( )
+   love.graphics.rectangle("line", w-280, 90, 200, totalHeightGraphNodes)
+
+   local scrollBarH = (h-90-16)
+   love.graphics.rectangle("line", w-280+200, 90, 32, scrollBarH)
+   local scrollBarThumbH = scrollBarH
+   if totalHeightGraphNodes > scrollBarH then
+      scrollBarThumbH = (scrollBarH / totalHeightGraphNodes) * scrollBarH
+      
+   end
+   love.graphics.rectangle("fill", w-280+200, 90, 32, scrollBarThumbH)
 
    if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
       if (editingMode == 'backdrop') then
@@ -1349,6 +1364,13 @@ function love.draw()
       love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
    end
 
+   -- love.graphics.setFont(large)
+   -- love.graphics.setColor(0,0,0, 1)
+   -- love.graphics.print('image properties', 200, 200)
+   -- love.graphics.setColor(1,1,1, 1)
+   -- love.graphics.print('image properties', 200-3, 200-3)
+   --  love.graphics.setFont(small)
+      
    if quitDialog then
       local quitStr = "Quit? Seriously?! [ESC] "
       love.graphics.setFont(large)
@@ -1359,6 +1381,49 @@ function love.draw()
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print(quitStr, 115, 12)
    end
+
+   if fileDropPopup then
+      love.graphics.setFont(small)
+      love.graphics.setColor(1,1,1, 1)
+      love.graphics.rectangle("fill", 100, 100, w-200, h-200)
+      love.graphics.setColor(0,0,0)
+      local name =  fileDropPopup:getFilename()
+      love.graphics.print("dropped file: "..name, 140, 120)
+
+      if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
+      
+      
+      if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300, 1).clicked then
+         local tab = getDataFromFile(fileDropPopup)
+         root.children = TableConcat(root.children, tab)
+         parentize(root)
+         scrollviewOffset = 0
+         editingMode = nil
+         editingModeSub = nil
+         currentNode = nil
+         meshAll(root)
+         fileDropPopup = nil
+      end
+      if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200, 1).clicked then
+         local tab = getDataFromFile(fileDropPopup)
+         root.children = tab -- TableConcat(root.children, tab)
+         parentize(root)
+         scrollviewOffset = 0
+         editingMode = nil
+         editingModeSub = nil
+         currentNode = nil
+         meshAll(root)
+         fileDropPopup = nil
+      end
+
+      else
+         love.graphics.print("this isnt a good filetype", 140, 170)
+         if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200, 1).clicked then
+             fileDropPopup = nil
+         end
+      end
+   end
+   
 end
 
 function love.textinput(t)
@@ -1375,11 +1440,10 @@ function love.textinput(t)
    end
 end
 
-
-function love.filedropped(file)
-
+function getDataFromFile(file)
    local filename = file:getFilename()
    local tab
+   local shapeName
 
    if ends_with(filename, '.svg') then
       local command = 'node '..'resources/svg_to_love/index.js '..filename..' '..simplifyValue
@@ -1401,8 +1465,6 @@ function love.filedropped(file)
       local str = file:read('string')
       tab = (loadstring("return ".. str)())
 
-
-
       local index = string.find(filename, "/[^/]*$")
       if index == nil then
          index = string.find(filename, "\\[^\\]*$")
@@ -1411,25 +1473,12 @@ function love.filedropped(file)
       print(index, filename)
       shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
    end
-
-   if tab then
-      if editingMode == 'backdrop' and editingModeSub == 'add-to-list' then --append
-
-         root.children = TableConcat(root.children, tab)
-      else
-         root.children = tab
-
-      end
+   return tab
+end
 
 
-      parentize(root)
-      scrollviewOffset = 0
-      editingMode = nil
-      editingModeSub = nil
-      currentNode = nil
-      meshAll(root)
-   end
-
+function love.filedropped(file)
+   fileDropPopup = file
 end
 
 
@@ -1472,10 +1521,7 @@ function love.keypressed(key)
    if key == '0' and not changeName then
       root.transforms.l[1] = 0
       root.transforms.l[2] = 0
-
-
    end
-
 
 
    if (key == 's' and not changeName) then

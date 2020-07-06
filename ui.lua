@@ -45,14 +45,16 @@ function rgbbutton(id, rgb, x, y, scale)
    }
 end
 
-function iconlabelbutton(id, img, color, active, label, x, y, scale)
-
-   scale = scale or 1
+function iconlabelbutton(id, img, color, active, label, x, y)
    local mx, my = love.mouse:getPosition()
-   local w, h = img:getDimensions()
-
+   local imgW, h = img:getDimensions()
+   local w = 28
+   local h = 28
+   local imgScale = w/imgW
+   local buttonWidth = 200
    local clicked = false
    local hover = false
+   local fontHeight = love.graphics.getFont():getHeight(label)
 
    if (active) then
       love.graphics.setColor(0.2,0.2,0.2,.75)
@@ -60,26 +62,25 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
       love.graphics.setColor(0,0,0,.75)
     end
 
-   --love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
-   love.graphics.rectangle("fill", x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)
+   love.graphics.rectangle("fill", x, y, buttonWidth, h)
    love.graphics.setColor(1,1,1,1)
    --
-    if (active) then
-       love.graphics.setLineWidth(3)
+   if (active) then
+      love.graphics.setLineWidth(3)
 
-    else
-       love.graphics.setLineWidth(1)
-    end
+   else
+      love.graphics.setLineWidth(1)
+   end
 
-   love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)
+   love.graphics.rectangle("line", x, y, buttonWidth,h)
    if color then
       love.graphics.setColor(color[1],color[2],color[3],1)
-      love.graphics.rectangle("fill", x, y, (w*scale),( h * scale))
-       love.graphics.setColor(1,1,1,1)
+      love.graphics.rectangle("fill", x, y, w, h )
+      love.graphics.setColor(1,1,1,1)
    end
 
 
-   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w + 500)*scale,(8+ h)*scale)) then
+   if (pointInRect(mx, my,  x, y, buttonWidth,h)) then
       mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
@@ -107,8 +108,8 @@ function iconlabelbutton(id, img, color, active, label, x, y, scale)
       clicked = false
    end
 
-   love.graphics.print(label,  x-4*scale + 64*scale + 16*scale, y-4*scale )
-   love.graphics.draw(img, x, y, 0, scale, scale)
+   love.graphics.print(label,  x + 32 + 4, y + (h- fontHeight)/2 )
+   love.graphics.draw(img, x, y, 0, imgScale, imgScale)
 
    return {
       clicked = clicked,
