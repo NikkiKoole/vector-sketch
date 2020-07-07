@@ -45,13 +45,13 @@ function rgbbutton(id, rgb, x, y, scale)
    }
 end
 
-function iconlabelbutton(id, img, color, active, label, x, y)
+function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth)
    local mx, my = love.mouse:getPosition()
    local imgW, h = img:getDimensions()
-   local w = 28
-   local h = 28
+   local w = 24
+   local h = 24
    local imgScale = w/imgW
-   local buttonWidth = 200
+   local buttonWidth = buttonWidth or 200
    local clicked = false
    local hover = false
    local fontHeight = love.graphics.getFont():getHeight(label)
@@ -159,24 +159,32 @@ function imgbutton(id, img, x, y, scale, disabled)
    }
 end
 
-function scrollbarV(id, x,y, height, scrollBarThumbH, scrollOffset)
-   love.graphics.setColor(1,1,1)
-   love.graphics.setLineWidth(2)
-   love.graphics.rectangle("line",x, y, 32, height)
-
-   -- the thumb
+function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
    
 
-   love.graphics.rectangle("fill", x, y+scrollOffset, 32, scrollBarThumbH)
+   -- the thumb
+   local scrollBarThumbH = height
+   if contentHeight > height then
+      scrollBarThumbH = (height / contentHeight) * height
+   end
+
+   local pxScrollOffset = mapInto(scrollOffset, 0, contentHeight-height, 0, height-scrollBarThumbH)
 
    local result= nil
    local draggedResult = false
    local mx, my = love.mouse.getPosition( )
    local hover = false
-   if pointInRect(mx, my, x, y+scrollOffset,32,scrollBarThumbH) then
+   if pointInRect(mx, my, x, y+pxScrollOffset,32,scrollBarThumbH) then
        hover = true
-       --print("hovering")
    end
+   
+   local alpha =  (lastDraggedElement and lastDraggedElement.id == id or hover ) and 0.8 or 0.5 
+   love.graphics.setColor(1,1,1,alpha)
+   love.graphics.setLineWidth(2)
+   love.graphics.rectangle("line",x, y, 32, height)
+   love.graphics.rectangle("fill", x, y+pxScrollOffset, 32, scrollBarThumbH)
+   
+   
 
    if hover then
       mouseState.hoveredSomething = true
@@ -184,7 +192,7 @@ function scrollbarV(id, x,y, height, scrollBarThumbH, scrollOffset)
       if mouseState.click then
          lastDraggedElement = {id=id}
 	 mouseState.hoveredSomething = true
-	 mouseState.offset = {x=x - mx, y=(scrollOffset+y)-my}
+	 mouseState.offset = {x=x - mx, y=(pxScrollOffset+y)-my}
       end
    end
 
@@ -203,7 +211,11 @@ function scrollbarV(id, x,y, height, scrollBarThumbH, scrollOffset)
          if result > height-scrollBarThumbH then
             result = height-scrollBarThumbH
          end
+
+         result = mapInto(result, 0, height-scrollBarThumbH, 0, contentHeight-height )
       end
+
+      
     end
 
    
@@ -225,11 +237,11 @@ function v_slider(id, x, y, height, v, min, max)
    love.graphics.setColor(0, 0, 0)
    local yOffset = mapInto(v, min, max, 0, height-20)
    love.graphics.rectangle('fill',x, yOffset + y,20,20 )
-   love.graphics.setColor(1,1,1,1)
+
+   
    love.graphics.rectangle("line", x,yOffset + y,20,20)
 
    local result= nil
-   local draggedResult = false
    local mx, my = love.mouse.getPosition( )
    local hover = false
    if pointInRect(mx,my, x, (yOffset +y),20,20) then

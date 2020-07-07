@@ -476,10 +476,13 @@ end
 
 function renderGraphNodes(node, level, startY)
    local w, h = love.graphics.getDimensions( )
-   local rightX = w - 280 + level*16
+   local beginRightX = w - 280 + level*6
+   local rightX = beginRightX
    local nested = 0
 
    local runningY = 0
+
+   local rowHeight = 27
 
    for i=1, #node.children do
       
@@ -504,10 +507,10 @@ function renderGraphNodes(node, level, startY)
 
       local b = {}
       if (yPos >=0 and yPos <= h) then
-         b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos)
+         b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos, 200-(level*6))
       end
       if (child.folder and child.open ) then
-         local add = renderGraphNodes(child, level + 1, runningY + startY + 32)
+         local add = renderGraphNodes(child, level + 1, runningY + startY + rowHeight)
          runningY = runningY + add
       end
 
@@ -539,7 +542,7 @@ function renderGraphNodes(node, level, startY)
       if b.hover then
          currentlyHoveredUINode = node.children[i]
       end
-      runningY = runningY + 32
+      runningY = runningY + rowHeight
    end
    return runningY
 end
@@ -737,8 +740,6 @@ function love.load(arg)
       scale = 1
    }
 
-   hiearchy = {scrollOffset=0}
-   
    fileDropPopup = nil
 
    wireframe = false
@@ -1139,43 +1140,16 @@ function love.draw()
 
    love.graphics.setFont(smallest)
    local totalHeightGraphNodes = renderGraphNodes(root, 0, 90)
-   --print(totalHeightGraphNodes)
    love.graphics.setFont(small)
 
    local w, h = love.graphics.getDimensions( )
    local scrollBarH = (h-90-16)
-   local scrollBarThumbH = scrollBarH
    if totalHeightGraphNodes > scrollBarH then
-       scrollBarThumbH = (scrollBarH / totalHeightGraphNodes) * scrollBarH
-   
-       
-       local ding = scrollbarV('hierarchyslider', w-40, 90, scrollBarH, scrollBarThumbH, hiearchy.scrollOffset)
-       if ding.value then
-          hiearchy.scrollOffset =  ding.value
-          local v = mapInto(ding.value, 0, scrollBarH-scrollBarThumbH, 0, totalHeightGraphNodes-scrollBarH )
-          --print(v)
-          scrollviewOffset = v
-       end
+      local ding = scrollbarV('hierarchyslider', w-40, 90, scrollBarH, totalHeightGraphNodes, scrollviewOffset)
+      if ding.value ~= nil then
+         scrollviewOffset = ding.value
+      end
    end
-
-   
-   -- love.graphics.setColor(1,1,1)
-   -- love.graphics.setLineWidth(2)
-   -- local w, h = love.graphics.getDimensions( )
-   -- love.graphics.rectangle("line", w-280, 90, 200, totalHeightGraphNodes)
-
-   -- local scrollBarH = (h-90-16)
-   -- love.graphics.rectangle("line", w-280+200, 90, 32, scrollBarH)
-   -- local scrollBarThumbH = scrollBarH
-   -- if totalHeightGraphNodes > scrollBarH then
-   --    scrollBarThumbH = (scrollBarH / totalHeightGraphNodes) * scrollBarH
-      
-   -- end
-   -- love.graphics.rectangle("fill", w-280+200, 90, 32, scrollBarThumbH)
-
-   
-
-
    
    if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
       if (editingMode == 'backdrop') then
@@ -1211,7 +1185,7 @@ function love.draw()
    end
 
 
-   if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10, s).clicked then
+   if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX, 10).clicked then
       local shape = {
          color = {0,0,0,1},
          outline = true,
@@ -1232,7 +1206,7 @@ function love.draw()
       editingMode = 'polyline'
       editingModeSub = 'polyline-insert'
    end
-   if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, 50, s).clicked then
+   if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX, 50).clicked then
       local shape = {
          folder = true,
          transforms =  {l={0,0,0,1,1,0,0, 0,0}},
@@ -1408,7 +1382,7 @@ function love.draw()
       if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
       
       
-      if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300, 1).clicked then
+      if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
          local tab = getDataFromFile(fileDropPopup)
          root.children = TableConcat(root.children, tab)
          parentize(root)
@@ -1419,7 +1393,7 @@ function love.draw()
          meshAll(root)
          fileDropPopup = nil
       end
-      if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200, 1).clicked then
+      if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
          local tab = getDataFromFile(fileDropPopup)
          root.children = tab -- TableConcat(root.children, tab)
          parentize(root)
@@ -1433,7 +1407,7 @@ function love.draw()
 
       else
          love.graphics.print("this isnt a good filetype", 140, 170)
-         if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200, 1).clicked then
+         if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
              fileDropPopup = nil
          end
       end
