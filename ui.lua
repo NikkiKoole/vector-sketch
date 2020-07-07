@@ -158,6 +158,67 @@ function imgbutton(id, img, x, y, scale, disabled)
       clicked = clicked
    }
 end
+
+function scrollbarV(id, x,y, height, scrollBarThumbH, scrollOffset)
+   love.graphics.setColor(1,1,1)
+   love.graphics.setLineWidth(2)
+   love.graphics.rectangle("line",x, y, 32, height)
+
+   -- the thumb
+   
+
+   love.graphics.rectangle("fill", x, y+scrollOffset, 32, scrollBarThumbH)
+
+   local result= nil
+   local draggedResult = false
+   local mx, my = love.mouse.getPosition( )
+   local hover = false
+   if pointInRect(mx, my, x, y+scrollOffset,32,scrollBarThumbH) then
+       hover = true
+       --print("hovering")
+   end
+
+   if hover then
+      mouseState.hoveredSomething = true
+      love.mouse.setCursor(cursors.hand)
+      if mouseState.click then
+         lastDraggedElement = {id=id}
+	 mouseState.hoveredSomething = true
+	 mouseState.offset = {x=x - mx, y=(scrollOffset+y)-my}
+      end
+   end
+
+    if love.mouse.isDown(1 ) then
+      if lastDraggedElement and lastDraggedElement.id == id then
+	 mouseState.hoveredSomething = true
+	 love.mouse.setCursor(cursors.hand)
+
+         local mx, my = love.mouse.getPosition( )
+         result = mapInto(my + mouseState.offset.y,
+                          y, y+height-scrollBarThumbH,
+                          0, height-scrollBarThumbH)
+	 if result < 0 then
+	     result = 0
+	 end
+         if result > height-scrollBarThumbH then
+            result = height-scrollBarThumbH
+         end
+      end
+    end
+
+   
+    
+ return {
+      value=result
+   }
+
+
+   
+end
+
+
+
+
 function v_slider(id, x, y, height, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill',x+8,y,3,height )

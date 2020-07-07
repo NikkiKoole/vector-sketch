@@ -707,29 +707,21 @@ function love.load(arg)
                           points = {{0,0},{200,0},{200,200},{0,200}},
                                },}
          },
-
-         {
-            name="child2 ",
-            color = {1,1,0, 0.8},
-            points = {{500,0},{500,200},{300,200}},
-         },
-
-
-         {
-            folder = true,
-            transforms =  {l={0,0,0,1,1,0,0,0,0}},
-            name="group ",
-            children ={{
-                          name="child1 ",
-                          color = {1,1,0, 0.8},
-                          points = {{600,0},{700,0},{200,800},{1000,200}},
-                       }}
-         },
-
-
       },
    }
 
+
+   for i = 1, 100 do
+      local r = {
+                          name="child1 ",
+                          color = {1,1,0, 0.8},
+                          points = {{0,0},{200,0},{200,200},{0,200}},
+                       } 
+      table.insert(root.children[1].children, r)
+   end
+   
+
+   
    parentize(root)
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -745,6 +737,8 @@ function love.load(arg)
       scale = 1
    }
 
+   hiearchy = {scrollOffset=0}
+   
    fileDropPopup = nil
 
    wireframe = false
@@ -1148,20 +1142,41 @@ function love.draw()
    --print(totalHeightGraphNodes)
    love.graphics.setFont(small)
 
-   love.graphics.setColor(1,1,1)
-   love.graphics.setLineWidth(2)
    local w, h = love.graphics.getDimensions( )
-   love.graphics.rectangle("line", w-280, 90, 200, totalHeightGraphNodes)
-
    local scrollBarH = (h-90-16)
-   love.graphics.rectangle("line", w-280+200, 90, 32, scrollBarH)
    local scrollBarThumbH = scrollBarH
    if totalHeightGraphNodes > scrollBarH then
-      scrollBarThumbH = (scrollBarH / totalHeightGraphNodes) * scrollBarH
-      
+       scrollBarThumbH = (scrollBarH / totalHeightGraphNodes) * scrollBarH
+   
+       
+       local ding = scrollbarV('hierarchyslider', w-40, 90, scrollBarH, scrollBarThumbH, hiearchy.scrollOffset)
+       if ding.value then
+          hiearchy.scrollOffset =  ding.value
+          local v = mapInto(ding.value, 0, scrollBarH-scrollBarThumbH, 0, totalHeightGraphNodes-scrollBarH )
+          --print(v)
+          scrollviewOffset = v
+       end
    end
-   love.graphics.rectangle("fill", w-280+200, 90, 32, scrollBarThumbH)
 
+   
+   -- love.graphics.setColor(1,1,1)
+   -- love.graphics.setLineWidth(2)
+   -- local w, h = love.graphics.getDimensions( )
+   -- love.graphics.rectangle("line", w-280, 90, 200, totalHeightGraphNodes)
+
+   -- local scrollBarH = (h-90-16)
+   -- love.graphics.rectangle("line", w-280+200, 90, 32, scrollBarH)
+   -- local scrollBarThumbH = scrollBarH
+   -- if totalHeightGraphNodes > scrollBarH then
+   --    scrollBarThumbH = (scrollBarH / totalHeightGraphNodes) * scrollBarH
+      
+   -- end
+   -- love.graphics.rectangle("fill", w-280+200, 90, 32, scrollBarThumbH)
+
+   
+
+
+   
    if imgbutton('backdrop', ui.backdrop, rightX- 50, 10, s).clicked then
       if (editingMode == 'backdrop') then
          editingMode = nil
@@ -1345,13 +1360,13 @@ function love.draw()
          love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4, s) + 8*4, 2, cursorH)
       end
    end
-   local count = countNestedChildren(root, 0)
-   if (count * 50 > h) then
-      local v2 = v_slider("scrollview", w - 50, calcY(4, s) , 100, scrollviewOffset, 0, count * 50)
-      if (v2.value ~= nil) then
-         scrollviewOffset = v2.value
-      end
-   end
+   -- local count = countNestedChildren(root, 0)
+   -- if (count * 50 > h) then
+   --    local v2 = v_slider("scrollview", w - 50, calcY(4, s) , 100, scrollviewOffset, 0, count * 50)
+   --    if (v2.value ~= nil) then
+   --       scrollviewOffset = v2.value
+   --    end
+   -- end
 
    love.graphics.pop()
    love.graphics.setFont(small)
