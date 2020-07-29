@@ -23,10 +23,10 @@ function love.conf(t)
     t.window.usedpiscale = true         -- Enable automatic DPI scaling (boolean)
     t.window.vsync = 0                  -- Vertical sync mode (number)
     t.window.msaa = 2                   -- The number of samples to use with multi-sampled antialiasing (number)
-    t.window.depth = nil                -- The number of bits per sample in the depth buffer
+    t.window.depth = 32                 -- The number of bits per sample in the depth buffer
     t.window.stencil = nil              -- The number of bits per sample in the stencil buffer
     t.window.display = 1                -- Index of the monitor to show the window in (number)
-    t.window.highdpi = true            -- Enable high-dpi mode for the window on a Retina display (boolean)
+    t.window.highdpi = true             -- Enable high-dpi mode for the window on a Retina display (boolean)
     t.window.x = nil                    -- The x-coordinate of the window's position in the specified display (number)
     t.window.y = nil                    -- The y-coordinate of the window's position in the specified display (number)
 

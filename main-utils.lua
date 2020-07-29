@@ -28,6 +28,7 @@ function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
    if not shape then return end
+   
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
@@ -67,12 +68,29 @@ function handleChild(shape)
    --   love.graphics.setStencilTest()
    --end
 
-
-
+   --local fovy = 100
+   --local aspect = 1
+   --local near  = 0.1
+   --local far = 100.0
+   --print( inspect(mat4from_perspective(fovy, aspect, near, far)))
+   
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
+         
+         --local perpectiveMatrix = mat4from_perspective(fovy, aspect, near, far)
+         --local transform = love.math.newTransform( )
+         --transform:setMatrix(perpectiveMatrix)
+
+         -- look here https://stackoverflow.com/questions/51691482/how-to-create-a-2d-perspective-transform-matrix-from-individual-components
+
+         
+         --shape._parent._globalTransform
 	 love.graphics.setColor(shape.color)
-	 love.graphics.draw(shape.mesh, shape._parent._globalTransform )
+	 --love.graphics.draw(shape.mesh, shape._parent._globalTransform)
+         --print( shape._parent._globalTransform[1])
+         --local m = { shape._parent._globalTransform:getMatrix()}
+         --groundShader:send("camera", m)
+         love.graphics.draw(shape.mesh, shape._parent._globalTransform )
       end
    end
    if currentNode == shape then
@@ -83,7 +101,36 @@ function handleChild(shape)
 	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
       end
    end
+
+   
 end
+
+
+-- function mat4from_perspective(fovy, aspect, near, far)
+-- 	assert(aspect ~= 0)
+-- 	assert(near   ~= far)
+
+--         local new = function()
+--            return {
+-- 		0, 0, 0, 0,
+-- 		0, 0, 0, 0,
+-- 		0, 0, 0, 0,
+-- 		0, 0, 0, 0
+-- 	}
+--         end
+        
+        
+-- 	local t   = math.tan(math.rad(fovy) / 2)
+-- 	local out = new()
+-- 	out[1]    =  1 / (t * aspect)
+-- 	out[6]    =  1 / t
+-- 	out[11]   = -(far + near) / (far - near)
+-- 	out[12]   = -1
+-- 	out[15]   = -(2 * far * near) / (far - near)
+-- 	out[16]   =  0
+
+-- 	return out
+-- end
 
 
 function lerpColor(c1, c2, t)

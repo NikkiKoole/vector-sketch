@@ -19,7 +19,7 @@ end
 function rgbbutton(id, rgb, x, y, scale)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
-   local w, h = 48, 48
+   local w, h = 24, 24
    local clicked = false
 
    love.graphics.setColor(rgb[1] ,rgb[2],rgb[3], 1)
@@ -121,8 +121,11 @@ end
 function imgbutton(id, img, x, y, scale, disabled)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
-   local w, h = img:getDimensions()
-
+   local imgW, h = img:getDimensions()
+   local w = 24
+   h = 24
+   local imgScale = w/imgW
+   
    local clicked = false
 
    love.graphics.setColor(0,0,0,.75)
@@ -152,7 +155,7 @@ function imgbutton(id, img, x, y, scale, disabled)
 
    end
 
-   love.graphics.draw(img, x, y, 0, scale, scale)
+   love.graphics.draw(img, x, y, 0, imgScale, imgScale)
 
    return {
       clicked = clicked
