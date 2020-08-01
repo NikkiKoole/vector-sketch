@@ -274,6 +274,7 @@ function renderThings(root)
       end
       if (root.keyframes == 5) then
 	 if currentNode == root then
+            print("doing the 5 way")
 	    local lerpX = root.lerpX or 0.5
 	    local lerpY = root.lerpY or 0.5
 	    local newLerpX =0

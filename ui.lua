@@ -15,6 +15,19 @@ function handleMouseClickStart()
    mouseState.lastDown =  mouseState.down
 end
 
+function getUIRect(id, x,y,w,h)
+  local result = false
+  if mouseState.click then
+     local mx, my = love.mouse.getPosition( )
+     if pointInRect(mx,my,x,y,w,h) then
+        result = true
+     end
+   end
+  
+   return {
+      clicked=result
+   }
+end
 
 function rgbbutton(id, rgb, x, y, scale)
    scale = scale or 1
