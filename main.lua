@@ -8,6 +8,7 @@ poly = require 'poly'
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
+easing = require 'vendor.easing'
 
 
 -- investigate
@@ -1571,13 +1572,6 @@ end
       
    end
 
-   local function linear(t, b, c, d)
-    return c * t / d + b
-   end
-   local function inQuad(t, b, c, d)
-    t = t / d
-    return c * math.pow(t, 2) + b
-   end
 
    
    if dopesheetEditing then
@@ -1734,7 +1728,7 @@ end
                   local endVal = 1
                   local change = endVal - beginVal
                   local duration = 1
-                  local l1 = inQuad(tempT*duration, beginVal,change, duration)
+                  local l1 = easing.inOutBounce(tempT*duration, beginVal,change, duration, 1/10, 1/3)
                   print('linear', l1)
 
                   
