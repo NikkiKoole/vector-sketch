@@ -736,21 +736,21 @@ function love.load(arg)
    }
 
 
-   for i = 1, 1 do
-      local r = {
-         folder = true,
-         transforms =  {l={200,200,0,1,1,0,0,0,0}},
-         name="geel",
-         children ={
-            {
-               name="child:"..1,
-               color = {1,1,0, 0.8},
-               points = {{0,0},{200,0},{200,200},{0,200}},
-            }
-         }
-      }
-      table.insert(root.children[1].children, r)
-   end
+   -- for i = 1, 1 do
+   --    local r = {
+   --       folder = true,
+   --       transforms =  {l={200,200,0,1,1,0,0,0,0}},
+   --       name="geel",
+   --       children ={
+   --          {
+   --             name="child:"..1,
+   --             color = {1,1,0, 0.8},
+   --             points = {{0,0},{200,0},{200,200},{0,200}},
+   --          }
+   --       }
+   --    }
+   --    table.insert(root.children[1].children, r)
+   -- end
    
 
    
@@ -1714,28 +1714,16 @@ end
                   local nodeBefore, nodeBeforeIndex = lookForFirstIndexBefore(dopesheet.data[i],frameIndex)
                   local nodeAfter, nodeAfterIndex =  lookForFirstIndexAfter(dopesheet.data[i],frameIndex)
 
-                  local tempT = 0
-                                    
-                  if nodeBeforeIndex ~= nodeAfterIndex then
-                     tempT = mapInto(dsSlider.value, (nodeBeforeIndex/12),  (nodeAfterIndex/12), 1/12  ,1 )
-                  else
-                     print("what do i have?", dsSlider.value)
-                  end
+                  local durp = mapInto(1+ dsSlider.value * 11, nodeBeforeIndex, nodeAfterIndex, 0,1)
+                
 
-                  
-
-                  local beginVal = 0
-                  local endVal = 1
-                  local change = endVal - beginVal
-                  local duration = 1
-                  local l1 = easing.inOutBounce(tempT*duration, beginVal,change, duration, 1/10, 1/3)
-                  print('linear', l1)
-
+                  -- local beginVal = 0
+                  -- local endVal = 1
+                  -- local change = endVal - beginVal
+                  -- local duration = 1
+                  local l1 = easing.linear(durp, 0,1,1, 1/10, 1/3)
                   
                   local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
-                  
-                  --print(dopesheet.names[i], inspect(dopesheet.data[i]))
-                  print('t', tempT, newRotation)
                   dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
                end
                
