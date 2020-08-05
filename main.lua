@@ -615,10 +615,14 @@ function love.load(arg)
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
-   smallest = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 16)
-   small = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 24)
-   medium = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 32)
-   large = love.graphics.newFont( "resources/fonts/WindsorBT-Roman.otf", 48)
+   local ffont = "resources/fonts/cooper-bold-bt.ttf"
+   --
+   --ffont = "resources/fonts/WindsorBT-Roman.otf"
+   supersmallest = love.graphics.newFont(ffont , 8)
+   smallest = love.graphics.newFont(ffont , 16)
+   small = love.graphics.newFont(ffont, 24)
+   medium = love.graphics.newFont( ffont, 32)
+   large = love.graphics.newFont(ffont , 48)
 
    introSound = love.audio.newSource("resources/sounds/supermarket.wav", "static")
    introSound:setVolume(0.1)
@@ -678,6 +682,7 @@ function love.load(arg)
       flip_vertical = love.graphics.newImage("resources/ui/flip-vertical.png"),
       flip_horizontal = love.graphics.newImage("resources/ui/flip-horizontal.png"),
       dopesheet = love.graphics.newImage("resources/ui/spreadsheet.png"),
+      curve = love.graphics.newImage("resources/ui/curve.png"),
    }
 
    cursors = {
@@ -736,7 +741,7 @@ function love.load(arg)
    }
 
 
-   for i = 1, 1 do
+   for i = 1, 6 do
       local r = {
          folder = true,
          transforms =  {l={200,200,0,1,1,0,0,0,0}},
@@ -819,7 +824,7 @@ function love.update(dt)
    --    end
    --    calculateDopesheetRotations(dopesheet.sliderValue)
    -- end
- 
+   
 end
 
 
@@ -1410,6 +1415,7 @@ function love.draw()
    --if not dopesheetEditing then
    function initializeDopeSheet()
       dopesheet = {
+         scrollOffset = 0,
          node=currentNode,
          names = {},
          refs = {}
@@ -1432,8 +1438,8 @@ function love.draw()
          for j = 1, cellCount do
             row[j] = {}
          end
-         row[1] = {rotation=currentNode.transforms.l[3]}
-         row[cellCount] = {rotation=currentNode.transforms.l[3]}
+         row[1] = {rotation=currentNode.transforms.l[3], ease='linear'}
+         row[cellCount] = {rotation=currentNode.transforms.l[3], ease='linear'}
          
          data[i] = row
       end
@@ -1443,7 +1449,7 @@ function love.draw()
       dopesheet.drawMode = 'sheet'
       
       
-      print(inspect(data))
+
       
    end
 
@@ -1452,11 +1458,11 @@ function love.draw()
       local frameIndex = (math.floor(sliderValue*(cellCount-1))+1)
       if frameIndex > cellCount-1 then frameIndex = cellCount-1 end
       
-      --print('frame', frameIndex)
       for i = 1, #dopesheet.names do
          local nodeBefore, nodeBeforeIndex = lookForFirstIndexBefore(dopesheet.data[i],frameIndex)
          local nodeAfter, nodeAfterIndex =  lookForFirstIndexAfter(dopesheet.data[i],frameIndex)
 
+         print(inspect(nodeBefore))
          local durp = mapInto(1+ sliderValue * (cellCount-1), nodeBeforeIndex, nodeAfterIndex, 0,1)
          
 
@@ -1464,7 +1470,8 @@ function love.draw()
          -- local endVal = 1
          -- local change = endVal - beginVal
          -- local duration = 1
-         local l1 = easing.linear(durp, 0,1,1, 1/10, 1/3)
+         local ease = nodeBefore.ease or 'linear'
+         local l1 = easing[ease](durp, 0,1,1, 1/10, 1/3)
          
          local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
          dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
@@ -1528,6 +1535,16 @@ function love.draw()
       if drawUseToggle.clicked then
          dopesheet.drawMode = ( dopesheet.drawMode == 'draw') and 'sheet' or 'draw'
       end
+
+      if (((32+24) * #dopesheet.names)  > h/2) then
+         local ding = scrollbarV('dopesheetslider', 400, h/2, (h/2),48+ ((32+24) * #dopesheet.names) , dopesheet.scrollOffset or 0)
+         if ding.value ~= nil then
+            --if not tostring(ding.value) == "nan" then
+               dopesheet.scrollOffset = ding.value
+            --end
+         end
+      end
+      
       
       if currentNode then
          for i = 1, #dopesheet.names do
@@ -1535,112 +1552,120 @@ function love.draw()
             local h2 = 24
 
             local x1 = 0
-            local y1 = 32 + h/2 + ((i-1)*(h1+h2)) 
+            local y1 = 32 + h/2 + ((i-1)*(h1+h2))
+            y1 = y1 - dopesheet.scrollOffset
             local w1 = 200
-            
             local b = getUIRect('dope-bone'..i, x1,y1,w1,h1)
 
             local cellWidth = 12
             local cellHeight = 24
             local node = dopesheet.refs[dopesheet.names[i]]
-            if b.clicked then
-               setCurrentNode(node)
-            end
-
-            if currentNode == node then
-               love.graphics.setLineWidth(3)
-               love.graphics.setColor(0,0,0)
-            else
-               love.graphics.setLineWidth(2)
-               love.graphics.setColor(0.5,0.5,0.5)
-            end
             
-            love.graphics.rectangle("line",  x1,y1,w1,h1)
-            
-            love.graphics.setLineWidth(2)
-            love.graphics.setColor(0.7,0.7,0.7)
-            for ci = 1,cellCount do
-               --print(ci, inspect(dopesheet.data[i][ci]))
-               local myX = x1+w1+((ci-1)*cellWidth)
-               local myY = y1 + h1
-               love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
-               if dopesheet.data[i][ci] then
-                  
-                  love.graphics.setColor(0,0,0)
-                  love.graphics.rectangle("line",myX+1,myY+1,cellWidth,cellHeight)
-                  
-                  love.graphics.setColor(0.7,0.7,0.7)
-                  love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
-                  
-                  if dopesheet.data[i][ci].rotation then
-                     love.graphics.setColor(0,1,0,0.3)
-
-                     if dopesheet.selectedCell and
-                        dopesheet.selectedCell[1]==i and
-                     dopesheet.selectedCell[2]==ci then
-                        love.graphics.setColor(0,1,0,0.8)
-                     end
-                     
-                     love.graphics.rectangle("fill",myX+2,myY+2,cellWidth-4,cellHeight-4)
-                  end
+            if y1 >= h/2 then -- dont draw things that are scrolled away
+               
+               if b.clicked then
+                  setCurrentNode(node)
                end
 
-               b = getUIRect(i..ci..'cell', myX, myY, cellWidth,cellHeight)
-               if b.clicked then
-                  
-                  if dopesheet.drawMode == 'draw' then
+               if currentNode == node then
+                  love.graphics.setLineWidth(3)
+                  love.graphics.setColor(0,0,0)
+               else
+                  love.graphics.setLineWidth(2)
+                  love.graphics.setColor(0.5,0.5,0.5)
+               end
+               
+               love.graphics.rectangle("line",  x1,y1,w1,h1)
+               
+               love.graphics.setLineWidth(2)
+               love.graphics.setColor(0.7,0.7,0.7)
+               for ci = 1,cellCount do
+                  --print(ci, inspect(dopesheet.data[i][ci]))
+                  local myX = x1+w1+((ci-1)*cellWidth)
+                  local myY = y1 + h1
+                  love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
+                  if dopesheet.data[i][ci] then
+                     
+                     love.graphics.setColor(0,0,0)
+                     love.graphics.rectangle("line",myX+1,myY+1,cellWidth,cellHeight)
+                     
+                     love.graphics.setColor(0.7,0.7,0.7)
+                     love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
+                     
                      if dopesheet.data[i][ci].rotation then
-                        if ci > 1 then -- you cannot delete the first one
-                           dopesheet.data[i][ci] = {}
+                        love.graphics.setColor(0,1,0,0.3)
+
+                        if dopesheet.selectedCell and
+                           dopesheet.selectedCell[1]==i and
+                        dopesheet.selectedCell[2]==ci then
+                           love.graphics.setColor(0,1,0,0.8)
                         end
                         
-                     else
-                        dopesheet.data[i][ci] = {rotation = dopesheet.data[i][1].rotation}
-                     end
-                  end
-                  if dopesheet.drawMode == 'sheet' then
-                     if  dopesheet.data[i][ci].rotation then
-                        
-                        dopesheet.sliderValue = (ci-1)/(cellCount-1)
-                        
-                        dopesheet.selectedCell = {i, ci}
-                        calculateDopesheetRotations(dopesheet.sliderValue)
-                        
-                        -- local name = dopesheet.names[i]
-                        -- local node2 = dopesheet.data[i][ci]
-                        -- dopesheet.refs[name].transforms.l[3] = node2.rotation
-                     else
-                        dopesheet.selectedCell  = nil
+                        love.graphics.rectangle("fill",myX+2,myY+2,cellWidth-4,cellHeight-4)
                      end
                   end
 
+                  b = getUIRect(i..ci..'cell', myX, myY, cellWidth,cellHeight)
+                  if b.clicked then
+                     
+                     if dopesheet.drawMode == 'draw' then
+                        if dopesheet.data[i][ci].rotation then
+                           if ci > 1 then -- you cannot delete the first one
+                              dopesheet.data[i][ci] = {}
+                           end
+                           
+                        else
+                           dopesheet.data[i][ci] = {rotation = dopesheet.data[i][1].rotation, ease='linear'}
+                        end
+                     end
+                     if dopesheet.drawMode == 'sheet' then
+                        if  dopesheet.data[i][ci].rotation then
+                           
+                           dopesheet.sliderValue = (ci-1)/(cellCount-1)
+                           
+                           dopesheet.selectedCell = {i, ci}
+                           calculateDopesheetRotations(dopesheet.sliderValue)
+                           
+                           -- local name = dopesheet.names[i]
+                           -- local node2 = dopesheet.data[i][ci]
+                           -- dopesheet.refs[name].transforms.l[3] = node2.rotation
+                        else
+                           dopesheet.selectedCell  = nil
+                        end
+                     end
+
+                  end
+
+                  
                end
+               
+               love.graphics.setColor(1,1,1,1)
+               love.graphics.setFont(small)
+               local strW = small:getWidth(dopesheet.names[i] )
+               love.graphics.setColor(0,0,0,1)
+               love.graphics.print(dopesheet.names[i], w1 - strW - 10+2, y1+1)
+               love.graphics.setColor(1,1,1,1)
+               love.graphics.print(dopesheet.names[i], w1 - strW - 10, y1)
+
+               
+               love.graphics.setFont(smallest)
+
+               
+               local rotStr = "rotation: "..round2(node.transforms.l[3], 3)
+               local str2W = smallest:getWidth(rotStr)
+
+               love.graphics.setColor(0,0,0,1)
+               love.graphics.print(rotStr, w1 - str2W - 10 + 2, y1 + 32 +1)
+
+               love.graphics.setColor(1,1,1,1)
+               love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
             end
-
-            
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.setFont(small)
-            local strW = small:getWidth(dopesheet.names[i] )
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.print(dopesheet.names[i], w1 - strW - 10+2, y1+1)
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.print(dopesheet.names[i], w1 - strW - 10, y1)
-
-            love.graphics.setFont(smallest)
-
-            
-            local rotStr = "rotation: "..round2(node.transforms.l[3], 3)
-            local str2W = smallest:getWidth(rotStr)
-
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.print(rotStr, w1 - str2W - 10 + 2, y1 + 32 +1)
-
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
-
             
             if dopesheet.selectedCell then
                local indx = dopesheet.selectedCell
+               if iconlabelbutton('toggle_dopesheet_curve', ui.curve, nil, false,  'ease',  w/2, h/4 -50).clicked then
+                  dopesheet.showEases = not dopesheet.showEases
+               end
                node = dopesheet.data[indx[1]][indx[2]]
                --print(inspect(node.rotation))
                rotStr =  "rotation: "..round2(node.rotation, 3)
@@ -1653,11 +1678,11 @@ function love.draw()
                   
                end
                
-             love.graphics.setColor(0,0,0,0)
+               love.graphics.setColor(0,0,0,0)
                love.graphics.print(rotStr, w/2 + 2 , h/4 - 20 + 1)
 
                
-             love.graphics.setColor(1,1,1,1)
+               love.graphics.setColor(1,1,1,1)
                love.graphics.print(rotStr, w/2 , h/4 - 20)
             end
 
@@ -1675,9 +1700,106 @@ function love.draw()
             
          end
 
-         
+         if dopesheet.selectedCell and  dopesheet.showEases then
+            -- make a dropdown where you can set the type of ease
+            local currentEase = dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease
+            local eases = {
+               "linear",
+               "inQuad",
+               "outQuad",
+               "inOutQuad",
+               "outInQuad",
+               "inCubic",
+               "outCubic",
+               "inOutCubic",
+               "outInCubic",
+               "inQuart",
+               "outQuart",
+               "inOutQuart",
+               "outInQuart",
+               "inQuint",
+               "outQuint",
+               "inOutQuint",
+               "outInQuint",
+               "inSine",
+               "outSine",
+               "inOutSine",
+               "outInSine",
+               "inExpo",
+               "outExpo",
+               "inOutExpo",
+               "outInExpo",
+               "inCirc",
+               "outCirc",
+               "inOutCirc",
+               "outInCirc",
+               "inBounce",
+               "outBounce",
+               "inOutBounce",
+               "outInBounce",
+            }
+
+            local eases_1p = {
+               "inBack",
+               "outBack",
+               "inOutBack",
+               "outInBack",
+            }
+
+            local eases_2p = {
+               "inElastic",
+               "outElastic",
+               "inOutElastic",
+               "outInElastic",
+            }
+
+            local halfEases = math.floor(#eases/2)
+
+            function makeEaseLabelButton(label, x, y, selectedEase)
+               love.graphics.setColor(0,0,0, 1)
+               love.graphics.print(label, x+2, y+1)
+               love.graphics.setColor(1,1,1, 1)
+               if (label == selectedEase) then
+                  love.graphics.setColor(1,0,1, 1)
+               end
+               
+               love.graphics.print(label, x, y)
+               local labelWidth = smallest:getWidth(label)
+               love.graphics.setColor(1,0,1, 0.2)
+               return getUIRect('ease-select-'..label, x,y,labelWidth,20)
+            end
+            
+            
+            for i =1 , #eases do
+               local y = 20 * i
+               local x = 10
+               if i > #eases/2 then
+                  y = 20 * (i - #eases/2 )
+                  x = 150
+               end
+               local b = makeEaseLabelButton(eases[i], x, y, currentEase)
+               if b.clicked then
+                  dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases[i]
+               end
+               
+            end
+            for i =1 , #eases_1p do
+               local b = makeEaseLabelButton(eases_1p[i], 300, 20*i, currentEase)
+               if b.clicked then
+                  dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_1p[i]
+               end
+            end
+            for i =1 , #eases_2p do
+               local b = makeEaseLabelButton(eases_2p[i], 450, 20*i, currentEase)
+               if b.clicked then
+                  dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_2p[i]
+               end
+            end
+         end
          
       end
+
+      
       love.graphics.setLineWidth(1)
    end
    
