@@ -457,6 +457,7 @@ function love.mousemoved(x,y, dx, dy)
          end
          currentNode.transforms.l[6]= currentNode.transforms.l[6] - ddx
          currentNode.transforms.l[7]= currentNode.transforms.l[7] - ddy
+         
       end
    end
 
@@ -741,14 +742,14 @@ function love.load(arg)
    }
 
 
-   for i = 1, 6 do
+   for i = 1, 2 do
       local r = {
          folder = true,
          transforms =  {l={200,200,0,1,1,0,0,0,0}},
-         name="geel",
+         name="geel"..i,
          children ={
             {
-               name="child:"..1,
+               name="child:"..i,
                color = {1,1,0, 0.8},
                points = {{0,0},{200,0},{200,200},{0,200}},
             }
@@ -955,29 +956,45 @@ function love.draw()
          editingModeSub = nil
          if (#currentNode.children > 0) then
             local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+            local middleX = tlx + (brx - tlx)/2
+            local middleY = tly + (bry - tly)/2
+            
             local mx = tlx + (brx - tlx)/2
             local my = tly + (bry - tly)/2
             local nx = currentNode.transforms.l[6]
             local ny = currentNode.transforms.l[7]
 
             if (nx == tlx and ny == tly) then
+               currentNode.transforms.l[6]= middleX
+               currentNode.transforms.l[7]= tly
+            elseif (nx == middleX and ny == tly) then
                currentNode.transforms.l[6]= brx
                currentNode.transforms.l[7]= tly
             elseif (nx == brx and ny == tly) then
+                currentNode.transforms.l[6]= brx
+                currentNode.transforms.l[7]= middleY
+            elseif (nx == brx and ny == middleY) then
                currentNode.transforms.l[6]= brx
                currentNode.transforms.l[7]= bry
             elseif (nx == brx and ny == bry) then
+               currentNode.transforms.l[6]= middleX
+               currentNode.transforms.l[7]= bry
+            elseif (nx == middleX and ny == bry) then
                currentNode.transforms.l[6]= tlx
                currentNode.transforms.l[7]= bry
-            elseif (nx == tlx and ty == bry) then
+            elseif (nx == tlx and ny == bry) then
                currentNode.transforms.l[6]= tlx
-               currentNode.transforms.l[7]= tly
+               currentNode.transforms.l[7]= middleY
+            elseif (nx == tlx and ny == middleY) then
+               currentNode.transforms.l[6]= mx
+               currentNode.transforms.l[7]= my
             elseif (nx == mx and ny == my) then
                currentNode.transforms.l[6]= tlx
                currentNode.transforms.l[7]= tly
             else
                currentNode.transforms.l[6]= mx
                currentNode.transforms.l[7]= my
+               print('default')
             end
             editingModeSub = 'folder-move'
          end
@@ -1531,6 +1548,31 @@ function love.draw()
       love.graphics.rectangle("fill", 0, h/2, w, h/2)
       love.graphics.setLineWidth(2)
 
+      --print(#(dopesheet.refs), inspect(dopesheet.refs))
+
+      for k,v in pairs(dopesheet.refs) do
+         local t = v._parent._globalTransform
+         
+         local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
+         --print(k,  inspect(v.transforms.l), v._parent._globalTransform)
+         love.graphics.setColor(1,1,0)
+         love.graphics.circle("fill",lx,ly,10)
+         love.graphics.setColor(0,0,0)
+         love.graphics.circle("line",lx,ly,10)
+
+
+
+         -- local px, py = t:transformPoint(0,0)
+         -- love.graphics.setColor(1,0,1,.5)
+         -- love.graphics.circle("fill",px,py,10)
+
+         -- love.graphics.setColor(0,0,0)
+         -- love.graphics.circle("line",px,py,10)
+         --print(lx, ly)
+      end
+      
+      
+      
       local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and ui.dopesheet  or ui.pencil, 0, h/2)
       if drawUseToggle.clicked then
          dopesheet.drawMode = ( dopesheet.drawMode == 'draw') and 'sheet' or 'draw'
@@ -1547,6 +1589,8 @@ function love.draw()
       
       
       if currentNode then
+          local cellWidth = 12
+          local cellHeight = 24
          for i = 1, #dopesheet.names do
             local h1 = 32
             local h2 = 24
@@ -1557,8 +1601,7 @@ function love.draw()
             local w1 = 200
             local b = getUIRect('dope-bone'..i, x1,y1,w1,h1)
 
-            local cellWidth = 12
-            local cellHeight = 24
+           
             local node = dopesheet.refs[dopesheet.names[i]]
             
             if y1 >= h/2 then -- dont draw things that are scrolled away
@@ -1661,10 +1704,17 @@ function love.draw()
                love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
             end
             
-            if dopesheet.selectedCell then
+           
+            
+            
+         end
+
+          if dopesheet.selectedCell then
                local indx = dopesheet.selectedCell
                if iconlabelbutton('toggle_dopesheet_curve', ui.curve, nil, false,  'ease',  w/2, h/4 -50).clicked then
+                  
                   dopesheet.showEases = not dopesheet.showEases
+                  print("showEases",dopesheet.showEases)
                end
                node = dopesheet.data[indx[1]][indx[2]]
                --print(inspect(node.rotation))
@@ -1696,10 +1746,7 @@ function love.draw()
                calculateDopesheetRotations(dsSlider.value)
                
             end
-            
-            
-         end
-
+         --print(dopesheet.selectedCell,  dopesheet.showEases)
          if dopesheet.selectedCell and  dopesheet.showEases then
             -- make a dropdown where you can set the type of ease
             local currentEase = dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease
