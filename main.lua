@@ -1559,9 +1559,21 @@ function love.draw()
          love.graphics.circle("fill",lx,ly,10)
          love.graphics.setColor(0,0,0)
          love.graphics.circle("line",lx,ly,10)
+         love.graphics.setColor(1,1,1)
+          for k2,v2 in pairs(dopesheet.refs) do
+             if v2._parent == v then
+                local t2 = v2._parent._globalTransform
+                
+                local lx2, ly2 = t2:transformPoint(v2.transforms.l[1], v2.transforms.l[2])
+                --print(lx,ly,lx2,ly2)
+                love.graphics.line(lx,ly, lx2, ly2)
 
+                
 
-
+             end
+             
+          end
+          
          -- local px, py = t:transformPoint(0,0)
          -- love.graphics.setColor(1,0,1,.5)
          -- love.graphics.circle("fill",px,py,10)
