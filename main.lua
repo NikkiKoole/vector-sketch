@@ -43,7 +43,7 @@ function makeMeshFromVertices(vertices, originalPoints)
             round2(vertices[i][2], 3)
          }
       end
-      
+
       --print(inspect(moreRounded))
       --print(inspect(originalPoints))
       local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
@@ -457,7 +457,7 @@ function love.mousemoved(x,y, dx, dy)
          end
          currentNode.transforms.l[6]= currentNode.transforms.l[6] - ddx
          currentNode.transforms.l[7]= currentNode.transforms.l[7] - ddy
-         
+
       end
    end
 
@@ -522,7 +522,7 @@ function renderGraphNodes(node, level, startY)
    local rowHeight = 27
 
    for i=1, #node.children do
-      
+
       local yPos = -scrollviewOffset + startY  + runningY
       local child = node.children[i]
       local icon = ui.object_group
@@ -719,47 +719,76 @@ function love.load(arg)
       offset = {x=0, y=0}
    }
 
-
-
-
    root = {
       folder = true,
       name = 'root',
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       children = {
+
          {
             folder = true,
             transforms =  {l={0,0,0,1,1,0,0,0,0}},
             name="rood",
-            children ={{
-                  name="chi22ld:"..1,
+            children ={
+               {
+                  name="roodchild:"..1,
                   color = {1,0,0, 0.8},
                   points = {{0,0},{200,0},{200,200},{0,200}},
-                       }
-            }
+
+               },
+
+               {
+                  folder = true,
+                  transforms =  {l={200,200,0,1,1,0,0,0,0}},
+                  name="yellow",
+                  children ={
+                     {
+                        name="chi22ld:"..1,
+                        color = {1,1,0, 0.8},
+                        points = {{0,0},{200,0},{200,200},{0,200}},
+
+                     },
+                     {
+                        folder = true,
+                        transforms =  {l={200,200,0,1,1,0,0,0,0}},
+                        name="blue",
+                        children ={
+
+
+
+                           {
+                              name="bluechild:"..1,
+                              color = {0,0,1, 0.8},
+                              points = {{0,0},{200,0},{200,200},{0,200}},
+
+                           },
+                           {
+                              folder = true,
+                              transforms =  {l={200,200,0,1,1,0,0,0,0}},
+                              name="endhandle",
+                              children ={
+
+                                 {
+                                    name="endhandlechild:"..1,
+                                    color = {0,1,0, 0.8},
+                                    points = {{0,0},{20,0},{20,20},{0,20}},
+
+                                 }
+
+                              }
+                           }
+
+
+
+                        }
+                     }
+                  }
+               }
+            },
          },
-      },
+      }
    }
 
-
-   for i = 1, 2 do
-      local r = {
-         folder = true,
-         transforms =  {l={200,200,0,1,1,0,0,0,0}},
-         name="geel"..i,
-         children ={
-            {
-               name="child:"..i,
-               color = {1,1,0, 0.8},
-               points = {{0,0},{200,0},{200,200},{0,200}},
-            }
-         }
-      }
-      table.insert(root.children[1].children, r)
-   end
-   
-
-   
    parentize(root)
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -787,11 +816,11 @@ function love.load(arg)
    childrenInRectangleSelect = {}
    meshAll(root)
 
-   
+
    dopesheet = {}
    dopesheetEditing = false
-   cellCount =  12*1 
-   
+   cellCount =  12*1
+
 end
 
 function drawGrid()
@@ -825,7 +854,7 @@ function love.update(dt)
    --    end
    --    calculateDopesheetRotations(dopesheet.sliderValue)
    -- end
-   
+
 end
 
 
@@ -844,14 +873,14 @@ function love.draw()
    local w, h = love.graphics.getDimensions( )
    local rightX = w - (64 + 500+ 10)/2
 
-   
+
    love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
-   
+
    if  backdrop.visible then
       love.graphics.setColor(1,1,1, backdrop.alpha)
       love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
    end
-   
+
    love.graphics.setWireframe(wireframe )
    renderThings(root)
 
@@ -958,7 +987,7 @@ function love.draw()
             local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
             local middleX = tlx + (brx - tlx)/2
             local middleY = tly + (bry - tly)/2
-            
+
             local mx = tlx + (brx - tlx)/2
             local my = tly + (bry - tly)/2
             local nx = currentNode.transforms.l[6]
@@ -1157,7 +1186,7 @@ function love.draw()
          editingModeSub = nil
          backdrop.visible = not backdrop.visible
       end
-      
+
 
       love.graphics.setColor(1,1,1, 1)
       love.graphics.print("simplify svg",  labelPos(calcX(1), calcY(1)) )
@@ -1184,7 +1213,7 @@ function love.draw()
             editingModeSub = nil
             love.graphics.print(string.format("%0.2f", vslider.value),  calcX(10), calcY(1))
          end
-         
+
          love.graphics.setColor(1,1,1, 1)
          love.graphics.print("scale",  labelPos(calcX(18), calcY(1)) )
          local hslider =  h_slider("backdrop_scale", calcX(18), calcY(1), 200, backdrop.scale, 0, 5)
@@ -1193,7 +1222,7 @@ function love.draw()
             editingModeSub = nil
             love.graphics.print(string.format("%0.2f", hslider.value),  calcX(18), calcY(1))
          end
-         
+
       end
 
       if (editingModeSub == 'backdrop-palette') then
@@ -1224,7 +1253,7 @@ function love.draw()
             scrollviewOffset = ding.value
          end
       end
-      
+
       if imgbutton('backdrop', ui.backdrop, rightX - 50, calcY(0)).clicked then
          if (editingMode == 'backdrop') then
             editingMode = nil
@@ -1258,7 +1287,7 @@ function love.draw()
          end
       end
 
-      
+
       if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX-10, calcY(0)).clicked then
          local shape = {
             color = {0,0,0,1},
@@ -1280,7 +1309,7 @@ function love.draw()
          editingMode = 'polyline'
          editingModeSub = 'polyline-insert'
       end
-      
+
       if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX-10,calcY(1)).clicked then
          local shape = {
             folder = true,
@@ -1375,7 +1404,7 @@ function love.draw()
                end
             end
          end
-         
+
          if currentNode and currentNode.folder and #currentNode.children >= 4 and (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
             if (imgbutton('joystick', ui.joystick, rightX - 50, calcY(8))).clicked then
                if (currentNode.keyframes) then
@@ -1408,7 +1437,7 @@ function love.draw()
          end
       end
    end
-   
+
    -- local count = countNestedChildren(root, 0)
    -- if (count * 50 > h) then
    --    local v2 = v_slider("scrollview", w - 50, calcY(4) , 100, scrollviewOffset, 0, count * 50)
@@ -1451,37 +1480,37 @@ function love.draw()
       data = {}
       for i =1, #dopesheet.names do
          local row = {}
-         
+
          for j = 1, cellCount do
             row[j] = {}
          end
          row[1] = {rotation=currentNode.transforms.l[3], ease='linear'}
          row[cellCount] = {rotation=currentNode.transforms.l[3], ease='linear'}
-         
+
          data[i] = row
       end
       dopesheet.data = data
       dopesheet.selectedCell = nil
       dopesheet.sliderValue = 0
       dopesheet.drawMode = 'sheet'
-      
-      
 
-      
+
+
+
    end
 
    function calculateDopesheetRotations(sliderValue)
-      
+
       local frameIndex = (math.floor(sliderValue*(cellCount-1))+1)
       if frameIndex > cellCount-1 then frameIndex = cellCount-1 end
-      
+
       for i = 1, #dopesheet.names do
          local nodeBefore, nodeBeforeIndex = lookForFirstIndexBefore(dopesheet.data[i],frameIndex)
          local nodeAfter, nodeAfterIndex =  lookForFirstIndexAfter(dopesheet.data[i],frameIndex)
 
          print(inspect(nodeBefore))
          local durp = mapInto(1+ sliderValue * (cellCount-1), nodeBeforeIndex, nodeAfterIndex, 0,1)
-         
+
 
          -- local beginVal = 0
          -- local endVal = 1
@@ -1489,13 +1518,13 @@ function love.draw()
          -- local duration = 1
          local ease = nodeBefore.ease or 'linear'
          local l1 = easing[ease](durp, 0,1,1, 1/10, 1/3)
-         
+
          local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
          dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
       end
    end
-   
-   
+
+
    function lookForFirstIndexBefore(data, index)
       for i=index , 1 , -1 do
          if data[i].rotation then
@@ -1512,7 +1541,7 @@ function love.draw()
       end
       return nil
    end
-   
+
 
    function fetchAllNames(root, result)
       result = result or {}
@@ -1520,7 +1549,7 @@ function love.draw()
       if root.folder then -- only care for the names of folders atm
          table.insert(result, root.name)
       end
-      
+
       if root.children then
          for i = 1, #root.children do
             fetchAllNames(root.children[i], result)
@@ -1528,21 +1557,21 @@ function love.draw()
       end
       return result
    end
-   
-   
-   
-   
+
+
+
+
    if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
       dopesheetEditing = not dopesheetEditing
       editingMode = dopesheetEditing and 'dopesheet' or nil
       if dopesheetEditing then -- initialize
          initializeDopeSheet(cellCount)
       end
-      
    end
 
+   local mousex = love.mouse.getX()
+   local mousey = love.mouse.getY()
 
-   
    if dopesheetEditing then
       love.graphics.setColor(1,1,1,0.5)
       love.graphics.rectangle("fill", 0, h/2, w, h/2)
@@ -1552,28 +1581,36 @@ function love.draw()
 
       for k,v in pairs(dopesheet.refs) do
          local t = v._parent._globalTransform
-         
          local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
-         --print(k,  inspect(v.transforms.l), v._parent._globalTransform)
+
          love.graphics.setColor(1,1,0)
          love.graphics.circle("fill",lx,ly,10)
          love.graphics.setColor(0,0,0)
+
+         if pointInCircle(mousex, mousey, lx, ly, 10) then
+            love.graphics.setColor(0.5,0.5,0.5)
+
+         end
          love.graphics.circle("line",lx,ly,10)
+
          love.graphics.setColor(1,1,1)
+
+
+
           for k2,v2 in pairs(dopesheet.refs) do
              if v2._parent == v then
                 local t2 = v2._parent._globalTransform
-                
+
                 local lx2, ly2 = t2:transformPoint(v2.transforms.l[1], v2.transforms.l[2])
                 --print(lx,ly,lx2,ly2)
                 love.graphics.line(lx,ly, lx2, ly2)
 
-                
+
 
              end
-             
+
           end
-          
+
          -- local px, py = t:transformPoint(0,0)
          -- love.graphics.setColor(1,0,1,.5)
          -- love.graphics.circle("fill",px,py,10)
@@ -1582,9 +1619,9 @@ function love.draw()
          -- love.graphics.circle("line",px,py,10)
          --print(lx, ly)
       end
-      
-      
-      
+
+
+
       local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and ui.dopesheet  or ui.pencil, 0, h/2)
       if drawUseToggle.clicked then
          dopesheet.drawMode = ( dopesheet.drawMode == 'draw') and 'sheet' or 'draw'
@@ -1598,8 +1635,8 @@ function love.draw()
             --end
          end
       end
-      
-      
+
+
       if currentNode then
           local cellWidth = 12
           local cellHeight = 24
@@ -1613,11 +1650,11 @@ function love.draw()
             local w1 = 200
             local b = getUIRect('dope-bone'..i, x1,y1,w1,h1)
 
-           
+
             local node = dopesheet.refs[dopesheet.names[i]]
-            
+
             if y1 >= h/2 then -- dont draw things that are scrolled away
-               
+
                if b.clicked then
                   setCurrentNode(node)
                end
@@ -1629,9 +1666,9 @@ function love.draw()
                   love.graphics.setLineWidth(2)
                   love.graphics.setColor(0.5,0.5,0.5)
                end
-               
+
                love.graphics.rectangle("line",  x1,y1,w1,h1)
-               
+
                love.graphics.setLineWidth(2)
                love.graphics.setColor(0.7,0.7,0.7)
                for ci = 1,cellCount do
@@ -1640,13 +1677,13 @@ function love.draw()
                   local myY = y1 + h1
                   love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
                   if dopesheet.data[i][ci] then
-                     
+
                      love.graphics.setColor(0,0,0)
                      love.graphics.rectangle("line",myX+1,myY+1,cellWidth,cellHeight)
-                     
+
                      love.graphics.setColor(0.7,0.7,0.7)
                      love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
-                     
+
                      if dopesheet.data[i][ci].rotation then
                         love.graphics.setColor(0,1,0,0.3)
 
@@ -1655,32 +1692,32 @@ function love.draw()
                         dopesheet.selectedCell[2]==ci then
                            love.graphics.setColor(0,1,0,0.8)
                         end
-                        
+
                         love.graphics.rectangle("fill",myX+2,myY+2,cellWidth-4,cellHeight-4)
                      end
                   end
 
                   b = getUIRect(i..ci..'cell', myX, myY, cellWidth,cellHeight)
                   if b.clicked then
-                     
+
                      if dopesheet.drawMode == 'draw' then
                         if dopesheet.data[i][ci].rotation then
                            if ci > 1 then -- you cannot delete the first one
                               dopesheet.data[i][ci] = {}
                            end
-                           
+
                         else
                            dopesheet.data[i][ci] = {rotation = dopesheet.data[i][1].rotation, ease='linear'}
                         end
                      end
                      if dopesheet.drawMode == 'sheet' then
                         if  dopesheet.data[i][ci].rotation then
-                           
+
                            dopesheet.sliderValue = (ci-1)/(cellCount-1)
-                           
+
                            dopesheet.selectedCell = {i, ci}
                            calculateDopesheetRotations(dopesheet.sliderValue)
-                           
+
                            -- local name = dopesheet.names[i]
                            -- local node2 = dopesheet.data[i][ci]
                            -- dopesheet.refs[name].transforms.l[3] = node2.rotation
@@ -1691,9 +1728,9 @@ function love.draw()
 
                   end
 
-                  
+
                end
-               
+
                love.graphics.setColor(1,1,1,1)
                love.graphics.setFont(small)
                local strW = small:getWidth(dopesheet.names[i] )
@@ -1702,10 +1739,10 @@ function love.draw()
                love.graphics.setColor(1,1,1,1)
                love.graphics.print(dopesheet.names[i], w1 - strW - 10, y1)
 
-               
+
                love.graphics.setFont(smallest)
 
-               
+
                local rotStr = "rotation: "..round2(node.transforms.l[3], 3)
                local str2W = smallest:getWidth(rotStr)
 
@@ -1715,16 +1752,16 @@ function love.draw()
                love.graphics.setColor(1,1,1,1)
                love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
             end
-            
-           
-            
-            
+
+
+
+
          end
 
           if dopesheet.selectedCell then
                local indx = dopesheet.selectedCell
                if iconlabelbutton('toggle_dopesheet_curve', ui.curve, nil, false,  'ease',  w/2, h/4 -50).clicked then
-                  
+
                   dopesheet.showEases = not dopesheet.showEases
                   print("showEases",dopesheet.showEases)
                end
@@ -1737,26 +1774,26 @@ function love.draw()
                   local name = dopesheet.names[indx[1]]
                   dopesheet.refs[name].transforms.l[3] = rotSlider.value
                   node.rotation = rotSlider.value
-                  
+
                end
-               
+
                love.graphics.setColor(0,0,0,0)
                love.graphics.print(rotStr, w/2 + 2 , h/4 - 20 + 1)
 
-               
+
                love.graphics.setColor(1,1,1,1)
                love.graphics.print(rotStr, w/2 , h/4 - 20)
             end
 
-            
-            
+
+
             local dsSlider = h_slider("dopesheetstuff", 200, h/2, cellWidth*cellCount, dopesheet.sliderValue, 0, 1)
             if dsSlider.value then
-               
+
                dopesheet.sliderValue =  dsSlider.value
-               
+
                calculateDopesheetRotations(dsSlider.value)
-               
+
             end
          --print(dopesheet.selectedCell,  dopesheet.showEases)
          if dopesheet.selectedCell and  dopesheet.showEases then
@@ -1821,14 +1858,14 @@ function love.draw()
                if (label == selectedEase) then
                   love.graphics.setColor(1,0,1, 1)
                end
-               
+
                love.graphics.print(label, x, y)
                local labelWidth = smallest:getWidth(label)
                love.graphics.setColor(1,0,1, 0.2)
                return getUIRect('ease-select-'..label, x,y,labelWidth,20)
             end
-            
-            
+
+
             for i =1 , #eases do
                local y = 20 * i
                local x = 10
@@ -1840,7 +1877,7 @@ function love.draw()
                if b.clicked then
                   dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases[i]
                end
-               
+
             end
             for i =1 , #eases_1p do
                local b = makeEaseLabelButton(eases_1p[i], 300, 20*i, currentEase)
@@ -1855,13 +1892,13 @@ function love.draw()
                end
             end
          end
-         
+
       end
 
-      
+
       love.graphics.setLineWidth(1)
    end
-   
+
 
    if quitDialog then
       local quitStr = "Quit? Seriously?! [ESC] "
@@ -1883,8 +1920,8 @@ function love.draw()
       love.graphics.print("dropped file: "..name, 140, 120)
 
       if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
-         
-         
+
+
          if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
             local tab = getDataFromFile(fileDropPopup)
             root.children = TableConcat(root.children, tab)
@@ -1915,7 +1952,7 @@ function love.draw()
          end
       end
    end
-   
+
 end
 
 function love.textinput(t)
@@ -1993,7 +2030,7 @@ function love.keypressed(key)
          dopesheetEditing = false
          editingMode = nil
       end
-      
+
       initializeDopeSheet()
    end
    if key == "escape" then
