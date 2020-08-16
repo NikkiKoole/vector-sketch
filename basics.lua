@@ -17,6 +17,13 @@ function pointInRect(x,y, rx, ry, rw, rh)
    if x > rx+rw or y > ry+rh then return false end
    return true
 end
+function pointInCircle(x,y, cx, cy, cr)
+   local dx = x -cx
+   local dy = y -cy
+   local d  = math.sqrt ((dx*dx) + (dy*dy))
+   return cr > d
+end
+
 
 function ends_with(str, ending)
    return ending == "" or str:sub(-#ending) == ending
