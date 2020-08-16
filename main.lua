@@ -1574,13 +1574,7 @@ function love.draw()
              
           end
           
-         -- local px, py = t:transformPoint(0,0)
-         -- love.graphics.setColor(1,0,1,.5)
-         -- love.graphics.circle("fill",px,py,10)
-
-         -- love.graphics.setColor(0,0,0)
-         -- love.graphics.circle("line",px,py,10)
-         --print(lx, ly)
+         
       end
       
       
