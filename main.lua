@@ -1572,6 +1572,19 @@ function love.draw()
    local mousex = love.mouse.getX()
    local mousey = love.mouse.getY()
 
+   function getAngleAndDistance(x1,y1,x2,y2)
+      local dx = x1 - x2
+      local dy = y1 - y2
+      local angle =  math.atan2(dy, dx)
+      local distance =  math.sqrt ((dx*dx) + (dy*dy))
+
+      return angle, distance
+   end
+
+   function posAngleAndDistance(x1,y1,angle, distance)
+   end
+   
+   
    if dopesheetEditing then
       love.graphics.setColor(1,1,1,0.5)
       love.graphics.rectangle("fill", 0, h/2, w, h/2)
@@ -1586,37 +1599,53 @@ function love.draw()
          love.graphics.setColor(1,1,0)
          love.graphics.circle("fill",lx,ly,10)
          love.graphics.setColor(0,0,0)
-
-         local b = getUICircle(k.."thing", lx, ly, 10)
+         local id = k.."thing"
+         local b = getUICircle(id, lx, ly, 10)
          love.graphics.setColor(1,0,1, 0.8)
          if b.hover then
             love.graphics.setColor(0.5,0.5,0.5)
          end
-         
-         local vpx, vpy = t:transformPoint(0,0)
 
-         local dx = lx - vpx
-         local dy = ly - vpy
-         local angle = math.atan2(dy, dx)
-         local d  = math.sqrt ((dx*dx) + (dy*dy))
-         local distance = d
-         
+          local vpx0, vpy0 = t:transformPoint(0,0 )
+         local vpx, vpy = t:transformPoint(v._parent.transforms.l[6] ,v._parent.transforms.l[7] )
+         local angle, distance = getAngleAndDistance(lx,lx,vpx0,vpx0) 
+           
          if b.clicked then
             print(k, 'is clicked, look for parent to rotate', v._parent.name)
             print("what is the angle between us?")
             print('parent',v._parent.name, 'is at', vpx, vpy )
             print(k, "is at", lx,ly)
             print("angle might be ", angle )
- 
+           
+            lastDraggedElement = {id=id}
          end
 
-         local new_x = vpx + math.cos(angle) * distance
-         local new_y = vpy + math.sin(angle) * distance
+         local angle2, distance2 = getAngleAndDistance(mousex,mousey,vpx0,vpy0)
+         local parentsAddedAngle = 0
+         local thing = v._parent._parent
+               
+         while thing do
+            parentsAddedAngle = parentsAddedAngle + thing.transforms.l[3] 
+            thing = thing._parent
+         end
+         
+         if love.mouse.isDown(1 ) then
+            if lastDraggedElement and lastDraggedElement.id == id then
+               v._parent.transforms.l[3] =  angle2 - parentsAddedAngle  - math.pi/4
+            end
+         end
 
-         love.graphics.line(vpx, vpy, new_x, new_y)
+         --currentNode.transforms.l[6] -- ouch sad trombone 6 & 7 pivot points offsett
+
+         --local a2 =  v._parent.transforms.l[3] + parentsAddedAngle + math.pi/4
+         --local angle2 = v._parent.transforms.l[3] 
+         --local new_x = vpx + math.cos(a2) * distance
+         --local new_y = vpy + math.sin(a2) * distance
+
+         love.graphics.line(vpx, vpy, lx, ly)
      
          love.graphics.circle("line",lx,ly,10)
-
+         love.graphics.circle("line",vpx0,vpy0,3)
          love.graphics.setColor(1,1,1)
 
       end
