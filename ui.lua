@@ -28,6 +28,23 @@ function getUIRect(id, x,y,w,h)
       clicked=result
    }
 end
+function getUICircle(id, x,y,r)
+   local clicked = false
+   local hover = false
+   local mx, my = love.mouse.getPosition( )
+
+   if pointInCircle(mx, my, x, y, r) then
+      hover = true
+   end
+   if mouseState.click and hover then
+      clicked = true
+   end
+ 
+   return {
+      clicked=clicked,
+      hover=hover
+   }
+end
 
 function rgbbutton(id, rgb, x, y, scale)
    scale = scale or 1

@@ -1587,29 +1587,37 @@ function love.draw()
          love.graphics.circle("fill",lx,ly,10)
          love.graphics.setColor(0,0,0)
 
-         if pointInCircle(mousex, mousey, lx, ly, 10) then
+         local b = getUICircle(k.."thing", lx, ly, 10)
+         love.graphics.setColor(1,0,1, 0.8)
+         if b.hover then
             love.graphics.setColor(0.5,0.5,0.5)
-
          end
+         
+         local vpx, vpy = t:transformPoint(0,0)
+
+         local dx = lx - vpx
+         local dy = ly - vpy
+         local angle = math.atan2(dy, dx)
+         local d  = math.sqrt ((dx*dx) + (dy*dy))
+         local distance = d
+         
+         if b.clicked then
+            print(k, 'is clicked, look for parent to rotate', v._parent.name)
+            print("what is the angle between us?")
+            print('parent',v._parent.name, 'is at', vpx, vpy )
+            print(k, "is at", lx,ly)
+            print("angle might be ", angle )
+ 
+         end
+
+         local new_x = vpx + math.cos(angle) * distance
+         local new_y = vpy + math.sin(angle) * distance
+
+         love.graphics.line(vpx, vpy, new_x, new_y)
+     
          love.graphics.circle("line",lx,ly,10)
 
          love.graphics.setColor(1,1,1)
-
-
-
-          for k2,v2 in pairs(dopesheet.refs) do
-             if v2._parent == v then
-                local t2 = v2._parent._globalTransform
-
-                local lx2, ly2 = t2:transformPoint(v2.transforms.l[1], v2.transforms.l[2])
-                --print(lx,ly,lx2,ly2)
-                love.graphics.line(lx,ly, lx2, ly2)
-
-
-
-             end
-
-          end
 
       end
 
