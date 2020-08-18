@@ -727,19 +727,19 @@ function love.load(arg)
 
          {
             folder = true,
-            transforms =  {l={0,0,0,1,1,0,0,0,0}},
+            transforms =  {l={0,0,0,1,1,100,0,0,0}},
             name="rood",
             children ={
                {
                   name="roodchild:"..1,
                   color = {1,0,0, 0.8},
-                  points = {{0,0},{200,0},{200,200},{0,200}},
+                  points = {{-100,-100},{100,-100},{100,100},{-100,100}},
 
                },
 
                {
                   folder = true,
-                  transforms =  {l={200,200,0,1,1,0,0,0,0}},
+                  transforms =  {l={200,200,0,1,1,100,0,0,0}},
                   name="yellow",
                   children ={
                      {
@@ -750,7 +750,7 @@ function love.load(arg)
                      },
                      {
                         folder = true,
-                        transforms =  {l={200,200,0,1,1,0,0,0,0}},
+                        transforms =  {l={200,200,0,1,1,100,0,0,0}},
                         name="blue",
                         children ={
 
@@ -1593,6 +1593,9 @@ function love.draw()
       --print(#(dopesheet.refs), inspect(dopesheet.refs))
 
       for k,v in pairs(dopesheet.refs) do
+         
+         
+         
          local t = v._parent._globalTransform
          local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
 
@@ -1606,7 +1609,12 @@ function love.draw()
             love.graphics.setColor(0.5,0.5,0.5)
          end
 
-          local vpx0, vpy0 = t:transformPoint(0,0 )
+         local vpx0, vpy0 = t:transformPoint(0,0 )
+         if v._parent and v._parent._parent then
+         --   vpx0, vpy0 =  v._parent._parent._globalTransform:transformPoint(0,0 )
+
+         end
+
          local vpx, vpy = t:transformPoint(v._parent.transforms.l[6] ,v._parent.transforms.l[7] )
          local angle, distance = getAngleAndDistance(lx,lx,vpx0,vpx0) 
            
@@ -1622,16 +1630,28 @@ function love.draw()
 
          local angle2, distance2 = getAngleAndDistance(mousex,mousey,vpx0,vpy0)
          local parentsAddedAngle = 0
-         local thing = v._parent._parent
-               
-         while thing do
-            parentsAddedAngle = parentsAddedAngle + thing.transforms.l[3] 
-            thing = thing._parent
+         local thing = v._parent
+         local gtangle = 0
+         if thing then
+            if v._parent and v._parent._parent then
+               local gt = v._parent._parent._globalTransform
+               local gtx, gty = gt:transformPoint(0,0)
+               gtangle, gtdxx = getAngleAndDistance(gtx,gty,0,0)
+            end
+            
+            
+            
          end
-         
+            -- while thing do
+            --    parentsAddedAngle = parentsAddedAngle + thing.transforms.l[3] 
+            --    thing = thing._parent
+            -- end
+         --end
          if love.mouse.isDown(1 ) then
             if lastDraggedElement and lastDraggedElement.id == id then
-               v._parent.transforms.l[3] =  angle2 - parentsAddedAngle  - math.pi/4
+               --print(parentsAddedAngle, gtangle)
+               --v._parent.transforms.l[3] =  angle2 - parentsAddedAngle  - math.pi/4
+                v._parent.transforms.l[3] = angle2  -- gtangle 
             end
          end
 
