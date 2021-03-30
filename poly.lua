@@ -381,7 +381,7 @@ function makeVertices(shape)
 	    local p = polys[k]
 	    if (#p >= 6) then
 	       -- if a import breaks on triangulation errors uncomment this
-	       --print(shapes[i].name, #p, inspect(p))
+--	       print( #p, inspect(p))
 	       local triangles = love.math.triangulate(p)
 	       for j = 1, #triangles do
 		  local t = triangles[j]

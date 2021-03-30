@@ -87,6 +87,9 @@ function copyShape(shape)
 	 if shape.hole then
 	    result.hole = true
 	 end
+         if shape.border then
+	    result.border = true
+	 end
 	 if (shape.color) then
 	    for i=1, #shape.color do
 	       result.color[i] = round2(shape.color[i],3)

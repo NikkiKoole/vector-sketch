@@ -46,7 +46,7 @@ function handleChild(shape)
 
       end
       if shape.mask then
-	  love.graphics.stencil(
+         love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent._globalTransform )
 	 end, "replace", 255, true)
@@ -85,12 +85,35 @@ function handleChild(shape)
 
          
          --shape._parent._globalTransform
+
+         
+
+         
 	 love.graphics.setColor(shape.color)
 	 --love.graphics.draw(shape.mesh, shape._parent._globalTransform)
          --print( shape._parent._globalTransform[1])
          --local m = { shape._parent._globalTransform:getMatrix()}
          --groundShader:send("camera", m)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
+
+         if (shape.borderMesh) then
+            love.graphics.setColor(0,0,0)
+            love.graphics.draw(shape.borderMesh, shape._parent._globalTransform )
+         end
+         
+         
+         --print('main-utils todo')
+         if false and shape.points then
+            -- render outline!!!!!
+            local work =  unpackNodePoints(shape.points)
+            local verts, indices, draw_mode = polyline('bevel',work, 10, 1, true)
+            local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+            love.graphics.setColor(shape.color[1]-.2,shape.color[2]-.2,shape.color[3]-.2,shape.color[4])
+            love.graphics.setColor(1,1,1)
+            love.graphics.draw(mesh, shape._parent._globalTransform )
+         end
+
+         
       end
    end
    if currentNode == shape then
@@ -100,11 +123,87 @@ function handleChild(shape)
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
       end
+      if currentNode.border then
+         --print('need to mesh the direct one too')
+      end
+      
    end
 
    
 end
 
+function unpackNodePointsLoop(points)
+   local unpacked = {}
+   --unpacked[1] = points[#points][1]
+   --unpacked[2] = points[#points][2]
+      
+   for i = 0, #points do
+      local nxt = i == #points and 1 or i+1
+      unpacked[1 + (i*2)] = points[nxt][1]
+      unpacked[2 + (i*2)] =  points[nxt][2]
+   end
+
+   -- the catmul splines look better when wrapped around
+   -- so i double up and use .5 -> 1 t
+   for i = 0, #points do
+      local nxt = i == #points and 1 or i+1
+      unpacked[(#points*2) + 1 + (i*2)] = points[nxt][1]
+      unpacked[(#points*2) + 2 + (i*2)] =  points[nxt][2]
+   end
+
+   -- for i = 0, #points do
+   --    local nxt = i == #points and 1 or i+1
+   --    unpacked[(#points*3) + 1 + (i*2)] = points[nxt][1]
+   --    unpacked[(#points*3) + 2 + (i*2)] =  points[nxt][2]
+   -- end
+
+   --  for i = 0, #points do
+   --    local nxt = i == #points and 1 or i+1
+   --    unpacked[(#points*4) + 1 + (i*2)] = points[nxt][1]
+   --    unpacked[(#points*4) + 2 + (i*2)] =  points[nxt][2]
+   -- end
+  
+
+   -- for i = 0, #points do
+   --    local nxt = i == #points and 1 or i+1
+   --    unpacked[(#points*3) + 1 + (i*2)] = points[nxt][1]
+   --    unpacked[(#points*3) + 2 + (i*2)] =  points[nxt][2]
+   -- end
+     
+     -- unpacked[(#points*2)+1] =   points[1][1]
+     -- unpacked[(#points*2)+2] =   points[1][2]
+     -- unpacked[(#points*2)+3] =   points[2][1]
+     -- unpacked[(#points*2)+4] =   points[2][2]
+      -- make it go round
+      --unpacked[#unpacked] =   points[1][1]
+      --unpacked[#unpacked] =   points[1][2]
+
+      --unpacked[(#points*2)+2] =   points[1][2]
+      --unpacked[(#points*2)+3] =   points[2][1]
+     -- unpacked[(#points*2)+4] =   points[2][2]
+
+
+      return unpacked
+end
+
+function unpackNodePoints(points)
+   local unpacked = {}
+   if #points >= 1 then
+      for i = 0, #points-1 do
+         unpacked[1 + (i*2)] = points[i+1][1]
+         unpacked[2 + (i*2)] =  points[i+1][2]
+      end
+      
+      -- make it go round
+      unpacked[(#points*2)+1] =   points[1][1]
+      unpacked[(#points*2)+2] =   points[1][2]
+      --unpacked[(#points*2)+3] =   points[2][1]
+      -- unpacked[(#points*2)+4] =   points[2][2]
+   end
+
+   return unpacked
+   
+end
 
 -- function mat4from_perspective(fovy, aspect, near, far)
 -- 	assert(aspect ~= 0)

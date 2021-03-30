@@ -53,11 +53,17 @@ local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
     -- lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
     table.insert(normals, Vector(ns))
     table.insert(normals, Vector(-ns.x, -ns.y))
+
   else
     -- cramers rule
     local nx, ny = ntx - ns.x, nty - ns.y
     local lambda = cross(nx, ny, tx, ty) / det
     local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
+    --print('craners', dx,dy)
+    if dx > math.pi*2 then dx = math.pi*2 end
+  if dx < -math.pi*2 then dx = -math.pi*2 end 
+    if dy > math.pi*2 then dy = math.pi*2 end 
+    if dy < -math.pi*2 then dy = -math.pi*2 end 
 
     table.insert(normals, Vector(dx, dy))
     table.insert(normals, Vector(-dx, -dy))
@@ -99,6 +105,7 @@ local function renderEdgeBevel(anchors, normals, s, len_s, ns, q, r, hw)
     table.insert(normals, Vector(-ns.x, -ns.y))
     table.insert(normals, Vector(dx, dy))
     table.insert(normals, Vector(-ntx, -nty))
+
   else
     table.insert(normals, Vector(ns.x, ns.y))
     table.insert(normals, Vector(-dx, -dy))
@@ -220,7 +227,7 @@ local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw
   for i=1,#coords-2,2 do
     q.x, q.y = r.x, r.y
     r.x, r.y = coords[i + 2], coords[i + 3]
-    half_width = hw + (i % 4)/8  -- the bibbering
+    half_width = hw --+ (i % 4)/8  -- the bibbering
     len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, half_width)
   end
 
@@ -255,16 +262,28 @@ local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw
       table.insert(vertices, {
         anchors[i].x + normals[i].x,
         anchors[i].y + normals[i].y,
-        0, 0, 255, 255, 255, 255
+        --0, 0, 255, 255, 255, 255
       })
     end
     draw_mode = 'triangles'
   else
-    for i=1,vertex_count do
+     local firstR
+     for i=1,vertex_count do
+        --print(i, vertex_count, anchors[i].x, anchors[i].y)
+        local r = love.math.random()
+        if i == 1 then
+           firstR = r
+        end
+        if i == vertex_count then
+           r = firstR
+        end
+        r = 4
+           
+        
       table.insert(vertices, {
-        anchors[i].x + normals[i].x,
-        anchors[i].y + normals[i].y,
-        0, 0, 255, 255, 255, 255
+                      anchors[i].x + normals[i].x * (r * half_width)  ,
+                      anchors[i].y + normals[i].y * (r * half_width),
+        --0, 0, 255, 255, 255, 255
       })
     end
   end
