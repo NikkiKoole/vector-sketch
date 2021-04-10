@@ -198,7 +198,8 @@ local JOIN_TYPES = {
   bevel = renderEdgeBevel,
 }
 
-local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw)
+local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+ 
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
 
@@ -268,23 +269,28 @@ local function polyline(join_type, coords, half_width, pixel_size, draw_overdraw
     draw_mode = 'triangles'
   else
      local firstR
+     love.math.setRandomSeed(1 )
      for i=1,vertex_count do
-        --print(i, vertex_count, anchors[i].x, anchors[i].y)
-        local r = love.math.random()
-        if i == 1 then
-           firstR = r
-        end
-        if i == vertex_count then
-           r = firstR
-        end
-        r = 4
-           
-        
+        local r = 1
+       -- if rndMultiplier ~= nil then
+           r =  love.math.random() * 4
+           if i == 1 then
+              firstR = r
+           end
+           if i == vertex_count then
+              r = firstR
+           end
+       -- end
+           r = 5*rndMultiplier + (love.math.random() * rndMultiplier)
+        --if rndMultiplier ~= 0 then
       table.insert(vertices, {
-                      anchors[i].x + normals[i].x * (r * half_width)  ,
-                      anchors[i].y + normals[i].y * (r * half_width),
-        --0, 0, 255, 255, 255, 255
+                      anchors[i].x + normals[i].x * (r)  ,
+                      anchors[i].y + normals[i].y * (r),
+        
       })
+      
+        --end
+        
     end
   end
 

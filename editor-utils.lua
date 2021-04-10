@@ -90,6 +90,19 @@ function copyShape(shape)
          if shape.border then
 	    result.border = true
 	 end
+         if shape.borderTension then
+	    result.borderTension = shape.borderTension
+	 end
+         if shape.borderSpacing then
+	    result.borderSpacing = shape.borderSpacing
+	 end
+         if shape.borderThickness then
+	    result.borderThickness = shape.borderThickness
+	 end
+         if shape.borderRandomizerMultiplier then
+	    result.borderRandomizerMultiplier = shape.borderRandomizerMultiplier
+	 end
+
 	 if (shape.color) then
 	    for i=1, #shape.color do
 	       result.color[i] = round2(shape.color[i],3)

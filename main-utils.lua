@@ -36,7 +36,7 @@ function handleChild(shape)
       else
 	 mesh =  makeMeshFromVertices(poly.makeVertices(shape)) -- realtime iupdating the thingie
       end
-
+      
       local parentIndex = getIndex(shape._parent)
       if shape.hole then
 	 love.graphics.stencil(
@@ -63,6 +63,9 @@ function handleChild(shape)
    if shape.folder then
       renderThings(shape)
       love.graphics.setStencilTest()
+   else
+      print()
+      print(inspect(poly.makeVertices(shape)))
    end
    --if ( shape.hole) then
    --   love.graphics.setStencilTest()
@@ -124,6 +127,9 @@ function handleChild(shape)
 	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
       end
       if currentNode.border then
+         local borderMesh = makeBorderMesh(currentNode)
+	 love.graphics.setColor(0,0,0)
+         love.graphics.draw(borderMesh,  shape._parent._globalTransform )
          --print('need to mesh the direct one too')
       end
       
@@ -151,36 +157,7 @@ function unpackNodePointsLoop(points)
       unpacked[(#points*2) + 2 + (i*2)] =  points[nxt][2]
    end
 
-   -- for i = 0, #points do
-   --    local nxt = i == #points and 1 or i+1
-   --    unpacked[(#points*3) + 1 + (i*2)] = points[nxt][1]
-   --    unpacked[(#points*3) + 2 + (i*2)] =  points[nxt][2]
-   -- end
-
-   --  for i = 0, #points do
-   --    local nxt = i == #points and 1 or i+1
-   --    unpacked[(#points*4) + 1 + (i*2)] = points[nxt][1]
-   --    unpacked[(#points*4) + 2 + (i*2)] =  points[nxt][2]
-   -- end
-  
-
-   -- for i = 0, #points do
-   --    local nxt = i == #points and 1 or i+1
-   --    unpacked[(#points*3) + 1 + (i*2)] = points[nxt][1]
-   --    unpacked[(#points*3) + 2 + (i*2)] =  points[nxt][2]
-   -- end
-     
-     -- unpacked[(#points*2)+1] =   points[1][1]
-     -- unpacked[(#points*2)+2] =   points[1][2]
-     -- unpacked[(#points*2)+3] =   points[2][1]
-     -- unpacked[(#points*2)+4] =   points[2][2]
-      -- make it go round
-      --unpacked[#unpacked] =   points[1][1]
-      --unpacked[#unpacked] =   points[1][2]
-
-      --unpacked[(#points*2)+2] =   points[1][2]
-      --unpacked[(#points*2)+3] =   points[2][1]
-     -- unpacked[(#points*2)+4] =   points[2][2]
+ 
 
 
       return unpacked

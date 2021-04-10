@@ -44,7 +44,22 @@ end
 
 function makeBorderMesh(node)
    local work = unpackNodePointsLoop(node.points)
-   local verts, indices, draw_mode = polyline('miter',work, 1)
+
+   local output = {}
+
+   for i =50, 100 do
+      local t = (i/100)
+      if t >= 1 then t = 0.99999999 end
+
+      local x,y = GetSplinePos(work, t, node.borderTension)
+      table.insert(output, {x,y})
+   end
+
+   local rrr = {}
+   local r2 = evenlySpreadPath(rrr, output, 1, 0, node.borderSpacing)
+
+   output = unpackNodePoints(rrr)
+   local verts, indices, draw_mode = polyline('miter',output, node.borderThickness, nil, nil, node.borderRandomizerMultiplier)
    local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
    return mesh
 end
@@ -2390,97 +2405,46 @@ function love.draw()
       love.graphics.print(str, 600, 50)
       if getUIRect('borderhing', 600, 50,strW, strH ).clicked then
          currentNode.border = not currentNode.border
-         print(love.graphics.getFont():getWidth(str))
+         if currentNode.border then
+            if currentNode.borderThickness == nil then
+               currentNode.borderThickness = 1
+            end
+            if currentNode.borderSpacing == nil then
+               currentNode.borderSpacing = 10
+            end
+            if currentNode.borderTension == nil then
+               currentNode.borderTension = 0
+            end
+            if currentNode.borderRandomizerMultiplier == nil then
+               currentNode.borderRandomizerMultiplier = 0
+            end
+         end
       end
-      --local a = getUIRect
-      work = unpackNodePointsLoop(currentNode.points)
    end
  
-   if work and currentNode.border then
-      local v =  h_slider("splinetension", 600, 120, 200,  splineTension , 0.00001, 1)
+   if currentNode and currentNode.border then
+      local v =  h_slider("splinetension", 600, 120, 200,  currentNode.borderTension , 0.00001, 1)
       if v.value ~= nil then
-         splineTension = v.value
+         currentNode.borderTension = v.value
       end
 
       
-      local v =  h_slider("splineSpacing", 600, 160, 200,  splineSpacing , 2, 50)
+      local v =  h_slider("splineSpacing", 600, 160, 200,  currentNode.borderSpacing , 2, 50)
       if v.value ~= nil then
-         splineSpacing = v.value
+         currentNode.borderSpacing = v.value
       end
 
-      local v =  h_slider("splineLinethick", 600, 200, 200,  splineLineThickness , .1, 10)
+      local v =  h_slider("splineLinethick", 600, 200, 200,  currentNode.borderThickness , .1, 10)
       if v.value ~= nil then
-         splineLineThickness = v.value
+         currentNode.borderThickness = v.value
+      end
+
+      local v =  h_slider("splinerndmul", 600, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
+      if v.value ~= nil then
+        currentNode.borderRandomizerMultiplier = v.value
       end
       
-      local output = {}
-      for i =50, 100 do
-         local t = (i/100)
-
-         if t >= 1 then t = 0.99999 end
-
-         local x,y = GetSplinePos(work, t, splineTension)
-         table.insert(output, {x,y})
-      end
-      love.graphics.setColor(0,0,1)
-      for i = 1, #output do
-         --love.graphics.circle('fill',output[i][1], output[i][2],2)
-      end
-      --love.graphics.setColor(1,0,1)
-
-      local r2 = evenlyDistributeOnPath(output)
-      for i = 1, #r2 do
-         -- love.graphics.circle('fill',r2[i][1], r2[i][2],2)
-      end
-      love.graphics.setColor(1,1,1)
-
-      local rrr = {}
-      local clone = {}
-      for i = 1, #currentNode.points do
-         clone[i] = {currentNode.points[i][1], currentNode.points[i][2]}
-      end
-      --clone[#clone + 1] = {currentNode.points[1][1],currentNode.points[1][2]}
-
-      local totalLength =   getLengthOfPath(output)
-
-      local r2 = evenlySpreadPath(rrr, output, 1, 0, splineSpacing)
-
-      for i = 1, #rrr do
-         love.graphics.setColor(rrr[i][3][1],rrr[i][3][2],rrr[i][3][3])
-         love.graphics.circle('fill',rrr[i][1], rrr[i][2],2)
-      end
-
-     -- local without_duplicates = rrr
-      -- table.insert(without_duplicates, {rrr[1][1], rrr[1][2]})
       
-      -- for i =2 ,#rrr do
-      --    local here = rrr[i]
-      --    local last = without_duplicates[#without_duplicates]
-      --    --print(here[1],here[2],last[1] ,last[2] )
-      --    if here[1] ~= last[1] or here[2] ~= last[2] then
-      --        table.insert(without_duplicates, {here[1], here[2]})
-      --    else
-      --    end
-         
-         
-      -- end
-      
-      if true and rrr then
-            -- render outline!!!!!
-         local work2 =  unpackNodePoints(clone)
---         print(work[1],work[2], work[#work -1],work[#work])
-         local verts, indices, draw_mode = polyline('miter',work2, 1)
-         local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-            --love.graphics.setColor(shape.color[1]-.2,shape.color[2]-.2,shape.color[3]-.2,shape.color[4])
-            love.graphics.setColor(0,0,0)
-            love.graphics.draw(mesh, currentNode._parent._globalTransform )
-         end
-      --love.graphics.setColor(1,1,1)
-
-      -- local r2 = evenlyDistributeOnPath( currentNode.points)
-      -- for i = 1, #r2 do
-      --    love.graphics.circle('fill',r2[i][1], r2[i][2],2)
-      -- end
    end
 end
 
@@ -2543,7 +2507,7 @@ function evenlySpreadPath(result, path, index, running, spacing)
    local there = path[nextIndex]
    local d = getDistance(here[1], here[2], there[1], there[2])
    if (d + running) < spacing then
---      print('go to next node without adding one here', index+1)
+
       running = running + d
       return evenlySpreadPath(result, path, index+1, running, spacing)
    else
@@ -2570,40 +2534,9 @@ function evenlySpreadPath(result, path, index, running, spacing)
          running = running - d
          return evenlySpreadPath(result, path, index+1, running, spacing)
       end
-
-        
-
-      --print(running)
-      
-      
-      -- --print('subdivide this node', index)
-      -- for i = 0, (d+running), spacing do
-      --    print(running)
-      --    local x = lerp(here[1], there[1], running/d)
-      --    local y = lerp(here[2], there[2], running/d)
-         
-        
-      --    running = running + spacing
-
-      --    if running > d then
-      --       if running >=spacing then
-      --          table.insert(result, {x,y})
-      --       end
-            
-      --       running = running - d
-      --       return evenlySpreadPath(result, path, index+1, running, spacing)
-      --    elseif running >= spacing then
-            
-      --       table.insert(result, {x,y})
-
-      --    end
-         
-      -- end
-      --return evenlySpreadPath(result, path, index+1, running, spacing)
-
    end
    
-   --print(d)
+
 end
 
 
@@ -2627,155 +2560,153 @@ function getDistance(x1,y1,x2,y2)
       return distance
    end
 
-  -- https://stackoverflow.com/questions/24907476/how-to-get-a-fixed-number-of-evenly-spaced-points-describing-a-path
-      function evenlyDistributeOnPath(path)
-      local totalLength = 0
-      for i =1, #path do
-         local here = path[i]
-         local nextIndex = i == #path and 1 or i+1
-         local there = path[nextIndex]
-         totalLength = totalLength + getDistance(here[1], here[2], there[1], there[2])
-      end
+--   -- https://stackoverflow.com/questions/24907476/how-to-get-a-fixed-number-of-evenly-spaced-points-describing-a-path
+--       function evenlyDistributeOnPath(path)
+--       local totalLength = 0
+--       for i =1, #path do
+--          local here = path[i]
+--          local nextIndex = i == #path and 1 or i+1
+--          local there = path[nextIndex]
+--          totalLength = totalLength + getDistance(here[1], here[2], there[1], there[2])
+--       end
       
-      -- i want a thing every 10 distance
-      local spacing = 10
-      local lengthBetween = totalLength / spacing
-      local output = {}
+--       -- i want a thing every 10 distance
+--       local spacing = 10
+--       local lengthBetween = totalLength / spacing
+--       local output = {}
 
-      local runningTotal = 0 
-      local runningPart = 0
+--       local runningTotal = 0 
+--       local runningPart = 0
 
 
-      local lookingAtIndex = 1
+--       local lookingAtIndex = 1
       
-      --print(totalLength)
-      --print("should", (totalLength / spacing))
-      local done = false
-      while  lookingAtIndex < #path and (done ~= true)  do
-         --print(runningTotal)
-         --print(lookingAtIndex, #path)
-         local here = path[lookingAtIndex]
-         local nextIndex = lookingAtIndex == #path and 1 or lookingAtIndex+1
-         local there = path[nextIndex]
+--       local done = false
+--       while  lookingAtIndex < #path and (done ~= true)  do
+--          --print(runningTotal)
+--          --print(lookingAtIndex, #path)
+--          local here = path[lookingAtIndex]
+--          local nextIndex = lookingAtIndex == #path and 1 or lookingAtIndex+1
+--          local there = path[nextIndex]
 
-         local d = getDistance(here[1], here[2], there[1], there[2])
+--          local d = getDistance(here[1], here[2], there[1], there[2])
 
-         if runningPart > d then
-            runningPart = runningPart - d
-            lookingAtIndex = lookingAtIndex + 1
+--          if runningPart > d then
+--             runningPart = runningPart - d
+--             lookingAtIndex = lookingAtIndex + 1
            
-            if lookingAtIndex <= #path then
-               here = path[lookingAtIndex]
-               nextIndex = lookingAtIndex == #path and 1 or lookingAtIndex+1
-               there =path[nextIndex]
-               d = getDistance(here[1], here[2], there[1], there[2])
-            end
-         end
-         --if lookingAtIndex == #path then
-         if #output > 2 then -- this is an early exit
-            local d = getDistance(path[1][1],path[1][2],
-                                  output[#output][1],output[#output][2] )
-            if d < spacing then
-               done = true
-            end
+--             if lookingAtIndex <= #path then
+--                here = path[lookingAtIndex]
+--                nextIndex = lookingAtIndex == #path and 1 or lookingAtIndex+1
+--                there =path[nextIndex]
+--                d = getDistance(here[1], here[2], there[1], there[2])
+--             end
+--          end
+--          --if lookingAtIndex == #path then
+--          if #output > 2 then -- this is an early exit
+--             local d = getDistance(path[1][1],path[1][2],
+--                                   output[#output][1],output[#output][2] )
+--             if d < spacing then
+--                done = true
+--             end
             
-         end
+--          end
          
-         if not done then
-            local x = lerp(here[1], there[1], runningPart/d)
-            local y = lerp(here[2], there[2], runningPart/d)
+--          if not done then
+--             local x = lerp(here[1], there[1], runningPart/d)
+--             local y = lerp(here[2], there[2], runningPart/d)
             
-            table.insert(output, {x,y})
+--             table.insert(output, {x,y})
             
-            runningPart = runningPart + spacing
-            runningTotal = runningTotal + spacing
-         end
+--             runningPart = runningPart + spacing
+--             runningTotal = runningTotal + spacing
+--          end
 
-      end
+--       end
      
-      return output
-      end
+--       return output
+--       end
 
-function experiment(work)
-   local verts, indices, draw_mode = polyline('bevel',work, 3 , 0, false)
-      --print(indices, draw_mode, inspect(verts))
-      love.graphics.setColor(1,1,1)
-      local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+-- function experiment(work)
+--    local verts, indices, draw_mode = polyline('bevel',work, 3 , 0, false)
+--       --print(indices, draw_mode, inspect(verts))
+--       love.graphics.setColor(1,1,1)
+--       local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
 
-      love.graphics.draw(mesh, currentNode._parent._globalTransform)
+--       love.graphics.draw(mesh, currentNode._parent._globalTransform)
 
-      love.graphics.setColor(1,0,0)
-      love.graphics.setLineWidth(1)
+--       love.graphics.setColor(1,0,0)
+--       love.graphics.setLineWidth(1)
      
 
-      local withTexture = {}
-      for i = 1, #currentNode.points do
-         local here = currentNode.points[i]
-         local thereIndex
-         if i == #currentNode.points then
-            thereIndex = 1
-         else
-            thereIndex = i+1
-         end
-         local there = currentNode.points[thereIndex]
+--       local withTexture = {}
+--       for i = 1, #currentNode.points do
+--          local here = currentNode.points[i]
+--          local thereIndex
+--          if i == #currentNode.points then
+--             thereIndex = 1
+--          else
+--             thereIndex = i+1
+--          end
+--          local there = currentNode.points[thereIndex]
          
 
-         function addPoints(container, here, there) 
-            --local there = currentNode.points[thereIndex]
-            local angle, distance = getAngleAndDistance(there[1],there[2], here[1], here[2])
-            local perpAngle = angle - math.pi/2
+--          function addPoints(container, here, there) 
+--             --local there = currentNode.points[thereIndex]
+--             local angle, distance = getAngleAndDistance(there[1],there[2], here[1], here[2])
+--             local perpAngle = angle - math.pi/2
 
             
-            local j = 0
-            while j < distance do
-               local xx = here[1] +  (j * math.cos(angle))
-               local yy = here[2] +  (j * math.sin(angle))
-               local offset = 25 * math.random() 
-               xx = xx + math.cos(perpAngle) * offset
-               yy = yy + math.sin(perpAngle) * offset
-               table.insert(container, {xx, yy, 3})
+--             local j = 0
+--             while j < distance do
+--                local xx = here[1] +  (j * math.cos(angle))
+--                local yy = here[2] +  (j * math.sin(angle))
+--                local offset = 25 * math.random() 
+--                xx = xx + math.cos(perpAngle) * offset
+--                yy = yy + math.sin(perpAngle) * offset
+--                table.insert(container, {xx, yy, 3})
                
-               j = j +  love.math.random()*1
-            end
-         end
-         addPoints(withTexture, here, there)
+--                j = j +  love.math.random()*1
+--             end
+--          end
+--          addPoints(withTexture, here, there)
          
-         if i <= #currentNode.points then
+--          if i <= #currentNode.points then
          
-            local next = there
-            local afterIndex = (thereIndex+1) > #currentNode.points and 1 or  (thereIndex+1)
-            local after = currentNode.points[afterIndex] 
-            local angle, distance = getAngleAndDistance(after[1],after[2], next[1], next[2])
-            local perpAngle = angle - math.pi/2
-            --print(i, thereIndex, afterIndex)
+--             local next = there
+--             local afterIndex = (thereIndex+1) > #currentNode.points and 1 or  (thereIndex+1)
+--             local after = currentNode.points[afterIndex] 
+--             local angle, distance = getAngleAndDistance(after[1],after[2], next[1], next[2])
+--             local perpAngle = angle - math.pi/2
+--             --print(i, thereIndex, afterIndex)
 
 
-            local xx = there[1]
-            local yy = there[2]
-            local offset = 5 --12.5 * math.random() 
-            xx = xx + math.cos(perpAngle) * offset
-            yy = yy + math.sin(perpAngle) * offset
+--             local xx = there[1]
+--             local yy = there[2]
+--             local offset = 5 --12.5 * math.random() 
+--             xx = xx + math.cos(perpAngle) * offset
+--             yy = yy + math.sin(perpAngle) * offset
             
-            addPoints(withTexture, withTexture[#withTexture], {xx,yy})
-            -- love.graphics.line(100 + withTexture[#withTexture][1],
-            --                    100 + withTexture[#withTexture][2],
-            --                    100 + xx,
-            --                    100 + yy)
+--             addPoints(withTexture, withTexture[#withTexture], {xx,yy})
+--             -- love.graphics.line(100 + withTexture[#withTexture][1],
+--             --                    100 + withTexture[#withTexture][2],
+--             --                    100 + xx,
+--             --                    100 + yy)
 
-         else
---            print(i)
-         end
+--          else
+-- --            print(i)
+--          end
          
             
-         --table.insert(withTexture, {there[1], there[2], love.math.random()* 2})
-      end
+--          --table.insert(withTexture, {there[1], there[2], love.math.random()* 2})
+--       end
       
     
 
-      for i = 1, #withTexture do
-         love.graphics.circle('fill',100 +  withTexture[i][1], 100 +  withTexture[i][2], withTexture[i][3])
-      end
-end
+--       for i = 1, #withTexture do
+--          love.graphics.circle('fill',100 +  withTexture[i][1], 100 +  withTexture[i][2], withTexture[i][3])
+--       end
+-- end
 
 
 function getAngleAndDistance(x1,y1,x2,y2)
