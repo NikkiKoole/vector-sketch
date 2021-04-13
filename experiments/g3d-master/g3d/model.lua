@@ -54,7 +54,10 @@ local function newModel(verts, texture, translation, rotation, scale)
     self.verts = verts
     self.texture = texture
     self.mesh = love.graphics.newMesh(self.vertexFormat, self.verts, "triangles")
-    self.mesh:setTexture(self.texture)
+    if (self.texture) then
+       self.mesh:setTexture(self.texture)
+    end
+    
     self.matrix = newMatrix()
     self:setTransform(translation or {0,0,0}, rotation or {0,0,0}, scale or {1,1,1})
     self:generateAABB()

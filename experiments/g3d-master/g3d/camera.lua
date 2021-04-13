@@ -124,18 +124,15 @@ function camera.firstPersonMovement(dt)
     if love.keyboard.isDown("a") then moveX = moveX - 1 end
     if love.keyboard.isDown("s") then moveY = moveY + 1 end
     if love.keyboard.isDown("d") then moveX = moveX + 1 end
-    if love.keyboard.isDown("space") then
+    if love.keyboard.isDown("space") or love.keyboard.isDown("x")  then
         camera.position[2] = camera.position[2] - speed*dt
         cameraMoved = true
     end
-    if love.keyboard.isDown("k") then
+    if love.keyboard.isDown("k") or love.keyboard.isDown("z")  then
         camera.position[2] = camera.position[2] + speed*dt
         cameraMoved = true
     end
-    if love.keyboard.isDown("lshift") then
-        camera.position[2] = camera.position[2] + speed*dt
-        cameraMoved = true
-    end
+   
 
     -- do some trigonometry on the inputs to make movement relative to camera's direction
     -- also to make the player not move faster in diagonal directions
