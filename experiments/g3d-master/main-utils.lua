@@ -27,7 +27,6 @@ end
 function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
-
    if not shape then return end
    
    if shape.mask or shape.hole then
@@ -80,7 +79,15 @@ function handleChild(shape)
    
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
-        
+         
+         --local perpectiveMatrix = mat4from_perspective(fovy, aspect, near, far)
+         --local transform = love.math.newTransform( )
+         --transform:setMatrix(perpectiveMatrix)
+
+         -- look here https://stackoverflow.com/questions/51691482/how-to-create-a-2d-perspective-transform-matrix-from-individual-components
+
+         
+         --shape._parent._globalTransform
 
          
 

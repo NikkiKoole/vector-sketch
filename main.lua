@@ -840,12 +840,9 @@ function love.wheelmoved(x,y)
 
    local posx, posy = love.mouse.getPosition()
    local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
-
    root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9)
    root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
 
-   --- ugh
-   --local tg = root.transforms.g
    local tl = root.transforms.l
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
    root._globalTransform = root._localTransform
@@ -2861,7 +2858,21 @@ function love.keypressed(key)
       root.transforms.l[1] = 0
       root.transforms.l[2] = 0
    end
-
+   if key == 'o' then -- trace
+      if currentNode  then
+         if currentNode.points then
+         print(currentNode.name)
+         print(inspect(poly.makeVertices(currentNode)))
+         print(inspect(currentNode.points))
+         print(inspect(currentNode.transforms))
+         else
+            print(inspect(currentNode.transforms))
+         end
+         
+      end
+      
+   end
+   
 
    if (key == 's' and not changeName) then
       local path = shapeName..".polygons.txt"

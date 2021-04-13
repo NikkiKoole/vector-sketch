@@ -18,7 +18,7 @@ local shader = love.graphics.newShader [[
         vec4 position(mat4 transform_projection, vec4 vertex_position)
         {
             vertexColor = VertexColor;
-            return projectionMatrix * viewMatrix * modelMatrix * vertex_position;
+            return projectionMatrix  * viewMatrix  *  modelMatrix * TransformMatrix * vertex_position;
         }
     #endif
 

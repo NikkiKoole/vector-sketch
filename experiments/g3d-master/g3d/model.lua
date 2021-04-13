@@ -144,12 +144,20 @@ function model:updateMatrix()
 end
 
 -- draw the model
-function model:draw(shader)
+function model:draw(shader, transform)
     local shader = shader or self.shader
     love.graphics.setShader(shader)
     shader:send("modelMatrix", self.matrix)
-    love.graphics.draw(self.mesh)
+    love.graphics.draw(self.mesh, transform)
     love.graphics.setShader()
+end
+
+function model:draw2(shader, transform)
+--    local shader = shader or self.shader
+ --   love.graphics.setShader(shader)
+    shader:send("modelMatrix", self.matrix)
+    love.graphics.draw(self.mesh, transform)
+    --love.graphics.setShader()
 end
 
 return newModel
