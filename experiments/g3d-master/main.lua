@@ -91,18 +91,21 @@ function meshAll(root) -- this needs to be done recursive
          local verts= poly.makeVertices(child)
          local shape3d = generate3dShapeFrom2d(verts, i*0.00001)
          if #shape3d > 0 then
-            local m = g3d.newModel(shape3d, nil, {0,0,0})
-            m:makeNormals()
+
+            local pt = child._parent._globalTransform
+            --print(child._parent._globalTransform)
+            local m = g3d.newModel(shape3d, nil, {0,0,0}, nil,nil, pt)
+            --m:makeNormals()
             root.children[i].m3d= m
 
             local thick = .05
             local a = extrudeShape(verts, child.points,thick, i*0.00)
             --print(inspect(a))
-            local n = g3d.newModel(a.sides, nil, {0,0,0})
-            n:makeNormals()
+            local n = g3d.newModel(a.sides, nil, {0,0,0},nil,nil, pt)
+            --n:makeNormals()
             root.children[i].m3dSides = n
-            local o = g3d.newModel(shape3d, nil, {0,0,thick})
-            o:makeNormals()
+            local o = g3d.newModel(shape3d, nil, {0,0,thick},nil,nil, pt)
+            ---o:makeNormals()
             root.children[i].m3dOther=  o
             --print(a.sides)
             --extrudeShape(shape, border,thickness)
@@ -121,83 +124,73 @@ function love.load()
    for i = 1, #generated, 2 do
       table.insert(points, {generated[i], generated[i+1]})
    end
+
+   
+   
+   
    root = {
       folder = true,
       name = 'root',
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       children = {
-
-         {
+         { 
+            children = { {
+                  color = { 0.867, 0.239, 0.055, 1 },
+                  name = "orange",
+                  points = { { 270, 290 }, { 469, 335 }, { 341, 140 } }
+            } },
             folder = true,
-            transforms =  {l={0,0,0,1,1,100,0,0,0}},
-            name="rood",
-            children ={
-               {
-                  name="roodchild:"..1,
-                  color = {.5,1,0, 0.8},
-                  points = points,
-
-               },
-               {
-                  folder = true,
-                  transforms =  {l={200,200,0,1,1,100,0,0,0}},
-                  name="yellow",
-                  children ={
-                     {
-                        name="chi22ld:"..1,
-                        color = {1,1,0, 0.8},
-                        points = {{0,0},{200,0},{200,200},{0,200}},
-
-                     },
-                     {
-                        folder = true,
-                        transforms =  {l={200,200,0,1,1,100,0,0,0}},
-                        name="blue",
-                        children ={
-
-
-
-                           {
-                              name="bluechild:"..1,
-                              color = {0,0,1, 0.8},
-                              points = {{0,0},{200,0},{200,200},{0,200}},
-
-                           },
-                           {
-                              folder = true,
-                              transforms =  {l={200,200,0,1,1,0,0,0,0}},
-                              name="endhandle",
-                              children ={
-
-                                 {
-                                    name="endhandlechild:"..1,
-                                    color = {0,1,0, 0.8},
-                                    points = {{0,0},{20,0},{20,20},{0,20}},
-
-                                 }
-
-                              }
-                           }
-
-
-
-                        }
-                     }
-                  }
-               }
-            },
-         },
-      }
+            name = "orange parent",
+            transforms = {
+               l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+            }
+         }, {
+            children = { {
+                  color = { 0.161, 0.678, 1, 1 },
+                  name = "blue",
+                  points = { { 270, 290 }, { 469, 335 }, { 341, 140 } }
+            } },
+            folder = true,
+            name = " blue parent",
+            transforms = {
+               l = { 9, 269, 0, 1, 1, 0, 0, 0, 0 }
+            }
+            }, {
+            children = { {
+                  color = { 0, 0.529, 0.318, 1 },
+                  name = "green",
+                  points = { { 605, 339 }, { 749, 403 }, { 682, 135 } }
+            } },
+            folder = true,
+            name = "green parent",
+            transforms = {
+               l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+            }
+               }, {
+            children = { {
+                  color = { 0.514, 0.463, 0.612, 1 },
+                  name = "purple",
+                  points = { { 605, 339 }, { 749, 403 }, { 682, 135 } }
+            } },
+            folder = true,
+            name = " purple parent",
+            transforms = {
+               l = { -27, 281, 0, 1, 1, 0, 0, 0, 0 }
+            }
+      } }
+      
    }
 
    makeScaleFit(root)
    parentize(root)
+   renderThings3d(root)
    meshAll(root)
-
+  
     Earth = g3d.newModel("assets/sphere.obj", "assets/earth.png", {0,0,4})
     Moon = g3d.newModel("assets/sphere.obj", "assets/moon.png", {5,0,4}, nil, {0.5,0.5,0.5})
     Background = g3d.newModel("assets/sphere.obj", "assets/iper.jpeg", {0,0,0}, nil, {500,500,500})
     Timer = 0
+    love.mouse.setVisible( true)
 end
 
 
@@ -214,8 +207,42 @@ function love.keypressed(k)
    end
 end
 
+function recursiveRayIntersection(root, x,y,z, pos)
+   -- todo this doenst check other and sides
+   if root.m3d then
+     if (root._parent._globalTransform) then
+         local dx, dy = root._parent._globalTransform:inverseTransformPoint(0,0)
+         local hit = root.m3d:rayIntersectionAABB(pos[1], pos[2], pos[3], x, y, z)
+
+         if hit then
+            print(root.name, root._parent.name)
+         end
+         
+     end
+   else
+      if root.children then
+      for i = 1, #root.children do
+         recursiveRayIntersection(root.children[i], x,y,z, pos)
+      end
+      end
+   end
+   
+end
+
+
 function love.mousemoved(x,y, dx,dy)
-    g3d.camera.firstPersonLook(dx,dy)
+   g3d.camera.firstPersonLook(dx,dy)
+   --print(inspect(g3d.camera.position))
+   
+   local x,y,z = g3d.camera:getLookVector()
+   local pos = g3d.camera.position
+
+   local hit = Earth:rayIntersectionAABB(pos[1], pos[2], pos[3], x, y, z)
+   print('earth hit', hit)
+   local hit = Moon:rayIntersectionAABB(pos[1], pos[2], pos[3], x, y, z)
+   print('moon hit', hit)
+   recursiveRayIntersection(root, x,y,z, pos)
+
 end
 
 function love.update(dt)
@@ -233,6 +260,8 @@ function handleChild3d(shape, t)
       if shape.m3d then
          love.graphics.setColor(shape.color[1], shape.color[2], shape.color[3])
          --local t= love.math.newTransform(0,0,Timer,1,1,Timer % 4,0,0,0)
+         --shape.m3d:draw2(shader )
+         
          shape.m3d:draw2(shader, shape._parent._globalTransform )
          if shape.m3dSides then
             shape.m3dSides:draw2(shader, shape._parent._globalTransform )
@@ -277,8 +306,10 @@ function love.filedropped(file)
     local tab = getDataFromFile(file)
     root.children = tab -- TableConcat(root.children, tab)
     parentize(root)
+    renderThings3d(root)
     meshAll(root)
     makeScaleFit(root)
+
 end
 
 
@@ -313,4 +344,6 @@ function love.draw()
     love.graphics.setShader()
     love.graphics.setColor(1,1,1)
     love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 0, 30)
+
+    love.graphics.rectangle('fill', 1024/2, 768/2,2,2)
 end

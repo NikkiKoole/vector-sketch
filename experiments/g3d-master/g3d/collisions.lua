@@ -448,7 +448,7 @@ end
 --
 -- translation, and scale are not included here because they are computed on the fly instead
 -- rotation is never included because AABBs are axis-aligned
-function collisions:generateAABB()
+function collisions:generateAABB(parentTransform)
     local aabb = {
         min = {
             math.huge,
@@ -471,6 +471,18 @@ function collisions:generateAABB()
         aabb.max[3] = math.max(aabb.max[3], vert[3])
     end
 
+    
+    if (parentTransform) then
+--       print(inspect(aabb))
+       local minx, miny = parentTransform:transformPoint(aabb.min[1], aabb.min[2])
+       local maxx, maxy = parentTransform:transformPoint(aabb.max[1], aabb.max[2])
+       --print('got some stuff todo', nx,ny)
+       aabb.min[1] = minx
+       aabb.min[2] = miny
+       aabb.max[1] = maxx
+       aabb.max[2] = maxy
+
+    end
     self.aabb = aabb
     return aabb
 end

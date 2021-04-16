@@ -34,7 +34,7 @@ end
 -- this returns a new instance of the model class
 -- a model must be given a .obj file or equivalent lua table, and a texture
 -- translation, rotation, and scale are all 3d vectors and are all optional
-local function newModel(verts, texture, translation, rotation, scale)
+local function newModel(verts, texture, translation, rotation, scale,parentTransform)
     local self = setmetatable({}, model)
 
     -- if verts is a string, use it as a path to a .obj file
@@ -60,7 +60,7 @@ local function newModel(verts, texture, translation, rotation, scale)
     
     self.matrix = newMatrix()
     self:setTransform(translation or {0,0,0}, rotation or {0,0,0}, scale or {1,1,1})
-    self:generateAABB()
+    self:generateAABB(parentTransform)
 
     return self
 end
