@@ -59,6 +59,7 @@ local function newModel(verts, texture, translation, rotation, scale,parentTrans
     end
     
     self.matrix = newMatrix()
+    
     self:setTransform(translation or {0,0,0}, rotation or {0,0,0}, scale or {1,1,1})
     self:generateAABB(parentTransform)
 
@@ -157,7 +158,8 @@ end
 
 function model:draw2(shader, transform)
 --    local shader = shader or self.shader
- --   love.graphics.setShader(shader)
+   --   love.graphics.setShader(shader)
+    --print((self.matrix))
     shader:send("modelMatrix", self.matrix)
     love.graphics.draw(self.mesh, transform)
     --love.graphics.setShader()

@@ -11,7 +11,7 @@ local newMatrix = require(G3D_PATH .. "/matrices")
 
 local camera = {
     fov = math.pi/2,
-    nearClip = 0.01,
+    nearClip = 0.1,
     farClip = 1000,
     aspectRatio = love.graphics.getWidth()/love.graphics.getHeight(),
     position = {0,0,0},
@@ -42,7 +42,7 @@ function camera:getLookVector()
 
     -- make sure not to divide by 0
     if length > 0 then
-        return vx/length, vy/length, vz/length
+       return vx/length, vy/length, vz/length
     end
     return vx,vy,vz
 end
