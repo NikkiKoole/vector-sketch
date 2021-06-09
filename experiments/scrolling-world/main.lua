@@ -12,7 +12,10 @@ end
 local function resizeCamera( self, w, h )
    local scaleW, scaleH = w / self.w, h / self.h
    local scale = math.min( scaleW, scaleH )
-   self.w, self.h = scale * self.w, scale * self.h
+   -- the line below keeps aspect
+   --self.w, self.h = scale * self.w, scale * self.h
+   -- the line below deosnt keep aspect
+   self.w, self.h = scaleW * self.w, scaleH * self.h
    self.aspectRatio = self.w / w
    self.offsetX, self.offsetY = self.w / 2, self.h / 2
    offset = offset * scale
@@ -25,7 +28,7 @@ end
 function love.load()
    love.window.setMode(1024, 768, {resizable=true,  msaa=4})
    W, H = love.graphics.getDimensions()
-   offset = 4
+   offset = 20
 
    player = {
       x = - 25,
@@ -38,18 +41,34 @@ function love.load()
    cameraFollowPlayer = true
    stuff = {}
    
-   for i = 1, 10 do
+   for i = 1, 20 do
       table.insert(
          stuff,
          {
-            x = love.math.random(-W, W ),
-            y = love.math.random(-H, H),
+            x = love.math.random(-W*2, W*2 ),
+            y = love.math.random(-H*2, H*2),
             width = love.math.random(100, 300),
             height = love.math.random(100, 300),
             color = { 1, 1, 1 }
          }
       )
    end
+
+   cameraPoints = {}
+   for i = 1, 10 do
+      table.insert(
+         cameraPoints,
+         {
+            x = love.math.random(-W*2, W*2 ),
+            y = love.math.random(-H*2, H*2),
+            width = love.math.random(200, 500),
+            height = love.math.random(200, 500),
+            color = { 1, 1, 1 },
+            selected = false
+         }
+      )
+   end
+   
 
 
    
@@ -110,8 +129,34 @@ function love.update(dt)
    cam:update()
 end
 
+function pointInRect(x,y, rx, ry, rw, rh)
+   if x < rx or y < ry then return false end
+   if x > rx+rw or y > ry+rh then return false end
+   return true
+end
+
+function love.mousepressed(x,y)
+   local wx, wy = cam:getMouseWorldCoordinates()
+   local foundOne = false
+   for _, v in pairs(cameraPoints) do
+      if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
+         foundOne = true
+         v.selected = true
+         local cw, ch = cam:getContainerDimensions()
+         local targetScale = math.min(cw/v.width, ch/v.height)
+         
+         cam:setScale(targetScale)
+         cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
+      else
+         v.selected = false
+      end
+      
+   end
+end
+
 
 function love.draw()
+   W, H = love.graphics.getDimensions()
    love.graphics.clear(.3, .3, .7)
    drawCameraBounds(cam, 'line' )
    cam:push()
@@ -129,6 +174,16 @@ function love.draw()
    for _, v in pairs(stuff) do
       love.graphics.setColor(v.color)
       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+   end
+
+   for _, v in pairs(cameraPoints) do
+      love.graphics.setColor(v.color)
+      if v.selected then
+         love.graphics.setColor(1,0,0,1)
+
+      end
+      
+      love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
    end
 
    love.graphics.setColor(player.color)
