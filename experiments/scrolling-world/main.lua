@@ -1,0 +1,133 @@
+local Camera = require 'brady'
+
+
+
+
+function love.keyreleased( key )
+   if key == 'escape' then love.event.quit()
+   end
+end
+
+local function resizeCamera( self, w, h )
+   local scaleW, scaleH = w / self.w, h / self.h
+   local scale = math.min( scaleW, scaleH )
+   self.w, self.h = scale * self.w, scale * self.h
+   self.aspectRatio = self.w / w
+   self.offsetX, self.offsetY = self.w / 2, self.h / 2
+   offset = offset * scale
+end
+
+local function drawCameraBounds( cam, mode )
+   love.graphics.rectangle( mode, cam.x, cam.y, cam.w, cam.h )
+end
+
+function love.load()
+   love.window.setMode(1024, 768, {resizable=true})
+   W, H = love.graphics.getDimensions()
+   offset = 4
+
+   player = {
+      x = - 25,
+      y = - 25,
+      width = 50,
+      height = 50,
+      speed = 300,
+      color = { 1,0,0 }
+   }
+   stuff = {}
+   
+   for i = 1, 10 do
+      table.insert(
+         stuff,
+         {
+            x = love.math.random(100, W * 2 - 100),
+            y = love.math.random(100, H * 2 - 100),
+            width = love.math.random(100, 300),
+            height = love.math.random(100, 300),
+            color = { 1, 1, 1 }
+         }
+      )
+   end
+
+
+   
+   cam = Camera(
+      W - 2 * offset,
+      H - 2 * offset,
+      {
+         x = offset, y = offset, resizable = true, maintainAspectRatio = true,
+         resizingFunction = function( self, w, h )
+            resizeCamera( self, w, h )
+            local W, H = love.graphics.getDimensions()
+            self.x = offset
+            self.y = offset
+         end,
+         getContainerDimensions = function()
+            local W, H = love.graphics.getDimensions()
+            return W - 2 * offset, H - 2 * offset
+         end
+      }
+   )
+   
+end
+
+
+function love.update(dt)
+
+   local v = {x=0, y=0}
+   
+   if love.keyboard.isDown('left') then
+      v.x = v.x - 1
+   end
+   if love.keyboard.isDown('right') then
+      v.x = v.x + 1
+   end
+   if love.keyboard.isDown('up') then
+      v.y = v.y - 1
+   end
+   if love.keyboard.isDown('down') then
+      v.y = v.y + 1
+   end
+
+   local mag = math.sqrt((v.x * v.x) + (v.y * v.y))
+   if mag > 0 then
+      v.x = (v.x/mag) * player.speed * dt 
+      v.y = (v.y/mag) * player.speed * dt
+      player.x = player.x + v.x
+      player.y = player.y + v.y
+   end
+   
+   cam:setTranslationSmooth(player.x + player.width/2,
+                            player.y + player.height/2,
+                            dt,
+                            2)
+   cam:update()
+end
+
+
+function love.draw()
+   love.graphics.clear(.3, .3, .7)
+   drawCameraBounds(cam, 'line' )
+   cam:push()
+
+   for _, v in pairs(stuff) do
+      love.graphics.setColor(v.color)
+      love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+   end
+
+   love.graphics.setColor(player.color)
+   love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
+   
+   
+   cam:pop()
+
+   love.graphics.setColor(1,1,1,.2)
+   love.graphics.line(0,0,W,H)
+   love.graphics.line(0,H,W,0)
+
+end
+
+function love.wheelmoved( dx, dy )
+
+   cam:scaleToPoint( 1 + dy / 10 )
+end

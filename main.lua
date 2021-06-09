@@ -82,6 +82,8 @@ function makeMeshFromVertices(vertices)
    end
    return nil
 end
+
+
 function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
       if (not root.children[i].folder) then
@@ -1169,6 +1171,8 @@ function  makeNewFolder()
 end
 
 
+
+
 local step = 0
 function love.update(dt)
    -- if dopesheet and dopesheet.sliderValue ~= nil then
@@ -1615,23 +1619,11 @@ function love.draw()
             editingMode = 'rectangle-select'
          end
          if #childrenInRectangleSelect > 0 then
-            --print(#childrenInRectangleSelect)
             if love.keyboard.isDown("delete") then
                for i =1, #childrenInRectangleSelect do
                   local n = childrenInRectangleSelect[i]
-                  
-                  --    function removeCurrentNode()
-                  --if (currentNode) then
                   table.remove(n._parent.children, getIndex(n))
-                  --end
                end
-
-               --print('new node:', inspect(n))
-               --deleteNode(n)
-
-               --end
-               
-               -- print("delete pressed?, delete a bunch of children at once?")
             end
             
             
@@ -1639,15 +1631,11 @@ function love.draw()
                lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
             end
 
-            if imgbutton('object_group', ui.object_group, rightX - 400, 10).clicked  then
+            if imgbutton('object_group', ui.object_group, rightX - 400, 10).clicked   then
 
                for i =1, #childrenInRectangleSelect do
                   local n = childrenInRectangleSelect[i]
-                  
-                  --    function removeCurrentNode()
-                  --if (currentNode) then
                   table.remove(n._parent.children, getIndex(n))
-                  --end
                end
                
                local shape = {
