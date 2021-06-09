@@ -3,9 +3,10 @@ local Camera = require 'brady'
 
 
 
-function love.keyreleased( key )
-   if key == 'escape' then love.event.quit()
-   end
+function love.keypressed( key )
+   if key == 'escape' then love.event.quit() end
+   if key == 'space' then cameraFollowPlayer = not cameraFollowPlayer end
+
 end
 
 local function resizeCamera( self, w, h )
@@ -22,7 +23,7 @@ local function drawCameraBounds( cam, mode )
 end
 
 function love.load()
-   love.window.setMode(1024, 768, {resizable=true})
+   love.window.setMode(1024, 768, {resizable=true,  msaa=4})
    W, H = love.graphics.getDimensions()
    offset = 4
 
@@ -34,14 +35,15 @@ function love.load()
       speed = 300,
       color = { 1,0,0 }
    }
+   cameraFollowPlayer = true
    stuff = {}
    
    for i = 1, 10 do
       table.insert(
          stuff,
          {
-            x = love.math.random(100, W * 2 - 100),
-            y = love.math.random(100, H * 2 - 100),
+            x = love.math.random(-W, W ),
+            y = love.math.random(-H, H),
             width = love.math.random(100, 300),
             height = love.math.random(100, 300),
             color = { 1, 1, 1 }
@@ -68,7 +70,7 @@ function love.load()
          end
       }
    )
-   
+   far = cam:addLayer( 'far', .85, { relativeScale = (1.0/.85) * 1.05 } )
 end
 
 
@@ -96,11 +98,15 @@ function love.update(dt)
       player.x = player.x + v.x
       player.y = player.y + v.y
    end
-   
-   cam:setTranslationSmooth(player.x + player.width/2,
-                            player.y + player.height/2,
-                            dt,
-                            2)
+
+   if cameraFollowPlayer then
+      cam:setTranslationSmooth(
+         player.x + player.width/2,
+         player.y + player.height/2,
+         dt,
+         2
+      )
+   end
    cam:update()
 end
 
@@ -110,6 +116,16 @@ function love.draw()
    drawCameraBounds(cam, 'line' )
    cam:push()
 
+   far:push()
+   -- the parallax layer behind
+   love.graphics.setColor( 1, 0, 0, .25 )
+   for _, v in pairs(stuff) do
+      love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+      love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+   end
+   far:pop()
+
+   
    for _, v in pairs(stuff) do
       love.graphics.setColor(v.color)
       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)

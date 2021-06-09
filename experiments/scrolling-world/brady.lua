@@ -165,10 +165,10 @@ local function newCamera( w, h, flags )
                    local deltaY = newY - self.translationY
                    self.translationX =  self.translationX + deltaX * smoothing * dt
                    self.translationY =  self.translationY + deltaY * smoothing * dt
-                    if (math.abs(deltaX) < 0.1) then
+                   if (math.abs(deltaX) < .5) then
                        self.translationX = newX
                     end
-                    if (math.abs(deltaY) < 0.1) then
+                    if (math.abs(deltaY) < .5) then
                        self.translationY = newY
                     end
                    
