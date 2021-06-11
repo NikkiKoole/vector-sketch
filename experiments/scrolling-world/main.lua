@@ -57,12 +57,12 @@ function love.load()
    cameraFollowPlayer = true
    stuff = {}
    
-   for i = 1, 20 do
+   for i = 1, 200000 do
       table.insert(
          stuff,
          {
-            x = love.math.random(-W*2, W*2 ),
-            y = love.math.random(-H*2, H*2),
+            x = love.math.random(-W*120, W*120 ),
+            y = love.math.random(-H*120, H*120),
             width = love.math.random(100, 300),
             height = love.math.random(100, 300),
             color = { 1, 1, 1 }
@@ -259,19 +259,31 @@ function love.draw()
    far:push()
    -- the parallax layer behind
    love.graphics.setColor( 1, 0, 0, .25 )
+    tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
+   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
+
    for _, v in pairs(stuff) do
-      love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-      love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+         love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      end
    end
    renderThings(root)
    far:pop()
    
 
    
+   tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'main')
+   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'main')
+
+
    for _, v in pairs(stuff) do
-      love.graphics.setColor(v.color)
-      love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+         love.graphics.setColor(v.color)
+         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      end
       
+
    end
 
    renderThings(root)
@@ -317,8 +329,7 @@ end
 
 
 function love.wheelmoved( dx, dy )
-
-   cam:scaleToPoint( 1 + dy / 10 )
+   cam:scaleToPoint(  1 + dy / 10)
 end
 
 
