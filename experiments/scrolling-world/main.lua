@@ -1,6 +1,22 @@
 local Camera = require 'brady'
 
+function require_all(path, opts)
+	local items = love.filesystem.getDirectoryItems(path)
+	for _, item in pairs(items) do
+		if love.filesystem.getInfo(path .. '/' .. item, 'file') then 
+			require(path .. '/' .. item:gsub('.lua', '')) 
+		end
+	end
+	if opts and opts.recursive then 
+		for _, item in pairs(items) do
+			if love.filesystem.getInfo(path .. '/' .. item, 'directory') then 
+				require_all(path .. '/' .. item, {recursive = true}) 
+			end
+		end
+	end
+end
 
+require_all "vecsketch"
 
 
 function love.keypressed( key )
@@ -26,7 +42,7 @@ local function drawCameraBounds( cam, mode )
 end
 
 function love.load()
-   love.window.setMode(1024, 768, {resizable=true,  msaa=4})
+
    W, H = love.graphics.getDimensions()
    offset = 20
 
@@ -68,8 +84,6 @@ function love.load()
          }
       )
    end
-   
-
 
    
    cam = Camera(
@@ -89,7 +103,88 @@ function love.load()
          end
       }
    )
-   far = cam:addLayer( 'far', .85, { relativeScale = (1.0/.85) * 1.05 } )
+   far = cam:addLayer( 'far', .95, { relativeScale = (1.0/.95) * .95 } )
+
+   close = cam:addLayer( 'close', 1.05, { relativeScale = (1.0/1.05) * 1.05 } )
+   local generated = generatePolygon(0,0, 40, .05, .02 , 6)
+   local points = {}
+   for i = 1, #generated, 2 do
+      table.insert(points, {generated[i], generated[i+1]})
+   end
+   root = {
+      folder = true,
+      name = 'root',
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      children = {
+
+         {
+            folder = true,
+            transforms =  {l={0,0,0,1,1,100,0,0,0}},
+            name="rood",
+            children ={
+               {
+                  name="roodchild:"..1,
+                  color = {.5,1,0, 0.8},
+                  points = points,
+
+               },
+               {
+                  folder = true,
+                  transforms =  {l={200,200,0,1,1,100,0,0,0}},
+                  name="yellow",
+                  children ={
+                     {
+                        name="chi22ld:"..1,
+                        color = {1,1,0, 0.8},
+                        points = {{0,0},{200,0},{200,200},{0,200}},
+
+                     },
+                     {
+                        folder = true,
+                        transforms =  {l={200,200,0,1,1,100,0,0,0}},
+                        name="blue",
+                        children ={
+
+
+
+                           {
+                              name="bluechild:"..1,
+                              color = {0,0,1, 0.8},
+                              points = {{0,0},{200,0},{200,200},{0,200}},
+
+                           },
+                           {
+                              folder = true,
+                              transforms =  {l={200,200,0,1,1,0,0,0,0}},
+                              name="endhandle",
+                              children ={
+
+                                 {
+                                    name="endhandlechild:"..1,
+                                    color = {0,1,0, 0.8},
+                                    points = {{0,0},{20,0},{20,20},{0,20}},
+
+                                 }
+
+                              }
+                           }
+
+
+
+                        }
+                     }
+                  }
+               }
+            },
+         },
+      }
+   }
+   
+   parentize(root)
+   meshAll(root)
+   renderThings(root)
+  
+        
 end
 
 
@@ -168,18 +263,23 @@ function love.draw()
       love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
    end
+   renderThings(root)
    far:pop()
+   
 
    
    for _, v in pairs(stuff) do
       love.graphics.setColor(v.color)
       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      
    end
 
+   renderThings(root)
+
    for _, v in pairs(cameraPoints) do
-      love.graphics.setColor(v.color)
+      love.graphics.setColor(1,0,1,.5)
       if v.selected then
-         love.graphics.setColor(1,0,0,1)
+         love.graphics.setColor(1,0,0,.6)
 
       end
       
@@ -188,7 +288,18 @@ function love.draw()
 
    love.graphics.setColor(player.color)
    love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
-   
+
+
+
+   -- close:push()
+   -- -- the parallax layer before
+   -- love.graphics.setColor( 1, 0, 0, .25 )
+   -- for _, v in pairs(stuff) do
+   --    love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+   --    love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+   -- end
+   -- renderThings(root)
+   -- close:pop()
    
    cam:pop()
 
@@ -196,9 +307,29 @@ function love.draw()
    love.graphics.line(0,0,W,H)
    love.graphics.line(0,H,W,0)
 
+   love.graphics.setColor(0,0,0,.2)
+   love.graphics.print(love.timer.getFPS())
+   love.graphics.setColor(1,1,1,.8)
+
+   love.graphics.print(love.timer.getFPS(),1,1)
+
 end
+
 
 function love.wheelmoved( dx, dy )
 
    cam:scaleToPoint( 1 + dy / 10 )
 end
+
+
+function love.filedropped(file)
+
+    local tab = getDataFromFile(file)
+    root.children = tab -- TableConcat(root.children, tab)
+    parentize(root)
+    meshAll(root)
+    renderThings(root)
+    
+
+end
+

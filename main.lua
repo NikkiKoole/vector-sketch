@@ -986,6 +986,60 @@ function love.load(arg)
    for i = 1, #generated, 2 do
       table.insert(points, {generated[i], generated[i+1]})
    end
+
+
+   rootOld = {
+      folder = true,
+      name = 'root',
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      children = {
+         {
+            children = { {
+                  color = { 0.867, 0.239, 0.055, 1 },
+                  name = "orange",
+                  points = { { 270, 290 }, { 469, 335 }, { 341, 140 } }
+            } },
+            folder = true,
+            name = "orange parent",
+            transforms = {
+               l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+            }
+         }, {
+            children = { {
+                  color = { 0.161, 0.678, 1, 1 },
+                  name = "blue",
+                  points = { { 270, 290 }, { 469, 335 }, { 341, 140 } }
+            } },
+            folder = true,
+            name = " blue parent",
+            transforms = {
+               l = { 9, 269, 0, 1, 1, 0, 0, 0, 0 }
+            }
+            }, {
+            children = { {
+                  color = { 0, 0.529, 0.318, 1 },
+                  name = "green",
+                  points = { { 605, 339 }, { 749, 403 }, { 682, 135 } }
+            } },
+            folder = true,
+            name = "green parent",
+            transforms = {
+               l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+            }
+               }, {
+            children = { {
+                  color = { 0.514, 0.463, 0.612, 1 },
+                  name = "purple",
+                  points = { { 605, 339 }, { 749, 403 }, { 682, 135 } }
+            } },
+            folder = true,
+            name = " purple parent",
+            transforms = {
+               l = { -27, 281, 0, 1, 1, 0, 0, 0, 0 }
+            }
+      } }
+
+   }
    
    root = {
       folder = true,
