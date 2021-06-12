@@ -45,19 +45,19 @@ function love.load()
 
    W, H = love.graphics.getDimensions()
    offset = 20
-
+   counter = 0
    player = {
       x = - 25,
       y = - 25,
       width = 50,
-      height = 50,
+      height = 180,
       speed = 300,
       color = { 1,0,0 }
    }
    cameraFollowPlayer = true
    stuff = {}
    
-   for i = 1, 200000 do
+   for i = 1, 20000 do
       table.insert(
          stuff,
          {
@@ -103,9 +103,12 @@ function love.load()
          end
       }
    )
+   hack = cam:addLayer('hack', 1, {relativeScale=1})
+   farther = cam:addLayer( 'farther', .65, { relativeScale = (1.0/.65) * .65 } )
    far = cam:addLayer( 'far', .95, { relativeScale = (1.0/.95) * .95 } )
 
    close = cam:addLayer( 'close', 1.05, { relativeScale = (1.0/1.05) * 1.05 } )
+   
    local generated = generatePolygon(0,0, 40, .05, .02 , 6)
    local points = {}
    for i = 1, #generated, 2 do
@@ -251,12 +254,13 @@ end
 
 
 function love.draw()
+   counter = counter +1
    W, H = love.graphics.getDimensions()
    love.graphics.clear(.3, .3, .7)
    drawCameraBounds(cam, 'line' )
-   cam:push()
+  
 
-   far:push()
+   farther:push()
    -- the parallax layer behind
    love.graphics.setColor( 1, 0, 0, .25 )
     tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
@@ -269,23 +273,80 @@ function love.draw()
       end
    end
    renderThings(root)
-   far:pop()
-   
+   farther:pop()
 
    
-   tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'main')
-   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'main')
-
+   far:push()
+   -- the parallax layer behind
+   --print(cam:getTranslation()) 
+--   local tx, ty = far:getTranslation()
+   
+  -- love.graphics.translate( -tx * far.relativeScale, -ty * far.relativeScale )
+   
+   love.graphics.setColor( 1, 0, 0, .25 )
+    tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
+   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
 
    for _, v in pairs(stuff) do
       if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+         love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      end
+   end
+   renderThings(root)
+   far:pop()
+
+
+  
+   --.65, { relativeScale = (1.0/.65) * .65 } )
+   
+   
+
+   local p = ((math.sin(counter / 100)) )
+   p = mapInto(p, -1, 1, -0.05, 0.05)
+   print(p)
+      
+   -- local layer = {relativeScale=(1.0/p) * p, scale=p}
+
+   -- local lastSetScale = 0 
+   -- local lastSetTranslate = {x-0,y=0}
+   
+   -- love.graphics.scale( cam.scale * cam.aspectRatioScale * layer.scale )
+   -- love.graphics.translate( -cam.translationX * layer.relativeScale,
+   --                             -cam.translationY * layer.relativeScale )
+
+
+   -- lastSetScale = cam.scale * cam.aspectRatioScale * layer.scale
+   -- lastSetTranslate = { x = -cam.translationX * layer.relativeScale,
+   --                             y = -cam.translationY * layer.relativeScale}
+  
+   tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'main')
+   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'main')
+
+   cam:push()
+   local teller = 0
+   for _, v in pairs(stuff) do
+      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+         
+        
+         hack.scale = 1 + p --+ (#stuff/ teller) * 0.1  
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+         hack.push()
+         --print(hack.scale, hack.relativeScale)
          love.graphics.setColor(v.color)
          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+         hack:pop()
+         teller = teller + 1
       end
       
 
    end
+   --cam:push()
 
+   love.graphics.setColor(player.color)
+   love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
+
+   
    renderThings(root)
 
    for _, v in pairs(cameraPoints) do
@@ -298,8 +359,8 @@ function love.draw()
       love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
    end
 
-   love.graphics.setColor(player.color)
-   love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
+   --love.graphics.setColor(player.color)
+   --love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
 
 
 

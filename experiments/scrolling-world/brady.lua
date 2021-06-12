@@ -37,11 +37,10 @@ local function makePush( self, layer )
 		love.graphics.translate( self.x + self.offsetX, self.y + self.offsetY )
 		love.graphics.rotate( self.rotation )
 		love.graphics.scale( self.scale * self.aspectRatioScale * layer.scale )
-
-
 		love.graphics.translate( -self.translationX * layer.relativeScale, -self.translationY * layer.relativeScale )
 	end
 end
+
 
 local function addLayer( self, name, scale, flags )
 	local new = {
@@ -50,6 +49,7 @@ local function addLayer( self, name, scale, flags )
 		relativeScale = 1, -- Controls the translation speed
 		mode = self.mode,
 	}
+        
 	new.push = makePush( self, new )
 	new.pop = love.graphics.pop
 
@@ -103,6 +103,7 @@ local function newCamera( w, h, flags )
 			return ( type( name ) == 'table' and name or self.layers[name] )
 		end,
 		push = function( self, layer ) self:getLayer( layer or 'main' ):push() end,
+                
 		pop = function( self, layer ) self:getLayer( layer or 'main' ):pop() end,
 		getWorldCoordinates = function( self, x, y, layer )
 			layer = self:getLayer( layer or 'main' )
