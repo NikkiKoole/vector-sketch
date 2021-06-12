@@ -1,4 +1,5 @@
 local Camera = require 'brady'
+local inspect = require 'inspect'
 
 function require_all(path, opts)
 	local items = love.filesystem.getDirectoryItems(path)
@@ -57,18 +58,25 @@ function love.load()
    cameraFollowPlayer = true
    stuff = {}
    
-   for i = 1, 20000 do
+   for i = 1, 1000 do
+      local rndHeight = love.math.random(100, 900)
+      local rndDepth =  love.math.random(-10,10)
       table.insert(
          stuff,
          {
-            x = love.math.random(-W*120, W*120 ),
-            y = love.math.random(-H*120, H*120),
-            width = love.math.random(100, 300),
-            height = love.math.random(100, 300),
-            color = { 1, 1, 1 }
+            x = love.math.random(-W*5, W*5 ),
+            y = 0-rndHeight, --love.math.random(-H*12, 0),
+            width = love.math.random(30, 50),
+            height = rndHeight,
+            color = {.6,
+                     mapInto(rndDepth, -10,10,  .6, .5),
+                     mapInto(rndDepth, -10,10, 0, .3) ,
+                     love.math.random(.7,.9)},
+            depth = rndDepth
          }
       )
    end
+   table.sort( stuff, function(a,b) return a.depth <  b.depth end)
 
    cameraPoints = {}
    for i = 1, 10 do
@@ -260,41 +268,41 @@ function love.draw()
    drawCameraBounds(cam, 'line' )
   
 
-   farther:push()
-   -- the parallax layer behind
-   love.graphics.setColor( 1, 0, 0, .25 )
-    tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
-   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
+   -- farther:push()
+   -- -- the parallax layer behind
+   -- love.graphics.setColor( 1, 0, 0, .25 )
+   --  tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
+   -- brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
 
-   for _, v in pairs(stuff) do
-      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
-         love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-      end
-   end
-   renderThings(root)
-   farther:pop()
+   -- for _, v in pairs(stuff) do
+   --    if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+   --       love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+   --       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+   --    end
+   -- end
+   -- renderThings(root)
+   -- farther:pop()
 
    
-   far:push()
-   -- the parallax layer behind
-   --print(cam:getTranslation()) 
---   local tx, ty = far:getTranslation()
+--    far:push()
+--    -- the parallax layer behind
+--    --print(cam:getTranslation()) 
+-- --   local tx, ty = far:getTranslation()
    
-  -- love.graphics.translate( -tx * far.relativeScale, -ty * far.relativeScale )
+--   -- love.graphics.translate( -tx * far.relativeScale, -ty * far.relativeScale )
    
-   love.graphics.setColor( 1, 0, 0, .25 )
-    tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
-   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
+--    love.graphics.setColor( 1, 0, 0, .25 )
+--     tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
+--    brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
 
-   for _, v in pairs(stuff) do
-      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
-         love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-      end
-   end
-   renderThings(root)
-   far:pop()
+--    for _, v in pairs(stuff) do
+--       if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+--          love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+--          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+--       end
+--    end
+--    renderThings(root)
+--    far:pop()
 
 
   
@@ -302,50 +310,40 @@ function love.draw()
    
    
 
-   local p = ((math.sin(counter / 100)) )
-   p = mapInto(p, -1, 1, -0.05, 0.05)
-   print(p)
-      
-   -- local layer = {relativeScale=(1.0/p) * p, scale=p}
-
-   -- local lastSetScale = 0 
-   -- local lastSetTranslate = {x-0,y=0}
+   --local p = ((math.sin(counter / 100)) )
+   --p = mapInto(p, -1, 1, -0.125, 0.125)
+   --print(p)
    
-   -- love.graphics.scale( cam.scale * cam.aspectRatioScale * layer.scale )
-   -- love.graphics.translate( -cam.translationX * layer.relativeScale,
-   --                             -cam.translationY * layer.relativeScale )
-
-
-   -- lastSetScale = cam.scale * cam.aspectRatioScale * layer.scale
-   -- lastSetTranslate = { x = -cam.translationX * layer.relativeScale,
-   --                             y = -cam.translationY * layer.relativeScale}
+ 
   
    tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'main')
    brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'main')
 
-   cam:push()
-   local teller = 0
+  
+   --local teller = 0
+
+   -- wanna sort stuff on a new depth value
+   --table.sort( stuff, function(a,b) return a.depth <  b.depth end)
+   --print(inspect(stuff))
+  -- stuff = table.sort( stuff, function(a,b) return a.depth <  b.depth end)
    for _, v in pairs(stuff) do
       if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
          
         
-         hack.scale = 1 + p --+ (#stuff/ teller) * 0.1  
+         hack.scale = mapInto(v.depth, -1, 1, .95, 1.05) 
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
          hack.push()
          --print(hack.scale, hack.relativeScale)
          love.graphics.setColor(v.color)
          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
          hack:pop()
-         teller = teller + 1
+        -- teller = teller + 1
       end
-      
-
    end
-   --cam:push()
+    cam:push()
 
    love.graphics.setColor(player.color)
    love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
-
    
    renderThings(root)
 
