@@ -12,6 +12,9 @@ json = require 'vendor.json'
 easing = require 'vendor.easing'
 Vector = require "brinevector"
 
+
+--magic numbers 210
+
 -- investigate
 -- https://github.com/TannerRogalsky/lua-poly2tri
 
@@ -127,20 +130,32 @@ end
 
 function resizeGroup(node, children, scale)
 
-   print(inspect(node))
+   --print(inspect(children[1]))
+   if type(children[1]) == 'number' then
+      --print('numbers')
+      --print(inspect(node.points))
+      for i = 1, #children do
+         node.points[i] = {node.points[i][1] * scale, node.points[i][2] * scale}
+      end
+      
+         
+   else
+      print('other things')
+
+   end
    
-   for i=1, #children do
+   -- for i=1, #children do
 
          
-         local scaledPoints = {}
-         --for p=1, #children[i].points do
-
-         scaledPoints[i] = {node.points[i] * scale, node.points[i+1] * scale}
-         --end
-         node.points = scaledPoints
-         remeshNode(node)
-         --.mesh= makeMeshFromVertices(poly.makeVertices(children[i]))
-   end
+   --       local scaledPoints = {}
+   --       --for p=1, #children[i].points do
+         
+   --       scaledPoints[i] = {node.points[i] * scale, node.points[i+1] * scale}
+   --       --end
+   --       node.points = scaledPoints
+   --       remeshNode(node)
+   --       --.mesh= makeMeshFromVertices(poly.makeVertices(children[i]))
+   -- end
 
    
    -- print(inspect(children))
@@ -302,9 +317,10 @@ end
 function deletePoints(node)
    local newPoints = {}
    for i = 1, #node.points do
-      if not arrayHas(childrenInRectangleSelect, i) then
+      --print(inspect(childrenInRectangleSelect), i,  not arrayHas(childrenInRectangleSelect, i))
+     if not arrayHas(childrenInRectangleSelect, i) then
          table.insert(newPoints, {node.points[i][1], node.points[i][2]})
-      end
+     end
 
       -- if i isnt in childreninrectangelselct the n add
    end
@@ -416,7 +432,7 @@ function love.mousepressed(x,y, button)
       editingMode = 'move'
    end
 
-   if ( love.keyboard.isDown( 'lctrl' ) or love.keyboard.isDown( 'lalt' )) then
+   if ( love.keyboard.isDown( 'lctrl' )) then
       local d = findMeshThatsHit(root, x, y, love.keyboard.isDown( 'lctrl' ) )
       
       if d then
@@ -785,7 +801,7 @@ end
 
 function renderGraphNodes(node, level, startY)
    local w, h = love.graphics.getDimensions( )
-   local beginRightX = w - 280 + level*6
+   local beginRightX = w - 210 + level*6
    local rightX = beginRightX
    local nested = 0
 
@@ -817,7 +833,7 @@ function renderGraphNodes(node, level, startY)
       local b = {}
       if (yPos >=0 and yPos <= h) then
          -- 180-(level*6)
-         b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos, 180, -4)
+         b = iconlabelbutton('object-group', icon, color, child == currentNode, child.name or "", rightX , yPos, 128+32, -4)
       end
       if (child.folder and child.open ) then
          local add = renderGraphNodes(child, level + 1, runningY + startY + rowHeight)
@@ -1671,12 +1687,48 @@ function love.draw()
    end
 
    if  editingMode ~= 'dopesheet' then
+
+      if currentNode  then
+         --if currentNode.points then
+           -- love.graphics.setColor(currentNode.color[1],currentNode.color[2],currentNode.color[3], 0.3)
+         --else
+            love.graphics.setColor(.1,.1,.1, 0.6)
+         --end
+         
+
+         local desiredWidth = 64 + 16
+         local desiredHeight =h - 32
+         local offsetX = w - desiredWidth  - 210
+         local offsetY =  16 -- (h - desiredHeight)
+         
+         love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,desiredHeight)
+         if currentNode.points then
+            love.graphics.setColor(currentNode.color[1],currentNode.color[2],currentNode.color[3], .8)
+            love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,10)
+
+            love.graphics.rectangle('fill',offsetX,offsetY+20,desiredWidth,10)
+            
+
+
+         end
+         
+         --love.graphics.setColor(.15,.15,.15,.1)
+          --love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,desiredHeight)
+       end
+      
       love.graphics.setFont(smallest)
-      local totalHeightGraphNodes = renderGraphNodes(root, 0, 90+8)
+      local totalHeightGraphNodes = renderGraphNodes(root, 0, 16)
+      if (scrollviewOffset > totalHeightGraphNodes) then
+         scrollviewOffset = totalHeightGraphNodes
+
+      end
+      
+
+      --print("total hieght,",totalHeightGraphNodes,scrollviewOffset)
       love.graphics.setFont(small)
-      local scrollBarH = (h-16-90)
+      local scrollBarH =  (h-32)
       if totalHeightGraphNodes > scrollBarH then
-         local ding = scrollbarV('hierarchyslider', w-40, 24, scrollBarH, totalHeightGraphNodes, scrollviewOffset)
+         local ding = scrollbarV('hierarchyslider', w-40, 16 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
          if ding.value ~= nil then
             scrollviewOffset = ding.value
          end
@@ -1696,10 +1748,20 @@ function love.draw()
          end
          if #childrenInRectangleSelect > 0 then
             if love.keyboard.isDown("delete") then
-               for i =1, #childrenInRectangleSelect do
-                  local n = childrenInRectangleSelect[i]
-                  table.remove(n._parent.children, getIndex(n))
+               local indexes = type(childrenInRectangleSelect[1]) == "number"
+
+               if indexes then
+               else
+                  for i =1, #childrenInRectangleSelect do
+                     local n = childrenInRectangleSelect[i]
+                     table.remove(n._parent.children, getIndex(n))
+                  end
+                  
                end
+               
+               
+               childrenInRectangleSelect = {}
+              
             end
             
             
@@ -1759,9 +1821,11 @@ function love.draw()
             end
          end
       end
+      --ui.object_group
+      doubleiconlabelbutton('add-shape-too', ui.add, ui.folder, rightX-600, 100)
+       doubleiconlabelbutton('add-shape-too', ui.add, ui.polygon, rightX-500, 100)
 
-
-      if iconlabelbutton('add-shape', ui.add, nil, false,  'add shape',  rightX-10, calcY(0)).clicked then
+      if iconlabelbutton('add-shape', ui.add, nil, false,  'shape',  rightX-500, calcY(1), 128).clicked then
          local shape = {
             color = {0,0,0,1},
             outline = true,
@@ -1784,7 +1848,7 @@ function love.draw()
          editingModeSub = 'polyline-insert'
       end
 
-      if iconlabelbutton('add-parent', ui.add, nil, false,  'add folder',  rightX-10,calcY(1)).clicked then
+      if iconlabelbutton('add-parent', ui.add, nil, false,  'folder',  rightX-250,calcY(1), 128).clicked then
 
          local f = makeNewFolder()
          
@@ -1828,6 +1892,10 @@ function love.draw()
       end
 
       if (currentNode) then
+
+        
+         
+         
          if imgbutton('delete', ui.delete,  rightX - 50, calcY(3)).clicked then
             deleteNode(currentNode)
          end
@@ -2988,6 +3056,7 @@ function love.keypressed(key)
          movePoints(currentNode, 0, shift and 10 or 1)
       end
       if key == 'delete' then
+         print("yes i hope?")
          deletePoints(currentNode)
       end
 

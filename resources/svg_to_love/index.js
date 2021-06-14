@@ -152,7 +152,8 @@ function toFixed(n) {
 }
 
 function makeLoveShapePositions(fill, opacity, contours, groupIndex, pathIndex) {
-
+    // I REMOVE THIS LINE BELOW at 2 locations L170 & L210 !!
+    //name="${groupIndex+'-'+pathIndex+'-'+contourIndex}",
     let totalResult = ""
     let rgb = hexRgb(fill)
     let contourIndex = 0
@@ -166,7 +167,7 @@ function makeLoveShapePositions(fill, opacity, contours, groupIndex, pathIndex) 
     points += "}";
     let result =
 `{
-name="${groupIndex+'-'+pathIndex+'-'+contourIndex}",
+name="",
 color=${color},
 points=${points}
 },
@@ -206,7 +207,7 @@ function makeLoveShape(fill, opacity, contours, groupIndex, pathIndex) {
         points += '}'
         let result =
 `{
-name="${groupIndex+'-'+pathIndex+'-'+contourIndex}",
+name="",
 color=${color},
 points=${points}
 },

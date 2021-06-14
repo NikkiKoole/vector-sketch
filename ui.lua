@@ -75,6 +75,31 @@ function rgbbutton(id, rgb, x, y, scale)
    }
 end
 
+function doubleiconlabelbutton(id, img1,img2, x, y)
+   local mx, my = love.mouse:getPosition()
+   local img1W, img1H = img1:getDimensions()
+   local margin = 8
+   local w1 = 24
+   local h1 = 24
+   local imgScale1 = h1/img1H
+
+   local img2W, img2H = img2:getDimensions()
+   local w2 = 24
+   local h2 = 24
+   local imgScale2 = h2/img2H
+
+
+   local buttonWidth = w1 +margin + w2
+
+   love.graphics.setColor(0,0,0,.75)
+   love.graphics.rectangle("fill", x, y, buttonWidth, h1)
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.draw(img1, x, y, 0, imgScale1, imgScale1)
+   
+    love.graphics.draw(img2, x+margin+w1, y, 0, imgScale2, imgScale2)
+end
+
+
 function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, buttonOffsetHeight)
    local mx, my = love.mouse:getPosition()
    local imgW, imgH = img:getDimensions()
@@ -256,7 +281,8 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
    
     
  return {
-      value=result
+    value=result,
+    scrollBarThumbH=scrollBarThumbH
    }
 
 

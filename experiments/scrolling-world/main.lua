@@ -57,21 +57,22 @@ function love.load()
    }
    cameraFollowPlayer = true
    stuff = {}
-   
-   for i = 1, 1000 do
-      local rndHeight = love.math.random(100, 900)
-      local rndDepth =  love.math.random(-10,10)
+
+   depthMinMax = {min=-2, max=2}
+   for i = 1, 4000 do
+      local rndHeight = 200--love.math.random(100, 900)
+      local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
       table.insert(
          stuff,
          {
             x = love.math.random(-W*5, W*5 ),
-            y = 0-rndHeight, --love.math.random(-H*12, 0),
-            width = love.math.random(30, 50),
+            y = 0, --love.math.random(-H*12, 0),
+            width = 10, --love.math.random(30, 50),
             height = rndHeight,
             color = {.6,
-                     mapInto(rndDepth, -10,10,  .6, .5),
-                     mapInto(rndDepth, -10,10, 0, .3) ,
-                     love.math.random(.7,.9)},
+                     mapInto(rndDepth, depthMinMax.min,depthMinMax.max,  .6, .5),
+                     mapInto(rndDepth, depthMinMax.min,depthMinMax.max, 0.4, .6) ,
+                     love.math.random(.3,.9)},
             depth = rndDepth
          }
       )
@@ -316,8 +317,6 @@ function love.draw()
    
  
   
-   tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'main')
-   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'main')
 
   
    --local teller = 0
@@ -325,20 +324,30 @@ function love.draw()
    -- wanna sort stuff on a new depth value
    --table.sort( stuff, function(a,b) return a.depth <  b.depth end)
    --print(inspect(stuff))
-  -- stuff = table.sort( stuff, function(a,b) return a.depth <  b.depth end)
+   -- stuff = table.sort( stuff, function(a,b) return a.depth <  b.depth end)
+   
+   
+   -- this doesny check for outof bounds
+   table.sort( stuff, function(a,b) return a.depth <  b.depth end)
    for _, v in pairs(stuff) do
-      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
-         
-        
-         hack.scale = mapInto(v.depth, -1, 1, .95, 1.05) 
+
+
+      
+      hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, .75, 1.25)
+      --print(v.depth, hack.scale)
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
          hack.push()
-         --print(hack.scale, hack.relativeScale)
-         love.graphics.setColor(v.color)
-         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+
+        --tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'hack')
+        --brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'hack')
+         --print(tlx,tly,brx,bry)
+         --if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+            love.graphics.setColor(v.color)
+            love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+            love.graphics.setColor(.1, .1, .1)
+            love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
+         --end
          hack:pop()
-        -- teller = teller + 1
-      end
    end
     cam:push()
 
