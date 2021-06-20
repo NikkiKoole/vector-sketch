@@ -60,6 +60,7 @@ function rgbbutton(id, rgb, x, y, scale)
       love.mouse.setCursor(cursors.hand)
       if (mouseState.click) then
 	 clicked = true
+         mouseState.clickedId = id
       end
 
       love.graphics.setColor(1,1,1,1)
@@ -78,7 +79,7 @@ end
 function doubleiconlabelbutton(id, img1,img2, x, y)
    local mx, my = love.mouse:getPosition()
    local img1W, img1H = img1:getDimensions()
-   local margin = 8
+   local margin = 16
    local w1 = 24
    local h1 = 24
    local imgScale1 = h1/img1H
@@ -145,6 +146,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 
       if (mouseState.click) then
 	 clicked = true
+         
       end
    else
       love.graphics.setColor(1,1,1, .5)

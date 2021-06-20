@@ -83,5 +83,42 @@ pico = {
 }
 for i = 1, #picoColors do
    local r,g,b = hex2rgb(picoColors[i])
+   print('pico', r,g,b)
    table.insert(pico.colors, {name='unknown', rgb={r,g,b}})
+end
+
+childCraftColors = {
+         
+   '4D391F',
+   '4B6868',
+   '9F7344',
+   '9D7630',
+   'D3C281',
+   'CB433A',
+   'EBE9D6',
+   'AE934D',
+   'B09764',
+   '8F4839',
+   '8A934E',
+   '69445D',
+   '4F4C91',
+   'BDA971',
+   'E2DAA5',
+   'BEA762',
+   'AAAC73',
+   'EEC488',
+   'BAB87F'
+}
+
+
+
+childCraft = {
+   name='childCraft',
+   colors = {}
+}
+
+for i = 1, #childCraftColors do
+   local r,g,b = hex2rgb(childCraftColors[i])
+   print('childcraft', r,g,b)
+   table.insert(childCraft.colors, {name='unknown', rgb={r,g,b}})
 end
