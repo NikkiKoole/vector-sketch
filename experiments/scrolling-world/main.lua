@@ -49,12 +49,13 @@ function love.load()
    counter = 0
    player = {
       x = - 25,
-      y = - 25,
+      y = 0,
       width = 50,
       height = 180,
       speed = 300,
       color = { 1,0,0 }
    }
+   player.depth = 0-- -2 , 2
    cameraFollowPlayer = true
    stuff = {}
 
@@ -77,6 +78,7 @@ function love.load()
          }
       )
    end
+   table.insert(stuff, player)
    table.sort( stuff, function(a,b) return a.depth <  b.depth end)
 
    cameraPoints = {}
@@ -112,86 +114,18 @@ function love.load()
          end
       }
    )
+   
    hack = cam:addLayer('hack', 1, {relativeScale=1})
    farther = cam:addLayer( 'farther', .65, { relativeScale = (1.0/.65) * .65 } )
    far = cam:addLayer( 'far', .95, { relativeScale = (1.0/.95) * .95 } )
-
    close = cam:addLayer( 'close', 1.05, { relativeScale = (1.0/1.05) * 1.05 } )
    
-   local generated = generatePolygon(0,0, 40, .05, .02 , 6)
-   local points = {}
-   for i = 1, #generated, 2 do
-      table.insert(points, {generated[i], generated[i+1]})
-   end
    root = {
       folder = true,
       name = 'root',
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
-      children = {
-
-         {
-            folder = true,
-            transforms =  {l={0,0,0,1,1,100,0,0,0}},
-            name="rood",
-            children ={
-               {
-                  name="roodchild:"..1,
-                  color = {.5,1,0, 0.8},
-                  points = points,
-
-               },
-               {
-                  folder = true,
-                  transforms =  {l={200,200,0,1,1,100,0,0,0}},
-                  name="yellow",
-                  children ={
-                     {
-                        name="chi22ld:"..1,
-                        color = {1,1,0, 0.8},
-                        points = {{0,0},{200,0},{200,200},{0,200}},
-
-                     },
-                     {
-                        folder = true,
-                        transforms =  {l={200,200,0,1,1,100,0,0,0}},
-                        name="blue",
-                        children ={
-
-
-
-                           {
-                              name="bluechild:"..1,
-                              color = {0,0,1, 0.8},
-                              points = {{0,0},{200,0},{200,200},{0,200}},
-
-                           },
-                           {
-                              folder = true,
-                              transforms =  {l={200,200,0,1,1,0,0,0,0}},
-                              name="endhandle",
-                              children ={
-
-                                 {
-                                    name="endhandlechild:"..1,
-                                    color = {0,1,0, 0.8},
-                                    points = {{0,0},{20,0},{20,20},{0,20}},
-
-                                 }
-
-                              }
-                           }
-
-
-
-                        }
-                     }
-                  }
-               }
-            },
-         },
-      }
+      children = {}
    }
-   
    parentize(root)
    meshAll(root)
    renderThings(root)
@@ -216,19 +150,25 @@ function love.update(dt)
    if love.keyboard.isDown('down') then
       v.y = v.y + 1
    end
-
+   
    local mag = math.sqrt((v.x * v.x) + (v.y * v.y))
    if mag > 0 then
       v.x = (v.x/mag) * player.speed * dt 
       v.y = (v.y/mag) * player.speed * dt
       player.x = player.x + v.x
-      player.y = player.y + v.y
+      
+      --player.y = player.y + v.y
+      --print(v.y)
+      player.depth = player.depth + (v.y)/100
+      --local r = (mapInto(player.y, -H, H, -2, 2))
+
+      --player.depth = r
    end
 
    if cameraFollowPlayer then
       cam:setTranslationSmooth(
          player.x + player.width/2,
-         player.y + player.height/2,
+         player.y + player.height/2 - 200,
          dt,
          2
       )
@@ -319,15 +259,6 @@ function love.draw()
   
 
   
-   --local teller = 0
-
-   -- wanna sort stuff on a new depth value
-   --table.sort( stuff, function(a,b) return a.depth <  b.depth end)
-   --print(inspect(stuff))
-   -- stuff = table.sort( stuff, function(a,b) return a.depth <  b.depth end)
-   
-   
-   -- this doesny check for outof bounds
    table.sort( stuff, function(a,b) return a.depth <  b.depth end)
    for _, v in pairs(stuff) do
 
@@ -351,8 +282,8 @@ function love.draw()
    end
     cam:push()
 
-   love.graphics.setColor(player.color)
-   love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
+   --love.graphics.setColor(player.color)
+   --love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
    
    renderThings(root)
 
