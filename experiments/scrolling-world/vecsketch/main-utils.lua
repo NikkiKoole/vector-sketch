@@ -182,6 +182,13 @@ function handleChild(shape)
    -- this gets in the way of lerping between nodes...
    if not shape then return end
 
+   if (shape.depth ~= nil) then
+      hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, .75, 1.25)
+      hack.relativeScale = (1.0/ hack.scale) * hack.scale
+      hack.push()
+   end
+   
+   
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
@@ -220,36 +227,13 @@ function handleChild(shape)
      -- print()
       --print(inspect(poly.makeVertices(shape)))
    end
-   --if ( shape.hole) then
-   --   love.graphics.setStencilTest()
-   --end
 
-   --local fovy = 100
-   --local aspect = 1
-   --local near  = 0.1
-   --local far = 100.0
-   --print( inspect(mat4from_perspective(fovy, aspect, near, far)))
-   
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
-         
-         --local perpectiveMatrix = mat4from_perspective(fovy, aspect, near, far)
-         --local transform = love.math.newTransform( )
-         --transform:setMatrix(perpectiveMatrix)
 
-         -- look here https://stackoverflow.com/questions/51691482/how-to-create-a-2d-perspective-transform-matrix-from-individual-components
-
-         
-         --shape._parent._globalTransform
-
-         
 
          
 	 love.graphics.setColor(shape.color)
-	 --love.graphics.draw(shape.mesh, shape._parent._globalTransform)
-         --print( shape._parent._globalTransform[1])
-         --local m = { shape._parent._globalTransform:getMatrix()}
-         --groundShader:send("camera", m)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
 
          if (shape.borderMesh) then
@@ -288,6 +272,10 @@ function handleChild(shape)
       
    end
 
+   if (shape.depth ~= nil) then
+      hack:pop()
+   end
+   
    
 end
 

@@ -1,5 +1,10 @@
 local Camera = require 'brady'
 local inspect = require 'inspect'
+ProFi = require 'ProFi'
+
+-- four corner distort!!!!
+--https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
+--https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
 
 function require_all(path, opts)
 	local items = love.filesystem.getDirectoryItems(path)
@@ -23,6 +28,15 @@ require_all "vecsketch"
 function love.keypressed( key )
    if key == 'escape' then love.event.quit() end
    if key == 'space' then cameraFollowPlayer = not cameraFollowPlayer end
+   if (key == 'p') then
+    if not profiling then
+	 ProFi:start()
+      else
+	 ProFi:stop()
+	 ProFi:writeReport( 'profilingReport.txt' )
+      end
+      profiling = not profiling
+   end
 
 end
 
@@ -51,7 +65,7 @@ function love.load()
       x = - 25,
       y = 0,
       width = 50,
-      height = 180,
+      height = -180,
       speed = 300,
       color = { 1,0,0 }
    }
@@ -60,7 +74,7 @@ function love.load()
    stuff = {}
 
    depthMinMax = {min=-2, max=2}
-   for i = 1, 4000 do
+   for i = 1, 14 do
       local rndHeight = 200--love.math.random(100, 900)
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
       table.insert(
@@ -79,6 +93,7 @@ function love.load()
       )
    end
    table.insert(stuff, player)
+   
    table.sort( stuff, function(a,b) return a.depth <  b.depth end)
 
    cameraPoints = {}
@@ -126,11 +141,104 @@ function love.load()
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       children = {}
    }
+
+   --local tab = getDataFromFilePath('assets/grassypatches.polygons.txt')
+   --root.children = tab -- TableConcat(root.children, tab)
+   
+   --boei = parseFile('assets/grassx5_.polygons.txt')
+   boei = parseFile('assets/grassypatches.polygons.txt')
+
+   for i = 1, 15 do
+      local boei2 = parseFile('assets/grassypatches.polygons.txt')
+      boei = TableConcat(boei,boei2)
+   end
+   
+   
+   for i= 1, #boei do
+      if boei[i].transforms then
+         --print(boei[i].transforms)
+         boei[i].transforms.l[1] = love.math.random() * 2000
+         boei[i].transforms.l[2] = 0--love.math.random() * 200
+         boei[i].transforms.l[4] = 1.2
+         boei[i].transforms.l[5] = 1.2 --love.math.random()*5
+
+         local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
+         --print(rndDepth)
+         boei[i].depth = rndDepth
+      else
+         print('rea;;u')
+      end
+   end
+
+
+   -- new player
+   newPlayer = {
+      folder = true,
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      name="player",
+      depth = 0,
+      x=0,
+      children ={
+         {
+            name="chi22ld:"..1,
+            color = {1,1,0, 0.8},
+            points = {{-50,-250},{50,-250},{50,0},{-50,0}},
+
+         }
+      }
+   }
+   
+   root.children = boei
+   table.insert(root.children, newPlayer)
+   --table.insert(root.children, boei)
+
+
+   for j = 1, 1000 do
+      local generated = generatePolygon(0,0, love.math.random()*14, .05, .02 , 10)
+      local points = {}
+      for i = 1, #generated, 2 do
+         table.insert(points, {generated[i], generated[i+1]})
+      end
+      local r,g,b = hex2rgb('4D391F')
+      r = love.math.random()*255
+      local randomShape = {
+         folder = true,
+         transforms =  {l={love.math.random()*2000,0,0,1,1,0,0,0,0}},
+         name="rood",
+         depth = love.math.random()*4 -2.0,
+         children ={
+            {
+               name="roodchild:"..1,
+               color = {r/255,g/255,b/255, 1.0},
+               points = points,
+
+            },
+            
+         }
+      }
+
+      table.insert(root.children, randomShape)
+   end
+
    parentize(root)
    meshAll(root)
    renderThings(root)
   
         
+end
+
+function hex2rgb(hex)
+    hex = hex:gsub("#","")
+    return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
+end
+
+function shuffleAndMultiply(items, mul)
+   local result = {}
+   for i = 1, (#items * mul) do
+      print(i)
+      table.insert(result, items[love.math.random()*#items])
+   end
+   return result
 end
 
 
@@ -156,18 +264,16 @@ function love.update(dt)
       v.x = (v.x/mag) * player.speed * dt 
       v.y = (v.y/mag) * player.speed * dt
       player.x = player.x + v.x
-      
-      --player.y = player.y + v.y
-      --print(v.y)
       player.depth = player.depth + (v.y)/100
-      --local r = (mapInto(player.y, -H, H, -2, 2))
-
-      --player.depth = r
+      newPlayer.transforms.l[1] = newPlayer.transforms.l[1] + v.x
+      newPlayer.depth = newPlayer.depth + (v.y)/100
+      
    end
 
    if cameraFollowPlayer then
+      --print(v.x*200)
       cam:setTranslationSmooth(
-         player.x + player.width/2,
+         player.x + player.width/2 ,
          player.y + player.height/2 - 200,
          dt,
          2
@@ -205,7 +311,7 @@ end
 function love.draw()
    counter = counter +1
    W, H = love.graphics.getDimensions()
-   love.graphics.clear(.3, .3, .7)
+   love.graphics.clear(.6, .3, .7)
    drawCameraBounds(cam, 'line' )
   
 
@@ -265,14 +371,10 @@ function love.draw()
 
       
       hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, .75, 1.25)
-      --print(v.depth, hack.scale)
+
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
          hack.push()
 
-        --tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'hack')
-        --brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'hack')
-         --print(tlx,tly,brx,bry)
-         --if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
             love.graphics.setColor(v.color)
             love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
             love.graphics.setColor(.1, .1, .1)
@@ -284,8 +386,10 @@ function love.draw()
 
    --love.graphics.setColor(player.color)
    --love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
-   
-   renderThings(root)
+
+    --print(#root.children)
+    table.sort(root.children, function(a,b) return a.depth <  b.depth end)
+    renderThings(root)
 
    for _, v in pairs(cameraPoints) do
       love.graphics.setColor(1,0,1,.5)
@@ -297,6 +401,7 @@ function love.draw()
       love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
    end
 
+  
    --love.graphics.setColor(player.color)
    --love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
 
@@ -309,7 +414,7 @@ function love.draw()
    --    love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
    --    love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
    -- end
-   -- renderThings(root)
+   --renderThings(root)
    -- close:pop()
    
    cam:pop()

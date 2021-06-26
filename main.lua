@@ -12,6 +12,9 @@ json = require 'vendor.json'
 easing = require 'vendor.easing'
 Vector = require "brinevector"
 
+-- four corner distort!!!!
+--https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
+--https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
 
 --magic numbers 210
 
@@ -138,7 +141,7 @@ function resizeGroup(node, children, scale)
          node.points[i] = {node.points[i][1] * scale, node.points[i][2] * scale}
       end
       
-         
+      
    else
       print('other things')
 
@@ -146,10 +149,10 @@ function resizeGroup(node, children, scale)
    
    -- for i=1, #children do
 
-         
+   
    --       local scaledPoints = {}
    --       --for p=1, #children[i].points do
-         
+   
    --       scaledPoints[i] = {node.points[i] * scale, node.points[i+1] * scale}
    --       --end
    --       node.points = scaledPoints
@@ -161,7 +164,7 @@ function resizeGroup(node, children, scale)
    -- print(inspect(children))
    -- for i=1, #children do
 
-         
+   
    --    if children[i].points then
    --       local scaledPoints = {}
    --       for p=1, #children[i].points do
@@ -185,7 +188,7 @@ function flipGroup(children, xaxis, yaxis)
          end
          children[i].points = scaledPoints
          remeshNode(children[i])
---         children[i].mesh= makeMeshFromVertices(poly.makeVertices(children[i]))
+         --         children[i].mesh= makeMeshFromVertices(poly.makeVertices(children[i]))
       end
    end
 end
@@ -254,46 +257,6 @@ function removeShapeAtPath(path)
 end
 
 
-function getPointsBBox(points)
-   local tlx = 9999999999
-   local tly = 9999999999
-   local brx = -9999999999
-   local bry = -9999999999
-   for ip=1, #points do
-      if points[ip][1] < tlx then tlx = points[ip][1] end
-      if points[ip][1] > brx then brx = points[ip][1] end
-      if points[ip][2] < tly then tly = points[ip][2] end
-      if points[ip][2] > bry then bry = points[ip][2] end
-   end
-   return tlx, tly, brx, bry
-end
-
-function getDirectChildrenBBox(node)
-   local tlx = 9999999999
-   local tly = 9999999999
-   local brx = -9999999999
-   local bry = -9999999999
-
-   for i=1, #node.children do
-      local points = node.children[i].points
-      if points then
-         for ip=1, #points do
-            if points[ip][1] < tlx then tlx = points[ip][1] end
-            if points[ip][1] > brx then brx = points[ip][1] end
-            if points[ip][2] < tly then tly = points[ip][2] end
-            if points[ip][2] > bry then bry = points[ip][2] end
-         end
-      end
-   end
-
-   if ( tlx == 9999999999 and tly == 9999999999 and brx == -9999999999 and bry == -9999999999) then
-      print('no direct children you pancake!')
-      return 0,0,0,0
-   else
-      return tlx, tly, brx, bry
-   end
-
-end
 function movePoints(node, dx, dy)
    for i = 1, #childrenInRectangleSelect do
       local index = childrenInRectangleSelect[i]
@@ -301,7 +264,7 @@ function movePoints(node, dx, dy)
 
    end
    remeshNode(node)
---   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
+   --   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
 end
 
 local function arrayHas(tab, val)
@@ -318,15 +281,15 @@ function deletePoints(node)
    local newPoints = {}
    for i = 1, #node.points do
       --print(inspect(childrenInRectangleSelect), i,  not arrayHas(childrenInRectangleSelect, i))
-     if not arrayHas(childrenInRectangleSelect, i) then
+      if not arrayHas(childrenInRectangleSelect, i) then
          table.insert(newPoints, {node.points[i][1], node.points[i][2]})
-     end
+      end
 
       -- if i isnt in childreninrectangelselct the n add
    end
    node.points = newPoints
    remeshNode(node)
---   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
+   --   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
 
 end
 
@@ -431,62 +394,72 @@ function drawUIAroundGraphNodes(w,h)
          end
          runningY = runningY + 40
 
-if imgbutton('folder-pivot', ui.pivot,  w - 300, runningY).clicked then
-         editingModeSub = nil
-         if (#currentNode.children > 0) then
-            local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-            local middleX = tlx + (brx - tlx)/2
-            local middleY = tly + (bry - tly)/2
+         if imgbutton('folder-pivot', ui.pivot,  w - 300, runningY).clicked then
+            editingModeSub = nil
+            if (#currentNode.children > 0) then
+               local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+               local middleX = tlx + (brx - tlx)/2
+               local middleY = tly + (bry - tly)/2
 
-            local mx = tlx + (brx - tlx)/2
-            local my = tly + (bry - tly)/2
-            local nx = currentNode.transforms.l[6]
-            local ny = currentNode.transforms.l[7]
+               local mx = tlx + (brx - tlx)/2
+               local my = tly + (bry - tly)/2
+               local nx = currentNode.transforms.l[6]
+               local ny = currentNode.transforms.l[7]
 
-            if (nx == tlx and ny == tly) then
-               currentNode.transforms.l[6]= middleX
-               currentNode.transforms.l[7]= tly
-            elseif (nx == middleX and ny == tly) then
-               currentNode.transforms.l[6]= brx
-               currentNode.transforms.l[7]= tly
-            elseif (nx == brx and ny == tly) then
-               currentNode.transforms.l[6]= brx
-               currentNode.transforms.l[7]= middleY
-            elseif (nx == brx and ny == middleY) then
-               currentNode.transforms.l[6]= brx
-               currentNode.transforms.l[7]= bry
-            elseif (nx == brx and ny == bry) then
-               currentNode.transforms.l[6]= middleX
-               currentNode.transforms.l[7]= bry
-            elseif (nx == middleX and ny == bry) then
-               currentNode.transforms.l[6]= tlx
-               currentNode.transforms.l[7]= bry
-            elseif (nx == tlx and ny == bry) then
-               currentNode.transforms.l[6]= tlx
-               currentNode.transforms.l[7]= middleY
-            elseif (nx == tlx and ny == middleY) then
-               currentNode.transforms.l[6]= mx
-               currentNode.transforms.l[7]= my
-            elseif (nx == mx and ny == my) then
-               currentNode.transforms.l[6]= tlx
-               currentNode.transforms.l[7]= tly
-            else
-               currentNode.transforms.l[6]= mx
-               currentNode.transforms.l[7]= my
-               print('default')
+               if (nx == tlx and ny == tly) then
+                  currentNode.transforms.l[6]= middleX
+                  currentNode.transforms.l[7]= tly
+               elseif (nx == middleX and ny == tly) then
+                  currentNode.transforms.l[6]= brx
+                  currentNode.transforms.l[7]= tly
+               elseif (nx == brx and ny == tly) then
+                  currentNode.transforms.l[6]= brx
+                  currentNode.transforms.l[7]= middleY
+               elseif (nx == brx and ny == middleY) then
+                  currentNode.transforms.l[6]= brx
+                  currentNode.transforms.l[7]= bry
+               elseif (nx == brx and ny == bry) then
+                  currentNode.transforms.l[6]= middleX
+                  currentNode.transforms.l[7]= bry
+               elseif (nx == middleX and ny == bry) then
+                  currentNode.transforms.l[6]= tlx
+                  currentNode.transforms.l[7]= bry
+               elseif (nx == tlx and ny == bry) then
+                  currentNode.transforms.l[6]= tlx
+                  currentNode.transforms.l[7]= middleY
+               elseif (nx == tlx and ny == middleY) then
+                  currentNode.transforms.l[6]= mx
+                  currentNode.transforms.l[7]= my
+               elseif (nx == mx and ny == my) then
+                  currentNode.transforms.l[6]= tlx
+                  currentNode.transforms.l[7]= tly
+               else
+                  currentNode.transforms.l[6]= mx
+                  currentNode.transforms.l[7]= my
+                  print('default')
+               end
+               editingModeSub = 'folder-move'
             end
+         end
+
+         if imgbutton('folder-pan-pivot', ui.pan,  w-256, runningY).clicked then
+            editingModeSub = 'folder-pan-pivot'
+         end
+         runningY = runningY + 40
+         if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
             editingModeSub = 'folder-move'
          end
-end
+         if imgbutton('change-perspective', ui.change, w-256, runningY).clicked then
+            editingModeSub = 'change-perspective'
+            print('maybe reset everything about perspective')
 
- if imgbutton('folder-pan-pivot', ui.pan,  w-256, runningY).clicked then
-         editingModeSub = 'folder-pan-pivot'
-      end
- runningY = runningY + 40
-          if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
-         editingModeSub = 'folder-move'
-          end
-          
+            local bbox = getBBoxOfChildren(currentNode.children)
+            local t = currentNode._globalTransform
+            local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
+            local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
+            perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
+         end
+
       end
       
       
@@ -525,54 +498,54 @@ end
             end
          end
          runningY = runningY + 40  -- behind an if !!
-          if currentNode and currentNode.points then
-             if imgbutton('border', ui.polygon, w - 300, runningY).clicked  then
-                --flipGroup(childrenInRectangleSelect, 1,-1)
-                currentNode.border = not currentNode.border
-                if currentNode.border then
-                   if currentNode.borderThickness == nil then
-                      currentNode.borderThickness = 1
-                   end
-                   if currentNode.borderSpacing == nil then
-                      currentNode.borderSpacing = 10
-                   end
-                   if currentNode.borderTension == nil then
-                      currentNode.borderTension = 0
-                   end
-                   if currentNode.borderRandomizerMultiplier == nil then
-                      currentNode.borderRandomizerMultiplier = 0
-                   end
-                end
-                
-             end
-             if currentNode and currentNode.border then
-                local v =  h_slider("splinetension", 600, 120, 200,  currentNode.borderTension , 0.00001, 1)
-                if v.value ~= nil then
-                   currentNode.borderTension = v.value
-                end
-                
-                
-                local v =  h_slider("splineSpacing", 600, 160, 200,  currentNode.borderSpacing , 2, 50)
-                if v.value ~= nil then
-                   currentNode.borderSpacing = v.value
-                end
-                
-                local v =  h_slider("splineLinethick", 600, 200, 200,  currentNode.borderThickness , .1, 10)
-                if v.value ~= nil then
-                   currentNode.borderThickness = v.value
-                end
-                
-                local v =  h_slider("splinerndmul", 600, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
-                if v.value ~= nil then
-                   currentNode.borderRandomizerMultiplier = v.value
-                end
-                
-                
-             end
+         if currentNode and currentNode.points then
+            if imgbutton('border', ui.polygon, w - 300, runningY).clicked  then
+               --flipGroup(childrenInRectangleSelect, 1,-1)
+               currentNode.border = not currentNode.border
+               if currentNode.border then
+                  if currentNode.borderThickness == nil then
+                     currentNode.borderThickness = 1
+                  end
+                  if currentNode.borderSpacing == nil then
+                     currentNode.borderSpacing = 10
+                  end
+                  if currentNode.borderTension == nil then
+                     currentNode.borderTension = 0
+                  end
+                  if currentNode.borderRandomizerMultiplier == nil then
+                     currentNode.borderRandomizerMultiplier = 0
+                  end
+               end
+               
+            end
+            if currentNode and currentNode.border then
+               local v =  h_slider("splinetension", 600, 120, 200,  currentNode.borderTension , 0.00001, 1)
+               if v.value ~= nil then
+                  currentNode.borderTension = v.value
+               end
+               
+               
+               local v =  h_slider("splineSpacing", 600, 160, 200,  currentNode.borderSpacing , 2, 50)
+               if v.value ~= nil then
+                  currentNode.borderSpacing = v.value
+               end
+               
+               local v =  h_slider("splineLinethick", 600, 200, 200,  currentNode.borderThickness , .1, 10)
+               if v.value ~= nil then
+                  currentNode.borderThickness = v.value
+               end
+               
+               local v =  h_slider("splinerndmul", 600, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
+               if v.value ~= nil then
+                  currentNode.borderRandomizerMultiplier = v.value
+               end
+               
+               
+            end
 
-             
-          runningY = runningY + 40  -- behind an if !!
-          end
+            
+            runningY = runningY + 40  -- behind an if !!
+         end
          
          if #childrenInRectangleSelect > 0 then
             
@@ -606,7 +579,7 @@ end
                end
             end
             
-          end
+         end
 
          
       end
@@ -667,9 +640,9 @@ function isMouseInMesh(mx, my, body, mesh)
       local px,py = body._globalTransform:inverseTransformPoint(mx, my)
       for i = 1, count, 3 do
          if i+2 <= count then 
-         if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
-            return true
-         end
+            if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
+               return true
+            end
          end
          
       end
@@ -742,38 +715,71 @@ function love.mousepressed(x,y, button)
       rectangleSelect.startP = {x=x, y=y}
    end
 
+   
+   if currentNode then
    local points = currentNode and currentNode.points
-   if not points then return end
-
+   --if not points then return end
+   --local px, py
+   
    local t = currentNode._parent._globalTransform
    local px, py = t:inverseTransformPoint( x, y )
    local scale = root.transforms.l[4]
-   if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-      local w, h = getLocalDelta(t, 10, 10)
-      w = math.max(math.abs(w), math.abs(h))
+   if  editingModeSub == 'change-perspective' and currentNode then
+      print('hiya! we gonna be needing you', points)
+      -- duplication
+     
 
-      local index =  0
-      for i = 1, #points do
-         if pointInRect(px,py,
-                        points[i][1] - w/2, points[i][2] - w/2,
-                        w, w) then
-            index = i
+      --local TLX,TLY = perspective[1], perspective[2]
+      --local BRX,BRY = perspective[3], perspective[4]
+      --print(TLX, TLY, BRX-TLX, BRY-TLY)
+
+      function simplecheck(x2,y2, width)
+         if pointInRect(x,y, x2, y2, width,width) then
+            return true
+         end
+         return false
+      end
+      for i = 1, 4 do
+         if simplecheck(perspective[i][1] - 5,perspective[i][2] - 5, 10) then
+            print(i, 'set')
+            lastDraggedElement = {id='perspective-corner', index=i}
          end
       end
+      
+ 
+      
+      --lastDraggedElement = {id='perspective-corner', index=index}
+   end
 
-      if (index > 0) then
-         if (editingModeSub == 'polyline-remove') then
-            table.remove(points, index)
+   if points then
+      if editingMode == 'polyline' and not mouseState.hoveredSomething   then
+         local w, h = getLocalDelta(t, 10, 10)
+         w = math.max(math.abs(w), math.abs(h))
+
+         local index =  0
+         for i = 1, #points do
+            if pointInRect(px,py,
+                           points[i][1] - w/2, points[i][2] - w/2,
+                           w, w) then
+               index = i
+            end
          end
-         if (editingModeSub == 'polyline-edit') then
-            lastDraggedElement = {id='polyline', index=index}
+
+         if (index > 0) then
+            if (editingModeSub == 'polyline-remove') then
+               table.remove(points, index)
+            end
+            if (editingModeSub == 'polyline-edit') then
+               lastDraggedElement = {id='polyline', index=index}
+            end
+         end
+
+         if (editingModeSub == 'polyline-insert') then
+            local closestEdgeIndex = getClosestEdgeIndex(px, py, points)
+            table.insert(points, closestEdgeIndex+1, {px, py})
          end
       end
-
-      if (editingModeSub == 'polyline-insert') then
-         local closestEdgeIndex = getClosestEdgeIndex(px, py, points)
-         table.insert(points, closestEdgeIndex+1, {px, py})
-      end
+   end
    end
 end
 
@@ -808,33 +814,33 @@ function love.mousereleased(x,y, button)
          local root = currentNode or root
 
          local t = not currentNode and  root._localTransform or root._globalTransform
-        if t then
-         local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
-         local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
-         local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
-         local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
-         local childrenInRect = {}
-         for i=1, #root.children do
-            local child = root.children[i]
-            if (child.points) then
-               local failed = false
-               for pi = 1, #child.points do
-                  local p = child.points[pi]
-                  if p[1] < tl.x or p[1] > br.x then failed = true end
-                  if p[2] < tl.y or p[2] > br.y then failed = true end
-               end
+         if t then
+            local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
+            local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
+            local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
+            local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
+            local childrenInRect = {}
+            for i=1, #root.children do
+               local child = root.children[i]
+               if (child.points) then
+                  local failed = false
+                  for pi = 1, #child.points do
+                     local p = child.points[pi]
+                     if p[1] < tl.x or p[1] > br.x then failed = true end
+                     if p[2] < tl.y or p[2] > br.y then failed = true end
+                  end
 
-               if not failed then
-                  table.insert(childrenInRect, child)
+                  if not failed then
+                     table.insert(childrenInRect, child)
+                  end
                end
             end
-         end
-         
-         if #childrenInRect > 0 then
-            childrenInRectangleSelect = childrenInRect
-         else
-            childrenInRectangleSelect = {}
-         end
+            
+            if #childrenInRect > 0 then
+               childrenInRectangleSelect = childrenInRect
+            else
+               childrenInRectangleSelect = {}
+            end
          end
          editingMode = nil
       end
@@ -862,23 +868,7 @@ function love.mousereleased(x,y, button)
          local offY = -  (tly + h2)
          
          recenterGroup(childrenInRectangleSelect, offX, offY)
-        -- p-- rint('todo')
-         -- local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
-         -- print(tlx,tly,brx,bry)
-         -- local w2 = (brx - tlx)/2
-         -- local h2 = (bry - tly)/2
-         -- local offX = -  (tlx + w2)
-         -- local offY = -  (tly + h2)
-
-         -- for i =1, #childrenInRectangleSelect do
-         --    for j = 1, #(childrenInRectangleSelect[i].points) do
-         --       childrenInRectangleSelect[i].points[j][1] = childrenInRectangleSelect[i].points[j][1] + offX
-         --       childrenInRectangleSelect[i].points[j][2] = childrenInRectangleSelect[i].points[j][2] + offY
-
-         --    end
-         -- end
-         
-         --childrenInRectangleSelect = recenterChildrenInRect(childrenInRectangleSelect, currentlyHoveredUINode)
+     
          addGroupAtEnd(childrenInRectangleSelect, currentlyHoveredUINode)
          meshAll(currentlyHoveredUINode)
          childrenInRectangleSelect = {}
@@ -896,7 +886,7 @@ function recenterGroup(group, dx, dy)
          group[i].points[j][2] = group[i].points[j][2] + dy
       end
    end
-    
+   
 end
 
 
@@ -905,7 +895,7 @@ end
 --    for i =1, #children do
 --       local p = recenterPoints(children[i].points)
 --       result[i].points = p
-     
+
 --    end
 --   -- meshAll(result)
 --    return result
@@ -984,6 +974,29 @@ function love.mousemoved(x,y, dx, dy)
       end
    end
 
+
+   if editingModeSub == 'change-perspective' then
+      --lastDraggedElement = {id='perspective-corner', kind='tl'}
+      
+      if lastDraggedElement then
+         
+         local index = lastDraggedElement.index
+         
+         if  snap then
+            perspective[index][1] = round2(x,0)
+            perspective[index][2] = round2(y,0)
+            print(round2(x,0), round2(y,0))
+         else
+            
+            perspective[index][1] = x
+            perspective[index][2] = y
+         end
+         
+      end
+      
+   end
+
+   
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
          local dragIndex = lastDraggedElement.index
@@ -1147,7 +1160,7 @@ function renderGraphNodes(node, level, startY)
                changeName=true
                changeNameCursor= child.name and #child.name or 0
                lastClickedGraphButton = nil
-            
+               
 
             else
                --changeName=false
@@ -1202,28 +1215,28 @@ function love.wheelmoved(x,y)
    if posx > w-256 then
       scrollviewOffset = scrollviewOffset + y*24
       --if scrollviewOffset > 0 then scrollviewOffset = 0 end
---      print(scrollviewOffset)
+      --      print(scrollviewOffset)
    else
       
-   local scale = root.transforms.l[4]
+      local scale = root.transforms.l[4]
 
-   
-   local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
-   root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9)
-   root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
+      
+      local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
+      root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9)
+      root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
 
-   local tl = root.transforms.l
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-   root._globalTransform = root._localTransform
-   ---
+      local tl = root.transforms.l
+      root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+      root._globalTransform = root._localTransform
+      ---
 
-   local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
-   local dx = ix1 - ix2
-   local dy = iy1 - iy2
+      local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
+      local dx = ix1 - ix2
+      local dy = iy1 - iy2
 
-   local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
-   root.transforms.l[1] = root.transforms.l[1] - dx3
-   root.transforms.l[2] = root.transforms.l[2] - dy3
+      local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
+      root.transforms.l[1] = root.transforms.l[1] - dx3
+      root.transforms.l[2] = root.transforms.l[2] - dy3
    end
    
 end
@@ -1465,6 +1478,48 @@ function love.load(arg)
 
 end
 
+
+function getPointsBBox(points)
+   local tlx = 9999999999
+   local tly = 9999999999
+   local brx = -9999999999
+   local bry = -9999999999
+   for ip=1, #points do
+      if points[ip][1] < tlx then tlx = points[ip][1] end
+      if points[ip][1] > brx then brx = points[ip][1] end
+      if points[ip][2] < tly then tly = points[ip][2] end
+      if points[ip][2] > bry then bry = points[ip][2] end
+   end
+   return tlx, tly, brx, bry
+end
+
+function getDirectChildrenBBox(node)
+   local tlx = 9999999999
+   local tly = 9999999999
+   local brx = -9999999999
+   local bry = -9999999999
+
+   for i=1, #node.children do
+      local points = node.children[i].points
+      if points then
+         for ip=1, #points do
+            if points[ip][1] < tlx then tlx = points[ip][1] end
+            if points[ip][1] > brx then brx = points[ip][1] end
+            if points[ip][2] < tly then tly = points[ip][2] end
+            if points[ip][2] > bry then bry = points[ip][2] end
+         end
+      end
+   end
+
+   if ( tlx == 9999999999 and tly == 9999999999 and brx == -9999999999 and bry == -9999999999) then
+      print('no direct children you pancake!')
+      return 0,0,0,0
+   else
+      return tlx, tly, brx, bry
+   end
+
+end
+
 function getGroupBBox(group)
    local tlx = math.huge
    local tly = math.huge
@@ -1493,16 +1548,38 @@ function getGroupBBox(group)
 end
 
 
- function recenterPoints(points)
-         local tlx, tly, brx, bry = getPointsBBox(points)
-         local w2 = (brx - tlx)/2
-         local h2 = (bry - tly)/2
-         for i=1, #points do
-            points[i][1] = points[i][1] -  (tlx + w2)
-            points[i][2] = points[i][2] -  (tly + h2)
+function getBBoxOfChildren(children)
+   local minX = math.huge
+   local minY = math.huge
+   local maxX = -math.huge
+   local maxY = -math.huge
+   
+   for i = 1, #children do
+      local c = children[i]
+      if c.points then
+         for ip = 1, #c.points do
+            if c.points[ip][1] < minX then minX =  c.points[ip][1]  end
+            if c.points[ip][1] > maxX then maxX =  c.points[ip][1]  end
+            if c.points[ip][2]  < minY then minY =  c.points[ip][2]  end
+            if c.points[ip][2]  > maxY then maxY =  c.points[ip][2]  end
          end
-         return points
       end
+   end
+
+   return {tl = {x=minX, y=minY}, br={x=maxX, y=maxY}}
+end
+
+
+function recenterPoints(points)
+   local tlx, tly, brx, bry = getPointsBBox(points)
+   local w2 = (brx - tlx)/2
+   local h2 = (bry - tly)/2
+   for i=1, #points do
+      points[i][1] = points[i][1] -  (tlx + w2)
+      points[i][2] = points[i][2] -  (tly + h2)
+   end
+   return points
+end
 
 function drawGrid()
    local scale = root.transforms.l[4]
@@ -1532,7 +1609,7 @@ function  makeNewFolder()
 
    if currentNode and not currentNode.folder then
       remeshNode(currentNode)
---      currentNode.mesh= makeMeshFromVertices(poly.makeVertices(currentNode))
+      --      currentNode.mesh= makeMeshFromVertices(poly.makeVertices(currentNode))
    end
    if (currentNode) then
       shape._parent = currentNode and currentNode._parent
@@ -1556,13 +1633,94 @@ function love.update(dt)
    --    end
    --    calculateDopesheetRotations(dopesheet.sliderValue)
    -- end
-  
+   
 end
 
 
 function labelPos(x,y)
    return x,y-20
 end
+
+function transferPoint (xI, yI, source, destination)
+
+    local ADDING = 0.00001 -- to avoid dividing by zero
+
+    local xA = source[1]
+    local yA = source[2]
+
+    local xC = source[3]
+    local yC = source[4]
+    
+    local xAu = destination[1][1]
+    local yAu = destination[1][2]
+
+    local xBu = destination[2][1]
+    local yBu = destination[2][2]
+
+    local xCu = destination[3][1]
+    local yCu = destination[3][2]
+
+    local xDu = destination[4][1]
+    local yDu = destination[4][2]
+    --print(xA,yA,xC,yC)
+    --print(xAu,yAu,xBu,yBu,xCu,yCu,xDu,yDu)
+    -- Calcultations
+    -- if points are the same, have to add a ADDING to avoid dividing by zero
+    if (xBu==xCu) then xC = xC + ADDING end
+    if (xAu==xDu) then xDu= xDu+ ADDING end
+    if (xAu==xBu) then xBu =xBu + ADDING end
+    if (xDu==xCu) then xCu = xCu + ADDING end
+    --print(xC,xDu,xBu,xCu)
+    local kBC = (yBu-yCu)/(xBu-xCu)
+    local kAD = (yAu-yDu)/(xAu-xDu)
+    local kAB = (yAu-yBu)/(xAu-xBu)
+    local kDC = (yDu-yCu)/(xDu-xCu)
+
+    if (kBC==kAD) then kAD =kAd + ADDING end
+    local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
+    local yE = kBC*(xE - xBu) + yBu
+
+    if (kAB==kDC) then kDC = kDC + ADDING end
+    local xF = (kAB*xBu - kDC*xCu + yCu - yBu) / (kAB-kDC)
+    local yF = kAB*(xF - xBu) + yBu
+
+    if (xE==xF) then xF = xF + ADDING end
+    local kEF = (yE-yF) / (xE-xF)
+
+    if (kEF==kAB) then kAB = kAB + ADDING end
+    local xG = (kEF*xDu - kAB*xAu + yAu - yDu) / (kEF-kAB)
+    local yG = kEF*(xG - xDu) + yDu
+
+    if (kEF==kBC) then kBC = kBC + ADDING end
+    local xH = (kEF*xDu - kBC*xBu + yBu - yDu) / (kEF-kBC)
+    local yH = kEF*(xH - xDu) + yDu
+
+    local rG = (yC-yI)/(yC-yA)
+    local rH = (xI-xA)/(xC-xA)
+
+    local xJ = (xG-xDu)*rG + xDu
+    local yJ = (yG-yDu)*rG + yDu
+
+    local xK = (xH-xDu)*rH + xDu
+    local yK = (yH-yDu)*rH + yDu
+
+    if (xF==xJ) then xJ = xJ + ADDING end
+    if (xE==xK) then xK =xK + ADDING end
+    local kJF = (yF-yJ) / (xF-xJ) --//23
+    local kKE = (yE-yK) / (xE-xK) --//12
+
+    local xKE
+    if (kJF==kKE) then kKE= kKE + ADDING end
+    local xIu = (kJF*xF - kKE*xE + yE - yF) / (kJF-kKE)
+    local yIu = kJF * (xIu - xJ) + yJ
+
+    local b={x=xIu,y=yIu} 
+    --b.x=math.round(b.x)
+    --b.y=math.round(b.y)
+    return b
+end
+
+
 
 
 function love.draw()
@@ -1572,7 +1730,7 @@ function love.draw()
    --        --love.graphics.setColor(love.math.random(), 0, 0);
    --        for i =1, 10 /2 do
    --           --love.graphics.line(0, 0, love.math.random(0, love.graphics.getWidth()), love.math.random(0, love.graphics.getHeight()));
-             
+   
    --        end
    --        love.graphics.setColor(1,1,1, 1)
    --        renderThings(root)
@@ -1583,1138 +1741,1199 @@ function love.draw()
 
    
    if true then
-   step = step + 1
-   local mx,my = love.mouse.getPosition()
+      step = step + 1
+      local mx,my = love.mouse.getPosition()
 
-   handleMouseClickStart()
-   love.mouse.setCursor(cursors.arrow)
-   local w, h = love.graphics.getDimensions( )
-   local rightX = w - (64 + 500+ 10)/2
+      handleMouseClickStart()
+      love.mouse.setCursor(cursors.arrow)
+      local w, h = love.graphics.getDimensions( )
+      local rightX = w - (64 + 500+ 10)/2
 
 
-   love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
+      love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
 
-   if  backdrop.visible then
-      love.graphics.setColor(1,1,1, backdrop.alpha)
-      love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
-   end
-
-   love.graphics.setWireframe(wireframe )
-   renderThings(root)
-
-   if (currentlyHoveredUINode) then
-      local alpha = 0.5 + math.sin(step/100)
-      love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
-      local editing = poly.makeVertices(currentlyHoveredUINode)
-      if (editing and #editing > 0) then
-         local editingMesh = makeMeshFromVertices(editing)
-         love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent._globalTransform)
-      end
-   end
-
-   love.graphics.setWireframe( false )
-
-   drawUIAroundGraphNodes(w,h)
-   
-   if currentNode then
-      local t = root._localTransform
-      local x,y = t:transformPoint(0,0)
-      love.graphics.setColor(1,1,1)
-      love.graphics.line(x-5, y, x+5, y)
-      love.graphics.line(x, y-5, x, y+5)
-   end
-
-   if currentNode and currentNode.folder and  currentNode._globalTransform then
-      local t = currentNode.transforms.l
-      local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
-      love.graphics.setColor(0,0,0)
-      love.graphics.circle("line", pivotX-1, pivotY, 10)
-      love.graphics.setColor(1,1,1)
-      love.graphics.circle("line", pivotX, pivotY, 10)
-   end
-
-   if editingMode == 'polyline' and currentNode and currentNode.points then
-      local points =  currentNode and currentNode.points or {}
-      local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( mx, my )
-      local transformedPoints = {}
-      local t = currentNode._parent._globalTransform
-      for i=1, #points do
-         local lx, ly = t:transformPoint( points[i][1], points[i][2] )
-         table.insert(transformedPoints, {lx, ly})
+      if  backdrop.visible then
+         love.graphics.setColor(1,1,1, backdrop.alpha)
+         love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
       end
 
-      love.graphics.setLineWidth(2.0  )
-      love.graphics.setColor(1,1,1)
-      local w, h = getLocalDelta(t, 10, 10)
-      w = math.max(math.abs(w), math.abs(h))
-      for i=1, #points do
-         local kind = "line"
-         if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
-            local scale = root.transforms.l[4]
-            if pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
-               kind= "fill"
-               love.graphics.print(round2(points[i][1],3)..", "..round2(points[i][2],3), 8, love.graphics.getHeight()-32)
-            end
+      love.graphics.setWireframe(wireframe )
+      renderThings(root)
+
+      if (currentlyHoveredUINode) then
+         local alpha = 0.5 + math.sin(step/100)
+         love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
+         local editing = poly.makeVertices(currentlyHoveredUINode)
+         if (editing and #editing > 0) then
+            local editingMesh = makeMeshFromVertices(editing)
+            love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent._globalTransform)
          end
+      end
 
-         if editingModeSub == 'polyline-insert' then
-            local closestEdgeIndex = getClosestEdgeIndex(globalX, globalY, points)
-            local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
+      love.graphics.setWireframe( false )
 
-            if i == closestEdgeIndex or i == nextIndex then
-               kind = 'fill'
-            end
-         end
-
-         local dot_x = transformedPoints[i][1] - 5
-         local dot_y =  transformedPoints[i][2] - 5
-         local dot_size = 10
-         love.graphics.setColor(0,0,0)
-         love.graphics.rectangle(kind, dot_x-1, dot_y, dot_size, dot_size)
-
+      drawUIAroundGraphNodes(w,h)
+      
+      if currentNode then
+         local t = root._localTransform
+         local x,y = t:transformPoint(0,0)
          love.graphics.setColor(1,1,1)
-         love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
+         love.graphics.line(x-5, y, x+5, y)
+         love.graphics.line(x, y-5, x, y+5)
       end
 
-      love.graphics.setLineWidth(1)
-   end
-
-   love.graphics.setColor(1,1,1, 1)
-
-   if (editingMode == 'rectangle-select' or  editingModeSub =='rectangle-point-select')  and rectangleSelect.startP and rectangleSelect.endP then
-      love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.startP.y)
-      love.graphics.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
-      love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
-      love.graphics.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
-
-   end
-
-   love.graphics.setColor(1,1,1, 0.1)
-   drawGrid()
-
-   love.graphics.push()
-
-   local s = 1
-
-   if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
-      -- if imgbutton('folder-move', ui.move,  calcX(6), calcY(0)).clicked then
-      --    editingModeSub = 'folder-move'
-      -- end
-
-      -- if imgbutton('folder-pivot', ui.pivot,  calcX(7), calcY(0)).clicked then
-      --    editingModeSub = nil
-      --    if (#currentNode.children > 0) then
-      --       local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-      --       local middleX = tlx + (brx - tlx)/2
-      --       local middleY = tly + (bry - tly)/2
-
-      --       local mx = tlx + (brx - tlx)/2
-      --       local my = tly + (bry - tly)/2
-      --       local nx = currentNode.transforms.l[6]
-      --       local ny = currentNode.transforms.l[7]
-
-      --       if (nx == tlx and ny == tly) then
-      --          currentNode.transforms.l[6]= middleX
-      --          currentNode.transforms.l[7]= tly
-      --       elseif (nx == middleX and ny == tly) then
-      --          currentNode.transforms.l[6]= brx
-      --          currentNode.transforms.l[7]= tly
-      --       elseif (nx == brx and ny == tly) then
-      --          currentNode.transforms.l[6]= brx
-      --          currentNode.transforms.l[7]= middleY
-      --       elseif (nx == brx and ny == middleY) then
-      --          currentNode.transforms.l[6]= brx
-      --          currentNode.transforms.l[7]= bry
-      --       elseif (nx == brx and ny == bry) then
-      --          currentNode.transforms.l[6]= middleX
-      --          currentNode.transforms.l[7]= bry
-      --       elseif (nx == middleX and ny == bry) then
-      --          currentNode.transforms.l[6]= tlx
-      --          currentNode.transforms.l[7]= bry
-      --       elseif (nx == tlx and ny == bry) then
-      --          currentNode.transforms.l[6]= tlx
-      --          currentNode.transforms.l[7]= middleY
-      --       elseif (nx == tlx and ny == middleY) then
-      --          currentNode.transforms.l[6]= mx
-      --          currentNode.transforms.l[7]= my
-      --       elseif (nx == mx and ny == my) then
-      --          currentNode.transforms.l[6]= tlx
-      --          currentNode.transforms.l[7]= tly
-      --       else
-      --          currentNode.transforms.l[6]= mx
-      --          currentNode.transforms.l[7]= my
-      --          print('default')
-      --       end
-      --       editingModeSub = 'folder-move'
-      --    end
-      -- end
-
-      -- if imgbutton('folder-pan-pivot', ui.pan,  calcX(8), calcY(0)).clicked then
-      --    editingModeSub = 'folder-pan-pivot'
-      -- end
-      -- if imgbutton('folder-clone', ui.clone,calcX(9), calcY(0)).clicked then
-      --    local cloned = copyShape(currentNode)
-      --    cloned._parent = currentNode._parent
-      --    parentize(cloned)
-      --    cloned.name = (cloned.name)..' copy'
-      --    addShapeAfter(cloned, currentNode)
-      --    meshAll(cloned)
-      --    setCurrentNode(cloned)
-      -- end
+      if currentNode and currentNode.folder and  currentNode._globalTransform then
+         local t = currentNode.transforms.l
+         local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
+         love.graphics.setColor(0,0,0)
+         love.graphics.circle("line", pivotX-1, pivotY, 10)
+         love.graphics.setColor(1,1,1)
+         love.graphics.circle("line", pivotX, pivotY, 10)
+      end
 
 
-      if (showTheParentTransforms) then
-         love.graphics.setFont(smallest)
+     
+      
 
-         love.graphics.setColor(1,1,1, 1)
+      
+      if editingModeSub == 'change-perspective' and currentNode then
+         -- for now the limitation is :
+         -- children can only be shapes (not folders)
+         -- thus no nesting
+         --print("sjoepie")
+         
+         if currentNode.children then
+            
+            --print(minX,minY, maxX,maxY)
+            
+            -- four corner distort!!!!
+            --https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
+            --https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
+               
+            --local vanilla = {}
+            if (true) then
+               local bbox = getBBoxOfChildren(currentNode.children)
+               local t = currentNode._globalTransform
+               local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
+               local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
+               --print('vanilla', TLX, TLY, BRX, BRY)
+               --print('initial', bbox.tl.x,bbox.tl.y ,bbox.br.x, bbox.br.y)
+               local ip1x, ip1y = t:inverseTransformPoint(perspective[1][1], perspective[1][2])
+               local ip2x, ip2y = t:inverseTransformPoint(perspective[2][1], perspective[2][2])
+               local ip3x, ip3y = t:inverseTransformPoint(perspective[3][1], perspective[3][2])
+               local ip4x, ip4y = t:inverseTransformPoint(perspective[4][1], perspective[4][2])
+               
+              -- print('inverted: ', itlx, itly, ibrx, ibry)
 
-         local scrollerWidth = 314*2
-         love.graphics.print("scale x and y",  labelPos(calcX(1), calcY(2))  )
-         if (currentNode.transforms.l[4] == currentNode.transforms.l[5]) then
-            local v =  h_slider("folder-scale-xy", calcX(1), calcY(2), scrollerWidth,  currentNode.transforms.l[5] , 0.00001, 10)
+               local source = {bbox.tl.x,bbox.tl.y,  bbox.br.x, bbox.br.y}
+               local dest = {{ip1x, ip1y},{ip2x, ip2y},{ip3x, ip3y},{ip4x, ip4y}}
+
+               for i = 1, #currentNode.children do
+               if currentNode.children[i].points then
+                  local verts = {}
+                  for j =1, #currentNode.children[i].points do
+                     
+                     local p = currentNode.children[i].points[j]
+                     local r = transferPoint (p[1], p[2], source, dest)
+                     if tostring(r.x) == 'nan' then
+                        r.x = p[1]
+                     end
+                     if tostring(r.y) == 'nan' then
+                        r.y = p[2]
+                     end
+                     local x2,y2 = t:transformPoint(r.x, r.y)
+                     table.insert(verts, x2)
+                     table.insert(verts, y2)
+
+                     --love.graphics.rectangle('line', r.x, r.y, 10,10)
+                     
+                     --print(i, p[1],p[2], r.x, r.y)
+                  end
+                  love.graphics.setColor(currentNode.children[i].color[1],currentNode.children[i].color[2],currentNode.children[i].color[3],0.3)
+                  love.graphics.polygon('fill', verts)
+               end
+               end
+               
+               
+               
+               
+            end
+            
+           
+
+
+           
+            
+            local TLX,TLY = perspective[1][1], perspective[1][2]
+            local BRX,BRY = perspective[3][1], perspective[3][2]
+
+            love.graphics.setColor(1,1,1)
+            --love.graphics.rectangle('line', TLX, TLY, BRX-TLX, BRY-TLY )
+            ------
+
+            function simplehover(x,y, width)
+               if pointInRect(mx,my, x, y, width,width) then
+                  love.graphics.rectangle('fill', x,y, width,width)
+               else
+                  love.graphics.rectangle('line', x,y, width,width)
+               end
+            end
+            
+            --love.graphics.rectangle('line', TLX-5, TLY-5, 10,10)
+            --love.graphics.rectangle('line', BRX-5, BRY-5, 10,10)
+            for i=1, 4 do
+               local nxt = i -1
+               if nxt < 1 then nxt = 4 end
+               
+               --print(nxt)
+               love.graphics.line(
+                  perspective[i][1], perspective[i][2],
+                  perspective[nxt][1], perspective[nxt][2]
+               )
+            end
+            --local source = {bbox.tl.x,bbox.tl.y,  bbox.br.x, bbox.br.y}
+            --{TLX, TLY, BRX, BRY}
+            --local dest = perspective
+
+           -- print(inspect(currentNode.children[1].points))
+            if currentNode.children[1].points then
+            for i =1, #currentNode.children[1].points do
+               local p = currentNode.children[1].points[i]
+               --print(i,":",p[1], p[2], inspect(source), inspect(dest))
+               --local r = transferPoint (p[1], p[2], source, dest)
+               --if tostring( r.x ) ~= "nan" and tostring(r.y) ~= "nan" then
+               --   print(p[1],p[2],r.x,r.y)
+               --end
+               
+            end
+            end
+            
+            simplehover( perspective[1][1]-5, perspective[1][2]-5, 10)
+            simplehover( perspective[2][1]-5, perspective[2][2]-5, 10)
+            simplehover( perspective[3][1]-5, perspective[3][2]-5, 10)
+            simplehover( perspective[4][1]-5, perspective[4][2]-5, 10)
+         end
+         
+      end
+      
+
+      if editingMode == 'polyline' and currentNode and currentNode.points then
+         local points =  currentNode and currentNode.points or {}
+         local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( mx, my )
+         local transformedPoints = {}
+         local t = currentNode._parent._globalTransform
+         for i=1, #points do
+            local lx, ly = t:transformPoint( points[i][1], points[i][2] )
+            table.insert(transformedPoints, {lx, ly})
+         end
+
+         love.graphics.setLineWidth(2.0  )
+         love.graphics.setColor(1,1,1)
+         local w, h = getLocalDelta(t, 10, 10)
+         w = math.max(math.abs(w), math.abs(h))
+         for i=1, #points do
+            local kind = "line"
+            if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
+               local scale = root.transforms.l[4]
+               if pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
+                  kind= "fill"
+                  love.graphics.print(round2(points[i][1],3)..", "..round2(points[i][2],3), 8, love.graphics.getHeight()-32)
+               end
+            end
+
+            if editingModeSub == 'polyline-insert' then
+               local closestEdgeIndex = getClosestEdgeIndex(globalX, globalY, points)
+               local nextIndex = (closestEdgeIndex == #transformedPoints and 1) or closestEdgeIndex+1
+
+               if i == closestEdgeIndex or i == nextIndex then
+                  kind = 'fill'
+               end
+            end
+
+            local dot_x = transformedPoints[i][1] - 5
+            local dot_y =  transformedPoints[i][2] - 5
+            local dot_size = 10
+            love.graphics.setColor(0,0,0)
+            love.graphics.rectangle(kind, dot_x-1, dot_y, dot_size, dot_size)
+
+            love.graphics.setColor(1,1,1)
+            love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
+         end
+
+         love.graphics.setLineWidth(1)
+      end
+
+      love.graphics.setColor(1,1,1, 1)
+
+      if (editingMode == 'rectangle-select' or  editingModeSub =='rectangle-point-select')  and rectangleSelect.startP and rectangleSelect.endP then
+         love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.startP.y)
+         love.graphics.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
+         love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
+         love.graphics.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
+
+      end
+
+      love.graphics.setColor(1,1,1, 0.1)
+      drawGrid()
+
+      love.graphics.push()
+
+      local s = 1
+
+      if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
+
+         if (showTheParentTransforms) then
+            love.graphics.setFont(smallest)
+
+            love.graphics.setColor(1,1,1, 1)
+
+            local scrollerWidth = 314*2
+            love.graphics.print("scale x and y",  labelPos(calcX(1), calcY(2))  )
+            if (currentNode.transforms.l[4] == currentNode.transforms.l[5]) then
+               local v =  h_slider("folder-scale-xy", calcX(1), calcY(2), scrollerWidth,  currentNode.transforms.l[5] , 0.00001, 10)
+               if (v.value ~= nil) then
+                  currentNode.transforms.l[4] = v.value
+                  currentNode.transforms.l[5] = v.value
+                  editingModeSub = 'folder-scale'
+                  love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(2))
+               end
+            end
+
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("scale x",  labelPos(calcX(1), calcY(3)) )
+            local v =  h_slider("folder-scale-x", calcX(1),  calcY(3) , scrollerWidth,  currentNode.transforms.l[4] , -2, 2)
             if (v.value ~= nil) then
                currentNode.transforms.l[4] = v.value
+               --currentNode.transforms.l[5] = v.value
+               editingModeSub = 'folder-scale'
+               love.graphics.print(string.format("%0.2f", v.value), calcX(1),  calcY(3))
+            end
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("scale y",  labelPos(calcX(1), calcY(4)) )
+
+            local v =  h_slider("folder-scale-y", calcX(1), calcY(4), scrollerWidth,  currentNode.transforms.l[5] , -2, 2)
+            if (v.value ~= nil) then
+               --currentNode.transforms.l[4] = v.value
                currentNode.transforms.l[5] = v.value
                editingModeSub = 'folder-scale'
-               love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(2))
+               love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(4))
             end
-         end
-
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("scale x",  labelPos(calcX(1), calcY(3)) )
-         local v =  h_slider("folder-scale-x", calcX(1),  calcY(3) , scrollerWidth,  currentNode.transforms.l[4] , -2, 2)
-         if (v.value ~= nil) then
-            currentNode.transforms.l[4] = v.value
-            --currentNode.transforms.l[5] = v.value
-            editingModeSub = 'folder-scale'
-            love.graphics.print(string.format("%0.2f", v.value), calcX(1),  calcY(3))
-         end
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("scale y",  labelPos(calcX(1), calcY(4)) )
-
-         local v =  h_slider("folder-scale-y", calcX(1), calcY(4), scrollerWidth,  currentNode.transforms.l[5] , -2, 2)
-         if (v.value ~= nil) then
-            --currentNode.transforms.l[4] = v.value
-            currentNode.transforms.l[5] = v.value
-            editingModeSub = 'folder-scale'
-            love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(4))
-         end
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("skew x",  labelPos(calcX(1), calcY(5)) )
-         local v = h_slider('folder_skew_x', calcX(1), calcY(5), scrollerWidth, currentNode.transforms.l[8] or 0,  -math.pi, math.pi )
-         if (v.value ~= nil) then
-            currentNode.transforms.l[8] = v.value
-            love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(5))
-         end
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("skew y",  labelPos(calcX(1), calcY(6))  )
-         local v = h_slider('folder_skew_y', calcX(1), calcY(6), scrollerWidth, currentNode.transforms.l[9] or 0,    -math.pi, math.pi )
-         if (v.value ~= nil) then
-            currentNode.transforms.l[9] = v.value
-            love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(6))
-         end
-
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("rotate", labelPos(calcX(1), calcY(7)) )
-         local v =  h_slider("folder-rotate", calcX(1),  calcY(7) , scrollerWidth,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
-
-         if (v.value ~= nil) then
-            currentNode.transforms.l[3] = v.value
-            editingModeSub = 'folder-rotate'
-            love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(7))
-         end
-         --end
-      end
-      love.graphics.setFont(small)
-   end
-
-
-   
-
-   if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
-      local colorsInRow = 10
-      for i = 1, #palette.colors do
-         local rgb = palette.colors[i].rgb
-         local x = w - 700 + ((i-1) % colorsInRow)*28
-         local y = math.ceil((i) / colorsInRow)*28
-         y = y + 50
-         x = x + 50
-         if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
-            currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
-         end
-      end
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("alpha",  labelPos(calcX(0), calcY(10)) )
-      local v =  h_slider("polyline_alpha", calcX(0), calcY(10), 100,  currentNode.color[4] , 0, 1)
-      if (v.value ~= nil) then
-         currentNode.color[4] = v.value
-         love.graphics.print(currentNode.color[4], calcX(0), calcY(10))
-      end
-   end
-
-   if (editingMode == 'backdrop') then
-      if imgbutton('polyline-wireframe', ui.lines,  calcX(0), calcY(0)).clicked then
-         wireframe = not wireframe
-      end
-
-      if imgbutton('polyline-palette', ui.palette,  calcX(7), calcY(0)).clicked then
-         editingModeSub = 'backdrop-palette'
-      end
-      if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,  calcX(8), calcY(0)).clicked then
-         editingModeSub = nil
-         backdrop.visible = not backdrop.visible
-      end
-
-
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.print("simplify svg",  labelPos(calcX(1), calcY(1)) )
-      local v =  h_slider("simplify_value", calcX(1), calcY(1), 200,  simplifyValue , 0, 10)
-      if (v.value ~= nil) then
-         simplifyValue= v.value
-         love.graphics.print(simplifyValue, calcX(1), 20)
-      end
-
-      if (backdrop.visible) then
-         if imgbutton('backdrop-move', ui.move, calcX(9), calcY(1)).clicked then
-            if (editingModeSub == 'backdrop-move') then
-               editingModeSub = nil
-            else
-               editingModeSub = 'backdrop-move'
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("skew x",  labelPos(calcX(1), calcY(5)) )
+            local v = h_slider('folder_skew_x', calcX(1), calcY(5), scrollerWidth, currentNode.transforms.l[8] or 0,  -math.pi, math.pi )
+            if (v.value ~= nil) then
+               currentNode.transforms.l[8] = v.value
+               love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(5))
             end
-         end
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("skew y",  labelPos(calcX(1), calcY(6))  )
+            local v = h_slider('folder_skew_y', calcX(1), calcY(6), scrollerWidth, currentNode.transforms.l[9] or 0,    -math.pi, math.pi )
+            if (v.value ~= nil) then
+               currentNode.transforms.l[9] = v.value
+               love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(6))
+            end
 
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("alpha",  labelPos(calcX(10), calcY(1)) )
-         local vslider =  h_slider("backdrop_alpha", calcX(10), calcY(1), 200, backdrop.alpha, 0, 1)
-         if (vslider.value ~= nil) then
-            backdrop.alpha = vslider.value
-            editingModeSub = nil
-            love.graphics.print(string.format("%0.2f", vslider.value),  calcX(10), calcY(1))
-         end
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("rotate", labelPos(calcX(1), calcY(7)) )
+            local v =  h_slider("folder-rotate", calcX(1),  calcY(7) , scrollerWidth,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
 
-         love.graphics.setColor(1,1,1, 1)
-         love.graphics.print("scale",  labelPos(calcX(18), calcY(1)) )
-         local hslider =  h_slider("backdrop_scale", calcX(18), calcY(1), 200, backdrop.scale, 0, 5)
-         if (hslider.value ~= nil) then
-            backdrop.scale = hslider.value
-            editingModeSub = nil
-            love.graphics.print(string.format("%0.2f", hslider.value),  calcX(18), calcY(1))
+            if (v.value ~= nil) then
+               currentNode.transforms.l[3] = v.value
+               editingModeSub = 'folder-rotate'
+               love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(7))
+            end
+            --end
          end
-
+         love.graphics.setFont(small)
       end
 
-      if (editingModeSub == 'backdrop-palette') then
+
+      
+
+      if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
          local colorsInRow = 10
          for i = 1, #palette.colors do
             local rgb = palette.colors[i].rgb
-            local x = ((i-1) % colorsInRow)*50
-            local y = math.ceil((i) / colorsInRow)*50
-
+            local x = w - 700 + ((i-1) % colorsInRow)*28
+            local y = math.ceil((i) / colorsInRow)*28
             y = y + 50
             x = x + 50
             if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
-               backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
-               print("bg_color: ", rgb[1]/255,rgb[2]/255,rgb[3]/255)
+               currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
+            end
+         end
+         love.graphics.setColor(1,1,1, 1)
+         love.graphics.print("alpha",  labelPos(calcX(0), calcY(10)) )
+         local v =  h_slider("polyline_alpha", calcX(0), calcY(10), 100,  currentNode.color[4] , 0, 1)
+         if (v.value ~= nil) then
+            currentNode.color[4] = v.value
+            love.graphics.print(currentNode.color[4], calcX(0), calcY(10))
+         end
+      end
+
+      if (editingMode == 'backdrop') then
+         if imgbutton('polyline-wireframe', ui.lines,  calcX(0), calcY(0)).clicked then
+            wireframe = not wireframe
+         end
+
+         if imgbutton('polyline-palette', ui.palette,  calcX(7), calcY(0)).clicked then
+            editingModeSub = 'backdrop-palette'
+         end
+         if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,  calcX(8), calcY(0)).clicked then
+            editingModeSub = nil
+            backdrop.visible = not backdrop.visible
+         end
+
+
+         love.graphics.setColor(1,1,1, 1)
+         love.graphics.print("simplify svg",  labelPos(calcX(1), calcY(1)) )
+         local v =  h_slider("simplify_value", calcX(1), calcY(1), 200,  simplifyValue , 0, 10)
+         if (v.value ~= nil) then
+            simplifyValue= v.value
+            love.graphics.print(simplifyValue, calcX(1), 20)
+         end
+
+         if (backdrop.visible) then
+            if imgbutton('backdrop-move', ui.move, calcX(9), calcY(1)).clicked then
+               if (editingModeSub == 'backdrop-move') then
+                  editingModeSub = nil
+               else
+                  editingModeSub = 'backdrop-move'
+               end
+            end
+
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("alpha",  labelPos(calcX(10), calcY(1)) )
+            local vslider =  h_slider("backdrop_alpha", calcX(10), calcY(1), 200, backdrop.alpha, 0, 1)
+            if (vslider.value ~= nil) then
+               backdrop.alpha = vslider.value
+               editingModeSub = nil
+               love.graphics.print(string.format("%0.2f", vslider.value),  calcX(10), calcY(1))
+            end
+
+            love.graphics.setColor(1,1,1, 1)
+            love.graphics.print("scale",  labelPos(calcX(18), calcY(1)) )
+            local hslider =  h_slider("backdrop_scale", calcX(18), calcY(1), 200, backdrop.scale, 0, 5)
+            if (hslider.value ~= nil) then
+               backdrop.scale = hslider.value
+               editingModeSub = nil
+               love.graphics.print(string.format("%0.2f", hslider.value),  calcX(18), calcY(1))
+            end
+
+         end
+
+         if (editingModeSub == 'backdrop-palette') then
+            local colorsInRow = 10
+            for i = 1, #palette.colors do
+               local rgb = palette.colors[i].rgb
+               local x = ((i-1) % colorsInRow)*50
+               local y = math.ceil((i) / colorsInRow)*50
+
+               y = y + 50
+               x = x + 50
+               if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
+                  backdrop.bg_color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255}
+                  print("bg_color: ", rgb[1]/255,rgb[2]/255,rgb[3]/255)
+               end
             end
          end
       end
-   end
 
-   if  editingMode ~= 'dopesheet' then
+      if  editingMode ~= 'dopesheet' then
 
-      if currentNode  then
-         --if currentNode.points then
-           -- love.graphics.setColor(currentNode.color[1],currentNode.color[2],currentNode.color[3], 0.3)
-         --else
+         if currentNode  then
+            --if currentNode.points then
+            -- love.graphics.setColor(currentNode.color[1],currentNode.color[2],currentNode.color[3], 0.3)
+            --else
             love.graphics.setColor(.1,.1,.1, 0.6)
-         --end
-         
-
-         --local desiredWidth = 64 + 16
-         --local desiredHeight =h - 32
-         --local offsetX = w - desiredWidth  - 210
-         --local offsetY =  16 -- (h - desiredHeight)
-         
-         --love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,desiredHeight)
-
-         love.graphics.rectangle('fill',0,h-64,w,64)
-         
-         if currentNode.points then
-            --love.graphics.setColor(currentNode.color[1],currentNode.color[2],currentNode.color[3], .8)
-            --love.graphics.rectangle('line',offsetX,offsetY,desiredWidth,10)
-
-            --love.graphics.rectangle('fill',offsetX,offsetY+20,desiredWidth,10)
+            --end
             
 
+            --local desiredWidth = 64 + 16
+            --local desiredHeight =h - 32
+            --local offsetX = w - desiredWidth  - 210
+            --local offsetY =  16 -- (h - desiredHeight)
+            
+            --love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,desiredHeight)
+
+            love.graphics.rectangle('fill',0,h-64,w,64)
+            
+            if currentNode.points then
+               --love.graphics.setColor(currentNode.color[1],currentNode.color[2],currentNode.color[3], .8)
+               --love.graphics.rectangle('line',offsetX,offsetY,desiredWidth,10)
+
+               --love.graphics.rectangle('fill',offsetX,offsetY+20,desiredWidth,10)
+               
+
+
+            end
+            
+            --love.graphics.setColor(.15,.15,.15,.1)
+            --love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,desiredHeight)
+         end
+         
+         love.graphics.setFont(smallest)
+         local totalHeightGraphNodes = renderGraphNodes(root, 0, 16)
+         if (scrollviewOffset > totalHeightGraphNodes) then
+            scrollviewOffset = totalHeightGraphNodes
 
          end
          
-         --love.graphics.setColor(.15,.15,.15,.1)
-          --love.graphics.rectangle('fill',offsetX,offsetY,desiredWidth,desiredHeight)
-       end
-      
-      love.graphics.setFont(smallest)
-      local totalHeightGraphNodes = renderGraphNodes(root, 0, 16)
-      if (scrollviewOffset > totalHeightGraphNodes) then
-         scrollviewOffset = totalHeightGraphNodes
 
-      end
-      
-
-      --print("total hieght,",totalHeightGraphNodes,scrollviewOffset)
-      love.graphics.setFont(small)
-      local scrollBarH =  (h-32)
-      if totalHeightGraphNodes > scrollBarH then
-         local ding = scrollbarV('hierarchyslider', w-40, 16 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
-         if ding.value ~= nil then
-            scrollviewOffset = ding.value
+         --print("total hieght,",totalHeightGraphNodes,scrollviewOffset)
+         love.graphics.setFont(small)
+         local scrollBarH =  (h-32)
+         if totalHeightGraphNodes > scrollBarH then
+            local ding = scrollbarV('hierarchyslider', w-40, 16 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
+            if ding.value ~= nil then
+               scrollviewOffset = ding.value
+            end
          end
-      end
 
-      if imgbutton('backdrop', ui.backdrop, rightX - 50, calcY(0)).clicked then
-         if (editingMode == 'backdrop') then
-            editingMode = nil
-         else
-            editingMode = 'backdrop'
+         if imgbutton('backdrop', ui.backdrop, rightX - 50, calcY(0)).clicked then
+            if (editingMode == 'backdrop') then
+               editingMode = nil
+            else
+               editingMode = 'backdrop'
+            end
+            editingModeSub = nil
          end
-         editingModeSub = nil
-      end
-      if true or (not currentNode or not currentNode.points) then
-         if imgbutton('select', ui.select, rightX - 100, calcY(0)).clicked then
-            editingMode = 'rectangle-select'
-         end
-         if #childrenInRectangleSelect > 0 then
-            if love.keyboard.isDown("delete") then
-               local indexes = type(childrenInRectangleSelect[1]) == "number"
+         if true or (not currentNode or not currentNode.points) then
+            if imgbutton('select', ui.select, rightX - 100, calcY(0)).clicked then
+               editingMode = 'rectangle-select'
+            end
+            if #childrenInRectangleSelect > 0 then
+               if love.keyboard.isDown("delete") then
+                  local indexes = type(childrenInRectangleSelect[1]) == "number"
 
-               if indexes then
-               else
+                  if indexes then
+                  else
+                     for i =1, #childrenInRectangleSelect do
+                        local n = childrenInRectangleSelect[i]
+                        table.remove(n._parent.children, getIndex(n))
+                     end
+                     
+                  end
+                  
+                  
+                  childrenInRectangleSelect = {}
+                  
+               end
+               
+               
+               if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
+                  lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
+               end
+
+               if imgbutton('object_group', ui.object_group, rightX - 200, calcY(0)).clicked   then
+
                   for i =1, #childrenInRectangleSelect do
                      local n = childrenInRectangleSelect[i]
                      table.remove(n._parent.children, getIndex(n))
                   end
                   
+                  local shape = {
+                     folder = true,
+                     transforms =  {l={0,0,0,1,1,0,0, 0,0}},
+                     children = {}
+                  }
+                  if not currentNode then
+                     shape._parent = root
+                     addShapeAtRoot(shape)
+                  else
+                     addThingAtEnd(shape, currentNode)
+                  end
+                  local f = shape
+                  
+                  local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
+                  
+                  local w2 = (brx - tlx)/2
+                  local h2 = (bry - tly)/2
+                  local offX = -  (tlx + w2)
+                  local offY = -  (tly + h2)
+                  
+                  recenterGroup(childrenInRectangleSelect, offX, offY)
+                  f.children = childrenInRectangleSelect
+                  parentize(f._parent)
+                  f.transforms.l[1] = -offX
+                  f.transforms.l[2] = -offY
+                  
+                  meshAll(f._parent)
+                  childrenInRectangleSelect = {}
+
                end
                
-               
-               childrenInRectangleSelect = {}
-              
             end
-            
-            
-            if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
-               lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
-            end
-
-            if imgbutton('object_group', ui.object_group, rightX - 200, calcY(0)).clicked   then
-
-               for i =1, #childrenInRectangleSelect do
-                  local n = childrenInRectangleSelect[i]
-                  table.remove(n._parent.children, getIndex(n))
-               end
-               
-               local shape = {
-                  folder = true,
-                  transforms =  {l={0,0,0,1,1,0,0, 0,0}},
-                  children = {}
-               }
-               if not currentNode then
-                  shape._parent = root
-                  addShapeAtRoot(shape)
-               else
-                  addThingAtEnd(shape, currentNode)
-               end
-               local f = shape
-               
-               local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
-               
-               local w2 = (brx - tlx)/2
-               local h2 = (bry - tly)/2
-               local offX = -  (tlx + w2)
-               local offY = -  (tly + h2)
-               
-               recenterGroup(childrenInRectangleSelect, offX, offY)
-               f.children = childrenInRectangleSelect
-               parentize(f._parent)
-               f.transforms.l[1] = -offX
-               f.transforms.l[2] = -offY
-               
-               meshAll(f._parent)
-               childrenInRectangleSelect = {}
-
-            end
-            
          end
-      end
-      --ui.object_group
-      --doubleiconlabelbutton('add-shape-too', ui.add, ui.folder, rightX-600, 100)
-       --doubleiconlabelbutton('add-shape-too', ui.add, ui.polygon, rightX-500, 100)
+         --ui.object_group
+         --doubleiconlabelbutton('add-shape-too', ui.add, ui.folder, rightX-600, 100)
+         --doubleiconlabelbutton('add-shape-too', ui.add, ui.polygon, rightX-500, 100)
 
-      if iconlabelbutton('add-shape', ui.add, nil, false,  'shape',  rightX-500, 16, 128).clicked then
-         local shape = {
-            color = {0,0,0,1},
-            outline = true,
-            points = {},
-         }
+         if iconlabelbutton('add-shape', ui.add, nil, false,  'shape',  rightX-500, 16, 128).clicked then
+            local shape = {
+               color = {0,0,0,1},
+               outline = true,
+               points = {},
+            }
 
-         if currentNode and not currentNode.folder then
-            remeshNode(currentNode)
---            currentNode.mesh= makeMeshFromVertices(poly.makeVertices(currentNode))
+            if currentNode and not currentNode.folder then
+               remeshNode(currentNode)
+               --            currentNode.mesh= makeMeshFromVertices(poly.makeVertices(currentNode))
+            end
+            if (currentNode) then
+               shape._parent = currentNode and currentNode._parent
+               addShapeAfter(shape, currentNode)
+            else
+               shape._parent = root
+               addShapeAtRoot(shape)
+            end
+
+            editingMode = 'polyline'
+            editingModeSub = 'polyline-insert'
          end
+
+         if iconlabelbutton('add-parent', ui.add, nil, false,  'folder',  rightX-256 - 96,16, 128).clicked then
+
+            local f = makeNewFolder()
+            
+
+            editingMode = 'polyline'
+            editingModeSub = 'polyline-insert'
+         end
+
          if (currentNode) then
-            shape._parent = currentNode and currentNode._parent
-            addShapeAfter(shape, currentNode)
-         else
-            shape._parent = root
-            addShapeAtRoot(shape)
-         end
+            -- what is y position of button in list ?
+            --local yOffset = getNodeYPosition(root, currentNode)
+            --yOffset = math.max(10, yOffset - scrollviewOffset)
+            local index = getIndex(currentNode)
+            if (currentNode and index > 1) then
+               index = getIndex(currentNode)
+               if index > 1 and imgbutton('polyline-move-up', ui.move_up,  w -256, 20 ).clicked then
+                  local taken_out = removeCurrentNode()
+                  table.insert(taken_out._parent.children, index-1, taken_out)
+               end
+            end
 
-         editingMode = 'polyline'
-         editingModeSub = 'polyline-insert'
-      end
-
-      if iconlabelbutton('add-parent', ui.add, nil, false,  'folder',  rightX-256 - 96,16, 128).clicked then
-
-         local f = makeNewFolder()
-         
-
-         editingMode = 'polyline'
-         editingModeSub = 'polyline-insert'
-      end
-
-      if (currentNode) then
-         -- what is y position of button in list ?
-         --local yOffset = getNodeYPosition(root, currentNode)
-         --yOffset = math.max(10, yOffset - scrollviewOffset)
-         local index = getIndex(currentNode)
-         if (currentNode and index > 1) then
-            index = getIndex(currentNode)
-            if index > 1 and imgbutton('polyline-move-up', ui.move_up,  w -256, 20 ).clicked then
+            if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  w -256,60 ).clicked then
                local taken_out = removeCurrentNode()
-               table.insert(taken_out._parent.children, index-1, taken_out)
+               if (taken_out) then
+                  table.insert(taken_out._parent.children, index+1, taken_out)
+               end
+            end
+         end
+         if currentNode then
+            -- print(currentNode ,currentNode.keyframes)
+         end
+         if currentNode and currentNode.keyframes then
+            if (currentNode.keyframes == 2) then
+               local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
+               if v.value then
+                  currentNode.lerpValue = v.value
+               end
+            end
+            if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
+               local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
+               if v.value then
+                  currentNode.lerpX = v.value.x
+                  currentNode.lerpY = v.value.y
+               end
             end
          end
 
-         if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  w -256,60 ).clicked then
-            local taken_out = removeCurrentNode()
-            if (taken_out) then
-               table.insert(taken_out._parent.children, index+1, taken_out)
-            end
-         end
-      end
-      if currentNode then
-        -- print(currentNode ,currentNode.keyframes)
-      end
-      if currentNode and currentNode.keyframes then
-         if (currentNode.keyframes == 2) then
-            local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
-            if v.value then
-               currentNode.lerpValue = v.value
-            end
-         end
-         if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
-            local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
-            if v.value then
-               currentNode.lerpX = v.value.x
-               currentNode.lerpY = v.value.y
-            end
-         end
-      end
-
-      if (currentNode) then
+         if (currentNode) then
 
 
-         
-         
+            
+            
 
-         if (changeName) then
-            local str =  currentNode and currentNode.name  or ""
-            local substr = string.sub(str, 1, changeNameCursor)
-            local cursorX = (love.graphics.getFont():getWidth(substr))
-            local cursorH = (love.graphics.getFont():getHeight(str))
-            love.graphics.setColor(1,1,1,0.5)
-            love.graphics.rectangle('fill', w-700 - 10, calcY(4) + 8*4 - 10, 300 + 20,  cursorH + 20 )
-            love.graphics.setColor(1,1,1)
-            love.graphics.print(str , w - 700, calcY(4) + 8*4)
-            love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4) , 2, cursorH)
+            if (changeName) then
+               local str =  currentNode and currentNode.name  or ""
+               local substr = string.sub(str, 1, changeNameCursor)
+               local cursorX = (love.graphics.getFont():getWidth(substr))
+               local cursorH = (love.graphics.getFont():getHeight(str))
+               love.graphics.setColor(1,1,1,0.5)
+               love.graphics.rectangle('fill', w-700 - 10, calcY(4) + 8*4 - 10, 300 + 20,  cursorH + 20 )
+               love.graphics.setColor(1,1,1)
+               love.graphics.print(str , w - 700, calcY(4) + 8*4)
+               love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4) , 2, cursorH)
 
-            if lastClickedGraphButton then
-               love.graphics.rectangle('line',
-                                       lastClickedGraphButton.x+24+12,
-                                       lastClickedGraphButton.y, 100,23)
-               love.graphics.setColor(1,0,0)
-               love.graphics.setFont(smallest)
-               love.graphics.print(lastClickedGraphButton.childName or "",lastClickedGraphButton.x+24+12,
-               lastClickedGraphButton.y)
+               if lastClickedGraphButton then
+                  love.graphics.rectangle('line',
+                                          lastClickedGraphButton.x+24+12,
+                                          lastClickedGraphButton.y, 100,23)
+                  love.graphics.setColor(1,0,0)
+                  love.graphics.setFont(smallest)
+                  love.graphics.print(lastClickedGraphButton.childName or "",lastClickedGraphButton.x+24+12,
+                                      lastClickedGraphButton.y)
+                  
+               end
                
-            end
-            
-            --
-         end
-      end
-   end
-
-   -- local count = countNestedChildren(root, 0)
-   -- if (count * 50 > h) then
-   --    local v2 = v_slider("scrollview", w - 50, calcY(4) , 100, scrollviewOffset, 0, count * 50)
-   --    if (v2.value ~= nil) then
-   --       scrollviewOffset = v2.value
-   --    end
-   -- end
-
-   love.graphics.pop()
-   love.graphics.setFont(small)
-   if not quitDialog then
-      love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
-      love.graphics.print(shapeName, 64, 0)
-   end
-
-   if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
-      love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
-   end
-
-
-   --if not dopesheetEditing then
-   function initializeDopeSheet()
-      dopesheet = {
-         scrollOffset = 0,
-         node=currentNode,
-         names = {},
-         refs = {}
-      }
-      if currentNode then
-         --local flatted = {}
-         local d = fetchAllNames(currentNode)
-         dopesheet.names = d
-         local refs = {}
-         for i = 1, #d do
-            refs[d[i]] = findNodeByName(root, d[i])
-         end
-         dopesheet.refs = refs
-      end
-
-      data = {}
-      for i =1, #dopesheet.names do
-         local row = {}
-
-         for j = 1, cellCount do
-            row[j] = {}
-         end
-         row[1] = {rotation=currentNode.transforms.l[3], ease='linear'}
-         row[cellCount] = {rotation=currentNode.transforms.l[3], ease='linear'}
-
-         data[i] = row
-      end
-      dopesheet.data = data
-      dopesheet.selectedCell = nil
-      dopesheet.sliderValue = 0
-      dopesheet.drawMode = 'sheet'
-
-
-
-
-   end
-
-   function calculateDopesheetRotations(sliderValue)
-
-      local frameIndex = (math.floor(sliderValue*(cellCount-1))+1)
-      if frameIndex > cellCount-1 then frameIndex = cellCount-1 end
-
-      for i = 1, #dopesheet.names do
-         local nodeBefore, nodeBeforeIndex = lookForFirstIndexBefore(dopesheet.data[i],frameIndex)
-         local nodeAfter, nodeAfterIndex =  lookForFirstIndexAfter(dopesheet.data[i],frameIndex)
-
-
-         local durp = mapInto(1+ sliderValue * (cellCount-1), nodeBeforeIndex, nodeAfterIndex, 0,1)
-
-
-         -- local beginVal = 0
-         -- local endVal = 1
-         -- local change = endVal - beginVal
-         -- local duration = 1
-         local ease = nodeBefore.ease or 'linear'
-         local l1 = easing[ease](durp, 0,1,1, 1/10, 1/3)
-
-         local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
-         dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
-      end
-   end
-
-
-   function lookForFirstIndexBefore(data, index)
-      for i=index , 1 , -1 do
-         if data[i].rotation then
-            return data[i], i
-         end
-      end
-      return nil
-   end
-   function lookForFirstIndexAfter(data, index)
-      for i=index+1 , #data do
-         if data[i].rotation then
-            return data[i], i
-         end
-      end
-      return nil
-   end
-
-
-   function fetchAllNames(root, result)
-      result = result or {}
-
-      if root.folder then -- only care for the names of folders atm
-         table.insert(result, root.name)
-      end
-
-      if root.children then
-         for i = 1, #root.children do
-            fetchAllNames(root.children[i], result)
-         end
-      end
-      return result
-   end
-
-
-
-
-   if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
-      dopesheetEditing = not dopesheetEditing
-      editingMode = dopesheetEditing and 'dopesheet' or nil
-      if dopesheetEditing then -- initialize
-         initializeDopeSheet(cellCount)
-      end
-   end
-
-   local mousex = love.mouse.getX()
-   local mousey = love.mouse.getY()
-
-   function getAngleAndDistance(x1,y1,x2,y2)
-      local dx = x1 - x2
-      local dy = y1 - y2
-      local angle =  math.atan2(dy, dx)
-      local distance =  math.sqrt ((dx*dx) + (dy*dy))
-
-      return angle, distance
-   end
-
-   function posAngleAndDistance(x1,y1,angle, distance)
-   end
-   
-   
-   if dopesheetEditing then
-      love.graphics.setColor(1,1,1,0.5)
-      love.graphics.rectangle("fill", 0, h/2, w, h/2)
-      love.graphics.setLineWidth(2)
-
-      for k,v in pairs(dopesheet.refs) do
-         
-         
-         
-         local t = v._parent._globalTransform
-         local t2 = v._globalTransform
-         local mex, mey = t2:transformPoint(v.transforms.l[1], v.transforms.l[2])
-         local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
-
-         love.graphics.setColor(1,1,0)
-         love.graphics.circle("fill",lx,ly,10)
-         love.graphics.setColor(0,0,0)
-         local id = k.."thing"
-         local b = getUICircle(id, lx, ly, 10)
-         love.graphics.setColor(1,0,1, 0.8)
-         if b.hover then
-            love.graphics.setColor(0.5,0.5,0.5)
-         end
-
-         local vpx0, vpy0 = t:transformPoint(0,0 )
-         if v._parent and v._parent._parent then
-            --   vpx0, vpy0 =  v._parent._parent._globalTransform:transformPoint(0,0 )
-
-         end
-
-         local vpx, vpy = t:transformPoint(v._parent.transforms.l[6] ,v._parent.transforms.l[7] )
-         --local mex, mey = t:transformPoint(v._parent.transforms.l[6] ,v._parent.transforms.l[7] )
-         local angle, distance = getAngleAndDistance(lx,lx,vpx0,vpx0) 
-         local angle2, distance2 = getAngleAndDistance(mousex,mousey,vpx,vpy)
-         local angle3 , distance3 = getAngleAndDistance(mex, mey, vpx, vpy)
-         local parentsAddedAngle = 0
-         local thing = v._parent._parent
-         local gtangle = v._parent.transforms[3]
-         
-         if b.clicked then
-            print(k, 'is clicked, look for parent to rotate', v._parent.name)
-            print("what is the angle between us?")
-            print('parent',v._parent.name, 'is at', vpx, vpy )
-            print(k, "is at", lx,ly)
-            print("angle might be ", angle)
-
-            
-            lastDraggedElement = {id=id}
-         end
-         
-         while thing do
-            parentsAddedAngle = parentsAddedAngle + thing.transforms.l[3] 
-            thing = thing._parent
-         end
-         if love.mouse.isDown(1 ) then
-            if lastDraggedElement and lastDraggedElement.id == id then
-
-               v._parent.transforms.l[3]  = v._parent.transforms.l[3]  + (angle2 - angle3) 
-               --v._parent.transforms.l[3] = angle2 - parentsAddedAngle -math.pi/2   -- gtangle
+               --
             end
          end
+      end
 
-         --currentNode.transforms.l[6] -- ouch sad trombone 6 & 7 pivot points offsett
+      -- local count = countNestedChildren(root, 0)
+      -- if (count * 50 > h) then
+      --    local v2 = v_slider("scrollview", w - 50, calcY(4) , 100, scrollviewOffset, 0, count * 50)
+      --    if (v2.value ~= nil) then
+      --       scrollviewOffset = v2.value
+      --    end
+      -- end
 
-         --local a2 =  v._parent.transforms.l[3] + parentsAddedAngle + math.pi/4
-         --local angle2 = v._parent.transforms.l[3] 
-         --local new_x = vpx + math.cos(a2) * distance
-         --local new_y = vpy + math.sin(a2) * distance
+      love.graphics.pop()
+      love.graphics.setFont(small)
+      if not quitDialog then
+         love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
+         love.graphics.print(shapeName, 64, 0)
+      end
 
-         love.graphics.line(vpx, vpy, lx, ly)
-         
-         love.graphics.circle("line",lx,ly,10)
-         love.graphics.setColor(0,1,0)
-         love.graphics.circle("line",vpx0,vpy0,3)
-         love.graphics.setColor(1,1,1)
-
+      if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
+         love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
       end
 
 
-
-      local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and ui.dopesheet  or ui.pencil, 0, h/2)
-      if drawUseToggle.clicked then
-         dopesheet.drawMode = ( dopesheet.drawMode == 'draw') and 'sheet' or 'draw'
-      end
-
-      if (((32+24) * #dopesheet.names)  > h/2) then
-         local ding = scrollbarV('dopesheetslider', 400, h/2, (h/2),48+ ((32+24) * #dopesheet.names) , dopesheet.scrollOffset or 0)
-         if ding.value ~= nil then
-            --if not tostring(ding.value) == "nan" then
-            dopesheet.scrollOffset = ding.value
-            --end
+      --if not dopesheetEditing then
+      function initializeDopeSheet()
+         dopesheet = {
+            scrollOffset = 0,
+            node=currentNode,
+            names = {},
+            refs = {}
+         }
+         if currentNode then
+            --local flatted = {}
+            local d = fetchAllNames(currentNode)
+            dopesheet.names = d
+            local refs = {}
+            for i = 1, #d do
+               refs[d[i]] = findNodeByName(root, d[i])
+            end
+            dopesheet.refs = refs
          end
+
+         data = {}
+         for i =1, #dopesheet.names do
+            local row = {}
+
+            for j = 1, cellCount do
+               row[j] = {}
+            end
+            row[1] = {rotation=currentNode.transforms.l[3], ease='linear'}
+            row[cellCount] = {rotation=currentNode.transforms.l[3], ease='linear'}
+
+            data[i] = row
+         end
+         dopesheet.data = data
+         dopesheet.selectedCell = nil
+         dopesheet.sliderValue = 0
+         dopesheet.drawMode = 'sheet'
+
+
+
+
       end
 
+      function calculateDopesheetRotations(sliderValue)
 
-      if currentNode then
-         local cellWidth = 12
-         local cellHeight = 24
+         local frameIndex = (math.floor(sliderValue*(cellCount-1))+1)
+         if frameIndex > cellCount-1 then frameIndex = cellCount-1 end
+
          for i = 1, #dopesheet.names do
-            local h1 = 32
-            local h2 = 24
-
-            local x1 = 0
-            local y1 = 32 + h/2 + ((i-1)*(h1+h2))
-            y1 = y1 - dopesheet.scrollOffset
-            local w1 = 200
-            local b = getUIRect('dope-bone'..i, x1,y1,w1,h1)
+            local nodeBefore, nodeBeforeIndex = lookForFirstIndexBefore(dopesheet.data[i],frameIndex)
+            local nodeAfter, nodeAfterIndex =  lookForFirstIndexAfter(dopesheet.data[i],frameIndex)
 
 
-            local node = dopesheet.refs[dopesheet.names[i]]
+            local durp = mapInto(1+ sliderValue * (cellCount-1), nodeBeforeIndex, nodeAfterIndex, 0,1)
 
-            if y1 >= h/2 then -- dont draw things that are scrolled away
 
-               if b.clicked then
-                  setCurrentNode(node)
+            -- local beginVal = 0
+            -- local endVal = 1
+            -- local change = endVal - beginVal
+            -- local duration = 1
+            local ease = nodeBefore.ease or 'linear'
+            local l1 = easing[ease](durp, 0,1,1, 1/10, 1/3)
+
+            local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
+            dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
+         end
+      end
+
+
+      function lookForFirstIndexBefore(data, index)
+         for i=index , 1 , -1 do
+            if data[i].rotation then
+               return data[i], i
+            end
+         end
+         return nil
+      end
+      function lookForFirstIndexAfter(data, index)
+         for i=index+1 , #data do
+            if data[i].rotation then
+               return data[i], i
+            end
+         end
+         return nil
+      end
+
+
+      function fetchAllNames(root, result)
+         result = result or {}
+
+         if root.folder then -- only care for the names of folders atm
+            table.insert(result, root.name)
+         end
+
+         if root.children then
+            for i = 1, #root.children do
+               fetchAllNames(root.children[i], result)
+            end
+         end
+         return result
+      end
+
+
+
+
+      if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
+         dopesheetEditing = not dopesheetEditing
+         editingMode = dopesheetEditing and 'dopesheet' or nil
+         if dopesheetEditing then -- initialize
+            initializeDopeSheet(cellCount)
+         end
+      end
+
+      local mousex = love.mouse.getX()
+      local mousey = love.mouse.getY()
+
+      function getAngleAndDistance(x1,y1,x2,y2)
+         local dx = x1 - x2
+         local dy = y1 - y2
+         local angle =  math.atan2(dy, dx)
+         local distance =  math.sqrt ((dx*dx) + (dy*dy))
+
+         return angle, distance
+      end
+
+      function posAngleAndDistance(x1,y1,angle, distance)
+      end
+      
+      
+      if dopesheetEditing then
+         love.graphics.setColor(1,1,1,0.5)
+         love.graphics.rectangle("fill", 0, h/2, w, h/2)
+         love.graphics.setLineWidth(2)
+
+         for k,v in pairs(dopesheet.refs) do
+            
+            
+            
+            local t = v._parent._globalTransform
+            local t2 = v._globalTransform
+            local mex, mey = t2:transformPoint(v.transforms.l[1], v.transforms.l[2])
+            local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
+
+            love.graphics.setColor(1,1,0)
+            love.graphics.circle("fill",lx,ly,10)
+            love.graphics.setColor(0,0,0)
+            local id = k.."thing"
+            local b = getUICircle(id, lx, ly, 10)
+            love.graphics.setColor(1,0,1, 0.8)
+            if b.hover then
+               love.graphics.setColor(0.5,0.5,0.5)
+            end
+
+            local vpx0, vpy0 = t:transformPoint(0,0 )
+            if v._parent and v._parent._parent then
+               --   vpx0, vpy0 =  v._parent._parent._globalTransform:transformPoint(0,0 )
+
+            end
+
+            local vpx, vpy = t:transformPoint(v._parent.transforms.l[6] ,v._parent.transforms.l[7] )
+            --local mex, mey = t:transformPoint(v._parent.transforms.l[6] ,v._parent.transforms.l[7] )
+            local angle, distance = getAngleAndDistance(lx,lx,vpx0,vpx0) 
+            local angle2, distance2 = getAngleAndDistance(mousex,mousey,vpx,vpy)
+            local angle3 , distance3 = getAngleAndDistance(mex, mey, vpx, vpy)
+            local parentsAddedAngle = 0
+            local thing = v._parent._parent
+            local gtangle = v._parent.transforms[3]
+            
+            if b.clicked then
+               print(k, 'is clicked, look for parent to rotate', v._parent.name)
+               print("what is the angle between us?")
+               print('parent',v._parent.name, 'is at', vpx, vpy )
+               print(k, "is at", lx,ly)
+               print("angle might be ", angle)
+
+               
+               lastDraggedElement = {id=id}
+            end
+            
+            while thing do
+               parentsAddedAngle = parentsAddedAngle + thing.transforms.l[3] 
+               thing = thing._parent
+            end
+            if love.mouse.isDown(1 ) then
+               if lastDraggedElement and lastDraggedElement.id == id then
+
+                  v._parent.transforms.l[3]  = v._parent.transforms.l[3]  + (angle2 - angle3) 
+                  --v._parent.transforms.l[3] = angle2 - parentsAddedAngle -math.pi/2   -- gtangle
                end
+            end
 
-               if currentNode == node then
-                  love.graphics.setLineWidth(3)
-                  love.graphics.setColor(0,0,0)
-               else
-                  love.graphics.setLineWidth(2)
-                  love.graphics.setColor(0.5,0.5,0.5)
-               end
+            --currentNode.transforms.l[6] -- ouch sad trombone 6 & 7 pivot points offsett
 
-               love.graphics.rectangle("line",  x1,y1,w1,h1)
+            --local a2 =  v._parent.transforms.l[3] + parentsAddedAngle + math.pi/4
+            --local angle2 = v._parent.transforms.l[3] 
+            --local new_x = vpx + math.cos(a2) * distance
+            --local new_y = vpy + math.sin(a2) * distance
 
-               love.graphics.setLineWidth(2)
-               love.graphics.setColor(0.7,0.7,0.7)
-               for ci = 1,cellCount do
+            love.graphics.line(vpx, vpy, lx, ly)
+            
+            love.graphics.circle("line",lx,ly,10)
+            love.graphics.setColor(0,1,0)
+            love.graphics.circle("line",vpx0,vpy0,3)
+            love.graphics.setColor(1,1,1)
 
-                  local myX = x1+w1+((ci-1)*cellWidth)
-                  local myY = y1 + h1
-                  love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
-                  if dopesheet.data[i][ci] then
+         end
 
-                     love.graphics.setColor(0,0,0)
-                     love.graphics.rectangle("line",myX+1,myY+1,cellWidth,cellHeight)
 
-                     love.graphics.setColor(0.7,0.7,0.7)
-                     love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
 
-                     if dopesheet.data[i][ci].rotation then
-                        love.graphics.setColor(0,1,0,0.3)
+         local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and ui.dopesheet  or ui.pencil, 0, h/2)
+         if drawUseToggle.clicked then
+            dopesheet.drawMode = ( dopesheet.drawMode == 'draw') and 'sheet' or 'draw'
+         end
 
-                        if dopesheet.selectedCell and
-                           dopesheet.selectedCell[1]==i and
-                        dopesheet.selectedCell[2]==ci then
-                           love.graphics.setColor(0,1,0,0.8)
-                        end
+         if (((32+24) * #dopesheet.names)  > h/2) then
+            local ding = scrollbarV('dopesheetslider', 400, h/2, (h/2),48+ ((32+24) * #dopesheet.names) , dopesheet.scrollOffset or 0)
+            if ding.value ~= nil then
+               --if not tostring(ding.value) == "nan" then
+               dopesheet.scrollOffset = ding.value
+               --end
+            end
+         end
 
-                        love.graphics.rectangle("fill",myX+2,myY+2,cellWidth-4,cellHeight-4)
-                     end
+
+         if currentNode then
+            local cellWidth = 12
+            local cellHeight = 24
+            for i = 1, #dopesheet.names do
+               local h1 = 32
+               local h2 = 24
+
+               local x1 = 0
+               local y1 = 32 + h/2 + ((i-1)*(h1+h2))
+               y1 = y1 - dopesheet.scrollOffset
+               local w1 = 200
+               local b = getUIRect('dope-bone'..i, x1,y1,w1,h1)
+
+
+               local node = dopesheet.refs[dopesheet.names[i]]
+
+               if y1 >= h/2 then -- dont draw things that are scrolled away
+
+                  if b.clicked then
+                     setCurrentNode(node)
                   end
 
-                  b = getUIRect(i..ci..'cell', myX, myY, cellWidth,cellHeight)
-                  if b.clicked then
+                  if currentNode == node then
+                     love.graphics.setLineWidth(3)
+                     love.graphics.setColor(0,0,0)
+                  else
+                     love.graphics.setLineWidth(2)
+                     love.graphics.setColor(0.5,0.5,0.5)
+                  end
 
-                     if dopesheet.drawMode == 'draw' then
+                  love.graphics.rectangle("line",  x1,y1,w1,h1)
+
+                  love.graphics.setLineWidth(2)
+                  love.graphics.setColor(0.7,0.7,0.7)
+                  for ci = 1,cellCount do
+
+                     local myX = x1+w1+((ci-1)*cellWidth)
+                     local myY = y1 + h1
+                     love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
+                     if dopesheet.data[i][ci] then
+
+                        love.graphics.setColor(0,0,0)
+                        love.graphics.rectangle("line",myX+1,myY+1,cellWidth,cellHeight)
+
+                        love.graphics.setColor(0.7,0.7,0.7)
+                        love.graphics.rectangle("line",myX,myY,cellWidth,cellHeight)
+
                         if dopesheet.data[i][ci].rotation then
-                           if ci > 1 then -- you cannot delete the first one
-                              dopesheet.data[i][ci] = {}
+                           love.graphics.setColor(0,1,0,0.3)
+
+                           if dopesheet.selectedCell and
+                              dopesheet.selectedCell[1]==i and
+                           dopesheet.selectedCell[2]==ci then
+                              love.graphics.setColor(0,1,0,0.8)
                            end
 
-                        else
-                           dopesheet.data[i][ci] = {rotation = dopesheet.data[i][1].rotation, ease='linear'}
+                           love.graphics.rectangle("fill",myX+2,myY+2,cellWidth-4,cellHeight-4)
                         end
                      end
-                     if dopesheet.drawMode == 'sheet' then
-                        if  dopesheet.data[i][ci].rotation then
 
-                           dopesheet.sliderValue = (ci-1)/(cellCount-1)
+                     b = getUIRect(i..ci..'cell', myX, myY, cellWidth,cellHeight)
+                     if b.clicked then
 
-                           dopesheet.selectedCell = {i, ci}
-                           calculateDopesheetRotations(dopesheet.sliderValue)
+                        if dopesheet.drawMode == 'draw' then
+                           if dopesheet.data[i][ci].rotation then
+                              if ci > 1 then -- you cannot delete the first one
+                                 dopesheet.data[i][ci] = {}
+                              end
 
-                           -- local name = dopesheet.names[i]
-                           -- local node2 = dopesheet.data[i][ci]
-                           -- dopesheet.refs[name].transforms.l[3] = node2.rotation
-                        else
-                           dopesheet.selectedCell  = nil
+                           else
+                              dopesheet.data[i][ci] = {rotation = dopesheet.data[i][1].rotation, ease='linear'}
+                           end
                         end
+                        if dopesheet.drawMode == 'sheet' then
+                           if  dopesheet.data[i][ci].rotation then
+
+                              dopesheet.sliderValue = (ci-1)/(cellCount-1)
+
+                              dopesheet.selectedCell = {i, ci}
+                              calculateDopesheetRotations(dopesheet.sliderValue)
+
+                              -- local name = dopesheet.names[i]
+                              -- local node2 = dopesheet.data[i][ci]
+                              -- dopesheet.refs[name].transforms.l[3] = node2.rotation
+                           else
+                              dopesheet.selectedCell  = nil
+                           end
+                        end
+
                      end
+
 
                   end
 
+                  love.graphics.setColor(1,1,1,1)
+                  love.graphics.setFont(small)
+                  local strW = small:getWidth(dopesheet.names[i] )
+                  love.graphics.setColor(0,0,0,1)
+                  love.graphics.print(dopesheet.names[i], w1 - strW - 10+2, y1+1)
+                  love.graphics.setColor(1,1,1,1)
+                  love.graphics.print(dopesheet.names[i], w1 - strW - 10, y1)
+
+
+                  love.graphics.setFont(smallest)
+
+
+                  local rotStr = "rotation: "..round2(node.transforms.l[3], 3)
+                  local str2W = smallest:getWidth(rotStr)
+
+                  love.graphics.setColor(0,0,0,1)
+                  love.graphics.print(rotStr, w1 - str2W - 10 + 2, y1 + 32 +1)
+
+                  love.graphics.setColor(1,1,1,1)
+                  love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
+               end
+
+
+
+
+            end
+
+            if dopesheet.selectedCell then
+               local indx = dopesheet.selectedCell
+               if iconlabelbutton('toggle_dopesheet_curve', ui.curve, nil, false,  'ease',  w/2, h/4 -50).clicked then
+
+                  dopesheet.showEases = not dopesheet.showEases
+                  print("showEases",dopesheet.showEases)
+               end
+               node = dopesheet.data[indx[1]][indx[2]]
+
+               rotStr =  "rotation: "..round2(node.rotation, 3)
+
+               local rotSlider = h_slider("dopesheetrotsliderstuff", w/2, h/4, 600, node.rotation, -math.pi, math.pi)
+               if rotSlider.value then
+                  local name = dopesheet.names[indx[1]]
+                  dopesheet.refs[name].transforms.l[3] = rotSlider.value
+                  node.rotation = rotSlider.value
 
                end
+
+               love.graphics.setColor(0,0,0,0)
+               love.graphics.print(rotStr, w/2 + 2 , h/4 - 20 + 1)
+
 
                love.graphics.setColor(1,1,1,1)
-               love.graphics.setFont(small)
-               local strW = small:getWidth(dopesheet.names[i] )
-               love.graphics.setColor(0,0,0,1)
-               love.graphics.print(dopesheet.names[i], w1 - strW - 10+2, y1+1)
-               love.graphics.setColor(1,1,1,1)
-               love.graphics.print(dopesheet.names[i], w1 - strW - 10, y1)
-
-
-               love.graphics.setFont(smallest)
-
-
-               local rotStr = "rotation: "..round2(node.transforms.l[3], 3)
-               local str2W = smallest:getWidth(rotStr)
-
-               love.graphics.setColor(0,0,0,1)
-               love.graphics.print(rotStr, w1 - str2W - 10 + 2, y1 + 32 +1)
-
-               love.graphics.setColor(1,1,1,1)
-               love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
+               love.graphics.print(rotStr, w/2 , h/4 - 20)
             end
 
 
 
+            local dsSlider = h_slider("dopesheetstuff", 200, h/2, cellWidth*cellCount, dopesheet.sliderValue, 0, 1)
+            if dsSlider.value then
+
+               dopesheet.sliderValue =  dsSlider.value
+
+               calculateDopesheetRotations(dsSlider.value)
+
+            end
+
+            if dopesheet.selectedCell and  dopesheet.showEases then
+               -- make a dropdown where you can set the type of ease
+               local currentEase = dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease
+               local eases = {
+                  "linear",
+                  "inQuad",
+                  "outQuad",
+                  "inOutQuad",
+                  "outInQuad",
+                  "inCubic",
+                  "outCubic",
+                  "inOutCubic",
+                  "outInCubic",
+                  "inQuart",
+                  "outQuart",
+                  "inOutQuart",
+                  "outInQuart",
+                  "inQuint",
+                  "outQuint",
+                  "inOutQuint",
+                  "outInQuint",
+                  "inSine",
+                  "outSine",
+                  "inOutSine",
+                  "outInSine",
+                  "inExpo",
+                  "outExpo",
+                  "inOutExpo",
+                  "outInExpo",
+                  "inCirc",
+                  "outCirc",
+                  "inOutCirc",
+                  "outInCirc",
+                  "inBounce",
+                  "outBounce",
+                  "inOutBounce",
+                  "outInBounce",
+               }
+
+               local eases_1p = {
+                  "inBack",
+                  "outBack",
+                  "inOutBack",
+                  "outInBack",
+               }
+
+               local eases_2p = {
+                  "inElastic",
+                  "outElastic",
+                  "inOutElastic",
+                  "outInElastic",
+               }
+
+               local halfEases = math.floor(#eases/2)
+
+               function makeEaseLabelButton(label, x, y, selectedEase)
+                  love.graphics.setColor(0,0,0, 1)
+                  love.graphics.print(label, x+2, y+1)
+                  love.graphics.setColor(1,1,1, 1)
+                  if (label == selectedEase) then
+                     love.graphics.setColor(1,0,1, 1)
+                  end
+
+                  love.graphics.print(label, x, y)
+                  local labelWidth = smallest:getWidth(label)
+                  love.graphics.setColor(1,0,1, 0.2)
+                  return getUIRect('ease-select-'..label, x,y,labelWidth,20)
+               end
+
+
+               for i =1 , #eases do
+                  local y = 20 * i
+                  local x = 10
+                  if i > #eases/2 then
+                     y = 20 * (i - #eases/2 )
+                     x = 150
+                  end
+                  local b = makeEaseLabelButton(eases[i], x, y, currentEase)
+                  if b.clicked then
+                     dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases[i]
+                  end
+
+               end
+               for i =1 , #eases_1p do
+                  local b = makeEaseLabelButton(eases_1p[i], 300, 20*i, currentEase)
+                  if b.clicked then
+                     dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_1p[i]
+                  end
+               end
+               for i =1 , #eases_2p do
+                  local b = makeEaseLabelButton(eases_2p[i], 450, 20*i, currentEase)
+                  if b.clicked then
+                     dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_2p[i]
+                  end
+               end
+            end
 
          end
 
-         if dopesheet.selectedCell then
-            local indx = dopesheet.selectedCell
-            if iconlabelbutton('toggle_dopesheet_curve', ui.curve, nil, false,  'ease',  w/2, h/4 -50).clicked then
 
-               dopesheet.showEases = not dopesheet.showEases
-               print("showEases",dopesheet.showEases)
-            end
-            node = dopesheet.data[indx[1]][indx[2]]
-
-            rotStr =  "rotation: "..round2(node.rotation, 3)
-
-            local rotSlider = h_slider("dopesheetrotsliderstuff", w/2, h/4, 600, node.rotation, -math.pi, math.pi)
-            if rotSlider.value then
-               local name = dopesheet.names[indx[1]]
-               dopesheet.refs[name].transforms.l[3] = rotSlider.value
-               node.rotation = rotSlider.value
-
-            end
-
-            love.graphics.setColor(0,0,0,0)
-            love.graphics.print(rotStr, w/2 + 2 , h/4 - 20 + 1)
-
-
-            love.graphics.setColor(1,1,1,1)
-            love.graphics.print(rotStr, w/2 , h/4 - 20)
-         end
-
-
-
-         local dsSlider = h_slider("dopesheetstuff", 200, h/2, cellWidth*cellCount, dopesheet.sliderValue, 0, 1)
-         if dsSlider.value then
-
-            dopesheet.sliderValue =  dsSlider.value
-
-            calculateDopesheetRotations(dsSlider.value)
-
-         end
-
-         if dopesheet.selectedCell and  dopesheet.showEases then
-            -- make a dropdown where you can set the type of ease
-            local currentEase = dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease
-            local eases = {
-               "linear",
-               "inQuad",
-               "outQuad",
-               "inOutQuad",
-               "outInQuad",
-               "inCubic",
-               "outCubic",
-               "inOutCubic",
-               "outInCubic",
-               "inQuart",
-               "outQuart",
-               "inOutQuart",
-               "outInQuart",
-               "inQuint",
-               "outQuint",
-               "inOutQuint",
-               "outInQuint",
-               "inSine",
-               "outSine",
-               "inOutSine",
-               "outInSine",
-               "inExpo",
-               "outExpo",
-               "inOutExpo",
-               "outInExpo",
-               "inCirc",
-               "outCirc",
-               "inOutCirc",
-               "outInCirc",
-               "inBounce",
-               "outBounce",
-               "inOutBounce",
-               "outInBounce",
-            }
-
-            local eases_1p = {
-               "inBack",
-               "outBack",
-               "inOutBack",
-               "outInBack",
-            }
-
-            local eases_2p = {
-               "inElastic",
-               "outElastic",
-               "inOutElastic",
-               "outInElastic",
-            }
-
-            local halfEases = math.floor(#eases/2)
-
-            function makeEaseLabelButton(label, x, y, selectedEase)
-               love.graphics.setColor(0,0,0, 1)
-               love.graphics.print(label, x+2, y+1)
-               love.graphics.setColor(1,1,1, 1)
-               if (label == selectedEase) then
-                  love.graphics.setColor(1,0,1, 1)
-               end
-
-               love.graphics.print(label, x, y)
-               local labelWidth = smallest:getWidth(label)
-               love.graphics.setColor(1,0,1, 0.2)
-               return getUIRect('ease-select-'..label, x,y,labelWidth,20)
-            end
-
-
-            for i =1 , #eases do
-               local y = 20 * i
-               local x = 10
-               if i > #eases/2 then
-                  y = 20 * (i - #eases/2 )
-                  x = 150
-               end
-               local b = makeEaseLabelButton(eases[i], x, y, currentEase)
-               if b.clicked then
-                  dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases[i]
-               end
-
-            end
-            for i =1 , #eases_1p do
-               local b = makeEaseLabelButton(eases_1p[i], 300, 20*i, currentEase)
-               if b.clicked then
-                  dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_1p[i]
-               end
-            end
-            for i =1 , #eases_2p do
-               local b = makeEaseLabelButton(eases_2p[i], 450, 20*i, currentEase)
-               if b.clicked then
-                  dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_2p[i]
-               end
-            end
-         end
-
+         love.graphics.setLineWidth(1)
       end
 
 
-      love.graphics.setLineWidth(1)
-   end
+      if quitDialog then
+         local quitStr = "Quit? Seriously?! [ESC] "
+         love.graphics.setFont(large)
+         love.graphics.setColor(0,0,0, 1)
+         love.graphics.print(quitStr, 114, 11)
+         love.graphics.setColor(1,0.5,0.5, 1)
+         love.graphics.print(quitStr, 116, 13)
+         love.graphics.setColor(1,1,1, 1)
+         love.graphics.print(quitStr, 115, 12)
+      end
+
+      if fileDropPopup then
+         love.graphics.setFont(small)
+         love.graphics.setColor(1,1,1, 1)
+         love.graphics.rectangle("fill", 100, 100, w-200, h-200)
+         love.graphics.setColor(0,0,0)
+         local name =  fileDropPopup:getFilename()
+         love.graphics.print("dropped file: "..name, 140, 120)
+
+         if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
 
 
-   if quitDialog then
-      local quitStr = "Quit? Seriously?! [ESC] "
-      love.graphics.setFont(large)
-      love.graphics.setColor(0,0,0, 1)
-      love.graphics.print(quitStr, 114, 11)
-      love.graphics.setColor(1,0.5,0.5, 1)
-      love.graphics.print(quitStr, 116, 13)
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.print(quitStr, 115, 12)
-   end
+            if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
+               local tab = getDataFromFile(fileDropPopup)
+               root.children = TableConcat(root.children, tab)
+               parentize(root)
+               scrollviewOffset = 0
+               editingMode = nil
+               editingModeSub = nil
+               currentNode = nil
+               meshAll(root)
+               fileDropPopup = nil
+            end
+            if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
+               local tab = getDataFromFile(fileDropPopup)
+               root.children = tab -- TableConcat(root.children, tab)
+               parentize(root)
+               scrollviewOffset = 0
+               editingMode = nil
+               editingModeSub = nil
+               currentNode = nil
+               meshAll(root)
+               fileDropPopup = nil
+            end
 
-   if fileDropPopup then
-      love.graphics.setFont(small)
-      love.graphics.setColor(1,1,1, 1)
-      love.graphics.rectangle("fill", 100, 100, w-200, h-200)
-      love.graphics.setColor(0,0,0)
-      local name =  fileDropPopup:getFilename()
-      love.graphics.print("dropped file: "..name, 140, 120)
-
-      if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
-
-
-         if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
-            local tab = getDataFromFile(fileDropPopup)
-            root.children = TableConcat(root.children, tab)
-            parentize(root)
-            scrollviewOffset = 0
-            editingMode = nil
-            editingModeSub = nil
-            currentNode = nil
-            meshAll(root)
-            fileDropPopup = nil
-         end
-         if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
-            local tab = getDataFromFile(fileDropPopup)
-            root.children = tab -- TableConcat(root.children, tab)
-            parentize(root)
-            scrollviewOffset = 0
-            editingMode = nil
-            editingModeSub = nil
-            currentNode = nil
-            meshAll(root)
-            fileDropPopup = nil
-         end
-
-      else
-         love.graphics.print("this isnt a good filetype", 140, 170)
-         if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
-            fileDropPopup = nil
+         else
+            love.graphics.print("this isnt a good filetype", 140, 170)
+            if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
+               fileDropPopup = nil
+            end
          end
       end
-   end
    end
    local work =  nil
-   if currentNode and currentNode.points and #currentNode.points >= 2 then
-      local str = "border is "..(currentNode.border and "on" or "off")
+   --if currentNode and currentNode.points and #currentNode.points >= 2 then
+      --local str = "border is "..(currentNode.border and "on" or "off")
       --local strW = love.graphics.getFont():getWidth(str)
       --local strH = love.graphics.getFont():getHeight(str) 
 
@@ -2736,60 +2955,60 @@ function love.draw()
       --       end
       --    end
       -- end
-   end
- 
+   --end
+   
    
 end
 
 --https://love2d.org/forums/viewtopic.php?t=1401
 function GetSplinePos(tab, percent, tension)		--returns the position at 'percent' distance along the spline.
-	if(tab and (#tab >= 4)) then
-		local pos = (((#tab)/2) - 1) * percent
-		local lowpnt, percent_2 = math.modf(pos)
-		
-		local i = (1+lowpnt*2)
-		local p1x = tab[i]
-		local p1y = tab[i+1]
-		local p2x = tab[i+2]
-		local p2y = tab[i+3]
+   if(tab and (#tab >= 4)) then
+      local pos = (((#tab)/2) - 1) * percent
+      local lowpnt, percent_2 = math.modf(pos)
+      
+      local i = (1+lowpnt*2)
+      local p1x = tab[i]
+      local p1y = tab[i+1]
+      local p2x = tab[i+2]
+      local p2y = tab[i+3]
 
-		local p0x = tab[i-2]
-		local p0y = tab[i-1]
-		local p3x = tab[i+4]
-		local p3y = tab[i+5]
+      local p0x = tab[i-2]
+      local p0y = tab[i-1]
+      local p3x = tab[i+4]
+      local p3y = tab[i+5]
 
-                local tension = tension or .5
-		local t1x = 0
-		local t1y = 0
-		if(p0x and p0y) then
-                   t1x = (1.0 - tension) * (p2x - p0x)
-                   t1y =  (1.0 - tension) * (p2y - p0y)
-		end
-		local t2x = 0
-		local t2y = 0
-		if(p3x and p3y) then
-			t2x =  (1.0 - tension) * (p3x - p1x)
-			t2y =  (1.0 - tension) * (p3y - p1y)
-		end
-			
-		local s = percent_2
-		local s2 = s*s
-		local s3 = s*s*s
-		local h1 = 2*s3 - 3*s2 + 1
-		local h2 = -2*s3 + 3*s2
-		local h3 = s3 - 2*s2 + s
-		local h4 = s3 - s2
-		local px = (h1*p1x) + (h2*p2x) + (h3*t1x) + (h4*t2x)
-		local py = (h1*p1y) + (h2*p2y) + (h3*t1y) + (h4*t2y)
-		
-		return px, py
-	end
+      local tension = tension or .5
+      local t1x = 0
+      local t1y = 0
+      if(p0x and p0y) then
+         t1x = (1.0 - tension) * (p2x - p0x)
+         t1y =  (1.0 - tension) * (p2y - p0y)
+      end
+      local t2x = 0
+      local t2y = 0
+      if(p3x and p3y) then
+         t2x =  (1.0 - tension) * (p3x - p1x)
+         t2y =  (1.0 - tension) * (p3y - p1y)
+      end
+      
+      local s = percent_2
+      local s2 = s*s
+      local s3 = s*s*s
+      local h1 = 2*s3 - 3*s2 + 1
+      local h2 = -2*s3 + 3*s2
+      local h3 = s3 - 2*s2 + s
+      local h4 = s3 - s2
+      local px = (h1*p1x) + (h2*p2x) + (h3*t1x) + (h4*t2x)
+      local py = (h1*p1y) + (h2*p2y) + (h3*t1y) + (h4*t2y)
+      
+      return px, py
+   end
 end
 
 
 
 function lerp(v0, v1, t) 
-    return v0*(1-t)+v1*t
+   return v0*(1-t)+v1*t
 end
 
 function evenlySpreadPath(result, path, index, running, spacing)
@@ -2809,7 +3028,7 @@ function evenlySpreadPath(result, path, index, running, spacing)
          local x = lerp(here[1], there[1], 1 or running/d)
          local y = lerp(here[2], there[2], 1 or running/d)
          --if index < #path-2 then
-            table.insert(result, {x,y, {1,0,0}} )
+         table.insert(result, {x,y, {1,0,0}} )
          --end
          --running = d
       end
@@ -2819,7 +3038,7 @@ function evenlySpreadPath(result, path, index, running, spacing)
          local x = lerp(here[1], there[1], running/d)
          local y = lerp(here[2], there[2], running/d)
          table.insert(result, {x,y, {1,0,1}})
-      
+         
          running = running + spacing
       end
       
@@ -2846,12 +3065,12 @@ end
 
 
 function getDistance(x1,y1,x2,y2)
-      local dx = x1 - x2
-      local dy = y1 - y2
-      local distance =  math.sqrt ((dx*dx) + (dy*dy))
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local distance =  math.sqrt ((dx*dx) + (dy*dy))
 
-      return distance
-   end
+   return distance
+end
 
 --   -- https://stackoverflow.com/questions/24907476/how-to-get-a-fixed-number-of-evenly-spaced-points-describing-a-path
 --       function evenlyDistributeOnPath(path)
@@ -2862,7 +3081,7 @@ function getDistance(x1,y1,x2,y2)
 --          local there = path[nextIndex]
 --          totalLength = totalLength + getDistance(here[1], here[2], there[1], there[2])
 --       end
-      
+
 --       -- i want a thing every 10 distance
 --       local spacing = 10
 --       local lengthBetween = totalLength / spacing
@@ -2873,7 +3092,7 @@ function getDistance(x1,y1,x2,y2)
 
 
 --       local lookingAtIndex = 1
-      
+
 --       local done = false
 --       while  lookingAtIndex < #path and (done ~= true)  do
 --          --print(runningTotal)
@@ -2887,7 +3106,7 @@ function getDistance(x1,y1,x2,y2)
 --          if runningPart > d then
 --             runningPart = runningPart - d
 --             lookingAtIndex = lookingAtIndex + 1
-           
+
 --             if lookingAtIndex <= #path then
 --                here = path[lookingAtIndex]
 --                nextIndex = lookingAtIndex == #path and 1 or lookingAtIndex+1
@@ -2902,21 +3121,21 @@ function getDistance(x1,y1,x2,y2)
 --             if d < spacing then
 --                done = true
 --             end
-            
+
 --          end
-         
+
 --          if not done then
 --             local x = lerp(here[1], there[1], runningPart/d)
 --             local y = lerp(here[2], there[2], runningPart/d)
-            
+
 --             table.insert(output, {x,y})
-            
+
 --             runningPart = runningPart + spacing
 --             runningTotal = runningTotal + spacing
 --          end
 
 --       end
-     
+
 --       return output
 --       end
 
@@ -2930,7 +3149,7 @@ function getDistance(x1,y1,x2,y2)
 
 --       love.graphics.setColor(1,0,0)
 --       love.graphics.setLineWidth(1)
-     
+
 
 --       local withTexture = {}
 --       for i = 1, #currentNode.points do
@@ -2942,14 +3161,14 @@ function getDistance(x1,y1,x2,y2)
 --             thereIndex = i+1
 --          end
 --          local there = currentNode.points[thereIndex]
-         
+
 
 --          function addPoints(container, here, there) 
 --             --local there = currentNode.points[thereIndex]
 --             local angle, distance = getAngleAndDistance(there[1],there[2], here[1], here[2])
 --             local perpAngle = angle - math.pi/2
 
-            
+
 --             local j = 0
 --             while j < distance do
 --                local xx = here[1] +  (j * math.cos(angle))
@@ -2958,14 +3177,14 @@ function getDistance(x1,y1,x2,y2)
 --                xx = xx + math.cos(perpAngle) * offset
 --                yy = yy + math.sin(perpAngle) * offset
 --                table.insert(container, {xx, yy, 3})
-               
+
 --                j = j +  love.math.random()*1
 --             end
 --          end
 --          addPoints(withTexture, here, there)
-         
+
 --          if i <= #currentNode.points then
-         
+
 --             local next = there
 --             local afterIndex = (thereIndex+1) > #currentNode.points and 1 or  (thereIndex+1)
 --             local after = currentNode.points[afterIndex] 
@@ -2979,7 +3198,7 @@ function getDistance(x1,y1,x2,y2)
 --             local offset = 5 --12.5 * math.random() 
 --             xx = xx + math.cos(perpAngle) * offset
 --             yy = yy + math.sin(perpAngle) * offset
-            
+
 --             addPoints(withTexture, withTexture[#withTexture], {xx,yy})
 --             -- love.graphics.line(100 + withTexture[#withTexture][1],
 --             --                    100 + withTexture[#withTexture][2],
@@ -2989,12 +3208,12 @@ function getDistance(x1,y1,x2,y2)
 --          else
 -- --            print(i)
 --          end
-         
-            
+
+
 --          --table.insert(withTexture, {there[1], there[2], love.math.random()* 2})
 --       end
-      
-    
+
+
 
 --       for i = 1, #withTexture do
 --          love.graphics.circle('fill',100 +  withTexture[i][1], 100 +  withTexture[i][2], withTexture[i][3])
@@ -3003,13 +3222,13 @@ function getDistance(x1,y1,x2,y2)
 
 
 function getAngleAndDistance(x1,y1,x2,y2)
-      local dx = x1 - x2
-      local dy = y1 - y2
-      local angle =  math.atan2(dy, dx)
-      local distance =  math.sqrt ((dx*dx) + (dy*dy))
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local angle =  math.atan2(dy, dx)
+   local distance =  math.sqrt ((dx*dx) + (dy*dy))
 
-      return angle, distance
-   end
+   return angle, distance
+end
 
 
 
@@ -3157,10 +3376,10 @@ function love.keypressed(key)
    if key == 'o' then -- trace
       if currentNode  then
          if currentNode.points then
-         print(currentNode.name)
-         print(inspect(poly.makeVertices(currentNode)))
-         print(inspect(currentNode.points))
-         print(inspect(currentNode.transforms))
+            print(currentNode.name)
+            print(inspect(poly.makeVertices(currentNode)))
+            print(inspect(currentNode.points))
+            print(inspect(currentNode.transforms))
          else
             print(inspect(currentNode.transforms))
          end

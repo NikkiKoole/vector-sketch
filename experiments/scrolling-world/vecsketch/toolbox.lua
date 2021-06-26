@@ -1,6 +1,9 @@
 
+
+
+
 function getDataFromFile(file)
-   local filename = file:getFilename()
+   local filename = file:getFilename() 
    local tab
    local _shapeName
 
