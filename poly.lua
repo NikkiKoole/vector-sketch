@@ -367,8 +367,8 @@ function makeVertices(shape)
 
       local scale = 1
       local coords = {}
-      --local coordsRound = {}
       local ps = {}
+      
       for l=1, #points do
 	 table.insert(coords, points[l][1])
 	 table.insert(coords, points[l][2])
@@ -376,6 +376,7 @@ function makeVertices(shape)
 
       if (shape.color) then
 	 local polys = decompose_complex_poly(coords, {})
+         
 	 local result = {}
 	 for k=1 , #polys do
 	    local p = polys[k]
@@ -383,6 +384,8 @@ function makeVertices(shape)
 	       -- if a import breaks on triangulation errors uncomment this
 --	       print( #p, inspect(p))
 	       local triangles = love.math.triangulate(p)
+               --print(inspect(triangles))
+               --local triangles = { { 40, -4, 24, 32, -17, 36 }, { 40, -4, -17, 36, -41, 4 }, { 40, -4, -41, 4, -23, -33 }, { 40, -4, -23, -33, 17, -36 } }
 	       for j = 1, #triangles do
 		  local t = triangles[j]
 		  local cx, cy = getTriangleCentroid(t)
@@ -392,13 +395,12 @@ function makeVertices(shape)
 	       end
 	    end
 	 end
-
+         
 	 for j = 1, #result do
 	    table.insert(vertices, {result[j][1], result[j][2]})
 	    table.insert(vertices, {result[j][3], result[j][4]})
 	    table.insert(vertices, {result[j][5], result[j][6]})
 	 end
-
       end
    end
    return vertices

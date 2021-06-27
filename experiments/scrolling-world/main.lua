@@ -66,32 +66,36 @@ function love.load()
       y = 0,
       width = 50,
       height = -180,
-      speed = 300,
+      speed = 700,
       color = { 1,0,0 }
    }
    player.depth = 0-- -2 , 2
    cameraFollowPlayer = true
    stuff = {}
 
-   depthMinMax = {min=-2, max=2}
-   for i = 1, 14 do
-      local rndHeight = 200--love.math.random(100, 900)
-      local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
-      table.insert(
-         stuff,
-         {
-            x = love.math.random(-W*5, W*5 ),
-            y = 0, --love.math.random(-H*12, 0),
-            width = 10, --love.math.random(30, 50),
-            height = rndHeight,
-            color = {.6,
-                     mapInto(rndDepth, depthMinMax.min,depthMinMax.max,  .6, .5),
-                     mapInto(rndDepth, depthMinMax.min,depthMinMax.max, 0.4, .6) ,
-                     love.math.random(.3,.9)},
-            depth = rndDepth
-         }
-      )
-   end
+   depthMinMax = {min=-1, max=1}
+   depthScaleFactors = { min=.75, max=1.25} 
+
+   
+   -- for i = 1, 140 do
+   --    local rndHeight = 200--love.math.random(100, 900)
+   --    local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
+   --    table.insert(
+   --       stuff,
+   --       {
+   --          x = love.math.random(-W*5, W*5 ),
+   --          y = 0, --love.math.random(-H*12, 0),
+   --          width = 10, --love.math.random(30, 50),
+   --          height = rndHeight,
+   --          color = {.6,
+   --                   mapInto(rndDepth, depthMinMax.min,depthMinMax.max,  .6, .5),
+   --                   mapInto(rndDepth, depthMinMax.min,depthMinMax.max, 0.4, .6) ,
+   --                   love.math.random(.3,.9)},
+   --          depth = rndDepth
+   --       }
+   --    )
+   -- end
+   
    table.insert(stuff, player)
    
    table.sort( stuff, function(a,b) return a.depth <  b.depth end)
@@ -131,9 +135,25 @@ function love.load()
    )
    
    hack = cam:addLayer('hack', 1, {relativeScale=1})
-   farther = cam:addLayer( 'farther', .65, { relativeScale = (1.0/.65) * .65 } )
-   far = cam:addLayer( 'far', .95, { relativeScale = (1.0/.95) * .95 } )
-   close = cam:addLayer( 'close', 1.05, { relativeScale = (1.0/1.05) * 1.05 } )
+
+   hackFar = cam:addLayer(
+      'hackFar',
+      depthScaleFactors.min ,
+      {relativeScale=(1.0/depthScaleFactors.min) *depthScaleFactors.min }
+   )
+
+   hackClose = cam:addLayer(
+      'hackClose',
+      depthScaleFactors.max ,
+      {relativeScale=(1.0/depthScaleFactors.max) *depthScaleFactors.max }
+   )
+   
+   
+   --hackClose = cam:addLayer('hackClose', 1, {relativeScale=depthScaleFactors.max})
+   
+   --farther = cam:addLayer( 'farther', .65, { relativeScale = (1.0/.65) * .65 } )
+   --far = cam:addLayer( 'far', .95, { relativeScale = (1.0/.95) * .95 } )
+   --close = cam:addLayer( 'close', 1.05, { relativeScale = (1.0/1.05) * 1.05 } )
    
    root = {
       folder = true,
@@ -148,7 +168,7 @@ function love.load()
    --boei = parseFile('assets/grassx5_.polygons.txt')
    boei = parseFile('assets/grassypatches.polygons.txt')
 
-   for i = 1, 15 do
+   for i = 1, 2 do
       local boei2 = parseFile('assets/grassypatches.polygons.txt')
       boei = TableConcat(boei,boei2)
    end
@@ -159,10 +179,10 @@ function love.load()
          --print(boei[i].transforms)
          boei[i].transforms.l[1] = love.math.random() * 2000
          boei[i].transforms.l[2] = 0--love.math.random() * 200
-         boei[i].transforms.l[4] = 1.2
-         boei[i].transforms.l[5] = 1.2 --love.math.random()*5
+         boei[i].transforms.l[4] = 1.0
+         boei[i].transforms.l[5] = 1.0 --love.math.random()*5
 
-         local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
+         local rndDepth = mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
          --print(rndDepth)
          boei[i].depth = rndDepth
       else
@@ -193,7 +213,7 @@ function love.load()
    --table.insert(root.children, boei)
 
 
-   for j = 1, 1000 do
+   for j = 1, 100 do
       local generated = generatePolygon(0,0, love.math.random()*14, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
@@ -201,11 +221,12 @@ function love.load()
       end
       local r,g,b = hex2rgb('4D391F')
       r = love.math.random()*255
+      local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
       local randomShape = {
          folder = true,
          transforms =  {l={love.math.random()*2000,0,0,1,1,0,0,0,0}},
          name="rood",
-         depth = love.math.random()*4 -2.0,
+         depth = rndDepth,
          children ={
             {
                name="roodchild:"..1,
@@ -266,7 +287,7 @@ function love.update(dt)
       player.x = player.x + v.x
       player.depth = player.depth + (v.y)/100
       newPlayer.transforms.l[1] = newPlayer.transforms.l[1] + v.x
-      newPlayer.depth = newPlayer.depth + (v.y)/100
+      newPlayer.depth =player.depth-- newPlayer.depth + (v.y)/100
       
    end
 
@@ -274,7 +295,7 @@ function love.update(dt)
       --print(v.x*200)
       cam:setTranslationSmooth(
          player.x + player.width/2 ,
-         player.y + player.height/2 - 200,
+         player.y  - 200,
          dt,
          2
       )
@@ -362,15 +383,38 @@ function love.draw()
    --print(p)
    
  
-  
+   -- the ground plane hwo to do it?
+   love.graphics.setColor(1,1,1)
+   love.graphics.setLineWidth(2)
+   local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
+   local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
+   --print(x1,x2,math.ceil(x1/100)*100, math.ceil(x2/100)*100)
+   local s = math.ceil(x1/100)*100
+   local e = math.ceil(x2/100)*100
+   if s < 0 then s = s -100 end
+   --if s > 0 then s = s +100 end
+   if e < 0 then e = e -100 end
+   --if e > 0 then e = e +100 end
 
+
+   for i = s, e, 100 do
+      --print(i)
+       local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
+       local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
+       --print(x1,y1, x2,y2)
+       love.graphics.line(x1,y1,x2,y2)
+       
+   end
+   
+   love.graphics.setLineWidth(1)
+  
   
    table.sort( stuff, function(a,b) return a.depth <  b.depth end)
    for _, v in pairs(stuff) do
 
 
       
-      hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, .75, 1.25)
+      hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
 
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
          hack.push()
@@ -428,6 +472,7 @@ function love.draw()
    love.graphics.setColor(1,1,1,.8)
 
    love.graphics.print(love.timer.getFPS(),1,1)
+
 
 end
 

@@ -985,11 +985,12 @@ function love.mousemoved(x,y, dx, dy)
          if  snap then
             perspective[index][1] = round2(x,0)
             perspective[index][2] = round2(y,0)
-            print(round2(x,0), round2(y,0))
+            --print(round2(x,0), round2(y,0))
          else
-            
-            perspective[index][1] = x
-            perspective[index][2] = y
+            if perspective[index] then
+               perspective[index][1] = x
+               perspective[index][2] = y
+            end
          end
          
       end
@@ -1676,7 +1677,7 @@ function transferPoint (xI, yI, source, destination)
     local kAB = (yAu-yBu)/(xAu-xBu)
     local kDC = (yDu-yCu)/(xDu-xCu)
 
-    if (kBC==kAD) then kAD =kAd + ADDING end
+    if (kBC==kAD) then kAD =kAD + ADDING end
     local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
     local yE = kBC*(xE - xBu) + yBu
 
@@ -1809,60 +1810,100 @@ function love.draw()
             -- four corner distort!!!!
             --https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
             --https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
-               
+
+
+            -- mesh data passing can be improved:
+            --https://love2d.org/forums/viewtopic.php?t=83410
+            --https://gist.github.com/TannerRogalsky/1e9950c116bc88a94cc0cf9ff571cff2
+            
             --local vanilla = {}
             if (true) then
                local bbox = getBBoxOfChildren(currentNode.children)
                local t = currentNode._globalTransform
                local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
                local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
-               --print('vanilla', TLX, TLY, BRX, BRY)
-               --print('initial', bbox.tl.x,bbox.tl.y ,bbox.br.x, bbox.br.y)
+               
                local ip1x, ip1y = t:inverseTransformPoint(perspective[1][1], perspective[1][2])
                local ip2x, ip2y = t:inverseTransformPoint(perspective[2][1], perspective[2][2])
                local ip3x, ip3y = t:inverseTransformPoint(perspective[3][1], perspective[3][2])
                local ip4x, ip4y = t:inverseTransformPoint(perspective[4][1], perspective[4][2])
-               
-              -- print('inverted: ', itlx, itly, ibrx, ibry)
 
                local source = {bbox.tl.x,bbox.tl.y,  bbox.br.x, bbox.br.y}
                local dest = {{ip1x, ip1y},{ip2x, ip2y},{ip3x, ip3y},{ip4x, ip4y}}
 
                for i = 1, #currentNode.children do
-               if currentNode.children[i].points then
-                  local verts = {}
-                  for j =1, #currentNode.children[i].points do
-                     
-                     local p = currentNode.children[i].points[j]
-                     local r = transferPoint (p[1], p[2], source, dest)
-                     if tostring(r.x) == 'nan' then
-                        r.x = p[1]
-                     end
-                     if tostring(r.y) == 'nan' then
-                        r.y = p[2]
-                     end
-                     local x2,y2 = t:transformPoint(r.x, r.y)
-                     table.insert(verts, x2)
-                     table.insert(verts, y2)
+                  
+                  if currentNode.children[i].points then
 
-                     --love.graphics.rectangle('line', r.x, r.y, 10,10)
                      
-                     --print(i, p[1],p[2], r.x, r.y)
+                     -- local verts = {}
+                     -- for j =1, #currentNode.children[i].points do
+                     --    local p = currentNode.children[i].points[j]
+                     --    local r = transferPoint (p[1], p[2], source, dest)
+                     --    if tostring(r.x) == 'nan' then
+                     --       r.x = p[1]
+                     --    end
+                     --    if tostring(r.y) == 'nan' then
+                     --       r.y = p[2]
+                     --    end
+                     --    table.insert(verts, {r.x,r.y})
+                     -- end
+
+
+                     -- optimization idea:
+                     -- instead of constructing a new mesh (with all the complex triangulation behind the scenes)
+                     -- just change the vertices with the transferpoint function above, it might be good enough, it might not, but itll be a fuckton faster
+                     
+                    -- local fakeNode = {color=currentNode.children[i].color, points=verts}
+
+                     if (currentNode.children[i].mesh) then
+
+                        --local tm = love.graphics.newMesh(simple_format, poly.makeVertices(fakeNode) , "triangles")
+                        
+                        
+                        local count = currentNode.children[i].mesh:getVertexCount()
+                        local result = {}
+
+                        
+                        
+                        for v = 1, count do
+                           local x, y = currentNode.children[i].mesh:getVertex(v) 
+                           --print(x, y)
+                           local r = transferPoint (x, y, source, dest)
+                           --print(x,y,r.x,r.y)
+                           table.insert(result, {r.x, r.y})
+                        end
+
+                        if currentNode.children[i].perspectiveMesh then
+                           -- make a new one if data is not same length
+                           if #result ~= currentNode.children[i].perspectiveMesh:getVertexCount() then
+                              currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+                           else
+                              --print('slushing')
+                              currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
+                           end
+                        else
+                           -- make new one cause 
+                           currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+                        end
+
+                              
+                        
+                        --
+                        --local tm = love.graphics.newMesh(simple_format, result , "triangles")
+                        
+                        love.graphics.setColor(currentNode.children[i].color[1],
+                                               currentNode.children[i].color[2],
+                                               currentNode.children[i].color[3],0.3)
+                        love.graphics.draw(currentNode.children[i].perspectiveMesh, currentNode._globalTransform)
+                     
+                     end
+                     --print((currentNode.children[i].mesh:getVertex(1)))
+                   
+
                   end
-                  love.graphics.setColor(currentNode.children[i].color[1],currentNode.children[i].color[2],currentNode.children[i].color[3],0.3)
-                  love.graphics.polygon('fill', verts)
                end
-               end
-               
-               
-               
-               
             end
-            
-           
-
-
-           
             
             local TLX,TLY = perspective[1][1], perspective[1][2]
             local BRX,BRY = perspective[3][1], perspective[3][2]
@@ -1896,17 +1937,17 @@ function love.draw()
             --local dest = perspective
 
            -- print(inspect(currentNode.children[1].points))
-            if currentNode.children[1].points then
-            for i =1, #currentNode.children[1].points do
-               local p = currentNode.children[1].points[i]
+            --if currentNode.children[1].points then
+            --for i =1, #currentNode.children[1].points do
+              -- local p = currentNode.children[1].points[i]
                --print(i,":",p[1], p[2], inspect(source), inspect(dest))
                --local r = transferPoint (p[1], p[2], source, dest)
                --if tostring( r.x ) ~= "nan" and tostring(r.y) ~= "nan" then
                --   print(p[1],p[2],r.x,r.y)
                --end
                
-            end
-            end
+            --end
+            --end
             
             simplehover( perspective[1][1]-5, perspective[1][2]-5, 10)
             simplehover( perspective[2][1]-5, perspective[2][2]-5, 10)

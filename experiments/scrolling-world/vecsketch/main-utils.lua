@@ -183,7 +183,7 @@ function handleChild(shape)
    if not shape then return end
 
    if (shape.depth ~= nil) then
-      hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, .75, 1.25)
+      hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
       hack.relativeScale = (1.0/ hack.scale) * hack.scale
       hack.push()
    end
