@@ -93,6 +93,7 @@ function findNodeByName(root, name)
       return root
    end
    if root.children then
+      
       for i=1, #root.children do
 	 local result = findNodeByName(root.children[i], name)
 	 if result then return result end

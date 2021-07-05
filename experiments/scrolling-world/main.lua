@@ -25,6 +25,7 @@ end
 require_all "vecsketch"
 
 
+
 function love.keypressed( key )
    if key == 'escape' then love.event.quit() end
    if key == 'space' then cameraFollowPlayer = not cameraFollowPlayer end
@@ -56,6 +57,20 @@ local function drawCameraBounds( cam, mode )
    love.graphics.rectangle( mode, cam.x, cam.y, cam.w, cam.h )
 end
 
+
+function copy3(obj, seen)
+    -- Handle non-tables and previously-seen tables.
+    if type(obj) ~= 'table' then return obj end
+    if seen and seen[obj] then return seen[obj] end
+  
+    -- New table; mark it as seen and copy recursively.
+    local s = seen or {}
+    local res = {}
+    s[obj] = res
+    for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
+    return setmetatable(res, getmetatable(obj))
+end
+
 function love.load()
 
    W, H = love.graphics.getDimensions()
@@ -66,17 +81,17 @@ function love.load()
       y = 0,
       width = 50,
       height = -180,
-      speed = 700,
+      speed = 200,
       color = { 1,0,0 }
    }
-   player.depth = 0-- -2 , 2
+   player.depth = 0
    cameraFollowPlayer = true
    stuff = {}
 
-   depthMinMax = {min=-1, max=1}
-   depthScaleFactors = { min=.75, max=1.25} 
+   depthMinMax = {min=-2, max=2}
+   depthScaleFactors = { min=.95, max=1.05} 
 
-   
+   carThickness = 2.5
    -- for i = 1, 140 do
    --    local rndHeight = 200--love.math.random(100, 900)
    --    local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -162,35 +177,59 @@ function love.load()
       children = {}
    }
 
+
    --local tab = getDataFromFilePath('assets/grassypatches.polygons.txt')
    --root.children = tab -- TableConcat(root.children, tab)
    
    --boei = parseFile('assets/grassx5_.polygons.txt')
-   boei = parseFile('assets/grassypatches.polygons.txt')
+   boei = {}
+   boei.children = parseFile('assets/grassypatches.polygons.txt')
+   
 
+   carparts = {}
+   carparts.children = parseFile('assets/carparts_.polygons.txt')
+   
+   --table.insert(testroot.children, carparts)
+   --parentize(testroot)
+   --print(inspect(carparts))
+   
+   carbody = copy3(findNodeByName(carparts, 'carbody'))
+   --carbody.children[1].colors = {1,1,0, .35}
+
+   carbody.children[1].color[4] = 1.0
+   carbody.transforms.l[1]=0
+   carbody.transforms.l[2]=0
+   carbody.depth = 0
+
+   carbodyVoor = copy3(findNodeByName(carparts, 'carbody'))
+   carbodyVoor.children[1].color[4] = 0.3
+   carbodyVoor.children[2].children[1].color[4] = 0.6
+   carbodyVoor.children[2].children[2].color[4] = 0.6
+
+   
+   carbodyVoor.transforms.l[1]=0
+   carbodyVoor.transforms.l[2]=0
+   carbodyVoor.depth = carThickness
+   
    for i = 1, 2 do
       local boei2 = parseFile('assets/grassypatches.polygons.txt')
       boei = TableConcat(boei,boei2)
    end
-   
+  
    
    for i= 1, #boei do
       if boei[i].transforms then
-         --print(boei[i].transforms)
          boei[i].transforms.l[1] = love.math.random() * 2000
          boei[i].transforms.l[2] = 0--love.math.random() * 200
          boei[i].transforms.l[4] = 1.0
          boei[i].transforms.l[5] = 1.0 --love.math.random()*5
 
          local rndDepth = mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
-         --print(rndDepth)
          boei[i].depth = rndDepth
-      else
-         print('rea;;u')
       end
    end
 
-
+  
    -- new player
    newPlayer = {
       folder = true,
@@ -199,19 +238,33 @@ function love.load()
       depth = 0,
       x=0,
       children ={
+        carbody,
          {
             name="chi22ld:"..1,
             color = {1,1,0, 0.8},
             points = {{-50,-250},{50,-250},{50,0},{-50,0}},
 
-         }
+         },
+         carbodyVoor
+         
       }
    }
+
+
+   newPlayer.children[1].children[2].transforms.l[3] = love.math.random()
+   newPlayer.children[1].children[3].transforms.l[3] = love.math.random()
+   newPlayer.children[3].children[2].transforms.l[3] = love.math.random()
+   newPlayer.children[3].children[3].transforms.l[3] = love.math.random()
+
    
    root.children = boei
+   --table.insert(newPlayer.children, carbodyVoor)
+   --table.insert(newPlayer.children, carbody)
+   
+   
    table.insert(root.children, newPlayer)
-   --table.insert(root.children, boei)
 
+   --print(inspect(car))
 
    for j = 1, 100 do
       local generated = generatePolygon(0,0, love.math.random()*14, .05, .02 , 10)
@@ -245,7 +298,7 @@ function love.load()
    meshAll(root)
    renderThings(root)
   
-        
+   avgRunningAhead = 0
 end
 
 function hex2rgb(hex)
@@ -261,6 +314,8 @@ function shuffleAndMultiply(items, mul)
    end
    return result
 end
+
+
 
 
 function love.update(dt)
@@ -288,11 +343,37 @@ function love.update(dt)
       player.depth = player.depth + (v.y)/100
       newPlayer.transforms.l[1] = newPlayer.transforms.l[1] + v.x
       newPlayer.depth =player.depth-- newPlayer.depth + (v.y)/100
+     -- newPlayer.children[2].depth  =player.depth
+      carbody.depth = player.depth
+ --     print(carbody.depth)
+   --   print(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+      local otherScale = mapInto(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+      carbodyVoor.depth = player.depth + carThickness *otherScale -- to get a perspective going
+      --print(player.depth, carbodyVoor.depth)
+      --print(carbodyVoor, carbody)
+      --newPlayer.children[3].depth  = 1
+      local dir = v.x > 0 and 1 or -1
       
+       newPlayer.children[1].children[2].transforms.l[3] =  newPlayer.children[1].children[2].transforms.l[3] +  10 * dt * dir 
+       newPlayer.children[1].children[3].transforms.l[3] =  newPlayer.children[1].children[3].transforms.l[3] +  10 * dt * dir
+
+       newPlayer.children[3].children[2].transforms.l[3] =  newPlayer.children[3].children[2].transforms.l[3] +  10 * dt * dir 
+       newPlayer.children[3].children[3].transforms.l[3] =  newPlayer.children[3].children[3].transforms.l[3] +  10 * dt * dir
    end
 
+
+   
+   
    if cameraFollowPlayer then
-      --print(v.x*200)
+      --      print(v.x*200)
+      --print(v.x)
+      local distanceAhead = math.floor(300*v.x)
+      --avgRunningAhead = (avgRunningAhead + distanceAhead)/ 2
+      --if distanceAhead then print(distanceAhead)
+      --local offset = player.width/2 +  (200*math.floor(v.x))
+      
+      --if v.x < 0 then offset = offset * -1 end
+      
       cam:setTranslationSmooth(
          player.x + player.width/2 ,
          player.y  - 200,
@@ -472,6 +553,9 @@ function love.draw()
    love.graphics.setColor(1,1,1,.8)
 
    love.graphics.print(love.timer.getFPS(),1,1)
+
+   love.graphics.print('todo:', 1, 30)
+   love.graphics.print('depth of car parts is all the same, for the sorting', 1, 60)
 
 
 end
