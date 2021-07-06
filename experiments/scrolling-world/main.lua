@@ -91,7 +91,7 @@ function love.load()
    depthMinMax = {min=-2, max=2}
    depthScaleFactors = { min=.95, max=1.05} 
 
-   carThickness = 2.5
+   carThickness = 12.5
    -- for i = 1, 140 do
    --    local rndHeight = 200--love.math.random(100, 900)
    --    local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -245,16 +245,30 @@ function love.load()
             points = {{-50,-250},{50,-250},{50,0},{-50,0}},
 
          },
+         --carbodyVoor
+         
+      }
+   }
+
+   voor2 = {
+      folder = true,
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      name="voor2",
+      depth = 12,
+      x=0,
+      children ={
+         
          carbodyVoor
          
       }
    }
 
+   
 
    newPlayer.children[1].children[2].transforms.l[3] = love.math.random()
    newPlayer.children[1].children[3].transforms.l[3] = love.math.random()
-   newPlayer.children[3].children[2].transforms.l[3] = love.math.random()
-   newPlayer.children[3].children[3].transforms.l[3] = love.math.random()
+   --newPlayer.children[3].children[2].transforms.l[3] = love.math.random()
+   --newPlayer.children[3].children[3].transforms.l[3] = love.math.random()
 
    
    root.children = boei
@@ -263,11 +277,11 @@ function love.load()
    
    
    table.insert(root.children, newPlayer)
-
+   table.insert(root.children, voor2)
    --print(inspect(car))
 
    for j = 1, 100 do
-      local generated = generatePolygon(0,0, love.math.random()*14, .05, .02 , 10)
+      local generated = generatePolygon(0,0, love.math.random()*24, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
@@ -343,12 +357,15 @@ function love.update(dt)
       player.depth = player.depth + (v.y)/100
       newPlayer.transforms.l[1] = newPlayer.transforms.l[1] + v.x
       newPlayer.depth =player.depth-- newPlayer.depth + (v.y)/100
-     -- newPlayer.children[2].depth  =player.depth
+      -- newPlayer.children[2].depth  =player.depth
+       local otherScale = mapInto(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
       carbody.depth = player.depth
+      carbodyVoor.depth = player.depth + carThickness * otherScale
  --     print(carbody.depth)
    --   print(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-      local otherScale = mapInto(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-      carbodyVoor.depth = player.depth + carThickness *otherScale -- to get a perspective going
+     
+      voor2.transforms.l[1] =  newPlayer.transforms.l[1]
+      voor2.depth = player.depth + carThickness * otherScale -- to get a perspective going
       --print(player.depth, carbodyVoor.depth)
       --print(carbodyVoor, carbody)
       --newPlayer.children[3].depth  = 1
@@ -357,8 +374,8 @@ function love.update(dt)
        newPlayer.children[1].children[2].transforms.l[3] =  newPlayer.children[1].children[2].transforms.l[3] +  10 * dt * dir 
        newPlayer.children[1].children[3].transforms.l[3] =  newPlayer.children[1].children[3].transforms.l[3] +  10 * dt * dir
 
-       newPlayer.children[3].children[2].transforms.l[3] =  newPlayer.children[3].children[2].transforms.l[3] +  10 * dt * dir 
-       newPlayer.children[3].children[3].transforms.l[3] =  newPlayer.children[3].children[3].transforms.l[3] +  10 * dt * dir
+       --newPlayer.children[3].children[2].transforms.l[3] =  newPlayer.children[3].children[2].transforms.l[3] +  10 * dt * dir 
+       --newPlayer.children[3].children[3].transforms.l[3] =  newPlayer.children[3].children[3].transforms.l[3] +  10 * dt * dir
    end
 
 
