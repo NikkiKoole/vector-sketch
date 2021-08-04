@@ -261,6 +261,13 @@ function triangulate(type, poly)
    return result
 end
 
+function getCentroid(triangle)
+   local x = (triangle[1] + triangle[3] + triangle[5])/3
+   local y = (triangle[2] + triangle[4] + triangle[6])/3
+   return x, y
+end
+
+
 
 function printArray(a)
    -- just print 10 values on a row

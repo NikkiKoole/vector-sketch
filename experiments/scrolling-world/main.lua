@@ -286,6 +286,7 @@ function love.load()
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
       end
+      
       local r,g,b = hex2rgb('4D391F')
       r = love.math.random()*255
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )

@@ -395,7 +395,7 @@ function renderThings(root)
 	       local lerped = createLerpedChild(cTop, cBot, newLerpY)
 	       if lerped then handleChild(lerped) end
 	    end
-	    if lerped then handleChild(lerped) end
+	    --if lerped then handleChild(lerped) end
 	 else
 	    handleChild(root.children[root.frame])
 	 end

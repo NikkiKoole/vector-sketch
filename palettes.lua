@@ -83,7 +83,6 @@ pico = {
 }
 for i = 1, #picoColors do
    local r,g,b = hex2rgb(picoColors[i])
-   print('pico', r,g,b)
    table.insert(pico.colors, {name='unknown', rgb={r,g,b}})
 end
 
@@ -119,6 +118,5 @@ childCraft = {
 
 for i = 1, #childCraftColors do
    local r,g,b = hex2rgb(childCraftColors[i])
-   print('childcraft', r,g,b)
    table.insert(childCraft.colors, {name='unknown', rgb={r,g,b}})
 end

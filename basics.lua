@@ -18,9 +18,10 @@ function pointInRect(x,y, rx, ry, rw, rh)
    return true
 end
 function pointInCircle(x,y, cx, cy, cr)
-   local dx = x -cx
-   local dy = y -cy
+   local dx = x - cx
+   local dy = y - cy
    local d  = math.sqrt ((dx*dx) + (dy*dy))
+         
    return cr > d
 end
 
@@ -35,12 +36,21 @@ function split(str, pos)
 end
 
 function copyArray(original)
+print('copyaray')
    local result = {}
    for i=1, #original do
       table.insert(result, round2(original[i], 3))
    end
    return result
 end
+
+function round2durp(num, numDecimalPlaces)
+    local mult = 10^(numDecimalPlaces or 0)
+   return math.floor(num * mult + 0.5) / mult
+ end
+ 
+
 function round2(num, numDecimalPlaces)
-  return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+local r = tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+return r
 end
