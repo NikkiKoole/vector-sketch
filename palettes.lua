@@ -87,7 +87,7 @@ for i = 1, #picoColors do
 end
 
 childCraftColors = {
-         
+
    '4D391F',
    '4B6868',
    '9F7344',
@@ -119,4 +119,56 @@ childCraft = {
 for i = 1, #childCraftColors do
    local r,g,b = hex2rgb(childCraftColors[i])
    table.insert(childCraft.colors, {name='unknown', rgb={r,g,b}})
+end
+
+
+gruvBoxColors = {
+'1D2021',
+'282828',
+'32302F',
+'3C3836',
+'504945',
+'665C54',
+'7C6F64',
+'7C6F64',
+'928374',
+'928374',
+'F9F5D7',
+'FBF1C7',
+'F2E5BC',
+'EBDBB2',
+'D5C4A1',
+'BDAE93',
+'A89984',
+'A89984',
+'FB4934',
+'B8BB26',
+'FABD2F',
+'83a598',
+'d3869b',
+'8ec07c',
+'FE8019',
+'CC241D',
+'98971A',
+'D79921',
+'458588',
+'B16286',
+'689d6a',
+'D65D0E',
+'9D0006',
+'79740E',
+'B57614',
+'076678',
+'8F3F71',
+'427B58',
+'AF3A03',
+}
+gruvBox = {
+   name='gruvBox',
+   colors = {}
+}
+
+for i = 1, #gruvBoxColors do
+   local r,g,b = hex2rgb(gruvBoxColors[i])
+   table.insert(gruvBox.colors, {name='unknown', rgb={r,g,b}})
 end
