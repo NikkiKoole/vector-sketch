@@ -172,3 +172,67 @@ for i = 1, #gruvBoxColors do
    local r,g,b = hex2rgb(gruvBoxColors[i])
    table.insert(gruvBox.colors, {name='unknown', rgb={r,g,b}})
 end
+
+quentinBlake = {
+   name='quentinBlake',
+   colors = {}
+}
+
+quentinBlakeColors = {
+'D9ccc5',
+'D1CCC0',
+'CCC4C9',
+'BDC0C9',
+'C77D52',
+'C7B6A9',
+'C4AC7C',
+'C2997A',
+'C2B7A3',
+'9E9691',
+'9C3E44',
+'9C9498',
+'9C5F43',
+'9C998E',
+'9C8D81',
+'997E45',
+'965D64',
+'96835A',
+'96755D',
+'8D8F94',
+'948F81',
+'8A918C',
+'798091',
+'768A7B',
+'4C5575',
+'4A7067',
+'6E4431',
+'6E6D5D',
+'6E615A',
+'6B5E42',
+'6B6A64',
+'6B6563',
+'626964',
+'56695B',
+'694F41',
+'545566',
+'613D41',
+'614E57',
+'5C5D61',
+'5E595C',
+'453B3D',
+'45362D',
+'424345',
+'454343',
+'384239',
+'423F42',
+'3E4240',
+'423A35',
+'42423E',
+'3E4035',
+
+}
+
+for i = 1, #quentinBlakeColors do
+   local r,g,b = hex2rgb(quentinBlakeColors[i])
+   table.insert(quentinBlake.colors, {name='unknown', rgb={r,g,b}})
+end

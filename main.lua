@@ -1240,7 +1240,7 @@ function love.load(arg)
       name='mix-and-match',
       colors={}
    }
-   local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox}
+   local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox, quentinBlake}
    for i = 1, #palettes do
       for j = 1, #palettes[i].colors do
          table.insert(palette.colors,palettes[i].colors[j] )
