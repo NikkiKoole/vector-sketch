@@ -94,26 +94,40 @@ function resizeGroup(node, children, scale)
 
    --print(inspect(children[1]))
    if type(children[1]) == 'number' then
-      --print('numbers')
-      --print(inspect(node.points))
+
       for i = 1, #children do
-         node.points[i] = {node.points[i][1] * scale, node.points[i][2] * scale}
+	 local index = children[i]
+         node.points[index] = {node.points[index][1] * scale, node.points[index][2] * scale}
       end
    else
+      print(type(children[1]), inspect(children[1]))
       print('other things')
 
    end
 
 end
-function flipGroup(children, xaxis, yaxis)
-   for i=1, #children do
-      if children[i].points then
-         local scaledPoints = {}
-         for p=1, #children[i].points do
-            scaledPoints[p] = {children[i].points[p][1] * (xaxis ), children[i].points[p][2] * (yaxis )}
-         end
-         children[i].points = scaledPoints
-         remeshNode(children[i])
+function flipGroup(node, children, xaxis, yaxis)
+   if type(children[1]) == 'number' then
+      --local scaledPoints = {}
+      --print(inspect(children))
+      for p=1, #children do
+	 local index = children[p]
+	 node.points[index] =  {node.points[index][1] * xaxis, node.points[index][2] * yaxis}
+--	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
+      end
+      --node.points = scaledPoints
+      remeshNode(node)
+   else
+      for i=1, #children do
+
+	 if children[i].points then
+	    local scaledPoints = {}
+	    for p=1, #children[i].points do
+	       scaledPoints[p] = {children[i].points[p][1] * (xaxis ), children[i].points[p][2] * (yaxis )}
+	    end
+	    children[i].points = scaledPoints
+	    remeshNode(children[i])
+	 end
       end
    end
 end
@@ -472,10 +486,10 @@ function drawUIAroundGraphNodes(w,h)
          if #childrenInRectangleSelect > 0 then
 
             if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, runningY).clicked  then
-               flipGroup(childrenInRectangleSelect, 1,-1)
+               flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
             end
             if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, runningY).clicked  then
-               flipGroup(childrenInRectangleSelect, -1,1)
+               flipGroup(currentNode, childrenInRectangleSelect, -1,1)
             end
             runningY = runningY + 40  -- behind an if !!
             if imgbutton('children-scale', ui.resize, w - 300, runningY).clicked  then
@@ -703,6 +717,7 @@ function love.mousereleased(x,y, button)
       editingMode = nil
    end
    if editingModeSub == 'rectangle-point-select' then
+
       if  (rectangleSelect.startP and rectangleSelect.endP) then
          childrenInRect = {}
          local parent = currentNode._parent or root
@@ -720,6 +735,7 @@ function love.mousereleased(x,y, button)
          end
          childrenInRectangleSelect = childrenInRect
          rectangleSelect = {}
+	 editingModeSub = nil
       end
    end
 
@@ -2555,7 +2571,7 @@ function love.keypressed(key)
          deleteNode(currentNode)
       end
    end
-   if editingModeSub == 'rectangle-point-select' and #childrenInRectangleSelect then
+   if #childrenInRectangleSelect then
       local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
       if (key == 'left') then
          movePoints(currentNode, shift and -10 or -1, 0)
