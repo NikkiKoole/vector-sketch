@@ -1155,6 +1155,7 @@ function love.load(arg)
    local ffont = "resources/fonts/cooper-bold-bt.ttf"
    --local ffont = "resources/fonts/Turbo Pascal Font.ttf"
    --local ffont = "resources/fonts/MonacoB.otf"
+   --local ffont = "resources/fonts/agave.ttf"
    --ffont = "resources/fonts/WindsorBT-Roman.otf"
 
    supersmallest = love.graphics.newFont(ffont , 8)
@@ -1515,14 +1516,6 @@ end
 
 local step = 0
 function love.update(dt)
-   -- if dopesheet and dopesheet.sliderValue ~= nil then
-   --    dopesheet.sliderValue = dopesheet.sliderValue  + dt
-   --    if dopesheet.sliderValue > 1 then
-   --       dopesheet.sliderValue = 0
-   --    end
-   --    calculateDopesheetRotations(dopesheet.sliderValue)
-   -- end
-
 end
 
 
@@ -2288,110 +2281,6 @@ function love.draw()
          love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
       end
 
-
-      --if not dopesheetEditing then
-      function initializeDopeSheet()
-         dopesheet = {
-            scrollOffset = 0,
-            node=currentNode,
-            names = {},
-            refs = {}
-         }
-         if currentNode then
-            --local flatted = {}
-            local d = fetchAllNames(currentNode)
-            dopesheet.names = d
-            local refs = {}
-            for i = 1, #d do
-               refs[d[i]] = findNodeByName(root, d[i])
-            end
-            dopesheet.refs = refs
-         end
-
-         data = {}
-         for i =1, #dopesheet.names do
-            local row = {}
-
-            for j = 1, cellCount do
-               row[j] = {}
-            end
-            row[1] = {rotation=currentNode.transforms.l[3], ease='linear'}
-            row[cellCount] = {rotation=currentNode.transforms.l[3], ease='linear'}
-
-            data[i] = row
-         end
-         dopesheet.data = data
-         dopesheet.selectedCell = nil
-         dopesheet.sliderValue = 0
-         dopesheet.drawMode = 'sheet'
-
-
-
-
-      end
-
-      function calculateDopesheetRotations(sliderValue)
-
-         local frameIndex = (math.floor(sliderValue*(cellCount-1))+1)
-         if frameIndex > cellCount-1 then frameIndex = cellCount-1 end
-
-         for i = 1, #dopesheet.names do
-            local nodeBefore, nodeBeforeIndex = lookForFirstIndexBefore(dopesheet.data[i],frameIndex)
-            local nodeAfter, nodeAfterIndex =  lookForFirstIndexAfter(dopesheet.data[i],frameIndex)
-
-
-            local durp = mapInto(1+ sliderValue * (cellCount-1), nodeBeforeIndex, nodeAfterIndex, 0,1)
-
-
-            -- local beginVal = 0
-            -- local endVal = 1
-            -- local change = endVal - beginVal
-            -- local duration = 1
-            local ease = nodeBefore.ease or 'linear'
-            local l1 = easing[ease](durp, 0,1,1, 1/10, 1/3)
-
-            local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
-            dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
-         end
-      end
-
-
-      function lookForFirstIndexBefore(data, index)
-         for i=index , 1 , -1 do
-            if data[i].rotation then
-               return data[i], i
-            end
-         end
-         return nil
-      end
-      function lookForFirstIndexAfter(data, index)
-         for i=index+1 , #data do
-            if data[i].rotation then
-               return data[i], i
-            end
-         end
-         return nil
-      end
-
-
-      function fetchAllNames(root, result)
-         result = result or {}
-
-         if root.folder then -- only care for the names of folders atm
-            table.insert(result, root.name)
-         end
-
-         if root.children then
-            for i = 1, #root.children do
-               fetchAllNames(root.children[i], result)
-            end
-         end
-         return result
-      end
-
-
-
-
       if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
          dopesheetEditing = not dopesheetEditing
          editingMode = dopesheetEditing and 'dopesheet' or nil
@@ -2459,43 +2348,12 @@ function love.draw()
       end
    end
    local work =  nil
-   --if currentNode and currentNode.points and #currentNode.points >= 2 then
-      --local str = "border is "..(currentNode.border and "on" or "off")
-      --local strW = love.graphics.getFont():getWidth(str)
-      --local strH = love.graphics.getFont():getHeight(str)
-
-      -- love.graphics.print(str, 600, 50)
-      -- if getUIRect('borderhing', 600, 50,strW, strH ).clicked then
-      --    currentNode.border = not currentNode.border
-      --    if currentNode.border then
-      --       if currentNode.borderThickness == nil then
-      --          currentNode.borderThickness = 1
-      --       end
-      --       if currentNode.borderSpacing == nil then
-      --          currentNode.borderSpacing = 10
-      --       end
-      --       if currentNode.borderTension == nil then
-      --          currentNode.borderTension = 0
-      --       end
-      --       if currentNode.borderRandomizerMultiplier == nil then
-      --          currentNode.borderRandomizerMultiplier = 0
-      --       end
-      --    end
-      -- end
-   --end
-
-
 end
-
-
 
 
 function lerp(v0, v1, t)
    return v0*(1-t)+v1*t
 end
-
-
-
 
 function getAngleAndDistance(x1,y1,x2,y2)
    local dx = x1 - x2
