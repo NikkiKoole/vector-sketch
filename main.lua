@@ -2477,6 +2477,7 @@ function love.keypressed(key)
 
       initializeDopeSheet()
    end
+   if #childrenInRectangleSelect == 0 then
    if key == 'down' then
       if currentNode then
          local index = getIndex(currentNode)
@@ -2492,6 +2493,7 @@ function love.keypressed(key)
             setCurrentNode(currentNode._parent.children[index -1])
          end
       end
+   end
    end
 
    if key == "escape" then
