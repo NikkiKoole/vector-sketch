@@ -433,8 +433,19 @@ function drawUIAroundGraphNodes(w,h)
 
          if currentNode and currentNode.points then
             if imgbutton('rectangle-point-select', ui.select, w - 256, runningY).clicked then
-               editingModeSub = 'rectangle-point-select'
+	       if #childrenInRectangleSelect > 0 then
+		  editingModeSub = 0
+		  childrenInRectangleSelect = {}
+
+	       else
+		  editingModeSub = 'rectangle-point-select'
+	       end
+
             end
+	    if #childrenInRectangleSelect > 0 then
+	       love.graphics.print(#childrenInRectangleSelect, w - 256, runningY)
+	    end
+
          end
          runningY = runningY + 40  -- behind an if !!
          if currentNode and currentNode.points then
