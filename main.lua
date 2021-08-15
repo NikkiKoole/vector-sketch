@@ -504,10 +504,23 @@ function drawUIAroundGraphNodes(w,h)
             end
             runningY = runningY + 40  -- behind an if !!
             if imgbutton('children-scale', ui.resize, w - 300, runningY).clicked  then
-               resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+               if love.keyboard.isDown('a') then
+                  resizeGroup(currentNode, childrenInRectangleSelect, .75)
+
+               else
+                  
+                  resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+               end
             end
             if imgbutton('children-scale', ui.resize, w - 256, runningY).clicked  then
-               resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+               if love.keyboard.isDown('a') then
+                  resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+
+               else
+                  
+                  resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+               end
+               
             end
             runningY = runningY + 40  -- behind an if !!
          end
@@ -1657,7 +1670,6 @@ function love.draw()
       --love.mouse.setCursor(cursors.arrow)
       local w, h = love.graphics.getDimensions( )
       local rightX = w - (64 + 500+ 10)/2
-
 
       love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
 
