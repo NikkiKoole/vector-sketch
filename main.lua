@@ -331,60 +331,145 @@ function drawUIAroundGraphNodes(w,h)
          if imgbutton('transform-toggle', ui.transform,  w - 300, runningY).clicked then
             showTheParentTransforms = not showTheParentTransforms
          end
-         runningY = runningY + 40
-
-         if imgbutton('folder-pivot', ui.pivot,  w - 300, runningY).clicked then
-            editingModeSub = nil
-            if (#currentNode.children > 0) then
-               local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-               local middleX = tlx + (brx - tlx)/2
-               local middleY = tly + (bry - tly)/2
-
-               local mx = tlx + (brx - tlx)/2
-               local my = tly + (bry - tly)/2
-               local nx = currentNode.transforms.l[6]
-               local ny = currentNode.transforms.l[7]
-
-               if (nx == tlx and ny == tly) then
-                  currentNode.transforms.l[6]= middleX
-                  currentNode.transforms.l[7]= tly
-               elseif (nx == middleX and ny == tly) then
-                  currentNode.transforms.l[6]= brx
-                  currentNode.transforms.l[7]= tly
-               elseif (nx == brx and ny == tly) then
-                  currentNode.transforms.l[6]= brx
-                  currentNode.transforms.l[7]= middleY
-               elseif (nx == brx and ny == middleY) then
-                  currentNode.transforms.l[6]= brx
-                  currentNode.transforms.l[7]= bry
-               elseif (nx == brx and ny == bry) then
-                  currentNode.transforms.l[6]= middleX
-                  currentNode.transforms.l[7]= bry
-               elseif (nx == middleX and ny == bry) then
-                  currentNode.transforms.l[6]= tlx
-                  currentNode.transforms.l[7]= bry
-               elseif (nx == tlx and ny == bry) then
-                  currentNode.transforms.l[6]= tlx
-                  currentNode.transforms.l[7]= middleY
-               elseif (nx == tlx and ny == middleY) then
-                  currentNode.transforms.l[6]= mx
-                  currentNode.transforms.l[7]= my
-               elseif (nx == mx and ny == my) then
-                  currentNode.transforms.l[6]= tlx
-                  currentNode.transforms.l[7]= tly
-               else
-                  currentNode.transforms.l[6]= mx
-                  currentNode.transforms.l[7]= my
-                  print('default')
-               end
-               editingModeSub = 'folder-move'
-            end
-         end
-
          if imgbutton('folder-pan-pivot', ui.pan,  w-256, runningY).clicked then
-            editingModeSub = 'folder-pan-pivot'
+            if editingModeSub == 'folder-pan-pivot' then
+               editingModeSub = nil
+            else
+               editingModeSub = 'folder-pan-pivot'
+            end
+            print(editingModeSub)
          end
          runningY = runningY + 40
+         
+         
+         -- if imgbutton('folder-pivot', ui.pivot,  w - 300, runningY).clicked2 then
+         --    editingModeSub = nil
+         --    if (#currentNode.children > 0) then
+         --       local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+         --       local middleX = tlx + (brx - tlx)/2
+         --       local middleY = tly + (bry - tly)/2
+
+         --       local mx = tlx + (brx - tlx)/2
+         --       local my = tly + (bry - tly)/2
+         --       local nx = currentNode.transforms.l[6]
+         --       local ny = currentNode.transforms.l[7]
+
+         --       if (nx == tlx and ny == tly) then
+         --          currentNode.transforms.l[6]= middleX
+         --          currentNode.transforms.l[7]= tly
+         --       elseif (nx == middleX and ny == tly) then
+         --          currentNode.transforms.l[6]= brx
+         --          currentNode.transforms.l[7]= tly
+         --       elseif (nx == brx and ny == tly) then
+         --          currentNode.transforms.l[6]= brx
+         --          currentNode.transforms.l[7]= middleY
+         --       elseif (nx == brx and ny == middleY) then
+         --          currentNode.transforms.l[6]= brx
+         --          currentNode.transforms.l[7]= bry
+         --       elseif (nx == brx and ny == bry) then
+         --          currentNode.transforms.l[6]= middleX
+         --          currentNode.transforms.l[7]= bry
+         --       elseif (nx == middleX and ny == bry) then
+         --          currentNode.transforms.l[6]= tlx
+         --          currentNode.transforms.l[7]= bry
+         --       elseif (nx == tlx and ny == bry) then
+         --          currentNode.transforms.l[6]= tlx
+         --          currentNode.transforms.l[7]= middleY
+         --       elseif (nx == tlx and ny == middleY) then
+         --          currentNode.transforms.l[6]= mx
+         --          currentNode.transforms.l[7]= my
+         --       elseif (nx == mx and ny == my) then
+         --          currentNode.transforms.l[6]= tlx
+         --          currentNode.transforms.l[7]= tly
+         --       else
+         --          currentNode.transforms.l[6]= mx
+         --          currentNode.transforms.l[7]= my
+         --          print('default')
+         --       end
+         --       editingModeSub = 'folder-move'
+         --    end
+         -- end
+         
+         love.graphics.setColor(1,1,1,.5)
+         function get6(node)
+            local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+            local mx = tlx + (brx - tlx)/2
+            local my = tly + (bry - tly)/2
+            return tlx, tly, brx, bry, mx, my
+         end
+         if (#currentNode.children > 0) then
+         love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+         if getUIRect('p1', w-300, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= tlx
+            currentNode.transforms.l[7]= tly
+         end
+
+         love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+         if getUIRect('p2', w-300+24, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= mx
+            currentNode.transforms.l[7]= tly
+         end
+
+         love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+         if getUIRect('p3', w-300+48, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= brx
+            currentNode.transforms.l[7]= tly
+         end
+
+         runningY = runningY + 24
+
+         love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+         if getUIRect('p4', w-300, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= tlx
+            currentNode.transforms.l[7]= my
+         end
+
+         love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+         if getUIRect('p5', w-300+24, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= mx
+            currentNode.transforms.l[7]= my
+         end
+
+         love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+         if getUIRect('p6', w-300+48, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= brx
+            currentNode.transforms.l[7]= my
+         end
+
+         runningY = runningY + 24
+
+         love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+         if getUIRect('p7', w-300, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= tlx
+            currentNode.transforms.l[7]= bry
+         end
+
+         love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+         if getUIRect('p8', w-300+24, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= mx
+            currentNode.transforms.l[7]= bry
+         end
+
+         love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+         if getUIRect('p9', w-300+48, runningY, 20,20).clicked then
+            local tlx, tly, brx, bry, mx, my = get6(currentNode)
+            currentNode.transforms.l[6]= brx
+            currentNode.transforms.l[7]= bry
+         end
+         
+         runningY = runningY + 40
+         end
+         
+         
+--         runningY = runningY + 40
          if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
             editingModeSub = 'folder-move'
          end
@@ -2596,7 +2681,7 @@ function love.keypressed(key)
          deleteNode(currentNode)
       end
    end
-   if #childrenInRectangleSelect then
+   if #childrenInRectangleSelect > 0 and currentNode then
       local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
       if (key == 'left') then
          movePoints(currentNode, shift and -10 or -1, 0)

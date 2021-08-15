@@ -61,7 +61,6 @@ function generateCameraLayer(name, zoom)
    return cam:addLayer(name, zoom, {relativeScale=(1.0/zoom) * zoom})
 end
 
-
 function copy3(obj, seen)
     -- Handle non-tables and previously-seen tables.
     if type(obj) ~= 'table' then return obj end
@@ -73,6 +72,10 @@ function copy3(obj, seen)
     s[obj] = res
     for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
     return setmetatable(res, getmetatable(obj))
+end
+
+function sortOnDepth(list)
+   table.sort( list, function(a,b) return a.depth <  b.depth end)
 end
 
 function love.load()
@@ -96,15 +99,16 @@ function love.load()
    depthScaleFactors = { min=.95, max=1.05} 
 
    carThickness = 12.5
+   testCar = false
    
    for i = 1, 140 do
-      local rndHeight = 200--love.math.random(100, 900)
+      local rndHeight = love.math.random(100, 200)
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
       table.insert(
          stuff,
          {
             x = love.math.random(-W*5, W*5 ),
-            y = -200,--love.math.random(-H*12, 0),
+            y = -rndHeight,
             width = 10, --love.math.random(30, 50),
             height = rndHeight,
             color = {.6,
@@ -117,8 +121,10 @@ function love.load()
    end
    
    table.insert(stuff, player)
-   
-   table.sort( stuff, function(a,b) return a.depth <  b.depth end)
+
+ 
+
+   sortOnDepth(stuff)
 
    cameraPoints = {}
    for i = 1, 10 do
@@ -166,11 +172,7 @@ function love.load()
    }
 
 
-   --local tab = getDataFromFilePath('assets/grassypatches.polygons.txt')
-   --root.children = tab -- TableConcat(root.children, tab)
-   --boei = parseFile('assets/grassx5_.polygons.txt')
-   boei = {}
-   boei.children = parseFile('assets/grassypatches.polygons.txt')
+ 
    
    function initCarParts()
       carparts = {}
@@ -193,8 +195,9 @@ function love.load()
       carbodyVoor.depth = carThickness
    end
    initCarParts()
-   
-   for i = 1, 2 do
+
+   boei = {}
+   for i = 1, 1 do
       local boei2 = parseFile('assets/grassypatches.polygons.txt')
       boei = TableConcat(boei,boei2)
    end
@@ -203,14 +206,15 @@ function love.load()
    for i= 1, #boei do
       if boei[i].transforms then
          boei[i].transforms.l[1] = love.math.random() * 2000
-         boei[i].transforms.l[2] = 0--love.math.random() * 200
+         boei[i].transforms.l[2] = 0 
          boei[i].transforms.l[4] = 1.0
-         boei[i].transforms.l[5] = 1.0 --love.math.random()*5
+         boei[i].transforms.l[5] = 1.0 
 
-         local rndDepth = mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
+         local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
          boei[i].depth = rndDepth
       end
    end
+   table.insert(root.children, boei)
 
   
    -- new player
@@ -221,45 +225,39 @@ function love.load()
       depth = 0,
       x=0,
       children ={
-        carbody,
          {
             name="chi22ld:"..1,
             color = {1,1,0, 0.8},
             points = {{-50,-250},{50,-250},{50,0},{-50,0}},
 
          },
-         --carbodyVoor
-         
       }
    }
-
-   voor2 = {
-      folder = true,
-      transforms =  {l={0,0,0,1,1,0,0,0,0}},
-      name="voor2",
-      depth = 12,
-      x=0,
-      children ={
-         
-         carbodyVoor
-         
-      }
-   }
-
-   
-
-  -- newPlayer.children[1].children[2].transforms.l[3] = love.math.random()
-  -- newPlayer.children[1].children[3].transforms.l[3] = love.math.random()
- 
-   
-   root.children = boei
-   --table.insert(newPlayer.children, carbodyVoor)
-   --table.insert(newPlayer.children, carbody)
-   
+   if testCar then
+      table.insert(newPlayer.children, 1, carbody)
+   end
    
    table.insert(root.children, newPlayer)
-   table.insert(root.children, voor2)
-   --print(inspect(car))
+   
+   if testCar then
+      voor2 = {
+         folder = true,
+         transforms =  {l={0,0,0,1,1,0,0,0,0}},
+         name="voor2",
+         depth = 12,
+         x=0,
+         children ={
+            
+            carbodyVoor
+            
+         }
+      }
+      table.insert(root.children, voor2)
+   
+   end
+   
+   
+ 
 
    for j = 1, 100 do
       local generated = generatePolygon(0,0, love.math.random()*24, .05, .02 , 10)
@@ -337,26 +335,22 @@ function love.update(dt)
       player.x = player.x + v.x
       player.depth = player.depth + (v.y)/100
       newPlayer.transforms.l[1] = newPlayer.transforms.l[1] + v.x
-      newPlayer.depth =player.depth-- newPlayer.depth + (v.y)/100
-      -- newPlayer.children[2].depth  =player.depth
-       local otherScale = mapInto(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-      carbody.depth = player.depth
-      carbodyVoor.depth = player.depth + carThickness * otherScale
- --     print(carbody.depth)
-   --   print(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-     
-      voor2.transforms.l[1] =  newPlayer.transforms.l[1]
-      voor2.depth = player.depth + carThickness * otherScale -- to get a perspective going
-      --print(player.depth, carbodyVoor.depth)
-      --print(carbodyVoor, carbody)
-      --newPlayer.children[3].depth  = 1
-      local dir = v.x > 0 and 1 or -1
-      
-       newPlayer.children[1].children[2].transforms.l[3] =  newPlayer.children[1].children[2].transforms.l[3] +  10 * dt * dir 
-       newPlayer.children[1].children[3].transforms.l[3] =  newPlayer.children[1].children[3].transforms.l[3] +  10 * dt * dir
+      newPlayer.depth =player.depth
 
-       --newPlayer.children[3].children[2].transforms.l[3] =  newPlayer.children[3].children[2].transforms.l[3] +  10 * dt * dir 
-       --newPlayer.children[3].children[3].transforms.l[3] =  newPlayer.children[3].children[3].transforms.l[3] +  10 * dt * dir
+      if testCar then
+         -- doing the depth
+         local otherScale = mapInto(carbody.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         carbody.depth = player.depth
+         carbodyVoor.depth = player.depth + carThickness * otherScale
+         voor2.transforms.l[1] =  newPlayer.transforms.l[1]
+         voor2.depth = player.depth + carThickness * otherScale -- to get a perspective going
+         local dir = v.x > 0 and 1 or -1
+
+         -- rotating the wheels
+         newPlayer.children[1].children[2].transforms.l[3] =  newPlayer.children[1].children[2].transforms.l[3] +  10 * dt * dir 
+         newPlayer.children[1].children[3].transforms.l[3] =  newPlayer.children[1].children[3].transforms.l[3] +  10 * dt * dir
+      end
+
    end
 
 
@@ -487,8 +481,9 @@ function love.draw()
 
    
    love.graphics.setLineWidth(1)
-  
-   table.sort( stuff, function(a,b) return a.depth <  b.depth end)
+
+   sortOnDepth(stuff)
+
    for _, v in pairs(stuff) do
       
       hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
@@ -504,8 +499,8 @@ function love.draw()
    end
    
     cam:push()
-    
-    table.sort(root.children, function(a,b) return a.depth <  b.depth end)
+
+    sortOnDepth(root.children)
     renderThings(root)
 
    
