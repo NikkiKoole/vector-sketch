@@ -1835,8 +1835,7 @@ function love.draw()
                end
             end
 
-            --love.graphics.rectangle('line', TLX-5, TLY-5, 10,10)
-            --love.graphics.rectangle('line', BRX-5, BRY-5, 10,10)
+
             for i=1, 4 do
                local nxt = i -1
                if nxt < 1 then nxt = 4 end
@@ -1847,23 +1846,7 @@ function love.draw()
                   perspective[nxt][1], perspective[nxt][2]
                )
             end
-            --local source = {bbox.tl.x,bbox.tl.y,  bbox.br.x, bbox.br.y}
-            --{TLX, TLY, BRX, BRY}
-            --local dest = perspective
-
-           -- print(inspect(currentNode.children[1].points))
-            --if currentNode.children[1].points then
-            --for i =1, #currentNode.children[1].points do
-              -- local p = currentNode.children[1].points[i]
-               --print(i,":",p[1], p[2], inspect(source), inspect(dest))
-               --local r = transferPoint (p[1], p[2], source, dest)
-               --if tostring( r.x ) ~= "nan" and tostring(r.y) ~= "nan" then
-               --   print(p[1],p[2],r.x,r.y)
-               --end
-
-            --end
-            --end
-
+            
             simplehover( perspective[1][1]-5, perspective[1][2]-5, 10)
             simplehover( perspective[2][1]-5, perspective[2][2]-5, 10)
             simplehover( perspective[3][1]-5, perspective[3][2]-5, 10)
@@ -2295,14 +2278,6 @@ function love.draw()
             end
          end
       end
-
-      -- local count = countNestedChildren(root, 0)
-      -- if (count * 50 > h) then
-      --    local v2 = v_slider("scrollview", w - 50, calcY(4) , 100, scrollviewOffset, 0, count * 50)
-      --    if (v2.value ~= nil) then
-      --       scrollviewOffset = v2.value
-      --    end
-      -- end
 
       love.graphics.pop()
       love.graphics.setFont(small)
