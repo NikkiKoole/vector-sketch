@@ -7,30 +7,65 @@ ProFi = require 'ProFi'
 --https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
 
 function require_all(path, opts)
-	local items = love.filesystem.getDirectoryItems(path)
-	for _, item in pairs(items) do
-		if love.filesystem.getInfo(path .. '/' .. item, 'file') then 
-			require(path .. '/' .. item:gsub('.lua', '')) 
-		end
-	end
-	if opts and opts.recursive then 
-		for _, item in pairs(items) do
-			if love.filesystem.getInfo(path .. '/' .. item, 'directory') then 
-				require_all(path .. '/' .. item, {recursive = true}) 
-			end
-		end
-	end
+   local items = love.filesystem.getDirectoryItems(path)
+   for _, item in pairs(items) do
+      if love.filesystem.getInfo(path .. '/' .. item, 'file') then 
+         require(path .. '/' .. item:gsub('.lua', '')) 
+      end
+   end
+   if opts and opts.recursive then 
+      for _, item in pairs(items) do
+         if love.filesystem.getInfo(path .. '/' .. item, 'directory') then 
+            require_all(path .. '/' .. item, {recursive = true}) 
+         end
+      end
+   end
 end
 
 require_all "vecsketch"
 
+-- utility function that ought to be somewehre else
+
+function pointInRect(x,y, rx, ry, rw, rh)
+   if x < rx or y < ry then return false end
+   if x > rx+rw or y > ry+rh then return false end
+   return true
+end
+
+function hex2rgb(hex)
+   hex = hex:gsub("#","")
+   return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
+end
+
+function shuffleAndMultiply(items, mul)
+   local result = {}
+   for i = 1, (#items * mul) do
+      table.insert(result, items[love.math.random()*#items])
+   end
+   return result
+end
+
+function copy3(obj, seen)
+   -- Handle non-tables and previously-seen tables.
+   if type(obj) ~= 'table' then return obj end
+   if seen and seen[obj] then return seen[obj] end
+   
+   -- New table; mark it as seen and copy recursively.
+   local s = seen or {}
+   local res = {}
+   s[obj] = res
+   for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
+   return setmetatable(res, getmetatable(obj))
+end
+
+-- end utility functions
 
 
 function love.keypressed( key )
    if key == 'escape' then love.event.quit() end
    if key == 'space' then cameraFollowPlayer = not cameraFollowPlayer end
    if (key == 'p') then
-    if not profiling then
+      if not profiling then
 	 ProFi:start()
       else
 	 ProFi:stop()
@@ -61,19 +96,6 @@ function generateCameraLayer(name, zoom)
    return cam:addLayer(name, zoom, {relativeScale=(1.0/zoom) * zoom})
 end
 
-function copy3(obj, seen)
-    -- Handle non-tables and previously-seen tables.
-    if type(obj) ~= 'table' then return obj end
-    if seen and seen[obj] then return seen[obj] end
-  
-    -- New table; mark it as seen and copy recursively.
-    local s = seen or {}
-    local res = {}
-    s[obj] = res
-    for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
-    return setmetatable(res, getmetatable(obj))
-end
-
 function sortOnDepth(list)
    table.sort( list, function(a,b) return a.depth <  b.depth end)
 end
@@ -93,13 +115,14 @@ function love.load()
    }
    player.depth = 0
    cameraFollowPlayer = true
-   stuff = {}
+   stuff = {} -- this is the testlayer with just some rectangles and the red player
 
    depthMinMax = {min=-2, max=2}
    depthScaleFactors = { min=.95, max=1.05} 
 
    carThickness = 12.5
    testCar = false
+   testCameraViewpointRects = false
    
    for i = 1, 140 do
       local rndHeight = love.math.random(100, 200)
@@ -122,7 +145,7 @@ function love.load()
    
    table.insert(stuff, player)
 
- 
+   
 
    sortOnDepth(stuff)
 
@@ -163,6 +186,7 @@ function love.load()
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
    hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
    farther = generateCameraLayer('farther', .3)
+   close = generateCameraLayer('close', 1.5)
    
    root = {
       folder = true,
@@ -170,9 +194,6 @@ function love.load()
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       children = {}
    }
-
-
- 
    
    function initCarParts()
       carparts = {}
@@ -196,27 +217,29 @@ function love.load()
    end
    initCarParts()
 
-   boei = {}
-   for i = 1, 1 do
-      local boei2 = parseFile('assets/grassypatches.polygons.txt')
-      boei = TableConcat(boei,boei2)
-   end
-  
-   
-   for i= 1, #boei do
-      if boei[i].transforms then
-         boei[i].transforms.l[1] = love.math.random() * 2000
-         boei[i].transforms.l[2] = 0 
-         boei[i].transforms.l[4] = 1.0
-         boei[i].transforms.l[5] = 1.0 
-
-         local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
-         boei[i].depth = rndDepth
+   function initGrass()
+      local boei = {}
+      for i = 1, 10 do
+         local boei2 = parseFile('assets/grassx5_.polygons.txt')
+         boei = TableConcat(boei,boei2)
       end
-   end
-   table.insert(root.children, boei)
+      
+      for i= 1, #boei do
+         if boei[i].transforms then
+            boei[i].transforms.l[1] = love.math.random() * 2000
+            boei[i].transforms.l[2] = 0 
+            boei[i].transforms.l[4] = 1.0
+            boei[i].transforms.l[5] = 1.0 
 
-  
+            local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
+            boei[i].depth = rndDepth
+         end
+      end
+      
+      root.children = boei
+   end
+   initGrass()
+   
    -- new player
    newPlayer = {
       folder = true,
@@ -253,11 +276,7 @@ function love.load()
          }
       }
       table.insert(root.children, voor2)
-   
    end
-   
-   
- 
 
    for j = 1, 100 do
       local generated = generatePolygon(0,0, love.math.random()*24, .05, .02 , 10)
@@ -291,21 +310,8 @@ function love.load()
    parentize(root)
    meshAll(root)
    renderThings(root)
-  
+   
    avgRunningAhead = 0
-end
-
-function hex2rgb(hex)
-   hex = hex:gsub("#","")
-   return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
-end
-
-function shuffleAndMultiply(items, mul)
-   local result = {}
-   for i = 1, (#items * mul) do
-      table.insert(result, items[love.math.random()*#items])
-   end
-   return result
 end
 
 
@@ -352,9 +358,6 @@ function love.update(dt)
       end
 
    end
-
-
-   
    
    if cameraFollowPlayer then
       local distanceAhead = math.floor(300*v.x)
@@ -368,28 +371,24 @@ function love.update(dt)
    cam:update()
 end
 
-function pointInRect(x,y, rx, ry, rw, rh)
-   if x < rx or y < ry then return false end
-   if x > rx+rw or y > ry+rh then return false end
-   return true
-end
-
 function love.mousepressed(x,y)
    local wx, wy = cam:getMouseWorldCoordinates()
    local foundOne = false
-   for _, v in pairs(cameraPoints) do
-      if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
-         foundOne = true
-         v.selected = true
-         local cw, ch = cam:getContainerDimensions()
-         local targetScale = math.min(cw/v.width, ch/v.height)
+   if testCameraViewpointRects then
+      for _, v in pairs(cameraPoints) do
+         if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
+            foundOne = true
+            v.selected = true
+            local cw, ch = cam:getContainerDimensions()
+            local targetScale = math.min(cw/v.width, ch/v.height)
+            
+            cam:setScale(targetScale)
+            cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
+         else
+            v.selected = false
+         end
          
-         cam:setScale(targetScale)
-         cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
-      else
-         v.selected = false
       end
-      
    end
 end
 
@@ -404,13 +403,13 @@ function drawGroundPlaneLines()
    if s < 0 then s = s -100 end
    if e < 0 then e = e -100 end
    for i = s, e, 100 do
-       local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
-       local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
-       love.graphics.line(x1,y1,x2,y2)
+      local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
+      local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
+      love.graphics.line(x1,y1,x2,y2)
    end
 end
 
- function drawCameraViewPointRectangles()
+function drawCameraViewPointRectangles()
    for _, v in pairs(cameraPoints) do
       love.graphics.setColor(1,0,1,.5)
       if v.selected then
@@ -420,124 +419,85 @@ end
       
       love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
    end
- end
+end
+function drawCameraCross() 
+   love.graphics.setColor(1,1,1,.2)
+   love.graphics.line(0,0,W,H)
+   love.graphics.line(0,H,W,0)
+end
+function drawDebugStrings()
+   love.graphics.setColor(0,0,0,.2)
+   love.graphics.print('fps: '..love.timer.getFPS())
+   love.graphics.setColor(1,1,1,.8)
+   love.graphics.print('fps: '..love.timer.getFPS(),1,1)
+end
 
 function love.draw()
    counter = counter +1
    W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
    drawCameraBounds(cam, 'line' )
-  
 
-   farther:push()
-   -- the parallax layer behind
-   love.graphics.setColor( 1, 0, 0, .25 )
-   tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
-   brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'farther')
+   if (false) then
+      farther:push()
+      love.graphics.setColor( 1, 0, 0, .25 )
+      tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
+      brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'farther')
 
-   for _, v in pairs(stuff) do
-      if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+      for _, v in pairs(stuff) do
+         if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+            love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+            love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+         end
+      end
+      farther:pop()
+   end
+   
+   drawGroundPlaneLines()
+   love.graphics.setLineWidth(1)
+
+
+   if (false) then
+      sortOnDepth(stuff)
+      for _, v in pairs(stuff) do
+         
+         hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+         hack.push()
+         
+         love.graphics.setColor(v.color)
+         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+         love.graphics.setColor(.1, .1, .1)
+         love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
+         
+         hack:pop()
+      end
+   end
+   
+   cam:push()
+
+   sortOnDepth(root.children)
+   renderThings(root)
+
+   if testCameraViewpointRects then
+      drawCameraViewPointRectangles()
+   end
+   
+   if (false) then
+      close:push()
+      love.graphics.setColor( 1, 0, 0, .25 )
+      for _, v in pairs(stuff) do
          love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
       end
+      renderThings(root)
+      close:pop()
    end
-   --renderThings(root)
-   farther:pop()
 
-   
---    far:push()
---    -- the parallax layer behind
---    --print(cam:getTranslation()) 
--- --   local tx, ty = far:getTranslation()
-   
---   -- love.graphics.translate( -tx * far.relativeScale, -ty * far.relativeScale )
-   
---    love.graphics.setColor( 1, 0, 0, .25 )
---     tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'far')
---    brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'far')
-
---    for _, v in pairs(stuff) do
---       if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
---          love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
---          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
---       end
---    end
---    renderThings(root)
---    far:pop()
-
-
-  
-   --.65, { relativeScale = (1.0/.65) * .65 } )
-   
-   
-
-   --local p = ((math.sin(counter / 100)) )
-   --p = mapInto(p, -1, 1, -0.125, 0.125)
-   --print(p)
-   
- 
-   drawGroundPlaneLines()
-
-
-   
-   love.graphics.setLineWidth(1)
-
-   sortOnDepth(stuff)
-
-   for _, v in pairs(stuff) do
-      
-      hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-      hack.relativeScale = (1.0/ hack.scale) * hack.scale
-      hack.push()
-      
-      love.graphics.setColor(v.color)
-      love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-      love.graphics.setColor(.1, .1, .1)
-      love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
-         
-      hack:pop()
-   end
-   
-    cam:push()
-
-    sortOnDepth(root.children)
-    renderThings(root)
-
-   
-
-    drawCameraViewPointRectangles()
-  
-   --love.graphics.setColor(player.color)
-   --love.graphics.rectangle('fill', player.x, player.y, player.width, player.height)
-
-
-
-   -- close:push()
-   -- -- the parallax layer before
-   -- love.graphics.setColor( 1, 0, 0, .25 )
-   -- for _, v in pairs(stuff) do
-   --    love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-   --    love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-   -- end
-   --renderThings(root)
-   -- close:pop()
-   
    cam:pop()
-
    
-   love.graphics.setColor(1,1,1,.2)
-   love.graphics.line(0,0,W,H)
-   love.graphics.line(0,H,W,0)
-
-   love.graphics.setColor(0,0,0,.2)
-   love.graphics.print('fps: '..love.timer.getFPS())
-   love.graphics.setColor(1,1,1,.8)
-   love.graphics.print('fps: '..love.timer.getFPS(),1,1)
-
-   love.graphics.print('todo:', 1, 30)
-   love.graphics.print('depth of car parts is all the same, for the sorting', 1, 60)
-
-
+   --drawCameraCross()
+   drawDebugStrings()
 end
 
 
@@ -548,12 +508,12 @@ end
 
 function love.filedropped(file)
 
-    local tab = getDataFromFile(file)
-    root.children = tab -- TableConcat(root.children, tab)
-    parentize(root)
-    meshAll(root)
-    renderThings(root)
-    
+   local tab = getDataFromFile(file)
+   root.children = tab -- TableConcat(root.children, tab)
+   parentize(root)
+   meshAll(root)
+   renderThings(root)
+   
 
 end
 
