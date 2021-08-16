@@ -2367,6 +2367,10 @@ function getDataFromFile(file)
    if ends_with(filename, '.svg') then
       local command = 'node '..'resources/svg_to_love/index.js '..filename..' '..simplifyValue
       print(command)
+      if string.match(filename, " ") then
+         print(":::ERROR::: path string should not contain any spaces")
+      end
+      
       local p = io.popen(command)
       local str = p:read('*all')
       p:close()
