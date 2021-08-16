@@ -333,8 +333,8 @@ function drawUIAroundGraphNodes(w,h)
             print(editingModeSub)
          end
          runningY = runningY + 40
-         
-         
+
+
          -- if imgbutton('folder-pivot', ui.pivot,  w - 300, runningY).clicked2 then
          --    editingModeSub = nil
          --    if (#currentNode.children > 0) then
@@ -382,7 +382,7 @@ function drawUIAroundGraphNodes(w,h)
          --       editingModeSub = 'folder-move'
          --    end
          -- end
-         
+
          love.graphics.setColor(1,1,1,.5)
          function get6(node)
             local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
@@ -457,11 +457,11 @@ function drawUIAroundGraphNodes(w,h)
             currentNode.transforms.l[6]= brx
             currentNode.transforms.l[7]= bry
          end
-         
+
          runningY = runningY + 40
          end
-         
-         
+
+
 --         runningY = runningY + 40
          if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
             editingModeSub = 'folder-move'
@@ -586,7 +586,7 @@ function drawUIAroundGraphNodes(w,h)
                   resizeGroup(currentNode, childrenInRectangleSelect, .75)
 
                else
-                  
+
                   resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
                end
             end
@@ -595,10 +595,10 @@ function drawUIAroundGraphNodes(w,h)
                   resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
 
                else
-                  
+
                   resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
                end
-               
+
             end
             runningY = runningY + 40  -- behind an if !!
          end
@@ -706,7 +706,7 @@ function love.mousepressed(x,y, button)
          setCurrentNode(d)
          tryToCenterUI(d)
          editingMode = 'polyline'
-         editingModeSub = 'polyline-edit'
+         --editingModeSub = 'polyline-edit'
       else
          setCurrentNode(nil)
          editingMode = nil
@@ -1813,7 +1813,7 @@ function love.draw()
                   perspective[nxt][1], perspective[nxt][2]
                )
             end
-            
+
             simplehover( perspective[1][1]-5, perspective[1][2]-5, 10)
             simplehover( perspective[2][1]-5, perspective[2][2]-5, 10)
             simplehover( perspective[3][1]-5, perspective[3][2]-5, 10)
@@ -2370,7 +2370,7 @@ function getDataFromFile(file)
       if string.match(filename, " ") then
          print(":::ERROR::: path string should not contain any spaces")
       end
-      
+
       local p = io.popen(command)
       local str = p:read('*all')
       p:close()

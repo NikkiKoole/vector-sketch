@@ -9,14 +9,14 @@ ProFi = require 'ProFi'
 function require_all(path, opts)
    local items = love.filesystem.getDirectoryItems(path)
    for _, item in pairs(items) do
-      if love.filesystem.getInfo(path .. '/' .. item, 'file') then 
-         require(path .. '/' .. item:gsub('.lua', '')) 
+      if love.filesystem.getInfo(path .. '/' .. item, 'file') then
+         require(path .. '/' .. item:gsub('.lua', ''))
       end
    end
-   if opts and opts.recursive then 
+   if opts and opts.recursive then
       for _, item in pairs(items) do
-         if love.filesystem.getInfo(path .. '/' .. item, 'directory') then 
-            require_all(path .. '/' .. item, {recursive = true}) 
+         if love.filesystem.getInfo(path .. '/' .. item, 'directory') then
+            require_all(path .. '/' .. item, {recursive = true})
          end
       end
    end
@@ -49,7 +49,7 @@ function copy3(obj, seen)
    -- Handle non-tables and previously-seen tables.
    if type(obj) ~= 'table' then return obj end
    if seen and seen[obj] then return seen[obj] end
-   
+
    -- New table; mark it as seen and copy recursively.
    local s = seen or {}
    local res = {}
@@ -118,12 +118,12 @@ function love.load()
    stuff = {} -- this is the testlayer with just some rectangles and the red player
 
    depthMinMax = {min=-2, max=2}
-   depthScaleFactors = { min=.95, max=1.05} 
+   depthScaleFactors = { min=.95, max=1.05}
 
    carThickness = 12.5
    testCar = false
    testCameraViewpointRects = false
-   
+
    for i = 1, 140 do
       local rndHeight = love.math.random(100, 200)
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -142,10 +142,10 @@ function love.load()
          }
       )
    end
-   
+
    table.insert(stuff, player)
 
-   
+
 
    sortOnDepth(stuff)
 
@@ -163,7 +163,7 @@ function love.load()
          }
       )
    end
-   
+
    cam = Camera(
       W - 2 * offset,
       H - 2 * offset,
@@ -187,14 +187,14 @@ function love.load()
    hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
    farther = generateCameraLayer('farther', .3)
    close = generateCameraLayer('close', 1.5)
-   
+
    root = {
       folder = true,
       name = 'root',
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       children = {}
    }
-   
+
    function initCarParts()
       carparts = {}
       carparts.children = parseFile('assets/carparts_.polygons.txt')
@@ -210,7 +210,7 @@ function love.load()
       carbodyVoor.children[2].children[1].color[4] = 0.6
       carbodyVoor.children[2].children[2].color[4] = 0.6
 
-      
+
       carbodyVoor.transforms.l[1]=0
       carbodyVoor.transforms.l[2]=0
       carbodyVoor.depth = carThickness
@@ -219,27 +219,33 @@ function love.load()
 
    function initGrass()
       local grass = {}
-      for i = 1, 10 do
-         local grass2 = parseFile('assets/grassx5_.polygons.txt')
-         grass = TableConcat(grass,grass2)
+      for i = 1, 130 do
+         local grass1 = parseFile('assets/grassx5_.polygons.txt')
+	 local grass2 = parseFile('assets/dong_single.polygons.txt')
+	 local grass3 = parseFile('assets/dong_single2.polygons.txt')
+         grass = TableConcat(grass,grass1)
+	 grass = TableConcat(grass,grass1)
+	 grass = TableConcat(grass,grass1)
+	 grass = TableConcat(grass,grass2)
+	 grass = TableConcat(grass,grass3)
       end
-      
+
       for i= 1, #grass do
          if grass[i].transforms then
-            grass[i].transforms.l[1] = love.math.random() * 2000
-            grass[i].transforms.l[2] = 0 
-            grass[i].transforms.l[4] = 1.0
-            grass[i].transforms.l[5] = 1.0 
+            grass[i].transforms.l[1] = love.math.random() * 12000
+            grass[i].transforms.l[2] = 0
+            grass[i].transforms.l[4] = 1.0 + love.math.random()*.2
+            grass[i].transforms.l[5] = 1.0 + love.math.random()* 2
 
             local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
             grass[i].depth = rndDepth
          end
       end
-      
+
       root.children = grass
    end
    initGrass()
-   
+
    -- new player
    newPlayer = {
       folder = true,
@@ -258,9 +264,9 @@ function love.load()
    if testCar then
       table.insert(newPlayer.children, 1, carbody)
    end
-   
+
    table.insert(root.children, newPlayer)
-   
+
    if testCar then
       voor2 = {
          folder = true,
@@ -281,7 +287,7 @@ function love.load()
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
       end
-      
+
       local tlx, tly, brx, bry = getPointsBBox(points)
       local pointsHeight = math.floor((bry - tly)/2)
 
@@ -313,7 +319,7 @@ end
 
 function love.update(dt)
    local v = {x=0, y=0}
-   
+
    if love.keyboard.isDown('left') then
       v.x = v.x - 1
    end
@@ -326,10 +332,10 @@ function love.update(dt)
    if love.keyboard.isDown('down') then
       v.y = v.y + 1
    end
-   
+
    local mag = math.sqrt((v.x * v.x) + (v.y * v.y))
    if mag > 0 then
-      v.x = (v.x/mag) * player.speed * dt 
+      v.x = (v.x/mag) * player.speed * dt
       v.y = (v.y/mag) * player.speed * dt
       player.x = player.x + v.x
       player.depth = player.depth + (v.y)/100
@@ -346,12 +352,12 @@ function love.update(dt)
          local dir = v.x > 0 and 1 or -1
 
          -- rotating the wheels
-         newPlayer.children[1].children[2].transforms.l[3] =  newPlayer.children[1].children[2].transforms.l[3] +  10 * dt * dir 
+         newPlayer.children[1].children[2].transforms.l[3] =  newPlayer.children[1].children[2].transforms.l[3] +  10 * dt * dir
          newPlayer.children[1].children[3].transforms.l[3] =  newPlayer.children[1].children[3].transforms.l[3] +  10 * dt * dir
       end
 
    end
-   
+
    if cameraFollowPlayer then
       local distanceAhead = math.floor(300*v.x)
       cam:setTranslationSmooth(
@@ -374,13 +380,13 @@ function love.mousepressed(x,y)
             v.selected = true
             local cw, ch = cam:getContainerDimensions()
             local targetScale = math.min(cw/v.width, ch/v.height)
-            
+
             cam:setScale(targetScale)
             cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
          else
             v.selected = false
          end
-         
+
       end
    end
 end
@@ -392,7 +398,7 @@ function drawGroundPlaneLines()
    local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
    local s = math.ceil(x1/100)*100
    local e = math.ceil(x2/100)*100
-   
+
    if s < 0 then s = s -100 end
    if e < 0 then e = e -100 end
    for i = s, e, 100 do
@@ -409,11 +415,11 @@ function drawCameraViewPointRectangles()
          love.graphics.setColor(1,0,0,.6)
 
       end
-      
+
       love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
    end
 end
-function drawCameraCross() 
+function drawCameraCross()
    love.graphics.setColor(1,1,1,.2)
    love.graphics.line(0,0,W,H)
    love.graphics.line(0,H,W,0)
@@ -431,7 +437,7 @@ function love.draw()
    love.graphics.clear(.6, .3, .7)
    drawCameraBounds(cam, 'line' )
 
-   if (false) then 
+   if (false) then
       farther:push()
       love.graphics.setColor( 1, 0, 0, .25 )
       tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
@@ -445,7 +451,7 @@ function love.draw()
       end
       farther:pop()
    end
-   
+
    drawGroundPlaneLines()
    love.graphics.setLineWidth(1)
 
@@ -453,20 +459,20 @@ function love.draw()
    if (false) then
       sortOnDepth(stuff)
       for _, v in pairs(stuff) do
-         
+
          hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
          hack.push()
-         
+
          love.graphics.setColor(v.color)
          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
          love.graphics.setColor(.1, .1, .1)
          love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
-         
+
          hack:pop()
       end
    end
-   
+
    cam:push()
 
    sortOnDepth(root.children)
@@ -475,7 +481,7 @@ function love.draw()
    if testCameraViewpointRects then
       drawCameraViewPointRectangles()
    end
-   
+
    if (false) then
       close:push()
       love.graphics.setColor( 1, 0, 0, .25 )
@@ -488,7 +494,7 @@ function love.draw()
    end
 
    cam:pop()
-   
+
    --drawCameraCross()
    drawDebugStrings()
 end
@@ -506,7 +512,6 @@ function love.filedropped(file)
    parentize(root)
    meshAll(root)
    renderThings(root)
-   
+
 
 end
-

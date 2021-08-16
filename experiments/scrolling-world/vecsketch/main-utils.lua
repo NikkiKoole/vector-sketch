@@ -1,7 +1,7 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
 
-function lerp(v0, v1, t) 
+function lerp(v0, v1, t)
     return v0*(1-t)+v1*t
 end
 
@@ -24,11 +24,11 @@ function isMouseInMesh(mx, my, body, mesh)
    local count = mesh:getVertexCount()
    local px,py = body._globalTransform:inverseTransformPoint(mx, my)
    for i = 1, count, 3 do
-      
+
       if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
 	 return true
       end
-      
+
    end
    return false
 end
@@ -79,8 +79,8 @@ function handleChild(shape)
       hack.relativeScale = (1.0/ hack.scale) * hack.scale
       hack.push()
    end
-   
-   
+
+
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
@@ -88,7 +88,7 @@ function handleChild(shape)
       else
 	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
       end
-      
+
       local parentIndex = getIndex(shape._parent)
       if shape.hole then
 	 love.graphics.stencil(
@@ -124,7 +124,7 @@ function handleChild(shape)
       if (shape.mesh and not shape.mask) then
 
 
-         
+
 	 love.graphics.setColor(shape.color)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
 
@@ -132,8 +132,8 @@ function handleChild(shape)
             love.graphics.setColor(0,0,0)
             love.graphics.draw(shape.borderMesh, shape._parent._globalTransform )
          end
-         
-         
+
+
          --print('main-utils todo')
          if false and shape.points then
             -- render outline!!!!!
@@ -145,7 +145,7 @@ function handleChild(shape)
             love.graphics.draw(mesh, shape._parent._globalTransform )
          end
 
-         
+
       end
    end
    if currentNode == shape then
@@ -161,21 +161,21 @@ function handleChild(shape)
          love.graphics.draw(borderMesh,  shape._parent._globalTransform )
          --print('need to mesh the direct one too')
       end
-      
+
    end
 
    if (shape.depth ~= nil) then
       hack:pop()
    end
-   
-   
+
+
 end
 
 function unpackNodePointsLoop(points)
    local unpacked = {}
    --unpacked[1] = points[#points][1]
    --unpacked[2] = points[#points][2]
-      
+
    for i = 0, #points do
       local nxt = i == #points and 1 or i+1
       unpacked[1 + (i*2)] = points[nxt][1]
@@ -190,7 +190,7 @@ function unpackNodePointsLoop(points)
       unpacked[(#points*2) + 2 + (i*2)] =  points[nxt][2]
    end
 
- 
+
 
 
       return unpacked
@@ -203,7 +203,7 @@ function unpackNodePoints(points)
          unpacked[1 + (i*2)] = points[i+1][1]
          unpacked[2 + (i*2)] =  points[i+1][2]
       end
-      
+
       -- make it go round
       unpacked[(#points*2)+1] =   points[1][1]
       unpacked[(#points*2)+2] =   points[1][2]
@@ -212,7 +212,7 @@ function unpackNodePoints(points)
    end
 
    return unpacked
-   
+
 end
 
 -- function mat4from_perspective(fovy, aspect, near, far)
@@ -227,8 +227,8 @@ end
 -- 		0, 0, 0, 0
 -- 	}
 --         end
-        
-        
+
+
 -- 	local t   = math.tan(math.rad(fovy) / 2)
 -- 	local out = new()
 -- 	out[1]    =  1 / (t * aspect)
