@@ -158,14 +158,11 @@ function findNodeByName(root, name)
       return root
    end
    if root.children then
-      print('found children', #root.children)
       for i=1, #root.children do
 	 local result = findNodeByName(root.children[i], name)
-         print(root.children[i].name)
 	 if result then return result end
       end
    end
-
    return nil
 end
 

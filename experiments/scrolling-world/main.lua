@@ -219,25 +219,25 @@ function love.load()
    initCarParts()
 
    function initGrass()
-      local boei = {}
+      local grass = {}
       for i = 1, 10 do
-         local boei2 = parseFile('assets/grassx5_.polygons.txt')
-         boei = TableConcat(boei,boei2)
+         local grass2 = parseFile('assets/grassx5_.polygons.txt')
+         grass = TableConcat(grass,grass2)
       end
       
-      for i= 1, #boei do
-         if boei[i].transforms then
-            boei[i].transforms.l[1] = love.math.random() * 2000
-            boei[i].transforms.l[2] = 0 
-            boei[i].transforms.l[4] = 1.0
-            boei[i].transforms.l[5] = 1.0 
+      for i= 1, #grass do
+         if grass[i].transforms then
+            grass[i].transforms.l[1] = love.math.random() * 2000
+            grass[i].transforms.l[2] = 0 
+            grass[i].transforms.l[4] = 1.0
+            grass[i].transforms.l[5] = 1.0 
 
             local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
-            boei[i].depth = rndDepth
+            grass[i].depth = rndDepth
          end
       end
       
-      root.children = boei
+      root.children = grass
    end
    initGrass()
    
@@ -250,10 +250,9 @@ function love.load()
       x=0,
       children ={
          {
-            name="chi22ld:"..1,
+            name="yellow shape:"..1,
             color = {1,1,0, 0.8},
             points = {{-50,-250},{50,-250},{50,0},{-50,0}},
-
          },
       }
    }
@@ -271,9 +270,7 @@ function love.load()
          depth = 12,
          x=0,
          children ={
-            
             carbodyVoor
-            
          }
       }
       table.insert(root.children, voor2)
@@ -285,6 +282,7 @@ function love.load()
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
       end
+      
       local tlx, tly, brx, bry = getPointsBBox(points)
       local pointsHeight = math.floor((bry - tly)/2)
 
@@ -301,9 +299,7 @@ function love.load()
                name="roodchild:"..1,
                color = {r/255,g/255,b/255, 1.0},
                points = points,
-
             },
-            
          }
       }
 
@@ -313,15 +309,10 @@ function love.load()
    parentize(root)
    meshAll(root)
    renderThings(root)
-   
    avgRunningAhead = 0
 end
 
-
-
-
 function love.update(dt)
-
    local v = {x=0, y=0}
    
    if love.keyboard.isDown('left') then
@@ -366,7 +357,7 @@ function love.update(dt)
       local distanceAhead = math.floor(300*v.x)
       cam:setTranslationSmooth(
          player.x + player.width/2 ,
-         player.y  - 200,
+         player.y  - 350,
          dt,
          2
       )

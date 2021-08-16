@@ -1,5 +1,42 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
+function signT(p1, p2, p3)
+   return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
+end
+function pointInTriangle(p, t1, t2, t3)
+   local b1, b2, b3
+   b1 = signT(p, t1, t2) < 0.0
+   b2 = signT(p, t2, t3) < 0.0
+   b3 = signT(p, t3, t1) < 0.0
+
+   return ((b1 == b2) and (b2 == b3))
+end
+function isMouseInMesh(mx, my, body, mesh)
+   if mesh and body then
+      local count = mesh:getVertexCount()
+      local px,py = body._globalTransform:inverseTransformPoint(mx, my)
+      for i = 1, count, 3 do
+         if i+2 <= count then
+            if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
+               return true
+            end
+         end
+
+      end
+   end
+   return false
+end
+
+function getIndex(item)
+   if (item) then
+      for k,v in ipairs(item._parent.children) do
+         if v == item then return k end
+      end
+   end
+   return -1
+end
+
+
 function findNodeByName(root, name)
    if (root.name == name) then
       return root
