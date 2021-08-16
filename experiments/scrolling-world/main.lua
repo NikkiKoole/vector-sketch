@@ -123,6 +123,7 @@ function love.load()
    carThickness = 12.5
    testCar = false
    testCameraViewpointRects = false
+   renderCount = 0
 
    for i = 1, 140 do
       local rndHeight = love.math.random(100, 200)
@@ -219,7 +220,7 @@ function love.load()
 
    function initGrass()
       local grass = {}
-      for i = 1, 130 do
+      for i = 1, 100 do
          local grass1 = parseFile('assets/grassx5_.polygons.txt')
 	 local grass2 = parseFile('assets/dong_single.polygons.txt')
 	 local grass3 = parseFile('assets/dong_single2.polygons.txt')
@@ -281,7 +282,7 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 100 do
+   for j = 1, 3000 do
       local generated = generatePolygon(0,0, 4 + love.math.random()*6, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
@@ -296,7 +297,7 @@ function love.load()
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
       local randomShape = {
          folder = true,
-         transforms =  {l={love.math.random()*2000,0,0,1,1,0,pointsHeight,0,0}},
+         transforms =  {l={love.math.random()*12000,0,0,1,1,0,pointsHeight,0,0}},
          name="rood",
          depth = rndDepth,
          children ={
@@ -427,11 +428,17 @@ end
 function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
    love.graphics.print('fps: '..love.timer.getFPS())
+   love.graphics.print('renderCount: '..renderCount, 0, 20)
+
    love.graphics.setColor(1,1,1,.8)
    love.graphics.print('fps: '..love.timer.getFPS(),1,1)
+   love.graphics.print('renderCount: '..renderCount, 1, 21)
+
+
 end
 
 function love.draw()
+   renderCount = 0
    counter = counter +1
    W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
@@ -475,7 +482,11 @@ function love.draw()
 
    cam:push()
 
+   --https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
+   -- spoiler use a heap
    sortOnDepth(root.children)
+   -- rendering needs some sort of culling
+   -- i'd say a bbox per folder
    renderThings(root)
 
    if testCameraViewpointRects then

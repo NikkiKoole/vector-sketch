@@ -123,8 +123,7 @@ function handleChild(shape)
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
 
-
-
+	 renderCount = renderCount + 1
 	 love.graphics.setColor(shape.color)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
 
@@ -326,6 +325,15 @@ function renderThings(root)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
+   --print(root._globalTransform)
+   --local localX, localY = root._globalTransform:transformPoint( 0, 0 )
+   --print(minX, localX, maxX )
+   --print(tl[1], tl[2])
+   --local minX = cam.translationX - (cam.w*2 * cam.scale)
+   --local maxX = cam.translationX + (cam.w*2 * cam.scale)
+
+   --if tl[1] < minX then return end
+   --if tl[1] > maxX then return end
 
    if (root.keyframes) then
       if (root.keyframes == 2) then
