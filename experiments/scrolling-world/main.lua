@@ -1,5 +1,6 @@
 local Camera = require 'brady'
 local inspect = require 'inspect'
+require 'bbox'
 ProFi = require 'ProFi'
 
 -- four corner distort!!!!
@@ -279,18 +280,20 @@ function love.load()
    end
 
    for j = 1, 100 do
-      local generated = generatePolygon(0,0, love.math.random()*24, .05, .02 , 10)
+      local generated = generatePolygon(0,0, 4 + love.math.random()*6, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
       end
-      
+      local tlx, tly, brx, bry = getPointsBBox(points)
+      local pointsHeight = math.floor((bry - tly)/2)
+
       local r,g,b = hex2rgb('4D391F')
       r = love.math.random()*255
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
       local randomShape = {
          folder = true,
-         transforms =  {l={love.math.random()*2000,0,0,1,1,0,0,0,0}},
+         transforms =  {l={love.math.random()*2000,0,0,1,1,0,pointsHeight,0,0}},
          name="rood",
          depth = rndDepth,
          children ={
@@ -438,7 +441,7 @@ function love.draw()
    love.graphics.clear(.6, .3, .7)
    drawCameraBounds(cam, 'line' )
 
-   if (false) then
+   if (false) then 
       farther:push()
       love.graphics.setColor( 1, 0, 0, .25 )
       tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
