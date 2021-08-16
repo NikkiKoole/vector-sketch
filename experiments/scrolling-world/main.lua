@@ -240,6 +240,7 @@ function love.load()
 
             local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
             grass[i].depth = rndDepth
+            grass[i].aabb =  grass[i].transforms.l[1]
          end
       end
 
@@ -282,7 +283,7 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 3000 do
+   for j = 1, 1000 do
       local generated = generatePolygon(0,0, 4 + love.math.random()*6, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
@@ -295,11 +296,13 @@ function love.load()
       local r,g,b = hex2rgb('4D391F')
       r = love.math.random()*255
       local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
+      local xPos = love.math.random()*12000
       local randomShape = {
          folder = true,
-         transforms =  {l={love.math.random()*12000,0,0,1,1,0,pointsHeight,0,0}},
+         transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
          name="rood",
          depth = rndDepth,
+         aabb = xPos,
          children ={
             {
                name="roodchild:"..1,
@@ -316,6 +319,7 @@ function love.load()
    meshAll(root)
    renderThings(root)
    avgRunningAhead = 0
+   sortOnDepth(root.children)
 end
 
 function love.update(dt)
@@ -433,7 +437,8 @@ function drawDebugStrings()
    love.graphics.setColor(1,1,1,.8)
    love.graphics.print('fps: '..love.timer.getFPS(),1,1)
    love.graphics.print('renderCount: '..renderCount, 1, 21)
-
+   love.graphics.print('todo: sorting needs to be better, atm sorting continousy is tuened off', 1, 41)
+   
 
 end
 
@@ -484,7 +489,7 @@ function love.draw()
 
    --https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
    -- spoiler use a heap
-   sortOnDepth(root.children)
+   --sortOnDepth(root.children)
    -- rendering needs some sort of culling
    -- i'd say a bbox per folder
    renderThings(root)
@@ -499,6 +504,8 @@ function love.draw()
       for _, v in pairs(stuff) do
          love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
          love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+         love.graphics.setColor(.1, .1, .1)
+         love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
       end
       renderThings(root)
       close:pop()

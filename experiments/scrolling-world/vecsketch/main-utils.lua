@@ -72,13 +72,9 @@ function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
    if not shape then return end
-
-   if (shape.depth ~= nil) then
-
-      hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-      hack.relativeScale = (1.0/ hack.scale) * hack.scale
-      hack.push()
-   end
+   --
+   
+   
 
 
    if shape.mask or shape.hole then
@@ -113,7 +109,28 @@ function handleChild(shape)
 
 
    if shape.folder then
+      --if love.math.random() < .85 then return end
+      
+      if (shape.depth ~= nil) then
+
+         hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+         hack.push()
+      end
+      
+      if shape.aabb then
+         local minX = cam.translationX - ((cam.w/2) / cam.scale)
+         local maxX = cam.translationX + ((cam.w/2) / cam.scale)
+         local extraOffset = 100
+         if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
+            renderThings(shape)
+         end
+      else
+
+
+          
       renderThings(shape)
+      end
       love.graphics.setStencilTest()
    --else
      -- print()
@@ -322,14 +339,18 @@ function renderThings(root)
    if (root._parent) then
       pg = root._parent._globalTransform
    end
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
+
+      root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
+
+   
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
+
    ----
    --print(root._globalTransform)
    --local localX, localY = root._globalTransform:transformPoint( 0, 0 )
    --print(minX, localX, maxX )
    --print(tl[1], tl[2])
-   --local minX = cam.translationX - (cam.w*2 * cam.scale)
+   --Local minX = cam.translationX - (cam.w*2 * cam.scale)
    --local maxX = cam.translationX + (cam.w*2 * cam.scale)
 
    --if tl[1] < minX then return end

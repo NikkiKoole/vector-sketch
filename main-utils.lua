@@ -323,6 +323,7 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
+   
    if (root.keyframes) then
       if (root.keyframes == 2) then
 	 if currentNode == root then
