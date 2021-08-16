@@ -437,9 +437,7 @@ function drawDebugStrings()
    love.graphics.setColor(1,1,1,.8)
    love.graphics.print('fps: '..love.timer.getFPS(),1,1)
    love.graphics.print('renderCount: '..renderCount, 1, 21)
-   love.graphics.print('todo: sorting needs to be better, atm sorting continousy is tuened off', 1, 41)
-   
-
+   love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
 end
 
 function love.draw()
