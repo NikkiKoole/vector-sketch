@@ -1,0 +1,3 @@
+https://love2d.org/forums/viewtopic.php?t=84159
+https://bitbucket.org/bio1712/love2d-admob-ios/src/master/src/modules/ads/
+https://bitbucket.org/bio1712/love2d-admob-ios/src/master/
