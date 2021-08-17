@@ -66,6 +66,21 @@ function meshAll(root) -- this needs to be done recursive
    end
 end
 
+function makeOptimizedBatchMesh(folder)
+   -- this one assumes all children are shapes and are the same color
+   --print(#folder.children)
+   local allVerts = {}
+   for i=1, #folder.children do
+      allVerts = TableConcat(allVerts, poly.makeVertices(folder.children[i]))
+      --print(#verts, inspect(verts))
+   end
+   --print(#allVerts)
+   local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+   folder.optimizedBatchMesh = mesh
+
+end
+
+
 function getLocalDelta(transform, dx, dy)
    local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
    local dx2, dy2 = transform:inverseTransformPoint( dx, dy )
@@ -476,6 +491,13 @@ function drawUIAroundGraphNodes(w,h)
             local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
             perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
          end
+	 runningY = runningY + 40
+	 -- this optimizer should only be visibel when allowed,
+	 -- noot every folder can be optimized
+	 if imgbutton('optimizer', ui.layer_group, w-300, runningY).clicked then
+	    makeOptimizedBatchMesh(currentNode)
+	 end
+
 
       end
 

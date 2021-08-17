@@ -66,7 +66,7 @@ function handleChild(shape)
    -- this gets in the way of lerping between nodes...
 
    if not shape then return end
-   
+
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
@@ -74,7 +74,7 @@ function handleChild(shape)
       else
 	 mesh =  makeMeshFromVertices(poly.makeVertices(shape)) -- realtime iupdating the thingie
       end
-      
+
       local parentIndex = getIndex(shape._parent)
       if shape.hole then
 	 love.graphics.stencil(
@@ -99,43 +99,29 @@ function handleChild(shape)
 
 
    if shape.folder then
-      renderThings(shape)
-      love.graphics.setStencilTest()
-   --else
-     -- print()
-      --print(inspect(poly.makeVertices(shape)))
-   end
-   --if ( shape.hole) then
-   --   love.graphics.setStencilTest()
-   --end
+      if (shape.optimizedBatchMesh) then
+	 --print('something optimized todo here!')
+	 love.graphics.setColor(shape.children[1].color)
+         love.graphics.draw(shape.optimizedBatchMesh, shape._parent._globalTransform )
+      else
 
-   --local fovy = 100
-   --local aspect = 1
-   --local near  = 0.1
-   --local far = 100.0
-   --print( inspect(mat4from_perspective(fovy, aspect, near, far)))
-   
+	 renderThings(shape)
+      end
+      love.graphics.setStencilTest()
+   end
+
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
-        
 
-         
-
-         
 	 love.graphics.setColor(shape.color)
-	 --love.graphics.draw(shape.mesh, shape._parent._globalTransform)
-         --print( shape._parent._globalTransform[1])
-         --local m = { shape._parent._globalTransform:getMatrix()}
-         --groundShader:send("camera", m)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
 
          if (shape.borderMesh) then
             love.graphics.setColor(0,0,0)
             love.graphics.draw(shape.borderMesh, shape._parent._globalTransform )
          end
-         
-         
-         --print('main-utils todo')
+
+
          if false and shape.points then
             -- render outline!!!!!
             local work =  unpackNodePoints(shape.points)
@@ -146,7 +132,7 @@ function handleChild(shape)
             love.graphics.draw(mesh, shape._parent._globalTransform )
          end
 
-         
+
       end
    end
    if currentNode == shape then
@@ -162,17 +148,17 @@ function handleChild(shape)
          love.graphics.draw(borderMesh,  shape._parent._globalTransform )
          --print('need to mesh the direct one too')
       end
-      
+
    end
 
-   
+
 end
 
 function unpackNodePointsLoop(points)
    local unpacked = {}
    --unpacked[1] = points[#points][1]
    --unpacked[2] = points[#points][2]
-      
+
    for i = 0, #points do
       local nxt = i == #points and 1 or i+1
       unpacked[1 + (i*2)] = points[nxt][1]
@@ -187,7 +173,7 @@ function unpackNodePointsLoop(points)
       unpacked[(#points*2) + 2 + (i*2)] =  points[nxt][2]
    end
 
- 
+
 
 
       return unpacked
@@ -200,7 +186,7 @@ function unpackNodePoints(points)
          unpacked[1 + (i*2)] = points[i+1][1]
          unpacked[2 + (i*2)] =  points[i+1][2]
       end
-      
+
       -- make it go round
       unpacked[(#points*2)+1] =   points[1][1]
       unpacked[(#points*2)+2] =   points[1][2]
@@ -209,7 +195,7 @@ function unpackNodePoints(points)
    end
 
    return unpacked
-   
+
 end
 
 -- function mat4from_perspective(fovy, aspect, near, far)
@@ -224,8 +210,8 @@ end
 -- 		0, 0, 0, 0
 -- 	}
 --         end
-        
-        
+
+
 -- 	local t   = math.tan(math.rad(fovy) / 2)
 -- 	local out = new()
 -- 	out[1]    =  1 / (t * aspect)
@@ -323,7 +309,7 @@ function renderThings(root)
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
    ----
 
-   
+
    if (root.keyframes) then
       if (root.keyframes == 2) then
 	 if currentNode == root then
