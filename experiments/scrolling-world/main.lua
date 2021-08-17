@@ -431,13 +431,15 @@ function drawCameraCross()
 end
 function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
-   love.graphics.print('fps: '..love.timer.getFPS())
-   love.graphics.print('renderCount: '..renderCount, 0, 20)
+   love.graphics.scale(2)
+   love.graphics.print('fps: '..love.timer.getFPS(), 0, 10)
+   --love.graphics.print('renderCount: '..renderCount, 0, 30)
 
    love.graphics.setColor(1,1,1,.8)
-   love.graphics.print('fps: '..love.timer.getFPS(),1,1)
-   love.graphics.print('renderCount: '..renderCount, 1, 21)
-   love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
+   love.graphics.print('fps: '..love.timer.getFPS(),1,11)
+   --love.graphics.print('renderCount: '..renderCount, 1, 31)
+   --love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
+   love.graphics.scale(1)
 end
 
 function love.draw()
