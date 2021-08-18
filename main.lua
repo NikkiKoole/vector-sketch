@@ -494,10 +494,21 @@ function drawUIAroundGraphNodes(w,h)
 	 runningY = runningY + 40
 	 -- this optimizer should only be visibel when allowed,
 	 -- noot every folder can be optimized
+         
 	 if imgbutton('optimizer', ui.layer_group, w-300, runningY).clicked then
+            if (currentNode.optimizedBatchMesh) then
+               currentNode.optimizedBatchMesh = nil
+            else
+               
 	    makeOptimizedBatchMesh(currentNode)
-	 end
 
+            end
+         end
+         if (currentNode.optimizedBatchMesh) then
+            love.graphics.setColor(1,0,0)
+
+            love.graphics.rectangle("line", w-300-2, runningY-2, 28,28)
+         end
 
       end
 

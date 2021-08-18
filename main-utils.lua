@@ -102,7 +102,7 @@ function handleChild(shape)
       if (shape.optimizedBatchMesh) then
 	 --print('something optimized todo here!')
 	 love.graphics.setColor(shape.children[1].color)
-         love.graphics.draw(shape.optimizedBatchMesh, shape._parent._globalTransform )
+         love.graphics.draw(shape.optimizedBatchMesh, shape._parent._globalTransform *  shape._localTransform)
       else
 
 	 renderThings(shape)
