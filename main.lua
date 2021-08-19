@@ -95,6 +95,9 @@ function makeOptimizedBatchMesh(folder)
 
    end
    if #allVerts  >0 then
+      if  folder.optimizedBatchMesh == nil then
+	 folder.optimizedBatchMesh = {}
+      end
       local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
       folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
    end
@@ -1215,6 +1218,7 @@ function renderGraphNodes(node, level, startY)
          -- 180-(level*6)
          b = iconlabelbutton('object-group'..i, icon, color, child == currentNode, child.name or "", rightX , yPos, 128+32, -4)
       end
+
       if (child.folder and child.open ) then
          local add = renderGraphNodes(child, level + 1, runningY + startY + rowHeight)
          runningY = runningY + add
