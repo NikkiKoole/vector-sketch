@@ -67,33 +67,37 @@ function meshAll(root) -- this needs to be done recursive
 end
 
 function makeOptimizedBatchMesh(folder)
-   -- this one assumes all children are shapes and are the same color
- 
-   local lastColor = nil
+   -- this one assumes all children are shapes, still need to think of what todo when
+   -- folders are children
+
+   local lastColor = folder.children[1].color
    local allVerts = {}
    local batchIndex = 1
    for i=1, #folder.children do
       local thisColor = folder.children[i].color
-      if lastColor == nil or
-         (thisColor[1] ~= lastColor[1]) or
+      if (thisColor[1] ~= lastColor[1]) or
          (thisColor[2] ~= lastColor[2]) or
          (thisColor[3] ~= lastColor[3]) then
-         --print(i, lastColor, thisColor[1], thisColor[2], thisColor[3])
-        
-         if #allVerts then
-            print('work todo for batchIndex'..batchIndex, thisColor)
-            --allVerts = {}
-         end
-          lastColor = thisColor
+
+	 if  folder.optimizedBatchMesh == nil then
+	    folder.optimizedBatchMesh = {}
+	 end
+
+	 local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+	 folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+
+         lastColor = thisColor
+	 allVerts = {}
          batchIndex = batchIndex + 1
       end
-      
+
       allVerts = TableConcat(allVerts, poly.makeVertices(folder.children[i]))
 
    end
-   print('batchIndex'..batchIndex, lastColor)
-   local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-   folder.optimizedBatchMesh = {{mesh=mesh, color=folder.children[1].color}}
+   if #allVerts  >0 then
+      local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+      folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+   end
 
 end
 
@@ -511,12 +515,12 @@ function drawUIAroundGraphNodes(w,h)
 	 runningY = runningY + 40
 	 -- this optimizer should only be visibel when allowed,
 	 -- noot every folder can be optimized
-         
+
 	 if imgbutton('optimizer', ui.layer_group, w-300, runningY).clicked then
             if (currentNode.optimizedBatchMesh) then
                currentNode.optimizedBatchMesh = nil
             else
-               
+
 	    makeOptimizedBatchMesh(currentNode)
 
             end
@@ -528,7 +532,7 @@ function drawUIAroundGraphNodes(w,h)
             love.graphics.setColor(1,1,1)
             love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
          end
-         
+
       end
 
 
@@ -1293,6 +1297,9 @@ end
 
 
 function love.load(arg)
+   local features = love.graphics.getSupported( )
+   for key,value in pairs(features) do print(key,value) end
+
    shapeName = 'untitled'
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
@@ -1430,6 +1437,12 @@ function love.load(arg)
                   name="roodchild:"..1,
                   color = {.5,.1,0, 0.8},
                   points = {{0,0},{200,0},{200,200},{0,200}},
+
+		},
+		 {
+                  name="roodchild:"..1,
+                  color = {.5,.1,0, 0.8},
+                  points = {{300,0},{200,0},{1200,200},{0,1200}},
 
                },
                -- {
