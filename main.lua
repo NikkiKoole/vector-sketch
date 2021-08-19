@@ -68,15 +68,32 @@ end
 
 function makeOptimizedBatchMesh(folder)
    -- this one assumes all children are shapes and are the same color
-   --print(#folder.children)
+ 
+   local lastColor = nil
    local allVerts = {}
+   local batchIndex = 1
    for i=1, #folder.children do
+      local thisColor = folder.children[i].color
+      if lastColor == nil or
+         (thisColor[1] ~= lastColor[1]) or
+         (thisColor[2] ~= lastColor[2]) or
+         (thisColor[3] ~= lastColor[3]) then
+         --print(i, lastColor, thisColor[1], thisColor[2], thisColor[3])
+        
+         if #allVerts then
+            print('work todo for batchIndex'..batchIndex, thisColor)
+            --allVerts = {}
+         end
+          lastColor = thisColor
+         batchIndex = batchIndex + 1
+      end
+      
       allVerts = TableConcat(allVerts, poly.makeVertices(folder.children[i]))
-      --print(#verts, inspect(verts))
+
    end
-   --print(#allVerts)
+   print('batchIndex'..batchIndex, lastColor)
    local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-   folder.optimizedBatchMesh = mesh
+   folder.optimizedBatchMesh = {{mesh=mesh, color=folder.children[1].color}}
 
 end
 
@@ -508,8 +525,10 @@ function drawUIAroundGraphNodes(w,h)
             love.graphics.setColor(1,0,0)
 
             love.graphics.rectangle("line", w-300-2, runningY-2, 28,28)
+            love.graphics.setColor(1,1,1)
+            love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
          end
-
+         
       end
 
 
@@ -1407,53 +1426,59 @@ function love.load(arg)
                   points = points,
 
                },
-               {
-                  folder = true,
-                  transforms =  {l={200,200,0,1,1,100,0,0,0}},
-                  name="yellow",
-                  children ={
-                     {
-                        name="chi22ld:"..1,
-                        color = {1,1,0, 0.8},
-                        points = {{0,0},{200,0},{200,200},{0,200}},
+                {
+                  name="roodchild:"..1,
+                  color = {.5,.1,0, 0.8},
+                  points = {{0,0},{200,0},{200,200},{0,200}},
 
-                     },
-                     {
-                        folder = true,
-                        transforms =  {l={200,200,0,1,1,100,0,0,0}},
-                        name="blue",
-                        children ={
+               },
+               -- {
+               --    folder = true,
+               --    transforms =  {l={200,200,0,1,1,100,0,0,0}},
+               --    name="yellow",
+               --    children ={
+               --       {
+               --          name="chi22ld:"..1,
+               --          color = {1,1,0, 0.8},
+               --          points = {{0,0},{200,0},{200,200},{0,200}},
 
-
-
-                           {
-                              name="bluechild:"..1,
-                              color = {0,0,1, 0.8},
-                              points = {{0,0},{200,0},{200,200},{0,200}},
-
-                           },
-                           {
-                              folder = true,
-                              transforms =  {l={200,200,0,1,1,0,0,0,0}},
-                              name="endhandle",
-                              children ={
-
-                                 {
-                                    name="endhandlechild:"..1,
-                                    color = {0,1,0, 0.8},
-                                    points = {{0,0},{20,0},{20,20},{0,20}},
-
-                                 }
-
-                              }
-                           }
+               --       },
+               --       {
+               --          folder = true,
+               --          transforms =  {l={200,200,0,1,1,100,0,0,0}},
+               --          name="blue",
+               --          children ={
 
 
 
-                        }
-                     }
-                  }
-               }
+               --             {
+               --                name="bluechild:"..1,
+               --                color = {0,0,1, 0.8},
+               --                points = {{0,0},{200,0},{200,200},{0,200}},
+
+               --             },
+               --             {
+               --                folder = true,
+               --                transforms =  {l={200,200,0,1,1,0,0,0,0}},
+               --                name="endhandle",
+               --                children ={
+
+               --                   {
+               --                      name="endhandlechild:"..1,
+               --                      color = {0,1,0, 0.8},
+               --                      points = {{0,0},{20,0},{20,20},{0,20}},
+
+               --                   }
+
+               --                }
+               --             }
+
+
+
+               --          }
+               --       }
+               --    }
+               -- }
             },
          },
       }
