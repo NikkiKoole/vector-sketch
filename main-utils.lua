@@ -101,8 +101,14 @@ function handleChild(shape)
    if shape.folder then
       if (shape.optimizedBatchMesh) then
 	 --print('something optimized todo here!')
-	 love.graphics.setColor(shape.children[1].color)
-         love.graphics.draw(shape.optimizedBatchMesh, shape._parent._globalTransform )
+	 
+         setTransforms(shape)
+         --love.graphics.setColor(shape.children[1].color)
+         for i=1, #shape.optimizedBatchMesh do
+            love.graphics.setColor(shape.optimizedBatchMesh[i].color)
+            love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+         end
+         
       else
 
 	 renderThings(shape)
@@ -295,11 +301,12 @@ function createLerpedChild(ex1, ex2, t)
 
 end
 
-function renderThings(root)
 
-   ---- these calculations are only needed when some local transforms have changed
-
-   --local tg = root.transforms.g
+-- this function is just for the bacthMeshcurrently
+---- these calculations are only needed when some local transforms have changed
+-- they ought t o be more optimized
+function setTransforms(root)
+   
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
@@ -307,8 +314,13 @@ function renderThings(root)
    end
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
-   ----
+ 
+end
 
+
+function renderThings(root)
+
+   setTransforms(root)
 
    if (root.keyframes) then
       if (root.keyframes == 2) then
