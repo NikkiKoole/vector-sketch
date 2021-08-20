@@ -130,10 +130,11 @@ function renderNormallyOrOptimized(shape)
       for i=1, #shape.optimizedBatchMesh do
 	 love.graphics.setColor(shape.optimizedBatchMesh[i].color)
 	 love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+	 renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
       end
 
    else
-
+      renderCount.normal = renderCount.normal + 1
       renderThings(shape)
    end
    end
@@ -213,7 +214,7 @@ function handleChild(shape)
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
 
-	 renderCount = renderCount + 1
+	 --renderCount = renderCount + 1
 	 love.graphics.setColor(shape.color)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
 

@@ -128,7 +128,7 @@ function love.load()
    carThickness = 12.5
    testCar = false
    testCameraViewpointRects = false
-   renderCount = 0
+   renderCount = {normal=0, optimized=0}
 
    for i = 1, 140 do
       local rndHeight = random(100, 200)
@@ -228,7 +228,7 @@ function love.load()
       local g0 = parseFile('assets/grassx5_.polygons.txt')
       local g1 = parseFile('assets/dong_single.polygons.txt')
       local g2 = parseFile('assets/dong_single2.polygons.txt')
-      for i = 1, 1000 do
+      for i = 1, 100 do
          ---local grass1 = copy3(g0)
 	 --local grass2 = copy3(g1)
 	 local grass3 = copy3(g2)
@@ -432,6 +432,7 @@ function love.mousepressed(x,y)
 end
 
 function drawGroundPlaneLines()
+   local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
    local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
@@ -467,11 +468,15 @@ end
 function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
    love.graphics.scale(2,2)
-   love.graphics.print('fps: '..love.timer.getFPS(), 0, 10)
-   --love.graphics.print('renderCount: '..renderCount, 0, 30)
+   love.graphics.print('fps: '..love.timer.getFPS(), 20, 10)
+   love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
+    love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
 
    love.graphics.setColor(1,1,1,.8)
-   love.graphics.print('fps: '..love.timer.getFPS(),1,11)
+   love.graphics.print('fps: '..love.timer.getFPS(),21,11)
+   love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
+    love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
+
    --love.graphics.print('renderCount: '..renderCount, 1, 31)
    --love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
    love.graphics.scale(1,1)
@@ -484,6 +489,7 @@ end
 --    love.graphics.circle('fill', 50, (H/2)-25, 50)
 --    love.graphics.circle('fill', W-50, (H/2)-25, 50)
 -- end
+
 
 -- function love.mousepressed( x, y, button, istouch, presses )
 --    local W, H = love.graphics.getDimensions()
@@ -502,7 +508,8 @@ end
 -- end
 
 function love.draw()
-   renderCount = 0
+   renderCount = {normal=0, optimized=0}
+
    counter = counter +1
    local W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
@@ -581,6 +588,13 @@ end
 
 function love.wheelmoved( dx, dy )
    cam:scaleToPoint(  1 + dy / 10)
+end
+
+function love.resize(w, h)
+   print(("Window resized to width: %d and height: %d."):format(w, h))
+   print(inspect(cam))
+   --cam:update(w,h)
+
 end
 
 

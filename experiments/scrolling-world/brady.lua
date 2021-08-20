@@ -49,7 +49,7 @@ local function addLayer( self, name, scale, flags )
 		relativeScale = 1, -- Controls the translation speed
 		mode = self.mode,
 	}
-        
+
 	new.push = makePush( self, new )
 	new.pop = love.graphics.pop
 
@@ -78,7 +78,8 @@ local function newCamera( w, h, flags )
 		layers = {},
 		-- General Functions
 		update = function( self, containerW, containerH )
-			if self.resizable then self:resizingFunction( self:getContainerDimensions() ) end
+
+		   if self.resizable then self:resizingFunction( self:getContainerDimensions() ) end
 		end,
 		resizingFunction = function( self, containerW, containerH )
 			if self.maintainAspectRatio then
@@ -96,6 +97,7 @@ local function newCamera( w, h, flags )
 				self.offsetX = self.offsetX + (containerW - self.w) / 2
 				self.offsetY = self.offsetY + (containerH - self.h) / 2
 			end
+			print(self.offsetX)
 		end,
 		getContainerDimensions = function( self ) return love.graphics.getDimensions() end,
 		addLayer = addLayer,
@@ -103,7 +105,7 @@ local function newCamera( w, h, flags )
 			return ( type( name ) == 'table' and name or self.layers[name] )
 		end,
 		push = function( self, layer ) self:getLayer( layer or 'main' ):push() end,
-                
+
 		pop = function( self, layer ) self:getLayer( layer or 'main' ):pop() end,
 		getWorldCoordinates = function( self, x, y, layer )
 			layer = self:getLayer( layer or 'main' )
@@ -150,7 +152,7 @@ local function newCamera( w, h, flags )
 		getViewportPosition = function( self ) return self.x, self.y end,
 		setOffset = function( self, x, y ) self.offsetX, self.offsetY = x, y end,
 		getOffset = function( self ) return self.offsetX, self.offsetY end,
-	
+
 		increaseTranslation = function( self, dx, dy ) self.translationX, self.translationY = self.translationX + dx, self.translationY + dy end,
 		setRotation = function( self, theta ) self.rotation = theta end,
 		getRotation = function( self ) return self.rotation end,
@@ -172,9 +174,9 @@ local function newCamera( w, h, flags )
                     if (math.abs(deltaY) < .5) then
                        self.translationY = y
                     end
-                   
+
                 end,
-                
+
 	}
 	new.translate = new.increaseTranslation
 	new.rotate = new.increaseRotation
