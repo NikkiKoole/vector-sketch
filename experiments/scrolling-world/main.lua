@@ -219,11 +219,16 @@ function love.load()
    initCarParts()
 
    function initGrass()
+
+
       local grass = {}
-      for i = 1, 100 do
-         local grass1 = parseFile('assets/grassx5_.polygons.txt')
-	 local grass2 = parseFile('assets/dong_single.polygons.txt')
-	 local grass3 = parseFile('assets/dong_single2.polygons.txt')
+      local g0 = parseFile('assets/grassx5_.polygons.txt')
+      local g1 = parseFile('assets/dong_single.polygons.txt')
+      local g2 = parseFile('assets/dong_single2.polygons.txt')
+      for i = 1, 50 do
+         local grass1 = copy3(g0)
+	 local grass2 = copy3(g1)
+	 local grass3 = copy3(g2)
          grass = TableConcat(grass,grass1)
 	 grass = TableConcat(grass,grass1)
 	 grass = TableConcat(grass,grass1)
@@ -233,7 +238,7 @@ function love.load()
 
       for i= 1, #grass do
          if grass[i].transforms then
-            grass[i].transforms.l[1] = love.math.random() * 12000
+            grass[i].transforms.l[1] = love.math.random() * 2000
             grass[i].transforms.l[2] = 0
             grass[i].transforms.l[4] = 1.0 + love.math.random()*.2
             grass[i].transforms.l[5] = 1.0 + love.math.random()* 2
@@ -242,6 +247,7 @@ function love.load()
             grass[i].depth = rndDepth
             grass[i].aabb =  grass[i].transforms.l[1]
          end
+
       end
 
       root.children = grass
@@ -283,7 +289,7 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 1000 do
+   for j = 1, 10 do
       local generated = generatePolygon(0,0, 4 + love.math.random()*6, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
@@ -320,6 +326,15 @@ function love.load()
    renderThings(root)
    avgRunningAhead = 0
    sortOnDepth(root.children)
+
+   for i =1, #root.children do
+      if (root.children[i].folder) then
+	 makeOptimizedBatchMesh(root.children[i])
+      end
+
+   end
+
+
 end
 
 function love.update(dt)

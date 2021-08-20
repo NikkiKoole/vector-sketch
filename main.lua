@@ -66,43 +66,7 @@ function meshAll(root) -- this needs to be done recursive
    end
 end
 
-function makeOptimizedBatchMesh(folder)
-   -- this one assumes all children are shapes, still need to think of what todo when
-   -- folders are children
 
-   local lastColor = folder.children[1].color
-   local allVerts = {}
-   local batchIndex = 1
-   for i=1, #folder.children do
-      local thisColor = folder.children[i].color
-      if (thisColor[1] ~= lastColor[1]) or
-         (thisColor[2] ~= lastColor[2]) or
-         (thisColor[3] ~= lastColor[3]) then
-
-	 if  folder.optimizedBatchMesh == nil then
-	    folder.optimizedBatchMesh = {}
-	 end
-
-	 local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-	 folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
-
-         lastColor = thisColor
-	 allVerts = {}
-         batchIndex = batchIndex + 1
-      end
-
-      allVerts = TableConcat(allVerts, poly.makeVertices(folder.children[i]))
-
-   end
-   if #allVerts  >0 then
-      if  folder.optimizedBatchMesh == nil then
-	 folder.optimizedBatchMesh = {}
-      end
-      local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-      folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
-   end
-
-end
 
 
 function getLocalDelta(transform, dx, dy)
@@ -429,7 +393,7 @@ function drawUIAroundGraphNodes(w,h)
             local my = tly + (bry - tly)/2
             return tlx, tly, brx, bry, mx, my
          end
-         if (#currentNode.children > 0) then
+         if (currentNode.children and #currentNode.children > 0) then
          love.graphics.rectangle("fill", w-300, runningY, 20, 20)
          if getUIRect('p1', w-300, runningY, 20,20).clicked then
             local tlx, tly, brx, bry, mx, my = get6(currentNode)

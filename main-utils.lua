@@ -1,5 +1,61 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
+
+function makeOptimizedBatchMesh(folder)
+   -- this one assumes all children are shapes, still need to think of what todo when
+   -- folders are children
+    if #folder.children == 0 then
+      print("this was empty nothing to optimize")
+      return
+   end
+    for i=1, #folder.children do
+      if (folder.children[i].folder) then
+	 print("could not optimize shape, it contained a folder!!")
+	 return
+      end
+    end
+
+
+   local lastColor = folder.children[1].color
+   local allVerts = {}
+   local batchIndex = 1
+
+
+   for i=1, #folder.children do
+      local thisColor = folder.children[i].color
+      if (thisColor[1] ~= lastColor[1]) or
+         (thisColor[2] ~= lastColor[2]) or
+         (thisColor[3] ~= lastColor[3]) then
+
+	 if  folder.optimizedBatchMesh == nil then
+	    folder.optimizedBatchMesh = {}
+	 end
+
+	 local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+	 folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+
+         lastColor = thisColor
+	 allVerts = {}
+         batchIndex = batchIndex + 1
+      end
+
+      allVerts = TableConcat(allVerts, poly.makeVertices(folder.children[i]))
+
+   end
+   if #allVerts  >0 then
+      if  folder.optimizedBatchMesh == nil then
+	 folder.optimizedBatchMesh = {}
+      end
+      local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+      folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+   end
+
+end
+
+
+
+
+
 function signT(p1, p2, p3)
    return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
 end
@@ -101,14 +157,14 @@ function handleChild(shape)
    if shape.folder then
       if (shape.optimizedBatchMesh) then
 	 --print('something optimized todo here!')
-	 
+
          setTransforms(shape)
          --love.graphics.setColor(shape.children[1].color)
          for i=1, #shape.optimizedBatchMesh do
             love.graphics.setColor(shape.optimizedBatchMesh[i].color)
             love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
          end
-         
+
       else
 
 	 renderThings(shape)
@@ -306,7 +362,7 @@ end
 ---- these calculations are only needed when some local transforms have changed
 -- they ought t o be more optimized
 function setTransforms(root)
-   
+
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
@@ -314,7 +370,7 @@ function setTransforms(root)
    end
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
- 
+
 end
 
 

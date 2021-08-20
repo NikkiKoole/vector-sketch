@@ -1,5 +1,57 @@
 -- these utils are used when you wanna use the shapes and all in another application
+function makeOptimizedBatchMesh(folder)
+   -- this one assumes all children are shapes, still need to think of what todo when
+   -- folders are children
 
+   if #folder.children == 0 then
+      print("this was empty nothing to optimize")
+      return
+   end
+
+   for i=1, #folder.children do
+      if (folder.children[i].folder) then
+	 print("could not optimize shape, it contained a folder!!")
+	 return
+      end
+   end
+
+
+   local lastColor = folder.children[1].color
+   local allVerts = {}
+   local batchIndex = 1
+
+
+
+   for i=1, #folder.children do
+      local thisColor = folder.children[i].color
+      if (thisColor[1] ~= lastColor[1]) or
+         (thisColor[2] ~= lastColor[2]) or
+         (thisColor[3] ~= lastColor[3]) then
+
+	 if  folder.optimizedBatchMesh == nil then
+	    folder.optimizedBatchMesh = {}
+	 end
+
+	 local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+	 folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+
+         lastColor = thisColor
+	 allVerts = {}
+         batchIndex = batchIndex + 1
+      end
+
+      allVerts = TableConcat(allVerts, makeVertices(folder.children[i]))
+
+   end
+   if #allVerts  >0 then
+      if  folder.optimizedBatchMesh == nil then
+	 folder.optimizedBatchMesh = {}
+      end
+      local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+      folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+   end
+
+end
 
 function lerp(v0, v1, t)
     return v0*(1-t)+v1*t
@@ -68,13 +120,32 @@ function parentize(node)
    end
 end
 
+function renderNormallyOrOptimized(shape)
+  -- renderThings(shape)
+
+   if true then
+   if (shape.optimizedBatchMesh) then
+      setTransforms(shape)
+      for i=1, #shape.optimizedBatchMesh do
+	 love.graphics.setColor(shape.optimizedBatchMesh[i].color)
+	 love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+      end
+
+   else
+
+      renderThings(shape)
+   end
+   end
+
+end
+
 function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
    if not shape then return end
    --
-   
-   
+
+
 
 
    if shape.mask or shape.hole then
@@ -110,27 +181,28 @@ function handleChild(shape)
 
    if shape.folder then
       --if love.math.random() < .85 then return end
-      
+
       if (shape.depth ~= nil) then
 
          hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
          hack.push()
       end
-      
-      if shape.aabb then
-         local minX = cam.translationX - ((cam.w/2) / cam.scale)
-         local maxX = cam.translationX + ((cam.w/2) / cam.scale)
-         local extraOffset = 100
-         if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
-            renderThings(shape)
-         end
-      else
 
 
-          
-      renderThings(shape)
-      end
+	 if shape.aabb then
+	    local minX = cam.translationX - ((cam.w/2) / cam.scale)
+	    local maxX = cam.translationX + ((cam.w/2) / cam.scale)
+	    local extraOffset = 100
+	    if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
+	       renderNormallyOrOptimized(shape)
+	    end
+	 else
+	    renderNormallyOrOptimized(shape)
+	 end
+
+
+
       love.graphics.setStencilTest()
    --else
      -- print()
@@ -329,32 +401,26 @@ function createLerpedChild(ex1, ex2, t)
 
 end
 
-function renderThings(root)
+-- this function is just for the bacthMeshcurrently
+---- these calculations are only needed when some local transforms have changed
+-- they ought t o be more optimized
+function setTransforms(root)
 
-   ---- these calculations are only needed when some local transforms have changed
-
-   --local tg = root.transforms.g
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
       pg = root._parent._globalTransform
    end
-
-      root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
-
-   
+   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
 
-   ----
-   --print(root._globalTransform)
-   --local localX, localY = root._globalTransform:transformPoint( 0, 0 )
-   --print(minX, localX, maxX )
-   --print(tl[1], tl[2])
-   --Local minX = cam.translationX - (cam.w*2 * cam.scale)
-   --local maxX = cam.translationX + (cam.w*2 * cam.scale)
+end
 
-   --if tl[1] < minX then return end
-   --if tl[1] > maxX then return end
+
+
+function renderThings(root)
+
+   setTransforms(root)
 
    if (root.keyframes) then
       if (root.keyframes == 2) then
