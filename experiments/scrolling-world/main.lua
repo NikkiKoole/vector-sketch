@@ -2,6 +2,8 @@ local Camera = require 'brady'
 local inspect = require 'inspect'
 ProFi = require 'ProFi'
 
+local random = love.math.random
+
 -- four corner distort!!!!
 --https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
 --https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
@@ -40,7 +42,7 @@ end
 function shuffleAndMultiply(items, mul)
    local result = {}
    for i = 1, (#items * mul) do
-      table.insert(result, items[love.math.random()*#items])
+      table.insert(result, items[random()*#items])
    end
    return result
 end
@@ -102,6 +104,9 @@ end
 
 function love.load()
 
+
+    --ProFi:start()
+
    W, H = love.graphics.getDimensions()
    offset = 20
    counter = 0
@@ -126,19 +131,19 @@ function love.load()
    renderCount = 0
 
    for i = 1, 140 do
-      local rndHeight = love.math.random(100, 200)
-      local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
+      local rndHeight = random(100, 200)
+      local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
       table.insert(
          stuff,
          {
-            x = love.math.random(-W*5, W*5 ),
+            x = random(-W*5, W*5 ),
             y = -rndHeight,
             width = 10, --love.math.random(30, 50),
             height = rndHeight,
             color = {.6,
                      mapInto(rndDepth, depthMinMax.min,depthMinMax.max,  .6, .5),
                      mapInto(rndDepth, depthMinMax.min,depthMinMax.max, 0.4, .6) ,
-                     love.math.random(.3,.9)},
+                     random(.3,.9)},
             depth = rndDepth
          }
       )
@@ -155,10 +160,10 @@ function love.load()
       table.insert(
          cameraPoints,
          {
-            x = love.math.random(-W*2, W*2 ),
-            y = love.math.random(-H*2, H*2),
-            width = love.math.random(200, 500),
-            height = love.math.random(200, 500),
+            x = random(-W*2, W*2 ),
+            y = random(-H*2, H*2),
+            width = random(200, 500),
+            height = random(200, 500),
             color = { 1, 1, 1 },
             selected = false
          }
@@ -219,31 +224,29 @@ function love.load()
    initCarParts()
 
    function initGrass()
-
-
       local grass = {}
       local g0 = parseFile('assets/grassx5_.polygons.txt')
       local g1 = parseFile('assets/dong_single.polygons.txt')
       local g2 = parseFile('assets/dong_single2.polygons.txt')
-      for i = 1, 50 do
-         local grass1 = copy3(g0)
-	 local grass2 = copy3(g1)
+      for i = 1, 1000 do
+         ---local grass1 = copy3(g0)
+	 --local grass2 = copy3(g1)
 	 local grass3 = copy3(g2)
-         grass = TableConcat(grass,grass1)
-	 grass = TableConcat(grass,grass1)
-	 grass = TableConcat(grass,grass1)
-	 grass = TableConcat(grass,grass2)
+         --grass = TableConcat(grass,grass1)
+	 --grass = TableConcat(grass,grass1)
+	 --grass = TableConcat(grass,grass1)
+	 --grass = TableConcat(grass,grass2)
 	 grass = TableConcat(grass,grass3)
       end
 
       for i= 1, #grass do
          if grass[i].transforms then
-            grass[i].transforms.l[1] = love.math.random() * 2000
+            grass[i].transforms.l[1] = random() * 2000
             grass[i].transforms.l[2] = 0
-            grass[i].transforms.l[4] = 1.0 + love.math.random()*.2
-            grass[i].transforms.l[5] = 1.0 + love.math.random()* 2
+            grass[i].transforms.l[4] = 1.0 + random()*.2
+            grass[i].transforms.l[5] = 1.0 + random()* 2
 
-            local rndDepth = mapInto(love.math.random(), 0,1, depthMinMax.min, depthMinMax.max )
+            local rndDepth = mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max )
             grass[i].depth = rndDepth
             grass[i].aabb =  grass[i].transforms.l[1]
          end
@@ -289,8 +292,8 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 10 do
-      local generated = generatePolygon(0,0, 4 + love.math.random()*6, .05, .02 , 10)
+   for j = 1, 1 do
+      local generated = generatePolygon(0,0, 4 + random()*6, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
@@ -300,9 +303,9 @@ function love.load()
       local pointsHeight = math.floor((bry - tly)/2)
 
       local r,g,b = hex2rgb('4D391F')
-      r = love.math.random()*255
-      local rndDepth =  mapInto(love.math.random(), 0,1,depthMinMax.min,depthMinMax.max )
-      local xPos = love.math.random()*12000
+      r = random()*255
+      local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
+      local xPos = random()*12000
       local randomShape = {
          folder = true,
          transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
@@ -327,12 +330,29 @@ function love.load()
    avgRunningAhead = 0
    sortOnDepth(root.children)
 
+   if false then
+   makeOptimizedBatchMesh(root.children[1])
+   local m1 = root.children[1].optimizedBatchMesh
+
    for i =1, #root.children do
-      if (root.children[i].folder) then
+      root.children[i].optimizedBatchMesh = m1
+     -- if (root.children[i].folder) then
+	 --makeOptimizedBatchMesh(root.children[i])
+      --end
+   end
+   end
+
+   if true then
+   for i =1, #root.children do
+     if (root.children[i].folder) then
 	 makeOptimizedBatchMesh(root.children[i])
       end
-
    end
+   end
+
+
+   --ProFi:stop()
+   --ProFi:writeReport( 'profilingLoadReport.txt' )
 
 
 end
@@ -446,7 +466,7 @@ function drawCameraCross()
 end
 function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
-   love.graphics.scale(2)
+   love.graphics.scale(2,2)
    love.graphics.print('fps: '..love.timer.getFPS(), 0, 10)
    --love.graphics.print('renderCount: '..renderCount, 0, 30)
 
@@ -454,13 +474,37 @@ function drawDebugStrings()
    love.graphics.print('fps: '..love.timer.getFPS(),1,11)
    --love.graphics.print('renderCount: '..renderCount, 1, 31)
    --love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
-   love.graphics.scale(1)
+   love.graphics.scale(1,1)
 end
+
+-- function drawUI()
+--    local W, H = love.graphics.getDimensions()
+--    love.graphics.setColor(1,1,1)
+
+--    love.graphics.circle('fill', 50, (H/2)-25, 50)
+--    love.graphics.circle('fill', W-50, (H/2)-25, 50)
+-- end
+
+-- function love.mousepressed( x, y, button, istouch, presses )
+--    local W, H = love.graphics.getDimensions()
+
+--    local leftdis = getDistance(x,y, 50, (H/2)-25)
+--    local rightdis = getDistance(x,y, W-50, (H/2)-25)
+
+--    if leftdis < 50 then
+--       print('pressed left')
+--    end
+--    if rightdis < 50 then
+--       print('pressed right')
+--    end
+
+
+-- end
 
 function love.draw()
    renderCount = 0
    counter = counter +1
-   W, H = love.graphics.getDimensions()
+   local W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
    drawCameraBounds(cam, 'line' )
 
@@ -527,9 +571,11 @@ function love.draw()
    end
 
    cam:pop()
-
+   --drawUI()
    --drawCameraCross()
    drawDebugStrings()
+
+
 end
 
 

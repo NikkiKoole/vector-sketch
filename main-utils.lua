@@ -20,7 +20,6 @@ function makeOptimizedBatchMesh(folder)
    local allVerts = {}
    local batchIndex = 1
 
-
    for i=1, #folder.children do
       local thisColor = folder.children[i].color
       if (thisColor[1] ~= lastColor[1]) or

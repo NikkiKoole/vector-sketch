@@ -3,6 +3,9 @@ function makeOptimizedBatchMesh(folder)
    -- this one assumes all children are shapes, still need to think of what todo when
    -- folders are children
 
+   -- another big optimization would be reunsing the meshes, at fiorst because then i just need a few meshes and can reuse them
+   -- second big thing would be drawinstanced meshes
+
    if #folder.children == 0 then
       print("this was empty nothing to optimize")
       return
@@ -19,8 +22,6 @@ function makeOptimizedBatchMesh(folder)
    local lastColor = folder.children[1].color
    local allVerts = {}
    local batchIndex = 1
-
-
 
    for i=1, #folder.children do
       local thisColor = folder.children[i].color
