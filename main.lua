@@ -193,13 +193,30 @@ end
 
 
 function movePoints(node, dx, dy)
-   for i = 1, #childrenInRectangleSelect do
-      local index = childrenInRectangleSelect[i]
-      node.points[index] = {node.points[index][1] + dx, node.points[index][2] + dy}
+   if node.folder then
+      --print('parent is a folder, this is about multiple whole shapes')
+      for i = 1, #childrenInRectangleSelect do
+	 local child = childrenInRectangleSelect[i]
+	 local childIndex = getIndex(child)
+	 for j = 1, #node.children[childIndex].points do
+	    node.children[childIndex].points[j] = {node.children[childIndex].points[j][1] + dx,
+						   node.children[childIndex].points[j][2] + dy}
+	 end
+	 remeshNode( node.children[childIndex])
+      end
 
    end
-   remeshNode(node)
-   --   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
+
+   if node.points then
+      for i = 1, #childrenInRectangleSelect do
+
+	 local index = childrenInRectangleSelect[i]
+	 node.points[index] = {node.points[index][1] + dx, node.points[index][2] + dy}
+
+      end
+      remeshNode(node)
+   end
+
 end
 
 local function arrayHas(tab, val)
