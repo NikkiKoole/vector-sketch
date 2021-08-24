@@ -228,6 +228,7 @@ function love.load()
       local g0 = parseFile('assets/grassx5_.polygons.txt')
       local g1 = parseFile('assets/dong_single.polygons.txt')
       local g2 = parseFile('assets/dong_single2.polygons.txt')
+      --local g2 = parseFile('assets/m2.polygons.txt')
       for i = 1, 100 do
          ---local grass1 = copy3(g0)
 	 --local grass2 = copy3(g1)
@@ -256,6 +257,17 @@ function love.load()
       root.children = grass
    end
    initGrass()
+
+
+   -- floor plane stuff
+   floorplane = parseFile('assets/m2.polygons.txt')[1]
+  --  floorplane = parseFile('assets/square-pattern.polygons.txt')[1]
+   --print(inspect(floorplane))
+   meshAll(floorplane)
+   plane_bbox = getBBoxOfChildren(floorplane.children)
+   --print(inspect(plane_bbox))
+
+
 
    -- new player
    newPlayer = {
@@ -351,11 +363,15 @@ function love.load()
    end
 
 
+
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
 
 
 end
+
+
+
 
 function love.update(dt)
    local v = {x=0, y=0}
@@ -442,11 +458,52 @@ function drawGroundPlaneLines()
 
    if s < 0 then s = s -100 end
    if e < 0 then e = e -100 end
+   if true then
    for i = s, e, 100 do
+
       local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
       local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
       love.graphics.line(x1,y1,x2,y2)
+
+      local x3, y3 = cam:getScreenCoordinates(i+100,0, 'hackFar')
+      love.graphics.line(x3,y3, x2,y2)
+      local x4, y4 = cam:getScreenCoordinates(i+100,0, 'hackClose')
+      love.graphics.line(x4,y4, x1,y1)
+
+      local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
+      local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
+
+      for j = 1, #floorplane.children do
+	 if floorplane.children[j].points then
+	    if floorplane.children[j].mesh then
+	       --print('things todo')
+	       local count = floorplane.children[j].mesh:getVertexCount()
+	       local result = {}
+	       for v = 1, count do
+		  local x, y = floorplane.children[j].mesh:getVertex(v)
+		  --print(x, y)
+		  local r = transferPoint (x, y, source, dest)
+		  --print(x,y,r.x,r.y)
+		  table.insert(result, {r.x, r.y})
+	       end
+	       local perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+	       -- print(#result)
+	       --  need a mesh to reuse and do this:
+	       --  currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
+	       -- laso, when the groundplane hasnt changed i should just reuse the old meshes, nothing needs calculating then
+
+	       love.graphics.setColor(floorplane.children[j].color[1],
+				      floorplane.children[j].color[2],
+				      floorplane.children[j].color[3])
+	       love.graphics.draw(perspMesh)
+	    end
+	 end
+      end
+
+
    end
+   end
+   --print('****')
 end
 
 function drawCameraViewPointRectangles()

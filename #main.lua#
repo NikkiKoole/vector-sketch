@@ -1687,7 +1687,7 @@ function love.draw()
 
                local source = {bbox.tl.x,bbox.tl.y,  bbox.br.x, bbox.br.y}
                local dest = {{ip1x, ip1y},{ip2x, ip2y},{ip3x, ip3y},{ip4x, ip4y}}
-
+	       --perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
                for i = 1, #currentNode.children do
 
                   if currentNode.children[i].points then
