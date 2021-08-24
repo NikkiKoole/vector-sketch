@@ -363,7 +363,6 @@ function love.load()
    end
 
 
-
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
 
@@ -436,6 +435,7 @@ function love.mousepressed(x,y)
             v.selected = true
             local cw, ch = cam:getContainerDimensions()
             local targetScale = math.min(cw/v.width, ch/v.height)
+	    print('need to decide howmany ground meshes')
 
             cam:setScale(targetScale)
             cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
@@ -447,62 +447,89 @@ function love.mousepressed(x,y)
    end
 end
 
+function drawGroundPlaneInPosition(source, dest, i,s,e)
+   for j = 1, #floorplane.children do
+      if floorplane.children[j].points then
+	 if floorplane.children[j].mesh then
+	    local count = floorplane.children[j].mesh:getVertexCount()
+	    local result = {}
+
+	    for v = 1, count do
+	       local x, y = floorplane.children[j].mesh:getVertex(v)
+	       local r = transferPoint (x, y, source, dest)
+
+	       table.insert(result, {r.x, r.y})
+	    end
+	    if (tostring(result[1][1]) == 'nan' ) then
+	       print(inspect(result))
+	       --print("source", inspect(source))
+	       print("broken dest", inspect(dest))
+	       print("broken vars", i,s,e)
+
+	    else
+	       --print("good dest", inspect(dest))
+
+	    end
+
+
+
+	    local perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+	    -- print(#result)
+	    --  need a mesh to reuse and do this:
+	    --  currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
+	    -- laso, when the groundplane hasnt changed i should just reuse the old meshes, nothing needs calculating then
+	    --if #result ~= currentNode.children[i].perspectiveMesh:getVertexCount() then
+	    --               currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+	    --if index == 0 then
+	    --	  print('geting here thiough')
+	    --     end
+	    --   if (index ~= 0) then
+
+
+	       love.graphics.setColor(floorplane.children[j].color[1],
+				      floorplane.children[j].color[2],
+				      floorplane.children[j].color[3])
+	       love.graphics.draw(perspMesh)
+	       love.graphics.setColor(1,1,1)
+
+
+	 end
+      end
+   end
+end
+
+
 function drawGroundPlaneLines()
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
    local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
    local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
-   local s = math.ceil(x1/100)*100
+   local s = math.floor(x1/100)*100
    local e = math.ceil(x2/100)*100
+   --print(s,e)
+   --if s < 0 then  s = s -100 end
+   --if e < 0 then e = e -100 end
+   --print(e,s,1 + (e-s)/100)
+   --if true then
+      for i = s, e, 100 do
 
-   if s < 0 then s = s -100 end
-   if e < 0 then e = e -100 end
-   if true then
-   for i = s, e, 100 do
+	 --print(i,s)
+	 local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
+	 local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
+	 love.graphics.line(x1,y1,x2,y2)
 
-      local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
-      local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
-      love.graphics.line(x1,y1,x2,y2)
+	 local x3, y3 = cam:getScreenCoordinates(i+100.0001,0, 'hackFar')
+	 love.graphics.line(x3,y3, x2,y2)
+	 local x4, y4 = cam:getScreenCoordinates(i+100.0001,0, 'hackClose')
+	 love.graphics.line(x4,y4, x1,y1)
 
-      local x3, y3 = cam:getScreenCoordinates(i+100,0, 'hackFar')
-      love.graphics.line(x3,y3, x2,y2)
-      local x4, y4 = cam:getScreenCoordinates(i+100,0, 'hackClose')
-      love.graphics.line(x4,y4, x1,y1)
-
-      local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
-      local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
-
-      for j = 1, #floorplane.children do
-	 if floorplane.children[j].points then
-	    if floorplane.children[j].mesh then
-	       --print('things todo')
-	       local count = floorplane.children[j].mesh:getVertexCount()
-	       local result = {}
-	       for v = 1, count do
-		  local x, y = floorplane.children[j].mesh:getVertex(v)
-		  --print(x, y)
-		  local r = transferPoint (x, y, source, dest)
-		  --print(x,y,r.x,r.y)
-		  table.insert(result, {r.x, r.y})
-	       end
-	       local perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
-	       -- print(#result)
-	       --  need a mesh to reuse and do this:
-	       --  currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
-	       -- laso, when the groundplane hasnt changed i should just reuse the old meshes, nothing needs calculating then
-
-	       love.graphics.setColor(floorplane.children[j].color[1],
-				      floorplane.children[j].color[2],
-				      floorplane.children[j].color[3])
-	       love.graphics.draw(perspMesh)
-	    end
-	 end
+	 local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
+	 local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
+	 --print(inspect(dest))
+	 drawGroundPlaneInPosition(source, dest, i, s, e)
       end
-
-
-   end
-   end
+   --end
    --print('****')
 end
 
@@ -610,6 +637,7 @@ function love.draw()
 
    cam:push()
 
+
    --https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
    -- spoiler use a heap
    --sortOnDepth(root.children)
@@ -644,10 +672,12 @@ end
 
 
 function love.wheelmoved( dx, dy )
+   print('need to decide howmany ground meshes')
    cam:scaleToPoint(  1 + dy / 10)
 end
 
 function love.resize(w, h)
+   print('need to decide howmany ground meshes')
    print(("Window resized to width: %d and height: %d."):format(w, h))
    print(inspect(cam))
    --cam:update(w,h)
