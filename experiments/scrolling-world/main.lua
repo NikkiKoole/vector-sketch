@@ -260,7 +260,7 @@ function love.load()
 
 
    -- floor plane stuff
-   floorplane = parseFile('assets/m2.polygons.txt')[1]
+   floorplane = parseFile('assets/m2_.polygons.txt')[1]
   --  floorplane = parseFile('assets/square-pattern.polygons.txt')[1]
    --print(inspect(floorplane))
    meshAll(floorplane)
@@ -460,16 +460,16 @@ function drawGroundPlaneInPosition(source, dest, i,s,e)
 
 	       table.insert(result, {r.x, r.y})
 	    end
-	    if (tostring(result[1][1]) == 'nan' ) then
-	       print(inspect(result))
-	       --print("source", inspect(source))
-	       print("broken dest", inspect(dest))
-	       print("broken vars", i,s,e)
+	    -- if (tostring(result[1][1]) == 'nan' ) then
+	    --    print(inspect(result))
+	    --    --print("source", inspect(source))
+	    --    print("broken dest", inspect(dest))
+	    --    print("broken vars", i,s,e)
 
-	    else
-	       --print("good dest", inspect(dest))
+	    -- else
+	    --    --print("good dest", inspect(dest))
 
-	    end
+	    -- end
 
 
 
@@ -515,14 +515,14 @@ function drawGroundPlaneLines()
       for i = s, e, 100 do
 
 	 --print(i,s)
-	 local x1,y1 = cam:getScreenCoordinates(i,0, 'hackFar')
-	 local x2,y2 = cam:getScreenCoordinates(i,0, 'hackClose')
-	 love.graphics.line(x1,y1,x2,y2)
+	 local x1,y1 = cam:getScreenCoordinates(i+0.0001,0, 'hackFar')
+	 local x2,y2 = cam:getScreenCoordinates(i+0.0001,0, 'hackClose')
+	 --love.graphics.line(x1,y1,x2,y2)
 
 	 local x3, y3 = cam:getScreenCoordinates(i+100.0001,0, 'hackFar')
-	 love.graphics.line(x3,y3, x2,y2)
+	 --love.graphics.line(x3,y3, x2,y2)
 	 local x4, y4 = cam:getScreenCoordinates(i+100.0001,0, 'hackClose')
-	 love.graphics.line(x4,y4, x1,y1)
+	 --love.graphics.line(x4,y4, x1,y1)
 
 	 local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
 	 local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
