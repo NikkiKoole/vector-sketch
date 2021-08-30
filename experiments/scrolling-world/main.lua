@@ -128,7 +128,7 @@ function love.load()
    carThickness = 12.5
    testCar = false
    testCameraViewpointRects = false
-   renderCount = {normal=0, optimized=0}
+   renderCount = {normal=0, optimized=0, groundMesh=0}
 
    for i = 1, 140 do
       local rndHeight = random(100, 200)
@@ -460,6 +460,7 @@ function drawGroundPlanesSameSame(index)
 				   floorplane.children[j].color[2],
 				   floorplane.children[j].color[3])
 	    love.graphics.draw(groundPlane[index][j].perspMesh)
+	    renderCount.groundMesh = renderCount.groundMesh + 1
 	    love.graphics.setColor(1,1,1)
 	    --print(floorplane.children[j].perspMesh:getVertexCount())
 
@@ -502,6 +503,8 @@ function drawGroundPlaneInPosition(source, dest, index)
 				      floorplane.children[j].color[2],
 				      floorplane.children[j].color[3])
 	       love.graphics.draw(groundPlane[index][j].perspMesh)
+	       renderCount.groundMesh = renderCount.groundMesh + 1
+
 	       love.graphics.setColor(1,1,1)
 
 
@@ -571,12 +574,14 @@ function drawDebugStrings()
    love.graphics.scale(2,2)
    love.graphics.print('fps: '..love.timer.getFPS(), 20, 10)
    love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
-    love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
+   love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
+    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
 
    love.graphics.setColor(1,1,1,.8)
    love.graphics.print('fps: '..love.timer.getFPS(),21,11)
    love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
     love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
+    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
 
    --love.graphics.print('renderCount: '..renderCount, 1, 31)
    --love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
@@ -609,7 +614,7 @@ end
 -- end
 
 function love.draw()
-   renderCount = {normal=0, optimized=0}
+   renderCount = {normal=0, optimized=0, groundMesh=0}
 
    counter = counter +1
    local W, H = love.graphics.getDimensions()
