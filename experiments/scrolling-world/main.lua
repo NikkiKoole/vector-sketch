@@ -187,6 +187,9 @@ function love.load()
          end
       }
    )
+   lastCameraBounds = {nil, nil}
+
+   groundPlane = {}
 
    hack = generateCameraLayer('hack', 1)
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
@@ -447,7 +450,28 @@ function love.mousepressed(x,y)
    end
 end
 
-function drawGroundPlaneInPosition(source, dest, i,s,e)
+
+function drawGroundPlanesSameSame(index)
+   for j = 1, #floorplane.children do
+      if floorplane.children[j].points then
+	 --if floorplane.children[j].perspMesh then
+	    --print('hi hello?')
+	    love.graphics.setColor(floorplane.children[j].color[1],
+				   floorplane.children[j].color[2],
+				   floorplane.children[j].color[3])
+	    love.graphics.draw(groundPlane[index][j].perspMesh)
+	    love.graphics.setColor(1,1,1)
+	    --print(floorplane.children[j].perspMesh:getVertexCount())
+
+	 --end
+      end
+   end
+
+end
+
+
+function drawGroundPlaneInPosition(source, dest, index)
+
    for j = 1, #floorplane.children do
       if floorplane.children[j].points then
 	 if floorplane.children[j].mesh then
@@ -460,36 +484,24 @@ function drawGroundPlaneInPosition(source, dest, i,s,e)
 
 	       table.insert(result, {r.x, r.y})
 	    end
-	    -- if (tostring(result[1][1]) == 'nan' ) then
-	    --    print(inspect(result))
-	    --    --print("source", inspect(source))
-	    --    print("broken dest", inspect(dest))
-	    --    print("broken vars", i,s,e)
+	    -- todo these 2 check below are maybe better suited at init, just prepopulate a 2d array
+	    if not groundPlane[index] then
+	       groundPlane[index] = {}
+	    end
+	    if not groundPlane[index][j] then
+	       groundPlane[index][j] = {}
+	    end
 
-	    -- else
-	    --    --print("good dest", inspect(dest))
-
-	    -- end
-
-
-
-	    local perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
-	    -- print(#result)
-	    --  need a mesh to reuse and do this:
-	    --  currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
-	    -- laso, when the groundplane hasnt changed i should just reuse the old meshes, nothing needs calculating then
-	    --if #result ~= currentNode.children[i].perspectiveMesh:getVertexCount() then
-	    --               currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
-	    --if index == 0 then
-	    --	  print('geting here thiough')
-	    --     end
-	    --   if (index ~= 0) then
-
+	    if  groundPlane[index][j].perspMesh and groundPlane[index][j].perspMesh:getVertexCount() == #result then
+	       groundPlane[index][j].perspMesh:setVertices(result, 1, #result)
+	    else
+	       groundPlane[index][j] = {perspMesh=love.graphics.newMesh(simple_format, result , "triangles", "stream")}
+	    end
 
 	       love.graphics.setColor(floorplane.children[j].color[1],
 				      floorplane.children[j].color[2],
 				      floorplane.children[j].color[3])
-	       love.graphics.draw(perspMesh)
+	       love.graphics.draw(groundPlane[index][j].perspMesh)
 	       love.graphics.setColor(1,1,1)
 
 
@@ -500,37 +512,42 @@ end
 
 
 function drawGroundPlaneLines()
+
+   local tileSize = 100
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
    local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
    local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
-   local s = math.floor(x1/100)*100
-   local e = math.ceil(x2/100)*100
-   --print(s,e)
-   --if s < 0 then  s = s -100 end
-   --if e < 0 then e = e -100 end
-   --print(e,s,1 + (e-s)/100)
-   --if true then
-      for i = s, e, 100 do
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
 
-	 --print(i,s)
-	 local x1,y1 = cam:getScreenCoordinates(i+0.0001,0, 'hackFar')
-	 local x2,y2 = cam:getScreenCoordinates(i+0.0001,0, 'hackClose')
-	 --love.graphics.line(x1,y1,x2,y2)
 
-	 local x3, y3 = cam:getScreenCoordinates(i+100.0001,0, 'hackFar')
-	 --love.graphics.line(x3,y3, x2,y2)
-	 local x4, y4 = cam:getScreenCoordinates(i+100.0001,0, 'hackClose')
-	 --love.graphics.line(x4,y4, x1,y1)
+   if true then
+      if lastCameraBounds[1] == x1 and lastCameraBounds[2] == x2 and lastCameraBounds[3] == y1 then
+	 for i = s, e, tileSize do
+	    local index = (i - s)/tileSize
+	    drawGroundPlanesSameSame(index)
+	 end
+      else
+	 for i = s, e, tileSize do
+	    local index = (i - s)/tileSize
+	    local x1,y1 = cam:getScreenCoordinates(i+0.0001,0, 'hackFar')
+	    local x2,y2 = cam:getScreenCoordinates(i+0.0001,0, 'hackClose')
+	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001,0, 'hackFar')
+	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001,0, 'hackClose')
+	    local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
+	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
 
-	 local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
-	 local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
-	 --print(inspect(dest))
-	 drawGroundPlaneInPosition(source, dest, i, s, e)
+	    drawGroundPlaneInPosition(source, dest, index)
+	 end
+	 lastCameraBounds= {x1,x2,y1, y2}
       end
-   --end
-   --print('****')
+   end
+
+
+
+
 end
 
 function drawCameraViewPointRectangles()
