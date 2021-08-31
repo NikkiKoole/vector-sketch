@@ -4,10 +4,6 @@ ProFi = require 'ProFi'
 
 local random = love.math.random
 
--- four corner distort!!!!
---https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
---https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
-
 function require_all(path, opts)
    local items = love.filesystem.getDirectoryItems(path)
    for _, item in pairs(items) do
@@ -233,13 +229,13 @@ function love.load()
       local g2 = parseFile('assets/dong_single2.polygons.txt')
       --local g2 = parseFile('assets/m2.polygons.txt')
       for i = 1, 100 do
-         ---local grass1 = copy3(g0)
-	 --local grass2 = copy3(g1)
+         local grass1 = copy3(g0)
+	 local grass2 = copy3(g1)
 	 local grass3 = copy3(g2)
          --grass = TableConcat(grass,grass1)
 	 --grass = TableConcat(grass,grass1)
-	 --grass = TableConcat(grass,grass1)
-	 --grass = TableConcat(grass,grass2)
+	 grass = TableConcat(grass,grass1)
+	 grass = TableConcat(grass,grass2)
 	 grass = TableConcat(grass,grass3)
       end
 
@@ -438,7 +434,7 @@ function love.mousepressed(x,y)
             v.selected = true
             local cw, ch = cam:getContainerDimensions()
             local targetScale = math.min(cw/v.width, ch/v.height)
-	    print('need to decide howmany ground meshes')
+	    --print('need to decide howmany ground meshes')
 
             cam:setScale(targetScale)
             cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
@@ -694,14 +690,14 @@ end
 
 
 function love.wheelmoved( dx, dy )
-   print('need to decide howmany ground meshes')
+   --print('need to decide howmany ground meshes')
    cam:scaleToPoint(  1 + dy / 10)
 end
 
 function love.resize(w, h)
-   print('need to decide howmany ground meshes')
-   print(("Window resized to width: %d and height: %d."):format(w, h))
-   print(inspect(cam))
+   --print('need to decide howmany ground meshes')
+   --print(("Window resized to width: %d and height: %d."):format(w, h))
+   --print(inspect(cam))
    --cam:update(w,h)
 
 end
