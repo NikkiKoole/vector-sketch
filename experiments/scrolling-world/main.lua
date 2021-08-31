@@ -123,7 +123,7 @@ function love.load()
    stuff = {} -- this is the testlayer with just some rectangles and the red player
 
    depthMinMax = {min=-2, max=2}
-   depthScaleFactors = { min=.95, max=1.05}
+   depthScaleFactors = { min=.9, max=1.1}
 
    carThickness = 12.5
    testCar = false
@@ -232,20 +232,20 @@ function love.load()
       local g1 = parseFile('assets/dong_single.polygons.txt')
       local g2 = parseFile('assets/dong_single2.polygons.txt')
       --local g2 = parseFile('assets/m2.polygons.txt')
-      for i = 1, 100 do
+      for i = 1, 50 do
          ---local grass1 = copy3(g0)
-	 --local grass2 = copy3(g1)
+	 local grass2 = copy3(g1)
 	 local grass3 = copy3(g2)
          --grass = TableConcat(grass,grass1)
 	 --grass = TableConcat(grass,grass1)
 	 --grass = TableConcat(grass,grass1)
-	 --grass = TableConcat(grass,grass2)
+	 grass = TableConcat(grass,grass2)
 	 grass = TableConcat(grass,grass3)
       end
 
       for i= 1, #grass do
          if grass[i].transforms then
-            grass[i].transforms.l[1] = random() * 2000
+            grass[i].transforms.l[1] = -1000 + random() * 2000
             grass[i].transforms.l[2] = 0
             grass[i].transforms.l[4] = 1.0 + random()*.2
             grass[i].transforms.l[5] = 1.0 + random()* 2
@@ -364,7 +364,11 @@ function love.load()
       end
    end
    end
-
+   
+   cam:setTranslation(
+      player.x + player.width/2 ,
+      player.y - 350
+   )
 
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
@@ -420,7 +424,7 @@ function love.update(dt)
       local distanceAhead = math.floor(300*v.x)
       cam:setTranslationSmooth(
          player.x + player.width/2 ,
-         player.y  - 350,
+         player.y - 350,
          dt,
          2
       )
@@ -614,7 +618,6 @@ function love.draw()
    counter = counter +1
    local W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
-   drawCameraBounds(cam, 'line' )
 
    if (false) then
       farther:push()
@@ -682,7 +685,11 @@ function love.draw()
    cam:pop()
    --drawUI()
    --drawCameraCross()
+   love.graphics.setColor(1,1,1)
+   drawCameraBounds(cam, 'line' )
+
    drawDebugStrings()
+
 
 
 end
