@@ -293,7 +293,7 @@ function love.load()
          
          local grass = {}
 
-         for i= 1, 100 do
+         for i= 1, 50 do
             
             grass[i]= {
                folder = true,
@@ -302,7 +302,7 @@ function love.load()
                children ={}
             }
             if grass[i].transforms then
-               grass[i].transforms.l[1] = -20000 + random() * 40000
+               grass[i].transforms.l[1] = -2000 + random() * 4000
                grass[i].transforms.l[2] = 0
                grass[i].transforms.l[4] = 1.0 + random()*.2
                grass[i].transforms.l[5] = 1.0 + random()* 2
@@ -501,7 +501,7 @@ function love.update(dt)
    cam:update()
 end
 
-function love.mousepressed(x,y)
+function love.mousepressed(x,y, button, istouch, presses)
    local wx, wy = cam:getMouseWorldCoordinates()
    local foundOne = false
    if testCameraViewpointRects then
@@ -520,6 +520,17 @@ function love.mousepressed(x,y)
          end
 
       end
+   end
+   local W, H = love.graphics.getDimensions()
+
+   local leftdis = getDistance(x,y, 50, (H/2)-25)
+   local rightdis = getDistance(x,y, W-50, (H/2)-25)
+
+   if leftdis < 50 then
+      print('pressed left')
+   end
+   if rightdis < 50 then
+      print('pressed right')
    end
 end
 
@@ -661,13 +672,13 @@ function drawDebugStrings()
    love.graphics.scale(1,1)
 end
 
--- function drawUI()
---    local W, H = love.graphics.getDimensions()
---    love.graphics.setColor(1,1,1)
+function drawUI()
+    local W, H = love.graphics.getDimensions()
+    love.graphics.setColor(1,1,1)
 
---    love.graphics.circle('fill', 50, (H/2)-25, 50)
---    love.graphics.circle('fill', W-50, (H/2)-25, 50)
--- end
+    love.graphics.circle('fill', 50, (H/2)-25, 50)
+    love.graphics.circle('fill', W-50, (H/2)-25, 50)
+end
 
 
 -- function love.mousepressed( x, y, button, istouch, presses )
@@ -757,9 +768,10 @@ function love.draw()
    end
 
    cam:pop()
-   --drawUI()
    --drawCameraCross()
    love.graphics.setColor(1,1,1)
+   drawUI()
+
    drawCameraBounds(cam, 'line' )
 
    drawDebugStrings()
