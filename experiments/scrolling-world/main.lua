@@ -270,8 +270,20 @@ function love.load()
       
       local all = {}
       local urls = {
-         'assets/dong_single2.polygons.txt',
-         'assets/dong_single.polygons.txt',
+         'assets/plant1.polygons.txt',
+         'assets/plant2.polygons.txt',
+         'assets/plant3.polygons.txt',
+         'assets/plant4.polygons.txt',
+         'assets/plant5.polygons.txt',
+         'assets/plant6.polygons.txt',
+         'assets/plant7.polygons.txt',
+         'assets/plant8.polygons.txt',
+         'assets/plant9.polygons.txt',
+         'assets/plant10.polygons.txt',
+         'assets/plant11.polygons.txt',
+         'assets/plant12.polygons.txt',
+         'assets/plant13.polygons.txt',
+
       }
 
       for j = 1, #urls do
@@ -281,7 +293,7 @@ function love.load()
          
          local grass = {}
 
-         for i= 1, 10 do
+         for i= 1, 100 do
             
             grass[i]= {
                folder = true,
@@ -290,7 +302,7 @@ function love.load()
                children ={}
             }
             if grass[i].transforms then
-               grass[i].transforms.l[1] = -1000 + random() * 2000
+               grass[i].transforms.l[1] = -20000 + random() * 40000
                grass[i].transforms.l[2] = 0
                grass[i].transforms.l[4] = 1.0 + random()*.2
                grass[i].transforms.l[5] = 1.0 + random()* 2
@@ -358,8 +370,8 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 4 do
-      local generated = generatePolygon(0,0, 4 + random()*6, .05, .02 , 10)
+   for j = 1, 40 do
+      local generated = generatePolygon(0,0, 4 + random()*16, .05 + random()*.01, .02 , 8 + random()*8)
       local points = {}
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
@@ -371,7 +383,7 @@ function love.load()
       local r,g,b = hex2rgb('4D391F')
       r = random()*255
       local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
-      local xPos = random()*120
+      local xPos = random()*1200
       local randomShape = {
          folder = true,
          transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
