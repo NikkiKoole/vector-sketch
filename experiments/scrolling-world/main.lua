@@ -1,6 +1,7 @@
 local Camera = require 'brady'
 local inspect = require 'inspect'
 ProFi = require 'ProFi'
+require 'generateWorld'
 
 local random = love.math.random
 
@@ -22,7 +23,7 @@ end
 
 require_all "vecsketch"
 
--- utility function that ought to be somewehre else
+-- utility functions that ought to be somewehre else
 
 function pointInRect(x,y, rx, ry, rw, rh)
    if x < rx or y < ry then return false end
@@ -55,6 +56,27 @@ function copy3(obj, seen)
    for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
    return setmetatable(res, getmetatable(obj))
 end
+
+function findAllFolderNodesRecursively(root)
+   if root.folder then
+      if root.url then
+         root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
+      end
+      
+      --print(root.name, #root.children, root.url)
+   end
+
+   if root.children then
+      for i=1, #root.children do
+         if root.children[i].folder then
+            findAllFolderNodesRecursively(root.children[i])
+         end
+         
+      end
+   end
+end
+
+
 
 -- end utility functions
 
@@ -100,6 +122,7 @@ end
 
 function love.load()
 
+   local loadStart = love.timer.getTime()
 
     --ProFi:start()
 
@@ -118,6 +141,8 @@ function love.load()
    cameraFollowPlayer = true
    stuff = {} -- this is the testlayer with just some rectangles and the red player
 
+   meshCache = {}
+   
    depthMinMax = {min=-2, max=2}
    depthScaleFactors = { min=.9, max=1.1}
 
@@ -126,6 +151,7 @@ function love.load()
    testCameraViewpointRects = false
    renderCount = {normal=0, optimized=0, groundMesh=0}
 
+   if false then
    for i = 1, 140 do
       local rndHeight = random(100, 200)
       local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -150,6 +176,7 @@ function love.load()
 
 
    sortOnDepth(stuff)
+   end
 
    cameraPoints = {}
    for i = 1, 10 do
@@ -222,37 +249,65 @@ function love.load()
    end
    initCarParts()
 
+
+   function readFileAndAddToCache(url)
+      if not meshCache[url] then
+         local g2 = parseFile(url)[1]
+         assert(g2)
+         meshAll(g2)
+         makeOptimizedBatchMesh(g2)
+         meshCache[url] = g2
+      else
+         print(url, 'was already in the cache you fool')
+      end
+
+      return meshCache[url]
+      
+   end
+      
+   
    function initGrass()
-      local grass = {}
-      local g0 = parseFile('assets/grassx5_.polygons.txt')
-      local g1 = parseFile('assets/dong_single.polygons.txt')
-      local g2 = parseFile('assets/dong_single2.polygons.txt')
-      --local g2 = parseFile('assets/m2.polygons.txt')
-      for i = 1, 50 do
-         ---local grass1 = copy3(g0)
-	 local grass2 = copy3(g1)
-	 local grass3 = copy3(g2)
-         --grass = TableConcat(grass,grass1)
-	 --grass = TableConcat(grass,grass1)
-	 grass = TableConcat(grass,grass2)
-	 grass = TableConcat(grass,grass3)
-      end
+      
+      local all = {}
+      local urls = {
+         'assets/dong_single2.polygons.txt',
+         'assets/dong_single.polygons.txt',
+      }
 
-      for i= 1, #grass do
-         if grass[i].transforms then
-            grass[i].transforms.l[1] = -1000 + random() * 2000
-            grass[i].transforms.l[2] = 0
-            grass[i].transforms.l[4] = 1.0 + random()*.2
-            grass[i].transforms.l[5] = 1.0 + random()* 2
+      for j = 1, #urls do
+         local url = urls[j]
+         local read = readFileAndAddToCache(url)
+         
+         
+         local grass = {}
 
-            local rndDepth = mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max )
-            grass[i].depth = rndDepth
-            grass[i].aabb =  grass[i].transforms.l[1]
+         for i= 1, 10 do
+            
+            grass[i]= {
+               folder = true,
+               transforms =  copy3(read.transforms),
+               name="generated",
+               children ={}
+            }
+            if grass[i].transforms then
+               grass[i].transforms.l[1] = -1000 + random() * 2000
+               grass[i].transforms.l[2] = 0
+               grass[i].transforms.l[4] = 1.0 + random()*.2
+               grass[i].transforms.l[5] = 1.0 + random()* 2
+
+               local rndDepth = mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max )
+               grass[i].depth = rndDepth
+               grass[i].aabb =  grass[i].transforms.l[1]
+               grass[i].url = url
+            end
+            --print(grass[i].url)
          end
-
+         all = TableConcat(all, grass)
       end
-
-      root.children = grass
+      root.children = all
+      
+      --print(inspect(grass[1]))
+     
    end
    initGrass()
 
@@ -287,6 +342,7 @@ function love.load()
    end
 
    table.insert(root.children, newPlayer)
+   meshAll(newPlayer)
 
    if testCar then
       voor2 = {
@@ -302,7 +358,7 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 1 do
+   for j = 1, 4 do
       local generated = generatePolygon(0,0, 4 + random()*6, .05, .02 , 10)
       local points = {}
       for i = 1, #generated, 2 do
@@ -315,7 +371,7 @@ function love.load()
       local r,g,b = hex2rgb('4D391F')
       r = random()*255
       local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
-      local xPos = random()*12000
+      local xPos = random()*120
       local randomShape = {
          folder = true,
          transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
@@ -330,43 +386,49 @@ function love.load()
             },
          }
       }
+      meshAll(randomShape)
 
       table.insert(root.children, randomShape)
    end
 
    parentize(root)
-   meshAll(root)
+   --meshAll(root)
    renderThings(root)
    avgRunningAhead = 0
    sortOnDepth(root.children)
 
    if false then
-   makeOptimizedBatchMesh(root.children[1])
-   local m1 = root.children[1].optimizedBatchMesh
+      if true then
+         makeOptimizedBatchMesh(root.children[1])
+         local m1 = root.children[1].optimizedBatchMesh
 
-   for i =1, #root.children do
-      root.children[i].optimizedBatchMesh = m1
-     -- if (root.children[i].folder) then
-	 --makeOptimizedBatchMesh(root.children[i])
-      --end
-   end
-   end
+         for i =1, #root.children do
+            root.children[i].optimizedBatchMesh = m1
+            -- if (root.children[i].folder) then
+            --makeOptimizedBatchMesh(root.children[i])
+            --end
+         end
+      end
 
-   if true then
-   for i =1, #root.children do
-     if (root.children[i].folder) then
-	 makeOptimizedBatchMesh(root.children[i])
+      if false then
+         for i =1, #root.children do
+            if (root.children[i].folder) then
+               makeOptimizedBatchMesh(root.children[i])
+            end
+         end
       end
    end
-   end
-
+   
    cam:setTranslation(
       player.x + player.width/2 ,
       player.y - 350
    )
-
+   test()
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
+
+   findAllFolderNodesRecursively(root)
+   print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 
 
 end
