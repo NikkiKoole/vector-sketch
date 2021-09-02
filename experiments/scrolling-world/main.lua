@@ -62,8 +62,6 @@ function findAllFolderNodesRecursively(root)
       if root.url then
          root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
       end
-
-      --print(root.name, #root.children, root.url)
    end
 
    if root.children then
@@ -75,8 +73,6 @@ function findAllFolderNodesRecursively(root)
       end
    end
 end
-
-
 
 -- end utility functions
 
@@ -139,7 +135,7 @@ function love.load()
 
    local loadStart = love.timer.getTime()
 
-    --ProFi:start()
+   --ProFi:start()
 
    W, H = love.graphics.getDimensions()
    offset = 20
@@ -166,31 +162,29 @@ function love.load()
    testCameraViewpointRects = false
    renderCount = {normal=0, optimized=0, groundMesh=0}
 
+   moving = nil
+
    if false then
-   for i = 1, 140 do
-      local rndHeight = random(100, 200)
-      local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
-      table.insert(
-         stuff,
-         {
-            x = random(-W*5, W*5 ),
-            y = -rndHeight,
-            width = 10, --love.math.random(30, 50),
-            height = rndHeight,
-            color = {.6,
-                     mapInto(rndDepth, depthMinMax.min,depthMinMax.max,  .6, .5),
-                     mapInto(rndDepth, depthMinMax.min,depthMinMax.max, 0.4, .6) ,
-                     random(.3,.9)},
-            depth = rndDepth
-         }
-      )
-   end
-
-   table.insert(stuff, player)
-
-
-
-   sortOnDepth(stuff)
+      for i = 1, 140 do
+	 local rndHeight = random(100, 200)
+	 local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
+	 table.insert(
+	    stuff,
+	    {
+	       x = random(-W*5, W*5 ),
+	       y = -rndHeight,
+	       width = 10, --love.math.random(30, 50),
+	       height = rndHeight,
+	       color = {.6,
+			mapInto(rndDepth, depthMinMax.min,depthMinMax.max,  .6, .5),
+			mapInto(rndDepth, depthMinMax.min,depthMinMax.max, 0.4, .6) ,
+			random(.3,.9)},
+	       depth = rndDepth
+	    }
+	 )
+      end
+      table.insert(stuff, player)
+      sortOnDepth(stuff)
    end
 
    cameraPoints = {}
@@ -228,7 +222,6 @@ function love.load()
    lastCameraBounds = {nil, nil}
 
 
-
    hack = generateCameraLayer('hack', 1)
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
    hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
@@ -257,7 +250,6 @@ function love.load()
       carbodyVoor.children[2].children[1].color[4] = 0.6
       carbodyVoor.children[2].children[2].color[4] = 0.6
 
-
       carbodyVoor.transforms.l[1]=0
       carbodyVoor.transforms.l[2]=0
       carbodyVoor.depth = carThickness
@@ -266,7 +258,6 @@ function love.load()
 
 
    function initGrass()
-
       local all = {}
       local urls = {
          'assets/plant1.polygons.txt',
@@ -288,12 +279,9 @@ function love.load()
       for j = 1, #urls do
          local url = urls[j]
          local read = readFileAndAddToCache(url)
-
-
          local grass = {}
 
-         for i= 1, 50 do
-
+         for i= 1, 5 do
             grass[i]= {
                folder = true,
                transforms =  copy3(read.transforms),
@@ -311,28 +299,21 @@ function love.load()
                grass[i].aabb =  grass[i].transforms.l[1]
                grass[i].url = url
             end
-            --print(grass[i].url)
          end
          all = TableConcat(all, grass)
       end
       root.children = all
-
-      --print(inspect(grass[1]))
-
    end
    initGrass()
 
-
    groundPlanes = {
-      assets = {{
-	 url = 'assets/grond1.polygons.txt',
-      },{
-	 url = 'assets/grond2.polygons.txt',
-      },{
-	 url = 'assets/grond3.polygons.txt',
-      },{
-	 url = 'assets/grond4.polygons.txt',
-      }},
+      assets = {
+	 {url = 'assets/grasssquare_.polygons.txt'},
+	 {url = 'assets/grond1.polygons.txt'},
+	 {url = 'assets/grond2.polygons.txt'},
+	 {url = 'assets/grond3.polygons.txt'},
+	 {url = 'assets/grond4.polygons.txt'}
+      },
       perspectiveContainer = {
 	 -- all perspective groundmeshes drawn on screen will end up in here
       }
@@ -437,20 +418,16 @@ function love.load()
 
    findAllFolderNodesRecursively(root)
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
-
-
 end
-
-
 
 
 function love.update(dt)
    local v = {x=0, y=0}
 
-   if love.keyboard.isDown('left') then
+   if love.keyboard.isDown('left') or moving == 'left' then
       v.x = v.x - 1
    end
-   if love.keyboard.isDown('right') then
+   if love.keyboard.isDown('right') or moving == 'right' then
       v.x = v.x + 1
    end
    if love.keyboard.isDown('up') then
@@ -507,8 +484,6 @@ function love.mousepressed(x,y, button, istouch, presses)
             v.selected = true
             local cw, ch = cam:getContainerDimensions()
             local targetScale = math.min(cw/v.width, ch/v.height)
-	    --print('need to decide howmany ground meshes')
-
             cam:setScale(targetScale)
             cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
          else
@@ -523,13 +498,16 @@ function love.mousepressed(x,y, button, istouch, presses)
    local rightdis = getDistance(x,y, W-50, (H/2)-25)
 
    if leftdis < 50 then
-      print('pressed left')
+      moving = 'left'
    end
    if rightdis < 50 then
-      print('pressed right')
+      moving = 'right'
    end
 end
 
+function love.mousereleased()
+   moving = nil
+end
 
 function drawGroundPlanesSameSame(index, tileIndex)
    local thing = groundPlanes.assets[tileIndex].thing
@@ -539,9 +517,7 @@ function drawGroundPlanesSameSame(index, tileIndex)
       renderCount.groundMesh = renderCount.groundMesh + 1
       love.graphics.setColor(1,1,1)
    end
-
 end
-
 
 function drawGroundPlaneInPosition(dest, index, tileIndex)
    local thing = groundPlanes.assets[tileIndex].thing
@@ -555,7 +531,6 @@ function drawGroundPlaneInPosition(dest, index, tileIndex)
       for v = 1, count do
 	 local x, y = thing.optimizedBatchMesh[j].mesh:getVertex(v)
 	 local r = transferPoint (x, y, source, dest)
-
 	 table.insert(result, {r.x, r.y})
       end
 
@@ -574,7 +549,6 @@ function drawGroundPlaneInPosition(dest, index, tileIndex)
       renderCount.groundMesh = renderCount.groundMesh + 1
 
       love.graphics.setColor(1,1,1)
-
    end
 end
 
@@ -590,11 +564,11 @@ function drawGroundPlaneLines()
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-   --print(x1, x2)
+
    if true then
       if lastCameraBounds[1] == x1 and lastCameraBounds[2] == x2 and lastCameraBounds[3] == y1 then
 	 for i = s, e, tileSize do
-	    local tileIndex = ((i/tileSize) % 4) + 1
+	    local tileIndex = ((i/tileSize) % 5) + 1
 	    local index = (i - s)/tileSize
 	    if index >= 0 and index <= 100 then
 	       drawGroundPlanesSameSame(index, tileIndex)
@@ -602,12 +576,22 @@ function drawGroundPlaneLines()
 	 end
       else
 	 for i = s, e, tileSize do
-	    local tileIndex = ((i/tileSize) % 4) + 1
+	    local tileIndex = ((i/tileSize) % 5) + 1
 	    local index = (i - s)/tileSize
-	    local x1,y1 = cam:getScreenCoordinates(i+0.0001,0, 'hackFar')
-	    local x2,y2 = cam:getScreenCoordinates(i+0.0001,0, 'hackClose')
-	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001,0, 'hackFar')
-	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001,0, 'hackClose')
+	    local height1 = 0
+	    local height2 = 0
+	    if tileIndex == 2 then
+	       --   height1 = -30
+	    end
+	    if tileIndex == 1 then
+	       -- height2 = -30
+
+	    end
+
+	    local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, 'hackFar')
+	    local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, 'hackClose')
+	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, 'hackFar')
+	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, 'hackClose')
 
 	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
 	    if index >= 0 and index <= 100 then
@@ -618,10 +602,6 @@ function drawGroundPlaneLines()
 	 lastCameraBounds= {x1,x2,y1, y2}
       end
    end
-
-
-
-
 end
 
 function drawCameraViewPointRectangles()
@@ -629,60 +609,42 @@ function drawCameraViewPointRectangles()
       love.graphics.setColor(1,0,1,.5)
       if v.selected then
          love.graphics.setColor(1,0,0,.6)
-
       end
 
       love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
    end
 end
+
 function drawCameraCross()
    love.graphics.setColor(1,1,1,.2)
    love.graphics.line(0,0,W,H)
    love.graphics.line(0,H,W,0)
 end
+
 function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
    love.graphics.scale(2,2)
    love.graphics.print('fps: '..love.timer.getFPS(), 20, 10)
    love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
    love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
-    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
+   love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
 
    love.graphics.setColor(1,1,1,.8)
    love.graphics.print('fps: '..love.timer.getFPS(),21,11)
    love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
-    love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
-    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
+   love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
+   love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
 
-   --love.graphics.print('renderCount: '..renderCount, 1, 31)
-   --love.graphics.print('todo: sorting needs to be better, atm sorting continousy is turned off', 1, 41)
    love.graphics.scale(1,1)
 end
 
 function drawUI()
-    local W, H = love.graphics.getDimensions()
-    love.graphics.setColor(1,1,1)
+   local W, H = love.graphics.getDimensions()
+   love.graphics.setColor(1,1,1)
 
-    love.graphics.circle('fill', 50, (H/2)-25, 50)
-    love.graphics.circle('fill', W-50, (H/2)-25, 50)
+   love.graphics.circle('fill', 50, (H/2)-25, 50)
+   love.graphics.circle('fill', W-50, (H/2)-25, 50)
 end
-
-
--- function love.mousepressed( x, y, button, istouch, presses )
---    local W, H = love.graphics.getDimensions()
-
---    local leftdis = getDistance(x,y, 50, (H/2)-25)
---    local rightdis = getDistance(x,y, W-50, (H/2)-25)
-
---    if leftdis < 50 then
---       print('pressed left')
---    end
---    if rightdis < 50 then
---       print('pressed right')
---    end
-
-
--- end
 
 function love.draw()
    renderCount = {normal=0, optimized=0, groundMesh=0}
@@ -762,14 +724,10 @@ function love.draw()
    drawCameraBounds(cam, 'line' )
 
    drawDebugStrings()
-
-
-
 end
 
 
 function love.wheelmoved( dx, dy )
-   --print('need to decide howmany ground meshes')
    cam:scaleToPoint(  1 + dy / 10)
 end
 
@@ -778,17 +736,13 @@ function love.resize(w, h)
    --print(("Window resized to width: %d and height: %d."):format(w, h))
    --print(inspect(cam))
    --cam:update(w,h)
-
 end
 
 
 function love.filedropped(file)
-
    local tab = getDataFromFile(file)
    root.children = tab -- TableConcat(root.children, tab)
    parentize(root)
    meshAll(root)
    renderThings(root)
-
-
 end
