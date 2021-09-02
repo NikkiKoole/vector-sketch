@@ -208,7 +208,7 @@ function love.load()
 
    }
    local timeIndex = 17
-   rainbow = gradientMesh("vertical", gradients[timeIndex].from, gradients[timeIndex].to)
+   skygradient = gradientMesh("vertical", gradients[timeIndex].from, gradients[timeIndex].to)
 
    if false then
       for i = 1, 140 do
@@ -740,7 +740,7 @@ function love.draw()
    local W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
 
-   love.graphics.draw(rainbow, 0, 0, 0, love.graphics.getDimensions())
+   love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
    if (false) then
       farther:push()
