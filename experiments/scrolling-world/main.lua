@@ -519,7 +519,7 @@ function love.mousepressed(x,y, button, istouch, presses)
             v.selected = false
          end
 
-      end
+      end-- 
    end
    local W, H = love.graphics.getDimensions()
 
@@ -609,7 +609,7 @@ function drawGroundPlaneLines()
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-
+   print(x1, x2)
    if true then
       if lastCameraBounds[1] == x1 and lastCameraBounds[2] == x2 and lastCameraBounds[3] == y1 then
 	 for i = s, e, tileSize do
