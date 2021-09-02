@@ -62,7 +62,7 @@ function findAllFolderNodesRecursively(root)
       if root.url then
          root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
       end
-      
+
       --print(root.name, #root.children, root.url)
    end
 
@@ -71,7 +71,7 @@ function findAllFolderNodesRecursively(root)
          if root.children[i].folder then
             findAllFolderNodesRecursively(root.children[i])
          end
-         
+
       end
    end
 end
@@ -120,6 +120,21 @@ function sortOnDepth(list)
    table.sort( list, function(a,b) return a.depth <  b.depth end)
 end
 
+function readFileAndAddToCache(url)
+   if not meshCache[url] then
+      local g2 = parseFile(url)[1]
+      assert(g2)
+      meshAll(g2)
+      makeOptimizedBatchMesh(g2)
+      meshCache[url] = g2
+   else
+      print(url, 'was already in the cache you fool')
+   end
+
+   return meshCache[url]
+
+end
+
 function love.load()
 
    local loadStart = love.timer.getTime()
@@ -142,7 +157,7 @@ function love.load()
    stuff = {} -- this is the testlayer with just some rectangles and the red player
 
    meshCache = {}
-   
+
    depthMinMax = {min=-2, max=2}
    depthScaleFactors = { min=.9, max=1.1}
 
@@ -212,7 +227,7 @@ function love.load()
    )
    lastCameraBounds = {nil, nil}
 
-   groundPlane = {}
+
 
    hack = generateCameraLayer('hack', 1)
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
@@ -250,24 +265,8 @@ function love.load()
    initCarParts()
 
 
-   function readFileAndAddToCache(url)
-      if not meshCache[url] then
-         local g2 = parseFile(url)[1]
-         assert(g2)
-         meshAll(g2)
-         makeOptimizedBatchMesh(g2)
-         meshCache[url] = g2
-      else
-         print(url, 'was already in the cache you fool')
-      end
-
-      return meshCache[url]
-      
-   end
-      
-   
    function initGrass()
-      
+
       local all = {}
       local urls = {
          'assets/plant1.polygons.txt',
@@ -289,12 +288,12 @@ function love.load()
       for j = 1, #urls do
          local url = urls[j]
          local read = readFileAndAddToCache(url)
-         
-         
+
+
          local grass = {}
 
          for i= 1, 50 do
-            
+
             grass[i]= {
                folder = true,
                transforms =  copy3(read.transforms),
@@ -317,20 +316,39 @@ function love.load()
          all = TableConcat(all, grass)
       end
       root.children = all
-      
+
       --print(inspect(grass[1]))
-     
+
    end
    initGrass()
 
 
-   -- floor plane stuff
-   floorplane = parseFile('assets/m2_.polygons.txt')[1]
-  --  floorplane = parseFile('assets/square-pattern.polygons.txt')[1]
-   --print(inspect(floorplane))
-   meshAll(floorplane)
-   plane_bbox = getBBoxOfChildren(floorplane.children)
-   --print(inspect(plane_bbox))
+   groundPlanes = {
+      assets = {{
+	 url = 'assets/grond1.polygons.txt',
+      },{
+	 url = 'assets/grond2.polygons.txt',
+      },{
+	 url = 'assets/grond3.polygons.txt',
+      },{
+	 url = 'assets/grond4.polygons.txt',
+      }},
+      perspectiveContainer = {
+	 -- all perspective groundmeshes drawn on screen will end up in here
+      }
+   }
+
+   for i = 1, #groundPlanes.assets do
+      local url = groundPlanes.assets[i].url
+      groundPlanes.assets[i].thing = readFileAndAddToCache(url)
+      groundPlanes.assets[i].bbox = getBBoxOfChildren(groundPlanes.assets[i].thing.children)
+   end
+   for i = 0, 100 do  -- maximum of 100 groundplanes
+      groundPlanes.perspectiveContainer[i] = {}
+      for j =0, 10 do -- maximum of 10 'layers/children/optimized layers' in a thing
+	 groundPlanes.perspectiveContainer[i][j] = {}
+      end
+   end
 
 
 
@@ -404,33 +422,11 @@ function love.load()
    end
 
    parentize(root)
-   --meshAll(root)
+
    renderThings(root)
    avgRunningAhead = 0
    sortOnDepth(root.children)
 
-   if false then
-      if true then
-         makeOptimizedBatchMesh(root.children[1])
-         local m1 = root.children[1].optimizedBatchMesh
-
-         for i =1, #root.children do
-            root.children[i].optimizedBatchMesh = m1
-            -- if (root.children[i].folder) then
-            --makeOptimizedBatchMesh(root.children[i])
-            --end
-         end
-      end
-
-      if false then
-         for i =1, #root.children do
-            if (root.children[i].folder) then
-               makeOptimizedBatchMesh(root.children[i])
-            end
-         end
-      end
-   end
-   
    cam:setTranslation(
       player.x + player.width/2 ,
       player.y - 350
@@ -519,7 +515,7 @@ function love.mousepressed(x,y, button, istouch, presses)
             v.selected = false
          end
 
-      end-- 
+      end--
    end
    local W, H = love.graphics.getDimensions()
 
@@ -535,71 +531,56 @@ function love.mousepressed(x,y, button, istouch, presses)
 end
 
 
-function drawGroundPlanesSameSame(index)
-   for j = 1, #floorplane.children do
-      if floorplane.children[j].points then
-	 --if floorplane.children[j].perspMesh then
-	    --print('hi hello?')
-	    love.graphics.setColor(floorplane.children[j].color[1],
-				   floorplane.children[j].color[2],
-				   floorplane.children[j].color[3])
-	    love.graphics.draw(groundPlane[index][j].perspMesh)
-	    renderCount.groundMesh = renderCount.groundMesh + 1
-	    love.graphics.setColor(1,1,1)
-	    --print(floorplane.children[j].perspMesh:getVertexCount())
-
-	 --end
-      end
+function drawGroundPlanesSameSame(index, tileIndex)
+   local thing = groundPlanes.assets[tileIndex].thing
+   for j = 1, #thing.optimizedBatchMesh do
+      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
+      love.graphics.draw(groundPlanes.perspectiveContainer[index][j].perspMesh)
+      renderCount.groundMesh = renderCount.groundMesh + 1
+      love.graphics.setColor(1,1,1)
    end
 
 end
 
 
-function drawGroundPlaneInPosition(source, dest, index)
+function drawGroundPlaneInPosition(dest, index, tileIndex)
+   local thing = groundPlanes.assets[tileIndex].thing
+   local bbox = groundPlanes.assets[tileIndex].bbox
+   local source = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y }
 
-   for j = 1, #floorplane.children do
-      if floorplane.children[j].points then
-	 if floorplane.children[j].mesh then
-	    local count = floorplane.children[j].mesh:getVertexCount()
-	    local result = {}
+   for j = 1, #thing.optimizedBatchMesh do
+      local count = thing.optimizedBatchMesh[j].mesh:getVertexCount()
+      local result = {}
 
-	    for v = 1, count do
-	       local x, y = floorplane.children[j].mesh:getVertex(v)
-	       local r = transferPoint (x, y, source, dest)
+      for v = 1, count do
+	 local x, y = thing.optimizedBatchMesh[j].mesh:getVertex(v)
+	 local r = transferPoint (x, y, source, dest)
 
-	       table.insert(result, {r.x, r.y})
-	    end
-	    -- todo these 2 check below are maybe better suited at init, just prepopulate a 2d array
-	    if not groundPlane[index] then
-	       groundPlane[index] = {}
-	    end
-	    if not groundPlane[index][j] then
-	       groundPlane[index][j] = {}
-	    end
-
-	    if  groundPlane[index][j].perspMesh and groundPlane[index][j].perspMesh:getVertexCount() == #result then
-	       groundPlane[index][j].perspMesh:setVertices(result, 1, #result)
-	    else
-	       groundPlane[index][j] = {perspMesh=love.graphics.newMesh(simple_format, result , "triangles", "stream")}
-	    end
-
-	       love.graphics.setColor(floorplane.children[j].color[1],
-				      floorplane.children[j].color[2],
-				      floorplane.children[j].color[3])
-	       love.graphics.draw(groundPlane[index][j].perspMesh)
-	       renderCount.groundMesh = renderCount.groundMesh + 1
-
-	       love.graphics.setColor(1,1,1)
-
-
-	 end
+	 table.insert(result, {r.x, r.y})
       end
+
+      if groundPlanes.perspectiveContainer[index][j].perspMesh and
+	 groundPlanes.perspectiveContainer[index][j].perspMesh:getVertexCount() == #result then
+	 groundPlanes.perspectiveContainer[index][j].perspMesh:setVertices(result, 1, #result)
+      else
+	 groundPlanes.perspectiveContainer[index][j] = {
+	    perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+	 }
+      end
+
+      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
+
+      love.graphics.draw(groundPlanes.perspectiveContainer[index][j].perspMesh)
+      renderCount.groundMesh = renderCount.groundMesh + 1
+
+      love.graphics.setColor(1,1,1)
+
    end
 end
 
 
 function drawGroundPlaneLines()
-
+   local thing = groundPlanes.assets[1].thing
    local tileSize = 100
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
@@ -609,24 +590,30 @@ function drawGroundPlaneLines()
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-   print(x1, x2)
+   --print(x1, x2)
    if true then
       if lastCameraBounds[1] == x1 and lastCameraBounds[2] == x2 and lastCameraBounds[3] == y1 then
 	 for i = s, e, tileSize do
+	    local tileIndex = ((i/tileSize) % 4) + 1
 	    local index = (i - s)/tileSize
-	    drawGroundPlanesSameSame(index)
+	    if index >= 0 and index <= 100 then
+	       drawGroundPlanesSameSame(index, tileIndex)
+	    end
 	 end
       else
 	 for i = s, e, tileSize do
+	    local tileIndex = ((i/tileSize) % 4) + 1
 	    local index = (i - s)/tileSize
 	    local x1,y1 = cam:getScreenCoordinates(i+0.0001,0, 'hackFar')
 	    local x2,y2 = cam:getScreenCoordinates(i+0.0001,0, 'hackClose')
 	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001,0, 'hackFar')
 	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001,0, 'hackClose')
-	    local source = {plane_bbox.tl.x, plane_bbox.tl.y, plane_bbox.br.x, plane_bbox.br.y }
-	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
 
-	    drawGroundPlaneInPosition(source, dest, index)
+	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
+	    if index >= 0 and index <= 100 then
+	       drawGroundPlaneInPosition(dest, index, tileIndex)
+	    end
+
 	 end
 	 lastCameraBounds= {x1,x2,y1, y2}
       end
