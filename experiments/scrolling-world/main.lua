@@ -306,6 +306,8 @@ function love.load()
    function initGrass()
       local all = {}
       local urls = {
+         'assets/grassagain_.polygons.txt',
+
          'assets/plant1.polygons.txt',
          'assets/plant2.polygons.txt',
          'assets/plant3.polygons.txt',
@@ -327,7 +329,7 @@ function love.load()
          local read = readFileAndAddToCache(url)
          local grass = {}
 
-         for i= 1, 5 do
+         for i= 1, 25 do
             grass[i]= {
                folder = true,
                transforms =  copy3(read.transforms),
@@ -335,7 +337,7 @@ function love.load()
                children ={}
             }
             if grass[i].transforms then
-               grass[i].transforms.l[1] = -2000 + random() * 4000
+               grass[i].transforms.l[1] = -5000 + random() * 10000
                grass[i].transforms.l[2] = 0
                grass[i].transforms.l[4] = 1.0 + random()*.2
                grass[i].transforms.l[5] = 1.0 + random()* 2
@@ -354,11 +356,12 @@ function love.load()
 
    groundPlanes = {
       assets = {
-	 {url = 'assets/grasssquare_.polygons.txt'},
-	 {url = 'assets/grond1.polygons.txt'},
-	 {url = 'assets/grond2.polygons.txt'},
-	 {url = 'assets/grond3.polygons.txt'},
-	 {url = 'assets/grond4.polygons.txt'}
+	 --{url = 'assets/grasssquare_.polygons.txt'},
+         {url = 'assets/fit1.polygons.txt'},
+	 {url = 'assets/fit2.polygons.txt'},
+	 {url = 'assets/fit3.polygons.txt'},
+	 {url = 'assets/fit4.polygons.txt'},
+	 {url = 'assets/fit5.polygons.txt'}
       },
       perspectiveContainer = {
 	 -- all perspective groundmeshes drawn on screen will end up in here
@@ -601,7 +604,7 @@ end
 
 function drawGroundPlaneLines()
    local thing = groundPlanes.assets[1].thing
-   local tileSize = 100
+   local tileSize = 200
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
