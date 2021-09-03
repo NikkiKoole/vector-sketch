@@ -266,6 +266,8 @@ function love.load()
       }
    )
    lastCameraBounds = {nil, nil}
+   lastGroundBounds = {math.huge, -math.huge}
+
 
 
    hack = generateCameraLayer('hack', 1)
@@ -303,29 +305,53 @@ function love.load()
    initCarParts()
 
 
+
+
+
+   local plantUrls = {
+      'assets/grassagain_.polygons.txt',
+      'assets/plant1.polygons.txt',
+      'assets/plant2.polygons.txt',
+      'assets/plant3.polygons.txt',
+      'assets/plant4.polygons.txt',
+      'assets/plant5.polygons.txt',
+      'assets/plant6.polygons.txt',
+      'assets/plant7.polygons.txt',
+      'assets/plant8.polygons.txt',
+      'assets/plant9.polygons.txt',
+      'assets/plant10.polygons.txt',
+      'assets/plant11.polygons.txt',
+      'assets/plant12.polygons.txt',
+      'assets/plant13.polygons.txt',
+
+   }
+
+    --[[
+
+      ok my plan to make the laoding even faster and huge worlds possible
+      - make the inittid list just a big list of groundindexes ? -100 -> 100 or something
+      - at each list add a bunch of random things
+      - then try and display this thing.
+
+      - from there we are ion a good location to improve
+
+   ]]--
+
+  local testData = {}
+  for i = -100, 100 do
+     --print(i)
+     testData[i] = {}
+     for p = 1, 10 do
+	table.insert(testData[i], {x=random()*100,
+				   depth=mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max ),
+				   urlIndex=math.floor(random()* #plantUrls)})
+     end
+  end
+   --print(inspect(testData))
    function initGrass()
       local all = {}
-      local urls = {
-         'assets/grassagain_.polygons.txt',
-
-         'assets/plant1.polygons.txt',
-         'assets/plant2.polygons.txt',
-         'assets/plant3.polygons.txt',
-         'assets/plant4.polygons.txt',
-         'assets/plant5.polygons.txt',
-         'assets/plant6.polygons.txt',
-         'assets/plant7.polygons.txt',
-         'assets/plant8.polygons.txt',
-         'assets/plant9.polygons.txt',
-         'assets/plant10.polygons.txt',
-         'assets/plant11.polygons.txt',
-         'assets/plant12.polygons.txt',
-         'assets/plant13.polygons.txt',
-
-      }
-
-      for j = 1, #urls do
-         local url = urls[j]
+      for j = 1, #plantUrls do
+         local url = plantUrls[j]
          local read = readFileAndAddToCache(url)
          local grass = {}
 
@@ -601,10 +627,51 @@ function drawGroundPlaneInPosition(dest, index, tileIndex)
    end
 end
 
+function arrangeWhatIsVisible(x1, x2, tileSize)
+
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+   local startIndex = s/tileSize
+   local endIndex = e/tileSize
+
+
+   if (startIndex ~= lastGroundBounds[1] and endIndex ~= lastGroundBounds[2]) then
+       print("change at start and end")
+       print("this only happens at start i think")
+       if (lastGroundBounds[1] == math.huge and lastGroundBounds[2] == -math.huge) then
+	  print("this is the start, mayeb this should be done somewhere else")
+       end
+   end
+
+   if (startIndex ~= lastGroundBounds[1]) then
+      -- here i shoul dget some items to start displaying probably
+      print('change at start')
+      if startIndex < lastGroundBounds[1] then
+	 print("going left, more becomes visible at start, i need more")
+      elseif startIndex > lastGroundBounds[1] then
+	 print("going right, less becomes visible at start, i need less")
+
+      end
+   end
+   if (endIndex ~= lastGroundBounds[2]) then
+      -- here i shoul dget some items to start displaying probably
+      print('change at end')
+      if endIndex < lastGroundBounds[2] then
+	 print("going left, less becomes visible at end, i need less")
+      elseif endIndex > lastGroundBounds[2] then
+	 print("going right, more becomes visible at end, i need more")
+
+      end
+   end
+   lastGroundBounds = {startIndex, endIndex}
+end
+
+
+
 
 function drawGroundPlaneLines()
    local thing = groundPlanes.assets[1].thing
-   local tileSize = 200
+   local tileSize = 100
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
@@ -613,19 +680,25 @@ function drawGroundPlaneLines()
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
+   arrangeWhatIsVisible(x1, x2, tileSize)
+
+
 
    if true then
       if lastCameraBounds[1] == x1 and lastCameraBounds[2] == x2 and lastCameraBounds[3] == y1 then
 	 for i = s, e, tileSize do
-	    local tileIndex = ((i/tileSize) % 5) + 1
+	    local groundIndex = (i/tileSize)
+	    local tileIndex = (groundIndex % 5) + 1
 	    local index = (i - s)/tileSize
 	    if index >= 0 and index <= 100 then
+--	       print(groundIndex)
 	       drawGroundPlanesSameSame(index, tileIndex)
 	    end
 	 end
       else
 	 for i = s, e, tileSize do
-	    local tileIndex = ((i/tileSize) % 5) + 1
+	    local groundIndex = (i/tileSize)
+	    local tileIndex = (groundIndex % 5) + 1
 	    local index = (i - s)/tileSize
 	    local height1 = 0
 	    local height2 = 0
@@ -644,6 +717,8 @@ function drawGroundPlaneLines()
 
 	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
 	    if index >= 0 and index <= 100 then
+--	       print(groundIndex)
+
 	       drawGroundPlaneInPosition(dest, index, tileIndex)
 	    end
 
@@ -651,6 +726,7 @@ function drawGroundPlaneLines()
 	 lastCameraBounds= {x1,x2,y1, y2}
       end
    end
+
 end
 
 function drawCameraViewPointRectangles()
