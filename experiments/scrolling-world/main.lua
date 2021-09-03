@@ -265,8 +265,8 @@ function love.load()
          end
       }
    )
-   lastCameraBounds = {nil, nil}
-   lastGroundBounds = {math.huge, -math.huge}
+   lastCameraBounds = {nil, nil}   -- this one is unrounded start and end positions
+   lastGroundBounds = {math.huge, -math.huge}  -- this one is just talking about indices
 
 
 
