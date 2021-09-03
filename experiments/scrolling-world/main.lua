@@ -210,7 +210,7 @@ function love.load()
    local timeIndex = 17
    skygradient = gradientMesh("vertical", gradients[timeIndex].from, gradients[timeIndex].to)
 
-   if false then
+   if true then
       for i = 1, 140 do
 	 local rndHeight = random(100, 200)
 	 local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -271,7 +271,7 @@ function love.load()
    hack = generateCameraLayer('hack', 1)
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
    hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
-   farther = generateCameraLayer('farther', .3)
+   farther = generateCameraLayer('farther', .7)
    close = generateCameraLayer('close', 1.5)
 
    root = {
@@ -329,7 +329,7 @@ function love.load()
          local read = readFileAndAddToCache(url)
          local grass = {}
 
-         for i= 1, 25 do
+         for i= 1, 5 do
             grass[i]= {
                folder = true,
                transforms =  copy3(read.transforms),
@@ -337,7 +337,7 @@ function love.load()
                children ={}
             }
             if grass[i].transforms then
-               grass[i].transforms.l[1] = -5000 + random() * 10000
+               grass[i].transforms.l[1] = -1000 + random() * 2000
                grass[i].transforms.l[2] = 0
                grass[i].transforms.l[4] = 1.0 + random()*.2
                grass[i].transforms.l[5] = 1.0 + random()* 2
@@ -745,7 +745,7 @@ function love.draw()
 
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   if (false) then
+   if (true) then
       farther:push()
       love.graphics.setColor( 1, 0, 0, .25 )
       tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
