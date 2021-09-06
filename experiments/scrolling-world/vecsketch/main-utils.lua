@@ -4,81 +4,81 @@
 
 function transferPoint (xI, yI, source, destination)
 
-    local ADDING = 0.00001 -- to avoid dividing by zero
+   local ADDING = 0.00001 -- to avoid dividing by zero
 
-    local xA = source[1]
-    local yA = source[2]
+   local xA = source[1]
+   local yA = source[2]
 
-    local xC = source[3]
-    local yC = source[4]
+   local xC = source[3]
+   local yC = source[4]
 
-    local xAu = destination[1][1]
-    local yAu = destination[1][2]
+   local xAu = destination[1][1]
+   local yAu = destination[1][2]
 
-    local xBu = destination[2][1]
-    local yBu = destination[2][2]
+   local xBu = destination[2][1]
+   local yBu = destination[2][2]
 
-    local xCu = destination[3][1]
-    local yCu = destination[3][2]
+   local xCu = destination[3][1]
+   local yCu = destination[3][2]
 
-    local xDu = destination[4][1]
-    local yDu = destination[4][2]
-    --print(xA,yA,xC,yC)
-    --print(xAu,yAu,xBu,yBu,xCu,yCu,xDu,yDu)
-    -- Calcultations
-    -- if points are the same, have to add a ADDING to avoid dividing by zero
-    if (xBu==xCu) then xC = xC + ADDING end
-    if (xAu==xDu) then xDu= xDu+ ADDING end
-    if (xAu==xBu) then xBu =xBu + ADDING end
-    if (xDu==xCu) then xCu = xCu + ADDING end
-    --print(xC,xDu,xBu,xCu)
-    local kBC = (yBu-yCu)/(xBu-xCu)
-    local kAD = (yAu-yDu)/(xAu-xDu)
-    local kAB = (yAu-yBu)/(xAu-xBu)
-    local kDC = (yDu-yCu)/(xDu-xCu)
+   local xDu = destination[4][1]
+   local yDu = destination[4][2]
+   --print(xA,yA,xC,yC)
+   --print(xAu,yAu,xBu,yBu,xCu,yCu,xDu,yDu)
+   -- Calcultations
+   -- if points are the same, have to add a ADDING to avoid dividing by zero
+   if (xBu==xCu) then xC = xC + ADDING end
+   if (xAu==xDu) then xDu= xDu+ ADDING end
+   if (xAu==xBu) then xBu =xBu + ADDING end
+   if (xDu==xCu) then xCu = xCu + ADDING end
+   --print(xC,xDu,xBu,xCu)
+   local kBC = (yBu-yCu)/(xBu-xCu)
+   local kAD = (yAu-yDu)/(xAu-xDu)
+   local kAB = (yAu-yBu)/(xAu-xBu)
+   local kDC = (yDu-yCu)/(xDu-xCu)
 
-    if (kBC==kAD) then kAD =kAD + ADDING end
-    local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
-    local yE = kBC*(xE - xBu) + yBu
+   if (kBC==kAD) then kAD =kAD + ADDING end
+   local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
+   local yE = kBC*(xE - xBu) + yBu
 
-    if (kAB==kDC) then kDC = kDC + ADDING end
-    local xF = (kAB*xBu - kDC*xCu + yCu - yBu) / (kAB-kDC)
-    local yF = kAB*(xF - xBu) + yBu
+   if (kAB==kDC) then kDC = kDC + ADDING end
+   local xF = (kAB*xBu - kDC*xCu + yCu - yBu) / (kAB-kDC)
+   local yF = kAB*(xF - xBu) + yBu
 
-    if (xE==xF) then xF = xF + ADDING end
-    local kEF = (yE-yF) / (xE-xF)
+   if (xE==xF) then xF = xF + ADDING end
+   local kEF = (yE-yF) / (xE-xF)
 
-    if (kEF==kAB) then kAB = kAB + ADDING end
-    local xG = (kEF*xDu - kAB*xAu + yAu - yDu) / (kEF-kAB)
-    local yG = kEF*(xG - xDu) + yDu
+   if (kEF==kAB) then kAB = kAB + ADDING end
+   local xG = (kEF*xDu - kAB*xAu + yAu - yDu) / (kEF-kAB)
+   local yG = kEF*(xG - xDu) + yDu
 
-    if (kEF==kBC) then kBC = kBC + ADDING end
-    local xH = (kEF*xDu - kBC*xBu + yBu - yDu) / (kEF-kBC)
-    local yH = kEF*(xH - xDu) + yDu
+   if (kEF==kBC) then kBC = kBC + ADDING end
+   local xH = (kEF*xDu - kBC*xBu + yBu - yDu) / (kEF-kBC)
+   local yH = kEF*(xH - xDu) + yDu
 
-    local rG = (yC-yI)/(yC-yA)
-    local rH = (xI-xA)/(xC-xA)
+   local rG = (yC-yI)/(yC-yA)
+   local rH = (xI-xA)/(xC-xA)
 
-    local xJ = (xG-xDu)*rG + xDu
-    local yJ = (yG-yDu)*rG + yDu
+   local xJ = (xG-xDu)*rG + xDu
+   local yJ = (yG-yDu)*rG + yDu
 
-    local xK = (xH-xDu)*rH + xDu
-    local yK = (yH-yDu)*rH + yDu
+   local xK = (xH-xDu)*rH + xDu
+   local yK = (yH-yDu)*rH + yDu
 
-    if (xF==xJ) then xJ = xJ + ADDING end
-    if (xE==xK) then xK =xK + ADDING end
-    local kJF = (yF-yJ) / (xF-xJ) --//23
-    local kKE = (yE-yK) / (xE-xK) --//12
+   if (xF==xJ) then xJ = xJ + ADDING end
+   if (xE==xK) then xK =xK + ADDING end
+   local kJF = (yF-yJ) / (xF-xJ) --//23
+   local kKE = (yE-yK) / (xE-xK) --//12
 
-    local xKE
-    if (kJF==kKE) then kKE= kKE + ADDING end
-    local xIu = (kJF*xF - kKE*xE + yE - yF) / (kJF-kKE)
-    local yIu = kJF * (xIu - xJ) + yJ
+   local xKE
+   if (kJF==kKE) then kKE= kKE + ADDING end
+   local xIu = (kJF*xF - kKE*xE + yE - yF) / (kJF-kKE)
+   local yIu = kJF * (xIu - xJ) + yJ
 
-    local b={x=xIu,y=yIu}
-    --b.x=math.round(b.x)
-    --b.y=math.round(b.y)
-    return b
+   local b={x=xIu,y=yIu}
+   --b.x=math.round(b.x)
+   --b.y=math.round(b.y)
+   return b
 end
 
 
@@ -138,7 +138,7 @@ function makeOptimizedBatchMesh(folder)
 end
 
 function lerp(v0, v1, t)
-    return v0*(1-t)+v1*t
+   return v0*(1-t)+v1*t
 end
 
 
@@ -195,31 +195,31 @@ end
 
 function parentize(node)
    if (node.children) then
-   for i = 1, #node.children do
-      node.children[i]._parent = node
-      if (node.children[i].folder) then
-	 parentize(node.children[i])
+      for i = 1, #node.children do
+	 node.children[i]._parent = node
+	 if (node.children[i].folder) then
+	    parentize(node.children[i])
+	 end
       end
-   end
    end
 end
 
 function renderNormallyOrOptimized(shape)
-  -- renderThings(shape)
+   -- renderThings(shape)
 
    if true then
-   if (shape.optimizedBatchMesh) then
-      setTransforms(shape)
-      for i=1, #shape.optimizedBatchMesh do
-	 love.graphics.setColor(shape.optimizedBatchMesh[i].color)
-	 love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
-	 renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
-      end
+      if (shape.optimizedBatchMesh) then
+	 setTransforms(shape)
+	 for i=1, #shape.optimizedBatchMesh do
+	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
+	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+	    renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
+	 end
 
-   else
-      renderCount.normal = renderCount.normal + 1
-      renderThings(shape)
-   end
+      else
+	 renderCount.normal = renderCount.normal + 1
+	 renderThings(shape)
+      end
    end
 
 end
@@ -244,16 +244,16 @@ function handleChild(shape)
       local parentIndex = getIndex(shape._parent)
       if shape.hole then
 	 love.graphics.stencil(
-	 function()
-	    love.graphics.draw(mesh, shape._parent._globalTransform )
-	 end, "replace", parentIndex, true)
+	    function()
+	       love.graphics.draw(mesh, shape._parent._globalTransform )
+	    end, "replace", parentIndex, true)
 
       end
       if shape.mask then
          love.graphics.stencil(
-	 function()
-	    love.graphics.draw(mesh, shape._parent._globalTransform )
-	 end, "replace", 255, true)
+	    function()
+	       love.graphics.draw(mesh, shape._parent._globalTransform )
+	    end, "replace", 255, true)
       end
 
       if shape.hole then
@@ -275,28 +275,28 @@ function handleChild(shape)
       end
 
 
-	 if shape.aabb then
-	    local minX = cam.translationX - ((cam.w/2) / cam.scale)
-	    local maxX = cam.translationX + ((cam.w/2) / cam.scale)
-	    local extraOffset = 100
-	    if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
-	       renderNormallyOrOptimized(shape)
-	    end
-	 else
+      if shape.aabb then
+	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
+	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
+	 local extraOffset = 100
+	 if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
 	    renderNormallyOrOptimized(shape)
 	 end
+      else
+	 renderNormallyOrOptimized(shape)
+      end
 
 
 
       love.graphics.setStencilTest()
-   --else
-     -- print()
+      --else
+      -- print()
       --print(inspect(poly.makeVertices(shape)))
    end
 
    if currentNode ~= shape then
       if (shape.mesh and not shape.mask) then
-
+	 --print('doing alot work', shape.name)
 	 --renderCount = renderCount + 1
 	 love.graphics.setColor(shape.color)
          love.graphics.draw(shape.mesh, shape._parent._globalTransform )
@@ -366,7 +366,7 @@ function unpackNodePointsLoop(points)
 
 
 
-      return unpacked
+   return unpacked
 end
 
 function unpackNodePoints(points)
@@ -522,23 +522,23 @@ function renderThings(root)
       -- https://answers.unity.com/questions/1252260/lerp-color-between-4-corners.html
       --[[
 
- assuming a coordinate system something like this,
- with a different color at each corner,
- what's the color at u, v ?
+	 assuming a coordinate system something like this,
+	 with a different color at each corner,
+	 what's the color at u, v ?
 
 
-   0, 1                     1, 1
-     *-----------------------*
-     |                       |
-     |                       |
-     |             *         |
-     |             u, v      |
-     |                       |
-     |                       |
-     |                       |
-     |                       |
-     *-----------------------*
-   0, 0                     1, 0
+	 0, 1                     1, 1
+	 *-----------------------*
+	 |                       |
+	 |                       |
+	 |             *         |
+	 |             u, v      |
+	 |                       |
+	 |                       |
+	 |                       |
+	 |                       |
+	 *-----------------------*
+	 0, 0                     1, 0
 
 	 Color bilinear(Color[,] corners, Vector2 uv) {
 	 Color cTop = Color.lerp(corners[0, 1], corners[1, 1], uv.x);

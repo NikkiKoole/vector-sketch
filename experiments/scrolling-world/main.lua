@@ -222,7 +222,7 @@ function love.load()
          end
       }
    )
-   lastCameraBounds = {nil, nil}   -- this one is unrounded start and end positions
+   lastCameraBounds = {math.huge, -math.huge}   -- this one is unrounded start and end positions
    lastGroundBounds = {math.huge, -math.huge}  -- this one is just talking about indices
 
 
@@ -294,7 +294,7 @@ function love.load()
   for i = -100, 100 do
      --print(i)
      testData[i] = {}
-     for p = 1, 20 do
+     for p = 1, 8 do
 	table.insert(
            testData[i],
            {
@@ -442,7 +442,7 @@ function love.load()
    end
 
    parentize(root)
-   
+
    renderThings(root)
    avgRunningAhead = 0
    sortOnDepth(root.children)
@@ -509,7 +509,7 @@ function love.update(dt)
          player.x + player.width/2 ,
          player.y - 350,
          dt,
-         2
+         10
       )
    end
    cam:update()
@@ -608,7 +608,7 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex)
          end
       end
    end
-   
+
 end
 
 
@@ -638,7 +638,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
          table.insert(root.children, grass)
        --  print('added', (i*100)+thing.x)
       end
-      
+
       --print(i, testData[i], 'should be added')
    end
    parentize(root)
@@ -678,7 +678,7 @@ function arrangeWhatIsVisible(x1, x2, tileSize)
 
       removeTheContenstOfGroundTiles(startIndex, endIndex)
    end
-   
+
 
 
 
@@ -738,7 +738,12 @@ function drawGroundPlaneLines()
 
 
    if true then
-      if lastCameraBounds[1] == x1 and lastCameraBounds[2] == x2 and lastCameraBounds[3] == y1 then
+      -- print((math.floor(lastCameraBounds[1]) == math.floor(x1) and math.floor(lastCameraBounds[2]) == math.floor(x2) and math.floor(lastCameraBounds[3]) == math.floor(y1)),
+
+      -- 	 (lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)
+      -- )
+      --if math.floor(lastCameraBounds[1]) == math.floor(x1) and math.floor(lastCameraBounds[2]) == math.floor(x2) and math.floor(lastCameraBounds[3]) == math.floor(y1) then
+      if ((lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)) then
 	 for i = s, e, tileSize do
 	    local groundIndex = (i/tileSize)
 	    local tileIndex = (groundIndex % 5) + 1
