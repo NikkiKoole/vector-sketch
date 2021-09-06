@@ -123,7 +123,7 @@ function readFileAndAddToCache(url)
       makeOptimizedBatchMesh(g2)
       meshCache[url] = g2
    else
-      print(url, 'was already in the cache you fool')
+      --print(url, 'was already in the cache you fool')
    end
 
    return meshCache[url]
@@ -261,7 +261,7 @@ function love.load()
    end
    initCarParts()
 
-   local plantUrls = {
+   plantUrls = {
       'assets/grassagain_.polygons.txt',
       'assets/plant1.polygons.txt',
       'assets/plant2.polygons.txt',
@@ -281,28 +281,32 @@ function love.load()
 
     --[[
 
-      ok my plan to make the laoding even faster and huge worlds possible
-      - make the inittid list just a big list of groundindexes ? -100 -> 100 or something
+      ok my plan to make the loading faster and huge worlds possible
+      - make the initted list just a big list of groundindexes ? -100 -> 100 or something
       - at each list add a bunch of random things
       - then try and display this thing.
       - from there we are ion a good location to improve
 
    ]]--
 
-  testData = {}
+   tileSize = 200
+   testData = {}
   for i = -100, 100 do
      --print(i)
      testData[i] = {}
-     for p = 1, 10 do
+     for p = 1, 20 do
 	table.insert(
            testData[i],
            {
-              x=random()*100,
+              x=random()*tileSize,
               groundTileIndex = i,
               depth=mapInto(random(),
                             0,1,
                             depthMinMax.min, depthMinMax.max ),
-              urlIndex=math.floor(random()* #plantUrls)
+              scaleX = 1.0 + random()*.2,
+              scaleY = 1.0 + random()*1.2,
+
+              urlIndex=math.ceil(random()* #plantUrls)
            }
         )
      end
@@ -338,7 +342,7 @@ function love.load()
       end
       root.children = all
    end
-   initGrass()
+   --initGrass()
 
    groundPlanes = {
       assets = {
@@ -404,7 +408,7 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 40 do
+   for j = 1, 1 do
       local generated = generatePolygon(0,0, 4 + random()*16, .05 + random()*.01, .02 , 8 + random()*8)
       local points = {}
       for i = 1, #generated, 2 do
@@ -451,9 +455,9 @@ function love.load()
    test()
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
+   arrangeWhatIsVisibleStartup()
 
    findAllFolderNodesRecursively(root)
-   arrangeWhatIsVisibleStartup()
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 end
 
@@ -588,23 +592,74 @@ function drawGroundPlaneInPosition(dest, index, tileIndex)
       love.graphics.setColor(1,1,1)
    end
 end
+
+
+function removeTheContenstOfGroundTiles(startIndex, endIndex)
+   -- everything out of this range ought to be removed
+--   print('remove outside', startIndex, endIndex)
+   for i = #root.children, 1, -1 do
+      local child = root.children[i]
+      if child.groundTileIndex ~= nil then
+         if child.groundTileIndex < startIndex or
+            child.groundTileIndex > endIndex then
+            --print('found a thing to remove', child.groundTileIndex)
+
+            table.remove(root.children, i)
+         end
+      end
+   end
+   
+end
+
+
+function addTheContentsOfGroundTiles(startIndex, endIndex)
+   -- there is a risk of ading thing more then once, should i cehck that her or in the outside ?
+   --print("adding called", startIndex, endIndex)
+   for i = startIndex, endIndex do
+      for j = 1, #testData[i] do
+         local thing = testData[i][j]
+         local urlIndex = (thing.urlIndex)
+         local url = plantUrls[urlIndex]
+         local read = readFileAndAddToCache(url)
+         local grass = {
+            folder = true,
+            transforms = copy3(read.transforms),
+            name = 'generated',
+            children = {}
+         }
+         grass.transforms.l[1] = (i*tileSize) + thing.x
+         grass.transforms.l[2] = 0
+         grass.transforms.l[4] = thing.scaleX
+         grass.transforms.l[5] = thing.scaleY
+
+         grass.depth = thing.depth
+         grass.url = url
+         grass.groundTileIndex = thing.groundTileIndex
+         table.insert(root.children, grass)
+       --  print('added', (i*100)+thing.x)
+      end
+      
+      --print(i, testData[i], 'should be added')
+   end
+   parentize(root)
+   sortOnDepth(root.children)
+   findAllFolderNodesRecursively(root)
+
+end
+
+
 function arrangeWhatIsVisibleStartup()
    local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
    local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
-   local tileSize = 100
-
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
    local startIndex = s/tileSize
    local endIndex = e/tileSize
 
-   print('pretend i did a lot of init positonioning here')
-   for i = startIndex, endIndex do
-      print(i, testData[i], 'should be added')
-   end
-   
+   --print('pretend i did a lot of init positonioning here')
+   addTheContentsOfGroundTiles(startIndex, endIndex)
    lastGroundBounds = {startIndex, endIndex}
-
+   --print(inspect(root))
 end
 
 
@@ -617,45 +672,48 @@ function arrangeWhatIsVisible(x1, x2, tileSize)
    local endIndex = e/tileSize
 
 
-if false then   
-   if (startIndex ~= lastGroundBounds[1] and endIndex ~= lastGroundBounds[2]) then
-       print("change at start and end")
-       print("this only happens at start i think")
-       if (lastGroundBounds[1] == math.huge and lastGroundBounds[2] == -math.huge) then
-	  print("this is the start, mayeb this should be done somewhere else")
-       end
+
+   if startIndex ~= lastGroundBounds[1] or
+      endIndex ~= lastGroundBounds[2] then
+
+      removeTheContenstOfGroundTiles(startIndex, endIndex)
    end
-end
+   
+
+
+
 
 
    if (startIndex ~= lastGroundBounds[1]) then
       -- here i shoul dget some items to start displaying probably
       if startIndex < lastGroundBounds[1] then
-	 print("going left, more becomes visible at start, i need more")
-         for i = startIndex,lastGroundBounds[1]-1 do
-            print(i, testData[i], 'should be added')
-         end
+	 --print("going left, more becomes visible at start, i need more")
+         --for i = startIndex,lastGroundBounds[1]-1 do
+         --   print(i, testData[i], 'should be added')
+         --end
+         addTheContentsOfGroundTiles(startIndex, lastGroundBounds[1]-1)
       elseif startIndex > lastGroundBounds[1] then
-	 print("going right, less becomes visible at start, i need less")
-         for i = startIndex,lastGroundBounds[1]+1, -1 do
-            print(i, testData[i], 'should be removed')
-         end
+	 --print("going right, less becomes visible at start, i need less")
+         --for i = startIndex,lastGroundBounds[1]+1, -1 do
+         --   print(i, testData[i], 'should be removed')
+         --end
       end
    end
    if (endIndex ~= lastGroundBounds[2]) then
       -- here i shoul dget some items to start displaying probably
 --      print('change at end')
       if endIndex < lastGroundBounds[2] then
-	 print("going left, less becomes visible at end, i need less")
-         for i = endIndex,lastGroundBounds[2]-1 do
-            print(i, testData[i], 'should be removed')
-         end
+	 --print("going left, less becomes visible at end, i need less")
+         --for i = endIndex,lastGroundBounds[2]-1 do
+         --   print(i, testData[i], 'should be removed')
+         --end
 
       elseif endIndex > lastGroundBounds[2] then
-	 print("going right, more becomes visible at end, i need more")
-         for i = endIndex,lastGroundBounds[2]+1, -1 do
-            print(i, testData[i], 'should be added')
-         end
+	 --print("going right, more becomes visible at end, i need more")
+         --for i = endIndex,lastGroundBounds[2]+1, -1 do
+         --   print(i, testData[i], 'should be added')
+         --end
+         addTheContentsOfGroundTiles(lastGroundBounds[2]+1, endIndex)
 
       end
    end
@@ -667,7 +725,6 @@ end
 
 function drawGroundPlaneLines()
    local thing = groundPlanes.assets[1].thing
-   local tileSize = 100
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
@@ -749,12 +806,14 @@ function drawDebugStrings()
    love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
    love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
+   love.graphics.print('childCount: '..#root.children, 20, 90)
 
    love.graphics.setColor(1,1,1,.8)
    love.graphics.print('fps: '..love.timer.getFPS(),21,11)
    love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
    love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
+   love.graphics.print('childCount: '..#root.children, 21, 91)
 
    love.graphics.scale(1,1)
 end
@@ -777,7 +836,7 @@ function love.draw()
 
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   if (true) then
+   if (false) then
       farther:push()
       love.graphics.setColor( 1, 0, 0, .25 )
       tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
