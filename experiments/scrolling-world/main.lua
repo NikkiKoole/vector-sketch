@@ -2,7 +2,7 @@ local Camera = require 'brady'
 local inspect = require 'inspect'
 ProFi = require 'ProFi'
 require 'generateWorld'
-
+require 'gradient'
 local random = love.math.random
 
 function require_all(path, opts)
@@ -89,7 +89,6 @@ function love.keypressed( key )
       end
       profiling = not profiling
    end
-
 end
 
 local function resizeCamera( self, w, h )
@@ -128,18 +127,8 @@ function readFileAndAddToCache(url)
    end
 
    return meshCache[url]
-
 end
 
-function hex2rgb(hex)
-    hex = hex:gsub("#","")
-    return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
-end
-
-function hex2rgb1(hex)
-    hex = hex:gsub("#","")
-    return tonumber("0x"..hex:sub(1,2))/255, tonumber("0x"..hex:sub(3,4))/255, tonumber("0x"..hex:sub(5,6))/255
-end
 
 function love.load()
 
@@ -175,38 +164,6 @@ function love.load()
    moving = nil
 
    -- https://codepen.io/bork/pen/wJhEm
-   local gradients = {
-      {from={hex2rgb1('#012459')}, to={hex2rgb1('#001322')}},
-      {from={hex2rgb1('#003972')}, to={hex2rgb1('#001322')}},
-      {from={hex2rgb1('#003972')}, to={hex2rgb1('#001322')}},
-      {from={hex2rgb1('#004372')}, to={hex2rgb1('#00182b')}},
-
-      {from={hex2rgb1('#004372')}, to={hex2rgb1('#011d34')}},
-      {from={hex2rgb1('#016792')}, to={hex2rgb1('#00182b')}},
-      {from={hex2rgb1('#07729f')}, to={hex2rgb1('#042c47')}},
-      {from={hex2rgb1('#12a1c0')}, to={hex2rgb1('#07506e')}},
-
-      {from={hex2rgb1('#74d4cc')}, to={hex2rgb1('#1386a6')}},
-      {from={hex2rgb1('#efeebc')}, to={hex2rgb1('#61d0cf')}},
-      {from={hex2rgb1('#fee154')}, to={hex2rgb1('#a3dec6')}},
-      {from={hex2rgb1('#fdc352')}, to={hex2rgb1('#e8ed92')}},
-
-      {from={hex2rgb1('#ffac6f')}, to={hex2rgb1('#ffe467')}},
-      {from={hex2rgb1('#fda65a')}, to={hex2rgb1('#ffe467')}},
-      {from={hex2rgb1('#fd9e58')}, to={hex2rgb1('#ffe467')}},
-      {from={hex2rgb1('#f18448')}, to={hex2rgb1('#ffd364')}},
-
-      {from={hex2rgb1('#f06b7e')}, to={hex2rgb1('#f9a856')}},
-      {from={hex2rgb1('#ca5a92')}, to={hex2rgb1('#f4896b')}},
-      {from={hex2rgb1('#5b2c83')}, to={hex2rgb1('#d1628b')}},
-      {from={hex2rgb1('#371a79')}, to={hex2rgb1('#713684')}},
-
-      {from={hex2rgb1('#28166b')}, to={hex2rgb1('#45217c')}},
-      {from={hex2rgb1('#192861')}, to={hex2rgb1('#372074')}},
-      {from={hex2rgb1('#040b3c')}, to={hex2rgb1('#233072')}},
-      {from={hex2rgb1('#040b3c')}, to={hex2rgb1('#012459')}}
-
-   }
    local timeIndex = 17
    skygradient = gradientMesh("vertical", gradients[timeIndex].from, gradients[timeIndex].to)
 
@@ -304,10 +261,6 @@ function love.load()
    end
    initCarParts()
 
-
-
-
-
    local plantUrls = {
       'assets/grassagain_.polygons.txt',
       'assets/plant1.polygons.txt',
@@ -332,19 +285,26 @@ function love.load()
       - make the inittid list just a big list of groundindexes ? -100 -> 100 or something
       - at each list add a bunch of random things
       - then try and display this thing.
-
       - from there we are ion a good location to improve
 
    ]]--
 
-  local testData = {}
+  testData = {}
   for i = -100, 100 do
      --print(i)
      testData[i] = {}
      for p = 1, 10 do
-	table.insert(testData[i], {x=random()*100,
-				   depth=mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max ),
-				   urlIndex=math.floor(random()* #plantUrls)})
+	table.insert(
+           testData[i],
+           {
+              x=random()*100,
+              groundTileIndex = i,
+              depth=mapInto(random(),
+                            0,1,
+                            depthMinMax.min, depthMinMax.max ),
+              urlIndex=math.floor(random()* #plantUrls)
+           }
+        )
      end
   end
    --print(inspect(testData))
@@ -399,7 +359,7 @@ function love.load()
       groundPlanes.assets[i].thing = readFileAndAddToCache(url)
       groundPlanes.assets[i].bbox = getBBoxOfChildren(groundPlanes.assets[i].thing.children)
    end
-   for i = 0, 100 do  -- maximum of 100 groundplanes
+   for i = 0, 100 do  -- maximum of 100 groundplanes visible onscreen
       groundPlanes.perspectiveContainer[i] = {}
       for j =0, 10 do -- maximum of 10 'layers/children/optimized layers' in a thing
 	 groundPlanes.perspectiveContainer[i][j] = {}
@@ -478,11 +438,12 @@ function love.load()
    end
 
    parentize(root)
-
+   
    renderThings(root)
    avgRunningAhead = 0
    sortOnDepth(root.children)
 
+   -- set camera direct to where it wants to be
    cam:setTranslation(
       player.x + player.width/2 ,
       player.y - 350
@@ -492,6 +453,7 @@ function love.load()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
 
    findAllFolderNodesRecursively(root)
+   arrangeWhatIsVisibleStartup()
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 end
 
@@ -626,6 +588,26 @@ function drawGroundPlaneInPosition(dest, index, tileIndex)
       love.graphics.setColor(1,1,1)
    end
 end
+function arrangeWhatIsVisibleStartup()
+   local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
+   local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
+   local tileSize = 100
+
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+   local startIndex = s/tileSize
+   local endIndex = e/tileSize
+
+   print('pretend i did a lot of init positonioning here')
+   for i = startIndex, endIndex do
+      print(i, testData[i], 'should be added')
+   end
+   
+   lastGroundBounds = {startIndex, endIndex}
+
+end
+
+
 
 function arrangeWhatIsVisible(x1, x2, tileSize)
 
@@ -635,6 +617,7 @@ function arrangeWhatIsVisible(x1, x2, tileSize)
    local endIndex = e/tileSize
 
 
+if false then   
    if (startIndex ~= lastGroundBounds[1] and endIndex ~= lastGroundBounds[2]) then
        print("change at start and end")
        print("this only happens at start i think")
@@ -642,24 +625,37 @@ function arrangeWhatIsVisible(x1, x2, tileSize)
 	  print("this is the start, mayeb this should be done somewhere else")
        end
    end
+end
+
 
    if (startIndex ~= lastGroundBounds[1]) then
       -- here i shoul dget some items to start displaying probably
-      print('change at start')
       if startIndex < lastGroundBounds[1] then
 	 print("going left, more becomes visible at start, i need more")
+         for i = startIndex,lastGroundBounds[1]-1 do
+            print(i, testData[i], 'should be added')
+         end
       elseif startIndex > lastGroundBounds[1] then
 	 print("going right, less becomes visible at start, i need less")
-
+         for i = startIndex,lastGroundBounds[1]+1, -1 do
+            print(i, testData[i], 'should be removed')
+         end
       end
    end
    if (endIndex ~= lastGroundBounds[2]) then
       -- here i shoul dget some items to start displaying probably
-      print('change at end')
+--      print('change at end')
       if endIndex < lastGroundBounds[2] then
 	 print("going left, less becomes visible at end, i need less")
+         for i = endIndex,lastGroundBounds[2]-1 do
+            print(i, testData[i], 'should be removed')
+         end
+
       elseif endIndex > lastGroundBounds[2] then
 	 print("going right, more becomes visible at end, i need more")
+         for i = endIndex,lastGroundBounds[2]+1, -1 do
+            print(i, testData[i], 'should be added')
+         end
 
       end
    end
@@ -771,46 +767,6 @@ function drawUI()
    love.graphics.circle('fill', W-50, (H/2)-25, 50)
 end
 
-
-function gradientMesh(dir, ...)
-   local COLOR_MUL = love._version >= "11.0" and 1 or 255
-    -- Check for direction
-    local isHorizontal = true
-    if dir == "vertical" then
-        isHorizontal = false
-    elseif dir ~= "horizontal" then
-        error("bad argument #1 to 'gradient' (invalid value)", 2)
-    end
-
-    -- Check for colors
-    local colorLen = select("#", ...)
-    if colorLen < 2 then
-        error("color list is less than two", 2)
-    end
-
-    -- Generate mesh
-    local meshData = {}
-    if isHorizontal then
-        for i = 1, colorLen do
-            local color = select(i, ...)
-            local x = (i - 1) / (colorLen - 1)
-
-            meshData[#meshData + 1] = {x, 1, x, 1, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
-            meshData[#meshData + 1] = {x, 0, x, 0, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
-        end
-    else
-        for i = 1, colorLen do
-            local color = select(i, ...)
-            local y = (i - 1) / (colorLen - 1)
-
-            meshData[#meshData + 1] = {1, y, 1, y, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
-            meshData[#meshData + 1] = {0, y, 0, y, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
-        end
-    end
-
-    -- Resulting Mesh has 1x1 image size
-    return love.graphics.newMesh(meshData, "strip", "static")
-end
 
 function love.draw()
    renderCount = {normal=0, optimized=0, groundMesh=0}
