@@ -295,15 +295,18 @@ return transform_projection * vertex_position;
     --perspShader = love.graphics.newShader(pixel, vertex)
 
 
-angle = .2 * math.pi
+angle = 0.3 * math.pi
 	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
-	w, h = love.graphics.getDimensions()
+	--w, h = love.graphics.getDimensions()
 	groundShader = love.graphics.newShader( [[
 		uniform vec2 size;
 		uniform float cosAngle, sinAngle;
+//              uniform float xOff;
 
 		vec4 position(mat4 m, vec4 p) {
-			p.z = 1.0 - (p.y) / (size.y) * cosAngle;
+//xOff = 0;
+                        //p.x = (p.x + xOff);
+			p.z = 1.0 - (p.y) / size.y * cosAngle;
 			p.y *= sinAngle / p.z;
 			p.x = 0.5 * size.x + (p.x - 0.5 * size.x) / p.z;
 			return m * p;
@@ -807,7 +810,7 @@ function drawGroundPlaneLines()
 
    arrangeWhatIsVisible(x1, x2, tileSize)
 
-   local usePerspective = false
+   local usePerspective = true
 
    if usePerspective then
 
@@ -850,19 +853,26 @@ love.graphics.setShader(groundShader)
 groundShader:send("size", {W, H})
 groundShader:send("cosAngle", cosAngle)
 groundShader:send("sinAngle", sinAngle)
-      hackFar:push()
-      for i = s, e, tileSize do
+
+      --hackFar:push()
+for i = s, e, tileSize do
+--for i = 0, 1000, 100 do
 	  local groundIndex = (i/tileSize)
 	  local tileIndex = (groundIndex % 5) + 1
 	  local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
 	  love.graphics.setColor(1,1,1,0.5)
+	  love.graphics.setColor(love.math.random(),1,1)
+	  love.graphics.rectangle("fill", i, 0, 100,100)
+
 	  local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
+--	  groundShader:send("xOff", i)
+	  print(i)
 	  for  j=1, #optimized do
 	     love.graphics.setColor(optimized[j].color)
 	     love.graphics.draw(optimized[j].mesh, i, 0)
 	  end
-      end
-      hackFar:pop()
+end
+      --hackFar:pop()
 love.graphics.setShader()
 
    end
