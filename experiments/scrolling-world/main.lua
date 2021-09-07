@@ -240,6 +240,77 @@ function love.load()
       children = {}
    }
 
+
+   -- this is crap
+   -- o dont want to use the pixel shader
+   -- i need to just use teh vertex shader, thats all i have
+
+--https://love2d.org/forums/viewtopic.php?f=4&t=88253
+
+   perspShader = love.graphics.newShader [[
+vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
+return color;
+}
+]]
+
+effect = love.graphics.newShader [[
+        extern number time;
+        vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords)
+        {
+            return vec4((1.0+sin(time))/2.0, abs(cos(time)), abs(sin(time)), 1.0);
+        }
+    ]]
+
+    local pixel = [[
+varying vec4 vpos;
+vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
+return color * vpos;
+}
+]]
+
+local vertex = [[
+varying vec4 vpos;
+
+vec4 position( mat4 transform_projection, vec4 vertex_position )
+{
+    vpos = vertex_position;
+    //return transform_projection * vertex_position;
+float angle = 0;
+transform_projection *= mat4(
+			1, 0, 0, 0,
+			0, cos(angle), -sin(angle), 0,
+			0, sin(angle), cos(angle), 0,
+			1, 1, 1, 1
+		);
+float z = 1-(vertex_position.y/1);
+transform_projection *= mat4(
+	z, 0, 0, 0,
+	0, z, 0, 0,
+	0, 0, 1, 0,
+	1, 1, 1, 1
+);
+return transform_projection * vertex_position;
+}
+]]
+    --perspShader = love.graphics.newShader(pixel, vertex)
+
+
+angle = .2 * math.pi
+	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
+	w, h = love.graphics.getDimensions()
+	groundShader = love.graphics.newShader( [[
+		uniform vec2 size;
+		uniform float cosAngle, sinAngle;
+
+		vec4 position(mat4 m, vec4 p) {
+			p.z = 1.0 - (p.y) / (size.y) * cosAngle;
+			p.y *= sinAngle / p.z;
+			p.x = 0.5 * size.x + (p.x - 0.5 * size.x) / p.z;
+			return m * p;
+		}
+	]])
+
+
    function initCarParts()
       carparts = {}
       carparts.children = parseFile('assets/carparts_.polygons.txt')
@@ -289,12 +360,12 @@ function love.load()
 
    ]]--
 
-   tileSize = 200
+   tileSize = 100
    testData = {}
   for i = -100, 100 do
      --print(i)
      testData[i] = {}
-     for p = 1, 8 do
+     for p = 1, 1 do
 	table.insert(
            testData[i],
            {
@@ -312,36 +383,36 @@ function love.load()
      end
   end
    --print(inspect(testData))
-   function initGrass()
-      local all = {}
-      for j = 1, #plantUrls do
-         local url = plantUrls[j]
-         local read = readFileAndAddToCache(url)
-         local grass = {}
+   -- function initGrass()
+   --    local all = {}
+   --    for j = 1, #plantUrls do
+   --       local url = plantUrls[j]
+   --       local read = readFileAndAddToCache(url)
+   --       local grass = {}
 
-         for i= 1, 5 do
-            grass[i]= {
-               folder = true,
-               transforms =  copy3(read.transforms),
-               name="generated",
-               children ={}
-            }
-            if grass[i].transforms then
-               grass[i].transforms.l[1] = -1000 + random() * 2000
-               grass[i].transforms.l[2] = 0
-               grass[i].transforms.l[4] = 1.0 + random()*.2
-               grass[i].transforms.l[5] = 1.0 + random()* 2
+   --       for i= 1, 5 do
+   --          grass[i]= {
+   --             folder = true,
+   --             transforms =  copy3(read.transforms),
+   --             name="generated",
+   --             children ={}
+   --          }
+   --          if grass[i].transforms then
+   --             grass[i].transforms.l[1] = -1000 + random() * 2000
+   --             grass[i].transforms.l[2] = 0
+   --             grass[i].transforms.l[4] = 1.0 + random()*.2
+   --             grass[i].transforms.l[5] = 1.0 + random()* 2
 
-               local rndDepth = mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max )
-               grass[i].depth = rndDepth
-               grass[i].aabb =  grass[i].transforms.l[1]
-               grass[i].url = url
-            end
-         end
-         all = TableConcat(all, grass)
-      end
-      root.children = all
-   end
+   --             local rndDepth = mapInto(random(), 0,1, depthMinMax.min, depthMinMax.max )
+   --             grass[i].depth = rndDepth
+   --             grass[i].aabb =  grass[i].transforms.l[1]
+   --             grass[i].url = url
+   --          end
+   --       end
+   --       all = TableConcat(all, grass)
+   --    end
+   --    root.children = all
+   -- end
    --initGrass()
 
    groundPlanes = {
@@ -616,6 +687,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
    -- there is a risk of ading thing more then once, should i cehck that her or in the outside ?
    --print("adding called", startIndex, endIndex)
    for i = startIndex, endIndex do
+      if (testData[i]) then
       for j = 1, #testData[i] do
          local thing = testData[i][j]
          local urlIndex = (thing.urlIndex)
@@ -638,7 +710,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
          table.insert(root.children, grass)
        --  print('added', (i*100)+thing.x)
       end
-
+      end
       --print(i, testData[i], 'should be added')
    end
    parentize(root)
@@ -735,21 +807,16 @@ function drawGroundPlaneLines()
 
    arrangeWhatIsVisible(x1, x2, tileSize)
 
+   local usePerspective = false
 
+   if usePerspective then
 
-   if true then
-      -- print((math.floor(lastCameraBounds[1]) == math.floor(x1) and math.floor(lastCameraBounds[2]) == math.floor(x2) and math.floor(lastCameraBounds[3]) == math.floor(y1)),
-
-      -- 	 (lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)
-      -- )
-      --if math.floor(lastCameraBounds[1]) == math.floor(x1) and math.floor(lastCameraBounds[2]) == math.floor(x2) and math.floor(lastCameraBounds[3]) == math.floor(y1) then
       if ((lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)) then
 	 for i = s, e, tileSize do
 	    local groundIndex = (i/tileSize)
 	    local tileIndex = (groundIndex % 5) + 1
 	    local index = (i - s)/tileSize
 	    if index >= 0 and index <= 100 then
---	       print(groundIndex)
 	       drawGroundPlanesSameSame(index, tileIndex)
 	    end
 	 end
@@ -760,30 +827,46 @@ function drawGroundPlaneLines()
 	    local index = (i - s)/tileSize
 	    local height1 = 0
 	    local height2 = 0
-	    if tileIndex == 2 then
-	       --   height1 = -30
-	    end
-	    if tileIndex == 1 then
-	       -- height2 = -30
-
-	    end
-
 	    local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, 'hackFar')
 	    local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, 'hackClose')
 	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, 'hackFar')
 	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, 'hackClose')
-
 	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
 	    if index >= 0 and index <= 100 then
---	       print(groundIndex)
-
 	       drawGroundPlaneInPosition(dest, index, tileIndex)
 	    end
 
 	 end
 	 lastCameraBounds= {x1,x2,y1, y2}
       end
+   else
+      -- here we draw the ground tiles without any perpspective
+      -- it might be better, its gonna be faster atleast, lets see
+      -- its a shiot ton faster, i dont know what i think about it
+
+
+
+love.graphics.setShader(groundShader)
+groundShader:send("size", {W, H})
+groundShader:send("cosAngle", cosAngle)
+groundShader:send("sinAngle", sinAngle)
+      hackFar:push()
+      for i = s, e, tileSize do
+	  local groundIndex = (i/tileSize)
+	  local tileIndex = (groundIndex % 5) + 1
+	  local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
+	  love.graphics.setColor(1,1,1,0.5)
+	  local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
+	  for  j=1, #optimized do
+	     love.graphics.setColor(optimized[j].color)
+	     love.graphics.draw(optimized[j].mesh, i, 0)
+	  end
+      end
+      hackFar:pop()
+love.graphics.setShader()
+
    end
+
 
 end
 
