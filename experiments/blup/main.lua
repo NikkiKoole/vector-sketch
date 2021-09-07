@@ -15,7 +15,7 @@ local function screenToGround(x, y)
 end
 
 function love.load()
-	angle = 0.2 * math.pi
+	angle = .1* math.pi
 	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
 	w, h = love.graphics.getDimensions()
 	groundShader = love.graphics.newShader([[
