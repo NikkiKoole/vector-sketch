@@ -249,77 +249,65 @@ function love.load()
 
 --https://love2d.org/forums/viewtopic.php?f=4&t=88253
 
-   perspShader = love.graphics.newShader [[
-vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
-return color;
-}
-]]
+--    perspShader = love.graphics.newShader [[
+-- vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
+-- return color;
+-- }
+-- ]]
 
-effect = love.graphics.newShader [[
-        extern number time;
-        vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords)
-        {
-            return vec4((1.0+sin(time))/2.0, abs(cos(time)), abs(sin(time)), 1.0);
-        }
-    ]]
+-- effect = love.graphics.newShader [[
+--         extern number time;
+--         vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords)
+--         {
+--             return vec4((1.0+sin(time))/2.0, abs(cos(time)), abs(sin(time)), 1.0);
+--         }
+--     ]]
 
-    local pixel = [[
-varying vec4 vpos;
-vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
-return color * vpos;
-}
-]]
+--     local pixel = [[
+-- varying vec4 vpos;
+-- vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
+-- return color * vpos;
+-- }
+-- ]]
 
-local vertex = [[
-varying vec4 vpos;
+-- local vertex = [[
+-- varying vec4 vpos;
 
-vec4 position( mat4 transform_projection, vec4 vertex_position )
-{
-    vpos = vertex_position;
-    //return transform_projection * vertex_position;
-float angle = 0;
-transform_projection *= mat4(
-			1, 0, 0, 0,
-			0, cos(angle), -sin(angle), 0,
-			0, sin(angle), cos(angle), 0,
-			1, 1, 1, 1
-		);
-float z = 1-(vertex_position.y/1);
-transform_projection *= mat4(
-	z, 0, 0, 0,
-	0, z, 0, 0,
-	0, 0, 1, 0,
-	1, 1, 1, 1
-);
-return transform_projection * vertex_position;
-}
-]]
-    --perspShader = love.graphics.newShader(pixel, vertex)
+-- vec4 position( mat4 transform_projection, vec4 vertex_position )
+-- {
+--     vpos = vertex_position;
+--     //return transform_projection * vertex_position;
+-- float angle = 0;
+-- transform_projection *= mat4(
+-- 			1, 0, 0, 0,
+-- 			0, cos(angle), -sin(angle), 0,
+-- 			0, sin(angle), cos(angle), 0,
+-- 			1, 1, 1, 1
+-- 		);
+-- float z = 1-(vertex_position.y/1);
+-- transform_projection *= mat4(
+-- 	z, 0, 0, 0,
+-- 	0, z, 0, 0,
+-- 	0, 0, 1, 0,
+-- 	1, 1, 1, 1
+-- );
+-- return transform_projection * vertex_position;
+-- }
+-- ]]
 
-
-
-
---local arr =
---]]
-
-angle = 0.3 * math.pi
+        angle = .2 * math.pi
 	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
-	--w, h = love.graphics.getDimensions()
 	groundShader = love.graphics.newShader( [[
-		uniform vec2 size;
+		//uniform vec2 size;
 		uniform float cosAngle, sinAngle;
-              uniform float xOff;
-
+                uniform float xOff;
 		vec4 position(mat4 m, vec4 p) {
-//xOff = 0;
-
-//m *= ;
-
-                        p.x = (p.x + xOff);
-			p.z = 1.0 - (p.y) / size.y * cosAngle;
+                        vec2 size = love_ScreenSize.xy / 4;
+                        p.x =  (p.x) + (xOff);
+			p.z = 1.0 - p.y / size.y * cosAngle;
 			p.y *= sinAngle / p.z;
-			p.x = 0.5 * size.x + (p.x - 0.5 * size.x) / p.z;
-			return m * p * TransformMatrix;
+			p.x = 0.5 * (size.x) + (p.x - 0.5 * (size.x)) / p.z;
+			return m * p ;
 		}
 	]])
 
@@ -848,7 +836,6 @@ function drawGroundPlaneLines()
 	    if index >= 0 and index <= 100 then
 	       drawGroundPlaneInPosition(dest, index, tileIndex)
 	    end
-
 	 end
 	 lastCameraBounds= {x1,x2,y1, y2}
       end
@@ -859,31 +846,32 @@ function drawGroundPlaneLines()
 
 
 
-love.graphics.setShader(groundShader)
-groundShader:send("size", {W, H})
-groundShader:send("cosAngle", cosAngle)
-groundShader:send("sinAngle", sinAngle)
+      love.graphics.setShader(groundShader)
+      --groundShader:send("size", {W, H})
+      groundShader:send("cosAngle", cosAngle)
+      groundShader:send("sinAngle", sinAngle)
 
       --hackFar:push()
-for i = s, e, tileSize do
---for i = 0, 1000, 100 do
-	  local groundIndex = (i/tileSize)
-	  local tileIndex = (groundIndex % 5) + 1
-	  local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
-	  love.graphics.setColor(1,1,1,0.5)
-	  love.graphics.setColor(love.math.random(),1,1)
-	  love.graphics.rectangle("fill", i, 0, 100,100)
+      for i = s, e, tileSize do
+      --for i = 0, W, 100 do
+         local groundIndex = (i/tileSize)
+         local tileIndex = (groundIndex % 5) + 1
+         local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
+         --love.graphics.setColor(1,1,1,0.5)
+         groundShader:send("xOff", x1/2)
 
-	  local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
-	  groundShader:send("xOff", i)
-	  print(i)
-	  for  j=1, #optimized do
-	     love.graphics.setColor(optimized[j].color)
-	     love.graphics.draw(optimized[j].mesh, i, 0)
-	  end
-end
+         --love.graphics.setColor(love.math.random(),1,1)
+         --love.graphics.rectangle("fill", 0, 0,100,100)
+
+         local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
+         --print(i)
+         for  j=1, #optimized do
+            love.graphics.setColor(optimized[j].color)
+            love.graphics.draw(optimized[j].mesh, x1/2, 700)
+         end
+      end
       --hackFar:pop()
-love.graphics.setShader()
+      love.graphics.setShader()
 
    end
 
