@@ -240,7 +240,9 @@ function love.load()
       children = {}
    }
 
-
+   transform = love.math.newTransform( )
+   transform = transform:setTransformation( 123, 456)
+   print(transform:getMatrix())
    -- this is crap
    -- o dont want to use the pixel shader
    -- i need to just use teh vertex shader, thats all i have
@@ -295,21 +297,29 @@ return transform_projection * vertex_position;
     --perspShader = love.graphics.newShader(pixel, vertex)
 
 
+
+
+--local arr =
+--]]
+
 angle = 0.3 * math.pi
 	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
 	--w, h = love.graphics.getDimensions()
 	groundShader = love.graphics.newShader( [[
 		uniform vec2 size;
 		uniform float cosAngle, sinAngle;
-//              uniform float xOff;
+              uniform float xOff;
 
 		vec4 position(mat4 m, vec4 p) {
 //xOff = 0;
-                        //p.x = (p.x + xOff);
+
+//m *= ;
+
+                        p.x = (p.x + xOff);
 			p.z = 1.0 - (p.y) / size.y * cosAngle;
 			p.y *= sinAngle / p.z;
 			p.x = 0.5 * size.x + (p.x - 0.5 * size.x) / p.z;
-			return m * p;
+			return m * p * TransformMatrix;
 		}
 	]])
 
@@ -810,7 +820,7 @@ function drawGroundPlaneLines()
 
    arrangeWhatIsVisible(x1, x2, tileSize)
 
-   local usePerspective = true
+   local usePerspective = false
 
    if usePerspective then
 
@@ -865,7 +875,7 @@ for i = s, e, tileSize do
 	  love.graphics.rectangle("fill", i, 0, 100,100)
 
 	  local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
---	  groundShader:send("xOff", i)
+	  groundShader:send("xOff", i)
 	  print(i)
 	  for  j=1, #optimized do
 	     love.graphics.setColor(optimized[j].color)
