@@ -295,15 +295,15 @@ function love.load()
 -- }
 -- ]]
 
-        angle = .2 * math.pi
+        angle = .3 * math.pi
 	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
 	groundShader = love.graphics.newShader( [[
 		//uniform vec2 size;
 		uniform float cosAngle, sinAngle;
                 uniform float xOff;
 		vec4 position(mat4 m, vec4 p) {
-                        vec2 size = love_ScreenSize.xy / 4;
-                        p.x =  (p.x) + (xOff);
+                        vec2 size = love_ScreenSize.xy / 2;
+                        p.x =  (p.x) + (xOff*0);
 			p.z = 1.0 - p.y / size.y * cosAngle;
 			p.y *= sinAngle / p.z;
 			p.x = 0.5 * (size.x) + (p.x - 0.5 * (size.x)) / p.z;
@@ -311,6 +311,8 @@ function love.load()
 		}
 	]])
 
+        image = love.graphics.newImage("images.jpeg")
+        --quad = love.graphics.newQuad(0, 0, 128, 64, image:getWidth(), image:getHeight())
 
    function initCarParts()
       carparts = {}
@@ -847,27 +849,28 @@ function drawGroundPlaneLines()
 
 
       love.graphics.setShader(groundShader)
-      --groundShader:send("size", {W, H})
+     -- groundShader:send("size", {W, H})
       groundShader:send("cosAngle", cosAngle)
       groundShader:send("sinAngle", sinAngle)
 
-      --hackFar:push()
+     -- hackFar:push()
       for i = s, e, tileSize do
       --for i = 0, W, 100 do
          local groundIndex = (i/tileSize)
          local tileIndex = (groundIndex % 5) + 1
          local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
-         --love.graphics.setColor(1,1,1,0.5)
-         groundShader:send("xOff", x1/2)
+         love.graphics.setColor(1,1,1,0.5)
+         groundShader:send("xOff", x1)
 
          --love.graphics.setColor(love.math.random(),1,1)
-         --love.graphics.rectangle("fill", 0, 0,100,100)
+         --love.graphics.rectangle("fill", x1, 0,100,100)
+         love.graphics.draw(image, x1, 300)
 
          local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
          --print(i)
          for  j=1, #optimized do
             love.graphics.setColor(optimized[j].color)
-            love.graphics.draw(optimized[j].mesh, x1/2, 700)
+            love.graphics.draw(optimized[j].mesh, x1, 700)
          end
       end
       --hackFar:pop()
