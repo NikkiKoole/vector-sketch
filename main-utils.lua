@@ -147,6 +147,7 @@ function pointInTriangle(p, t1, t2, t3)
 
    return ((b1 == b2) and (b2 == b3))
 end
+
 function isMouseInMesh(mx, my, body, mesh)
    if mesh and body then
       local count = mesh:getVertexCount()

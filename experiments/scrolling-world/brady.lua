@@ -31,14 +31,14 @@ local function rotateAboutPoint( px, py, ox, oy, theta )
 end
 
 local function makePush( self, layer )
-	return function()
-		love.graphics.push( layer.mode )
-		love.graphics.origin()
-		love.graphics.translate( self.x + self.offsetX, self.y + self.offsetY )
-		love.graphics.rotate( self.rotation )
-		love.graphics.scale( self.scale * self.aspectRatioScale * layer.scale )
-		love.graphics.translate( -self.translationX * layer.relativeScale, -self.translationY * layer.relativeScale )
-	end
+   return function()
+      love.graphics.push( layer.mode )
+      love.graphics.origin()
+      love.graphics.translate( self.x + self.offsetX, self.y + self.offsetY )
+      love.graphics.rotate( self.rotation )
+      love.graphics.scale( self.scale * self.aspectRatioScale * layer.scale )
+      love.graphics.translate( -self.translationX * layer.relativeScale, -self.translationY * layer.relativeScale )
+   end
 end
 
 

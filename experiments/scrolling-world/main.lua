@@ -59,6 +59,8 @@ function readFileAndAddToCache(url)
       assert(g2)
       meshAll(g2)
       makeOptimizedBatchMesh(g2)
+      local bbox = getBBoxOfChildren(g2.children)
+      g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
       meshCache[url] = g2
    end
 
@@ -291,9 +293,9 @@ function love.load()
    tileSize = 100
    plantData = {}
    for i = -100, 100 do
-      --print(i)
+
       plantData[i] = {}
-      for p = 1, 5 do
+      for p = 1, 1 do
          table.insert(
             plantData[i],
             {
@@ -310,7 +312,7 @@ function love.load()
          )
       end
    end
-   --print(inspect(plantData))
+
    -- function initGrass()
    --    local all = {}
    --    for j = 1, #plantUrls do
@@ -407,7 +409,7 @@ function love.load()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 1 do
+   for j = 1, 100 do
       local generated = generatePolygon(0,0, 4 + random()*16, .05 + random()*.01, .02 , 8 + random()*8)
       local points = {}
       for i = 1, #generated, 2 do
@@ -419,18 +421,20 @@ function love.load()
 
       local r,g,b = hex2rgb('4D391F')
       r = random()*255
-      local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
-      local xPos = random()*1200
+      local rnd = random()
+      local rndDepth =  mapInto(rnd, 0,1,depthMinMax.min,depthMinMax.max )
+      local xPos = -600 + random()*1200
       local randomShape = {
          folder = true,
          transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
          name="rood",
          depth = rndDepth,
          aabb = xPos,
+         bbox= {tlx, tly, brx, bry},
          children ={
             {
                name="roodchild:"..1,
-               color = {r/255,g/255,b/255, 1.0},
+               color = {rnd,g/255,b/255, 1.0},
                points = points,
             },
          }
@@ -548,6 +552,12 @@ function love.mousereleased()
    moving = nil
 end
 
+function love.mousemoved(mx, my)
+   for i = 1, #root.children do
+      local child = root.children[i]
+   end
+   
+end
 
 
 function removeTheContenstOfGroundTiles(startIndex, endIndex)
@@ -583,6 +593,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
             grass.depth = thing.depth
             grass.url = url
             grass.groundTileIndex = thing.groundTileIndex
+            grass.bbox = read.bbox
             table.insert(root.children, grass)
          end
       end
@@ -739,8 +750,34 @@ function love.draw()
    end
 
    cam:pop()
+
+   -- draw hitboxes around things with bbox
+   -- see if i can do it
+      love.graphics.setColor(1,1,1,.5)
+
+   for i =1 ,#root.children do
+      local c = root.children[i]
+      if c.bbox and c._localTransform  then
+
+         local hack = {}
+         hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+
+         local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+         local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+
+         local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+         local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+
+         
+         love.graphics.rectangle('fill', tlx, tly, brx-tlx, bry-tly)
+      end
+      
+   end
+      love.graphics.setColor(1,1,1,1)
+   
+   
    --drawCameraCross()
-   love.graphics.setColor(1,1,1)
    drawUI()
 
    drawCameraBounds(cam, 'line' )
