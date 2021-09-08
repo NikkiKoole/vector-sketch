@@ -66,7 +66,10 @@ function drawGroundPlaneLines()
                                   0,
                                   1*scale,
                                   -1*scale*1.4)
+               renderCount.groundMesh = renderCount.groundMesh + 1
+
             end
+
       end
       love.graphics.setShader()
    end
