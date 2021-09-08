@@ -6,6 +6,18 @@ require 'gradient'
 require 'groundplane'
 local random = love.math.random
 
+
+--[[
+TODO:
+ 
+the bbox functions have 2 ways of returning the data 
+{tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
+make that just one way
+]]--
+
+
+
+
 function require_all(path, opts)
    local items = love.filesystem.getDirectoryItems(path)
    for _, item in pairs(items) do
@@ -304,8 +316,8 @@ function love.load()
                depth=mapInto(random(),
                              0,1,
                              depthMinMax.min, depthMinMax.max ),
-               scaleX = 1.0 + random()*.2,
-               scaleY = 1.0 + random()*1.2,
+               scaleX = 1.0 + random()*2,
+               scaleY = 1.0 + random()*4,
 
                urlIndex=math.ceil(random()* #plantUrls)
             }
@@ -554,7 +566,36 @@ end
 
 function love.mousemoved(mx, my)
    for i = 1, #root.children do
-      local child = root.children[i]
+      local c = root.children[i]
+      -- this assumes things are only ever one level deep
+      -- and i think its fine
+
+      -- at the moment i am only looking at items with bbox and DEPTH set
+      if c.bbox and c._localTransform and c.depth then
+         local hack = {}
+         hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+
+         local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+         local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+
+         local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+         local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+         --print(tlx, tly, brx-tlx, bry-tly)
+         if pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly) then
+            --love.graphics.setColor(1,1,1,1)
+                  
+            --love.graphics.rectangle('fill', tlx, tly, brx-tlx, bry-tly)
+            c.mouseOver = true
+         else
+            c.mouseOver = false
+
+         end
+         
+
+      end
+      
+      
    end
    
 end
@@ -753,11 +794,12 @@ function love.draw()
 
    -- draw hitboxes around things with bbox
    -- see if i can do it
-      love.graphics.setColor(1,1,1,.5)
 
+      -- draw the hitboxes
+      
    for i =1 ,#root.children do
       local c = root.children[i]
-      if c.bbox and c._localTransform  then
+      if c.bbox and c._localTransform and c.depth ~= nil then
 
          local hack = {}
          hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
@@ -769,8 +811,23 @@ function love.draw()
          local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
          local brx, bry = cam:getScreenCoordinates(bx, by, hack)
 
-         
-         love.graphics.rectangle('fill', tlx, tly, brx-tlx, bry-tly)
+         if c.mouseOver == true then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my, hack)
+            -- i think i am missing soemhting about my pivot point
+            local ix, iy = c._localTransform:inverseTransformPoint(wx, wy)
+            --print(ix -  c.transforms.l[6],iy - c.transforms.l[7])
+            --c.transforms.l[2] = c.transforms.l[2] + iy
+
+
+            --print(ix, iy)
+            love.graphics.setColor(1,1,1)
+
+            love.graphics.print(round2(ix -  c.transforms.l[6])..", "..round2(iy - c.transforms.l[7]), tlx, tly)
+            love.graphics.setColor(1,1,1,.5)
+      
+            love.graphics.rectangle('fill', tlx, tly, brx-tlx, bry-tly)
+         end
       end
       
    end
