@@ -3,6 +3,7 @@ local inspect = require 'inspect'
 ProFi = require 'ProFi'
 require 'generateWorld'
 require 'gradient'
+require 'groundplane'
 local random = love.math.random
 
 function require_all(path, opts)
@@ -31,11 +32,6 @@ function pointInRect(x,y, rx, ry, rw, rh)
    return true
 end
 
-function hex2rgb(hex)
-   hex = hex:gsub("#","")
-   return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
-end
-
 function shuffleAndMultiply(items, mul)
    local result = {}
    for i = 1, (#items * mul) do
@@ -57,7 +53,20 @@ function copy3(obj, seen)
    return setmetatable(res, getmetatable(obj))
 end
 
-function findAllFolderNodesRecursively(root)
+function readFileAndAddToCache(url)
+   if not meshCache[url] then
+      local g2 = parseFile(url)[1]
+      assert(g2)
+      meshAll(g2)
+      makeOptimizedBatchMesh(g2)
+      meshCache[url] = g2
+   end
+
+   return meshCache[url]
+end
+
+
+function recursivelyAddOptimizedMesh(root)
    if root.folder then
       if root.url then
          root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
@@ -67,9 +76,8 @@ function findAllFolderNodesRecursively(root)
    if root.children then
       for i=1, #root.children do
          if root.children[i].folder then
-            findAllFolderNodesRecursively(root.children[i])
+            recursivelyAddOptimizedMesh(root.children[i])
          end
-
       end
    end
 end
@@ -115,23 +123,9 @@ function sortOnDepth(list)
    table.sort( list, function(a,b) return a.depth <  b.depth end)
 end
 
-function readFileAndAddToCache(url)
-   if not meshCache[url] then
-      local g2 = parseFile(url)[1]
-      assert(g2)
-      meshAll(g2)
-      makeOptimizedBatchMesh(g2)
-      meshCache[url] = g2
-   else
-      --print(url, 'was already in the cache you fool')
-   end
-
-   return meshCache[url]
-end
 
 
 function love.load()
-
    local loadStart = love.timer.getTime()
 
    --ProFi:start()
@@ -163,11 +157,10 @@ function love.load()
 
    moving = nil
 
-   -- https://codepen.io/bork/pen/wJhEm
    local timeIndex = 17
    skygradient = gradientMesh("vertical", gradients[timeIndex].from, gradients[timeIndex].to)
 
-   if true then
+   if false then
       for i = 1, 140 do
 	 local rndHeight = random(100, 200)
 	 local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -225,8 +218,6 @@ function love.load()
    lastCameraBounds = {math.huge, -math.huge}   -- this one is unrounded start and end positions
    lastGroundBounds = {math.huge, -math.huge}  -- this one is just talking about indices
 
-
-
    hack = generateCameraLayer('hack', 1)
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
    hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
@@ -240,80 +231,13 @@ function love.load()
       children = {}
    }
 
-   transform = love.math.newTransform( )
-   transform = transform:setTransformation( 123, 456)
-   print(transform:getMatrix())
-   -- this is crap
-   -- o dont want to use the pixel shader
-   -- i need to just use teh vertex shader, thats all i have
-
---https://love2d.org/forums/viewtopic.php?f=4&t=88253
-
---    perspShader = love.graphics.newShader [[
--- vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
--- return color;
--- }
--- ]]
-
--- effect = love.graphics.newShader [[
---         extern number time;
---         vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords)
---         {
---             return vec4((1.0+sin(time))/2.0, abs(cos(time)), abs(sin(time)), 1.0);
---         }
---     ]]
-
---     local pixel = [[
--- varying vec4 vpos;
--- vec4 effect(vec4 color,Image tex,vec2 tc,vec2 sc){
--- return color * vpos;
--- }
--- ]]
-
--- local vertex = [[
--- varying vec4 vpos;
-
--- vec4 position( mat4 transform_projection, vec4 vertex_position )
--- {
---     vpos = vertex_position;
---     //return transform_projection * vertex_position;
--- float angle = 0;
--- transform_projection *= mat4(
--- 			1, 0, 0, 0,
--- 			0, cos(angle), -sin(angle), 0,
--- 			0, sin(angle), cos(angle), 0,
--- 			1, 1, 1, 1
--- 		);
--- float z = 1-(vertex_position.y/1);
--- transform_projection *= mat4(
--- 	z, 0, 0, 0,
--- 	0, z, 0, 0,
--- 	0, 0, 1, 0,
--- 	1, 1, 1, 1
--- );
--- return transform_projection * vertex_position;
--- }
--- ]]
-
-        angle = .3 * math.pi
-	cosAngle, sinAngle = math.sin(angle), math.cos(angle)
-	groundShader = love.graphics.newShader( [[
-		//uniform vec2 size;
-		uniform float cosAngle, sinAngle;
-                uniform float xOff;
-		vec4 position(mat4 m, vec4 p) {
-                        vec2 size = love_ScreenSize.xy / 2;
-                        p.x =  (p.x) + (xOff*0);
-			p.z = 1.0 - p.y / size.y * cosAngle;
-			p.y *= sinAngle / p.z;
-			p.x = 0.5 * (size.x) + (p.x - 0.5 * (size.x)) / p.z;
-			return m * p ;
-		}
-	]])
-
-        image = love.graphics.newImage("images.jpeg")
-        --quad = love.graphics.newQuad(0, 0, 128, 64, image:getWidth(), image:getHeight())
-
+   betterShader = love.graphics.newShader( [[
+         extern mat4 view;
+         vec4 position(mat4 m, vec4 p) {
+             return view  * TransformMatrix * p;
+         }
+   ]])
+   
    function initCarParts()
       carparts = {}
       carparts.children = parseFile('assets/carparts_.polygons.txt')
@@ -333,8 +257,10 @@ function love.load()
       carbodyVoor.transforms.l[2]=0
       carbodyVoor.depth = carThickness
    end
-   initCarParts()
+   --initCarParts()
 
+
+   
    plantUrls = {
       'assets/grassagain_.polygons.txt',
       'assets/plant1.polygons.txt',
@@ -350,10 +276,9 @@ function love.load()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
-
    }
 
-    --[[
+   --[[
 
       ok my plan to make the loading faster and huge worlds possible
       - make the initted list just a big list of groundindexes ? -100 -> 100 or something
@@ -364,28 +289,28 @@ function love.load()
    ]]--
 
    tileSize = 100
-   testData = {}
-  for i = -100, 100 do
-     --print(i)
-     testData[i] = {}
-     for p = 1, 1 do
-	table.insert(
-           testData[i],
-           {
-              x=random()*tileSize,
-              groundTileIndex = i,
-              depth=mapInto(random(),
-                            0,1,
-                            depthMinMax.min, depthMinMax.max ),
-              scaleX = 1.0 + random()*.2,
-              scaleY = 1.0 + random()*1.2,
+   plantData = {}
+   for i = -100, 100 do
+      --print(i)
+      plantData[i] = {}
+      for p = 1, 5 do
+         table.insert(
+            plantData[i],
+            {
+               x=random()*tileSize,
+               groundTileIndex = i,
+               depth=mapInto(random(),
+                             0,1,
+                             depthMinMax.min, depthMinMax.max ),
+               scaleX = 1.0 + random()*.2,
+               scaleY = 1.0 + random()*1.2,
 
-              urlIndex=math.ceil(random()* #plantUrls)
-           }
-        )
-     end
-  end
-   --print(inspect(testData))
+               urlIndex=math.ceil(random()* #plantUrls)
+            }
+         )
+      end
+   end
+   --print(inspect(plantData))
    -- function initGrass()
    --    local all = {}
    --    for j = 1, #plantUrls do
@@ -526,12 +451,11 @@ function love.load()
       player.x + player.width/2 ,
       player.y - 350
    )
-   test()
+
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
-   arrangeWhatIsVisibleStartup()
 
-   findAllFolderNodesRecursively(root)
+   recursivelyAddOptimizedMesh(root)
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 end
 
@@ -624,262 +548,78 @@ function love.mousereleased()
    moving = nil
 end
 
-function drawGroundPlanesSameSame(index, tileIndex)
-   local thing = groundPlanes.assets[tileIndex].thing
-   for j = 1, #thing.optimizedBatchMesh do
-      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
-      love.graphics.draw(groundPlanes.perspectiveContainer[index][j].perspMesh)
-      renderCount.groundMesh = renderCount.groundMesh + 1
-      love.graphics.setColor(1,1,1)
-   end
-end
-
-function drawGroundPlaneInPosition(dest, index, tileIndex)
-   local thing = groundPlanes.assets[tileIndex].thing
-   local bbox = groundPlanes.assets[tileIndex].bbox
-   local source = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y }
-
-   for j = 1, #thing.optimizedBatchMesh do
-      local count = thing.optimizedBatchMesh[j].mesh:getVertexCount()
-      local result = {}
-
-      for v = 1, count do
-	 local x, y = thing.optimizedBatchMesh[j].mesh:getVertex(v)
-	 local r = transferPoint (x, y, source, dest)
-	 table.insert(result, {r.x, r.y})
-      end
-
-      if groundPlanes.perspectiveContainer[index][j].perspMesh and
-	 groundPlanes.perspectiveContainer[index][j].perspMesh:getVertexCount() == #result then
-	 groundPlanes.perspectiveContainer[index][j].perspMesh:setVertices(result, 1, #result)
-      else
-	 groundPlanes.perspectiveContainer[index][j] = {
-	    perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
-	 }
-      end
-
-      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
-
-      love.graphics.draw(groundPlanes.perspectiveContainer[index][j].perspMesh)
-      renderCount.groundMesh = renderCount.groundMesh + 1
-
-      love.graphics.setColor(1,1,1)
-   end
-end
 
 
 function removeTheContenstOfGroundTiles(startIndex, endIndex)
-   -- everything out of this range ought to be removed
---   print('remove outside', startIndex, endIndex)
    for i = #root.children, 1, -1 do
       local child = root.children[i]
       if child.groundTileIndex ~= nil then
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
-            --print('found a thing to remove', child.groundTileIndex)
-
             table.remove(root.children, i)
          end
       end
    end
-
 end
-
-
 function addTheContentsOfGroundTiles(startIndex, endIndex)
-   -- there is a risk of ading thing more then once, should i cehck that her or in the outside ?
-   --print("adding called", startIndex, endIndex)
    for i = startIndex, endIndex do
-      if (testData[i]) then
-      for j = 1, #testData[i] do
-         local thing = testData[i][j]
-         local urlIndex = (thing.urlIndex)
-         local url = plantUrls[urlIndex]
-         local read = readFileAndAddToCache(url)
-         local grass = {
-            folder = true,
-            transforms = copy3(read.transforms),
-            name = 'generated',
-            children = {}
-         }
-         grass.transforms.l[1] = (i*tileSize) + thing.x
-         grass.transforms.l[2] = 0
-         grass.transforms.l[4] = thing.scaleX
-         grass.transforms.l[5] = thing.scaleY
+      if (plantData[i]) then
+         for j = 1, #plantData[i] do
+            local thing = plantData[i][j]
+            local urlIndex = (thing.urlIndex)
+            local url = plantUrls[urlIndex]
+            local read = readFileAndAddToCache(url)
+            local grass = {
+               folder = true,
+               transforms = copy3(read.transforms),
+               name = 'generated',
+               children = {}
+            }
+            grass.transforms.l[1] = (i*tileSize) + thing.x
+            grass.transforms.l[2] = 0
+            grass.transforms.l[4] = thing.scaleX
+            grass.transforms.l[5] = thing.scaleY
 
-         grass.depth = thing.depth
-         grass.url = url
-         grass.groundTileIndex = thing.groundTileIndex
-         table.insert(root.children, grass)
-       --  print('added', (i*100)+thing.x)
+            grass.depth = thing.depth
+            grass.url = url
+            grass.groundTileIndex = thing.groundTileIndex
+            table.insert(root.children, grass)
+         end
       end
-      end
-      --print(i, testData[i], 'should be added')
    end
    parentize(root)
    sortOnDepth(root.children)
-   findAllFolderNodesRecursively(root)
-
+   recursivelyAddOptimizedMesh(root)
 end
-
-
-function arrangeWhatIsVisibleStartup()
-   local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
-   local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
-   local s = math.floor(x1/tileSize)*tileSize
-   local e = math.ceil(x2/tileSize)*tileSize
-   local startIndex = s/tileSize
-   local endIndex = e/tileSize
-
-   --print('pretend i did a lot of init positonioning here')
-   addTheContentsOfGroundTiles(startIndex, endIndex)
-   lastGroundBounds = {startIndex, endIndex}
-   --print(inspect(root))
-end
-
-
 
 function arrangeWhatIsVisible(x1, x2, tileSize)
-
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
    local startIndex = s/tileSize
    local endIndex = e/tileSize
 
-
-
-   if startIndex ~= lastGroundBounds[1] or
-      endIndex ~= lastGroundBounds[2] then
-
-      removeTheContenstOfGroundTiles(startIndex, endIndex)
-   end
-
-
-
-
-
-
-   if (startIndex ~= lastGroundBounds[1]) then
-      -- here i shoul dget some items to start displaying probably
-      if startIndex < lastGroundBounds[1] then
-	 --print("going left, more becomes visible at start, i need more")
-         --for i = startIndex,lastGroundBounds[1]-1 do
-         --   print(i, testData[i], 'should be added')
-         --end
-         addTheContentsOfGroundTiles(startIndex, lastGroundBounds[1]-1)
-      elseif startIndex > lastGroundBounds[1] then
-	 --print("going right, less becomes visible at start, i need less")
-         --for i = startIndex,lastGroundBounds[1]+1, -1 do
-         --   print(i, testData[i], 'should be removed')
-         --end
+   -- initial adding
+   if lastGroundBounds[1] == math.huge and lastGroundBounds[2] == -math.huge then
+      addTheContentsOfGroundTiles(startIndex, endIndex)
+   else
+      -- look to add at start or end
+      if startIndex ~= lastGroundBounds[1] or
+         endIndex ~= lastGroundBounds[2] then
+         removeTheContenstOfGroundTiles(startIndex, endIndex)
       end
-   end
-   if (endIndex ~= lastGroundBounds[2]) then
-      -- here i shoul dget some items to start displaying probably
---      print('change at end')
-      if endIndex < lastGroundBounds[2] then
-	 --print("going left, less becomes visible at end, i need less")
-         --for i = endIndex,lastGroundBounds[2]-1 do
-         --   print(i, testData[i], 'should be removed')
-         --end
 
-      elseif endIndex > lastGroundBounds[2] then
-	 --print("going right, more becomes visible at end, i need more")
-         --for i = endIndex,lastGroundBounds[2]+1, -1 do
-         --   print(i, testData[i], 'should be added')
-         --end
+      if startIndex < lastGroundBounds[1] then
+         addTheContentsOfGroundTiles(startIndex, lastGroundBounds[1]-1)
+      end
+
+      if endIndex > lastGroundBounds[2] then
          addTheContentsOfGroundTiles(lastGroundBounds[2]+1, endIndex)
-
       end
    end
    lastGroundBounds = {startIndex, endIndex}
 end
 
 
-
-
-function drawGroundPlaneLines()
-   local thing = groundPlanes.assets[1].thing
-   local W, H = love.graphics.getDimensions()
-   love.graphics.setColor(1,1,1)
-   love.graphics.setLineWidth(2)
-   local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
-   local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
-   local s = math.floor(x1/tileSize)*tileSize
-   local e = math.ceil(x2/tileSize)*tileSize
-
-   arrangeWhatIsVisible(x1, x2, tileSize)
-
-   local usePerspective = false
-
-   if usePerspective then
-
-      if ((lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)) then
-	 for i = s, e, tileSize do
-	    local groundIndex = (i/tileSize)
-	    local tileIndex = (groundIndex % 5) + 1
-	    local index = (i - s)/tileSize
-	    if index >= 0 and index <= 100 then
-	       drawGroundPlanesSameSame(index, tileIndex)
-	    end
-	 end
-      else
-	 for i = s, e, tileSize do
-	    local groundIndex = (i/tileSize)
-	    local tileIndex = (groundIndex % 5) + 1
-	    local index = (i - s)/tileSize
-	    local height1 = 0
-	    local height2 = 0
-	    local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, 'hackFar')
-	    local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, 'hackClose')
-	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, 'hackFar')
-	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, 'hackClose')
-	    local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
-	    if index >= 0 and index <= 100 then
-	       drawGroundPlaneInPosition(dest, index, tileIndex)
-	    end
-	 end
-	 lastCameraBounds= {x1,x2,y1, y2}
-      end
-   else
-      -- here we draw the ground tiles without any perpspective
-      -- it might be better, its gonna be faster atleast, lets see
-      -- its a shiot ton faster, i dont know what i think about it
-
-
-
-      love.graphics.setShader(groundShader)
-     -- groundShader:send("size", {W, H})
-      groundShader:send("cosAngle", cosAngle)
-      groundShader:send("sinAngle", sinAngle)
-
-     -- hackFar:push()
-      for i = s, e, tileSize do
-      --for i = 0, W, 100 do
-         local groundIndex = (i/tileSize)
-         local tileIndex = (groundIndex % 5) + 1
-         local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
-         love.graphics.setColor(1,1,1,0.5)
-         groundShader:send("xOff", x1)
-
-         --love.graphics.setColor(love.math.random(),1,1)
-         --love.graphics.rectangle("fill", x1, 0,100,100)
-         love.graphics.draw(image, x1, 300)
-
-         local  optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
-         --print(i)
-         for  j=1, #optimized do
-            love.graphics.setColor(optimized[j].color)
-            love.graphics.draw(optimized[j].mesh, x1, 700)
-         end
-      end
-      --hackFar:pop()
-      love.graphics.setShader()
-
-   end
-
-
-end
 
 function drawCameraViewPointRectangles()
    for _, v in pairs(cameraPoints) do

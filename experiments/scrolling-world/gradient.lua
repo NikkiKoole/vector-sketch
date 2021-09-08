@@ -9,6 +9,7 @@ function hex2rgb1(hex)
 end
 
 
+-- https://codepen.io/bork/pen/wJhEm
 gradients = {
    {from={hex2rgb1('#012459')}, to={hex2rgb1('#001322')}},
    {from={hex2rgb1('#003972')}, to={hex2rgb1('#001322')}},
