@@ -66,7 +66,7 @@ function drawGroundPlaneLines()
                                  100 ,
                                   0,
                                   1*scale,
-                                  -1*scale*1.5)
+                                  -1*scale*1.55)
                renderCount.groundMesh = renderCount.groundMesh + 1
 
             end

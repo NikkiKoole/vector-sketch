@@ -5,18 +5,19 @@ require 'generateWorld'
 require 'gradient'
 require 'groundplane'
 local random = love.math.random
-
+flux = require "flux"
 
 --[[
 TODO:
- 
-the bbox functions have 2 ways of returning the data 
+
+the bbox functions have 2 ways of returning the data
 {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
 make that just one way
 
 look at some touch throw, swipe flick stuff
 https://forum.unity.com/threads/flicking-shooting-throwing-tossing-lobbing-slicing-script.91726/
 
+https://cloud.netlifyusercontent.com/assets/344dbf88-fdf9-42bb-adb4-46f01eedd629/c0061c8d-2295-4c87-8340-2fb3613c9a35/touch-chart-preview-opt.jpg
 ]]--
 
 
@@ -255,7 +256,7 @@ function love.load()
              return view  * TransformMatrix * p;
          }
    ]])
-   
+
    function initCarParts()
       carparts = {}
       carparts.children = parseFile('assets/carparts_.polygons.txt')
@@ -270,7 +271,6 @@ function love.load()
       carbodyVoor.children[1].color[4] = 0.3
       carbodyVoor.children[2].children[1].color[4] = 0.6
       carbodyVoor.children[2].children[2].color[4] = 0.6
-
       carbodyVoor.transforms.l[1]=0
       carbodyVoor.transforms.l[2]=0
       carbodyVoor.depth = carThickness
@@ -278,7 +278,7 @@ function love.load()
    --initCarParts()
 
 
-   
+
    plantUrls = {
       'assets/grassagain_.polygons.txt',
       'assets/plant1.polygons.txt',
@@ -320,8 +320,8 @@ function love.load()
                depth=mapInto(random(),
                              0,1,
                              depthMinMax.min, depthMinMax.max ),
-               scaleX = 1.0 + random()*2,
-               scaleY = 1.0 + random()*4,
+               scaleX = 1.0 + random(),
+               scaleY = 1.0 + random()*1.5,
 
                urlIndex=math.ceil(random()* #plantUrls)
             }
@@ -477,10 +477,18 @@ function love.load()
 
    recursivelyAddOptimizedMesh(root)
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
+
+   gesture = nil
+
+   gestureUpdateResolution = 0.016
+   gestureUpdateResolutionCounter = 0
+   dt = 0
 end
 
 
 function love.update(dt)
+   dt = dt
+   flux.update(dt)
    local v = {x=0, y=0}
 
    if love.keyboard.isDown('left') or moving == 'left' then
@@ -531,6 +539,18 @@ function love.update(dt)
       )
    end
    cam:update()
+   gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
+   if gestureUpdateResolutionCounter > gestureUpdateResolution then
+      gestureUpdateResolutionCounter = 0
+      if gesture then
+	 local x,y = love.mouse:getPosition()
+	 table.insert(gesture.positions, {x=x,y=y, time=love.timer.getTime( )})
+      end
+   end
+
+
+
+   --print(dt)
 end
 
 function love.mousepressed(x,y, button, istouch, presses)
@@ -563,6 +583,7 @@ function love.mousepressed(x,y, button, istouch, presses)
       moving = 'right'
    end
 
+   local itemPressed = false
    for i = 1, #root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth then
@@ -570,29 +591,80 @@ function love.mousepressed(x,y, button, istouch, presses)
          hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
 
-         local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
-         local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-         local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
-         local brx, bry = cam:getScreenCoordinates(bx, by, hack)
-
          if c.mouseOver then
             local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my, hack)
-            local ix, iy = c._localTransform:inverseTransformPoint(wx, wy)
+            local wx2, wy2 = cam:getWorldCoordinates(mx, my, hack)
+            local ix, iy = c._localTransform:inverseTransformPoint(wx2, wy2)
 
             c.pressed = {dx=ix, dy=iy}
+	    itemPressed = true
          end
       end
    end
+
+   if not itemPressed then
+      print('no item pressed, could check and start fro a drag/ flick.throw gesture on the stage')
+      gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}}
+   else
+      print('item is pressed, this might become a throw of that item who knows!?')
+      gesture = nil
+   end
+
 end
 
-function love.mousereleased()
+
+--https://stackoverflow.com/questions/47856682/how-to-get-the-delta-of-swipe-draging-touch
+
+function gestureRecognizer(gesture)
+   -- todo make a few types of gesture here now its just one
+   local minSpeed = 1000
+   local maxSpeed = 5000
+   local minDistance = 25
+   local minDuration = 0.05
+
+
+    local dx = gesture.endPos.x - gesture.startPos.x
+    local dy = gesture.endPos.y - gesture.startPos.y
+    local distance = math.sqrt(dx*dx+dy*dy)
+
+    if distance > minDistance then
+       local deltaTime = gesture.endTime - gesture.startTime
+       if deltaTime > minDuration then
+	  local speed = distance / deltaTime
+	  if speed >= minSpeed and speed < maxSpeed then
+
+	     local durp = {s=0}
+	     flux.to(durp, deltaTime*1.5, { s = 1 }):ease("elasticout"):onupdate(function() cam:translate(-dx/(speed/minSpeed)/30,0) end)
+	  else
+	     print('failed at speed', minSpeed, speed, maxSpeed)
+	  end
+       else
+	  print('failed at duratoin', deltaTime, minDuration)
+       end
+
+
+    else
+       print('failed at distance')
+    end
+
+
+end
+
+
+
+
+function love.mousereleased(x,y)
    moving = nil
    for i = 1, #root.children do
       local c =root.children[i]
       if c.pressed then
          c.pressed = nil
       end
+   end
+   if gesture  then
+      gesture.endTime = love.timer.getTime( )
+      gesture.endPos = {x=x, y=y}
+      gestureRecognizer(gesture)
    end
 end
 
@@ -617,7 +689,7 @@ function love.mousemoved(mx, my)
          end
       end
    end
-   
+
 end
 
 
@@ -816,7 +888,7 @@ function love.draw()
    -- see if i can do it
 
       -- draw the hitboxes
-      
+
    for i =1 ,#root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth ~= nil then
@@ -845,11 +917,11 @@ function love.draw()
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
          end
       end
-      
+
    end
       love.graphics.setColor(1,1,1,1)
-   
-   
+
+
    --drawCameraCross()
    drawUI()
 
