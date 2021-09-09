@@ -13,6 +13,10 @@ TODO:
 the bbox functions have 2 ways of returning the data 
 {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
 make that just one way
+
+look at some touch throw, swipe flick stuff
+https://forum.unity.com/threads/flicking-shooting-throwing-tossing-lobbing-slicing-script.91726/
+
 ]]--
 
 
@@ -558,19 +562,9 @@ function love.mousepressed(x,y, button, istouch, presses)
    if rightdis < 50 then
       moving = 'right'
    end
-end
 
-function love.mousereleased()
-   moving = nil
-end
-
-function love.mousemoved(mx, my)
    for i = 1, #root.children do
       local c = root.children[i]
-      -- this assumes things are only ever one level deep
-      -- and i think its fine
-
-      -- at the moment i am only looking at items with bbox and DEPTH set
       if c.bbox and c._localTransform and c.depth then
          local hack = {}
          hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
@@ -578,24 +572,50 @@ function love.mousemoved(mx, my)
 
          local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
          local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-
          local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
          local brx, bry = cam:getScreenCoordinates(bx, by, hack)
-         --print(tlx, tly, brx-tlx, bry-tly)
+
+         if c.mouseOver then
+            local mx, my = love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my, hack)
+            local ix, iy = c._localTransform:inverseTransformPoint(wx, wy)
+
+            c.pressed = {dx=ix, dy=iy}
+         end
+      end
+   end
+end
+
+function love.mousereleased()
+   moving = nil
+   for i = 1, #root.children do
+      local c =root.children[i]
+      if c.pressed then
+         c.pressed = nil
+      end
+   end
+end
+
+function love.mousemoved(mx, my)
+   for i = 1, #root.children do
+      local c = root.children[i]
+      if c.bbox and c._localTransform and c.depth then
+         local hack = {}
+         hack.scale = mapInto(c.depth,
+                              depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+
+         local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+         local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+         local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+         local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+
          if pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly) then
-            --love.graphics.setColor(1,1,1,1)
-                  
-            --love.graphics.rectangle('fill', tlx, tly, brx-tlx, bry-tly)
             c.mouseOver = true
          else
             c.mouseOver = false
-
          end
-         
-
       end
-      
-      
    end
    
 end
@@ -811,22 +831,18 @@ function love.draw()
          local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
          local brx, bry = cam:getScreenCoordinates(bx, by, hack)
 
-         if c.mouseOver == true then
+         if c.mouseOver == true or c.pressed then
             local mx, my = love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my, hack)
-            -- i think i am missing soemhting about my pivot point
             local ix, iy = c._localTransform:inverseTransformPoint(wx, wy)
-            --print(ix -  c.transforms.l[6],iy - c.transforms.l[7])
-            --c.transforms.l[2] = c.transforms.l[2] + iy
 
+            if c.pressed then
+               c.transforms.l[1] = c.transforms.l[1] + (ix - c.pressed.dx)
+               c.transforms.l[2] = c.transforms.l[2] + (iy - c.pressed.dy)
+            end
 
-            --print(ix, iy)
-            love.graphics.setColor(1,1,1)
-
-            love.graphics.print(round2(ix -  c.transforms.l[6])..", "..round2(iy - c.transforms.l[7]), tlx, tly)
             love.graphics.setColor(1,1,1,.5)
-      
-            love.graphics.rectangle('fill', tlx, tly, brx-tlx, bry-tly)
+            love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
          end
       end
       
