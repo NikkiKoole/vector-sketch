@@ -10,7 +10,7 @@ function drawGroundPlaneLines()
 
    arrangeWhatIsVisible(x1, x2, tileSize)
 
-   local useCPU = false 
+   local useCPU = false
 
    if useCPU then
 
@@ -43,9 +43,9 @@ function drawGroundPlaneLines()
       end
    else
       love.graphics.setShader(betterShader)
-     
+
       betterShader:send('view', {
-                     1.3,  0,    0, -150,
+                     1.15,  0,    0, -150,
                      0,    0, -1.7, -120,
                      0,    1,    0,   50,
                      0,    1,    0,   50,
@@ -56,16 +56,17 @@ function drawGroundPlaneLines()
          local tileIndex = (groundIndex % 5) + 1
             local optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
             local scale = cam:getScale()*0.225
+	    local scale2 = cam:getScale()*.5
             local tx, ty = cam:getViewportPosition()
             local x1,y1 = cam:getScreenCoordinates(i+0.0001, H, 'hackFar')
             for  j=1, #optimized do
-               love.graphics.setColor(optimized[j].color)
+               love.graphics.setColor(optimized[j].color[1],optimized[j].color[2],optimized[j].color[3],0.5 )
                love.graphics.draw(optimized[j].mesh,
-                                  x1*scale,
-                                  100 ,
+                                  x1/4,
+                                 100 ,
                                   0,
                                   1*scale,
-                                  -1*scale*1.4)
+                                  -1*scale*1.5)
                renderCount.groundMesh = renderCount.groundMesh + 1
 
             end
