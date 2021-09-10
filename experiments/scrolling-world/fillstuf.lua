@@ -192,7 +192,8 @@ function createStuff()
    end
 
 
-
+   local points = {{-50,-250},{50,-250},{50,0},{-50,0}}
+   local tlx, tly, brx, bry = getPointsBBox(points)
    -- new player
    newPlayer = {
       folder = true,
@@ -200,11 +201,12 @@ function createStuff()
       name="player",
       depth = 0,
       x=0,
+      bbox= {tlx, tly, brx, bry},
       children ={
          {
             name="yellow shape:"..1,
             color = {1,1,0, 0.8},
-            points = {{-50,-250},{50,-250},{50,0},{-50,0}},
+            points = points,
          },
       }
    }

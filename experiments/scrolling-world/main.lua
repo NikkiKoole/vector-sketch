@@ -2,6 +2,7 @@ local Camera = require 'vendor.brady'
 local inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
 --flux = require "vendor.flux"
+local Vector = require "vendor.brinevector"
 
 require 'generateWorld'
 require 'gradient'
@@ -22,7 +23,19 @@ https://forum.unity.com/threads/flicking-shooting-throwing-tossing-lobbing-slici
 https://cloud.netlifyusercontent.com/assets/344dbf88-fdf9-42bb-adb4-46f01eedd629/c0061c8d-2295-4c87-8340-2fb3613c9a35/touch-chart-preview-opt.jpg
 ]]--
 
+function applyForce(motionObject, force)
+   local f = force / motionObject.mass
+   motionObject.acceleration =  motionObject.acceleration + f
+end
 
+
+function makeMotionObject()
+   return {
+      velocity = Vector(0,0),
+      acceleration = Vector(0,0),
+      mass = 10
+   }
+end
 
 
 function require_all(path, opts)
@@ -236,6 +249,8 @@ function love.load()
 
    tweenCameraDelta = 0
    followPlayerCameraDelta = 0
+
+   showNumbersOnScreen = false
 end
 
 
@@ -328,6 +343,34 @@ function love.update(dt)
       end
    end
 
+   for i=1, #root.children do
+      local thing = root.children[i]
+      if thing.inMotion then
+
+	 local gravity = Vector(0,9*thing.inMotion.mass);
+
+	 applyForce(thing.inMotion, gravity)
+
+	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration
+
+	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
+	 thing.transforms.l[2] = thing.transforms.l[2] + (thing.inMotion.velocity.y * dt)
+
+	 --print(thing.transforms.l[2])
+	 --velocity.add(acceleration);
+	 --location.add(velocity);
+	 --Now add clearing the acceleration each time!
+	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
+
+	 if thing.transforms.l[2] >= 0 then
+--	    print('this is too dumb, fix it better')
+	    thing.transforms.l[2] = 0
+	    thing.inMotion = nil
+	 end
+
+      end
+
+   end
 
 
 
@@ -357,17 +400,23 @@ function love.mousepressed(x,y, button, istouch, presses)
    local leftdis = getDistance(x,y, 50, (H/2)-25)
    local rightdis = getDistance(x,y, W-50, (H/2)-25)
 
+   local toprightdis = getDistance(x,y, W-50, 25)
+
    if leftdis < 50 then
       moving = 'left'
    end
    if rightdis < 50 then
       moving = 'right'
    end
+   if toprightdis < 50 then
+      showNumbersOnScreen = not showNumbersOnScreen
+   end
+
 
    local itemPressed = false
-   for i = 1, #root.children do
+   for i = #root.children,1,-1 do
       local c = root.children[i]
-      if c.bbox and c._localTransform and c.depth then
+      if c.bbox and c._localTransform and c.depth and not itemPressed then
          local hack = {}
          hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
@@ -400,17 +449,19 @@ end
 
 function gestureRecognizer(gesture)
    -- todo make a few types of gesture here now its just one
-   local minSpeed = 1000
-   local maxSpeed = 5000
-   local minDistance = 25
-   local minDuration = 0.05
 
-
-   local dx = gesture.endPos.x - gesture.startPos.x
-   local dy = gesture.endPos.y - gesture.startPos.y
-   local distance = math.sqrt(dx*dx+dy*dy)
 
    if gesture.target == 'stage' then
+      local minSpeed = 1000
+      local maxSpeed = 5000
+      local minDistance = 25
+      local minDuration = 0.05
+
+
+      local dx = gesture.endPos.x - gesture.startPos.x
+      local dy = gesture.endPos.y - gesture.startPos.y
+      local distance = math.sqrt(dx*dx+dy*dy)
+
       if distance > minDistance then
 	 local deltaTime = gesture.endTime - gesture.startTime
 	 if deltaTime > minDuration then
@@ -429,9 +480,33 @@ function gestureRecognizer(gesture)
       else
 	 print('failed at distance')
       end
-   else
+   else -- this is gesture target something else items basically!
+      local lastGesture
+      local firstGesture
 
-      print('what do we have here?')
+      if (#gesture.positions < 10) then
+	 lastGesture = gesture.positions[#gesture.positions]
+	 firstGesture = gesture.positions[1]
+      else
+	 lastGesture = gesture.positions[#gesture.positions]
+	 firstGesture = gesture.positions[#gesture.positions-10]
+      end
+
+      local dx = lastGesture.x - firstGesture.x
+      local dy = lastGesture.y - firstGesture.y
+      local distance = math.sqrt(dx*dx+dy*dy)
+
+      local  dxn = dx / distance
+      local  dyn = dy / distance
+
+      local deltaTime = lastGesture.time - firstGesture.time
+      local speed = distance / deltaTime
+
+      gesture.target.inMotion = makeMotionObject()
+      local impulse = Vector(dxn * speed * 10, dyn * speed * 7);
+      print('impulse', impulse)
+
+      applyForce(gesture.target.inMotion, impulse)
    end
 
 
@@ -488,7 +563,7 @@ function love.mousemoved(mx, my)
 
    if cameraTween and gesture then
       if (cameraTween.originalGesture ~= gesture) then
-	 print('camera is still tweening, another new gesture is being started figure out if i have todo something')
+--	 print('camera is still tweening, another new gesture is being started figure out if i have todo something')
 
       end
 
@@ -592,23 +667,31 @@ function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
    love.graphics.scale(2,2)
    love.graphics.print('fps: '..love.timer.getFPS(), 20, 10)
-   love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
-   love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
-   love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
-   love.graphics.print('childCount: '..#root.children, 20, 90)
 
-   love.graphics.setColor(1,1,1,.8)
-   love.graphics.print('fps: '..love.timer.getFPS(),21,11)
-   love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
-   love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
-   love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
-   love.graphics.print('childCount: '..#root.children, 21, 91)
-   if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
-      love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 111)
+   if showNumbersOnScreen then
+      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
+      love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
+      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
+      love.graphics.print('childCount: '..#root.children, 20, 90)
+      if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
+	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 110)
+
+      end
+
+      love.graphics.setColor(1,1,1,.8)
+      love.graphics.print('fps: '..love.timer.getFPS(),21,11)
+      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
+      love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
+      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
+      love.graphics.print('childCount: '..#root.children, 21, 91)
+      if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
+	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 111)
+
+      end
 
    end
 
-
+   love.graphics.setColor(1,1,1,1)
    love.graphics.scale(1,1)
 end
 
@@ -618,6 +701,9 @@ function drawUI()
 
    love.graphics.circle('fill', 50, (H/2)-25, 50)
    love.graphics.circle('fill', W-50, (H/2)-25, 50)
+
+   love.graphics.circle('fill', W-50, 25, 50)
+
 end
 
 
