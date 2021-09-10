@@ -228,9 +228,13 @@ function love.load()
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 
    gesture = nil
-
+   gestureUpdateResolutionCounter = 0
+   gestureUpdateResolution = 0.0167  -- aka 60 fps
 
    cameraTween = nil
+
+   tweenCameraDelta = 0
+   followPlayerCameraDelta = 0
 end
 
 
@@ -277,36 +281,53 @@ function love.update(dt)
 
    end
 
+   if not cameraFollowPlayer then
+      if cameraTween then
+
+	 local delta = cam:setTranslationSmooth(
+	    cameraTween.goalX,
+	    cameraTween.goalY,
+	    dt,
+	    cameraTween.smoothValue
+	 )
+	 print(cameraTween.goalX, cameraTween.goalY, delta)
+	 if delta == 0 then
+	    if cameraTween.originalGesture == gesture then
+	       gesture = nil
+	    end
+	    cameraTween = nil
+
+	 end
+	 tweenCameraDelta = delta
+      end
+   end
+
    if cameraFollowPlayer then
       local distanceAhead = math.floor(300*v.x)
-      cam:setTranslationSmooth(
+      followPlayerCameraDelta = cam:setTranslationSmooth(
          player.x + player.width/2 ,
          player.y - 350,
          dt,
          10
       )
    end
-   if cameraTween then
-      local delta = cam:setTranslationSmooth(
-	 cameraTween.goalX,
-	 cameraTween.goalY,
-	 dt,
-	 cameraTween.smoothValue
-      )
-      if delta == 0 then
-	 cameraTween = nil
+
+
+   cam:update()
+
+   gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
+   if gestureUpdateResolutionCounter > gestureUpdateResolution then
+      gestureUpdateResolutionCounter = 0
+      if gesture then
+	 local x,y = love.mouse:getPosition()
+	 if not gesture.positions then
+	    gesture.positions = {}
+	 end
+	 print('adding gesture position')
+    	 table.insert(gesture.positions, {x=x,y=y, time=love.timer.getTime( )})
       end
    end
 
-   cam:update()
-   -- gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
-   -- if gestureUpdateResolutionCounter > gestureUpdateResolution then
-   --    gestureUpdateResolutionCounter = 0
-   --    if gesture then
-   -- 	 local x,y = love.mouse:getPosition()
-   -- 	 table.insert(gesture.positions, {x=x,y=y, time=love.timer.getTime( )})
-   --    end
-   -- end
 
 
 
@@ -357,15 +378,16 @@ function love.mousepressed(x,y, button, istouch, presses)
             local ix, iy = c._localTransform:inverseTransformPoint(wx2, wy2)
 
             c.pressed = {dx=ix, dy=iy}
-	    itemPressed = true
+	    itemPressed = c
          end
       end
    end
 
-   if not itemPressed then
+   if not itemPressed  then
       --print('no item pressed, could check and start fro a drag/ flick.throw gesture on the stage')
-
-      gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}}
+      if not cameraFollowPlayer then
+	 gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}}
+      end
    else
       print('item is pressed, this might become a throw of that item who knows!?')
       gesture = nil
@@ -426,6 +448,15 @@ function love.mousereleased(x,y)
       gesture.endTime = love.timer.getTime( )
       gesture.endPos = {x=x, y=y}
       gestureRecognizer(gesture)
+      if cameraTween then
+	 -- dont delete the gesture just yet
+	 -- i wanna check in the tween stuff agianst it
+      else
+	 gesture = nil
+      end
+
+
+      gesture = nil
    end
 end
 
@@ -568,6 +599,11 @@ function drawDebugStrings()
    love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
    love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
    love.graphics.print('childCount: '..#root.children, 21, 91)
+   if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
+      love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 111)
+
+   end
+
 
    love.graphics.scale(1,1)
 end
