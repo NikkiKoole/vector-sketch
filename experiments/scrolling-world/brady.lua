@@ -164,6 +164,7 @@ local function newCamera( w, h, flags )
                 setTranslation = function( self, x, y ) self.translationX, self.translationY = x or 0, y or 0 end,
 		getTranslation = function( self ) return self.translationX, self.translationY end,
                 setTranslationSmooth = function(self, x, y, dt, smoothing)
+
                    local deltaX = x - self.translationX
                    local deltaY = y - self.translationY
                    self.translationX =  self.translationX + deltaX * smoothing * dt
@@ -174,7 +175,7 @@ local function newCamera( w, h, flags )
 		   if (math.abs(deltaY) < .5) then
 		      self.translationY = y
 		   end
-		   --print(deltaX, deltaY)
+		   return (deltaX + deltaY) --- so i can check if done
                 end,
 
 	}
