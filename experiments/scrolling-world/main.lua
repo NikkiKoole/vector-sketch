@@ -1,12 +1,13 @@
-local Camera = require 'brady'
-local inspect = require 'inspect'
-ProFi = require 'ProFi'
+local Camera = require 'vendor.brady'
+local inspect = require 'vendor.inspect'
+local ProFi = require 'vendor.ProFi'
+--flux = require "vendor.flux"
+
 require 'generateWorld'
 require 'gradient'
 require 'groundplane'
 require 'fillstuf'
 random = love.math.random
---flux = require "flux"
 
 --[[
 TODO:
@@ -290,7 +291,6 @@ function love.update(dt)
 	    dt,
 	    cameraTween.smoothValue
 	 )
-	 print(cameraTween.goalX, cameraTween.goalY, delta)
 	 if delta == 0 then
 	    if cameraTween.originalGesture == gesture then
 	       gesture = nil
@@ -323,7 +323,7 @@ function love.update(dt)
 	 if not gesture.positions then
 	    gesture.positions = {}
 	 end
-	 print('adding gesture position')
+	 --print('adding gesture position')
     	 table.insert(gesture.positions, {x=x,y=y, time=love.timer.getTime( )})
       end
    end
@@ -386,11 +386,11 @@ function love.mousepressed(x,y, button, istouch, presses)
    if not itemPressed  then
       --print('no item pressed, could check and start fro a drag/ flick.throw gesture on the stage')
       if not cameraFollowPlayer then
-	 gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}}
+	 gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}, target='stage'}
       end
    else
-      print('item is pressed, this might become a throw of that item who knows!?')
       gesture = nil
+      gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}, target=itemPressed}
    end
 
 end
@@ -406,29 +406,33 @@ function gestureRecognizer(gesture)
    local minDuration = 0.05
 
 
-    local dx = gesture.endPos.x - gesture.startPos.x
-    local dy = gesture.endPos.y - gesture.startPos.y
-    local distance = math.sqrt(dx*dx+dy*dy)
+   local dx = gesture.endPos.x - gesture.startPos.x
+   local dy = gesture.endPos.y - gesture.startPos.y
+   local distance = math.sqrt(dx*dx+dy*dy)
 
-    if distance > minDistance then
-       local deltaTime = gesture.endTime - gesture.startTime
-       if deltaTime > minDuration then
-	  local speed = distance / deltaTime
-	  if speed >= minSpeed and speed < maxSpeed then
-	     print(dx, speed)
-	     local cx,cy = cam:getTranslation()
-	     cameraTween = {goalX=cx-dx, goalY=cy, smoothValue=5, originalGesture=gesture}
-	  else
-	     print('failed at speed', minSpeed, speed, maxSpeed)
-	  end
-       else
-	  print('failed at duratoin', deltaTime, minDuration)
-       end
+   if gesture.target == 'stage' then
+      if distance > minDistance then
+	 local deltaTime = gesture.endTime - gesture.startTime
+	 if deltaTime > minDuration then
+	    local speed = distance / deltaTime
+	    if speed >= minSpeed and speed < maxSpeed then
+	       local cx,cy = cam:getTranslation()
+	       cameraTween = {goalX=cx-dx, goalY=cy, smoothValue=5, originalGesture=gesture}
+	    else
+	       print('failed at speed', minSpeed, speed, maxSpeed)
+	    end
+	 else
+	    print('failed at duration', deltaTime, minDuration)
+	 end
 
 
-    else
-       print('failed at distance')
-    end
+      else
+	 print('failed at distance')
+      end
+   else
+
+      print('what do we have here?')
+   end
 
 
 end
