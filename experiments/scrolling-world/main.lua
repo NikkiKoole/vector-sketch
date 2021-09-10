@@ -347,7 +347,7 @@ function love.update(dt)
       local thing = root.children[i]
       if thing.inMotion then
 
-	 local gravity = Vector(0,9*thing.inMotion.mass);
+	 local gravity = Vector(0,9.8*thing.inMotion.mass);
 
 	 applyForce(thing.inMotion, gravity)
 
@@ -428,6 +428,9 @@ function love.mousepressed(x,y, button, istouch, presses)
 
             c.pressed = {dx=ix, dy=iy}
 	    itemPressed = c
+	    -- not working
+	    c.poep = true
+	    c.groundTileIndex = nil -- a hack to make items not disappear when doing stuff to them
          end
       end
    end
@@ -449,15 +452,14 @@ end
 
 function gestureRecognizer(gesture)
    -- todo make a few types of gesture here now its just one
-
+   -- todo get rid of differnt things in gesture.positions and startPos and startEnd
+   -- make it all look the same things, then this code can be easier
 
    if gesture.target == 'stage' then
       local minSpeed = 1000
       local maxSpeed = 5000
       local minDistance = 25
       local minDuration = 0.05
-
-
       local dx = gesture.endPos.x - gesture.startPos.x
       local dy = gesture.endPos.y - gesture.startPos.y
       local distance = math.sqrt(dx*dx+dy*dy)
@@ -483,30 +485,40 @@ function gestureRecognizer(gesture)
    else -- this is gesture target something else items basically!
       local lastGesture
       local firstGesture
+      if #gesture.positions > 1 then
+	 if (#gesture.positions <= 10) then
+	    lastGesture = gesture.positions[#gesture.positions]
+	    firstGesture = gesture.positions[1]
+	 else
+	    lastGesture = gesture.positions[#gesture.positions]
+	    firstGesture = gesture.positions[#gesture.positions-10]
+	 end
 
-      if (#gesture.positions < 10) then
-	 lastGesture = gesture.positions[#gesture.positions]
-	 firstGesture = gesture.positions[1]
+	 local dx = lastGesture.x - firstGesture.x
+	 local dy = lastGesture.y - firstGesture.y
+	 local distance = math.sqrt(dx*dx+dy*dy)
+	 if distance < 0.00001 then
+	    distance = 0.00001
+	 end
+
+	 local  dxn = dx / distance
+	 local  dyn = dy / distance
+
+	 local deltaTime = lastGesture.time - firstGesture.time
+	 local speed = distance / deltaTime
+
+	 gesture.target.inMotion = makeMotionObject()
+	 local throwStrength = 10
+
+	 if speed > 2000 then speed = 2000 end
+
+	 local impulse = Vector(dxn * speed * throwStrength, dyn * speed * throwStrength);
+	 print('impulse', impulse)
+	 -- print(inspect(firstGesture), inspect(lastGesture))
+	 applyForce(gesture.target.inMotion, impulse)
       else
-	 lastGesture = gesture.positions[#gesture.positions]
-	 firstGesture = gesture.positions[#gesture.positions-10]
+	 gesture = nil
       end
-
-      local dx = lastGesture.x - firstGesture.x
-      local dy = lastGesture.y - firstGesture.y
-      local distance = math.sqrt(dx*dx+dy*dy)
-
-      local  dxn = dx / distance
-      local  dyn = dy / distance
-
-      local deltaTime = lastGesture.time - firstGesture.time
-      local speed = distance / deltaTime
-
-      gesture.target.inMotion = makeMotionObject()
-      local impulse = Vector(dxn * speed * 10, dyn * speed * 7);
-      print('impulse', impulse)
-
-      applyForce(gesture.target.inMotion, impulse)
    end
 
 
@@ -576,7 +588,9 @@ end
 
 function removeTheContenstOfGroundTiles(startIndex, endIndex)
    for i = #root.children, 1, -1 do
+
       local child = root.children[i]
+
       if child.groundTileIndex ~= nil then
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
