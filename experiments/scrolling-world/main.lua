@@ -17,10 +17,6 @@ the bbox functions have 2 ways of returning the data
 {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
 make that just one way
 
-look at some touch throw, swipe flick stuff
-https://forum.unity.com/threads/flicking-shooting-throwing-tossing-lobbing-slicing-script.91726/
-
-https://cloud.netlifyusercontent.com/assets/344dbf88-fdf9-42bb-adb4-46f01eedd629/c0061c8d-2295-4c87-8340-2fb3613c9a35/touch-chart-preview-opt.jpg
 ]]--
 
 function applyForce(motionObject, force)
@@ -33,7 +29,7 @@ function makeMotionObject()
    return {
       velocity = Vector(0,0),
       acceleration = Vector(0,0),
-      mass = 10
+      mass = 4
    }
 end
 
@@ -353,17 +349,24 @@ function love.update(dt)
       local thing = root.children[i]
       if thing.inMotion and not thing.pressed then
 
-	 local gravity = Vector(0, 3*980*thing.inMotion.mass*dt);
+	 local gravity = Vector(0, 5*980*thing.inMotion.mass*dt);
 
 	 applyForce(thing.inMotion, gravity)
 
-	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration
+         -- applying half the velocity before position
+         -- other half after positioning
+         --https://web.archive.org/web/20150322180858/http://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
+         
+	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
 
 	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
 	 thing.transforms.l[2] = thing.transforms.l[2] + (thing.inMotion.velocity.y * dt)
 
 	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
 
+	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
+
+         
 	 if thing.transforms.l[2] >= 0 then
 	    thing.transforms.l[2] = 0
 	    thing.inMotion = nil
