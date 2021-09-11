@@ -234,7 +234,7 @@ function love.load()
       player.x + player.width/2 ,
       player.y - 350
    )
-   dt = 0
+   --dt = 0
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
 
@@ -251,11 +251,17 @@ function love.load()
    followPlayerCameraDelta = 0
 
    showNumbersOnScreen = false
+
+   lastDT = 0
 end
 
 
 function love.update(dt)
-   dt = dt
+   --  dt = dt
+   lastDT = dt
+   local W, H = love.graphics.getDimensions()
+
+   --print(dt)
    --flux.update(dt)
    local v = {x=0, y=0}
 
@@ -345,9 +351,9 @@ function love.update(dt)
 
    for i=1, #root.children do
       local thing = root.children[i]
-      if thing.inMotion then
+      if thing.inMotion and not thing.pressed then
 
-	 local gravity = Vector(0,9.8*thing.inMotion.mass);
+	 local gravity = Vector(0, 3*980*thing.inMotion.mass*dt);
 
 	 applyForce(thing.inMotion, gravity)
 
@@ -356,19 +362,38 @@ function love.update(dt)
 	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
 	 thing.transforms.l[2] = thing.transforms.l[2] + (thing.inMotion.velocity.y * dt)
 
-	 --print(thing.transforms.l[2])
-	 --velocity.add(acceleration);
-	 --location.add(velocity);
-	 --Now add clearing the acceleration each time!
 	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
 
 	 if thing.transforms.l[2] >= 0 then
---	    print('this is too dumb, fix it better')
 	    thing.transforms.l[2] = 0
 	    thing.inMotion = nil
 	 end
 
       end
+      if false then
+         if thing.pressed then
+            
+            local hack = {}
+            hack.scale = mapInto(thing.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+            hack.relativeScale = (1.0/ hack.scale) * hack.scale
+            
+            local tx, ty = thing._localTransform:transformPoint(thing.bbox[1],thing.bbox[2])
+            local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+            
+            local bx, by = thing._localTransform:transformPoint(thing.bbox[3],thing.bbox[4])
+            local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+
+            -- this means dragging a thingover the border pans the screen 1000px per sec.
+            if ((brx + offset) > W) then
+               --          cam:translate(1000*dt,0)
+            end
+            if ((tlx - offset) < 0) then
+               --            cam:translate(-1000*dt,0 )
+            end
+         end
+      end
+      
+      
 
    end
 
@@ -510,9 +535,10 @@ function gestureRecognizer(gesture)
 	 gesture.target.inMotion = makeMotionObject()
 	 local throwStrength = 10
 
-	 if speed > 2000 then speed = 2000 end
+	 --if speed > 2000 then speed = 2000 end
 
-	 local impulse = Vector(dxn * speed * throwStrength, dyn * speed * throwStrength);
+	 local impulse = Vector(dxn * speed * throwStrength,
+                                dyn * speed * throwStrength);
 	 print('impulse', impulse)
 	 -- print(inspect(firstGesture), inspect(lastGesture))
 	 applyForce(gesture.target.inMotion, impulse)
@@ -823,12 +849,21 @@ function love.draw()
                c.transforms.l[1] = c.transforms.l[1] + (ix - c.pressed.dx)
                c.transforms.l[2] = c.transforms.l[2] + (iy - c.pressed.dy)
 
-	       if ((brx + offset) > W) then
-		  cam:translate(1,0)
-	       end
-	       if ((tlx - offset) < 0) then
-		  cam:translate(-1,0 )
-	       end
+
+               if ((brx + offset) > W) then
+
+                  local overShoot = (brx + offset) - W
+                  local distance = mapInto(overShoot, 0, (brx-tlx), 0, 500)
+                  
+                  cam:translate(distance*lastDT,0)
+                  --cam:setTranslationSmooth(wx, 0, lastDT, 20)
+               end
+               if ((tlx - offset) < 0) then
+                  local overShoot = math.abs(tlx - offset) 
+                  local distance = mapInto(overShoot, 0, (brx-tlx), 0, 500)
+
+                  cam:translate(-distance*lastDT,0 )
+               end
 
             end
 
