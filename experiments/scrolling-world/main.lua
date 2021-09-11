@@ -19,6 +19,12 @@ make that just one way
 
 ]]--
 
+if os.setlocale(nil) ~= 'C' then
+   print('wrong locale:', os.setlocale(nil))
+   os.setlocale("C")
+end
+
+
 function applyForce(motionObject, force)
    local f = force / motionObject.mass
    motionObject.acceleration =  motionObject.acceleration + f
@@ -29,7 +35,7 @@ function makeMotionObject()
    return {
       velocity = Vector(0,0),
       acceleration = Vector(0,0),
-      mass = 4
+      mass = 8
    }
 end
 
@@ -349,7 +355,7 @@ function love.update(dt)
       local thing = root.children[i]
       if thing.inMotion and not thing.pressed then
 
-	 local gravity = Vector(0, 5*980*thing.inMotion.mass*dt);
+	 local gravity = Vector(0, 6*980*thing.inMotion.mass*dt);
 
 	 applyForce(thing.inMotion, gravity)
 
@@ -536,7 +542,7 @@ function gestureRecognizer(gesture)
 	 local speed = distance / deltaTime
 
 	 gesture.target.inMotion = makeMotionObject()
-	 local throwStrength = 10
+	 local throwStrength = 15
 
 	 --if speed > 2000 then speed = 2000 end
 
@@ -718,7 +724,6 @@ function drawDebugStrings()
       love.graphics.print('childCount: '..#root.children, 20, 90)
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
 	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 110)
-
       end
 
       love.graphics.setColor(1,1,1,.8)
