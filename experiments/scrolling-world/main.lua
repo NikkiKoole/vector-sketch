@@ -326,7 +326,6 @@ function love.update(dt)
    end
 
    if cameraFollowPlayer then
-      local distanceAhead = math.floor(300*v.x)
       followPlayerCameraDelta = cam:setTranslationSmooth(
          player.x + player.width/2 ,
          player.y - 350,
@@ -490,10 +489,10 @@ function gestureRecognizer(gesture)
    -- make it all look the same things, then this code can be easier
 
    if gesture.target == 'stage' then
-      local minSpeed = 1000
+      local minSpeed = 1200
       local maxSpeed = 5000
       local minDistance = 25
-      local minDuration = 0.05
+      local minDuration = 0.005
       local dx = gesture.endPos.x - gesture.startPos.x
       local dy = gesture.endPos.y - gesture.startPos.y
       local distance = math.sqrt(dx*dx+dy*dy)
@@ -504,6 +503,7 @@ function gestureRecognizer(gesture)
 	    local speed = distance / deltaTime
 	    if speed >= minSpeed and speed < maxSpeed then
 	       local cx,cy = cam:getTranslation()
+               print('speed',speed,'distance', distance)
 	       cameraTween = {goalX=cx-dx, goalY=cy, smoothValue=5, originalGesture=gesture}
 	    else
 	       print('failed at speed', minSpeed, speed, maxSpeed)
@@ -586,7 +586,7 @@ function love.mousereleased(x,y)
    end
 end
 
-function love.mousemoved(mx, my)
+function love.mousemoved(mx, my,dx,dy)
    for i = 1, #root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth then
@@ -613,10 +613,24 @@ function love.mousemoved(mx, my)
 --	 print('camera is still tweening, another new gesture is being started figure out if i have todo something')
 
       end
-
-
    end
 
+   if love.mouse.isDown(1) then
+      if cameraTween then
+         cameraTween = nil
+         tweenCameraDelta = 0
+
+      end
+      
+      if gesture then
+         if gesture.target == 'stage' then
+            cam:translate(-dx,0)
+         end
+      end
+      
+      --print(dx,dy)
+   end
+   
 
 end
 
@@ -859,18 +873,19 @@ function love.draw()
 
 
                if ((brx + offset) > W) then
-
-                  local overShoot = (brx + offset) - W
-                  local distance = mapInto(overShoot, 0, (brx-tlx), 0, 500)
-                  
-                  cam:translate(distance*lastDT,0)
-                  --cam:setTranslationSmooth(wx, 0, lastDT, 20)
+                  --local overShoot = (brx + offset) - W
+                  --local cx,cy = cam:getTranslation()
+                  --cameraTween = {goalX=cx+overShoot, goalY=cy, smoothValue=15}
+                  cam:translate(1000*lastDT, 0)
+                  c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
                end
                if ((tlx - offset) < 0) then
-                  local overShoot = math.abs(tlx - offset) 
-                  local distance = mapInto(overShoot, 0, (brx-tlx), 0, 500)
+                  --local overShoot = math.abs(tlx - offset) 
+                  --local cx,cy = cam:getTranslation()
+                  --cameraTween = {goalX=cx-overShoot, goalY=cy, smoothValue=15}
+                  cam:translate(-1000*lastDT, 0)
+                  c.transforms.l[1] = c.transforms.l[1] + -1000*lastDT
 
-                  cam:translate(-distance*lastDT,0 )
                end
 
             end
