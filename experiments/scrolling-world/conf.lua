@@ -8,4 +8,5 @@ function love.conf(t)
   t.window.msaa = 4
   t.window.highdpi = true
   t.window.vsync = 1
+  t.window.borderless = true
 end

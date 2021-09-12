@@ -491,7 +491,7 @@ function gestureRecognizer(gesture)
    if gesture.target == 'stage' then
       local minSpeed = 200
       local maxSpeed = 5000
-      local minDistance = 25
+      local minDistance = 100
       local minDuration = 0.005
       local dx = gesture.endPos.x - gesture.startPos.x
       local dy = gesture.endPos.y - gesture.startPos.y
