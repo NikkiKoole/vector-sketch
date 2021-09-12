@@ -91,6 +91,8 @@ function createStuff()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
+      'assets/poep.polygons.txt',
+
     }
     plantData = {}
 

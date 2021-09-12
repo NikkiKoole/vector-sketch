@@ -489,7 +489,7 @@ function gestureRecognizer(gesture)
    -- make it all look the same things, then this code can be easier
 
    if gesture.target == 'stage' then
-      local minSpeed = 1200
+      local minSpeed = 200
       local maxSpeed = 5000
       local minDistance = 25
       local minDuration = 0.005
@@ -504,7 +504,7 @@ function gestureRecognizer(gesture)
 	    if speed >= minSpeed and speed < maxSpeed then
 	       local cx,cy = cam:getTranslation()
                print('speed',speed,'distance', distance)
-	       cameraTween = {goalX=cx-dx, goalY=cy, smoothValue=5, originalGesture=gesture}
+	       cameraTween = {goalX=cx-(dx*0.0005 * speed ), goalY=cy, smoothValue=5, originalGesture=gesture}
 	    else
 	       print('failed at speed', minSpeed, speed, maxSpeed)
 	    end
