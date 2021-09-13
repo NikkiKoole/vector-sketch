@@ -481,13 +481,26 @@ function love.mousepressed(x,y, button, istouch, presses)
 end
 
 
+function love.touchpressed(id, x, y, dx, dy, pressure)
+   print('touch pressed, ',id, x, y, dx, dy, pressure)
+end
+function love.touchreleased(id, x, y, dx, dy, pressure)
+   print('touch released, ',id, x, y, dx, dy, pressure)
+
+end
+function love.touchmoved(id, x,y, dx, dy, pressure)
+   print('touch moved, ',id, x, y, dx, dy, pressure)
+
+end
+
+
 --https://stackoverflow.com/questions/47856682/how-to-get-the-delta-of-swipe-draging-touch
 
 function gestureRecognizer(gesture)
    -- todo make a few types of gesture here now its just one
    -- todo get rid of differnt things in gesture.positions and startPos and startEnd
    -- make it all look the same things, then this code can be easier
-
+   
    if gesture.target == 'stage' then
       local minSpeed = 200
       local maxSpeed = 5000
@@ -503,8 +516,11 @@ function gestureRecognizer(gesture)
 	    local speed = distance / deltaTime
 	    if speed >= minSpeed and speed < maxSpeed then
 	       local cx,cy = cam:getTranslation()
-               print('speed',speed,'distance', distance)
-	       cameraTween = {goalX=cx-(dx*0.0005 * speed ), goalY=cy, smoothValue=5, originalGesture=gesture}
+
+--               print('speed',speed,'distance', distance, 'dx', dx)
+               local m = dx < 0 and -1 or 1
+               
+	       cameraTween = {goalX=cx-((dx) + (m* speed/7.5) ), goalY=cy, smoothValue=3.5, originalGesture=gesture}
 	    else
 	       print('failed at speed', minSpeed, speed, maxSpeed)
 	    end
