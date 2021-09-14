@@ -10,7 +10,7 @@
 | FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
 | [string "boot.lua"]                               : anonymous                               :  594                : 2.939       : 99.28%      :     264     |
 | main.lua                                          : draw                                    :  712                : 2.631       : 88.88%      :     264     |
-| vecsketch/main-utils.lua                          : handleChild                             :  227                : 1.252       : 42.28%      :   55968     |
+| vecsketch/main-utils.lua                          : handleChild                             :  227                : 1.252   g    : 42.28%      :   55968     |
 | vecsketch/main-utils.lua                          : renderNormallyOrOptimized               :  207                : 1.128       : 38.12%      :   29304     |
 | vecsketch/main-utils.lua                          : renderThings                            :  506                : 0.879       : 29.69%      :   26136     |
 | vendor/brady.lua                                  : push                                    :   34                : 0.557       : 18.81%      :   30360     |

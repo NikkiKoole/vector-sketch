@@ -275,6 +275,10 @@ function love.load()
    showNumbersOnScreen = false
 
    lastDT = 0
+
+   font = love.graphics.newFont( "assets/adlib.ttf", 16)
+   love.graphics.setFont(font)
+   ui = {show=false}
 end
 
 
@@ -387,10 +391,10 @@ function love.update(dt)
 	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
 	 thing.transforms.l[2] = thing.transforms.l[2] + (thing.inMotion.velocity.y * dt)
 
-	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
+
 
 	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
-
+	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
 
 	 if thing.transforms.l[2] >= 0 then
 	    thing.transforms.l[2] = 0
@@ -444,6 +448,7 @@ function love.mousepressed(x,y, button, istouch, presses)
    end
    if toprightdis < 50 then
       showNumbersOnScreen = not showNumbersOnScreen
+      ui.show = not ui.show
    end
 
 
@@ -544,7 +549,7 @@ function gestureRecognizer(gesture)
 	 local  dyn = dy / distance
 
 	 gesture.target.inMotion = makeMotionObject()
-	 local throwStrength = 15
+	 local throwStrength = 5
 	 local impulse = Vector(dxn * speed * throwStrength,
                                 dyn * speed * throwStrength);
 	 applyForce(gesture.target.inMotion, impulse)
@@ -678,7 +683,14 @@ function drawDebugStrings()
 end
 
 function drawUI()
+
    local W, H = love.graphics.getDimensions()
+
+   if ui.show then
+      love.graphics.setColor(1,1,1, 0.3)
+      love.graphics.rectangle('fill', offset,0, W-offset*2, 48)
+   end
+
 
    love.graphics.setColor(1,1,1)
    love.graphics.circle('fill', 50, (H/2)-25, 50)
