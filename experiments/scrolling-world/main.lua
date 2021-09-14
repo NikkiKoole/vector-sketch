@@ -8,6 +8,8 @@ require 'generateWorld'
 require 'gradient'
 require 'groundplane'
 require 'fillstuf'
+require 'removeAddItems'
+
 random = love.math.random
 
 --[[
@@ -410,6 +412,16 @@ function love.update(dt)
    --print(dt)
 end
 
+
+function getScreenBBoxForItem(c)
+   local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+   local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+   local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+   local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+   return tlx, tly, brx, bry
+end
+
+
 function love.mousepressed(x,y, button, istouch, presses)
    local wx, wy = cam:getMouseWorldCoordinates()
    local foundOne = false
@@ -602,25 +614,52 @@ function love.mousereleased(x,y)
    end
 end
 
+
+function getScreenBBoxForItem(c)
+   local hack = {}
+   hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max,
+                        depthScaleFactors.min, depthScaleFactors.max)
+   hack.relativeScale = (1.0/ hack.scale) * hack.scale
+   
+   local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+   local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+   local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+   local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+   return tlx, tly, brx, bry
+end
+
+function mouseIsOverItemBBox(mx, my, item)
+   local tlx, tly, brx, bry = getScreenBBoxForItem(item)
+   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly)
+end
+
+
 function love.mousemoved(mx, my,dx,dy)
    for i = 1, #root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth then
-         local hack = {}
-         hack.scale = mapInto(c.depth,
-                              depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+         --local hack = {}
+         --hack.scale = mapInto(c.depth,
+         --                     depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         --hack.relativeScale = (1.0/ hack.scale) * hack.scale
 
-         local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
-         local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-         local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
-         local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+         c.mouseOver = mouseIsOverItemBBox(mx, my, c)
+         --local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+         --local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+         --local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+         --local brx, bry = cam:getScreenCoordinates(bx, by, hack)
 
-         if pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly) then
-            c.mouseOver = true
-         else
-            c.mouseOver = false
-         end
+         --local tlx, tly, brx, bry = getScreenBBoxForItem()
+         --if pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly) then
+         --   c.mouseOver = true
+         --else
+         --   c.mouseOver = false
+         --end
+         --if mouseIsOverItemBBox(mx, my, c) or  c.mouseOver then
+         --   print(mouseIsOverItemBBox(mx, my, c), c.mouseOver)
+         --end
+         
+
       end
    end
 
@@ -650,78 +689,6 @@ function love.mousemoved(mx, my,dx,dy)
 
 end
 
-
-function removeTheContenstOfGroundTiles(startIndex, endIndex)
-   for i = #root.children, 1, -1 do
-
-      local child = root.children[i]
-
-      if child.groundTileIndex ~= nil then
-         if child.groundTileIndex < startIndex or
-            child.groundTileIndex > endIndex then
-            table.remove(root.children, i)
-         end
-      end
-   end
-end
-function addTheContentsOfGroundTiles(startIndex, endIndex)
-   for i = startIndex, endIndex do
-      if (plantData[i]) then
-         for j = 1, #plantData[i] do
-            local thing = plantData[i][j]
-            local urlIndex = (thing.urlIndex)
-            local url = plantUrls[urlIndex]
-            local read = readFileAndAddToCache(url)
-            local grass = {
-               folder = true,
-               transforms = copy3(read.transforms),
-               name = 'generated',
-               children = {}
-            }
-            grass.transforms.l[1] = (i*tileSize) + thing.x
-            grass.transforms.l[2] = 0
-            grass.transforms.l[4] = thing.scaleX
-            grass.transforms.l[5] = thing.scaleY
-
-            grass.depth = thing.depth
-            grass.url = url
-            grass.groundTileIndex = thing.groundTileIndex
-            grass.bbox = read.bbox
-            table.insert(root.children, grass)
-         end
-      end
-   end
-   parentize(root)
-   sortOnDepth(root.children)
-   recursivelyAddOptimizedMesh(root)
-end
-
-function arrangeWhatIsVisible(x1, x2, tileSize)
-   local s = math.floor(x1/tileSize)*tileSize
-   local e = math.ceil(x2/tileSize)*tileSize
-   local startIndex = s/tileSize
-   local endIndex = e/tileSize
-
-   -- initial adding
-   if lastGroundBounds[1] == math.huge and lastGroundBounds[2] == -math.huge then
-      addTheContentsOfGroundTiles(startIndex, endIndex)
-   else
-      -- look to add at start or end
-      if startIndex ~= lastGroundBounds[1] or
-         endIndex ~= lastGroundBounds[2] then
-         removeTheContenstOfGroundTiles(startIndex, endIndex)
-      end
-
-      if startIndex < lastGroundBounds[1] then
-         addTheContentsOfGroundTiles(startIndex, lastGroundBounds[1]-1)
-      end
-
-      if endIndex > lastGroundBounds[2] then
-         addTheContentsOfGroundTiles(lastGroundBounds[2]+1, endIndex)
-      end
-   end
-   lastGroundBounds = {startIndex, endIndex}
-end
 
 
 
