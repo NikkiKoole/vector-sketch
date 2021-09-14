@@ -276,7 +276,9 @@ function love.load()
 
    lastDT = 0
 
-   font = love.graphics.newFont( "assets/adlib.ttf", 16)
+   font = love.graphics.newFont( "assets/adlib.ttf", 32)
+   smallfont = love.graphics.newFont( "assets/adlib.ttf", 20)
+
    love.graphics.setFont(font)
    ui = {show=false}
 end
@@ -653,33 +655,39 @@ end
 
 function drawDebugStrings()
    love.graphics.setColor(0,0,0,.2)
-   love.graphics.scale(2,2)
-   love.graphics.print('fps: '..love.timer.getFPS(), 20, 10)
+--   love.graphics.scale(2,2)
+   love.graphics.setFont(smallfont)
+   love.graphics.print('fps: '..love.timer.getFPS(), 20, 20)
+   love.graphics.setColor(1,1,1,.8)
+   love.graphics.print('fps: '..love.timer.getFPS(),21,21)
+   love.graphics.setFont(font)
 
+   love.graphics.setColor(0,0,0,.2)
+   
    if showNumbersOnScreen then
-      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 30)
-      love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 50)
-      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 70)
-      love.graphics.print('childCount: '..#root.children, 20, 90)
+      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 40)
+      love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 70)
+      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 100)
+      love.graphics.print('childCount: '..#root.children, 20, 130)
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
-	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 110)
+	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 160)
       end
 
       love.graphics.setColor(1,1,1,.8)
-      love.graphics.print('fps: '..love.timer.getFPS(),21,11)
-      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 31)
-      love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 51)
-      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 71)
-      love.graphics.print('childCount: '..#root.children, 21, 91)
+
+      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 41)
+      love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 71)
+      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 101)
+      love.graphics.print('childCount: '..#root.children, 21, 131)
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
-	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 111)
+	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 161)
 
       end
 
    end
 
    love.graphics.setColor(1,1,1,1)
-   love.graphics.scale(1,1)
+--   love.graphics.scale(1,1)
 end
 
 function drawUI()
@@ -688,14 +696,22 @@ function drawUI()
 
    if ui.show then
       love.graphics.setColor(1,1,1, 0.3)
-      love.graphics.rectangle('fill', offset,0, W-offset*2, 48)
+      love.graphics.rectangle('fill', 0,0, W, 50)
+
+      love.graphics.setColor(0,0,0,.2)
+      love.graphics.setFont(smallfont)
+      love.graphics.print('tweaks', 120, 20)
+      love.graphics.setFont(font)
+
+      love.graphics.setColor(1,1,1, 0.3)
+
    end
 
 
    love.graphics.setColor(1,1,1)
    love.graphics.circle('fill', 50, (H/2)-25, 50)
    love.graphics.circle('fill', W-50, (H/2)-25, 50)
-   love.graphics.circle('fill', W-50, 25, 50)
+   love.graphics.circle('fill', W-25, 25, 25)
 end
 
 
@@ -803,7 +819,7 @@ function love.draw()
 
    love.graphics.setColor(1,1,1,1)
    drawUI()
-   drawCameraBounds(cam, 'line' )
+   if not ui.show then drawCameraBounds(cam, 'line' ) end
    drawDebugStrings()
 end
 
