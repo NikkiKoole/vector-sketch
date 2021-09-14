@@ -21,9 +21,27 @@ make that just one way
 
 ]]--
 
+
+
 if os.setlocale(nil) ~= 'C' then
    print('wrong locale:', os.setlocale(nil))
    os.setlocale("C")
+end
+
+local TESTING__ = true
+
+if TESTING__ then
+   local old_print = print
+   print = function(...)
+      local info = debug.getinfo(2, "Sl")
+      local source = info.source
+      if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
+      if source:sub(1,1) == "@" then source = source:sub(2) end
+      local msg = ("%s:%i"):format(source, info.currentline)
+      old_print(msg, ...)
+   end
+else
+   print = function() end
 end
 
 
@@ -363,7 +381,7 @@ function love.update(dt)
          -- applying half the velocity before position
          -- other half after positioning
          --https://web.archive.org/web/20150322180858/http://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
-         
+
 	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
 
 	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
@@ -373,37 +391,15 @@ function love.update(dt)
 
 	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
 
-         
+
 	 if thing.transforms.l[2] >= 0 then
 	    thing.transforms.l[2] = 0
 	    thing.inMotion = nil
 	 end
 
       end
-      if false then
-         if thing.pressed then
-            
-            local hack = {}
-            hack.scale = mapInto(thing.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-            hack.relativeScale = (1.0/ hack.scale) * hack.scale
-            
-            local tx, ty = thing._localTransform:transformPoint(thing.bbox[1],thing.bbox[2])
-            local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-            
-            local bx, by = thing._localTransform:transformPoint(thing.bbox[3],thing.bbox[4])
-            local brx, bry = cam:getScreenCoordinates(bx, by, hack)
 
-            -- this means dragging a thingover the border pans the screen 1000px per sec.
-            if ((brx + offset) > W) then
-               --          cam:translate(1000*dt,0)
-            end
-            if ((tlx - offset) < 0) then
-               --            cam:translate(-1000*dt,0 )
-            end
-         end
-      end
-      
-      
+
 
    end
 
@@ -413,13 +409,6 @@ function love.update(dt)
 end
 
 
-function getScreenBBoxForItem(c)
-   local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
-   local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-   local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
-   local brx, bry = cam:getScreenCoordinates(bx, by, hack)
-   return tlx, tly, brx, bry
-end
 
 
 function love.mousepressed(x,y, button, istouch, presses)
@@ -462,34 +451,35 @@ function love.mousepressed(x,y, button, istouch, presses)
    for i = #root.children,1,-1 do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth and not itemPressed then
-         local hack = {}
-         hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-         hack.relativeScale = (1.0/ hack.scale) * hack.scale
 
-         if c.mouseOver then
-            local mx, my = love.mouse.getPosition()
-            local wx2, wy2 = cam:getWorldCoordinates(mx, my, hack)
-            local ix, iy = c._localTransform:inverseTransformPoint(wx2, wy2)
+	 local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c)
 
-            c.pressed = {dx=ix, dy=iy}
+	 if mouseover then
+	    c.pressed = {dx=invx, dy=invy}
 	    itemPressed = c
-	    -- not working
 	    c.poep = true
-	    c.groundTileIndex = nil -- a hack to make items not disappear when doing stuff to them
-         end
+	    c.groundTileIndex = nil
+	 end
+
       end
    end
 
    if not itemPressed  then
-      --print('no item pressed, could check and start fro a drag/ flick.throw gesture on the stage')
       if not cameraFollowPlayer then
-	 gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}, target='stage'}
+	 gesture = {positions={}, target='stage'}
+	 addGesturePoint(gesture, love.timer.getTime( ),x,y)
       end
    else
       gesture = nil
-      gesture = {startTime=love.timer.getTime( ), startPos={x=x, y=y}, positions={}, target=itemPressed}
+      gesture = {positions={}, target=itemPressed}
+      addGesturePoint(gesture, love.timer.getTime( ),x,y)
    end
 
+end
+
+function addGesturePoint(gesture, time, x,y)
+   assert(gesture)
+   table.insert(gesture.positions, {time=time, x=x, y=y})
 end
 
 
@@ -509,80 +499,60 @@ end
 --https://stackoverflow.com/questions/47856682/how-to-get-the-delta-of-swipe-draging-touch
 
 function gestureRecognizer(gesture)
-   -- todo make a few types of gesture here now its just one
-   -- todo get rid of differnt things in gesture.positions and startPos and startEnd
-   -- make it all look the same things, then this code can be easier
-   
-   if gesture.target == 'stage' then
-      local minSpeed = 200
-      local maxSpeed = 5000
-      local minDistance = 100
-      local minDuration = 0.005
-      local dx = gesture.endPos.x - gesture.startPos.x
-      local dy = gesture.endPos.y - gesture.startPos.y
+   if #gesture.positions > 1 then
+      local startP = gesture.positions[1]
+      local endP = gesture.positions[#gesture.positions]
+      local gestureLength = 3
+      if (#gesture.positions > gestureLength) then
+	 startP = gesture.positions[#gesture.positions - gestureLength]
+      end
+      local dx = endP.x - startP.x
+      local dy = endP.y - startP.y
       local distance = math.sqrt(dx*dx+dy*dy)
 
-      if distance > minDistance then
-	 local deltaTime = gesture.endTime - gesture.startTime
-	 if deltaTime > minDuration then
-	    local speed = distance / deltaTime
-	    if speed >= minSpeed and speed < maxSpeed then
-	       local cx,cy = cam:getTranslation()
+      local deltaTime = endP.time - startP.time
+      local speed = distance / deltaTime
 
---               print('speed',speed,'distance', distance, 'dx', dx)
-               local m = dx < 0 and -1 or 1
-               
-	       cameraTween = {goalX=cx-((dx) + (m* speed/7.5) ), goalY=cy, smoothValue=3.5, originalGesture=gesture}
+      if gesture.target == 'stage' then
+	 local minSpeed = 200
+	 local maxSpeed = 15000
+	 local minDistance = 10
+	 local minDuration = 0.005
+
+	 if distance > minDistance then
+	    if deltaTime > minDuration then
+	       if speed >= minSpeed and speed < maxSpeed then
+		  local cx,cy = cam:getTranslation()
+		  local m = dx < 0 and -1 or 1
+
+		  cameraTween = {goalX=cx-((dx) + (m* speed/7.5) ), goalY=cy, smoothValue=3.5, originalGesture=gesture}
+	       else
+		  print('failed at speed', minSpeed, speed, maxSpeed)
+	       end
 	    else
-	       print('failed at speed', minSpeed, speed, maxSpeed)
+	       print('failed at duration', deltaTime, minDuration)
 	    end
 	 else
-	    print('failed at duration', deltaTime, minDuration)
+	    print('failed at distance')
 	 end
+      else -- this is gesture target something else items basically!
 
-
-      else
-	 print('failed at distance')
-      end
-   else -- this is gesture target something else items basically!
-      local lastGesture
-      local firstGesture
-      if #gesture.positions > 1 then
-	 if (#gesture.positions <= 10) then
-	    lastGesture = gesture.positions[#gesture.positions]
-	    firstGesture = gesture.positions[1]
-	 else
-	    lastGesture = gesture.positions[#gesture.positions]
-	    firstGesture = gesture.positions[#gesture.positions-10]
-	 end
-
-	 local dx = lastGesture.x - firstGesture.x
-	 local dy = lastGesture.y - firstGesture.y
-	 local distance = math.sqrt(dx*dx+dy*dy)
 	 if distance < 0.00001 then
 	    distance = 0.00001
 	 end
-
 	 local  dxn = dx / distance
 	 local  dyn = dy / distance
 
-	 local deltaTime = lastGesture.time - firstGesture.time
-	 local speed = distance / deltaTime
-
 	 gesture.target.inMotion = makeMotionObject()
 	 local throwStrength = 15
-
-	 --if speed > 2000 then speed = 2000 end
-
 	 local impulse = Vector(dxn * speed * throwStrength,
                                 dyn * speed * throwStrength);
-	 print('impulse', impulse)
-	 -- print(inspect(firstGesture), inspect(lastGesture))
 	 applyForce(gesture.target.inMotion, impulse)
-      else
-	 gesture = nil
-      end
    end
+   else
+      gesture = nil
+   end
+
 
 
 end
@@ -599,28 +569,14 @@ function love.mousereleased(x,y)
       end
    end
    if gesture  then
-      gesture.endTime = love.timer.getTime( )
-      gesture.endPos = {x=x, y=y}
+      addGesturePoint(gesture, love.timer.getTime( ), x, y)
       gestureRecognizer(gesture)
-      if cameraTween then
-	 -- dont delete the gesture just yet
-	 -- i wanna check in the tween stuff agianst it
-      else
-	 gesture = nil
-      end
-
-
       gesture = nil
    end
 end
 
 
-function getScreenBBoxForItem(c)
-   local hack = {}
-   hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max,
-                        depthScaleFactors.min, depthScaleFactors.max)
-   hack.relativeScale = (1.0/ hack.scale) * hack.scale
-   
+function getScreenBBoxForItem(c, hack)
    local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
    local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
@@ -629,8 +585,16 @@ function getScreenBBoxForItem(c)
 end
 
 function mouseIsOverItemBBox(mx, my, item)
-   local tlx, tly, brx, bry = getScreenBBoxForItem(item)
-   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly)
+   local hack =  {}
+   hack.scale = mapInto(item.depth, depthMinMax.min, depthMinMax.max,
+                        depthScaleFactors.min, depthScaleFactors.max)
+   hack.relativeScale = (1.0/ hack.scale) * hack.scale
+   local tlx, tly, brx, bry = getScreenBBoxForItem(item, hack)
+
+   local wx, wy = cam:getWorldCoordinates(mx, my, hack)
+   local invx, invy = item._localTransform:inverseTransformPoint(wx, wy)
+
+   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
 
 
@@ -638,28 +602,8 @@ function love.mousemoved(mx, my,dx,dy)
    for i = 1, #root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth then
-         --local hack = {}
-         --hack.scale = mapInto(c.depth,
-         --                     depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-         --hack.relativeScale = (1.0/ hack.scale) * hack.scale
-
-         c.mouseOver = mouseIsOverItemBBox(mx, my, c)
-         --local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
-         --local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-         --local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
-         --local brx, bry = cam:getScreenCoordinates(bx, by, hack)
-
-         --local tlx, tly, brx, bry = getScreenBBoxForItem()
-         --if pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly) then
-         --   c.mouseOver = true
-         --else
-         --   c.mouseOver = false
-         --end
-         --if mouseIsOverItemBBox(mx, my, c) or  c.mouseOver then
-         --   print(mouseIsOverItemBBox(mx, my, c), c.mouseOver)
-         --end
-         
-
+	 local mouseover, invx, invy = mouseIsOverItemBBox(mx, my, c)
+         c.mouseOver = mouseover
       end
    end
 
@@ -674,26 +618,19 @@ function love.mousemoved(mx, my,dx,dy)
       if cameraTween then
          cameraTween = nil
          tweenCameraDelta = 0
-
       end
-      
+
       if gesture then
          if gesture.target == 'stage' then
             cam:translate(-dx,0)
          end
       end
-      
-      --print(dx,dy)
    end
-   
-
 end
 
 
-
-
 function drawCameraViewPointRectangles()
-   for _, v in pairs(cameraPoints) do
+   for _, v in pairs(cameraPoint) do
       love.graphics.setColor(1,0,1,.5)
       if v.selected then
          love.graphics.setColor(1,0,0,.6)
@@ -742,13 +679,11 @@ end
 
 function drawUI()
    local W, H = love.graphics.getDimensions()
-   love.graphics.setColor(1,1,1)
 
+   love.graphics.setColor(1,1,1)
    love.graphics.circle('fill', 50, (H/2)-25, 50)
    love.graphics.circle('fill', W-50, (H/2)-25, 50)
-
    love.graphics.circle('fill', W-50, 25, 50)
-
 end
 
 
@@ -779,7 +714,6 @@ function love.draw()
    drawGroundPlaneLines()
    love.graphics.setLineWidth(1)
 
-
    if (false) then
       sortOnDepth(stuff)
       for _, v in pairs(stuff) do
@@ -798,7 +732,6 @@ function love.draw()
    end
 
    cam:push()
-
 
    --https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
    -- spoiler use a heap
@@ -827,69 +760,40 @@ function love.draw()
    cam:pop()
 
    -- draw hitboxes around things with bbox
-   -- see if i can do it
 
-      -- draw the hitboxes
+   local mx, my = love.mouse.getPosition()
 
    for i =1 ,#root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth ~= nil then
 
-         local hack = {}
-         hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-         hack.relativeScale = (1.0/ hack.scale) * hack.scale
-
-         local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
-         local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-
-         local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
-         local brx, bry = cam:getScreenCoordinates(bx, by, hack)
-
-         if c.mouseOver == true or c.pressed then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my, hack)
-            local ix, iy = c._localTransform:inverseTransformPoint(wx, wy)
-
+         if c.mouseOver or c.pressed  then
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
             if c.pressed then
-               c.transforms.l[1] = c.transforms.l[1] + (ix - c.pressed.dx)
-               c.transforms.l[2] = c.transforms.l[2] + (iy - c.pressed.dy)
-
+               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
 
                if ((brx + offset) > W) then
-                  --local overShoot = (brx + offset) - W
-                  --local cx,cy = cam:getTranslation()
-                  --cameraTween = {goalX=cx+overShoot, goalY=cy, smoothValue=15}
                   cam:translate(1000*lastDT, 0)
                   c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
                end
                if ((tlx - offset) < 0) then
-                  --local overShoot = math.abs(tlx - offset) 
-                  --local cx,cy = cam:getTranslation()
-                  --cameraTween = {goalX=cx-overShoot, goalY=cy, smoothValue=15}
                   cam:translate(-1000*lastDT, 0)
                   c.transforms.l[1] = c.transforms.l[1] + -1000*lastDT
-
                end
-
             end
 
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
          end
       end
-
    end
-      love.graphics.setColor(1,1,1,1)
 
-
-   --drawCameraCross()
+   love.graphics.setColor(1,1,1,1)
    drawUI()
-
    drawCameraBounds(cam, 'line' )
-
    drawDebugStrings()
 end
-
 
 function love.wheelmoved( dx, dy )
    cam:scaleToPoint(  1 + dy / 10)
@@ -901,7 +805,6 @@ function love.resize(w, h)
    --print(inspect(cam))
    --cam:update(w,h)
 end
-
 
 function love.filedropped(file)
    local tab = getDataFromFile(file)

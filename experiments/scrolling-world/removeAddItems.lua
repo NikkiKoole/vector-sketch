@@ -69,4 +69,3 @@ function arrangeWhatIsVisible(x1, x2, tileSize)
    end
    lastGroundBounds = {startIndex, endIndex}
 end
-
