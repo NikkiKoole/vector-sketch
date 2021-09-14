@@ -15,50 +15,20 @@ random = love.math.random
 --[[
 TODO:
 
-the bbox functions have 2 ways of returning the data
+* the bbox functions have 2 ways of returning the data
 {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
 make that just one way
 
+* I'd like to be able to have negative masses (balloons) and tiny and large 
+masses, my calculations break down currently
+maybe also have a few differnt looking objects for that use case
+
 ]]--
-
-
 
 if os.setlocale(nil) ~= 'C' then
    print('wrong locale:', os.setlocale(nil))
    os.setlocale("C")
 end
-
-local TESTING__ = true
-
-if TESTING__ then
-   local old_print = print
-   print = function(...)
-      local info = debug.getinfo(2, "Sl")
-      local source = info.source
-      if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
-      if source:sub(1,1) == "@" then source = source:sub(2) end
-      local msg = ("%s:%i"):format(source, info.currentline)
-      old_print(msg, ...)
-   end
-else
-   print = function() end
-end
-
-
-function applyForce(motionObject, force)
-   local f = force / motionObject.mass
-   motionObject.acceleration =  motionObject.acceleration + f
-end
-
-
-function makeMotionObject()
-   return {
-      velocity = Vector(0,0),
-      acceleration = Vector(0,0),
-      mass = 8
-   }
-end
-
 
 function require_all(path, opts)
    local items = love.filesystem.getDirectoryItems(path)
@@ -77,6 +47,37 @@ function require_all(path, opts)
 end
 
 require_all "vecsketch"
+
+
+local TESTING__ = true
+if TESTING__ then
+   local old_print = print
+   print = function(...)
+      local info = debug.getinfo(2, "Sl")
+      local source = info.source
+      if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
+      if source:sub(1,1) == "@" then source = source:sub(2) end
+      local msg = ("%s:%i"):format(source, info.currentline)
+      old_print(msg, ...)
+   end
+else
+   print = function() end
+end
+
+function applyForce(motionObject, force)
+   local f = force  / motionObject.mass
+   
+   motionObject.acceleration =  motionObject.acceleration + f
+end
+
+function makeMotionObject()
+   return {
+      velocity = Vector(0,0),
+      acceleration = Vector(0,0),
+      mass = 10
+   }
+end
+
 
 -- utility functions that ought to be somewehre else
 
@@ -380,8 +381,9 @@ function love.update(dt)
       local thing = root.children[i]
       if thing.inMotion and not thing.pressed then
 
-	 local gravity = Vector(0, 6*980*thing.inMotion.mass*dt);
-
+         local gy = 6*980*thing.inMotion.mass*dt
+	 local gravity = Vector(0, gy);
+         
 	 applyForce(thing.inMotion, gravity)
 
          -- applying half the velocity before position
@@ -552,8 +554,9 @@ function gestureRecognizer(gesture)
 
 	 gesture.target.inMotion = makeMotionObject()
 	 local throwStrength = 5
-	 local impulse = Vector(dxn * speed * throwStrength,
-                                dyn * speed * throwStrength);
+         local mass = gesture.target.inMotion.mass
+	 local impulse = Vector(dxn * speed * throwStrength ,
+                                dyn * speed * throwStrength );
 	 applyForce(gesture.target.inMotion, impulse)
    end
    else

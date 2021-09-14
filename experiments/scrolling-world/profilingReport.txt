@@ -1,90 +1,84 @@
 ###############################################################################################################
-#####  ProFi, a lua profiler. This profile was generated on: Tue Sep 14 12:23:24 2021
+#####  ProFi, a lua profiler. This profile was generated on: Tue Sep 14 20:12:41 2021
 #####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
 #####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
 #####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
 ###############################################################################################################
 
 
-| TOTAL TIME = 2.959996
+| TOTAL TIME = 2.150788
 | FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
-| [string "boot.lua"]                               : anonymous                               :  594                : 2.939       : 99.28%      :     264     |
-| main.lua                                          : draw                                    :  712                : 2.631       : 88.88%      :     264     |
-| vecsketch/main-utils.lua                          : handleChild                             :  227                : 1.252   g    : 42.28%      :   55968     |
-| vecsketch/main-utils.lua                          : renderNormallyOrOptimized               :  207                : 1.128       : 38.12%      :   29304     |
-| vecsketch/main-utils.lua                          : renderThings                            :  506                : 0.879       : 29.69%      :   26136     |
-| vendor/brady.lua                                  : push                                    :   34                : 0.557       : 18.81%      :   30360     |
-| vecsketch/main-utils.lua                          : setTransforms                           :  492                : 0.273       : 9.24%       :   29568     |
-| groundplane.lua                                   : drawGroundPlaneLines                    :    1                : 0.262       : 8.87%       :     264     |
-| main.lua                                          : anonymous                               :  622                : 0.152       : 5.14%       :      26     |
-| main.lua                                          : mouseIsOverItemBBox                     :  607                : 0.146       : 4.94%       :    2906     |
-| vecsketch/basics.lua                              : mapInto                                 :    1                : 0.084       : 2.84%       :   33002     |
-| vendor/brady.lua                                  : getScreenCoordinates                    :  118                : 0.082       : 2.77%       :    9244     |
-| main.lua                                          : getScreenBBoxForItem                    :  598                : 0.051       : 1.71%       :    2906     |
-| vendor/brady.lua                                  : getWorldCoordinates                     :  110                : 0.037       : 1.26%       :    3434     |
-| vendor/brady.lua                                  : getLayer                                :  104                : 0.032       : 1.07%       :    6866     |
-| vendor/brady.lua                                  : getScale                                :  161                : 0.023       : 0.77%       :    6864     |
-| main.lua                                          : update                                  :  281                : 0.020       : 0.66%       :     264     |
-| vendor/brady.lua                                  : rotateAboutPoint                        :   27                : 0.018       : 0.62%       :    6338     |
-| vendor/brady.lua                                  : getViewportPosition                     :  152                : 0.011       : 0.38%       :    3432     |
-| vendor/brady.lua                                  : push                                    :  107                : 0.010       : 0.34%       :     264     |
-| main.lua                                          : drawDebugStrings                        :  670                : 0.009       : 0.32%       :     264     |
-| vendor/brady.lua                                  : update                                  :   80                : 0.009       : 0.30%       :     264     |
-| main.lua                                          : pointInRect                             :   83                : 0.007       : 0.25%       :    2906     |
-| main.lua                                          : drawUI                                  :  701                : 0.006       : 0.22%       :     264     |
-| main.lua                                          : resizingFunction                        :  216                : 0.004       : 0.13%       :     264     |
-| vendor/brady.lua                                  : pop                                     :  109                : 0.003       : 0.12%       :     264     |
-| main.lua                                          : drawCameraBounds                        :  170                : 0.002       : 0.06%       :     264     |
-| main.lua                                          : getContainerDimensions                  :  222                : 0.002       : 0.06%       :     264     |
-| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.001       : 0.04%       :     264     |
-| main.lua                                          : resizeCamera                            :  158                : 0.001       : 0.04%       :     264     |
-| removeAddItems.lua                                : arrangeWhatIsVisible                    :   46                : 0.001       : 0.03%       :     264     |
+| [string "boot.lua"]                               : anonymous                               :  594                : 2.129       : 99.01%      :     211     |
+| main.lua                                          : draw                                    :  720                : 2.021       : 93.97%      :     211     |
+| vecsketch/main-utils.lua                          : handleChild                             :  227                : 1.030       : 47.91%      :   44943     |
+| vecsketch/main-utils.lua                          : renderNormallyOrOptimized               :  207                : 0.897       : 41.72%      :   23632     |
+| vecsketch/main-utils.lua                          : renderThings                            :  506                : 0.696       : 32.34%      :   21100     |
+| vendor/brady.lua                                  : push                                    :   34                : 0.423       : 19.67%      :   24265     |
+| vecsketch/main-utils.lua                          : setTransforms                           :  492                : 0.196       : 9.10%       :   23843     |
+| groundplane.lua                                   : drawGroundPlaneLines                    :    1                : 0.179       : 8.33%       :     211     |
+| vecsketch/basics.lua                              : mapInto                                 :    1                : 0.062       : 2.88%       :   24054     |
+| vendor/brady.lua                                  : getScreenCoordinates                    :  118                : 0.045       : 2.11%       :    2743     |
+| vendor/brady.lua                                  : getLayer                                :  104                : 0.017       : 0.80%       :    3165     |
+| vendor/brady.lua                                  : getScale                                :  161                : 0.015       : 0.70%       :    5486     |
+| main.lua                                          : update                                  :  288                : 0.011       : 0.52%       :     211     |
+| main.lua                                          : drawDebugStrings                        :  658                : 0.009       : 0.42%       :     211     |
+| vendor/brady.lua                                  : rotateAboutPoint                        :   27                : 0.008       : 0.37%       :    2743     |
+| vendor/brady.lua                                  : getViewportPosition                     :  152                : 0.007       : 0.35%       :    2743     |
+| vendor/brady.lua                                  : push                                    :  107                : 0.007       : 0.34%       :     211     |
+| vendor/brady.lua                                  : update                                  :   80                : 0.005       : 0.24%       :     211     |
+| main.lua                                          : drawUI                                  :  695                : 0.005       : 0.22%       :     211     |
+| vendor/brady.lua                                  : pop                                     :  109                : 0.003       : 0.13%       :     211     |
+| main.lua                                          : resizingFunction                        :  217                : 0.002       : 0.11%       :     211     |
+| vendor/brady.lua                                  : getWorldCoordinates                     :  110                : 0.001       : 0.06%       :     422     |
+| main.lua                                          : drawCameraBounds                        :  171                : 0.001       : 0.06%       :     211     |
+| main.lua                                          : getContainerDimensions                  :  223                : 0.001       : 0.05%       :     211     |
+| main.lua                                          : resizeCamera                            :  159                : 0.001       : 0.03%       :     211     |
+| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.001       : 0.03%       :     211     |
+| removeAddItems.lua                                : arrangeWhatIsVisible                    :   46                : 0.001       : 0.03%       :     211     |
+| [string "boot.lua"]                               : anonymous                               :  192                : 0.000       : 0.00%       :       1     |
 | [string "boot.lua"]                               : anonymous                               :  189                : 0.000       : 0.00%       :       1     |
 | vendor/ProFi.lua                                  : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
-| [string "boot.lua"]                               : anonymous                               :  192                : 0.000       : 0.00%       :       1     |
-| [C]                                               : circle                                  :   -1                : 0.000       : 0.00%       :     792     |
-| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :     284     |
-| vendor/ProFi.lua                                  : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
-| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : inverseTransformPoint                   :   -1                : 0.000       : 0.00%       :    2906     |
-| [C]                                               : transformPoint                          :   -1                : 0.000       : 0.00%       :    5812     |
+| [C]                                               : __mul                                   :   -1                : 0.000       : 0.00%       :   30173     |
+| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :   24265     |
+| [C]                                               : setFont                                 :   -1                : 0.000       : 0.00%       :     422     |
+| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :     211     |
 | [string "boot.lua"]                               : anonymous                               :  186                : 0.000       : 0.00%       :       1     |
 | vendor/ProFi.lua                                  : stop                                    :   88                : 0.000       : 0.00%       :       1     |
-| [C]                                               : getFPS                                  :   -1                : 0.000       : 0.00%       :     264     |
-| [string "boot.lua"]                               : anonymous                               :  198                : 0.000       : 0.00%       :      26     |
-| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :   30360     |
-| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :   60720     |
-| [C]                                               : setStencilTest                          :   -1                : 0.000       : 0.00%       :   82368     |
-| [C]                                               : sqrt                                    :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :    1082     |
-| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :   30624     |
-| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :     528     |
-| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :    1848     |
-| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :     293     |
+| [C]                                               : circle                                  :   -1                : 0.000       : 0.00%       :     633     |
+| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : getFPS                                  :   -1                : 0.000       : 0.00%       :     422     |
+| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :     422     |
+| [C]                                               : setStencilTest                          :   -1                : 0.000       : 0.00%       :   66254     |
+| vendor/ProFi.lua                                  : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
+| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :   24265     |
+| [C]                                               : sqrt                                    :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :     844     |
+| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :   24476     |
+| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :    1477     |
+| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :     214     |
 | [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :       2     |
-| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :     264     |
+| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :     211     |
 | vendor/ProFi.lua                                  : start                                   :   70                : 0.000       : 0.00%       :       0     |
-| main.lua                                          : anonymous                               :  144                : 0.000       : 0.00%       :       1     |
-| [C]                                               : __mul                                   :   -1                : 0.000       : 0.00%       :   36696     |
-| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :   43824     |
-| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :     528     |
-| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :   30360     |
+| main.lua                                          : anonymous                               :  145                : 0.000       : 0.00%       :       1     |
+| [C]                                               : newTransform                            :   -1                : 0.000       : 0.00%       :   23843     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :     422     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :   37136     |
+| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :   24265     |
 | vendor/ProFi.lua                                  : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
-| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :   30888     |
-| [C]                                               : newTransform                            :   -1                : 0.000       : 0.00%       :   29568     |
-| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :   44900     |
-| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :   30360     |
-| [C]                                               : send                                    :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :    3960     |
-| [C]                                               : ceil                                    :   -1                : 0.000       : 0.00%       :     264     |
-| [C]                                               : setShader                               :   -1                : 0.000       : 0.00%       :     528     |
+| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :   48530     |
+| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :   24265     |
+| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :   35870     |
+| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :    3165     |
+| [C]                                               : setShader                               :   -1                : 0.000       : 0.00%       :     422     |
+| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :     422     |
+| [C]                                               : send                                    :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :     211     |
+| [C]                                               : ceil                                    :   -1                : 0.000       : 0.00%       :     211     |
 | [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |
