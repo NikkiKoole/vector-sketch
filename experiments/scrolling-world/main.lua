@@ -65,22 +65,13 @@ else
 end
 
 function applyForce(motionObject, force)
-         
-   --local f = force  / motionObject.mass
-   local fx, fy
-   if motionObject.mass > 0 then
-      fx = force.x / (motionObject.mass)
-      fy = force.y / (motionObject.mass)
-      
-   else
-      fx = force.x / math.abs(motionObject.mass)
-      fy = force.y / math.abs(motionObject.mass)
+   local f = force / motionObject.mass
 
+   if motionObject.mass < 1 then
+      f = f * motionObject.mass
    end
    
-   --motionObject.acceleration =  motionObject.acceleration + f
-   motionObject.acceleration =  motionObject.acceleration + Vector(fx,fy)
-
+   motionObject.acceleration =  motionObject.acceleration + f
 end
 
 function makeMotionObject()
@@ -278,6 +269,7 @@ function love.load()
    print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 
    gesture = nil
+
    gestureUpdateResolutionCounter = 0
    gestureUpdateResolution = 0.0167  -- aka 60 fps
 
@@ -433,42 +425,46 @@ end
 
 
 function love.mousepressed(x,y, button, istouch, presses)
-   local wx, wy = cam:getMouseWorldCoordinates()
-   local foundOne = false
-   if testCameraViewpointRects then
-      for _, v in pairs(cameraPoints) do
-         if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
-            foundOne = true
-            v.selected = true
-            local cw, ch = cam:getContainerDimensions()
-            local targetScale = math.min(cw/v.width, ch/v.height)
-            cam:setScale(targetScale)
-            cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
-         else
-            v.selected = false
-         end
+   print('mouse pressed')
+   if false then
+      local wx, wy = cam:getMouseWorldCoordinates()
+      local foundOne = false
+      if testCameraViewpointRects then
+         for _, v in pairs(cameraPoints) do
+            if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
+               foundOne = true
+               v.selected = true
+               local cw, ch = cam:getContainerDimensions()
+               local targetScale = math.min(cw/v.width, ch/v.height)
+               cam:setScale(targetScale)
+               cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
+            else
+               v.selected = false
+            end
 
-      end--
+         end--
+      end
+      local W, H = love.graphics.getDimensions()
+
+      local leftdis = getDistance(x,y, 50, (H/2)-25)
+      local rightdis = getDistance(x,y, W-50, (H/2)-25)
+
+      local toprightdis = getDistance(x,y, W-50, 25)
+
+      if leftdis < 50 then
+         moving = 'left'
+      end
+      if rightdis < 50 then
+         moving = 'right'
+      end
+      if toprightdis < 50 then
+         showNumbersOnScreen = not showNumbersOnScreen
+         ui.show = not ui.show
+      end
    end
-   local W, H = love.graphics.getDimensions()
+   
 
-   local leftdis = getDistance(x,y, 50, (H/2)-25)
-   local rightdis = getDistance(x,y, W-50, (H/2)-25)
-
-   local toprightdis = getDistance(x,y, W-50, 25)
-
-   if leftdis < 50 then
-      moving = 'left'
-   end
-   if rightdis < 50 then
-      moving = 'right'
-   end
-   if toprightdis < 50 then
-      showNumbersOnScreen = not showNumbersOnScreen
-      ui.show = not ui.show
-   end
-
-
+   
    local itemPressed = false
    for i = #root.children,1,-1 do
       local c = root.children[i]
