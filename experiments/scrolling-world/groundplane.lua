@@ -50,26 +50,36 @@ function drawGroundPlaneLines()
                      0,    1,    0,   50,
                      0,    1,    0,   50,
       })
+      --local weirdOffset = (H-768)
+      betterShader:send('m2', {
+                     1,    0,    0,   0,
+                     0,    1,    0,   0,
+                     0,    0,    1,   0,
+                     0,    0,    0,   1,
+      })
+--	return camera.projection_matrix * camera.view_matrix * model.matrix * TransformMatrix  * initial_vertex_position ;
 
+      
       for i = s, e, tileSize do
          local groundIndex = (i/tileSize)
          local tileIndex = (groundIndex % 5) + 1
-            local optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
-            local scale = cam:getScale()*0.225
-	    local scale2 = cam:getScale()*.5
-            local tx, ty = cam:getViewportPosition()
-            local x1,y1 = cam:getScreenCoordinates(i+0.0001, H, 'hackFar')
-            for  j=1, #optimized do
-               love.graphics.setColor(optimized[j].color[1],optimized[j].color[2],optimized[j].color[3],0.5 )
-               love.graphics.draw(optimized[j].mesh,
-                                  x1/4,
-                                 100 ,
-                                  0,
+         local optimized = groundPlanes.assets[tileIndex].thing.optimizedBatchMesh
+         local scale = cam:getScale()*0.225
+         --print('ratio', cam:getContainerDimensions())
+         local scale2 = cam:getScale()*.5
+         local tx, ty = cam:getViewportPosition()
+         local x1,y1 = cam:getScreenCoordinates(i+0.0001, 0, 'hackFar')
+         for  j=1, #optimized do
+            love.graphics.setColor(optimized[j].color[1],optimized[j].color[2],optimized[j].color[3],0.5 )
+            love.graphics.draw(optimized[j].mesh,
+                               x1/4,
+                               100 ,
+                               0,
                                   1*scale,
                                   -1*scale*1.55)
-               renderCount.groundMesh = renderCount.groundMesh + 1
-
-            end
+            renderCount.groundMesh = renderCount.groundMesh + 1
+            
+         end
 
       end
       love.graphics.setShader()
