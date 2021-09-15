@@ -65,16 +65,29 @@ else
 end
 
 function applyForce(motionObject, force)
-   local f = force  / motionObject.mass
+         
+   --local f = force  / motionObject.mass
+   local fx, fy
+   if motionObject.mass > 0 then
+      fx = force.x / (motionObject.mass)
+      fy = force.y / (motionObject.mass)
+      
+   else
+      fx = force.x / math.abs(motionObject.mass)
+      fy = force.y / math.abs(motionObject.mass)
+
+   end
    
-   motionObject.acceleration =  motionObject.acceleration + f
+   --motionObject.acceleration =  motionObject.acceleration + f
+   motionObject.acceleration =  motionObject.acceleration + Vector(fx,fy)
+
 end
 
 function makeMotionObject()
    return {
       velocity = Vector(0,0),
       acceleration = Vector(0,0),
-      mass = 10
+      mass = 1
    }
 end
 
@@ -381,7 +394,7 @@ function love.update(dt)
       local thing = root.children[i]
       if thing.inMotion and not thing.pressed then
 
-         local gy = 6*980*thing.inMotion.mass*dt
+         local gy = 6*980 * thing.inMotion.mass * dt
 	 local gravity = Vector(0, gy);
          
 	 applyForce(thing.inMotion, gravity)
@@ -553,18 +566,21 @@ function gestureRecognizer(gesture)
 	 local  dyn = dy / distance
 
 	 gesture.target.inMotion = makeMotionObject()
-	 local throwStrength = 5
          local mass = gesture.target.inMotion.mass
-	 local impulse = Vector(dxn * speed * throwStrength ,
-                                dyn * speed * throwStrength );
+
+	 local throwStrength = 1
+         if mass < 0 then throwStrength = throwStrength / 100 end
+         
+         local impulse = Vector(dxn * speed * throwStrength ,
+                                dyn * speed * throwStrength )
+         
+
+         print('impulse', impulse)
 	 applyForce(gesture.target.inMotion, impulse)
    end
    else
       gesture = nil
    end
-
-
-
 end
 
 
