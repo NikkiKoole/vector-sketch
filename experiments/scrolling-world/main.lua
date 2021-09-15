@@ -261,7 +261,7 @@ function love.load()
 
    cam:setTranslation(
       player.x + player.width/2 ,
-      player.y - 350
+      player.y - 250
    )
    --dt = 0
    --ProFi:stop()
@@ -894,7 +894,14 @@ function love.draw()
    --sortOnDepth(root.children)
    -- rendering needs some sort of culling
    -- i'd say a bbox per folder
+   --love.graphics.push()
+   --love.graphics.translate(0,-100)
+
+   --local offset = H - 768
+   --root.transforms.l[2] = offset/2.225
+   
    renderThings(root)
+   --love.graphics.pop()
 
    if testCameraViewpointRects then
       drawCameraViewPointRectangles()
@@ -984,7 +991,7 @@ function love.resize(w, h)
    --print('need to decide howmany ground meshes')
    --print(("Window resized to width: %d and height: %d."):format(w, h))
    --print(inspect(cam))
-   --cam:update(w,h)
+   cam:update(w,h)
 end
 
 function love.filedropped(file)

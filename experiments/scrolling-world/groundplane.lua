@@ -12,6 +12,35 @@ function drawGroundPlaneLines()
 
    local useCPU = false
 
+   local simplerPolies = true
+   
+   if simplerPolies then
+      	 for i = s, e, tileSize do
+	    local groundIndex = (i/tileSize)
+	    local tileIndex = (groundIndex % 5) + 1
+	    local index = (i - s)/tileSize
+	    local height1 = 0
+	    local height2 = 0
+	    local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, 'hackFar')
+	    local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, 'hackClose')
+	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, 'hackFar')
+	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, 'hackClose')
+
+            love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
+            love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
+            love.graphics.setColor(0.25,.5,0.25)
+
+            love.graphics.line(x1,y1, x2,y2)
+            love.graphics.line(x1,y1, x3,y3)
+
+         end
+         
+      
+      return
+   end
+   
+
+   
    if useCPU then
 
       if ((lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)) then
@@ -44,16 +73,39 @@ function drawGroundPlaneLines()
    else
       love.graphics.setShader(betterShader)
 
+      --[[
       betterShader:send('view', {
                      1.15,  0,    0, -150,
                      0,    0, -1.7, -120,
                      0,    1,    0,   50,
                      0,    1,    0,   50,
       })
+      ]]--
+
+
+      -- de eerste waarde hier (.8) of (1.15) lijkt iets te maken te hebben met de scroll snelheid
+
+
+      
+      local ratio = W/H
+      local ratio1024 = 1024/768
+      local ratio1869 = 1869/1027
+      local first = mapInto(ratio, ratio1024, ratio1869, 1.15, .65)
+
+      betterShader:send('view', {
+                     first,    0,    0, -150,
+                     0,    0,    -1.7, -120,
+                     0,    1,    0,   50,
+                     0,    1,    0,   50,
+      })
+
+      local offset = H - 768
+--      offset/2.225
+
       --local weirdOffset = (H-768)
       betterShader:send('m2', {
                      1,    0,    0,   0,
-                     0,    1,    0,   0,
+                     0,    1,    0,   -(offset/2.225),
                      0,    0,    1,   0,
                      0,    0,    0,   1,
       })
