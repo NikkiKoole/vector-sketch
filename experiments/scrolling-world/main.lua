@@ -29,7 +29,6 @@ maybe also have a few differnt looking objects for that use case
 
 function applyForce(motionObject, force)
    local f = force / motionObject.mass
-
    if motionObject.mass < 1 then
       f = f * motionObject.mass
    end
@@ -44,7 +43,6 @@ function makeMotionObject()
       mass = 1
    }
 end
-
 
 function getPointerPosition(id)
    local x, y
@@ -62,8 +60,6 @@ function getPointerPosition(id)
    end
    return nil,nil,false
 end
-
-
 
 -- utility functions that ought to be somewehre else
 
@@ -190,7 +186,7 @@ function love.load()
 
    moving = nil
 
-   local timeIndex = 17
+   local timeIndex = 18
    skygradient = gradientMesh("vertical", gradients[timeIndex].from, gradients[timeIndex].to)
 
    tileSize = 100
@@ -550,16 +546,25 @@ function pointerPressed(x,y, id)
             if gestureList[i].target == 'stage' then
                hasOneAlready = true
             end
-
          end
+         
 
          if not hasOneAlready then
+            
             local g = {positions={}, target='stage', trigger=id}
             table.insert(gestureList, g)
             addGesturePoint(g, love.timer.getTime( ),x,y)
          end
       end
    else
+      if cameraTween then
+         print('hi this works nicely on mouse does it work here?')
+         cameraTween = nil
+         tweenCameraDelta = 0
+
+
+      end
+      
       local g = {positions={}, target=itemPressed, trigger=id}
       table.insert(gestureList, g)
       addGesturePoint(g, love.timer.getTime( ),x,y)
@@ -653,16 +658,19 @@ end
 
 function love.touchmoved(id, x,y, dx, dy, pressure)
    --print('touch moved, ',id, x, y, dx, dy, pressure)
+
+   if cameraTween then
+      print( 'there migjt be an issue here!')
+   end
+
    for i = 1, #gestureList do
       local g = gestureList[i]
       if g.target == 'stage' and g.trigger == id then
-         --cam:translate(-dx, 0)
          local scale = cam:getScale()
-
 	 cameraTranslateScheduler(-dx/scale, 0)
-
       end
    end
+
 
 end
 
@@ -982,12 +990,24 @@ function love.draw()
                c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
 
                if ((brx + offset) > W) then
+                  if cameraTween then
+                     print('update hi this works nicely on mouse')
+                     cameraTween = nil
+                     tweenCameraDelta = 0
+                  end
+
 		  cameraTranslateScheduler(1000*lastDT, 0)
 
                   --cam:translate(1000*lastDT, 0)
                   --c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
                end
                if ((tlx - offset) < 0) then
+                  if cameraTween then
+                     print('update hi this works nicely on mouse')
+                     cameraTween = nil
+                     tweenCameraDelta = 0
+                  end
+
 		  cameraTranslateScheduler(-1000*lastDT, 0)
 
                   --cam:translate(-1000*lastDT, 0)
