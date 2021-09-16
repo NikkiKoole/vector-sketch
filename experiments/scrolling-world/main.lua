@@ -274,6 +274,8 @@ function love.load()
    ui = {show=false}
 
    translateScheduler = {x=0,y=0}
+   translateSchedulerJustItem = {x=0,y=0}
+      
 end
 
 
@@ -333,7 +335,11 @@ function love.update(dt)
 	    dt,
 	    cameraTween.smoothValue
 	 )
-	 if delta == 0 then
+         if delta.x ~= 0 then
+            cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
+         end
+         
+	 if (delta.x + delta.y) == 0 then
             for i = #gestureList, 1 -1 do
                if cameraTween.originalGesture == gestureList[i] then
                   removeGestureFromList(gestureList[i])
@@ -562,6 +568,12 @@ function pointerPressed(x,y, id)
 end
 
 
+function cameraTranslateScheduleJustItem(dx,dy)
+   -- this comes from just the cameraTween
+   translateSchedulerJustItem.x = dx
+   translateSchedulerJustItem.y = dy
+
+end
 
 
 function cameraTranslateScheduler(dx, dy)
@@ -584,13 +596,16 @@ function cameraApplyTranslate()
    for i =1 ,#root.children do
       local c = root.children[i]
       if c.pressed then
-	 c.transforms.l[1] = c.transforms.l[1] + translateScheduler.x
+	 c.transforms.l[1] =
+            c.transforms.l[1] + translateScheduler.x + translateSchedulerJustItem.x
       end
    end
 
 
    translateScheduler.x = 0
    translateScheduler.y = 0
+   translateSchedulerJustItem.x = 0
+   translateSchedulerJustItem.y = 0
 
 end
 
@@ -642,6 +657,8 @@ function love.touchmoved(id, x,y, dx, dy, pressure)
       local g = gestureList[i]
       if g.target == 'stage' and g.trigger == id then
          --cam:translate(-dx, 0)
+         local scale = cam:getScale()
+
 	 cameraTranslateScheduler(-dx/scale, 0)
 
       end

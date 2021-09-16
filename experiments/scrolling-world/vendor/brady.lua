@@ -176,7 +176,8 @@ local function newCamera( w, h, flags )
 		   if (math.abs(deltaY) < .5) then
 		      self.translationY = y
 		   end
-		   return (deltaX + deltaY) --- so i can check if done
+                   return {x=deltaX, y=deltaY}
+		   --return (deltaX + deltaY) --- so i can check if done
                 end,
 
 	}
