@@ -273,7 +273,7 @@ function love.load()
    translateScheduler = {x=0,y=0}
    translateSchedulerJustItem = {x=0,y=0}
 
-   translateCache = {value=0, stopped=true, stoppedAt=0, tweenValue=0}
+   translateCache = {value=0, cacheValue=0, stopped=true, stoppedAt=0, tweenValue=0}
    --flux.to(translateCache, 1, {tweenValue = 100}):onupdate(function(d) print(translateCache.tweenValue) end)
 
    bouncetween = nil
@@ -613,18 +613,22 @@ function cameraApplyTranslate()
       translateCache.triggered= false
       translateCache.stopped = false
       translateCache.value = translateCache.value + translateScheduler.x
+      translateCache.cacheValue = translateCache.value
+
    else
       if translateCache.stopped == false then
          translateCache.stopped = true
          translateCache.stoppedAt = translateCache.value 
       end
-      translateCache.value = translateCache.value / 1.2
+      translateCache.cacheValue = translateCache.cacheValue / 1.2
 
       -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
-      if math.abs(translateCache.value) < 1 and translateCache.triggered == false then
+      if math.abs(translateCache.cacheValue) < 0.01 and translateCache.triggered == false then
+         translateCache.cacheValue = 0
          translateCache.value = 0
+         
          translateCache.triggered= true
-         print('triggered!', translateCache.stoppedAt)
+         ---print('triggered!', translateCache.stoppedAt)
          translateCache.tweenValue = translateCache.stoppedAt
          --print('still triggering baby')
          bouncetween = tween.new(1, translateCache, {tweenValue=0}, 'outElastic')
@@ -1064,11 +1068,11 @@ function love.draw()
    drawUI()
    if not ui.show then drawCameraBounds(cam, 'line' ) end
    drawDebugStrings()
-   love.graphics.print(translateCache.value.."|"..translateCache.tweenValue, 10, 40)
+   --love.graphics.print(translateCache.value.."|"..translateCache.tweenValue, 10, 40)
    if translateCache.value ~= 0 then
-      love.graphics.line(100,100,100+translateCache.value, 0)
+      love.graphics.line(W/2,100,W/2+translateCache.value, 0)
    else
-      love.graphics.line(100,100,100+translateCache.tweenValue, 0)
+      love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
    end
 end
 
