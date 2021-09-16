@@ -618,10 +618,10 @@ function cameraApplyTranslate()
          translateCache.stopped = true
          translateCache.stoppedAt = translateCache.value 
       end
-      translateCache.value = translateCache.value / 1.5
+      translateCache.value = translateCache.value / 1.2
 
       -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
-      if math.abs(translateCache.value) < 0.001 and translateCache.triggered == false then
+      if math.abs(translateCache.value) < 1 and translateCache.triggered == false then
          translateCache.value = 0
          translateCache.triggered= true
          print('triggered!', translateCache.stoppedAt)
