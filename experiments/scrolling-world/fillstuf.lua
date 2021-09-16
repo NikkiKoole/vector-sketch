@@ -98,10 +98,10 @@ function createStuff()
 
 
 
-   for i = -100, 100 do
+   for i = -1000, 1000 do
 
       plantData[i] = {}
-      for p = 1, 1 do
+      for p = 1, 5 do
          table.insert(
             plantData[i],
             {

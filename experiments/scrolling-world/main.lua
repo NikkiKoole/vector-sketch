@@ -557,13 +557,7 @@ function pointerPressed(x,y, id)
          end
       end
    else
-      if cameraTween then
-         print('hi this works nicely on mouse does it work here?')
-         cameraTween = nil
-         tweenCameraDelta = 0
-
-
-      end
+      resetCameraTween()
       
       local g = {positions={}, target=itemPressed, trigger=id}
       table.insert(gestureList, g)
@@ -582,12 +576,8 @@ end
 
 
 function cameraTranslateScheduler(dx, dy)
-   -- todo think about hwo to handle multiple items that are all triggering
-   -- differnt translates, now they will add up, thats not really desired
-   -- mayeb i should average them ?
    translateScheduler.x = translateScheduler.x + dx
    translateScheduler.y = translateScheduler.y + dy
-
 end
 
 function cameraApplyTranslate()
@@ -607,6 +597,14 @@ function cameraApplyTranslate()
    end
 
 
+   -- this thing is meant for the elastic bounce back of items
+   -- if it was something before and now its 0 then its time to do something
+   if translateCache == 0 and translateScheduler.x ~= 0 then
+      print('do a bounce back! but this goes off too much!')
+   end
+   
+   translateCache = translateScheduler.x --+ translateSchedulerJustItem.x 
+   
    translateScheduler.x = 0
    translateScheduler.y = 0
    translateSchedulerJustItem.x = 0
@@ -635,11 +633,7 @@ function love.mousemoved(mx, my,dx,dy, istouch)
    if not istouch then
    if love.mouse.isDown(1) then
       -- todo this probably needs to be handled for touch too
-      if cameraTween then
-         print('hi this works nicely on mouse')
-         cameraTween = nil
-         tweenCameraDelta = 0
-      end
+      resetCameraTween()
 
       for i = 1, #gestureList do
          local g = gestureList[i]
@@ -672,6 +666,13 @@ function love.touchmoved(id, x,y, dx, dy, pressure)
    end
 
 
+end
+
+function resetCameraTween()
+   if cameraTween then
+      cameraTween = nil
+      tweenCameraDelta = 0
+   end
 end
 
 
@@ -990,23 +991,15 @@ function love.draw()
                c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
 
                if ((brx + offset) > W) then
-                  if cameraTween then
-                     print('update hi this works nicely on mouse')
-                     cameraTween = nil
-                     tweenCameraDelta = 0
-                  end
-
+                  resetCameraTween()
 		  cameraTranslateScheduler(1000*lastDT, 0)
 
                   --cam:translate(1000*lastDT, 0)
                   --c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
                end
                if ((tlx - offset) < 0) then
-                  if cameraTween then
-                     print('update hi this works nicely on mouse')
-                     cameraTween = nil
-                     tweenCameraDelta = 0
-                  end
+                  resetCameraTween()
+
 
 		  cameraTranslateScheduler(-1000*lastDT, 0)
 
@@ -1040,6 +1033,7 @@ function love.draw()
    drawUI()
    if not ui.show then drawCameraBounds(cam, 'line' ) end
    drawDebugStrings()
+   love.graphics.print(translateCache, 10, 40)
 end
 
 function love.wheelmoved( dx, dy )
