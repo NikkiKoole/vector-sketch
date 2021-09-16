@@ -1,7 +1,8 @@
 local Camera = require 'vendor.brady'
 local inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
---flux = require "vendor.flux"
+flux = require "vendor.flux"
+local tween = require "vendor.tween"
 local Vector = require "vendor.brinevector"
 
 require 'generateWorld'
@@ -271,7 +272,11 @@ function love.load()
 
    translateScheduler = {x=0,y=0}
    translateSchedulerJustItem = {x=0,y=0}
-      
+
+   translateCache = {value=0, stopped=true, stoppedAt=0, tweenValue=0}
+   --flux.to(translateCache, 1, {tweenValue = 100}):onupdate(function(d) print(translateCache.tweenValue) end)
+
+   bouncetween = nil
 end
 
 
@@ -282,6 +287,11 @@ function love.update(dt)
 
    --print(dt)
    --flux.update(dt)
+--   print(tween)
+   if bouncetween then
+      bouncetween:update(dt)
+   end
+   
    local v = {x=0, y=0}
 
    if love.keyboard.isDown('left') or moving == 'left' then
@@ -599,11 +609,32 @@ function cameraApplyTranslate()
 
    -- this thing is meant for the elastic bounce back of items
    -- if it was something before and now its 0 then its time to do something
-   if translateCache == 0 and translateScheduler.x ~= 0 then
-      print('do a bounce back! but this goes off too much!')
+   if translateScheduler.x ~= 0 then
+      translateCache.triggered= false
+      translateCache.stopped = false
+      translateCache.value = translateCache.value + translateScheduler.x
+   else
+      if translateCache.stopped == false then
+         translateCache.stopped = true
+         translateCache.stoppedAt = translateCache.value 
+      end
+      translateCache.value = translateCache.value / 1.5
+
+      -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
+      if math.abs(translateCache.value) < 0.001 and translateCache.triggered == false then
+         translateCache.value = 0
+         translateCache.triggered= true
+         print('triggered!', translateCache.stoppedAt)
+         translateCache.tweenValue = translateCache.stoppedAt
+         --print('still triggering baby')
+         bouncetween = tween.new(1, translateCache, {tweenValue=0}, 'outElastic')
+      end
+      
    end
+
    
-   translateCache = translateScheduler.x --+ translateSchedulerJustItem.x 
+   
+
    
    translateScheduler.x = 0
    translateScheduler.y = 0
@@ -1033,7 +1064,12 @@ function love.draw()
    drawUI()
    if not ui.show then drawCameraBounds(cam, 'line' ) end
    drawDebugStrings()
-   love.graphics.print(translateCache, 10, 40)
+   love.graphics.print(translateCache.value.."|"..translateCache.tweenValue, 10, 40)
+   if translateCache.value ~= 0 then
+      love.graphics.line(100,100,100+translateCache.value, 0)
+   else
+      love.graphics.line(100,100,100+translateCache.tweenValue, 0)
+   end
 end
 
 function love.wheelmoved( dx, dy )
