@@ -586,6 +586,7 @@ end
 
 
 function cameraTranslateScheduler(dx, dy)
+   print(dx)
    translateScheduler.x = translateScheduler.x + dx
    translateScheduler.y = translateScheduler.y + dy
 end
@@ -676,6 +677,7 @@ function love.mousemoved(mx, my,dx,dy, istouch)
             local scale = cam:getScale()
             --print(scale)
             --cam:translate(-dx*scale, 0)
+            print('&&')
 	    cameraTranslateScheduler(-dx/scale, 0)
          end
       end
