@@ -13,7 +13,7 @@ function drawGroundPlaneLines()
    local useCPU = false
 
    local simplerPolies = true
-   
+
    if simplerPolies then
       	 for i = s, e, tileSize do
 	    local groundIndex = (i/tileSize)
@@ -34,13 +34,13 @@ function drawGroundPlaneLines()
             love.graphics.line(x1,y1, x3,y3)
 
          end
-         
-      
+
+
       return
    end
-   
 
-   
+
+
    if useCPU then
 
       if ((lastCameraBounds[1]) == (x1) and (lastCameraBounds[2]) == (x2) and (lastCameraBounds[3]) == (y1)) then
@@ -86,7 +86,7 @@ function drawGroundPlaneLines()
       -- de eerste waarde hier (.8) of (1.15) lijkt iets te maken te hebben met de scroll snelheid
 
 
-      
+
       local ratio = W/H
       local ratio1024 = 1024/768
       local ratio1869 = 1869/1027
@@ -111,7 +111,7 @@ function drawGroundPlaneLines()
       })
 --	return camera.projection_matrix * camera.view_matrix * model.matrix * TransformMatrix  * initial_vertex_position ;
 
-      
+
       for i = s, e, tileSize do
          local groundIndex = (i/tileSize)
          local tileIndex = (groundIndex % 5) + 1
@@ -130,7 +130,7 @@ function drawGroundPlaneLines()
                                   1*scale,
                                   -1*scale*1.55)
             renderCount.groundMesh = renderCount.groundMesh + 1
-            
+
          end
 
       end

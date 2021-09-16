@@ -162,6 +162,7 @@ local function newCamera( w, h, flags )
 		increaseScale = function( self, ds ) self.scale = self.scale + ds end,
 		scaleBy = function( self, ds ) self.scale = self.scale * ds end,
                 setTranslation = function( self, x, y ) self.translationX, self.translationY = x or 0, y or 0 end,
+		setTranslationY = function( self, y ) self.translationY = y or 0 end,
 		getTranslation = function( self ) return self.translationX, self.translationY end,
                 setTranslationSmooth = function(self, x, y, dt, smoothing)
 

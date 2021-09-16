@@ -9,7 +9,8 @@ require 'gradient'
 require 'groundplane'
 require 'fillstuf'
 require 'removeAddItems'
-
+require 'basic-tools'  -- this defines require_all
+require_all "vecsketch"
 random = love.math.random
 
 --[[
@@ -19,50 +20,12 @@ TODO:
 {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
 make that just one way
 
-* I'd like to be able to have negative masses (balloons) and tiny and large 
+* I'd like to be able to have negative masses (balloons) and tiny and large
 masses, my calculations break down currently
 maybe also have a few differnt looking objects for that use case
 
 ]]--
 
-if os.setlocale(nil) ~= 'C' then
-   print('wrong locale:', os.setlocale(nil))
-   os.setlocale("C")
-end
-
-function require_all(path, opts)
-   local items = love.filesystem.getDirectoryItems(path)
-   for _, item in pairs(items) do
-      if love.filesystem.getInfo(path .. '/' .. item, 'file') then
-         require(path .. '/' .. item:gsub('.lua', ''))
-      end
-   end
-   if opts and opts.recursive then
-      for _, item in pairs(items) do
-         if love.filesystem.getInfo(path .. '/' .. item, 'directory') then
-            require_all(path .. '/' .. item, {recursive = true})
-         end
-      end
-   end
-end
-
-require_all "vecsketch"
-
-
-local TESTING__ = true
-if TESTING__ then
-   local old_print = print
-   print = function(...)
-      local info = debug.getinfo(2, "Sl")
-      local source = info.source
-      if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
-      if source:sub(1,1) == "@" then source = source:sub(2) end
-      local msg = ("%s:%i"):format(source, info.currentline)
-      old_print(msg, ...)
-   end
-else
-   print = function() end
-end
 
 function applyForce(motionObject, force)
    local f = force / motionObject.mass
@@ -70,7 +33,7 @@ function applyForce(motionObject, force)
    if motionObject.mass < 1 then
       f = f * motionObject.mass
    end
-   
+
    motionObject.acceleration =  motionObject.acceleration + f
 end
 
@@ -81,6 +44,25 @@ function makeMotionObject()
       mass = 1
    }
 end
+
+
+function getPointerPosition(id)
+   local x, y
+   if id == 'mouse' then
+      x, y = love.mouse.getPosition()
+      return x,y,true
+   else
+      local touches =  love.touch.getTouches()
+      for i = 1, #touches do
+	 if touches[i] == id then
+	    x,y = love.touch.getPosition( id )
+	    return x,y, true
+	 end
+      end
+   end
+   return nil,nil,false
+end
+
 
 
 -- utility functions that ought to be somewehre else
@@ -198,8 +180,8 @@ function love.load()
 
    meshCache = {}
 
-   depthMinMax = {min=-2, max=2}
-   depthScaleFactors = { min=.9, max=1.1}
+   depthMinMax = {min=-1, max=1}
+   depthScaleFactors = { min=.8, max=1}
 
    --carThickness = 12.5
    --testCar = false
@@ -259,16 +241,17 @@ function love.load()
    --avgRunningAhead = 0
    sortOnDepth(root.children)
 
+
    cam:setTranslation(
       player.x + player.width/2 ,
-      player.y - 250
+      -H/2 + offset
    )
    --dt = 0
    --ProFi:stop()
    --ProFi:writeReport( 'profilingLoadReport.txt' )
 
 
-   print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
+   --print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 
    gestureList = {}
 
@@ -289,6 +272,8 @@ function love.load()
 
    love.graphics.setFont(font)
    ui = {show=false}
+
+   translateScheduler = {x=0,y=0}
 end
 
 
@@ -355,7 +340,7 @@ function love.update(dt)
                   print('yeah babay is this still in use ?!')
                end
             end
-            
+
 	    cameraTween = nil
 
 	 end
@@ -378,24 +363,22 @@ function love.update(dt)
    gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
    if gestureUpdateResolutionCounter > gestureUpdateResolution then
       gestureUpdateResolutionCounter = 0
-      
-      for i = 1, #gestureList do
-         
-         local g = gestureList[i]
-         --print(g.trigger)
-         local x,y-- = love.mouse:getPosition()
-         if g.trigger == 'mouse' then
-            x,y = love.mouse.getPosition()
-         else
-            x,y = love.touch.getPosition(g.trigger)
-            
-         end
-         
-         
-         table.insert(g.positions, {x=x,y=y, time=love.timer.getTime( )})
 
+      for i = 1, #gestureList do
+
+         local g = gestureList[i]
+         local x,y, success = getPointerPosition(g.trigger)    -- = love.mouse:getPosition()
+         --if g.trigger == 'mouse' then
+         --   x,y = love.mouse.getPosition()
+         --else
+         --   x,y = love.touch.getPosition(g.trigger)
+         --end
+
+	 if success then
+	    table.insert(g.positions, {x=x,y=y, time=love.timer.getTime( )})
+	 end
       end
-      
+
    end
 
 
@@ -404,9 +387,9 @@ function love.update(dt)
          print('gesture is nil!', i)
 
       end
-      
+
    end
-   
+
 
    for i=1, #root.children do
       local thing = root.children[i]
@@ -414,7 +397,7 @@ function love.update(dt)
 
          local gy = 6*980 * thing.inMotion.mass * dt
 	 local gravity = Vector(0, gy);
-         
+
 	 applyForce(thing.inMotion, gravity)
 
          -- applying half the velocity before position
@@ -443,7 +426,7 @@ function love.update(dt)
    end
 
 
-
+   cameraApplyTranslate()
    --print(dt)
 end
 
@@ -462,12 +445,8 @@ function removeGestureFromList(gesture)
    if found == false then
       print('didnt find gesture to delete',gesture.trigger, #gestureList)
    else
-      print('deleted gesture succesfully', gesture.trigger, #gestureList)
+      --print('deleted gesture succesfully', gesture.trigger, #gestureList)
    end
-   
-   
-   
---   print('want to merove from', gesture, #gestureList)
 end
 
 
@@ -523,7 +502,7 @@ end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
    print('touch pressed, ',id, x, y, dx, dy, pressure)
-   
+
    pointerPressed(x,y, id)
 
 end
@@ -540,7 +519,7 @@ function pointerPressed(x,y, id)
             if c.pressed then
                print('dont kow how but this thig was pressed alreda')
             end
-            
+
 	    c.pressed = {dx=invx, dy=invy, id=id}
 	    itemPressed = c
 	    c.poep = true
@@ -565,9 +544,9 @@ function pointerPressed(x,y, id)
             if gestureList[i].target == 'stage' then
                hasOneAlready = true
             end
-            
+
          end
-         
+
          if not hasOneAlready then
             local g = {positions={}, target='stage', trigger=id}
             table.insert(gestureList, g)
@@ -581,6 +560,42 @@ function pointerPressed(x,y, id)
    end
 
 end
+
+
+
+
+function cameraTranslateScheduler(dx, dy)
+   -- todo think about hwo to handle multiple items that are all triggering
+   -- differnt translates, now they will add up, thats not really desired
+   -- mayeb i should average them ?
+   translateScheduler.x = translateScheduler.x + dx
+   translateScheduler.y = translateScheduler.y + dy
+
+end
+
+function cameraApplyTranslate()
+   --look at the trasnlatiosn being set in this frame
+   -- apoply it to the camera
+   -- and reset
+   -- also do the stuff to pressed
+
+   cam:translate( translateScheduler.x, translateScheduler.y)
+
+   for i =1 ,#root.children do
+      local c = root.children[i]
+      if c.pressed then
+	 c.transforms.l[1] = c.transforms.l[1] + translateScheduler.x
+      end
+   end
+
+
+   translateScheduler.x = 0
+   translateScheduler.y = 0
+
+end
+
+
+
 
 function love.mousemoved(mx, my,dx,dy, istouch)
    -- for i = 1, #root.children do
@@ -610,11 +625,12 @@ function love.mousemoved(mx, my,dx,dy, istouch)
          local g = gestureList[i]
          if g.target == 'stage' and g.trigger == 'mouse' then
             local scale = cam:getScale()
-            print(scale)
-            cam:translate(-dx*scale, 0)
+            --print(scale)
+            --cam:translate(-dx*scale, 0)
+	    cameraTranslateScheduler(-dx/scale, 0)
          end
       end
-      
+
    end
    end
 end
@@ -626,6 +642,8 @@ function love.touchmoved(id, x,y, dx, dy, pressure)
       local g = gestureList[i]
       if g.target == 'stage' and g.trigger == id then
          --cam:translate(-dx, 0)
+	 cameraTranslateScheduler(-dx/scale, 0)
+
       end
    end
 
@@ -643,16 +661,19 @@ function pointerReleased(x,y, id)
 
    for i = 1, #gestureList do
       local g = gestureList[i]
-      -- todo why the fuc is there anil gesture in here?
+      -- todo why the fuc is there a nil gesture in here?
       if g then
-      if g.trigger == id then
-         --print('do ii ever get her?')
-         addGesturePoint(g, love.timer.getTime( ), x, y)
-         gestureRecognizer(g)
-         removeGestureFromList(g)
+	 if g.trigger == id then
+	    --print('do ii ever get her?')
+	    addGesturePoint(g, love.timer.getTime( ), x, y)
+	    gestureRecognizer(g)
+	    removeGestureFromList(g)
+	 end
+      else
+
       end
-      end
-      
+
+
    end
 
 
@@ -663,14 +684,10 @@ function love.mousereleased(x,y, button, istouch)
    if not istouch then
       pointerReleased(x,y, 'mouse')
    end
-   
 end
 
-
 function love.touchreleased(id, x, y, dx, dy, pressure)
-   print('touch released, ',id, x, y, dx, dy, pressure)
    pointerReleased(x,y, id)
-
 end
 
 
@@ -726,10 +743,10 @@ function gestureRecognizer(gesture)
 
 	 local throwStrength = 1
          if mass < 0 then throwStrength = throwStrength / 100 end
-         
+
          local impulse = Vector(dxn * speed * throwStrength ,
                                 dyn * speed * throwStrength )
-         
+
 
          print('impulse', impulse)
 	 applyForce(gesture.target.inMotion, impulse)
@@ -791,7 +808,7 @@ function drawDebugStrings()
    love.graphics.setFont(font)
 
    love.graphics.setColor(0,0,0,.2)
-   
+
    if showNumbersOnScreen then
       love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 40)
       love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 70)
@@ -899,7 +916,7 @@ function love.draw()
 
    --local offset = H - 768
    --root.transforms.l[2] = offset/2.225
-   
+
    renderThings(root)
    --love.graphics.pop()
 
@@ -924,35 +941,40 @@ function love.draw()
 
    -- draw hitboxes around things with bbox
 
-   local mx, my-- = love.mouse.getPosition()
+   --local mx, my-- = love.mouse.getPosition()
 
    for i =1 ,#root.children do
       local c = root.children[i]
       if c.bbox and c._localTransform and c.depth ~= nil then
 
-         if c.pressed  then
-            --            print('pressed id ', c.pressed.id)
-            if c.pressed.id == 'mouse' then
-               mx, my = love.mouse.getPosition()
-            else
-               local touches = love.touch.getTouches()
+         if c.pressed then
+
+	    --            print('pressed id ', c.pressed.id)
+            --if c.pressed.id == 'mouse' then
+            --   mx, my = love.mouse.getPosition()
+            --else
+            --   local touches = love.touch.getTouches()
                --print(inspect(touches), #touches)
                -- todo i think sometimes this id isnt correct somehow
-               mx, my = love.touch.getPosition( c.pressed.id )
-            end
-
+            --   mx, my = love.touch.getPosition( c.pressed.id )
+            --end
+	    local mx, my = getPointerPosition(c.pressed.id)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
             if c.pressed then
                c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
                c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
 
                if ((brx + offset) > W) then
---                  cam:translate(1000*lastDT, 0)
---                  c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
+		  cameraTranslateScheduler(1000*lastDT, 0)
+
+                  --cam:translate(1000*lastDT, 0)
+                  --c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
                end
                if ((tlx - offset) < 0) then
- --                 cam:translate(-1000*lastDT, 0)
-  --                c.transforms.l[1] = c.transforms.l[1] + -1000*lastDT
+		  cameraTranslateScheduler(-1000*lastDT, 0)
+
+                  --cam:translate(-1000*lastDT, 0)
+                  --c.transforms.l[1] = c.transforms.l[1] + -1000*lastDT
                end
             end
 
@@ -965,7 +987,7 @@ function love.draw()
    love.graphics.setColor(1,1,1,1)
 
    local touches = love.touch.getTouches()
- 
+
     for i, id in ipairs(touches) do
        local x, y = love.touch.getPosition(id)
        love.graphics.setColor(1,1,1,1)
@@ -977,7 +999,7 @@ function love.draw()
     end
 
    love.graphics.setColor(1,1,1,1)
-   
+
    drawUI()
    if not ui.show then drawCameraBounds(cam, 'line' ) end
    drawDebugStrings()
@@ -992,6 +1014,8 @@ function love.resize(w, h)
    --print(("Window resized to width: %d and height: %d."):format(w, h))
    --print(inspect(cam))
    cam:update(w,h)
+   --cam:setScale(2)
+   --cam:setTranslationY(-h/2)
 end
 
 function love.filedropped(file)
