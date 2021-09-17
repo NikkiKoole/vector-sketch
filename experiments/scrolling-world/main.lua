@@ -586,7 +586,7 @@ end
 
 
 function cameraTranslateScheduler(dx, dy)
-   print(dx)
+--   print(dx, 'try to average instead of adding')
    translateScheduler.x = translateScheduler.x + dx
    translateScheduler.y = translateScheduler.y + dy
 end
@@ -596,9 +596,12 @@ function cameraApplyTranslate()
    -- apoply it to the camera
    -- and reset
    -- also do the stuff to pressed
-
+   --print('her eits clered')
    cam:translate( translateScheduler.x, translateScheduler.y)
+  -- translateScheduler.x = 0
+  -- translateScheduler.y = 0
 
+   if true then
    for i =1 ,#root.children do
       local c = root.children[i]
       if c.pressed then
@@ -621,7 +624,8 @@ function cameraApplyTranslate()
          translateCache.stopped = true
          translateCache.stoppedAt = translateCache.value 
       end
-      translateCache.cacheValue = translateCache.cacheValue / 1.2
+      -- i need some dt calc here
+      translateCache.cacheValue = translateCache.cacheValue / 1.4
 
       -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
       if math.abs(translateCache.cacheValue) < 0.01 and translateCache.triggered == false then
@@ -636,29 +640,25 @@ function cameraApplyTranslate()
       end
       
    end
-
-   
-   
-
    
    translateScheduler.x = 0
    translateScheduler.y = 0
    translateSchedulerJustItem.x = 0
    translateSchedulerJustItem.y = 0
-
+   end
 end
 
 
 
 
 function love.mousemoved(mx, my,dx,dy, istouch)
-   -- for i = 1, #root.children do
-   --    local c = root.children[i]
-   --    if c.bbox and c._localTransform and c.depth then
-   --       local mouseover, invx, invy = mouseIsOverItemBBox(mx, my, c)
-   --       c.mouseOver = mouseover
-   --    end
-   -- end
+   for i = 1, #root.children do
+      local c = root.children[i]
+      if c.bbox and c._localTransform and c.depth then
+         local mouseover, invx, invy = mouseIsOverItemBBox(mx, my, c)
+         c.mouseOver = mouseover
+      end
+   end
 
   -- if cameraTween and gesture then
     --  if (cameraTween.originalGesture ~= gesture) then
@@ -677,7 +677,7 @@ function love.mousemoved(mx, my,dx,dy, istouch)
             local scale = cam:getScale()
             --print(scale)
             --cam:translate(-dx*scale, 0)
-            print('&&')
+            --print('&&')
 	    cameraTranslateScheduler(-dx/scale, 0)
          end
       end
@@ -774,7 +774,7 @@ function gestureRecognizer(gesture)
       if gesture.target == 'stage' then
 	 local minSpeed = 200
 	 local maxSpeed = 15000
-	 local minDistance = 10
+	 local minDistance = 6
 	 local minDuration = 0.005
 
 	 if distance > minDistance then
@@ -1011,7 +1011,7 @@ function love.draw()
       if c.bbox and c._localTransform and c.depth ~= nil then
 
          if c.pressed then
-
+            
 	    --            print('pressed id ', c.pressed.id)
             --if c.pressed.id == 'mouse' then
             --   mx, my = love.mouse.getPosition()
@@ -1045,9 +1045,12 @@ function love.draw()
                end
             end
 
+
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+
          end
+         
       end
    end
 
