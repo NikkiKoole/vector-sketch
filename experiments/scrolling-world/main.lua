@@ -46,22 +46,6 @@ function makeMotionObject()
    }
 end
 
-function getPointerPosition(id)
-   local x, y
-   if id == 'mouse' then
-      x, y = love.mouse.getPosition()
-      return x,y,true
-   else
-      local touches =  love.touch.getTouches()
-      for i = 1, #touches do
-	 if touches[i] == id then
-	    x,y = love.touch.getPosition( id )
-	    return x,y, true
-	 end
-      end
-   end
-   return nil,nil,false
-end
 
 -- utility functions that ought to be somewehre else
 
@@ -253,8 +237,6 @@ function love.load()
 
    gestureList = {}
 
-   gestureUpdateResolutionCounter = 0
-   gestureUpdateResolution = 0.0167  -- aka 60 fps
 
    cameraTween = nil
 
@@ -270,6 +252,11 @@ function love.load()
 
    love.graphics.setFont(font)
    ui = {show=false}
+
+
+
+   gestureUpdateResolutionCounter = 0
+   gestureUpdateResolution = 0.0167  -- aka 60 fps
 
    translateScheduler = {x=0,y=0}
    translateSchedulerJustItem = {x=0,y=0}
@@ -357,7 +344,7 @@ function love.update(dt)
 	    cameraTween = nil
 
 	 end
-	 tweenCameraDelta = delta
+	 tweenCameraDelta = (delta.x + delta.y)
       end
    end
 
@@ -373,21 +360,7 @@ function love.update(dt)
 
    cam:update()
 
-   gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
-   if gestureUpdateResolutionCounter > gestureUpdateResolution then
-      gestureUpdateResolutionCounter = 0
-
-      for i = 1, #gestureList do
-
-         local g = gestureList[i]
-         local x,y, success = getPointerPosition(g.trigger)    -- = love.mouse:getPosition()
-	 if success then
-	    table.insert(g.positions, {x=x,y=y, time=love.timer.getTime( )})
-	 end
-      end
-
-   end
-
+   updateGestureCounter(dt)
 
    for i =1, #gestureList do
       if gestureList[i] == nil then
@@ -709,7 +682,6 @@ function love.draw()
    counter = counter +1
    local W, H = love.graphics.getDimensions()
    love.graphics.clear(.6, .3, .7)
-
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
    if (false) then
@@ -786,43 +758,8 @@ function love.draw()
 
    --local mx, my-- = love.mouse.getPosition()
 
-   for i =1 ,#root.children do
-      local c = root.children[i]
-      if c.bbox and c._localTransform and c.depth ~= nil then
 
-         if c.pressed then
-	    local mx, my = getPointerPosition(c.pressed.id)
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
-            if c.pressed then
-               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
-
-               if ((brx + offset) > W) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(1000*lastDT, 0)
-               end
-               if ((tlx - offset) < 0) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(-1000*lastDT, 0)
-               end
-            end
-
-
-            love.graphics.setColor(1,1,1,.5)
-            love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-
-         end
-
-	 if false and c.mouseOver then
-	    local mx, my = getPointerPosition('mouse')
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
-	    love.graphics.setColor(1,1,1,.5)
-            love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-	 end
-
-
-      end
-   end
+   handlePressedItemsOnStage(W, H)
 
    love.graphics.setColor(1,1,1,1)
 

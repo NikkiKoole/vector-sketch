@@ -1,5 +1,23 @@
 
 
+function getPointerPosition(id)
+   local x, y
+   if id == 'mouse' then
+      x, y = love.mouse.getPosition()
+      return x,y,true
+   else
+      local touches =  love.touch.getTouches()
+      for i = 1, #touches do
+	 if touches[i] == id then
+	    x,y = love.touch.getPosition( id )
+	    return x,y, true
+	 end
+      end
+   end
+   return nil,nil,false
+end
+
+
 function addGesturePoint(gesture, time, x,y)
    assert(gesture)
    table.insert(gesture.positions, {time=time, x=x, y=y})
@@ -20,6 +38,70 @@ function removeGestureFromList(gesture)
       --print('deleted gesture succesfully', gesture.trigger, #gestureList)
    end
 end
+
+
+
+function updateGestureCounter(dt)
+   gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
+
+   if gestureUpdateResolutionCounter > gestureUpdateResolution then
+      gestureUpdateResolutionCounter = 0
+      for i = 1, #gestureList do
+
+         local g = gestureList[i]
+         local x,y, success = getPointerPosition(g.trigger)    -- = love.mouse:getPosition()
+	 if success then
+	    addGesturePoint(g, love.timer.getTime( ), x, y)
+	    --table.insert(g.positions, {x=x,y=y, time=love.timer.getTime( )})
+	 end
+      end
+
+   end
+end
+
+
+function handlePressedItemsOnStage(W, H)
+   for i = 1, #root.children do
+      local c = root.children[i]
+      if c.bbox and c._localTransform and c.depth ~= nil then
+
+         if c.pressed then
+	    local mx, my = getPointerPosition(c.pressed.id)
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
+            if c.pressed then
+               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
+
+               if ((brx + offset) > W) then
+                  resetCameraTween()
+		  cameraTranslateScheduler(1000*lastDT, 0)
+               end
+               if ((tlx - offset) < 0) then
+                  resetCameraTween()
+		  cameraTranslateScheduler(-1000*lastDT, 0)
+               end
+            end
+
+
+            love.graphics.setColor(1,1,1,.5)
+            love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+
+         end
+
+	 if false and c.mouseOver then
+	    local mx, my = getPointerPosition('mouse')
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
+	    love.graphics.setColor(1,1,1,.5)
+            love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+	 end
+
+
+      end
+   end
+end
+
+
+
 
 
 --[[
