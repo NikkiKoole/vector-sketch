@@ -10,6 +10,7 @@ require 'gradient'
 require 'groundplane'
 require 'fillstuf'
 require 'removeAddItems'
+require 'pointer-interactions'
 require 'basic-tools'  -- this defines require_all
 require_all "vecsketch"
 random = love.math.random
@@ -380,12 +381,6 @@ function love.update(dt)
 
          local g = gestureList[i]
          local x,y, success = getPointerPosition(g.trigger)    -- = love.mouse:getPosition()
-         --if g.trigger == 'mouse' then
-         --   x,y = love.mouse.getPosition()
-         --else
-         --   x,y = love.touch.getPosition(g.trigger)
-         --end
-
 	 if success then
 	    table.insert(g.positions, {x=x,y=y, time=love.timer.getTime( )})
 	 end
@@ -397,11 +392,8 @@ function love.update(dt)
    for i =1, #gestureList do
       if gestureList[i] == nil then
          print('gesture is nil!', i)
-
       end
-
    end
-
 
    for i=1, #root.children do
       local thing = root.children[i]
@@ -430,149 +422,10 @@ function love.update(dt)
 	    thing.transforms.l[2] = 0
 	    thing.inMotion = nil
 	 end
-
       end
-
-
-
    end
-
 
    cameraApplyTranslate()
-   --print(dt)
-end
-
-
-
-
-
-function removeGestureFromList(gesture)
-   local found = false
-   for i = #gestureList, 1, -1 do
-      if gestureList[i] == gesture then
-         table.remove(gestureList, i)
-         found = true
-      end
-   end
-   if found == false then
-      print('didnt find gesture to delete',gesture.trigger, #gestureList)
-   else
-      --print('deleted gesture succesfully', gesture.trigger, #gestureList)
-   end
-end
-
-
-function addGesturePoint(gesture, time, x,y)
-   assert(gesture)
-   table.insert(gesture.positions, {time=time, x=x, y=y})
-end
-
-function love.mousepressed(x,y, button, istouch, presses)
-   --print('mouse pressed')
-   if false then
-      local wx, wy = cam:getMouseWorldCoordinates()
-      local foundOne = false
-      if testCameraViewpointRects then
-         for _, v in pairs(cameraPoints) do
-            if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
-               foundOne = true
-               v.selected = true
-               local cw, ch = cam:getContainerDimensions()
-               local targetScale = math.min(cw/v.width, ch/v.height)
-               cam:setScale(targetScale)
-               cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
-            else
-               v.selected = false
-            end
-
-         end--
-      end
-      local W, H = love.graphics.getDimensions()
-
-      local leftdis = getDistance(x,y, 50, (H/2)-25)
-      local rightdis = getDistance(x,y, W-50, (H/2)-25)
-
-      local toprightdis = getDistance(x,y, W-50, 25)
-
-      if leftdis < 50 then
-         moving = 'left'
-      end
-      if rightdis < 50 then
-         moving = 'right'
-      end
-      if toprightdis < 50 then
-         showNumbersOnScreen = not showNumbersOnScreen
-         ui.show = not ui.show
-      end
-   end
-   if not istouch then
-      pointerPressed(x,y, 'mouse')
-   end
-
-end
-
-
-function love.touchpressed(id, x, y, dx, dy, pressure)
-   print('touch pressed, ',id, x, y, dx, dy, pressure)
-
-   pointerPressed(x,y, id)
-
-end
-
-function pointerPressed(x,y, id)
-   local itemPressed = false
-   for i = #root.children,1,-1 do
-      local c = root.children[i]
-      if c.bbox and c._localTransform and c.depth and not itemPressed then
-
-	 local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c)
-
-	 if mouseover then
-            if c.pressed then
-               print('dont kow how but this thig was pressed alreda')
-            end
-
-	    c.pressed = {dx=invx, dy=invy, id=id}
-	    itemPressed = c
-	    c.poep = true
-	    c.groundTileIndex = nil
-	 end
-
-      end
-   end
-
-   if not itemPressed  then
-      if not cameraFollowPlayer then
-         --print('do a stage gesture')
-         -- maybe i need to take out the other stage gestures
-         --for i = #gestureList, 1, -1 do
-         --   if (gestureList[i].target == 'stage') then
-         --      removeGestureFromList(gestureList[i])
-         --   end
-         --end
-         -- maybe only allow stage gesture when no are present ?
-         local hasOneAlready = false
-         for i =1, #gestureList do
-            if gestureList[i].target == 'stage' then
-               hasOneAlready = true
-            end
-         end
-
-
-         if not hasOneAlready then
-
-            local g = {positions={}, target='stage', trigger=id}
-            table.insert(gestureList, g)
-            addGesturePoint(g, love.timer.getTime( ),x,y)
-         end
-      end
-   else
-      resetCameraTween()
-
-      local g = {positions={}, target=itemPressed, trigger=id}
-      table.insert(gestureList, g)
-      addGesturePoint(g, love.timer.getTime( ),x,y)
-   end
 
 end
 
@@ -615,7 +468,6 @@ function checkForBounceBack()
 	 translateCache.tweenValue = translateCache.stoppedAt
 	 bouncetween = tween.new(1, translateCache, {tweenValue=0}, 'outElastic')
       end
-
    end
 end
 
@@ -642,63 +494,6 @@ function cameraApplyTranslate()
    end
 end
 
-
-
-
-function love.mousemoved(mx, my,dx,dy, istouch)
-   for i = 1, #root.children do
-      local c = root.children[i]
-      if c.bbox and c._localTransform and c.depth then
-         local mouseover, invx, invy = mouseIsOverItemBBox(mx, my, c)
-         c.mouseOver = mouseover
-      end
-   end
-
-  -- if cameraTween and gesture then
-    --  if (cameraTween.originalGesture ~= gesture) then
---	 print('camera is still tweening, another new gesture is being started figure out if i have todo something')
-
-      --end
-   --end
-   if not istouch then
-   if love.mouse.isDown(1) then
-      -- todo this probably needs to be handled for touch too
-      resetCameraTween()
-
-      for i = 1, #gestureList do
-         local g = gestureList[i]
-         if g.target == 'stage' and g.trigger == 'mouse' then
-            local scale = cam:getScale()
-            --print(scale)
-            --cam:translate(-dx*scale, 0)
-            --print('&&')
-	    cameraTranslateScheduler(-dx/scale, 0)
-         end
-      end
-
-   end
-   end
-end
-
-
-function love.touchmoved(id, x,y, dx, dy, pressure)
-   --print('touch moved, ',id, x, y, dx, dy, pressure)
-
-   if cameraTween then
-      print( 'there migjt be an issue here!')
-   end
-
-   for i = 1, #gestureList do
-      local g = gestureList[i]
-      if g.target == 'stage' and g.trigger == id then
-         local scale = cam:getScale()
-	 cameraTranslateScheduler(-dx/scale, 0)
-      end
-   end
-
-
-end
-
 function resetCameraTween()
    if cameraTween then
       cameraTween = nil
@@ -707,33 +502,25 @@ function resetCameraTween()
 end
 
 
-function pointerReleased(x,y, id)
-   moving = nil
-   for i = 1, #root.children do
-      local c =root.children[i]
-      if c.pressed and c.pressed.id == id then
-         c.pressed = nil
-      end
+function love.mousepressed(x,y, button, istouch, presses)
+   if not istouch then
+      pointerPressed(x,y, 'mouse')
    end
+end
 
-   for i = 1, #gestureList do
-      local g = gestureList[i]
-      -- todo why the fuc is there a nil gesture in here?
-      if g then
-	 if g.trigger == id then
-	    --print('do ii ever get her?')
-	    addGesturePoint(g, love.timer.getTime( ), x, y)
-	    gestureRecognizer(g)
-	    removeGestureFromList(g)
-	 end
-      else
-
-      end
+function love.touchpressed(id, x, y, dx, dy, pressure)
+   pointerPressed(x,y, id)
+end
 
 
+function love.mousemoved(x, y,dx,dy, istouch)
+   if not istouch then
+      pointerMoved(x,y,dx,dy, 'mouse')
    end
+end
 
-
+function love.touchmoved(id, x,y, dx, dy, pressure)
+   pointerMoved(x,y,dx,dy, id)
 end
 
 
@@ -1069,12 +856,7 @@ function love.wheelmoved( dx, dy )
 end
 
 function love.resize(w, h)
-   --print('need to decide howmany ground meshes')
-   --print(("Window resized to width: %d and height: %d."):format(w, h))
-   --print(inspect(cam))
    cam:update(w,h)
-   --cam:setScale(2)
-   --cam:setTranslationY(-h/2)
 end
 
 function love.filedropped(file)
