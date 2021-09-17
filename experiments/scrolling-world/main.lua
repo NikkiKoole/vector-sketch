@@ -291,7 +291,7 @@ function love.update(dt)
    if bouncetween then
       bouncetween:update(dt)
    end
-   
+
    local v = {x=0, y=0}
 
    if love.keyboard.isDown('left') or moving == 'left' then
@@ -344,7 +344,7 @@ function love.update(dt)
          if delta.x ~= 0 then
             cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
          end
-         
+
 	 if (delta.x + delta.y) == 0 then
             for i = #gestureList, 1 -1 do
                if cameraTween.originalGesture == gestureList[i] then
@@ -557,10 +557,10 @@ function pointerPressed(x,y, id)
                hasOneAlready = true
             end
          end
-         
+
 
          if not hasOneAlready then
-            
+
             local g = {positions={}, target='stage', trigger=id}
             table.insert(gestureList, g)
             addGesturePoint(g, love.timer.getTime( ),x,y)
@@ -568,7 +568,7 @@ function pointerPressed(x,y, id)
       end
    else
       resetCameraTween()
-      
+
       local g = {positions={}, target=itemPressed, trigger=id}
       table.insert(gestureList, g)
       addGesturePoint(g, love.timer.getTime( ),x,y)
@@ -591,60 +591,54 @@ function cameraTranslateScheduler(dx, dy)
    translateScheduler.y = translateScheduler.y + dy
 end
 
-function cameraApplyTranslate()
-   --look at the trasnlatiosn being set in this frame
-   -- apoply it to the camera
-   -- and reset
-   -- also do the stuff to pressed
-   --print('her eits clered')
-   cam:translate( translateScheduler.x, translateScheduler.y)
-  -- translateScheduler.x = 0
-  -- translateScheduler.y = 0
-
-   if true then
-   for i =1 ,#root.children do
-      local c = root.children[i]
-      if c.pressed then
-	 c.transforms.l[1] =
-            c.transforms.l[1] + translateScheduler.x + translateSchedulerJustItem.x
-      end
-   end
-
-
+function checkForBounceBack()
    -- this thing is meant for the elastic bounce back of items
-   -- if it was something before and now its 0 then its time to do something
    if translateScheduler.x ~= 0 then
       translateCache.triggered= false
       translateCache.stopped = false
       translateCache.value = translateCache.value + translateScheduler.x
       translateCache.cacheValue = translateCache.value
-
    else
       if translateCache.stopped == false then
-         translateCache.stopped = true
-         translateCache.stoppedAt = translateCache.value 
+	 translateCache.stopped = true
+	 translateCache.stoppedAt = translateCache.value
       end
-      -- i need some dt calc here
-      translateCache.cacheValue = translateCache.cacheValue / 1.4
+      local multiplier = (0.5 ^ (lastDT*300))
+      translateCache.cacheValue = translateCache.cacheValue * multiplier
 
       -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
       if math.abs(translateCache.cacheValue) < 0.01 and translateCache.triggered == false then
-         translateCache.cacheValue = 0
-         translateCache.value = 0
-         
-         translateCache.triggered= true
-         ---print('triggered!', translateCache.stoppedAt)
-         translateCache.tweenValue = translateCache.stoppedAt
-         --print('still triggering baby')
-         bouncetween = tween.new(1, translateCache, {tweenValue=0}, 'outElastic')
+	 translateCache.cacheValue = 0
+	 translateCache.value = 0
+
+	 translateCache.triggered= true
+	 translateCache.tweenValue = translateCache.stoppedAt
+	 bouncetween = tween.new(1, translateCache, {tweenValue=0}, 'outElastic')
       end
-      
+
    end
-   
-   translateScheduler.x = 0
-   translateScheduler.y = 0
-   translateSchedulerJustItem.x = 0
-   translateSchedulerJustItem.y = 0
+end
+
+
+function cameraApplyTranslate()
+
+   cam:translate( translateScheduler.x, translateScheduler.y)
+
+   if true then
+      for i =1 ,#root.children do
+	 local c = root.children[i]
+	 if c.pressed then
+	    c.transforms.l[1] =
+	       c.transforms.l[1] + translateScheduler.x + translateSchedulerJustItem.x
+	 end
+      end
+
+      checkForBounceBack()
+
+      translateScheduler.x = 0
+      translateScheduler.y = 0
+      translateSchedulerJustItem.x = 0
+      translateSchedulerJustItem.y = 0
    end
 end
 
@@ -810,8 +804,7 @@ function gestureRecognizer(gesture)
          local impulse = Vector(dxn * speed * throwStrength ,
                                 dyn * speed * throwStrength )
 
-
-         print('impulse', impulse)
+         --print('impulse', impulse)
 	 applyForce(gesture.target.inMotion, impulse)
       end
    end
@@ -821,9 +814,9 @@ end
 
 
 function getScreenBBoxForItem(c, hack)
-   local tx, ty = c._localTransform:transformPoint(c.bbox[1],c.bbox[2])
+   local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
-   local bx, by = c._localTransform:transformPoint(c.bbox[3],c.bbox[4])
+   local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, hack)
    return tlx, tly, brx, bry
 end
@@ -836,7 +829,7 @@ function mouseIsOverItemBBox(mx, my, item)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, hack)
 
    local wx, wy = cam:getWorldCoordinates(mx, my, hack)
-   local invx, invy = item._localTransform:inverseTransformPoint(wx, wy)
+   local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
 
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
@@ -1011,16 +1004,6 @@ function love.draw()
       if c.bbox and c._localTransform and c.depth ~= nil then
 
          if c.pressed then
-            
-	    --            print('pressed id ', c.pressed.id)
-            --if c.pressed.id == 'mouse' then
-            --   mx, my = love.mouse.getPosition()
-            --else
-            --   local touches = love.touch.getTouches()
-               --print(inspect(touches), #touches)
-               -- todo i think sometimes this id isnt correct somehow
-            --   mx, my = love.touch.getPosition( c.pressed.id )
-            --end
 	    local mx, my = getPointerPosition(c.pressed.id)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
             if c.pressed then
@@ -1030,18 +1013,10 @@ function love.draw()
                if ((brx + offset) > W) then
                   resetCameraTween()
 		  cameraTranslateScheduler(1000*lastDT, 0)
-
-                  --cam:translate(1000*lastDT, 0)
-                  --c.transforms.l[1] = c.transforms.l[1] + 1000*lastDT
                end
                if ((tlx - offset) < 0) then
                   resetCameraTween()
-
-
 		  cameraTranslateScheduler(-1000*lastDT, 0)
-
-                  --cam:translate(-1000*lastDT, 0)
-                  --c.transforms.l[1] = c.transforms.l[1] + -1000*lastDT
                end
             end
 
@@ -1050,7 +1025,15 @@ function love.draw()
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
          end
-         
+
+	 if false and c.mouseOver then
+	    local mx, my = getPointerPosition('mouse')
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
+	    love.graphics.setColor(1,1,1,.5)
+            love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+	 end
+
+
       end
    end
 
