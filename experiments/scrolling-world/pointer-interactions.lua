@@ -223,13 +223,13 @@ function pointerMoved(x,y,dx,dy, id)
    -- in the case of mouse i only allow pannin the stage when its pressed, touch is always down when moved
    if (id == 'mouse' and love.mouse.isDown(1) ) or id ~= 'mouse' then
 
-      if (id == 'mouse') then
-	 resetCameraTween()
-      end
+      --if (id == 'mouse') then
+      resetCameraTween()
+      --end
 
-      if cameraTween then
-	 print( 'there migjt be an issue here!')
-      end
+      --if cameraTween then
+--	 print( 'there migjt be an issue here!')
+  --    end
 
       for i = 1, #gestureList do
 	 local g = gestureList[i]
@@ -262,7 +262,7 @@ function pointerReleased(x,y, id)
 	    removeGestureFromList(g)
 	 end
       else
-
+         print('why did this happen ? a nil gesture!?')
       end
 
 
