@@ -93,6 +93,10 @@ function createStuff()
       'assets/plant13.polygons.txt',
       'assets/poep.polygons.txt',
 
+      'assets/isthissizeok.polygons.txt',
+      'assets/anotherdog.polygons.txt',
+--      'assets/gerns2.polygons.txt',
+
     }
     plantData = {}
 
