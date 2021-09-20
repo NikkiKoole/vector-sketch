@@ -81,7 +81,10 @@ function readFileAndAddToCache(url)
       local g2 = parseFile(url)[1]
       assert(g2)
       meshAll(g2)
+      --print(inspect(g2))
       makeOptimizedBatchMesh(g2)
+      --print(inspect(g2))
+
       local bbox = getBBoxOfChildren(g2.children)
       g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
       meshCache[url] = g2
@@ -94,7 +97,7 @@ end
 function recursivelyAddOptimizedMesh(root)
    if root.folder then
       if root.url then
-         root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
+	root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
       end
    end
 
@@ -786,6 +789,10 @@ function love.draw()
    else
       love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
    end
+
+   love.graphics.print('make drawing unoptimized possible again', 30, 50)
+   love.graphics.print('then optimize nested object drawing too.', 30, 100)
+   love.graphics.print('currenlty i cannot render a complex thing.', 30, 150)
 end
 
 function love.wheelmoved( dx, dy )

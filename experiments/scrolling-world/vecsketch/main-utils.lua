@@ -84,7 +84,7 @@ end
 
 function makeOptimizedBatchMesh(folder)
    -- this one assumes all children are shapes, still need to think of what todo when
-   -- folders are children
+   -- children are folders
 
    -- another big optimization would be reunsing the meshes, at fiorst because then i just need a few meshes and can reuse them
    -- second big thing would be drawinstanced meshes
@@ -205,9 +205,11 @@ function parentize(node)
 end
 
 function renderNormallyOrOptimized(shape)
-   -- renderThings(shape)
-
+   --renderThings(shape)
+   --print(shape.mesh)
+   --print(shape.optimizedBatchMesh)
    if true then
+      --print(shape.optimizedBatchMesh and #shape.optimizedBatchMesh, shape.name)
       if (shape.optimizedBatchMesh) then
 	 setTransforms(shape)
 	 for i=1, #shape.optimizedBatchMesh do
@@ -215,10 +217,12 @@ function renderNormallyOrOptimized(shape)
 	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
 	    renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
 	 end
-
+	-- print('getting in optimized render')
       else
 	 renderCount.normal = renderCount.normal + 1
 	 renderThings(shape)
+	-- print('rendering something?', shape.name)
+	 --print(#shape.children)
       end
    end
 

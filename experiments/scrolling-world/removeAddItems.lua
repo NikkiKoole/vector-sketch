@@ -12,6 +12,7 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex)
    end
 end
 function addTheContentsOfGroundTiles(startIndex, endIndex)
+   -- todo the issue is here, this one assumes fully optimized data without children
    for i = startIndex, endIndex do
       if (plantData[i]) then
          for j = 1, #plantData[i] do
@@ -19,11 +20,13 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
             local urlIndex = (thing.urlIndex)
             local url = plantUrls[urlIndex]
             local read = readFileAndAddToCache(url)
+	   -- print((read.optimizedBatchMesh))
+	    local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
             local grass = {
                folder = true,
                transforms = copy3(read.transforms),
-               name = 'generated',
-               children = {}
+               name = 'generated '..url,
+               children = doOptimized and {} or copy3(read.children)
             }
             grass.transforms.l[1] = (i*tileSize) + thing.x
             grass.transforms.l[2] = 0

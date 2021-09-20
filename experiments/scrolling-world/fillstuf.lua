@@ -91,10 +91,16 @@ function createStuff()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
-      'assets/poep.polygons.txt',
+       'assets/poep.polygons.txt',
 
-      'assets/isthissizeok.polygons.txt',
-      'assets/anotherdog.polygons.txt',
+       --'assets/isthissizeok.polygons.txt',
+       'assets/anotherdog.polygons.txt',
+       'assets/birdword.polygons.txt',
+       'assets/birdword.polygons.txt',
+       'assets/birdword.polygons.txt',
+        'assets/birdword.polygons.txt',
+
+
 --      'assets/gerns2.polygons.txt',
 
     }
@@ -109,6 +115,7 @@ function createStuff()
          table.insert(
             plantData[i],
             {
+
                x=random()*tileSize,
                groundTileIndex = i,
                depth=mapInto(random(),
@@ -237,7 +244,8 @@ function createStuff()
       table.insert(root.children, voor2)
    end
 
-   for j = 1, 100 do
+   if false then
+   for j = 1, 1 do
       local generated = generatePolygon(0,0, 4 + random()*16, .05 + random()*.01, .02 , 8 + random()*8)
       local points = {}
       for i = 1, #generated, 2 do
@@ -270,6 +278,7 @@ function createStuff()
       meshAll(randomShape)
 
       table.insert(root.children, randomShape)
+   end
    end
 
 end
