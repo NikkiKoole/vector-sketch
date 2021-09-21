@@ -98,7 +98,8 @@ function createStuff()
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
-        'assets/birdword.polygons.txt',
+       'assets/birdword.polygons.txt',
+       'assets/ramen_.polygons.txt',
 
 
 --      'assets/gerns2.polygons.txt',

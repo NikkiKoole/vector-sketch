@@ -99,6 +99,15 @@ function makeOptimizedBatchMesh(folder)
 	 print("could not optimize shape, it contained a folder!!")
 	 return
       end
+      if (folder.children[i].hole) then
+	 print("could not optimize shape, it contained a hole!!")
+	 return
+      end
+      if (folder.children[i].mask) then
+	 print("could not optimize shape, it contained a hole!!")
+	 return
+      end
+
    end
 
 

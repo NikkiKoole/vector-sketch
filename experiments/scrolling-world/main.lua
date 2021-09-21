@@ -478,6 +478,7 @@ function cameraApplyTranslate()
 	 local cx,cy = cam:getTranslation()
 --	 print((translateScheduler.x + translateSchedulerJustItem.x))
 	 local delta = (translateScheduler.x + translateSchedulerJustItem.x) * 10
+	 -- just trigger a camera tween directly no need to mess around with gestures
 	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
       end
       ------ end that part
