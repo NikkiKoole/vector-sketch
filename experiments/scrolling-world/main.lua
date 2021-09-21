@@ -263,6 +263,7 @@ function love.load()
 
    translateScheduler = {x=0,y=0}
    translateSchedulerJustItem = {x=0,y=0}
+   translateHappenedByPressedItems = false
 
    translateCache = {value=0, cacheValue=0, stopped=true, stoppedAt=0, tweenValue=0}
    --flux.to(translateCache, 1, {tweenValue = 100}):onupdate(function(d) print(translateCache.tweenValue) end)
@@ -339,8 +340,9 @@ function love.update(dt)
 	 if (delta.x + delta.y) == 0 then
             for i = #gestureList, 1 -1 do
                if cameraTween.originalGesture == gestureList[i] then
-                  removeGestureFromList(gestureList[i])
-                  print('yeah babay is this still in use ?!')
+		  if gestureList[i] ~= nil then
+		     removeGestureFromList(gestureList[i])
+		  end
                end
             end
 
@@ -420,6 +422,8 @@ function cameraTranslateScheduler(dx, dy)
    translateScheduler.y = translateScheduler.y + dy
 end
 
+
+
 function checkForBounceBack()
    -- this thing is meant for the elastic bounce back of items
    if translateScheduler.x ~= 0 then
@@ -451,15 +455,32 @@ end
 function cameraApplyTranslate()
 
    cam:translate( translateScheduler.x, translateScheduler.y)
+   local translateByPressed = false
 
    if true then
+
       for i =1 ,#root.children do
 	 local c = root.children[i]
 	 if c.pressed then
 	    c.transforms.l[1] =
 	       c.transforms.l[1] + translateScheduler.x + translateSchedulerJustItem.x
+	    translateByPressed = (translateScheduler.x + translateSchedulerJustItem.x) ~= 0
 	 end
       end
+
+
+      --- this part is here for triggering a tween on ending item pressed drag
+      if translateByPressed == true then
+	 translateHappenedByPressedItems = true
+      end
+      if translateHappenedByPressedItems == true and  translateByPressed == false then
+	 translateHappenedByPressedItems = false
+	 local cx,cy = cam:getTranslation()
+--	 print((translateScheduler.x + translateSchedulerJustItem.x))
+	 local delta = (translateScheduler.x + translateSchedulerJustItem.x) * 10
+	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
+      end
+      ------ end that part
 
       checkForBounceBack()
 

@@ -82,10 +82,8 @@ function handlePressedItemsOnStage(W, H)
                end
             end
 
-
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-
          end
 
 	 if false and c.mouseOver then
@@ -94,8 +92,6 @@ function handlePressedItemsOnStage(W, H)
 	    love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 	 end
-
-
       end
    end
 end
