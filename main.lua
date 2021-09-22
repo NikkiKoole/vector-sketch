@@ -97,25 +97,6 @@ function setCurrentNode(newNode)
 end
 
 
--- function rotate_point(t cy,float angle,POINT p)
--- {
---   float s = sin(angle);
---   float c = cos(angle);
-
---   // translate point back to origin:
---   p.x -= cx;
---   p.y -= cy;
-
---   // rotate point
---   float xnew = p.x * c - p.y * s;
---   float ynew = p.x * s + p.y * c;
-
---   // translate point back:
---   p.x = xnew + cx;
---   p.y = ynew + cy;
---   return p;
--- }
-
 function rotateGroup(node, degrees)
    if node.degrees then
       print('this shape has been rotated before')
@@ -1679,6 +1660,9 @@ function love.draw()
       end
 
       love.graphics.setWireframe(wireframe )
+      --local bbox = getBBoxOfChildren(root.children)
+      --print(inspect(bbox))
+      print('need to recursivey make bbox so i can make fitting canvas')
       renderThings(root)
 
       if (currentlyHoveredUINode) then

@@ -46,9 +46,13 @@ console.BACKGROUND_COLOR = {0, 0, 0, 0.4}
 console.TEXT_COLOR = {1, 1, 1, 1}
 console.ERROR_COLOR = {1, 0, 0, 1}
 
-console.FONT_SIZE = 12
-console.FONT = love.graphics.newFont(console.FONT_SIZE)
-
+console.FONT_SIZE = 16
+console.FONT_PATH =  "/resources/fonts/Turbo Pascal Font.ttf" 
+if console.FONT_PATH then
+   console.FONT = love.graphics.newFont(console.FONT_PATH, console.FONT_SIZE)
+else
+   console.FONT = love.graphics.newFont(console.FONT_SIZE)
+end
 -- The scope in which lines in the console are executed.
 console.ENV = setmetatable({}, {__index = _G})
 
