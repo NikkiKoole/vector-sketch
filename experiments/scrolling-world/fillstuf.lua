@@ -94,15 +94,19 @@ function createStuff()
        'assets/poep.polygons.txt',
 
        --'assets/isthissizeok.polygons.txt',
-       'assets/anotherdog.polygons.txt',
+ --      'assets/anotherdog.polygons.txt',
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
-       'assets/ramen_.polygons.txt',
+ --      'assets/ramen_.polygons.txt',
+ --      'assets/bedje.polygons.txt',
+--       'assets/raampje2.polygons.txt',
+       'assets/raamagain.polygons.txt',
+       'assets/raamagain2.polygons.txt',
+       'assets/raamagain2_.polygons.txt',
 
-
---      'assets/gerns2.polygons.txt',
+--      'Assets/gerns2.polygons.txt',
 
     }
     plantData = {}

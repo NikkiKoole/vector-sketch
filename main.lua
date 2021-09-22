@@ -1,4 +1,6 @@
 inspect = require 'vendor.inspect'
+console = require 'vendor.console'
+
 require 'ui'
 require 'palettes'
 require 'editor-utils'
@@ -93,6 +95,62 @@ function setCurrentNode(newNode)
    end
    currentNode = newNode
 end
+
+
+-- function rotate_point(t cy,float angle,POINT p)
+-- {
+--   float s = sin(angle);
+--   float c = cos(angle);
+
+--   // translate point back to origin:
+--   p.x -= cx;
+--   p.y -= cy;
+
+--   // rotate point
+--   float xnew = p.x * c - p.y * s;
+--   float ynew = p.x * s + p.y * c;
+
+--   // translate point back:
+--   p.x = xnew + cx;
+--   p.y = ynew + cy;
+--   return p;
+-- }
+
+function rotateGroup(node, degrees)
+   if node.degrees then
+      print('this shape has been rotated before')
+   end
+   
+   node.degrees = degrees
+   local tlx, tly, brx, bry = getPointsBBox(node.points)
+   local w2 = (brx - tlx)/2
+   local h2 = (bry - tly)/2
+   print('center of points=', tlx+w2, tly+h2)
+
+   local cx = tlx+w2
+   local cy = tly+h2
+
+   local s = math.sin(degrees*0.0174532925)
+   local c = math.cos(degrees*0.0174532925)
+   
+   for i=1, #node.points do
+      local p = {
+         node.points[i][1] - cx,
+         node.points[i][2] - cy,
+      }
+      local xnew = p[1] * c - p[2] * s
+      local ynew = p[1] * s + p[2] * c
+      p[1] = xnew + cx
+      p[2] = ynew + cy
+      node.points[i] =  {p[1], p[2]}
+      --	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
+      
+   end
+   remeshNode(node)
+
+   
+end
+
 
 function resizeGroup(node, children, scale)
 
@@ -586,6 +644,10 @@ function drawUIAroundGraphNodes(w,h)
                end
 
             end
+            if imgbutton('rotate', ui.rotate, w - 256, runningY).clicked then
+               rotateGroup(currentNode, 22.5)
+            end
+            
             if currentNode and currentNode.border then
                local v =  h_slider("splinetension", 600, 120, 200,  currentNode.borderTension , 0.00001, 1)
                if v.value ~= nil then
@@ -2300,6 +2362,8 @@ function love.draw()
       end
    end
    local work =  nil
+
+   console.draw()
 end
 
 
@@ -2333,6 +2397,7 @@ function love.textinput(t)
       changeNameCursor = changeNameCursor + 1
       currentNode.name = r
    end
+   console.textinput(t)
 end
 
 function getDataFromFile(file)
@@ -2384,7 +2449,9 @@ function love.filedropped(file)
 end
 
 
-function love.keypressed(key)
+function love.keypressed(key, scancode, isrepeat)
+   console.keypressed(key, scancode, isrepeat)
+   if not console.isEnabled() then
    if key == 'lshift' then
       editingMode = 'rectangle-select'
    end
@@ -2569,5 +2636,6 @@ function love.keypressed(key)
       if (key == 'return') then
          changeName = false
       end
+   end
    end
 end
