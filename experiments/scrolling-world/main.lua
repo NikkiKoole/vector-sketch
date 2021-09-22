@@ -5,6 +5,10 @@ flux = require "vendor.flux"
 local tween = require "vendor.tween"
 local Vector = require "vendor.brinevector"
 
+--local f = love.filesystem.load('../../dopesheet.lua')
+--print(f)
+--f.dopesheetTest()
+
 require 'generateWorld'
 require 'gradient'
 require 'groundplane'
@@ -14,6 +18,13 @@ require 'pointer-interactions'
 require 'basic-tools'  -- this defines require_all
 require_all "vecsketch"
 random = love.math.random
+
+--package.path = package.path .. ";../../vendor/?.lua"
+-- this works now i can get rid of all te code duplication
+package.path = package.path .. ";../../vendor/?.lua;../../?.lua"
+
+require 'dopesheet'
+dopesheetTest()
 
 --[[
 TODO:
