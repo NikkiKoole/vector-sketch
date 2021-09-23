@@ -12,6 +12,7 @@ require 'lib.polyline'
 require 'lib.poly'
 require 'lib.bbox'
 require 'lib.border-mesh'
+require 'lib.generate-polygon'
 require 'lib.toolbox'
 require 'lib.ui'
 
@@ -20,7 +21,6 @@ utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
 easing = require 'vendor.easing'
---Vector = require "brinevector"
 
 -- four corner distort!!!!
 --https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
