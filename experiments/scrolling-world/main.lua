@@ -801,9 +801,9 @@ function love.draw()
       love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
    end
 
-   love.graphics.print('done -- make drawing unoptimized possible again', 30, 50)
-   love.graphics.print('then optimize nested object drawing too.', 30, 100)
-   love.graphics.print('currenlty i cannot render a complex thing.', 30, 150)
+   --love.graphics.print('done -- make drawing unoptimized possible again', 30, 50)
+   --love.graphics.print('then optimize nested object drawing too.', 30, 100)
+   --love.graphics.print('currenlty i cannot render a complex thing.', 30, 150)
 end
 
 function love.wheelmoved( dx, dy )

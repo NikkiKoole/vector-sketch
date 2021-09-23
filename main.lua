@@ -1361,7 +1361,7 @@ function love.draw()
       if (currentlyHoveredUINode) then
          local alpha = 0.5 + math.sin(step/100)
          love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
-         local editing = poly.makeVertices(currentlyHoveredUINode)
+         local editing = makeVertices(currentlyHoveredUINode)
          if (editing and #editing > 0) then
             local editingMesh = makeMeshFromVertices(editing)
             love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent._globalTransform)
@@ -2067,7 +2067,7 @@ function love.keypressed(key, scancode, isrepeat)
 	 if currentNode  then
 	    if currentNode.points then
 	       print(currentNode.name)
-	       print(inspect(poly.makeVertices(currentNode)))
+	       print(inspect(makeVertices(currentNode)))
 	       print(inspect(currentNode.points))
 	       print(inspect(currentNode.transforms))
 	    else
