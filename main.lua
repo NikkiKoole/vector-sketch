@@ -2,7 +2,6 @@ inspect = require 'vendor.inspect'
 console = require 'vendor.console'
 
 require 'palettes'
-require 'generate-polygon'
 require 'dopesheet'
 
 require 'lib.basics'
@@ -15,7 +14,6 @@ require 'lib.border-mesh'
 require 'lib.generate-polygon'
 require 'lib.toolbox'
 require 'lib.ui'
-
 
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
