@@ -1,12 +1,11 @@
-require 'util'
+package.path = package.path .. ";../../?.lua"
+
+
+require 'editor-utils'
 require 'poly'
 require 'main-utils'
-inspect = require 'inspect'
-
-
-function getDeltaWhenMovingBetweenContainers(elem, fromContainer, toContainer)
-end
-
+require 'toolbox'
+inspect = require 'vendor.inspect'
 
 
 function love.keypressed(key)
@@ -57,8 +56,17 @@ function love.load()
    root2 = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},l={500,650,0,.25,.25,0,0}},
+      transforms =  {g={0,0,0,1,1,0,0},l={600,650,0,.25,.25,0,0}},
       children ={
+	 {
+	    folder = true,
+	    transforms =  {l={-400,-500,0,1,1,0,0,0,0}},
+	    name="group",
+	    children ={{
+		  name="child1 ",
+		  color = {1,1,0, 0.8},
+		  points = {{0,0},{200,0},{200,200},{0,200}},
+	 }}}
 	
       }
    }
@@ -70,6 +78,7 @@ function love.load()
    parentize(root)
    parentize(root2)
    meshAll(root)
+   meshAll(root2)
    renderThings(root)
    renderThings(root2)
    
@@ -78,6 +87,6 @@ end
 
 function love.draw()
    renderThings(root)
-   --renderThings(root2)
+   renderThings(root2)
 
 end

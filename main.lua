@@ -9,6 +9,7 @@ require 'generate-polygon'
 require 'dopesheet'
 require 'bbox'
 require 'border-mesh'
+require 'toolbox'
 
 polyline = require 'polyline'
 poly = require 'poly'
@@ -27,7 +28,7 @@ if os.setlocale(nil) ~= 'C' then
    os.setlocale("C")
 end
 
-function remeshNode(node)
+function XremeshNode(node)
    node.mesh = makeMeshFromVertices(poly.makeVertices(node))
    if node.border then
       node.borderMesh =  makeBorderMesh(node)
@@ -55,7 +56,7 @@ function makeMeshFromVertices(vertices)
    return nil
 end
 
-function meshAll(root) -- this needs to be done recursive
+function XmeshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
       if (not root.children[i].folder) then
          remeshNode(root.children[i])
@@ -2384,7 +2385,7 @@ function love.textinput(t)
    console.textinput(t)
 end
 
-function getDataFromFile(file)
+function XgetDataFromFile(file)
    local filename = file:getFilename()
    local tab
    local _shapeName

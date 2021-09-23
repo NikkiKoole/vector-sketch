@@ -460,12 +460,18 @@ function renderThings(root)
    setTransforms(root)
 
    if (root.keyframes) then
-      if (root.keyframes == 2) then
+      if (root.keyframes == 2 ) then
 	 if currentNode == root then
 	    local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
 
 	    if lerped then handleChild(lerped) end
-	 else
+	 elseif (not root.lastLerp or root.needsLerp) then
+                   local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+       if lerped then handleChild(lerped) end
+       root.lastLerp = lerped
+
+         else
+            
 	    handleChild(root.children[root.frame])
 	 end
       end

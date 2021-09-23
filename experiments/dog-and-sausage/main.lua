@@ -1,76 +1,84 @@
-require 'util'
-poly = require 'poly'
-inspect = require 'inspect'
-flux = require "flux"
+package.path = package.path .. ";../../?.lua"
+
+require 'editor-utils'
+require 'poly'
+require 'basics'
+require 'main-utils'
+require 'toolbox'
+
+--require 'util'
+--poly = require 'poly'
+inspect = require 'vendor.inspect'
+flux = require "vendor.flux"
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
 end
 
 
-function parseFile(url)
-   local contents, size = love.filesystem.read( url)
-   local parsed = (loadstring("return ".. contents)())
-   return parsed
-end
+-- function parseFile(url)
+--    local contents, size = love.filesystem.read( url)
+--    local parsed = (loadstring("return ".. contents)())
+--    return parsed
+-- end
 
-function parentize(node)
-   for i = 1, #node.children do
-      node.children[i]._parent = node
-      if (node.children[i].folder) then
-	 parentize(node.children[i])
-      end
-   end
-end
-function meshAll(root) -- this needs to be done recursive
+-- function parentize(node)
+--    for i = 1, #node.children do
+--       node.children[i]._parent = node
+--       if (node.children[i].folder) then
+-- 	 parentize(node.children[i])
+--       end
+--    end
+-- end
+-- function meshAll(root) -- this needs to be done recursive
 
-   for i=1, #root.children do
-      if (not root.children[i].folder) then
-	 local vertices = makeVertices(root.children[i])
-	 root.children[i].mesh = makeMeshFromVertices(vertices)
-      else
-	 meshAll(root.children[i])
-      end
-   end
-end
+--    for i=1, #root.children do
+--       if (not root.children[i].folder) then
+-- 	 local vertices = makeVertices(root.children[i])
+-- 	 root.children[i].mesh = makeMeshFromVertices(vertices)
+--       else
+-- 	 meshAll(root.children[i])
+--       end
+--    end
+-- end
 
-function renderThings(root)
+-- function renderThings(root)
 
-   ---- these calculations are only needed when some local transforms have changed
-   local tg = root.transforms.g
-   local tl = root.transforms.l
-   local pg = nil
-   if (root._parent) then
-      pg = root._parent._globalTransform
-   end
+--    ---- these calculations are only needed when some local transforms have changed
+--    local tg = root.transforms.g
+--    local tl = root.transforms.l
+--    local pg = nil
+--    if (root._parent) then
+--       pg = root._parent._globalTransform
+--    end
 
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-   root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
-   ----
+--    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+--    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
+--    ----
 
-   for i = 1, #root.children do
+--    for i = 1, #root.children do
 
-      local shape = root.children[i]
+--       local shape = root.children[i]
 
-      if shape.folder then
-	 renderThings(shape)
-      end
-      if currentNode ~= shape then
-	 if (shape.mesh) then
-	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(shape.mesh, shape._parent._globalTransform)
-	 end
-      end
-      if currentNode == shape then
-	 local editing = makeVertices(shape)
-	 if (editing and #editing > 0) then
-	    local editingMesh = makeMeshFromVertices(editing)
-	    love.graphics.setColor(shape.color)
-	    love.graphics.draw(editingMesh,  shape._parent._globalTransform)
-	 end
-      end
-   end
-end
+--       if shape.folder then
+-- 	 renderThings(shape)
+--       end
+--       if currentNode ~= shape then
+-- 	 if (shape.mesh) then
+-- 	    love.graphics.setColor(shape.color)
+-- 	    love.graphics.draw(shape.mesh, shape._parent._globalTransform)
+-- 	 end
+--       end
+--       if currentNode == shape then
+-- 	 local editing = makeVertices(shape)
+-- 	 if (editing and #editing > 0) then
+-- 	    local editingMesh = makeMeshFromVertices(editing)
+-- 	    love.graphics.setColor(shape.color)
+-- 	    love.graphics.draw(editingMesh,  shape._parent._globalTransform)
+-- 	 end
+--       end
+--    end
+-- end
 
 function love.update(dt)
    flux.update(dt)
@@ -84,22 +92,22 @@ function love.draw()
 end
 
 
-function findNodeByName(root, name)
-   if (root.name == name) then
-      return root
-   end
-   if root.children then
-      for i=1, #root.children do
-	 local result = findNodeByName(root.children[i], name)
-	 if result then return result end
-      end
-   end
-   return nil
+-- function findNodeByName(root, name)
+--    if (root.name == name) then
+--       return root
+--    end
+--    if root.children then
+--       for i=1, #root.children do
+-- 	 local result = findNodeByName(root.children[i], name)
+-- 	 if result then return result end
+--       end
+--    end
+--    return nil
    
-end
-function mapInto(x, in_min, in_max, out_min, out_max)
-   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-end
+-- end
+-- function mapInto(x, in_min, in_max, out_min, out_max)
+--    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+-- end
 
 function love.mousemoved(x,y)
    if (leftPupil._globalTransform) then

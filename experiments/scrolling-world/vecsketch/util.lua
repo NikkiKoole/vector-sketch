@@ -143,11 +143,11 @@ function makeVertices(shape)
    end
    return vertices
 end
-simple_format = {
+Xsimple_format = {
    {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
 }
 
-function makeMeshFromVertices(vertices)
+function XmakeMeshFromVertices(vertices)
    if (vertices and vertices[1] and vertices[1][1]) then
       local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
       return mesh

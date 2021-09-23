@@ -1,36 +1,41 @@
-require 'util'
-flux = require "flux"
+package.path = package.path .. ";../../?.lua"
+inspect = require 'vendor.inspect'
+flux = require "vendor.flux"
 
+require 'basics'
+require 'toolbox'
+require 'main-utils'
 poly = require 'poly'
-inspect = require 'inspect'
+
+--require 'poly'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
 end
 
-function parseFile(url)
-   local contents, size = love.filesystem.read( url)
-   local parsed = (loadstring("return ".. contents)())
-   return parsed
-end
+-- function parseFile(url)
+--    local contents, size = love.filesystem.read( url)
+--    local parsed = (loadstring("return ".. contents)())
+--    return parsed
+-- end
 
-function findNodeByName(root, name)
-   if (root.name == name) then
-      return root
-   end
-   if root.children then
-      for i=1, #root.children do
-	 local result = findNodeByName(root.children[i], name)
-	 if result then return result end
-      end
-   end
-   return nil
+-- function findNodeByName(root, name)
+--    if (root.name == name) then
+--       return root
+--    end
+--    if root.children then
+--       for i=1, #root.children do
+-- 	 local result = findNodeByName(root.children[i], name)
+-- 	 if result then return result end
+--       end
+--    end
+--    return nil
    
-end
+-- end
 
-function mapInto(x, in_min, in_max, out_min, out_max)
-   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-end
+-- function mapInto(x, in_min, in_max, out_min, out_max)
+--    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+-- end
 
 
 function love.draw()
@@ -107,180 +112,181 @@ end
 
 ---
 
-function parentize(node)
-   if (node.children) then
-   for i = 1, #node.children do
-      node.children[i]._parent = node
-      if (node.children[i].folder) then
-	 parentize(node.children[i])
-      end
-   end
-   end
-end
+-- function parentize(node)
+--    if (node.children) then
+--    for i = 1, #node.children do
+--       node.children[i]._parent = node
+--       if (node.children[i].folder) then
+-- 	 parentize(node.children[i])
+--       end
+--    end
+--    end
+-- end
 
 
-function meshAll(root) -- this needs to be done recursive
-   for i=1, #root.children do
-      if (not root.children[i].folder) then
-	 root.children[i].mesh = makeMeshFromVertices(makeVertices(root.children[i]))
-      else
-	 meshAll(root.children[i])
-      end
-   end
-end
+-- function meshAll(root) -- this needs to be done recursive
+--    for i=1, #root.children do
+--       if (not root.children[i].folder) then
+-- 	 root.children[i].mesh = makeMeshFromVertices(makeVertices(root.children[i]))
+--       else
+-- 	 meshAll(root.children[i])
+--       end
+--    end
+-- end
 
-function handleChild(shape)
-   -- TODO i dont want to directly depend on my parents global transform that is not correct
-   -- this gets in the way of lerping between nodes...
-  -- print(inspect(shape))
-   if not shape then return end
-   if shape.mask then
-      local mesh
-      if currentNode ~= shape then
-	 mesh = shape.mesh -- the standard way of rendering
-      else
-	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
-      end
+-- function handleChild(shape)
+--    -- TODO i dont want to directly depend on my parents global transform that is not correct
+--    -- this gets in the way of lerping between nodes...
+--   -- print(inspect(shape))
+--    if not shape then return end
+--    if shape.mask then
+--       local mesh
+--       if currentNode ~= shape then
+-- 	 mesh = shape.mesh -- the standard way of rendering
+--       else
+-- 	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
+--       end
       
-      love.graphics.stencil(
-	 function()
-	    love.graphics.draw(mesh, shape._parent._globalTransform )
-	 end, "replace", 1)
-      love.graphics.setStencilTest("equal", 1)
-   end
-   if shape.folder then
-      renderThings(shape)
-   end
+--       love.graphics.stencil(
+-- 	 function()
+-- 	    love.graphics.draw(mesh, shape._parent._globalTransform )
+-- 	 end, "replace", 1)
+--       love.graphics.setStencilTest("equal", 1)
+--    end
+--    if shape.folder then
+--       renderThings(shape)
+--    end
 
-   if currentNode ~= shape then 
-      if (shape.mesh and not shape.mask) then
-	 love.graphics.setColor(shape.color)
-	 love.graphics.draw(shape.mesh, shape._parent._globalTransform )
-      end
-   end
-   if currentNode == shape then
-      local editing = makeVertices(shape)
-      if (editing and #editing > 0) then
-	 local editingMesh = makeMeshFromVertices(editing)
-	 love.graphics.setColor(shape.color)
-	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
-      end
-   end
-end
+--    if currentNode ~= shape then 
+--       if (shape.mesh and not shape.mask) then
+-- 	 love.graphics.setColor(shape.color)
+-- 	 love.graphics.draw(shape.mesh, shape._parent._globalTransform )
+--       end
+--    end
+--    if currentNode == shape then
+--       local editing = makeVertices(shape)
+--       if (editing and #editing > 0) then
+-- 	 local editingMesh = makeMeshFromVertices(editing)
+-- 	 love.graphics.setColor(shape.color)
+-- 	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
+--       end
+--    end
+-- end
 
-function lerpColor(c1, c2, t)
-   return {lerp(c1[1], c2[1], t),
-	   lerp(c1[2], c2[2], t),
-	   lerp(c1[3], c2[3], t),
-	   lerp(c1[4], c2[4], t)}
-end
+-- function lerpColor(c1, c2, t)
+--    return {lerp(c1[1], c2[1], t),
+-- 	   lerp(c1[2], c2[2], t),
+-- 	   lerp(c1[3], c2[3], t),
+-- 	   lerp(c1[4], c2[4], t)}
+-- end
 
-function lerpArray(a1, a2, t)
-   local result = {}
-   for i =1, #a1 do
-      table.insert(result, lerp(a1[i], a2[i], t))
-   end
-   return result
-end
+-- function lerpArray(a1, a2, t)
+--    local result = {}
+--    for i =1, #a1 do
+--       table.insert(result, lerp(a1[i], a2[i], t))
+--    end
+--    return result
+-- end
 
-function lerpPoints(p1, p2, t)
-   assert(#p1 == #p2)
-   local result = {}
-   for i=1, #p1 do
-      table.insert(result, {
-		      lerp(p1[i][1], p2[i][1], t),
-		      lerp(p1[i][2], p2[i][2], t)
-      })
-   end
-   return result
-end
+-- function XlerpPoints(p1, p2, t)
+--    assert(#p1 == #p2)
+--    local result = {}
+--    for i=1, #p1 do
+--       table.insert(result, {
+-- 		      lerp(p1[i][1], p2[i][1], t),
+-- 		      lerp(p1[i][2], p2[i][2], t)
+--       })
+--    end
+--    return result
+-- end
 
 
 
-function lerpNodes(left, right, root, t)
-   if (left.folder and right.folder) then
-      root.folder = true
-      root.transforms = {
-	 l = lerpArray(left.transforms.l, right.transforms.l, t),
-	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
-      }
-      root.children = {}
-      assert(#left.children == #right.children)
-      for i=1, #left.children do
-	 root.children[i] = {}
-	 lerpNodes(left.children[i], right.children[i], root.children[i], t)
-      end
-      --root._parent = left._parent
-   elseif (left.points and right.points) then
-      if (left.mask and right.mask) then
-	 root.mask = true
-      end
+-- function XlerpNodes(left, right, root, t)
+--    if (left.folder and right.folder) then
+--       root.folder = true
+--       root.transforms = {
+-- 	 l = lerpArray(left.transforms.l, right.transforms.l, t),
+-- 	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
+--       }
+--       root.children = {}
+--       assert(#left.children == #right.children)
+--       for i=1, #left.children do
+-- 	 root.children[i] = {}
+-- 	 lerpNodes(left.children[i], right.children[i], root.children[i], t)
+--       end
+--       --root._parent = left._parent
+--    elseif (left.points and right.points) then
+--       if (left.mask and right.mask) then
+-- 	 root.mask = true
+--       end
       
-      root.color = lerpColor(left.color, right.color, t)
-      root.points = lerpPoints(left.points, right.points, t)
-      --root._parent = left._parent
-      root.mesh = makeMeshFromVertices(makeVertices(root))
-   end
+--       root.color = lerpColor(left.color, right.color, t)
+--       root.points = lerpPoints(left.points, right.points, t)
+--       --root._parent = left._parent
+--       root.mesh = makeMeshFromVertices(makeVertices(root))
+--    end
    
-   return root
-end
+--    return root
+-- end
 
-function createLerpedChild(ex1, ex2, t)
+-- function XcreateLerpedChild(ex1, ex2, t)
 
-   local result = {}
-   lerpNodes(ex1, ex2, result, t)
-   result._parent = ex1._parent
-   parentize(result)
-   return result
+--    local result = {}
+--    lerpNodes(ex1, ex2, result, t)
+--    result._parent = ex1._parent
+--    parentize(result)
+--    return result
 
-end
+-- end
 
 
-function renderThings(root)
+-- function XrenderThings(root)
 
-   ---- these calculations are only needed when some local transforms have changed
+--    ---- these calculations are only needed when some local transforms have changed
 
-   local tg = root.transforms.g
-   local tl = root.transforms.l
-   local pg = nil
-   if (root._parent) then
-      pg = root._parent._globalTransform
-   end
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-   root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
-   ----
+--    local tg = root.transforms.g
+--    local tl = root.transforms.l
+--    local pg = nil
+--    if (root._parent) then
+--       pg = root._parent._globalTransform
+--    end
+--    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+--    root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
+--    ----
    
-   if (root.keyframes) then
-      --print("coming in here!", root.lerpValue)
-      -- if currentNode == root then
-      -- 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
-      -- 	 if lerped then handleChild(lerped) end
-      -- else
-      -- 	 handleChild(root.children[root.frame])
-      -- end
+--    if (root.keyframes) then
+--       --print("coming in here!", root.lerpValue)
+--       -- if currentNode == root then
+--       -- 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+--       -- 	 if lerped then handleChild(lerped) end
+--       -- else
+--       -- 	 handleChild(root.children[root.frame])
+--       -- end
 
-      -- TODO finda way to cache teh result and reuse , alos whne not tweening i dont wanna
-      -- do all the unneeded calcs here
-      if (not root.lastLerp or root.needsLerp) then
-	 --print('doing the lerping calcs')
-       local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
-       if lerped then handleChild(lerped) end
-       root.lastLerp = lerped
-      else
-	 --print('reusing lastlerp')
-	  handleChild(root.lastLerp)
-      end
+--       -- TODO finda way to cache teh result and reuse , alos whne not tweening i dont wanna
+--       -- do all the unneeded calcs here
+--       print(root.keyframes, root.lastLerp, root.needsLerp)
+--       if (not root.lastLerp or root.needsLerp) then
+-- 	 --print('doing the lerping calcs')
+--        local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+--        if lerped then handleChild(lerped) end
+--        root.lastLerp = lerped
+--       else
+-- 	 --print('reusing lastlerp')
+-- 	  handleChild(root.lastLerp)
+--       end
       
       
-   else
-      for i = 1, #root.children do
-	 local shape = root.children[i]
-	 handleChild(shape)   
-      end
-   end
+--    else
+--       for i = 1, #root.children do
+-- 	 local shape = root.children[i]
+-- 	 handleChild(shape)   
+--       end
+--    end
    
-   love.graphics.setStencilTest()
-end
+--    love.graphics.setStencilTest()
+-- end
 
 ----
 
@@ -370,32 +376,32 @@ function love.mousepressed(x,y)
    
 end
 
-function signT(p1, p2, p3)
-   return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
-end
+-- function signT(p1, p2, p3)
+--    return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
+-- end
 
-function pointInTriangle(p, t1, t2, t3)
-   local b1, b2, b3
-   b1 = signT(p, t1, t2) < 0.0
-   b2 = signT(p, t2, t3) < 0.0
-   b3 = signT(p, t3, t1) < 0.0
+-- function pointInTriangle(p, t1, t2, t3)
+--    local b1, b2, b3
+--    b1 = signT(p, t1, t2) < 0.0
+--    b2 = signT(p, t2, t3) < 0.0
+--    b3 = signT(p, t3, t1) < 0.0
 
-   return ((b1 == b2) and (b2 == b3))
-end
+--    return ((b1 == b2) and (b2 == b3))
+-- end
 
 
-function isMouseInMesh(mx, my, body, mesh)
-   local count = mesh:getVertexCount()
-   local px,py = body._globalTransform:inverseTransformPoint(mx, my)
-   for i = 1, count, 3 do
+-- function isMouseInMesh(mx, my, body, mesh)
+--    local count = mesh:getVertexCount()
+--    local px,py = body._globalTransform:inverseTransformPoint(mx, my)
+--    for i = 1, count, 3 do
       
-      if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
-	 return true
-      end
+--       if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
+-- 	 return true
+--       end
       
-   end
-   return false
-end
+--    end
+--    return false
+-- end
 
 
 

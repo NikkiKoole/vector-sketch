@@ -1,3 +1,9 @@
+function parseFile(url)
+   local contents, size = love.filesystem.read( url)
+   local parsed = (loadstring("return ".. contents)())
+   return parsed
+end
+
 
 function getDataFromFile(file)
    local filename = file:getFilename()
@@ -123,6 +129,22 @@ function generate3dShapeFrom2d(shape, z)
       result[i] = {shape[i][1]/100, shape[i][2]/100, z}
    end
    return result
+end
+
+function addNodeInGroup(node, group)
+   node._parent = group
+   table.insert(group.children, node)
+end
+
+function addAfterNode(element, after)
+   element._parent = after._parent
+   table.insert(after._parent.children, getIndex(after), element)
+end
+
+
+function removeNodeFrom(element, from)
+   assert(getIndex(element))
+   return table.remove(from.children, getIndex(element))
 end
 
 
