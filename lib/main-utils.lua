@@ -1,5 +1,12 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
+function getLocalizedDelta(element, dx, dy)
+   local x1,y1 = element._parent._globalTransform:inverseTransformPoint(dx,dy)
+   local x0, y0 = element._parent._globalTransform:inverseTransformPoint(0,0)
+
+   return x1-x0, y1-y0
+end
+
 
 function transferPoint (xI, yI, source, destination)
 
@@ -119,7 +126,7 @@ function makeOptimizedBatchMesh(folder)
          batchIndex = batchIndex + 1
       end
 
-      allVerts = TableConcat(allVerts, poly.makeVertices(folder.children[i]))
+      allVerts = TableConcat(allVerts, makeVertices(folder.children[i]))
 
    end
    if #allVerts  >0 then
@@ -132,13 +139,10 @@ function makeOptimizedBatchMesh(folder)
 
 end
 
-
-
-
-
 function signT(p1, p2, p3)
    return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
 end
+
 function pointInTriangle(p, t1, t2, t3)
    local b1, b2, b3
    b1 = signT(p, t1, t2) < 0.0
@@ -163,6 +167,67 @@ function isMouseInMesh(mx, my, body, mesh)
    end
    return false
 end
+
+
+function recursiveHitCheck(x,y, node)
+   -- you want to check the first child IF IT HAS POINTS
+   if not node then return false end
+
+   if node.points then
+      local body = node
+      local mesh = body.mesh
+      if (body and mesh) then
+         if isMouseInMesh(x,y, body._parent, mesh) then
+            return true
+         end
+      end
+   else
+      if node.children then
+         for i = 1, #node.children do
+            local r =  recursiveHitCheck(x,y, node.children[i])
+            if r then return true end
+         end
+      end
+   end
+   return false
+
+end
+
+function findMeshThatsHit(parent, mx, my, order)
+   -- order decides which way we will walk,
+   -- order = false will return the firts hitted one (usually below everything)
+   -- order = true will return the last hitted
+   local result = nil
+   for i = 1, #parent.children do
+      if parent.children[i].children then
+         if order then
+            local temp = findMeshThatsHit(parent.children[i], mx, my, order)
+            if temp then
+               result = temp
+            end
+         else
+            return findMeshThatsHit(parent.children[i], mx, my, order)
+         end
+
+      else
+
+         local hit = isMouseInMesh(mx, my, parent,  parent.children[i].mesh)
+         if hit then
+            if order then
+               result = parent.children[i]
+            else
+               return parent.children[i]
+            end
+         end
+      end
+   end
+   if (order) then
+      return result
+   else
+      return nil
+   end
+end
+
 
 function getIndex(item)
    if (item) then
@@ -209,7 +274,7 @@ function handleChild(shape)
       if currentNode ~= shape then
 	 mesh = shape.mesh -- the standard way of rendering
       else
-	 mesh =  makeMeshFromVertices(poly.makeVertices(shape)) -- realtime iupdating the thingie
+	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
       end
 
       local parentIndex = getIndex(shape._parent)
@@ -233,7 +298,6 @@ function handleChild(shape)
 	 love.graphics.setStencilTest("equal", 255)
       end
    end
-
 
    if shape.folder then
       if (shape.optimizedBatchMesh) then
@@ -279,7 +343,7 @@ function handleChild(shape)
       end
    end
    if currentNode == shape then
-      local editing = poly.makeVertices(shape)
+      local editing = makeVertices(shape)
       if (editing and #editing > 0) then
 	 local editingMesh = makeMeshFromVertices(editing)
 	 love.graphics.setColor(shape.color)
@@ -316,10 +380,7 @@ function unpackNodePointsLoop(points)
       unpacked[(#points*2) + 2 + (i*2)] =  points[nxt][2]
    end
 
-
-
-
-      return unpacked
+   return unpacked
 end
 
 function unpackNodePoints(points)
@@ -340,32 +401,6 @@ function unpackNodePoints(points)
    return unpacked
 
 end
-
--- function mat4from_perspective(fovy, aspect, near, far)
--- 	assert(aspect ~= 0)
--- 	assert(near   ~= far)
-
---         local new = function()
---            return {
--- 		0, 0, 0, 0,
--- 		0, 0, 0, 0,
--- 		0, 0, 0, 0,
--- 		0, 0, 0, 0
--- 	}
---         end
-
-
--- 	local t   = math.tan(math.rad(fovy) / 2)
--- 	local out = new()
--- 	out[1]    =  1 / (t * aspect)
--- 	out[6]    =  1 / t
--- 	out[11]   = -(far + near) / (far - near)
--- 	out[12]   = -1
--- 	out[15]   = -(2 * far * near) / (far - near)
--- 	out[16]   =  0
-
--- 	return out
--- end
 
 
 function lerpColor(c1, c2, t)
@@ -422,7 +457,7 @@ function lerpNodes(left, right, root, t)
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
-      root.mesh = makeMeshFromVertices(poly.makeVertices(root))
+      root.mesh = makeMeshFromVertices(makeVertices(root))
    end
 
    return root
@@ -471,7 +506,7 @@ function renderThings(root)
        root.lastLerp = lerped
 
          else
-            
+
 	    handleChild(root.children[root.frame])
 	 end
       end

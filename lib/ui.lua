@@ -1,4 +1,4 @@
-require 'basics'
+--require 'basics'
 
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
@@ -23,7 +23,7 @@ function getUIRect(id, x,y,w,h)
         result = true
      end
    end
-  
+
    return {
       clicked=result
    }
@@ -39,7 +39,7 @@ function getUICircle(id, x,y,r)
    if mouseState.click and hover then
       clicked = true
    end
- 
+
    return {
       clicked=clicked,
       hover=hover
@@ -96,7 +96,7 @@ function doubleiconlabelbutton(id, img1,img2, x, y)
    love.graphics.rectangle("fill", x, y, buttonWidth, h1)
     love.graphics.setColor(1,1,1,1)
     love.graphics.draw(img1, x, y, 0, imgScale1, imgScale1)
-   
+
     love.graphics.draw(img2, x+margin+w1, y, 0, imgScale2, imgScale2)
 end
 
@@ -126,7 +126,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
       love.graphics.rectangle("fill", x, y, w, h )
       love.graphics.setColor(1,1,1,1)
    end
-   
+
    if (active) then
       love.graphics.setLineWidth(3)
 
@@ -134,8 +134,8 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
       love.graphics.setLineWidth(1)
    end
 
-   
-   
+
+
    love.graphics.rectangle("line", x, y, buttonWidth,h)
 
    if (pointInRect(mx, my,  x, y, buttonWidth,h)) then
@@ -146,7 +146,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 
       if (mouseState.click) then
 	 clicked = true
-         
+
       end
    else
       love.graphics.setColor(1,1,1, .5)
@@ -184,7 +184,7 @@ function imgbutton(id, img, x, y, scale, disabled)
    local w = 24
    h = 24
    local imgScale = w/imgW
-   
+
    local clicked = false
 
    love.graphics.setColor(0,0,0,.75)
@@ -222,7 +222,7 @@ function imgbutton(id, img, x, y, scale, disabled)
 end
 
 function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
-   
+
 
    -- the thumb
    local scrollBarThumbH = height
@@ -239,14 +239,14 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
    if pointInRect(mx, my, x, y+pxScrollOffset,32,scrollBarThumbH) then
        hover = true
    end
-   
-   local alpha =  (lastDraggedElement and lastDraggedElement.id == id or hover ) and 0.8 or 0.5 
+
+   local alpha =  (lastDraggedElement and lastDraggedElement.id == id or hover ) and 0.8 or 0.5
    love.graphics.setColor(1,1,1,alpha)
    love.graphics.setLineWidth(2)
    love.graphics.rectangle("line",x, y, 32, height)
    love.graphics.rectangle("fill", x, y+pxScrollOffset, 32, scrollBarThumbH)
-   
-   
+
+
 
    if hover then
       mouseState.hoveredSomething = true
@@ -277,18 +277,18 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
          result = mapInto(result, 0, height-scrollBarThumbH, 0, contentHeight-height )
       end
 
-      
+
     end
 
-   
-    
+
+
  return {
     value=result,
     scrollBarThumbH=scrollBarThumbH
    }
 
 
-   
+
 end
 
 
@@ -301,7 +301,7 @@ function v_slider(id, x, y, height, v, min, max)
    local yOffset = mapInto(v, min, max, 0, height-20)
    love.graphics.rectangle('fill',x, yOffset + y,20,20 )
 
-   
+
    love.graphics.rectangle("line", x,yOffset + y,20,20)
 
    local result= nil

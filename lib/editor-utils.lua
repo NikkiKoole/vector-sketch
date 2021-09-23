@@ -1,5 +1,4 @@
 
-
 function distancePointSegment(x,y, x1,y1, x2, y2)
    local A = x - x1
    local B = y - y1
@@ -46,7 +45,6 @@ end
 
 
 
-
 function copyShape(shape)
    if (shape.folder) then
       local result = {
@@ -61,7 +59,13 @@ function copyShape(shape)
       if (shape.keyframes) then
 	 result.frame = shape.frame
 	 result.keyframes = shape.keyframes
+	 if shape.keyframes == 2 then
 	 result.lerpValue = shape.lerpValue
+	 end
+	 if shape.keyframes == 4 or shape.keyframes == 5 then
+	    result.lerpX = shape.lerpX
+	    result.lerpY = shape.lerpY
+	 end
       end
 
       for i=1, #shape.children do
@@ -81,6 +85,22 @@ function copyShape(shape)
 	 if shape.hole then
 	    result.hole = true
 	 end
+         if shape.border then
+	    result.border = true
+	 end
+         if shape.borderTension then
+	    result.borderTension = shape.borderTension
+	 end
+         if shape.borderSpacing then
+	    result.borderSpacing = shape.borderSpacing
+	 end
+         if shape.borderThickness then
+	    result.borderThickness = shape.borderThickness
+	 end
+         if shape.borderRandomizerMultiplier then
+	    result.borderRandomizerMultiplier = shape.borderRandomizerMultiplier
+	 end
+
 	 if (shape.color) then
 	    for i=1, #shape.color do
 	       result.color[i] = round2(shape.color[i],3)
@@ -95,62 +115,4 @@ function copyShape(shape)
 	 return result
    end
 
-end
-
-function makeVertices(shape)
-   local triangles = {}
-   local vertices = {}
-   if (shape.folder) then return end
-   local points = shape.points
-
-   if (#points >= 2 ) then
-
-      local scale = 1
-      local coords = {}
-      --local coordsRound = {}
-      local ps = {}
-      for l=1, #points do
-	 table.insert(coords, points[l][1])
-	 table.insert(coords, points[l][2])
-      end
-
-      if (shape.color) then
-	 local polys = decompose_complex_poly(coords, {})
-	 local result = {}
-	 for k=1 , #polys do
-	    local p = polys[k]
-	    if (#p >= 6) then
-	       -- if a import breaks on triangulation errors uncomment this
-	       --print(shapes[i].name, #p, inspect(p))
-	       local triangles = love.math.triangulate(p)
-	       for j = 1, #triangles do
-		  local t = triangles[j]
-		  local cx, cy = getTriangleCentroid(t)
-		  if isPointInPath(cx,cy, p) then
-		     table.insert(result, t)
-		  end
-	       end
-	    end
-	 end
-
-	 for j = 1, #result do
-	    table.insert(vertices, {result[j][1], result[j][2]})
-	    table.insert(vertices, {result[j][3], result[j][4]})
-	    table.insert(vertices, {result[j][5], result[j][6]})
-	 end
-
-      end
-   end
-   return vertices
-end
-simple_format = {
-   {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-}
-
-function makeMeshFromVertices(vertices)
-   if (vertices and vertices[1] and vertices[1][1]) then
-      local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
-      return mesh
-   end
-   return nil
 end

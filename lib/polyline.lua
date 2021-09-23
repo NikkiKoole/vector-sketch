@@ -61,9 +61,9 @@ local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
     local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
     --print('craners', dx,dy)
     if dx > math.pi*2 then dx = math.pi*2 end
-  if dx < -math.pi*2 then dx = -math.pi*2 end 
-    if dy > math.pi*2 then dy = math.pi*2 end 
-    if dy < -math.pi*2 then dy = -math.pi*2 end 
+  if dx < -math.pi*2 then dx = -math.pi*2 end
+    if dy > math.pi*2 then dy = math.pi*2 end
+    if dy < -math.pi*2 then dy = -math.pi*2 end
 
     table.insert(normals, Vector(dx, dy))
     table.insert(normals, Vector(-dx, -dy))
@@ -199,7 +199,7 @@ local JOIN_TYPES = {
 }
 
 function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
- 
+
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
 
@@ -220,7 +220,7 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
 
   local len_s = length(s)
 
-  
+
   local ns = normal({}, s, half_width / len_s)
 
   local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
@@ -286,11 +286,11 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
       table.insert(vertices, {
                       anchors[i].x + normals[i].x * (r)  ,
                       anchors[i].y + normals[i].y * (r),
-        
+
       })
-      
+
         --end
-        
+
     end
   end
 
@@ -335,5 +335,3 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
 
   return vertices, indices, draw_mode
 end
-
-

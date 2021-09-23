@@ -1,10 +1,69 @@
-require 'basics'
-require 'util'
-require 'poly'
-flux = require "flux"
-require 'main-utils'
-inspect = require 'inspect'
-ProFi = require 'ProFi'
+package.path = package.path .. ";../../?.lua"
+
+flux = require "vendor.flux"
+inspect = require 'vendor.inspect'
+ProFi = require 'vendor.ProFi'
+
+require 'lib.basics'
+require 'lib.bbox'
+require 'lib.toolbox'
+require 'lib.editor-utils'
+require 'lib.poly'
+require 'lib.main-utils'
+
+
+function elemIsAboveAnother(elem,  another)
+   assert(another.children[1].points)
+
+   local px,py = elem._globalTransform:transformPoint(0,0)
+   local tlx, tly, brx, bry = getPointsBBox(another.children[1].points)
+   local tlx2, tly2 = another._globalTransform:transformPoint(tlx, tly)
+   local brx2, bry2 = another._globalTransform:transformPoint(brx, bry)
+
+   if (px >= tlx2 and px < brx2) then
+      if (py < bry2) then
+         return true
+      end
+
+   end
+   return false
+end
+
+
+function moveNodeBetweenParentsAndPosition(node, newParent)
+   -- this will keep the position intact
+
+   local x1,y1 = node._globalTransform:transformPoint(0,0)
+   removeNodeFrom(node, node._parent)
+   addNodeInGroup(node, newParent)
+   renderThings(newParent)
+   local x2,y2 = node._globalTransform:transformPoint(0,0)
+   local dx, dy = x1-x2, y1-y2
+   local x0,y0 = node._globalTransform:inverseTransformPoint(0,0)
+   local dx1, dy1 =  node._globalTransform:inverseTransformPoint(dx,dy)
+   node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
+   node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
+
+end
+
+function getNamesForElementRecurive(node, tabs, str)
+   local spaces = ""
+   for i = 0, tabs do
+      spaces = spaces.."   "
+   end
+   if node.children then
+      str = str..(spaces..node.name).."\n"
+   end
+   if node.children then
+      for i = 1, #node.children do
+         str = getNamesForElementRecurive(node.children[i], tabs+1, str)
+      end
+
+   end
+   return str
+end
+
+
 
 function herman()
    return  (boat.velocity/150)
@@ -185,10 +244,7 @@ function updateFishes()
    end
 end
 
-
-
 function updateWolken()
-
    for i = 1, #wolken do
       wolken[i].transforms.l[1] =  wolken[i].transforms.l[1] - boat.velocity* wolken[i].speedMultiplier
       if ( wolken[i].transforms.l[1] < - 1000) then
@@ -198,7 +254,6 @@ function updateWolken()
          wolken[i].transforms.l[1] = -1000
       end
    end
-
 end
 
 function doRookspawn()
@@ -282,9 +337,6 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude, alpha)
    end
    love.graphics.setColor(0, 0.3,0.48, 0.9)
    love.graphics.line(coords)
-   --- end drawing the filled wave
-
-
 end
 
 
@@ -295,50 +347,6 @@ function love.mousemoved(x,y,dx,dy)
       dragged.transforms.l[2] = dragged.transforms.l[2] + dy2
    end
 end
-
-
-function bboxOfPoints(points)
-   local smallestX =  math.huge
-   local largestX  = -math.huge
-   local smallestY =  math.huge
-   local largestY  = -math.huge
-
-   for i = 1, #points do
-      if points[i][1] < smallestX then
-         smallestX = points[i][1]
-      end
-      if points[i][1] > largestX then
-         largestX = points[i][1]
-      end
-      if points[i][2] < smallestY then
-         smallestY = points[i][2]
-      end
-      if points[i][2] > largestY then
-         largestY = points[i][2]
-      end
-   end
-
-   return {smallestX, smallestY},{largestX, largestY}
-end
-
-
-function elemIsAboveAnother(elem,  another)
-   assert(another.children[1].points)
-
-   local px,py = elem._globalTransform:transformPoint(0,0)
-   local tl, br = bboxOfPoints(another.children[1].points)
-   local tlx, tly = another._globalTransform:transformPoint(tl[1], tl[2])
-   local brx, bry = another._globalTransform:transformPoint(br[1], br[2])
-
-   if (px >= tlx and px < brx) then
-      if (py < bry) then
-         return true
-      end
-
-   end
-   return false
-end
-
 
 function love.mousereleased()
    if (dragged) then
@@ -374,53 +382,13 @@ function love.mousereleased()
 end
 
 
-function moveNodeBetweenParentsAndPosition(node, newParent)
-   -- this will keep the position intact
-
-   local x1,y1 = node._globalTransform:transformPoint(0,0)
-   removeNodeFrom(node, node._parent)
-   addNodeInGroup(node, newParent)
-   renderThings(newParent)
-   local x2,y2 = node._globalTransform:transformPoint(0,0)
-   local dx, dy = x1-x2, y1-y2
-   local x0,y0 = node._globalTransform:inverseTransformPoint(0,0)
-   local dx1, dy1 =  node._globalTransform:inverseTransformPoint(dx,dy)
-   node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
-   node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
-
-end
-
-
-function recursiveHitCheck(x,y, node)
-   -- you want to check the first child IF IT HAS POINTS
-   if not node then return false end
-
-   if node.points then
-      local body = node
-      local mesh = body.mesh
-      if (body and mesh) then
-         if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
-            return true
-         end
-      end
-   else
-      if node.children then
-         for i = 1, #node.children do
-            local r =  recursiveHitCheck(x,y, node.children[i])
-            if r then return true end
-         end
-      end
-   end
-   return false
-
-end
 
 
 function love.mousepressed(x,y)
    renderInfoForElement = nil
    local body = kajuitdeur.children[3]
    local mesh = kajuitdeur.children[3].mesh
-   if isMouseInMesh(x,y, body._parent._globalTransform, mesh) then
+   if isMouseInMesh(x,y, body._parent, mesh) then
       if (kajuitdeur.transforms.l[1]  < - 400) then
          flux.to(kajuitdeur.transforms.l, .3, {[1]=-390.81}):ease("circinout")
       else
@@ -444,30 +412,12 @@ function love.mousepressed(x,y)
       dragged = walter
       moveNodeBetweenParentsAndPosition(walter, overlayer)
       renderInfoForElement = walter
-         --walter.children[1].transforms.l[4] = walter.children[1].transforms.l[4] * -1
-
-
-      -- flux.to(walter.children[1].transforms.l, .05,
-      -- 	      {
-      -- 		 [4]= walter.children[1].transforms.l[4] * -1,
-      -- 		 [8]=0 - (herman()) * (walter.children[1].transforms.l[4]*-1)
-      -- 	      }
-      -- ):ease("circinout")
    end
-
 
    if recursiveHitCheck(x,y, olivia) then
       dragged = olivia
       moveNodeBetweenParentsAndPosition(olivia, overlayer)
       renderInfoForElement = olivia
-
-      --  flux.to(olivia.children[1].transforms.l, .05,
-      -- 	      {
-      -- 		 [4]= olivia.children[1].transforms.l[4] * -1,
-      -- 		 [8]=0 - (herman()) * (olivia.children[1].transforms.l[4]*-1)
-      -- 	      }
-      -- ):ease("circinout")
-
    end
 
    for i = 1, #fishRefs do
@@ -475,7 +425,6 @@ function love.mousepressed(x,y)
          dragged = fishRefs[i]
          moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[getIndex(fishRefs[i])], overlayer)
          renderInfoForElement = dragged
-         --dragged.children[1].transforms.l[3] = 0.5
       end
    end
 
@@ -489,9 +438,6 @@ function love.mousepressed(x,y)
          end
       end
    end
-
-
-
 end
 
 
@@ -514,26 +460,6 @@ function foamFunction(waveCounter, middleY, waves, amplitude, startX, endX, alph
 
    love.graphics.line(coords)
    love.graphics.setLineWidth(2)
-
-end
-
-
-function getNamesForElementRecurive(node, tabs, str)
-   local spaces = ""
-   for i = 0, tabs do
-      spaces = spaces.."   "
-   end
-   if node.children then
-      str = str..(spaces..node.name).."\n"
-   end
-   if node.children then
-      for i = 1, #node.children do
-         str = getNamesForElementRecurive(node.children[i], tabs+1, str)
-      end
-
-   end
-   return str
-
 end
 
 

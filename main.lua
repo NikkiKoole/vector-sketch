@@ -1,23 +1,26 @@
 inspect = require 'vendor.inspect'
 console = require 'vendor.console'
 
-require 'ui'
 require 'palettes'
-require 'editor-utils'
-require 'main-utils'
 require 'generate-polygon'
 require 'dopesheet'
-require 'bbox'
-require 'border-mesh'
-require 'toolbox'
 
-polyline = require 'polyline'
-poly = require 'poly'
+require 'lib.basics'
+require 'lib.editor-utils'
+require 'lib.main-utils'
+require 'lib.polyline'
+require 'lib.poly'
+require 'lib.bbox'
+require 'lib.border-mesh'
+require 'lib.toolbox'
+require 'lib.ui'
+
+
 utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
 easing = require 'vendor.easing'
-Vector = require "brinevector"
+--Vector = require "brinevector"
 
 -- four corner distort!!!!
 --https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
@@ -28,48 +31,17 @@ if os.setlocale(nil) ~= 'C' then
    os.setlocale("C")
 end
 
-function XremeshNode(node)
-   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
-   if node.border then
-      node.borderMesh =  makeBorderMesh(node)
-      --print('found a border need to mesh it')
-   end
+
+
+
+function getAngleAndDistance(x1,y1,x2,y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local angle =  math.atan2(dy, dx)
+   local distance =  math.sqrt ((dx*dx) + (dy*dy))
+
+   return angle, distance
 end
-
-
-
-function makeMeshFromVertices(vertices)
-   if (vertices and vertices[1] and vertices[1][1]) then
-      -- vertices should be more rounded
-      local moreRounded = {}
-      for i=1 ,#vertices do
-         moreRounded[i] = {
-            round2(vertices[i][1], 3),
-            round2(vertices[i][2], 3)
-         }
-      end
-
-      local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
-
-      return mesh
-   end
-   return nil
-end
-
-function XmeshAll(root) -- this needs to be done recursive
-   for i=1, #root.children do
-      if (not root.children[i].folder) then
-         remeshNode(root.children[i])
-         if root.children[i].border then
-            print('this border should be meshed here')
-         end
-      else
-         meshAll(root.children[i])
-      end
-   end
-end
-
-
 
 
 function getLocalDelta(transform, dx, dy)
@@ -98,11 +70,41 @@ function setCurrentNode(newNode)
 end
 
 
+
+function isPartOfKeyframePose(node)
+   if (node.keyframes) then return true end
+   if (node._parent == root) then return false end
+   if (node._parent) then
+      return isPartOfKeyframePose(node._parent)
+   end
+end
+
+function countNestedChildren(node, total)
+   for i=1, #node.children do
+      if (node.children[i].children) then
+         local r = countNestedChildren(node.children[i], 0)
+         total = total + r
+      end
+      total = total+1
+   end
+   return total
+end
+function nodeIsMyOwnOffspring(me, node)
+   if (me == node) then return true end
+   if (node._parent == me) then
+      return true
+   end
+   if (node._parent.name == 'root') then
+      return false
+   end
+   return nodeIsMyOwnOffspring(me, node._parent)
+end
+
 function rotateGroup(node, degrees)
    if node.degrees then
       print('this shape has been rotated before')
    end
-   
+
    node.degrees = degrees
    local tlx, tly, brx, bry = getPointsBBox(node.points)
    local w2 = (brx - tlx)/2
@@ -114,7 +116,7 @@ function rotateGroup(node, degrees)
 
    local s = math.sin(degrees*0.0174532925)
    local c = math.cos(degrees*0.0174532925)
-   
+
    for i=1, #node.points do
       local p = {
          node.points[i][1] - cx,
@@ -126,13 +128,33 @@ function rotateGroup(node, degrees)
       p[2] = ynew + cy
       node.points[i] =  {p[1], p[2]}
       --	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
-      
+
    end
    remeshNode(node)
 
-   
+
 end
 
+function recenterGroup(group, dx, dy)
+   for i =1, #group do
+      for j = 1, #(group[i].points) do
+         group[i].points[j][1] = group[i].points[j][1] + dx
+         group[i].points[j][2] = group[i].points[j][2] + dy
+      end
+   end
+
+end
+
+function recenterPoints(points)
+   local tlx, tly, brx, bry = getPointsBBox(points)
+   local w2 = (brx - tlx)/2
+   local h2 = (bry - tly)/2
+   for i=1, #points do
+      points[i][1] = points[i][1] -  (tlx + w2)
+      points[i][2] = points[i][2] -  (tly + h2)
+   end
+   return points
+end
 
 function resizeGroup(node, children, scale)
 
@@ -157,7 +179,7 @@ function flipGroup(node, children, xaxis, yaxis)
       for p=1, #children do
 	 local index = children[p]
 	 node.points[index] =  {node.points[index][1] * xaxis, node.points[index][2] * yaxis}
---	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
+	 --	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
       end
       --node.points = scaledPoints
       remeshNode(node)
@@ -286,6 +308,11 @@ function deletePoints(node)
 end
 
 
+
+
+
+------------ editor specific code
+
 function drawUIAroundGraphNodes(w,h)
    if currentNode then
       local panelWidth = 96
@@ -343,7 +370,7 @@ function drawUIAroundGraphNodes(w,h)
       end
 
       if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
-      (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
          if (imgbutton('transition', ui.transition, w - 300, runningY)).clicked then
             if (currentNode.keyframes) then
                currentNode.keyframes = nil
@@ -358,7 +385,7 @@ function drawUIAroundGraphNodes(w,h)
       end
 
       if currentNode and currentNode.folder and #currentNode.children >= 4 and
-      (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
          if (imgbutton('joystick', ui.joystick, w - 256, runningY)).clicked then
             if (currentNode.keyframes) then
                currentNode.keyframes = nil
@@ -394,55 +421,6 @@ function drawUIAroundGraphNodes(w,h)
          end
          runningY = runningY + 40
 
-
-         -- if imgbutton('folder-pivot', ui.pivot,  w - 300, runningY).clicked2 then
-         --    editingModeSub = nil
-         --    if (#currentNode.children > 0) then
-         --       local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-         --       local middleX = tlx + (brx - tlx)/2
-         --       local middleY = tly + (bry - tly)/2
-
-         --       local mx = tlx + (brx - tlx)/2
-         --       local my = tly + (bry - tly)/2
-         --       local nx = currentNode.transforms.l[6]
-         --       local ny = currentNode.transforms.l[7]
-
-         --       if (nx == tlx and ny == tly) then
-         --          currentNode.transforms.l[6]= middleX
-         --          currentNode.transforms.l[7]= tly
-         --       elseif (nx == middleX and ny == tly) then
-         --          currentNode.transforms.l[6]= brx
-         --          currentNode.transforms.l[7]= tly
-         --       elseif (nx == brx and ny == tly) then
-         --          currentNode.transforms.l[6]= brx
-         --          currentNode.transforms.l[7]= middleY
-         --       elseif (nx == brx and ny == middleY) then
-         --          currentNode.transforms.l[6]= brx
-         --          currentNode.transforms.l[7]= bry
-         --       elseif (nx == brx and ny == bry) then
-         --          currentNode.transforms.l[6]= middleX
-         --          currentNode.transforms.l[7]= bry
-         --       elseif (nx == middleX and ny == bry) then
-         --          currentNode.transforms.l[6]= tlx
-         --          currentNode.transforms.l[7]= bry
-         --       elseif (nx == tlx and ny == bry) then
-         --          currentNode.transforms.l[6]= tlx
-         --          currentNode.transforms.l[7]= middleY
-         --       elseif (nx == tlx and ny == middleY) then
-         --          currentNode.transforms.l[6]= mx
-         --          currentNode.transforms.l[7]= my
-         --       elseif (nx == mx and ny == my) then
-         --          currentNode.transforms.l[6]= tlx
-         --          currentNode.transforms.l[7]= tly
-         --       else
-         --          currentNode.transforms.l[6]= mx
-         --          currentNode.transforms.l[7]= my
-         --          print('default')
-         --       end
-         --       editingModeSub = 'folder-move'
-         --    end
-         -- end
-
          love.graphics.setColor(1,1,1,.5)
          function get6(node)
             local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
@@ -451,78 +429,77 @@ function drawUIAroundGraphNodes(w,h)
             return tlx, tly, brx, bry, mx, my
          end
          if (currentNode.children and #currentNode.children > 0) then
-         love.graphics.rectangle("fill", w-300, runningY, 20, 20)
-         if getUIRect('p1', w-300, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= tlx
-            currentNode.transforms.l[7]= tly
+	    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	    if getUIRect('p1', w-300, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= tlx
+	       currentNode.transforms.l[7]= tly
+	    end
+
+	    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	    if getUIRect('p2', w-300+24, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= mx
+	       currentNode.transforms.l[7]= tly
+	    end
+
+	    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	    if getUIRect('p3', w-300+48, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= brx
+	       currentNode.transforms.l[7]= tly
+	    end
+
+	    runningY = runningY + 24
+
+	    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	    if getUIRect('p4', w-300, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= tlx
+	       currentNode.transforms.l[7]= my
+	    end
+
+	    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	    if getUIRect('p5', w-300+24, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= mx
+	       currentNode.transforms.l[7]= my
+	    end
+
+	    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	    if getUIRect('p6', w-300+48, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= brx
+	       currentNode.transforms.l[7]= my
+	    end
+
+	    runningY = runningY + 24
+
+	    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	    if getUIRect('p7', w-300, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= tlx
+	       currentNode.transforms.l[7]= bry
+	    end
+
+	    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	    if getUIRect('p8', w-300+24, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= mx
+	       currentNode.transforms.l[7]= bry
+	    end
+
+	    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	    if getUIRect('p9', w-300+48, runningY, 20,20).clicked then
+	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       currentNode.transforms.l[6]= brx
+	       currentNode.transforms.l[7]= bry
+	    end
+
+	    runningY = runningY + 40
          end
 
-         love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
-         if getUIRect('p2', w-300+24, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= mx
-            currentNode.transforms.l[7]= tly
-         end
 
-         love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
-         if getUIRect('p3', w-300+48, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= brx
-            currentNode.transforms.l[7]= tly
-         end
-
-         runningY = runningY + 24
-
-         love.graphics.rectangle("fill", w-300, runningY, 20, 20)
-         if getUIRect('p4', w-300, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= tlx
-            currentNode.transforms.l[7]= my
-         end
-
-         love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
-         if getUIRect('p5', w-300+24, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= mx
-            currentNode.transforms.l[7]= my
-         end
-
-         love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
-         if getUIRect('p6', w-300+48, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= brx
-            currentNode.transforms.l[7]= my
-         end
-
-         runningY = runningY + 24
-
-         love.graphics.rectangle("fill", w-300, runningY, 20, 20)
-         if getUIRect('p7', w-300, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= tlx
-            currentNode.transforms.l[7]= bry
-         end
-
-         love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
-         if getUIRect('p8', w-300+24, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= mx
-            currentNode.transforms.l[7]= bry
-         end
-
-         love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
-         if getUIRect('p9', w-300+48, runningY, 20,20).clicked then
-            local tlx, tly, brx, bry, mx, my = get6(currentNode)
-            currentNode.transforms.l[6]= brx
-            currentNode.transforms.l[7]= bry
-         end
-
-         runningY = runningY + 40
-         end
-
-
---         runningY = runningY + 40
          if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
             editingModeSub = 'folder-move'
          end
@@ -545,7 +522,7 @@ function drawUIAroundGraphNodes(w,h)
                currentNode.optimizedBatchMesh = nil
             else
 
-	    makeOptimizedBatchMesh(currentNode)
+	       makeOptimizedBatchMesh(currentNode)
 
             end
          end
@@ -556,11 +533,7 @@ function drawUIAroundGraphNodes(w,h)
             love.graphics.setColor(1,1,1)
             love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
          end
-
       end
-
-
-
 
       if (editingMode == 'polyline') and currentNode  then
          if imgbutton('polyline-palette', ui.palette,  w - 300, runningY).clicked then
@@ -569,7 +542,6 @@ function drawUIAroundGraphNodes(w,h)
             else
                editingModeSub = 'polyline-palette'
             end
-
          end
 
          if imgbutton('polyline-move', ui.move,  w - 256, runningY).clicked then
@@ -629,7 +601,7 @@ function drawUIAroundGraphNodes(w,h)
             if imgbutton('rotate', ui.rotate, w - 256, runningY).clicked then
                rotateGroup(currentNode, 22.5)
             end
-            
+
             if currentNode and currentNode.border then
                local v =  h_slider("splinetension", 600, 120, 200,  currentNode.borderTension , 0.00001, 1)
                if v.value ~= nil then
@@ -648,10 +620,7 @@ function drawUIAroundGraphNodes(w,h)
                if v.value ~= nil then
                   currentNode.borderRandomizerMultiplier = v.value
                end
-
-
             end
-
 
             runningY = runningY + 40  -- behind an if !!
          end
@@ -668,18 +637,14 @@ function drawUIAroundGraphNodes(w,h)
             if imgbutton('children-scale', ui.resize, w - 300, runningY).clicked  then
                if love.keyboard.isDown('a') then
                   resizeGroup(currentNode, childrenInRectangleSelect, .75)
-
                else
-
                   resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
                end
             end
             if imgbutton('children-scale', ui.resize, w - 256, runningY).clicked  then
                if love.keyboard.isDown('a') then
                   resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
-
                else
-
                   resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
                end
 
@@ -703,79 +668,7 @@ function drawUIAroundGraphNodes(w,h)
          end
       end
    end
-
 end
-
-
-function isPartOfKeyframePose(node)
-   if (node.keyframes) then return true end
-   if (node._parent == root) then return false end
-   if (node._parent) then
-      return isPartOfKeyframePose(node._parent)
-   end
-end
-
-function countNestedChildren(node, total)
-   for i=1, #node.children do
-      if (node.children[i].children) then
-         local r = countNestedChildren(node.children[i], 0)
-         total = total + r
-      end
-      total = total+1
-   end
-   return total
-end
-function nodeIsMyOwnOffspring(me, node)
-   if (me == node) then return true end
-   if (node._parent == me) then
-      return true
-   end
-   if (node._parent.name == 'root') then
-      return false
-   end
-   return nodeIsMyOwnOffspring(me, node._parent)
-end
-
---------------------------------
-
-
-
-function findMeshThatsHit(parent, mx, my, order)
-   -- order decides which way we will walk,
-   -- order = false will return the firts hitted one (usually below everything)
-   -- order = true will return the last hitted
-   local result = nil
-   for i = 1, #parent.children do
-      if parent.children[i].children then
-         if order then
-            local temp = findMeshThatsHit(parent.children[i], mx, my, order)
-            if temp then
-               result = temp
-            end
-         else
-            return findMeshThatsHit(parent.children[i], mx, my, order)
-         end
-
-      else
-
-         local hit = isMouseInMesh(mx, my, parent,  parent.children[i].mesh)
-         if hit then
-            if order then
-               result = parent.children[i]
-            else
-               return parent.children[i]
-            end
-         end
-      end
-   end
-   if (order) then
-      return result
-   else
-      return nil
-   end
-end
-
-------------
 
 
 function love.mousepressed(x,y, button)
@@ -786,90 +679,73 @@ function love.mousepressed(x,y, button)
 
    if ( love.keyboard.isDown( 'lctrl' )) then
       local d = findMeshThatsHit(root, x, y, love.keyboard.isDown( 'lctrl' ) )
-
       if d then
          setCurrentNode(d)
          tryToCenterUI(d)
          editingMode = 'polyline'
-         --editingModeSub = 'polyline-edit'
       else
          setCurrentNode(nil)
          editingMode = nil
          editingModeSub = nil
-         --currentNode = nil
       end
    end
 
-   --local lShiftDown = love.keyboard.isDown('lshift')
+
    if editingMode == 'rectangle-select' or editingModeSub == 'rectangle-point-select'  then
       rectangleSelect.startP = {x=x, y=y}
    end
 
 
    if currentNode then
-   local points = currentNode and currentNode.points
-   --if not points then return end
-   --local px, py
+      local points = currentNode and currentNode.points
+      local t = currentNode._parent._globalTransform
+      local px, py = t:inverseTransformPoint( x, y )
+      local scale = root.transforms.l[4]
 
-   local t = currentNode._parent._globalTransform
-   local px, py = t:inverseTransformPoint( x, y )
-   local scale = root.transforms.l[4]
-   if  editingModeSub == 'change-perspective' and currentNode then
-      print('hiya! we gonna be needing you', points)
-      -- duplication
-
-
-      --local TLX,TLY = perspective[1], perspective[2]
-      --local BRX,BRY = perspective[3], perspective[4]
-      --print(TLX, TLY, BRX-TLX, BRY-TLY)
-
-      function simplecheck(x2,y2, width)
-         if pointInRect(x,y, x2, y2, width,width) then
-            return true
-         end
-         return false
-      end
-      for i = 1, 4 do
-         if simplecheck(perspective[i][1] - 5,perspective[i][2] - 5, 10) then
-            print(i, 'set')
-            lastDraggedElement = {id='perspective-corner', index=i}
-         end
+      if  editingModeSub == 'change-perspective' and currentNode then
+	 function simplecheck(x2,y2, width)
+	    if pointInRect(x,y, x2, y2, width,width) then
+	       return true
+	    end
+	    return false
+	 end
+	 for i = 1, 4 do
+	    if simplecheck(perspective[i][1] - 5,perspective[i][2] - 5, 10) then
+	       print(i, 'set')
+	       lastDraggedElement = {id='perspective-corner', index=i}
+	    end
+	 end
       end
 
+      if points then
+	 if editingMode == 'polyline' and not mouseState.hoveredSomething   then
+	    local w, h = getLocalDelta(t, 10, 10)
+	    w = math.max(math.abs(w), math.abs(h))
 
+	    local index =  0
+	    for i = 1, #points do
+	       if pointInRect(px,py,
+			      points[i][1] - w/2, points[i][2] - w/2,
+			      w, w) then
+		  index = i
+	       end
+	    end
 
-      --lastDraggedElement = {id='perspective-corner', index=index}
-   end
+	    if (index > 0) then
+	       if (editingModeSub == 'polyline-remove') then
+		  table.remove(points, index)
+	       end
+	       if (editingModeSub == 'polyline-edit') then
+		  lastDraggedElement = {id='polyline', index=index}
+	       end
+	    end
 
-   if points then
-      if editingMode == 'polyline' and not mouseState.hoveredSomething   then
-         local w, h = getLocalDelta(t, 10, 10)
-         w = math.max(math.abs(w), math.abs(h))
-
-         local index =  0
-         for i = 1, #points do
-            if pointInRect(px,py,
-                           points[i][1] - w/2, points[i][2] - w/2,
-                           w, w) then
-               index = i
-            end
-         end
-
-         if (index > 0) then
-            if (editingModeSub == 'polyline-remove') then
-               table.remove(points, index)
-            end
-            if (editingModeSub == 'polyline-edit') then
-               lastDraggedElement = {id='polyline', index=index}
-            end
-         end
-
-         if (editingModeSub == 'polyline-insert') then
-            local closestEdgeIndex = getClosestEdgeIndex(px, py, points)
-            table.insert(points, closestEdgeIndex+1, {px, py})
-         end
+	    if (editingModeSub == 'polyline-insert') then
+	       local closestEdgeIndex = getClosestEdgeIndex(px, py, points)
+	       table.insert(points, closestEdgeIndex+1, {px, py})
+	    end
+	 end
       end
-   end
    end
 end
 
@@ -949,11 +825,11 @@ function love.mousereleased(x,y, button)
          addThingAtEnd(removeCurrentNode(), root)
       end
    end
+
    if lastDraggedElement and lastDraggedElement.id == 'connector-group' then
       if (currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
          removeGroupOfThings(childrenInRectangleSelect)
          local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
-
          local w2 = (brx - tlx)/2
          local h2 = (bry - tly)/2
          local offX = -  (tlx + w2)
@@ -969,30 +845,6 @@ function love.mousereleased(x,y, button)
    end
    lastDraggedElement = nil
 end
-
-
-function recenterGroup(group, dx, dy)
-   for i =1, #group do
-      for j = 1, #(group[i].points) do
-         group[i].points[j][1] = group[i].points[j][1] + dx
-         group[i].points[j][2] = group[i].points[j][2] + dy
-      end
-   end
-
-end
-
-
--- function recenterChildrenInRect(children, futureParent)
---    local result = children
---    for i =1, #children do
---       local p = recenterPoints(children[i].points)
---       result[i].points = p
-
---    end
---   -- meshAll(result)
---    return result
--- end
-
 
 
 function love.mousemoved(x,y, dx, dy)
@@ -1073,29 +925,20 @@ function love.mousemoved(x,y, dx, dy)
       end
    end
 
-
    if editingModeSub == 'change-perspective' then
-      --lastDraggedElement = {id='perspective-corner', kind='tl'}
-
       if lastDraggedElement then
-
          local index = lastDraggedElement.index
-
          if  snap then
             perspective[index][1] = round2(x,0)
             perspective[index][2] = round2(y,0)
-            --print(round2(x,0), round2(y,0))
          else
             if perspective[index] then
                perspective[index][1] = x
                perspective[index][2] = y
             end
          end
-
       end
-
    end
-
 
    if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
@@ -1117,6 +960,7 @@ function love.mousemoved(x,y, dx, dy)
          end
       end
    end
+
 end
 
 function calcY(i)
@@ -1461,65 +1305,18 @@ function love.load(arg)
                   points = points,
 
                },
-                {
+	       {
                   name="roodchild:"..1,
                   color = {.5,.1,0, 0.8},
                   points = {{0,0},{200,0},{200,200},{0,200}},
 
-		},
-		 {
+	       },
+	       {
                   name="roodchild:"..1,
                   color = {.5,.1,0, 0.8},
                   points = {{300,0},{200,0},{1200,200},{0,1200}},
 
                },
-               -- {
-               --    folder = true,
-               --    transforms =  {l={200,200,0,1,1,100,0,0,0}},
-               --    name="yellow",
-               --    children ={
-               --       {
-               --          name="chi22ld:"..1,
-               --          color = {1,1,0, 0.8},
-               --          points = {{0,0},{200,0},{200,200},{0,200}},
-
-               --       },
-               --       {
-               --          folder = true,
-               --          transforms =  {l={200,200,0,1,1,100,0,0,0}},
-               --          name="blue",
-               --          children ={
-
-
-
-               --             {
-               --                name="bluechild:"..1,
-               --                color = {0,0,1, 0.8},
-               --                points = {{0,0},{200,0},{200,200},{0,200}},
-
-               --             },
-               --             {
-               --                folder = true,
-               --                transforms =  {l={200,200,0,1,1,0,0,0,0}},
-               --                name="endhandle",
-               --                children ={
-
-               --                   {
-               --                      name="endhandlechild:"..1,
-               --                      color = {0,1,0, 0.8},
-               --                      points = {{0,0},{20,0},{20,20},{0,20}},
-
-               --                   }
-
-               --                }
-               --             }
-
-
-
-               --          }
-               --       }
-               --    }
-               -- }
             },
          },
       }
@@ -1561,16 +1358,7 @@ function love.load(arg)
 end
 
 
-function recenterPoints(points)
-   local tlx, tly, brx, bry = getPointsBBox(points)
-   local w2 = (brx - tlx)/2
-   local h2 = (bry - tly)/2
-   for i=1, #points do
-      points[i][1] = points[i][1] -  (tlx + w2)
-      points[i][2] = points[i][2] -  (tly + h2)
-   end
-   return points
-end
+
 
 function drawGrid()
    local scale = root.transforms.l[4]
@@ -1600,7 +1388,6 @@ function  makeNewFolder()
 
    if currentNode and not currentNode.folder then
       remeshNode(currentNode)
-      --      currentNode.mesh= makeMeshFromVertices(poly.makeVertices(currentNode))
    end
    if (currentNode) then
       shape._parent = currentNode and currentNode._parent
@@ -1611,8 +1398,6 @@ function  makeNewFolder()
    end
    return shape
 end
-
-
 
 
 local step = 0
@@ -1628,20 +1413,6 @@ end
 
 
 function love.draw()
-
-   -- love.graphics.setColor(1,1,1, 1)
-   -- canvas:renderTo(function()
-   --        --love.graphics.setColor(love.math.random(), 0, 0);
-   --        for i =1, 10 /2 do
-   --           --love.graphics.line(0, 0, love.math.random(0, love.graphics.getWidth()), love.math.random(0, love.graphics.getHeight()));
-
-   --        end
-   --        love.graphics.setColor(1,1,1, 1)
-   --        renderThings(root)
-   --  end);
-   -- love.graphics.setColor(1,1,1, 1)
-   -- love.graphics.draw(canvas);
-
 
 
    if true then
@@ -1661,8 +1432,6 @@ function love.draw()
       end
 
       love.graphics.setWireframe(wireframe )
-      --local bbox = getBBoxOfChildren(root.children)
-      --print(inspect(bbox))
       print('need to recursivey make bbox so i can make fitting canvas')
       renderThings(root)
 
@@ -1697,31 +1466,10 @@ function love.draw()
          love.graphics.circle("line", pivotX, pivotY, 10)
       end
 
-
-
-
-
-
       if editingModeSub == 'change-perspective' and currentNode then
-         -- for now the limitation is :
-         -- children can only be shapes (not folders)
-         -- thus no nesting
-         --print("sjoepie")
 
          if currentNode.children then
 
-            --print(minX,minY, maxX,maxY)
-
-            -- four corner distort!!!!
-            --https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
-            --https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
-
-
-            -- mesh data passing can be improved: , jit ffi though so no iOS joy
-            --https://love2d.org/forums/viewtopic.php?t=83410
-            --https://gist.github.com/TannerRogalsky/1e9950c116bc88a94cc0cf9ff571cff2
-
-            --local vanilla = {}
             if (true) then
                local bbox = getBBoxOfChildren(currentNode.children)
                local t = currentNode._globalTransform
@@ -1740,42 +1488,14 @@ function love.draw()
 
                   if currentNode.children[i].points then
 
-
-                     -- local verts = {}
-                     -- for j =1, #currentNode.children[i].points do
-                     --    local p = currentNode.children[i].points[j]
-                     --    local r = transferPoint (p[1], p[2], source, dest)
-                     --    if tostring(r.x) == 'nan' then
-                     --       r.x = p[1]
-                     --    end
-                     --    if tostring(r.y) == 'nan' then
-                     --       r.y = p[2]
-                     --    end
-                     --    table.insert(verts, {r.x,r.y})
-                     -- end
-
-
-                     -- optimization idea:
-                     -- instead of constructing a new mesh (with all the complex triangulation behind the scenes)
-                     -- just change the vertices with the transferpoint function above, it might be good enough, it might not, but itll be a fuckton faster
-
-                    -- local fakeNode = {color=currentNode.children[i].color, points=verts}
-
                      if (currentNode.children[i].mesh) then
-
-                        --local tm = love.graphics.newMesh(simple_format, poly.makeVertices(fakeNode) , "triangles")
-
 
                         local count = currentNode.children[i].mesh:getVertexCount()
                         local result = {}
 
-
-
                         for v = 1, count do
                            local x, y = currentNode.children[i].mesh:getVertex(v)
-                           --print(x, y)
                            local r = transferPoint (x, y, source, dest)
-                           --print(x,y,r.x,r.y)
                            table.insert(result, {r.x, r.y})
                         end
 
@@ -1792,20 +1512,12 @@ function love.draw()
                            currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
                         end
 
-
-
-                        --
-                        --local tm = love.graphics.newMesh(simple_format, result , "triangles")
-
                         love.graphics.setColor(currentNode.children[i].color[1],
                                                currentNode.children[i].color[2],
                                                currentNode.children[i].color[3],0.3)
                         love.graphics.draw(currentNode.children[i].perspectiveMesh, currentNode._globalTransform)
 
                      end
-                     --print((currentNode.children[i].mesh:getVertex(1)))
-
-
                   end
                end
             end
@@ -1814,8 +1526,6 @@ function love.draw()
             local BRX,BRY = perspective[3][1], perspective[3][2]
 
             love.graphics.setColor(1,1,1)
-            --love.graphics.rectangle('line', TLX, TLY, BRX-TLX, BRY-TLY )
-            ------
 
             function simplehover(x,y, width)
                if pointInRect(mx,my, x, y, width,width) then
@@ -1825,12 +1535,10 @@ function love.draw()
                end
             end
 
-
             for i=1, 4 do
                local nxt = i -1
                if nxt < 1 then nxt = 4 end
 
-               --print(nxt)
                love.graphics.line(
                   perspective[i][1], perspective[i][2],
                   perspective[nxt][1], perspective[nxt][2]
@@ -2160,14 +1868,10 @@ function love.draw()
 
                   meshAll(f._parent)
                   childrenInRectangleSelect = {}
-
                end
 
             end
          end
-         --ui.object_group
-         --doubleiconlabelbutton('add-shape-too', ui.add, ui.folder, rightX-600, 100)
-         --doubleiconlabelbutton('add-shape-too', ui.add, ui.polygon, rightX-500, 100)
 
          if iconlabelbutton('add-shape', ui.add, nil, false,  'shape',  rightX-500, 16, 128).clicked then
             local shape = {
@@ -2178,7 +1882,6 @@ function love.draw()
 
             if currentNode and not currentNode.folder then
                remeshNode(currentNode)
-               --            currentNode.mesh= makeMeshFromVertices(poly.makeVertices(currentNode))
             end
             if (currentNode) then
                shape._parent = currentNode and currentNode._parent
@@ -2195,8 +1898,6 @@ function love.draw()
          if iconlabelbutton('add-parent', ui.add, nil, false,  'folder',  rightX-256 - 96,16, 128).clicked then
 
             local f = makeNewFolder()
-
-
             editingMode = 'polyline'
             editingModeSub = 'polyline-insert'
          end
@@ -2313,8 +2014,6 @@ function love.draw()
          love.graphics.print("dropped file: "..name, 140, 120)
 
          if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
-
-
             if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
                local tab = getDataFromFile(fileDropPopup)
                root.children = TableConcat(root.children, tab)
@@ -2347,26 +2046,8 @@ function love.draw()
       end
    end
    local work =  nil
-
    console.draw()
 end
-
-
-function lerp(v0, v1, t)
-   return v0*(1-t)+v1*t
-end
-
-function getAngleAndDistance(x1,y1,x2,y2)
-   local dx = x1 - x2
-   local dy = y1 - y2
-   local angle =  math.atan2(dy, dx)
-   local distance =  math.sqrt ((dx*dx) + (dy*dy))
-
-   return angle, distance
-end
-
--- end of draw...
-
 
 
 
@@ -2385,242 +2066,194 @@ function love.textinput(t)
    console.textinput(t)
 end
 
-function XgetDataFromFile(file)
-   local filename = file:getFilename()
-   local tab
-   local _shapeName
-
-   if ends_with(filename, '.svg') then
-      local command = 'node '..'resources/svg_to_love/index.js '..filename..' '..simplifyValue
-      print(command)
-      if string.match(filename, " ") then
-         print(":::ERROR::: path string should not contain any spaces")
-      end
-
-      local p = io.popen(command)
-      local str = p:read('*all')
-      p:close()
-      local obj = ('{'..str..'}')
-      tab = (loadstring("return ".. obj)())
-      local charIndex = string.find(filename, "/[^/]*$")
-      if charIndex == nil then
-         charIndex = string.find(filename, "\\[^\\]*$")
-      end
-
-      _shapeName = filename:sub(charIndex+1, -5) -- cutting off .svg
-      shapeName = _shapeName
-
-   end
-
-   if ends_with(filename, 'polygons.txt') then
-      local str = file:read('string')
-      tab = (loadstring("return ".. str)())
-
-      local index = string.find(filename, "/[^/]*$")
-      if index == nil then
-         index = string.find(filename, "\\[^\\]*$")
-      end
-
-      print(index, filename)
-      _shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
-      shapeName = _shapeName
-   end
-   return tab
-end
-
-
 function love.filedropped(file)
    fileDropPopup = file
 end
 
-
 function love.keypressed(key, scancode, isrepeat)
    console.keypressed(key, scancode, isrepeat)
    if not console.isEnabled() then
-   if key == 'lshift' then
-      editingMode = 'rectangle-select'
-   end
+      if key == 'lshift' then
+	 editingMode = 'rectangle-select'
+      end
 
-   if key == 't' then
-      usePerspective = not usePerspective
-   end
-   if key == 'tab' then
-      if editingMode ~= 'dopesheet' then
-         editingMode = 'dopesheet'
-         dopesheetEditing = true
-         if not currentNode then
-            currentNode = root.children[1]
-         end
+      if key == 't' then
+	 usePerspective = not usePerspective
+      end
+      if key == 'tab' then
+	 if editingMode ~= 'dopesheet' then
+	    editingMode = 'dopesheet'
+	    dopesheetEditing = true
+	    if not currentNode then
+	       currentNode = root.children[1]
+	    end
+	 else
+	    dopesheetEditing = false
+	    editingMode = nil
+	 end
+
+	 initializeDopeSheet()
+      end
+      if #childrenInRectangleSelect == 0 then
+	 if key == 'down' then
+	    if currentNode then
+	       local index = getIndex(currentNode)
+	       if #currentNode._parent.children > index + 1 then
+		  setCurrentNode(currentNode._parent.children[index + 1])
+	       end
+	    end
+	 end
+	 if key == 'up' then
+	    if currentNode then
+	       local index = getIndex(currentNode)
+	       if index > 1 then
+		  setCurrentNode(currentNode._parent.children[index -1])
+	       end
+	    end
+	 end
+      end
+
+      if key == "escape" then
+	 if (editingModeSub ~= nil) then
+	    editingModeSub = nil
+	 elseif (editingMode ~= nil) then
+	    editingMode = nil
+	 else
+	    if (quitDialog == true) then
+	       love.event.quit()
+	    elseif (quitDialog == false) then
+	       quitDialog = true
+	    end
+	 end
       else
-         dopesheetEditing = false
-         editingMode = nil
+	 if (quitDialog) then
+	    quitDialog = false
+	 end
       end
 
-      initializeDopeSheet()
-   end
-   if #childrenInRectangleSelect == 0 then
-   if key == 'down' then
-      if currentNode then
-         local index = getIndex(currentNode)
-         if #currentNode._parent.children > index + 1 then
-            setCurrentNode(currentNode._parent.children[index + 1])
-         end
+      if (key == 'p' and not changeName) then
+	 if not profiling then
+	    ProFi:start()
+	 else
+	    ProFi:stop()
+	    ProFi:writeReport( 'log/MyProfilingReport.txt' )
+	 end
+	 profiling = not profiling
       end
-   end
-   if key == 'up' then
-      if currentNode then
-         local index = getIndex(currentNode)
-         if index > 1 then
-            setCurrentNode(currentNode._parent.children[index -1])
-         end
+      if key == '-' and not changeName then
+	 love.wheelmoved(0,-1)
       end
-   end
-   end
-
-   if key == "escape" then
-      if (editingModeSub ~= nil) then
-         editingModeSub = nil
-      elseif (editingMode ~= nil) then
-         editingMode = nil
-      else
-         if (quitDialog == true) then
-            love.event.quit()
-         elseif (quitDialog == false) then
-            quitDialog = true
-         end
+      if key == '=' and not changeName then
+	 love.wheelmoved(0,1)
       end
-   else
-      if (quitDialog) then
-         quitDialog = false
+      if key == '0' and not changeName then
+	 root.transforms.l[1] = 0
+	 root.transforms.l[2] = 0
       end
-   end
-
-   if (key == 'p' and not changeName) then
-      if not profiling then
-         ProFi:start()
-      else
-         ProFi:stop()
-         ProFi:writeReport( 'log/MyProfilingReport.txt' )
-      end
-      profiling = not profiling
-   end
-   if key == '-' and not changeName then
-      love.wheelmoved(0,-1)
-   end
-   if key == '=' and not changeName then
-      love.wheelmoved(0,1)
-   end
-   if key == '0' and not changeName then
-      root.transforms.l[1] = 0
-      root.transforms.l[2] = 0
-   end
-   if key == 'o' then -- trace
-      if currentNode  then
-         if currentNode.points then
-            print(currentNode.name)
-            print(inspect(poly.makeVertices(currentNode)))
-            print(inspect(currentNode.points))
-            print(inspect(currentNode.transforms))
-         else
-            print(inspect(currentNode.transforms))
-         end
-
+      if key == 'o' then -- trace
+	 if currentNode  then
+	    if currentNode.points then
+	       print(currentNode.name)
+	       print(inspect(poly.makeVertices(currentNode)))
+	       print(inspect(currentNode.points))
+	       print(inspect(currentNode.transforms))
+	    else
+	       print(inspect(currentNode.transforms))
+	    end
+	 end
       end
 
-   end
+      if (key == 's' and not changeName) then
+	 local path = shapeName..".polygons.txt"
+	 local info = love.filesystem.getInfo( path )
+	 if (info) then
+	    shapeName = shapeName..'_'
+	    path =  shapeName..".polygons.txt"
+	 end
+	 local toSave = {}
+	 for i=1 , #root.children do
+	    table.insert(toSave, copyShape(root.children[i]))
+	 end
 
-
-   if (key == 's' and not changeName) then
-      local path = shapeName..".polygons.txt"
-      local info = love.filesystem.getInfo( path )
-      if (info) then
-         shapeName = shapeName..'_'
-         path =  shapeName..".polygons.txt"
-      end
-      local toSave = {}
-      for i=1 , #root.children do
-         table.insert(toSave, copyShape(root.children[i]))
-      end
-
-      love.filesystem.write(path, inspect(toSave, {indent=""}))
-      love.system.openURL("file://"..love.filesystem.getSaveDirectory())
-   end
-   if (key == 'j' and not changeName) then
-      local path = shapeName..".polygons.txt.json"
-      local info = love.filesystem.getInfo( path )
-      if (info) then
-         shapeName = shapeName..'_'
-         path =  shapeName..".polygons.txt.json"
-      end
-      local toSave = {}
-      for i=1 , #root.children do
-         table.insert(toSave, copyShape(root.children[i]))
+	 love.filesystem.write(path, inspect(toSave, {indent=""}))
+	 love.system.openURL("file://"..love.filesystem.getSaveDirectory())
       end
 
-      love.filesystem.write(path, json.encode(toSave, {indent=""}))
-      love.system.openURL("file://"..love.filesystem.getSaveDirectory())
-   end
-   if not changeName and currentNode and not #childrenInRectangleSelect then
-      if (key == 'delete') then
-         deleteNode(currentNode)
-      end
-   end
-   if #childrenInRectangleSelect > 0 and currentNode then
-      local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
-      if (key == 'left') then
-         movePoints(currentNode, shift and -10 or -1, 0)
-      end
-      if (key == 'right') then
-         movePoints(currentNode, shift and 10 or 1, 0)
-      end
-      if (key == 'up') then
-         movePoints(currentNode, 0, shift and -10 or -1)
-      end
-      if (key == 'down') then
-         movePoints(currentNode, 0, shift and 10 or 1)
-      end
-      if key == 'delete' then
-         print("yes i hope?")
-         deletePoints(currentNode)
+      if (key == 'j' and not changeName) then
+	 local path = shapeName..".polygons.txt.json"
+	 local info = love.filesystem.getInfo( path )
+	 if (info) then
+	    shapeName = shapeName..'_'
+	    path =  shapeName..".polygons.txt.json"
+	 end
+	 local toSave = {}
+	 for i=1 , #root.children do
+	    table.insert(toSave, copyShape(root.children[i]))
+	 end
+
+	 love.filesystem.write(path, json.encode(toSave, {indent=""}))
+	 love.system.openURL("file://"..love.filesystem.getSaveDirectory())
       end
 
-   end
-
-
-
-   if (changeName) then
-      if (key == 'backspace') then
-         local str = currentNode and currentNode.name or ""
-         local a,b = split(str, changeNameCursor+1)
-         currentNode.name = table.concat{split(a,utf8.len(a)), b}
-         changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
+      if not changeName and currentNode and not #childrenInRectangleSelect then
+	 if (key == 'delete') then
+	    deleteNode(currentNode)
+	 end
       end
 
-      if (key == 'delete') then
-         local str = currentNode and currentNode.name or ""
-         local a,b = split(str, changeNameCursor+2)
-         if (#b > 0) then
-            currentNode.name = table.concat{split(a,utf8.len(a)), b}
-            changeNameCursor = math.min(#currentNode.name, changeNameCursor)
-         end
+      if #childrenInRectangleSelect > 0 and currentNode then
+	 local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+	 if (key == 'left') then
+	    movePoints(currentNode, shift and -10 or -1, 0)
+	 end
+	 if (key == 'right') then
+	    movePoints(currentNode, shift and 10 or 1, 0)
+	 end
+	 if (key == 'up') then
+	    movePoints(currentNode, 0, shift and -10 or -1)
+	 end
+	 if (key == 'down') then
+	    movePoints(currentNode, 0, shift and 10 or 1)
+	 end
+	 if key == 'delete' then
+	    print("yes i hope?")
+	    deletePoints(currentNode)
+	 end
       end
 
-      if (key == 'left') then
-         if (changeNameCursor > 0) then
-            changeNameCursor = changeNameCursor - 1
-         end
-      end
+      if (changeName) then
+	 if (key == 'backspace') then
+	    local str = currentNode and currentNode.name or ""
+	    local a,b = split(str, changeNameCursor+1)
+	    currentNode.name = table.concat{split(a,utf8.len(a)), b}
+	    changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
+	 end
 
-      if (key == 'right' ) then
-         local str =  currentNode and currentNode.name or ""
-         if (changeNameCursor < utf8.len(str)) then
-            changeNameCursor = changeNameCursor + 1
-         end
-      end
+	 if (key == 'delete') then
+	    local str = currentNode and currentNode.name or ""
+	    local a,b = split(str, changeNameCursor+2)
+	    if (#b > 0) then
+	       currentNode.name = table.concat{split(a,utf8.len(a)), b}
+	       changeNameCursor = math.min(#currentNode.name, changeNameCursor)
+	    end
+	 end
 
-      if (key == 'return') then
-         changeName = false
+	 if (key == 'left') then
+	    if (changeNameCursor > 0) then
+	       changeNameCursor = changeNameCursor - 1
+	    end
+	 end
+
+	 if (key == 'right' ) then
+	    local str =  currentNode and currentNode.name or ""
+	    if (changeNameCursor < utf8.len(str)) then
+	       changeNameCursor = changeNameCursor + 1
+	    end
+	 end
+
+	 if (key == 'return') then
+	    changeName = false
+	 end
       end
-   end
    end
 end

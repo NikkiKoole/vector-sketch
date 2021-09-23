@@ -1,10 +1,11 @@
 package.path = package.path .. ";../../?.lua"
 
 
-require 'editor-utils'
-require 'poly'
-require 'main-utils'
-require 'toolbox'
+require 'lib.editor-utils'
+require 'lib.poly'
+require 'lib.main-utils'
+require 'lib.toolbox'
+
 inspect = require 'vendor.inspect'
 
 
@@ -18,7 +19,7 @@ function love.keypressed(key)
       local x1,y1 = group._globalTransform:transformPoint(0,0)
       removeNodeFrom(group, group._parent)
 
-      
+
       addNodeInGroup(group, root2)
       renderThings(root)
       renderThings(root2)
@@ -32,7 +33,7 @@ function love.keypressed(key)
       group.transforms.l[2] = group.transforms.l[2] - (y0-dy1)
 
    end
-   
+
 end
 
 function love.load()
@@ -67,12 +68,12 @@ function love.load()
 		  color = {1,1,0, 0.8},
 		  points = {{0,0},{200,0},{200,200},{0,200}},
 	 }}}
-	
+
       }
    }
 
-   
-   
+
+
    group = findNodeByName(root, 'group')
 
    parentize(root)
@@ -81,8 +82,8 @@ function love.load()
    meshAll(root2)
    renderThings(root)
    renderThings(root2)
-   
-   
+
+
 end
 
 function love.draw()

@@ -249,7 +249,7 @@ function createStuff()
       table.insert(root.children, voor2)
    end
 
-   if false then
+   if true then
    for j = 1, 1 do
       local generated = generatePolygon(0,0, 4 + random()*16, .05 + random()*.01, .02 , 8 + random()*8)
       local points = {}

@@ -1,13 +1,19 @@
-local Camera = require 'vendor.brady'
+package.path = package.path .. ";../../?.lua"
+
+local Camera = require 'custom-vendor.brady'
+
 local inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
-flux = require "vendor.flux"
-local tween = require "vendor.tween"
-local Vector = require "vendor.brinevector"
+local Vector = require 'vendor.brinevector'
 
---local f = love.filesystem.load('../../dopesheet.lua')
---print(f)
---f.dopesheetTest()
+require 'lib.basics'
+require 'lib.poly'
+require 'lib.toolbox'
+require 'lib.main-utils'
+require 'lib.bbox'
+require 'lib.polyline'
+require 'lib.border-mesh'
+require 'lib.generate-polygon'
 
 require 'generateWorld'
 require 'gradient'
@@ -15,16 +21,9 @@ require 'groundplane'
 require 'fillstuf'
 require 'removeAddItems'
 require 'pointer-interactions'
-require 'basic-tools'  -- this defines require_all
-require_all "vecsketch"
+require 'basic-tools'
+
 random = love.math.random
-
---package.path = package.path .. ";../../vendor/?.lua"
--- this works now i can get rid of all te code duplication
-package.path = package.path .. ";../../vendor/?.lua;../../?.lua"
-
-require 'dopesheet'
-dopesheetTest()
 
 --[[
 TODO:
@@ -60,11 +59,6 @@ end
 
 -- utility functions that ought to be somewehre else
 
-function pointInRect(x,y, rx, ry, rw, rh)
-   if x < rx or y < ry then return false end
-   if x > rx+rw or y > ry+rh then return false end
-   return true
-end
 
 function shuffleAndMultiply(items, mul)
    local result = {}
@@ -242,12 +236,6 @@ function love.load()
       player.x + player.width/2 ,
       -H/2 + offset
    )
-   --dt = 0
-   --ProFi:stop()
-   --ProFi:writeReport( 'profilingLoadReport.txt' )
-
-
-   --print(string.format("load took %.3f millisecs.", (love.timer.getTime() - loadStart) * 1000))
 
    gestureList = {}
 
@@ -277,20 +265,15 @@ function love.load()
    translateHappenedByPressedItems = false
 
    translateCache = {value=0, cacheValue=0, stopped=true, stoppedAt=0, tweenValue=0}
-   --flux.to(translateCache, 1, {tweenValue = 100}):onupdate(function(d) print(translateCache.tweenValue) end)
 
    bouncetween = nil
 end
 
 
 function love.update(dt)
-   --  dt = dt
    lastDT = dt
    local W, H = love.graphics.getDimensions()
 
-   --print(dt)
-   --flux.update(dt)
---   print(tween)
    if bouncetween then
       bouncetween:update(dt)
    end
@@ -487,9 +470,7 @@ function cameraApplyTranslate()
       if translateHappenedByPressedItems == true and  translateByPressed == false then
 	 translateHappenedByPressedItems = false
 	 local cx,cy = cam:getTranslation()
---	 print((translateScheduler.x + translateSchedulerJustItem.x))
 	 local delta = (translateScheduler.x + translateSchedulerJustItem.x) * 10
-	 -- just trigger a camera tween directly no need to mess around with gestures
 	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
       end
       ------ end that part
@@ -605,9 +586,6 @@ function gestureRecognizer(gesture)
       end
    end
 end
-
-
-
 
 function getScreenBBoxForItem(c, hack)
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
@@ -789,10 +767,6 @@ function love.draw()
    end
 
    cam:pop()
-
-   -- draw hitboxes around things with bbox
-
-   --local mx, my-- = love.mouse.getPosition()
 
 
    handlePressedItemsOnStage(W, H)

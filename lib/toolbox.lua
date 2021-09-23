@@ -1,3 +1,9 @@
+function parseFile(url)
+   local contents, size = love.filesystem.read( url)
+   local parsed = (loadstring("return ".. contents)())
+   return parsed
+end
+
 
 function getDataFromFile(file)
    local filename = file:getFilename()
@@ -43,28 +49,6 @@ function getDataFromFile(file)
 end
 
 
-
-function XgetDataFromFile(file)
-   local filename = file:getFilename() 
-   local tab
-   local _shapeName
-
-
-   if ends_with(filename, 'polygons.txt') then
-      local str = file:read('string')
-      tab = (loadstring("return ".. str)())
-
-      local index = string.find(filename, "/[^/]*$")
-      if index == nil then
-         index = string.find(filename, "\\[^\\]*$")
-      end
-
-      print(index, filename)
-      _shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
-      shapeName = _shapeName
-   end
-   return tab
-end
 
 -- this was for a 3d experiment
 function makeScaleFit(root, multipier)
@@ -125,6 +109,22 @@ function generate3dShapeFrom2d(shape, z)
    return result
 end
 
+function addNodeInGroup(node, group)
+   node._parent = group
+   table.insert(group.children, node)
+end
+
+function addAfterNode(element, after)
+   element._parent = after._parent
+   table.insert(after._parent.children, getIndex(after), element)
+end
+
+
+function removeNodeFrom(element, from)
+   assert(getIndex(element))
+   return table.remove(from.children, getIndex(element))
+end
+
 
 function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
@@ -135,7 +135,7 @@ function meshAll(root) -- this needs to be done recursive
          if root.children[i].border then
             print('this border should be meshed here')
          end
-         
+
       else
          meshAll(root.children[i])
       end
@@ -276,4 +276,3 @@ function renderThings3d(root)
    end
    lg.setColor(1,1,1,1)
 end
-
