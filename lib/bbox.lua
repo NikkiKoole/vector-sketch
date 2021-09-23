@@ -14,6 +14,45 @@ function getPointsBBox(points)
    return tlx, tly, brx, bry
 end
 
+function getBBoxRecursive(node)
+   if node.children then
+      setTransforms(node)
+      -- first try to get as deep as possible
+      local p1 = {math.huge, math.huge, -math.huge, -math.huge}
+      for i = 1, #node.children do
+         if node.children[i].folder then
+            local r= getBBoxRecursive(node.children[i])
+            --print('r', inspect(r))
+            if r[1] < p1[1] then p1[1] = r[1] end
+            if r[2] < p1[2] then p1[2] = r[2] end
+            if r[3] > p1[3] then p1[3] = r[3] end
+            if r[4] > p1[4] then p1[4] = r[4] end
+         end
+      end
+     
+      local p2 = {math.huge, math.huge, -math.huge, -math.huge}
+      for i = 1, #node.children do
+         if node.children[i].points then
+            --local r = getBBoxR2(node.children[i])
+            local tlx, tly, brx, bry = getPointsBBox(node.children[i].points)
+            if tlx < p2[1] then p2[1] = tlx end
+            if tly < p2[2] then p2[2] = tly end
+            if brx > p2[3] then p2[3] = brx end
+            if bry > p2[4] then p2[4] = bry end
+
+         end
+      end
+      local tlxg , tlyg = node._globalTransform:transformPoint(p2[1], p2[2])
+      local brxg , bryg = node._globalTransform:transformPoint(p2[3], p2[4])
+
+      return {math.min(tlxg, p1[1]),
+              math.min(tlyg, p1[2]),
+              math.max(brxg, p1[3]),
+              math.max(bryg, p1[4])}
+   end
+end
+
+
 function getDirectChildrenBBox(node)
    local tlx = 9999999999
    local tly = 9999999999
