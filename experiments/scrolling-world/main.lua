@@ -5,6 +5,7 @@ local Camera = require 'custom-vendor.brady'
 local inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
 local Vector = require 'vendor.brinevector'
+local tween = require 'vendor.tween'
 
 require 'lib.basics'
 require 'lib.poly'
@@ -420,6 +421,9 @@ end
 
 function checkForBounceBack()
    -- this thing is meant for the elastic bounce back of items
+   -- i dont really understand what this does anymore
+   -- ah right, its the elements that will bounce in opposite direction of a camera tween
+   -- just the little line right now that displays that
    if translateScheduler.x ~= 0 then
       translateCache.triggered= false
       translateCache.stopped = false
