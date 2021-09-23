@@ -29,9 +29,6 @@ if os.setlocale(nil) ~= 'C' then
    os.setlocale("C")
 end
 
-
-
-
 function getAngleAndDistance(x1,y1,x2,y2)
    local dx = x1 - x2
    local dy = y1 - y2
@@ -40,7 +37,6 @@ function getAngleAndDistance(x1,y1,x2,y2)
 
    return angle, distance
 end
-
 
 function getLocalDelta(transform, dx, dy)
    local dx1, dy1 = transform:inverseTransformPoint( 0, 0 )
@@ -62,12 +58,9 @@ end
 function setCurrentNode(newNode)
    if currentNode and not currentNode.folder then
       remeshNode(currentNode)
-      --currentNode.mesh = makeMeshFromVertices(poly.makeVertices(currui.tNode), currentNode.points)
    end
    currentNode = newNode
 end
-
-
 
 function isPartOfKeyframePose(node)
    if (node.keyframes) then return true end
@@ -87,6 +80,7 @@ function countNestedChildren(node, total)
    end
    return total
 end
+
 function nodeIsMyOwnOffspring(me, node)
    if (me == node) then return true end
    if (node._parent == me) then
@@ -99,16 +93,9 @@ function nodeIsMyOwnOffspring(me, node)
 end
 
 function rotateGroup(node, degrees)
-   if node.degrees then
-      print('this shape has been rotated before')
-   end
-
-   node.degrees = degrees
    local tlx, tly, brx, bry = getPointsBBox(node.points)
    local w2 = (brx - tlx)/2
    local h2 = (bry - tly)/2
-   print('center of points=', tlx+w2, tly+h2)
-
    local cx = tlx+w2
    local cy = tly+h2
 
@@ -125,12 +112,8 @@ function rotateGroup(node, degrees)
       p[1] = xnew + cx
       p[2] = ynew + cy
       node.points[i] =  {p[1], p[2]}
-      --	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
-
    end
    remeshNode(node)
-
-
 end
 
 function recenterGroup(group, dx, dy)
@@ -155,10 +138,7 @@ function recenterPoints(points)
 end
 
 function resizeGroup(node, children, scale)
-
-   --print(inspect(children[1]))
    if type(children[1]) == 'number' then
-
       for i = 1, #children do
 	 local index = children[i]
          node.points[index] = {node.points[index][1] * scale, node.points[index][2] * scale}
@@ -166,20 +146,15 @@ function resizeGroup(node, children, scale)
    else
       print(type(children[1]), inspect(children[1]))
       print('other things')
-
    end
-
 end
+
 function flipGroup(node, children, xaxis, yaxis)
    if type(children[1]) == 'number' then
-      --local scaledPoints = {}
-      --print(inspect(children))
       for p=1, #children do
 	 local index = children[p]
 	 node.points[index] =  {node.points[index][1] * xaxis, node.points[index][2] * yaxis}
-	 --	 scaledPoints[p] = {node.children[i][1] * (xaxis ), children[i][2] * (yaxis )}
       end
-      --node.points = scaledPoints
       remeshNode(node)
    else
       for i=1, #children do
@@ -207,8 +182,6 @@ function deleteNode(node)
       setCurrentNode(nil)
    end
 end
-
-
 
 function removeGroupOfThings(group)
    local root =  currentNode or root
@@ -251,10 +224,8 @@ function removeShapeAtPath(path)
    return table.remove(root.children, path[1])
 end
 
-
 function movePoints(node, dx, dy)
    if node.folder then
-      --print('parent is a folder, this is about multiple whole shapes')
       for i = 1, #childrenInRectangleSelect do
 	 local child = childrenInRectangleSelect[i]
 	 local childIndex = getIndex(child)
@@ -264,19 +235,15 @@ function movePoints(node, dx, dy)
 	 end
 	 remeshNode( node.children[childIndex])
       end
-
    end
 
    if node.points then
       for i = 1, #childrenInRectangleSelect do
-
 	 local index = childrenInRectangleSelect[i]
 	 node.points[index] = {node.points[index][1] + dx, node.points[index][2] + dy}
-
       end
       remeshNode(node)
    end
-
 end
 
 local function arrayHas(tab, val)
@@ -292,21 +259,13 @@ end
 function deletePoints(node)
    local newPoints = {}
    for i = 1, #node.points do
-      --print(inspect(childrenInRectangleSelect), i,  not arrayHas(childrenInRectangleSelect, i))
       if not arrayHas(childrenInRectangleSelect, i) then
          table.insert(newPoints, {node.points[i][1], node.points[i][2]})
       end
-
-      -- if i isnt in childreninrectangelselct the n add
    end
    node.points = newPoints
    remeshNode(node)
-   --   node.mesh = makeMeshFromVertices(poly.makeVertices(node))
-
 end
-
-
-
 
 
 ------------ editor specific code
@@ -338,8 +297,8 @@ function drawUIAroundGraphNodes(w,h)
             meshAll(cloned)
             setCurrentNode(cloned)
          end
-
       end
+
       if imgbutton('delete', ui.delete,  w - 256, runningY).clicked then
          deleteNode(currentNode)
       end
@@ -392,8 +351,6 @@ function drawUIAroundGraphNodes(w,h)
                currentNode.lerpY = nil
                currentNode.frame = nil
             else
-               --assert(#currentNode.children == 4 or #currentNode.children == 5)
-               --print("")
                currentNode.keyframes = #currentNode.children
                currentNode.lerpX = 0.5
                currentNode.lerpY = 0.5
@@ -497,36 +454,31 @@ function drawUIAroundGraphNodes(w,h)
 	    runningY = runningY + 40
          end
 
-
          if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
             editingModeSub = 'folder-move'
          end
+
          if imgbutton('change-perspective', ui.change, w-256, runningY).clicked then
             editingModeSub = 'change-perspective'
-            print('maybe reset everything about perspective')
-
             local bbox = getBBoxOfChildren(currentNode.children)
             local t = currentNode._globalTransform
             local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
             local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
             perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
          end
+
 	 runningY = runningY + 40
-	 -- this optimizer should only be visibel when allowed,
-	 -- noot every folder can be optimized
 
 	 if imgbutton('optimizer', ui.layer_group, w-300, runningY).clicked then
             if (currentNode.optimizedBatchMesh) then
                currentNode.optimizedBatchMesh = nil
             else
-
 	       makeOptimizedBatchMesh(currentNode)
-
             end
          end
+
          if (currentNode.optimizedBatchMesh) then
             love.graphics.setColor(1,0,0)
-
             love.graphics.rectangle("line", w-300-2, runningY-2, 28,28)
             love.graphics.setColor(1,1,1)
             love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
@@ -564,21 +516,18 @@ function drawUIAroundGraphNodes(w,h)
 	       if #childrenInRectangleSelect > 0 then
 		  editingModeSub = 0
 		  childrenInRectangleSelect = {}
-
 	       else
 		  editingModeSub = 'rectangle-point-select'
 	       end
-
             end
 	    if #childrenInRectangleSelect > 0 then
 	       love.graphics.print(#childrenInRectangleSelect, w - 256, runningY)
 	    end
-
          end
+
          runningY = runningY + 40  -- behind an if !!
          if currentNode and currentNode.points then
             if imgbutton('border', ui.polygon, w - 300, runningY).clicked  then
-               --flipGroup(childrenInRectangleSelect, 1,-1)
                currentNode.border = not currentNode.border
                if currentNode.border then
                   if currentNode.borderThickness == nil then
@@ -594,8 +543,8 @@ function drawUIAroundGraphNodes(w,h)
                      currentNode.borderRandomizerMultiplier = 0
                   end
                end
-
             end
+
             if imgbutton('rotate', ui.rotate, w - 256, runningY).clicked then
                rotateGroup(currentNode, 22.5)
             end
@@ -628,10 +577,13 @@ function drawUIAroundGraphNodes(w,h)
             if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, runningY).clicked  then
                flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
             end
+
             if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, runningY).clicked  then
                flipGroup(currentNode, childrenInRectangleSelect, -1,1)
             end
+
             runningY = runningY + 40  -- behind an if !!
+
             if imgbutton('children-scale', ui.resize, w - 300, runningY).clicked  then
                if love.keyboard.isDown('a') then
                   resizeGroup(currentNode, childrenInRectangleSelect, .75)
@@ -639,18 +591,20 @@ function drawUIAroundGraphNodes(w,h)
                   resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
                end
             end
+
             if imgbutton('children-scale', ui.resize, w - 256, runningY).clicked  then
                if love.keyboard.isDown('a') then
                   resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
                else
                   resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
                end
-
             end
+
             runningY = runningY + 40  -- behind an if !!
          end
 
          if (editingMode == 'polyline') and currentNode  then
+
             if imgbutton('polyline-edit', ui.polyline_edit,  w - 320, runningY).clicked then
                editingModeSub = 'polyline-edit'
             end
@@ -671,6 +625,7 @@ end
 
 function love.mousepressed(x,y, button)
    lastDraggedElement = nil
+
    if editingMode == nil then
       editingMode = 'move'
    end
@@ -688,11 +643,9 @@ function love.mousepressed(x,y, button)
       end
    end
 
-
    if editingMode == 'rectangle-select' or editingModeSub == 'rectangle-point-select'  then
       rectangleSelect.startP = {x=x, y=y}
    end
-
 
    if currentNode then
       local points = currentNode and currentNode.points
@@ -700,7 +653,7 @@ function love.mousepressed(x,y, button)
       local px, py = t:inverseTransformPoint( x, y )
       local scale = root.transforms.l[4]
 
-      if  editingModeSub == 'change-perspective' and currentNode then
+      if editingModeSub == 'change-perspective' and currentNode then
 	 function simplecheck(x2,y2, width)
 	    if pointInRect(x,y, x2, y2, width,width) then
 	       return true
@@ -723,7 +676,8 @@ function love.mousepressed(x,y, button)
 	    local index =  0
 	    for i = 1, #points do
 	       if pointInRect(px,py,
-			      points[i][1] - w/2, points[i][2] - w/2,
+			      points[i][1] - w/2,
+			      points[i][2] - w/2,
 			      w, w) then
 		  index = i
 	       end
@@ -752,8 +706,8 @@ function love.mousereleased(x,y, button)
    if editingMode == 'move' then
       editingMode = nil
    end
-   if editingModeSub == 'rectangle-point-select' then
 
+   if editingModeSub == 'rectangle-point-select' then
       if  (rectangleSelect.startP and rectangleSelect.endP) then
          childrenInRect = {}
          local parent = currentNode._parent or root
@@ -778,7 +732,6 @@ function love.mousereleased(x,y, button)
    if (editingMode == 'rectangle-select') then
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
-
          local t = not currentNode and  root._localTransform or root._globalTransform
          if t then
             local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
@@ -857,12 +810,9 @@ function love.mousemoved(x,y, dx, dy)
       love.mouse.setCursor(handCursor)
       root.transforms.l[1] = root.transforms.l[1] + dx
       root.transforms.l[2] = root.transforms.l[2] + dy
-
-
    else
       love.mouse.setCursor()
    end
-
 
    if editingMode == 'backdrop' and  editingModeSub == 'backdrop-move' and love.mouse.isDown(1) then
       backdrop.x = backdrop.x + dx / root.transforms.l[4]
@@ -889,6 +839,7 @@ function love.mousemoved(x,y, dx, dy)
          currentNode.transforms.l[2]= currentNode.transforms.l[2] + ddy
       end
    end
+
    if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot' and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
          local ddx, ddy = getLocalDelta(currentNode._globalTransform, dx, dy)
@@ -958,7 +909,6 @@ function love.mousemoved(x,y, dx, dy)
          end
       end
    end
-
 end
 
 function calcY(i)
@@ -967,7 +917,6 @@ end
 function calcX(i)
    return ((24 + 8 + 4) * i)
 end
-
 
 function recursiveCloseAll(node)
    if node.folder then
@@ -980,6 +929,7 @@ function recursiveCloseAll(node)
       end
    end
 end
+
 function recursiveOpenSome(node, toOpen)
    if node.folder then
       for j=#toOpen, 1, -1 do
@@ -996,32 +946,24 @@ function recursiveOpenSome(node, toOpen)
       end
    end
 end
+
 function recursiveGetRunningYForNode(node, lookFor, runningY)
    -- this one assumes the nodes are already opened up correctly
    local rowHeight = 27 - 4
-   --print(node.name)
    for i = 1,#node.children do
       local child = node.children[i]
-      --print(child.name, lookFor.name)
       if child == lookFor then
-         --print('huuray', runningY)
          return runningY
       else
          runningY = runningY + rowHeight
          if child.folder and child.open then
             return recursiveGetRunningYForNode(node.children[i], lookFor, runningY)
-
          end
-
       end
-
-
    end
 
    return runningY
-
 end
-
 
 function tryToCenterUI(node2)
    recursiveCloseAll(root)
@@ -1039,26 +981,20 @@ function tryToCenterUI(node2)
    else
       scrollviewOffset = 30
    end
-
 end
 
-
 local startTime = love.timer.getTime()
-
 
 function getNodeYPosition(node, lookFor)
    return recursiveGetRunningYForNode(node, lookFor, 0)
 end
-
 
 function renderGraphNodes(node, level, startY)
    local w, h = love.graphics.getDimensions( )
    local beginRightX = w - 210 + level*6
    local rightX = beginRightX
    local nested = 0
-
    local runningY = 0
-
    local rowHeight = 27 - 5
 
    for i=1, #node.children do
@@ -1083,7 +1019,6 @@ function renderGraphNodes(node, level, startY)
 
       local b = {}
       if (yPos >=0 and yPos <= h) then
-         -- 180-(level*6)
          b = iconlabelbutton('object-group'..i, icon, color, child == currentNode, child.name or "", rightX , yPos, 128+32, -4)
       end
 
@@ -1263,6 +1198,7 @@ function love.load(arg)
       name='mix-and-match',
       colors={}
    }
+
    local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox, quentinBlake}
    for i = 1, #palettes do
       for j = 1, #palettes[i].colors do
@@ -1283,8 +1219,6 @@ function love.load(arg)
    for i = 1, #generated, 2 do
       table.insert(points, {generated[i], generated[i+1]})
    end
-
-
 
    root = {
       folder = true,
@@ -1352,11 +1286,7 @@ function love.load(arg)
    dopesheet = {}
    dopesheetEditing = false
    cellCount =  12*1
-
 end
-
-
-
 
 function drawGrid()
    local scale = root.transforms.l[4]
@@ -1407,18 +1337,13 @@ function labelPos(x,y)
    return x,y-20
 end
 
-
-
-
 function love.draw()
-
-
    if true then
       step = step + 1
       local mx,my = love.mouse.getPosition()
 
       handleMouseClickStart()
-      --love.mouse.setCursor(cursors.arrow)
+
       local w, h = love.graphics.getDimensions( )
       local rightX = w - (64 + 500+ 10)/2
 
@@ -1430,7 +1355,7 @@ function love.draw()
       end
 
       love.graphics.setWireframe(wireframe )
-      print('need to recursivey make bbox so i can make fitting canvas')
+      --print('need to recursivey make bbox so i can make fitting canvas')
       renderThings(root)
 
       if (currentlyHoveredUINode) then
@@ -1444,7 +1369,6 @@ function love.draw()
       end
 
       love.graphics.setWireframe( false )
-
       drawUIAroundGraphNodes(w,h)
 
       if currentNode then
@@ -1465,9 +1389,7 @@ function love.draw()
       end
 
       if editingModeSub == 'change-perspective' and currentNode then
-
          if currentNode.children then
-
             if (true) then
                local bbox = getBBoxOfChildren(currentNode.children)
                local t = currentNode._globalTransform
@@ -1513,7 +1435,8 @@ function love.draw()
                         love.graphics.setColor(currentNode.children[i].color[1],
                                                currentNode.children[i].color[2],
                                                currentNode.children[i].color[3],0.3)
-                        love.graphics.draw(currentNode.children[i].perspectiveMesh, currentNode._globalTransform)
+                        love.graphics.draw(currentNode.children[i].perspectiveMesh,
+					   currentNode._globalTransform)
 
                      end
                   end
@@ -1548,9 +1471,7 @@ function love.draw()
             simplehover( perspective[3][1]-5, perspective[3][2]-5, 10)
             simplehover( perspective[4][1]-5, perspective[4][2]-5, 10)
          end
-
       end
-
 
       if editingMode == 'polyline' and currentNode and currentNode.points then
          local points =  currentNode and currentNode.points or {}
@@ -1725,7 +1646,6 @@ function love.draw()
             backdrop.visible = not backdrop.visible
          end
 
-
          love.graphics.setColor(1,1,1, 1)
          love.graphics.print("simplify svg",  labelPos(calcX(1), calcY(1)) )
          local v =  h_slider("simplify_value", calcX(1), calcY(1), 200,  simplifyValue , 0, 10)
@@ -1760,7 +1680,6 @@ function love.draw()
                editingModeSub = nil
                love.graphics.print(string.format("%0.2f", hslider.value),  calcX(18), calcY(1))
             end
-
          end
 
          if (editingModeSub == 'backdrop-palette') then
@@ -1781,7 +1700,6 @@ function love.draw()
       end
 
       if  editingMode ~= 'dopesheet' then
-
          if currentNode  then
             love.graphics.setColor(.1,.1,.1, 0.6)
             love.graphics.rectangle('fill',0,h-64,w,64)
@@ -1832,7 +1750,6 @@ function love.draw()
                end
 
                if imgbutton('object_group', ui.object_group, rightX - 200, calcY(0)).clicked   then
-
                   for i =1, #childrenInRectangleSelect do
                      local n = childrenInRectangleSelect[i]
                      table.remove(n._parent.children, getIndex(n))
@@ -1867,7 +1784,6 @@ function love.draw()
                   meshAll(f._parent)
                   childrenInRectangleSelect = {}
                end
-
             end
          end
 
@@ -2046,7 +1962,6 @@ function love.draw()
    local work =  nil
    console.draw()
 end
-
 
 
 function love.textinput(t)
