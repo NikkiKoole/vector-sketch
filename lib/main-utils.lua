@@ -7,6 +7,73 @@ function getLocalizedDelta(element, dx, dy)
    return x1-x0, y1-y0
 end
 
+function renderNodeIntoCanvas(node, canvas, filename)
+
+   love.graphics.setCanvas({canvas, stencil=true})
+   love.graphics.clear()
+   love.graphics.setBlendMode("alpha")
+
+   drawNodeIntoRect(node, 0,0,canvas:getWidth(),canvas:getHeight())
+
+   love.graphics.setCanvas()
+
+   canvas:newImageData():encode("png",filename)
+end
+
+
+
+
+function drawNodeIntoRect(node, x,y,w,h)
+   -- first get the nodes bbox
+   local bboxbefore = getBBoxRecursive(node)
+   local cw = bboxbefore[3] - bboxbefore[1]
+   local ch = bboxbefore[4] - bboxbefore[2]
+
+   local oldScaleW = node.transforms.l[4]
+   local oldScaleH = node.transforms.l[5]
+
+   local newScaleW = oldScaleW / (cw/w)
+   local newScaleH = oldScaleH / (ch/h)
+
+   local biggestRatio = math.max(cw, ch)
+   local newScaleW2 = oldScaleW / (biggestRatio/w)
+   local newScaleH2 = oldScaleH / (biggestRatio/h)
+
+
+   -- here i am scaling the original
+   node.transforms.l[4] = newScaleW
+   node.transforms.l[5] = newScaleH
+   local bboxafter = getBBoxRecursive(node) -- this bbox describes the squashed image
+
+
+   -- here i am scaling the original
+   node.transforms.l[4] = newScaleW2
+   node.transforms.l[5] = newScaleH2
+   local bboxafter2 = getBBoxRecursive(node) -- this bbox descirbes the image at the same ratio as original
+
+   -- now i need to calculate the offset, which is the same as the difference between the 2 bounding boxes
+
+   local w1 = bboxafter[3] - bboxafter[1]
+   local w2 = bboxafter2[3] - bboxafter2[1]
+   local h1 = bboxafter[4] - bboxafter[2]
+   local h2 = bboxafter2[4] - bboxafter2[2]
+   local offsetX = (w1 - w2)/2
+   local offsetY = (h1 - h2)/2
+
+   love.graphics.push()
+   love.graphics.translate(-bboxafter2[1] + x + offsetX, -bboxafter2[2] + y + offsetY)
+   renderThings(node)
+   love.graphics.pop()
+
+
+
+      -- here i am restoring the original
+   node.transforms.l[4] = oldScaleW
+   node.transforms.l[5] = oldScaleH
+
+
+end
+
 
 function transferPoint (xI, yI, source, destination)
 

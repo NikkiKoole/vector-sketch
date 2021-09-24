@@ -2043,7 +2043,10 @@ function love.keypressed(key, scancode, isrepeat)
 	    quitDialog = false
 	 end
       end
-
+      if (key == 'i' and not changeName) then
+	 -- screenshot
+	 renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapeName..".polygons.png")
+      end
       if (key == 'p' and not changeName) then
 	 if not profiling then
 	    ProFi:start()
