@@ -28,9 +28,6 @@ function love.load()
       children ={}
    }
 
-
-
-   
    baas = parseFile('eindbaas.polygons.txt')[1]
    
    table.insert(root.children, baas)
@@ -107,27 +104,35 @@ function love.draw()
 
    local oldScaleW = root.transforms.l[4]
    local oldScaleH = root.transforms.l[5]
+
+   --scale = scaleX < scaleY ? scaleX : scaleY;
    local oldX = root.transforms.l[1]
    local oldY = root.transforms.l[2]
 
-   -- i odnt know how to calculate the correct x and y yet
-   -- its something about my oldX and teh b[1]/ tlx
-   
 
-   --print(oldX)
-   --root.transforms.l[1] = oldX / (cw/200)
-   --root.transforms.l[2] = 0
-   root.transforms.l[4] = root.transforms.l[4] / (cw/200)
-   root.transforms.l[5] = root.transforms.l[5] / (cw/200)
+   local newScaleW = root.transforms.l[4] / (cw/200)
+   local newScaleH = root.transforms.l[5] / (cw/200)
+   
+   root.transforms.l[4] = newScaleW 
+   root.transforms.l[5] = newScaleH
+
+   --print(oldScaleW, newScaleW)
+
+   local c = getBBoxRecursive(root)
+
+   love.graphics.push()
+   love.graphics.translate(-c[1],0)
    renderThings(root)
+   --print(c[1], b[1])
+   love.graphics.pop()
 
    root.transforms.l[4] = oldScaleW
    root.transforms.l[5] = oldScaleH
    root.transforms.l[1] = oldX
    root.transforms.l[2] = oldY
    
-      
-   love.graphics.line(0,0,200,0)
+   love.graphics.setColor(1,1,1)
+--   love.graphics.line(0,0,200,0)
    love.graphics.line(0,0,200,200)
 
 end
