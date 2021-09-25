@@ -29,6 +29,7 @@ if os.setlocale(nil) ~= 'C' then
    os.setlocale("C")
 end
 
+
 function getAngleAndDistance(x1,y1,x2,y2)
    local dx = x1 - x2
    local dy = y1 - y2
@@ -1104,7 +1105,6 @@ end
 
 
 function love.load(arg)
-
    shapeName = 'untitled'
    love.keyboard.setKeyRepeat( true )
    editingMode = nil

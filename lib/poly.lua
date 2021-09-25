@@ -247,7 +247,7 @@ function triangulate(type, poly)
          local triangles = love.math.triangulate(p)
          for j = 1, #triangles do
             local t = triangles[j]
-            local cx, cy = getCentroid(t)
+            local cx, cy = getTriangleCentroid(t)
             if isPointInPath(cx,cy, p) then
                table.insert(result, t)
             end

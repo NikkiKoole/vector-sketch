@@ -24,7 +24,7 @@ require 'removeAddItems'
 require 'pointer-interactions'
 require 'basic-tools'
 
-random = love.math.random
+local random = love.math.random
 
 --[[
 TODO:
@@ -167,15 +167,15 @@ function love.load()
    offset = 20
    counter = 0
    cameraFollowPlayer = false
-   --stuff = {} -- this is the testlayer with just some rectangles and the red player
+   stuff = {} -- this is the testlayer with just some rectangles and the red player
 
    meshCache = {}
 
    depthMinMax = {min=-1, max=1}
    depthScaleFactors = { min=.8, max=1}
 
-   --carThickness = 12.5
-   --testCar = false
+   carThickness = 12.5
+   testCar = false
    testCameraViewpointRects = false
    renderCount = {normal=0, optimized=0, groundMesh=0}
 

@@ -4,6 +4,35 @@ function parseFile(url)
    return parsed
 end
 
+function batchProcessAllFiles()
+   local files = love.filesystem.getDirectoryItems('')
+   for k, file in ipairs(files) do
+      --print(k .. ". " .. file) --outputs something like "1. main.lua"
+      if ends_with(file, 'polygons.txt') then
+         print(file)
+         contents, size = love.filesystem.read(file )
+         --print(contents)
+         tab = (loadstring("return ".. contents)())
+      
+         _shapeName = file:sub(1, -14) --cutting off .polygons.txt
+         shapeName = _shapeName
+      
+         print(shapeName)
+         root.children = tab -- TableConcat(root.children, tab)
+         parentize(root)
+         scrollviewOffset = 0
+         editingMode = nil
+         editingModeSub = nil
+         currentNode = nil
+         meshAll(root)
+
+         renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapeName..".polygons.png")
+         --print(tab)
+      end
+      
+   end
+end
+
 
 function getDataFromFile(file)
    local filename = file:getFilename()
