@@ -4,6 +4,8 @@ function parseFile(url)
    return parsed
 end
 
+-- this function is actually just for the editor
+-- that shol dnot be in these files
 function batchProcessAllFiles()
    local files = love.filesystem.getDirectoryItems('')
    for k, file in ipairs(files) do

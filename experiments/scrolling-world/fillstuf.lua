@@ -1,4 +1,4 @@
-
+local random = love.math.random
 
 function createStuff()
     local W, H = love.graphics.getDimensions()
@@ -73,7 +73,7 @@ function createStuff()
       carbodyVoor.children[2].children[2].color[4] = 0.6
       carbodyVoor.transforms.l[1]=0
       carbodyVoor.transforms.l[2]=0
-      carbodyVoor.depth = carThickness
+      --carbodyVoor.depth = carThickness
    end
    --initCarParts()
     plantUrls = {
