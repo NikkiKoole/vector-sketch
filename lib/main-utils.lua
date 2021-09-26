@@ -341,11 +341,17 @@ function renderNormallyOrOptimized(shape)
 	 for i=1, #shape.optimizedBatchMesh do
 	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
 	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
-	    renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
+            if renderCount then
+               renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
+            end
+            
 	 end
 	-- print('getting in optimized render')
       else
-	 renderCount.normal = renderCount.normal + 1
+         if renderCount then
+            renderCount.normal = renderCount.normal + 1
+         end
+         
 	 renderThings(shape)
 	-- print('rendering something?', shape.name)
 	 --print(#shape.children)
