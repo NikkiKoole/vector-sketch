@@ -215,6 +215,7 @@ function makeBorderMesh(node)
    return mesh
 end
 
+--[[
 function meshAll3d(root) -- this needs to be done recursive
 
    for i=1, #root.children do
@@ -307,3 +308,4 @@ function renderThings3d(root)
    end
    lg.setColor(1,1,1,1)
 end
+]]--

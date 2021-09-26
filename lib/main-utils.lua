@@ -330,6 +330,30 @@ function parentize(node)
    end
 end
 
+function renderNormallyOrOptimized(shape)
+   --renderThings(shape)
+   --print(shape.mesh)
+   --print(shape.optimizedBatchMesh)
+   if true then
+      --print(shape.optimizedBatchMesh and #shape.optimizedBatchMesh, shape.name)
+      if (shape.optimizedBatchMesh) then
+	 setTransforms(shape)
+	 for i=1, #shape.optimizedBatchMesh do
+	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
+	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+	    renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
+	 end
+	-- print('getting in optimized render')
+      else
+	 renderCount.normal = renderCount.normal + 1
+	 renderThings(shape)
+	-- print('rendering something?', shape.name)
+	 --print(#shape.children)
+      end
+   end
+
+end
+
 function handleChild(shape)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
@@ -367,20 +391,43 @@ function handleChild(shape)
    end
 
    if shape.folder then
-      if (shape.optimizedBatchMesh) then
-	 --print('something optimized todo here!')
 
-         setTransforms(shape)
-         --love.graphics.setColor(shape.children[1].color)
-         for i=1, #shape.optimizedBatchMesh do
-            love.graphics.setColor(shape.optimizedBatchMesh[i].color)
-            love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
-         end
+      if (shape.depth ~= nil) then
 
-      else
-
-	 renderThings(shape)
+         hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+         hack.relativeScale = (1.0/ hack.scale) * hack.scale
+         hack.push()
       end
+
+
+      if shape.aabb then
+	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
+	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
+	 local extraOffset = 100
+	 if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
+	    renderNormallyOrOptimized(shape)
+	 end
+      else
+	 renderNormallyOrOptimized(shape)
+      end
+
+      
+      -- if (shape.optimizedBatchMesh) then
+      --    --print('something optimized todo here!')
+
+      --    setTransforms(shape)
+      --    --love.graphics.setColor(shape.children[1].color)
+      --    for i=1, #shape.optimizedBatchMesh do
+      --       love.graphics.setColor(shape.optimizedBatchMesh[i].color)
+      --       love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+      --    end
+
+      -- else
+
+      --    renderThings(shape)
+      -- end
+
+      
       love.graphics.setStencilTest()
    end
 
@@ -425,6 +472,9 @@ function handleChild(shape)
 
    end
 
+   if (shape.depth ~= nil) then
+      hack:pop()
+   end
 
 end
 

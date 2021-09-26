@@ -1,5 +1,5 @@
-local random = love.math.random
-
+--local random = love.math.random
+local inspect = require 'vendor.inspect'
 function createStuff()
     local W, H = love.graphics.getDimensions()
     player = {
@@ -99,12 +99,12 @@ function createStuff()
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
        'assets/birdword.polygons.txt',
-      'assets/ramen_.polygons.txt',
+     -- 'assets/ramen_.polygons.txt',
  --      'assets/bedje.polygons.txt',
-       'assets/raampje2.polygons.txt',
-       'assets/raamagain.polygons.txt',
-       'assets/raamagain2.polygons.txt',
-       'assets/raamagain2_.polygons.txt',
+      -- 'assets/raampje2.polygons.txt',
+      -- 'assets/raamagain.polygons.txt',
+      -- 'assets/raamagain2.polygons.txt',
+      -- 'assets/raamagain2_.polygons.txt',
 
 --      'Assets/gerns2.polygons.txt',
 
@@ -113,10 +113,11 @@ function createStuff()
 
 
 
-   for i = -1000, 1000 do
+   for i = -10, 10 do
 
       plantData[i] = {}
-      for p = 1, 5 do
+      for p = 1, 2 do
+         
          table.insert(
             plantData[i],
             {
@@ -133,7 +134,9 @@ function createStuff()
             }
          )
       end
+      
    end
+   print(inspect(plantData))
 
 
 

@@ -24,7 +24,7 @@ require 'removeAddItems'
 require 'pointer-interactions'
 require 'basic-tools'
 
-local random = love.math.random
+random = love.math.random
 
 --[[
 TODO:
@@ -172,7 +172,7 @@ function love.load()
    meshCache = {}
 
    depthMinMax = {min=-1, max=1}
-   depthScaleFactors = { min=.8, max=1}
+   depthScaleFactors = { min=.4, max=1}
 
    carThickness = 12.5
    testCar = false
@@ -592,6 +592,7 @@ function gestureRecognizer(gesture)
 end
 
 function getScreenBBoxForItem(c, hack)
+   
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
    local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
@@ -615,7 +616,7 @@ end
 
 
 
-function drawCameraViewPointRectangles()
+function drawCameraViewPointRectangles(cameraPoint)
    for _, v in pairs(cameraPoint) do
       love.graphics.setColor(1,0,1,.5)
       if v.selected then
@@ -626,7 +627,7 @@ function drawCameraViewPointRectangles()
    end
 end
 
-function drawCameraCross()
+function drawCameraCross(W,H)
    love.graphics.setColor(1,1,1,.2)
    love.graphics.line(0,0,W,H)
    love.graphics.line(0,H,W,0)
