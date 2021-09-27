@@ -155,14 +155,15 @@ function pointerPressed(x,y, id)
 	 local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c)
 
 	 if mouseover then
-            if c.pressed then
-               print('dont kow how but this thig was pressed alreda')
-            end
 
-	    c.pressed = {dx=invx, dy=invy, id=id}
-	    itemPressed = c
-	    c.poep = true
-	    c.groundTileIndex = nil
+	    local justBBoxCheck = false
+
+	    if (justBBoxCheck == true or ( mouseIsOverObjectInCamLayer(x, y, c))) then
+	       c.pressed = {dx=invx, dy=invy, id=id}
+	       itemPressed = c
+	       c.poep = true
+	       c.groundTileIndex = nil
+	    end
 	 end
 
       end
