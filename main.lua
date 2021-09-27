@@ -1,5 +1,8 @@
 inspect = require 'vendor.inspect'
+require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
+
 console = require 'vendor.console'
+
 
 require 'palettes'
 require 'dopesheet'
@@ -19,15 +22,6 @@ utf8 = require("utf8")
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
 easing = require 'vendor.easing'
-
--- four corner distort!!!!
---https://stackoverflow.com/questions/12919398/perspective-transform-of-svg-paths-four-corner-distort
---https://drive.google.com/file/d/0B7ba4SLdzCRuU05VYnlfcHNkSlk/view?resourcekey=0-N6EpbKvpvLA9wt6YpW9_5w
-
-if os.setlocale(nil) ~= 'C' then
-   print('wrong locale:', os.setlocale(nil))
-   os.setlocale("C")
-end
 
 
 function getAngleAndDistance(x1,y1,x2,y2)
@@ -124,7 +118,6 @@ function recenterGroup(group, dx, dy)
          group[i].points[j][2] = group[i].points[j][2] + dy
       end
    end
-
 end
 
 function recenterPoints(points)

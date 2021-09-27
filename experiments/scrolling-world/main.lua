@@ -1,12 +1,12 @@
 package.path = package.path .. ";../../?.lua"
 
 local Camera = require 'custom-vendor.brady'
-
 local inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
 local Vector = require 'vendor.brinevector'
 local tween = require 'vendor.tween'
 
+require 'lib.basic-tools'
 require 'lib.basics'
 require 'lib.poly'
 require 'lib.toolbox'
@@ -22,7 +22,6 @@ require 'groundplane'
 require 'fillstuf'
 require 'removeAddItems'
 require 'pointer-interactions'
-require 'basic-tools'
 
 random = love.math.random
 
@@ -592,7 +591,7 @@ function gestureRecognizer(gesture)
 end
 
 function getScreenBBoxForItem(c, hack)
-   
+
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
    local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
@@ -611,24 +610,17 @@ function mouseIsOverItemBBox(mx, my, item)
    local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
 
 
-   -- another xepriment, which could lead to a
-   -- full mesh is hit it test   meshAll(newPlayer)
-
-   -- can i instead of calcualting everythign to world coords
-   -- do theopposite and calculate mouse to screen
-   -- yes this works and can also be used for the bbox i think
-   local mx2, my2 = cam:getWorldCoordinates(mx, my, hack)
-   local mx3, my3 = item._globalTransform:inverseTransformPoint(mx2, my2)
-   print(item.name, pointInRect(mx3, my3, item.bbox[1], item.bbox[2], item.bbox[3]-item.bbox[1], item.bbox[4]-item.bbox[2] ))
-
-   
-   print(item.mesh and 'normal mesh found', item.optimizedBatchMesh and 'optimized batch mesh found')
-
-   -- this one is correct but just does the bbox
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
-   
 end
 
+function mouseIsOverObjectInCamLayer(mx, my, item)
+   local hack =  {}
+   hack.scale = mapInto(item.depth, depthMinMax.min, depthMinMax.max,
+                        depthScaleFactors.min, depthScaleFactors.max)
+   hack.relativeScale = (1.0/ hack.scale) * hack.scale
+   local mx2, my2 = cam:getWorldCoordinates(mx, my, hack)
+   return  recursiveHitCheck(mx2, my2, item)
+end
 
 
 

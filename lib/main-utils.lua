@@ -163,7 +163,7 @@ function makeOptimizedBatchMesh(folder)
       print("this was empty nothing to optimize")
       return
     end
-    
+
     for i=1, #folder.children do
        if (folder.children[i].folder) then
           print("could not optimize shape, it contained a folder!!",folder.name,folder.children[i].name)
@@ -245,13 +245,20 @@ function recursiveHitCheck(x,y, node)
       local body = node
       local mesh = body.mesh
       if (body and mesh) then
-         if isMouseInMesh(x,y, body._parent, mesh) then
+	 if isMouseInMesh(x,y, body._parent, mesh) then
             return true
          end
       end
    else
-      if node.children then
-         for i = 1, #node.children do
+      if  node.optimizedBatchMesh then
+	 for i = 1, #node.optimizedBatchMesh do  --folder.optimizedBatchMesh[batchIndex] = {mesh=mesh
+	    if isMouseInMesh(x,y, node, node.optimizedBatchMesh[i].mesh) then
+	       return true
+	    end
+	 end
+
+      elseif node.children then
+	 for i = 1, #node.children do
             local r =  recursiveHitCheck(x,y, node.children[i])
             if r then return true end
          end
@@ -345,14 +352,14 @@ function renderNormallyOrOptimized(shape)
             if renderCount then
                renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
             end
-            
+
 	 end
 	-- print('getting in optimized render')
       else
          if renderCount then
             renderCount.normal = renderCount.normal + 1
          end
-         
+
 	 renderThings(shape)
 	-- print('rendering something?', shape.name)
 	 --print(#shape.children)
@@ -418,23 +425,7 @@ function handleChild(shape)
 	 renderNormallyOrOptimized(shape)
       end
 
-      
-      -- if (shape.optimizedBatchMesh) then
-      --    --print('something optimized todo here!')
 
-      --    setTransforms(shape)
-      --    --love.graphics.setColor(shape.children[1].color)
-      --    for i=1, #shape.optimizedBatchMesh do
-      --       love.graphics.setColor(shape.optimizedBatchMesh[i].color)
-      --       love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
-      --    end
-
-      -- else
-
-      --    renderThings(shape)
-      -- end
-
-      
       love.graphics.setStencilTest()
    end
 
@@ -601,6 +592,8 @@ end
 -- this function is just for the bacthMeshcurrently
 ---- these calculations are only needed when some local transforms have changed
 -- they ought t o be more optimized
+-- in short: this needs a isDirty flag of sorts
+
 function setTransforms(root)
 
    local tl = root.transforms.l
@@ -618,7 +611,24 @@ function renderThings(root)
 
    setTransforms(root)
 
-   if (root.keyframes) then
+   if root.keyframes then
+      renderThingsWithKeyFrames(root)
+   else
+      love.graphics.setStencilTest()
+      for i = 1, #root.children do
+	 local shape = root.children[i]
+	 handleChild(shape)
+      end
+      --love.graphics.setStencilTest()
+   end
+   love.graphics.setStencilTest()
+
+
+end
+
+
+function renderThingsWithKeyFrames(root)
+  -- if (root.keyframes) then
       if (root.keyframes == 2 ) then
 	 if currentNode == root then
 	    local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
@@ -738,15 +748,4 @@ function renderThings(root)
 	    handleChild(root.children[root.frame])
 	 end
       end
-   else
-      love.graphics.setStencilTest()
-      for i = 1, #root.children do
-	 local shape = root.children[i]
-	 handleChild(shape)
-      end
-      --love.graphics.setStencilTest()
-   end
-   love.graphics.setStencilTest()
-
-
 end
