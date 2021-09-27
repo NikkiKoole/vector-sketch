@@ -610,7 +610,23 @@ function mouseIsOverItemBBox(mx, my, item)
    local wx, wy = cam:getWorldCoordinates(mx, my, hack)
    local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
 
+
+   -- another xepriment, which could lead to a
+   -- full mesh is hit it test   meshAll(newPlayer)
+
+   -- can i instead of calcualting everythign to world coords
+   -- do theopposite and calculate mouse to screen
+   -- yes this works and can also be used for the bbox i think
+   local mx2, my2 = cam:getWorldCoordinates(mx, my, hack)
+   local mx3, my3 = item._globalTransform:inverseTransformPoint(mx2, my2)
+   print(item.name, pointInRect(mx3, my3, item.bbox[1], item.bbox[2], item.bbox[3]-item.bbox[1], item.bbox[4]-item.bbox[2] ))
+
+   
+   print(item.mesh and 'normal mesh found', item.optimizedBatchMesh and 'optimized batch mesh found')
+
+   -- this one is correct but just does the bbox
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
+   
 end
 
 
@@ -755,7 +771,7 @@ function love.draw()
    --love.graphics.pop()
 
    if testCameraViewpointRects then
-      drawCameraViewPointRectangles()
+      drawCameraViewPointRectangles(cameraPoint)
    end
 
    if (false) then
@@ -802,9 +818,9 @@ function love.draw()
       love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
    end
 
-   --love.graphics.print('done -- make drawing unoptimized possible again', 30, 50)
+   love.graphics.print('make a mousehit test for the layered objects\n (bbox works already) just do it after that hits ', 30, 50)
    --love.graphics.print('then optimize nested object drawing too.', 30, 100)
-   --love.graphics.print('currenlty i cannot render a complex thing.', 30, 150)
+
 end
 
 function love.wheelmoved( dx, dy )

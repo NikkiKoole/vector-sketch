@@ -162,14 +162,14 @@ function makeOptimizedBatchMesh(folder)
     if #folder.children == 0 then
       print("this was empty nothing to optimize")
       return
-   end
+    end
+    
     for i=1, #folder.children do
-      if (folder.children[i].folder) then
-	 print("could not optimize shape, it contained a folder!!")
-	 return
+       if (folder.children[i].folder) then
+          print("could not optimize shape, it contained a folder!!",folder.name,folder.children[i].name)
+          return
       end
     end
-
 
    local lastColor = folder.children[1].color
    local allVerts = {}
@@ -202,6 +202,7 @@ function makeOptimizedBatchMesh(folder)
       end
       local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
       folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+      --print('optimized: ', folder.name,)
    end
 
 end
