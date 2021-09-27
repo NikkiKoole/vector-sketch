@@ -309,6 +309,10 @@ littleGreeneColors = {
     "2E2D2E",
     "040E0F"
 }
+for i = 1, #littleGreeneColors do
+   local r,g,b = hex2rgb(littleGreeneColors[i])
+   table.insert(littleGreene.colors, {name='unknown', rgb={r,g,b}})
+end
 
 
 quentinBlake = {

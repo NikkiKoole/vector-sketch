@@ -1598,11 +1598,13 @@ function love.draw()
       end
 
       if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
-         local colorsInRow = 10
+         local colorsInRow = 16
+         local thumbSize = 20
          for i = 1, #palette.colors do
             local rgb = palette.colors[i].rgb
-            local x = w - 700 + ((i-1) % colorsInRow)*28
-            local y = math.ceil((i) / colorsInRow)*28
+            
+            local x = w - 400 -((thumbSize+2)*colorsInRow) + ((i-1) % colorsInRow)* (thumbSize+4)
+            local y = math.ceil((i) / colorsInRow)* (thumbSize+4)
             y = y + 50
             x = x + 50
 
@@ -1610,10 +1612,10 @@ function love.draw()
                 currentNode.color[2] == rgb[2]/255 and
                 currentNode.color[3] == rgb[3]/255) then
                love.graphics.setColor(1,1,1)
-               love.graphics.rectangle("fill",x-2,y-2,28,28)
+               love.graphics.rectangle("fill",x-2,y-2,thumbSize+4,thumbSize+4)
             end
 
-            if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,s).clicked then
+            if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,thumbSize).clicked then
                currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
             end
          end
@@ -1676,7 +1678,7 @@ function love.draw()
          end
 
          if (editingModeSub == 'backdrop-palette') then
-            local colorsInRow = 10
+            local colorsInRow = 20
             for i = 1, #palette.colors do
                local rgb = palette.colors[i].rgb
                local x = ((i-1) % colorsInRow)*50

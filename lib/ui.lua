@@ -46,10 +46,10 @@ function getUICircle(id, x,y,r)
    }
 end
 
-function rgbbutton(id, rgb, x, y, scale)
+function rgbbutton(id, rgb, x, y, size)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
-   local w, h = 24, 24
+   local w, h = size or 24, size or 24
    local clicked = false
 
    love.graphics.setColor(rgb[1] ,rgb[2],rgb[3], 1)
@@ -64,7 +64,7 @@ function rgbbutton(id, rgb, x, y, scale)
       end
 
       love.graphics.setColor(1,1,1,1)
-      love.graphics.rectangle("line", x*scale, y*scale, (8)*scale,(8)*scale)
+      love.graphics.rectangle("line", x*scale, y*scale, (w)*scale,(h)*scale)
    end
    if (editingMode == id) then
    end
