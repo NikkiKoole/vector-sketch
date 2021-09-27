@@ -1199,7 +1199,7 @@ function love.load(arg)
       colors={}
    }
 
-   local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox, quentinBlake}
+   local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox, quentinBlake, littleGreene}
    for i = 1, #palettes do
       for j = 1, #palettes[i].colors do
          table.insert(palette.colors,palettes[i].colors[j] )
