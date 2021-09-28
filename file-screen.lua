@@ -28,7 +28,7 @@ local function getPolygonFiles(rootPath, tree)
 
 	 if file and png then
 	    tree[#tree+1] = {path=string.sub(path, 2),       txt=file,
-			     pngPath=string.sub(pngPath, 2), png=png }
+			     pngPath=string.sub(pngPath, 2), png=png, img= love.graphics.newImage(string.sub(pngPath, 2)) }
 	 end
       elseif file.type == 'directory'  then
 	 fileTree = getPolygonFiles(path, tree)
@@ -40,37 +40,14 @@ end
 
 
 function gatherData(path)
-
-   -- local polygonFiles = {}
-
-   -- local files = love.filesystem.getDirectoryItems(path)
-   -- for _, file in ipairs(files) do
-   --    local f = love.filesystem.getInfo(file)
-
-   --    if ends_with(file, 'polygons.txt') then
-   --       local pngPath = file:gsub('polygons.txt', 'polygons.png')
-   --       local png = love.filesystem.getInfo(pngPath)
-   --       local txt = f
-   --       if png then
-   --          table.insert(polygonFiles, {png=png, txt=txt})
-   --       end
-   --    end
-
-   --    if f.type == 'directory' and ends_with(file, 'polygons.folder') then
-   --       print(inspect(f),file)
-   --    end
-
-
-   -- end
-
-   --print(inspect(getPolygonFiles(path)))
-   recursiveReadPolygonFiles('', getPolygonFiles(path))
+   return getPolygonFiles(path)
+   --recursiveReadPolygonFiles('', )
 
 end
 
 function recursiveReadPolygonFiles(path, tree)
    for i =1, #tree do
-      print(tree[i].path)
+      print(tree[i].path:sub(1,-14))
    end
 
 
