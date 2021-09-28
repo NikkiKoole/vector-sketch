@@ -6,6 +6,7 @@ console = require 'vendor.console'
 
 require 'palettes'
 require 'dopesheet'
+require 'file-screen'
 
 require 'lib.basics'
 require 'lib.editor-utils'
@@ -1098,6 +1099,7 @@ end
 
 
 function love.load(arg)
+   gatherData('')
    shapeName = 'untitled'
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
