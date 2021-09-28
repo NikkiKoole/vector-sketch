@@ -12,9 +12,32 @@ local function getFiles(rootPath, tree)
       end
    return tree
 end
+local function getPolygonFiles(rootPath, tree)
+   tree = tree or {}
+   local lfs = love.filesystem
+   local filesTable = lfs.getDirectoryItems(rootPath)
+   for i,v in ipairs(filesTable) do
+         local path = rootPath.."/"..v
+         if lfs.getInfo(path).type == 'file' and
+            ends_with(path, 'polygons.txt') then
+            local pngPath = path:gsub('polygons.txt', 'polygons.png')
+            local png = love.filesystem.getInfo(pngPath)
+            --print(pngPath, png)
+
+            tree[#tree+1] = {path=path, png=png, txt=lfs.getInfo(path)}
+         elseif lfs.getInfo(path).type == 'directory' and ends_with(path, 'polygons.folder') then
+            fileTree = getPolygonFiles(path, tree)
+         else
+            --print(path)
+         end
+         
+      end
+   return tree
+end
 
 
 function gatherData(path)
+   
    local polygonFiles = {}
 
    local files = love.filesystem.getDirectoryItems(path)
@@ -37,6 +60,7 @@ function gatherData(path)
 
    end
 
-   --print(inspect(polygonFiles))
-   -- gather files that have a polygons.txt and a polygons.png
+   print(inspect(getPolygonFiles(path)))
+--   print(inspect(getPolygonFiles(path)))
+
 end
