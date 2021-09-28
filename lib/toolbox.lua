@@ -4,6 +4,26 @@ function parseFile(url)
    return parsed
 end
 
+function stringSplit(str, sep)
+   local result = {}
+   local regex = ("([^%s]+)"):format(sep)
+   for each in str:gmatch(regex) do
+      table.insert(result, each)
+   end
+   return result
+end
+
+function stringFindLastSlash(str)
+   --return str:match'^.*()'..char
+   local index =  string.find(str, "/[^/]*$")
+   if index == nil then -- windows ? i dunno?
+      index = string.find(str, "\\[^\\]*$")
+   end
+   return index
+   --index = string.find(your_string, "/[^/]*$")
+end
+
+
 -- this function is actually just for the editor
 -- that shol dnot be in these files
 function batchProcessAllFiles()
@@ -15,10 +35,10 @@ function batchProcessAllFiles()
          contents, size = love.filesystem.read(file )
          --print(contents)
          tab = (loadstring("return ".. contents)())
-      
+
          _shapeName = file:sub(1, -14) --cutting off .polygons.txt
          shapeName = _shapeName
-      
+
          print(shapeName)
          root.children = tab -- TableConcat(root.children, tab)
          parentize(root)
@@ -31,7 +51,7 @@ function batchProcessAllFiles()
          renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapeName..".polygons.png")
          --print(tab)
       end
-      
+
    end
 end
 
@@ -67,14 +87,16 @@ function getDataFromFile(file)
       local str = file:read('string')
       tab = (loadstring("return ".. str)())
 
-      local index = string.find(filename, "/[^/]*$")
-      if index == nil then
-         index = string.find(filename, "\\[^\\]*$")
+      local vsketchIndex = (string.find(filename, 'vector-sketch/', 1, true)) + #'vector-sketch/'
+      local  lookFurther =  filename:sub(vsketchIndex)
+      local index2 = stringFindLastSlash(lookFurther)
+      local fname = lookFurther
+      shapePath = ''
+      if index2 then
+	 fname = lookFurther:sub(index2+1)
+	 shapePath =  lookFurther:sub(1, index2)
       end
-
-      print(index, filename)
-      _shapeName = filename:sub(index+1, -14) --cutting off .polygons.txt
-      shapeName = _shapeName
+      shapeName = fname:sub(1, -14)
    end
    return tab
 end

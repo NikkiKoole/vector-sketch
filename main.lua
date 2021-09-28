@@ -1,8 +1,8 @@
 inspect = require 'vendor.inspect'
-require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
+
 
 console = require 'vendor.console'
-
+require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 
 require 'palettes'
 require 'dopesheet'
@@ -1101,6 +1101,7 @@ end
 function love.load(arg)
    gatherData('')
    shapeName = 'untitled'
+   shapePath = ''
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
@@ -1604,7 +1605,7 @@ function love.draw()
          local thumbSize = 20
          for i = 1, #palette.colors do
             local rgb = palette.colors[i].rgb
-            
+
             local x = w - 400 -((thumbSize+2)*colorsInRow) + ((i-1) % colorsInRow)* (thumbSize+4)
             local y = math.ceil((i) / colorsInRow)* (thumbSize+4)
             y = y + 50
@@ -2040,10 +2041,10 @@ function love.keypressed(key, scancode, isrepeat)
 	    quitDialog = false
 	 end
       end
-      if (key == 'i' and not changeName) then
+      --if (key == 'i' and not changeName) then
 	 -- screenshot
-	 renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapeName..".polygons.png")
-      end
+	 --renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapeName..".polygons.png")
+      --end
       if (key == 'p' and not changeName) then
 	 if not profiling then
 	    ProFi:start()
@@ -2077,19 +2078,27 @@ function love.keypressed(key, scancode, isrepeat)
       end
 
       if (key == 's' and not changeName) then
-	 local path = shapeName..".polygons.txt"
+	 local path = shapePath..shapeName..".polygons.txt"
 	 local info = love.filesystem.getInfo( path )
 	 if (info) then
 	    shapeName = shapeName..'_'
-	    path =  shapeName..".polygons.txt"
+	    path =  shapePath..shapeName..".polygons.txt"
 	 end
 	 local toSave = {}
 	 for i=1 , #root.children do
 	    table.insert(toSave, copyShape(root.children[i]))
 	 end
 
+	 if #shapePath > 0 then
+	    --print('creating directory', shapePath)
+	    love.filesystem.createDirectory( shapePath )
+	 end
+
 	 love.filesystem.write(path, inspect(toSave, {indent=""}))
-	 love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+	 renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapePath..shapeName..".polygons.png")
+	 local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
+	 --print('open url:', openURL)
+	 love.system.openURL(openURL)
       end
 
       if (key == 'j' and not changeName) then
