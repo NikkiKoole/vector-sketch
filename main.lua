@@ -1336,29 +1336,7 @@ end
 
 function love.draw()
    if openFileScreen then
-      love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
-      love.graphics.setColor(1,1,1)
-      local w, h = love.graphics.getDimensions( )
-      local smallsize = (1024/2) / 8
-      local columns = math.ceil(w/smallsize)
-
-      local mx, my = love.mouse.getPosition()
-
-      for i =1, #gatheredData do
-	 local x = (i % columns) - 1
-	 local y = (math.ceil(i / columns)) - 1
-	 love.graphics.draw(gatheredData[i].img,x * smallsize, y * smallsize, 0, .125, .125)
-
-	 if pointInRect(mx, my, x*smallsize, y*smallsize, smallsize, smallsize) then
-
-	    love.graphics.draw(gatheredData[i].img, w-512, h-512, 0, 1, 1)
-	 end
-
-
-      end
-
-      love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
-
+      renderOpenFileScreen()
    else
 
       if true then
@@ -2053,7 +2031,7 @@ function love.keypressed(key, scancode, isrepeat)
       end
 
       if key == "escape" then
-	 if openFileScreen ~= nil then
+	 if openFileScreen == true then
 	    openFileScreen = false
 	 elseif (editingModeSub ~= nil) then
 	    editingModeSub = nil
@@ -2098,7 +2076,7 @@ function love.keypressed(key, scancode, isrepeat)
       end
       if key == 'o' then -- trace
 	 openFileScreen = not openFileScreen
-	 gatheredData = gatherData('')
+	 gatherData('')
       end
 
       if (key == 's' and not changeName) then

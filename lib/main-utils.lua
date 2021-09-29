@@ -223,6 +223,10 @@ end
 function isMouseInMesh(mx, my, body, mesh)
    if mesh and body then
       local count = mesh:getVertexCount()
+      if body._globalTransform then
+
+
+      
       local px,py = body._globalTransform:inverseTransformPoint(mx, my)
       for i = 1, count, 3 do
          if i+2 <= count then
@@ -231,6 +235,7 @@ function isMouseInMesh(mx, my, body, mesh)
             end
          end
 
+      end
       end
    end
    return false
@@ -245,6 +250,7 @@ function recursiveHitCheck(x,y, node)
       local body = node
       local mesh = body.mesh
       if (body and mesh) then
+         print(body.name)
 	 if isMouseInMesh(x,y, body._parent, mesh) then
             return true
          end

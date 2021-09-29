@@ -85,7 +85,13 @@ function getDataFromFile(file)
 
    if ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
-      tab = (loadstring("return ".. str)())
+      tab = readStrAsShape(str, filename)
+   end
+   return tab
+end
+
+function readStrAsShape(str, filename )
+      local tab = (loadstring("return ".. str)())
 
       local vsketchIndex = (string.find(filename, 'vector-sketch/', 1, true)) + #'vector-sketch/'
       local  lookFurther =  filename:sub(vsketchIndex)
@@ -97,10 +103,8 @@ function getDataFromFile(file)
 	 shapePath =  lookFurther:sub(1, index2)
       end
       shapeName = fname:sub(1, -14)
-   end
-   return tab
+      return tab
 end
-
 
 
 -- this was for a 3d experiment
