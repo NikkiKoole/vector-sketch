@@ -91,14 +91,16 @@ function createStuff()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
-       'assets/poep.polygons.txt',
+      'assets/digger_.polygons.txt',
+      'assets/digger02__.polygons.txt',
+      -- 'assets/poep.polygons.txt',
 
        --'assets/isthissizeok.polygons.txt',
  --      'assets/anotherdog.polygons.txt',
-       'assets/birdword.polygons.txt',
-       'assets/birdword.polygons.txt',
-       'assets/birdword.polygons.txt',
-       'assets/birdword.polygons.txt',
+      -- 'assets/birdword.polygons.txt',
+      -- 'assets/birdword.polygons.txt',
+      -- 'assets/birdword.polygons.txt',
+      -- 'assets/birdword.polygons.txt',
      -- 'assets/ramen_.polygons.txt',
  --      'assets/bedje.polygons.txt',
       -- 'assets/raampje2.polygons.txt',
@@ -113,11 +115,11 @@ function createStuff()
 
 
 
-   for i = -10, 10 do
+   for i = -1000, 1000 do
 
       plantData[i] = {}
-      for p = 1, 1 do
-         
+      for p = 1, 10 do
+
          table.insert(
             plantData[i],
             {
@@ -134,7 +136,7 @@ function createStuff()
             }
          )
       end
-      
+
    end
    --print(inspect(plantData))
 

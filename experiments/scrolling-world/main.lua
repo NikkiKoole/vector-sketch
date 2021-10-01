@@ -171,7 +171,7 @@ function love.load()
    meshCache = {}
 
    depthMinMax = {min=-1, max=1}
-   depthScaleFactors = { min=.4, max=1}
+   depthScaleFactors = { min=.8, max=1}
 
    carThickness = 12.5
    testCar = false

@@ -10,7 +10,7 @@ function drawGroundPlaneLines()
 
    arrangeWhatIsVisible(x1, x2, tileSize)
 
-   local useCPU = false
+   local useCPU = true
 
    local simplerPolies = true
 
