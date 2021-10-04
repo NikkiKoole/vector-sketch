@@ -84,6 +84,26 @@ function handlePressedItemsOnStage(W, H)
 
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+
+
+
+	    -- this renders the pivot point
+	    love.graphics.setColor(1,1,1,1)
+	    local px, py = c._globalTransform:transformPoint( c.transforms.l[6], c.transforms.l[7])
+	    local hack =  {}
+	    hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max,
+				 depthScaleFactors.min, depthScaleFactors.max)
+	    hack.relativeScale = (1.0/ hack.scale) * hack.scale
+	    local pivx, pivy = cam:getScreenCoordinates(px, py, hack)
+
+	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
+	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
+
+	    --love.graphics.rectangle('fill', pivx-5, pivy-5, 10, 10)
+	    -- end
+
+
+
          end
 
 	 if false and c.mouseOver then

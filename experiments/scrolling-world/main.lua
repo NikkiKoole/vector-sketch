@@ -15,6 +15,7 @@ require 'lib.bbox'
 require 'lib.polyline'
 require 'lib.border-mesh'
 require 'lib.generate-polygon'
+require 'lib.ui'
 
 require 'generateWorld'
 require 'gradient'
@@ -267,6 +268,27 @@ function love.load()
    translateCache = {value=0, cacheValue=0, stopped=true, stoppedAt=0, tweenValue=0}
 
    bouncetween = nil
+
+   uiState = {
+      toggle1=true,
+      gravityValue= 50
+   }
+
+   mouseState = {
+      hoveredSomething = false,
+      down = false,
+      lastDown = false,
+      click = false,
+      offset = {x=0, y=0}
+   }
+
+   cursors = {
+      hand= love.mouse.getSystemCursor("hand"),
+      arrow= love.mouse.getSystemCursor("arrow")
+   }
+
+   activeButton = nil
+
 end
 
 
@@ -497,6 +519,9 @@ end
 
 
 function love.mousepressed(x,y, button, istouch, presses)
+
+   if (mouseState.hoveredSomething) then return end
+
    if not istouch then
       pointerPressed(x,y, 'mouse')
    end
@@ -519,6 +544,8 @@ end
 
 
 function love.mousereleased(x,y, button, istouch)
+   lastDraggedElement = nil --{id=id}
+
    if not istouch then
       pointerReleased(x,y, 'mouse')
    end
@@ -683,7 +710,7 @@ function drawUI()
 
    local W, H = love.graphics.getDimensions()
 
-   if ui.show then
+   if false and ui.show then
       love.graphics.setColor(1,1,1, 0.3)
       love.graphics.rectangle('fill', 0,0, W, 50)
 
@@ -697,14 +724,44 @@ function drawUI()
    end
 
 
+   love.graphics.setFont(font)
+    local toggleString = function(state, str)
+      if state then
+	 return '(x) '..str
+      else
+	 return '(o) '..str
+      end
+   end
+   local buttonMarginSide = 16
+   local str = "show settings"
+   str = toggleString(uiState.toggle1, str)
+   local w = font:getWidth(str)+buttonMarginSide
+   local h = font:getHeight(str)
+
+
+
+   love.graphics.scale(1,1)
+   if labelbutton(str, str, 0, 10, w , h, buttonMarginSide/2).clicked then
+      uiState.toggle1 = not uiState.toggle1
+   end
+
+   local sl =  h_slider('gravronics', 20, 100, 100, uiState.gravityValue, 0, 100)
+   if sl.value ~= nil then
+      uiState.gravityValue = sl.value
+   end
+
+
+   if false then
    love.graphics.setColor(1,1,1)
    love.graphics.circle('fill', 50, (H/2)-25, 50)
    love.graphics.circle('fill', W-50, (H/2)-25, 50)
    love.graphics.circle('fill', W-25, 25, 25)
+   end
 end
 
 
 function love.draw()
+   handleMouseClickStart()
    renderCount = {normal=0, optimized=0, groundMesh=0}
 
    counter = counter +1
@@ -802,8 +859,8 @@ function love.draw()
    love.graphics.setColor(1,1,1,1)
 
    drawUI()
-   if not ui.show then drawCameraBounds(cam, 'line' ) end
-   drawDebugStrings()
+   --if not ui.show then drawCameraBounds(cam, 'line' ) end
+   --drawDebugStrings()
    --love.graphics.print(translateCache.value.."|"..translateCache.tweenValue, 10, 40)
    if translateCache.value ~= 0 then
       love.graphics.line(W/2,100,W/2+translateCache.value, 0)

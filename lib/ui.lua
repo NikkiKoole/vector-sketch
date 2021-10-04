@@ -45,6 +45,37 @@ function getUICircle(id, x,y,r)
       hover=hover
    }
 end
+function shadedText(str,x, y)
+   love.graphics.setColor(0,0,0)
+   love.graphics.print(str,x,y)
+   love.graphics.setColor(1,1,1)
+   love.graphics.print(str,x+1,y+1)
+end
+
+function labelbutton(id, str, x,y,w,h, margin)
+   local mx, my = love.mouse:getPosition()
+   local clicked = false
+   local alpha = 0.1
+
+   if (pointInRect(mx, my,  x, y, w, h)) then
+       alpha = 0.5
+       mouseState.hoveredSomething = true
+       love.mouse.setCursor(cursors.hand)
+       if (mouseState.click) then
+	 clicked = true
+       end
+
+    end
+
+   love.graphics.setColor(0 ,0,0, alpha)
+   love.graphics.rectangle("fill", x, y, w, h)
+   shadedText(str, x+margin,y)
+   return {
+      clicked=clicked
+   }
+end
+
+
 
 function rgbbutton(id, rgb, x, y, size)
    scale = scale or 1
@@ -424,7 +455,9 @@ function h_slider(id, x, y, width, v, min, max)
    local xOffset = mapInto(v, min, max, 0, width-20)
    love.graphics.rectangle('fill',xOffset + x,y,20,20 )
    love.graphics.setColor(1,1,1,1)
+   love.graphics.setLineWidth(2)
    love.graphics.rectangle("line", xOffset + x,y,20,20)
+   love.graphics.setLineWidth(1)
 
    local result= nil
    local draggedResult = false
