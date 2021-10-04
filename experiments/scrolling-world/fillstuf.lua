@@ -255,8 +255,8 @@ function createStuff()
    end
 
    if true then
-   for j = 1, 1 do
-      local generated = generatePolygon(0,0, 4 + random()*16, .05 + random()*.01, .02 , 8 + random()*8)
+   for j = 1, 10 do
+      local generated = generatePolygon(0,0, 4 + random()*160, .05 + random()*.01, .02 + random()*0.12 , 8 + random()*18)
       local points = {}
       for i = 1, #generated, 2 do
          table.insert(points, {generated[i], generated[i+1]})
@@ -267,7 +267,7 @@ function createStuff()
 
       local r,g,b = hex2rgb('4D391F')
       r = random()*255
-      local rnd = random()
+      local rnd = 0.45 + random()*0.1
       local rndDepth =  mapInto(rnd, 0,1,depthMinMax.min,depthMinMax.max )
       local xPos = -600 + random()*1200
       local randomShape = {
@@ -280,7 +280,7 @@ function createStuff()
          children ={
             {
                name="roodchild:"..1,
-               color = {rnd,g/255,b/255, 1.0},
+               color = {r/255,g/255,b/255, 1.0},
                points = points,
             },
          }
