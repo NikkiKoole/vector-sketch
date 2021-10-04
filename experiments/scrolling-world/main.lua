@@ -348,12 +348,13 @@ function love.update(dt)
    end
 
    if cameraFollowPlayer then
-      followPlayerCameraDelta = cam:setTranslationSmooth(
-         player.x + player.width/2 ,
-         player.y - 350,
-         dt,
-         10
-      )
+      local delta = cam:setTranslationSmooth(
+            player.x + player.width/2 ,
+            player.y - 350,
+            dt,
+            10
+                                   )
+      followPlayerCameraDelta = delta.x + delta.y
    end
 
 
@@ -810,7 +811,7 @@ function love.draw()
       love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
    end
 
-   love.graphics.print('make a mousehit test for the layered objects\n (bbox works already) just do it after that hits ', 30, 50)
+--   love.graphics.print('make a mousehit test for the layered objects\n (bbox works already) just do it after that hits ', 30, 50)
    --love.graphics.print('then optimize nested object drawing too.', 30, 100)
 
 end
