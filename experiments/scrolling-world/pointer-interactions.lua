@@ -154,15 +154,17 @@ function pointerPressed(x,y, id)
    local rightdis = getDistance(x,y, W-50, (H/2)-25)
    local toprightdis = getDistance(x,y, W-25, 25)
 
+   if uiState.showWalkButtons then
    if leftdis < 50 then
       moving = 'left'
    end
    if rightdis < 50 then
       moving = 'right'
    end
+   end
    if toprightdis < 50 then
-      showNumbersOnScreen = not showNumbersOnScreen
-      ui.show = not ui.show
+      --showNumbersOnScreen = not showNumbersOnScreen
+      uiState.show = not uiState.show
    end
    ------------- end ui
 

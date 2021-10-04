@@ -246,7 +246,7 @@ function love.load()
    tweenCameraDelta = 0
    followPlayerCameraDelta = 0
 
-   showNumbersOnScreen = false
+
 
    lastDT = 0
 
@@ -254,7 +254,7 @@ function love.load()
    smallfont = love.graphics.newFont( "assets/adlib.ttf", 20)
 
    love.graphics.setFont(font)
-   ui = {show=false}
+
 
 
 
@@ -269,8 +269,12 @@ function love.load()
 
    bouncetween = nil
 
+   showNumbersOnScreen = false
+   --ui = {show=false}
    uiState = {
-      toggle1=true,
+      show= false,
+      showFPS=false,
+      showNumbers=false,
       gravityValue= 50
    }
 
@@ -670,17 +674,22 @@ function drawCameraCross(W,H)
 end
 
 function drawDebugStrings()
-   love.graphics.setColor(0,0,0,.2)
---   love.graphics.scale(2,2)
-   love.graphics.setFont(smallfont)
-   love.graphics.print('fps: '..love.timer.getFPS(), 20, 20)
-   love.graphics.setColor(1,1,1,.8)
-   love.graphics.print('fps: '..love.timer.getFPS(),21,21)
-   love.graphics.setFont(font)
 
-   love.graphics.setColor(0,0,0,.2)
+   --   love.graphics.scale(2,2)
 
-   if showNumbersOnScreen then
+   if uiState.showFPS then
+      love.graphics.setFont(smallfont)
+      love.graphics.setColor(0,0,0,.2)
+      love.graphics.print('fps: '..love.timer.getFPS(), 20, 20)
+      love.graphics.setColor(1,1,1,.8)
+      love.graphics.print('fps: '..love.timer.getFPS(),21,21)
+      love.graphics.setFont(font)
+   end
+
+
+
+   if uiState.showNumbers then
+      love.graphics.setColor(0,0,0,.2)
       love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 40)
       love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 70)
       love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 100)
@@ -723,40 +732,79 @@ function drawUI()
 
    end
 
-
-   love.graphics.setFont(font)
-    local toggleString = function(state, str)
-      if state then
-	 return '(x) '..str
-      else
-	 return '(o) '..str
+   if uiState.show then
+      love.graphics.setFont(font)
+      local toggleString = function(state, str)
+	 if state then
+	    return '(x) '..str
+	 else
+	    return '(o) '..str
+	 end
       end
-   end
-   local buttonMarginSide = 16
-   local str = "show settings"
-   str = toggleString(uiState.toggle1, str)
-   local w = font:getWidth(str)+buttonMarginSide
-   local h = font:getHeight(str)
+      local buttonMarginSide = 16
+      local str = "show numbers"
+      str = toggleString(uiState.showNumbers, str)
+      local w = font:getWidth(str)+buttonMarginSide
+      local h = font:getHeight(str)
+
+      love.graphics.scale(1,1)
+      if labelbutton(str, str, 0, 10, w , h, buttonMarginSide/2).clicked then
+	 uiState.showNumbers = not uiState.showNumbers
+      end
+
+      str = "show FPS"
+      str = toggleString(uiState.showFPS, str)
+      w = font:getWidth(str)+buttonMarginSide
+      h = font:getHeight(str)
+
+      love.graphics.scale(1,1)
+      if labelbutton(str, str, 0, 45, w , h, buttonMarginSide/2).clicked then
+	 uiState.showFPS = not uiState.showFPS
+      end
+
+
+      str = "show walkbuttons"
+      str = toggleString(uiState.showWalkButtons, str)
+      w = font:getWidth(str)+buttonMarginSide
+      h = font:getHeight(str)
+
+      love.graphics.scale(1,1)
+      if labelbutton(str, str, 0, 80, w , h, buttonMarginSide/2).clicked then
+	 uiState.showWalkButtons = not uiState.showWalkButtons
+      end
+
+      str = "show bouncey"
+      str = toggleString(uiState.showBouncy, str)
+      w = font:getWidth(str)+buttonMarginSide
+      h = font:getHeight(str)
+
+      love.graphics.scale(1,1)
+      if labelbutton(str, str, 0, 115, w , h, buttonMarginSide/2).clicked then
+	 uiState.showBouncy = not uiState.showBouncy
+      end
 
 
 
-   love.graphics.scale(1,1)
-   if labelbutton(str, str, 0, 10, w , h, buttonMarginSide/2).clicked then
-      uiState.toggle1 = not uiState.toggle1
-   end
-
-   local sl =  h_slider('gravronics', 20, 100, 100, uiState.gravityValue, 0, 100)
-   if sl.value ~= nil then
-      uiState.gravityValue = sl.value
+      --local sl =  h_slider('gravronics', 20, 100, 100, uiState.gravityValue, 0, 100)
+      --if sl.value ~= nil then-
+	 --uiState.gravityValue = sl.value
+      --end
    end
 
 
    if false then
    love.graphics.setColor(1,1,1)
-   love.graphics.circle('fill', 50, (H/2)-25, 50)
-   love.graphics.circle('fill', W-50, (H/2)-25, 50)
    love.graphics.circle('fill', W-25, 25, 25)
    end
+
+   if uiState.showWalkButtons then
+      love.graphics.circle('fill', 50, (H/2)-25, 50)
+      love.graphics.circle('fill', W-50, (H/2)-25, 50)
+
+   end
+
+
+   love.graphics.circle('fill', W-25, 25, 25)
 end
 
 
@@ -860,12 +908,15 @@ function love.draw()
 
    drawUI()
    --if not ui.show then drawCameraBounds(cam, 'line' ) end
-   --drawDebugStrings()
+   drawDebugStrings()
    --love.graphics.print(translateCache.value.."|"..translateCache.tweenValue, 10, 40)
+
+   if uiState.showBouncy then
    if translateCache.value ~= 0 then
       love.graphics.line(W/2,100,W/2+translateCache.value, 0)
    else
       love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
+   end
    end
 
 --   love.graphics.print('make a mousehit test for the layered objects\n (bbox works already) just do it after that hits ', 30, 50)
