@@ -28,6 +28,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
                name = 'generated '..url,
                children = doOptimized and {} or copy3(read.children)
             }
+            --print(thing.groundTileIndex)
             grass.transforms.l[1] = (i*tileSize) + thing.x
             grass.transforms.l[2] = 0
             grass.transforms.l[4] = thing.scaleX
