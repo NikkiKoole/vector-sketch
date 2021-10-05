@@ -591,13 +591,13 @@ function gestureRecognizer(gesture)
 
 		  cameraTween = {goalX=cx-((dx) + (m* speed/7.5) ), goalY=cy, smoothValue=3.5, originalGesture=gesture}
 	       else
-		  print('failed at speed', minSpeed, speed, maxSpeed)
+		  --print('failed at speed', minSpeed, speed, maxSpeed)
 	       end
 	    else
-	       print('failed at duration', deltaTime, minDuration)
+	       --print('failed at duration', deltaTime, minDuration)
 	    end
 	 else
-	    print('failed at distance')
+	    --print('failed at distance')
 	 end
       else -- this is gesture target something else items basically!
 

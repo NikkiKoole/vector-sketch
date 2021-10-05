@@ -91,8 +91,8 @@ function createStuff()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
-      'assets/digger_.polygons.txt',
-      'assets/digger02__.polygons.txt',
+  --    'assets/digger_.polygons.txt',
+--      'assets/digger02__.polygons.txt',
       -- 'assets/poep.polygons.txt',
 
        --'assets/isthissizeok.polygons.txt',

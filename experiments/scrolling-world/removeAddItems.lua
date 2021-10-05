@@ -17,29 +17,32 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
       if (plantData[i]) then
          for j = 1, #plantData[i] do
             local thing = plantData[i][j]
-            local urlIndex = (thing.urlIndex)
-            local url = plantUrls[urlIndex]
-            local read = readFileAndAddToCache(url)
-	   -- print((read.optimizedBatchMesh))
-	    local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
-            local grass = {
-               folder = true,
-               transforms = copy3(read.transforms),
-               name = 'generated '..url,
-               children = doOptimized and {} or copy3(read.children)
-            }
-            --print(thing.groundTileIndex)
-            grass.transforms.l[1] = (i*tileSize) + thing.x
-            grass.transforms.l[2] = 0
-            grass.transforms.l[4] = thing.scaleX
-            grass.transforms.l[5] = thing.scaleY
-
-            grass.depth = thing.depth
-            grass.url = url
-            grass.groundTileIndex = thing.groundTileIndex
-            grass.bbox = read.bbox
-            table.insert(root.children, grass)
+            if not thing.hasBeenPressed then -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
+               local urlIndex = (thing.urlIndex)
+               local url = plantUrls[urlIndex]
+               local read = readFileAndAddToCache(url)
+               -- print((read.optimizedBatchMesh))
+               local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
+               local grass = {
+                  folder = true,
+                  transforms = copy3(read.transforms),
+                  name = 'generated '..url,
+                  children = doOptimized and {} or copy3(read.children)
+               }
+               --print(thing.groundTileIndex)
+               grass.transforms.l[1] = (i*tileSize) + thing.x
+               grass.transforms.l[2] = 0
+               grass.transforms.l[4] = thing.scaleX
+               grass.transforms.l[5] = thing.scaleY
+               grass.originalIndices = {i,j}
+               grass.depth = thing.depth
+               grass.url = url
+               grass.groundTileIndex = thing.groundTileIndex
+               grass.bbox = read.bbox
+               table.insert(root.children, grass)
+            end
          end
+         
       end
    end
    parentize(root)

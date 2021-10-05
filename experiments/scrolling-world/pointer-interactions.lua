@@ -185,7 +185,15 @@ function pointerPressed(x,y, id)
 	       itemPressed = c
 	       c.poep = true
 	       c.groundTileIndex = nil
-	    end
+               local indices = c.originalIndices
+               -- i dont want to readd this item
+               -- the generated polygons arent in this list
+               -- there wll be more and more lists I imagine
+               if indices and plantData[indices[1]] and plantData[indices[1]][indices[2]] then
+                  plantData[indices[1]][indices[2]].hasBeenPressed = true
+               end
+               
+            end
 	 end
 
       end
