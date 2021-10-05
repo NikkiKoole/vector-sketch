@@ -91,6 +91,7 @@ function createStuff()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
+
   --    'assets/digger_.polygons.txt',
 --      'assets/digger02__.polygons.txt',
       -- 'assets/poep.polygons.txt',
@@ -112,8 +113,6 @@ function createStuff()
 
     }
     plantData = {}
-
-
 
    for i = -1000, 1000 do
 
@@ -138,6 +137,38 @@ function createStuff()
       end
 
    end
+
+   local fartherUrls = {
+      'assets/doosgroot.polygons.txt',
+      'assets/doosklein.polygons.txt',
+   }
+   fartherData = {}
+
+     for i = -1000, 1000 do
+
+      fartherData[i] = {}
+      for p = 1, 1 do
+
+         table.insert(
+            fartherData[i],
+            {
+
+               x=random()*tileSize,
+               groundTileIndex = i,
+               --depth=mapInto(random(), 0,1,
+               --              depthMinMax.min, depthMinMax.max ),
+	       --depthLayer = 'hack',
+               scaleX = 1.0 + random(),
+               scaleY = 1.0 + random()*1.5,
+
+               urlIndex=math.ceil(random()* #fartherUrls)
+            }
+         )
+      end
+
+   end
+
+
    --print(inspect(plantData))
 
 

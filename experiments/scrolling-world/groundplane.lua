@@ -8,9 +8,15 @@ function drawGroundPlaneLines()
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-   arrangeWhatIsVisible(x1, x2, tileSize)
+   arrangeWhatIsVisible(x1, x2, tileSize, 'hack')
 
-   local useCPU = true
+   local x1f,y1f = cam:getWorldCoordinates(0,0, 'farther')
+   local x2f,y2f = cam:getWorldCoordinates(W,0, 'farther')
+   arrangeWhatIsVisible(x1f, x2f, tileSize, 'farther')
+
+
+
+   local useCPU = false
 
    local simplerPolies = true
 

@@ -1,4 +1,7 @@
-function removeTheContenstOfGroundTiles(startIndex, endIndex)
+function removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
+   local map = {
+      hack = root.children
+   }
    for i = #root.children, 1, -1 do
 
       local child = root.children[i]
@@ -6,12 +9,16 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex)
       if child.groundTileIndex ~= nil then
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
-            table.remove(root.children, i)
+            table.remove(map[layerName], i)
          end
       end
    end
 end
-function addTheContentsOfGroundTiles(startIndex, endIndex)
+function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
+   local map = {
+      hack = root.children
+   }
+
    -- todo the issue is here, this one assumes fully optimized data without children
    for i = startIndex, endIndex do
       if (plantData[i]) then
@@ -40,7 +47,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
                grass.url = url
                grass.groundTileIndex = thing.groundTileIndex
                grass.bbox = read.bbox
-               table.insert(root.children, grass)
+               table.insert(map[layerName], grass)
             end
          end
 
@@ -51,29 +58,39 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
    recursivelyAddOptimizedMesh(root)
 end
 
-function arrangeWhatIsVisible(x1, x2, tileSize)
-   local s = math.floor(x1/tileSize)*tileSize
-   local e = math.ceil(x2/tileSize)*tileSize
-   local startIndex = s/tileSize
-   local endIndex = e/tileSize
+function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
+   if layerName == 'hack' then
+      local s = math.floor(x1/tileSize)*tileSize
+      local e = math.ceil(x2/tileSize)*tileSize
+      local startIndex = s/tileSize
+      local endIndex = e/tileSize
+      -- initial adding
+      if lastGroundBounds[1] == math.huge and lastGroundBounds[2] == -math.huge then
+	 addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
+      else
+	 -- look to add at start or end
+	 if startIndex ~= lastGroundBounds[1] or
+	    endIndex ~= lastGroundBounds[2] then
+	    removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
+	 end
 
-   -- initial adding
-   if lastGroundBounds[1] == math.huge and lastGroundBounds[2] == -math.huge then
-      addTheContentsOfGroundTiles(startIndex, endIndex)
+	 if startIndex < lastGroundBounds[1] then
+	    addTheContentsOfGroundTiles(startIndex, lastGroundBounds[1]-1, layerName)
+	 end
+
+	 if endIndex > lastGroundBounds[2] then
+	    addTheContentsOfGroundTiles(lastGroundBounds[2]+1, endIndex, layerName)
+	 end
+      end
+      lastGroundBounds = {startIndex, endIndex}
+      print(startIndex, endIndex, layerName)
    else
-      -- look to add at start or end
-      if startIndex ~= lastGroundBounds[1] or
-         endIndex ~= lastGroundBounds[2] then
-         removeTheContenstOfGroundTiles(startIndex, endIndex)
-      end
-
-      if startIndex < lastGroundBounds[1] then
-         addTheContentsOfGroundTiles(startIndex, lastGroundBounds[1]-1)
-      end
-
-      if endIndex > lastGroundBounds[2] then
-         addTheContentsOfGroundTiles(lastGroundBounds[2]+1, endIndex)
-      end
+      print('not yet handling the other layers!', layerName)
+      local s = math.floor(x1/tileSize)*tileSize
+      local e = math.ceil(x2/tileSize)*tileSize
+      local startIndex = s/tileSize
+      local endIndex = e/tileSize
+      print(startIndex, endIndex, layerName)
    end
-   lastGroundBounds = {startIndex, endIndex}
+
 end
