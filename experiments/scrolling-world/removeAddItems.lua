@@ -36,13 +36,14 @@ function addTheContentsOfGroundTiles(startIndex, endIndex)
                grass.transforms.l[5] = thing.scaleY
                grass.originalIndices = {i,j}
                grass.depth = thing.depth
+	       grass.depthLayer = thing.depthLayer
                grass.url = url
                grass.groundTileIndex = thing.groundTileIndex
                grass.bbox = read.bbox
                table.insert(root.children, grass)
             end
          end
-         
+
       end
    end
    parentize(root)

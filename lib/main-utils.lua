@@ -226,7 +226,7 @@ function isMouseInMesh(mx, my, body, mesh)
       if body._globalTransform then
 
 
-      
+
       local px,py = body._globalTransform:inverseTransformPoint(mx, my)
       for i = 1, count, 3 do
          if i+2 <= count then
@@ -345,11 +345,7 @@ function parentize(node)
 end
 
 function renderNormallyOrOptimized(shape)
-   --renderThings(shape)
-   --print(shape.mesh)
-   --print(shape.optimizedBatchMesh)
    if true then
-      --print(shape.optimizedBatchMesh and #shape.optimizedBatchMesh, shape.name)
       if (shape.optimizedBatchMesh) then
 	 setTransforms(shape)
 	 for i=1, #shape.optimizedBatchMesh do
@@ -360,15 +356,12 @@ function renderNormallyOrOptimized(shape)
             end
 
 	 end
-	-- print('getting in optimized render')
       else
          if renderCount then
             renderCount.normal = renderCount.normal + 1
          end
 
 	 renderThings(shape)
-	-- print('rendering something?', shape.name)
-	 --print(#shape.children)
       end
    end
 
@@ -412,7 +405,7 @@ function handleChild(shape)
 
    if shape.folder then
 
-      if (shape.depth ~= nil) then
+      if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
 
          hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
          hack.relativeScale = (1.0/ hack.scale) * hack.scale
@@ -476,7 +469,7 @@ function handleChild(shape)
 
    end
 
-   if (shape.depth ~= nil) then
+   if (shape.depth ~= nil  and (shape.depthLayer == 'hack')) then
       hack:pop()
    end
 

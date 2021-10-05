@@ -12,7 +12,7 @@ function createStuff()
    }
    player.depth = 0
 
-    if false then
+    if true  then
       for i = 1, 140 do
 	 local rndHeight = random(100, 200)
 	 local rndDepth =  mapInto(random(), 0,1,depthMinMax.min,depthMinMax.max )
@@ -126,9 +126,9 @@ function createStuff()
 
                x=random()*tileSize,
                groundTileIndex = i,
-               depth=mapInto(random(),
-                             0,1,
+               depth=mapInto(random(), 0,1,
                              depthMinMax.min, depthMinMax.max ),
+	       depthLayer = 'hack',
                scaleX = 1.0 + random(),
                scaleY = 1.0 + random()*1.5,
 
@@ -223,6 +223,7 @@ function createStuff()
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       name="player",
       depth = 0,
+      depthLayer = 'hack',
       x=0,
       bbox= {tlx, tly, brx, bry},
       children ={
@@ -275,7 +276,8 @@ function createStuff()
          transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
          name="rood",
          depth = rndDepth,
-         aabb = xPos,
+	 depthLayer = 'hack',
+         --aabb = xPos,
          bbox= {tlx, tly, brx, bry},
          children ={
             {

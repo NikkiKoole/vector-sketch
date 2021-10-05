@@ -234,7 +234,7 @@ function love.load()
 
 
    cam:setTranslation(
-      player.x + player.width/2 ,
+      newPlayer.transforms.l[1] ,
       -H/2 + offset
    )
 
@@ -275,7 +275,7 @@ function love.load()
       show= false,
       showFPS=false,
       showNumbers=false,
-      gravityValue= 50
+      gravityValue= 5000
    }
 
    mouseState = {
@@ -398,7 +398,8 @@ function love.update(dt)
       local thing = root.children[i]
       if thing.inMotion and not thing.pressed then
 
-         local gy = 6*980 * thing.inMotion.mass * dt
+         --local gy = (6*980)
+	 local gy = uiState.gravityValue * thing.inMotion.mass * dt
 	 local gravity = Vector(0, gy);
 
 	 applyForce(thing.inMotion, gravity)
@@ -785,10 +786,11 @@ function drawUI()
 
 
 
-      --local sl =  h_slider('gravronics', 20, 100, 100, uiState.gravityValue, 0, 100)
-      --if sl.value ~= nil then-
-	 --uiState.gravityValue = sl.value
-      --end
+      local sl =  h_slider('gravronics', 20, 200, 300, uiState.gravityValue, -10000, 10000)
+      if sl.value ~= nil then
+	 uiState.gravityValue = sl.value
+      end
+      shadedText(round2(uiState.gravityValue), 340, 200)
    end
 
 
@@ -817,18 +819,19 @@ function love.draw()
    love.graphics.clear(.6, .3, .7)
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   if (false) then
+   if (true) then
       farther:push()
-      love.graphics.setColor( 1, 0, 0, .25 )
-      tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
-      brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'farther')
+      -- love.graphics.setColor( 1, 0, 0, .25 )
+      -- tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
+      -- brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'farther')
 
-      for _, v in pairs(stuff) do
-         if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
-            love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-            love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-         end
-      end
+      --for _, v in pairs(stuff) do
+      --    if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
+      --       love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
+      --       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
+      --    end
+      ---end
+      --renderThings(root)
       farther:pop()
    end
 
