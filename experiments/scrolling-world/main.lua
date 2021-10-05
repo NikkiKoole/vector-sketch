@@ -204,8 +204,14 @@ function love.load()
       }
    )
    lastCameraBounds = {math.huge, -math.huge}   -- this one is unrounded start and end positions
-   lastGroundBounds = {math.huge, -math.huge}  -- this one is just talking about indices
 
+   
+   --lastGroundBounds = {math.huge, -math.huge}  -- this one is just talking about indices
+   layerBounds = {
+      hack = {math.huge, -math.huge},
+      farther = {math.huge, -math.huge}
+
+   }
    hack = generateCameraLayer('hack', 1)
    hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
    hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
@@ -225,14 +231,19 @@ function love.load()
 
 
    createStuff()
-   parentize(root)
-   renderThings(root)
-   recursivelyAddOptimizedMesh(root)
+   
+   parentize(middleLayer)
+   renderThings(middleLayer)
+   recursivelyAddOptimizedMesh(middleLayer)
+   sortOnDepth(middleLayer.children)
 
-   --avgRunningAhead = 0
-   sortOnDepth(root.children)
 
+   parentize(fartherLayer)
+   renderThings(fartherLayer)
+   recursivelyAddOptimizedMesh(fartherLayer)
+   sortOnDepth(fartherLayer.children)
 
+   
    cam:setTranslation(
       newPlayer.transforms.l[1] ,
       -H/2 + offset
@@ -394,8 +405,8 @@ function love.update(dt)
       end
    end
 
-   for i=1, #root.children do
-      local thing = root.children[i]
+   for i=1, #middleLayer.children do
+      local thing = middleLayer.children[i]
       if thing.inMotion and not thing.pressed then
 
          --local gy = (6*980)
@@ -484,8 +495,8 @@ function cameraApplyTranslate()
 
    if true then
 
-      for i =1 ,#root.children do
-	 local c = root.children[i]
+      for i =1 ,#middleLayer.children do
+	 local c = middleLayer.children[i]
 	 if c.pressed then
 	    c.transforms.l[1] =
 	       c.transforms.l[1] + translateScheduler.x + translateSchedulerJustItem.x
@@ -694,7 +705,7 @@ function drawDebugStrings()
       love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 40)
       love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 70)
       love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 100)
-      love.graphics.print('childCount: '..#root.children, 20, 130)
+      love.graphics.print('childCount: '..#middleLayer.children, 20, 130)
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
 	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 160)
       end
@@ -704,7 +715,7 @@ function drawDebugStrings()
       love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 41)
       love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 71)
       love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 101)
-      love.graphics.print('childCount: '..#root.children, 21, 131)
+      love.graphics.print('childCount: '..#middleLayer.children, 21, 131)
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
 	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 161)
 
@@ -832,6 +843,8 @@ function love.draw()
       --    end
       ---end
       --renderThings(root)
+      renderThings(fartherLayer)
+
       farther:pop()
    end
 
@@ -868,7 +881,7 @@ function love.draw()
    --local offset = H - 768
    --root.transforms.l[2] = offset/2.225
 
-   renderThings(root)
+   renderThings(middleLayer)
    --love.graphics.pop()
 
    if testCameraViewpointRects then
@@ -884,7 +897,7 @@ function love.draw()
          love.graphics.setColor(.1, .1, .1)
          love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
       end
-      renderThings(root)
+      renderThings(middleLayer)
       close:pop()
    end
 
@@ -937,8 +950,8 @@ end
 
 function love.filedropped(file)
    local tab = getDataFromFile(file)
-   root.children = tab -- TableConcat(root.children, tab)
-   parentize(root)
-   meshAll(root)
-   renderThings(root)
+   middleLayer.children = tab -- TableConcat(root.children, tab)
+   parentize(middleLayer)
+   meshAll(middleLayer)
+   renderThings(middleLayer)
 end

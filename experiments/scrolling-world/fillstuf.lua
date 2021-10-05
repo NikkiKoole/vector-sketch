@@ -50,9 +50,15 @@ function createStuff()
        )
     end
 
-    root = {
+    middleLayer = {
       folder = true,
-      name = 'root',
+      name = 'middleLayer',
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      children = {}
+    }
+    fartherLayer = {
+      folder = true,
+      name = 'fartherLayer',
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
       children = {}
     }
@@ -138,7 +144,7 @@ function createStuff()
 
    end
 
-   local fartherUrls = {
+   fartherUrls = {
       'assets/doosgroot.polygons.txt',
       'assets/doosklein.polygons.txt',
    }
@@ -157,7 +163,7 @@ function createStuff()
                groundTileIndex = i,
                --depth=mapInto(random(), 0,1,
                --              depthMinMax.min, depthMinMax.max ),
-	       --depthLayer = 'hack',
+	       depthLayer = 'farther',
                scaleX = 1.0 + random(),
                scaleY = 1.0 + random()*1.5,
 
@@ -269,7 +275,7 @@ function createStuff()
       table.insert(newPlayer.children, 1, carbody)
    end
 
-   table.insert(root.children, newPlayer)
+   table.insert(middleLayer.children, newPlayer)
    meshAll(newPlayer)
 
    if testCar then
@@ -283,7 +289,7 @@ function createStuff()
             carbodyVoor
          }
       }
-      table.insert(root.children, voor2)
+      table.insert(middleLayer.children, voor2)
    end
 
    if true then
@@ -320,7 +326,7 @@ function createStuff()
       }
       meshAll(randomShape)
 
-      table.insert(root.children, randomShape)
+      table.insert(middleLayer.children, randomShape)
    end
    end
 

@@ -61,8 +61,8 @@ end
 
 
 function handlePressedItemsOnStage(W, H)
-   for i = 1, #root.children do
-      local c = root.children[i]
+   for i = 1, #middleLayer.children do
+      local c = middleLayer.children[i]
       if c.bbox and c._localTransform and c.depth ~= nil then
 
          if c.pressed then
@@ -170,8 +170,8 @@ function pointerPressed(x,y, id)
 
 
    local itemPressed = false
-   for i = #root.children,1,-1 do
-      local c = root.children[i]
+   for i = #middleLayer.children,1,-1 do
+      local c = middleLayer.children[i]
       if c.bbox and c._localTransform and c.depth and not itemPressed then
 
 	 local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c)
@@ -238,8 +238,8 @@ end
 function pointerMoved(x,y,dx,dy, id)
    -- it only makes sense to check mouseOver with mouse
    if id == 'mouse' then
-      for i = 1, #root.children do
-	 local c = root.children[i]
+      for i = 1, #middleLayer.children do
+	 local c = middleLayer.children[i]
 	 if c.bbox and c._localTransform and c.depth then
 	    local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c)
 	    c.mouseOver = mouseover
@@ -271,8 +271,8 @@ end
 
 function pointerReleased(x,y, id)
    moving = nil
-   for i = 1, #root.children do
-      local c =root.children[i]
+   for i = 1, #middleLayer.children do
+      local c =middleLayer.children[i]
       if c.pressed and c.pressed.id == id then
          c.pressed = nil
       end
