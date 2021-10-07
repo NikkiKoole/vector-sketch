@@ -83,27 +83,29 @@ function createStuff()
    end
    --initCarParts()
     plantUrls = {
-      'assets/grassagain_.polygons.txt',
-      'assets/plant1.polygons.txt',
-      'assets/plant2.polygons.txt',
-      'assets/plant3.polygons.txt',
-      'assets/plant4.polygons.txt',
-      'assets/plant5.polygons.txt',
-      'assets/plant6.polygons.txt',
-      'assets/plant7.polygons.txt',
-      'assets/plant8.polygons.txt',
-      'assets/plant9.polygons.txt',
-      'assets/plant10.polygons.txt',
-      'assets/plant11.polygons.txt',
-      'assets/plant12.polygons.txt',
-      'assets/plant13.polygons.txt',
-      'assets/deurlaag3.polygons.txt',
+      -- 'assets/grassagain_.polygons.txt',
+       'assets/plant1.polygons.txt',
+       'assets/plant2.polygons.txt',
+       'assets/plant3.polygons.txt',
+      -- 'assets/plant4.polygons.txt',
+      -- 'assets/plant5.polygons.txt',
+      -- 'assets/plant6.polygons.txt',
+      -- 'assets/plant7.polygons.txt',
+      -- 'assets/plant8.polygons.txt',
+      -- 'assets/plant9.polygons.txt',
+      -- 'assets/plant10.polygons.txt',
+      -- 'assets/plant11.polygons.txt',
+      -- 'assets/plant12.polygons.txt',
+      -- 'assets/plant13.polygons.txt',
+       'assets/deurpaar4s__.polygons.txt',
+       'assets/two_.polygons.txt',
+       'assets/deurlaag3.polygons.txt',
 
 
     }
     plantData = {}
 
-   for i = -1000, 1000 do
+   for i = -10, 10 do
 
       plantData[i] = {}
       for p = 1, 1 do
@@ -129,13 +131,14 @@ function createStuff()
 
    fartherUrls = {
       'assets/doosgroot.polygons.txt',
-      'assets/doosklein.polygons.txt',
-      'assets/deurlaag3.polygons.txt',
+      --'assets/doosklein.polygons.txt',
+      --'assets/deurlaag3.polygons.txt',
+      --'assets/two_.polygons.txt'
 
    }
    fartherData = {}
 
-     for i = -1000, 1000 do
+     for i = -10, 10 do
 
       fartherData[i] = {}
       for p = 1, 1 do

@@ -250,7 +250,6 @@ function recursiveHitCheck(x,y, node)
       local body = node
       local mesh = body.mesh
       if (body and mesh) then
-         print(body.name)
 	 if isMouseInMesh(x,y, body._parent, mesh) then
             return true
          end

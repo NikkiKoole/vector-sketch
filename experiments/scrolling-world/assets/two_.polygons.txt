@@ -1,0 +1,30 @@
+{ {
+children = { {
+children = { {
+color = { 0.5, 1, 0, 0.8 },
+name = "roodchild:1",
+points = { { -12, -38 }, { 27, -30 }, { 39, 10 }, { 11, 37 }, { -28, 28 }, { -40, -9 } }
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { 405.861, 184.661 }, { 595.534, 216.838 }, { 410.941, 54.261 } }
+} },
+folder = true,
+name = "",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+}
+} },
+folder = true,
+name = "rood",
+transforms = {
+l = { 0, 0, 0, 1, 1, -0.5, -0.5, 0, 0 }
+}
+} },
+folder = true,
+name = "",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+}
+} }

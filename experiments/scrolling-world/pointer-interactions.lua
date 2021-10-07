@@ -106,7 +106,7 @@ function handlePressedItemsOnStage(W, H)
 
          end
 
-	 if false and c.mouseOver then
+	 if  c.mouseOver or uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
 	    love.graphics.setColor(1,1,1,.5)
@@ -192,7 +192,7 @@ function pointerPressed(x,y, id)
                if indices and plantData[indices[1]] and plantData[indices[1]][indices[2]] then
                   plantData[indices[1]][indices[2]].hasBeenPressed = true
                end
-               
+
             end
 	 end
 

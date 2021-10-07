@@ -29,7 +29,7 @@ function getBBoxRecursive(node)
             if r[4] > p1[4] then p1[4] = r[4] end
          end
       end
-     
+
       local p2 = {math.huge, math.huge, -math.huge, -math.huge}
       for i = 1, #node.children do
          if node.children[i].points then
@@ -49,7 +49,11 @@ function getBBoxRecursive(node)
               math.min(tlyg, p1[2]),
               math.max(brxg, p1[3]),
               math.max(bryg, p1[4])}
+
+
    end
+
+
 end
 
 

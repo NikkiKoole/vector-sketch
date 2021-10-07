@@ -23,7 +23,7 @@ function love.keypressed(key)
 end
 
 function love.load()
-   love.window.setMode( 1600, 1200 )
+   love.window.setMode( 1700, 1200 )
    root = {
       folder = true,
       name = 'root',
@@ -31,7 +31,7 @@ function love.load()
       children ={}
    }
 
-   baas = parseFile('boat.polygons.txt')[1]
+   baas = parseFile('deurlaag3.polygons.txt')[1]
 
    table.insert(root.children, baas)
 

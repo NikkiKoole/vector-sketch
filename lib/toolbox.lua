@@ -1,5 +1,9 @@
 function parseFile(url)
    local contents, size = love.filesystem.read( url)
+   if contents == nil then
+      print(printC({fg='red'}, "file not found: ", url))
+   end
+
    local parsed = (loadstring("return ".. contents)())
    return parsed
 end

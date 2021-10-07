@@ -84,15 +84,24 @@ end
 
 function readFileAndAddToCache(url)
    if not meshCache[url] then
+--      print(url)
       local g2 = parseFile(url)[1]
-      assert(g2)
-      meshAll(g2)
-      --print(inspect(g2))
-      makeOptimizedBatchMesh(g2)
-      --print(inspect(g2))
 
-      local bbox = getBBoxOfChildren(g2.children)
-      g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
+      parentize(g2)
+      meshAll(g2)
+      makeOptimizedBatchMesh(g2)
+
+      --parentize(g2)
+      --renderThings(g2)
+
+      local bbox = getBBoxRecursive(g2)
+      -- ok this is needed cause i do a bit of transforming in the function
+      local tlx, tly = g2._globalTransform:inverseTransformPoint(bbox[1], bbox[2])
+      local brx, bry = g2._globalTransform:inverseTransformPoint(bbox[3], bbox[4])
+      g2.bbox = {tlx, tly, brx, bry }--bbox
+
+      --local bbox = getBBoxOfChildren(g2.children)
+      --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
       meshCache[url] = g2
    end
 
@@ -205,7 +214,7 @@ function love.load()
    )
    lastCameraBounds = {math.huge, -math.huge}   -- this one is unrounded start and end positions
 
-   
+
    --lastGroundBounds = {math.huge, -math.huge}  -- this one is just talking about indices
    layerBounds = {
       hack = {math.huge, -math.huge},
@@ -231,7 +240,7 @@ function love.load()
 
 
    createStuff()
-   
+
    parentize(middleLayer)
    renderThings(middleLayer)
    recursivelyAddOptimizedMesh(middleLayer)
@@ -243,7 +252,7 @@ function love.load()
    recursivelyAddOptimizedMesh(fartherLayer)
    sortOnDepth(fartherLayer.children)
 
-   
+
    cam:setTranslation(
             player.x + player.width/2 ,
             player.y - 300
@@ -287,6 +296,7 @@ function love.load()
       show= false,
       showFPS=true,
       showNumbers=false,
+      showBBoxes = true,
       gravityValue= 5000
    }
 
@@ -636,6 +646,10 @@ function gestureRecognizer(gesture)
 end
 
 function getScreenBBoxForItem(c, hack)
+   --local tx = c.bbox[1]
+   --local ty = c.bbox[2]
+   --local bx = c.bbox[3]
+   --local by = c.bbox[4]
 
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
@@ -803,6 +817,16 @@ function drawUI()
 	 uiState.gravityValue = sl.value
       end
       shadedText(round2(uiState.gravityValue), 340, 200)
+
+       str = "show bboxes"
+      str = toggleString(uiState.showBBoxes, str)
+      w = font:getWidth(str)+buttonMarginSide
+      h = font:getHeight(str)
+
+      love.graphics.scale(1,1)
+      if labelbutton(str, str, 0, 230, w , h, buttonMarginSide/2).clicked then
+	 uiState.showBBoxes = not uiState.showBBoxes
+      end
    end
 
 
