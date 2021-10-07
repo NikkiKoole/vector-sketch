@@ -97,25 +97,8 @@ function createStuff()
       'assets/plant11.polygons.txt',
       'assets/plant12.polygons.txt',
       'assets/plant13.polygons.txt',
+      'assets/deurlaag3.polygons.txt',
 
-  --    'assets/digger_.polygons.txt',
---      'assets/digger02__.polygons.txt',
-      -- 'assets/poep.polygons.txt',
-
-       --'assets/isthissizeok.polygons.txt',
- --      'assets/anotherdog.polygons.txt',
-      -- 'assets/birdword.polygons.txt',
-      -- 'assets/birdword.polygons.txt',
-      -- 'assets/birdword.polygons.txt',
-      -- 'assets/birdword.polygons.txt',
-     -- 'assets/ramen_.polygons.txt',
- --      'assets/bedje.polygons.txt',
-      -- 'assets/raampje2.polygons.txt',
-      -- 'assets/raamagain.polygons.txt',
-      -- 'assets/raamagain2.polygons.txt',
-      -- 'assets/raamagain2_.polygons.txt',
-
---      'Assets/gerns2.polygons.txt',
 
     }
     plantData = {}
@@ -147,6 +130,8 @@ function createStuff()
    fartherUrls = {
       'assets/doosgroot.polygons.txt',
       'assets/doosklein.polygons.txt',
+      'assets/deurlaag3.polygons.txt',
+
    }
    fartherData = {}
 
@@ -164,8 +149,8 @@ function createStuff()
                --depth=mapInto(random(), 0,1,
                --              depthMinMax.min, depthMinMax.max ),
 	       depthLayer = 'farther',
-               scaleX = 1.0 + random(),
-               scaleY = 1.0 + random()*1.5,
+               scaleX = 1.0 + random()*3.5,
+               scaleY = 1.0 + random()*3.5,
 
                urlIndex=math.ceil(random()* #fartherUrls)
             }

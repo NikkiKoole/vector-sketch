@@ -245,8 +245,9 @@ function love.load()
 
    
    cam:setTranslation(
-      newPlayer.transforms.l[1] ,
-      -H/2 + offset
+            player.x + player.width/2 ,
+            player.y - 300
+
    )
 
    gestureList = {}
@@ -284,7 +285,7 @@ function love.load()
    --ui = {show=false}
    uiState = {
       show= false,
-      showFPS=false,
+      showFPS=true,
       showNumbers=false,
       gravityValue= 5000
    }
@@ -387,7 +388,7 @@ function love.update(dt)
    if cameraFollowPlayer then
       local delta = cam:setTranslationSmooth(
             player.x + player.width/2 ,
-            player.y - 350,
+            player.y - 300,
             dt,
             10
                                    )
