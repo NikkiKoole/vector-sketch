@@ -97,9 +97,10 @@ function createStuff()
       -- 'assets/plant11.polygons.txt',
       -- 'assets/plant12.polygons.txt',
       -- 'assets/plant13.polygons.txt',
-       'assets/deurpaar4s__.polygons.txt',
-       'assets/two_.polygons.txt',
-       'assets/deurlaag3.polygons.txt',
+       --'assets/deurpaar4s__.polygons.txt',
+        'assets/deurpaarser2.polygons.txt',
+       --'assets/two_.polygons.txt',
+       --'assets/deurlaag3.polygons.txt',
 
 
     }
