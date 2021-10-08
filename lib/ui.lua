@@ -51,6 +51,12 @@ function shadedText(str,x, y)
    love.graphics.setColor(1,1,1)
    love.graphics.print(str,x+1,y+1)
 end
+function shadedTextTransparent(str,alpha,x, y)
+   love.graphics.setColor(0,0,0, alpha)
+   love.graphics.print(str,x,y)
+   love.graphics.setColor(1,1,1, alpha)
+   love.graphics.print(str,x+1,y+1)
+end
 
 function labelbutton(id, str, x,y,w,h, margin)
    local mx, my = love.mouse:getPosition()

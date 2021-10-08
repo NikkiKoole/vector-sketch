@@ -37,6 +37,9 @@ make that just one way
 masses, my calculations break down currently
 maybe also have a few differnt looking objects for that use case
 
+
+   --https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
+
 ]]--
 
 
@@ -297,6 +300,7 @@ function love.load()
       showFPS=true,
       showNumbers=false,
       showBBoxes = true,
+      showTouches = false,
       gravityValue= 5000
    }
 
@@ -646,11 +650,6 @@ function gestureRecognizer(gesture)
 end
 
 function getScreenBBoxForItem(c, hack)
-   --local tx = c.bbox[1]
-   --local ty = c.bbox[2]
-   --local bx = c.bbox[3]
-   --local by = c.bbox[4]
-
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
    local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
@@ -702,147 +701,75 @@ end
 
 function drawDebugStrings()
 
-   --   love.graphics.scale(2,2)
-
    if uiState.showFPS then
       love.graphics.setFont(smallfont)
-      love.graphics.setColor(0,0,0,.2)
-      love.graphics.print('fps: '..love.timer.getFPS(), 20, 20)
-      love.graphics.setColor(1,1,1,.8)
-      love.graphics.print('fps: '..love.timer.getFPS(),21,21)
+      shadedText('fps: '..love.timer.getFPS(), 20, 20)
       love.graphics.setFont(font)
    end
 
-
-
    if uiState.showNumbers then
-      love.graphics.setColor(0,0,0,.2)
-      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 20, 40)
-      love.graphics.print('renderCount.normal: '..renderCount.normal, 20, 70)
-      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 20, 100)
-      love.graphics.print('childCount: '..#middleLayer.children, 20, 130)
+      shadedText('renderCount.optimized: '..renderCount.optimized, 20, 40)
+      shadedText('renderCount.normal: '..renderCount.normal, 20, 70)
+      shadedText('renderCount.groundMesh: '..renderCount.groundMesh, 20, 100)
+      shadedText('childCount: '..#middleLayer.children, 20, 130)
+
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
-	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 160)
+	 shadedText('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 160)
       end
-
-      love.graphics.setColor(1,1,1,.8)
-
-      love.graphics.print('renderCount.optimized: '..renderCount.optimized, 21, 41)
-      love.graphics.print('renderCount.normal: '..renderCount.normal, 21, 71)
-      love.graphics.print('renderCount.groundMesh: '..renderCount.groundMesh, 21, 101)
-      love.graphics.print('childCount: '..#middleLayer.children, 21, 131)
-      if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
-	 love.graphics.print('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 21, 161)
-
-      end
-
    end
 
    love.graphics.setColor(1,1,1,1)
---   love.graphics.scale(1,1)
 end
 
 function drawUI()
 
    local W, H = love.graphics.getDimensions()
 
-   if false and ui.show then
-      love.graphics.setColor(1,1,1, 0.3)
-      love.graphics.rectangle('fill', 0,0, W, 50)
-
-      love.graphics.setColor(0,0,0,.2)
-      love.graphics.setFont(smallfont)
-      love.graphics.print('tweaks', 120, 20)
-      love.graphics.setFont(font)
-
-      love.graphics.setColor(1,1,1, 0.3)
-
-   end
-
    if uiState.show then
       love.graphics.setFont(font)
       local toggleString = function(state, str)
-	 if state then
-	    return '(x) '..str
-	 else
-	    return '(o) '..str
+	 if state then return '(x) '..str else return '(o) '..str end
+      end
+
+      local runningY = 10
+
+      local toggleButton = function(str, prop)
+	 local buttonMarginSide = 16
+	 str = toggleString(uiState[prop], str)
+	 local w = font:getWidth(str)+buttonMarginSide
+	 local h = font:getHeight(str)
+
+	 love.graphics.scale(1,1)
+	 if labelbutton(str, str, 0, runningY, w , h, buttonMarginSide/2).clicked then
+	    print(prop)
+	    uiState[prop] = not uiState[prop]
 	 end
-      end
-      local buttonMarginSide = 16
-      local str = "show numbers"
-      str = toggleString(uiState.showNumbers, str)
-      local w = font:getWidth(str)+buttonMarginSide
-      local h = font:getHeight(str)
-
-      love.graphics.scale(1,1)
-      if labelbutton(str, str, 0, 10, w , h, buttonMarginSide/2).clicked then
-	 uiState.showNumbers = not uiState.showNumbers
+	 runningY = runningY + 35
       end
 
-      str = "show FPS"
-      str = toggleString(uiState.showFPS, str)
-      w = font:getWidth(str)+buttonMarginSide
-      h = font:getHeight(str)
+      toggleButton('show numbers', 'showNumbers')
+      toggleButton('show FPS', 'showFPS')
+      toggleButton('show walkbuttons', 'showWalkButtons')
+      toggleButton('show bouncey', 'showBouncy')
+      toggleButton('show bboxes', 'showBBoxes')
+      toggleButton('show touches', 'showTouches')
 
-      love.graphics.scale(1,1)
-      if labelbutton(str, str, 0, 45, w , h, buttonMarginSide/2).clicked then
-	 uiState.showFPS = not uiState.showFPS
-      end
-
-
-      str = "show walkbuttons"
-      str = toggleString(uiState.showWalkButtons, str)
-      w = font:getWidth(str)+buttonMarginSide
-      h = font:getHeight(str)
-
-      love.graphics.scale(1,1)
-      if labelbutton(str, str, 0, 80, w , h, buttonMarginSide/2).clicked then
-	 uiState.showWalkButtons = not uiState.showWalkButtons
-      end
-
-      str = "show bouncey"
-      str = toggleString(uiState.showBouncy, str)
-      w = font:getWidth(str)+buttonMarginSide
-      h = font:getHeight(str)
-
-      love.graphics.scale(1,1)
-      if labelbutton(str, str, 0, 115, w , h, buttonMarginSide/2).clicked then
-	 uiState.showBouncy = not uiState.showBouncy
-      end
-
-
-
-      local sl =  h_slider('gravronics', 20, 200, 300, uiState.gravityValue, -10000, 10000)
+      local sl =  h_slider('gravity', 20, runningY, 300, uiState.gravityValue, -10000, 10000)
       if sl.value ~= nil then
 	 uiState.gravityValue = sl.value
       end
-      shadedText(round2(uiState.gravityValue), 340, 200)
-
-       str = "show bboxes"
-      str = toggleString(uiState.showBBoxes, str)
-      w = font:getWidth(str)+buttonMarginSide
-      h = font:getHeight(str)
-
-      love.graphics.scale(1,1)
-      if labelbutton(str, str, 0, 230, w , h, buttonMarginSide/2).clicked then
-	 uiState.showBBoxes = not uiState.showBBoxes
-      end
+      shadedTextTransparent('gravity',0.8, 20, runningY)
+      shadedText(round2(uiState.gravityValue), 340, runningY)
    end
 
-
-   if false then
-   love.graphics.setColor(1,1,1)
-   love.graphics.circle('fill', W-25, 25, 25)
-   end
 
    if uiState.showWalkButtons then
       love.graphics.circle('fill', 50, (H/2)-25, 50)
       love.graphics.circle('fill', W-50, (H/2)-25, 50)
-
    end
 
-
    love.graphics.circle('fill', W-25, 25, 25)
+
 end
 
 
@@ -857,19 +784,7 @@ function love.draw()
 
    if (true) then
       farther:push()
-      -- love.graphics.setColor( 1, 0, 0, .25 )
-      -- tlx, tly = cam:getWorldCoordinates(cam.x - cam.w, cam.y - cam.h, 'farther')
-      -- brx, bry = cam:getWorldCoordinates(cam.x + cam.w*2, cam.y + cam.h*2, 'farther')
-
-      --for _, v in pairs(stuff) do
-      --    if v.x >= tlx and v.x <= brx and v.y >= tly and v.y <= bry then
-      --       love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-      --       love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-      --    end
-      ---end
-      --renderThings(root)
       renderThings(fartherLayer)
-
       farther:pop()
    end
 
@@ -894,73 +809,43 @@ function love.draw()
    end
 
    cam:push()
-
-   --https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
-   -- spoiler use a heap
-   --sortOnDepth(root.children)
-   -- rendering needs some sort of culling
-   -- i'd say a bbox per folder
-   --love.graphics.push()
-   --love.graphics.translate(0,-100)
-
-   --local offset = H - 768
-   --root.transforms.l[2] = offset/2.225
-
    renderThings(middleLayer)
-   --love.graphics.pop()
 
    if testCameraViewpointRects then
       drawCameraViewPointRectangles(cameraPoint)
    end
 
-   if (false) then
-      close:push()
-      love.graphics.setColor( 1, 0, 0, .25 )
-      for _, v in pairs(stuff) do
-         love.graphics.setColor(v.color[1], v.color[2],  v.color[3], 0.3)
-         love.graphics.rectangle('fill', v.x, v.y, v.width, v.height)
-         love.graphics.setColor(.1, .1, .1)
-         love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
-      end
-      renderThings(middleLayer)
-      close:pop()
-   end
-
    cam:pop()
-
 
    handlePressedItemsOnStage(W, H)
 
    love.graphics.setColor(1,1,1,1)
 
-   local touches = love.touch.getTouches()
-
-    for i, id in ipairs(touches) do
-       local x, y = love.touch.getPosition(id)
-       love.graphics.setColor(1,1,1,1)
-
-        love.graphics.circle("fill", x, y, 20)
-        love.graphics.setColor(1,0,0)
-        love.graphics.print(tostring(id), x, y)
-
-    end
+   if uiState.showTouches then
+      local touches = love.touch.getTouches()
+      for i, id in ipairs(touches) do
+	 local x, y = love.touch.getPosition(id)
+	 love.graphics.setColor(1,1,1,1)
+	 love.graphics.circle("fill", x, y, 20)
+	 love.graphics.setColor(1,0,0)
+	 love.graphics.print(tostring(id), x, y)
+      end
+   end
 
    love.graphics.setColor(1,1,1,1)
 
    drawUI()
-   --if not ui.show then drawCameraBounds(cam, 'line' ) end
    drawDebugStrings()
-   --love.graphics.print(translateCache.value.."|"..translateCache.tweenValue, 10, 40)
+
 
    if uiState.showBouncy then
-   if translateCache.value ~= 0 then
-      love.graphics.line(W/2,100,W/2+translateCache.value, 0)
-   else
-      love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
-   end
+      if translateCache.value ~= 0 then
+	 love.graphics.line(W/2,100,W/2+translateCache.value, 0)
+      else
+	 love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
+      end
    end
 
---   love.graphics.print('make a mousehit test for the layered objects\n (bbox works already) just do it after that hits ', 30, 50)
    --love.graphics.print('then optimize nested object drawing too.', 30, 100)
 
 end
