@@ -219,6 +219,21 @@ function removeShapeAtPath(path)
    return table.remove(root.children, path[1])
 end
 
+function moveItemsInRectangleSelect(dx, dy)
+   for i = 1, #childrenInRectangleSelect do
+      local child = childrenInRectangleSelect[i]
+      --print(child, child._parent)
+--      print(child.points)
+      for j = 1, #child.points do
+         child.points[j] = {child.points[j][1] + dx, child.points[j][2] + dy}
+      end
+      remeshNode( child)
+
+   end
+   
+end
+
+
 function movePoints(node, dx, dy)
    if node.folder then
       for i = 1, #childrenInRectangleSelect do
@@ -773,6 +788,10 @@ function love.mousereleased(x,y, button)
    end
 
    if lastDraggedElement and lastDraggedElement.id == 'connector-group' then
+      if not currentlyHoveredUINode then
+         currentlyHoveredUINode = root
+      end
+      
       if (currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
          removeGroupOfThings(childrenInRectangleSelect)
          local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
@@ -788,6 +807,7 @@ function love.mousereleased(x,y, button)
          childrenInRectangleSelect = {}
          scrollviewOffset = 0
       end
+      
    end
    lastDraggedElement = nil
 end
@@ -800,7 +820,7 @@ function love.mousemoved(x,y, dx, dy)
       snap = true
    end
 
-   if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
+   if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and editingModeSub ~= 'group-move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
 
       love.mouse.setCursor(handCursor)
       root.transforms.l[1] = root.transforms.l[1] + dx
@@ -813,6 +833,11 @@ function love.mousemoved(x,y, dx, dy)
       backdrop.x = backdrop.x + dx / root.transforms.l[4]
       backdrop.y = backdrop.y + dy / root.transforms.l[4]
    end
+
+   if editingModeSub == 'group-move' and love.mouse.isDown(1) then
+      moveItemsInRectangleSelect(dx/ root.transforms.l[4], dy/ root.transforms.l[4])
+   end
+   
 
    local isConnecting = lastDraggedElement and lastDraggedElement.id == 'connector'
 
@@ -1104,11 +1129,11 @@ function love.load(arg)
    love.keyboard.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
-   local ffont = "resources/fonts/cooper-bold-bt.ttf"
+   --local ffont = "resources/fonts/cooper-bold-bt.ttf"
    --local ffont = "resources/fonts/Turbo Pascal Font.ttf"
    --local ffont = "resources/fonts/MonacoB.otf"
    --local ffont = "resources/fonts/agave.ttf"
-   --ffont = "resources/fonts/WindsorBT-Roman.otf"
+   local ffont = "resources/fonts/WindsorBT-Roman.otf"
 
    supersmallest = love.graphics.newFont(ffont , 8)
    smallest = love.graphics.newFont(ffont , 16)
@@ -1723,7 +1748,8 @@ function love.draw()
 	       end
 	    end
 
-	    if imgbutton('backdrop', ui.backdrop, rightX - 50, calcY(0)).clicked then
+            
+	    if imgbutton('backdrop', ui.backdrop, 50, h-32).clicked then
 	       if (editingMode == 'backdrop') then
 		  editingMode = nil
 	       else
@@ -1731,10 +1757,22 @@ function love.draw()
 	       end
 	       editingModeSub = nil
 	    end
+            
 	    if true or (not currentNode or not currentNode.points) then
 	       if imgbutton('select', ui.select, rightX - 100, calcY(0)).clicked then
-		  editingMode = 'rectangle-select'
+                  if (editingMode == 'rectangle-select') then
+                     editingMode = nil
+                     editingModeSub = nil
+
+                  else
+                     editingMode = 'rectangle-select'
+                  end
+
 	       end
+               if #childrenInRectangleSelect > 0 then
+                  love.graphics.print(#childrenInRectangleSelect, rightX - 100, calcY(0))
+               end
+
 	       if #childrenInRectangleSelect > 0 then
 		  if love.keyboard.isDown("delete") then
 		     local indexes = type(childrenInRectangleSelect[1]) == "number"
@@ -1748,6 +1786,16 @@ function love.draw()
 		     childrenInRectangleSelect = {}
 		  end
 
+                  if imgbutton('group-move', ui.move, rightX - 50, calcY(0)).clicked then
+                     if (editingModeSub == 'group-move') then
+                        editingModeSub = nil
+                     else
+                        editingModeSub = 'group-move'
+                     end
+
+                  end
+                  
+                  
 		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
 		     lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
 		  end
