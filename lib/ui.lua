@@ -131,10 +131,9 @@ function doubleiconlabelbutton(id, img1,img2, x, y)
 
    love.graphics.setColor(0,0,0,.75)
    love.graphics.rectangle("fill", x, y, buttonWidth, h1)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.draw(img1, x, y, 0, imgScale1, imgScale1)
-
-    love.graphics.draw(img2, x+margin+w1, y, 0, imgScale2, imgScale2)
+   love.graphics.setColor(1,1,1,1)
+   love.graphics.draw(img1, x, y, 0, imgScale1, imgScale1)
+   love.graphics.draw(img2, x+margin+w1, y, 0, imgScale2, imgScale2)
 end
 
 

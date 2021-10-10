@@ -1026,6 +1026,10 @@ function renderGraphNodes(node, level, startY)
       if (child.folder ) then
          icon = child.open and ui.folder_open or ui.folder
       end
+      if (child.line) then
+         icon = ui.polyline
+      end
+      
       local color = child.color
 
       if child.mask then
@@ -1124,6 +1128,7 @@ end
 
 
 function love.load(arg)
+   --if arg[#arg] == "-debug" then require("mobdebug").start() end
    shapeName = 'untitled'
    shapePath = ''
    love.keyboard.setKeyRepeat( true )
@@ -1252,11 +1257,12 @@ function love.load(arg)
             name="rood",
             children ={
                {
-                  name="roodchild:"..1,
+                  name="roodline:"..1,
                   color = {.5,1,0, 0.8},
                   points = points,
-
+                  line=true
                },
+
 	       {
                   name="roodchild:"..1,
                   color = {.5,.1,0, 0.8},
@@ -1308,6 +1314,7 @@ function love.load(arg)
    cellCount =  12*1
    openFileScreen = false
    gatheredData = {}
+   openedAddPanel = false
 end
 
 function drawGrid()
@@ -1759,11 +1766,10 @@ function love.draw()
 	    end
             
 	    if true or (not currentNode or not currentNode.points) then
-	       if imgbutton('select', ui.select, rightX - 100, calcY(0)).clicked then
+	       if imgbutton('rectangle-select', ui.select, rightX - 100, calcY(0)).clicked then
                   if (editingMode == 'rectangle-select') then
                      editingMode = nil
                      editingModeSub = nil
-
                   else
                      editingMode = 'rectangle-select'
                   end
@@ -1838,34 +1844,48 @@ function love.draw()
 	       end
 	    end
 
-	    if iconlabelbutton('add-shape', ui.add, nil, false,  'shape',  rightX-500, 16, 128).clicked then
-	       local shape = {
-		  color = {0,0,0,1},
-		  outline = true,
-		  points = {},
-	       }
 
-	       if currentNode and not currentNode.folder then
-		  remeshNode(currentNode)
-	       end
-	       if (currentNode) then
-		  shape._parent = currentNode and currentNode._parent
-		  addShapeAfter(shape, currentNode)
-	       else
-		  shape._parent = root
-		  addShapeAtRoot(shape)
-	       end
+            
+            if imgbutton('add-something', ui.add, rightX, 16).clicked then
+               openedAddPanel = not openedAddPanel
+            end
+            
 
-	       editingMode = 'polyline'
-	       editingModeSub = 'polyline-insert'
-	    end
+            if openedAddPanel then
+               if iconlabelbutton('add-line', ui.polyline, nil, false,  'line',  rightX-400, 48, 128).clicked then
+               end
+               
+               
+               --ui.object-group
+               if iconlabelbutton('add-shape', ui.object_group, nil, false,  'shape',  rightX-250, 48, 128).clicked then
+                  local shape = {
+                     color = {0,0,0,1},
+                     outline = true,
+                     points = {},
+                  }
 
-	    if iconlabelbutton('add-parent', ui.add, nil, false,  'folder',  rightX-256 - 96,16, 128).clicked then
+                  if currentNode and not currentNode.folder then
+                     remeshNode(currentNode)
+                  end
+                  if (currentNode) then
+                     shape._parent = currentNode and currentNode._parent
+                     addShapeAfter(shape, currentNode)
+                  else
+                     shape._parent = root
+                     addShapeAtRoot(shape)
+                  end
 
-	       local f = makeNewFolder()
-	       editingMode = 'polyline'
-	       editingModeSub = 'polyline-insert'
-	    end
+                  editingMode = 'polyline'
+                  editingModeSub = 'polyline-insert'
+               end
+               --ui.folder
+               if iconlabelbutton('add-parent', ui.folder, nil, false,  'folder',  rightX-100,48, 128).clicked then
+
+                  local f = makeNewFolder()
+                  editingMode = 'polyline'
+                  editingModeSub = 'polyline-insert'
+               end
+            end
 
 	    if (currentNode) then
 	       -- what is y position of button in list ?
