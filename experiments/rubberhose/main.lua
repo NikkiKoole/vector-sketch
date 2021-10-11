@@ -1,4 +1,8 @@
 -- inspired by https://www.battleaxe.co/rubberhose
+-- todo have a lok at FABRIK
+-- https://www.youtube.com/watch?v=UNoX65PRehA&t=1180s
+-- https://github.com/datlass/fabrik-ik-motor6d/blob/master/src/ReplicatedStorage/LimbChain/FabrikSolver.lua
+   
 Vector = require "brinevector"
 local inspect = require 'inspect'
 
@@ -197,8 +201,8 @@ function love.load()
 
   
    segments = {}
-   for i = 1, 10 do
-      segments[i] = Segment:create(200,300,0,15)
+   for i = 1, 30 do
+      segments[i] = Segment:create(200,300,0,10)
    end
 
    --segments2 = {}
@@ -307,7 +311,7 @@ function positionControlPoints(start, eind, hoseLength)
    local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
    local d = distance(start.x,start.y, eind.x, eind.y)
    local b = getEllipseWidth(hoseLength/math.pi, d)
-   local perpL = b/2 -- why am i dividing this?
+   local perpL = b /2 -- why am i dividing this?
 
    local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
    local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
@@ -407,9 +411,9 @@ function love.draw()
 
    love.graphics.setColor(1,0,0)
 
+   local robot = true   
 
    local last = segments[#segments]
-   last:updateB()
    last:follow(mx,my)
    last:updateB()
    
@@ -417,23 +421,26 @@ function love.draw()
       segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
       segments[i]:updateB()
    end
-
-
-   -- this is like a robot arm attached to pos
-   --segments[1]:setA(400,400)
-   --segments[1]:updateB()
    
-   -- for i = 2, #segments do
-   --     segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y)
-   --     segments[i]:updateB()
-   -- end
+      
+   if robot then
 
-   -- this is like a rope attahced to mouse
-   for i = 1, #segments do
-      segments[i]:setA(segments[i].a.x,segments[i].a.y + 2)
+      -- this is like a robot arm attached to pos
+      segments[1]:setA(400,400)
       segments[1]:updateB()
+      
+      for i = 2, #segments do
+         segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y)
+         segments[i]:updateB()
+      end
+   else
+
+      --   this is like a rope attahced to mouse
+      for i = 1, #segments do
+         segments[i]:setA(segments[i].a.x,segments[i].a.y + 2)
+         segments[1]:updateB()
+      end
    end
-   
    for i = 1, #segments do
       love.graphics.setColor(1,i * 0.1,i * 0.1)
       love.graphics.line(segments[i].a.x,
@@ -501,11 +508,28 @@ function love.draw()
           local ex2 = ex + feetLength * math.cos(angle);
           local ey2 = ey + feetLength * math.sin(angle);
           love.graphics.line(ex,ey,ex2,ey2)
+          for i =1, 10 do
+             --local derivate = curve:getDerivative()
+             --local dx, dy = derivate:evaluate(i/10)
+
+             local px, py = curve:evaluate(i/10)
+             love.graphics.setColor(0.5, 1, 0)
+
+             love.graphics.circle('fill', px, py, 5)
+--             love.graphics.setColor(0.5, 1, .5)
+  --           love.graphics.circle('fill', dx, dy, 5)
+
+
+          end
+          love.graphics.setColor(0.5, 1, .5)
+          
+          --love.graphics.line(curve:renderSegment(0, .75))
+          
       end
        love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 200)
 
       -- the feet 
      
-
+       -- love.timer.sleep(0.2 )
    end
 end
