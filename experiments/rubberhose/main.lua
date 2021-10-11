@@ -2,7 +2,7 @@
 -- todo have a lok at FABRIK
 -- https://www.youtube.com/watch?v=UNoX65PRehA&t=1180s
 -- https://github.com/datlass/fabrik-ik-motor6d/blob/master/src/ReplicatedStorage/LimbChain/FabrikSolver.lua
-   
+
 Vector = require "brinevector"
 local inspect = require 'inspect'
 
@@ -91,7 +91,7 @@ function getUIRect(id, x,y,w,h)
         result = true
      end
    end
-  
+
    return {
       clicked=result
    }
@@ -111,7 +111,7 @@ function h_slider(id, x, y, width, v, min, max)
    local draggedResult = false
    local mx, my = love.mouse.getPosition( )
    local hover = false
-   
+
    if pointInRect(mx,my, xOffset+x,y,20,20) then
       hover = true
    end
@@ -143,7 +143,7 @@ function h_slider(id, x, y, width, v, min, max)
 	 end
       end
    end
-   
+
    return {
       value=result
    }
@@ -152,7 +152,7 @@ end
 function positionLegsFromBody()
    local w2 = body.w*7/9
    local h2 = body.h*6/9
-   
+
    hoses[1].start.x = body.x - w2
    hoses[1].start.y = body.y + h2
    hoses[1].eind.x = body.x  - w2
@@ -166,7 +166,7 @@ end
 
 
 
-                      
+
 
 function love.load()
    love.window.setMode(1024, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
@@ -191,25 +191,25 @@ function love.load()
       arrow= love.mouse.getSystemCursor("arrow")
    }
 
-   
+
    borderRadius = 0
    lineWidth = 10
    flop = -1
-
+   dt = 0
    ----
    -- ik stuff
 
-  
+
    segments = {}
-   for i = 1, 30 do
-      segments[i] = Segment:create(200,300,0,10)
+   for i = 1, 70 do
+      segments[i] = Segment:create(200,300,0,5)
    end
 
    --segments2 = {}
    --for i = 1, 20 do
    --   segments2[i] = Segment:create(200,300,0,20)
    --end
-  
+
 end
 
 function isInCircle(x,y, x2,y2,r)
@@ -257,27 +257,27 @@ function love.mousemoved(x,y, dx, dy)
    end
 end
 
-function love.update()
-  
+function love.update(dt2)
+   dt = dt2
 end
 
 
 function getPerpOfLine(x1,y1,x2,y2)
     local nx = x2 - x1
     local ny = y2 - y1
-    local len = math.sqrt(nx * nx + ny * ny) 
+    local len = math.sqrt(nx * nx + ny * ny)
     nx = nx/len
     ny = ny/len
     return flop * ny, -flop * nx
 end
 
 function distance(x1,y1,x2,y2)
-   local nx = x2 - x1  
-   local ny = y2 - y1 
+   local nx = x2 - x1
+   local ny = y2 - y1
    return math.sqrt(nx * nx + ny * ny)
 end
 
-function lerp(v0, v1, t) 
+function lerp(v0, v1, t)
   return (1 - t) * v0 + t * v1
 end
 
@@ -289,12 +289,12 @@ function getEllipseCircumference(w, h)
    return 2 * math.pi * math.sqrt(((w*w) + (h*h))/2)
 end
 
-function getEllipseWidth(circumf, h) 
+function getEllipseWidth(circumf, h)
    return math.sqrt((circumf*circumf) - (2* (h*h))) / math.sqrt(2)
 end
 
 
-function pointInEllipse (px, py, cx, cy, rx, ry, rotation) 
+function pointInEllipse (px, py, cx, cy, rx, ry, rotation)
     local rotation = rotation or 0
     local cos = math.cos(rotation)
     local sin = math.sin(rotation)
@@ -315,7 +315,7 @@ function positionControlPoints(start, eind, hoseLength)
 
    local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
    local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
-   
+
    local startP = {x= sp2.x +(pxm*perpL), y= sp2.y + (pym*perpL)}
    local endP = {x= ep2.x +(pxm*perpL), y= ep2.y + (pym*perpL)}
    return startP, endP
@@ -326,7 +326,7 @@ end
  --   last:updateB()
  --   last:follow(mx,my)
  --   last:updateB()
-   
+
  --   for i = #segments-1, 1 , -1 do
  --      segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
  --      segments[i]:updateB()
@@ -334,13 +334,13 @@ end
 
  --   segments[1]:setA(400,400)
  --   segments[1]:updateB()
-   
+
  --   for i = 2, #segments do
  --       segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y)
  --       segments[i]:updateB()
  --   end
-   
-   
+
+
  --   for i = 1, #segments do
  --      love.graphics.setColor(1,i * 0.1,i * 0.1)
  --      love.graphics.line(segments[i].a.x,
@@ -352,7 +352,7 @@ end
  --   end
 
 function love.draw()
-   
+
    handleMouseClickStart()
 
    --- some ui
@@ -387,7 +387,7 @@ function love.draw()
 
   local mx, my = love.mouse.getPosition()
 
-   
+
    love.graphics.setColor(0,1,.5)
 
    if pointInEllipse (mx, my, body.x, body.y, body.w, body.h, body.rotation) then
@@ -395,49 +395,49 @@ function love.draw()
 
    end
 
- 
+
    love.graphics.ellipse( 'fill', body.x, body.y, body.w, body.h)
 
 
-   
-
- 
 
 
 
-   
 
-   
+   love.graphics.setLineWidth(10)
+
+
+
+
 
    love.graphics.setColor(1,0,0)
 
-   local robot = true   
+   local robot = true
 
    local last = segments[#segments]
    last:follow(mx,my)
    last:updateB()
-   
+
    for i = #segments-1, 1 , -1 do
       segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
       segments[i]:updateB()
    end
-   
-      
+
+
    if robot then
 
       -- this is like a robot arm attached to pos
       segments[1]:setA(400,400)
       segments[1]:updateB()
-      
+
       for i = 2, #segments do
-         segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y)
+         segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y + 100*dt)  -- rmeove the +10dt to get rid of gravity
          segments[i]:updateB()
       end
    else
 
       --   this is like a rope attahced to mouse
       for i = 1, #segments do
-         segments[i]:setA(segments[i].a.x,segments[i].a.y + 2)
+         segments[i]:setA(segments[i].a.x, segments[i].a.y + 1000*dt)
          segments[1]:updateB()
       end
    end
@@ -450,9 +450,9 @@ function love.draw()
    end
 
 
-   
-   
-   
+
+
+
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
@@ -467,7 +467,7 @@ function love.draw()
       love.graphics.circle('fill', eind.x, eind.y, 10)
 
       love.graphics.setLineWidth(lineWidth)
-     
+
       local feetLength = 40
 
       if (tostring(cp.x) == 'nan') then
@@ -522,14 +522,14 @@ function love.draw()
 
           end
           love.graphics.setColor(0.5, 1, .5)
-          
+
           --love.graphics.line(curve:renderSegment(0, .75))
-          
+
       end
        love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 200)
 
-      -- the feet 
-     
+      -- the feet
+
        -- love.timer.sleep(0.2 )
    end
 end
