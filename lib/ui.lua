@@ -174,6 +174,8 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 
    love.graphics.rectangle("line", x, y, buttonWidth,h)
 
+   love.graphics.setLineWidth(1)
+
    if (pointInRect(mx, my,  x, y, buttonWidth,h)) then
       mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,1)

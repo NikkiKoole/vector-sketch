@@ -230,7 +230,7 @@ function moveItemsInRectangleSelect(dx, dy)
       remeshNode( child)
 
    end
-   
+
 end
 
 
@@ -791,7 +791,7 @@ function love.mousereleased(x,y, button)
       if not currentlyHoveredUINode then
          currentlyHoveredUINode = root
       end
-      
+
       if (currentlyHoveredUINode and  currentlyHoveredUINode.folder) then
          removeGroupOfThings(childrenInRectangleSelect)
          local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
@@ -807,7 +807,7 @@ function love.mousereleased(x,y, button)
          childrenInRectangleSelect = {}
          scrollviewOffset = 0
       end
-      
+
    end
    lastDraggedElement = nil
 end
@@ -837,7 +837,7 @@ function love.mousemoved(x,y, dx, dy)
    if editingModeSub == 'group-move' and love.mouse.isDown(1) then
       moveItemsInRectangleSelect(dx/ root.transforms.l[4], dy/ root.transforms.l[4])
    end
-   
+
 
    local isConnecting = lastDraggedElement and lastDraggedElement.id == 'connector'
 
@@ -1029,7 +1029,7 @@ function renderGraphNodes(node, level, startY)
       if (child.line) then
          icon = ui.polyline
       end
-      
+
       local color = child.color
 
       if child.mask then
@@ -1550,9 +1550,9 @@ function love.draw()
 	       love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
 	    end
 
-	    love.graphics.setLineWidth(1)
-	 end
 
+	 end
+	 love.graphics.setLineWidth(1)
 	 love.graphics.setColor(1,1,1, 1)
 
 	 if (editingMode == 'rectangle-select' or  editingModeSub =='rectangle-point-select')  and rectangleSelect.startP and rectangleSelect.endP then
@@ -1755,7 +1755,7 @@ function love.draw()
 	       end
 	    end
 
-            
+
 	    if imgbutton('backdrop', ui.backdrop, 50, h-32).clicked then
 	       if (editingMode == 'backdrop') then
 		  editingMode = nil
@@ -1764,7 +1764,7 @@ function love.draw()
 	       end
 	       editingModeSub = nil
 	    end
-            
+
 	    if true or (not currentNode or not currentNode.points) then
 	       if imgbutton('rectangle-select', ui.select, rightX - 100, calcY(0)).clicked then
                   if (editingMode == 'rectangle-select') then
@@ -1800,8 +1800,8 @@ function love.draw()
                      end
 
                   end
-                  
-                  
+
+
 		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
 		     lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
 		  end
@@ -1845,17 +1845,17 @@ function love.draw()
 	    end
 
 
-            
+
             if imgbutton('add-something', ui.add, rightX, 16).clicked then
                openedAddPanel = not openedAddPanel
             end
-            
+
 
             if openedAddPanel then
                if iconlabelbutton('add-line', ui.polyline, nil, false,  'line',  rightX-400, 48, 128).clicked then
                end
-               
-               
+
+
                --ui.object-group
                if iconlabelbutton('add-shape', ui.object_group, nil, false,  'shape',  rightX-250, 48, 128).clicked then
                   local shape = {
@@ -1937,7 +1937,9 @@ function love.draw()
 		  love.graphics.rectangle('fill', w-700 - 10, calcY(4) + 8*4 - 10, 300 + 20,  cursorH + 20 )
 		  love.graphics.setColor(1,1,1)
 		  love.graphics.print(str , w - 700, calcY(4) + 8*4)
-		  love.graphics.rectangle('fill', w- 700 + cursorX, calcY(4) , 2, cursorH)
+		  love.graphics.setColor(1,1,1, math.abs(math.sin(step/ 100)))
+		  love.graphics.rectangle('fill', w- 700 + cursorX+2, calcY(4) + 32,  2, cursorH)
+		  love.graphics.setColor(1,1,1)
 
 		  if lastClickedGraphButton then
 		     love.graphics.rectangle('line',
@@ -2142,7 +2144,7 @@ function love.keypressed(key, scancode, isrepeat)
 	 root.transforms.l[1] = 0
 	 root.transforms.l[2] = 0
       end
-      if key == 'o' then -- trace
+      if key == 'o' and not changeName then -- trace
 	 openFileScreen = not openFileScreen
 	 gatherData('')
       end
