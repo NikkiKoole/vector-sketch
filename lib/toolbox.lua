@@ -170,21 +170,6 @@ function generate3dShapeFrom2d(shape, z)
    return result
 end
 
-function addNodeInGroup(node, group)
-   node._parent = group
-   table.insert(group.children, node)
-end
-
-function addAfterNode(element, after)
-   element._parent = after._parent
-   table.insert(after._parent.children, getIndex(after), element)
-end
-
-
-function removeNodeFrom(element, from)
-   assert(getIndex(element))
-   return table.remove(from.children, getIndex(element))
-end
 
 
 function meshAll(root) -- this needs to be done recursive

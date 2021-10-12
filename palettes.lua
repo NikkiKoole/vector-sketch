@@ -25,13 +25,13 @@ miffy = {
 lego = {
    name='lego-classic',
    colors={
-      -- {name="bright red", rgb={196,40,27}},
-      -- {name="bright blue", rgb={13,105,171}},
-      -- {name="bright yellow", rgb={245,205,47}},
-      -- {name="dark green", rgb={40,127,70}},
+      --{name="bright red", rgb={196,40,27}},
+      {name="bright blue", rgb={13,105,171}},
+      {name="bright yellow", rgb={245,205,47}},
+       {name="dark green", rgb={40,127,70}},
      {name="white", rgb={242,243,242}},
-      -- {name="grey", rgb={161,165,162}},
-      -- {name="dark grey", rgb={109,110,108}},
+       {name="grey", rgb={161,165,162}},
+     {name="dark grey", rgb={109,110,108}},
       -- {name="black", rgb={27,42,52}},
    }
 }

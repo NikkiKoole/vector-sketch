@@ -3,6 +3,7 @@ package.path = package.path .. ";../../?.lua"
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
+require 'lib.scene-graph'
 require 'lib.basics'
 require 'lib.toolbox'
 require 'lib.main-utils'

@@ -1,6 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
-
+require 'lib.scene-graph'
 require 'lib.editor-utils'
 require 'lib.poly'
 require 'lib.main-utils'

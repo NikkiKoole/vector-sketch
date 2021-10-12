@@ -1,11 +1,6 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
-function getLocalizedDelta(element, dx, dy)
-   local x1,y1 = element._parent._globalTransform:inverseTransformPoint(dx,dy)
-   local x0, y0 = element._parent._globalTransform:inverseTransformPoint(0,0)
 
-   return x1-x0, y1-y0
-end
 
 function renderNodeIntoCanvas(node, canvas, filename)
 
@@ -309,39 +304,7 @@ function findMeshThatsHit(parent, mx, my, order)
 end
 
 
-function getIndex(item)
-   if (item) then
-      for k,v in ipairs(item._parent.children) do
-         if v == item then return k end
-      end
-   end
-   return -1
-end
 
-
-function findNodeByName(root, name)
-   if (root.name == name) then
-      return root
-   end
-   if root.children then
-      for i=1, #root.children do
-	 local result = findNodeByName(root.children[i], name)
-	 if result then return result end
-      end
-   end
-   return nil
-end
-
-function parentize(node)
-   if (node.children) then
-   for i = 1, #node.children do
-      node.children[i]._parent = node
-      if (node.children[i].folder) then
-	 parentize(node.children[i])
-      end
-   end
-   end
-end
 
 function renderNormallyOrOptimized(shape)
    if true then
@@ -476,8 +439,6 @@ end
 
 function unpackNodePointsLoop(points)
    local unpacked = {}
-   --unpacked[1] = points[#points][1]
-   --unpacked[2] = points[#points][2]
 
    for i = 0, #points do
       local nxt = i == #points and 1 or i+1
@@ -485,8 +446,6 @@ function unpackNodePointsLoop(points)
       unpacked[2 + (i*2)] =  points[nxt][2]
    end
 
-   -- the catmul splines look better when wrapped around
-   -- so i double up and use .5 -> 1 t
    for i = 0, #points do
       local nxt = i == #points and 1 or i+1
       unpacked[(#points*2) + 1 + (i*2)] = points[nxt][1]
@@ -507,8 +466,7 @@ function unpackNodePoints(points)
       -- make it go round
       unpacked[(#points*2)+1] =   points[1][1]
       unpacked[(#points*2)+2] =   points[1][2]
-      --unpacked[(#points*2)+3] =   points[2][1]
-      -- unpacked[(#points*2)+4] =   points[2][2]
+
    end
 
    return unpacked
@@ -592,17 +550,7 @@ end
 -- they ought t o be more optimized
 -- in short: this needs a isDirty flag of sorts
 
-function setTransforms(root)
 
-   local tl = root.transforms.l
-   local pg = nil
-   if (root._parent) then
-      pg = root._parent._globalTransform
-   end
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
-   root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
-
-end
 
 
 function renderThings(root)
@@ -627,52 +575,52 @@ end
 
 function renderThingsWithKeyFrames(root)
   -- if (root.keyframes) then
-      if (root.keyframes == 2 ) then
-	 if currentNode == root then
-	    local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+   if (root.keyframes == 2 ) then
+      if currentNode == root then
+	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
 
-	    if lerped then handleChild(lerped) end
-	 elseif (not root.lastLerp or root.needsLerp) then
-                   local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
-       if lerped then handleChild(lerped) end
-       root.lastLerp = lerped
+	 if lerped then handleChild(lerped) end
+      elseif (not root.lastLerp or root.needsLerp) then
+	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+	 if lerped then handleChild(lerped) end
+	 root.lastLerp = lerped
 
-         else
+      else
 
-	    handleChild(root.children[root.frame])
-	 end
+	 handleChild(root.children[root.frame])
       end
+   end
 
 
-      -- https://answers.unity.com/questions/1252260/lerp-color-between-4-corners.html
-      --[[
+   -- https://answers.unity.com/questions/1252260/lerp-color-between-4-corners.html
+   --[[
 
- assuming a coordinate system something like this,
- with a different color at each corner,
- what's the color at u, v ?
+      assuming a coordinate system something like this,
+      with a different color at each corner,
+      what's the color at u, v ?
 
 
-   0, 1                     1, 1
-     *-----------------------*
-     |                       |
-     |                       |
-     |             *         |
-     |             u, v      |
-     |                       |
-     |                       |
-     |                       |
-     |                       |
-     *-----------------------*
-   0, 0                     1, 0
+      0, 1                     1, 1
+      *-----------------------*
+      |                       |
+      |                       |
+      |             *         |
+      |             u, v      |
+      |                       |
+      |                       |
+      |                       |
+      |                       |
+      *-----------------------*
+      0, 0                     1, 0
 
-	 Color bilinear(Color[,] corners, Vector2 uv) {
-	 Color cTop = Color.lerp(corners[0, 1], corners[1, 1], uv.x);
-	 Color cBot = Color.lerp(corners[0, 0], corners[1, 0], uv.x);
-	 Color cUV  = Color.lerp(cBot, cTop, uv.y);
-	 return cUV;
-	 }
+      Color bilinear(Color[,] corners, Vector2 uv) {
+      Color cTop = Color.lerp(corners[0, 1], corners[1, 1], uv.x);
+      Color cBot = Color.lerp(corners[0, 0], corners[1, 0], uv.x);
+      Color cUV  = Color.lerp(cBot, cTop, uv.y);
+      return cUV;
+      }
 
-      ]]--
+   ]]--
 
       if (root.keyframes == 4) then
 	 if currentNode == root then

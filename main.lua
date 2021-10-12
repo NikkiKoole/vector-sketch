@@ -8,6 +8,7 @@ require 'palettes'
 require 'dopesheet'
 require 'file-screen'
 
+require 'lib.scene-graph'
 require 'lib.basics'
 require 'lib.editor-utils'
 require 'lib.main-utils'
@@ -19,7 +20,7 @@ require 'lib.generate-polygon'
 require 'lib.toolbox'
 require 'lib.ui'
 
-utf8 = require("utf8")
+utf8 = require('utf8')
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
 easing = require 'vendor.easing'
@@ -222,15 +223,11 @@ end
 function moveItemsInRectangleSelect(dx, dy)
    for i = 1, #childrenInRectangleSelect do
       local child = childrenInRectangleSelect[i]
-      --print(child, child._parent)
---      print(child.points)
       for j = 1, #child.points do
          child.points[j] = {child.points[j][1] + dx, child.points[j][2] + dy}
       end
       remeshNode( child)
-
    end
-
 end
 
 

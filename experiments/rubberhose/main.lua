@@ -7,11 +7,12 @@ package.path = package.path .. ";../../?.lua"
 
 local inspect = require 'vendor.inspect'
 require 'lib.basics'
+require 'lib.toolbox'
 require 'lib.ui'
 require 'segment'
 
 
-
+require 'lib.polyline'
 
 
 function love.keypressed(k)
@@ -22,8 +23,6 @@ end
 
 
 function love.load()
-   love.window.setMode(1024, 768, {resizable=true, vsync=false, minwidth=400, minheight=300})
-
    body = {x=1024/2,y=768/2, w=40,h=70,rotation=0}
    magic = 4.46
    hoses = {
@@ -259,7 +258,7 @@ function love.draw()
          love.graphics.line(ex,ey,ex2,ey2)
       else
          local c = curve:render()
-         love.graphics.line(c)
+         --love.graphics.line(c)
 
          love.graphics.setLineWidth(5)
          love.graphics.setColor(1,1,1)
@@ -277,6 +276,7 @@ function love.draw()
           local ex2 = ex + feetLength * math.cos(angle);
           local ey2 = ey + feetLength * math.sin(angle);
           love.graphics.line(ex,ey,ex2,ey2)
+	  local result = {}
           for i =1, 10 do
              --local derivate = curve:getDerivative()
              --local dx, dy = derivate:evaluate(i/10)
@@ -284,13 +284,29 @@ function love.draw()
              local px, py = curve:evaluate(i/10)
              love.graphics.setColor(0.5, 1, 0)
 
-             love.graphics.circle('fill', px, py, 5)
+             --love.graphics.circle('fill', px, py, 5)
 --             love.graphics.setColor(0.5, 1, .5)
   --           love.graphics.circle('fill', dx, dy, 5)
 
-
+	     table.insert(result, px)
+	     table.insert(result, py)
           end
-          love.graphics.setColor(0.5, 1, .5)
+	  --print(inspect(result))
+	  --print(#result)
+	  local widths = {}
+	  for i =1, #result/2 do
+	     widths[i] = (#result/2+1)-i
+	  end
+	  --print(#widths)
+	  --widths = {10,10,10,10,10,10,10,10,10,14,
+	--	    13,11,10,10,8, 6, 5, 3, 3, 3}
+	  local verts, indices, draw_mode = polyline('bevel',result, widths)
+	  --print(draw_mode)
+	  local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+
+
+	  love.graphics.draw(mesh)
+	 -- love.graphics.setColor(0.5, 1, .5)
 
           --love.graphics.line(curve:renderSegment(0, .75))
 

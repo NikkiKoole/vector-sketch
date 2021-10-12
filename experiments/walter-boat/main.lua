@@ -4,6 +4,7 @@ flux = require "vendor.flux"
 inspect = require 'vendor.inspect'
 ProFi = require 'vendor.ProFi'
 
+require 'lib.scene-graph'
 require 'lib.basics'
 require 'lib.bbox'
 require 'lib.toolbox'

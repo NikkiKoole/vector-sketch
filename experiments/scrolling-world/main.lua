@@ -6,6 +6,7 @@ local ProFi = require 'vendor.ProFi'
 local Vector = require 'vendor.brinevector'
 local tween = require 'vendor.tween'
 
+require  'lib.scene-graph'
 require 'lib.basic-tools'
 require 'lib.basics'
 require 'lib.poly'
