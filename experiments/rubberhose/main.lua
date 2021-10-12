@@ -26,8 +26,8 @@ function love.load()
    body = {x=1024/2,y=768/2, w=40,h=70,rotation=0}
    magic = 4.46
    hoses = {
-      {start={x=325, y=125}, eind={x=325, y=400},  hoseLength = 550},
-      {start={x=425, y=125}, eind={x=425, y=400},  hoseLength = 550}
+      {start={x=325, y=125}, eind={x=325, y=400},  hoseLength = 550, flop=1},
+      {start={x=425, y=125}, eind={x=425, y=400},  hoseLength = 550, flop=-1}
    }
    positionLegsFromBody()
    mouseState = {
@@ -46,7 +46,7 @@ function love.load()
 
    borderRadius = 0
    lineWidth = 10
-   flop = -1
+   --flop = -1
    dt = 0
 
    segments = {}
@@ -96,7 +96,7 @@ function love.update(dt2)
 end
 
 
-function positionControlPoints(start, eind, hoseLength)
+function positionControlPoints(start, eind, hoseLength, flop)
    local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
    pxm = pxm * flop
    pym = pym * -flop
@@ -138,14 +138,14 @@ function love.draw()
 
    --- some ui
    love.graphics.print('hose length: '..hoses[1].hoseLength, 30, 30 - 20)
-   local slider = h_slider('hose', 30, 30, 100, hoses[1].hoseLength, 0,800)
+   local slider = h_slider('hose', 30, 30, 200, hoses[1].hoseLength, 0,800)
    if slider.value ~= nil then
       hoses[1].hoseLength = slider.value
       hoses[2].hoseLength = slider.value
       positionLegsFromBody()
    end
    love.graphics.print('border radius: '..borderRadius, 30, 70 - 20)
-   slider = h_slider('bradius', 30, 70, 100, borderRadius, -2, 2)
+   slider = h_slider('bradius', 30, 70, 200, borderRadius, -2, 2)
    if slider.value ~= nil then
       borderRadius = slider.value
    end
@@ -154,13 +154,19 @@ function love.draw()
    if slider.value ~= nil then
       lineWidth = slider.value
    end
-   love.graphics.print('flop: '..flop, 30, 150 - 20)
-   slider = h_slider('flop', 30, 150, 100, flop, -1, 1)
+   love.graphics.print('flop1: '.. hoses[1].flop, 30, 150 - 20)
+   slider = h_slider('flop1', 30, 150, 100, hoses[1].flop, -1, 1)
    if slider.value ~= nil then
-      flop = slider.value
+      hoses[1].flop = slider.value
    end
-   love.graphics.print('body w: '..body.w, 30, 190 - 20)
-   slider = h_slider('bodyw', 30, 190, 100, body.w, 1, 100)
+   love.graphics.print('flop2: '..hoses[2].flop, 30, 190 - 20)
+   slider = h_slider('flop2', 30, 190, 100, hoses[2].flop, -1, 1)
+   if slider.value ~= nil then
+      hoses[2].flop = slider.value
+   end
+
+   love.graphics.print('body w: '..body.w, 30, 230 - 20)
+   slider = h_slider('bodyw', 30, 230, 100, body.w, 1, 100)
    if slider.value ~= nil then
       body.w = slider.value
       positionLegsFromBody()
@@ -183,7 +189,7 @@ function love.draw()
 
    love.graphics.setColor(1,0,0)
 
-   local robot = true
+   local robot = false
 
    local last = segments[#segments]
    last:follow(mx,my)
@@ -224,7 +230,7 @@ function love.draw()
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
-      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength)
+      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop)
       local eind = hoses[i].eind
       local d = distance(start.x,start.y, eind.x, eind.y)
       local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
@@ -237,6 +243,9 @@ function love.draw()
       love.graphics.setLineWidth(lineWidth)
 
       local feetLength = 40
+      if hose.flop > 0 then
+	 feetLength = feetLength * -1
+      end
 
       if (tostring(cp.x) == 'nan') then
          -- i want the linewidth to be stretchy
@@ -253,12 +262,13 @@ function love.draw()
          local dx = eind.x - start.x
          local dy = eind.y - start.y
          local angle = math.atan2(dy,dx) + math.pi/2  -- why isnt this the same as teh one
+
          local ex2 = ex + feetLength * math.cos(angle);
          local ey2 = ey + feetLength * math.sin(angle);
          love.graphics.line(ex,ey,ex2,ey2)
       else
          local c = curve:render()
-         --love.graphics.line(c)
+         love.graphics.line(c)
 
          love.graphics.setLineWidth(5)
          love.graphics.setColor(1,1,1)
@@ -277,11 +287,12 @@ function love.draw()
           local ey2 = ey + feetLength * math.sin(angle);
           love.graphics.line(ex,ey,ex2,ey2)
 	  local result = {}
-          for i =1, 10 do
+	  local steps = 14
+          for i =0, steps do
              --local derivate = curve:getDerivative()
              --local dx, dy = derivate:evaluate(i/10)
 
-             local px, py = curve:evaluate(i/10)
+             local px, py = curve:evaluate(i/steps)
              love.graphics.setColor(0.5, 1, 0)
 
              --love.graphics.circle('fill', px, py, 5)
