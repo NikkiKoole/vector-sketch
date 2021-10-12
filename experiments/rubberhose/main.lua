@@ -1,10 +1,12 @@
+package.path = package.path .. ";../../?.lua"
+
 -- inspired by https://www.battleaxe.co/rubberhose
 -- todo have a lok at FABRIK
 -- https://www.youtube.com/watch?v=UNoX65PRehA&t=1180s
 -- https://github.com/datlass/fabrik-ik-motor6d/blob/master/src/ReplicatedStorage/LimbChain/FabrikSolver.lua
 
-Vector = require "brinevector"
-local inspect = require 'inspect'
+Vector = require "vendor.brinevector"
+local inspect = require 'vendor.inspect'
 
 
 Segment = {}
@@ -430,7 +432,7 @@ function love.draw()
       segments[1]:updateB()
 
       for i = 2, #segments do
-         segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y + 100*dt)  -- rmeove the +10dt to get rid of gravity
+         segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y )  -- rmeove the +10dt to get rid of gravity
          segments[i]:updateB()
       end
    else
