@@ -5,42 +5,10 @@ package.path = package.path .. ";../../?.lua"
 -- https://www.youtube.com/watch?v=UNoX65PRehA&t=1180s
 -- https://github.com/datlass/fabrik-ik-motor6d/blob/master/src/ReplicatedStorage/LimbChain/FabrikSolver.lua
 
-Vector = require "vendor.brinevector"
 local inspect = require 'vendor.inspect'
-
-
-Segment = {}
-Segment.__index = Segment
-
-
-function Segment:create(x,y,angle, length)
-   local s = {}             -- our new object
-   setmetatable(s,Segment)  -- make Account handle lookup
-   s.a = Vector(x,y)      -- initialize our object
-   s.b = Vector(x,y)
-   s.angle = angle
-   s.length = length
-   return s
-end
-function Segment:updateB()
-   local dx = self.length * math.cos(self.angle)
-   local dy = self.length * math.sin(self.angle)
-   self.b.x = self.a.x + dx
-   self.b.y = self.a.y + dy
-end
-function Segment:setA(x,y)
-   self.a = Vector(x,y)
-end
-
-function Segment:follow(tx, ty)
-   local target = Vector(tx, ty)
-   local dir = target - self.a
-   self.angle = dir:getAngle()
-   dir = dir:getNormalized()*self.length * -1
-   self.a = target + dir
-   --print(dir:getNormalized()*self.length * -1)
-end
-
+require 'lib.basics'
+require 'lib.ui'
+require 'segment'
 
 
 
@@ -51,123 +19,6 @@ function love.keypressed(k)
       love.event.quit()
    end
 end
-
-function mapInto(x, in_min, in_max, out_min, out_max)
-   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-end
-
-
-function pointInRect(x,y, rx, ry, rw, rh)
-   if x < rx or y < ry then return false end
-   if x > rx+rw or y > ry+rh then return false end
-   return true
-end
-
-function pointInCircle(x,y, cx, cy, cr)
-   local dx = x -cx
-   local dy = y -cy
-   local d  = math.sqrt ((dx*dx) + (dy*dy))
-   return cr > d
-end
-
-function handleMouseClickStart()
-   mouseState.hoveredSomething = false
-   mouseState.down = love.mouse.isDown(1 )
-   mouseState.click = false
-   mouseState.released = false
-   if mouseState.down ~= mouseState.lastDown then
-      if mouseState.down  then
-         mouseState.click  = true
-      else
-	 mouseState.released = true
-      end
-   end
-   mouseState.lastDown =  mouseState.down
-end
-
-function getUIRect(id, x,y,w,h)
-  local result = false
-  if mouseState.click then
-     local mx, my = love.mouse.getPosition( )
-     if pointInRect(mx,my,x,y,w,h) then
-        result = true
-     end
-   end
-
-   return {
-      clicked=result
-   }
-end
-
-
-function h_slider(id, x, y, width, v, min, max)
-   love.graphics.setColor(0.3, 0.3, 0.3)
-   love.graphics.rectangle('fill',x,y+8,width,3 )
-   love.graphics.setColor(0, 0, 0)
-   local xOffset = mapInto(v, min, max, 0, width-20)
-   love.graphics.rectangle('fill',xOffset + x,y,20,20 )
-   love.graphics.setColor(1,1,1,1)
-   love.graphics.rectangle("line", xOffset + x,y,20,20)
-
-   local result= nil
-   local draggedResult = false
-   local mx, my = love.mouse.getPosition( )
-   local hover = false
-
-   if pointInRect(mx,my, xOffset+x,y,20,20) then
-      hover = true
-   end
-
-   if hover then
-      mouseState.hoveredSomething = true
-      love.mouse.setCursor(cursors.hand)
-      if mouseState.click then
-         lastDraggedElement = {id=id}
-	 mouseState.hoveredSomething = true
-	 mouseState.offset = {x=(xOffset+x) - mx, y=my-y}
-      end
-      love.graphics.setColor(.7,.8,0,1)
-      love.graphics.rectangle("line", xOffset + x,y,20,20)
-      love.graphics.setColor(1,1,1,1)
-   end
-
-   if love.mouse.isDown(1 ) then
-      if lastDraggedElement and lastDraggedElement.id == id then
-	 mouseState.hoveredSomething = true
-	 love.mouse.setCursor(cursors.hand)
-         local mx, my = love.mouse.getPosition( )
-         result = mapInto(mx + mouseState.offset.x, x, x+width-20, min, max)
-	 if result < min then
-	    result = nil
-	 else
-         result = math.max(result, min)
-         result = math.min(result, max)
-	 end
-      end
-   end
-
-   return {
-      value=result
-   }
-end
-
-function positionLegsFromBody()
-   local w2 = body.w*7/9
-   local h2 = body.h*6/9
-
-   hoses[1].start.x = body.x - w2
-   hoses[1].start.y = body.y + h2
-   hoses[1].eind.x = body.x  - w2
-   hoses[1].eind.y = body.y + h2 + hoses[1].hoseLength/magic
-
-   hoses[2].start.x = body.x  + w2
-   hoses[2].start.y = body.y  + h2
-   hoses[2].eind.x = body.x  + w2
-   hoses[2].eind.y = body.y + h2 + hoses[1].hoseLength/magic
-end
-
-
-
 
 
 function love.load()
@@ -198,40 +49,22 @@ function love.load()
    lineWidth = 10
    flop = -1
    dt = 0
-   ----
-   -- ik stuff
-
 
    segments = {}
    for i = 1, 70 do
       segments[i] = Segment:create(200,300,0,5)
    end
 
-   --segments2 = {}
-   --for i = 1, 20 do
-   --   segments2[i] = Segment:create(200,300,0,20)
-   --end
-
-end
-
-function isInCircle(x,y, x2,y2,r)
-    local dx = x - x2
-    local dy = y - y2
-    local distance = math.sqrt( (dx*dx) + (dy*dy))
-    if distance < r then
-       return true
-    end
-    return false
 end
 
 
 function love.mousepressed(mx, my)
    for i = 1, #hoses do
-      if isInCircle(hoses[i].start.x, hoses[i].start.y, mx,my,10) then
+      if pointInCircle(hoses[i].start.x, hoses[i].start.y, mx,my,10) then
          hoses[i].start.dragging = true
          return
       end
-      if isInCircle(hoses[i].eind.x, hoses[i].eind.y, mx,my,10) then
+      if pointInCircle(hoses[i].eind.x, hoses[i].eind.y, mx,my,10) then
          hoses[i].eind.dragging = true
          return
       end
@@ -264,53 +97,10 @@ function love.update(dt2)
 end
 
 
-function getPerpOfLine(x1,y1,x2,y2)
-    local nx = x2 - x1
-    local ny = y2 - y1
-    local len = math.sqrt(nx * nx + ny * ny)
-    nx = nx/len
-    ny = ny/len
-    return flop * ny, -flop * nx
-end
-
-function distance(x1,y1,x2,y2)
-   local nx = x2 - x1
-   local ny = y2 - y1
-   return math.sqrt(nx * nx + ny * ny)
-end
-
-function lerp(v0, v1, t)
-  return (1 - t) * v0 + t * v1
-end
-
-function lerpLine(x1,y1, x2,y2, t)
-   return {x=lerp(x1, x2, t), y= lerp(y1, y2, t)}
-end
-
-function getEllipseCircumference(w, h)
-   return 2 * math.pi * math.sqrt(((w*w) + (h*h))/2)
-end
-
-function getEllipseWidth(circumf, h)
-   return math.sqrt((circumf*circumf) - (2* (h*h))) / math.sqrt(2)
-end
-
-
-function pointInEllipse (px, py, cx, cy, rx, ry, rotation)
-    local rotation = rotation or 0
-    local cos = math.cos(rotation)
-    local sin = math.sin(rotation)
-    local dx  = (px - cx)
-    local dy  = (py - cy)
-    local tdx = cos * dx + sin * dy
-    local tdy = sin * dx - cos * dy
-
-    return (tdx * tdx) / (rx * rx) + (tdy * tdy) / (ry * ry) <= 1;
-end
-
-
 function positionControlPoints(start, eind, hoseLength)
    local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
+   pxm = pxm * flop
+   pym = pym * -flop
    local d = distance(start.x,start.y, eind.x, eind.y)
    local b = getEllipseWidth(hoseLength/math.pi, d)
    local perpL = b /2 -- why am i dividing this?
@@ -323,35 +113,25 @@ function positionControlPoints(start, eind, hoseLength)
    return startP, endP
 end
 
- -- function doIk(segments)
- --   local last = segments[#segments]
- --   last:updateB()
- --   last:follow(mx,my)
- --   last:updateB()
-
- --   for i = #segments-1, 1 , -1 do
- --      segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
- --      segments[i]:updateB()
- --   end
-
- --   segments[1]:setA(400,400)
- --   segments[1]:updateB()
-
- --   for i = 2, #segments do
- --       segments[i]:setA(segments[i-1].b.x, segments[i-1].b.y)
- --       segments[i]:updateB()
- --   end
 
 
- --   for i = 1, #segments do
- --      love.graphics.setColor(1,i * 0.1,i * 0.1)
- --      love.graphics.line(segments[i].a.x,
- --                         segments[i].a.y,
- --                         segments[i].b.x,
- --                         segments[i].b.y)
- --   end
- --   return segments
- --   end
+function positionLegsFromBody()
+   local w2 = body.w*7/9
+   local h2 = body.h*6/9
+
+   hoses[1].start.x = body.x - w2
+   hoses[1].start.y = body.y + h2
+   hoses[1].eind.x = body.x  - w2
+   hoses[1].eind.y = body.y + h2 + hoses[1].hoseLength/magic
+
+   hoses[2].start.x = body.x  + w2
+   hoses[2].start.y = body.y  + h2
+   hoses[2].eind.x = body.x  + w2
+   hoses[2].eind.y = body.y + h2 + hoses[1].hoseLength/magic
+end
+
+
+
 
 function love.draw()
 
@@ -400,16 +180,7 @@ function love.draw()
 
    love.graphics.ellipse( 'fill', body.x, body.y, body.w, body.h)
 
-
-
-
-
-
    love.graphics.setLineWidth(10)
-
-
-
-
 
    love.graphics.setColor(1,0,0)
 
@@ -450,10 +221,6 @@ function love.draw()
                          segments[i].b.x,
                          segments[i].b.y)
    end
-
-
-
-
 
    for i = 1, #hoses do
       local hose = hoses[i]

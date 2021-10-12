@@ -461,10 +461,7 @@ function h_slider(id, x, y, width, v, min, max)
    love.graphics.setColor(0, 0, 0)
    local xOffset = mapInto(v, min, max, 0, width-20)
    love.graphics.rectangle('fill',xOffset + x,y,20,20 )
-   love.graphics.setColor(1,1,1,1)
-   love.graphics.setLineWidth(2)
-   love.graphics.rectangle("line", xOffset + x,y,20,20)
-   love.graphics.setLineWidth(1)
+
 
    local result= nil
    local draggedResult = false
@@ -473,6 +470,8 @@ function h_slider(id, x, y, width, v, min, max)
    if pointInRect(mx,my, xOffset+x,y,20,20) then
       hover = true
    end
+
+
 
    if hover then
       mouseState.hoveredSomething = true
@@ -502,6 +501,12 @@ function h_slider(id, x, y, width, v, min, max)
 
       end
    end
+
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.setLineWidth((hover or lastDraggedElement and lastDraggedElement.id == id )  and 4 or 2)
+   love.graphics.rectangle("line", xOffset + x,y,20,20)
+   love.graphics.setLineWidth(1)
+
    return {
       value=result
    }
