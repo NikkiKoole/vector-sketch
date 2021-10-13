@@ -60,14 +60,28 @@ function scene.load()
    --recursivelyAddOptimizedMesh(middleLayer)
    --sortOnDepth(middleLayer.children)
 
+   renderCount = {normal=0, optimized=0, groundMesh=0}
 
    cam:setTranslation(
-       player.x + player.width/2 ,
-       player.y - 300
+      player.x + player.width/2 ,
+      player.y - 300
 
-    )
+   )
 
+   font = love.graphics.newFont( "assets/adlib.ttf", 32)
+   smallfont = love.graphics.newFont( "assets/adlib.ttf", 20)
+
+   cursors = {
+      hand= love.mouse.getSystemCursor("hand"),
+      arrow= love.mouse.getSystemCursor("arrow")
+   }
+   tweenCameraDelta=0
+   followPlayerCameraDelta = 0
    
+   love.graphics.setFont(font)
+
+   updateMotionItems(middleLayer, dt)
+
 end
 
 
@@ -81,6 +95,8 @@ function scene.update(dt)
    end
 
    function love.mousepressed(x,y, button, istouch, presses)
+      if (mouseState.hoveredSomething) then return end
+
       if not istouch then
          pointerPressed(x,y, 'mouse')
       end
@@ -112,14 +128,8 @@ function scene.update(dt)
       pointerReleased(x,y, id)
    end
 
-
-
-   
-
    manageCameraTween(dt)
    cam:update()
-   updateMotionItems(middleLayer, dt)
-
    cameraApplyTranslate(dt)
    
    local W, H = love.graphics.getDimensions()
@@ -127,11 +137,15 @@ function scene.update(dt)
       bouncetween:update(dt)
    end
 
-   handlePressedItemsOnStage(W, H, dt)
+   updateMotionItems(middleLayer, dt)
 
+   handlePressedItemsOnStage(W, H, dt)
+   
 end
 
 function scene.draw()
+   renderCount = {normal=0, optimized=0, groundMesh=0}
+
    local W, H = love.graphics.getDimensions()
 
    love.graphics.clear(1,1,1)
@@ -149,13 +163,19 @@ function scene.draw()
    renderThings(middleLayer)
    cam:pop()
 
-   --if uiState.showBouncy then
-   if translateCache.value ~= 0 then
-      love.graphics.line(W/2,100,W/2+translateCache.value, 0)
-   else
-      love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
+   
+   love.graphics.setColor(1,1,1)
+
+   drawUI()
+   drawDebugStrings()
+   drawBBoxAroundItems()
+   if uiState.showBouncy then
+      if translateCache.value ~= 0 then
+         love.graphics.line(W/2,100,W/2+translateCache.value, 0)
+      else
+         love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
+      end
    end
-   --end
 
 
 end

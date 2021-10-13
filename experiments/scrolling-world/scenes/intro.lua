@@ -4,6 +4,10 @@ function scene.modify(obj)
 end
 
 function scene.load()
+   font = love.graphics.newFont( "assets/adlib.ttf", 32)
+
+   love.graphics.setFont(font)
+
 end
 
 function scene.update(dt)

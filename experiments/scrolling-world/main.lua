@@ -29,7 +29,7 @@ SM = require 'lib.SceneMgr'
 
 random = love.math.random
 
-runold = true
+runold = false
 
 --[[
 TODO:
@@ -909,9 +909,9 @@ function love.load()
    translateScheduler = {x=0,y=0}
    translateSchedulerJustItem = {x=0,y=0}
    translateHappenedByPressedItems = false
-
    translateCache = {value=0, cacheValue=0, stopped=true, stoppedAt=0, tweenValue=0}
 
+   
    uiState = {
       show= false,
       showFPS=true,
@@ -919,6 +919,13 @@ function love.load()
       showBBoxes = true,
       showTouches = false,
       gravityValue= 5000
+   }
+   mouseState = {
+      hoveredSomething = false,
+      down = false,
+      lastDown = false,
+      click = false,
+      offset = {x=0, y=0}
    }
 
    
@@ -937,7 +944,9 @@ function love.update(dt)
 end
 
 function love.draw()
-  -- Run your scene files render function
+   -- Run your scene files render function
+   handleMouseClickStart()
+
   SM.draw()
 end
 

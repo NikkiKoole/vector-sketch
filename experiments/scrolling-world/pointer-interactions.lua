@@ -81,7 +81,20 @@ function handlePressedItemsOnStage(W, H, dt)
 		  cameraTranslateScheduler(-1000*dt, 0)
                end
             end
+         end
 
+      end
+   end
+end
+
+function drawBBoxAroundItems()
+   for i = 1, #middleLayer.children do
+      local c = middleLayer.children[i]
+      if c.bbox and c._localTransform and c.depth ~= nil then
+
+         if c.pressed then
+            local mx, my = getPointerPosition(c.pressed.id)
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c)
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
@@ -99,19 +112,16 @@ function handlePressedItemsOnStage(W, H, dt)
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
 
-	    --love.graphics.rectangle('fill', pivx-5, pivy-5, 10, 10)
-	    -- end
-
-
 
          end
-
+         
 	 if  c.mouseOver or uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
 	    love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 	 end
+
       end
    end
 end
