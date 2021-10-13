@@ -25,10 +25,15 @@ require 'fillstuf'
 require 'removeAddItems'
 require 'pointer-interactions'
 
+SM = require 'lib.SceneMgr'
+
 random = love.math.random
+
 
 --[[
 TODO:
+
+https://gitlab.com/V3X3D/love-libs/-/tree/master/SceneMgr/scenes
 
 * the bbox functions have 2 ways of returning the data
 {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
@@ -549,7 +554,7 @@ function resetCameraTween()
    end
 end
 
-
+--[[
 function love.mousepressed(x,y, button, istouch, presses)
 
    if (mouseState.hoveredSomething) then return end
@@ -587,6 +592,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
    pointerReleased(x,y, id)
 end
 
+--]]
 
 --https://stackoverflow.com/questions/47856682/how-to-get-the-delta-of-swipe-draging-touch
 
@@ -789,7 +795,7 @@ function love.draw()
       farther:pop()
    end
 
-   drawGroundPlaneLines()
+   drawGroundPlaneLines(cam)
    love.graphics.setLineWidth(1)
 
    if (false) then
@@ -865,4 +871,22 @@ function love.filedropped(file)
    parentize(middleLayer)
    meshAll(middleLayer)
    renderThings(middleLayer)
+end
+
+function love.load()
+  -- Set path of your scene files
+  SM.setPath("scenes/")
+
+  -- Add scene "intro" to scene table
+  SM.load("intro")
+end
+
+function love.update(dt)
+  -- Run your scene files update function
+  SM.update(dt)
+end
+
+function love.draw()
+  -- Run your scene files render function
+  SM.draw()
 end

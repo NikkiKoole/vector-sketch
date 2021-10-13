@@ -1,4 +1,4 @@
-function drawGroundPlaneLines()
+function drawGroundPlaneLines(cam)
    local thing = groundPlanes.assets[1].thing
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
