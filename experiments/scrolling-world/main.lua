@@ -169,33 +169,32 @@ local function drawCameraBounds( cam, mode )
 end
 
 function manageCameraTween(dt)
-         if cameraTween then
+   if cameraTween then
+      local delta = cam:setTranslationSmooth(
+         cameraTween.goalX,
+         cameraTween.goalY,
+         dt,
+         cameraTween.smoothValue
+      )
 
-	 local delta = cam:setTranslationSmooth(
-	    cameraTween.goalX,
-	    cameraTween.goalY,
-	    dt,
-	    cameraTween.smoothValue
-	 )
---         print('delta', inspect(delta))
-         if delta.x ~= 0 then
-            cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
-         end
+      if delta.x ~= 0 then
+         cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
+      end
 
-	 if (delta.x + delta.y) == 0 then
-            for i = #gestureList, 1 -1 do
-               if cameraTween.originalGesture == gestureList[i] then
-		  if gestureList[i] ~= nil then
-		     removeGestureFromList(gestureList[i])
-		  end
+      if (delta.x + delta.y) == 0 then
+         for i = #gestureList, 1 -1 do
+            if cameraTween.originalGesture == gestureList[i] then
+               if gestureList[i] ~= nil then
+                  removeGestureFromList(gestureList[i])
                end
             end
+         end
 
-	    cameraTween = nil
+         cameraTween = nil
 
-	 end
-	 tweenCameraDelta = (delta.x + delta.y)
       end
+      tweenCameraDelta = (delta.x + delta.y)
+   end
 
 end
 
@@ -443,6 +442,8 @@ function love.update(dt)
 
    end
 
+   cameraApplyTranslate(dt)
+
    if not cameraFollowPlayer then
       manageCameraTween(dt)
    end
@@ -473,7 +474,6 @@ function love.update(dt)
 
    updateMotionItems(middleLayer, dt)
 
-   cameraApplyTranslate(dt)
 
 end
 
@@ -550,8 +550,8 @@ function cameraApplyTranslate(dt)
 	 translateHappenedByPressedItems = false
 
 	 local cx,cy = cam:getTranslation()
-	 local delta = (translateScheduler.x + translateSchedulerJustItem.x) * 10
-         print(delta, inspect(translateScheduler), inspect(translateSchedulerJustItem))
+	 local delta = (translateScheduler.x + translateSchedulerJustItem.x) * 100
+         --print(delta, inspect(translateScheduler), inspect(translateSchedulerJustItem))
 
 	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
       end
