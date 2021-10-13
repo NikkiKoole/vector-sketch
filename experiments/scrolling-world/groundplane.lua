@@ -79,19 +79,6 @@ function drawGroundPlaneLines(cam)
    else
       love.graphics.setShader(betterShader)
 
-      --[[
-      betterShader:send('view', {
-                     1.15,  0,    0, -150,
-                     0,    0, -1.7, -120,
-                     0,    1,    0,   50,
-                     0,    1,    0,   50,
-      })
-      ]]--
-
-
-      -- de eerste waarde hier (.8) of (1.15) lijkt iets te maken te hebben met de scroll snelheid
-
-
 
       local ratio = W/H
       local ratio1024 = 1024/768

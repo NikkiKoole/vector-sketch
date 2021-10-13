@@ -60,7 +60,7 @@ function updateGestureCounter(dt)
 end
 
 
-function handlePressedItemsOnStage(W, H)
+function handlePressedItemsOnStage(W, H, dt)
    for i = 1, #middleLayer.children do
       local c = middleLayer.children[i]
       if c.bbox and c._localTransform and c.depth ~= nil then
@@ -74,11 +74,11 @@ function handlePressedItemsOnStage(W, H)
 
                if ((brx + offset) > W) then
                   resetCameraTween()
-		  cameraTranslateScheduler(1000*lastDT, 0)
+		  cameraTranslateScheduler(1000*dt, 0)
                end
                if ((tlx - offset) < 0) then
                   resetCameraTween()
-		  cameraTranslateScheduler(-1000*lastDT, 0)
+		  cameraTranslateScheduler(-1000*dt, 0)
                end
             end
 

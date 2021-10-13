@@ -1,7 +1,7 @@
 package.path = package.path .. ";../../?.lua"
 
 local Camera = require 'custom-vendor.brady'
-local inspect = require 'vendor.inspect'
+inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
 local Vector = require 'vendor.brinevector'
 local tween = require 'vendor.tween'
@@ -29,6 +29,7 @@ SM = require 'lib.SceneMgr'
 
 random = love.math.random
 
+runold = true
 
 --[[
 TODO:
@@ -151,7 +152,7 @@ function love.keypressed( key )
    end
 end
 
-local function resizeCamera( self, w, h )
+function resizeCamera( self, w, h )
    local scaleW, scaleH = w / self.w, h / self.h
    local scale = math.min( scaleW, scaleH )
    -- the line below keeps aspect
@@ -166,6 +167,38 @@ end
 local function drawCameraBounds( cam, mode )
    love.graphics.rectangle( mode, cam.x, cam.y, cam.w, cam.h )
 end
+
+function manageCameraTween(dt)
+         if cameraTween then
+
+	 local delta = cam:setTranslationSmooth(
+	    cameraTween.goalX,
+	    cameraTween.goalY,
+	    dt,
+	    cameraTween.smoothValue
+	 )
+--         print('delta', inspect(delta))
+         if delta.x ~= 0 then
+            cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
+         end
+
+	 if (delta.x + delta.y) == 0 then
+            for i = #gestureList, 1 -1 do
+               if cameraTween.originalGesture == gestureList[i] then
+		  if gestureList[i] ~= nil then
+		     removeGestureFromList(gestureList[i])
+		  end
+               end
+            end
+
+	    cameraTween = nil
+
+	 end
+	 tweenCameraDelta = (delta.x + delta.y)
+      end
+
+end
+
 
 function generateCameraLayer(name, zoom)
    return cam:addLayer(name, zoom, {relativeScale=(1.0/zoom) * zoom})
@@ -278,7 +311,7 @@ function love.load()
 
 
 
-   lastDT = 0
+--   lastDT = 0
 
    font = love.graphics.newFont( "assets/adlib.ttf", 32)
    smallfont = love.graphics.newFont( "assets/adlib.ttf", 20)
@@ -328,8 +361,42 @@ function love.load()
 end
 
 
+function updateMotionItems(layer, dt)
+   for i=1, #layer.children do
+      local thing = layer.children[i]
+      if thing.inMotion and not thing.pressed then
+
+         --local gy = (6*980)
+	 local gy = uiState.gravityValue * thing.inMotion.mass * dt
+	 local gravity = Vector(0, gy);
+
+	 applyForce(thing.inMotion, gravity)
+
+         -- applying half the velocity before position
+         -- other half after positioning
+         --https://web.archive.org/web/20150322180858/http://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
+
+	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
+
+	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
+	 thing.transforms.l[2] = thing.transforms.l[2] + (thing.inMotion.velocity.y * dt)
+
+
+
+	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
+	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
+
+	 if thing.transforms.l[2] >= 0 then
+	    thing.transforms.l[2] = 0
+	    thing.inMotion = nil
+	 end
+      end
+   end
+end
+
+
 function love.update(dt)
-   lastDT = dt
+--   lastDT = dt
    local W, H = love.graphics.getDimensions()
 
    if bouncetween then
@@ -377,32 +444,7 @@ function love.update(dt)
    end
 
    if not cameraFollowPlayer then
-      if cameraTween then
-
-	 local delta = cam:setTranslationSmooth(
-	    cameraTween.goalX,
-	    cameraTween.goalY,
-	    dt,
-	    cameraTween.smoothValue
-	 )
-         if delta.x ~= 0 then
-            cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
-         end
-
-	 if (delta.x + delta.y) == 0 then
-            for i = #gestureList, 1 -1 do
-               if cameraTween.originalGesture == gestureList[i] then
-		  if gestureList[i] ~= nil then
-		     removeGestureFromList(gestureList[i])
-		  end
-               end
-            end
-
-	    cameraTween = nil
-
-	 end
-	 tweenCameraDelta = (delta.x + delta.y)
-      end
+      manageCameraTween(dt)
    end
 
    if cameraFollowPlayer then
@@ -417,6 +459,7 @@ function love.update(dt)
 
 
    cam:update()
+   handlePressedItemsOnStage(W, H, dt)
 
    updateGestureCounter(dt)
 
@@ -426,38 +469,11 @@ function love.update(dt)
       end
    end
 
-   for i=1, #middleLayer.children do
-      local thing = middleLayer.children[i]
-      if thing.inMotion and not thing.pressed then
-
-         --local gy = (6*980)
-	 local gy = uiState.gravityValue * thing.inMotion.mass * dt
-	 local gravity = Vector(0, gy);
-
-	 applyForce(thing.inMotion, gravity)
-
-         -- applying half the velocity before position
-         -- other half after positioning
-         --https://web.archive.org/web/20150322180858/http://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
-
-	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
-
-	 thing.transforms.l[1] = thing.transforms.l[1] + (thing.inMotion.velocity.x * dt)
-	 thing.transforms.l[2] = thing.transforms.l[2] + (thing.inMotion.velocity.y * dt)
 
 
+   updateMotionItems(middleLayer, dt)
 
-	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
-	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
-
-	 if thing.transforms.l[2] >= 0 then
-	    thing.transforms.l[2] = 0
-	    thing.inMotion = nil
-	 end
-      end
-   end
-
-   cameraApplyTranslate()
+   cameraApplyTranslate(dt)
 
 end
 
@@ -478,9 +494,8 @@ end
 
 
 
-function checkForBounceBack()
+function checkForBounceBack(dt)
    -- this thing is meant for the elastic bounce back of items
-   -- i dont really understand what this does anymore
    -- ah right, its the elements that will bounce in opposite direction of a camera tween
    -- just the little line right now that displays that
    if translateScheduler.x ~= 0 then
@@ -493,9 +508,9 @@ function checkForBounceBack()
 	 translateCache.stopped = true
 	 translateCache.stoppedAt = translateCache.value
       end
-      local multiplier = (0.5 ^ (lastDT*300))
+      local multiplier = (0.5 ^ (dt*300))
       translateCache.cacheValue = translateCache.cacheValue * multiplier
-
+      
       -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
       if math.abs(translateCache.cacheValue) < 0.01 and translateCache.triggered == false then
 	 translateCache.cacheValue = 0
@@ -509,7 +524,7 @@ function checkForBounceBack()
 end
 
 
-function cameraApplyTranslate()
+function cameraApplyTranslate(dt)
 
    cam:translate( translateScheduler.x, translateScheduler.y)
    local translateByPressed = false
@@ -530,15 +545,19 @@ function cameraApplyTranslate()
       if translateByPressed == true then
 	 translateHappenedByPressedItems = true
       end
+
       if translateHappenedByPressedItems == true and  translateByPressed == false then
 	 translateHappenedByPressedItems = false
+
 	 local cx,cy = cam:getTranslation()
 	 local delta = (translateScheduler.x + translateSchedulerJustItem.x) * 10
+         print(delta, inspect(translateScheduler), inspect(translateSchedulerJustItem))
+
 	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
       end
       ------ end that part
 
-      checkForBounceBack()
+      checkForBounceBack(dt)
 
       translateScheduler.x = 0
       translateScheduler.y = 0
@@ -554,7 +573,9 @@ function resetCameraTween()
    end
 end
 
---[[
+
+if (runold) then
+
 function love.mousepressed(x,y, button, istouch, presses)
 
    if (mouseState.hoveredSomething) then return end
@@ -592,7 +613,8 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
    pointerReleased(x,y, id)
 end
 
---]]
+end
+
 
 --https://stackoverflow.com/questions/47856682/how-to-get-the-delta-of-swipe-draging-touch
 
@@ -781,6 +803,7 @@ end
 
 
 function love.draw()
+   love.graphics.setColor(1,1,1)
    handleMouseClickStart()
    renderCount = {normal=0, optimized=0, groundMesh=0}
 
@@ -824,7 +847,6 @@ function love.draw()
 
    cam:pop()
 
-   handlePressedItemsOnStage(W, H)
 
    love.graphics.setColor(1,1,1,1)
 
@@ -873,20 +895,51 @@ function love.filedropped(file)
    renderThings(middleLayer)
 end
 
+
+if not runold then
+
 function love.load()
-  -- Set path of your scene files
-  SM.setPath("scenes/")
+   -- Set path of your scene files
+   meshCache = {}
+
+   gestureList = {}
+   gestureUpdateResolutionCounter = 0
+   gestureUpdateResolution = 0.0167  -- aka 60 fps
+
+   translateScheduler = {x=0,y=0}
+   translateSchedulerJustItem = {x=0,y=0}
+   translateHappenedByPressedItems = false
+
+   translateCache = {value=0, cacheValue=0, stopped=true, stoppedAt=0, tweenValue=0}
+
+   uiState = {
+      show= false,
+      showFPS=true,
+      showNumbers=false,
+      showBBoxes = true,
+      showTouches = false,
+      gravityValue= 5000
+   }
+
+   
+   SM.setPath("scenes/")
 
   -- Add scene "intro" to scene table
-  SM.load("intro")
+   SM.load("intro")
 end
 
 function love.update(dt)
   -- Run your scene files update function
-  SM.update(dt)
+   updateGestureCounter(dt)
+
+
+   SM.update(dt)
 end
 
 function love.draw()
   -- Run your scene files render function
   SM.draw()
+end
+
+
 end

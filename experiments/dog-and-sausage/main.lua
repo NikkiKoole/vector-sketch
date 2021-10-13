@@ -17,7 +17,7 @@ end
 
 function love.update(dt)
    flux.update(dt)
-   worst.transforms.l[3] = worst.transforms.l[3] + .0001/dt
+   worst.transforms.l[3] = worst.transforms.l[3] + 0.01/dt
 end
 
 function love.draw()
