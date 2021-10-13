@@ -9,7 +9,7 @@ end
 
 
 function scene.load()
-   local timeIndex = 18
+   local timeIndex = math.floor(1 + love.math.random()*24)
    
    skygradient = gradientMesh(
       "vertical",
@@ -19,7 +19,7 @@ function scene.load()
    stuff = {}
    depthMinMax = {min=-1, max=1}
    depthScaleFactors = { min=.8, max=1}
-   tileSize = 100
+   tileSize = 400
    offset = 20
    local W, H = love.graphics.getDimensions()
 
