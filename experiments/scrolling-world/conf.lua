@@ -1,7 +1,7 @@
 function love.conf(t)
 
-   t.window.width = 1024
-   t.window.height = 768
+   t.window.width = 1000
+   t.window.height = 1000
    --t.window.width = 2388
   -- t.window.height= 1668
    t.window.title = "Strolling world"

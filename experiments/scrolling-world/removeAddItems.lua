@@ -2,148 +2,90 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
    local map = {
       hack = middleLayer.children,
       farther = fartherLayer.children
-
    }
    
    for i = #map[layerName], 1, -1 do
-
       local child = map[layerName][i]
-
       if child.groundTileIndex ~= nil then
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
---            print('removing', i, 'from', layerName)
             table.remove(map[layerName], i)
-            
          end
       end
    end
 end
 function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
    local map = {
-      hack = middleLayer.children,
-      farther = fartherLayer.children
+      hack = {layer = middleLayer, data = plantData},
+      farther = {layer = fartherLayer, data = fartherData}
    }
 
-   -- todo the issue is here, this one assumes fully optimized data without children
-   if layerName == 'hack' then
-      for i = startIndex, endIndex do
-         if (plantData[i]) then
-            for j = 1, #plantData[i] do
-               local thing = plantData[i][j]
-               if not thing.hasBeenPressed then -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
-                  local urlIndex = (thing.urlIndex)
-                  local url = plantUrls[urlIndex]
-                  local read = readFileAndAddToCache(url)
-                  -- print((read.optimizedBatchMesh))
-                  local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
-                  local grass = {
-                     folder = true,
-                     transforms = copy3(read.transforms),
-                     name = 'generated '..url,
-                     children = doOptimized and {} or copy3(read.children)
-                  }
-                  --print(thing.groundTileIndex)
-                  grass.transforms.l[1] = (i*tileSize) + thing.x
-                  grass.transforms.l[2] = 0
-                  grass.transforms.l[4] = thing.scaleX
-                  grass.transforms.l[5] = thing.scaleY
-                  grass.originalIndices = {i,j}
-                  grass.depth = thing.depth
-                  grass.depthLayer = thing.depthLayer
-                  grass.url = url
-                  grass.groundTileIndex = thing.groundTileIndex
-                  grass.bbox = read.bbox
-                  table.insert(map[layerName], grass)
-               end
-            end
+   local data = map[layerName].data
+   local urls = map[layerName].urls
 
+   for i = startIndex, endIndex do
+      if (data[i]) then
+         for j = 1, #data[i] do
+            local thing = data[i][j]
+            -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
+            if not thing.hasBeenPressed then 
+               --local urlIndex = (thing.urlIndex)
+               local url = thing.url --urls[urlIndex]
+               local read = readFileAndAddToCache(url)
+               local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
+               local child = {
+                  folder = true,
+                  transforms = copy3(read.transforms),
+                  name = 'generated '..url,
+                  children = doOptimized and {} or copy3(read.children)
+               }
+
+               child.transforms.l[1] = (i*tileSize) + thing.x
+               child.transforms.l[2] = 0
+               child.transforms.l[4] = thing.scaleX
+               child.transforms.l[5] = thing.scaleY
+               child.originalIndices = {i,j}
+               child.depth = thing.depth
+               child.depthLayer = thing.depthLayer
+               child.url = thing.url
+               child.groundTileIndex = thing.groundTileIndex
+               child.bbox = read.bbox
+               table.insert(map[layerName].layer.children, child)
+            end
          end
       end
-      parentize(middleLayer)
-   sortOnDepth(middleLayer.children)
-   recursivelyAddOptimizedMesh(middleLayer)
-   else
-      
-      for i = startIndex, endIndex do
-         if (fartherData[i]) then
-            for j = 1, #fartherData[i] do
-               local thing = fartherData[i][j]
-               if not thing.hasBeenPressed then -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
-                  local urlIndex = (thing.urlIndex)
-                  local url = fartherUrls[urlIndex]
-                  local read = readFileAndAddToCache(url)
-                  -- print((read.optimizedBatchMesh))
-                  local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
-                  local grass = {
-                     folder = true,
-                     transforms = copy3(read.transforms),
-                     name = 'generated '..url,
-                     children = doOptimized and {} or copy3(read.children)
-                  }
-                  --print(thing.groundTileIndex)
-                  grass.transforms.l[1] = (i*tileSize) + thing.x
-                  grass.transforms.l[2] = 0
-                  grass.transforms.l[4] = thing.scaleX
-                  grass.transforms.l[5] = thing.scaleY
-                  grass.originalIndices = {i,j}
-                  grass.depth = thing.depth
-                  grass.depthLayer = thing.depthLayer
-                  grass.url = url
-                  grass.groundTileIndex = thing.groundTileIndex
-                  grass.bbox = read.bbox
-                  table.insert(map[layerName], grass)
-               end
-            end
-
-         end
-      end
-      
-      --print('want to add things to', layerName)
-      parentize(fartherLayer)
-      --sortOnDepth(fartherLayer.children)
-      recursivelyAddOptimizedMesh(fartherLayer)
-      
    end
+   
+   parentize(map[layerName].layer)
+   sortOnDepth(map[layerName].layer.children)
+   recursivelyAddOptimizedMesh(map[layerName].layer)
    
 end
 
 function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
    local bounds = layerBounds[layerName]
    
-   --if layerName == 'hack' then
-      local s = math.floor(x1/tileSize)*tileSize
-      local e = math.ceil(x2/tileSize)*tileSize
-      local startIndex = s/tileSize
-      local endIndex = e/tileSize
-      -- initial adding
-      if bounds[1] == math.huge and bounds[2] == -math.huge then
-	 addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
-      else
-	 -- look to add at start or end
-	 if startIndex ~= bounds[1] or
-	    endIndex ~= bounds[2] then
-	    removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
-	 end
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+   local startIndex = s/tileSize
+   local endIndex = e/tileSize
 
-	 if startIndex < bounds[1] then
-	    addTheContentsOfGroundTiles(startIndex, bounds[1]-1, layerName)
-	 end
-
-	 if endIndex > bounds[2] then
-	    addTheContentsOfGroundTiles(bounds[2]+1, endIndex, layerName)
-	 end
+   if bounds[1] == math.huge and bounds[2] == -math.huge then
+      addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
+   else
+      if startIndex ~= bounds[1] or
+         endIndex ~= bounds[2] then
+         removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
       end
-      --lastGroundBounds = {startIndex, endIndex}
-      layerBounds[layerName] = {startIndex, endIndex}
---      print(startIndex, endIndex, layerName)
-   --else
-   --   print('not yet handling the other layers!', layerName)
-   --   local s = math.floor(x1/tileSize)*tileSize
-   --   local e = math.ceil(x2/tileSize)*tileSize
-   --   local startIndex = s/tileSize
-   --   local endIndex = e/tileSize
-   --   print(startIndex, endIndex, layerName)
-   --end
+
+      if startIndex < bounds[1] then
+         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, layerName)
+      end
+
+      if endIndex > bounds[2] then
+         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, layerName)
+      end
+   end
+   layerBounds[layerName] = {startIndex, endIndex}
 
 end

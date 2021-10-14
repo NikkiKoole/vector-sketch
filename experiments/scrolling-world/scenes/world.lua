@@ -1,7 +1,7 @@
 local scene = {}
 
-local Camera = require 'custom-vendor.brady'
 
+local hasBeenLoaded = false
 function scene.modify(data)
 end
 
@@ -9,6 +9,7 @@ end
 
 
 function scene.load()
+   
    local timeIndex = math.floor(1 + love.math.random()*24)
    
    skygradient = gradientMesh(
@@ -16,72 +17,45 @@ function scene.load()
       gradients[timeIndex].from, gradients[timeIndex].to
    )
 
-   stuff = {}
-   depthMinMax = {min=-1, max=1}
-   depthScaleFactors = { min=.8, max=1}
-   tileSize = 400
-   offset = 20
-   local W, H = love.graphics.getDimensions()
+   if not hasBeenLoaded then
+      --stuff = {}
+      depthMinMax = {min=-1, max=1.0}
 
-   cam = Camera(
-      W - 2 * offset,
-      H - 2 * offset,
-      {
-         x = offset, y = offset, resizable = true, maintainAspectRatio = true,
-         resizingFunction = function( self, w, h )
-            resizeCamera( self, w, h )
-            local W, H = love.graphics.getDimensions()
-            self.x = offset
-            self.y = offset
-         end,
-         getContainerDimensions = function()
-            local W, H = love.graphics.getDimensions()
-            return W - 2 * offset, H - 2 * offset
-         end
+      depthScaleFactors = { min=.8, max=1}
+      depthScaleFactors2 = { min=.4, max=.7}
+
+      tileSize = 100
+      cam = createCamera()
+      
+      layerBounds = {
+         hack = {math.huge, -math.huge},
+         farther = {math.huge, -math.huge}
       }
-   )
-   layerBounds = {
-      hack = {math.huge, -math.huge},
-      farther = {math.huge, -math.huge}
 
-   }
+      farthest = generateCameraLayer('farthest', .4)
 
-   hack = generateCameraLayer('hack', 1)
-   hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
-   hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
-   farther = generateCameraLayer('farther', .7)
+      farther = generateCameraLayer('farther', .7)
+      hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
+      hack = generateCameraLayer('hack', 1)
+      hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
 
+      fartherLayer = makeContainerFolder('fartherLayer')
+      middleLayer = makeContainerFolder('middleLayer')
+      
+      createStuff()
 
-   
-   createStuff()
+      setCameraViewport(600,600)
 
-   --parentize(middleLayer)
-   --renderThings(middleLayer)
-   --recursivelyAddOptimizedMesh(middleLayer)
-   --sortOnDepth(middleLayer.children)
+      updateMotionItems(middleLayer, dt)
+   end
+   hasBeenLoaded = true
+end
 
-   renderCount = {normal=0, optimized=0, groundMesh=0}
-
-   cam:setTranslation(
-      player.x + player.width/2 ,
-      player.y - 300
-
-   )
-
-   font = love.graphics.newFont( "assets/adlib.ttf", 32)
-   smallfont = love.graphics.newFont( "assets/adlib.ttf", 20)
-
-   cursors = {
-      hand= love.mouse.getSystemCursor("hand"),
-      arrow= love.mouse.getSystemCursor("arrow")
-   }
-   tweenCameraDelta=0
-   followPlayerCameraDelta = 0
-   
-   love.graphics.setFont(font)
-
-   updateMotionItems(middleLayer, dt)
-
+function setCameraViewport(w, h)
+   local cw, ch = cam:getContainerDimensions()
+   local targetScale = math.min(cw/w, ch/h)
+   cam:setScale(targetScale)
+   cam:setTranslation(0, -1 * h/2)
 end
 
 
@@ -128,23 +102,50 @@ function scene.update(dt)
       pointerReleased(x,y, id)
    end
 
+   
    manageCameraTween(dt)
    cam:update()
    cameraApplyTranslate(dt)
-   
+   function handlePressedItemsOnStage(dt)
    local W, H = love.graphics.getDimensions()
+
+   for i = 1, #middleLayer.children do
+      local c = middleLayer.children[i]
+      if c.bbox and c._localTransform and c.depth ~= nil then
+
+         if c.pressed then
+	    local mx, my = getPointerPosition(c.pressed.id)
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
+            if c.pressed then
+               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
+
+               if ((brx + offset) > W) then
+                  resetCameraTween()
+		  cameraTranslateScheduler(1000*dt, 0)
+               end
+               if ((tlx - offset) < 0) then
+                  resetCameraTween()
+		  cameraTranslateScheduler(-1000*dt, 0)
+               end
+            end
+         end
+
+      end
+   end
+end
+
    if bouncetween then
       bouncetween:update(dt)
    end
 
    updateMotionItems(middleLayer, dt)
 
-   handlePressedItemsOnStage(W, H, dt)
+   handlePressedItemsOnStage(dt)
    
 end
 
 function scene.draw()
-   renderCount = {normal=0, optimized=0, groundMesh=0}
 
    local W, H = love.graphics.getDimensions()
 
@@ -152,15 +153,29 @@ function scene.draw()
    love.graphics.setColor(1,1,1)
    
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
-   drawGroundPlaneLines(cam)
-   
+
+   drawGroundPlaneLinesSimple(cam, 'farthest', 'farther')
+
+   drawGroundPlaneLinesSimple(cam, 'hackFar', 'hackClose')
+
+
+   arrangeParallaxLayerVisibility('farthest', 'farther')
    farther:push()
-   renderThings(fartherLayer)
+   renderThings(fartherLayer, {
+                   camera=hack,
+                   factors=depthScaleFactors2,
+                   minmax=depthMinMax
+   })
    farther:pop()
 
-   
+   arrangeParallaxLayerVisibility('hackFar', 'hack')
    cam:push()
-   renderThings(middleLayer)
+   renderThings( middleLayer, {
+                    camera=hack,
+                    factors=depthScaleFactors,
+                    minmax=depthMinMax
+   })
+   --renderThings(middleLayer)
    cam:pop()
 
    
@@ -169,13 +184,7 @@ function scene.draw()
    drawUI()
    drawDebugStrings()
    drawBBoxAroundItems()
-   if uiState.showBouncy then
-      if translateCache.value ~= 0 then
-         love.graphics.line(W/2,100,W/2+translateCache.value, 0)
-      else
-         love.graphics.line(W/2,100,W/2+translateCache.tweenValue, 0)
-      end
-   end
+   
 
 
 end

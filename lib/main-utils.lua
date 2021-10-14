@@ -329,7 +329,7 @@ function renderNormallyOrOptimized(shape)
 
 end
 
-function handleChild(shape)
+function handleChild(shape,parallax)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
 
@@ -367,12 +367,25 @@ function handleChild(shape)
 
    if shape.folder then
 
-      if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
-
-         hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
-         hack.relativeScale = (1.0/ hack.scale) * hack.scale
-         hack.push()
+      if (shape.depth ~= nil) and parallax then
+         parallax.camera.scale = mapInto(
+            shape.depth,
+            parallax.minmax.min, parallax.minmax.max,
+            parallax.factors.min, parallax.factors.max
+         )
+         parallax.camera.relativeScale = 1
+         --(1.0/ parallax.camera.scale) * parallax.camera.scale
+         parallax.camera.push()
+         
       end
+      
+      
+      -- if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
+      --    print(inspect(hack))
+      --    hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
+      --    hack.relativeScale = (1.0/ hack.scale) * hack.scale
+      --    hack.push()
+      -- end
 
 
       if shape.aabb then
@@ -431,8 +444,8 @@ function handleChild(shape)
 
    end
 
-   if (shape.depth ~= nil  and (shape.depthLayer == 'hack')) then
-      hack:pop()
+   if (shape.depth ~= nil  and parallax) then
+      parallax.camera:pop()
    end
 
 end
@@ -553,7 +566,7 @@ end
 
 
 
-function renderThings(root)
+function renderThings(root, parallax)
 
    setTransforms(root)
 
@@ -563,7 +576,7 @@ function renderThings(root)
       love.graphics.setStencilTest()
       for i = 1, #root.children do
 	 local shape = root.children[i]
-	 handleChild(shape)
+	 handleChild(shape, parallax)
       end
       --love.graphics.setStencilTest()
    end

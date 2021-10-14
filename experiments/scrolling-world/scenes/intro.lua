@@ -20,7 +20,7 @@ end
 function scene.draw()
    love.graphics.clear(1,1,1)
    love.graphics.setColor(0,0,0)
-   love.graphics.print("This is the intro, press any key to go to the world.", 10,10)
+   love.graphics.print("This is the intro <!NEW!>, press any key to go to the world.", 10,10)
 end
 
 return scene

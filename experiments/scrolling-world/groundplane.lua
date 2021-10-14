@@ -1,45 +1,82 @@
+function drawGroundPlaneLinesSimple(cam, far, near)
+
+   love.graphics.setColor(1,1,1)
+   love.graphics.setLineWidth(2)
+   local W, H = love.graphics.getDimensions()
+
+   local x1,y1 = cam:getWorldCoordinates(0,0, far)
+   local x2,y2 = cam:getWorldCoordinates(W,0, far)
+
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+
+   for i = s, e, tileSize do
+      local groundIndex = (i/tileSize)
+      local tileIndex = (groundIndex % 5) + 1
+      local index = (i - s)/tileSize
+      local height1 = 0
+      local height2 = 0
+      local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
+      local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, near)
+      local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
+      local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, near)
+
+      love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
+      love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
+      love.graphics.setColor(0.25,.5,0.25)
+
+      love.graphics.line(x1,y1, x2,y2)
+      love.graphics.line(x1,y1, x3,y3)
+
+   end
+end
+
+function arrangeParallaxLayerVisibility(far, layer)
+   if layer == nil then layer = far end
+   local W, H = love.graphics.getDimensions()
+   
+   local x1,y1 = cam:getWorldCoordinates(0,0, far)
+   local x2,y2 = cam:getWorldCoordinates(W,0, far)
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+
+   arrangeWhatIsVisible(x1, x2, tileSize, layer)
+end
+
+
+
+
+
 function drawGroundPlaneLines(cam)
    local thing = groundPlanes.assets[1].thing
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
-   local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
-   local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
-   local s = math.floor(x1/tileSize)*tileSize
-   local e = math.ceil(x2/tileSize)*tileSize
-
-   arrangeWhatIsVisible(x1, x2, tileSize, 'hack')
-
-   local x1f,y1f = cam:getWorldCoordinates(0,0, 'farther')
-   local x2f,y2f = cam:getWorldCoordinates(W,0, 'farther')
-   arrangeWhatIsVisible(x1f, x2f, tileSize, 'farther')
-
-
 
    local useCPU = false
 
    local simplerPolies = true
 
    if simplerPolies then
-      	 for i = s, e, tileSize do
-	    local groundIndex = (i/tileSize)
-	    local tileIndex = (groundIndex % 5) + 1
-	    local index = (i - s)/tileSize
-	    local height1 = 0
-	    local height2 = 0
-	    local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, 'hackFar')
-	    local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, 'hackClose')
-	    local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, 'hackFar')
-	    local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, 'hackClose')
+      for i = s, e, tileSize do
+         local groundIndex = (i/tileSize)
+         local tileIndex = (groundIndex % 5) + 1
+         local index = (i - s)/tileSize
+         local height1 = 0
+         local height2 = 0
+         local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, 'hackFar')
+         local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, 'hackClose')
+         local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, 'hackFar')
+         local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, 'hackClose')
 
-            love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
-            love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
-            love.graphics.setColor(0.25,.5,0.25)
+         love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
+         love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
+         love.graphics.setColor(0.25,.5,0.25)
 
-            love.graphics.line(x1,y1, x2,y2)
-            love.graphics.line(x1,y1, x3,y3)
+         love.graphics.line(x1,y1, x2,y2)
+         love.graphics.line(x1,y1, x3,y3)
 
-         end
+      end
 
 
       return
@@ -86,23 +123,23 @@ function drawGroundPlaneLines(cam)
       local first = mapInto(ratio, ratio1024, ratio1869, 1.15, .65)
 
       betterShader:send('view', {
-                     first,    0,    0, -150,
-                     0,    0,    -1.7, -120,
-                     0,    1,    0,   50,
-                     0,    1,    0,   50,
+                           first,    0,    0, -150,
+                           0,    0,    -1.7, -120,
+                           0,    1,    0,   50,
+                           0,    1,    0,   50,
       })
 
       local offset = H - 768
---      offset/2.225
+      --      offset/2.225
 
       --local weirdOffset = (H-768)
       betterShader:send('m2', {
-                     1,    0,    0,   0,
-                     0,    1,    0,   -(offset/2.225),
-                     0,    0,    1,   0,
-                     0,    0,    0,   1,
+                           1,    0,    0,   0,
+                           0,    1,    0,   -(offset/2.225),
+                           0,    0,    1,   0,
+                           0,    0,    0,   1,
       })
---	return camera.projection_matrix * camera.view_matrix * model.matrix * TransformMatrix  * initial_vertex_position ;
+      --	return camera.projection_matrix * camera.view_matrix * model.matrix * TransformMatrix  * initial_vertex_position ;
 
 
       for i = s, e, tileSize do
@@ -120,8 +157,8 @@ function drawGroundPlaneLines(cam)
                                x1/4,
                                100 ,
                                0,
-                                  1*scale,
-                                  -1*scale*1.55)
+                               1*scale,
+                               -1*scale*1.55)
             renderCount.groundMesh = renderCount.groundMesh + 1
 
          end

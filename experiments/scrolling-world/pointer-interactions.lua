@@ -26,29 +26,29 @@ end
 
 function removeGestureFromList(gesture)
    local found = false
-   for i = #gestureList, 1, -1 do
-      if gestureList[i] == gesture then
-         table.remove(gestureList, i)
+   for i = #gestureState.list, 1, -1 do
+      if gestureState.list[i] == gesture then
+         table.remove(gestureState.list, i)
          found = true
       end
    end
    if found == false then
-      print('didnt find gesture to delete',gesture.trigger, #gestureList)
+      print('didnt find gesture to delete',gesture.trigger, #gestureState.list)
    else
-      --print('deleted gesture succesfully', gesture.trigger, #gestureList)
+      --print('deleted gesture succesfully', gesture.trigger, #gestureState.list)
    end
 end
 
 
 
 function updateGestureCounter(dt)
-   gestureUpdateResolutionCounter = gestureUpdateResolutionCounter + dt
+   gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
 
-   if gestureUpdateResolutionCounter > gestureUpdateResolution then
-      gestureUpdateResolutionCounter = 0
-      for i = 1, #gestureList do
+   if gestureState.updateResolutionCounter > gestureState.updateResolution then
+      gestureState.updateResolutionCounter = 0
+      for i = 1, #gestureState.list do
 
-         local g = gestureList[i]
+         local g = gestureState.list[i]
          local x,y, success = getPointerPosition(g.trigger)    -- = love.mouse:getPosition()
 	 if success then
 	    addGesturePoint(g, love.timer.getTime( ), x, y)
@@ -60,32 +60,6 @@ function updateGestureCounter(dt)
 end
 
 
-function handlePressedItemsOnStage(W, H, dt)
-   for i = 1, #middleLayer.children do
-      local c = middleLayer.children[i]
-      if c.bbox and c._localTransform and c.depth ~= nil then
-
-         if c.pressed then
-	    local mx, my = getPointerPosition(c.pressed.id)
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
-            if c.pressed then
-               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
-
-               if ((brx + offset) > W) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(1000*dt, 0)
-               end
-               if ((tlx - offset) < 0) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(-1000*dt, 0)
-               end
-            end
-         end
-
-      end
-   end
-end
 
 function drawBBoxAroundItems()
    for i = 1, #middleLayer.children do
@@ -115,7 +89,7 @@ function drawBBoxAroundItems()
 
          end
          
-	 if  c.mouseOver or uiState.showBBoxes then
+	 if   uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
 	    love.graphics.setColor(1,1,1,.5)
@@ -131,27 +105,6 @@ end
 
 
 --[[
-
-if false then
-      local wx, wy = cam:getMouseWorldCoordinates()
-      local foundOne = false
-      if testCameraViewpointRects then
-         for _, v in pairs(cameraPoints) do
-            if pointInRect(wx,wy, v.x, v.y, v.width, v.height) and not foundOne then
-               foundOne = true
-               v.selected = true
-               local cw, ch = cam:getContainerDimensions()
-               local targetScale = math.min(cw/v.width, ch/v.height)
-               cam:setScale(targetScale)
-               cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
-            else
-               v.selected = false
-            end
-
-         end--
-      end
-
-   end
 ]]--
 
 
@@ -193,7 +146,7 @@ function pointerPressed(x,y, id)
 	    if (justBBoxCheck == true or ( mouseIsOverObjectInCamLayer(x, y, c))) then
 	       c.pressed = {dx=invx, dy=invy, id=id}
 	       itemPressed = c
-	       c.poep = true
+--	       c.poep = true
 	       c.groundTileIndex = nil
                local indices = c.originalIndices
                -- i dont want to readd this item
@@ -213,15 +166,15 @@ function pointerPressed(x,y, id)
       if not cameraFollowPlayer then
          --print('do a stage gesture')
          -- maybe i need to take out the other stage gestures
-         --for i = #gestureList, 1, -1 do
-         --   if (gestureList[i].target == 'stage') then
-         --      removeGestureFromList(gestureList[i])
+         --for i = #gestureState.list, 1, -1 do
+         --   if (gestureState.list[i].target == 'stage') then
+         --      removeGestureFromList(gestureState.list[i])
          --   end
          --end
          -- maybe only allow stage gesture when no are present ?
          local hasOneAlready = false
-         for i =1, #gestureList do
-            if gestureList[i].target == 'stage' then
+         for i =1, #gestureState.list do
+            if gestureState.list[i].target == 'stage' then
                hasOneAlready = true
             end
          end
@@ -230,7 +183,7 @@ function pointerPressed(x,y, id)
          if not hasOneAlready then
 
             local g = {positions={}, target='stage', trigger=id}
-            table.insert(gestureList, g)
+            table.insert(gestureState.list, g)
             addGesturePoint(g, love.timer.getTime( ),x,y)
          end
       end
@@ -238,7 +191,7 @@ function pointerPressed(x,y, id)
       resetCameraTween()
 
       local g = {positions={}, target=itemPressed, trigger=id}
-      table.insert(gestureList, g)
+      table.insert(gestureState.list, g)
       addGesturePoint(g, love.timer.getTime( ),x,y)
    end
 
@@ -268,8 +221,8 @@ function pointerMoved(x,y,dx,dy, id)
 --	 print( 'there migjt be an issue here!')
   --    end
 
-      for i = 1, #gestureList do
-	 local g = gestureList[i]
+      for i = 1, #gestureState.list do
+	 local g = gestureState.list[i]
 	 if g.target == 'stage' and g.trigger == id then
 	    local scale = cam:getScale()
 	    cameraTranslateScheduler(-dx/scale, 0)
@@ -288,8 +241,8 @@ function pointerReleased(x,y, id)
       end
    end
 
-   for i = 1, #gestureList do
-      local g = gestureList[i]
+   for i = 1, #gestureState.list do
+      local g = gestureState.list[i]
       -- todo why the fuc is there a nil gesture in here?
       if g then
 	 if g.trigger == id then
@@ -301,9 +254,129 @@ function pointerReleased(x,y, id)
       else
          print('why did this happen ? a nil gesture!?')
       end
-
-
    end
-
-
 end
+
+function handlePressedItemsOnStage(dt)
+   local W, H = love.graphics.getDimensions()
+
+   for i = 1, #middleLayer.children do
+      local c = middleLayer.children[i]
+      if c.bbox and c._localTransform and c.depth ~= nil then
+
+         if c.pressed then
+	    local mx, my = getPointerPosition(c.pressed.id)
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
+            if c.pressed then
+               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
+
+               if ((brx + offset) > W) then
+                  resetCameraTween()
+		  cameraTranslateScheduler(1000*dt, 0)
+               end
+               if ((tlx - offset) < 0) then
+                  resetCameraTween()
+		  cameraTranslateScheduler(-1000*dt, 0)
+               end
+            end
+         end
+
+      end
+   end
+end
+
+
+
+function getScreenBBoxForItem(c, hack)
+   local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
+   local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+   local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
+   local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+   return tlx, tly, brx, bry
+end
+
+function mouseIsOverItemBBox(mx, my, item)
+   local hack =  {}
+   hack.scale = mapInto(item.depth, depthMinMax.min, depthMinMax.max,
+                        depthScaleFactors.min, depthScaleFactors.max)
+   hack.relativeScale = (1.0/ hack.scale) * hack.scale
+   local tlx, tly, brx, bry = getScreenBBoxForItem(item, hack)
+
+   local wx, wy = cam:getWorldCoordinates(mx, my, hack)
+   local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
+
+
+   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
+end
+
+function mouseIsOverObjectInCamLayer(mx, my, item)
+   local hack =  {}
+   hack.scale = mapInto(item.depth, depthMinMax.min, depthMinMax.max,
+                        depthScaleFactors.min, depthScaleFactors.max)
+   hack.relativeScale = (1.0/ hack.scale) * hack.scale
+   local mx2, my2 = cam:getWorldCoordinates(mx, my, hack)
+   return  recursiveHitCheck(mx2, my2, item)
+end
+
+
+function gestureRecognizer(gesture)
+   if #gesture.positions > 1 then
+      local startP = gesture.positions[1]
+      local endP = gesture.positions[#gesture.positions]
+      local gestureLength = 3
+      if (#gesture.positions > gestureLength) then
+	 startP = gesture.positions[#gesture.positions - gestureLength]
+      end
+      local dx = endP.x - startP.x
+      local dy = endP.y - startP.y
+      local distance = math.sqrt(dx*dx+dy*dy)
+
+      local deltaTime = endP.time - startP.time
+      local speed = distance / deltaTime
+
+      if gesture.target == 'stage' then
+	 local minSpeed = 200
+	 local maxSpeed = 15000
+	 local minDistance = 6
+	 local minDuration = 0.005
+
+	 if distance > minDistance then
+	    if deltaTime > minDuration then
+	       if speed >= minSpeed and speed < maxSpeed then
+		  local cx,cy = cam:getTranslation()
+		  local m = dx < 0 and -1 or 1
+
+		  cameraTween = {goalX=cx-((dx) + (m* speed/7.5) ), goalY=cy, smoothValue=3.5, originalGesture=gesture}
+	       else
+		  --print('failed at speed', minSpeed, speed, maxSpeed)
+	       end
+	    else
+	       --print('failed at duration', deltaTime, minDuration)
+	    end
+	 else
+	    --print('failed at distance')
+	 end
+      else -- this is gesture target something else items basically!
+
+	 if distance < 0.00001 then
+	    distance = 0.00001
+	 end
+	 local  dxn = dx / distance
+	 local  dyn = dy / distance
+
+	 gesture.target.inMotion = makeMotionObject()
+         local mass = gesture.target.inMotion.mass
+
+	 local throwStrength = 1
+         if mass < 0 then throwStrength = throwStrength / 100 end
+
+         local impulse = Vector(dxn * speed * throwStrength ,
+                                dyn * speed * throwStrength )
+
+         --print('impulse', impulse)
+	 applyForce(gesture.target.inMotion, impulse)
+      end
+   end
+end
+
