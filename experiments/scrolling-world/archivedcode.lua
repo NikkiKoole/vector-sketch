@@ -88,6 +88,18 @@ if false then
 
    end
 
+if false then
+if cameraFollowPlayer then
+      local delta = cam:setTranslationSmooth(
+            player.x + player.width/2 ,
+            player.y - 300,
+            dt,
+            10
+                                   )
+      followPlayerCameraDelta = delta.x + delta.y
+   end
+end
+
 
 function drawCameraViewPointRectangles(cameraPoint)
    for _, v in pairs(cameraPoint) do

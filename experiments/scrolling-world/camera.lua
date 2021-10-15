@@ -34,6 +34,13 @@ function createCamera()
 
 end
 
+function setCameraViewport(cam, w, h)
+   local cw, ch = cam:getContainerDimensions()
+   local targetScale = math.min(cw/w, ch/h)
+   cam:setScale(targetScale)
+   cam:setTranslation(0, -1 * h/2)
+end
+
 
 function drawCameraBounds( cam, mode )
    love.graphics.rectangle( mode, cam.x, cam.y, cam.w, cam.h )
@@ -124,13 +131,15 @@ function cameraApplyTranslate(dt)
    cam:translate( translateScheduler.x, translateScheduler.y)
    local translateByPressed = false
 
+
    if true then
 
       for i =1 ,#middleLayer.children do
 	 local c = middleLayer.children[i]
 	 if c.pressed then
-	    c.transforms.l[1] =
-	       c.transforms.l[1] + translateScheduler.x + translateScheduler.justItem.x
+            -- this line cause the jerkyness, have to check it on multitouch
+	   -- c.transforms.l[1] =
+	   --    c.transforms.l[1] + translateScheduler.x + translateScheduler.justItem.x
 	    translateByPressed = (translateScheduler.x + translateScheduler.justItem.x) ~= 0
 	 end
       end
@@ -143,20 +152,20 @@ function cameraApplyTranslate(dt)
 
       if translateScheduler.happenedByPressedItems == true and  translateByPressed == false then
 	 translateScheduler.happenedByPressedItems = false
-
 	 local cx,cy = cam:getTranslation()
-	 local delta = (translateScheduler.x + translateScheduler.justItem.x) * 100
+	 local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
 	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
       end
       ------ end that part
 
+   end
       checkForBounceBack(dt)
-
+   
       translateScheduler.x = 0
       translateScheduler.y = 0
       translateScheduler.justItem.x = 0
       translateScheduler.justItem.y = 0
-   end
+
 end
 
 function resetCameraTween()

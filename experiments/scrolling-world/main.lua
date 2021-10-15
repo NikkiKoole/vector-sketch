@@ -45,6 +45,13 @@ random = love.math.random
 
 -- utility functions that ought to be somewehre else
 
+function pickRandom(array)
+--   plantUrls[math.ceil(random()* #plantUrls)]
+   local index = math.ceil(random() * #array)
+   --print(index, #array)
+   return array[index]
+end
+
 
 function shuffleAndMultiply(items, mul)
    local result = {}
@@ -262,7 +269,7 @@ function love.load()
       show= false,
       showFPS=true,
       showNumbers=false,
-      showBBoxes = true,
+      showBBoxes = false,
       showTouches = false,
       gravityValue= 5000
    }
@@ -297,14 +304,14 @@ function love.draw()
    handleMouseClickStart()
 
    SM.draw()
-
-      if uiState.showBouncy then
+   local W,H = love.graphics.getDimensions()
+      --if uiState.showBouncy then
       if translateScheduler.cache.value ~= 0 then
          love.graphics.line(W/2,100,W/2+translateScheduler.cache.value, 0)
       else
          love.graphics.line(W/2,100,W/2+translateScheduler.cache.tweenValue, 0)
       end
-   end
+   --end
    if uiState.showTouches then
       local touches = love.touch.getTouches()
       for i, id in ipairs(touches) do

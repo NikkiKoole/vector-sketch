@@ -1,3 +1,16 @@
+function arrangeParallaxLayerVisibility(far, layer)
+   if layer == nil then layer = far end
+   local W, H = love.graphics.getDimensions()
+   
+   local x1,y1 = cam:getWorldCoordinates(0,0, far)
+   local x2,y2 = cam:getWorldCoordinates(W,0, far)
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+
+   arrangeWhatIsVisible(x1, x2, tileSize, layer)
+end
+
+
 function drawGroundPlaneLinesSimple(cam, far, near)
 
    love.graphics.setColor(1,1,1)
@@ -31,31 +44,118 @@ function drawGroundPlaneLinesSimple(cam, far, near)
    end
 end
 
-function arrangeParallaxLayerVisibility(far, layer)
-   if layer == nil then layer = far end
+function drawGroundPlaneWithTextures(cam, far, near, layerName)
+
    local W, H = love.graphics.getDimensions()
-   
+
    local x1,y1 = cam:getWorldCoordinates(0,0, far)
    local x2,y2 = cam:getWorldCoordinates(W,0, far)
+
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-   arrangeWhatIsVisible(x1, x2, tileSize, layer)
+   local bounds = lastCameraBounds[layerName]
+   
+   if (bounds.x[1] == x1 and bounds.x[2] == x2
+       and bounds.y[1] == y1 and bounds.y[2] == y2) then
+      for i = s, e, tileSize do
+         local groundIndex = (i/tileSize)
+         local tileIndex = (groundIndex % 5) + 1
+         local index = (i - s)/tileSize
+         if index >= 0 and index <= 100 then
+            drawGroundPlanesSameSame(index, tileIndex, layerName)
+         end
+      end
+   else
+      for i = s, e, tileSize do
+         local groundIndex = (i/tileSize)
+         local tileIndex = (groundIndex % 5) + 1
+         local index = (i - s)/tileSize
+         local height1 = 0
+         local height2 = 0
+         local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
+         local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, near)
+         local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
+         local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, near)
+         local dest = {{x1,y1}, {x3,y3}, {x4,y4}, {x2,y2}}
+         if index >= 0 and index <= 100 then
+            drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
+         end
+      end
+      lastCameraBounds[layerName].x = {x1,x2}
+      lastCameraBounds[layerName].y = {y1,y2}
+   end
+
+
+end
+function drawGroundPlanesSameSame(index, tileIndex, layerName)
+   local thing = groundPlanes[tileIndex].thing
+   for j = 1, #thing.optimizedBatchMesh do
+      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
+      love.graphics.draw(perspectiveContainer[layerName][index][j].perspMesh)
+      renderCount.groundMesh = renderCount.groundMesh + 1
+   end
+   love.graphics.setColor(1,1,1)
+
+end
+
+function drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
+   local thing = groundPlanes[tileIndex].thing
+   local bbox = groundPlanes[tileIndex].bbox
+   local source = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y }
+
+   for j = 1, #thing.optimizedBatchMesh do
+      local count = thing.optimizedBatchMesh[j].mesh:getVertexCount()
+      local result = {}
+
+      for v = 1, count do
+	 local x, y = thing.optimizedBatchMesh[j].mesh:getVertex(v)
+	 local r = transferPoint (x, y, source, dest)
+	 table.insert(result, {r.x, r.y})
+      end
+      
+      if perspectiveContainer[layerName][index][j].perspMesh and
+	 perspectiveContainer[layerName][index][j].perspMesh:getVertexCount() == #result then
+	 perspectiveContainer[layerName][index][j].perspMesh:setVertices(result, 1, #result)
+      else
+	 perspectiveContainer[layerName][index][j] = {
+	    perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+	 }
+      end
+
+      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
+      love.graphics.draw(perspectiveContainer[layerName][index][j].perspMesh)
+      renderCount.groundMesh = renderCount.groundMesh + 1
+
+   end
+   love.graphics.setColor(1,1,1)
+
 end
 
 
 
 
 
+
+--[[
 function drawGroundPlaneLines(cam)
    local thing = groundPlanes.assets[1].thing
    local W, H = love.graphics.getDimensions()
    love.graphics.setColor(1,1,1)
    love.graphics.setLineWidth(2)
 
-   local useCPU = false
 
-   local simplerPolies = true
+   local W, H = love.graphics.getDimensions()
+
+   local x1,y1 = cam:getWorldCoordinates(0,0, 'hackFar')
+   local x2,y2 = cam:getWorldCoordinates(W,0, 'hackFar')
+
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+   
+   local useCPU = true
+
+   local simplerPolies = false
 
    if simplerPolies then
       for i = s, e, tileSize do
@@ -167,46 +267,5 @@ function drawGroundPlaneLines(cam)
       love.graphics.setShader()
    end
 end
+--]]
 
-function drawGroundPlanesSameSame(index, tileIndex)
-   local thing = groundPlanes.assets[tileIndex].thing
-   for j = 1, #thing.optimizedBatchMesh do
-      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
-      love.graphics.draw(groundPlanes.perspectiveContainer[index][j].perspMesh)
-      renderCount.groundMesh = renderCount.groundMesh + 1
-      love.graphics.setColor(1,1,1)
-   end
-end
-
-function drawGroundPlaneInPosition(dest, index, tileIndex)
-   local thing = groundPlanes.assets[tileIndex].thing
-   local bbox = groundPlanes.assets[tileIndex].bbox
-   local source = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y }
-
-   for j = 1, #thing.optimizedBatchMesh do
-      local count = thing.optimizedBatchMesh[j].mesh:getVertexCount()
-      local result = {}
-
-      for v = 1, count do
-	 local x, y = thing.optimizedBatchMesh[j].mesh:getVertex(v)
-	 local r = transferPoint (x, y, source, dest)
-	 table.insert(result, {r.x, r.y})
-      end
-
-      if groundPlanes.perspectiveContainer[index][j].perspMesh and
-	 groundPlanes.perspectiveContainer[index][j].perspMesh:getVertexCount() == #result then
-	 groundPlanes.perspectiveContainer[index][j].perspMesh:setVertices(result, 1, #result)
-      else
-	 groundPlanes.perspectiveContainer[index][j] = {
-	    perspMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
-	 }
-      end
-
-      love.graphics.setColor(thing.optimizedBatchMesh[j].color)
-
-      love.graphics.draw(groundPlanes.perspectiveContainer[index][j].perspMesh)
-      renderCount.groundMesh = renderCount.groundMesh + 1
-
-      love.graphics.setColor(1,1,1)
-   end
-end

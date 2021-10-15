@@ -5,7 +5,106 @@ local hasBeenLoaded = false
 function scene.modify(data)
 end
 
+function attachPointerCallbacks()
+      function love.keypressed(key, unicode)
+      if key == 'escape' then
+         resetCameraTween()
+         SM.load('intro')
+      end
+   end
+   function love.mousepressed(x,y, button, istouch, presses)
+      if (mouseState.hoveredSomething) then return end
+      if not istouch then
+         pointerPressed(x,y, 'mouse', parallaxLayersData)
+      end
+   end
+   function love.touchpressed(id, x, y, dx, dy, pressure)
+      pointerPressed(x,y, id, parallaxLayersData)
+   end
+   function love.mousemoved(x, y,dx,dy, istouch)
+      if not istouch then
 
+         pointerMoved(x,y,dx,dy, 'mouse', parallaxLayersData)
+      end
+   end
+   function love.touchmoved(id, x,y, dx, dy, pressure)
+      pointerMoved(x,y,dx,dy, id, parallaxLayersData)
+   end
+   function love.mousereleased(x,y, button, istouch)
+      lastDraggedElement = nil --{id=id}
+      if not istouch then
+         pointerReleased(x,y, 'mouse', parallaxLayersData)
+      end
+   end
+   function love.touchreleased(id, x, y, dx, dy, pressure)
+      pointerReleased(x,y, id, parallaxLayersData)
+   end
+
+end
+
+function preparePerspectiveContainers(layers)
+   local result = {}
+   for k =1, #layers do
+      local layerName = layers[k]
+      result[layerName] = {}
+
+      for i = 0, 100 do
+         -- maximum of 100 groundplanes visible onscreen
+         result[layerName][i] = {}
+         for j =0, 10 do
+            -- maximum of 10 'layers/children/optimized layers' in a thing
+            result[layerName][i][j] = {}
+         end
+      end
+   end
+   return result
+end
+
+
+function createAssetPolyUrls(strings)
+   local result = {}
+   for i = 1, #strings do
+      table.insert(result, 'assets/'..strings[i]..'.polygons.txt')
+   end
+   return result
+end
+
+function makeGroundPlaneBook(urls)
+   local result = {}
+   for i =1, #urls do
+      local url = urls[i]
+      local thing = readFileAndAddToCache(url) 
+      result[i] = {
+         url = url,
+         thing = thing,
+         bbox = getBBoxOfChildren(thing.children),
+      }
+   end
+   return result
+end
+
+
+function generateAssetBook(recipe)
+   local result = {}
+
+   for i = recipe.index.min, recipe.index.max do
+      result[i] = {}
+      for p= 1, recipe.amountPerTile do
+      table.insert(
+         result[i],
+         {
+            x=random()*tileSize,
+            groundTileIndex = i,
+            depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
+            scaleX=1,
+            scaleY=1,
+            url=pickRandom(recipe.urls)
+         }
+      )
+      end
+   end
+   return result
+end
 
 
 function scene.load()
@@ -18,20 +117,26 @@ function scene.load()
    )
 
    if not hasBeenLoaded then
-      --stuff = {}
-      depthMinMax = {min=-1, max=1.0}
-
+      depthMinMax = {min=-1.0, max=1.0}
       depthScaleFactors = { min=.8, max=1}
       depthScaleFactors2 = { min=.4, max=.7}
-
+     
       tileSize = 100
       cam = createCamera()
-      
-      layerBounds = {
+      setCameraViewport(cam, 1000,1000)
+
+      -- used in deciding what items to add and remove to the 'ground tile'
+      layerTileBounds = {
          hack = {math.huge, -math.huge},
          farther = {math.huge, -math.huge}
       }
-
+      -- used in figuring out if i can re-use a perspective ground mesh
+      -- this also take y in account, perspective change when y changes
+      lastCameraBounds = {
+         hack = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
+         farther = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
+      }
+      
       farthest = generateCameraLayer('farthest', .4)
 
       farther = generateCameraLayer('farther', .7)
@@ -39,125 +144,90 @@ function scene.load()
       hack = generateCameraLayer('hack', 1)
       hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
 
-      fartherLayer = makeContainerFolder('fartherLayer')
-      middleLayer = makeContainerFolder('middleLayer')
+
+
+      fartherAssetBook = generateAssetBook({
+            urls= createAssetPolyUrls({'doosgroot'}),
+            index={min=-100, max= 100},
+            amountPerTile=1,
+            depth={min=depthMinMax.min, max=depthMinMax.max}
+      })
       
-      createStuff()
+      fartherLayer = makeContainerFolder('fartherLayer')
 
-      setCameraViewport(600,600)
+      -- i keep some data in the asset book, basically that what i need to generate
+      -- it fully when the time comes
 
-      updateMotionItems(middleLayer, dt)
+      middleAssetBook = generateAssetBook({
+            urls= createAssetPolyUrls(
+               { 'plant1','plant2','plant3','plant4',
+                 'plant5','plant6','plant7','plant8',
+                 'plant9','plant10','plant11','plant12',
+                 'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
+            }),
+            index={min=-100, max= 100},
+            amountPerTile=1,
+            depth={min=depthMinMax.min, max=depthMinMax.max}
+      })
+      middleLayer = makeContainerFolder('middleLayer')
+
+
+      groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
+      perspectiveContainer = preparePerspectiveContainers({'hack', 'farther'})
+
+
+      -- this will contain all the data, in an organized way
+      -- from back to front
+      parallaxLayersData = {
+         {
+            layer=fartherLayer,
+            p={factors=depthScaleFactors2, minmax=depthMinMax},
+            assets=fartherAssetBook
+         },
+         {
+            layer=middleLayer,
+            p={factors=depthScaleFactors, minmax=depthMinMax},
+            assets=middleAssetBook}
+      }
+      
+      --createStuff()
+
    end
+   
    hasBeenLoaded = true
-end
+   attachPointerCallbacks()
 
-function setCameraViewport(w, h)
-   local cw, ch = cam:getContainerDimensions()
-   local targetScale = math.min(cw/w, ch/h)
-   cam:setScale(targetScale)
-   cam:setTranslation(0, -1 * h/2)
 end
 
 
 
 function scene.update(dt)
-   function love.keypressed(key, unicode)
-      if key == 'escape' then
-         resetCameraTween()
-         SM.load('intro')
-      end
-   end
-
-   function love.mousepressed(x,y, button, istouch, presses)
-      if (mouseState.hoveredSomething) then return end
-
-      if not istouch then
-         pointerPressed(x,y, 'mouse')
-      end
-   end
-
-   function love.touchpressed(id, x, y, dx, dy, pressure)
-      pointerPressed(x,y, id)
-   end
-
-   function love.mousemoved(x, y,dx,dy, istouch)
-      if not istouch then
-         pointerMoved(x,y,dx,dy, 'mouse')
-      end
-   end
-
-   function love.touchmoved(id, x,y, dx, dy, pressure)
-      pointerMoved(x,y,dx,dy, id)
-   end
-
-   function love.mousereleased(x,y, button, istouch)
-      lastDraggedElement = nil --{id=id}
-
-      if not istouch then
-         pointerReleased(x,y, 'mouse')
-      end
-   end
-
-   function love.touchreleased(id, x, y, dx, dy, pressure)
-      pointerReleased(x,y, id)
-   end
-
    
    manageCameraTween(dt)
    cam:update()
    cameraApplyTranslate(dt)
-   function handlePressedItemsOnStage(dt)
-   local W, H = love.graphics.getDimensions()
-
-   for i = 1, #middleLayer.children do
-      local c = middleLayer.children[i]
-      if c.bbox and c._localTransform and c.depth ~= nil then
-
-         if c.pressed then
-	    local mx, my = getPointerPosition(c.pressed.id)
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
-            if c.pressed then
-               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
-
-               if ((brx + offset) > W) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(1000*dt, 0)
-               end
-               if ((tlx - offset) < 0) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(-1000*dt, 0)
-               end
-            end
-         end
-
-      end
-   end
-end
 
    if bouncetween then
       bouncetween:update(dt)
    end
 
    updateMotionItems(middleLayer, dt)
+   updateMotionItems(fartherLayer, dt)
 
-   handlePressedItemsOnStage(dt)
+   handlePressedItemsOnStage(dt, parallaxLayersData)
    
+
 end
 
 function scene.draw()
-
-   local W, H = love.graphics.getDimensions()
 
    love.graphics.clear(1,1,1)
    love.graphics.setColor(1,1,1)
    
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   drawGroundPlaneLinesSimple(cam, 'farthest', 'farther')
-
-   drawGroundPlaneLinesSimple(cam, 'hackFar', 'hackClose')
-
+   drawGroundPlaneWithTextures(cam, 'farthest', 'farther' ,'farther')
+   drawGroundPlaneWithTextures(cam, 'hackFar', 'hackClose', 'hack')
 
    arrangeParallaxLayerVisibility('farthest', 'farther')
    farther:push()
@@ -183,8 +253,9 @@ function scene.draw()
 
    drawUI()
    drawDebugStrings()
-   drawBBoxAroundItems()
-   
+   drawBBoxAroundItems(middleLayer, {factors=depthScaleFactors, minmax=depthMinMax})
+   drawBBoxAroundItems(fartherLayer, {factors=depthScaleFactors2, minmax=depthMinMax})
+      
 
 
 end

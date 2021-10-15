@@ -16,8 +16,8 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
 end
 function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
    local map = {
-      hack = {layer = middleLayer, data = plantData},
-      farther = {layer = fartherLayer, data = fartherData}
+      hack = {layer = middleLayer, data = middleAssetBook},
+      farther = {layer = fartherLayer, data = fartherAssetBook}
    }
 
    local data = map[layerName].data
@@ -46,7 +46,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
                child.transforms.l[5] = thing.scaleY
                child.originalIndices = {i,j}
                child.depth = thing.depth
-               child.depthLayer = thing.depthLayer
+               --child.depthLayer = thing.depthLayer
                child.url = thing.url
                child.groundTileIndex = thing.groundTileIndex
                child.bbox = read.bbox
@@ -63,7 +63,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
 end
 
 function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
-   local bounds = layerBounds[layerName]
+   local bounds = layerTileBounds[layerName]
    
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
@@ -86,6 +86,6 @@ function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
          addTheContentsOfGroundTiles(bounds[2]+1, endIndex, layerName)
       end
    end
-   layerBounds[layerName] = {startIndex, endIndex}
+   layerTileBounds[layerName] = {startIndex, endIndex}
 
 end

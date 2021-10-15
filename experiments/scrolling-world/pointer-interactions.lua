@@ -61,14 +61,14 @@ end
 
 
 
-function drawBBoxAroundItems()
-   for i = 1, #middleLayer.children do
-      local c = middleLayer.children[i]
+function drawBBoxAroundItems(layer, parallaxData)
+   for i = 1, #layer.children do
+      local c = layer.children[i]
       if c.bbox and c._localTransform and c.depth ~= nil then
 
          if c.pressed then
             local mx, my = getPointerPosition(c.pressed.id)
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c)
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
@@ -77,11 +77,13 @@ function drawBBoxAroundItems()
 	    -- this renders the pivot point
 	    love.graphics.setColor(1,1,1,1)
 	    local px, py = c._globalTransform:transformPoint( c.transforms.l[6], c.transforms.l[7])
-	    local hack =  {}
-	    hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max,
-				 depthScaleFactors.min, depthScaleFactors.max)
-	    hack.relativeScale = (1.0/ hack.scale) * hack.scale
-	    local pivx, pivy = cam:getScreenCoordinates(px, py, hack)
+
+            local camData = createCamData(c, parallaxData)
+	    --local hack =  {}
+	    --hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max,
+            --		 depthScaleFactors.min, depthScaleFactors.max)
+	    --hack.relativeScale = (1.0/ hack.scale) * hack.scale
+	    local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
 
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
@@ -89,9 +91,9 @@ function drawBBoxAroundItems()
 
          end
          
-	 if   uiState.showBBoxes then
+	 if c.mouseOver or    uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
+	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
 	    love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 	 end
@@ -108,70 +110,68 @@ end
 ]]--
 
 
-function pointerPressed(x,y, id)
+function pointerPressed(x,y, id, layers)
 
-   local W, H = love.graphics.getDimensions()
+   -- local W, H = love.graphics.getDimensions()
 
-   ------------ begin ui
-   local leftdis = getDistance(x,y, 50, (H/2)-25)
-   local rightdis = getDistance(x,y, W-50, (H/2)-25)
-   local toprightdis = getDistance(x,y, W-25, 25)
+   -- ------------ begin ui
+   -- local leftdis = getDistance(x,y, 50, (H/2)-25)
+   -- local rightdis = getDistance(x,y, W-50, (H/2)-25)
+   -- local toprightdis = getDistance(x,y, W-25, 25)
 
-   if uiState.showWalkButtons then
-   if leftdis < 50 then
-      moving = 'left'
-   end
-   if rightdis < 50 then
-      moving = 'right'
-   end
-   end
-   if toprightdis < 50 then
-      --showNumbersOnScreen = not showNumbersOnScreen
-      uiState.show = not uiState.show
-   end
-   ------------- end ui
+   -- if uiState.showWalkButtons then
+   -- if leftdis < 50 then
+   --    moving = 'left'
+   -- end
+   -- if rightdis < 50 then
+   --    moving = 'right'
+   -- end
+   -- end
+   -- if toprightdis < 50 then
+   --    --showNumbersOnScreen = not showNumbersOnScreen
+   --    uiState.show = not uiState.show
+   -- end
+   -- ------------- end ui
 
 
    local itemPressed = false
-   for i = #middleLayer.children,1,-1 do
-      local c = middleLayer.children[i]
-      if c.bbox and c._localTransform and c.depth and not itemPressed then
 
-	 local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c)
+   for j =#layers, 1 , -1 do
+      local l = layers[j]
 
-	 if mouseover then
+      for i = #l.layer.children,1,-1 do
+         local c = l.layer.children[i]
+         if c.bbox and c._localTransform and c.depth and not itemPressed then
 
-	    local justBBoxCheck = false
+            local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c, l.p)
 
-	    if (justBBoxCheck == true or ( mouseIsOverObjectInCamLayer(x, y, c))) then
-	       c.pressed = {dx=invx, dy=invy, id=id}
-	       itemPressed = c
---	       c.poep = true
-	       c.groundTileIndex = nil
-               local indices = c.originalIndices
-               -- i dont want to readd this item
-               -- the generated polygons arent in this list
-               -- there wll be more and more lists I imagine
-               if indices and plantData[indices[1]] and plantData[indices[1]][indices[2]] then
-                  plantData[indices[1]][indices[2]].hasBeenPressed = true
+            if mouseover then
+
+               local justBBoxCheck = false
+
+               if (justBBoxCheck == true or ( mouseIsOverObjectInCamLayer(x, y, c, l.p))) then
+                  c.pressed = {dx=invx, dy=invy, id=id}
+                  itemPressed = c
+                  c.groundTileIndex = nil
+                  local indices = c.originalIndices
+                  -- i dont want to readd this item
+                  -- the generated polygons arent in this list
+                  -- there wll be more and more lists I imagine
+                  if indices and l.assets[indices[1]] and l.assets[indices[1]][indices[2]] then
+                     l.assets[indices[1]][indices[2]].hasBeenPressed = true
+                  end
+
                end
-
             end
-	 end
 
+         end
       end
-   end
 
+   end
+   
    if not itemPressed  then
       if not cameraFollowPlayer then
-         --print('do a stage gesture')
-         -- maybe i need to take out the other stage gestures
-         --for i = #gestureState.list, 1, -1 do
-         --   if (gestureState.list[i].target == 'stage') then
-         --      removeGestureFromList(gestureState.list[i])
-         --   end
-         --end
-         -- maybe only allow stage gesture when no are present ?
+         
          local hasOneAlready = false
          for i =1, #gestureState.list do
             if gestureState.list[i].target == 'stage' then
@@ -179,9 +179,7 @@ function pointerPressed(x,y, id)
             end
          end
 
-
          if not hasOneAlready then
-
             local g = {positions={}, target='stage', trigger=id}
             table.insert(gestureState.list, g)
             addGesturePoint(g, love.timer.getTime( ),x,y)
@@ -197,29 +195,31 @@ function pointerPressed(x,y, id)
 
 end
 
-
-function pointerMoved(x,y,dx,dy, id)
-   -- it only makes sense to check mouseOver with mouse
-   if id == 'mouse' then
-      for i = 1, #middleLayer.children do
-	 local c = middleLayer.children[i]
-	 if c.bbox and c._localTransform and c.depth then
-	    local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c)
-	    c.mouseOver = mouseover
-	 end
+function checkForItemMouseOver(x,y, layer, parallaxData)
+   for i = 1, #layer.children do
+      local c = layer.children[i]
+      if c.bbox and c._localTransform and c.depth then
+         local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, parallaxData)
+         c.mouseOver = mouseover
       end
    end
+end
 
-   -- in the case of mouse i only allow pannin the stage when its pressed, touch is always down when moved
+
+
+function pointerMoved(x,y,dx,dy, id, layers)
+
+   if (id == 'mouse') then
+      for i =1 , #layers do
+         local l = layers[i]
+         checkForItemMouseOver(x,y,l.layer, l.p)
+      end
+   end
+   
+   
    if (id == 'mouse' and love.mouse.isDown(1) ) or id ~= 'mouse' then
 
-      --if (id == 'mouse') then
       resetCameraTween()
-      --end
-
-      --if cameraTween then
---	 print( 'there migjt be an issue here!')
-  --    end
 
       for i = 1, #gestureState.list do
 	 local g = gestureState.list[i]
@@ -232,12 +232,15 @@ function pointerMoved(x,y,dx,dy, id)
 end
 
 
-function pointerReleased(x,y, id)
+function pointerReleased(x,y, id, layers)
    moving = nil
-   for i = 1, #middleLayer.children do
-      local c =middleLayer.children[i]
-      if c.pressed and c.pressed.id == id then
-         c.pressed = nil
+
+   for j =1, #layers do
+      for i = 1, #layers[j].layer.children do
+         local c =layers[j].layer.children[i]
+         if c.pressed and c.pressed.id == id then
+            c.pressed = nil
+         end
       end
    end
 
@@ -257,65 +260,82 @@ function pointerReleased(x,y, id)
    end
 end
 
-function handlePressedItemsOnStage(dt)
+function handlePressedItemsOnStage(dt, layers)
    local W, H = love.graphics.getDimensions()
+   for j = 1, #layers do
+      local l=layers[j]
+      for i = 1, #l.layer.children do
+         local c = l.layer.children[i]
+         if c.bbox and c._localTransform and c.depth ~= nil then
 
-   for i = 1, #middleLayer.children do
-      local c = middleLayer.children[i]
-      if c.bbox and c._localTransform and c.depth ~= nil then
-
-         if c.pressed then
-	    local mx, my = getPointerPosition(c.pressed.id)
-	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c)
             if c.pressed then
-               c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-               c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
+               local mx, my = getPointerPosition(c.pressed.id)
+               local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
+               if c.pressed then
+                  c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+                  c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
 
-               if ((brx + offset) > W) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(1000*dt, 0)
-               end
-               if ((tlx - offset) < 0) then
-                  resetCameraTween()
-		  cameraTranslateScheduler(-1000*dt, 0)
+                  if ((brx + offset) > W) then
+                     resetCameraTween()
+                     cameraTranslateScheduler(1000*dt, 0)
+                  end
+                  if ((tlx - offset) < 0) then
+                     resetCameraTween()
+                     cameraTranslateScheduler(-1000*dt, 0)
+                  end
                end
             end
          end
-
       end
    end
 end
 
 
 
-function getScreenBBoxForItem(c, hack)
+function getScreenBBoxForItem(c, camData)
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
-   local tlx, tly = cam:getScreenCoordinates(tx, ty, hack)
+   local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
    local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
-   local brx, bry = cam:getScreenCoordinates(bx, by, hack)
+   local brx, bry = cam:getScreenCoordinates(bx, by, camData)
    return tlx, tly, brx, bry
 end
 
-function mouseIsOverItemBBox(mx, my, item)
-   local hack =  {}
-   hack.scale = mapInto(item.depth, depthMinMax.min, depthMinMax.max,
-                        depthScaleFactors.min, depthScaleFactors.max)
-   hack.relativeScale = (1.0/ hack.scale) * hack.scale
-   local tlx, tly, brx, bry = getScreenBBoxForItem(item, hack)
+function createCamData(item, parallaxData)
+   local camData = nil -- its important to be nil at start
+   -- that way i can feed the nil to brady and get default behaviours
+   if parallaxData and parallaxData.factors then
+      camData = {}
+      camData.scale = mapInto(item.depth,
+                              parallaxData.minmax.min,
+                              parallaxData.minmax.max,
+                              parallaxData.factors.min,
+                              parallaxData.factors.max)
+      camData.relativeScale = 1--(1.0/ hack.scale) * hack.scale
+   end
+   if camData == nil then
+      print('hope you know')
+   end
+   
+   return camData
+end
 
-   local wx, wy = cam:getWorldCoordinates(mx, my, hack)
+
+function mouseIsOverItemBBox(mx, my, item, parallaxData)
+   -- now i always generate a cameraLyer assuming there will be differenr depths
+   -- within, that wont always be neccesary
+   
+   local camData = createCamData(item, parallaxData)
+   local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
+   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
    local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
 
 
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
 
-function mouseIsOverObjectInCamLayer(mx, my, item)
-   local hack =  {}
-   hack.scale = mapInto(item.depth, depthMinMax.min, depthMinMax.max,
-                        depthScaleFactors.min, depthScaleFactors.max)
-   hack.relativeScale = (1.0/ hack.scale) * hack.scale
-   local mx2, my2 = cam:getWorldCoordinates(mx, my, hack)
+function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
+   local camData = createCamData(item, parallaxData)
+   local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
    return  recursiveHitCheck(mx2, my2, item)
 end
 
