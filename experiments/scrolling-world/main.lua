@@ -214,6 +214,8 @@ function love.wheelmoved( dx, dy )
 end
 
 function love.resize(w, h)
+   setCameraViewport(cam, 1000,1000)
+
    cam:update(w,h)
 end
 
@@ -231,10 +233,7 @@ end
 function love.load()
    -- Set path of your scene files
    renderCount = {normal=0, optimized=0, groundMesh=0}
-
-   
    meshCache = {}
-
 
    gestureState = {
       list = {},
@@ -305,12 +304,12 @@ function love.draw()
 
    SM.draw()
    local W,H = love.graphics.getDimensions()
-      --if uiState.showBouncy then
-      if translateScheduler.cache.value ~= 0 then
-         love.graphics.line(W/2,100,W/2+translateScheduler.cache.value, 0)
-      else
-         love.graphics.line(W/2,100,W/2+translateScheduler.cache.tweenValue, 0)
-      end
+   --if uiState.showBouncy then
+   if translateScheduler.cache.value ~= 0 then
+      love.graphics.line(W/2,100,W/2+translateScheduler.cache.value, 0)
+   else
+      love.graphics.line(W/2,100,W/2+translateScheduler.cache.tweenValue, 0)
+   end
    --end
    if uiState.showTouches then
       local touches = love.touch.getTouches()

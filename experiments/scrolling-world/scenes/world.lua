@@ -117,11 +117,12 @@ function scene.load()
    )
 
    if not hasBeenLoaded then
+      
       depthMinMax = {min=-1.0, max=1.0}
       depthScaleFactors = { min=.8, max=1}
       depthScaleFactors2 = { min=.4, max=.7}
      
-      tileSize = 100
+      tileSize = 300
       cam = createCamera()
       setCameraViewport(cam, 1000,1000)
 
@@ -251,7 +252,7 @@ function scene.draw()
    
    love.graphics.setColor(1,1,1)
 
-   drawUI()
+   --drawUI()
    drawDebugStrings()
    drawBBoxAroundItems(middleLayer, {factors=depthScaleFactors, minmax=depthMinMax})
    drawBBoxAroundItems(fartherLayer, {factors=depthScaleFactors2, minmax=depthMinMax})

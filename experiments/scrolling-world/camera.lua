@@ -35,10 +35,13 @@ function createCamera()
 end
 
 function setCameraViewport(cam, w, h)
+   local cx,cy = cam:getTranslation()
+
    local cw, ch = cam:getContainerDimensions()
    local targetScale = math.min(cw/w, ch/h)
    cam:setScale(targetScale)
-   cam:setTranslation(0, -1 * h/2)
+
+   cam:setTranslation(cx, -1 * h/2)
 end
 
 
