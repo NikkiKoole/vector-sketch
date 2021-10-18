@@ -244,7 +244,7 @@ function pointerReleased(x,y, id, layers)
       end
    end
 
-   for i = 1, #gestureState.list do
+   for i = #gestureState.list, 1, -1 do
       local g = gestureState.list[i]
       -- todo why the fuc is there a nil gesture in here?
       if g then
@@ -255,7 +255,9 @@ function pointerReleased(x,y, id, layers)
 	    removeGestureFromList(g)
 	 end
       else
-         print('why did this happen ? a nil gesture!?')
+
+         -- its only on touch i feel
+         print('why did this happen ? a nil gesture!?',i, print(inspect(gestureState)))
       end
    end
 end

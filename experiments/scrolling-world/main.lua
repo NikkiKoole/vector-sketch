@@ -256,8 +256,8 @@ function love.load()
    smallfont = love.graphics.newFont( "assets/adlib.ttf", 20)
 
    cursors = {
-      hand= love.mouse.getSystemCursor("hand"),
-      arrow= love.mouse.getSystemCursor("arrow")
+   --   hand= love.mouse.getSystemCursor("hand"),
+   --   arrow= love.mouse.getSystemCursor("arrow")
    }
    
    
