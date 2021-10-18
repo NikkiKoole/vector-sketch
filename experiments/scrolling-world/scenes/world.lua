@@ -73,7 +73,7 @@ function makeGroundPlaneBook(urls)
    local result = {}
    for i =1, #urls do
       local url = urls[i]
-      local thing = readFileAndAddToCache(url) 
+      local thing = readFileAndAddToCache(url)
       result[i] = {
          url = url,
          thing = thing,
@@ -108,20 +108,20 @@ end
 
 
 function scene.load()
-   
+
    local timeIndex = math.floor(1 + love.math.random()*24)
-   
+
    skygradient = gradientMesh(
       "vertical",
       gradients[timeIndex].from, gradients[timeIndex].to
    )
 
    if not hasBeenLoaded then
-      
+
       depthMinMax = {min=-1.0, max=1.0}
       depthScaleFactors = { min=.8, max=1}
       depthScaleFactors2 = { min=.4, max=.7}
-     
+
       tileSize = 300
       cam = createCamera()
       setCameraViewport(cam, 1000,1000)
@@ -137,10 +137,12 @@ function scene.load()
          hack = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
          farther = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
       }
-      
-      farthest = generateCameraLayer('farthest', .4)
 
+
+
+      farthest = generateCameraLayer('farthest', .4)
       farther = generateCameraLayer('farther', .7)
+
       hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
       hack = generateCameraLayer('hack', 1)
       hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
@@ -153,7 +155,7 @@ function scene.load()
             amountPerTile=1,
             depth={min=depthMinMax.min, max=depthMinMax.max}
       })
-      
+
       fartherLayer = makeContainerFolder('fartherLayer')
 
       -- i keep some data in the asset book, basically that what i need to generate
@@ -190,11 +192,11 @@ function scene.load()
             p={factors=depthScaleFactors, minmax=depthMinMax},
             assets=middleAssetBook}
       }
-      
+
       --createStuff()
 
    end
-   
+
    hasBeenLoaded = true
    attachPointerCallbacks()
 
@@ -203,7 +205,7 @@ end
 
 
 function scene.update(dt)
-   
+
    manageCameraTween(dt)
    cam:update()
    cameraApplyTranslate(dt)
@@ -216,7 +218,7 @@ function scene.update(dt)
    updateMotionItems(fartherLayer, dt)
 
    handlePressedItemsOnStage(dt, parallaxLayersData)
-   
+
 
 end
 
@@ -224,7 +226,7 @@ function scene.draw()
 
    love.graphics.clear(1,1,1)
    love.graphics.setColor(1,1,1)
-   
+
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
    drawGroundPlaneWithTextures(cam, 'farthest', 'farther' ,'farther')
@@ -249,19 +251,16 @@ function scene.draw()
    --renderThings(middleLayer)
    cam:pop()
 
-   
+
    love.graphics.setColor(1,1,1)
 
    --drawUI()
    drawDebugStrings()
    drawBBoxAroundItems(middleLayer, {factors=depthScaleFactors, minmax=depthMinMax})
    drawBBoxAroundItems(fartherLayer, {factors=depthScaleFactors2, minmax=depthMinMax})
-      
+
 
 
 end
 
 return scene
-
-
-
