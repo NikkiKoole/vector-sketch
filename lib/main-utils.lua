@@ -371,15 +371,15 @@ function handleChild(shape,parallax)
          parallax.camera.scale = mapInto(
             shape.depth,
             parallax.minmax.min, parallax.minmax.max,
-            parallax.factors.min, parallax.factors.max
+            parallax.factors.far, parallax.factors.near
          )
          parallax.camera.relativeScale = 1
          --(1.0/ parallax.camera.scale) * parallax.camera.scale
          parallax.camera.push()
-         
+
       end
-      
-      
+
+
       -- if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
       --    print(inspect(hack))
       --    hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)

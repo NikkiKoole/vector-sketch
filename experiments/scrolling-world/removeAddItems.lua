@@ -1,9 +1,9 @@
 function removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
    local map = {
-      hack = middleLayer.children,
-      farther = fartherLayer.children
+      foreground = middleLayer.children,
+      background = fartherLayer.children
    }
-   
+
    for i = #map[layerName], 1, -1 do
       local child = map[layerName][i]
       if child.groundTileIndex ~= nil then
@@ -16,8 +16,8 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
 end
 function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
    local map = {
-      hack = {layer = middleLayer, data = middleAssetBook},
-      farther = {layer = fartherLayer, data = fartherAssetBook}
+      foreground = {layer = middleLayer, data = middleAssetBook},
+      background = {layer = fartherLayer, data = fartherAssetBook}
    }
 
    local data = map[layerName].data
@@ -28,7 +28,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
          for j = 1, #data[i] do
             local thing = data[i][j]
             -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
-            if not thing.hasBeenPressed then 
+            if not thing.hasBeenPressed then
                --local urlIndex = (thing.urlIndex)
                local url = thing.url --urls[urlIndex]
                local read = readFileAndAddToCache(url)
@@ -55,16 +55,16 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
          end
       end
    end
-   
+
    parentize(map[layerName].layer)
    sortOnDepth(map[layerName].layer.children)
    recursivelyAddOptimizedMesh(map[layerName].layer)
-   
+
 end
 
 function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
    local bounds = layerTileBounds[layerName]
-   
+
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
    local startIndex = s/tileSize

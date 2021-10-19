@@ -118,9 +118,9 @@ function scene.load()
 
    if not hasBeenLoaded then
 
-      depthMinMax = {min=-1.0, max=1.0}
-      depthScaleFactors = { min=.8, max=1}
-      depthScaleFactors2 = { min=.4, max=.7}
+      depthMinMax =       {min=-1.0, max=1.0}
+      foregroundFactors = { far=.8, near=1}
+      backgroundFactors = { far=.4, near=.7}
 
       tileSize = 300
       cam = createCamera()
@@ -128,25 +128,25 @@ function scene.load()
 
       -- used in deciding what items to add and remove to the 'ground tile'
       layerTileBounds = {
-         hack = {math.huge, -math.huge},
-         farther = {math.huge, -math.huge}
+         foreground = {math.huge, -math.huge},
+         background = {math.huge, -math.huge}
       }
       -- used in figuring out if i can re-use a perspective ground mesh
       -- this also take y in account, perspective change when y changes
       lastCameraBounds = {
-         hack = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
-         farther = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
+         foreground = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
+         background = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
       }
 
 
 
-      farthest = generateCameraLayer('farthest', .4)
-      farther = generateCameraLayer('farther', .7)
+      backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
+      backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
 
-      hackFar = generateCameraLayer('hackFar', depthScaleFactors.min)
-      hack = generateCameraLayer('hack', 1)
-      hackClose = generateCameraLayer('hackClose', depthScaleFactors.max)
+      foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
+      foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
 
+      dynamic = generateCameraLayer('dynamic', 1)
 
 
       fartherAssetBook = generateAssetBook({
@@ -176,7 +176,7 @@ function scene.load()
 
 
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
-      perspectiveContainer = preparePerspectiveContainers({'hack', 'farther'})
+      perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
 
 
       -- this will contain all the data, in an organized way
@@ -184,12 +184,12 @@ function scene.load()
       parallaxLayersData = {
          {
             layer=fartherLayer,
-            p={factors=depthScaleFactors2, minmax=depthMinMax},
+            p={factors=backgroundFactors, minmax=depthMinMax},
             assets=fartherAssetBook
          },
          {
             layer=middleLayer,
-            p={factors=depthScaleFactors, minmax=depthMinMax},
+            p={factors=foregroundFactors, minmax=depthMinMax},
             assets=middleAssetBook}
       }
 
@@ -229,23 +229,27 @@ function scene.draw()
 
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   drawGroundPlaneWithTextures(cam, 'farthest', 'farther' ,'farther')
-   drawGroundPlaneWithTextures(cam, 'hackFar', 'hackClose', 'hack')
+   drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
+   drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   arrangeParallaxLayerVisibility('farthest', 'farther')
-   farther:push()
+   arrangeParallaxLayerVisibility('backgroundFar', 'background')
+
+   cam:push()
+
    renderThings(fartherLayer, {
-                   camera=hack,
-                   factors=depthScaleFactors2,
+                   camera=dynamic,
+                   factors=backgroundFactors,
                    minmax=depthMinMax
    })
-   farther:pop()
 
-   arrangeParallaxLayerVisibility('hackFar', 'hack')
+   cam:pop()
+
+
+   arrangeParallaxLayerVisibility('foregroundFar', 'foreground')
    cam:push()
    renderThings( middleLayer, {
-                    camera=hack,
-                    factors=depthScaleFactors,
+                    camera=dynamic,
+                    factors=foregroundFactors,
                     minmax=depthMinMax
    })
    --renderThings(middleLayer)
@@ -256,8 +260,8 @@ function scene.draw()
 
    --drawUI()
    drawDebugStrings()
-   drawBBoxAroundItems(middleLayer, {factors=depthScaleFactors, minmax=depthMinMax})
-   drawBBoxAroundItems(fartherLayer, {factors=depthScaleFactors2, minmax=depthMinMax})
+   drawBBoxAroundItems(middleLayer, {factors=foregroundFactors, minmax=depthMinMax})
+   drawBBoxAroundItems(fartherLayer, {factors=backgroundFactors, minmax=depthMinMax})
 
 
 

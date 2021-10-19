@@ -1,7 +1,7 @@
 function arrangeParallaxLayerVisibility(far, layer)
    if layer == nil then layer = far end
    local W, H = love.graphics.getDimensions()
-   
+
    local x1,y1 = cam:getWorldCoordinates(0,0, far)
    local x2,y2 = cam:getWorldCoordinates(W,0, far)
    local s = math.floor(x1/tileSize)*tileSize
@@ -55,7 +55,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
    local e = math.ceil(x2/tileSize)*tileSize
 
    local bounds = lastCameraBounds[layerName]
-   
+
    if (bounds.x[1] == x1 and bounds.x[2] == x2
        and bounds.y[1] == y1 and bounds.y[2] == y2) then
       for i = s, e, tileSize do
@@ -113,7 +113,7 @@ function drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
 	 local r = transferPoint (x, y, source, dest)
 	 table.insert(result, {r.x, r.y})
       end
-      
+
       if perspectiveContainer[layerName][index][j].perspMesh and
 	 perspectiveContainer[layerName][index][j].perspMesh:getVertexCount() == #result then
 	 perspectiveContainer[layerName][index][j].perspMesh:setVertices(result, 1, #result)
@@ -152,7 +152,7 @@ function drawGroundPlaneLines(cam)
 
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
-   
+
    local useCPU = true
 
    local simplerPolies = false
@@ -268,4 +268,3 @@ function drawGroundPlaneLines(cam)
    end
 end
 --]]
-

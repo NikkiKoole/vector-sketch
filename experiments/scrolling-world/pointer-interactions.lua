@@ -90,7 +90,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
 
          end
-         
+
 	 if c.mouseOver or    uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
@@ -168,10 +168,10 @@ function pointerPressed(x,y, id, layers)
       end
 
    end
-   
+
    if not itemPressed  then
       if not cameraFollowPlayer then
-         
+
          local hasOneAlready = false
          for i =1, #gestureState.list do
             if gestureState.list[i].target == 'stage' then
@@ -215,8 +215,8 @@ function pointerMoved(x,y,dx,dy, id, layers)
          checkForItemMouseOver(x,y,l.layer, l.p)
       end
    end
-   
-   
+
+
    if (id == 'mouse' and love.mouse.isDown(1) ) or id ~= 'mouse' then
 
       resetCameraTween()
@@ -310,14 +310,14 @@ function createCamData(item, parallaxData)
       camData.scale = mapInto(item.depth,
                               parallaxData.minmax.min,
                               parallaxData.minmax.max,
-                              parallaxData.factors.min,
-                              parallaxData.factors.max)
+                              parallaxData.factors.far,
+                              parallaxData.factors.near)
       camData.relativeScale = 1--(1.0/ hack.scale) * hack.scale
    end
    if camData == nil then
       print('hope you know')
    end
-   
+
    return camData
 end
 
@@ -325,7 +325,7 @@ end
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
    -- now i always generate a cameraLyer assuming there will be differenr depths
    -- within, that wont always be neccesary
-   
+
    local camData = createCamData(item, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
@@ -401,4 +401,3 @@ function gestureRecognizer(gesture)
       end
    end
 end
-
