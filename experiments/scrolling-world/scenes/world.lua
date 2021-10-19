@@ -11,6 +11,13 @@ function attachPointerCallbacks()
          resetCameraTween()
          SM.load('intro')
       end
+      if key == 'up' then
+	 cam:translate(0, -10)
+      end
+       if key == 'down' then
+	 cam:translate(0, 10)
+      end
+      love.keyboard.setKeyRepeat( true )
    end
    function love.mousepressed(x,y, button, istouch, presses)
       if (mouseState.hoveredSomething) then return end
@@ -122,7 +129,7 @@ function scene.load()
       foregroundFactors = { far=.8, near=1}
       backgroundFactors = { far=.4, near=.7}
 
-      tileSize = 300
+      tileSize = 100
       cam = createCamera()
       setCameraViewport(cam, 1000,1000)
 
@@ -153,7 +160,7 @@ function scene.load()
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
             amountPerTile=1,
-            depth={min=depthMinMax.min, max=depthMinMax.max}
+            depth=depthMinMax,
       })
 
       fartherLayer = makeContainerFolder('fartherLayer')
@@ -170,7 +177,7 @@ function scene.load()
             }),
             index={min=-100, max= 100},
             amountPerTile=1,
-            depth={min=depthMinMax.min, max=depthMinMax.max}
+            depth=depthMinMax,
       })
       middleLayer = makeContainerFolder('middleLayer')
 
