@@ -1,28 +1,17 @@
-function removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
-   local map = {
-      foreground = middleLayer.children,
-      background = fartherLayer.children
-   }
-
-   for i = #map[layerName], 1, -1 do
-      local child = map[layerName][i]
+function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
+   for i = #parallaxData.layer.children, 1, -1 do
+      local child = parallaxData.layer.children[i]---map[layerName][i]
       if child.groundTileIndex ~= nil then
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
-            table.remove(map[layerName], i)
+            table.remove(parallaxData.layer.children, i)
          end
       end
    end
 end
-function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
-   local map = {
-      foreground = {layer = middleLayer, data = middleAssetBook},
-      background = {layer = fartherLayer, data = fartherAssetBook}
-   }
-
-   local data = map[layerName].data
-   local urls = map[layerName].urls
-
+function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
+   local data = parallaxData.assets
+   
    for i = startIndex, endIndex do
       if (data[i]) then
          for j = 1, #data[i] do
@@ -50,20 +39,32 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
                child.url = thing.url
                child.groundTileIndex = thing.groundTileIndex
                child.bbox = read.bbox
-               table.insert(map[layerName].layer.children, child)
+               table.insert(parallaxData.layer.children, child)
             end
          end
       end
    end
 
-   parentize(map[layerName].layer)
-   sortOnDepth(map[layerName].layer.children)
-   recursivelyAddOptimizedMesh(map[layerName].layer)
+   parentize(parallaxData.layer)
+   sortOnDepth(parallaxData.layer.children)
+   recursivelyAddOptimizedMesh(parallaxData.layer)
 
 end
 
-function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
-   local bounds = layerTileBounds[layerName]
+function arrangeParallaxLayerVisibility(far, layer)
+
+   local W, H = love.graphics.getDimensions()
+
+   local x1,y1 = cam:getWorldCoordinates(0,0, far)
+   local x2,y2 = cam:getWorldCoordinates(W,0, far)
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+   
+   arrangeWhatIsVisible(x1, x2, tileSize, layer)
+end
+
+function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData)
+   local bounds = parallaxData.tileBounds
 
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
@@ -71,21 +72,20 @@ function arrangeWhatIsVisible(x1, x2, tileSize, layerName)
    local endIndex = e/tileSize
 
    if bounds[1] == math.huge and bounds[2] == -math.huge then
-      addTheContentsOfGroundTiles(startIndex, endIndex, layerName)
+      addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
    else
       if startIndex ~= bounds[1] or
          endIndex ~= bounds[2] then
-         removeTheContenstOfGroundTiles(startIndex, endIndex, layerName)
+         removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
       end
 
       if startIndex < bounds[1] then
-         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, layerName)
+         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, parallaxData)
       end
 
       if endIndex > bounds[2] then
-         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, layerName)
+         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, parallaxData)
       end
    end
-   layerTileBounds[layerName] = {startIndex, endIndex}
-
+   parallaxData.tileBounds = {startIndex, endIndex}
 end

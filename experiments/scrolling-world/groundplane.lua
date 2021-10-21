@@ -1,15 +1,3 @@
-function arrangeParallaxLayerVisibility(far, layer)
-   if layer == nil then layer = far end
-   local W, H = love.graphics.getDimensions()
-
-   local x1,y1 = cam:getWorldCoordinates(0,0, far)
-   local x2,y2 = cam:getWorldCoordinates(W,0, far)
-   local s = math.floor(x1/tileSize)*tileSize
-   local e = math.ceil(x2/tileSize)*tileSize
-
-   arrangeWhatIsVisible(x1, x2, tileSize, layer)
-end
-
 
 function drawGroundPlaneLinesSimple(cam, far, near)
 
@@ -54,7 +42,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-   local bounds = lastCameraBounds[layerName]
+   local bounds = perspectiveContainer[layerName].cameraBounds
 
    if (bounds.x[1] == x1 and bounds.x[2] == x2
        and bounds.y[1] == y1 and bounds.y[2] == y2) then
@@ -82,8 +70,8 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
             drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
          end
       end
-      lastCameraBounds[layerName].x = {x1,x2}
-      lastCameraBounds[layerName].y = {y1,y2}
+      perspectiveContainer[layerName].cameraBounds.x = {x1,x2}
+      perspectiveContainer[layerName].cameraBounds.y = {y1,y2}
    end
 
 

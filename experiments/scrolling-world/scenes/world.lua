@@ -54,7 +54,10 @@ function preparePerspectiveContainers(layers)
    for k =1, #layers do
       local layerName = layers[k]
       result[layerName] = {}
-
+      result[layerName].cameraBounds = {
+         x={math.huge, -math.huge},
+         y={math.huge, -math.huge}
+      }
       for i = 0, 100 do
          -- maximum of 100 groundplanes visible onscreen
          result[layerName][i] = {}
@@ -113,6 +116,56 @@ function generateAssetBook(recipe)
    return result
 end
 
+function makeContainerFolder(name)
+   return   {
+      folder = true,
+      name = name,
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      children = {}
+   }
+end
+
+function generateRandomPolysAndAddToContainer(amount, factors, container)
+         for j = 1, amount do
+         local generated = generatePolygon(0,0, 4 + random()*160, .05 + random()*.01, .02 + random()*0.12 , 8 + random()*18)
+         local points = {}
+         for i = 1, #generated, 2 do
+            table.insert(points, {generated[i], generated[i+1]})
+         end
+
+         local tlx, tly, brx, bry = getPointsBBox(points)
+         local pointsHeight = math.floor((bry - tly)/2)
+
+         local r,g,b = hex2rgb('4D391F')
+         r = random()*255
+         local rnd = 0.45 + random()*0.1
+         local rndDepth =  mapInto(rnd, 0,1,factors.far,factors.near )
+         local xPos = -1000 + random()*2000
+         local randomShape = {
+            folder = true,
+            transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
+            name="rood",
+            depth = rndDepth,
+            depthLayer = 'hack',
+            --aabb = xPos,
+            bbox= {tlx, tly, brx, bry},
+            children ={
+               {
+                  name="roodchild:"..1,
+                  color = {r/255,g/255,b/255, 1.0},
+                  points = points,
+               },
+            }
+         }
+         meshAll(randomShape)
+
+         table.insert(container.children, randomShape)
+      end
+
+
+end
+
+
 
 function scene.load()
 
@@ -128,47 +181,27 @@ function scene.load()
       depthMinMax =       {min=-1.0, max=1.0}
       foregroundFactors = { far=.8, near=1}
       backgroundFactors = { far=.4, near=.7}
-
       tileSize = 100
+      
       cam = createCamera()
       setCameraViewport(cam, 1000,1000)
 
-      -- used in deciding what items to add and remove to the 'ground tile'
-      layerTileBounds = {
-         foreground = {math.huge, -math.huge},
-         background = {math.huge, -math.huge}
-      }
-      -- used in figuring out if i can re-use a perspective ground mesh
-      -- this also take y in account, perspective change when y changes
-      lastCameraBounds = {
-         foreground = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
-         background = {x={math.huge, -math.huge}, y={math.huge, -math.huge}},
-      }
-
-
-
       backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
       backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
-
       foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
       foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
 
       dynamic = generateCameraLayer('dynamic', 1)
 
-
-      fartherAssetBook = generateAssetBook({
+      backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
             amountPerTile=1,
             depth=depthMinMax,
       })
+      backgroundLayer = makeContainerFolder('backgroundLayer')
 
-      fartherLayer = makeContainerFolder('fartherLayer')
-
-      -- i keep some data in the asset book, basically that what i need to generate
-      -- it fully when the time comes
-
-      middleAssetBook = generateAssetBook({
+      foregroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
                  'plant5','plant6','plant7','plant8',
@@ -176,10 +209,10 @@ function scene.load()
                  'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
             }),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=2,
             depth=depthMinMax,
       })
-      middleLayer = makeContainerFolder('middleLayer')
+      foregroundLayer = makeContainerFolder('foregroundLayer')
 
 
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
@@ -190,17 +223,20 @@ function scene.load()
       -- from back to front
       parallaxLayersData = {
          {
-            layer=fartherLayer,
+            layer=backgroundLayer,
             p={factors=backgroundFactors, minmax=depthMinMax},
-            assets=fartherAssetBook
+            assets=backgroundAssetBook,
+            tileBounds={math.huge, -math.huge},
          },
          {
-            layer=middleLayer,
+            layer=foregroundLayer,
             p={factors=foregroundFactors, minmax=depthMinMax},
-            assets=middleAssetBook}
+            assets=foregroundAssetBook,
+            tileBounds={math.huge, -math.huge},
+         }
       }
 
-      --createStuff()
+      generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
    end
 
@@ -215,14 +251,15 @@ function scene.update(dt)
 
    manageCameraTween(dt)
    cam:update()
-   cameraApplyTranslate(dt)
+   
+   cameraApplyTranslate(dt, foregroundLayer)
 
    if bouncetween then
       bouncetween:update(dt)
    end
 
-   updateMotionItems(middleLayer, dt)
-   updateMotionItems(fartherLayer, dt)
+   updateMotionItems(foregroundLayer, dt)
+   updateMotionItems(backgroundLayer, dt)
 
    handlePressedItemsOnStage(dt, parallaxLayersData)
 
@@ -239,27 +276,15 @@ function scene.draw()
    drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   arrangeParallaxLayerVisibility('backgroundFar', 'background')
-
+   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1])
    cam:push()
-
-   renderThings(fartherLayer, {
-                   camera=dynamic,
-                   factors=backgroundFactors,
-                   minmax=depthMinMax
-   })
-
+   renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[1].p})
    cam:pop()
 
 
-   arrangeParallaxLayerVisibility('foregroundFar', 'foreground')
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
    cam:push()
-   renderThings( middleLayer, {
-                    camera=dynamic,
-                    factors=foregroundFactors,
-                    minmax=depthMinMax
-   })
-   --renderThings(middleLayer)
+   renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[2].p })
    cam:pop()
 
 
@@ -267,8 +292,8 @@ function scene.draw()
 
    --drawUI()
    drawDebugStrings()
-   drawBBoxAroundItems(middleLayer, {factors=foregroundFactors, minmax=depthMinMax})
-   drawBBoxAroundItems(fartherLayer, {factors=backgroundFactors, minmax=depthMinMax})
+   drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
+   drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
 
 
 

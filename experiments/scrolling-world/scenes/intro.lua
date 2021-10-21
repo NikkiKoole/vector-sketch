@@ -19,6 +19,10 @@ function scene.update(dt)
 --      if key == 'escape' then love.event.quit() end
       SM.load("world")
    end
+   function love.mousepressed(key, unicode)
+--      if key == 'escape' then love.event.quit() end
+      SM.load("world")
+   end
 
 end
 

@@ -129,7 +129,7 @@ function checkForBounceBack(dt)
 end
 
 
-function cameraApplyTranslate(dt)
+function cameraApplyTranslate(dt, layer)
 
    cam:translate( translateScheduler.x, translateScheduler.y)
    local translateByPressed = false
@@ -137,8 +137,8 @@ function cameraApplyTranslate(dt)
 
    if true then
 
-      for i =1 ,#middleLayer.children do
-	 local c = middleLayer.children[i]
+      for i =1 ,#layer.children do
+	 local c = layer.children[i]
 	 if c.pressed then
             -- this line cause the jerkyness, have to check it on multitouch
 	   -- c.transforms.l[1] =

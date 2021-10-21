@@ -148,7 +148,7 @@ function drawDebugStrings()
       shadedText('renderCount.optimized: '..renderCount.optimized, 20, 40)
       shadedText('renderCount.normal: '..renderCount.normal, 20, 70)
       shadedText('renderCount.groundMesh: '..renderCount.groundMesh, 20, 100)
-      shadedText('childCount: '..#middleLayer.children, 20, 130)
+      --shadedText('childCount: '..#middleLayer.children, 20, 130)
 
       if (tweenCameraDelta ~= 0 or followPlayerCameraDelta ~= 0) then
 	 shadedText('d1 '..round2(tweenCameraDelta, 2)..' d2 '..round2(followPlayerCameraDelta,2), 20, 160)
@@ -220,11 +220,11 @@ function love.resize(w, h)
 end
 
 function love.filedropped(file)
-   local tab = getDataFromFile(file)
-   middleLayer.children = tab -- TableConcat(root.children, tab)
-   parentize(middleLayer)
-   meshAll(middleLayer)
-   renderThings(middleLayer)
+   --local tab = getDataFromFile(file)
+   --middleLayer.children = tab -- TableConcat(root.children, tab)
+   --parentize(middleLayer)
+   --meshAll(middleLayer)
+   --renderThings(middleLayer)
 end
 
 

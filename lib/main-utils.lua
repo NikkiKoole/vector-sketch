@@ -370,8 +370,8 @@ function handleChild(shape,parallax)
       if (shape.depth ~= nil) and parallax then
          parallax.camera.scale = mapInto(
             shape.depth,
-            parallax.minmax.min, parallax.minmax.max,
-            parallax.factors.far, parallax.factors.near
+            parallax.p.minmax.min, parallax.p.minmax.max,
+            parallax.p.factors.far, parallax.p.factors.near
          )
          parallax.camera.relativeScale = 1
          --(1.0/ parallax.camera.scale) * parallax.camera.scale
