@@ -32,11 +32,6 @@ function removeGestureFromList(gesture)
          found = true
       end
    end
-   if found == false then
-      print('didnt find gesture to delete',gesture.trigger, #gestureState.list)
-   else
-      --print('deleted gesture succesfully', gesture.trigger, #gestureState.list)
-   end
 end
 
 
@@ -47,15 +42,12 @@ function updateGestureCounter(dt)
    if gestureState.updateResolutionCounter > gestureState.updateResolution then
       gestureState.updateResolutionCounter = 0
       for i = 1, #gestureState.list do
-
          local g = gestureState.list[i]
-         local x,y, success = getPointerPosition(g.trigger)    -- = love.mouse:getPosition()
+         local x,y, success = getPointerPosition(g.trigger)
 	 if success then
 	    addGesturePoint(g, love.timer.getTime( ), x, y)
-	    --table.insert(g.positions, {x=x,y=y, time=love.timer.getTime( )})
 	 end
       end
-
    end
 end
 
@@ -72,42 +64,25 @@ function drawBBoxAroundItems(layer, parallaxData)
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
-
-
-	    -- this renders the pivot point
 	    love.graphics.setColor(1,1,1,1)
 	    local px, py = c._globalTransform:transformPoint( c.transforms.l[6], c.transforms.l[7])
 
             local camData = createCamData(c, parallaxData)
-	    --local hack =  {}
-	    --hack.scale = mapInto(c.depth, depthMinMax.min, depthMinMax.max,
-            --		 depthScaleFactors.min, depthScaleFactors.max)
-	    --hack.relativeScale = (1.0/ hack.scale) * hack.scale
 	    local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
 
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
-
-
          end
 
-	 if c.mouseOver or    uiState.showBBoxes then
+	 if c.mouseOver or uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
 	    love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 	 end
-
       end
    end
 end
-
-
-
-
-
---[[
-]]--
 
 
 function pointerPressed(x,y, id, layers)
@@ -144,9 +119,7 @@ function pointerPressed(x,y, id, layers)
          if c.bbox and c._localTransform and c.depth and not itemPressed then
 
             local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c, l.p)
-
             if mouseover then
-
                local justBBoxCheck = false
 
                if (justBBoxCheck == true or ( mouseIsOverObjectInCamLayer(x, y, c, l.p))) then
@@ -154,9 +127,7 @@ function pointerPressed(x,y, id, layers)
                   itemPressed = c
                   c.groundTileIndex = nil
                   local indices = c.originalIndices
-                  -- i dont want to readd this item
-                  -- the generated polygons arent in this list
-                  -- there wll be more and more lists I imagine
+		  -- todo ouch i dunno about this
                   if indices and l.assets[indices[1]] and l.assets[indices[1]][indices[2]] then
                      l.assets[indices[1]][indices[2]].hasBeenPressed = true
                   end
@@ -225,7 +196,13 @@ function pointerMoved(x,y,dx,dy, id, layers)
 	 local g = gestureState.list[i]
 	 if g.target == 'stage' and g.trigger == id then
 	    local scale = cam:getScale()
-	    cameraTranslateScheduler(-dx/scale, 0)
+
+	    local xAxisAllowed = true
+	    local xAxis =xAxisAllowed and  -dx/scale or 0
+	    local yAxisAllowed = false
+	    local yAxis =yAxisAllowed and  -dy/scale or 0
+
+	    cameraTranslateScheduler(xAxis, yAxis)
 	 end
       end
    end
@@ -246,18 +223,12 @@ function pointerReleased(x,y, id, layers)
 
    for i = #gestureState.list, 1, -1 do
       local g = gestureState.list[i]
-      -- todo why the fuc is there a nil gesture in here?
       if g then
 	 if g.trigger == id then
-	    --print('do ii ever get her?')
 	    addGesturePoint(g, love.timer.getTime( ), x, y)
 	    gestureRecognizer(g)
 	    removeGestureFromList(g)
 	 end
-      else
-
-         -- its only on touch i feel
-         print('why did this happen ? a nil gesture!?',i, print(inspect(gestureState)))
       end
    end
 end
@@ -350,10 +321,10 @@ function gestureRecognizer(gesture)
       if (#gesture.positions > gestureLength) then
 	 startP = gesture.positions[#gesture.positions - gestureLength]
       end
+
       local dx = endP.x - startP.x
       local dy = endP.y - startP.y
       local distance = math.sqrt(dx*dx+dy*dy)
-
       local deltaTime = endP.time - startP.time
       local speed = distance / deltaTime
 
@@ -363,19 +334,46 @@ function gestureRecognizer(gesture)
 	 local minDistance = 6
 	 local minDuration = 0.005
 
-	 if distance > minDistance then
-	    if deltaTime > minDuration then
-	       if speed >= minSpeed and speed < maxSpeed then
-		  local cx,cy = cam:getTranslation()
-		  local m = dx < 0 and -1 or 1
+	 local xAxisAllowed = true
+	 local yAxisAllowed = false
 
-		  cameraTween = {goalX=cx-((dx) + (m* speed/7.5) ), goalY=cy, smoothValue=3.5, originalGesture=gesture}
-	       else
-		  --print('failed at speed', minSpeed, speed, maxSpeed)
+	 if deltaTime > minDuration then
+	    local doTween = false
+	    local cx,cy = cam:getTranslation()
+	    local xAxis = cx
+	    local yAxis = cy
+
+	    if xAxisAllowed then
+	       if math.abs(dx) > minDistance then
+		  if math.abs(dx/deltaTime) >= minSpeed and  math.abs(dx/deltaTime) < maxSpeed then
+		     doTween = true
+		     local mx = dx < 0 and -1 or 1
+		     xAxis = cx -((dx) + (mx* speed/7.5) )
+		  end
 	       end
-	    else
-	       --print('failed at duration', deltaTime, minDuration)
 	    end
+
+	    if yAxisAllowed then
+	       if math.abs(dy) > minDistance then
+		  if math.abs(dy/deltaTime) >= minSpeed and  math.abs(dy/deltaTime) < maxSpeed then
+		     doTween = true
+		     local my = dy < 0 and -1 or 1
+		     yAxis = cy -((dy) + (my* speed/7.5) )
+		  end
+	       end
+	    end
+
+	    if doTween then
+	       cameraTween = {
+		  goalX=xAxis,
+		  goalY=yAxis,
+		  smoothValue=3.5,
+		  originalGesture=gesture
+	       }
+	    end
+
+
+
 	 else
 	    --print('failed at distance')
 	 end
@@ -396,7 +394,6 @@ function gestureRecognizer(gesture)
          local impulse = Vector(dxn * speed * throwStrength ,
                                 dyn * speed * throwStrength )
 
-         --print('impulse', impulse)
 	 applyForce(gesture.target.inMotion, impulse)
       end
    end

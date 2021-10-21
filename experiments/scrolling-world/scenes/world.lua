@@ -6,7 +6,7 @@ function scene.modify(data)
 end
 
 function attachPointerCallbacks()
-      function love.keypressed(key, unicode)
+   function love.keypressed(key, unicode)
       if key == 'escape' then
          resetCameraTween()
          SM.load('intro')
@@ -14,7 +14,7 @@ function attachPointerCallbacks()
       if key == 'up' then
 	 cam:translate(0, -10)
       end
-       if key == 'down' then
+      if key == 'down' then
 	 cam:translate(0, 10)
       end
       love.keyboard.setKeyRepeat( true )
@@ -100,17 +100,17 @@ function generateAssetBook(recipe)
    for i = recipe.index.min, recipe.index.max do
       result[i] = {}
       for p= 1, recipe.amountPerTile do
-      table.insert(
-         result[i],
-         {
-            x=random()*tileSize,
-            groundTileIndex = i,
-            depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
-            scaleX=1,
-            scaleY=1,
-            url=pickRandom(recipe.urls)
-         }
-      )
+	 table.insert(
+	    result[i],
+	    {
+	       x=random()*tileSize,
+	       groundTileIndex = i,
+	       depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
+	       scaleX=1,
+	       scaleY=1,
+	       url=pickRandom(recipe.urls)
+	    }
+	 )
       end
    end
    return result
@@ -126,41 +126,41 @@ function makeContainerFolder(name)
 end
 
 function generateRandomPolysAndAddToContainer(amount, factors, container)
-         for j = 1, amount do
-         local generated = generatePolygon(0,0, 4 + random()*160, .05 + random()*.01, .02 + random()*0.12 , 8 + random()*18)
-         local points = {}
-         for i = 1, #generated, 2 do
-            table.insert(points, {generated[i], generated[i+1]})
-         end
-
-         local tlx, tly, brx, bry = getPointsBBox(points)
-         local pointsHeight = math.floor((bry - tly)/2)
-
-         local r,g,b = hex2rgb('4D391F')
-         r = random()*255
-         local rnd = 0.45 + random()*0.1
-         local rndDepth =  mapInto(rnd, 0,1,factors.far,factors.near )
-         local xPos = -1000 + random()*2000
-         local randomShape = {
-            folder = true,
-            transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
-            name="rood",
-            depth = rndDepth,
-            depthLayer = 'hack',
-            --aabb = xPos,
-            bbox= {tlx, tly, brx, bry},
-            children ={
-               {
-                  name="roodchild:"..1,
-                  color = {r/255,g/255,b/255, 1.0},
-                  points = points,
-               },
-            }
-         }
-         meshAll(randomShape)
-
-         table.insert(container.children, randomShape)
+   for j = 1, amount do
+      local generated = generatePolygon(0,0, 4 + random()*160, .05 + random()*.01, .02 + random()*0.12 , 8 + random()*18)
+      local points = {}
+      for i = 1, #generated, 2 do
+	 table.insert(points, {generated[i], generated[i+1]})
       end
+
+      local tlx, tly, brx, bry = getPointsBBox(points)
+      local pointsHeight = math.floor((bry - tly)/2)
+
+      local r,g,b = hex2rgb('4D391F')
+      r = random()*255
+      local rnd = 0.45 + random()*0.1
+      local rndDepth =  mapInto(rnd, 0,1,factors.far,factors.near )
+      local xPos = -1000 + random()*2000
+      local randomShape = {
+	 folder = true,
+	 transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
+	 name="rood",
+	 depth = rndDepth,
+	 depthLayer = 'hack',
+	 --aabb = xPos,
+	 bbox= {tlx, tly, brx, bry},
+	 children ={
+	    {
+	       name="roodchild:"..1,
+	       color = {r/255,g/255,b/255, 1.0},
+	       points = points,
+	    },
+	 }
+      }
+      meshAll(randomShape)
+
+      table.insert(container.children, randomShape)
+   end
 
 
 end
@@ -182,7 +182,7 @@ function scene.load()
       foregroundFactors = { far=.8, near=1}
       backgroundFactors = { far=.4, near=.7}
       tileSize = 100
-      
+
       cam = createCamera()
       setCameraViewport(cam, 1000,1000)
 
@@ -251,7 +251,7 @@ function scene.update(dt)
 
    manageCameraTween(dt)
    cam:update()
-   
+
    cameraApplyTranslate(dt, foregroundLayer)
 
    if bouncetween then
@@ -262,8 +262,6 @@ function scene.update(dt)
    updateMotionItems(backgroundLayer, dt)
 
    handlePressedItemsOnStage(dt, parallaxLayersData)
-
-
 end
 
 function scene.draw()
