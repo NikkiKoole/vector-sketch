@@ -125,7 +125,7 @@ function pointerPressed(x,y, id, layers)
                if (justBBoxCheck == true or hitcheck) then
 
 		  if type(hitcheck) == 'string' then
-		     print('what kind of magic action we want? ', hitcheck)
+		     print('what kind of magic -hitarea action we want? ', hitcheck)
 		  end
 
                   c.pressed = {dx=invx, dy=invy, id=id}
