@@ -45,6 +45,7 @@ function scene.load()
     }
 
     setCameraViewport(cam, 300,300)
+    hasBeenLoaded = true
 end
 
 function scene.update(dt)
