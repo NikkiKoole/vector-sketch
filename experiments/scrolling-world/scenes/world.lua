@@ -73,7 +73,7 @@ function scene.load()
       tileSize = 100
 
       cam = createCamera()
-      setCameraViewport(cam, 500,500)
+
 
       backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
       backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
@@ -98,32 +98,19 @@ function scene.load()
                  'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
             }),
             index={min=-100, max= 100},
-            amountPerTile=2,
+            amountPerTile=1,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
 
 
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
-      perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
+
 
 
       -- this will contain all the data, in an organized way
       -- from back to front
-      parallaxLayersData = {
-         {
-            layer=backgroundLayer,
-            p={factors=backgroundFactors, minmax=depthMinMax},
-            assets=backgroundAssetBook,
-            tileBounds={math.huge, -math.huge},
-         },
-         {
-            layer=foregroundLayer,
-            p={factors=foregroundFactors, minmax=depthMinMax},
-            assets=foregroundAssetBook,
-            tileBounds={math.huge, -math.huge},
-         }
-      }
+
 
       --generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
@@ -137,6 +124,22 @@ function scene.load()
       --print(inspect(thing))
    end
 
+   perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
+   parallaxLayersData = {
+         {
+            layer=backgroundLayer,
+            p={factors=backgroundFactors, minmax=depthMinMax},
+            assets=backgroundAssetBook,
+            tileBounds={math.huge, -math.huge},
+         },
+         {
+            layer=foregroundLayer,
+            p={factors=foregroundFactors, minmax=depthMinMax},
+            assets=foregroundAssetBook,
+            tileBounds={math.huge, -math.huge},
+         }
+      }
+   setCameraViewport(cam, 500,500)
    hasBeenLoaded = true
    attachPointerCallbacks()
 end

@@ -1,4 +1,5 @@
 local scene = {}
+local hasBeenLoaded = false
 
 function scene.modify(obj)
 end
@@ -13,8 +14,37 @@ function scene.load()
       "vertical",
       gradients[timeIndex].from, gradients[timeIndex].to
    )
+   if not hasBeenLoaded then
+      depthMinMax =       {min=-1.0, max=1.0}
+      foregroundFactors = { far=.8, near=1}
+      foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
+      foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+      foregroundAssetBook2 = generateAssetBook({
+            urls= createAssetPolyUrls(
+               { 'plant1','plant2','plant3','plant4',
+                 'plant5','plant6','plant7','plant8',
+                 'plant9','plant10','plant11','plant12',
+                 'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
+            }),
+            index={min=-100, max= 100},
+            amountPerTile=1,
+            depth=depthMinMax,
+      })
+      foregroundLayer2 = makeContainerFolder('foregroundLayer')
+      groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
+   end
 
+    perspectiveContainer = preparePerspectiveContainers({'foreground'})
+    parallaxLayersData = {
+       {
+	  layer=foregroundLayer2,
+	  p={factors=foregroundFactors, minmax=depthMinMax},
+	  assets=foregroundAssetBook2,
+	  tileBounds={math.huge, -math.huge},
+       }
+    }
 
+    setCameraViewport(cam, 300,300)
 end
 
 function scene.update(dt)
@@ -41,6 +71,13 @@ function scene.draw()
 
    love.graphics.setColor(0,0,0)
    love.graphics.print("This is the cave, press any key to go back to the world.", 10,10)
+
+   drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1])
+   cam:push()
+   renderThings( foregroundLayer2, {camera=dynamic, p=parallaxLayersData[1].p })
+   cam:pop()
+
 end
 
 return scene

@@ -41,7 +41,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
-
+   --print(layerName, inspect(perspectiveContainer))
    local bounds = perspectiveContainer[layerName].cameraBounds
 
    if (bounds.x[1] == x1 and bounds.x[2] == x2

@@ -124,20 +124,21 @@ function pointerPressed(x,y, id, layers)
 	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
 
-		  if type(hitcheck) == 'string' then
-		     eventBus(hitcheck)
-		     --print('what kind of magic -hitarea action we want? ', hitcheck)
-		  else
-
-		     c.pressed = {dx=invx, dy=invy, id=id}
-		     itemPressed = c
-		  end
                   c.groundTileIndex = nil
                   local indices = c.originalIndices
 		  -- todo ouch i dunno about this
                   if indices and l.assets[indices[1]] and l.assets[indices[1]][indices[2]] then
                      l.assets[indices[1]][indices[2]].hasBeenPressed = true
                   end
+		  if type(hitcheck) == 'string' then
+		     eventBus(hitcheck)
+		     return
+		     --print('what kind of magic -hitarea action we want? ', hitcheck)
+		  else
+
+		     c.pressed = {dx=invx, dy=invy, id=id}
+		     itemPressed = c
+		  end
 
                end
             end
