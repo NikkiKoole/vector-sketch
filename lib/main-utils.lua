@@ -246,13 +246,15 @@ function recursiveHitCheck(x,y, node)
       local mesh = body.mesh
       if (body and mesh) then
 	 if isMouseInMesh(x,y, body._parent, mesh) then
+	    print(1)
             return true
          end
       end
    else
       if  node.optimizedBatchMesh then
-	 for i = 1, #node.optimizedBatchMesh do  --folder.optimizedBatchMesh[batchIndex] = {mesh=mesh
+	 for i = 1, #node.optimizedBatchMesh do
 	    if isMouseInMesh(x,y, node, node.optimizedBatchMesh[i].mesh) then
+	       print(2)
 	       return true
 	    end
 	 end
@@ -260,12 +262,25 @@ function recursiveHitCheck(x,y, node)
       elseif node.children then
 	 for i = 1, #node.children do
             local r =  recursiveHitCheck(x,y, node.children[i])
-            if r then return true end
+            if r then
+	       if node.name ~= '' then
+		  if string.find(node.name, "-hitarea") then
+		     print(i,'returnning', node.name)
+		     return node.name
+
+		  end
+		  if string.find(node.children[i].name, "-hitarea") then
+		     print(i,'returnning', node.children[i].name)
+		     return  node.children[i].name
+		  end
+	       end
+	       print(i)
+	       return true
+	    end
          end
       end
    end
    return false
-
 end
 
 function findMeshThatsHit(parent, mx, my, order)

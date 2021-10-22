@@ -107,7 +107,7 @@ function generateRandomPolysAndAddToContainer(amount, factors, container)
 	 transforms =  {l={xPos,0,0,1,1,0,pointsHeight,0,0}},
 	 name="rood",
 	 depth = rndDepth,
-	 depthLayer = 'hack',
+	 --depthLayer = 'hack',
 	 --aabb = xPos,
 	 bbox= {tlx, tly, brx, bry},
 	 children ={

@@ -121,8 +121,9 @@ function pointerPressed(x,y, id, layers)
             local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c, l.p)
             if mouseover then
                local justBBoxCheck = false
-
-               if (justBBoxCheck == true or ( mouseIsOverObjectInCamLayer(x, y, c, l.p))) then
+	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
+               if (justBBoxCheck == true or hitcheck) then
+		  print(type(hitcheck))
                   c.pressed = {dx=invx, dy=invy, id=id}
                   itemPressed = c
                   c.groundTileIndex = nil
@@ -309,7 +310,8 @@ end
 function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    local camData = createCamData(item, parallaxData)
    local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
-   return  recursiveHitCheck(mx2, my2, item)
+   local hit = recursiveHitCheck(mx2, my2, item)
+   return hit
 end
 
 

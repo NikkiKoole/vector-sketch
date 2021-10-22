@@ -1,7 +1,6 @@
 local scene = {}
-
-
 local hasBeenLoaded = false
+
 function scene.modify(data)
 end
 
@@ -64,7 +63,7 @@ function scene.load()
       tileSize = 100
 
       cam = createCamera()
-      setCameraViewport(cam, 1000,1000)
+      setCameraViewport(cam, 500,500)
 
       backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
       backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
@@ -116,8 +115,16 @@ function scene.load()
          }
       }
 
-      generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
+      --generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
+
+      local thing = readFileAndAddToCache('assets/cavething.polygons.txt')
+      thing.depth = 0
+      thing.transforms.l[1] = 0
+      thing.transforms.l[2] = 0
+      meshAll(thing)
+      table.insert(foregroundLayer.children, thing)
+      --print(inspect(thing))
    end
 
    hasBeenLoaded = true
