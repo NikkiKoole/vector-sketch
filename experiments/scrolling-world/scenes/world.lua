@@ -44,6 +44,16 @@ function attachPointerCallbacks()
    function love.touchreleased(id, x, y, dx, dy, pressure)
       pointerReleased(x,y, id, parallaxLayersData)
    end
+   function eventBus(event)
+      if event == 'door-hitarea' then
+	 -- tween camera to cave opening
+	 -- go into cave
+	 SM.load("cave")
+      end
+
+
+   end
+
 end
 
 function scene.load()

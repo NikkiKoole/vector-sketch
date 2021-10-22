@@ -125,11 +125,13 @@ function pointerPressed(x,y, id, layers)
                if (justBBoxCheck == true or hitcheck) then
 
 		  if type(hitcheck) == 'string' then
-		     print('what kind of magic -hitarea action we want? ', hitcheck)
-		  end
+		     eventBus(hitcheck)
+		     --print('what kind of magic -hitarea action we want? ', hitcheck)
+		  else
 
-                  c.pressed = {dx=invx, dy=invy, id=id}
-                  itemPressed = c
+		     c.pressed = {dx=invx, dy=invy, id=id}
+		     itemPressed = c
+		  end
                   c.groundTileIndex = nil
                   local indices = c.originalIndices
 		  -- todo ouch i dunno about this
