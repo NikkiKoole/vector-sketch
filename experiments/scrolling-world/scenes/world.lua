@@ -122,23 +122,25 @@ function scene.load()
       meshAll(thing)
       table.insert(foregroundLayer.children, thing)
       --print(inspect(thing))
-   end
 
-   perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
-   parallaxLayersData = {
-         {
+      parallaxLayersData = {
+	 {
             layer=backgroundLayer,
             p={factors=backgroundFactors, minmax=depthMinMax},
             assets=backgroundAssetBook,
             tileBounds={math.huge, -math.huge},
-         },
-         {
+	 },{
             layer=foregroundLayer,
             p={factors=foregroundFactors, minmax=depthMinMax},
             assets=foregroundAssetBook,
             tileBounds={math.huge, -math.huge},
-         }
+	   }
       }
+   end
+   perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
+    print(#foregroundLayer.children)
+   --   foregroundLayer.children = {}
+
    setCameraViewport(cam, 500,500)
    hasBeenLoaded = true
    attachPointerCallbacks()

@@ -32,10 +32,8 @@ function scene.load()
       })
       foregroundLayer2 = makeContainerFolder('foregroundLayer')
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
-   end
 
-    perspectiveContainer = preparePerspectiveContainers({'foreground'})
-    parallaxLayersData = {
+       parallaxLayersData2 = {
        {
 	  layer=foregroundLayer2,
 	  p={factors=foregroundFactors, minmax=depthMinMax},
@@ -43,6 +41,10 @@ function scene.load()
 	  tileBounds={math.huge, -math.huge},
        }
     }
+
+   end
+    perspectiveContainer = preparePerspectiveContainers({'foreground'})
+
 
     setCameraViewport(cam, 300,300)
     hasBeenLoaded = true
@@ -74,9 +76,9 @@ function scene.draw()
    love.graphics.print("This is the cave, press any key to go back to the world.", 10,10)
 
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
-   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1])
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData2[1])
    cam:push()
-   renderThings( foregroundLayer2, {camera=dynamic, p=parallaxLayersData[1].p })
+   renderThings( foregroundLayer2, {camera=dynamic, p=parallaxLayersData2[1].p })
    cam:pop()
 
 end
