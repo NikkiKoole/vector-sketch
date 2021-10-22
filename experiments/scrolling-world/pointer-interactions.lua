@@ -123,7 +123,11 @@ function pointerPressed(x,y, id, layers)
                local justBBoxCheck = false
 	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
-		  print(type(hitcheck))
+
+		  if type(hitcheck) == 'string' then
+		     print('what kind of magic action we want? ', hitcheck)
+		  end
+
                   c.pressed = {dx=invx, dy=invy, id=id}
                   itemPressed = c
                   c.groundTileIndex = nil

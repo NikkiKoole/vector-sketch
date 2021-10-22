@@ -86,7 +86,7 @@ function readFileAndAddToCache(url)
       local tlx, tly = g2._globalTransform:inverseTransformPoint(bbox[1], bbox[2])
       local brx, bry = g2._globalTransform:inverseTransformPoint(bbox[3], bbox[4])
       g2.bbox = {tlx, tly, brx, bry }--bbox
-      
+
       --local bbox = getBBoxOfChildren(g2.children)
       --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
       meshCache[url] = g2
@@ -259,11 +259,11 @@ function love.load()
    --   hand= love.mouse.getSystemCursor("hand"),
    --   arrow= love.mouse.getSystemCursor("arrow")
    }
-   
-   
+
+
    love.graphics.setFont(font)
 
-   
+
    uiState = {
       show= false,
       showFPS=true,
@@ -280,12 +280,17 @@ function love.load()
       offset = {x=0, y=0}
    }
 
-   
+
    SM.setPath("scenes/")
 
   -- Add scene "intro" to scene table
    SM.load("intro")
+
+
 end
+
+
+
 
 function love.update(dt)
   -- Run your scene files update function
@@ -323,6 +328,3 @@ function love.draw()
    end
 
 end
-
-
-

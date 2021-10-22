@@ -237,6 +237,7 @@ function isMouseInMesh(mx, my, body, mesh)
 end
 
 
+
 function recursiveHitCheck(x,y, node)
    -- you want to check the first child IF IT HAS POINTS
    if not node then return false end
@@ -246,8 +247,13 @@ function recursiveHitCheck(x,y, node)
       local mesh = body.mesh
       if (body and mesh) then
 	 if isMouseInMesh(x,y, body._parent, mesh) then
-	    print(1)
-            return true
+	    -- imma looking for hitareas
+	    if string.find(node.name, "-hitarea") then
+	       return node.name
+	    else
+	       return true
+	    end
+
          end
       end
    else
@@ -260,22 +266,11 @@ function recursiveHitCheck(x,y, node)
 	 end
 
       elseif node.children then
+	 local result = false
 	 for i = 1, #node.children do
-            local r =  recursiveHitCheck(x,y, node.children[i])
-            if r then
-	       if node.name ~= '' then
-		  if string.find(node.name, "-hitarea") then
-		     print(i,'returnning', node.name)
-		     return node.name
-
-		  end
-		  if string.find(node.children[i].name, "-hitarea") then
-		     print(i,'returnning', node.children[i].name)
-		     return  node.children[i].name
-		  end
-	       end
-	       print(i)
-	       return true
+	    local result =  recursiveHitCheck(x,y, node.children[i])
+	    if result then
+	       return result
 	    end
          end
       end
