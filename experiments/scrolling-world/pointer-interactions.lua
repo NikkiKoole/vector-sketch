@@ -61,8 +61,14 @@ function drawBBoxAroundItems(layer, parallaxData)
          if c.pressed then
             local mx, my = getPointerPosition(c.pressed.id)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
+            --print(tlx, tly, brx, bry)
             love.graphics.setColor(1,1,1,.5)
+            
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+
+
+
+
 
 
 	    love.graphics.setColor(1,1,1,1)
@@ -70,7 +76,6 @@ function drawBBoxAroundItems(layer, parallaxData)
 
             local camData = createCamData(c, parallaxData)
 	    local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
-
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
 
@@ -279,7 +284,7 @@ function handlePressedItemsOnStage(dt, layers)
       for i = 1, #l.layer.children do
          local c = l.layer.children[i]
          if c.bbox and c._localTransform and c.depth ~= nil then
-            if c.pressed then
+            if c.pressed  then
 
                
                --print(inspect(c.bbox))
@@ -288,17 +293,54 @@ function handlePressedItemsOnStage(dt, layers)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
                   -- todo make these thing parameters
-                  c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-                  c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
+                  if c.wheelCircumference then
+                     -- todo calculate the amount of rotating
+
+                     local rotateStep = ( (invx - c.pressed.dx) )
+                     if math.abs(rotateStep) > 0.00001 then 
+                        --print  (c.wheelCircumference / rotateStep)
+                     --end
+                     
+                        c.children[1].transforms.l[3] =  c.children[1].transforms.l[3] + (rotateStep/c.wheelCircumference)*(math.pi*2)
+                     end
+                     --mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
+
+                     c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+                     
+                  else
+                     c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+                     c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
+
+                  end
                   
+                  
+                     --if (invx - c.pressed.dx) ~= 0 then
+                     --print(c.wheelCircumference, (invx - c.pressed.dx))
+                     --local rotateStep = (c.wheelCircumference / (invx - c.pressed.dx) )
+--                  print(i, c.transforms.l[3])
+                     --end
+                  --else
+
+
+                  
+
+                  -- todo
+  --                c.transforms.l[3] = c.transforms.l[3] + 0.001
+                  
+                  
+                  --end
+                  local speed = 300
                   if ((brx + offset) > W) then
                      resetCameraTween()
-                     cameraTranslateScheduler(1000*dt, 0)
+                     cameraTranslateScheduler(speed*dt, 0)
                   end
                   if ((tlx - offset) < 0) then
                      resetCameraTween()
-                     cameraTranslateScheduler(-1000*dt, 0)
+                     cameraTranslateScheduler(-speed*dt, 0)
                   end
+
+
+
                end
             end
          end
@@ -309,11 +351,25 @@ end
 
 
 function getScreenBBoxForItem(c, camData)
+
+   -- todo allways create a new bbox to be sure
+   -- local bbox = getBBoxRecursive(c)
+   -- local tlx, tly = c._globalTransform:inverseTransformPoint(bbox[1], bbox[2])
+   -- local brx, bry = c._globalTransform:inverseTransformPoint(bbox[3], bbox[4])
+      
+   -- c.bbox = {tlx, tly, brx, bry }--bbox
+
+
+   
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
    local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
-   return tlx, tly, brx, bry
+
+   return tlx,tly,brx,bry
+   
+   --return math.min(tlx, brx), math.min(tly, bry),
+   --   math.max(brx, tlx), math.max(bry, tly)
 end
 
 function createCamData(item, parallaxData)
@@ -342,9 +398,15 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
 
    local camData = createCamData(item, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
+   --tlx, tly, brx, bry =0,0,100,100
+   --print(tlx,tly,brx,bry)
+
+
+   -- todo this breaks down when rotating !!!!!
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
    local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
-
+   --print(wx,wy,invx,invy)
+   --local invx,invy=0,0
 
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end

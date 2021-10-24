@@ -85,6 +85,7 @@ function readFileAndAddToCache(url)
       -- ok this is needed cause i do a bit of transforming in the function
       local tlx, tly = g2._globalTransform:inverseTransformPoint(bbox[1], bbox[2])
       local brx, bry = g2._globalTransform:inverseTransformPoint(bbox[3], bbox[4])
+      
       g2.bbox = {tlx, tly, brx, bry }--bbox
 
       --local bbox = getBBoxOfChildren(g2.children)

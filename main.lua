@@ -26,6 +26,19 @@ json = require 'vendor.json'
 easing = require 'vendor.easing'
 
 
+function getCircumference()
+   local total = 0
+   for i=1, #currentNode.points-1 do
+      local p = currentNode.points[i]
+      local n = currentNode.points[i+1]
+
+      local angle, distance = getAngleAndDistance(p[1],p[2],n[1],n[2])
+      total = total + distance
+   end
+   return total
+end
+
+
 function getAngleAndDistance(x1,y1,x2,y2)
    local dx = x1 - x2
    local dy = y1 - y2

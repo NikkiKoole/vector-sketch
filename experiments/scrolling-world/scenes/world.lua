@@ -122,6 +122,29 @@ function scene.load()
       meshAll(thing)
       table.insert(foregroundLayer.children, thing)
 
+
+      -- circumference = 282
+      -- local thing = readFileAndAddToCache('assets/wiel.polygons.txt')
+      -- thing.depth = 1
+      -- thing.wheelCircumference = 282
+      -- thing.transforms.l[1] = 0
+      -- thing.transforms.l[2] = 0
+      -- meshAll(thing)
+      -- table.insert(foregroundLayer.children, thing)
+
+      --todo why cannot draw 2 identical things?
+      -- the position end up shared?
+      
+      local thing = readFileAndAddToCache('assets/wiel.polygons.txt')
+      thing.depth = 1
+      thing.wheelCircumference = 282
+      thing.transforms.l[1] = 400
+      thing.transforms.l[2] = 0
+      meshAll(thing)
+      table.insert(foregroundLayer.children, thing)
+
+      --sortOnDepth(foregroundLayer.children)
+      
       parallaxLayersData = {
 	 {
             layer=backgroundLayer,
@@ -191,7 +214,7 @@ function scene.draw()
 
    love.graphics.setColor(1,1,1)
    --drawUI()
-   drawDebugStrings()
+   --drawDebugStrings()
    drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
    drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
 
