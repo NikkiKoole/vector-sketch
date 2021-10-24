@@ -93,8 +93,8 @@ function scene.load()
       foregroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
-                 'plant5','plant6','plant7','plant8',
-                 'plant9','plant10','plant11','plant12',
+                 -- 'plant5','plant6','plant7','plant8',
+                 -- 'plant9','plant10','plant11','plant12',
                  'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
             }),
             index={min=-100, max= 100},
@@ -121,7 +121,6 @@ function scene.load()
       thing.transforms.l[2] = 0
       meshAll(thing)
       table.insert(foregroundLayer.children, thing)
-      --print(inspect(thing))
 
       parallaxLayersData = {
 	 {
@@ -138,8 +137,6 @@ function scene.load()
       }
    end
    perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
-    print(#foregroundLayer.children)
-   --   foregroundLayer.children = {}
 
    setCameraViewport(cam, 500,500)
    hasBeenLoaded = true
@@ -162,6 +159,14 @@ function scene.update(dt)
    updateMotionItems(backgroundLayer, dt)
 
    handlePressedItemsOnStage(dt, parallaxLayersData)
+
+   for i = 1, #foregroundLayer.children do
+   --   if not foregroundLayer.children[i].pressed then
+   --   foregroundLayer.children[i].transforms.l[3] = foregroundLayer.children[i].transforms.l[3] + 0.01
+   --   end
+   end
+   
+   
 end
 
 function scene.draw()

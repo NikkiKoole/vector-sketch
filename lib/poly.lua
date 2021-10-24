@@ -361,6 +361,7 @@ end
 function makeVertices(shape)
    local triangles = {}
    local vertices = {}
+   if (shape.type == 'meta') then return end
    if (shape.folder) then return end
    local points = shape.points
    if (#points >= 2 ) then

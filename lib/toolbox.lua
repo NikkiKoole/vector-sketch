@@ -174,8 +174,11 @@ end
 
 function meshAll(root) -- this needs to be done recursive
    for i=1, #root.children do
-      if (not root.children[i].folder) then
+      if (root.children[i].points) then
+         if root.children[i].type == 'meta' then
+         else
          remeshNode(root.children[i])
+         end
          --root.children[i].mesh = makeMeshFromVertices(poly.makeVertices(root.children[i]))
          --print(root.children[i])
          if root.children[i].border then

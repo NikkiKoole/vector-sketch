@@ -324,7 +324,7 @@ function drawUIAroundGraphNodes(w,h)
 
       runningY = runningY + 40
 
-      if currentNode and currentNode.points then
+      if currentNode and currentNode.points and currentNode.type ~= 'meta' then
          if imgbutton('mask', ui.mask, w - 300, runningY).clicked then
             currentNode.mask = not currentNode.mask
          end
@@ -493,6 +493,13 @@ function drawUIAroundGraphNodes(w,h)
       end
 
       if (editingMode == 'polyline') and currentNode  then
+         if imgbutton('polyline-move', ui.move,  w - 256, runningY).clicked then
+            editingModeSub = 'polyline-move'
+         end
+
+      end
+      
+      if (editingMode == 'polyline') and currentNode and currentNode.type ~= 'meta'  then
          if imgbutton('polyline-palette', ui.palette,  w - 300, runningY).clicked then
             if editingModeSub == 'polyline-palette' then
                editingModeSub = 'polyline-edit'
@@ -501,9 +508,6 @@ function drawUIAroundGraphNodes(w,h)
             end
          end
 
-         if imgbutton('polyline-move', ui.move,  w - 256, runningY).clicked then
-            editingModeSub = 'polyline-move'
-         end
 
          runningY = runningY + 40  -- behind an if !!
          if imgbutton('polyline-recenter', ui.pivot, w - 300, runningY).clicked then
@@ -883,6 +887,12 @@ function love.mousemoved(x,y, dx, dy)
          if not (points[1] == points[#points]) then
             beginIndex = 1
          end
+         -- this one is to move single points, usefull for metadata
+         -- the meshing will break on this
+         if (points[1] == points[#points] and #points==1) then
+            beginIndex = 1
+         end
+
          for i = beginIndex, #points do
             local p = points[i]
             p[1] = p[1] + dx3
@@ -1025,6 +1035,9 @@ function renderGraphNodes(node, level, startY)
       end
       if (child.line) then
          icon = ui.polyline
+      end
+      if (child.type and child.type == 'meta') then
+         icon = ui.move
       end
 
       local color = child.color
@@ -1267,10 +1280,11 @@ function love.load(arg)
 
 	       },
 	       {
-                  name="roodchild:"..1,
-                  color = {.5,.1,0, 0.8},
-                  points = {{300,0},{200,0},{1200,200},{0,1200}},
-
+                  name="meta thing"..1,
+                  type='meta',
+                  color = {1,0,0, 0.8},
+                  points = {{0,0}},
+                  
                },
             },
          },
@@ -1849,7 +1863,20 @@ function love.draw()
 
 
             if openedAddPanel then
-               if iconlabelbutton('add-line', ui.polyline, nil, false,  'line',  rightX-400, 48, 128).clicked then
+               if iconlabelbutton('add-meta', ui.move, nil, false,  'meta',  rightX-400, 48, 128).clicked then
+                  local shape = {
+                     color = {1,0,0,1},
+                     points = {{0,0}},
+                     type = 'meta'
+                  }
+                  if (currentNode) then
+                     shape._parent = currentNode and currentNode._parent
+                     addShapeAfter(shape, currentNode)
+                  else
+                     shape._parent = root
+                     addShapeAtRoot(shape)
+                  end
+
                end
 
 

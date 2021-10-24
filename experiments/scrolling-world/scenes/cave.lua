@@ -27,7 +27,7 @@ function scene.load()
                  'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
             }),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=10,
             depth=depthMinMax,
       })
       foregroundLayer2 = makeContainerFolder('foregroundLayer')

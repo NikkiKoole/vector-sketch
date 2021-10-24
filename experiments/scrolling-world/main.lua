@@ -309,13 +309,13 @@ function love.draw()
 
    SM.draw()
    local W,H = love.graphics.getDimensions()
-   --if uiState.showBouncy then
-   if translateScheduler.cache.value ~= 0 then
-      love.graphics.line(W/2,100,W/2+translateScheduler.cache.value, 0)
-   else
-      love.graphics.line(W/2,100,W/2+translateScheduler.cache.tweenValue, 0)
+   if uiState.showBouncy then
+      if translateScheduler.cache.value ~= 0 then
+         love.graphics.line(W/2,100,W/2+translateScheduler.cache.value, 0)
+      else
+         love.graphics.line(W/2,100,W/2+translateScheduler.cache.tweenValue, 0)
+      end
    end
-   --end
    if uiState.showTouches then
       local touches = love.touch.getTouches()
       for i, id in ipairs(touches) do

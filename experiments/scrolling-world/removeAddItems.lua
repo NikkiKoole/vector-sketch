@@ -9,6 +9,7 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
       end
    end
 end
+
 function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
    local data = parallaxData.assets
    
@@ -34,6 +35,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
                child.transforms.l[4] = thing.scaleX
                child.transforms.l[5] = thing.scaleY
                child.originalIndices = {i,j}
+               child.metaTags = read.metaTags
                child.depth = thing.depth
                --child.depthLayer = thing.depthLayer
                child.url = thing.url

@@ -64,6 +64,7 @@ function drawBBoxAroundItems(layer, parallaxData)
             love.graphics.setColor(1,1,1,.5)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
+
 	    love.graphics.setColor(1,1,1,1)
 	    local px, py = c._globalTransform:transformPoint( c.transforms.l[6], c.transforms.l[7])
 
@@ -72,6 +73,20 @@ function drawBBoxAroundItems(layer, parallaxData)
 
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
+
+            local checkAgainst = getItemsInLayerThatHaveMeta(layer, c)
+            
+            for j =1, #checkAgainst do
+               for k = 1, #checkAgainst[j].metaTags do
+                  local tag = checkAgainst[j].metaTags[k]
+                  local pos = tag.points[1] -- there is just one point in this collection 
+                  local kx, ky = checkAgainst[j]._globalTransform:transformPoint(pos[1], pos[2])
+                  local camData = createCamData(checkAgainst[j], parallaxData)
+                  local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+                  love.graphics.line(pivx, pivy, kx2, ky2)
+               end
+            end
+            
          end
 
 	 if c.mouseOver or uiState.showBBoxes then
@@ -241,6 +256,22 @@ function pointerReleased(x,y, id, layers)
    end
 end
 
+
+
+
+function getItemsInLayerThatHaveMeta(layer, me)
+   local result = {}
+   for i = 1, #layer.children do
+      local child = layer.children[i]
+      if child.metaTags and child ~= me then
+         table.insert(result, child)
+      end
+   end
+   return result
+end
+
+
+
 function handlePressedItemsOnStage(dt, layers)
    local W, H = love.graphics.getDimensions()
    for j = 1, #layers do
@@ -248,14 +279,18 @@ function handlePressedItemsOnStage(dt, layers)
       for i = 1, #l.layer.children do
          local c = l.layer.children[i]
          if c.bbox and c._localTransform and c.depth ~= nil then
-
             if c.pressed then
+
+               
+               --print(inspect(c.bbox))
+
                local mx, my = getPointerPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
+                  -- todo make these thing parameters
                   c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
                   c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
-
+                  
                   if ((brx + offset) > W) then
                      resetCameraTween()
                      cameraTranslateScheduler(1000*dt, 0)
@@ -380,9 +415,6 @@ function gestureRecognizer(gesture)
 		  originalGesture=gesture
 	       }
 	    end
-
-
-
 	 else
 	    --print('failed at distance')
 	 end
