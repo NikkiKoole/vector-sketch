@@ -33,7 +33,7 @@ function scene.load()
       foregroundLayer2 = makeContainerFolder('foregroundLayer')
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
 
-       parallaxLayersData2 = {
+      parallaxLayersData2 = {
        {
 	  layer=foregroundLayer2,
 	  p={factors=foregroundFactors, minmax=depthMinMax},

@@ -1,6 +1,9 @@
 local scene = {}
 local hasBeenLoaded = false
 
+-- look at some
+-- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
+
 function scene.modify(data)
 end
 
@@ -95,7 +98,7 @@ function scene.load()
                { 'plant1','plant2','plant3','plant4',
                  -- 'plant5','plant6','plant7','plant8',
                  -- 'plant9','plant10','plant11','plant12',
-                 'plant13','deurpaarser2', 'doosgroot', 'doosgroot',
+                 'plant13','deurpaarser2', 'doosgroot', 'doosgroot','funnyhead'
             }),
             index={min=-100, max= 100},
             amountPerTile=1,
@@ -107,57 +110,52 @@ function scene.load()
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
 
 
-
-      -- this will contain all the data, in an organized way
-      -- from back to front
-
-
       --generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
-
-      local thing = readFileAndAddToCache('assets/cavething.polygons.txt')
-      thing.depth = 0
-      thing.transforms.l[1] = 0
-      thing.transforms.l[2] = 0
-      meshAll(thing)
-      table.insert(foregroundLayer.children, thing)
-
-
-      -- circumference = 282
-      -- local thing = readFileAndAddToCache('assets/wiel.polygons.txt')
-      -- thing.depth = 1
-      -- thing.wheelCircumference = 282
-      -- thing.transforms.l[1] = 0
-      -- thing.transforms.l[2] = 0
-      -- meshAll(thing)
-      -- table.insert(foregroundLayer.children, thing)
-
-      --todo why cannot draw 2 identical things?
-      -- the position end up shared?
-
-
+      -- todo alot of duplication from removeAddItems
       function makeObject(url, x, y, depth)
          local read = readFileAndAddToCache(url)
-         local thing = copy3(read)
-         thing.depth = depth
-         thing.wheelCircumference = 282
-         thing.transforms.l[1] = x
-         thing.transforms.l[2] = y
-         meshAll(thing)
-         --table.insert(foregroundLayer.children, thing)
-         return thing
+	 local doOptimized = read.optimizedBatchMesh ~= nil
+
+	 local child = {
+	    folder = true,
+	    transforms = copy3(read.transforms),
+	    name = 'generated '..url,
+	    children = doOptimized and {} or copy3(read.children)
+	 }
+         child.depth = depth
+         child.transforms.l[1] = x
+         child.transforms.l[2] = y
+	 child.bbox = read.bbox
+         meshAll(child)
+         return child
       end
+
+      function makeWheel(thing, circumference)
+         thing.wheelCircumference = circumference
+	 return thing
+      end
+
+
       table.insert(
          foregroundLayer.children,
-         makeObject('assets/wiel.polygons.txt', 400,0, 1)
+         makeObject('assets/cavething.polygons.txt', 0,0, 0)
+      )
+      table.insert(
+         backgroundLayer.children,
+         makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
       )
       table.insert(
          foregroundLayer.children,
-         makeObject('assets/wiel.polygons.txt', -200,0, -2)
+         makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, 1), 282)
+      )
+      table.insert(
+         foregroundLayer.children,
+         makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
       )
 
       --sortOnDepth(foregroundLayer.children)
-      
+
       parallaxLayersData = {
 	 {
             layer=backgroundLayer,
@@ -196,13 +194,13 @@ function scene.update(dt)
 
    handlePressedItemsOnStage(dt, parallaxLayersData)
 
-   for i = 1, #foregroundLayer.children do
-   --   if not foregroundLayer.children[i].pressed then
-   --   foregroundLayer.children[i].transforms.l[3] = foregroundLayer.children[i].transforms.l[3] + 0.01
-   --   end
-   end
-   
-   
+   --for i = 1, #foregroundLayer.children do
+      --if not foregroundLayer.children[i].pressed then
+      --foregroundLayer.children[i].transforms.l[3] = foregroundLayer.children[i].transforms.l[3] + 0.01
+      --end
+   --end
+
+
 end
 
 function scene.draw()
@@ -227,7 +225,7 @@ function scene.draw()
 
    love.graphics.setColor(1,1,1)
    --drawUI()
-   --drawDebugStrings()
+   drawDebugStrings()
    drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
    drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
 

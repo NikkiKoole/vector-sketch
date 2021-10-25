@@ -63,7 +63,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
             --print(tlx, tly, brx, bry)
             love.graphics.setColor(1,1,1,.5)
-            
+
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
 
@@ -80,18 +80,19 @@ function drawBBoxAroundItems(layer, parallaxData)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
 
             local checkAgainst = getItemsInLayerThatHaveMeta(layer, c)
-            
+
             for j =1, #checkAgainst do
                for k = 1, #checkAgainst[j].metaTags do
                   local tag = checkAgainst[j].metaTags[k]
-                  local pos = tag.points[1] -- there is just one point in this collection 
+                  local pos = tag.points[1] -- there is just one point in this collection
                   local kx, ky = checkAgainst[j]._globalTransform:transformPoint(pos[1], pos[2])
                   local camData = createCamData(checkAgainst[j], parallaxData)
                   local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+		  love.graphics.setColor(1,1,1,.2)
                   love.graphics.line(pivx, pivy, kx2, ky2)
                end
             end
-            
+
          end
 
 	 if c.mouseOver or uiState.showBBoxes then
@@ -286,7 +287,7 @@ function handlePressedItemsOnStage(dt, layers)
          if c.bbox and c._localTransform and c.depth ~= nil then
             if c.pressed  then
 
-               
+
                --print(inspect(c.bbox))
 
                local mx, my = getPointerPosition(c.pressed.id)
@@ -297,37 +298,27 @@ function handlePressedItemsOnStage(dt, layers)
                      -- todo calculate the amount of rotating
 
                      local rotateStep = ( (invx - c.pressed.dx) )
-                     if math.abs(rotateStep) > 0.00001 then 
-                        --print  (c.wheelCircumference / rotateStep)
-                     --end
-                     
-                        c.children[1].transforms.l[3] =  c.children[1].transforms.l[3] + (rotateStep/c.wheelCircumference)*(math.pi)
+		     local rx, ry = c._globalTransform:transformPoint( rotateStep, 0)
+		     local rx2, ry2 = c._globalTransform:transformPoint( 0, 0)
+		     local rxdelta = rx - rx2
+
+                     if math.abs(rotateStep) > 0.00001 then
+
+                        c.children[1].transforms.l[3] =  c.children[1].transforms.l[3] + (rxdelta/c.wheelCircumference)*(math.pi*2)
                      end
-                     --mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
 
                      c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-                     
+
                   else
                      c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
                      c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
 
                   end
-                  
-                  
-                     --if (invx - c.pressed.dx) ~= 0 then
-                     --print(c.wheelCircumference, (invx - c.pressed.dx))
-                     --local rotateStep = (c.wheelCircumference / (invx - c.pressed.dx) )
---                  print(i, c.transforms.l[3])
-                     --end
-                  --else
 
 
-                  
 
-                  -- todo
-  --                c.transforms.l[3] = c.transforms.l[3] + 0.001
-                  
-                  
+
+
                   --end
                   local speed = 300
                   if ((brx + offset) > W) then
@@ -356,18 +347,18 @@ function getScreenBBoxForItem(c, camData)
    -- local bbox = getBBoxRecursive(c)
    -- local tlx, tly = c._globalTransform:inverseTransformPoint(bbox[1], bbox[2])
    -- local brx, bry = c._globalTransform:inverseTransformPoint(bbox[3], bbox[4])
-      
+
    -- c.bbox = {tlx, tly, brx, bry }--bbox
 
 
-   
+
    local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
    local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
 
    return tlx,tly,brx,bry
-   
+
    --return math.min(tlx, brx), math.min(tly, bry),
    --   math.max(brx, tlx), math.max(bry, tly)
 end
