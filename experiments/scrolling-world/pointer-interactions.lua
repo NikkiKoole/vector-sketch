@@ -301,7 +301,7 @@ function handlePressedItemsOnStage(dt, layers)
                         --print  (c.wheelCircumference / rotateStep)
                      --end
                      
-                        c.children[1].transforms.l[3] =  c.children[1].transforms.l[3] + (rotateStep/c.wheelCircumference)*(math.pi*2)
+                        c.children[1].transforms.l[3] =  c.children[1].transforms.l[3] + (rotateStep/c.wheelCircumference)*(math.pi)
                      end
                      --mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
 

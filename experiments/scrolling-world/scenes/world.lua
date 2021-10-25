@@ -134,14 +134,27 @@ function scene.load()
 
       --todo why cannot draw 2 identical things?
       -- the position end up shared?
-      
-      local thing = readFileAndAddToCache('assets/wiel.polygons.txt')
-      thing.depth = 1
-      thing.wheelCircumference = 282
-      thing.transforms.l[1] = 400
-      thing.transforms.l[2] = 0
-      meshAll(thing)
-      table.insert(foregroundLayer.children, thing)
+
+
+      function makeObject(url, x, y, depth)
+         local read = readFileAndAddToCache(url)
+         local thing = copy3(read)
+         thing.depth = depth
+         thing.wheelCircumference = 282
+         thing.transforms.l[1] = x
+         thing.transforms.l[2] = y
+         meshAll(thing)
+         --table.insert(foregroundLayer.children, thing)
+         return thing
+      end
+      table.insert(
+         foregroundLayer.children,
+         makeObject('assets/wiel.polygons.txt', 400,0, 1)
+      )
+      table.insert(
+         foregroundLayer.children,
+         makeObject('assets/wiel.polygons.txt', -200,0, -2)
+      )
 
       --sortOnDepth(foregroundLayer.children)
       
