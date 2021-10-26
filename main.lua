@@ -153,8 +153,16 @@ function resizeGroup(node, children, scale)
          node.points[index] = {node.points[index][1] * scale, node.points[index][2] * scale}
       end
    else
-      print(type(children[1]), inspect(children[1]))
-      print('other things')
+      for i = 1, #children do
+         for j =1 , #children[i].points do
+            children[i].points[j] = {
+               children[i].points[j][1] * scale,
+               children[i].points[j][2] * scale
+            }
+         end
+         remeshNode(children[i])
+      end
+      remeshNode(node)
    end
 end
 
@@ -1825,6 +1833,34 @@ function love.draw()
 
                   end
 
+
+
+                  if true then
+                     if imgbutton('group-scale-down', ui.resize, w - 300, 500).clicked  then
+                        if love.keyboard.isDown('a') then
+                           resizeGroup(currentNode, childrenInRectangleSelect, .75)
+                        else
+                           resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+                        end
+                     end
+
+                     if imgbutton('group-scale-up', ui.resize, w - 256, 500).clicked  then
+                        if love.keyboard.isDown('a') then
+                           resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+                        else
+                           resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+                        end
+                     end
+
+
+                  end
+               
+
+
+                  
+
+                  
+                  
 
 		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
 		     lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
