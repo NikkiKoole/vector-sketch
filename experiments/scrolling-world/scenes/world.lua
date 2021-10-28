@@ -96,9 +96,9 @@ function scene.load()
       foregroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
-                 -- 'plant5','plant6','plant7','plant8',
-                 -- 'plant9','plant10','plant11','plant12',
-                 'plant13','deurpaarser2', 'doosgroot', 'doosgroot','funnyhead', 'bunnyhead'
+                  'plant5','plant6','plant7','plant8',
+                  'plant9','plant10','plant11','plant12',
+                 'plant13','bunnyhead'
             }),
             index={min=-100, max= 100},
             amountPerTile=1,
@@ -113,7 +113,8 @@ function scene.load()
       --generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
       -- todo alot of duplication from removeAddItems
-      function makeObject(url, x, y, depth)
+      function makeObject(url, x, y, depth, allowOptimized)
+         if allowOptimized == nil then allowOptimized = true end
          local read = readFileAndAddToCache(url)
 	 local doOptimized = read.optimizedBatchMesh ~= nil
 
@@ -121,12 +122,18 @@ function scene.load()
 	    folder = true,
 	    transforms = copy3(read.transforms),
 	    name = 'generated '..url,
-	    children = doOptimized and {} or copy3(read.children)
+	    children = (allowOptimized and doOptimized) and {} or copy3(read.children)
 	 }
+         if allowOptimized and doOptimized then
+            child.url = url
+         end
+         
          child.depth = depth
          child.transforms.l[1] = x
          child.transforms.l[2] = y
 	 child.bbox = read.bbox
+         child.metaTags = read.metaTags
+
          meshAll(child)
          return child
       end
@@ -139,22 +146,40 @@ function scene.load()
 
       table.insert(
          foregroundLayer.children,
-         makeObject('assets/cavething.polygons.txt', 0,0, 0)
+         makeObject('assets/cavething.polygons.txt', 1000,0, 0)
       )
       table.insert(
          backgroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
+         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
       )
       table.insert(
          foregroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, 1), 282)
+         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, 1), 282)
       )
       table.insert(
          foregroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
+         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
+      )
+      
+      table.insert(
+         foregroundLayer.children,
+         makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
+      )
+      table.insert(
+         foregroundLayer.children,
+         makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
       )
 
-      --sortOnDepth(foregroundLayer.children)
+
+      walter =  makeObject('assets/walterbody.polygons.txt', 0,0, 0.3)
+
+      
+      table.insert(
+         foregroundLayer.children,
+         walter
+      )
+      
+      --Sortondepth(foregroundLayer.children)
 
       parallaxLayersData = {
 	 {
@@ -179,7 +204,10 @@ end
 
 
 function scene.update(dt)
-
+   if love.keyboard.isDown('p') then
+      print(inspect(walter.metaTags))
+   end
+   
    manageCameraTween(dt)
    cam:update()
 

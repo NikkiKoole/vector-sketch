@@ -286,7 +286,7 @@ function love.load()
    SM.setPath("scenes/")
 
   -- Add scene "intro" to scene table
-   SM.load("intro")
+   SM.load("world")
 
 
 end
@@ -328,5 +328,5 @@ function love.draw()
 	 love.graphics.print(tostring(id), x, y)
       end
    end
-
+--   print(collectgarbage('count'))
 end

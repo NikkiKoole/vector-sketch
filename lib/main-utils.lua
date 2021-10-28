@@ -284,7 +284,6 @@ function recursiveHitCheck(x,y, node)
       if  node.optimizedBatchMesh then
 	 for i = 1, #node.optimizedBatchMesh do
 	    if isMouseInMesh(x,y, node, node.optimizedBatchMesh[i].mesh) then
-	       print(2)
 	       return true
 	    end
 	 end

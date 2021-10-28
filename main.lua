@@ -1852,6 +1852,15 @@ function love.draw()
                         end
                      end
 
+                     if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, 550).clicked  then
+                        flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
+                     end
+                     
+                     if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, 550).clicked  then
+                        flipGroup(currentNode, childrenInRectangleSelect, -1,1)
+                     end
+
+
 
                   end
                

@@ -1,7 +1,10 @@
 
 local groundTiles = {}
 
-for i = -200, 200 do
+local minground = -200
+local maxground = 200
+
+for i = minground, maxground do
    groundTiles[i] = {tileIndex = math.ceil(math.random()*5)}
    if math.random() < .5 then
       groundTiles[i].tileIndex = -1
@@ -59,6 +62,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
    for i = s, e, tileSize do
       local groundIndex = (i/tileSize)
+      if groundIndex > minground and groundIndex < maxground then
       local tileIndex = groundTiles[groundIndex].tileIndex-- (groundIndex % 5) + 1
       local index = (i - s)/tileSize
 
@@ -95,6 +99,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
 	 --love.graphics.line(x1,y1, x2,y2)
 	 --love.graphics.line(x1,y1, x3,y3)
+      end
       end
    end
 
