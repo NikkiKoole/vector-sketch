@@ -16,7 +16,7 @@
       function a() {
 	  var colors = [ '#e3ca57','#ded869','#d4d29d',  '#d44553','#ec71a5','#e595ab','#dca9ac','#ecbcc7'];
 	  var x = document.getElementsByTagName("H1")[0];
-	  //x.style.color = colors[Math.floor(Math.random() * colors.length)]
+	  x.style.color = colors[Math.floor(Math.random() * colors.length)]
       }
     </script>
 
@@ -52,7 +52,7 @@
        }
        @media screen and (min-width: 600px) {
 	   body {
-	       
+
 	   }
        }
        body {
@@ -60,7 +60,7 @@
        }
        *, html {
 	   margin:0;
-	   padding:0;  
+	   padding:0;
        }
       h1 {
 	  font-family: SansSerifShaded;
@@ -71,7 +71,7 @@
 	  margin-top: 1rem;
 	  margin-left: 2rem;
 	  transform: rotate(1deg);
-			  
+
       }
       h2 {
 	  font-family: SansSerifShaded;
@@ -120,7 +120,7 @@
 	   transform: translateY(50%);
       }
       .topbar option:after {
-	  content: ""; 
+	  content: "";
 	  position: absolute;
 	  top: 0;
 	  left: 0;
@@ -169,8 +169,8 @@
 	  transition: all ease 0.3s;
 	  letter-spacing: 1.5px
       }
- 
-		  
+
+
       .button:hover {
 	  background-color: #4CAF50;
 	  font-weight: 600;
@@ -300,63 +300,63 @@
 
       }
 
-     
-      
-      </style>
+
+
+    </style>
   </head>
   <body>
-   
+
     <header>
-    <h1 onmouseover="repeater=setInterval(a(), 100);" onmouseout="clearInterval(repeater);">Pompelu</h1>
-    <div class="topbar">
-      <option>storytime</option>
-      <option>apps</option>
-      <option>contact</option>
-    </div>
+      <h1 onmouseover="repeater=setInterval(a(), 100);" onmouseout="clearInterval(repeater);">Pompelu</h1>
+      <div class="topbar">
+	<option>storytime</option>
+	<option>apps</option>
+	<a href="html/contact.html">contact</a>
+      </div>
     </header>
-    
+
 
     <section>
-    <h4>storytime </h4>
-    <p>
-      Do you dream about toys coming to live when not looking?
-    </p>
-    <p>
-      I know i did.
-      Not anymore, it doesnt happen when looking, it does takes alot of ellbow grease.</br>
-      Anyway, no adds, no micropayments, no generic illustrations.</br>
-      Just nonsense art to play with by you and your little one(s).</br>
-     </br>
-    </p>
-
-
-    <div class="allPanels">
-    <div class="panel">
-      <h2>Singing Tomatoes</h2>
+      <h4>storytime </h4>
       <p>
-	These tomatoes feel kinda jazzy, matter of fact, </br>
-	their helplesness makes them more bluesy if anything.</br>
-	Anyway, they sing, or try to sing. </br>
-	and you can play the vibes. </br>
-	All good art comes from pain they say dont they? </br>
+	Do you dream about toys coming to live when not looking?
       </p>
-      
-      <div style="background-image: url(tomatoes.gif);  height: 400px; width: 400px; margin-top: 1rem; margin-bottom: 1rem"> </div>
+      <p>
+	I know i did.
+	Not anymore, it doesnt happen when looking, it does takes alot of ellbow grease.</br>
+	Anyway, no adds, no micropayments, no generic illustrations.</br>
+	Just nonsense art to play with by you and your little one(s).</br>
+     </br>
+      </p>
 
-      <img class="appstore" src="appstore.svg" />
-    </div>
-    
-     <div class="panel">
-      <h2>Float my Boat</h2>
-      <p>This is a wld kinda test</p>
-      
-      <img  class="appstore"  src="appstore.svg" />
-    </div>
-     </div>
 
-    <div>
+      <div class="allPanels">
+	<div class="panel">
+	  <h2>Singing Tomatoes</h2>
+	  <p>
+	    These tomatoes feel kinda jazzy, matter of fact, </br>
+	    their helplesness makes them more bluesy if anything.</br>
+	    Anyway, they sing, or try to sing. </br>
+	    and you can play the vibes. </br>
+	    All good art comes from pain they say dont they? </br>
+	  </p>
 
-    </div>
+	  <div style="background-image: url(tomatoes.gif);  height: 400px; width: 400px; margin-top: 1rem; margin-bottom: 1rem"> </div>
+
+	  <img class="appstore" src="appstore.svg" />
+	</div>
+
+	<div class="panel" id="post-456">
+	  <h2>Float my Boat</h2>
+	  <p>This is a wld kinda test</p>
+
+	  <img  class="appstore"  src="appstore.svg" />
+	</div>
+      </div>
+
+      <div>
+
+      </div>
     </section>
   </body>
 </html>

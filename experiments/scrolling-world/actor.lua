@@ -9,15 +9,8 @@ function positionControlPoints(start, eind, hoseLength, flop)
    pxm = pxm * flop
    pym = pym * -flop
    local d = distance(start.x,start.y, eind.x, eind.y)
-
-   -- this is breaking needs some asserts
-   print(math.sqrt(-1000))
-   --print((hoseLength*hoseLength) - (2* (d*d)))
-   --print(math.sqrt((hoseLength*hoseLength) - (2* (d*d)) ))
-   --print(math.sqrt((hoseLength*hoseLength) - (2* (d*d))) / math.sqrt(2))
-
-   local b = getEllipseWidth(hoseLength, d)
-   print('b', b, hoseLength, d)
+   -- theze caluclations are off but i am using some magic numebr here and there
+   local b = getEllipseWidth(hoseLength/math.pi, d)
    local perpL = b /2 -- why am i dividing this?
 
    local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
@@ -34,33 +27,33 @@ function makeRubberHoseLeg(a, b, length, flip)
    local eind = b
 
    local d = distance(a.x,a.y, b.x, b.y)
-   print(d, length)
-   if d < length then
-      print('is this an error!')
-   end
-   
+   --print(d, length)
+
    local cp, cp2 = positionControlPoints(a, b, length, flip)
    if tostring(cp.x) == 'nan' then
       print('now its broken')
    end
-   
+
    local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
-
-
    local result = {}
-   local steps = 6
+   local steps = 14
    for i =0, steps do
       local px, py = curve:evaluate(i/steps)
       table.insert(result, px)
       table.insert(result, py)
    end
-   
+
    local widths = {}
    for i =1, #result/2 do
       widths[i] = (#result/2+4)-i
    end
 
-   return result, widths
+   local widths2 = {}
+   for i =1, #result/2 do
+      widths2[i] = (#result/2+1)-i
+   end
+
+   return result, widths, widths2
 end
 
 
@@ -75,52 +68,85 @@ function Actor:create(bodyparts)
    a.leg1_connector = a.body.metaTags[1]
    a.leg2_connector = a.body.metaTags[2]
 
+   local magic = 4.46
 
-   local offset = 45
+   a.leglength = 100
+
    a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1]
-   a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + offset
+   a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/magic
 
    a.rfoot.transforms.l[1] = a.leg2_connector.points[1][1]
-   a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + offset
+   a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + a.leglength/magic
 
-   
---   a.lfoot.transforms.l[2] = 37
+
+
 
    a.body.generatedMeshes = {} -- we can put the line meshes in here
 
    table.insert(a.body.children, a.lfoot)
    table.insert(a.body.children, a.rfoot)
 
-   
 
-   local result, widths = makeRubberHoseLeg(
-      {x=a.leg1_connector.points[1][1],
-       y=a.leg1_connector.points[1][2]},
-      {x=a.lfoot.transforms.l[1],
-       y=a.lfoot.transforms.l[2]},
-      offset+10,
-      -1
 
-   )
-   --print(inspect(result))
+   a:doTheLegs()
 
-   
-   local verts, indices, draw_mode = polyline('bevel',result, widths)
-   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-   table.insert(a.body.generatedMeshes, mesh)
 
-   
    return a
 end
+
+function Actor:doTheLegs()
+   self.body.generatedMeshes = {}
+   local result, widths, widths2 = makeRubberHoseLeg(
+      {x=self.leg1_connector.points[1][1],
+       y=self.leg1_connector.points[1][2]},
+      {x=self.lfoot.transforms.l[1],
+       y=self.lfoot.transforms.l[2]},
+      self.leglength+0,
+      -1
+   )
+
+   local verts, indices, draw_mode = polyline('bevel',result, widths)
+   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+
+   table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
+
+   local verts, indices, draw_mode = polyline('bevel',result, widths2)
+   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
+
+    local result, widths, widths2 = makeRubberHoseLeg(
+      {x=self.leg2_connector.points[1][1],
+       y=self.leg2_connector.points[1][2]},
+      {x=self.rfoot.transforms.l[1],
+       y=self.rfoot.transforms.l[2]},
+      self.leglength+0,
+      1
+   )
+
+   local verts, indices, draw_mode = polyline('bevel',result, widths)
+   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+
+   table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0}})
+
+   local verts, indices, draw_mode = polyline('bevel',result, widths2)
+   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
+
+
+end
+
 
 
 
 function Actor:update()
+
+   self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/4.46)
    --self.lfoot.transforms.l[1] = self.lfoot.transforms.l[1] + love.math.random() -0.5
+   --self.lfoot.transforms.l[2] = self.lfoot.transforms.l[2] + love.math.random() -0.5
    --self.lfoot.transforms.l[3] = self.lfoot.transforms.l[3] + 0.01
    --self.rfoot.transforms.l[1] = self.rfoot.transforms.l[1] + love.math.random() -0.5
+   --self.rfoot.transforms.l[2] = self.rfoot.transforms.l[2] + love.math.random() -0.5
 
-   -- do some stuff to the feet here 
+  -- self:doTheLegs()
+   -- do some stuff to the feet here
 end
-
-

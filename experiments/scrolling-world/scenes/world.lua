@@ -127,7 +127,7 @@ function scene.load()
          if allowOptimized and doOptimized then
             child.url = url
          end
-         
+
          child.depth = depth
          child.transforms.l[1] = x
          child.transforms.l[2] = y
@@ -160,7 +160,7 @@ function scene.load()
          foregroundLayer.children,
          makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
       )
-      
+
       -- table.insert(
       --    foregroundLayer.children,
       --    makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
@@ -172,21 +172,26 @@ function scene.load()
 
       actors  = {}
       for i = 1, 10 do
-         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0, love.math.random(), false)
-      walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0.3)
-      walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0.3)
+         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,0, false)
+	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
+	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 
-      walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot}) 
+	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
 
-      
-      table.insert(
-          foregroundLayer.children,
-          walterActor.body
-      )
+	 walterActor.body.hasFeet = true
 
-      table.insert(actors, walterActor)
+	 table.insert(
+	    foregroundLayer.children,
+	    walterActor.body
+	 )
+	 -- table.insert(
+	 --    foregroundLayer.children,
+	 --    walterLFoot
+	 -- )
+
+	 table.insert(actors, walterActor)
       end
-      
+
       --Sortondepth(foregroundLayer.children)
 
       parallaxLayersData = {
@@ -215,7 +220,7 @@ function scene.update(dt)
    if love.keyboard.isDown('p') then
       print(inspect(walter.metaTags))
    end
-   
+
    manageCameraTween(dt)
    cam:update()
 
@@ -238,7 +243,7 @@ function scene.update(dt)
    for i=1, #actors do
       actors[i]:update()
    end
-   
+
 end
 
 function scene.draw()

@@ -206,11 +206,11 @@ function makeOptimizedBatchMesh(folder)
             lastColor = thisColor
             allVerts = {}
          end
-         
+
          allVerts = TableConcat(allVerts, makeVertices(folder.children[i]))
       end
    end
-   
+
    if #allVerts  >0 then
       if  folder.optimizedBatchMesh == nil then
 	 folder.optimizedBatchMesh = {}
@@ -223,7 +223,7 @@ function makeOptimizedBatchMesh(folder)
    if #metaTags > 0 then
       folder.metaTags = metaTags
    end
-   
+
 end
 
 function signT(p1, p2, p3)
@@ -398,9 +398,9 @@ function handleChild(shape,parallax)
       end
    end
 
-   
 
-   
+
+
    if shape.folder then
 
       if (shape.depth ~= nil) and parallax then
@@ -417,7 +417,7 @@ function handleChild(shape,parallax)
 
 
 
-      
+
 
       -- if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
       --    print(inspect(hack))
@@ -432,8 +432,8 @@ function handleChild(shape,parallax)
 
                --print('there are some generatedMeshes here, are these rubberhose legs?')
          for i =1, #shape.generatedMeshes do
-            love.graphics.setColor(1,1,1)
-            love.graphics.draw(shape.generatedMeshes[i], shape._globalTransform )
+            love.graphics.setColor(shape.generatedMeshes[i].color)
+            love.graphics.draw(shape.generatedMeshes[i].mesh, shape._globalTransform )
          end
       end
 
@@ -450,15 +450,15 @@ function handleChild(shape,parallax)
       end
 
 
-      
+
 
       love.graphics.setStencilTest()
    end
 
    if currentNode ~= shape then
 
-      
-      
+
+
       if (shape.mesh and not shape.mask) then
 
 	 love.graphics.setColor(shape.color)

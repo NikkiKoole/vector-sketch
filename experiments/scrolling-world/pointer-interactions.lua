@@ -137,6 +137,22 @@ function pointerPressed(x,y, id, layers)
 
       for i = #l.layer.children,1,-1 do
          local c = l.layer.children[i]
+	 -- ok sometimes we might have nested childern too  ouch ouch
+	 if c.hasFeet then
+	    --print(inspect(c.children[#c.children]))
+
+	    local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(x,y, c,c.children[#c.children-1], l.p)
+	    --print(mouseover)
+	    --if mouseover then
+	       --c.children[#c.children].transforms.l[1] = 100
+	    --end
+	    --if mouseover then
+	    -- love.graphics.setColor(1,1,1,.5)
+	    -- love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+	    --end
+
+	 end
+
          if c.bbox and c._localTransform and c.depth and not itemPressed then
 
             local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c, l.p)
@@ -367,6 +383,7 @@ function createCamData(item, parallaxData)
    local camData = nil -- its important to be nil at start
    -- that way i can feed the nil to brady and get default behaviours
    if parallaxData and parallaxData.factors then
+
       camData = {}
       camData.scale = mapInto(item.depth,
                               parallaxData.minmax.min,
@@ -382,6 +399,24 @@ function createCamData(item, parallaxData)
    return camData
 end
 
+function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
+   -- now i always generate a cameraLyer assuming there will be differenr depths
+   -- within, that wont always be neccesary
+
+   local camData = createCamData(item, parallaxData)
+   local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
+   --tlx, tly, brx, bry =0,0,100,100
+   --print(tlx,tly,brx,bry)
+
+
+   -- todo this breaks down when rotating !!!!!
+   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
+   local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
+   --print(wx,wy,invx,invy)
+   --local invx,invy=0,0
+
+   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
+end
 
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
    -- now i always generate a cameraLyer assuming there will be differenr depths

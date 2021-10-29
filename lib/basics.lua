@@ -95,6 +95,10 @@ function getEllipseWidth(circumf, h)
    return math.sqrt((circumf*circumf) - (2* (h*h))) / math.sqrt(2)
 end
 
+function getEllipseWidth2(c, a)
+   return  math.sqrt((((c/(2* math.pi))^2)*2) - a^2)
+end
+
 
 function ends_with(str, ending)
    return ending == "" or str:sub(-#ending) == ending
