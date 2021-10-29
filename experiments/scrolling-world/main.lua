@@ -26,6 +26,7 @@ require 'removeAddItems'
 require 'pointer-interactions'
 require 'camera'
 require 'newton'
+require 'actor'
 
 SM = require 'lib.SceneMgr'
 

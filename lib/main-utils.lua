@@ -398,6 +398,9 @@ function handleChild(shape,parallax)
       end
    end
 
+   
+
+   
    if shape.folder then
 
       if (shape.depth ~= nil) and parallax then
@@ -413,12 +416,26 @@ function handleChild(shape,parallax)
       end
 
 
+
+      
+
       -- if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
       --    print(inspect(hack))
       --    hack.scale = mapInto(shape.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)
       --    hack.relativeScale = (1.0/ hack.scale) * hack.scale
       --    hack.push()
       -- end
+
+
+      if shape.generatedMeshes then
+         setTransforms(shape)
+
+               --print('there are some generatedMeshes here, are these rubberhose legs?')
+         for i =1, #shape.generatedMeshes do
+            love.graphics.setColor(1,1,1)
+            love.graphics.draw(shape.generatedMeshes[i], shape._globalTransform )
+         end
+      end
 
 
       if shape.aabb then
@@ -433,10 +450,15 @@ function handleChild(shape,parallax)
       end
 
 
+      
+
       love.graphics.setStencilTest()
    end
 
    if currentNode ~= shape then
+
+      
+      
       if (shape.mesh and not shape.mask) then
 
 	 love.graphics.setColor(shape.color)

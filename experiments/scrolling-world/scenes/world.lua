@@ -161,23 +161,31 @@ function scene.load()
          makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
       )
       
-      table.insert(
-         foregroundLayer.children,
-         makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
-      )
-      table.insert(
-         foregroundLayer.children,
-         makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
-      )
+      -- table.insert(
+      --    foregroundLayer.children,
+      --    makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
+      -- )
+      -- table.insert(
+      --    foregroundLayer.children,
+      --    makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
+      -- )
 
+      actors  = {}
+      for i = 1, 10 do
+         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0, love.math.random(), false)
+      walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0.3)
+      walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0.3)
 
-      walter =  makeObject('assets/walterbody.polygons.txt', 0,0, 0.3)
+      walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot}) 
 
       
       table.insert(
-         foregroundLayer.children,
-         walter
+          foregroundLayer.children,
+          walterActor.body
       )
+
+      table.insert(actors, walterActor)
+      end
       
       --Sortondepth(foregroundLayer.children)
 
@@ -227,8 +235,10 @@ function scene.update(dt)
       --foregroundLayer.children[i].transforms.l[3] = foregroundLayer.children[i].transforms.l[3] + 0.01
       --end
    --end
-
-
+   for i=1, #actors do
+      actors[i]:update()
+   end
+   
 end
 
 function scene.draw()
