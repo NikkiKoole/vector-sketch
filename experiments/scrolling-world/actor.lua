@@ -70,7 +70,7 @@ function Actor:create(bodyparts)
 
    local magic = 4.46
 
-   a.leglength = 100
+   a.leglength = 100 + love.math.random() * 400
 
    a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1]
    a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/magic
@@ -140,7 +140,7 @@ end
 
 function Actor:update()
 
-   self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/4.46)
+   --self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/4.46)
    --self.lfoot.transforms.l[1] = self.lfoot.transforms.l[1] + love.math.random() -0.5
    --self.lfoot.transforms.l[2] = self.lfoot.transforms.l[2] + love.math.random() -0.5
    --self.lfoot.transforms.l[3] = self.lfoot.transforms.l[3] + 0.01
