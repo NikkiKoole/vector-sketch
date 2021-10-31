@@ -23,10 +23,25 @@ function updateMotionItems(layer, dt)
 	 thing.inMotion.velocity = thing.inMotion.velocity + thing.inMotion.acceleration/2
 	 thing.inMotion.acceleration = thing.inMotion.acceleration * 0;
 
-	 if thing.transforms.l[2] >= 0 then
-	    thing.transforms.l[2] = 0
+
+         local bottomY = 0
+         -- this might as well be hasFeet
+
+         if thing.hasDraggableChildren then
+            -- see actor L73
+            --bottomY = -(200/4.46)
+         end
+
+         
+
+         
+         
+	 if thing.transforms.l[2] >= bottomY then
+	    thing.transforms.l[2] = bottomY
 	    thing.inMotion = nil
 	 end
+
+
       end
    end
 end
