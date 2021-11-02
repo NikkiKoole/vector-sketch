@@ -106,27 +106,23 @@ function Actor:create(bodyparts)
 
    a.magic = 4.46 -- dont touch
 
-   a.leglength = 600 + love.math.random()*700
+   a.leglength = 200 + love.math.random()*100
 
-   a.originalX =0
-   a.originalY =0
 
    a.body.leglength = a.leglength/a.magic
-   a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength 
+   a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength
 
-   
-   -- a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1] 
-   -- a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/a.magic 
 
-   -- a.rfoot.transforms.l[1] = a.leg2_connector.points[1][1] 
-   -- a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + a.leglength/a.magic 
+   a.originalX = a.body.transforms.l[1]
+   a.originalY = a.body.transforms.l[2]
 
+   a.body.actor = a
    a:straightenLegs()
    a.body.generatedMeshes = {} -- we can put the line meshes in here
    a.time= 0
    
-   table.insert(a.body.children, a.lfoot)
-   table.insert(a.body.children, a.rfoot)
+   table.insert(a.body.children, 1, a.lfoot)
+   table.insert(a.body.children, 1, a.rfoot)
 
    a.useRubber = true--false --math.random() < 0.5 and true or false
    a:doTheLegs()
@@ -241,11 +237,6 @@ function Actor:update(dt)
          local oldLeftFootY = self.lfoot.transforms.l[2]
          local oldLeftFootX = self.lfoot.transforms.l[1]
 
-
-
-         --if self.body.inMotion then
-         --   print('yoohoo')
-         --end
          
          self.beingPressed = false
          self:straightenLegs()
@@ -253,17 +244,13 @@ function Actor:update(dt)
          local newLeftFootX = self.lfoot.transforms.l[1]
 
          local dy = oldLeftFootY- newLeftFootY
-         local dx = oldLeftFootX- newLeftFootX 
-
-         self.originalX = self.body.transforms.l[1]
-         self.originalY = self.body.transforms.l[2]
-
---         print(dy)
-         if dy ~= 0 or dx ~= 0 then
-         self.body.inMotion = makeMotionObject()
+         local dx = oldLeftFootX- newLeftFootX
          
-         local impulse = Vector(dx*13,dy*13)
-         applyForce(self.body.inMotion, impulse)
+         if dy ~= 0 or dx ~= 0 then
+            --dx=0
+            self.body.inMotion = makeMotionObject()
+            local impulse = Vector(dx*11,dy*11)
+            applyForce(self.body.inMotion, impulse)
          end
          
       end
@@ -277,10 +264,8 @@ function Actor:update(dt)
       local pivx = self.body.transforms.l[6]
       local pivy = self.body.transforms.l[7]
       local px,py = self.body._globalTransform:transformPoint(pivx, pivy)
-      --print(px)
-      --print(py, self.body.leglength)
+
       -- i need to know if i am too far from feet
-    --  print(px - self.originalX, py - self.originalY )
 
       local dist = (math.sqrt((px - self.originalX)^2 + (py - self.originalY)^2   ))
 
@@ -289,26 +274,15 @@ function Actor:update(dt)
       if tooFar then
          self.originalX = self.body.transforms.l[1]
          self.originalY = self.body.transforms.l[2]
-
-
-      end
+     end
       
-      --local 
-      
-      --print(self.leglength/self.magic)
-
 
       
       if py <= -self.body.leglength  then
          if self.useRubber == true then
             print('transitioning from rubber to straight')
-
             self:straightenLegs()
-            self.originalX = self.body.transforms.l[1]
-            self.originalY = self.body.transforms.l[2]
-
          end
-         
          
          self.useRubber = false
          self:doTheLegs()
@@ -321,9 +295,6 @@ function Actor:update(dt)
          end
          
          self.useRubber = true
---         print('using rubbier')
-         --self.useRubber = true
-         -- calculate the position the feet should remain at
          
          self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] - py --+ self.originalY
          self.lfoot.transforms.l[1] = self.leg1_connector.points[1][1] - px + self.originalX
@@ -331,7 +302,6 @@ function Actor:update(dt)
          self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] - py --+ self.originalY
          self.rfoot.transforms.l[1] = self.leg2_connector.points[1][1] - px + self.originalX
 
-         --print(self.lfoot.transforms.l[2])
 
 
          self.body.generatedMeshes = {}
@@ -339,16 +309,8 @@ function Actor:update(dt)
          self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
          self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
 
-         --oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
-
-         
-
-         --print('stuff tofo wih feet', py, self.body.leglength)
-         --self.useRubber = true
       end
 
    end
 
-   --   self:doTheLegs()
-   -- do some stuff to the feet here
 end

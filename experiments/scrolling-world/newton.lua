@@ -43,6 +43,12 @@ function updateMotionItems(layer, dt)
 	 if thing.transforms.l[2] >= bottomY then
 	    thing.transforms.l[2] = bottomY
 	    thing.inMotion = nil
+            
+            if thing.actor then
+               thing.actor.originalX = thing.transforms.l[1]
+               thing.actor.originalY = thing.transforms.l[2]
+            end
+            
 	 end
 
 
