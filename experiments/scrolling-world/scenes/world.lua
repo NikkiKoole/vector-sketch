@@ -171,8 +171,8 @@ function scene.load()
       -- )
 
       actors  = {}
-      for i = 1, 4 do
-         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,love.math.random()*0.1, false)
+      for i = 1, 10 do
+         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,love.math.random(), false)
 	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 

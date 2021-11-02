@@ -106,7 +106,7 @@ function Actor:create(bodyparts)
 
    a.magic = 4.46 -- dont touch
 
-   a.leglength = 200 + love.math.random()*100
+   a.leglength = 200 + love.math.random()*500
 
 
    a.body.leglength = a.leglength/a.magic
@@ -270,10 +270,13 @@ function Actor:update(dt)
       local dist = (math.sqrt((px - self.originalX)^2 + (py - self.originalY)^2   ))
 
       local tooFar = dist > (self.leglength/self.magic)
---      print('tooFar', tooFar)
-      if tooFar then
+      --      print('tooFar', tooFar)
+      -- this causes the 'walk' it alos cause some fake elasticity
+      if tooFar  then
+         
          self.originalX = self.body.transforms.l[1]
          self.originalY = self.body.transforms.l[2]
+
      end
       
 
@@ -285,7 +288,7 @@ function Actor:update(dt)
          end
          
          self.useRubber = false
-         self:doTheLegs()
+         --self:doTheLegs()
       else
          if self.useRubber == false then
             self.originalX = self.body.transforms.l[1]
