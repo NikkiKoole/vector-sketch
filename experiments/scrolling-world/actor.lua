@@ -27,49 +27,67 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    local eind = b
 
    local d = distance(a.x,a.y, b.x, b.y)
-   --print(d, length)
 
+      -- if upside down the flop th flip
+   if eind.y < start.y then
+--      print('jo?', flip)
+      flip = -1
+     -- if flip == 1 then flip = -1 else flip = 1 end
+   else
+  --    print('not jo?')
+   end 
+
+   
    local cp, cp2 = positionControlPoints(a, b, length, flip)
-   if tostring(cp.x) == 'nan' then
-      print('now its broken')
-   end
-
-   local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
    local result = {}
 
-
-   for i =0, steps do
-      local px, py = curve:evaluate(i/steps)
-      table.insert(result, px)
-      table.insert(result, py)
+   local widths = {}
+   local widths2 = {}
+   local wasBroken = false
+   if d > length/4.46 then
+--      print('i am too long!',a,b)
+      wasBroken = true
+      
    end
 
    
-   local widths = {}
-   local widths2 = {}
+
+
    
    for i =0, steps do
       local w = mapInto(i, 0,steps,lineData.outer[1], lineData.outer[2] )
       local w2 = mapInto(i, 0,steps,lineData.inner[1], lineData.inner[2] )
       widths[i] = w
       widths2[i] = w2
+   end
+
+   
+   if tostring(cp.x) == 'nan' or wasBroken then
+
+      -- here i create straight legs that are too long
+      wasBroken = true
+      result = {}
+      local dx =  start.x - eind.x 
+      local dy =  start.y - eind.y
+      
+      for i = 0, steps do
+         table.insert(result, start.x + (dx/steps)*i*-1 )
+         table.insert(result, start.y + (dy/steps)*i*-1 )
+      end
+      
+   else
+      local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
+      for i =0, steps do
+         local px, py = curve:evaluate(i/steps)
+         table.insert(result, px)
+         table.insert(result, py)
+      end
+
+      
 
    end
+   return result, widths, widths2, wasBroken
    
-   
-   
-
-   --local widths = {}
-   --for i =1, #result/2 do
-     -- widths[i] = (#result/2+4)-i
-   --end
-
-   --local widths2 = {}
-   --for i =1, #result/2 do
-      --widths2[i] = (#result/2+1)-i
-   --end
-
-   return result, widths, widths2
 end
 
 
@@ -78,7 +96,7 @@ function Actor:create(bodyparts)
    setmetatable(a,Actor)    -- make Account handle lookup
 
    a.body = bodyparts.body
---   a.body.transforms.l[2] =    a.body.transforms.l[2] - 100
+   --   a.body.transforms.l[2] =    a.body.transforms.l[2] - 100
 
    a.lfoot = bodyparts.lfoot
    a.rfoot = bodyparts.rfoot
@@ -88,42 +106,94 @@ function Actor:create(bodyparts)
 
    a.magic = 4.46 -- dont touch
 
-   a.leglength = 100 + love.math.random()*300
+   a.leglength = 600 + love.math.random()*700
+
+   a.originalX =0
+   a.originalY =0
 
    a.body.leglength = a.leglength/a.magic
    a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength 
 
-      
-   a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1] 
-   a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/a.magic 
+   
+   -- a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1] 
+   -- a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/a.magic 
 
-   a.rfoot.transforms.l[1] = a.leg2_connector.points[1][1] 
-   a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + a.leglength/a.magic 
+   -- a.rfoot.transforms.l[1] = a.leg2_connector.points[1][1] 
+   -- a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + a.leglength/a.magic 
 
-
---   a.lfoot.transforms.l[1] =    a.lfoot.transforms.l[1] - 30
-  -- a.lfoot.transforms.l[2] =    a.lfoot.transforms.l[2] - 40
-
-   --a.rfoot.transforms.l[2] =    a.rfoot.transforms.l[2] - 30
-
-
+   a:straightenLegs()
    a.body.generatedMeshes = {} -- we can put the line meshes in here
    a.time= 0
+   
    table.insert(a.body.children, a.lfoot)
    table.insert(a.body.children, a.rfoot)
 
-
-   a.useRubber = false --math.random() < 0.5 and true or false
+   a.useRubber = true--false --math.random() < 0.5 and true or false
    a:doTheLegs()
 
 
    return a
 end
 
+function Actor:straightenLegs()
+   self.lfoot.transforms.l[1] = self.leg1_connector.points[1][1] 
+   self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + self.leglength/self.magic 
+
+   self.rfoot.transforms.l[1] = self.leg2_connector.points[1][1] 
+   self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + self.leglength/self.magic 
+
+   self:doTheLegs()
+
+end
+
+
 function Actor:setRandPos()
    self.lfoot.transforms.l[1] = self.lfoot.transforms.l[1] + math.sin(self.time)/120
    self.lfoot.transforms.l[2] = self.lfoot.transforms.l[2] + math.cos(self.time)/20
+end
 
+
+function Actor:oneLeg(connector, transforms, flip)
+   local useRubber = self.useRubber
+   local rnd = love.math.random()*30
+   local lineData = {
+      outer = {20, 5},
+      inner = {16, 3}
+   }
+   local steps = 23
+   local result, widths, widths2,wasBroken = makeRubberHoseLeg(
+      {x=connector.points[1][1],
+       y=connector.points[1][2]},
+      {x=transforms.l[1],
+       y=transforms.l[2]},
+      self.leglength,
+      steps,
+      lineData,
+      flip
+   )
+
+   
+   
+   if not useRubber then
+      result = {}
+      local dx =  transforms.l[1] - connector.points[1][1] 
+      local dy =  transforms.l[2] - connector.points[1][2]  
+      
+      for i = 0, steps do
+         table.insert(result, connector.points[1][1] + (dx/steps) * i)
+         table.insert(result, connector.points[1][2] + (dy/steps) * i)
+      end
+   end
+   
+   local verts, indices, draw_mode = polyline('bevel',result, widths)
+   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
+
+   
+   local verts, indices, draw_mode = polyline('bevel',result, widths2)
+   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
+   
 end
 
 
@@ -133,7 +203,7 @@ function Actor:doTheLegs()
    local useRubber = self.useRubber
 
    
-   if useRubber then
+   if false and useRubber then
       local m = math.sin(self.time*13)
       local o = mapInto(m, -1, 1, 0, 0.5)
       self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o 
@@ -147,94 +217,10 @@ function Actor:doTheLegs()
 
    end
    
+    
    
-   function oneLeg(connector, transforms, flip)
-      local rnd = love.math.random()*30
-      local lineData = {
-         outer = {20, 5},
-         inner = {16, 3}
-      }
-      local steps = 10
-      local result, widths, widths2 = makeRubberHoseLeg(
-         {x=connector.points[1][1],
-          y=connector.points[1][2]},
-         {x=transforms.l[1],
-          y=transforms.l[2]},
-         self.leglength,
-         steps,
-         lineData,
-         flip
-      )
-      
-      if not useRubber then
-         result = {}
-         local dx =  transforms.l[1] - connector.points[1][1] 
-         local dy =  transforms.l[2] - connector.points[1][2]  
-
-         for i = 0, steps do
-            table.insert(result, connector.points[1][1] + (dx/steps) * i)
-            table.insert(result, connector.points[1][2] + (dy/steps) * i)
-         end
-      end
-      
-      local verts, indices, draw_mode = polyline('bevel',result, widths)
-      local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-      table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
-
-      
-      local verts, indices, draw_mode = polyline('bevel',result, widths2)
-      local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-      table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
-      
-   end
-
-   
-  -- if self.body._globalTransform then
-    --  print(inspect(self.body._globalTransform))
-   --end
-
-   --self.lfoot.transforms[2]=500
-   
-   oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
-   oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
-
-   
-   -- local result, widths, widths2 = makeRubberHoseLeg(
-   --    {x=self.leg1_connector.points[1][1],
-   --     y=self.leg1_connector.points[1][2]},
-   --    {x=self.lfoot.transforms.l[1],
-   --     y=self.lfoot.transforms.l[2]},
-   --    self.leglength+0,
-   --    -1
-   -- )
-
-   -- local verts, indices, draw_mode = polyline('bevel',result, widths)
-   -- local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-
-   -- table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
-
-   -- local verts, indices, draw_mode = polyline('bevel',result, widths2)
-   -- local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-   -- table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
-
-   --  local result, widths, widths2 = makeRubberHoseLeg(
-   --    {x=self.leg2_connector.points[1][1],
-   --     y=self.leg2_connector.points[1][2]},
-   --    {x=self.rfoot.transforms.l[1],
-   --     y=self.rfoot.transforms.l[2]},
-   --    self.leglength+0,
-   --    1
-   -- )
-
-   -- local verts, indices, draw_mode = polyline('bevel',result, widths)
-   -- local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-
-   -- table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0}})
-
-   -- local verts, indices, draw_mode = polyline('bevel',result, widths2)
-   -- local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-   -- table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
-
+   self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
+   self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
 
 end
 
@@ -247,46 +233,122 @@ end
 function Actor:update(dt)
    self.time = self.time or 0
    self.time = self.time + dt
-   --print(self.time, math.sin(self.time))
-   --local x2,y2 = transposition()
 
-   --self.leg1_connector.points[1][2] = 50 --+ self.leglength/self.magic
-   --self.lfoot.transforms.l[2] = self.lfoot.transforms.l[2] + (math.sin(self.time)/145)
-   --self.rfoot.transforms.l[2] = self.rfoot.transforms.l[2] + (math.sin(self.time)/45)  
+   if not self.body.pressed then
+      if self.beingPressed == true then
+         print('actor re;leased from drag should add some force')
 
-   --self.lfoot.transforms.l[1] = self.lfoot.transforms.l[1] + dt*10
+         local oldLeftFootY = self.lfoot.transforms.l[2]
+         local oldLeftFootX = self.lfoot.transforms.l[1]
+
+
+
+         --if self.body.inMotion then
+         --   print('yoohoo')
+         --end
+         
+         self.beingPressed = false
+         self:straightenLegs()
+         local newLeftFootY = self.lfoot.transforms.l[2]
+         local newLeftFootX = self.lfoot.transforms.l[1]
+
+         local dy = oldLeftFootY- newLeftFootY
+         local dx = oldLeftFootX- newLeftFootX 
+
+         self.originalX = self.body.transforms.l[1]
+         self.originalY = self.body.transforms.l[2]
+
+--         print(dy)
+         if dy ~= 0 or dx ~= 0 then
+         self.body.inMotion = makeMotionObject()
+         
+         local impulse = Vector(dx*13,dy*13)
+         applyForce(self.body.inMotion, impulse)
+         end
+         
+      end
+      
+   end
+   
+   
    if self.body.pressed then
-      --      self:setRandPos()
+      self.beingPressed = true
+      setTransforms(self.body)
       local pivx = self.body.transforms.l[6]
       local pivy = self.body.transforms.l[7]
       local px,py = self.body._globalTransform:transformPoint(pivx, pivy)
+      --print(px)
+      --print(py, self.body.leglength)
+      -- i need to know if i am too far from feet
+    --  print(px - self.originalX, py - self.originalY )
 
-      print(py, self.body.leglength)
-      if py <= -self.body.leglength then
-         self.useRubber = false
-      else
-         self.useRubber = true
+      local dist = (math.sqrt((px - self.originalX)^2 + (py - self.originalY)^2   ))
+
+      local tooFar = dist > (self.leglength/self.magic)
+--      print('tooFar', tooFar)
+      if tooFar then
+         self.originalX = self.body.transforms.l[1]
+         self.originalY = self.body.transforms.l[2]
+
+
       end
       
-      --print('maybe we have something here?', inspect(self.body.pressed))
---      local  l = self.body.transforms.l
- --     if l[2] < (self.leglength / self.magic) then
-   --      print('above')
-     --else
-      --   print('below')
-     -- end
+      --local 
       
-      --print(inspect(self.body.transforms.l))
+      --print(self.leglength/self.magic)
+
+
       
-      --print(self.leglength / self.magic)
-      --self.rfoot.transforms.l[1] = self.rfoot.transforms.l[1] + self.body.pressed.dx
-      --self.lfoot.transforms.l[2] = self.lfoot.transforms.l[2] + self.body.pressed.dy
+      if py <= -self.body.leglength  then
+         if self.useRubber == true then
+            print('transitioning from rubber to straight')
+
+            self:straightenLegs()
+            self.originalX = self.body.transforms.l[1]
+            self.originalY = self.body.transforms.l[2]
+
+         end
+         
+         
+         self.useRubber = false
+         self:doTheLegs()
+      else
+         if self.useRubber == false then
+            self.originalX = self.body.transforms.l[1]
+            self.originalY = self.body.transforms.l[2]
+
+            print('transitioning from straight to rubber', self.originalX, self.originalY)
+         end
+         
+         self.useRubber = true
+--         print('using rubbier')
+         --self.useRubber = true
+         -- calculate the position the feet should remain at
+         
+         self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] - py --+ self.originalY
+         self.lfoot.transforms.l[1] = self.leg1_connector.points[1][1] - px + self.originalX
+
+         self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] - py --+ self.originalY
+         self.rfoot.transforms.l[1] = self.leg2_connector.points[1][1] - px + self.originalX
+
+         --print(self.lfoot.transforms.l[2])
+
+
+         self.body.generatedMeshes = {}
+
+         self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
+         self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
+
+         --oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
+
+         
+
+         --print('stuff tofo wih feet', py, self.body.leglength)
+         --self.useRubber = true
+      end
 
    end
-   
-   --self.lfoot.transforms.l[3] = self.lfoot.transforms.l[3] + 0.01
-   --self.rfoot.transforms.l[2] = self.rfoot.transforms.l[2] + love.math.random() -0.5
 
-   self:doTheLegs()
+   --   self:doTheLegs()
    -- do some stuff to the feet here
 end

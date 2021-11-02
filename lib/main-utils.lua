@@ -449,7 +449,7 @@ function handleChild(shape,parallax)
 	 renderNormallyOrOptimized(shape)
       end
 
-
+      if false then
       if shape.generatedMeshes then
          setTransforms(shape)
 
@@ -459,7 +459,7 @@ function handleChild(shape,parallax)
             love.graphics.draw(shape.generatedMeshes[i].mesh, shape._globalTransform )
          end
       end
-
+      end
 
 
 

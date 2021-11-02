@@ -2,7 +2,7 @@ function updateMotionItems(layer, dt)
    for i=1, #layer.children do
       local thing = layer.children[i]
       if thing.inMotion and not thing.pressed then
-
+--         print('wdwwedwdwedwe', i)
          --local gy = (6*980)
 	 local gy = uiState.gravityValue * thing.inMotion.mass * dt
 	 local gravity = Vector(0, gy);
