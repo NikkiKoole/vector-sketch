@@ -26,12 +26,12 @@ points = { { -19.31, 8.33 }, { -13.67, 6.36 }, { -1.87, 4.2 }, { 10.17, 4.37 }, 
 }, {
 color = { 1, 0, 0, 1 },
 name = "leg1-connector",
-points = { { -21.197, 37.548 } },
+points = { { -21.197, 30 } },
 type = "meta"
 }, {
 color = { 1, 0, 0, 1 },
 name = "leg2-connector",
-points = { { 22.408, 38.154 } },
+points = { { 22.408, 30 } },
 type = "meta"
 } },
 folder = true,

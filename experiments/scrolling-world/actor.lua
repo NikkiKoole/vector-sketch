@@ -22,7 +22,7 @@ function positionControlPoints(start, eind, hoseLength, flop)
 end
 
 
-function makeRubberHoseLeg(a, b, length, flip)
+function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    local start = a
    local eind = b
 
@@ -36,16 +36,6 @@ function makeRubberHoseLeg(a, b, length, flip)
 
    local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
    local result = {}
-   local steps = 4
-
-   local fromLegWidth = 20
-   local toLegWidth = 5
-
-   local fromLegWidth2 = 16
-   local toLegWidth2 = 3
-
-   local widths = {}
-   local widths2 = {}
 
 
    for i =0, steps do
@@ -55,10 +45,12 @@ function makeRubberHoseLeg(a, b, length, flip)
    end
 
    
+   local widths = {}
+   local widths2 = {}
+   
    for i =0, steps do
-      local w = mapInto(i, 0,steps,fromLegWidth, toLegWidth )
-      local w2 = mapInto(i, 0,steps,fromLegWidth2, toLegWidth2 )
-
+      local w = mapInto(i, 0,steps,lineData.outer[1], lineData.outer[2] )
+      local w2 = mapInto(i, 0,steps,lineData.inner[1], lineData.inner[2] )
       widths[i] = w
       widths2[i] = w2
 
@@ -86,6 +78,8 @@ function Actor:create(bodyparts)
    setmetatable(a,Actor)    -- make Account handle lookup
 
    a.body = bodyparts.body
+--   a.body.transforms.l[2] =    a.body.transforms.l[2] - 100
+
    a.lfoot = bodyparts.lfoot
    a.rfoot = bodyparts.rfoot
 
@@ -94,13 +88,17 @@ function Actor:create(bodyparts)
 
    a.magic = 4.46 -- dont touch
 
-   a.leglength = 100 
+   a.leglength = 100 + love.math.random()*300
 
-   a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1]
-   a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/a.magic
+   a.body.leglength = a.leglength/a.magic
+   a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength 
 
-   a.rfoot.transforms.l[1] = a.leg2_connector.points[1][1]
-   a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + a.leglength/a.magic
+      
+   a.lfoot.transforms.l[1] = a.leg1_connector.points[1][1] 
+   a.lfoot.transforms.l[2] = a.leg1_connector.points[1][2] + a.leglength/a.magic 
+
+   a.rfoot.transforms.l[1] = a.leg2_connector.points[1][1] 
+   a.rfoot.transforms.l[2] = a.leg2_connector.points[1][2] + a.leglength/a.magic 
 
 
 --   a.lfoot.transforms.l[1] =    a.lfoot.transforms.l[1] - 30
@@ -110,12 +108,12 @@ function Actor:create(bodyparts)
 
 
    a.body.generatedMeshes = {} -- we can put the line meshes in here
-
+   a.time= 0
    table.insert(a.body.children, a.lfoot)
    table.insert(a.body.children, a.rfoot)
 
 
-
+   a.useRubber = false --math.random() < 0.5 and true or false
    a:doTheLegs()
 
 
@@ -132,23 +130,57 @@ end
 function Actor:doTheLegs()
    self.body.generatedMeshes = {}
 
-   function oneLeg(connector, transforms, flip)
+   local useRubber = self.useRubber
 
+   
+   if useRubber then
+      local m = math.sin(self.time*13)
+      local o = mapInto(m, -1, 1, 0, 0.5)
+      self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o 
+      
+      local m = math.sin(self.time*13)
+      local o = mapInto(m, -1, 1, 0, 0.5)
+      self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o 
+   else
+      self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) 
+      self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic) 
+
+   end
+   
+   
+   function oneLeg(connector, transforms, flip)
+      local rnd = love.math.random()*30
+      local lineData = {
+         outer = {20, 5},
+         inner = {16, 3}
+      }
+      local steps = 10
       local result, widths, widths2 = makeRubberHoseLeg(
          {x=connector.points[1][1],
           y=connector.points[1][2]},
          {x=transforms.l[1],
           y=transforms.l[2]},
-         self.leglength+0,
+         self.leglength,
+         steps,
+         lineData,
          flip
       )
       
+      if not useRubber then
+         result = {}
+         local dx =  transforms.l[1] - connector.points[1][1] 
+         local dy =  transforms.l[2] - connector.points[1][2]  
+
+         for i = 0, steps do
+            table.insert(result, connector.points[1][1] + (dx/steps) * i)
+            table.insert(result, connector.points[1][2] + (dy/steps) * i)
+         end
+      end
+      
       local verts, indices, draw_mode = polyline('bevel',result, widths)
       local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-
-      --local generated = {}
-      
       table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
+
       
       local verts, indices, draw_mode = polyline('bevel',result, widths2)
       local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
@@ -224,9 +256,18 @@ function Actor:update(dt)
 
    --self.lfoot.transforms.l[1] = self.lfoot.transforms.l[1] + dt*10
    if self.body.pressed then
-      self:setRandPos()
-      --local px,py = body._globalTransform:inverseTransformPoint(mx, my)
+      --      self:setRandPos()
+      local pivx = self.body.transforms.l[6]
+      local pivy = self.body.transforms.l[7]
+      local px,py = self.body._globalTransform:transformPoint(pivx, pivy)
 
+      print(py, self.body.leglength)
+      if py <= -self.body.leglength then
+         self.useRubber = false
+      else
+         self.useRubber = true
+      end
+      
       --print('maybe we have something here?', inspect(self.body.pressed))
 --      local  l = self.body.transforms.l
  --     if l[2] < (self.leglength / self.magic) then

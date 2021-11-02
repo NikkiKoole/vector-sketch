@@ -28,6 +28,10 @@ function updateMotionItems(layer, dt)
          -- this might as well be hasFeet
 
          if thing.hasDraggableChildren then
+            if thing.leglength then
+               bottomY = -thing.leglength
+            end
+            
             -- see actor L73
             --bottomY = -(200/4.46)
          end

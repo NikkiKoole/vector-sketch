@@ -450,6 +450,17 @@ function handleChild(shape,parallax)
       end
 
 
+      if shape.generatedMeshes then
+         setTransforms(shape)
+
+               --print('there are some generatedMeshes here, are these rubberhose legs?')
+         for i =1, #shape.generatedMeshes do
+            love.graphics.setColor(shape.generatedMeshes[i].color)
+            love.graphics.draw(shape.generatedMeshes[i].mesh, shape._globalTransform )
+         end
+      end
+
+
 
 
       love.graphics.setStencilTest()
