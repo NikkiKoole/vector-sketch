@@ -1,6 +1,14 @@
 local scene = {}
 local hasBeenLoaded = false
 
+   local Entity     = Concord.entity
+   local Component  = Concord.component
+   local System     = Concord.system
+   local World      = Concord.world
+   
+-- Containers
+   local Components  = Concord.components
+
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
@@ -68,8 +76,14 @@ function scene.load()
       gradients[timeIndex].from, gradients[timeIndex].to
    )
 
+
+
+   
    if not hasBeenLoaded then
 
+         --print('world:', World)
+
+      
       depthMinMax =       {min=-1.0, max=1.0}
       foregroundFactors = { far=.8, near=1}
       backgroundFactors = { far=.4, near=.7}
@@ -212,12 +226,45 @@ function scene.load()
             tileBounds={math.huge, -math.huge},
 	   }
       }
+
+
+
+      -- --- ecs new
+      -- Concord.component(
+      --    "position",
+      --    function(component, x, y)
+      --       --print(inspect(component))
+      --       component.x = x or 0
+      --       component.y = y or 0
+      --    end
+      -- )
+      -- Concord.component(
+      --    "transforms",
+      --    function(component, t)
+      --       --print(inspect(component))
+      --       component.transforms = t or {}
+      --    end
+      -- )
+
+      -- local myWorld = Concord.world()
+      -- local myEntity = Entity(myWorld)
+
+      -- myEntity:give('position', 100,100)
+      -- myEntity:give('transforms', {0,0,0,1,1,0,0,0,0})
+
+      -- print(inspect(myEntity:get('transforms')))
+
+
+      -- ecs
    end
    perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
 
-   setCameraViewport(cam, 500,500)
+   setCameraViewport(cam, 400,400)
    hasBeenLoaded = true
    attachPointerCallbacks()
+
+
+   --print(inspect(foregroundLayer.children[1]))
 end
 
 
@@ -274,8 +321,8 @@ function scene.draw()
    love.graphics.setColor(1,1,1)
    --drawUI()
    drawDebugStrings()
-   drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
-   drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
+   --drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
+   --drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
 
 end
 

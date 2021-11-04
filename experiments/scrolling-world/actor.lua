@@ -1,6 +1,7 @@
 Actor = {}
 Actor.__index = Actor
 
+require 'lib.segment'
 
 function positionControlPoints(start, eind, hoseLength, flop)
    local borderRadius = 0
@@ -90,12 +91,31 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    
 end
 
+function Actor:getWidths()
+   local lineData = {
+      outer = {20, 5},
+      inner = {16, 3}
+   }
+   local widths = {}
+   local widths2 = {}
+
+   for i =0, self.steps do
+      local w = mapInto(i, 0,self.steps,lineData.outer[1], lineData.outer[2] )
+      local w2 = mapInto(i, 0,self.steps,lineData.inner[1], lineData.inner[2] )
+      widths[i] = w
+      widths2[i] = w2
+   end
+
+   return widths, widths2
+end
+
 
 function Actor:create(bodyparts)
    local a = {}             -- our new object
    setmetatable(a,Actor)    -- make Account handle lookup
 
    a.body = bodyparts.body
+
    --   a.body.transforms.l[2] =    a.body.transforms.l[2] - 100
 
    a.lfoot = bodyparts.lfoot
@@ -106,10 +126,19 @@ function Actor:create(bodyparts)
 
    a.magic = 4.46 -- dont touch
 
-   a.leglength = 200 + love.math.random()*500
+   a.leglength = 200 + love.math.random()*100
 
 
    a.body.leglength = a.leglength/a.magic
+   a.steps = 23
+   segments = {}
+   for i = 1, 23 do
+      segments[i] = Segment:create(0,0,0,a.body.leglength/a.steps)
+   end
+   a.segments = segments
+
+
+   
    a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength
 
 
@@ -150,13 +179,15 @@ end
 
 
 function Actor:oneLeg(connector, transforms, flip)
+   print('callin gone leg')
    local useRubber = self.useRubber
+   local steps = self.steps
    local rnd = love.math.random()*30
    local lineData = {
       outer = {20, 5},
       inner = {16, 3}
    }
-   local steps = 23
+
    local result, widths, widths2,wasBroken = makeRubberHoseLeg(
       {x=connector.points[1][1],
        y=connector.points[1][2]},
@@ -257,6 +288,12 @@ function Actor:update(dt)
       
    end
    
+   if self.disabledFunnyLegs and not self.body.pressed  then
+      if self.disabledFunnyLegs then
+         self.disabledFunnyLegs = false
+      end
+      
+   end
    
    if self.body.pressed then
       self.beingPressed = true
@@ -273,12 +310,17 @@ function Actor:update(dt)
       --      print('tooFar', tooFar)
       -- this causes the 'walk' it alos cause some fake elasticity
       if tooFar  then
-         
+         print('I need todo something!', self.disabledFunnyLegs)
+         --local disallow_funny_walk = true
+         --if allow_funny_walk then
+         self.disabledFunnyLegs = true
+         --end
          self.originalX = self.body.transforms.l[1]
          self.originalY = self.body.transforms.l[2]
 
      end
       
+
 
       
       if py <= -self.body.leglength  then
@@ -288,6 +330,69 @@ function Actor:update(dt)
          end
          
          self.useRubber = false
+         --------
+         ---
+         -- do the gravitylegs
+         local useGravityLegs = true
+         if useGravityLegs then
+         local segments = self.segments
+         local last = segments[#segments]
+         self.body.generatedMeshes = {}
+
+
+         local fx =self.leg1_connector.points[1][1]
+         local fy =self.leg1_connector.points[1][2]
+
+         setTransforms(self.body)
+
+         last:follow(self.body.transforms.l[1] + fx, self.body.transforms.l[2] + fy)
+         last:updateB()
+
+         for i = #segments-1, 1 , -1 do
+            segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
+            segments[i]:updateB()
+         end
+         
+         for i = 1, #segments do
+            segments[i]:setA(segments[i].a.x, segments[i].a.y + 100*dt)
+            segments[1]:updateB()
+         end
+
+        
+         local result = {}
+         --print(inspect(segments))
+         for i = 1, #segments do
+            table.insert(result, segments[i].a.x -self.body.transforms.l[1]  )
+            table.insert(result, segments[i].a.y -self.body.transforms.l[2])
+         end
+         
+         --local widths, width2 = self:getWidths()
+         
+         --print(inspect(self:getWidths()))
+         --local r = {}
+         --for i = 1, #widths do
+         --   r[i] = widths[#widths- i]
+         --end
+         
+         local verts, indices, draw_mode = polyline('bevel',result, 3)
+         local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+         table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
+
+         
+         local px2,py2 = self.body._globalTransform:inverseTransformPoint(segments[1].a.x , segments[1].a.y)
+         print(segments[1].a.x,segments[1].a.y)
+         
+         self.lfoot.transforms.l[1] = px2
+         self.lfoot.transforms.l[2] = py2
+
+         end
+
+
+
+         
+         --self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
+         --self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
+
          --self:doTheLegs()
       else
          if self.useRubber == false then
@@ -312,7 +417,25 @@ function Actor:update(dt)
          self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
          self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
 
+
+         
+         
       end
+
+
+      -- flipping the true false equal allow semi footwalking
+      local allowFunnyWalk = true
+      if allowFunnyWalk then
+      else
+         
+         if self.disabledFunnyLegs == true then
+         print('getting here!')
+         self:straightenLegs()
+         --print('is this another gravity one?')
+
+         end
+      end
+      
 
    end
 

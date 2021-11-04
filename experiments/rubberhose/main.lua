@@ -9,7 +9,7 @@ local inspect = require 'vendor.inspect'
 require 'lib.basics'
 require 'lib.toolbox'
 require 'lib.ui'
-require 'segment'
+require 'lib.segment'
 
 
 require 'lib.polyline'
@@ -50,8 +50,8 @@ function love.load()
    dt = 0
 
    segments = {}
-   for i = 1, 70 do
-      segments[i] = Segment:create(200,300,0,5)
+   for i = 1, 23 do
+      segments[i] = Segment:create(200,300,0,12)
    end
 
 end
@@ -202,6 +202,7 @@ function love.draw()
    end
 
 
+
    if robot then
 
       -- this is like a robot arm attached to pos
@@ -216,7 +217,7 @@ function love.draw()
 
       --   this is like a rope attahced to mouse
       for i = 1, #segments do
-         segments[i]:setA(segments[i].a.x, segments[i].a.y + 1000*dt)
+         segments[i]:setA(segments[i].a.x, segments[i].a.y + 600*dt)
          segments[1]:updateB()
       end
    end

@@ -56,7 +56,7 @@ end
 
 
 function setTransforms(root)
-
+  -- print('setting transform', root.name)
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then

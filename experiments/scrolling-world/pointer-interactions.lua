@@ -327,6 +327,8 @@ function pointerReleased(x,y, id, layers)
          
          if c.pressed and c.pressed.id == id then
             c.pressed = nil
+            -- todo this needs unsetting somewhere
+            --c.released = true
          end
       end
    end
