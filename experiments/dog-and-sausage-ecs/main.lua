@@ -13,15 +13,9 @@ flux = require "vendor.flux"
 
 Concord = require 'vendor.concord.init'
 
---local Entity     = Concord.entity
---local Component  = Concord.component
---local System     = Concord.system
---local World      = Concord.world
-
--- Containers
---local Components  = Concord.components
 
 Concord.component("mousefollowing")
+Concord.component("snoutbehaviour")
 Concord.component("pupil")
 
 
@@ -68,7 +62,6 @@ function MovePupilToMouseSystem:update(dt)
          local r = math.atan2(ly, lx)
          local dx = 2 * math.cos(r)
          local dy = 2 * math.sin(r)
-         --local newScale = love.math.random() * 0.5 + 0.75
          transforms.l[1] = e.startPos.x + dx
          transforms.l[2] = e.startPos.y + dy
       end
@@ -77,13 +70,38 @@ function MovePupilToMouseSystem:update(dt)
 end
 function MovePupilToMouseSystem:pressed(x,y, elem)
    print('movepupil sytem receiving click', x,y)
---   print(inspect(elem))
+   local newScale = love.math.random()*2 -1 + 1
+   for _, e in ipairs(self.pool) do
+      local transforms = e.transforms.transforms
+      transforms.l[4] = newScale
+      transforms.l[5] = newScale
+   end
+
 end
 
 
+local SnoutWithMouseSystem = Concord.system({pool = {'transforms', 'snoutbehaviour'}})
+function SnoutWithMouseSystem:update(dt)
+   local mx,my =love.mouse.getPosition()
+
+   if root.transforms._g then
+      local rx, ry = root.transforms._g:inverseTransformPoint( mx , my )
+      for _, e in ipairs(self.pool) do
+	 local transforms = e.transforms.transforms
+	 local distance = math.sqrt((rx *rx) + (ry * ry))
+	 local newScale = mapInto(distance, 0, 150, 1.1, 1)
+	 local diff = mapInto(love.math.random(), 0, 1, -0.01, 0.01)
+	 local newAngle = diff
+
+         transforms.l[3] = newAngle
+	 transforms.l[4] = newScale
+         transforms.l[5] = newScale
+      end
+   end
+end
 
 
-myWorld:addSystems(MoveWithMouseSystem, MovePupilToMouseSystem)
+myWorld:addSystems(MoveWithMouseSystem, MovePupilToMouseSystem, SnoutWithMouseSystem)
 
 
 function love.keypressed(key)
@@ -94,15 +112,7 @@ end
 
 function love.mousemoved(x,y)
 
-   if (snuit.transforms._g) then
-      local rx, ry = snuit.transforms._g:inverseTransformPoint( x , y )
-      local distance = math.sqrt((rx *rx) + (ry * ry))
-      local diff2 = mapInto(distance, 0, 150, 1.1, 1)
-      local diff = mapInto(love.math.random(), 0, 1, -0.01, 0.01)
-      local newAngle = diff
 
-      flux.to(snuit.transforms.l, 0.3, {[3]=newAngle, [4]=diff2, [5]=diff2})
-   end
 end
 
 
@@ -132,7 +142,7 @@ function makeBackdropMesh()
       {
    	 -- bottom-left corner (yellow-tinted)
    	 0, h,
-   	 1, 1, 0
+   	 0, 1, 1
       },
    }
    local mesh = love.graphics.newMesh(format, vertices)
@@ -159,13 +169,12 @@ function love.load()
    meshAll(root)
 
    worst = findNodeByName(root, 'worst')
---   print(inspect(worst.transforms))
+
    leftEye = findNodeByName(root, 'left eye')
    leftPupil = findNodeByName(leftEye, 'pupil')
-   --leftPupil.startPos = {leftPupil.transforms.l[1], leftPupil.transforms.l[2]}
+
    rightEye = findNodeByName(root, 'right eye')
    rightPupil = findNodeByName(rightEye, 'pupil')
-   --rightPupil.startPos = {rightPupil.transforms.l[1], rightPupil.transforms.l[2]}
 
    snuit = findNodeByName(root, 'snuit')
 
@@ -184,7 +193,9 @@ function love.load()
       :give('transforms', worst.transforms)
       :give('mousefollowing')
 
-
+   Concord.entity(myWorld)
+      :give('transforms', snuit.transforms)
+      :give('snoutbehaviour')
 
 end
 
@@ -194,15 +205,12 @@ function myWorld:onEntityAdded(e)
 end
 
 function love.mousepressed(x,y)
-   print('mousepressed', x,y)
+   --print('mousepressed', x,y)
    myWorld:emit('pressed',x,y, leftPupil)
 end
 
 function love.update(dt)
    myWorld:emit("update", dt)
-   --print(inspect(myWorld:getEntities()))
---   flux.update(dt)
---   worst.transforms.l[3] = worst.transforms.l[3] + 0.01/dt
 end
 
 function love.draw()
@@ -210,5 +218,4 @@ function love.draw()
    love.graphics.draw(m)
    renderThings(root)
    myWorld:emit("draw")
-
 end
