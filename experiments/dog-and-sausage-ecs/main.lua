@@ -50,9 +50,9 @@ function MoveWithMouseSystem:update(dt)
    if root.transforms._g then
       local rx, ry = root.transforms._g:inverseTransformPoint( mx , my )
       for _, e in ipairs(self.pool) do
-	 print(inspect(e.transforms))
-         e.transforms.transforms.l[1] = rx
-         e.transforms.transforms.l[2] = ry
+	 local transforms = e.transforms.transforms
+         transforms.l[1] = rx
+         transforms.l[2] = ry
       end
    end
 end
@@ -60,28 +60,17 @@ end
 local MovePupilToMouseSystem = Concord.system({pool = {'transforms', 'pupil', 'startPos'}})
 function MovePupilToMouseSystem:update(dt)
    local mx,my =love.mouse.getPosition()
-   print('yohoo')
+
    for _, e in ipairs(self.pool) do
-               --setTransforms(e)
-
-      if (e.transforms.transforms._g) then
-         --print('e.transforms._g',inspect(e.transforms._g))
-
-         --print('jowes',mx,my)
-         local lx, ly = e.transforms.transforms._g:inverseTransformPoint( mx , my )
-         local r = math.atan2(ly, lx) --* 2*math.pi -math.pi/2
-         print(r)
---         print(r, 'pos',mx,my, 'brok')
-
+      local transforms = e.transforms.transforms
+      if (transforms._g) then
+         local lx, ly = transforms._g:inverseTransformPoint( mx , my )
+         local r = math.atan2(ly, lx)
          local dx = 2 * math.cos(r)
          local dy = 2 * math.sin(r)
          local newScale = love.math.random() * 0.5 + 0.75
-         e.transforms.transforms.l[1]= e.startPos.x+dx
-         e.transforms.transforms.l[2]= e.startPos.y+dy
-         --e.transforms.l[4] = newScale
-         --e.transforms.l[5] = newScale
-      --else
-        -- setTransforms(e)
+         transforms.l[1]= e.startPos.x + dx
+         transforms.l[2]= e.startPos.y + dy
       end
    end
 
@@ -99,27 +88,7 @@ end
 
 
 function love.mousemoved(x,y)
-   if (false and leftPupil.transforms._g) then
-      print('leftPupil.transforms._g',leftPupil.transforms._g)
-      local lx, ly = leftPupil.transforms._g:inverseTransformPoint( x , y )
 
-      local r = math.atan2 (ly, lx)
-      print(r, 'pos',x,y)
-      local dx = 2 * math.cos(r)
-      local dy = 2 * math.sin(r)
-      local newScale = love.math.random() * 0.5 + 0.75
-      leftPupil.transforms.l[1] = leftPupil.startPos[1]+dx
-      leftPupil.transforms.l[2] = leftPupil.startPos[2]+dy
---      flux.to(leftPupil.transforms.l, 1/(math.abs(dx) + math.abs(dy)), {[1]= leftPupil.startPos[1]+dx, [2]= leftPupil.startPos[2]+dy, [4]=newScale, [5]=newScale})
-   end
-   -- if (rightPupil.transforms._g) then
-   --    local rx, ry = rightPupil.transforms._g:inverseTransformPoint( x , y )
-   --    local r = math.atan2 (ry, rx)
-   --    local dx = 2 * math.cos(r)
-   --    local dy = 2 * math.sin(r)
-   --    local newScale = love.math.random() * 0.5 + 0.75
-   --    flux.to(rightPupil.transforms.l, 1/(math.abs(dx) + math.abs(dy)), {[1]= rightPupil.startPos[1]+dx, [2]= rightPupil.startPos[2]+dy, [4]=newScale, [5]=newScale})
-   -- end
    if (snuit.transforms._g) then
       local rx, ry = snuit.transforms._g:inverseTransformPoint( x , y )
       local distance = math.sqrt((rx *rx) + (ry * ry))
@@ -201,17 +170,15 @@ function love.load()
 
 
    --print((MoveSystem:getName()))
- --   local myEntity1 = Concord.entity(myWorld)
- --      :give('transforms', leftPupil)
- --      :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
--- --      :give('transforms._g', leftPupil.transforms._g)
+    local myEntity1 = Concord.entity(myWorld)
+       :give('transforms', leftPupil.transforms)
+       :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
+       :give('pupil')
 
-  --     :give('pupil')
-
-  -- local myEntity1 = Concord.entity(myWorld)
-  --    :give('transforms', rightPupil.transforms)
-  --    :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
---      :give('pupil')
+   local myEntity1 = Concord.entity(myWorld)
+      :give('transforms', rightPupil.transforms)
+      :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
+      :give('pupil')
 
    local myEntity1 = Concord.entity(myWorld)
       :give('transforms', worst.transforms)
