@@ -629,9 +629,6 @@ end
 -- they ought t o be more optimized
 -- in short: this needs a isDirty flag of sorts
 
-
-
-
 function renderThings(root, parallax)
 
    setTransforms(root)

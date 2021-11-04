@@ -68,9 +68,9 @@ function MovePupilToMouseSystem:update(dt)
          local r = math.atan2(ly, lx)
          local dx = 2 * math.cos(r)
          local dy = 2 * math.sin(r)
-         local newScale = love.math.random() * 0.5 + 0.75
-         transforms.l[1]= e.startPos.x + dx
-         transforms.l[2]= e.startPos.y + dy
+         --local newScale = love.math.random() * 0.5 + 0.75
+         transforms.l[1] = e.startPos.x + dx
+         transforms.l[2] = e.startPos.y + dy
       end
    end
 
@@ -164,23 +164,18 @@ function love.load()
 
    snuit = findNodeByName(root, 'snuit')
 
-   --setTransforms(worst)
-   --setTransforms(leftPupil)
-   print('init', leftPupil.transforms._g)
 
+   Concord.entity(myWorld)
+      :give('transforms', leftPupil.transforms)
+      :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
+      :give('pupil')
 
-   --print((MoveSystem:getName()))
-    local myEntity1 = Concord.entity(myWorld)
-       :give('transforms', leftPupil.transforms)
-       :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
-       :give('pupil')
-
-   local myEntity1 = Concord.entity(myWorld)
+   Concord.entity(myWorld)
       :give('transforms', rightPupil.transforms)
       :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
       :give('pupil')
 
-   local myEntity1 = Concord.entity(myWorld)
+   Concord.entity(myWorld)
       :give('transforms', worst.transforms)
       :give('drawable')
 
