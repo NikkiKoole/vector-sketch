@@ -4,9 +4,9 @@ inspect = require 'vendor.inspect'
 console = require 'vendor.console'
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 
-require 'palettes'
-require 'dopesheet'
-require 'file-screen'
+require 'src.palettes'
+require 'src.dopesheet'
+require 'src.file-screen'
 
 require 'lib.scene-graph'
 require 'lib.basics'

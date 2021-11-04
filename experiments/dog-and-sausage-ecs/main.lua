@@ -76,7 +76,6 @@ function MovePupilToMouseSystem:pressed(x,y, elem)
       transforms.l[4] = newScale
       transforms.l[5] = newScale
    end
-
 end
 
 

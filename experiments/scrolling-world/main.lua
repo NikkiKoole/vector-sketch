@@ -6,6 +6,7 @@ tween = require 'vendor.tween'
 ProFi = require 'vendor.ProFi'
 Vector = require 'vendor.brinevector'
 Concord = require 'vendor.concord.init'
+SM = require 'vendor.SceneMgr'
 
 require  'lib.scene-graph'
 require 'lib.basic-tools'
@@ -19,17 +20,18 @@ require 'lib.border-mesh'
 require 'lib.generate-polygon'
 require 'lib.ui'
 
-require 'generateWorld'
-require 'gradient'
-require 'groundplane'
-require 'fillstuf'
-require 'removeAddItems'
-require 'pointer-interactions'
-require 'camera'
-require 'newton'
-require 'actor'
 
-SM = require 'lib.SceneMgr'
+
+require 'src.generateWorld'
+require 'src.gradient'
+require 'src.groundplane'
+require 'src.fillstuf'
+require 'src.removeAddItems'
+require 'src.pointer-interactions'
+require 'src.camera'
+require 'src.newton'
+require 'src.actor'
+
 
 random = love.math.random
 
