@@ -69,7 +69,7 @@ function MovePupilToMouseSystem:update(dt)
 
 end
 function MovePupilToMouseSystem:pressed(x,y, elem)
-   print('movepupil sytem receiving click', x,y)
+   --print('movepupil sytem receiving click', x,y)
    local newScale = love.math.random()*2 -1 + 1
    for _, e in ipairs(self.pool) do
       local transforms = e.transforms.transforms
@@ -216,5 +216,5 @@ function love.draw()
    local m = makeBackdropMesh()
    love.graphics.draw(m)
    renderThings(root)
-   myWorld:emit("draw")
+--   myWorld:emit("draw")
 end

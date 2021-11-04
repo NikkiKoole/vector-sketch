@@ -240,7 +240,10 @@ function pointInTriangle(p, t1, t2, t3)
 end
 
 function isMouseInMesh(mx, my, body, mesh)
+  
    if mesh and body then
+--      print(inspect(mesh))
+--      print(inspect(mesh))
       local count = mesh:getVertexCount()
       if body.transforms._g then
 
