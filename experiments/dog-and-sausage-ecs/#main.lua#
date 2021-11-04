@@ -76,7 +76,7 @@ function MovePupilToMouseSystem:update(dt)
 
 end
 function MovePupilToMouseSystem:pressed(x,y, elem)
-   print('movepupil ssytem reciving click', x,y)
+   print('movepupil ssytem receiving click', x,y)
 --   print(inspect(elem))
 end
 

@@ -57,39 +57,8 @@ function drawBBoxAroundItems(layer, parallaxData)
    for i = 1, #layer.children do
       local c = layer.children[i]
 
-      -- some of these 'hasDraggableChidlren'
-      -- these will need to visit that array
-
---       if c.hasDraggableChildren then
---          --         print('work')
---          for j = 1, #c.children do
---             if c.children[j].isDraggableChild then
---                --               print('work')
---                if c.children[j].pressed then
---                   local mx, my = getPointerPosition(c.children[j].pressed.id)
-
---                   local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(mx,my, c,c.children[j], c.p)
-
-
-
-
--- --                  local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
---                   --print(tlx, tly, brx, bry)
---                   love.graphics.setColor(1,1,1,.5)
-
---                   love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-
---                end
-
---             end
-
---          end
-
---       end
-
 
       if c.bbox and c.transforms._l and c.depth ~= nil then
-
 
          if c.pressed then
             local mx, my = getPointerPosition(c.pressed.id)
@@ -98,11 +67,6 @@ function drawBBoxAroundItems(layer, parallaxData)
             love.graphics.setColor(1,1,1,.5)
 
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-
-
-
-
-
 
 	    love.graphics.setColor(1,1,1,1)
 	    local px, py = c.transforms._g:transformPoint( c.transforms.l[6], c.transforms.l[7])
@@ -170,39 +134,7 @@ function pointerPressed(x,y, id, layers)
 
       for i = #l.layer.children,1,-1 do
          local c = l.layer.children[i]
-	 -- ok sometimes we might have nested childern too  ouch ouch
-         -- this ihevayliy simplified here
-         -- we dont really need this I think
 
-         -- if c.hasDraggableChildren then
-         --     for k = 1, #c.children do
-         --        if c.children[k].isDraggableChild then
-         --           local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(x,y, c,c.children[k], l.p)
-
-         --           if mouseover then
-
-         --              c.pressed = {dx=invx, dy=invy, id=id}
-         --              itemPressed = c
-
-         --           end
-
-         --        end
-         --     end
-         --  end
-
-            --print(inspect(c.children[#c.children]))
-
-	    --local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(x,y, c,c.children[#c.children-1], l.p)
-	    --Print(mouseover)
-	    --if mouseover then
-	       --c.children[#c.children].transforms.l[1] = 100
-	    --end
-	    --if mouseover then
-	    -- love.graphics.setColor(1,1,1,.5)
-	    -- love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-	    --end
-
---	 end
 
          if c.bbox and c.transforms._l and c.depth and not itemPressed then
 
@@ -311,24 +243,8 @@ function pointerReleased(x,y, id, layers)
    for j =1, #layers do
       for i = 1, #layers[j].layer.children do
          local c =layers[j].layer.children[i]
-
-         -- if c.hasDraggableChildren then
-         --    for k=1, #c.children do
-         --       if c.children[k].isDraggableChild then
-         --          if c.children[k].pressed then
-         --             --print('fewfe')
-         --             c.children[k].pressed = nil
-         --          end
-
-         --       end
-         --    end
-
-         -- end
-
          if c.pressed and c.pressed.id == id then
             c.pressed = nil
-            -- todo this needs unsetting somewhere
-            --c.released = true
          end
       end
    end
@@ -368,29 +284,6 @@ function handlePressedItemsOnStage(dt, layers)
       for i = 1, #l.layer.children do
          local c = l.layer.children[i]
 
-         -- if c.hasDraggableChildren then
-         --    for k=1, #c.children do
-         --       if c.children[k].isDraggableChild then
-         --          if c.children[k].pressed then
-         --             --print('action')
-         --             local p = c.children[k]
-
-         --             local mx, my = getPointerPosition(p.pressed.id)
-         --             local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(mx,my, c,c.children[k], l.p)
-
-         --             --          local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, m
-         --             print(mx,my)
-         --             if mouseover then
-         --             p.transforms.l[1] = p.transforms.l[1] + (invx - p.pressed.dx)
-         --             p.transforms.l[2] = p.transforms.l[2] + (invy - p.pressed.dy)
-         --             end
-         --          end
-
-         --       end
-
-         --    end
-
-         -- end
 
 
          if c.bbox and c.transforms._l and c.depth ~= nil then
@@ -405,12 +298,7 @@ function handlePressedItemsOnStage(dt, layers)
                   -- todo make these thing parameters
 
                   if c.hasDraggableChildren then -- aka feet
-                     --c.transforms.l[3] = c.transforms.l[3] + 0.001
                      if c.actorRef then
-                       -- print('i need to do some feet action')
-                       -- print(c.transforms.l[2])
-
-                       -- print(inspect(c.actorRef.leglength))
 
                      end
 

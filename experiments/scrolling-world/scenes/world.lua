@@ -1,13 +1,13 @@
 local scene = {}
 local hasBeenLoaded = false
 
-   local Entity     = Concord.entity
-   local Component  = Concord.component
-   local System     = Concord.system
-   local World      = Concord.world
-   
+  -- local Entity     = Concord.entity
+  -- local Component  = Concord.component
+  -- local System     = Concord.system
+  -- local World      = Concord.world
+
 -- Containers
-   local Components  = Concord.components
+  -- local Components  = Concord.components
 
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
@@ -78,12 +78,12 @@ function scene.load()
 
 
 
-   
+
    if not hasBeenLoaded then
 
          --print('world:', World)
 
-      
+
       depthMinMax =       {min=-1.0, max=1.0}
       foregroundFactors = { far=.8, near=1}
       backgroundFactors = { far=.4, near=.7}
@@ -190,12 +190,12 @@ function scene.load()
 	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 
-         
+
          walterBody.hasDraggableChildren = true
          walterLFoot.isDraggableChild = true
          walterRFoot.isDraggableChild = true
 --         walterBody.transforms.l[2]=-100
-         
+
 	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
 
 --         walterActor.body.actorRef = walterActor
