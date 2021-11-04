@@ -36,9 +36,9 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
      -- if flip == 1 then flip = -1 else flip = 1 end
    else
   --    print('not jo?')
-   end 
+   end
 
-   
+
    local cp, cp2 = positionControlPoints(a, b, length, flip)
    local result = {}
 
@@ -48,13 +48,13 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    if d > length/4.46 then
 --      print('i am too long!',a,b)
       wasBroken = true
-      
+
    end
 
-   
 
 
-   
+
+
    for i =0, steps do
       local w = mapInto(i, 0,steps,lineData.outer[1], lineData.outer[2] )
       local w2 = mapInto(i, 0,steps,lineData.inner[1], lineData.inner[2] )
@@ -62,20 +62,20 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
       widths2[i] = w2
    end
 
-   
+
    if tostring(cp.x) == 'nan' or wasBroken then
 
       -- here i create straight legs that are too long
       wasBroken = true
       result = {}
-      local dx =  start.x - eind.x 
+      local dx =  start.x - eind.x
       local dy =  start.y - eind.y
-      
+
       for i = 0, steps do
          table.insert(result, start.x + (dx/steps)*i*-1 )
          table.insert(result, start.y + (dy/steps)*i*-1 )
       end
-      
+
    else
       local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
       for i =0, steps do
@@ -84,11 +84,11 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
          table.insert(result, py)
       end
 
-      
+
 
    end
    return result, widths, widths2, wasBroken
-   
+
 end
 
 function Actor:getWidths()
@@ -138,7 +138,7 @@ function Actor:create(bodyparts)
    a.segments = segments
 
 
-   
+
    a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength
 
 
@@ -149,7 +149,7 @@ function Actor:create(bodyparts)
    a:straightenLegs()
    a.body.generatedMeshes = {} -- we can put the line meshes in here
    a.time= 0
-   
+
    table.insert(a.body.children, 1, a.lfoot)
    table.insert(a.body.children, 1, a.rfoot)
 
@@ -161,11 +161,11 @@ function Actor:create(bodyparts)
 end
 
 function Actor:straightenLegs()
-   self.lfoot.transforms.l[1] = self.leg1_connector.points[1][1] 
-   self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + self.leglength/self.magic 
+   self.lfoot.transforms.l[1] = self.leg1_connector.points[1][1]
+   self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + self.leglength/self.magic
 
-   self.rfoot.transforms.l[1] = self.leg2_connector.points[1][1] 
-   self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + self.leglength/self.magic 
+   self.rfoot.transforms.l[1] = self.leg2_connector.points[1][1]
+   self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + self.leglength/self.magic
 
    self:doTheLegs()
 
@@ -199,28 +199,28 @@ function Actor:oneLeg(connector, transforms, flip)
       flip
    )
 
-   
-   
+
+
    if not useRubber then
       result = {}
-      local dx =  transforms.l[1] - connector.points[1][1] 
-      local dy =  transforms.l[2] - connector.points[1][2]  
-      
+      local dx =  transforms.l[1] - connector.points[1][1]
+      local dy =  transforms.l[2] - connector.points[1][2]
+
       for i = 0, steps do
          table.insert(result, connector.points[1][1] + (dx/steps) * i)
          table.insert(result, connector.points[1][2] + (dy/steps) * i)
       end
    end
-   
+
    local verts, indices, draw_mode = polyline('bevel',result, widths)
    local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
    table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
 
-   
+
    local verts, indices, draw_mode = polyline('bevel',result, widths2)
    local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
    table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
-   
+
 end
 
 
@@ -229,23 +229,23 @@ function Actor:doTheLegs()
 
    local useRubber = self.useRubber
 
-   
+
    if false and useRubber then
       local m = math.sin(self.time*13)
       local o = mapInto(m, -1, 1, 0, 0.5)
-      self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o 
-      
+      self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o
+
       local m = math.sin(self.time*13)
       local o = mapInto(m, -1, 1, 0, 0.5)
-      self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o 
+      self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o
    else
-      self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) 
-      self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic) 
+      self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic)
+      self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic)
 
    end
-   
-    
-   
+
+
+
    self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
    self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
 
@@ -268,7 +268,7 @@ function Actor:update(dt)
          local oldLeftFootY = self.lfoot.transforms.l[2]
          local oldLeftFootX = self.lfoot.transforms.l[1]
 
-         
+
          self.beingPressed = false
          self:straightenLegs()
          local newLeftFootY = self.lfoot.transforms.l[2]
@@ -276,31 +276,31 @@ function Actor:update(dt)
 
          local dy = oldLeftFootY- newLeftFootY
          local dx = oldLeftFootX- newLeftFootX
-         
+
          if dy ~= 0 or dx ~= 0 then
             --dx=0
             self.body.inMotion = makeMotionObject()
             local impulse = Vector(dx*11,dy*11)
             applyForce(self.body.inMotion, impulse)
          end
-         
+
       end
-      
+
    end
-   
+
    if self.disabledFunnyLegs and not self.body.pressed  then
       if self.disabledFunnyLegs then
          self.disabledFunnyLegs = false
       end
-      
+
    end
-   
+
    if self.body.pressed then
       self.beingPressed = true
       setTransforms(self.body)
       local pivx = self.body.transforms.l[6]
       local pivy = self.body.transforms.l[7]
-      local px,py = self.body._globalTransform:transformPoint(pivx, pivy)
+      local px,py = self.body.transforms._g:transformPoint(pivx, pivy)
 
       -- i need to know if i am too far from feet
 
@@ -319,21 +319,21 @@ function Actor:update(dt)
          self.originalY = self.body.transforms.l[2]
 
      end
-      
 
 
-      
+
+
       if py <= -self.body.leglength  then
          if self.useRubber == true then
             print('transitioning from rubber to straight')
             self:straightenLegs()
          end
-         
+
          self.useRubber = false
          --------
          ---
          -- do the gravitylegs
-         local useGravityLegs = true
+         local useGravityLegs = false
          if useGravityLegs then
          local segments = self.segments
          local last = segments[#segments]
@@ -352,36 +352,36 @@ function Actor:update(dt)
             segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
             segments[i]:updateB()
          end
-         
+
          for i = 1, #segments do
             segments[i]:setA(segments[i].a.x, segments[i].a.y + 100*dt)
             segments[1]:updateB()
          end
 
-        
+
          local result = {}
          --print(inspect(segments))
          for i = 1, #segments do
             table.insert(result, segments[i].a.x -self.body.transforms.l[1]  )
             table.insert(result, segments[i].a.y -self.body.transforms.l[2])
          end
-         
+
          --local widths, width2 = self:getWidths()
-         
+
          --print(inspect(self:getWidths()))
          --local r = {}
          --for i = 1, #widths do
          --   r[i] = widths[#widths- i]
          --end
-         
+
          local verts, indices, draw_mode = polyline('bevel',result, 3)
          local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
          table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
 
-         
-         local px2,py2 = self.body._globalTransform:inverseTransformPoint(segments[1].a.x , segments[1].a.y)
+
+         local px2,py2 = self.body.transforms._g:inverseTransformPoint(segments[1].a.x , segments[1].a.y)
          print(segments[1].a.x,segments[1].a.y)
-         
+
          self.lfoot.transforms.l[1] = px2
          self.lfoot.transforms.l[2] = py2
 
@@ -389,7 +389,7 @@ function Actor:update(dt)
 
 
 
-         
+
          --self:oneLeg(self.leg1_connector, self.lfoot.transforms, -1)
          --self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
 
@@ -401,9 +401,9 @@ function Actor:update(dt)
 
             print('transitioning from straight to rubber', self.originalX, self.originalY)
          end
-         
+
          self.useRubber = true
-         
+
          self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] - py --+ self.originalY
          self.lfoot.transforms.l[1] = self.leg1_connector.points[1][1] - px + self.originalX
 
@@ -418,8 +418,8 @@ function Actor:update(dt)
          self:oneLeg(self.leg2_connector, self.rfoot.transforms, 1)
 
 
-         
-         
+
+
       end
 
 
@@ -427,7 +427,7 @@ function Actor:update(dt)
       local allowFunnyWalk = true
       if allowFunnyWalk then
       else
-         
+
          if self.disabledFunnyLegs == true then
          print('getting here!')
          self:straightenLegs()
@@ -435,7 +435,7 @@ function Actor:update(dt)
 
          end
       end
-      
+
 
    end
 

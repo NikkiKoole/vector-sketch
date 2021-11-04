@@ -17,7 +17,7 @@ Concord = require 'vendor.concord.init'
 --local Component  = Concord.component
 --local System     = Concord.system
 --local World      = Concord.world
-   
+
 -- Containers
 --local Components  = Concord.components
 
@@ -30,7 +30,7 @@ local myWorld = Concord.world()
 Concord.component(
    'transforms',
    function(c, value)
-      c.l = value
+      c.transforms = value
    end
 )
 
@@ -41,19 +41,13 @@ Concord.component(
       c.y =y
    end
 )
-Concord.component(
-   "_globalTransform",
-   function(c, gt)
-      c._globalTransform = gt
-   end
-)
 
 
 local MoveWithMouseSystem = Concord.system({pool = {'transforms', 'drawable'}})
 function MoveWithMouseSystem:update(dt)
    local mx,my =love.mouse.getPosition()
-   if root._globalTransform then
-      local rx, ry = root._globalTransform:inverseTransformPoint( mx , my )
+   if root.transforms._g then
+      local rx, ry = root.transforms._g:inverseTransformPoint( mx , my )
       for _, e in ipairs(self.pool) do
          e.transforms.l[1] = rx
          e.transforms.l[2] = ry
@@ -61,18 +55,18 @@ function MoveWithMouseSystem:update(dt)
    end
 end
 
-local MovePupilToMouseSystem = Concord.system({pool = {'transforms', 'pupil', 'startPos', '_globalTransform'}})
+local MovePupilToMouseSystem = Concord.system({pool = {'transforms', 'pupil', 'startPos'}})
 function MovePupilToMouseSystem:update(dt)
    local mx,my =love.mouse.getPosition()
 
    for _, e in ipairs(self.pool) do
                --setTransforms(e)
-      
-      if (e._globalTransform) then
-         --print('e._globalTransform',inspect(e._globalTransform))
+
+      if (e.transforms._g) then
+         print('e.transforms._g',inspect(e.transforms._g))
 
          --print('jowes',mx,my)
-         local lx, ly = e._globalTransform:inverseTransformPoint( mx , my )
+         local lx, ly = e.transforms._g:inverseTransformPoint( mx , my )
          local r = math.atan2(ly, lx) --* 2*math.pi -math.pi/2
          --print(r)
 --         print(r, 'pos',mx,my, 'brok')
@@ -103,10 +97,10 @@ end
 
 
 function love.mousemoved(x,y)
-   if (false and leftPupil._globalTransform) then
-      print('leftPupil._globalTransform',leftPupil._globalTransform)
-      local lx, ly = leftPupil._globalTransform:inverseTransformPoint( x , y )
-      
+   if (false and leftPupil.transforms._g) then
+      print('leftPupil.transforms._g',leftPupil.transforms._g)
+      local lx, ly = leftPupil.transforms._g:inverseTransformPoint( x , y )
+
       local r = math.atan2 (ly, lx)
       print(r, 'pos',x,y)
       local dx = 2 * math.cos(r)
@@ -116,16 +110,16 @@ function love.mousemoved(x,y)
       leftPupil.transforms.l[2] = leftPupil.startPos[2]+dy
 --      flux.to(leftPupil.transforms.l, 1/(math.abs(dx) + math.abs(dy)), {[1]= leftPupil.startPos[1]+dx, [2]= leftPupil.startPos[2]+dy, [4]=newScale, [5]=newScale})
    end
-   -- if (rightPupil._globalTransform) then
-   --    local rx, ry = rightPupil._globalTransform:inverseTransformPoint( x , y )
+   -- if (rightPupil.transforms._g) then
+   --    local rx, ry = rightPupil.transforms._g:inverseTransformPoint( x , y )
    --    local r = math.atan2 (ry, rx)
    --    local dx = 2 * math.cos(r)
    --    local dy = 2 * math.sin(r)
    --    local newScale = love.math.random() * 0.5 + 0.75
    --    flux.to(rightPupil.transforms.l, 1/(math.abs(dx) + math.abs(dy)), {[1]= rightPupil.startPos[1]+dx, [2]= rightPupil.startPos[2]+dy, [4]=newScale, [5]=newScale})
    -- end
-   if (snuit._globalTransform) then
-      local rx, ry = snuit._globalTransform:inverseTransformPoint( x , y )
+   if (snuit.transforms._g) then
+      local rx, ry = snuit.transforms._g:inverseTransformPoint( x , y )
       local distance = math.sqrt((rx *rx) + (ry * ry))
       local diff2 = mapInto(distance, 0, 150, 1.1, 1)
       local diff = mapInto(love.math.random(), 0, 1, -0.01, 0.01)
@@ -201,27 +195,27 @@ function love.load()
 
    --setTransforms(worst)
    --setTransforms(leftPupil)
-   print('init', leftPupil._globalTransform)
-   
-   
+   print('init', leftPupil.transforms._g)
+
+
    --print((MoveSystem:getName()))
    local myEntity1 = Concord.entity(myWorld)
-      :give('transforms', leftPupil.transforms.l)
+      :give('transforms', leftPupil.transforms)
       :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
---      :give('_globalTransform', leftPupil._globalTransform)
+--      :give('transforms._g', leftPupil.transforms._g)
 
       :give('pupil')
 
    local myEntity1 = Concord.entity(myWorld)
-      :give('transforms', rightPupil.transforms.l)
+      :give('transforms', rightPupil.transforms)
       :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
 --      :give('pupil')
 
    local myEntity1 = Concord.entity(myWorld)
-      :give('transforms', worst.transforms.l)
+      :give('transforms', worst.transforms)
       :give('drawable')
 
- 
+
 
 end
 

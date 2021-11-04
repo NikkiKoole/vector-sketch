@@ -24,7 +24,7 @@ end
 function evenlySpreadPath(result, path, index, running, spacing)
    local here = path[index]
    if index == #path then return end
-   
+
    local nextIndex = index+1
    local there = path[nextIndex]
    local d = getDistance(here[1], here[2], there[1], there[2])
@@ -42,29 +42,29 @@ function evenlySpreadPath(result, path, index, running, spacing)
          --end
          --running = d
       end
-      
+
       while running <= d do
 
          local x = lerp(here[1], there[1], running/d)
          local y = lerp(here[2], there[2], running/d)
          table.insert(result, {x,y, {1,0,1}})
-         
+
          running = running + spacing
       end
-      
+
       if running >= d then
          running = running - d
          return evenlySpreadPath(result, path, index+1, running, spacing)
       end
    end
-   
+
 
 end
 
 function evenlySpreadPath(result, path, index, running, spacing)
    local here = path[index]
    if index == #path then return end
-   
+
    local nextIndex = index+1
    local there = path[nextIndex]
    local d = getDistance(here[1], here[2], there[1], there[2])
@@ -82,22 +82,22 @@ function evenlySpreadPath(result, path, index, running, spacing)
          --end
          --running = d
       end
-      
+
       while running <= d do
 
          local x = lerp(here[1], there[1], running/d)
          local y = lerp(here[2], there[2], running/d)
          table.insert(result, {x,y, {1,0,1}})
-         
+
          running = running + spacing
       end
-      
+
       if running >= d then
          running = running - d
          return evenlySpreadPath(result, path, index+1, running, spacing)
       end
    end
-   
+
 
 end
 
@@ -127,7 +127,7 @@ function GetSplinePos(tab, percent, tension)		--returns the position at 'percent
    if(tab and (#tab >= 4)) then
       local pos = (((#tab)/2) - 1) * percent
       local lowpnt, percent_2 = math.modf(pos)
-      
+
       local i = (1+lowpnt*2)
       local p1x = tab[i]
       local p1y = tab[i+1]
@@ -152,7 +152,7 @@ function GetSplinePos(tab, percent, tension)		--returns the position at 'percent
          t2x =  (1.0 - tension) * (p3x - p1x)
          t2y =  (1.0 - tension) * (p3y - p1y)
       end
-      
+
       local s = percent_2
       local s2 = s*s
       local s3 = s*s*s
@@ -162,7 +162,7 @@ function GetSplinePos(tab, percent, tension)		--returns the position at 'percent
       local h4 = s3 - s2
       local px = (h1*p1x) + (h2*p2x) + (h3*t1x) + (h4*t2x)
       local py = (h1*p1y) + (h2*p2y) + (h3*t1y) + (h4*t2y)
-      
+
       return px, py
    end
 end
@@ -183,7 +183,7 @@ end
 --       local lengthBetween = totalLength / spacing
 --       local output = {}
 
---       local runningTotal = 0 
+--       local runningTotal = 0
 --       local runningPart = 0
 
 
@@ -241,7 +241,7 @@ end
 --       love.graphics.setColor(1,1,1)
 --       local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
 
---       love.graphics.draw(mesh, currentNode._parent._globalTransform)
+--       love.graphics.draw(mesh, currentNode._parent.transforms._g)
 
 --       love.graphics.setColor(1,0,0)
 --       love.graphics.setLineWidth(1)
@@ -259,7 +259,7 @@ end
 --          local there = currentNode.points[thereIndex]
 
 
---          function addPoints(container, here, there) 
+--          function addPoints(container, here, there)
 --             --local there = currentNode.points[thereIndex]
 --             local angle, distance = getAngleAndDistance(there[1],there[2], here[1], here[2])
 --             local perpAngle = angle - math.pi/2
@@ -269,7 +269,7 @@ end
 --             while j < distance do
 --                local xx = here[1] +  (j * math.cos(angle))
 --                local yy = here[2] +  (j * math.sin(angle))
---                local offset = 25 * math.random() 
+--                local offset = 25 * math.random()
 --                xx = xx + math.cos(perpAngle) * offset
 --                yy = yy + math.sin(perpAngle) * offset
 --                table.insert(container, {xx, yy, 3})
@@ -283,7 +283,7 @@ end
 
 --             local next = there
 --             local afterIndex = (thereIndex+1) > #currentNode.points and 1 or  (thereIndex+1)
---             local after = currentNode.points[afterIndex] 
+--             local after = currentNode.points[afterIndex]
 --             local angle, distance = getAngleAndDistance(after[1],after[2], next[1], next[2])
 --             local perpAngle = angle - math.pi/2
 --             --print(i, thereIndex, afterIndex)
@@ -291,7 +291,7 @@ end
 
 --             local xx = there[1]
 --             local yy = there[2]
---             local offset = 5 --12.5 * math.random() 
+--             local offset = 5 --12.5 * math.random()
 --             xx = xx + math.cos(perpAngle) * offset
 --             yy = yy + math.sin(perpAngle) * offset
 

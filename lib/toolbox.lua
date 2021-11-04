@@ -250,8 +250,8 @@ function meshAll3d(root) -- this needs to be done recursive
          local shape3d = generate3dShapeFrom2d(verts, i*0.00001)
          if #shape3d > 0 then
 
-            local pt = child._parent._globalTransform
-            --print(child._parent._globalTransform)
+            local pt = child._parent.transforms._g
+            --print(child._parent.transforms._g)
             local m = G4d.Model(shape3d, nil, {0,0,0}, nil,nil, pt)
             m:set_shader_data('color',  root.children[i].color)
             --m:makeNormals()
@@ -287,7 +287,7 @@ function handleChild3d(shape, t)
          --shape.m3d:draw2(shader )
          --print('yo shape:', shape)
 
-         localX, localY = shape._parent._globalTransform:transformPoint( 0, 0)
+         localX, localY = shape._parent.transforms._g:transformPoint( 0, 0)
          shape.m3d:move(localX, localY)
          shape.m3d:draw()
          if shape.m3dSides then
@@ -313,12 +313,12 @@ function renderThings3d(root)
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
-      pg = root._parent._globalTransform
+      pg = root._parent.transforms._g
    end
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
 
 
-   root._globalTransform = pg and (pg * root._localTransform) or root._localTransform
+   root.transforms._g = pg and (pg * root._localTransform) or root._localTransform
 
    for i = 1, #root.children do
       local shape = root.children[i]

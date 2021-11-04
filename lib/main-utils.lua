@@ -242,11 +242,11 @@ end
 function isMouseInMesh(mx, my, body, mesh)
    if mesh and body then
       local count = mesh:getVertexCount()
-      if body._globalTransform then
+      if body.transforms._g then
 
 
 
-      local px,py = body._globalTransform:inverseTransformPoint(mx, my)
+      local px,py = body.transforms._g:inverseTransformPoint(mx, my)
       for i = 1, count, 3 do
          if i+2 <= count then
             if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
@@ -345,7 +345,7 @@ function renderNormallyOrOptimized(shape)
 	 setTransforms(shape)
 	 for i=1, #shape.optimizedBatchMesh do
 	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
-	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent._globalTransform *  shape._localTransform)
+	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent.transforms._g *  shape.transforms._l)
             if renderCount then
                renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
             end
@@ -380,14 +380,14 @@ function handleChild(shape,parallax)
       if shape.hole then
 	 love.graphics.stencil(
 	 function()
-	    love.graphics.draw(mesh, shape._parent._globalTransform )
+	    love.graphics.draw(mesh, shape._parent.transforms._g )
 	 end, "replace", parentIndex, true)
 
       end
       if shape.mask then
          love.graphics.stencil(
 	 function()
-	    love.graphics.draw(mesh, shape._parent._globalTransform )
+	    love.graphics.draw(mesh, shape._parent.transforms._g )
 	 end, "replace", 255, true)
       end
 
@@ -433,7 +433,7 @@ function handleChild(shape,parallax)
                --print('there are some generatedMeshes here, are these rubberhose legs?')
          for i =1, #shape.generatedMeshes do
             love.graphics.setColor(shape.generatedMeshes[i].color)
-            love.graphics.draw(shape.generatedMeshes[i].mesh, shape._globalTransform )
+            love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
          end
       end
 
@@ -456,7 +456,7 @@ function handleChild(shape,parallax)
                --print('there are some generatedMeshes here, are these rubberhose legs?')
          for i =1, #shape.generatedMeshes do
             love.graphics.setColor(shape.generatedMeshes[i].color)
-            love.graphics.draw(shape.generatedMeshes[i].mesh, shape._globalTransform )
+            love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
          end
       end
       end
@@ -473,11 +473,11 @@ function handleChild(shape,parallax)
       if (shape.mesh and not shape.mask) then
 
 	 love.graphics.setColor(shape.color)
-         love.graphics.draw(shape.mesh, shape._parent._globalTransform )
+         love.graphics.draw(shape.mesh, shape._parent.transforms._g )
 
          if (shape.borderMesh) then
             love.graphics.setColor(0,0,0)
-            love.graphics.draw(shape.borderMesh, shape._parent._globalTransform )
+            love.graphics.draw(shape.borderMesh, shape._parent.transforms._g )
          end
 
 
@@ -488,7 +488,7 @@ function handleChild(shape,parallax)
             local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
             love.graphics.setColor(shape.color[1]-.2,shape.color[2]-.2,shape.color[3]-.2,shape.color[4])
             love.graphics.setColor(1,1,1)
-            love.graphics.draw(mesh, shape._parent._globalTransform )
+            love.graphics.draw(mesh, shape._parent.transforms._g )
          end
 
 
@@ -499,12 +499,12 @@ function handleChild(shape,parallax)
       if (editing and #editing > 0) then
 	 local editingMesh = makeMeshFromVertices(editing)
 	 love.graphics.setColor(shape.color)
-	 love.graphics.draw(editingMesh,  shape._parent._globalTransform )
+	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
       end
       if currentNode.border then
          local borderMesh = makeBorderMesh(currentNode)
 	 love.graphics.setColor(0,0,0)
-         love.graphics.draw(borderMesh,  shape._parent._globalTransform )
+         love.graphics.draw(borderMesh,  shape._parent.transforms._g )
          --print('need to mesh the direct one too')
       end
 

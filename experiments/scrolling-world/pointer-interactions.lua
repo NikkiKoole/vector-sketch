@@ -67,30 +67,30 @@ function drawBBoxAroundItems(layer, parallaxData)
 --                --               print('work')
 --                if c.children[j].pressed then
 --                   local mx, my = getPointerPosition(c.children[j].pressed.id)
-                  
+
 --                   local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(mx,my, c,c.children[j], c.p)
 
 
 
-                  
+
 -- --                  local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
 --                   --print(tlx, tly, brx, bry)
 --                   love.graphics.setColor(1,1,1,.5)
-                  
---                   love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
-                  
---                end
-               
---             end
-            
---          end
-         
---       end
-      
 
-      if c.bbox and c._localTransform and c.depth ~= nil then
-         
-         
+--                   love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
+
+--                end
+
+--             end
+
+--          end
+
+--       end
+
+
+      if c.bbox and c.transforms._l and c.depth ~= nil then
+
+
          if c.pressed then
             local mx, my = getPointerPosition(c.pressed.id)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
@@ -105,7 +105,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
 
 	    love.graphics.setColor(1,1,1,1)
-	    local px, py = c._globalTransform:transformPoint( c.transforms.l[6], c.transforms.l[7])
+	    local px, py = c.transforms._g:transformPoint( c.transforms.l[6], c.transforms.l[7])
 
             local camData = createCamData(c, parallaxData)
 	    local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
@@ -118,7 +118,7 @@ function drawBBoxAroundItems(layer, parallaxData)
                for k = 1, #checkAgainst[j].metaTags do
                   local tag = checkAgainst[j].metaTags[k]
                   local pos = tag.points[1] -- there is just one point in this collection
-                  local kx, ky = checkAgainst[j]._globalTransform:transformPoint(pos[1], pos[2])
+                  local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
                   local camData = createCamData(checkAgainst[j], parallaxData)
                   local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
 		  love.graphics.setColor(1,1,1,.2)
@@ -173,7 +173,7 @@ function pointerPressed(x,y, id, layers)
 	 -- ok sometimes we might have nested childern too  ouch ouch
          -- this ihevayliy simplified here
          -- we dont really need this I think
-         
+
          -- if c.hasDraggableChildren then
          --     for k = 1, #c.children do
          --        if c.children[k].isDraggableChild then
@@ -183,15 +183,15 @@ function pointerPressed(x,y, id, layers)
 
          --              c.pressed = {dx=invx, dy=invy, id=id}
          --              itemPressed = c
-                      
+
          --           end
-                   
+
          --        end
-         --     end  
+         --     end
          --  end
-            
+
             --print(inspect(c.children[#c.children]))
-            
+
 	    --local mouseover, invx, invy, tlx, tly, brx, bry  = mouseIsOverItemChildBBox(x,y, c,c.children[#c.children-1], l.p)
 	    --Print(mouseover)
 	    --if mouseover then
@@ -204,7 +204,7 @@ function pointerPressed(x,y, id, layers)
 
 --	 end
 
-         if c.bbox and c._localTransform and c.depth and not itemPressed then
+         if c.bbox and c.transforms._l and c.depth and not itemPressed then
 
             local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c, l.p)
             if mouseover then
@@ -265,7 +265,7 @@ end
 function checkForItemMouseOver(x,y, layer, parallaxData)
    for i = 1, #layer.children do
       local c = layer.children[i]
-      if c.bbox and c._localTransform and c.depth then
+      if c.bbox and c.transforms._l and c.depth then
          local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, parallaxData)
          c.mouseOver = mouseover
       end
@@ -322,9 +322,9 @@ function pointerReleased(x,y, id, layers)
 
          --       end
          --    end
-            
+
          -- end
-         
+
          if c.pressed and c.pressed.id == id then
             c.pressed = nil
             -- todo this needs unsetting somewhere
@@ -385,15 +385,15 @@ function handlePressedItemsOnStage(dt, layers)
          --             p.transforms.l[2] = p.transforms.l[2] + (invy - p.pressed.dy)
          --             end
          --          end
-                  
+
          --       end
-               
+
          --    end
-            
+
          -- end
-         
-         
-         if c.bbox and c._localTransform and c.depth ~= nil then
+
+
+         if c.bbox and c.transforms._l and c.depth ~= nil then
             if c.pressed  then
 
 
@@ -413,15 +413,15 @@ function handlePressedItemsOnStage(dt, layers)
                        -- print(inspect(c.actorRef.leglength))
 
                      end
-                     
+
                   end
-                  
+
                   if c.wheelCircumference then
                      -- todo calculate the amount of rotating
 
                      local rotateStep = ( (invx - c.pressed.dx) )
-		     local rx, ry = c._globalTransform:transformPoint( rotateStep, 0)
-		     local rx2, ry2 = c._globalTransform:transformPoint( 0, 0)
+		     local rx, ry = c.transforms._g:transformPoint( rotateStep, 0)
+		     local rx2, ry2 = c.transforms._g:transformPoint( 0, 0)
 		     local rxdelta = rx - rx2
 
                      if math.abs(rotateStep) > 0.00001 then
@@ -467,16 +467,16 @@ function getScreenBBoxForItem(c, camData)
 
    -- todo allways create a new bbox to be sure
    -- local bbox = getBBoxRecursive(c)
-   -- local tlx, tly = c._globalTransform:inverseTransformPoint(bbox[1], bbox[2])
-   -- local brx, bry = c._globalTransform:inverseTransformPoint(bbox[3], bbox[4])
+   -- local tlx, tly = c.transforms._g:inverseTransformPoint(bbox[1], bbox[2])
+   -- local brx, bry = c.transforms._g:inverseTransformPoint(bbox[3], bbox[4])
 
    -- c.bbox = {tlx, tly, brx, bry }--bbox
 
 
 
-   local tx, ty = c._globalTransform:transformPoint(c.bbox[1],c.bbox[2])
+   local tx, ty = c.transforms._g:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
-   local bx, by = c._globalTransform:transformPoint(c.bbox[3],c.bbox[4])
+   local bx, by = c.transforms._g:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
 
    return tlx,tly,brx,bry
@@ -511,8 +511,8 @@ function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
    local camData = createCamData(child, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
-   local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
-   
+   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
+
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
 
@@ -521,7 +521,7 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
    local camData = createCamData(item, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
-   local invx, invy = item._globalTransform:inverseTransformPoint(wx, wy)
+   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end

@@ -489,7 +489,7 @@ function drawUIAroundGraphNodes(w,h)
          if imgbutton('change-perspective', ui.change, w-256, runningY).clicked then
             editingModeSub = 'change-perspective'
             local bbox = getBBoxOfChildren(currentNode.children)
-            local t = currentNode._globalTransform
+            local t = currentNode.transforms._g
             local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
             local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
             perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
@@ -519,7 +519,7 @@ function drawUIAroundGraphNodes(w,h)
          end
 
       end
-      
+
       if (editingMode == 'polyline') and currentNode and currentNode.type ~= 'meta'  then
          if imgbutton('polyline-palette', ui.palette,  w - 300, runningY).clicked then
             if editingModeSub == 'polyline-palette' then
@@ -681,7 +681,9 @@ function love.mousepressed(x,y, button)
 
    if currentNode then
       local points = currentNode and currentNode.points
-      local t = currentNode._parent._globalTransform
+      --local t = currentNode._parent.transforms._g
+      local t = currentNode._parent.transforms._g
+
       local px, py = t:inverseTransformPoint( x, y )
       local scale = root.transforms.l[4]
 
@@ -743,7 +745,7 @@ function love.mousereleased(x,y, button)
       if  (rectangleSelect.startP and rectangleSelect.endP) then
          childrenInRect = {}
          local parent = currentNode._parent or root
-         local t = not  currentNode._parent and  parent._localTransform or parent._globalTransform
+         local t = not  currentNode._parent and  parent.transforms._l or parent.transforms._g
          local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
          local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
          local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
@@ -764,7 +766,7 @@ function love.mousereleased(x,y, button)
    if (editingMode == 'rectangle-select') then
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
-         local t = not currentNode and  root._localTransform or root._globalTransform
+         local t = not currentNode and  root.transforms._l or root.transforms._g
          if t then
             local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
             local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
@@ -872,7 +874,7 @@ function love.mousemoved(x,y, dx, dy)
 
    if (editingMode == 'folder' and editingModeSub ==  'folder-move' and mouseState.hoveredSomething == false and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-         local ddx, ddy = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+         local ddx, ddy = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
          if snap then
             ddx = round2(ddx, 0)
             ddy = round2(ddy, 0)
@@ -884,7 +886,7 @@ function love.mousemoved(x,y, dx, dy)
 
    if (editingMode == 'folder' and editingModeSub ==  'folder-pan-pivot' and not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
-         local ddx, ddy = getLocalDelta(currentNode._globalTransform, dx, dy)
+         local ddx, ddy = getLocalDelta(currentNode.transforms._g, dx, dy)
          if snap then
             ddx = round2(ddx, 0)
             ddy = round2(ddy, 0)
@@ -897,7 +899,7 @@ function love.mousemoved(x,y, dx, dy)
 
    if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
       local points = currentNode and currentNode.points
-      local dx3, dy3 = getLocalDelta(currentNode._parent._globalTransform, dx, dy)
+      local dx3, dy3 = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
       if snap then
          dx3 = round2(dx3, 0)
          dy3 = round2(dy3, 0)
@@ -942,7 +944,7 @@ function love.mousemoved(x,y, dx, dy)
          local dragIndex = lastDraggedElement.index
          if dragIndex > 0 then
             local points = currentNode and currentNode.points
-            local t = currentNode._parent._globalTransform
+            local t = currentNode._parent.transforms._g
             local globalX, globalY = t:inverseTransformPoint( x, y )
 
             if (dragIndex <= #points) then
@@ -1139,19 +1141,19 @@ function love.wheelmoved(x,y)
       scrollviewOffset = scrollviewOffset + y*24
    else
       local scale = root.transforms.l[4]
-      local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
+      local ix1, iy1 = root.transforms._g:inverseTransformPoint(posx, posy)
       root.transforms.l[4] = scale *  ((y>0) and 1.1 or 0.9)
       root.transforms.l[5] = scale *  ((y>0) and 1.1 or 0.9)
 
       local tl = root.transforms.l
-      root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-      root._globalTransform = root._localTransform
+      root.transforms._l =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+      root.transforms._g = root.transforms._l
 
-      local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
+      local ix2, iy2 = root.transforms._g:inverseTransformPoint(posx, posy)
       local dx = ix1 - ix2
       local dy = iy1 - iy2
 
-      local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
+      local dx3, dy3 = getGlobalDelta(root.transforms._g, dx, dy)
       root.transforms.l[1] = root.transforms.l[1] - dx3
       root.transforms.l[2] = root.transforms.l[2] - dy3
    end
@@ -1305,7 +1307,7 @@ function love.load(arg)
                   type='meta',
                   color = {1,0,0, 0.8},
                   points = {{0,0}},
-                  
+
                },
             },
          },
@@ -1429,7 +1431,7 @@ function love.draw()
 	    local editing = makeVertices(currentlyHoveredUINode)
 	    if (editing and #editing > 0) then
 	       local editingMesh = makeMeshFromVertices(editing)
-	       love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent._globalTransform)
+	       love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent.transforms._g)
 	    end
 	 end
 
@@ -1437,16 +1439,17 @@ function love.draw()
 	 drawUIAroundGraphNodes(w,h)
 
 	 if currentNode then
-	    local t = root._localTransform
+	    --local t = root.transforms._l
+	    local t = root.transforms._l
 	    local x,y = t:transformPoint(0,0)
 	    love.graphics.setColor(1,1,1)
 	    love.graphics.line(x-5, y, x+5, y)
 	    love.graphics.line(x, y-5, x, y+5)
 	 end
 
-	 if currentNode and currentNode.folder and  currentNode._globalTransform then
+	 if currentNode and currentNode.folder and  currentNode.transforms._g then
 	    local t = currentNode.transforms.l
-	    local pivotX, pivotY = currentNode._globalTransform:transformPoint( t[6], t[7] )
+	    local pivotX, pivotY = currentNode.transforms._g:transformPoint( t[6], t[7] )
 	    love.graphics.setColor(0,0,0)
 	    love.graphics.circle("line", pivotX-1, pivotY, 10)
 	    love.graphics.setColor(1,1,1)
@@ -1457,7 +1460,7 @@ function love.draw()
 	    if currentNode.children then
 	       if (true) then
 		  local bbox = getBBoxOfChildren(currentNode.children)
-		  local t = currentNode._globalTransform
+		  local t = currentNode.transforms._g
 		  local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
 		  local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
 
@@ -1501,7 +1504,7 @@ function love.draw()
 						  currentNode.children[i].color[2],
 						  currentNode.children[i].color[3],0.3)
 			   love.graphics.draw(currentNode.children[i].perspectiveMesh,
-					      currentNode._globalTransform)
+					      currentNode.transforms._g)
 
 			end
 		     end
@@ -1540,9 +1543,9 @@ function love.draw()
 
 	 if editingMode == 'polyline' and currentNode and currentNode.points then
 	    local points =  currentNode and currentNode.points or {}
-	    local globalX, globalY = currentNode._parent._globalTransform:inverseTransformPoint( mx, my )
+	    local globalX, globalY = currentNode._parent.transforms._g:inverseTransformPoint( mx, my )
 	    local transformedPoints = {}
-	    local t = currentNode._parent._globalTransform
+	    local t = currentNode._parent.transforms._g
 	    for i=1, #points do
 	       local lx, ly = t:transformPoint( points[i][1], points[i][2] )
 	       table.insert(transformedPoints, {lx, ly})
@@ -1855,7 +1858,7 @@ function love.draw()
                      if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, 550).clicked  then
                         flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
                      end
-                     
+
                      if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, 550).clicked  then
                         flipGroup(currentNode, childrenInRectangleSelect, -1,1)
                      end
@@ -1863,13 +1866,13 @@ function love.draw()
 
 
                   end
-               
 
 
-                  
 
-                  
-                  
+
+
+
+
 
 		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
 		     lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }

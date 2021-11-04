@@ -16,10 +16,10 @@ require 'lib.main-utils'
 function elemIsAboveAnother(elem,  another)
    assert(another.children[1].points)
 
-   local px,py = elem._globalTransform:transformPoint(0,0)
+   local px,py = elem.transforms._g:transformPoint(0,0)
    local tlx, tly, brx, bry = getPointsBBox(another.children[1].points)
-   local tlx2, tly2 = another._globalTransform:transformPoint(tlx, tly)
-   local brx2, bry2 = another._globalTransform:transformPoint(brx, bry)
+   local tlx2, tly2 = another.transforms._g:transformPoint(tlx, tly)
+   local brx2, bry2 = another.transforms._g:transformPoint(brx, bry)
 
    if (px >= tlx2 and px < brx2) then
       if (py < bry2) then
@@ -34,14 +34,14 @@ end
 function moveNodeBetweenParentsAndPosition(node, newParent)
    -- this will keep the position intact
 
-   local x1,y1 = node._globalTransform:transformPoint(0,0)
+   local x1,y1 = node.transforms._g:transformPoint(0,0)
    removeNodeFrom(node, node._parent)
    addNodeInGroup(node, newParent)
    renderThings(newParent)
-   local x2,y2 = node._globalTransform:transformPoint(0,0)
+   local x2,y2 = node.transforms._g:transformPoint(0,0)
    local dx, dy = x1-x2, y1-y2
-   local x0,y0 = node._globalTransform:inverseTransformPoint(0,0)
-   local dx1, dy1 =  node._globalTransform:inverseTransformPoint(dx,dy)
+   local x0,y0 = node.transforms._g:inverseTransformPoint(0,0)
+   local dx1, dy1 =  node.transforms._g:inverseTransformPoint(dx,dy)
    node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
    node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
 
@@ -497,14 +497,16 @@ function love.draw()
 
 
    if renderInfoForElement ~= nil then
-      if renderInfoForElement._globalTransform then
+      if (renderInfoForElement.transforms) then
+      if renderInfoForElement.transforms._g then
          local str = getNamesForElementRecurive(renderInfoForElement, 0, "")
-         local px, py = renderInfoForElement._globalTransform:transformPoint(0,0)
+         local px, py = renderInfoForElement.transforms._g:transformPoint(0,0)
          love.graphics.print(str, px, 0)
          love.graphics.setColor(1,1,1)
          love.graphics.print(str, px+1, 0+1)
          love.graphics.setColor(1,0,0)
          love.graphics.circle("fill", px, py, 5)
+      end
       end
    end
 

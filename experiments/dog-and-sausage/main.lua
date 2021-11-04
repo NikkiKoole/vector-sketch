@@ -17,7 +17,7 @@ end
 
 function love.update(dt)
    flux.update(dt)
-   worst.transforms.l[3] = worst.transforms.l[3] + 0.01/dt
+   worst.transforms.l[3] = worst.transforms.l[3] + 0.001/dt
 end
 
 function love.draw()
@@ -27,29 +27,29 @@ function love.draw()
 end
 
 function love.mousemoved(x,y)
-   if (leftPupil._globalTransform) then
-      local lx, ly = leftPupil._globalTransform:inverseTransformPoint( x , y )
+   if (leftPupil.transforms._g) then
+      local lx, ly = leftPupil.transforms._g:inverseTransformPoint( x , y )
       local r = math.atan2 (ly, lx)
       local dx = 2 * math.cos(r)
       local dy = 2 * math.sin(r)
       local newScale = love.math.random() * 0.5 + 0.75
       flux.to(leftPupil.transforms.l, 1/(math.abs(dx) + math.abs(dy)), {[1]= leftPupil.startPos[1]+dx, [2]= leftPupil.startPos[2]+dy, [4]=newScale, [5]=newScale})
    end
-   if (rightPupil._globalTransform) then
-      local rx, ry = rightPupil._globalTransform:inverseTransformPoint( x , y )
+   if (rightPupil.transforms._g) then
+      local rx, ry = rightPupil.transforms._g:inverseTransformPoint( x , y )
       local r = math.atan2 (ry, rx)
       local dx = 3 * math.cos(r)
       local dy = 2 * math.sin(r)
       local newScale = love.math.random() * 0.5 + 0.75
       flux.to(rightPupil.transforms.l, 1/(math.abs(dx) + math.abs(dy)), {[1]= rightPupil.startPos[1]+dx, [2]= rightPupil.startPos[2]+dy, [4]=newScale, [5]=newScale})
    end
-   if (root._globalTransform) then
-      local rx, ry = root._globalTransform:inverseTransformPoint( x , y )
+   if (root.transforms._g) then
+      local rx, ry = root.transforms._g:inverseTransformPoint( x , y )
       worst.transforms.l[1] = rx
       worst.transforms.l[2] = ry
    end
-   if (snuit._globalTransform) then
-      local rx, ry = snuit._globalTransform:inverseTransformPoint( x , y )
+   if (snuit.transforms._g) then
+      local rx, ry = snuit.transforms._g:inverseTransformPoint( x , y )
       local distance = math.sqrt((rx *rx) + (ry * ry))
       local diff2 = mapInto(distance, 0, 150, 1.1, 1)
       local diff = mapInto(love.math.random(), 0, 1, -0.01, 0.01)

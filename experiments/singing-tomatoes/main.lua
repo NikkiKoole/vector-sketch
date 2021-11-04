@@ -91,20 +91,20 @@ function love.mousemoved(x,y)
    for i =1, #tomatoes do
       local body = tomatoes[i]
 
-      if body._globalTransform then
+      if body.transforms._g then
 
 	 local linkerOog = findNodeByName(tomatoes[i], 'linkeroog')
 	 local linkerPupil = findNodeByName(linkerOog, 'pupil')
 	 local linkerWenkbrauw = findNodeByName(linkerOog, 'wenkbrauw')
-	 if  (linkerWenkbrauw._globalTransform) then
-	    local lx, ly =  (body._globalTransform):inverseTransformPoint(x, y)
+	 if  (linkerWenkbrauw.transforms._g) then
+	    local lx, ly =  (body.transforms._g):inverseTransformPoint(x, y)
 	    local distance = math.sqrt((lx *lx) + (ly * ly))
 	    local r2 = mapInto(distance, 0, 100,  -.03, .03)
 	    linkerWenkbrauw.transforms.l[3] = r2
 	 end
 
-	 if (linkerPupil._globalTransform) then
-	    local lx, ly =  (linkerPupil._globalTransform):inverseTransformPoint(x, y)
+	 if (linkerPupil.transforms._g) then
+	    local lx, ly =  (linkerPupil.transforms._g):inverseTransformPoint(x, y)
 	    local r = math.atan2 (ly, lx)
 	    local distance = math.sqrt((lx *lx) + (ly * ly))
 	    if (distance > 2) then
@@ -118,14 +118,14 @@ function love.mousemoved(x,y)
 	 local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
 	 local rechterPupil = findNodeByName(rechterOog, 'pupil')
 	 local rechterWenkbrauw = findNodeByName(rechterOog, 'wenkbrauw')
-	 if  (rechterWenkbrauw._globalTransform) then
-	    local lx, ly =  (rechterWenkbrauw._globalTransform):inverseTransformPoint(x, y)
+	 if  (rechterWenkbrauw.transforms._g) then
+	    local lx, ly =  (rechterWenkbrauw.transforms._g):inverseTransformPoint(x, y)
 	    local distance = math.sqrt((lx *lx) + (ly * ly))
 	    local r2 = mapInto(distance, 0, 100,  .03, -.03)
 	    rechterWenkbrauw.transforms.l[3] = r2
 	 end
-	 if (rechterPupil._globalTransform) then
-	    local lx, ly =  (rechterPupil._globalTransform):inverseTransformPoint(x, y)
+	 if (rechterPupil.transforms._g) then
+	    local lx, ly =  (rechterPupil.transforms._g):inverseTransformPoint(x, y)
 	    local r = math.atan2 (ly, lx)
 	    local distance = math.sqrt((lx *lx) + (ly * ly))
 

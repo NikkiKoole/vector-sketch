@@ -1,3 +1,4 @@
+
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
@@ -16,18 +17,18 @@ function love.keypressed(key)
 
    if key == 'space' then
       root = root2
-      local x1,y1 = group._globalTransform:transformPoint(0,0)
+      local x1,y1 = group.transforms._g:transformPoint(0,0)
       removeNodeFrom(group, group._parent)
 
 
       addNodeInGroup(group, root2)
       renderThings(root)
       renderThings(root2)
-      local x2,y2 = group._globalTransform:transformPoint(0,0)
+      local x2,y2 = group.transforms._g:transformPoint(0,0)
       local dx, dy = x1-x2, y1-y2
 
-      local x0,y0 = group._globalTransform:inverseTransformPoint(0,0)
-      local dx1, dy1 =  group._globalTransform:inverseTransformPoint(dx,dy)
+      local x0,y0 = group.transforms._g:inverseTransformPoint(0,0)
+      local dx1, dy1 =  group.transforms._g:inverseTransformPoint(dx,dy)
       print (x0-dx1, y0-dy1)
       group.transforms.l[1] = group.transforms.l[1] - (x0-dx1)
       group.transforms.l[2] = group.transforms.l[2] - (y0-dy1)
@@ -57,7 +58,7 @@ function love.load()
    root2 = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},l={600,650,0,.25,.25,0,0}},
+      transforms =  {g={0,0,0,1,1,0,0},l={600,450,0,.25,.25,0,0}},
       children ={
 	 {
 	    folder = true,

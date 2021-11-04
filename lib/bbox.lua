@@ -42,8 +42,8 @@ function getBBoxRecursive(node)
 
          end
       end
-      local tlxg , tlyg = node._globalTransform:transformPoint(p2[1], p2[2])
-      local brxg , bryg = node._globalTransform:transformPoint(p2[3], p2[4])
+      local tlxg , tlyg = node.transforms._g:transformPoint(p2[1], p2[2])
+      local brxg , bryg = node.transforms._g:transformPoint(p2[3], p2[4])
 
       return {math.min(tlxg, p1[1]),
               math.min(tlyg, p1[2]),
