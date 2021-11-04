@@ -147,6 +147,7 @@ function love.mousepressed(x,y)
       local mesh = body.children[1].mesh
 
       if isMouseInMesh(x,y, body, mesh) then
+	 print('hit head')
 	 onHitHead(i)
       end
    end

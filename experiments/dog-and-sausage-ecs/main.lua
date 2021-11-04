@@ -21,7 +21,7 @@ Concord = require 'vendor.concord.init'
 -- Containers
 --local Components  = Concord.components
 
-Concord.component("drawable")
+Concord.component("mousefollowing")
 Concord.component("pupil")
 
 
@@ -43,7 +43,7 @@ Concord.component(
 )
 
 
-local MoveWithMouseSystem = Concord.system({pool = {'transforms', 'drawable'}})
+local MoveWithMouseSystem = Concord.system({pool = {'transforms', 'mousefollowing'}})
 function MoveWithMouseSystem:update(dt)
    local mx,my =love.mouse.getPosition()
 
@@ -76,7 +76,7 @@ function MovePupilToMouseSystem:update(dt)
 
 end
 function MovePupilToMouseSystem:pressed(x,y, elem)
-   print('movepupil ssytem reciving click', x,y)
+   print('movepupil sytem receiving click', x,y)
 --   print(inspect(elem))
 end
 
@@ -162,10 +162,10 @@ function love.load()
 --   print(inspect(worst.transforms))
    leftEye = findNodeByName(root, 'left eye')
    leftPupil = findNodeByName(leftEye, 'pupil')
-   leftPupil.startPos = {leftPupil.transforms.l[1], leftPupil.transforms.l[2]}
+   --leftPupil.startPos = {leftPupil.transforms.l[1], leftPupil.transforms.l[2]}
    rightEye = findNodeByName(root, 'right eye')
    rightPupil = findNodeByName(rightEye, 'pupil')
-   rightPupil.startPos = {rightPupil.transforms.l[1], rightPupil.transforms.l[2]}
+   --rightPupil.startPos = {rightPupil.transforms.l[1], rightPupil.transforms.l[2]}
 
    snuit = findNodeByName(root, 'snuit')
 
@@ -182,7 +182,7 @@ function love.load()
 
    Concord.entity(myWorld)
       :give('transforms', worst.transforms)
-      :give('drawable')
+      :give('mousefollowing')
 
 
 
