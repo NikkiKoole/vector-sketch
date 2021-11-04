@@ -46,11 +46,13 @@ Concord.component(
 local MoveWithMouseSystem = Concord.system({pool = {'transforms', 'drawable'}})
 function MoveWithMouseSystem:update(dt)
    local mx,my =love.mouse.getPosition()
+
    if root.transforms._g then
       local rx, ry = root.transforms._g:inverseTransformPoint( mx , my )
       for _, e in ipairs(self.pool) do
-         e.transforms.l[1] = rx
-         e.transforms.l[2] = ry
+	 print(inspect(e.transforms))
+         e.transforms.transforms.l[1] = rx
+         e.transforms.transforms.l[2] = ry
       end
    end
 end
@@ -58,28 +60,28 @@ end
 local MovePupilToMouseSystem = Concord.system({pool = {'transforms', 'pupil', 'startPos'}})
 function MovePupilToMouseSystem:update(dt)
    local mx,my =love.mouse.getPosition()
-
+   print('yohoo')
    for _, e in ipairs(self.pool) do
                --setTransforms(e)
 
-      if (e.transforms._g) then
-         print('e.transforms._g',inspect(e.transforms._g))
+      if (e.transforms.transforms._g) then
+         --print('e.transforms._g',inspect(e.transforms._g))
 
          --print('jowes',mx,my)
-         local lx, ly = e.transforms._g:inverseTransformPoint( mx , my )
+         local lx, ly = e.transforms.transforms._g:inverseTransformPoint( mx , my )
          local r = math.atan2(ly, lx) --* 2*math.pi -math.pi/2
-         --print(r)
+         print(r)
 --         print(r, 'pos',mx,my, 'brok')
 
          local dx = 2 * math.cos(r)
          local dy = 2 * math.sin(r)
          local newScale = love.math.random() * 0.5 + 0.75
-         e.transforms.l[1]= e.startPos.x+dx
-         e.transforms.l[2]= e.startPos.y+dy
+         e.transforms.transforms.l[1]= e.startPos.x+dx
+         e.transforms.transforms.l[2]= e.startPos.y+dy
          --e.transforms.l[4] = newScale
          --e.transforms.l[5] = newScale
-      else
-         setTransforms(e)
+      --else
+        -- setTransforms(e)
       end
    end
 
@@ -171,7 +173,7 @@ function love.load()
    root = {
       folder = true,
       name = 'root',
-      transforms =  {g={0,0,0,1,1,0,0},l={1024/2,768/2,0,4,4,0,0}},
+      transforms =  {l={1024/2,768/2,0,4,4,0,0}},
 
    }
 
@@ -199,16 +201,16 @@ function love.load()
 
 
    --print((MoveSystem:getName()))
-   local myEntity1 = Concord.entity(myWorld)
-      :give('transforms', leftPupil.transforms)
-      :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
---      :give('transforms._g', leftPupil.transforms._g)
+ --   local myEntity1 = Concord.entity(myWorld)
+ --      :give('transforms', leftPupil)
+ --      :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
+-- --      :give('transforms._g', leftPupil.transforms._g)
 
-      :give('pupil')
+  --     :give('pupil')
 
-   local myEntity1 = Concord.entity(myWorld)
-      :give('transforms', rightPupil.transforms)
-      :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
+  -- local myEntity1 = Concord.entity(myWorld)
+  --    :give('transforms', rightPupil.transforms)
+  --    :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
 --      :give('pupil')
 
    local myEntity1 = Concord.entity(myWorld)
