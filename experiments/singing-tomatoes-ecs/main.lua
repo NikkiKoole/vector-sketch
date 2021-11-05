@@ -32,18 +32,28 @@ Concord.component(
       c.y =y
    end
 )
+
 Concord.component(
-   "mesh",
-   function(c,m)
-      c.mesh = m
-   end
-)
-Concord.component(
-   "body",
+   "bodyFirstChildMeshHit",
    function(c,b)
       c.body = b
    end
 )
+Concord.component(
+   "onHitFunc",
+   function(c,f)
+      c.hitFunc = f
+   end
+)
+Concord.component(
+   "blink2Eyes",
+   function(c, left, right)
+      c.left = left
+      c.right = right
+   end
+)
+
+
 
 
 local MovePupilToMouseSystem = Concord.system({pool = {'transforms', 'pupil', 'startPos'}})
@@ -72,44 +82,33 @@ function MovePupilToMouseSystem:pressed(x,y, elem)
    end
 end
 
-local HitMeshSystem = Concord.system({pool = {'mesh', 'body'}})
+local HitMeshSystem = Concord.system({pool = {'bodyFirstChildMeshHit', 'onHitFunc'}})
 function HitMeshSystem:pressed(x,y, elem)
-   --print('hit mesh', x,y,elem)
    for _, e in ipairs(self.pool) do
-      --print('test', inspect(e))
-      --print('hi hello')
-
---      print(inspect(e.mesh))
-      if isMouseInMesh(x,y, e.body.body, e.mesh.mesh) then
-         --print('sane? ', inspect(e.body.body.children))
-         local firstMouth = findNodeByName(e.body.body, 'mond')
-
-         for i = 1, #e.body.body.children do
-            print(e.body.body.children[i].name)
-            if e.body.body.children[i].children then
-            for j = 1, #e.body.body.children[i].children[j] do
-               print(e.body.body.children[i].children[j].name)
-
-            end
-            end
-         end
-         
-         --print('yooowew', firstMouth~=nil, firstMouth)
-
-
-         print('hit head 1231231',e.body.body.name)
-	 onHitHeadElem(e.body.body)
+      local body = e.bodyFirstChildMeshHit.body
+      if isMouseInMesh(x,y, body, body.children[1].mesh) then
+	 e.onHitFunc.hitFunc(body)
       end
+   end
+end
 
-      --local transforms = e.transforms.transforms
-      --transforms.l[4] = newScale
-      --transforms.l[5] = newScale
+local BlinkEyesSystem = Concord.system({pool = {'blink2Eyes'}})
+function BlinkEyesSystem:update(dt)
+   for _, e in ipairs(self.pool) do
+      local linkerPupil = e.blink2Eyes.left
+      local rechterPupil = e.blink2Eyes.right
+      if love.math.random() < 0.01 then
+	 flux.to(linkerPupil.transforms.l, 0.1, {[5]=0.01})
+	    :after(linkerPupil.transforms.l, 0.1, {[5]=1}):delay(0.1)
+	 flux.to(rechterPupil.transforms.l, 0.1, {[5]=0.01})
+	    :after(rechterPupil.transforms.l, 0.1, {[5]=1}):delay(0.1)
+      end
    end
 end
 
 
 
-myWorld:addSystems(MovePupilToMouseSystem, HitMeshSystem)
+myWorld:addSystems(MovePupilToMouseSystem, HitMeshSystem, BlinkEyesSystem)
 
 
 
@@ -117,89 +116,9 @@ function love.keypressed(key)
    if key == "escape" then love.event.quit() end
 end
 
-
-function blinkEyes(index)
-   local linkerOog = findNodeByName(tomatoes[index], 'linkeroog')
-   local rechterOog = findNodeByName(tomatoes[index], 'rechteroog')
-   local linkerPupil = findNodeByName(linkerOog, 'pupil')
-   local rechterPupil = findNodeByName(rechterOog, 'pupil')
-
-   flux.to(linkerPupil.transforms.l, 0.1, {[5]=0.01})
-      :after(linkerPupil.transforms.l, 0.1, {[5]=1}):delay(0.1)
-   flux.to(rechterPupil.transforms.l, 0.1, {[5]=0.01})
-      :after(rechterPupil.transforms.l, 0.1, {[5]=1}):delay(0.1)
-end
-
-function growKroontje(index)
-   local kroontje = findNodeByName(tomatoes[index], 'kroontje')
-   flux.to(kroontje.transforms.l, 0.1, {[5]=1.2, [4]=1.2})
-      :after(kroontje.transforms.l, 0.1, {[5]=1, [4]=1}):delay(0.1)
-end
-
-function onHitHeadElem(elem)
-   assert(elem)
-   local firstMouth = findNodeByName(elem, 'mond')
-   --print('yo', firstMouth, inspect(elem))
-   if firstMouth then
-   firstMouth.needsLerp = true
-   local tween = flux.to(firstMouth, 0.1, {lerpValue=1})
-      :after(firstMouth, 0.1, {lerpValue=0}):delay(0.1)
-      :oncomplete(function() firstMouth.needsLerp = false end)
-   end
-end
-
-function onHitHeadIndex(index)
-   print(tomatoes[index])
-   local firstMouth = findNodeByName(tomatoes[index], 'mond')
-   firstMouth.needsLerp = true
-   local tween = flux.to(firstMouth, 0.1, {lerpValue=1})
-      :after(firstMouth, 0.1, {lerpValue=0}):delay(0.1)
-      :oncomplete(function() firstMouth.needsLerp = false end)
-
-   blinkEyes(index)
-   growKroontje(index)
-
-end
-
-function onHitXylofoonChild(index)
-   local child = xylofoon.children[index]
-   child.needsLerp = true
-
-   local tween = flux.to(child.transforms.l, 0.05, {[4]=1.1, [5]=1.1})
-      :after(child.transforms.l, 0.2, {[4]=1, [5]=1}):delay(0.05)
-      :oncomplete(function() child.needsLerp = false end)
-end
-
-
-
 function love.update(dt)
-
    myWorld:emit("update", dt)
-
-   
    flux.update(dt)
-
-   if love.math.random() < 0.05 then
-      local index = math.floor((love.math.random() * #tomatoes + 1))
-      local firstMouth = findNodeByName(tomatoes[index], 'mond')
-      if firstMouth.needsLerp == false or firstMouth.needsLerp == nil then
-	 firstMouth.needsLerp = true
-	 local d1 = 0.1 + love.math.random()*0.2
-	 local d2 = 0.1 + love.math.random()*0.2
-	 local close = love.math.random() * 0.6 + 0.1
-	 local open = love.math.random() * 0.6 + 0.1
-
-	 local tween = flux.to(firstMouth, close, {lerpValue=0.7}):delay(d1)
-	    :after(firstMouth, open, {lerpValue=0.3}):delay(d2)
-
-	    :oncomplete(function() firstMouth.needsLerp = false end)
-      end
-   end
-
-   if (love.math.random() < 0.1) then
-      local index = math.floor((love.math.random() * #tomatoes + 1))
-      blinkEyes(index)
-   end
 end
 
 function love.draw()
@@ -207,91 +126,105 @@ function love.draw()
    renderThings(root)
 end
 
-
-
-function love.mousemoved(x,y)
-   
-   for i =1, #tomatoes do
-      local body = tomatoes[i]
-
-   --    if false and body.transforms._g then
-
-   --       local linkerOog = findNodeByName(tomatoes[i], 'linkeroog')
-   --       local linkerPupil = findNodeByName(linkerOog, 'pupil')
-   --       local linkerWenkbrauw = findNodeByName(linkerOog, 'wenkbrauw')
-   --       if  (linkerWenkbrauw.transforms._g) then
-   --          local lx, ly =  (body.transforms._g):inverseTransformPoint(x, y)
-   --          local distance = math.sqrt((lx *lx) + (ly * ly))
-   --          local r2 = mapInto(distance, 0, 100,  -.03, .03)
-   --          linkerWenkbrauw.transforms.l[3] = r2
-   --       end
-
-   --       if (linkerPupil.transforms._g) then
-   --          local lx, ly =  (linkerPupil.transforms._g):inverseTransformPoint(x, y)
-   --          local r = math.atan2 (ly, lx)
-   --          local distance = math.sqrt((lx *lx) + (ly * ly))
-   --          if (distance > 2) then
-   --             local radius = math.min(2, distance)
-   --             local dx = radius * math.cos(r)
-   --             local dy = radius * math.sin(r)
-   --             linkerPupil.transforms.l[1] = startPos[i].leftEye[1]+dx
-   --             linkerPupil.transforms.l[2] = startPos[i].leftEye[2]+dy
-   --          end
-   --       end
-   --       local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
-   --       local rechterPupil = findNodeByName(rechterOog, 'pupil')
-   --       local rechterWenkbrauw = findNodeByName(rechterOog, 'wenkbrauw')
-   --       if  (rechterWenkbrauw.transforms._g) then
-   --          local lx, ly =  (rechterWenkbrauw.transforms._g):inverseTransformPoint(x, y)
-   --          local distance = math.sqrt((lx *lx) + (ly * ly))
-   --          local r2 = mapInto(distance, 0, 100,  .03, -.03)
-   --          rechterWenkbrauw.transforms.l[3] = r2
-   --       end
-   --       if (rechterPupil.transforms._g) then
-   --          local lx, ly =  (rechterPupil.transforms._g):inverseTransformPoint(x, y)
-   --          local r = math.atan2 (ly, lx)
-   --          local distance = math.sqrt((lx *lx) + (ly * ly))
-
-   --          if distance > 2 then
-   --             local radius = math.min(3, distance)
-   --             local dx = radius * math.cos(r)
-   --             local dy = radius * math.sin(r)
-   --             rechterPupil.transforms.l[1] = startPos[i].rightEye[1]+dx
-   --             rechterPupil.transforms.l[2] = startPos[i].rightEye[2]+dy
-   --          end
-   --       end
-   --    end
-   end
-end
-
 function love.mousepressed(x,y)
-   
-   -- for i = 1, #tomatoes do
-   --    local body =  findNodeByName(tomatoes[i], 'lichaam')
-   --    local mesh = body.children[1].mesh
+   myWorld:emit('pressed',x,y)
+end
 
-   --    if isMouseInMesh(x,y, body, mesh) then
-   --       print('hit head')
-   --       onHitHead(i)
-   --    end
-   -- end
-   for i= 3, #xylofoon.children do
-      local body = xylofoon.children[i]
-      local mesh = body.children[1].mesh
-      if isMouseInMesh(x,y, body, mesh) then
-	 --print('hit', body.name)
-	 onHitXylofoonChild(i)
-      end
+
+
+
+
+function getPitch(semitone, octave)
+   local plusoctave = 0
+   if semitone > 11 then
+      plusoctave = 1
+      semitone = semitone % 12
    end
 
-   myWorld:emit('pressed',x,y)
+   local freqs = {261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25}
+   local n = mapInto(freqs[semitone+1], 261.63, 523.25, 0, 1)
+   local o = octave + plusoctave
+
+
+   if o == -5 then return (0.0625 -(0.03125 -  n/32)) end
+   if o == -4 then return (0.125 -(0.0625 -  n/16)) end
+   if o == -3 then return (0.25 -(0.125 -  n/8)) end
+   if o == -2 then return (0.5 -(0.25 -  n/4)) end
+   if o == -1 then return(1 -(0.5 -  n/2)) end
+   if o == 0 then return(1 + n) end
+   if o == 1 then return(2 + 2*n) end
+   if o == 2 then return(4 + 4*n) end
+   if o == 3 then return(8 + 8*n) end
+   if o == 4 then return(16 + 16*n) end
+   if o == 5 then return(32 + 32*n) end
 
 end
 
+
+local function onHitHead(body)
+   local index = love.math.random() < 0.5 and 1 or 2
+   local s = voiceSamples[index]:clone()
+
+   local semitones = {
+      ['tomaat 1'] = 0,
+      ['tomaat 2'] = 2,
+      ['tomaat 3'] = 4,
+      ['tomaat 4'] = 6,
+      ['tomaat 5'] = 8,
+      ['tomaat 6'] = 10
+   }
+
+   local pitch = getPitch(semitones[body._parent.name], -2)
+   s:setPitch(pitch + love.math.random()*.02 -.01)
+   love.audio.play(s)
+
+   local firstMouth = findNodeByName(body._parent, 'mond')
+   firstMouth.needsLerp = true
+   flux.to(firstMouth, 0.5, {lerpValue=1})
+      :after(firstMouth, 0.5, {lerpValue=0}):delay(0.5)
+      :oncomplete(function() firstMouth.needsLerp = false end)
+
+   local kroontje = findNodeByName(body._parent, 'kroontje')
+   flux.to(kroontje.transforms.l, 0.1, {[5]=1.2, [4]=1.2})
+      :after(kroontje.transforms.l, 0.1, {[5]=1, [4]=1}):delay(0.1)
+end
+
+
+local function onHitXylo(body)
+
+   local semitones = {
+      rood = 0,
+      oranje = 3,
+      geel = 5,
+      groen = 7,
+      blauw = 9,
+      roze = 11
+   }
+
+   local s = glockSample:clone()
+   local pitch = getPitch(semitones[body.name], 0)
+   s:setPitch(pitch + love.math.random()*.02 -.01)
+   love.audio.play(s)
+
+   body.needsLerp = true
+
+      local tween = flux.to(body.transforms.l, 0.05, {[4]=1.1, [5]=1.1})
+	 :after(body.transforms.l, 0.2, {[4]=1, [5]=1}):delay(0.05)
+	 :oncomplete(function() body.needsLerp = false end)
+   end
 
 function love.load()
    love.window.setTitle( 'ecs tomatoes')
    love.window.setMode(1024, 768, {resizable=true, vsync=true, minwidth=400, minheight=300, msaa=2, highdpi=true})
+
+   samples = {}
+   glockSample =   love.audio.newSource(love.sound.newSoundData( 'assets/glock1.wav' ), 'static')
+   voiceSamples = {}
+
+   for i = 1, 2 do
+      local data = love.sound.newSoundData( 'assets/voice'..i..'.wav' )
+      table.insert(voiceSamples, love.audio.newSource(data, 'static'))
+   end
 
    root = {
       folder = true,
@@ -323,27 +256,12 @@ function love.load()
       local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
       local linkerPupil = findNodeByName(linkerOog, 'pupil')
       local rechterPupil = findNodeByName(rechterOog, 'pupil')
-      
-      --local linkerWenkbrauw = findNodeByName(linkerOog, 'wenkbrauw')
-      --local rechterWenkbrauw = findNodeByName(rechterOog, 'wenkbrauw')
-      --print(inspect(linkerWenkbrauw), inspect(rechterWenkbrauw))
---      startPos[i] = {leftEye = {linkerPupil.transforms.l[1], linkerPupil.transforms.l[2]},
---		     rightEye = {rechterPupil.transforms.l[1], rechterPupil.transforms.l[2]}}
-
-
-      local body =  findNodeByName(tomatoes[i], 'lichaam')
-
-      --meshAll(body)
-
-      local mesh = body.children[1].mesh
-      --print('body >> ', inspect(body))
-      --print('mesh >> ', inspect(mesh))
 
       Concord.entity(myWorld)
-         :give('mesh', mesh)
-         :give('body', body)
-      
-      
+         :give('bodyFirstChildMeshHit',  findNodeByName(tomatoes[i], 'lichaam'))
+	 :give('onHitFunc', onHitHead)
+
+
       Concord.entity(myWorld)
          :give('transforms', linkerPupil.transforms)
          :give('startPos', linkerPupil.transforms.l[1], linkerPupil.transforms.l[2])
@@ -353,10 +271,15 @@ function love.load()
          :give('transforms', rechterPupil.transforms)
          :give('startPos', rechterPupil.transforms.l[1], rechterPupil.transforms.l[2])
          :give('pupil')
-      
 
+      Concord.entity(myWorld)
+	 :give('blink2Eyes', linkerPupil, rechterPupil)
+   end
 
-      
+   for i= 3, #xylofoon.children do
+      Concord.entity(myWorld)
+         :give('bodyFirstChildMeshHit',   xylofoon.children[i])
+	 :give('onHitFunc', onHitXylo)
    end
 
    parentize(root)
