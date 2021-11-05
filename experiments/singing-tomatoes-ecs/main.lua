@@ -81,9 +81,20 @@ function HitMeshSystem:pressed(x,y, elem)
 
 --      print(inspect(e.mesh))
       if isMouseInMesh(x,y, e.body.body, e.mesh.mesh) then
-
+         --print('sane? ', inspect(e.body.body.children))
          local firstMouth = findNodeByName(e.body.body, 'mond')
-         print('yooowew', firstMouth~=nil, firstMouth)
+
+         for i = 1, #e.body.body.children do
+            print(e.body.body.children[i].name)
+            if e.body.body.children[i].children then
+            for j = 1, #e.body.body.children[i].children[j] do
+               print(e.body.body.children[i].children[j].name)
+
+            end
+            end
+         end
+         
+         --print('yooowew', firstMouth~=nil, firstMouth)
 
 
          print('hit head 1231231',e.body.body.name)
