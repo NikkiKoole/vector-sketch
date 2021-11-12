@@ -207,7 +207,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=5,
             depth=depthMinMax,
       })
 
@@ -221,7 +221,7 @@ function scene.load()
                  'plant13','bunnyhead'
             }),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=5,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')

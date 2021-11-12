@@ -3,16 +3,38 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsW
       local child = parallaxData.layer.children[i]
 
       if child.groundTileIndex ~= nil then
-	 --print(child.groundTileIndex, math.floor(child.transforms.l[1]/tileSize))
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
             table.remove(parallaxData.layer.children, i)
-            --print('removing')
+  --          print('removing')
+            if not child.groundTileIndex == math.floor(child.transforms.l[1]/tileSize) then
+               print('wnowedn')
+            end
+            
 
+            local secondIndex = findSecondIndexInAssets(parallaxData.assets, child.ref, child.groundTileIndex)
+--            print('findSecondIndexInAssets',secondIndex)
 
          end
       end
    end
+end
+
+
+-- i need more ways of interacting with the 2d assets that is created at generateAssetBook
+-- i want to remove and add items
+-- the first index in the 2d array is a 1d space, a line , i imagine horizontally
+-- so lets say the first index= x , the next index is its position in the list over there
+
+function findSecondIndexInAssets(assets, item, firstIndex)
+   for i = 1, #assets[firstIndex] do
+      if assets[firstIndex][i] == item then
+         return i
+      end
+   end
+   
+   return -1
+ 
 end
 
 
@@ -43,11 +65,12 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                child.transforms.l[4] = thing.scaleX
                child.transforms.l[5] = thing.scaleY
                child.originalIndices = {i,j}
+               child.ref = thing
                child.metaTags = read.metaTags
                child.depth = thing.depth
 
                child.url = thing.url
-
+ --              print(thing.groundTileIndex, i)
                child.groundTileIndex = thing.groundTileIndex
                child.bbox = read.bbox
                table.insert(parallaxData.layer.children, child)
