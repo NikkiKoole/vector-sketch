@@ -64,7 +64,7 @@ function generateAssetBook(recipe)
 	 table.insert(
 	    result[i],
 	    {
-	       x=random()*tileSize,
+	       x=(i*tileSize) + random()*tileSize,
 	       groundTileIndex = i,
 	       depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
 	       scaleX=1,

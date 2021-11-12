@@ -483,7 +483,7 @@ function gestureRecognizer(gesture)
 	 else
 	    --print('failed at distance')
 	 end
-      else -- this is gesture target something else items basically!
+      else -- this is gesture target something else, items basically!
 
 	 if distance < 0.00001 then
 	    distance = 0.00001

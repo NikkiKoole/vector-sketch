@@ -1,28 +1,34 @@
-function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
+function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
    for i = #parallaxData.layer.children, 1, -1 do
-      local child = parallaxData.layer.children[i]---map[layerName][i]
+      local child = parallaxData.layer.children[i]
+
       if child.groundTileIndex ~= nil then
+	 --print(child.groundTileIndex, math.floor(child.transforms.l[1]/tileSize))
          if child.groundTileIndex < startIndex or
             child.groundTileIndex > endIndex then
             table.remove(parallaxData.layer.children, i)
-            print('removing')
+            --print('removing')
+
 
          end
       end
    end
 end
 
-function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
-   local data = parallaxData.assets
-   
+
+function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
+   local count = 0
+   local assets = parallaxData.assets
+
    for i = startIndex, endIndex do
-      if (data[i]) then
-         for j = 1, #data[i] do
-            local thing = data[i][j]
+      if (assets[i]) then
+         for j = 1, #assets[i] do
+
+            local thing = assets[i][j]
             -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
             if not thing.hasBeenPressed then
-               --local urlIndex = (thing.urlIndex)
-               local url = thing.url --urls[urlIndex]
+
+               local url = thing.url
                local read = readFileAndAddToCache(url)
                local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
                local child = {
@@ -32,31 +38,34 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
                   children = doOptimized and {} or copy3(read.children)
                }
 
-               child.transforms.l[1] = (i*tileSize) + thing.x
-               child.transforms.l[2] = 0
+               child.transforms.l[1] =  thing.x
+               child.transforms.l[2] = -200
                child.transforms.l[4] = thing.scaleX
                child.transforms.l[5] = thing.scaleY
                child.originalIndices = {i,j}
                child.metaTags = read.metaTags
                child.depth = thing.depth
-               --child.depthLayer = thing.depthLayer
+
                child.url = thing.url
+
                child.groundTileIndex = thing.groundTileIndex
                child.bbox = read.bbox
                table.insert(parallaxData.layer.children, child)
-               print('adding')
+               --print('adding')
+
+
             end
          end
       end
    end
-
+--   print('total in assets here: ', count)
    parentize(parallaxData.layer)
    sortOnDepth(parallaxData.layer.children)
    recursivelyAddOptimizedMesh(parallaxData.layer)
 
 end
 
-function arrangeParallaxLayerVisibility(far, layer)
+function arrangeParallaxLayerVisibility(far, layer, ecsWorld)
 
    local W, H = love.graphics.getDimensions()
 
@@ -64,11 +73,11 @@ function arrangeParallaxLayerVisibility(far, layer)
    local x2,y2 = cam:getWorldCoordinates(W,0, far)
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
-   
-   arrangeWhatIsVisible(x1, x2, tileSize, layer)
+
+   arrangeWhatIsVisible(x1, x2, tileSize, layer, ecsWorld)
 end
 
-function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData)
+function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData, ecsWorld)
    local bounds = parallaxData.tileBounds
 
    local s = math.floor(x1/tileSize)*tileSize
@@ -77,19 +86,19 @@ function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData)
    local endIndex = e/tileSize
 
    if bounds[1] == math.huge and bounds[2] == -math.huge then
-      addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
+      addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
    else
       if startIndex ~= bounds[1] or
          endIndex ~= bounds[2] then
-         removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
+         removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
       end
 
       if startIndex < bounds[1] then
-         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, parallaxData)
+         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, parallaxData, ecsWorld)
       end
 
       if endIndex > bounds[2] then
-         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, parallaxData)
+         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, parallaxData, ecsWorld)
       end
    end
    parallaxData.tileBounds = {startIndex, endIndex}

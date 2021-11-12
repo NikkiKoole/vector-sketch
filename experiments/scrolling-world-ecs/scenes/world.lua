@@ -53,7 +53,7 @@ function attachPointerCallbacks()
          pointerPressed(x,y, 'mouse', parallaxLayersData, pressed)
          --print(pressed)
       end
-      
+
    end
    function love.touchpressed(id, x, y, dx, dy, pressure)
 --      pointerPressed(x,y, id, parallaxLayersData)
@@ -92,7 +92,7 @@ function attachPointerCallbacks()
 
 end
 
-
+-- duplication from removeAddItems
 function makeObject(url, x, y, depth, allowOptimized)
    if allowOptimized == nil then allowOptimized = true end
    local read = readFileAndAddToCache(url)
@@ -114,7 +114,7 @@ function makeObject(url, x, y, depth, allowOptimized)
    child.bbox = read.bbox
    child.metaTags = read.metaTags
 
-   meshAll(child)
+   --meshAll(child)
    return child
 end
 
@@ -139,14 +139,37 @@ Concord.component(
    end
 )
 
+local TransformSystem = Concord.system({pool={'transforms'}})
+function TransformSystem:update(dt)
+   local count = 0
+   for _, e in ipairs(self.pool) do
+   end
+   --print('transformsystem, ', #self.pool)
+
+end
+
+
+--local AssetBookSystem = Concord.system({pool={'assetbook', 'parallaxlayer'}})
+--function AssetBookSystem:update(dt)
+   -- atm I think the best route would be:
+   -- have this system that contains all the items in assetbooks (not on screen or in scene graph)
+   -- make it do the arrangeParallaxLayerVisibility, so it probably needs the layer too
+   -- in the add and remove from layer code, have it add or remove components from the entity
+   -- which in turn will make it be used by the appropriate other systems
+
+--end
+
+
+
 local BipedSystem = Concord.system({pool={'biped'}})
 function BipedSystem:update(dt)
    for _, e in ipairs(self.pool) do
---      print('jo', e.biped.left, e.biped.right)
+--      myWorld:removeEntity(e)
+  --    print('jo', e.biped.left, e.biped.right)
    end
 end
 
-myWorld:addSystems(BipedSystem)
+myWorld:addSystems(BipedSystem, TransformSystem)
 
 
 
@@ -187,6 +210,7 @@ function scene.load()
             amountPerTile=1,
             depth=depthMinMax,
       })
+
       backgroundLayer = makeContainerFolder('backgroundLayer')
 
       foregroundAssetBook = generateAssetBook({
@@ -254,7 +278,7 @@ function scene.load()
             :give('transforms', walterBody.transforms)
             :give('biped', walterBody, walterLFoot, walterRFoot)
 
-         
+
 	 table.insert(
 	    foregroundLayer.children,
 	    walterActor.body
@@ -331,12 +355,12 @@ function scene.draw()
    drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1])
+   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1], myWorld)
    cam:push()
    renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[1].p})
    cam:pop()
 
-   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2], myWorld)
    cam:push()
    renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[2].p })
    cam:pop()

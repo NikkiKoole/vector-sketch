@@ -21,8 +21,6 @@ require 'lib.border-mesh'
 require 'lib.generate-polygon'
 require 'lib.ui'
 
-
-
 require 'src.generateWorld'
 require 'src.gradient'
 require 'src.groundplane'
@@ -273,7 +271,7 @@ function love.load()
    uiState = {
       show= false,
       showFPS=true,
-      showNumbers=false,
+      showNumbers=true,
       showBBoxes = false,
       showBouncy=true,
       showTouches = false,

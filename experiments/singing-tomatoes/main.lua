@@ -37,6 +37,7 @@ function growKroontje(index)
 end
 
 
+
 function onHitHead(index)
    local firstMouth = findNodeByName(tomatoes[index], 'mond')
    firstMouth.needsLerp = true
