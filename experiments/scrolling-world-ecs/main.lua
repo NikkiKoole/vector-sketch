@@ -333,5 +333,6 @@ function love.draw()
 	 love.graphics.print(tostring(id), x, y)
       end
    end
---   print(collectgarbage('count'))
+   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,128)
+
 end

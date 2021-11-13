@@ -56,19 +56,13 @@ end
 
 
 function setTransforms(root)
-   -- print('setting transform', root.name)
-   --print(inspect(root.transforms))
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
-      --pg = root._parent.transforms._g
       pg = root._parent.transforms._g
    end
    root.transforms._l = love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
    root.transforms._g = pg and (pg * root.transforms._l) or root.transforms._l
- --  root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
---   root.transforms._g = pg and (pg * root._localTransform) or root._localTransform
-
 end
 
 function getLocalizedDelta(element, dx, dy)

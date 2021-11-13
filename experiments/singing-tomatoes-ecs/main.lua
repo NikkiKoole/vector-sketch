@@ -124,6 +124,8 @@ end
 function love.draw()
    love.graphics.clear(0.52,0.56,0.28)
    renderThings(root)
+   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+
 end
 
 function love.mousepressed(x,y)

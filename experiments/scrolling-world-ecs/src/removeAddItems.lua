@@ -1,20 +1,24 @@
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
    for i = #parallaxData.layer.children, 1, -1 do
       local child = parallaxData.layer.children[i]
-
+      local groundTileIndex= math.floor(child.transforms.l[1]/tileSize)
+      
       if child.groundTileIndex ~= nil then
-         if child.groundTileIndex < startIndex or
-            child.groundTileIndex > endIndex then
+         if groundTileIndex < startIndex or
+            groundTileIndex > endIndex then
             table.remove(parallaxData.layer.children, i)
   --          print('removing')
-            if not child.groundTileIndex == math.floor(child.transforms.l[1]/tileSize) then
-               print('wnowedn')
-            end
+            --if not child.groundTileIndex == math.floor(child.transforms.l[1]/tileSize) then
+            --   print('wnowedn')
+            --end
             
 
-            local secondIndex = findSecondIndexInAssets(parallaxData.assets, child.ref, child.groundTileIndex)
---            print('findSecondIndexInAssets',secondIndex)
-
+            local first, second = findSecondIndexInAssets(parallaxData.assets, child.ref, groundTileIndex)
+            --print('findSecondIndexInAssets', child.groundTileIndex, first, second)
+            if child.groundTileIndex ~= groundTileIndex then
+               print(child.groundTileIndex, groundTileIndex)
+            end
+            
          end
       end
    end
@@ -29,11 +33,20 @@ end
 function findSecondIndexInAssets(assets, item, firstIndex)
    for i = 1, #assets[firstIndex] do
       if assets[firstIndex][i] == item then
-         return i
+         return firstIndex, i
+      end
+   end
+   print('getting in second leg')
+   for i = 1, #assets do
+      for j = 1, #assets[i] do
+         if assets[i][j] == item then
+            return i, j
+         end
       end
    end
    
-   return -1
+   
+   return -1, -1
  
 end
 
@@ -61,7 +74,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                }
 
                child.transforms.l[1] =  thing.x
-               child.transforms.l[2] = -200
+               child.transforms.l[2] = thing.y
                child.transforms.l[4] = thing.scaleX
                child.transforms.l[5] = thing.scaleY
                child.originalIndices = {i,j}
@@ -71,7 +84,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
 
                child.url = thing.url
  --              print(thing.groundTileIndex, i)
-               child.groundTileIndex = thing.groundTileIndex
+               child.groundTileIndex = i --thing.groundTileIndex
                child.bbox = read.bbox
                table.insert(parallaxData.layer.children, child)
                --print('adding')
