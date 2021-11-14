@@ -3,24 +3,49 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsW
       local child = parallaxData.layer.children[i]
       local groundTileIndex= math.floor(child.transforms.l[1]/tileSize)
       
-      if child.groundTileIndex ~= nil then
-         if groundTileIndex < startIndex or
-            groundTileIndex > endIndex then
-            table.remove(parallaxData.layer.children, i)
-  --          print('removing')
-            --if not child.groundTileIndex == math.floor(child.transforms.l[1]/tileSize) then
-            --   print('wnowedn')
-            --end
-            
+      --if child.groundTileIndex ~= nil then
+      if groundTileIndex < startIndex or
+         groundTileIndex > endIndex then
 
-            local first, second = findSecondIndexInAssets(parallaxData.assets, child.ref, groundTileIndex)
-            --print('findSecondIndexInAssets', child.groundTileIndex, first, second)
-            if child.groundTileIndex ~= groundTileIndex then
-               print(child.groundTileIndex, groundTileIndex)
-            end
+         
+
+         
+         if not child.inMotion then
             
+            table.remove(parallaxData.layer.children, i)
+            
+            local first, second = findSecondIndexInAssets(parallaxData.assets, child.ref, groundTileIndex)
+
+            if first == nil and second ==nil then
+               print('whats goingoj here', inspect(child.transforms.l), groundTileIndex)
+            else
+
+            
+            parallaxData.assets[first][second].x = child.transforms.l[1]
+            parallaxData.assets[first][second].y = child.transforms.l[2]
+
+            
+            -- this is repositioning in the structure
+            if first ~= groundTileIndex then
+
+               -- also if position has changed from the asset one
+               table.remove(parallaxData.assets[first], second)
+
+               --only add at valid location
+               if  groundTileIndex >= parallaxData.assets.min and
+                  groundTileIndex <= parallaxData.assets.max then
+                  table.insert(parallaxData.assets[groundTileIndex],objToAssetBookType(child) )
+               end
+               
+            end
+
+            end
+            --end
+
          end
+         
       end
+      --end
    end
 end
 
@@ -31,13 +56,15 @@ end
 -- so lets say the first index= x , the next index is its position in the list over there
 
 function findSecondIndexInAssets(assets, item, firstIndex)
+   --print(assets.min, assets.max, firstIndex)
+   if firstIndex >= assets.min and firstIndex <= assets.max then
    for i = 1, #assets[firstIndex] do
       if assets[firstIndex][i] == item then
          return firstIndex, i
       end
    end
-   print('getting in second leg')
-   for i = 1, #assets do
+   end
+   for i = assets.min, assets.max do
       for j = 1, #assets[i] do
          if assets[i][j] == item then
             return i, j
@@ -45,9 +72,10 @@ function findSecondIndexInAssets(assets, item, firstIndex)
       end
    end
    
+   print('getting in third leg why?')
    
-   return -1, -1
- 
+   return nil, nil
+   
 end
 
 
@@ -61,40 +89,27 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
 
             local thing = assets[i][j]
             -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
-            if not thing.hasBeenPressed then
-
-               local url = thing.url
-               local read = readFileAndAddToCache(url)
-               local doOptimized = read.optimizedBatchMesh ~= nil  -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
-               local child = {
-                  folder = true,
-                  transforms = copy3(read.transforms),
-                  name = 'generated '..url,
-                  children = doOptimized and {} or copy3(read.children)
-               }
-
-               child.transforms.l[1] =  thing.x
-               child.transforms.l[2] = thing.y
-               child.transforms.l[4] = thing.scaleX
-               child.transforms.l[5] = thing.scaleY
-               child.originalIndices = {i,j}
-               child.ref = thing
-               child.metaTags = read.metaTags
-               child.depth = thing.depth
-
-               child.url = thing.url
- --              print(thing.groundTileIndex, i)
-               child.groundTileIndex = i --thing.groundTileIndex
-               child.bbox = read.bbox
-               table.insert(parallaxData.layer.children, child)
-               --print('adding')
+            --          if not thing.hasBeenPressed then
 
 
-            end
+            local child = makeObject(thing.url, thing.x, thing.y, thing.depth, true)
+            
+            child.transforms.l[4] = thing.scaleX
+            child.transforms.l[5] = thing.scaleY
+
+            --child.originalIndices = {i,j}
+            child.ref = thing
+            --child.groundTileIndex = i --thing.groundTileIndex
+            --               print('adding ', child.url)
+            table.insert(parallaxData.layer.children, child)
+            --print('adding')
+
+
+            --        end
          end
       end
    end
---   print('total in assets here: ', count)
+   --   print('total in assets here: ', count)
    parentize(parallaxData.layer)
    sortOnDepth(parallaxData.layer.children)
    recursivelyAddOptimizedMesh(parallaxData.layer)

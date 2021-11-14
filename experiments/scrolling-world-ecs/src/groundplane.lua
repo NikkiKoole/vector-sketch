@@ -1,8 +1,8 @@
 
 local groundTiles = {}
 
-local minground = -200
-local maxground = 200
+local minground = -100
+local maxground = 100
 
 for i = minground, maxground do
    groundTiles[i] = {tileIndex = math.ceil(math.random()*5)}

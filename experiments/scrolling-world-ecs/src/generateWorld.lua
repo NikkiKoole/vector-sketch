@@ -54,6 +54,58 @@ function makeGroundPlaneBook(urls)
    return result
 end
 
+function makeObject(url, x, y, depth, allowOptimized)
+--   print(url, allowOptimized)
+   if allowOptimized == nil then allowOptimized = true end
+   local read = readFileAndAddToCache(url)
+   local doOptimized = read.optimizedBatchMesh ~= nil
+
+   local child = {
+      folder = true,
+      transforms = copy3(read.transforms),
+      name = 'generated '..url,
+      children = (allowOptimized and doOptimized) and {} or copy3(read.children)
+   }
+
+   child.transforms.l[1] = x
+   child.transforms.l[2] = y
+   child.depth = depth
+
+
+   child.bbox = read.bbox
+   child.metaTags = read.metaTags
+   -- this one is needed for feet ...
+   if allowOptimized and doOptimized then
+      child.url = url
+   end
+
+   --meshAll(child)
+   return child
+end
+
+function objToAssetBookType(obj)
+   return createAssetBookType(
+      obj.url,
+      obj.transforms.l[1],
+      obj.transforms.l[2],
+      obj.depth,
+      obj.transforms.l[4],
+      obj.transforms.l[5]
+   )
+end
+
+
+function createAssetBookType(url, x,y,depth, scaleX, scaleY)
+   return {
+      url = url,
+      x = x,
+      y = y,
+      depth = depth,
+      scaleX = scaleX or 1,
+      scaleY = scaleY or 1
+
+   }
+end
 
 function generateAssetBook(recipe)
    local result = {}
@@ -61,19 +113,24 @@ function generateAssetBook(recipe)
    for i = recipe.index.min, recipe.index.max do
       result[i] = {}
       for p= 1, recipe.amountPerTile do
-	 table.insert(
+         local addme = {
+            url = pickRandom(recipe.urls),
+            x= (i*tileSize) + random()*tileSize,
+            y= -100, 
+            depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max)
+         }
+
+         addme = createAssetBookType(addme.url, addme.x, addme.y, addme.depth)
+
+         table.insert(
 	    result[i],
-	    {
-	       x=(i*tileSize) + random()*tileSize,
-	       y=-100,--groundTileIndex = i,
-	       depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
-	       scaleX=1,
-	       scaleY=1,
-	       url=pickRandom(recipe.urls)
-	    }
+            addme
 	 )
       end
    end
+   result.min = recipe.index.min
+   result.max = recipe.index.max
+
    return result
 end
 

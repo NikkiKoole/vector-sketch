@@ -380,5 +380,7 @@ function love.draw()
    -- 	 love.graphics.circle("fill", x2 , y2 , 2)
    --    end
 
-   -- end
+    -- end
+       love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,128)
+
 end

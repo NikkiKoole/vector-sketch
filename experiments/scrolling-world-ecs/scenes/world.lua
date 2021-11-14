@@ -1,14 +1,6 @@
 local scene = {}
 local hasBeenLoaded = false
 
--- local Entity     = Concord.entity
--- local Component  = Concord.component
--- local System     = Concord.system
--- local World      = Concord.world
-
--- Containers
--- local Components  = Concord.components
-
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
@@ -35,33 +27,12 @@ function attachPointerCallbacks()
    function love.mousepressed(x,y, button, istouch, presses)
       if (mouseState.hoveredSomething) then return end
       if not istouch then
-
          local pressed = false
-         --print(inspect(parallaxLayersData[1]))
-
-         if false then
-         for i = #parallaxLayersData, 1 do
-            local layer = parallaxLayersData[i]
-            --
-            --print('adsf')
-            pointerPressed(x,y, 'mouse', layer, pressed)
-           -- print('sd', pressed)
-
-         end
-         end
-
          pointerPressed(x,y, 'mouse', parallaxLayersData, pressed)
-         --print(pressed)
       end
-
    end
    function love.touchpressed(id, x, y, dx, dy, pressure)
---      pointerPressed(x,y, id, parallaxLayersData)
-     -- for i = 1, #parallaxLayersData do
-       --  local layer = parallaxLayersData[i]
          pointerPressed(x,y, id, parallaxLayersData)
-      --end
-
    end
    function love.mousemoved(x, y,dx,dy, istouch)
       if not istouch then
@@ -92,31 +63,7 @@ function attachPointerCallbacks()
 
 end
 
--- duplication from removeAddItems
-function makeObject(url, x, y, depth, allowOptimized)
-   if allowOptimized == nil then allowOptimized = true end
-   local read = readFileAndAddToCache(url)
-   local doOptimized = read.optimizedBatchMesh ~= nil
 
-   local child = {
-      folder = true,
-      transforms = copy3(read.transforms),
-      name = 'generated '..url,
-      children = (allowOptimized and doOptimized) and {} or copy3(read.children)
-   }
-   if allowOptimized and doOptimized then
-      child.url = url
-   end
-
-   child.depth = depth
-   child.transforms.l[1] = x
-   child.transforms.l[2] = y
-   child.bbox = read.bbox
-   child.metaTags = read.metaTags
-
-   --meshAll(child)
-   return child
-end
 
 function makeWheel(thing, circumference)
    thing.wheelCircumference = circumference
@@ -192,7 +139,7 @@ function scene.load()
       depthMinMax =       {min=-1.0, max=1.0}
       foregroundFactors = { far=.8, near=1}
       backgroundFactors = { far=.4, near=.7}
-      tileSize = 100
+      tileSize = 20
 
       cam = createCamera()
 
@@ -204,10 +151,12 @@ function scene.load()
 
       dynamic = generateCameraLayer('dynamic', 1)
 
+      -- i need to use the asset book for everything i think
+      
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=0,
             depth=depthMinMax,
       })
 
@@ -221,9 +170,11 @@ function scene.load()
                  'plant13','bunnyhead'
             }),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=4,
             depth=depthMinMax,
       })
+
+      
       foregroundLayer = makeContainerFolder('foregroundLayer')
 
 
@@ -234,42 +185,50 @@ function scene.load()
 
       -- todo alot of duplication from removeAddItems
 
+      print(tileSize)
 
-      table.insert(
-         foregroundLayer.children,
-         makeObject('assets/cavething.polygons.txt', 1000,0, 0)
-      )
-      table.insert(
-         backgroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
-      )
-      table.insert(
-         foregroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, 1), 282)
-      )
-      table.insert(
-         foregroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
-      )
 
-      -- table.insert(
-      --    foregroundLayer.children,
-      --    makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
+       -- local addme = {
+       --    url = pickRandom(recipe.urls),
+       --    x= (i*tileSize) + random()*tileSize,
+       --    y= -100, 
+       --    depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max)
+       --    }
+      
+      --addme = createAssetBookType(addme.url, addme.x, addme.y, addme.depth)
+         
+       local myX = math.floor(100/tileSize)
+       local thing = createAssetBookType('assets/cavething.polygons.txt', 100,0, 0)
+       print(inspect(thing))
+       table.insert(foregroundAssetBook[myX], thing) -- <<  -- assetbook is an array
+      
+      --table.insert(
+      --   foregroundLayer.children,
+      --   makeObject('assets/cavething.polygons.txt', 100,0, 0)
+     -- )
+      
+      --table.insert(
+      --   backgroundLayer.children,
+      --   makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
       -- )
-      -- table.insert(
-      --    foregroundLayer.children,
-      --    makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
-      -- )
+      
+      --table.insert(
+      --   foregroundLayer.children,
+      --   makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, 1), 282)
+     -- )
+     -- table.insert(
+     --    foregroundLayer.children,
+     --    makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
+     -- )
+
 
       actors  = {}
+      if false then
       for i = 1, 10 do
          walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,love.math.random(), false)
 	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 
-         walterBody.hasDraggableChildren = true
-         walterLFoot.isDraggableChild = true
-         walterRFoot.isDraggableChild = true
 
 	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
 
@@ -287,7 +246,7 @@ function scene.load()
 
 	 table.insert(actors, walterActor)
       end
-
+      end
 
       parallaxLayersData = {
 	 {

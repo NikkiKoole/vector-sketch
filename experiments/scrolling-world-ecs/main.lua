@@ -95,7 +95,7 @@ function readFileAndAddToCache(url)
       --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
       meshCache[url] = g2
    end
-
+   --print(url)
    return meshCache[url]
 end
 
