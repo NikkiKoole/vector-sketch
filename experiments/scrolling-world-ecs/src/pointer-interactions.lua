@@ -154,24 +154,24 @@ function pointerPressed(x,y, id, layers, ecsWorld)
 --                  c.groundTileIndex = nil
 --                  local indices = c.originalIndices
                   if false then
-                  local first = c.assetBookIndex
-		  -- todo ouch i dunno about this
-                  if first and l.assets[first]  then
-                     --l.assets[indices[1]][indices[2]].hasBeenPressed = true
+                  -- local first = c.assetBookIndex
+		  -- -- todo ouch i dunno about this
+                  -- if first and l.assets[first]  then
+                  --    --l.assets[indices[1]][indices[2]].hasBeenPressed = true
 
-                     local index = 0
-                     for k =1 , #l.assets[first] do
-                        if l.assets[first][k] == c.assetBookRef then
-                           index = k
-                        end
-                     end
-                     if index > 0 then
-                        table.remove(l.assets[first], index)
-                        c.assetBookRef = nil
-                     end
+                  --    local index = 0
+                  --    for k =1 , #l.assets[first] do
+                  --       if l.assets[first][k] == c.assetBookRef then
+                  --          index = k
+                  --       end
+                  --    end
+                  --    if index > 0 then
+                  --       table.remove(l.assets[first], index)
+                  --       c.assetBookRef = nil
+                  --    end
                      
                      
-                  end
+                  -- end
                   end
 
                   

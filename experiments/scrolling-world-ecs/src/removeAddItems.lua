@@ -1,7 +1,9 @@
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
    for i = #parallaxData.layer.children, 1, -1 do
       local child = parallaxData.layer.children[i]---map[layerName][i]
-      if child.assetBookRef then -- only allowed to r
+      if child.entity and child.entity.assetBook then -- only allowed to r
+         --print(child.entity and child.entity.assetBook, child.assetBookRef)
+               
          local groundTileIndex  = math.floor(child.transforms.l[1]/tileSize)
          --print(math.floor(child.transforms.l[1]/tileSize), child.groundTileIndex)
          if groundTileIndex < startIndex or
@@ -33,8 +35,8 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                children = doOptimized and {} or copy3(read.children)
             }
 
-           child.assetBookRef = thing
-           child.assetBookIndex = i
+           --child.assetBookRef = thing
+           --child.assetBookIndex = i
 
 
             child.transforms.l[1] = thing.x
@@ -51,7 +53,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
             if ecsWorld then
                local myEntity = Concord.entity()
                myEntity
-                  --:give('assetBook', child.assetBookRef, child.assetBookIndex)
+                  :give('assetBook', thing, i)
                   :give('transforms', child.transforms)
                   :give('bbox', child.bbox)
                ecsWorld:addEntity(myEntity)

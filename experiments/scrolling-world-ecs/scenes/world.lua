@@ -33,8 +33,8 @@ Concord.component(
 Concord.component(
    'assetBook',
    function(c, ref, index)
-      c.assetBookRef = ref
-      c.assetBookIndex = ref
+      c.ref = ref
+      c.index = index
 
    end
 )
@@ -63,25 +63,37 @@ local AssetBookSystem = Concord.system({pool = {'assetBook'}})
 function AssetBookSystem:itemPressed(item, l, x,y)
    -- idea for this guy is to remove an item from the assetbook when its pressed
 
+   print(#self.pool)
+   for _, e in ipairs(self.pool) do
+      --print(inspect(e))
+   end
+
    
-   if true and item.entity then
+   if true and item.entity  then
 --      print(item.entity.assetBookIndex, first)
-      local first = item.assetBookIndex
---      print('wee', first, item.assetBookIndex)
+      --print('wee', item.assetBookIndex)
+
+
+      if item.entity.assetBook then
+    --     print(item.entity.assetBook.index, first)
+         local first = item.entity.assetBook.index
       
-      if first and l.assets[first]  then
-      local index = 0
-      for k =1 , #l.assets[first] do
-         if l.assets[first][k] == item.assetBookRef then
-            index = k
+         if first ~= nil and l.assets[first]  then
+            local index = 0
+            for k =1 , #l.assets[first] do
+               if l.assets[first][k] == item.entity.assetBook.ref then
+                  index = k
+               end
+            end
+            if index > 0 then
+  --             print('removeing something!')
+               table.remove(l.assets[first], index)
+--               item.assetBookRef = nil
+               item.entity:remove('assetBook')
+            end
          end
       end
-      if index > 0 then
-         print('removeing something!')
-         table.remove(l.assets[first], index)
-         item.assetBookRef = nil
-      end
-   end
+
    end
 
    
