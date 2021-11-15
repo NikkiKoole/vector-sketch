@@ -102,7 +102,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=0,
             depth=depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
@@ -112,7 +112,7 @@ function scene.load()
                { 'plant1','plant2','plant3','plant4',
                   'plant5','plant6','plant7','plant8',
                   'plant9','plant10','plant11','plant12',
-                 'plant13','bunnyhead'
+                 'plant13','bunnyhead', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
             amountPerTile=5,
@@ -211,7 +211,9 @@ function scene.load()
 	 table.insert(actors, walterActor)
       end
 
-      --Sortondepth(foregroundLayer.children)
+      parentize(foregroundLayer)
+      sortOnDepth(foregroundLayer.children)
+      recursivelyAddOptimizedMesh(foregroundLayer)
 
       parallaxLayersData = {
 	 {
@@ -313,7 +315,7 @@ function scene.draw()
    renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[1].p})
    cam:pop()
 
-   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
+--   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
    cam:push()
    renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[2].p })
    cam:pop()
