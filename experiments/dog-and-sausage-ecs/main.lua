@@ -192,9 +192,16 @@ function love.load()
       :give('transforms', worst.transforms)
       :give('mousefollowing')
 
-   Concord.entity(myWorld)
+   local myEntity = Concord.entity()
+   myEntity
       :give('transforms', snuit.transforms)
       :give('snoutbehaviour')
+   
+   myWorld:addEntity(myEntity)
+   
+   --Concord.entity(myWorld)
+   --   :give('transforms', snuit.transforms)
+   --   :give('snoutbehaviour')
 
 end
 

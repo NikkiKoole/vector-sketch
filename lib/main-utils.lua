@@ -441,13 +441,48 @@ function handleChild(shape,parallax)
       end
 
 
-      if shape.aabb then
+      if shape.bbox then
+         -- no need to repeat this calc
+	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
+	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
+         local extraOffset = tileSize
+         minX = minX - extraOffset
+         maxX = maxX + extraOffset
+
+         local tlx = shape.transforms.l[1]  + (shape.bbox[1] )
+         local tly = shape.transforms.l[2]  + shape.bbox[2]
+         local brx = shape.transforms.l[1]  + (shape.bbox[3] )
+         local bry = shape.transforms.l[2]  + shape.bbox[4]
+
+         if brx >= minX and tlx <= maxX then
+            --print('yes')
+            renderNormallyOrOptimized(shape)
+         else
+
+            --print('not')
+            --print(tlx,tly, brx, bry, inspect(shape.bbox))
+         end
+         
+         --print(tlx, tly, brx, bry)
+         --print(shape.transforms.l[2] + shape.transforms.l[7])
+         
+      else
+         renderNormallyOrOptimized(shape)
+
+      end
+      
+      
+      
+      if false and shape.aabb then
 	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
 	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
 	 local extraOffset = 100
 	 if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
 	    renderNormallyOrOptimized(shape)
-	 end
+	 else
+            print('not rendering something cause of the aabb', inspect(shape.aabb), minX, maxX)
+         end
+         
       else
 	 renderNormallyOrOptimized(shape)
       end

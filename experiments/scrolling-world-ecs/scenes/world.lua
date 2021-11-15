@@ -12,6 +12,92 @@ local hasBeenLoaded = false
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
+local myWorld = Concord.world()
+
+Concord.component("foregroundObject")
+Concord.component("backgroundObject")
+
+Concord.component(
+   'transforms',
+   function(c, value)
+      c.transforms = value
+   end
+)
+Concord.component(
+   'bbox',
+   function(c, value)
+      c.bbox = value
+   end
+)
+
+Concord.component(
+   'assetBook',
+   function(c, ref, index)
+      c.assetBookRef = ref
+      c.assetBookIndex = ref
+
+   end
+)
+
+local TransformSystem = Concord.system({pool = {'transforms'}})
+function TransformSystem:update(dt)
+   --print(#self.pool)
+   for _, e in ipairs(self.pool) do
+   end
+end
+
+
+local DraggableSystem = Concord.system({pool = {'transforms', 'bbox'}})
+function DraggableSystem:update(dt)
+   --print(#self.pool)
+   for _, e in ipairs(self.pool) do
+   end
+end
+function DraggableSystem:pressed(x,y)
+   print('pressed', x, y, #self.pool)
+   for _, e in ipairs(self.pool) do
+   end
+end
+
+local AssetBookSystem = Concord.system({pool = {'assetBook'}})
+function AssetBookSystem:itemPressed(item, l, x,y)
+   -- idea for this guy is to remove an item from the assetbook when its pressed
+
+   
+   if true and item.entity then
+--      print(item.entity.assetBookIndex, first)
+      local first = item.assetBookIndex
+--      print('wee', first, item.assetBookIndex)
+      
+      if first and l.assets[first]  then
+      local index = 0
+      for k =1 , #l.assets[first] do
+         if l.assets[first][k] == item.assetBookRef then
+            index = k
+         end
+      end
+      if index > 0 then
+         print('removeing something!')
+         table.remove(l.assets[first], index)
+         item.assetBookRef = nil
+      end
+   end
+   end
+
+   
+end
+
+
+
+
+
+
+myWorld:addSystems(AssetBookSystem, TransformSystem, DraggableSystem)
+
+
+
+
+
 function scene.modify(data)
 end
 
@@ -32,7 +118,9 @@ function attachPointerCallbacks()
    function love.mousepressed(x,y, button, istouch, presses)
       if (mouseState.hoveredSomething) then return end
       if not istouch then
-         pointerPressed(x,y, 'mouse', parallaxLayersData)
+         pointerPressed(x,y, 'mouse', parallaxLayersData, myWorld)
+--         myWorld:emit("pressed", x, y)
+
       end
    end
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -102,7 +190,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=0,
+            amountPerTile=2,
             depth=depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
@@ -115,7 +203,7 @@ function scene.load()
                  'plant13','bunnyhead', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
-            amountPerTile=5,
+            amountPerTile=2,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
@@ -229,36 +317,6 @@ function scene.load()
             tileBounds={math.huge, -math.huge},
 	   }
       }
-
-
-
-      -- --- ecs new
-      -- Concord.component(
-      --    "position",
-      --    function(component, x, y)
-      --       --print(inspect(component))
-      --       component.x = x or 0
-      --       component.y = y or 0
-      --    end
-      -- )
-      -- Concord.component(
-      --    "transforms",
-      --    function(component, t)
-      --       --print(inspect(component))
-      --       component.transforms = t or {}
-      --    end
-      -- )
-
-      -- local myWorld = Concord.world()
-      -- local myEntity = Entity(myWorld)
-
-      -- myEntity:give('position', 100,100)
-      -- myEntity:give('transforms', {0,0,0,1,1,0,0,0,0})
-
-      -- print(inspect(myEntity:get('transforms')))
-
-
-      -- ecs
    end
    perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
 
@@ -299,6 +357,9 @@ function scene.update(dt)
       actors[i]:update(dt)
    end
 
+
+   myWorld:emit("update", dt)
+
 end
 
 function scene.draw()
@@ -311,12 +372,12 @@ function scene.draw()
    drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1])
+   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1], myWorld)
    cam:push()
    renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[1].p})
    cam:pop()
 
-   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2], myWorld)
    cam:push()
    renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[2].p })
    cam:pop()
