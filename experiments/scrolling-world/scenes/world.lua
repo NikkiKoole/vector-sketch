@@ -115,7 +115,7 @@ function scene.load()
                  'plant13','bunnyhead'
             }),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=5,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
@@ -321,8 +321,8 @@ function scene.draw()
    love.graphics.setColor(1,1,1)
    --drawUI()
    drawDebugStrings()
-   --drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
-   --drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
+   drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
+   drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
 
 end
 

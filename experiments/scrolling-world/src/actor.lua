@@ -179,7 +179,7 @@ end
 
 
 function Actor:oneLeg(connector, transforms, flip)
-   print('callin gone leg')
+--   print('callin gone leg')
    local useRubber = self.useRubber
    local steps = self.steps
    local rnd = love.math.random()*30

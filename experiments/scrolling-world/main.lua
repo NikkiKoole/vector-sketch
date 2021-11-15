@@ -272,8 +272,8 @@ function love.load()
 
    uiState = {
       show= false,
-      showFPS=true,
-      showNumbers=false,
+      showFPS = true,
+      showNumbers = true,
       showBBoxes = false,
       showBouncy=true,
       showTouches = false,

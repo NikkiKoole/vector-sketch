@@ -144,11 +144,25 @@ function pointerPressed(x,y, id, layers)
 	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
 
-                  c.groundTileIndex = nil
-                  local indices = c.originalIndices
+--                  c.groundTileIndex = nil
+--                  local indices = c.originalIndices
+                  local first = c.assetBookIndex
 		  -- todo ouch i dunno about this
-                  if indices and l.assets[indices[1]] and l.assets[indices[1]][indices[2]] then
-                     l.assets[indices[1]][indices[2]].hasBeenPressed = true
+                  if first and l.assets[first]  then
+                     --l.assets[indices[1]][indices[2]].hasBeenPressed = true
+
+                     local index = 0
+                     for k =1 , #l.assets[first] do
+                        if l.assets[first][k] == c.assetBookRef then
+                           index = k
+                        end
+                     end
+                     if index > 0 then
+                        table.remove(l.assets[first], index)
+                        c.assetBookRef = nil
+                     end
+                     
+                     
                   end
 		  if type(hitcheck) == 'string' then
 		     eventBus(hitcheck)

@@ -1,14 +1,17 @@
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
    for i = #parallaxData.layer.children, 1, -1 do
       local child = parallaxData.layer.children[i]---map[layerName][i]
-      if child.groundTileIndex ~= nil then
-         if child.groundTileIndex < startIndex or
-            child.groundTileIndex > endIndex then
+      if child.assetBookRef then -- only allowed to r
+         local groundTileIndex  = math.floor(child.transforms.l[1]/tileSize)
+         --print(math.floor(child.transforms.l[1]/tileSize), child.groundTileIndex)
+         if groundTileIndex < startIndex or
+            groundTileIndex > endIndex then
             table.remove(parallaxData.layer.children, i)
          end
       end
    end
 end
+
 
 function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
    local data = parallaxData.assets
@@ -18,7 +21,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
          for j = 1, #data[i] do
             local thing = data[i][j]
             -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
-            if not thing.hasBeenPressed then
+            --if not thing.hasBeenPressed then
                --local urlIndex = (thing.urlIndex)
                local url = thing.url --urls[urlIndex]
                local read = readFileAndAddToCache(url)
@@ -30,19 +33,23 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
                   children = doOptimized and {} or copy3(read.children)
                }
 
-               child.transforms.l[1] = (i*tileSize) + thing.x
-               child.transforms.l[2] = 0
+               child.assetBookRef = thing
+               child.assetBookIndex = i
+
+
+               child.transforms.l[1] = thing.x
+               child.transforms.l[2] = thing.y
                child.transforms.l[4] = thing.scaleX
                child.transforms.l[5] = thing.scaleY
-               child.originalIndices = {i,j}
                child.metaTags = read.metaTags
                child.depth = thing.depth
                --child.depthLayer = thing.depthLayer
                child.url = thing.url
-               child.groundTileIndex = thing.groundTileIndex
+               --child.groundTileIndex = i 
                child.bbox = read.bbox
                table.insert(parallaxData.layer.children, child)
-            end
+            --end
+            
          end
       end
    end
