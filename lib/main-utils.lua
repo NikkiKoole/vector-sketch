@@ -240,7 +240,7 @@ function pointInTriangle(p, t1, t2, t3)
 end
 
 function isMouseInMesh(mx, my, body, mesh)
-  
+
    if mesh and body then
 --      print(inspect(mesh))
 --      print(inspect(mesh))
@@ -263,6 +263,27 @@ function isMouseInMesh(mx, my, body, mesh)
    return false
 end
 
+function recusiveLookForHitArea(node)
+   if not node then return false end
+   print('recusricve looking', node.name)
+
+   if node.points then
+      if string.find(node.name, "-hitarea") then
+	 return true
+      end
+
+   else
+      if node.children then
+	 for i = 1, #node.children do
+	 local result =  recusiveLookForHitArea(node.children[i])
+	 if result then
+	    return result
+	 end
+	 end
+      end
+   end
+   return false
+end
 
 
 function recursiveHitCheck(x,y, node)
@@ -462,17 +483,17 @@ function handleChild(shape,parallax)
             --print('not')
             --print(tlx,tly, brx, bry, inspect(shape.bbox))
          end
-         
+
          --print(tlx, tly, brx, bry)
          --print(shape.transforms.l[2] + shape.transforms.l[7])
-         
+
       else
          renderNormallyOrOptimized(shape)
 
       end
-      
-      
-      
+
+
+
       if false and shape.aabb then
 	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
 	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
@@ -482,7 +503,7 @@ function handleChild(shape,parallax)
 	 else
             print('not rendering something cause of the aabb', inspect(shape.aabb), minX, maxX)
          end
-         
+
       else
 	 renderNormallyOrOptimized(shape)
       end

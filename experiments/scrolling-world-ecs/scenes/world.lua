@@ -16,6 +16,8 @@ local myWorld = Concord.world()
 
 Concord.component("foregroundObject")
 Concord.component("backgroundObject")
+Concord.component("vanillaDraggable")
+Concord.component("hitAreaEvent")
 
 Concord.component(
    'transforms',
@@ -56,11 +58,12 @@ Concord.component(
 )
 
 local WheelSystem = Concord.system({pool = {'wheelCircumference', 'rotatingPart'}})
-function WheelSystem:itemPressedRepeat( c, l, x, y, invx, invy)
+function WheelSystem:itemDrag( c, l, x, y, invx, invy)
    --print(c.entity and c.entity.wheelCircumference)
    if (c.entity and c.entity.wheelCircumference and c.pressed) then
 
-        local rotateStep = invx - c.pressed.dx
+      local rotateStep = invx - c.pressed.dx
+      --print(invx - c.pressed.dx)
 	local rx, ry = c.transforms._g:transformPoint( rotateStep, 0)
 	local rx2, ry2 = c.transforms._g:transformPoint( 0, 0)
 	local rxdelta = rx - rx2
@@ -70,10 +73,12 @@ function WheelSystem:itemPressedRepeat( c, l, x, y, invx, invy)
 	   (rxdelta/c.entity.wheelCircumference.value)*(math.pi*2)
 
 
-	c.entity.rotatingPart.value.transforms.l[1] = c.entity.rotatingPart.value.transforms.l[1] + rotateStep
+	c.transforms.l[1] = c.transforms.l[1] + rotateStep
+	--print('the new one')
+
    end
 
-   print('item pressed repreat dragged!')
+
 end
 
 
@@ -81,42 +86,47 @@ end
 local TransformSystem = Concord.system({pool = {'transforms'}})
 function TransformSystem:update(dt)
    --print(#self.pool)
-   for _, e in ipairs(self.pool) do
-   end
+   --for _, e in ipairs(self.pool) do
+   --end
 end
 
 
-local DraggableSystem = Concord.system({pool = {'transforms', 'bbox'}})
+local DraggableSystem = Concord.system({pool = {'transforms', 'bbox', 'vanillaDraggable'}})
 function DraggableSystem:update(dt)
    --print(#self.pool)
-   for _, e in ipairs(self.pool) do
+   --for _, e in ipairs(self.pool) do
+   --end
+end
+function DraggableSystem:itemDrag( c, l, x, y, invx, invy)
+
+   if (c.entity and c.entity.vanillaDraggable and c.pressed) then
+      --print('vanilla drag')
+      c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
+      c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
    end
 end
+
 function DraggableSystem:pressed(x,y)
-   print('pressed', x, y, #self.pool)
-   for _, e in ipairs(self.pool) do
-   end
+   --print('pressed', x, y, #self.pool)
+   --for _, e in ipairs(self.pool) do
+   --end
 end
+
+local HitAreaEventSystem = Concord.system({pool={'hitAreaEvent'}})
+function HitAreaEventSystem:itemPressed(item, l, x,y, hitcheck)
+   if item.entity and item.entity.hitAreaEvent then
+      eventBus(hitcheck)
+   end
+
+end
+
+
 
 local AssetBookSystem = Concord.system({pool = {'assetBook'}})
 function AssetBookSystem:itemPressed(item, l, x,y)
-   -- idea for this guy is to remove an item from the assetbook when its pressed
 
-   print(#self.pool)
-   for _, e in ipairs(self.pool) do
-      --print(inspect(e))
-   end
-
-
-   if true and item.entity  then
---      print(item.entity.assetBookIndex, first)
-      --print('wee', item.assetBookIndex)
-
-
-      if item.entity.assetBook then
-    --     print(item.entity.assetBook.index, first)
+   if item.entity and item.entity.assetBook then
          local first = item.entity.assetBook.index
-
          if first ~= nil and l.assets[first]  then
             local index = 0
             for k =1 , #l.assets[first] do
@@ -125,17 +135,11 @@ function AssetBookSystem:itemPressed(item, l, x,y)
                end
             end
             if index > 0 then
-  --             print('removeing something!')
                table.remove(l.assets[first], index)
---               item.assetBookRef = nil
                item.entity:remove('assetBook')
             end
          end
-      end
-
    end
-
-
 end
 
 
@@ -143,7 +147,7 @@ end
 
 
 
-myWorld:addSystems(AssetBookSystem, TransformSystem, DraggableSystem, WheelSystem)
+myWorld:addSystems(AssetBookSystem, TransformSystem, DraggableSystem, WheelSystem, HitAreaEventSystem)
 
 
 
@@ -170,8 +174,6 @@ function attachPointerCallbacks()
       if (mouseState.hoveredSomething) then return end
       if not istouch then
          pointerPressed(x,y, 'mouse', parallaxLayersData, myWorld)
---         myWorld:emit("pressed", x, y)
-
       end
    end
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -254,7 +256,7 @@ function scene.load()
                  'plant13','bunnyhead', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
-            amountPerTile=0,
+            amountPerTile=2,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
@@ -288,15 +290,15 @@ function scene.load()
 
 	 child.bbox = read.bbox
          child.metaTags = read.metaTags
-         print(inspect(child.bbox),x,y)
+        -- print(inspect(child.bbox),x,y)
          meshAll(child)
 
 	 if ecsWorld then
 	    local myEntity = Concord.entity()
 	    myEntity
-	       :give('assetBook', thing, i)
 	       :give('transforms', child.transforms)
 	       :give('bbox', child.bbox)
+	       :give('vanillaDraggable')
 	    ecsWorld:addEntity(myEntity)
 	    child.entity = myEntity
 	 end
@@ -312,13 +314,25 @@ function scene.load()
 
 
 
+      local cave = makeObject('assets/cavething.polygons.txt', 1000,0, 0)
+
+      if recusiveLookForHitArea(cave) then
+	 cave.entity:give('hitAreaEvent')
+      end
+
       table.insert(
          foregroundLayer.children,
-         makeObject('assets/cavething.polygons.txt', 1000,0, 0)
+         cave
       )
+
+      --recusiveLookForHitArea(node)
+
+
       local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
       wheel.entity:give('wheelCircumference', 282)
       wheel.entity:give('rotatingPart', wheel.children[1])
+      wheel.entity:remove('vanillaDraggable')
+
       table.insert(foregroundLayer.children, wheel)
       --table.insert(
       --   backgroundLayer.children,

@@ -3,7 +3,7 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsW
       local child = parallaxData.layer.children[i]---map[layerName][i]
       if child.entity and child.entity.assetBook then -- only allowed to r
          --print(child.entity and child.entity.assetBook, child.assetBookRef)
-               
+
          local groundTileIndex  = math.floor(child.transforms.l[1]/tileSize)
          --print(math.floor(child.transforms.l[1]/tileSize), child.groundTileIndex)
          if groundTileIndex < startIndex or
@@ -20,12 +20,12 @@ end
 
 function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
    local data = parallaxData.assets
-   
+
    for i = startIndex, endIndex do
       if (data[i]) then
          for j = 1, #data[i] do
             local thing = data[i][j]
-            local url = thing.url 
+            local url = thing.url
             local read = readFileAndAddToCache(url)
             local doOptimized = read.optimizedBatchMesh ~= nil
             local child = {
@@ -47,7 +47,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
             child.depth = thing.depth
             child.url = thing.url
             child.bbox = read.bbox
-            
+
             table.insert(parallaxData.layer.children, child)
 
             if ecsWorld then
@@ -56,6 +56,8 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                   :give('assetBook', thing, i)
                   :give('transforms', child.transforms)
                   :give('bbox', child.bbox)
+		  :give('vanillaDraggable')
+
                ecsWorld:addEntity(myEntity)
                child.entity = myEntity
             end
@@ -77,7 +79,7 @@ function arrangeParallaxLayerVisibility(far, layer, ecsWorld)
    local x2,y2 = cam:getWorldCoordinates(W,0, far)
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
-   
+
    arrangeWhatIsVisible(x1, x2, tileSize, layer, ecsWorld)
 end
 

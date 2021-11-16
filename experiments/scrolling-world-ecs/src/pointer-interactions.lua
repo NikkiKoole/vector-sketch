@@ -25,11 +25,9 @@ end
 
 
 function removeGestureFromList(gesture)
-   --local found = false
    for i = #gestureState.list, 1, -1 do
       if gestureState.list[i] == gesture then
          table.remove(gestureState.list, i)
-         --found = true
       end
    end
 end
@@ -105,27 +103,6 @@ end
 
 function pointerPressed(x,y, id, layers, ecsWorld)
 
-   -- local W, H = love.graphics.getDimensions()
-
-   -- ------------ begin ui
-   -- local leftdis = getDistance(x,y, 50, (H/2)-25)
-   -- local rightdis = getDistance(x,y, W-50, (H/2)-25)
-   -- local toprightdis = getDistance(x,y, W-25, 25)
-
-   -- if uiState.showWalkButtons then
-   -- if leftdis < 50 then
-   --    moving = 'left'
-   -- end
-   -- if rightdis < 50 then
-   --    moving = 'right'
-   -- end
-   -- end
-   -- if toprightdis < 50 then
-   --    --showNumbersOnScreen = not showNumbersOnScreen
-   --    uiState.show = not uiState.show
-   -- end
-   -- ------------- end ui
-
 
    local itemPressed = false
 
@@ -144,46 +121,11 @@ function pointerPressed(x,y, id, layers, ecsWorld)
 	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
                   if ecsWorld then
-                     ecsWorld:emit("itemPressed", c, l, x, y)
-
+                     ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
                   end
 
-
-
-
---                  c.groundTileIndex = nil
---                  local indices = c.originalIndices
-                  if false then
-                  -- local first = c.assetBookIndex
-		  -- -- todo ouch i dunno about this
-                  -- if first and l.assets[first]  then
-                  --    --l.assets[indices[1]][indices[2]].hasBeenPressed = true
-
-                  --    local index = 0
-                  --    for k =1 , #l.assets[first] do
-                  --       if l.assets[first][k] == c.assetBookRef then
-                  --          index = k
-                  --       end
-                  --    end
-                  --    if index > 0 then
-                  --       table.remove(l.assets[first], index)
-                  --       c.assetBookRef = nil
-                  --    end
-
-
-                  -- end
-                  end
-
-
-		  if type(hitcheck) == 'string' then
-		     eventBus(hitcheck)
-		     return
-		     --print('what kind of magic -hitarea action we want? ', hitcheck)
-		  else
-
-		     c.pressed = {dx=invx, dy=invy, id=id}
-		     itemPressed = c
-		  end
+		  c.pressed = {dx=invx, dy=invy, id=id}
+		  itemPressed = c
 
                end
             end
@@ -314,67 +256,22 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
          if c.bbox and c.transforms._l and c.depth ~= nil then
             if c.pressed  then
 
-
-               --print(inspect(c.bbox))
-
                local mx, my = getPointerPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
-               if c.pressed then
-                  -- todo make these thing parameters
+	       if ecsWorld then
+		  ecsWorld:emit("itemDrag", c, l, x, y, invx, invy)
+	       end
 
+	       local speed = 300
+	       if ((brx + offset) > W) then
+		  resetCameraTween()
+		  cameraTranslateScheduler(speed*dt, 0)
+	       end
+	       if ((tlx - offset) < 0) then
+		  resetCameraTween()
+		  cameraTranslateScheduler(-speed*dt, 0)
+	       end
 
-		  if ecsWorld then
-                     ecsWorld:emit("itemPressedRepeat", c, l, x, y, invx, invy)
-
-                  end
-
-
-                  if c.hasDraggableChildren then -- aka feet
-                     if c.actorRef then
-
-                     end
-
-                  end
-
-                  if c.wheelCircumference then
-                     -- todo calculate the amount of rotating
-
-                     local rotateStep = ( (invx - c.pressed.dx) )
-		     local rx, ry = c.transforms._g:transformPoint( rotateStep, 0)
-		     local rx2, ry2 = c.transforms._g:transformPoint( 0, 0)
-		     local rxdelta = rx - rx2
-
-                     if math.abs(rotateStep) > 0.00001 then
-
-                        c.children[1].transforms.l[3] =  c.children[1].transforms.l[3] + (rxdelta/c.wheelCircumference)*(math.pi*2)
-                     end
-
-                     c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-
-                  else
-                     c.transforms.l[1] = c.transforms.l[1] + (invx - c.pressed.dx)
-                     c.transforms.l[2] = c.transforms.l[2] + (invy - c.pressed.dy)
-
-                  end
-
-
-
-
-
-                  --end
-                  local speed = 300
-                  if ((brx + offset) > W) then
-                     resetCameraTween()
-                     cameraTranslateScheduler(speed*dt, 0)
-                  end
-                  if ((tlx - offset) < 0) then
-                     resetCameraTween()
-                     cameraTranslateScheduler(-speed*dt, 0)
-                  end
-
-
-
-               end
             end
          end
       end
