@@ -335,5 +335,5 @@ function love.draw()
 	 love.graphics.print(tostring(id), x, y)
       end
    end
---   print(collectgarbage('count'))
+  -- print(collectgarbage('count'))
 end

@@ -20,6 +20,13 @@ Concord.component("vanillaDraggable")
 Concord.component("hitAreaEvent")
 
 Concord.component(
+   'actor',
+   function(c, value)
+      c.value = value
+   end
+)
+
+Concord.component(
    'transforms',
    function(c, value)
       c.transforms = value
@@ -37,16 +44,95 @@ Concord.component(
    function(c, ref, index)
       c.ref = ref
       c.index = index
-
    end
 )
 
+Concord.component(
+   'inMotion',
+   function(c, mass, velocity, acceleration)
+      c.mass = mass
+      c.velocity = velocity or Vector(0,0)
+      c.acceleration = acceleration or Vector(0,0)
+   end
+)
+
+local GravitySystem = Concord.system({pool={'inMotion'}})
+function GravitySystem:update(dt)
+   for _, e in ipairs(self.pool) do
+      local gy = uiState.gravityValue * e.inMotion.mass * dt
+      local gravity = Vector(0, gy)
+      applyForce(e.inMotion, gravity)
+   end
+end
+
+local InMotionSystem = Concord.system({pool={'inMotion', 'transforms'}})
+function InMotionSystem:update(dt)
+   -- applying half the velocity before position
+   -- other half after positioning
+   --https://web.archive.org/web/20150322180858/http://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
+   
+   for _, e in ipairs(self.pool) do
+
+      local transforms = e.transforms.transforms
+      
+      e.inMotion.velocity = e.inMotion.velocity + e.inMotion.acceleration/2
+
+      transforms.l[1] = transforms.l[1] + (e.inMotion.velocity.x * dt)
+      transforms.l[2] = transforms.l[2] + (e.inMotion.velocity.y * dt)
+
+      e.inMotion.velocity = e.inMotion.velocity + e.inMotion.acceleration/2
+      e.inMotion.acceleration = e.inMotion.acceleration * 0
+
+      -- temp do the floor
+      local bottomY = 0
+      if e.actor then
+--         print(inspect(e.actor.value.leglength))
+         bottomY = -e.actor.value.body.leglength
+      end
+      
+      if transforms.l[2] >= bottomY then
+         transforms.l[2] = bottomY
+         e:remove('inMotion')
+
+         if e.actor then
+            e.actor.value.originalX = transforms.l[1]
+            e.actor.value.originalY = transforms.l[2]
+         end
+
+      end
+      
+      
+   end
+end
+
+function InMotionSystem:itemThrow(target, dxn, dyn, speed)
+  -- print('item throw')
+   --print(target.entity)
+   target.entity
+      :ensure('inMotion', 1)
+
+   local mass = target.entity.inMotion.mass
+
+   local throwStrength = 1
+   if mass < 0 then throwStrength = throwStrength / 100 end
+
+   local impulse = Vector(dxn * speed * throwStrength ,
+                          dyn * speed * throwStrength )
+
+--   print('impulse', inspect(impulse))
+
+   applyForce(target.entity.inMotion, impulse)
+   --applyForce(target.inMotion, impulse)
+
+end
+
+
+-----------------------
 Concord.component(
    'wheelCircumference',
     function(c, value)
       c.value = value
    end
-
 )
 
 Concord.component(
@@ -117,14 +203,11 @@ function HitAreaEventSystem:itemPressed(item, l, x,y, hitcheck)
    if item.entity and item.entity.hitAreaEvent then
       eventBus(hitcheck)
    end
-
 end
-
 
 
 local AssetBookSystem = Concord.system({pool = {'assetBook'}})
 function AssetBookSystem:itemPressed(item, l, x,y)
-
    if item.entity and item.entity.assetBook then
          local first = item.entity.assetBook.index
          if first ~= nil and l.assets[first]  then
@@ -142,12 +225,15 @@ function AssetBookSystem:itemPressed(item, l, x,y)
    end
 end
 
-
-
-
-
-
-myWorld:addSystems(AssetBookSystem, TransformSystem, DraggableSystem, WheelSystem, HitAreaEventSystem)
+myWorld:addSystems(
+   AssetBookSystem,
+   GravitySystem,
+   InMotionSystem,
+   TransformSystem,
+   DraggableSystem,
+   WheelSystem,
+   HitAreaEventSystem
+)
 
 
 
@@ -190,11 +276,11 @@ function attachPointerCallbacks()
    function love.mousereleased(x,y, button, istouch)
       lastDraggedElement = nil
       if not istouch then
-         pointerReleased(x,y, 'mouse', parallaxLayersData)
+         pointerReleased(x,y, 'mouse', parallaxLayersData, myWorld)
       end
    end
    function love.touchreleased(id, x, y, dx, dy, pressure)
-      pointerReleased(x,y, id, parallaxLayersData)
+      pointerReleased(x,y, id, parallaxLayersData, myWorld)
    end
    function eventBus(event)
       if event == 'door-hitarea' then
@@ -362,13 +448,16 @@ function scene.load()
 	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 
-
+         print(walterBody.entity)
+         
          walterBody.hasDraggableChildren = true
          walterLFoot.isDraggableChild = true
          walterRFoot.isDraggableChild = true
 --         walterBody.transforms.l[2]=-100
 
 	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
+
+         walterBody.entity:give('actor', walterActor)
 
 --         walterActor.body.actorRef = walterActor
 	 table.insert(
@@ -426,8 +515,8 @@ function scene.update(dt)
       bouncetween:update(dt)
    end
 
-   updateMotionItems(foregroundLayer, dt)
-   updateMotionItems(backgroundLayer, dt)
+   --updateMotionItems(foregroundLayer, dt)
+   --updateMotionItems(backgroundLayer, dt)
 
    handlePressedItemsOnStage(dt, parallaxLayersData, myWorld)
 

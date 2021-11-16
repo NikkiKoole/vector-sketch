@@ -111,8 +111,7 @@ function pointerPressed(x,y, id, layers, ecsWorld)
 
       for i = #l.layer.children,1,-1 do
          local c = l.layer.children[i]
-
-
+         
          if c.bbox and c.transforms._l and c.depth and not itemPressed then
 
             local mouseover, invx, invy = mouseIsOverItemBBox(x,y, c, l.p)
@@ -129,11 +128,10 @@ function pointerPressed(x,y, id, layers, ecsWorld)
 
                end
             end
-
          end
       end
-
    end
+   
 
    if not itemPressed  then
       if not cameraFollowPlayer then
@@ -204,7 +202,7 @@ function pointerMoved(x,y,dx,dy, id, layers)
 end
 
 
-function pointerReleased(x,y, id, layers)
+function pointerReleased(x,y, id, layers, ecsWorld)
    moving = nil
 
    for j =1, #layers do
@@ -221,7 +219,7 @@ function pointerReleased(x,y, id, layers)
       if g then
 	 if g.trigger == id then
 	    addGesturePoint(g, love.timer.getTime( ), x, y)
-	    gestureRecognizer(g)
+	    gestureRecognizer(g, ecsWorld)
 	    removeGestureFromList(g)
 	 end
       end
@@ -351,7 +349,7 @@ function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
 end
 
 
-function gestureRecognizer(gesture)
+function gestureRecognizer(gesture, ecsWorld)
    if #gesture.positions > 1 then
       local startP = gesture.positions[1]
       local endP = gesture.positions[#gesture.positions]
@@ -414,22 +412,32 @@ function gestureRecognizer(gesture)
 	 end
       else -- this is gesture target something else, items basically!
 
+
+
+
+         
 	 if distance < 0.00001 then
 	    distance = 0.00001
 	 end
 	 local  dxn = dx / distance
 	 local  dyn = dy / distance
+         
 
-	 gesture.target.inMotion = makeMotionObject()
-         local mass = gesture.target.inMotion.mass
+--	 gesture.target.inMotion = makeMotionObject()
 
-	 local throwStrength = 1
-         if mass < 0 then throwStrength = throwStrength / 100 end
+         if ecsWorld then
+            ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
+         end
 
-         local impulse = Vector(dxn * speed * throwStrength ,
-                                dyn * speed * throwStrength )
+  --       local mass = gesture.target.inMotion.mass
 
-	 applyForce(gesture.target.inMotion, impulse)
+--	 local throwStrength = 1
+ --        if mass < 0 then throwStrength = throwStrength / 100 end
+--
+  --       local impulse = Vector(dxn * speed * throwStrength ,
+    --                            dyn * speed * throwStrength )
+      --   print('applying force old:', inspect(impulse))
+--	 applyForce(gesture.target.inMotion, impulse)
       end
    end
 end
