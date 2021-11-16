@@ -147,10 +147,10 @@ function pointerPressed(x,y, id, layers, ecsWorld)
                      ecsWorld:emit("itemPressed", c, l, x, y)
 
                   end
-                  
 
 
-                  
+
+
 --                  c.groundTileIndex = nil
 --                  local indices = c.originalIndices
                   if false then
@@ -169,12 +169,12 @@ function pointerPressed(x,y, id, layers, ecsWorld)
                   --       table.remove(l.assets[first], index)
                   --       c.assetBookRef = nil
                   --    end
-                     
-                     
+
+
                   -- end
                   end
 
-                  
+
 		  if type(hitcheck) == 'string' then
 		     eventBus(hitcheck)
 		     return
@@ -302,7 +302,7 @@ end
 
 
 
-function handlePressedItemsOnStage(dt, layers)
+function handlePressedItemsOnStage(dt, layers, ecsWorld)
    local W, H = love.graphics.getDimensions()
    for j = 1, #layers do
       local l=layers[j]
@@ -321,6 +321,13 @@ function handlePressedItemsOnStage(dt, layers)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
                   -- todo make these thing parameters
+
+
+		  if ecsWorld then
+                     ecsWorld:emit("itemPressedRepeat", c, l, x, y, invx, invy)
+
+                  end
+
 
                   if c.hasDraggableChildren then -- aka feet
                      if c.actorRef then

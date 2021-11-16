@@ -39,6 +39,45 @@ Concord.component(
    end
 )
 
+Concord.component(
+   'wheelCircumference',
+    function(c, value)
+      c.value = value
+   end
+
+)
+
+Concord.component(
+   'rotatingPart',
+    function(c, value)
+      c.value = value
+   end
+
+)
+
+local WheelSystem = Concord.system({pool = {'wheelCircumference', 'rotatingPart'}})
+function WheelSystem:itemPressedRepeat( c, l, x, y, invx, invy)
+   --print(c.entity and c.entity.wheelCircumference)
+   if (c.entity and c.entity.wheelCircumference and c.pressed) then
+
+        local rotateStep = invx - c.pressed.dx
+	local rx, ry = c.transforms._g:transformPoint( rotateStep, 0)
+	local rx2, ry2 = c.transforms._g:transformPoint( 0, 0)
+	local rxdelta = rx - rx2
+
+
+	c.entity.rotatingPart.value.transforms.l[3] = c.entity.rotatingPart.value.transforms.l[3]  +
+	   (rxdelta/c.entity.wheelCircumference.value)*(math.pi*2)
+
+
+	c.entity.rotatingPart.value.transforms.l[1] = c.entity.rotatingPart.value.transforms.l[1] + rotateStep
+   end
+
+   print('item pressed repreat dragged!')
+end
+
+
+
 local TransformSystem = Concord.system({pool = {'transforms'}})
 function TransformSystem:update(dt)
    --print(#self.pool)
@@ -68,7 +107,7 @@ function AssetBookSystem:itemPressed(item, l, x,y)
       --print(inspect(e))
    end
 
-   
+
    if true and item.entity  then
 --      print(item.entity.assetBookIndex, first)
       --print('wee', item.assetBookIndex)
@@ -77,7 +116,7 @@ function AssetBookSystem:itemPressed(item, l, x,y)
       if item.entity.assetBook then
     --     print(item.entity.assetBook.index, first)
          local first = item.entity.assetBook.index
-      
+
          if first ~= nil and l.assets[first]  then
             local index = 0
             for k =1 , #l.assets[first] do
@@ -96,7 +135,7 @@ function AssetBookSystem:itemPressed(item, l, x,y)
 
    end
 
-   
+
 end
 
 
@@ -104,7 +143,7 @@ end
 
 
 
-myWorld:addSystems(AssetBookSystem, TransformSystem, DraggableSystem)
+myWorld:addSystems(AssetBookSystem, TransformSystem, DraggableSystem, WheelSystem)
 
 
 
@@ -202,7 +241,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=2,
+            amountPerTile=0,
             depth=depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
@@ -215,7 +254,7 @@ function scene.load()
                  'plant13','bunnyhead', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
-            amountPerTile=2,
+            amountPerTile=0,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
@@ -227,6 +266,7 @@ function scene.load()
       --generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
       -- todo alot of duplication from removeAddItems
+      local ecsWorld = myWorld
       function makeObject(url, x, y, depth, allowOptimized)
          if allowOptimized == nil then allowOptimized = true end
          local read = readFileAndAddToCache(url)
@@ -250,6 +290,18 @@ function scene.load()
          child.metaTags = read.metaTags
          print(inspect(child.bbox),x,y)
          meshAll(child)
+
+	 if ecsWorld then
+	    local myEntity = Concord.entity()
+	    myEntity
+	       :give('assetBook', thing, i)
+	       :give('transforms', child.transforms)
+	       :give('bbox', child.bbox)
+	    ecsWorld:addEntity(myEntity)
+	    child.entity = myEntity
+	 end
+
+
          return child
       end
 
@@ -259,22 +311,27 @@ function scene.load()
       end
 
 
+
       table.insert(
          foregroundLayer.children,
          makeObject('assets/cavething.polygons.txt', 1000,0, 0)
       )
-      table.insert(
-         backgroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
-      )
-      table.insert(
-         foregroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, 1), 282)
-      )
-      table.insert(
-         foregroundLayer.children,
-         makeWheel(makeObject('assets/wiel.polygons.txt', 1100,0, -1), 282)
-      )
+      local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
+      wheel.entity:give('wheelCircumference', 282)
+      wheel.entity:give('rotatingPart', wheel.children[1])
+      table.insert(foregroundLayer.children, wheel)
+      --table.insert(
+      --   backgroundLayer.children,
+      --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
+     -- )
+      --table.insert(
+      --   foregroundLayer.children,
+      --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, 1), 282)
+     -- )
+      --table.insert(
+       --  foregroundLayer.children,
+       --  makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
+     -- )
 
       -- table.insert(
       --    foregroundLayer.children,
@@ -358,7 +415,7 @@ function scene.update(dt)
    updateMotionItems(foregroundLayer, dt)
    updateMotionItems(backgroundLayer, dt)
 
-   handlePressedItemsOnStage(dt, parallaxLayersData)
+   handlePressedItemsOnStage(dt, parallaxLayersData, myWorld)
 
    --for i = 1, #foregroundLayer.children do
       --if not foregroundLayer.children[i].pressed then
