@@ -269,7 +269,7 @@ function Actor:update(dt)
          local oldLeftFootX = self.lfoot.transforms.l[1]
 
 
-         self.beingPressed = false
+--         self.beingPressed = false
          self:straightenLegs()
          local newLeftFootY = self.lfoot.transforms.l[2]
          local newLeftFootX = self.lfoot.transforms.l[1]
@@ -279,9 +279,10 @@ function Actor:update(dt)
 
          if dy ~= 0 or dx ~= 0 then
             --dx=0
-            self.body.inMotion = makeMotionObject()
+            self.body.actor.inMotion = makeMotionObject()
             local impulse = Vector(dx*11,dy*11)
-            applyForce(self.body.inMotion, impulse)
+            print('adding force shou, yhis doesnt end up where i want it. ')
+            applyForce(self.body.entity.inMotion, impulse)
          end
 
       end
@@ -295,7 +296,7 @@ function Actor:update(dt)
 
    end
 
-   if self.body.pressed then
+   if self.body.pressed and true then
       self.beingPressed = true
       setTransforms(self.body)
       local pivx = self.body.transforms.l[6]
@@ -335,55 +336,47 @@ function Actor:update(dt)
          -- do the gravitylegs
          local useGravityLegs = false
          if useGravityLegs then
-         local segments = self.segments
-         local last = segments[#segments]
-         self.body.generatedMeshes = {}
+            local segments = self.segments
+            local last = segments[#segments]
+            self.body.generatedMeshes = {}
 
 
-         local fx =self.leg1_connector.points[1][1]
-         local fy =self.leg1_connector.points[1][2]
+            local fx =self.leg1_connector.points[1][1]
+            local fy =self.leg1_connector.points[1][2]
 
-         setTransforms(self.body)
+            setTransforms(self.body)
 
-         last:follow(self.body.transforms.l[1] + fx, self.body.transforms.l[2] + fy)
-         last:updateB()
+            last:follow(self.body.transforms.l[1] + fx, self.body.transforms.l[2] + fy)
+            last:updateB()
 
-         for i = #segments-1, 1 , -1 do
-            segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
-            segments[i]:updateB()
-         end
+            for i = #segments-1, 1 , -1 do
+               segments[i]:follow( segments[i+1].a.x, segments[i+1].a.y)
+               segments[i]:updateB()
+            end
 
-         for i = 1, #segments do
-            segments[i]:setA(segments[i].a.x, segments[i].a.y + 100*dt)
-            segments[1]:updateB()
-         end
-
-
-         local result = {}
-         --print(inspect(segments))
-         for i = 1, #segments do
-            table.insert(result, segments[i].a.x -self.body.transforms.l[1]  )
-            table.insert(result, segments[i].a.y -self.body.transforms.l[2])
-         end
-
-         --local widths, width2 = self:getWidths()
-
-         --print(inspect(self:getWidths()))
-         --local r = {}
-         --for i = 1, #widths do
-         --   r[i] = widths[#widths- i]
-         --end
-
-         local verts, indices, draw_mode = polyline('bevel',result, 3)
-         local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-         table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
+            for i = 1, #segments do
+               segments[i]:setA(segments[i].a.x, segments[i].a.y + 100*dt)
+               segments[1]:updateB()
+            end
 
 
-         local px2,py2 = self.body.transforms._g:inverseTransformPoint(segments[1].a.x , segments[1].a.y)
-         print(segments[1].a.x,segments[1].a.y)
+            local result = {}
+            --print(inspect(segments))
+            for i = 1, #segments do
+               table.insert(result, segments[i].a.x -self.body.transforms.l[1]  )
+               table.insert(result, segments[i].a.y -self.body.transforms.l[2])
+            end
 
-         self.lfoot.transforms.l[1] = px2
-         self.lfoot.transforms.l[2] = py2
+            local verts, indices, draw_mode = polyline('bevel',result, 3)
+            local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+            table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
+
+
+            local px2,py2 = self.body.transforms._g:inverseTransformPoint(segments[1].a.x , segments[1].a.y)
+            print(segments[1].a.x,segments[1].a.y)
+
+            self.lfoot.transforms.l[1] = px2
+            self.lfoot.transforms.l[2] = py2
 
          end
 

@@ -20,6 +20,15 @@ Concord.component("vanillaDraggable")
 Concord.component("hitAreaEvent")
 
 Concord.component(
+   'biped',
+   function(c, body, lfoot, rfoot)
+      c.body = body
+      c.lfoot = lfoot
+      c.rfoot = rfoot
+   end
+)
+
+Concord.component(
    'actor',
    function(c, value)
       c.value = value
@@ -125,7 +134,38 @@ function InMotionSystem:itemThrow(target, dxn, dyn, speed)
    --applyForce(target.inMotion, impulse)
 
 end
+------------------------
 
+local BipedSystem = Concord.system({pool={'biped'}})
+
+function BipedSystem:update(dt)
+--   print(#self.pool)
+   for _, e in ipairs(self.pool) do
+      if(e.biped.body.pressed) then
+         --         print('yo')
+         local oldLeftFootY = e.biped.lfoot.transforms.l[2]
+         local oldLeftFootX = e.biped.lfoot.transforms.l[1]
+
+
+         --self.beingPressed = false
+         --self:straightenLegs()
+         local newLeftFootY = e.biped.lfoot.transforms.l[2]
+         local newLeftFootX = e.biped.lfoot.transforms.l[1]
+
+         local dy = oldLeftFootY- newLeftFootY
+         local dx = oldLeftFootX- newLeftFootX
+
+         print(dx,dy)
+         print(oldLeftFootX, newLeftFootX)
+         if dy ~= 0 or dx ~= 0 then
+            print('yo biggity')
+         end
+         
+      end
+      
+   end
+      
+end
 
 -----------------------
 Concord.component(
@@ -231,6 +271,7 @@ myWorld:addSystems(
    InMotionSystem,
    TransformSystem,
    DraggableSystem,
+   BipedSystem,
    WheelSystem,
    HitAreaEventSystem
 )
@@ -458,6 +499,8 @@ function scene.load()
 	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
 
          walterBody.entity:give('actor', walterActor)
+
+         walterBody.entity:give('biped', walterBody, walterLFoot, walterRFoot)
 
 --         walterActor.body.actorRef = walterActor
 	 table.insert(
