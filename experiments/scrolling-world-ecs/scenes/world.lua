@@ -79,11 +79,11 @@ function InMotionSystem:update(dt)
    -- applying half the velocity before position
    -- other half after positioning
    --https://web.archive.org/web/20150322180858/http://www.niksula.hut.fi/~hkankaan/Homepages/gravity.html
-   
+
    for _, e in ipairs(self.pool) do
 
       local transforms = e.transforms.transforms
-      
+
       e.inMotion.velocity = e.inMotion.velocity + e.inMotion.acceleration/2
 
       transforms.l[1] = transforms.l[1] + (e.inMotion.velocity.x * dt)
@@ -98,7 +98,7 @@ function InMotionSystem:update(dt)
 --         print(inspect(e.actor.value.leglength))
          bottomY = -e.actor.value.body.leglength
       end
-      
+
       if transforms.l[2] >= bottomY then
          transforms.l[2] = bottomY
          e:remove('inMotion')
@@ -109,8 +109,8 @@ function InMotionSystem:update(dt)
          end
 
       end
-      
-      
+
+
    end
 end
 
@@ -136,35 +136,78 @@ function InMotionSystem:itemThrow(target, dxn, dyn, speed)
 end
 ------------------------
 
-local BipedSystem = Concord.system({pool={'biped'}})
+local BipedSystem = Concord.system({pool={'biped', 'actor'}})
 
 function BipedSystem:update(dt)
---   print(#self.pool)
+   -- todo
+   -- what exactly is that originalX originalY ?
+   -- try and just use biped or actor, not both
+   -- get rid of all functions on Actor
+
    for _, e in ipairs(self.pool) do
-      if(e.biped.body.pressed) then
-         --         print('yo')
+
+
+      if(not e.biped.body.pressed and e.actor.value.wasPressed) then
+	 e.actor.value.wasPressed = false
          local oldLeftFootY = e.biped.lfoot.transforms.l[2]
          local oldLeftFootX = e.biped.lfoot.transforms.l[1]
 
+	 e.actor.value:straightenLegs()
 
-         --self.beingPressed = false
-         --self:straightenLegs()
          local newLeftFootY = e.biped.lfoot.transforms.l[2]
          local newLeftFootX = e.biped.lfoot.transforms.l[1]
 
          local dy = oldLeftFootY- newLeftFootY
          local dx = oldLeftFootX- newLeftFootX
 
-         print(dx,dy)
-         print(oldLeftFootX, newLeftFootX)
+
          if dy ~= 0 or dx ~= 0 then
-            print('yo biggity')
+	    myWorld:emit("itemThrow", e.biped.body, dx, dy, 11)
          end
-         
+
       end
-      
+
+      if (e.biped.body.pressed) then
+	 e.actor.value.wasPressed = true
+	 setTransforms(e.biped.body)
+
+	 local pivx = e.biped.body.transforms.l[6]
+	 local pivy = e.biped.body.transforms.l[7]
+	 local px,py = e.biped.body.transforms._g:transformPoint(pivx, pivy)
+
+	 local dist = (math.sqrt((px - e.actor.value.originalX)^2 + (py - e.actor.value.originalY)^2   ))
+
+	 local tooFar = dist > (e.actor.value.leglength / e.actor.value.magic)
+	 if tooFar then
+	    e.actor.value.originalX = e.biped.body.transforms.l[1]
+	    e.actor.value.originalY = e.biped.body.transforms.l[2]
+	 end
+
+
+	 if py <= -e.biped.body.leglength then
+	    --print('oo!')
+	 else
+	    --print('need to do the rubbering!')
+
+	    e.biped.lfoot.transforms.l[2] = e.actor.value.leg1_connector.points[1][2] - py --+ self.originalY
+	    e.biped.lfoot.transforms.l[1] = e.actor.value.leg1_connector.points[1][1] - px + e.actor.value.originalX
+
+	    e.biped.rfoot.transforms.l[2] = e.actor.value.leg2_connector.points[1][2] - py --+ self.originalY
+	    e.biped.rfoot.transforms.l[1] = e.actor.value.leg2_connector.points[1][1] - px + e.actor.value.originalX
+
+
+
+	    e.biped.body.generatedMeshes = {}
+
+	    e.actor.value:oneLeg(e.actor.value.leg1_connector, e.biped.lfoot.transforms, -1)
+	    e.actor.value:oneLeg(e.actor.value.leg2_connector, e.biped.rfoot.transforms, 1)
+
+	 end
+
+      end
+
    end
-      
+
 end
 
 -----------------------
@@ -490,7 +533,7 @@ function scene.load()
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 
          print(walterBody.entity)
-         
+
          walterBody.hasDraggableChildren = true
          walterLFoot.isDraggableChild = true
          walterRFoot.isDraggableChild = true
@@ -568,9 +611,9 @@ function scene.update(dt)
       --foregroundLayer.children[i].transforms.l[3] = foregroundLayer.children[i].transforms.l[3] + 0.01
       --end
    --end
-   for i=1, #actors do
-      actors[i]:update(dt)
-   end
+   --for i=1, #actors do
+   --   actors[i]:update(dt)
+   --end
 
 
    myWorld:emit("update", dt)
