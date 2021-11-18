@@ -107,16 +107,11 @@ function InMotionSystem:update(dt)
             e.actor.value.originalX = transforms.l[1]
             e.actor.value.originalY = transforms.l[2]
          end
-
       end
-
-
    end
 end
 
 function InMotionSystem:itemThrow(target, dxn, dyn, speed)
-  -- print('item throw')
-   --print(target.entity)
    target.entity
       :ensure('inMotion', 1)
 
@@ -128,11 +123,7 @@ function InMotionSystem:itemThrow(target, dxn, dyn, speed)
    local impulse = Vector(dxn * speed * throwStrength ,
                           dyn * speed * throwStrength )
 
---   print('impulse', inspect(impulse))
-
    applyForce(target.entity.inMotion, impulse)
-   --applyForce(target.inMotion, impulse)
-
 end
 ------------------------
 
@@ -146,7 +137,6 @@ function BipedSystem:update(dt)
 
    for _, e in ipairs(self.pool) do
 
-
       if(not e.biped.body.pressed and e.actor.value.wasPressed) then
 	 e.actor.value.wasPressed = false
          local oldLeftFootY = e.biped.lfoot.transforms.l[2]
@@ -159,7 +149,6 @@ function BipedSystem:update(dt)
 
          local dy = oldLeftFootY- newLeftFootY
          local dx = oldLeftFootX- newLeftFootX
-
 
          if dy ~= 0 or dx ~= 0 then
 	    myWorld:emit("itemThrow", e.biped.body, dx, dy, 11)
@@ -185,27 +174,20 @@ function BipedSystem:update(dt)
 
 
 	 if py <= -e.biped.body.leglength then
-	    --print('oo!')
+	    e.actor.value:straightenLegs()
 	 else
-	    --print('need to do the rubbering!')
 
-	    e.biped.lfoot.transforms.l[2] = e.actor.value.leg1_connector.points[1][2] - py --+ self.originalY
+	    e.biped.lfoot.transforms.l[2] = e.actor.value.leg1_connector.points[1][2] - py
 	    e.biped.lfoot.transforms.l[1] = e.actor.value.leg1_connector.points[1][1] - px + e.actor.value.originalX
-
-	    e.biped.rfoot.transforms.l[2] = e.actor.value.leg2_connector.points[1][2] - py --+ self.originalY
+	    e.biped.rfoot.transforms.l[2] = e.actor.value.leg2_connector.points[1][2] - py
 	    e.biped.rfoot.transforms.l[1] = e.actor.value.leg2_connector.points[1][1] - px + e.actor.value.originalX
-
-
 
 	    e.biped.body.generatedMeshes = {}
 
 	    e.actor.value:oneLeg(e.actor.value.leg1_connector, e.biped.lfoot.transforms, -1)
 	    e.actor.value:oneLeg(e.actor.value.leg2_connector, e.biped.rfoot.transforms, 1)
-
 	 end
-
       end
-
    end
 
 end
@@ -527,7 +509,7 @@ function scene.load()
       -- )
 
       actors  = {}
-      for i = 1, 1 do
+      for i = 1, 10 do
          walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,love.math.random(), false)
 	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
