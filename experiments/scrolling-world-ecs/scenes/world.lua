@@ -14,8 +14,8 @@ local hasBeenLoaded = false
 
 local myWorld = Concord.world()
 
-Concord.component("foregroundObject")
-Concord.component("backgroundObject")
+--Concord.component("foregroundObject")
+--Concord.component("backgroundObject")
 Concord.component("vanillaDraggable")
 Concord.component("hitAreaEvent")
 
