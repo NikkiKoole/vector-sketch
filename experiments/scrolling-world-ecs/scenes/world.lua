@@ -19,14 +19,6 @@ local myWorld = Concord.world()
 Concord.component("vanillaDraggable")
 Concord.component("hitAreaEvent")
 
-Concord.component(
-   'biped',
-   function(c, body, lfoot, rfoot)
-      c.body = body
-      c.lfoot = lfoot
-      c.rfoot = rfoot
-   end
-)
 
 Concord.component(
    'actor',
@@ -48,31 +40,31 @@ Concord.component(
    end
 )
 
-Concord.component(
-   'assetBook',
-   function(c, ref, index)
-      c.ref = ref
-      c.index = index
-   end
-)
 
-Concord.component(
-   'inMotion',
-   function(c, mass, velocity, acceleration)
-      c.mass = mass
-      c.velocity = velocity or Vector(0,0)
-      c.acceleration = acceleration or Vector(0,0)
-   end
-)
+-- Concord.component(
+--    'inMotion',
+--    function(c, mass, velocity, acceleration)
+--       c.mass = mass
+--       c.velocity = velocity or Vector(0,0)
+--       c.acceleration = acceleration or Vector(0,0)
+--    end
+-- )
+--local Components = {}
 
-local GravitySystem = Concord.system({pool={'inMotion'}})
-function GravitySystem:update(dt)
-   for _, e in ipairs(self.pool) do
-      local gy = uiState.gravityValue * e.inMotion.mass * dt
-      local gravity = Vector(0, gy)
-      applyForce(e.inMotion, gravity)
-   end
-end
+Concord.utils.loadNamespace("src/components", Components)
+local Systems = {}
+Concord.utils.loadNamespace("src/systems", Systems)
+print(inspect(Systems.GravitySystem))
+--print(inspect(Concord))
+ 
+ --local GravitySystem = Concord.system({pool={'inMotion'}})
+-- function GravitySystem:update(dt)
+--    for _, e in ipairs(self.pool) do
+--       local gy = uiState.gravityValue * e.inMotion.mass * dt
+--       local gravity = Vector(0, gy)
+--       applyForce(e.inMotion, gravity)
+--    end
+-- end
 
 local InMotionSystem = Concord.system({pool={'inMotion', 'transforms'}})
 function InMotionSystem:update(dt)
@@ -193,20 +185,6 @@ function BipedSystem:update(dt)
 end
 
 -----------------------
-Concord.component(
-   'wheelCircumference',
-    function(c, value)
-      c.value = value
-   end
-)
-
-Concord.component(
-   'rotatingPart',
-    function(c, value)
-      c.value = value
-   end
-
-)
 
 local WheelSystem = Concord.system({pool = {'wheelCircumference', 'rotatingPart'}})
 function WheelSystem:itemDrag( c, l, x, y, invx, invy)
@@ -236,9 +214,6 @@ end
 
 local TransformSystem = Concord.system({pool = {'transforms'}})
 function TransformSystem:update(dt)
-   --print(#self.pool)
-   --for _, e in ipairs(self.pool) do
-   --end
 end
 
 
@@ -263,28 +238,10 @@ function HitAreaEventSystem:itemPressed(item, l, x,y, hitcheck)
 end
 
 
-local AssetBookSystem = Concord.system({pool = {'assetBook'}})
-function AssetBookSystem:itemPressed(item, l, x,y)
-   if item.entity and item.entity.assetBook then
-         local first = item.entity.assetBook.index
-         if first ~= nil and l.assets[first]  then
-            local index = 0
-            for k =1 , #l.assets[first] do
-               if l.assets[first][k] == item.entity.assetBook.ref then
-                  index = k
-               end
-            end
-            if index > 0 then
-               table.remove(l.assets[first], index)
-               item.entity:remove('assetBook')
-            end
-         end
-   end
-end
 
 myWorld:addSystems(
-   AssetBookSystem,
-   GravitySystem,
+   Systems.AssetBookSystem,
+   Systems.GravitySystem,
    InMotionSystem,
    TransformSystem,
    DraggableSystem,

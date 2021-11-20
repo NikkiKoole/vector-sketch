@@ -6,3 +6,4 @@ function GravitySystem:update(dt)
       applyForce(e.inMotion, gravity)
    end
 end
+return GravitySystem
