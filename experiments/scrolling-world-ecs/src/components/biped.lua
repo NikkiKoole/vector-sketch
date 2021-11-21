@@ -6,3 +6,9 @@ Concord.component(
       c.rfoot = rfoot
    end
 )
+Concord.component(
+   'actor',
+   function(c, value)
+      c.value = value
+   end
+)
