@@ -36,17 +36,18 @@ function InMotionSystem:update(dt)
 end
 
 function InMotionSystem:itemThrow(target, dxn, dyn, speed)
-   target.entity
-      :ensure('inMotion', 1)
+   if target.entity then
+      target.entity
+         :ensure('inMotion', 1)
 
-   local mass = target.entity.inMotion.mass
+      local mass = target.entity.inMotion.mass
+      local throwStrength = 1
+      if mass < 0 then throwStrength = throwStrength / 100 end
 
-   local throwStrength = 1
-   if mass < 0 then throwStrength = throwStrength / 100 end
+      local impulse = Vector(dxn * speed * throwStrength ,
+                             dyn * speed * throwStrength )
 
-   local impulse = Vector(dxn * speed * throwStrength ,
-                          dyn * speed * throwStrength )
-
-   applyForce(target.entity.inMotion, impulse)
+      applyForce(target.entity.inMotion, impulse)
+   end
 end
 return InMotionSystem

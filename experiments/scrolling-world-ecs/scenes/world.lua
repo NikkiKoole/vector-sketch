@@ -85,13 +85,7 @@ function scene.load()
       gradients[timeIndex].from, gradients[timeIndex].to
    )
 
-
-
-
    if not hasBeenLoaded then
-
-         --print('world:', World)
-
 
       depthMinMax =       {min=-1.0, max=1.0}
       foregroundFactors = { far=.8, near=1}
@@ -99,7 +93,6 @@ function scene.load()
       tileSize = 100
 
       cam = createCamera()
-
 
       backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
       backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
@@ -133,7 +126,7 @@ function scene.load()
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
 
 
-      --generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
+   --   generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
       -- todo alot of duplication from removeAddItems
       local ecsWorld = myWorld
@@ -200,8 +193,8 @@ function scene.load()
       wheel.entity:give('wheelCircumference', 282)
       wheel.entity:give('rotatingPart', wheel.children[1])
       wheel.entity:remove('vanillaDraggable')
-
       table.insert(foregroundLayer.children, wheel)
+      
       --table.insert(
       --   backgroundLayer.children,
       --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
@@ -215,14 +208,6 @@ function scene.load()
        --  makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
      -- )
 
-      -- table.insert(
-      --    foregroundLayer.children,
-      --    makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
-      -- )
-      -- table.insert(
-      --    foregroundLayer.children,
-      --    makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
-      -- )
 
       actors  = {}
       for i = 1, 10 do
@@ -230,29 +215,16 @@ function scene.load()
 	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
 	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
 
-         print(walterBody.entity)
-
-         walterBody.hasDraggableChildren = true
-         walterLFoot.isDraggableChild = true
-         walterRFoot.isDraggableChild = true
---         walterBody.transforms.l[2]=-100
-
 	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
 
          walterBody.entity:give('actor', walterActor)
 
          walterBody.entity:give('biped', walterBody, walterLFoot, walterRFoot)
 
---         walterActor.body.actorRef = walterActor
 	 table.insert(
 	    foregroundLayer.children,
 	    walterActor.body
 	 )
-	 -- table.insert(
-	 --    foregroundLayer.children,
-	 --    walterLFoot
-	 -- )
-
 	 table.insert(actors, walterActor)
       end
 
@@ -280,8 +252,6 @@ function scene.load()
    hasBeenLoaded = true
    attachPointerCallbacks()
 
-
-   --print(inspect(foregroundLayer.children[1]))
 end
 
 
@@ -299,20 +269,7 @@ function scene.update(dt)
       bouncetween:update(dt)
    end
 
-   --updateMotionItems(foregroundLayer, dt)
-   --updateMotionItems(backgroundLayer, dt)
-
    handlePressedItemsOnStage(dt, parallaxLayersData, myWorld)
-
-   --for i = 1, #foregroundLayer.children do
-      --if not foregroundLayer.children[i].pressed then
-      --foregroundLayer.children[i].transforms.l[3] = foregroundLayer.children[i].transforms.l[3] + 0.01
-      --end
-   --end
-   --for i=1, #actors do
-   --   actors[i]:update(dt)
-   --end
-
 
    myWorld:emit("update", dt)
 
@@ -322,7 +279,6 @@ function scene.draw()
 
    love.graphics.clear(1,1,1)
    love.graphics.setColor(1,1,1)
-
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
    drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
