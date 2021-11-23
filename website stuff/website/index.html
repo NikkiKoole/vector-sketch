@@ -9,6 +9,7 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <script>
       var repeater;
@@ -27,6 +28,12 @@
 	  src: url('fonts/VoltaT-Regu.svg#VoltaT-Regu') format('svg'),
 	       url('fonts/VoltaT-Regu.ttf') format('truetype'),
 	       url('fonts/VoltaT-Regu.woff') format('woff');
+	  font-weight: normal;
+	  font-style: normal;
+      }
+       @font-face {
+	  font-family: 'cooper';
+	  src: url('cooper-bold-bt.ttf') format('truetype');
 	  font-weight: normal;
 	  font-style: normal;
       }
@@ -61,6 +68,7 @@
        *, html {
 	   margin:0;
 	   padding:0;
+	   box-sizing: border-box;
        }
       h1 {
 	  font-family: SansSerifShaded;
@@ -100,10 +108,7 @@
 	   display: inline-block;
 	  margin: 0;
       }
-      header {
-	  display: flex;
-	  margin-bottom: 2rem;
-      }
+
       .topbar {
 
 	  display: inline-flex;
@@ -139,17 +144,7 @@
       .topbar option:hover:after {
 	  width: 100%
       }
-      .panel {
-	  min-width: 100px;
-	  min-height: 100px;
-	  background: #fbfbfb;
-	  width: fit-content;
-	  border-radius: 20px;
-	  box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
-	  padding: 1rem;
-	  margin-bottom: 1rem;
-	  border-opacity: 0.2;
-      }
+
 
       .button {
 	  border: 2px solid rgba(0,0,0,0.05);
@@ -193,8 +188,7 @@
       }
 
       section {
-	  padding-left: 6rem;
-	  padding-right: 6rem;
+
       }
 
       palette {
@@ -299,8 +293,67 @@
 	  color: #FFCCAA;
 
       }
+      @media only screen and (min-width: 2em) {
+	  body {
+
+	  }
+	  .allPanels .panel {
+	      width: 100%;
+	      margin: 5px;
+	  }
+      }
+      @media only screen and (min-width: 38em) {
+	  body {
+
+	  }
+	  .allPanels .panel {
+	      width: calc(50% - 12px);
+	      margin: 5px;
+	  }
+      }
+      @media only screen and (min-width: 54em) {
+	  body {
+
+	  }
+
+	  .allPanels .panel {
+	      width: calc(33% - 10px);
+	      margin: 5px;
+	  }
+      }
 
 
+      .container {
+	  max-width: 65em;
+	  margin: 0 auto;
+      }
+
+      .panel {
+	  background: #fbfbfb;
+	  border-radius: 20px;
+	  box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
+	  padding: 1em;
+	  border-opacity: 0.2;
+      }
+
+      .allPanels {
+	  display: flex;
+	  flex-direction: row;
+	  flex-wrap: wrap;
+      }
+
+      .cardimg {
+	  width: calc(100% - 1em);
+	  margin-top: 10px;
+	  margin-left: .5em;
+
+      }
+
+
+      header {
+	  display: block;
+	  margin-bottom: 2rem;
+      }
 
     </style>
   </head>
@@ -315,8 +368,9 @@
       </div>
     </header>
 
-
-    <section>
+    <main>
+      <section>
+	<div class='container'>
       <h4>storytime </h4>
       <p>
 	Do you dream about toys coming to live when not looking?
@@ -340,23 +394,30 @@
 	    and you can play the vibes. </br>
 	    All good art comes from pain they say dont they? </br>
 	  </p>
-
-	  <div style="background-image: url(tomatoes.gif);  height: 400px; width: 400px; margin-top: 1rem; margin-bottom: 1rem"> </div>
-
-	  <img class="appstore" src="appstore.svg" />
+	  <img class="cardimg" src="tomatoes.gif" alt="tomatoes" />
+	  <img class="appstore" src="appstore.svg" alt='appstore'/>
 	</div>
 
 	<div class="panel" id="post-456">
 	  <h2>Float my Boat</h2>
 	  <p>This is a wld kinda test</p>
 
-	  <img  class="appstore"  src="appstore.svg" />
+	  <img  class="appstore"  src="appstore.svg" alt='appstore'/>
+	</div>
+
+	<div class="panel" id="post-456">
+	  <h2>Float my Boat</h2>
+	  <p>This is a wld kinda test</p>
+
+	  <img  class="appstore"  src="appstore.svg" alt='appstore'/>
 	</div>
       </div>
 
       <div>
 
       </div>
+      </div>
     </section>
+    </main>
   </body>
 </html>
