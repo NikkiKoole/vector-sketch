@@ -341,7 +341,19 @@
 	  border-radius: 20px;
 	  box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
 	  padding: 1em;
-	  border-opacity: 0.2;
+	  cursor: pointer;
+      }
+
+      .panel:hover {
+	  background: #e3ca57;
+
+
+      }
+      .panel:hover p {
+	  color: white;
+      }
+      .panel:hover h2 {
+	  color: black;
       }
       .panel p {
 	  font-size: 1em;
@@ -356,6 +368,12 @@
 	  width: calc(100% - 1em);
 	  margin-top: 10px;
 	  margin-left: .5em;
+
+      }
+
+      .article {
+	  padding-left: 10px;
+	  padding-right: 10px;
 
       }
 
@@ -374,13 +392,14 @@
       <div class="topbar">
 	<option>storytime</option>
 	<option>apps</option>
-	<a href="html/contact.html">contact</a>
+	<option>contact</option>
       </div>
     </header>
 
     <main>
       <section>
 	<div class='container'>
+	  <div class='article'>
       <h4>storytime </h4>
       <p>
 	Do you dream about toys coming to live when not looking?
@@ -392,6 +411,7 @@
 	Just nonsense art to play with by you and your little one(s).</br>
      </br>
       </p>
+      </div>
 
 
       <div class="allPanels">
