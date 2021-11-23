@@ -9,6 +9,7 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="normalize.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <script>
@@ -297,6 +298,9 @@
 	  body {
 
 	  }
+	  h1 {
+	      font-size: 2em;
+	  }
 	  .allPanels .panel {
 	      width: 100%;
 	      margin: 5px;
@@ -305,6 +309,10 @@
       @media only screen and (min-width: 38em) {
 	  body {
 
+	  }
+
+	  h1 {
+	      font-size: 4.5em;
 	  }
 	  .allPanels .panel {
 	      width: calc(50% - 12px);
@@ -335,7 +343,9 @@
 	  padding: 1em;
 	  border-opacity: 0.2;
       }
-
+      .panel p {
+	  font-size: 1em;
+      }
       .allPanels {
 	  display: flex;
 	  flex-direction: row;
