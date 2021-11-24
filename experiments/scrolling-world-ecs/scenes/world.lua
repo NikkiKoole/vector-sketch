@@ -114,6 +114,7 @@ function scene.load()
                { 'plant1','plant2','plant3','plant4',
                   'plant5','plant6','plant7','plant8',
                   'plant9','plant10','plant11','plant12',
+                  'doosgroot', 'doosgroot', 'doosgroot',
                  'plant13','bunnyhead', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},

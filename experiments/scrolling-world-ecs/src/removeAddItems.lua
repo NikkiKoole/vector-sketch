@@ -46,6 +46,12 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
             child.metaTags = read.metaTags
             child.depth = thing.depth
             child.url = thing.url
+            --            print(thing.url)
+            if thing.url == 'assets/doosgroot.polygons.txt' then
+               --print('poop', inspect(read.metaTags))
+               --child.depth = 0
+            end
+            
             child.bbox = read.bbox
 
             table.insert(parallaxData.layer.children, child)
