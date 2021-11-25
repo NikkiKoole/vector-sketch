@@ -31,7 +31,7 @@ function readSource(source)
    local firstIndex = (string.find(source, '---\n', 1))
    local secondIndex = (string.find(source, '---\n', 4))
    local frontmatter = nil
-   
+
    if firstIndex and secondIndex  then
       frontmatter = string.sub(source,firstIndex,secondIndex+3)
       frontmatter = string.gsub(frontmatter, '---\n', '')
@@ -58,7 +58,7 @@ if arg then
             "timestamp="..os.time().."\n"..
             "title='"..arg[2].."'\n"..
             "---\n"
-         local path = 'content/posts/'..arg[2]:gsub(' ', '-')..'.md' 
+         local path = 'content/apps/'..arg[2]:gsub(' ', '-')..'.md'
          print('creating '..path)
          writePost(path, frontmatter)
       end
@@ -66,53 +66,57 @@ if arg then
 end
 
 
-
-local files = scandir('content/posts')
-local result = {}
 local writtenFileCount =0
 
-local posttemplate = readAll('templates/post.template')
-local compiled_posttemplate = liluat.compile(posttemplate)
+function doSimple(template, content, values, valueStorage)
+
+   local t = readAll('templates/'..template..'.template')
+   local source = readAll('content/'..content..'.md')
+   local html, frontmatter = readSource(source)
+   values.frontmatter = frontmatter
+   values.html = html
+   if (frontmatter and frontmatter.title) then
+      values.title = frontmatter.title
+   end
+
+   if (valueStorage) then
+      table.insert(valueStorage, values)
+   end
+
+   local compiled_template = liluat.compile(t)
+--   print(type(t), type(compiled_template))
+   local rendered_template = liluat.render(compiled_template, values)
+   writePost('public/'..content..'.html', rendered_template)
+   writtenFileCount = writtenFileCount + 1
+end
+
+local files = scandir('content/apps')
+local result = {}
 
 for _, file in ipairs(files) do
-   if ends_with(file, '.md') then
-      local source = readAll('content/posts/'..file)
-      local html, frontmatter = readSource(source)
-      local data = {
-         frontmatter=frontmatter,
-         html=html,
-         path='posts/'..file:gsub('.md', '.html')
-      }
-      table.insert(result, data)
-
-
-      local rendered_template = liluat.render(compiled_posttemplate, {content=data.html})
-
-      
-      writePost('public/'..data.path, rendered_template)
-      writtenFileCount = writtenFileCount+1
+   if (file ~= 'index.md') then
+      if ends_with(file, '.md') then
+	 local content = file:gsub('.md', '')
+	 doSimple('general', 'apps/'..content, {path=content..'.html'}, result)
+      end
    end
 end
+
 
 table.sort(result, function (left, right)
     return left.frontmatter.timestamp < right.frontmatter.timestamp
 end)
 
-local indextemplate = readAll('templates/index.template')
-local values = {
-	title = "A fine selection of posts.",
-	posts = {}
-}
+local appsList = {}
 for _, post in ipairs(result) do
-   table.insert(values.posts, {title=post.frontmatter.title, path=post.path})
+   table.insert(appsList, {title=post.frontmatter.title, path=post.path, frontmatter=post.frontmatter})
 end
 
-local compiled_template = liluat.compile(indextemplate)
-local rendered_template = liluat.render(compiled_template, values)
 
-writePost('public/index.html', rendered_template)
-
-
-print('Done!, written '..writtenFileCount..' post files and an index file.')
+doSimple('apps-index', 'apps/index', {title="Apps", apps=appsList})
+doSimple('general', 'about/index', {title="About"})
+doSimple('general', 'index', {title='Happy apps for young children'})
 
 
+
+print('Done!, written '..writtenFileCount..' files.')

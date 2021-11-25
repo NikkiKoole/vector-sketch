@@ -6,11 +6,219 @@
   font-family: moonflower;
   src: url(assets/fonts/MoonFlower-YzXXq.ttf);
 }
+@font-face {
+  font-family: sans-shaded;
+  src: url(assets/fonts/SansSerifShaded.ttf);
+}
+@font-face {
+  font-family: volta;
+  src: url(assets/fonts/VoltaT-Regu.ttf);
+}
+
+html {
+  overflow-y: scroll;
+}
+
+body {
+    background: beige
+}
+
+.container {
+    max-width: 65em;
+    margin: 0 auto;
+}
+
+
+/* begin header footer and nav */
+
+header {
+    max-width: 65em;
+    margin: 0 auto;
+    display: flex;
+}
+footer {
+    max-width: 65em;
+    margin: 0 auto;
+
+}
+header h1 {
+    transform: rotate(1deg);
+}
+header h1 a {
+    color: #e595ab;
+    text-decoration: none;
+    font-size: 4.5rem;
+}
+header nav {
+    height: 2rem;
+    display: flex;
+}
+header nav a {
+    color: #454546;
+    font-size: 2rem;
+    font-family: volta;
+    text-decoration: none;
+    margin-left: 2rem;
+    transform: translateY(100%);
+}
+header nav a:after {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     width: 0%;
+     height: 100%;
+     background-color: #000;
+     opacity: .05;
+     transition-timing-function: ease-out;
+     -webkit-transition: width .2s; /* Safari prior 6.1 */
+     transition: width .2s;
+     z-index: -1;
+}
+header nav a:hover {
+    color: #000;
+}
+header nav a:hover:after {
+    width: 100%;
+}
+
+/* end header and nav */
+
+/* begin app cards */
+
+.cards {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.card {
+    margin: .5rem;
+    width: calc(33% - 1rem);
+    background: #fbfbfb;
+    border-radius: 20px;
+    box-shadow: 2px 2px 12px rgb(0 0 0 / 5%);
+    cursor: pointer;
+    transition: background .2s;
+    list-style-type: none;
+}
+.card a {
+    text-decoration: none;
+    color: unset;
+
+}
+.card_content {
+    padding: 1rem;
+
+}
+.card_content b {
+    color: #f0b364;
+    font-size: 2rem;
+    font-family: sans-shaded;
+    transform: rotate(1deg);
+    display: block;
+    margin: 1rem;
+    transition: color .2s;
+}
+.card_content p {
+    font-family: volta;
+    transition: color .2s;
+}
+.cardimg_container {
+    border-radius: 20px;
+    overflow: hidden;
+    width: 100%;
+}
+.cardimg {
+    user-select: none;
+    pointer-events: none;
+    width: 100%;
+    transition: all .2s;
+
+}
+
+.card:hover .cardimg {
+    transform: scale(1.1) rotate(-1deg);
+    filter: grayscale(0.2)
+}
+.card:hover {
+    background: #e3ca57;
+}
+.card:hover b {
+    color: black;
+}
+.card:hover p {
+    color: white;
+}
+/* end app cards */
+
+article {
+    padding: 1rem;
+}
+
 
 b {
-    font-family: cooper
+    font-family: cooper;
 }
 h1 {
-    font-family: cooper
+    font-family: sans-shaded;
+}
+h2 {
+    font-family: volta;
+    color: #454546;
+}
+p {
+    font-family: volta;
+    color: #454546
 }
 
+
+.apps-intro h2 {
+    font-size: 2rem;
+}
+.apps-intro p {
+    font-size: 1.25rem;
+}
+
+
+/* begin media queries */
+@media only screen and (min-width: 2em) {
+    body {
+
+    }
+    .cards .card {
+	width: calc(100% - 2rem);
+    }
+    header nav {
+	margin-top: -4rem;
+    }
+    header {
+	display: block;
+    }
+}
+
+@media only screen and (min-width: 38em) {
+    body {
+
+    }
+    .cards .card {
+	width: calc(50% - 2rem);
+    }
+    header {
+	display: flex;
+    }
+    header nav {
+	margin-top: 0;
+    }
+}
+
+
+@media only screen and (min-width: 54em) {
+    body {
+
+    }
+
+    .cards .card {
+	width: calc(33% - 2rem);
+    }
+}
+/* end media queries */
