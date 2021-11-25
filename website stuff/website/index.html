@@ -342,6 +342,7 @@
 	  box-shadow: 2px 2px 12px rgba(0,0,0,0.05);
 	  padding: 1em;
 	  cursor: pointer;
+          transition: background .2s;
       }
 
       .panel:hover {
@@ -351,9 +352,13 @@
       }
       .panel:hover p {
 	  color: white;
+          
       }
       .panel:hover h2 {
 	  color: black;
+      }
+      .panel:hover .appstore {
+          filter: invert(1);
       }
       .panel p {
 	  font-size: 1em;
@@ -431,6 +436,7 @@
 	<div class="panel" id="post-456">
 	  <h2>Float my Boat</h2>
 	  <p>This is a wld kinda test</p>
+	  <img class="cardimg" src="walterboat.gif" alt="tomatoes" />
 
 	  <img  class="appstore"  src="appstore.svg" alt='appstore'/>
 	</div>

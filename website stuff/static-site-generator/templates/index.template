@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>{{= title}}</title>
+                {{include: 'templates/headcss.template'}}
+	</head>
+        
+	<body>
+                {{include: 'templates/header.template'}}
+
+                <h1>Posts</h1>
+		<ul>
+		{{ -- write regular lua code in the template}}
+		{{for _,post in ipairs(posts) do}}
+			<li><a href={{=post.path}}><b>{{= post.title}}</b></a></li>
+		{{end}}
+		</ul>
+                
+                {{include: 'templates/footer.template'}}
+
+	</body>
+</html>

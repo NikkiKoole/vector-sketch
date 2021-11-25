@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>{{= title}}</title>
+                {{include: 'templates/headcssl1.template'}}
+	</head>
+        
+	<body>
+                {{include: 'templates/header.template'}}
+                {{= content}}
+                {{include: 'templates/footer.template'}}
+	</body>
+</html>

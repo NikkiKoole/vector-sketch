@@ -1,0 +1,16 @@
+@font-face {
+  font-family: cooper;
+  src: url(assets/fonts/cooper-bold-bt.ttf);
+}
+@font-face {
+  font-family: moonflower;
+  src: url(assets/fonts/MoonFlower-YzXXq.ttf);
+}
+
+b {
+    font-family: cooper
+}
+h1 {
+    font-family: cooper
+}
+
