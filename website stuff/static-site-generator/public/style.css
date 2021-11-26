@@ -20,7 +20,7 @@ html {
 }
 
 body {
-    background: beige
+    background: #fbf0c7;
 }
 
 .container {
@@ -44,14 +44,18 @@ header {
 }
 footer {
     margin-top: 3rem;
-    background-color: #323232;
+    background-color: #5d5a4a;
     color: white;
     font-family: cooper;
-    padding-bottom: 1rem;    
+    padding-bottom: 1rem;
 }
-footer nav {
+
+footer .content {
     max-width: 65em;
     margin: 0 auto;
+}
+footer nav {
+
 }
 
 footer a {
@@ -113,7 +117,7 @@ header nav a:hover:after {
     margin: .5rem;
     width: calc(33% - 1rem);
     background: #fbfbfb;
-    border-radius: 20px;
+    border-radius: 10px;
     box-shadow: 2px 2px 12px rgb(0 0 0 / 5%);
     cursor: pointer;
     transition: background .2s;
@@ -135,14 +139,14 @@ header nav a:hover:after {
     transform: rotate(1deg);
     display: block;
     margin: 1rem;
-    transition: color .2s;
+    transition: all .2s;
 }
 .card_content p {
     font-family: volta;
     transition: color .2s;
 }
 .cardimg_container {
-    border-radius: 20px;
+    border-radius: 10px;
     overflow: hidden;
     width: 100%;
 }
@@ -151,18 +155,20 @@ header nav a:hover:after {
     pointer-events: none;
     width: 100%;
     transition: all .2s;
-
+    filter: sepia(0.25);
 }
 
 .card:hover .cardimg {
-    transform: scale(1.1) rotate(-1deg);
-    filter: grayscale(0.2)
+    transform: scale(1.1);
+    filter: sepia(0);
 }
+
 .card:hover {
     background: #e3ca57;
 }
 .card:hover b {
     color: black;
+    transform: rotate(-1deg);
 }
 .card:hover p {
     color: white;

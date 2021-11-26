@@ -1,6 +1,6 @@
 <footer>
+<div class='content'>
 <b>© 2021 Mipolai, Nikki Koole</b>
-
 <nav>
 <ul>
        <li><a href='/apps'>apps</a></li>
@@ -9,4 +9,5 @@
        <li><a href='/blog'>blog</a></li>
 </ul>
 </nav>
+</div>
 </footer>
