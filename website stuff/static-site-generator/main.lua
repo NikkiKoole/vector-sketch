@@ -50,15 +50,28 @@ end
 
 if arg then
    if arg[1] == 'post' then
+
+      local answer
+      repeat
+	 io.write("ok, you want a new post, should it be (a) app-post, or a (b) blog-post ? ")
+	 io.flush()
+	 answer=io.read()
+      until answer=="a" or answer=="b"
+
       if not arg[2] then
          print('you forgot to write a new name')
       else
          local frontmatter =
             "---\n"..
             "timestamp="..os.time().."\n"..
+	    "date="..(os.date ("'%d %h %Y'")).."\n"..
             "title='"..arg[2].."'\n"..
             "---\n"
-         local path = 'content/apps/'..arg[2]:gsub(' ', '-')..'.md'
+	 local prefix = 'content/'
+	 if answer == 'a' then prefix = prefix..'apps/' end
+	 if answer == 'b' then prefix = prefix..'blog/' end
+
+         local path = prefix..arg[2]:gsub(' ', '-')..'.md'
          print('creating '..path)
          writePost(path, frontmatter)
       end
@@ -69,7 +82,6 @@ end
 local writtenFileCount =0
 
 function doSimple(template, content, values, valueStorage)
-
    local t = readAll('templates/'..template..'.template')
    local source = readAll('content/'..content..'.md')
    local html, frontmatter = readSource(source)
@@ -90,30 +102,40 @@ function doSimple(template, content, values, valueStorage)
    writtenFileCount = writtenFileCount + 1
 end
 
-local files = scandir('content/apps')
-local result = {}
 
-for _, file in ipairs(files) do
-   if (file ~= 'index.md') then
-      if ends_with(file, '.md') then
-	 local content = file:gsub('.md', '')
-	 doSimple('general', 'apps/'..content, {path=content..'.html'}, result)
+function doBunch(dir)
+   local files = scandir('content/'..dir)
+   local result = {}
+
+   for _, file in ipairs(files) do
+      if (file ~= 'index.md') then
+	 if ends_with(file, '.md') then
+	    local content = file:gsub('.md', '')
+	    print(dir..'/'..content)
+	    doSimple('general', dir..'/'..content, {path=content..'.html'}, result)
+	 end
       end
    end
+
+
+   table.sort(result, function (left, right)
+		 return left.frontmatter.timestamp < right.frontmatter.timestamp
+   end)
+
+   local list = {}
+   for _, post in ipairs(result) do
+      table.insert(list, {title=post.frontmatter.title, path=post.path, frontmatter=post.frontmatter})
+   end
+
+   return list
 end
 
-
-table.sort(result, function (left, right)
-    return left.frontmatter.timestamp < right.frontmatter.timestamp
-end)
-
-local appsList = {}
-for _, post in ipairs(result) do
-   table.insert(appsList, {title=post.frontmatter.title, path=post.path, frontmatter=post.frontmatter})
-end
-
-
+local appsList = doBunch('apps')
 doSimple('apps-index', 'apps/index', {title="Apps", apps=appsList})
+
+local appsList = doBunch('blog')
+doSimple('blog-index', 'blog/index', {title="Blog", apps=appsList})
+
 doSimple('general', 'about/index', {title="About"})
 doSimple('general', 'index', {title='Happy apps for young children'})
 

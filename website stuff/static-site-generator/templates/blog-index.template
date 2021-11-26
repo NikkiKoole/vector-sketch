@@ -4,22 +4,22 @@
     <title>{{= title}} | made with ♥ by Mipolai</title>
     {{include: 'templates/headcss.template'}}
   </head>
-
+  
   <body>
     {{include: 'templates/header.template'}}
     <main>
       <div class='container'>
-	<article><div class='apps-intro'>{{= html}}</div></article>
-	<div class='cards'>
+	<article><div class='blog-intro'>{{= html}}</div></article>
+	<div class='posts'>
 
 	  {{ -- write regular lua code in the template}}
 	  {{for _,post in ipairs(apps) do}}
-	  <div class='card'>
+	  <div class='post'>
 	    <a href={{= post.path}}>
-	      <div class='card_content'>
-
-		<div class='cardimg_container'>
-		  <img class="cardimg" src={{= post.frontmatter.thumb}}>
+	      <div class='post_content'>
+		<div class='post_date'>{{= post.frontmatter.date}}</div>
+		<div class='postimg_container'>
+		  <img class="postimg" src={{= post.frontmatter.thumb}}>
 		</div>
 		<b>{{= post.title}}</b>
 		<p>{{= post.frontmatter.intro}}</p>
@@ -33,7 +33,6 @@
 	</div>
       </div>
     </main>
-
     {{include: 'templates/footer.template'}}
 
   </body>
