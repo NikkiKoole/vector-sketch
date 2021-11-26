@@ -1,3 +1,12 @@
 <footer>
-footert!
+<b>© 2021 Mipolai, Nikki Koole</b>
+
+<nav>
+<ul>
+       <li><a href='/apps'>apps</a></li>
+       <li> <a href='/about'>about</a></li>
+       <li><a href='/contact'>contact</a></li>
+       <li><a href='/blog'>blog</a></li>
+</ul>
+</nav>
 </footer>

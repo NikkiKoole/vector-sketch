@@ -1,6 +1,8 @@
 <header>
+       
+
 	<h1>
-		<a href="/">Mipolai</a>
+		<a href="/"> <img src="/assets/images/blup.svg" />Mipolai</a>
 	</h1>
 	<nav>
 		<a href="/apps">apps</a>
