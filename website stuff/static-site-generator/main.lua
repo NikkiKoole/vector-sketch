@@ -1,9 +1,18 @@
 #!/usr/bin/env lua
 
+os.setlocale("C")
+local now = os.time()
+
 local markdown = require 'libs.markdown'
 local toml = require 'libs.toml'
 local inspect = require 'libs.inspect'
 local liluat = require 'libs.liluat'
+
+function printGreen(...)
+   io.write("\x1B[32m")
+   print(...)
+   io.write("\x1B[m\x1B[K")
+end
 
 function scandir(directory)
     local i, t, popen = 0, {}, io.popen
@@ -18,6 +27,14 @@ end
 
 function ends_with(str, ending)
    return ending == "" or str:sub(-#ending) == ending
+end
+
+function split(str, delimiter)
+    local result = {}
+    for match in (str..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match);
+    end
+    return result;
 end
 
 function readAll(file)
@@ -83,10 +100,12 @@ local writtenFileCount =0
 
 function doSimple(template, content, values, valueStorage)
    local t = readAll('templates/'..template..'.template')
+   local firstPathPart = split(content, '/')[1]
    local source = readAll('content/'..content..'.md')
    local html, frontmatter = readSource(source)
    values.frontmatter = frontmatter
    values.html = html
+   values.firstPathPart = firstPathPart
    if (frontmatter and frontmatter.title) then
       values.title = frontmatter.title
    end
@@ -96,10 +115,10 @@ function doSimple(template, content, values, valueStorage)
    end
 
    local compiled_template = liluat.compile(t)
---   print(type(t), type(compiled_template))
    local rendered_template = liluat.render(compiled_template, values)
    writePost('public/'..content..'.html', rendered_template)
    writtenFileCount = writtenFileCount + 1
+   printGreen('public/'..content..'.html')
 end
 
 
@@ -111,7 +130,6 @@ function doBunch(dir)
       if (file ~= 'index.md') then
 	 if ends_with(file, '.md') then
 	    local content = file:gsub('.md', '')
-	    print(dir..'/'..content)
 	    doSimple('general', dir..'/'..content, {path=content..'.html'}, result)
 	 end
       end
@@ -130,15 +148,15 @@ function doBunch(dir)
    return list
 end
 
-local appsList = doBunch('apps')
-doSimple('apps-index', 'apps/index', {title="Apps", apps=appsList})
+local list = doBunch('apps')
+doSimple('collection', 'apps/index', {title="Apps", posts=list})
 
-local appsList = doBunch('blog')
-doSimple('blog-index', 'blog/index', {title="Blog", apps=appsList})
+local list = doBunch('blog')
+doSimple('collection', 'blog/index', {title="Blog", posts=list})
 
 doSimple('general', 'about/index', {title="About"})
 doSimple('general', 'index', {title='Happy apps for young children'})
 
 
 
-print('Done!, written '..writtenFileCount..' files.')
+print('Done!, written '..writtenFileCount..' files in '..(os.time()-now)..' seconds.' )

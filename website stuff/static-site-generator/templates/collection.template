@@ -8,23 +8,23 @@
   <body>
     {{include: 'templates/header.template'}}
     <main>
-      <div class='container'>
-	<article><div class='apps-intro'>{{= html}}</div></article>
-	<div class='cards'>
-
+      <div class='{{= firstPathPart}} container'>
+	<article>
+          <div class='intro'>{{= html}}</div>
+        </article>
+	<div class='posts'>
+          
 	  {{ -- write regular lua code in the template}}
-	  {{for _,post in ipairs(apps) do}}
-	  <div class='card'>
+	  {{for _,post in ipairs(posts) do}}
+	  <div class='post'>
 	    <a href={{= post.path}}>
-	      <div class='card_content'>
-
-		<div class='cardimg_container'>
-		  <img class="cardimg" src={{= post.frontmatter.thumb}}>
+	      <div class='content'>
+		<div class='picture_container'>
+		  <img class="picture" src={{= post.frontmatter.thumb}}>
 		</div>
+                <div class='date'>{{= post.frontmatter.date}}</div>
 		<b>{{= post.title}}</b>
 		<p>{{= post.frontmatter.intro}}</p>
-
-
 	      </div>
 	    </a>
 	  </div>

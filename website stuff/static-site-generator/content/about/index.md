@@ -1,15 +1,18 @@
 
 
-## about
+## Hi Hello! I am Nikki Koole
 
-> "Mipolai was a friend of mine, when I was a 3 years old boy.  
-Thing is, he was called Nikolai, but not to me."
+Artist turned software engineer.  
+
+Writing software is part of the thinking process for me,
+I get fascinated by a subject, study it; read and watch things about it.
+Think about it whilst taking very hot showers.  
+
+But the real understanding, I think, happens after putting it into a working piece of software, describing the rules in code that runs and is interactive. 
+
+I love math and drawing and music and programming, and how apps are this little medium that involves all of that. After I became a father, I started moving towards this idea:
+
+## Making apps for young children.
 
 
-I am Nikki, the guy behind the curtain, located in Rotterdam, the Netherlands.  
-I've studied Fine arts, sculpture and turned into a programmer around 2002,  
-or remembered I was one since the 80's.  
-
-I've been building little games and simulations as a hobby,  
-and since I'm a father I am slowly moving in the direction of developing baby, toddler and children apps.
-
+Read more over at [blog](/blog)

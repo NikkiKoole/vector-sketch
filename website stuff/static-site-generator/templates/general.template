@@ -8,7 +8,7 @@
 	<body>
                 {{include: 'templates/header.template'}}
                 <main>
-		  <div class='container'>
+		  <div class='{{= firstPathPart}} container'>
 		    <article>{{= html}}</article>
 		  </div>
 		</main>

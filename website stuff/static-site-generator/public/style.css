@@ -135,6 +135,9 @@ header nav a:hover:after {
 /* end header and nav */
 
 /* begin blog posts */
+/*
+
+/* begin app cards */
 
 .posts {
     display: flex;
@@ -149,101 +152,71 @@ header nav a:hover:after {
     box-shadow: 2px 2px 12px rgb(0 0 0 / 5%);
     cursor: pointer;
     transition: background .2s;
+    list-style-type: none;
 }
 .post a {
     text-decoration: none;
     color: unset;
 }
-
-.post_content {
+.post .content {
     padding: 1rem;
 }
-.post_content b {
-    color: black;
-    font-size: 3rem;
-    font-family: moonflower;
-    display: block;
-    transition: all .2s;
-}
-.post_content p {
-    font-family: volta;
-    transition: color .2s;
-}
-.post_content .post_date {
-    float: right;
-    font-family: volta;
-    background: #5d5a4a;
-    color: white;
-		
-}
-/* end blog posts */
-
-
-
-/* begin app cards */
-
-.cards {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-.card {
-    margin: .5rem;
-    width: calc(33% - 1rem);
-    background: #fbfbfb;
-    border-radius: 10px;
-    box-shadow: 2px 2px 12px rgb(0 0 0 / 5%);
-    cursor: pointer;
-    transition: background .2s;
-    list-style-type: none;
-}
-.card a {
-    text-decoration: none;
-    color: unset;
-
-}
-.card_content {
-    padding: 1rem;
-
-}
-.card_content b {
-    color: #f0b364;
+.post .content b {
+    color :#454546;
     font-size: 2rem;
     font-family: sans-shaded;
-    transform: rotate(1deg);
     display: block;
     margin: 1rem;
     transition: all .2s;
 }
-.card_content p {
+.apps .post .content b {
+    color: #f0b364;
+    transform: rotate(1deg);
+
+}
+.post .content p {
     font-family: volta;
     transition: color .2s;
 }
-.cardimg_container {
+
+.picture_container {
     border-radius: 10px;
     overflow: hidden;
     width: 100%;
 }
-.cardimg {
+
+.blog .picture_container {
+    width: 200px;
+    float: right;
+}
+.picture {
     user-select: none;
     pointer-events: none;
     width: 100%;
     transition: all .2s;
     filter: sepia(0.25);
 }
-.card:hover .cardimg {
+.post:hover .postimg {
     transform: scale(1.1);
     filter: sepia(0);
 }
 
-.card:hover {
+.post .content .date {
+    position: absolute;
+    right: 20px;
+    font-family: volta;
+    background: #5d5a4a;
+    color: white;
+}
+
+.apps .post:hover {
     background: #e3ca57;
 }
-.card:hover b {
+.apps .post:hover b {
     color: black;
     transform: rotate(-1deg);
 }
-.card:hover p {
+.apps .post:hover p {
     color: white;
 }
 /* end app cards */
@@ -282,7 +255,7 @@ article p {
     body {
 
     }
-    .cards .card {
+    .apps .post .post {
 	width: calc(100% - 2rem);
     }
     header nav {
@@ -300,7 +273,7 @@ article p {
     body {
 
     }
-    .cards .card {
+    .apps .posts .post {
 	width: calc(50% - 2rem);
     }
     header {
@@ -324,7 +297,7 @@ article p {
 	font-size: 4.5rem;
     }
 
-    .cards .card {
+    .apps .posts .post {
 	width: calc(33% - 2rem);
     }
 }
