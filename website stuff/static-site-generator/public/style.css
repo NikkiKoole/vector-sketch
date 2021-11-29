@@ -202,8 +202,7 @@ header nav a:hover:after {
 }
 
 .post .content .date {
-    position: absolute;
-    right: 20px;
+    left: 20px;
     font-family: volta;
     background: #5d5a4a;
     color: white;
