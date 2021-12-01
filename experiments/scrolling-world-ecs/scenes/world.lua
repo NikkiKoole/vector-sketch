@@ -18,7 +18,8 @@ myWorld:addSystems(
    Systems.DraggableSystem,
    Systems.BipedSystem,
    Systems.WheelSystem,
-   Systems.HitAreaEventSystem
+   Systems.HitAreaEventSystem,
+   Systems.StackSystem
 )
 
 function scene.modify(data)
@@ -73,6 +74,15 @@ function attachPointerCallbacks()
 
 
    end
+   function retrieveLayerAndParallax(index)
+      if (index == 1) then
+	 return foregroundLayer, parallaxLayersData[1].p
+      end
+      if (index == 2) then
+	 return backgroundLayer, parallaxLayersData[2].p
+      end
+   end
+   
 
 end
 
@@ -104,7 +114,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=0,
+            amountPerTile=1,
             depth=depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
@@ -112,9 +122,10 @@ function scene.load()
       foregroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
-                  'plant5','plant6','plant7','plant8',
-                  'plant9','plant10','plant11','plant12',
-                  'doosgroot', 'doosgroot', 'doosgroot',
+                  --'plant5','plant6','plant7','plant8',
+                  --'plant9','plant10','plant11','plant12',
+		 'doosgroot', 'doosgroot', 'doosgroot',
+		  'doosgroot', 'doosgroot', 'doosgroot',
                  'plant13','bunnyhead', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
@@ -182,6 +193,7 @@ function scene.load()
 	 cave.entity:give('hitAreaEvent')
       end
 
+      cave.entity:give('layer', 1)
       table.insert(
          foregroundLayer.children,
          cave
@@ -221,7 +233,7 @@ function scene.load()
          walterBody.entity:give('actor', walterActor)
 
          walterBody.entity:give('biped', walterBody, walterLFoot, walterRFoot)
-
+	 walterBody.entity:give('layer', 1)
 	 table.insert(
 	    foregroundLayer.children,
 	    walterActor.body
@@ -235,16 +247,17 @@ function scene.load()
 
       parallaxLayersData = {
 	 {
-            layer=backgroundLayer,
-            p={factors=backgroundFactors, minmax=depthMinMax},
-            assets=backgroundAssetBook,
-            tileBounds={math.huge, -math.huge},
-	 },{
             layer=foregroundLayer,
             p={factors=foregroundFactors, minmax=depthMinMax},
             assets=foregroundAssetBook,
             tileBounds={math.huge, -math.huge},
-	   }
+	  },
+	 {
+            layer=backgroundLayer,
+            p={factors=backgroundFactors, minmax=depthMinMax},
+            assets=backgroundAssetBook,
+            tileBounds={math.huge, -math.huge},
+	 }
       }
    end
    perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
@@ -276,6 +289,9 @@ function scene.update(dt)
 
 end
 
+
+
+
 function scene.draw()
 
    love.graphics.clear(1,1,1)
@@ -285,21 +301,21 @@ function scene.draw()
    drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1], myWorld)
+   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[2], myWorld, 2)
    cam:push()
-   renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[1].p})
+   renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[2].p})
    cam:pop()
 
-   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2], myWorld)
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld, 1)
    cam:push()
-   renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[2].p })
+   renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[1].p })
    cam:pop()
 
    love.graphics.setColor(1,1,1)
    --drawUI()
    drawDebugStrings()
-   drawBBoxAroundItems(foregroundLayer, parallaxLayersData[2].p)
-   drawBBoxAroundItems(backgroundLayer, parallaxLayersData[1].p)
+   drawBBoxAroundItems(foregroundLayer, parallaxLayersData[1].p)
+   drawBBoxAroundItems(backgroundLayer, parallaxLayersData[2].p)
 
 end
 

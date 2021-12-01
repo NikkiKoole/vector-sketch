@@ -1,6 +1,8 @@
 Actor = {}
 Actor.__index = Actor
 
+-- todo make this a system/component or better yet move it in with the biped stuff
+
 require 'lib.segment'
 
 function positionControlPoints(start, eind, hoseLength, flop)

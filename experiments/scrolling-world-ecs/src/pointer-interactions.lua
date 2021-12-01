@@ -74,17 +74,20 @@ function drawBBoxAroundItems(layer, parallaxData)
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
 
-            local checkAgainst = getItemsInLayerThatHaveMeta(layer, c)
+            local checkAgainst = getItemsInLayerThatHaveMeta(layer)
 
             for j =1, #checkAgainst do
                for k = 1, #checkAgainst[j].metaTags do
                   local tag = checkAgainst[j].metaTags[k]
-                  local pos = tag.points[1] -- there is just one point in this collection
-                  local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
-                  local camData = createCamData(checkAgainst[j], parallaxData)
-                  local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
-		  love.graphics.setColor(1,1,1,.2)
-                  love.graphics.line(pivx, pivy, kx2, ky2)
+
+		  if (tag.name == 'connector' and checkAgainst[j] ~= c) then
+		     local pos = tag.points[1] -- there is just one point in this collection
+		     local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
+		     local camData = createCamData(checkAgainst[j], parallaxData)
+		     local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+		     love.graphics.setColor(1,1,1,.2)
+		     love.graphics.line(pivx, pivy, kx2, ky2)
+		  end
                end
             end
 
@@ -106,7 +109,7 @@ function pointerPressed(x,y, id, layers, ecsWorld)
 
    local itemPressed = false
 
-   for j =#layers, 1 , -1 do
+   for j =1, #layers do
       local l = layers[j]
 
       for i = #l.layer.children,1,-1 do
@@ -229,17 +232,32 @@ end
 
 
 
-function getItemsInLayerThatHaveMeta(layer, me)
+function getItemsInLayerThatHaveMeta(layer)
    local result = {}
    for i = 1, #layer.children do
       local child = layer.children[i]
-      if child.metaTags and child ~= me then
+      if child.metaTags then
          table.insert(result, child)
       end
    end
    return result
 end
-
+function getItemsInLayerThatHaveSpecificMeta(layer, metaName)
+   local result = {}
+   for i = 1, #layer.children do
+      local child = layer.children[i]
+      if child.metaTags then
+	 for j = 1, #child.metaTags do
+	    if child.metaTags[j].name == metaName then
+	       table.insert(result, child)
+	    end
+	    
+	 end
+	 
+      end
+   end
+   return result
+end
 
 
 function handlePressedItemsOnStage(dt, layers, ecsWorld)

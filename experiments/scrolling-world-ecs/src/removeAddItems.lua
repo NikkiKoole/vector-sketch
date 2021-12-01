@@ -1,4 +1,4 @@
-function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
+function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    for i = #parallaxData.layer.children, 1, -1 do
       local child = parallaxData.layer.children[i]---map[layerName][i]
       if child.entity and child.entity.assetBook then -- only allowed to r
@@ -18,7 +18,7 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsW
 end
 
 
-function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
+function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    local data = parallaxData.assets
 
    for i = startIndex, endIndex do
@@ -35,10 +35,6 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                children = doOptimized and {} or copy3(read.children)
             }
 
-           --child.assetBookRef = thing
-           --child.assetBookIndex = i
-
-
             child.transforms.l[1] = thing.x
             child.transforms.l[2] = thing.y
             child.transforms.l[4] = thing.scaleX
@@ -46,12 +42,6 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
             child.metaTags = read.metaTags
             child.depth = thing.depth
             child.url = thing.url
-            --            print(thing.url)
-            if thing.url == 'assets/doosgroot.polygons.txt' then
-               --print('poop', inspect(read.metaTags))
-               --child.depth = 0
-            end
-            
             child.bbox = read.bbox
 
             table.insert(parallaxData.layer.children, child)
@@ -62,8 +52,12 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                   :give('assetBook', thing, i)
                   :give('transforms', child.transforms)
                   :give('bbox', child.bbox)
+		  :give('layer', layerIndex)
 		  :give('vanillaDraggable')
 
+	       if (child.metaTags and child.metaTags[1].name == 'connector') then
+		  myEntity:give('stackable')
+	       end
                ecsWorld:addEntity(myEntity)
                child.entity = myEntity
             end
@@ -77,7 +71,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
 
 end
 
-function arrangeParallaxLayerVisibility(far, layer, ecsWorld)
+function arrangeParallaxLayerVisibility(far, layer, ecsWorld, layerIndex)
 
    local W, H = love.graphics.getDimensions()
 
@@ -86,10 +80,10 @@ function arrangeParallaxLayerVisibility(far, layer, ecsWorld)
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
-   arrangeWhatIsVisible(x1, x2, tileSize, layer, ecsWorld)
+   arrangeWhatIsVisible(x1, x2, tileSize, layer, ecsWorld, layerIndex)
 end
 
-function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData, ecsWorld)
+function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData, ecsWorld, layerIndex)
    local bounds = parallaxData.tileBounds
 
    local s = math.floor(x1/tileSize)*tileSize
@@ -98,19 +92,19 @@ function arrangeWhatIsVisible(x1, x2, tileSize, parallaxData, ecsWorld)
    local endIndex = e/tileSize
 
    if bounds[1] == math.huge and bounds[2] == -math.huge then
-      addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
+      addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    else
       if startIndex ~= bounds[1] or
          endIndex ~= bounds[2] then
-         removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
+         removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
       end
 
       if startIndex < bounds[1] then
-         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, parallaxData, ecsWorld)
+         addTheContentsOfGroundTiles(startIndex, bounds[1]-1, parallaxData, ecsWorld, layerIndex)
       end
 
       if endIndex > bounds[2] then
-         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, parallaxData, ecsWorld)
+         addTheContentsOfGroundTiles(bounds[2]+1, endIndex, parallaxData, ecsWorld, layerIndex)
       end
    end
    parallaxData.tileBounds = {startIndex, endIndex}
