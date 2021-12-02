@@ -9,7 +9,7 @@ function DraggableSystem:itemDrag( c, l, x, y, invx, invy)
       c.transforms.l[1] = c.transforms.l[1] + dx
       c.transforms.l[2] = c.transforms.l[2] + dy
 
-
+      -- remove this is a duplication from the draggable system
       if (c.entity.inStack) then
 	 local nextLink = c.entity.inStack.next
 	 while nextLink do
@@ -20,6 +20,7 @@ function DraggableSystem:itemDrag( c, l, x, y, invx, invy)
 	    end
 	 end
       end
+      -- end remove this
       
    end
 end
