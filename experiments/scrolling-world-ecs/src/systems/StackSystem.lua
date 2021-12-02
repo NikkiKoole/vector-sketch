@@ -70,6 +70,11 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	 if (connectTo) then
 	    insertNodeAfter(target, connectTo)
 	 end
+
+	 -- todo, make the connection hard (actually position the thing at the connnector)
+
+	 -- make the depth thing working for the whole stack, first go to the beginning
+	 -- "recurse" over the next node and make the depth each step slightly diff.
 	 
 	 
 

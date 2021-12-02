@@ -114,7 +114,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=1,
+            amountPerTile=0,
             depth=depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
