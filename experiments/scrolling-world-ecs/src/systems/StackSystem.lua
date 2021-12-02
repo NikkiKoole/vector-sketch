@@ -29,17 +29,21 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	       local tag = checkAgainst[j].metaTags[k]
 
 	       if (tag.name == 'connector' and checkAgainst[j] ~= target) then
-		  -- todo you cant connect to items that alread have an inStack & next
+		  -- todo you cant connect to items that already have an inStack & next
 		  -- those are taken already
-		  local pos = tag.points[1] -- there is just one point in this collection
-		  local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
-		  local camData = createCamData(checkAgainst[j], pdata)
-		  local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
 
-		  local dis = distance(pivx, pivy, kx2, ky2)
-		  if dis < nearest.distance then
-		     nearest.distance = dis
-		     nearest.elem = checkAgainst[j]
+		  if checkAgainst[j].entity.inStack and checkAgainst[j].entity.inStack.next then
+		  else
+		     local pos = tag.points[1] -- there is just one point in this collection
+		     local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
+		     local camData = createCamData(checkAgainst[j], pdata)
+		     local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+
+		     local dis = distance(pivx, pivy, kx2, ky2)
+		     if dis < nearest.distance then
+			nearest.distance = dis
+			nearest.elem = checkAgainst[j]
+		     end
 		  end
 	       end
 	    end
@@ -49,9 +53,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	 if (nearest.distance <= MAX_DISTANCE_TO_CONNECT) then
 	    connectTo = nearest.elem
 	 end
-	 
-	
-	 -- found one to connect myself to
+
 	 if connectTo then
 	    target.entity:remove('inMotion')
 
@@ -63,56 +65,13 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	    end
 	 end
 
-	 -- the next step is, the one i am connecting to, is that already a stack or not
-	 -- if not, we need to create the newly made stack now
-
-	 -- todo when do we remove the inStack component ?
-	 -- todo there are still bugs here
-	 -- best foound by playing the 3 stack game with the piramids
 	 
-	 if connectTo then
-	    -- the question that isnt asked here is:
-	    -- am i (target) already inStack ?
-	    
-	    if connectTo.entity.inStack then
-	       connectTo.entity.inStack.next = target
-
-	       if target.entity.inStack then
-
-		  -- my old previous (if there needs to next to nothing)
-		  local prev = target.entity.inStack.prev
-		  if prev then
-		     prev.entity.inStack.next = nil
-		  end
-		  
-		  target.entity.inStack.prev = connectTo
-	       else
-		  
-		  target.entity:give('inStack', connectTo, nil)
-	       end
-	    else
-	       connectTo.entity:give('inStack', nil, target)
-	       if target.entity.inStack then
-		  target.entity.inStack.prev = connectTo
-	       else
-		  target.entity:give('inStack', connectTo, nil)
-	       end
-	    end
+	 removeNode(target)
+	 if (connectTo) then
+	    insertNodeAfter(target, connectTo)
 	 end
-
-	 if not connectTo then
-	    if target.entity.inStack then
-	       --print('this thing is in a stack, but we didnt find anything to connect too')
-	       -- atleast remove the inStack prev link from both sides
-	       local prev = target.entity.inStack.prev
-	       if prev then
-		  prev.entity.inStack.next = nil
-		  -- figure out if prev is still allowed to be inStack itself (if its prev == nil too it isnt)
-	       end
-	       target.entity.inStack.prev = nil
-	       
-	    end
-	 end
+	 
+	 
 
       end
       
@@ -121,11 +80,42 @@ end
 
 -- when you connect something (stack or item) to something else (stack or item)
 function insertNodeAfter(node, after)
+   if (not node.entity.inStack) then
+      node.entity:give('inStack', after, nil)
+   else
+      node.entity.inStack.prev = after
+   end
+   
+   if (not after.entity.inStack) then
+      after.entity:give('inStack', nil, node)
+   else
+      after.entity.inStack.next = node
+   end
+   
+   
 end
 
 -- when you remove something (stack or item) from a stack
 function removeNode(node)
+   if (node.entity and node.entity.inStack) then
+      if node.entity.inStack then
+	 local prev = node.entity.inStack.prev
+	 if prev then
+	    prev.entity.inStack.next = nil
+
+	    if (prev.entity.inStack.prev == nil) then
+	       prev.entity:remove('inStack') 
+	    end
+	    
+	 end
+	 node.entity.inStack.prev = nil
+      end
+      
+   end
+   
 end
+
+
 
 
 
