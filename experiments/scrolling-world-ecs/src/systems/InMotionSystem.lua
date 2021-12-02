@@ -16,32 +16,27 @@ function InMotionSystem:update(dt)
       transforms.l[1] = transforms.l[1] + dx
       transforms.l[2] = transforms.l[2] + dy
 
-      -- remove this is a duplication from the draggable system
+
       if (e.inStack) then
-	 local nextLink = e.inStack.next
-	 while nextLink do
-	    nextLink.transforms.l[1] = nextLink.transforms.l[1] + dx
-	    nextLink.transforms.l[2] = nextLink.transforms.l[2] + dy
-	    if nextLink.entity.inStack then
-	       nextLink = nextLink.entity.inStack.next
-	    end
-	 end
+         positionAllInStack(e, dx, dy)
       end
-      -- end remove this
-      
 
       e.inMotion.velocity = e.inMotion.velocity + e.inMotion.acceleration/2
       e.inMotion.acceleration = e.inMotion.acceleration * 0
 
-      -- temp do the floor
+      -- make things not go below the floor!
       local bottomY = 0
       if e.actor then
---         print(inspect(e.actor.value.leglength))
          bottomY = -e.actor.value.body.leglength
       end
 
       if transforms.l[2] >= bottomY then
-         transforms.l[2] = bottomY
+         local dy2 = bottomY - transforms.l[2] 
+         transforms.l[2] = transforms.l[2] + dy2
+         if (e.inStack) then
+            positionAllInStack(e, 0, dy2)
+         end
+
          e:remove('inMotion')
 
          if e.actor then

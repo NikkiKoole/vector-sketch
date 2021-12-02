@@ -9,18 +9,9 @@ function DraggableSystem:itemDrag( c, l, x, y, invx, invy)
       c.transforms.l[1] = c.transforms.l[1] + dx
       c.transforms.l[2] = c.transforms.l[2] + dy
 
-      -- remove this is a duplication from the draggable system
       if (c.entity.inStack) then
-	 local nextLink = c.entity.inStack.next
-	 while nextLink do
-	    nextLink.transforms.l[1] = nextLink.transforms.l[1] + dx
-	    nextLink.transforms.l[2] = nextLink.transforms.l[2] + dy
-	    if nextLink.entity.inStack then
-	       nextLink = nextLink.entity.inStack.next
-	    end
-	 end
+         positionAllInStack(c.entity, dx, dy)
       end
-      -- end remove this
       
    end
 end

@@ -32,6 +32,7 @@ require 'src.pointer-interactions'
 require 'src.camera'
 require 'src.newton'
 require 'src.actor'
+require 'src.stackStuff'
 
 
 

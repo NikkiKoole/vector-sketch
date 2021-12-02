@@ -43,6 +43,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 		     if dis < nearest.distance then
 			nearest.distance = dis
 			nearest.elem = checkAgainst[j]
+                        nearest.tag = tag
 		     end
 		  end
 	       end
@@ -54,23 +55,40 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	    connectTo = nearest.elem
 	 end
 
-	 if connectTo then
-	    target.entity:remove('inMotion')
 
-	    local changeDepth = true
-	    if changeDepth then
-	       target.depth = connectTo.depth + 0.01
-	       local layer, pdata = retrieveLayerAndParallax(target.entity.layer.index)
-	       sortOnDepth(layer.children)
-	    end
-	 end
-
-	 
+	 -----  this is the real stack stuff aka thedouble linked list of items
 	 removeNode(target)
 	 if (connectTo) then
 	    insertNodeAfter(target, connectTo)
 	 end
+	 -----  end this is the real stack stuff aka thedouble linked list of items
 
+
+         if connectTo then
+            local pos = nearest.tag.points[1] -- there is just one point in this collection
+            local kx, ky = nearest.elem.transforms._g:transformPoint(pos[1], pos[2])
+            target.transforms.l[1] = kx
+            target.transforms.l[2] = ky
+            -- this needs to happen for all items in stack too, so depth + positions
+         end
+         
+
+         if connectTo then
+	    target.entity:remove('inMotion')
+
+	    local changeDepth = true
+            arrangeDepthOfStack(target)
+	    if changeDepth then
+	       --target.depth = connectTo.depth + 0.01
+	       local layer, pdata = retrieveLayerAndParallax(target.entity.layer.index)
+	       sortOnDepth(layer.children)
+	    end
+
+
+	 end
+
+
+         
 	 -- todo, make the connection hard (actually position the thing at the connnector)
 
 	 -- make the depth thing working for the whole stack, first go to the beginning

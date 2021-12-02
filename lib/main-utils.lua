@@ -428,13 +428,14 @@ function handleChild(shape,parallax)
    if shape.folder then
 
       if (shape.depth ~= nil) and parallax then
+         
          parallax.camera.scale = mapInto(
             shape.depth,
             parallax.p.minmax.min, parallax.p.minmax.max,
             parallax.p.factors.far, parallax.p.factors.near
          )
+
          parallax.camera.relativeScale = 1
-         --(1.0/ parallax.camera.scale) * parallax.camera.scale
          parallax.camera.push()
 
       end

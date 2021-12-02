@@ -105,8 +105,6 @@ end
 
 
 function pointerPressed(x,y, id, layers, ecsWorld)
-
-
    local itemPressed = false
 
    for j =1, #layers do
@@ -267,8 +265,6 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
       for i = 1, #l.layer.children do
          local c = l.layer.children[i]
 
-
-
          if c.bbox and c.transforms._l and c.depth ~= nil then
             if c.pressed  then
 
@@ -287,7 +283,6 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 		  resetCameraTween()
 		  cameraTranslateScheduler(-speed*dt, 0)
 	       end
-
             end
          end
       end
@@ -297,25 +292,12 @@ end
 
 
 function getScreenBBoxForItem(c, camData)
-
-   -- todo allways create a new bbox to be sure
-   -- local bbox = getBBoxRecursive(c)
-   -- local tlx, tly = c.transforms._g:inverseTransformPoint(bbox[1], bbox[2])
-   -- local brx, bry = c.transforms._g:inverseTransformPoint(bbox[3], bbox[4])
-
-   -- c.bbox = {tlx, tly, brx, bry }--bbox
-
-
-
    local tx, ty = c.transforms._g:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
    local bx, by = c.transforms._g:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
 
    return tlx,tly,brx,bry
-
-   --return math.min(tlx, brx), math.min(tly, bry),
-   --   math.max(brx, tlx), math.max(bry, tly)
 end
 
 function createCamData(item, parallaxData)
@@ -340,14 +322,14 @@ end
 
 
 -- this function is only for nested children of a thing, as for FEET
-function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
-   local camData = createCamData(child, parallaxData)
-   local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
-   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
-   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
+-- function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
+--    local camData = createCamData(child, parallaxData)
+--    local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
+--    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
+--    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
-   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
-end
+--    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
+-- end
 
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
 
@@ -429,33 +411,17 @@ function gestureRecognizer(gesture, ecsWorld)
 	    --print('failed at distance')
 	 end
       else -- this is gesture target something else, items basically!
-
-
-
-
          
 	 if distance < 0.00001 then
 	    distance = 0.00001
 	 end
 	 local  dxn = dx / distance
 	 local  dyn = dy / distance
-         
-
---	 gesture.target.inMotion = makeMotionObject()
 
          if ecsWorld then
             ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
          end
 
-  --       local mass = gesture.target.inMotion.mass
-
---	 local throwStrength = 1
- --        if mass < 0 then throwStrength = throwStrength / 100 end
---
-  --       local impulse = Vector(dxn * speed * throwStrength ,
-    --                            dyn * speed * throwStrength )
-      --   print('applying force old:', inspect(impulse))
---	 applyForce(gesture.target.inMotion, impulse)
       end
    end
 end
