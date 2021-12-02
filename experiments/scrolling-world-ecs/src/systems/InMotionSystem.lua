@@ -10,8 +10,25 @@ function InMotionSystem:update(dt)
 
       e.inMotion.velocity = e.inMotion.velocity + e.inMotion.acceleration/2
 
-      transforms.l[1] = transforms.l[1] + (e.inMotion.velocity.x * dt)
-      transforms.l[2] = transforms.l[2] + (e.inMotion.velocity.y * dt)
+      local dx = (e.inMotion.velocity.x * dt)
+      local dy = (e.inMotion.velocity.y * dt)
+      
+      transforms.l[1] = transforms.l[1] + dx
+      transforms.l[2] = transforms.l[2] + dy
+
+      -- remove this is a duplication from the draggable system
+      if (e.inStack) then
+	 local nextLink = e.inStack.next
+	 while nextLink do
+	    nextLink.transforms.l[1] = nextLink.transforms.l[1] + dx
+	    nextLink.transforms.l[2] = nextLink.transforms.l[2] + dy
+	    if nextLink.entity.inStack then
+	       nextLink = nextLink.entity.inStack.next
+	    end
+	 end
+      end
+      -- end remove this
+      
 
       e.inMotion.velocity = e.inMotion.velocity + e.inMotion.acceleration/2
       e.inMotion.acceleration = e.inMotion.acceleration * 0

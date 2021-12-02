@@ -4,3 +4,4 @@ Concord.component(
       c.index = value
    end
 )
+

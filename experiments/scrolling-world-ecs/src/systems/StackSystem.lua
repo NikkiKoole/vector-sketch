@@ -1,4 +1,13 @@
-local StackSystem = Concord.system({pool = {'stackable'}, inStackPool = {'inStack'}})
+--[[
+
+stackable:  means this is a normal item that is allowed to be placed in a stack
+inStack  : means this thing is in a stack, inStack has a prev & next link (double linked list)
+]]--
+local StackSystem = Concord.system({pool = {'stackable'}})
+
+
+
+
 
 --function StackSystem:update(dt)
 --end
@@ -9,7 +18,7 @@ local StackSystem = Concord.system({pool = {'stackable'}, inStackPool = {'inStac
 -- end
 --end
 
-local MAX_DISTANCE_TO_CONNECT = 100
+local MAX_DISTANCE_TO_CONNECT = 20
 
 function StackSystem:itemThrow(target, dxn, dyn, speed)
    -- an item has been released and might want to end up in a stack.
@@ -47,7 +56,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	    end
 	 end
 
-	 print('the nearest connection possibile is ', nearest.distance)
+	 --print('the nearest connection possibile is ', nearest.distance)
 	 if (nearest.distance <= MAX_DISTANCE_TO_CONNECT) then
 	    foundOneToConnectMyselfTo = nearest.elem
 	 end
@@ -67,6 +76,33 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 
 	 -- the next step is, the one i am connecting to, is that already a stack or not
 	 -- if not, we need to create the newly made stack now
+
+	 -- todo when do we remove the inStack component ?
+
+	 if foundOneToConnectMyselfTo then
+	    if foundOneToConnectMyselfTo.entity.inStack then
+	       foundOneToConnectMyselfTo.entity.inStack.next = target
+	       target.entity:give('inStack', foundOneToConnectMyselfTo, nil)
+	    else
+	       foundOneToConnectMyselfTo.entity:give('inStack', nil, target)
+	       target.entity:give('inStack', foundOneToConnectMyselfTo, nil)
+	    end
+	 end
+
+	 if not foundOneToConnectMyselfTo then
+	    if target.entity.inStack then
+	       --print('this thing is in a stack, but we didnt find anything to connect too')
+	       -- atleast remove the inStack prev link from both sides
+	       local prev = target.entity.inStack.prev
+	       if prev then
+		  prev.entity.inStack.next = nil
+	       end
+	       target.entity.inStack.prev = nil
+	       
+	    end
+	 end
+	 
+	 
          
 	 
 	 
