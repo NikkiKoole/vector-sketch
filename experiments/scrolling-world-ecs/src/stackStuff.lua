@@ -29,7 +29,7 @@ function arrangeDepthOfStack(someNode)
    local depth = current.depth
    while current.entity.inStack and current.entity.inStack.next do
       current = current.entity.inStack.next
-      depth = depth + 0.001
+      depth = depth + 0.000001
       current.depth = depth
    end
    
