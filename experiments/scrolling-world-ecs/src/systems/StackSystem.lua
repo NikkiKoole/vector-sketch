@@ -50,8 +50,6 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	 print('the nearest connection possibile is ', nearest.distance)
 	 if (nearest.distance <= MAX_DISTANCE_TO_CONNECT) then
 	    foundOneToConnectMyselfTo = nearest.elem
-	    
-	    
 	 end
 	 
 	
@@ -59,7 +57,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	 if foundOneToConnectMyselfTo then
 	    target.entity:remove('inMotion')
 
-	    local changeDepth = false
+	    local changeDepth = true
 	    if changeDepth then
 	       target.depth = foundOneToConnectMyselfTo.depth + 0.01
 	       local layer, pdata = retrieveLayerAndParallax(target.entity.layer.index)
@@ -69,6 +67,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 
 	 -- the next step is, the one i am connecting to, is that already a stack or not
 	 -- if not, we need to create the newly made stack now
+         
 	 
 	 
       end
