@@ -66,30 +66,32 @@ function drawBBoxAroundItems(layer, parallaxData)
 
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
-	    love.graphics.setColor(1,1,1,1)
-	    local px, py = c.transforms._g:transformPoint( c.transforms.l[6], c.transforms.l[7])
 
-            local camData = createCamData(c, parallaxData)
-	    local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
-	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
-	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
+	    
+	    -- love.graphics.setColor(1,1,1,1)
+	    -- local px, py = c.transforms._g:transformPoint( c.transforms.l[6], c.transforms.l[7])
 
-            local checkAgainst = getItemsInLayerThatHaveMeta(layer)
+            -- local camData = createCamData(c, parallaxData)
+	    -- local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
+	    -- love.graphics.line(pivx-5, pivy, pivx+5, pivy)
+	    -- love.graphics.line(pivx, pivy-5, pivx, pivy+5)
 
-            for j =1, #checkAgainst do
-               for k = 1, #checkAgainst[j].metaTags do
-                  local tag = checkAgainst[j].metaTags[k]
+            -- local checkAgainst = getItemsInLayerThatHaveMeta(layer)
 
-		  if (tag.name == 'connector' and checkAgainst[j] ~= c) then
-		     local pos = tag.points[1] -- there is just one point in this collection
-		     local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
-		     local camData = createCamData(checkAgainst[j], parallaxData)
-		     local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
-		     love.graphics.setColor(1,1,1,.2)
-		     love.graphics.line(pivx, pivy, kx2, ky2)
-		  end
-               end
-            end
+            -- for j =1, #checkAgainst do
+            --    for k = 1, #checkAgainst[j].metaTags do
+            --       local tag = checkAgainst[j].metaTags[k]
+
+	    -- 	  if (tag.name == 'connector' and checkAgainst[j] ~= c) then
+	    -- 	     local pos = tag.points[1] -- there is just one point in this collection
+	    -- 	     local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
+	    -- 	     local camData = createCamData(checkAgainst[j], parallaxData)
+	    -- 	     local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+	    -- 	     love.graphics.setColor(1,1,1,.2)
+	    -- 	     love.graphics.line(pivx, pivy, kx2, ky2)
+	    -- 	  end
+            --    end
+            -- end
 
          end
 
