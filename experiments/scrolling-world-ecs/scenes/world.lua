@@ -19,7 +19,8 @@ myWorld:addSystems(
    Systems.BipedSystem,
    Systems.WheelSystem,
    Systems.HitAreaEventSystem,
-   Systems.StackSystem
+   Systems.StackSystem,
+   Systems.RotateOnMoveSystem
 )
 
 function scene.modify(data)

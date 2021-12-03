@@ -294,12 +294,15 @@ end
 
 
 function getScreenBBoxForItem(c, camData)
+   --setTransforms(c._parent)
+   --local tx, ty =c._parent.transforms._g:transformPoint(c.bbox[1],c.bbox[2])
    local tx, ty = c.transforms._g:transformPoint(c.bbox[1],c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
    local bx, by = c.transforms._g:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
-
-   return tlx,tly,brx,bry
+--   setTransforms(c)
+--   print(tlx,tly,brx,bry)
+   return  tlx,tly,brx,bry
 end
 
 function createCamData(item, parallaxData)
