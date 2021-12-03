@@ -76,10 +76,10 @@ function attachPointerCallbacks()
    end
    function retrieveLayerAndParallax(index)
       if (index == 1) then
-	 return foregroundLayer, parallaxLayersData[1].p
+	 return foregroundLayer, parallaxLayersData[1].p, parallaxLayersData[1]
       end
       if (index == 2) then
-	 return backgroundLayer, parallaxLayersData[2].p
+	 return backgroundLayer, parallaxLayersData[2].p, parallaxLayersData[2]
       end
    end
    

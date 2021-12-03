@@ -13,6 +13,22 @@ function positionAllInStack(element, dx, dy)
 end
 
 
+function findInArrayOnName(array, name)
+   for i =1, #array do
+      if array[i].name == name then
+	 return array[i]
+      end
+   end
+end
+
+function getPositionForNext(current)
+   local connectorName = current.entity.inStack.connectorName
+   local realConnector = findInArrayOnName(current.metaTags, connectorName)
+   local points = realConnector.points[1]
+   local x, y = current.transforms._g:transformPoint(points[1],points[2])
+   return x,y
+end
+
 
 function arrangeDepthOfStack(someNode)
    -- i dont know the root of the stack in advance first find it
@@ -24,13 +40,25 @@ function arrangeDepthOfStack(someNode)
 
    -- now i have the root.
    -- lets walk from the root, to the end and increase the depth everytime
-   -- todo: i also need to position the things to the connector node I think
+
+   
    local current = root
    local depth = current.depth
+   local nextX, nextY = getPositionForNext(current)
+   local counter = 0
+
    while current.entity.inStack and current.entity.inStack.next do
       current = current.entity.inStack.next
+      
+      current.transforms.l[1] = nextX
+      current.transforms.l[2] = nextY
+      setTransforms(current)  -- this was needed!!!!!!
+      
+      nextX, nextY = getPositionForNext(current)
       depth = depth + 0.000001
       current.depth = depth
+
+      counter = counter + 1
    end
    
 end

@@ -16,7 +16,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
       -- figure out if anything is near i can connect myself to
       
       if target.entity.layer  then
-	 local layer, pdata = retrieveLayerAndParallax(target.entity.layer.index)
+	 local layer, pdata, data = retrieveLayerAndParallax(target.entity.layer.index)
 	 local checkAgainst = getItemsInLayerThatHaveSpecificMeta(layer, 'connector')
 	 local nearest = {distance=math.huge, elem=nil}
 
@@ -55,23 +55,23 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	    connectTo = nearest.elem
 	 end
 
-
+	 -- if the one i am connecting to is still in assetbook remove it from there
+	 if (connectTo) then
+	    if connectTo.entity.assetBook then
+	       removeFromAssetBook(connectTo, data)
+	    end
+	 end
+   
+	 
 	 -----  this is the real stack stuff aka thedouble linked list of items
 	 removeNode(target)
 	 if (connectTo) then
-	    insertNodeAfter(target, connectTo)
+	    insertNodeAfter(target, connectTo, nearest.tag.name)
 	 end
 	 -----  end this is the real stack stuff aka thedouble linked list of items
 
 
-         if connectTo then
-            local pos = nearest.tag.points[1] -- there is just one point in this collection
-            local kx, ky = nearest.elem.transforms._g:transformPoint(pos[1], pos[2])
-            target.transforms.l[1] = kx
-            target.transforms.l[2] = ky
-            -- this needs to happen for all items in stack too, so depth + positions
-         end
-         
+   
 
          if connectTo then
 	    target.entity:remove('inMotion')
@@ -79,38 +79,31 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	    local changeDepth = true
             arrangeDepthOfStack(target)
 	    if changeDepth then
-	       --target.depth = connectTo.depth + 0.01
 	       local layer, pdata = retrieveLayerAndParallax(target.entity.layer.index)
 	       sortOnDepth(layer.children)
 	    end
-
+	   
 
 	 end
 
-
-         
 	 -- todo, make the connection hard (actually position the thing at the connnector)
-
-	 -- make the depth thing working for the whole stack, first go to the beginning
-	 -- "recurse" over the next node and make the depth each step slightly diff.
 	 
-	 
-
       end
       
    end
 end
 
 -- when you connect something (stack or item) to something else (stack or item)
-function insertNodeAfter(node, after)
+function insertNodeAfter(node, after, connectorName)
+   
    if (not node.entity.inStack) then
-      node.entity:give('inStack', after, nil)
+      node.entity:give('inStack', after, nil, connectorName)
    else
       node.entity.inStack.prev = after
    end
    
    if (not after.entity.inStack) then
-      after.entity:give('inStack', nil, node)
+      after.entity:give('inStack', nil, node, connectorName)
    else
       after.entity.inStack.next = node
    end
