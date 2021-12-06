@@ -122,12 +122,12 @@ function pointerPressed(x,y, id, layers, ecsWorld)
                local justBBoxCheck = false
 	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
-                  if ecsWorld then
-                     ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
-                  end
+                  --if ecsWorld then
+                  --   ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
+                  --end
 		  --
-		  print('pressed')
-		  c.pressed = {dx=invx, dy=invy, id=id}
+		  --print('pressed')
+		  c.pressed = { id=id}
 		  itemPressed = c
 
                end
@@ -213,9 +213,12 @@ function pointerMoved(x,y,dx,dy, id, layers, ecsWorld)
          local c = l.layer.children[i]
 	 if c.pressed and c.pressed.id == id then
 	    print('yohoo do the dragged here instead: ', dx,dy)
+	    
 	    -- this works correctly ( \0/ )  I just need to scale it 
-	     if ecsWorld then
-		ecsWorld:emit("itemDrag", c, l, x, y, dx, dy)
+	    if ecsWorld then
+	       local scale = cam:getScale()
+	       local lc = createCamData(c, l.p)
+	       ecsWorld:emit("itemDrag", c, l, x, y, dx/lc.scale/scale, dy/lc.scale/scale)
 	     end
 	 end
 	 
@@ -303,15 +306,24 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 		  resetCameraTween()
 		  cameraTranslateScheduler(speed*dt, 0)
 
-		   if ecsWorld then
-		      ecsWorld:emit("itemDrag", c, l, x, y, 1, 0)
+		  if ecsWorld then
+		     --local scale = cam:getScale()
+		     --local lc = createCamData(c, l.p)
+		     --local cam = createCamData(c, l.p)
+		     --ecsWorld:emit("itemDrag", c, l, x, y, dx*cam.scale, dy*cam.scale)
+		     --ecsWorld:emit("itemDrag", c, l, x, y, 1, 0)
+		     ecsWorld:emit("itemDrag", c, l, x, y, speed*dt, 0)
 		   end
 	       end
 	       if ((tlx - offset) < 0) then
 		  resetCameraTween()
 		  cameraTranslateScheduler(-speed*dt, 0)
 		  if ecsWorld then
-		     ecsWorld:emit("itemDrag", c, l, x, y, -1, 0)
+		     --local cam = createCamData(c, l.p)
+		     --local scale = cam:getScale()
+		     --local lc = createCamData(c, l.p)
+		     --ecsWorld:emit("itemDrag", c, l, x, y,  1, 0)
+		     ecsWorld:emit("itemDrag", c, l, x, y, -speed*dt, 0)
 		  end
 
 	       end

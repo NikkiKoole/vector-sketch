@@ -5,6 +5,10 @@ function RotateOnMoveSystem:update(dt)
          local transforms = e.transforms.transforms
          --transforms.l[3] = transforms.l[3] + 0.01
          --print('yoohoo!')
+	 --if e.pressed then
+	--     transforms.l[3] = transforms.l[3] + 0.01
+	 --end
+	 
          
       end
       
@@ -20,10 +24,11 @@ function RotateOnMoveSystem:itemDrag( c, l, x, y, invx, invy)
    --local thing = 
    --c.transforms.l[3] = c.transforms.l[3] + 0.01
 
---   c.transforms.l[3] = c.transforms.l[3] + 0.01
+   c.transforms.l[3] = c.transforms.l[3] + 0.01
 --   C.transforms.l[3]  =  c.transforms.l[3] - 0.001
   -- setTransforms(c)
 end
+
 
 
 

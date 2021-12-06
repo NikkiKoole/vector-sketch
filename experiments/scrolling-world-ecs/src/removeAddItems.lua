@@ -37,7 +37,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
 
             child.transforms.l[1] = thing.x
             child.transforms.l[2] = thing.y
-            child.transforms.l[3] = love.math.random()--thing.y
+            --child.transforms.l[3] = love.math.random()--thing.y
 
             child.transforms.l[4] = thing.scaleX
             child.transforms.l[5] = thing.scaleY
