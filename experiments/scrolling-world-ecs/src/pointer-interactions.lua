@@ -274,6 +274,9 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
                local mx, my = getPointerPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
 
+
+	       -- remove this from here, instead handle this is mousemvoe where i know the real dx and yd and dont need tyo rely on inverting the transformation which leds to issues
+	       
 	       if ecsWorld then
 		  ecsWorld:emit("itemDrag", c, l, x, y, invx, invy)
 	       end

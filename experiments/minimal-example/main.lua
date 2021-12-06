@@ -28,27 +28,40 @@ function love.mousereleased(x,y)
    dragging = false
 end
 
+function love.mousemoved(x,y,dx,dy)
+   if (mousedown and dragging) then
+      t[1] = t[1] + dx
+      t[2] = t[2] + dy
+      transform = love.math.newTransform(t[1],t[2],t[3],t[4],t[5],t[6],t[7],t[8],t[9])
+   end
+   
+end
+
+
 function love.update(dt)
    if mousedown then
       
       --the dragging part
       if  dragging then
-	 local x, y = love.mouse.getPosition()
-	 local invx, invy = transform:inverseTransformPoint(x,y)
-	 t[1] = t[1] + (invx - dragging.dx)
-	 t[2] = t[2] + (invy - dragging.dy)
-	 transform = transform:translate( (invx - dragging.dx), (invy - dragging.dy) )
+	 --local x, y = love.mouse.getPosition()
+	 --local invx = x
+	 --local invy = y
+	 --local invx, invy = transform:inverseTransformPoint(x,y)
+	 --t[1] = t[1] + 10-- (invx - dragging.dx)
+	 --t[2] = t[2] + 1--(invy - dragging.dy)
+	 --transform = transform:translate( 10,0 )
 	 --transform = love.math.newTransform(t[1],t[2],t[3],t[4],t[5],t[6],t[7],t[8],t[9])
       end
       -- end the dragging part
       
       -- the rotating part
       --
-      --t[3] = t[3] + 8*dt
-      --transform = love.math.newTransform(t[1],t[2],t[3],t[4],t[5],t[6],t[7],t[8],t[9])
+      
+      t[3] = t[3] + 8*dt
+      transform = love.math.newTransform(t[1],t[2],t[3],t[4],t[5],t[6],t[7],t[8],t[9])
 
       --print(transform:getMatrix())
-      transform = transform:rotate(8*dt)
+      --transform = transform:rotate(8*dt)
       -- end the rotating part
    end
 end
