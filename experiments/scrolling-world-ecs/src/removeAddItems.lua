@@ -37,6 +37,8 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
 
             child.transforms.l[1] = thing.x
             child.transforms.l[2] = thing.y
+            child.transforms.l[3] = love.math.random()--thing.y
+
             child.transforms.l[4] = thing.scaleX
             child.transforms.l[5] = thing.scaleY
             child.metaTags = read.metaTags
@@ -54,6 +56,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                   :give('bbox', child.bbox)
 		  :give('layer', layerIndex)
 		  :give('vanillaDraggable')
+                  :give("rotateOnMove")
 
 	       if (child.metaTags and child.metaTags[1].name == 'connector') then
 		  myEntity:give('stackable')

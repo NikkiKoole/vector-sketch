@@ -5,6 +5,7 @@ function DraggableSystem:itemDrag( c, l, x, y, invx, invy)
    if (c.entity and c.entity.vanillaDraggable and c.pressed) then
       local dx = (invx - c.pressed.dx)
       local dy = (invy - c.pressed.dy)
+
       
       c.transforms.l[1] = c.transforms.l[1] + dx
       c.transforms.l[2] = c.transforms.l[2] + dy

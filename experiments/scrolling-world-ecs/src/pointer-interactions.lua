@@ -272,6 +272,7 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 
                local mx, my = getPointerPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
+
 	       if ecsWorld then
 		  ecsWorld:emit("itemDrag", c, l, x, y, invx, invy)
 	       end
@@ -301,8 +302,12 @@ function getScreenBBoxForItem(c, camData)
    local bx, by = c.transforms._g:transformPoint(c.bbox[3],c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
 --   setTransforms(c)
---   print(tlx,tly,brx,bry)
-   return  tlx,tly,brx,bry
+   --   print(tlx,tly,brx,bry)
+   local min = math.min
+   local max = math.max
+
+   
+   return  min(tlx, brx),min(tly, bry),max(brx, tlx),max(bry, tly)
 end
 
 function createCamData(item, parallaxData)
@@ -330,7 +335,7 @@ end
 -- function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
 --    local camData = createCamData(child, parallaxData)
 --    local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
---    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
+--    local wx, =wy = cam:getWorldCoordinates(mx, my, camData)
 --    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
 --    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
@@ -338,11 +343,29 @@ end
 
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
 
+   -- stuff is breakng if you rotate this item
+   -- and then mouseover it with this function
+
+   -- bounding box is wrong too but that doenst cause the crazyness
+   -- the inverse stuff is what goes wrong when rotated
+   
    local camData = createCamData(item, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
+  
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
+--   setTransforms(item)
+   
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
+   if item.pressed then
+--      print(mx, my)
+     -- print(inspect(camData))
+--   print('invx, invy', invx, invy)
+--   print('tlx, tly, brx, bry', tlx, tly, brx, bry)
+--   print('wx, wy', wx,wy)
+   end
+
+   
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
 
