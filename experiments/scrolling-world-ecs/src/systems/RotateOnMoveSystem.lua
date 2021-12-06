@@ -18,11 +18,11 @@ function RotateOnMoveSystem:itemDrag( c, l, x, y, invx, invy)
 --   prparentint(c.name)
  --  print(#c._parent.name)
    --local thing = 
-   c.transforms.l[3] = c.transforms.l[3] + 0.01
+  -- c.transforms.l[3] = c.transforms.l[3] + 0.01
 
 --   c.transforms.l[3] = c.transforms.l[3] + 0.01
 --   C.transforms.l[3]  =  c.transforms.l[3] - 0.001
-   setTransforms(c)
+  -- setTransforms(c)
 end
 
 

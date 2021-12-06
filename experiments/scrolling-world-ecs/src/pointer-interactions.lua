@@ -125,7 +125,8 @@ function pointerPressed(x,y, id, layers, ecsWorld)
                   if ecsWorld then
                      ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
                   end
-
+		  --
+		  print('pressed')
 		  c.pressed = {dx=invx, dy=invy, id=id}
 		  itemPressed = c
 
@@ -357,13 +358,6 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
    
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
-   if item.pressed then
---      print(mx, my)
-     -- print(inspect(camData))
---   print('invx, invy', invx, invy)
---   print('tlx, tly, brx, bry', tlx, tly, brx, bry)
---   print('wx, wy', wx,wy)
-   end
 
    
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
