@@ -212,8 +212,6 @@ function pointerMoved(x,y,dx,dy, id, layers, ecsWorld)
       for i = #l.layer.children,1,-1 do
          local c = l.layer.children[i]
 	 if c.pressed and c.pressed.id == id then
-	    print('yohoo do the dragged here instead: ', dx,dy)
-	    
 	    -- this works correctly ( \0/ )  I just need to scale it 
 	    if ecsWorld then
 	       local scale = cam:getScale()
@@ -299,12 +297,13 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 
 	       -- remove this from here, instead handle this is mousemvoe where i know the real dx and yd and dont need tyo rely on inverting the transformation which leds to issues
 	       
-	      
+	       -- before i was moving the item first, and afterwards mabe following with the camera
+	       -- that is no longer the case, this causes a little jittery effect
+	       
 
-	       local speed = 300
+	       local speed = 200
 	       if ((brx + offset) > W) then
-		  resetCameraTween()
-		  cameraTranslateScheduler(speed*dt, 0)
+		 
 
 		  if ecsWorld then
 		     --local scale = cam:getScale()
@@ -313,7 +312,10 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 		     --ecsWorld:emit("itemDrag", c, l, x, y, dx*cam.scale, dy*cam.scale)
 		     --ecsWorld:emit("itemDrag", c, l, x, y, 1, 0)
 		     ecsWorld:emit("itemDrag", c, l, x, y, speed*dt, 0)
-		   end
+		  end
+
+		  resetCameraTween()
+		  cameraTranslateScheduler(speed*dt, 0)
 	       end
 	       if ((tlx - offset) < 0) then
 		  resetCameraTween()
