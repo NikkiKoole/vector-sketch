@@ -47,15 +47,15 @@ function attachPointerCallbacks()
       end
    end
    function love.touchpressed(id, x, y, dx, dy, pressure)
-      pointerPressed(x,y, id, parallaxLayersData)
+      pointerPressed(x,y, id, parallaxLayersData, myWorld)
    end
    function love.mousemoved(x, y,dx,dy, istouch)
       if not istouch then
-         pointerMoved(x,y,dx,dy, 'mouse', parallaxLayersData)
+         pointerMoved(x,y,dx,dy, 'mouse', parallaxLayersData, myWorld)
       end
    end
    function love.touchmoved(id, x,y, dx, dy, pressure)
-      pointerMoved(x,y,dx,dy, id, parallaxLayersData)
+      pointerMoved(x,y,dx,dy, id, parallaxLayersData, myWorld)
    end
    function love.mousereleased(x,y, button, istouch)
       lastDraggedElement = nil

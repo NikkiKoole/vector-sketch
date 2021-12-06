@@ -175,7 +175,7 @@ end
 
 
 
-function pointerMoved(x,y,dx,dy, id, layers)
+function pointerMoved(x,y,dx,dy, id, layers, ecsWorld)
 
    if (id == 'mouse') then
       for i =1 , #layers do
@@ -203,6 +203,25 @@ function pointerMoved(x,y,dx,dy, id, layers)
 	 end
       end
    end
+
+   -- if items are pressed i have the id that caused thta,
+   -- in here i know the id of the moved pointer so that ought to be enouigh
+   for j =1, #layers do
+      local l = layers[j]
+
+      for i = #l.layer.children,1,-1 do
+         local c = l.layer.children[i]
+	 if c.pressed and c.pressed.id == id then
+	    print('yohoo do the dragged here instead: ', dx,dy)
+	    -- this works correctly ( \0/ )  I just need to scale it 
+	     if ecsWorld then
+		ecsWorld:emit("itemDrag", c, l, x, y, dx, dy)
+	     end
+	 end
+	 
+      end
+   end
+   
 end
 
 
@@ -277,18 +296,24 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 
 	       -- remove this from here, instead handle this is mousemvoe where i know the real dx and yd and dont need tyo rely on inverting the transformation which leds to issues
 	       
-	       if ecsWorld then
-		  ecsWorld:emit("itemDrag", c, l, x, y, invx, invy)
-	       end
+	      
 
 	       local speed = 300
 	       if ((brx + offset) > W) then
 		  resetCameraTween()
 		  cameraTranslateScheduler(speed*dt, 0)
+
+		   if ecsWorld then
+		      ecsWorld:emit("itemDrag", c, l, x, y, 1, 0)
+		   end
 	       end
 	       if ((tlx - offset) < 0) then
 		  resetCameraTween()
 		  cameraTranslateScheduler(-speed*dt, 0)
+		  if ecsWorld then
+		     ecsWorld:emit("itemDrag", c, l, x, y, -1, 0)
+		  end
+
 	       end
             end
          end
