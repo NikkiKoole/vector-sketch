@@ -122,9 +122,9 @@ function pointerPressed(x,y, id, layers, ecsWorld)
                local justBBoxCheck = false
 	       local hitcheck =  mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
-                  --if ecsWorld then
-                  --   ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
-                  --end
+                  if ecsWorld then
+                     ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
+                  end
 		  --
 		  --print('pressed')
 		  c.pressed = { id=id}

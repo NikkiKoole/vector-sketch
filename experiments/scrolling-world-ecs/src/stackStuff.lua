@@ -1,6 +1,4 @@
 
-
-
 function positionAllInStack(element, dx, dy)
    local nextLink = element.inStack.next
    while nextLink do
@@ -11,7 +9,6 @@ function positionAllInStack(element, dx, dy)
       end
    end
 end
-
 
 function findInArrayOnName(array, name)
    for i =1, #array do
@@ -29,7 +26,6 @@ function getPositionForNext(current)
    return x,y
 end
 
-
 function arrangeDepthOfStack(someNode)
    -- i dont know the root of the stack in advance first find it
    local root = someNode
@@ -46,12 +42,13 @@ function arrangeDepthOfStack(someNode)
    local depth = current.depth
    local nextX, nextY = getPositionForNext(current)
    local counter = 0
-
+   
    while current.entity.inStack and current.entity.inStack.next do
       current = current.entity.inStack.next
       
       current.transforms.l[1] = nextX
       current.transforms.l[2] = nextY
+      current.transforms.l[3] = counter*0.1
       setTransforms(current)  -- this was needed!!!!!!
       
       nextX, nextY = getPositionForNext(current)
