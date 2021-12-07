@@ -127,7 +127,7 @@ function scene.load()
                   --'plant9','plant10','plant11','plant12',
 		 'doosgroot', 'doosgroot', 'doosgroot',
 		  'doosgroot', 'doosgroot', 'doosgroot',
-                 'plant13','bunnyhead', 'deurpaars', 'deurpaars'
+                 'plant13','bunnyhead', 'walrus','deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
             amountPerTile=2,
