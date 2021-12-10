@@ -401,6 +401,8 @@ function handleChild(shape,parallax)
       end
 
       local parentIndex = getIndex(shape._parent)
+      local thisIndex = 1 + math.floor( love.math.random()*200)
+
       if shape.hole then
 	 love.graphics.stencil(
 	 function()
@@ -408,17 +410,18 @@ function handleChild(shape,parallax)
 	 end, "replace", parentIndex, true)
 
       end
+      
       if shape.mask then
          love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent.transforms._g )
-	 end, "replace", 255, true)
+	 end, "replace", thisIndex, true)
       end
 
       if shape.hole then
 	 love.graphics.setStencilTest("notequal", parentIndex)
       else
-	 love.graphics.setStencilTest("equal", 255)
+	 love.graphics.setStencilTest("equal", thisIndex)
       end
    end
 
