@@ -387,7 +387,7 @@ function renderNormallyOrOptimized(shape)
 end
 
 
-local maskIndex = 254
+local maskIndex = 0
 
 function handleChild(shape,parallax)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
@@ -404,7 +404,8 @@ function handleChild(shape,parallax)
       end
 
       local parentIndex = getIndex(shape._parent)
-      local thisIndex = (maskIndex + 1) % 254
+      maskIndex = maskIndex + 1
+      local thisIndex = (maskIndex % 255) + 1
 
       if shape.hole then
 	 love.graphics.stencil(
