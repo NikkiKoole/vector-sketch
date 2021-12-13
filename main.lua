@@ -357,7 +357,9 @@ function drawUIAroundGraphNodes(w,h)
 
          end
 	 if imgbutton('close-stencil', ui.close_stencil, w - 240, runningY).clicked then
-
+	    currentNode.closeStencil = not currentNode.closeStencil
+	    currentNode.mask = false
+	    currentNode.hole = false
 	 end
 	 
       end
@@ -1079,6 +1081,10 @@ function renderGraphNodes(node, level, startY)
       end
       if child.hole then
          icon = ui.hole
+         color = {0,0,0}
+      end
+      if child.closeStencil then
+         icon = ui.close_stencil
          color = {0,0,0}
       end
 

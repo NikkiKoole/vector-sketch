@@ -407,7 +407,7 @@ function handleChild(shape,parallax)
       maskIndex = maskIndex + 1
       local thisIndex = (maskIndex % 255) + 1
 
-      if shape.hole then
+      if shape.hole and mesh then
 	 love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent.transforms._g )
@@ -415,7 +415,7 @@ function handleChild(shape,parallax)
 
       end
       
-      if shape.mask then
+      if shape.mask and mesh then
          love.graphics.stencil(
 	 function()
 	    love.graphics.draw(mesh, shape._parent.transforms._g )
@@ -428,6 +428,11 @@ function handleChild(shape,parallax)
 	 love.graphics.setStencilTest("equal", thisIndex)
       end
    end
+
+   if shape.closeStencil then
+      love.graphics.setStencilTest()
+   end
+   
 
 
 
@@ -703,15 +708,19 @@ function renderThings(root, parallax)
    if root.keyframes then
       renderThingsWithKeyFrames(root)
    else
-      love.graphics.setStencilTest()
+      --love.graphics.setStencilTest()
       for i = 1, #root.children do
 	 local shape = root.children[i]
 	 handleChild(shape, parallax)
       end
       --love.graphics.setStencilTest()
    end
-   love.graphics.setStencilTest()
 
+
+
+   if root._parent == nil then
+   love.graphics.setStencilTest()
+   end
 
 end
 

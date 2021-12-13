@@ -85,6 +85,9 @@ function copyShape(shape)
 	 if shape.hole then
 	    result.hole = true
 	 end
+	 if shape.closeStencil then
+	    result.closeStencil = true
+	 end
          if shape.type then
 	    result.type = shape.type
 	 end
