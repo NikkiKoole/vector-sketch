@@ -348,9 +348,13 @@ function drawUIAroundGraphNodes(w,h)
       if currentNode and currentNode.points and currentNode.type ~= 'meta' then
          if imgbutton('mask', ui.mask, w - 300, runningY).clicked then
             currentNode.mask = not currentNode.mask
+	    currentNode.hole = false
+
          end
          if imgbutton('hole', ui.hole, w - 256, runningY).clicked then
             currentNode.hole = not currentNode.hole
+	    currentNode.mask = false
+
          end
       end
 
