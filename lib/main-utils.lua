@@ -509,7 +509,7 @@ function handleChild(shape,parallax)
 	 if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
 	    renderNormallyOrOptimized(shape)
 	 else
-            print('not rendering something cause of the aabb', inspect(shape.aabb), minX, maxX)
+            print('not rendering someting cause of the aabb', inspect(shape.aabb), minX, maxX)
          end
 
       else
@@ -530,7 +530,7 @@ function handleChild(shape,parallax)
 
 
 
-      love.graphics.setStencilTest()
+      --love.graphics.setStencilTest()
    end
 
    if currentNode ~= shape then

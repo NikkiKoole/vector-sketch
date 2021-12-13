@@ -346,16 +346,20 @@ function drawUIAroundGraphNodes(w,h)
       runningY = runningY + 40
 
       if currentNode and currentNode.points and currentNode.type ~= 'meta' then
-         if imgbutton('mask', ui.mask, w - 300, runningY).clicked then
+         if imgbutton('mask', ui.mask, w - 320, runningY).clicked then
             currentNode.mask = not currentNode.mask
 	    currentNode.hole = false
 
          end
-         if imgbutton('hole', ui.hole, w - 256, runningY).clicked then
+         if imgbutton('hole', ui.hole, w - 280, runningY).clicked then
             currentNode.hole = not currentNode.hole
 	    currentNode.mask = false
 
          end
+	 if imgbutton('close-stencil', ui.close_stencil, w - 240, runningY).clicked then
+
+	 end
+	 
       end
 
       if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
@@ -1249,6 +1253,7 @@ function love.load(arg)
       flip_horizontal = love.graphics.newImage("resources/ui/flip-horizontal.png"),
       dopesheet = love.graphics.newImage("resources/ui/spreadsheet.png"),
       curve = love.graphics.newImage("resources/ui/curve.png"),
+      close_stencil = love.graphics.newImage("resources/ui/close-stencil.png"),
    }
 
    cursors = {
