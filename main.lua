@@ -766,7 +766,7 @@ function love.mousereleased(x,y, button)
    if (editingMode == 'rectangle-select') then
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
-         local t = not currentNode and  root.transforms._l or root.transforms._g
+         local t = not currentNode and  root.transforms and (root.transforms._l or root.transforms._g)
          if t then
             local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
             local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
