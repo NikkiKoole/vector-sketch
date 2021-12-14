@@ -5,6 +5,7 @@ function handleMouseClickStart()
    mouseState.down = love.mouse.isDown(1 )
    mouseState.click = false
    mouseState.released = false
+   --print('what!')
    if mouseState.down ~= mouseState.lastDown then
       if mouseState.down  then
          mouseState.click  = true
