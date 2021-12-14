@@ -162,7 +162,10 @@ function resizeGroup(node, children, scale)
          end
          remeshNode(children[i])
       end
-      remeshNode(node)
+      if node then
+	 remeshNode(node)
+      end
+      
    end
 end
 
@@ -753,6 +756,7 @@ function love.mousereleased(x,y, button)
 
    if editingModeSub == 'rectangle-point-select' then
       if  (rectangleSelect.startP and rectangleSelect.endP) then
+	 print('why isnt this selcting children that have a parent?')
          childrenInRect = {}
          local parent = currentNode._parent or root
          local t = not  currentNode._parent and  parent.transforms._l or parent.transforms._g
@@ -776,7 +780,9 @@ function love.mousereleased(x,y, button)
    if (editingMode == 'rectangle-select') then
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
-         local t = not currentNode and  root.transforms and (root.transforms._l or root.transforms._g)
+	 print('why isnt this selcting children that have a parent again???')
+         local t = (not currentNode and  root.transforms and root.transforms._l) or (root.transforms and root.transforms._g)
+
          if t then
             local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
             local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
