@@ -69,7 +69,7 @@ james = {
 
 for i = 1, #jamesGulliverHancock do
    local r,g,b = hex2rgb(jamesGulliverHancock[i])
-   table.insert(james.colors, {name='unknown', rgb={r,g,b}})
+   table.insert(james.colors, {name='unknown', rgb={r,g,b}, hex=jamesGulliverHancock[i]})
 end
 
 picoColors = {
@@ -83,7 +83,7 @@ pico = {
 }
 for i = 1, #picoColors do
    local r,g,b = hex2rgb(picoColors[i])
-   table.insert(pico.colors, {name='unknown', rgb={r,g,b}})
+   table.insert(pico.colors, {name='unknown', rgb={r,g,b}, hex=picoColors[i]})
 end
 
 childCraftColors = {
@@ -170,7 +170,7 @@ gruvBox = {
 
 for i = 1, #gruvBoxColors do
    local r,g,b = hex2rgb(gruvBoxColors[i])
-   table.insert(gruvBox.colors, {name='unknown', rgb={r,g,b}})
+   table.insert(gruvBox.colors, {name='unknown', rgb={r,g,b}, hex=gruvBoxColors[i]})
 end
 
 littleGreene = {
@@ -311,7 +311,7 @@ littleGreeneColors = {
 }
 for i = 1, #littleGreeneColors do
    local r,g,b = hex2rgb(littleGreeneColors[i])
-   table.insert(littleGreene.colors, {name='unknown', rgb={r,g,b}})
+   table.insert(littleGreene.colors, {name='unknown', rgb={r,g,b}, hex=littleGreeneColors[i]})
 end
 
 
@@ -376,5 +376,5 @@ quentinBlakeColors = {
 
 for i = 1, #quentinBlakeColors do
    local r,g,b = hex2rgb(quentinBlakeColors[i])
-   table.insert(quentinBlake.colors, {name='unknown', rgb={r,g,b}})
+   table.insert(quentinBlake.colors, {name='unknown', rgb={r,g,b}, hex=quentinBlakeColors[i]})
 end

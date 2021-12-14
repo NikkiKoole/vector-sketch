@@ -8,7 +8,6 @@ function handleMouseClickStart()
    --print('what!')
    if mouseState.down ~= mouseState.lastDown then
       if mouseState.down  then
-         print('click')
          mouseState.click  = true
       else
 	 mouseState.released = true

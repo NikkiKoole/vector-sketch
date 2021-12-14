@@ -1692,6 +1692,7 @@ function love.draw()
 	 if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
 	    local colorsInRow = 16
 	    local thumbSize = 20
+
 	    for i = 1, #palette.colors do
 	       local rgb = palette.colors[i].rgb
 
