@@ -16,7 +16,7 @@ function parentize(node)
 end
 
 function getIndex(item)
-   if (item) then
+   if (item and item._parent) then
       for k,v in ipairs(item._parent.children) do
          if v == item then return k end
       end

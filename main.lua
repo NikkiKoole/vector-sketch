@@ -1417,6 +1417,8 @@ end
 
 function love.draw()
    if openFileScreen then
+      handleMouseClickStart()
+
       renderOpenFileScreen()
    else
 

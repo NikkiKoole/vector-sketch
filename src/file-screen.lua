@@ -98,7 +98,8 @@ function renderOpenFileScreen()
       if pointInRect(mx, my, dirX,dirY, labelW, labelH ) then
          love.graphics.setColor(1,0,0)
          love.graphics.rectangle('fill', dirX, dirY, labelW, labelH )
-         if love.mouse.isDown(1) then
+         --print(inspect(mouseState))
+         if mouseState.released then
             if k == '< back' then
                gatherData('')
             else

@@ -403,7 +403,7 @@ function handleChild(shape,parallax)
 	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
       end
 
-      local parentIndex = getIndex(shape._parent)
+      local parentIndex = getIndex(shape._parent) 
       maskIndex = maskIndex + 1
       local thisIndex = (maskIndex % 255) + 1
 
@@ -573,7 +573,7 @@ function handleChild(shape,parallax)
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
       end
-      if currentNode.border then
+      if currentNode.border and #currentNode.points > 2 then
          local borderMesh = makeBorderMesh(currentNode)
 	 love.graphics.setColor(0,0,0)
          love.graphics.draw(borderMesh,  shape._parent.transforms._g )
