@@ -62,7 +62,7 @@ function drawNodeIntoRect(node, x,y,w,h)
 
 
 
-      -- here i am restoring the original
+   -- here i am restoring the original
    node.transforms.l[4] = oldScaleW
    node.transforms.l[5] = oldScaleH
 
@@ -72,81 +72,81 @@ end
 
 function transferPoint (xI, yI, source, destination)
 
-    local ADDING = 0.00001 -- to avoid dividing by zero
+   local ADDING = 0.00001 -- to avoid dividing by zero
 
-    local xA = source[1]
-    local yA = source[2]
+   local xA = source[1]
+   local yA = source[2]
 
-    local xC = source[3]
-    local yC = source[4]
+   local xC = source[3]
+   local yC = source[4]
 
-    local xAu = destination[1][1]
-    local yAu = destination[1][2]
+   local xAu = destination[1][1]
+   local yAu = destination[1][2]
 
-    local xBu = destination[2][1]
-    local yBu = destination[2][2]
+   local xBu = destination[2][1]
+   local yBu = destination[2][2]
 
-    local xCu = destination[3][1]
-    local yCu = destination[3][2]
+   local xCu = destination[3][1]
+   local yCu = destination[3][2]
 
-    local xDu = destination[4][1]
-    local yDu = destination[4][2]
-    --print(xA,yA,xC,yC)
-    --print(xAu,yAu,xBu,yBu,xCu,yCu,xDu,yDu)
-    -- Calcultations
-    -- if points are the same, have to add a ADDING to avoid dividing by zero
-    if (xBu==xCu) then xC = xC + ADDING end
-    if (xAu==xDu) then xDu= xDu+ ADDING end
-    if (xAu==xBu) then xBu =xBu + ADDING end
-    if (xDu==xCu) then xCu = xCu + ADDING end
-    --print(xC,xDu,xBu,xCu)
-    local kBC = (yBu-yCu)/(xBu-xCu)
-    local kAD = (yAu-yDu)/(xAu-xDu)
-    local kAB = (yAu-yBu)/(xAu-xBu)
-    local kDC = (yDu-yCu)/(xDu-xCu)
+   local xDu = destination[4][1]
+   local yDu = destination[4][2]
+   --print(xA,yA,xC,yC)
+   --print(xAu,yAu,xBu,yBu,xCu,yCu,xDu,yDu)
+   -- Calcultations
+   -- if points are the same, have to add a ADDING to avoid dividing by zero
+   if (xBu==xCu) then xC = xC + ADDING end
+   if (xAu==xDu) then xDu= xDu+ ADDING end
+   if (xAu==xBu) then xBu =xBu + ADDING end
+   if (xDu==xCu) then xCu = xCu + ADDING end
+   --print(xC,xDu,xBu,xCu)
+   local kBC = (yBu-yCu)/(xBu-xCu)
+   local kAD = (yAu-yDu)/(xAu-xDu)
+   local kAB = (yAu-yBu)/(xAu-xBu)
+   local kDC = (yDu-yCu)/(xDu-xCu)
 
-    if (kBC==kAD) then kAD =kAD + ADDING end
-    local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
-    local yE = kBC*(xE - xBu) + yBu
+   if (kBC==kAD) then kAD =kAD + ADDING end
+   local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
+   local yE = kBC*(xE - xBu) + yBu
 
-    if (kAB==kDC) then kDC = kDC + ADDING end
-    local xF = (kAB*xBu - kDC*xCu + yCu - yBu) / (kAB-kDC)
-    local yF = kAB*(xF - xBu) + yBu
+   if (kAB==kDC) then kDC = kDC + ADDING end
+   local xF = (kAB*xBu - kDC*xCu + yCu - yBu) / (kAB-kDC)
+   local yF = kAB*(xF - xBu) + yBu
 
-    if (xE==xF) then xF = xF + ADDING end
-    local kEF = (yE-yF) / (xE-xF)
+   if (xE==xF) then xF = xF + ADDING end
+   local kEF = (yE-yF) / (xE-xF)
 
-    if (kEF==kAB) then kAB = kAB + ADDING end
-    local xG = (kEF*xDu - kAB*xAu + yAu - yDu) / (kEF-kAB)
-    local yG = kEF*(xG - xDu) + yDu
+   if (kEF==kAB) then kAB = kAB + ADDING end
+   local xG = (kEF*xDu - kAB*xAu + yAu - yDu) / (kEF-kAB)
+   local yG = kEF*(xG - xDu) + yDu
 
-    if (kEF==kBC) then kBC = kBC + ADDING end
-    local xH = (kEF*xDu - kBC*xBu + yBu - yDu) / (kEF-kBC)
-    local yH = kEF*(xH - xDu) + yDu
+   if (kEF==kBC) then kBC = kBC + ADDING end
+   local xH = (kEF*xDu - kBC*xBu + yBu - yDu) / (kEF-kBC)
+   local yH = kEF*(xH - xDu) + yDu
 
-    local rG = (yC-yI)/(yC-yA)
-    local rH = (xI-xA)/(xC-xA)
+   local rG = (yC-yI)/(yC-yA)
+   local rH = (xI-xA)/(xC-xA)
 
-    local xJ = (xG-xDu)*rG + xDu
-    local yJ = (yG-yDu)*rG + yDu
+   local xJ = (xG-xDu)*rG + xDu
+   local yJ = (yG-yDu)*rG + yDu
 
-    local xK = (xH-xDu)*rH + xDu
-    local yK = (yH-yDu)*rH + yDu
+   local xK = (xH-xDu)*rH + xDu
+   local yK = (yH-yDu)*rH + yDu
 
-    if (xF==xJ) then xJ = xJ + ADDING end
-    if (xE==xK) then xK =xK + ADDING end
-    local kJF = (yF-yJ) / (xF-xJ) --//23
-    local kKE = (yE-yK) / (xE-xK) --//12
+   if (xF==xJ) then xJ = xJ + ADDING end
+   if (xE==xK) then xK =xK + ADDING end
+   local kJF = (yF-yJ) / (xF-xJ) --//23
+   local kKE = (yE-yK) / (xE-xK) --//12
 
-    local xKE
-    if (kJF==kKE) then kKE= kKE + ADDING end
-    local xIu = (kJF*xF - kKE*xE + yE - yF) / (kJF-kKE)
-    local yIu = kJF * (xIu - xJ) + yJ
+   local xKE
+   if (kJF==kKE) then kKE= kKE + ADDING end
+   local xIu = (kJF*xF - kKE*xE + yE - yF) / (kJF-kKE)
+   local yIu = kJF * (xIu - xJ) + yJ
 
-    local b={x=xIu,y=yIu}
-    --b.x=math.round(b.x)
-    --b.y=math.round(b.y)
-    return b
+   local b={x=xIu,y=yIu}
+   --b.x=math.round(b.x)
+   --b.y=math.round(b.y)
+   return b
 end
 
 
@@ -154,25 +154,25 @@ end
 function makeOptimizedBatchMesh(folder)
    -- this one assumes all children are shapes, still need to think of what todo when
    -- folders are children
-    if #folder.children == 0 then
+   if #folder.children == 0 then
       print("this was empty nothing to optimize")
       return
-    end
+   end
 
-    for i=1, #folder.children do
-       if (folder.children[i].folder) then
-          print("could not optimize shape, it contained a folder!!",folder.name,folder.children[i].name)
-          print('havent fetched the metatags either',folder.name,folder.children[i].name)
-          return
+   for i=1, #folder.children do
+      if (folder.children[i].folder) then
+	 print("could not optimize shape, it contained a folder!!",folder.name,folder.children[i].name)
+	 print('havent fetched the metatags either',folder.name,folder.children[i].name)
+	 return
       end
-    end
+   end
 
-    --for i=1, #folder.children do
-    --   if (folder.children[i].type == 'meta') then
-    --      print("could not optimize shape, it contained a meta tag",folder.name,folder.children[i].name)
-    --      return
-    --  end
-    --end
+   --for i=1, #folder.children do
+   --   if (folder.children[i].type == 'meta') then
+   --      print("could not optimize shape, it contained a meta tag",folder.name,folder.children[i].name)
+   --      return
+   --  end
+   --end
 
    local lastColor = folder.children[1].color
    local allVerts = {}
@@ -242,22 +242,22 @@ end
 function isMouseInMesh(mx, my, body, mesh)
 
    if mesh and body then
---      print(inspect(mesh))
---      print(inspect(mesh))
+      --      print(inspect(mesh))
+      --      print(inspect(mesh))
       local count = mesh:getVertexCount()
       if body.transforms._g then
 
 
 
-      local px,py = body.transforms._g:inverseTransformPoint(mx, my)
-      for i = 1, count, 3 do
-         if i+2 <= count then
-            if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
-               return true
-            end
-         end
+	 local px,py = body.transforms._g:inverseTransformPoint(mx, my)
+	 for i = 1, count, 3 do
+	    if i+2 <= count then
+	       if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
+		  return true
+	       end
+	    end
 
-      end
+	 end
       end
    end
    return false
@@ -275,10 +275,10 @@ function recusiveLookForHitArea(node)
    else
       if node.children then
 	 for i = 1, #node.children do
-	 local result =  recusiveLookForHitArea(node.children[i])
-	 if result then
-	    return result
-	 end
+	    local result =  recusiveLookForHitArea(node.children[i])
+	    if result then
+	       return result
+	    end
 	 end
       end
    end
@@ -409,17 +409,17 @@ function handleChild(shape,parallax)
 
       if shape.hole and mesh then
 	 love.graphics.stencil(
-	 function()
-	    love.graphics.draw(mesh, shape._parent.transforms._g )
-	 end, "replace", parentIndex, true)
+	    function()
+	       love.graphics.draw(mesh, shape._parent.transforms._g )
+	    end, "replace", parentIndex, true)
 
       end
       
       if shape.mask and mesh then
          love.graphics.stencil(
-	 function()
-	    love.graphics.draw(mesh, shape._parent.transforms._g )
-	 end, "replace", thisIndex, true)
+	    function()
+	       love.graphics.draw(mesh, shape._parent.transforms._g )
+	    end, "replace", thisIndex, true)
       end
 
       if shape.hole then
@@ -467,7 +467,7 @@ function handleChild(shape,parallax)
       if shape.generatedMeshes then
          setTransforms(shape)
 
-               --print('there are some generatedMeshes here, are these rubberhose legs?')
+	 --print('there are some generatedMeshes here, are these rubberhose legs?')
          for i =1, #shape.generatedMeshes do
             love.graphics.setColor(shape.generatedMeshes[i].color)
             love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
@@ -522,15 +522,15 @@ function handleChild(shape,parallax)
       end
 
       if false then
-      if shape.generatedMeshes then
-         setTransforms(shape)
+	 if shape.generatedMeshes then
+	    setTransforms(shape)
 
-               --print('there are some generatedMeshes here, are these rubberhose legs?')
-         for i =1, #shape.generatedMeshes do
-            love.graphics.setColor(shape.generatedMeshes[i].color)
-            love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
-         end
-      end
+	    --print('there are some generatedMeshes here, are these rubberhose legs?')
+	    for i =1, #shape.generatedMeshes do
+	       love.graphics.setColor(shape.generatedMeshes[i].color)
+	       love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
+	    end
+	 end
       end
 
 
@@ -719,14 +719,14 @@ function renderThings(root, parallax)
 
 
    if root._parent == nil then
-   love.graphics.setStencilTest()
+      love.graphics.setStencilTest()
    end
 
 end
 
 
 function renderThingsWithKeyFrames(root)
-  -- if (root.keyframes) then
+   -- if (root.keyframes) then
    if (root.keyframes == 2 ) then
       if currentNode == root then
 	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
@@ -774,76 +774,76 @@ function renderThingsWithKeyFrames(root)
 
    ]]--
 
-      if (root.keyframes == 4) then
-	 if currentNode == root then
-	    local cTop = createLerpedChild(root.children[1], root.children[2], root.lerpX)
-	    local cBot = createLerpedChild(root.children[3], root.children[4], root.lerpX)
-	    local lerped = createLerpedChild(cTop, cBot, root.lerpY)
-	    --print(root.lerpX, root.lerpY)
-	    --local lerped = createLerpedChild(root.children[1], root.children[2], 0.5)
+   if (root.keyframes == 4) then
+      if currentNode == root then
+	 local cTop = createLerpedChild(root.children[1], root.children[2], root.lerpX)
+	 local cBot = createLerpedChild(root.children[3], root.children[4], root.lerpX)
+	 local lerped = createLerpedChild(cTop, cBot, root.lerpY)
+	 --print(root.lerpX, root.lerpY)
+	 --local lerped = createLerpedChild(root.children[1], root.children[2], 0.5)
 
-	    if lerped then handleChild(lerped) end
-	 else
-	    handleChild(root.children[root.frame])
-	 end
+	 if lerped then handleChild(lerped) end
+      else
+	 handleChild(root.children[root.frame])
       end
-      if (root.keyframes == 5) then
-	 if currentNode == root then
-            print("doing the 5 way")
-	    local lerpX = root.lerpX or 0.5
-	    local lerpY = root.lerpY or 0.5
-	    local newLerpX =0
-	    local newLerpY =0
-	    if lerpX == .5 and lerpY == .5 then
-	       handleChild(root.children[1])
-	    else
-	       local tl, tr, bl, br
-	       if (lerpX < 0.5 and lerpY < 0.5) then
-		  tl = root.children[2]
-		  tr = createLerpedChild(root.children[2], root.children[3], 0.5)
-		  bl = createLerpedChild(root.children[2], root.children[4], 0.5)
-		  br =  root.children[1]
-		  newLerpX = lerpX *2
-		  newLerpY = lerpY *2
+   end
+   if (root.keyframes == 5) then
+      if currentNode == root then
+	 print("doing the 5 way")
+	 local lerpX = root.lerpX or 0.5
+	 local lerpY = root.lerpY or 0.5
+	 local newLerpX =0
+	 local newLerpY =0
+	 if lerpX == .5 and lerpY == .5 then
+	    handleChild(root.children[1])
+	 else
+	    local tl, tr, bl, br
+	    if (lerpX < 0.5 and lerpY < 0.5) then
+	       tl = root.children[2]
+	       tr = createLerpedChild(root.children[2], root.children[3], 0.5)
+	       bl = createLerpedChild(root.children[2], root.children[4], 0.5)
+	       br =  root.children[1]
+	       newLerpX = lerpX *2
+	       newLerpY = lerpY *2
 
-	       end
-	       if (lerpX >= 0.5 and lerpY < 0.5) then
-		  tl = createLerpedChild(root.children[2], root.children[3], 0.5)
-		  tr = root.children[3]
-		  bl =  root.children[1]
-		  br = createLerpedChild(root.children[3], root.children[5], 0.5)
-		  newLerpX = (lerpX-0.5) *2
-		  newLerpY = lerpY *2
-
-	       end
-	       if (lerpX < 0.5 and lerpY >= 0.5) then
-		  tl =  createLerpedChild(root.children[2], root.children[4], 0.5)
-		  tr = root.children[1]
-		  bl = root.children[4]
-		  br =  createLerpedChild(root.children[4], root.children[5], 0.5)
-
-		  newLerpX = (lerpX) *2
-		  newLerpY = (lerpY-0.5) *2
-
-	       end
-	       if (lerpX >= 0.5 and lerpY >= 0.5) then
-		  tl =   root.children[1]
-		  tr = createLerpedChild(root.children[3], root.children[5], 0.5)
-		  bl =  createLerpedChild(root.children[4], root.children[5], 0.5)
-		  br =  root.children[5]
-
-		  newLerpX = (lerpX-0.5) *2
-		  newLerpY = (lerpY-0.5) *2
-
-	       end
-	       local cTop = createLerpedChild(tl, tr, newLerpX)
-	       local cBot = createLerpedChild(bl, br, newLerpX)
-	       local lerped = createLerpedChild(cTop, cBot, newLerpY)
-	       if lerped then handleChild(lerped) end
 	    end
-	    --if lerped then handleChild(lerped) end
-	 else
-	    handleChild(root.children[root.frame])
+	    if (lerpX >= 0.5 and lerpY < 0.5) then
+	       tl = createLerpedChild(root.children[2], root.children[3], 0.5)
+	       tr = root.children[3]
+	       bl =  root.children[1]
+	       br = createLerpedChild(root.children[3], root.children[5], 0.5)
+	       newLerpX = (lerpX-0.5) *2
+	       newLerpY = lerpY *2
+
+	    end
+	    if (lerpX < 0.5 and lerpY >= 0.5) then
+	       tl =  createLerpedChild(root.children[2], root.children[4], 0.5)
+	       tr = root.children[1]
+	       bl = root.children[4]
+	       br =  createLerpedChild(root.children[4], root.children[5], 0.5)
+
+	       newLerpX = (lerpX) *2
+	       newLerpY = (lerpY-0.5) *2
+
+	    end
+	    if (lerpX >= 0.5 and lerpY >= 0.5) then
+	       tl =   root.children[1]
+	       tr = createLerpedChild(root.children[3], root.children[5], 0.5)
+	       bl =  createLerpedChild(root.children[4], root.children[5], 0.5)
+	       br =  root.children[5]
+
+	       newLerpX = (lerpX-0.5) *2
+	       newLerpY = (lerpY-0.5) *2
+
+	    end
+	    local cTop = createLerpedChild(tl, tr, newLerpX)
+	    local cBot = createLerpedChild(bl, br, newLerpX)
+	    local lerped = createLerpedChild(cTop, cBot, newLerpY)
+	    if lerped then handleChild(lerped) end
 	 end
+	 --if lerped then handleChild(lerped) end
+      else
+	 handleChild(root.children[root.frame])
       end
+   end
 end
