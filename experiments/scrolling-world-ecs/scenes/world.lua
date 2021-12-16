@@ -130,7 +130,7 @@ function scene.load()
                  'plant13','bunnyhead', 'walrus','teckel_', 'teckel_','teckelagain', 'mouse_', 'mouse_','vosje_','verken', 'deurpaars', 'deurpaars'
             }),
             index={min=-100, max= 100},
-            amountPerTile=2,
+            amountPerTile=1,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
@@ -181,10 +181,10 @@ function scene.load()
          return child
       end
 
-      function makeWheel(thing, circumference)
-         thing.wheelCircumference = circumference
-	 return thing
-      end
+--      function makeWheel(thing, circumference)
+--         thing.wheelCircumference = circumference
+--	 return thing
+--      end
 
 
 
