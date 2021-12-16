@@ -26,8 +26,12 @@ function InMotionSystem:update(dt)
 
       -- make things not go below the floor!
       local bottomY = 0
+      -- figure out the tile of the world i am in
+
+      local h = getGlobalHeight(transforms.l[1])
+      bottomY = h--groundTiles[tileX].height
       if e.actor then
-         bottomY = -e.actor.value.body.leglength
+         bottomY =h -e.actor.value.body.leglength
       end
 
       if transforms.l[2] >= bottomY then

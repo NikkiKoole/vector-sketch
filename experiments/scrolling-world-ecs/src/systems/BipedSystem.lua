@@ -35,6 +35,9 @@ function BipedSystem:update(dt)
 	 local pivy = e.biped.body.transforms.l[7]
 	 local px,py = e.biped.body.transforms._g:transformPoint(pivx, pivy)
 
+         local bodyHY = getGlobalHeight(e.biped.body.transforms.l[1])
+
+         
 	 local dist = (math.sqrt((px - e.actor.value.originalX)^2 + (py - e.actor.value.originalY)^2   ))
 
 	 local tooFar = dist > (e.actor.value.leglength / e.actor.value.magic)
@@ -44,15 +47,30 @@ function BipedSystem:update(dt)
 	 end
 
 
-	 if py <= -e.biped.body.leglength then
+	 if py <= -e.biped.body.leglength + bodyHY then
 	    e.actor.value:straightenLegs()
 	 else
 
-	    e.biped.lfoot.transforms.l[2] = e.actor.value.leg1_connector.points[1][2] - py
+                       
 	    e.biped.lfoot.transforms.l[1] = e.actor.value.leg1_connector.points[1][1] - px + e.actor.value.originalX
-	    e.biped.rfoot.transforms.l[2] = e.actor.value.leg2_connector.points[1][2] - py
-	    e.biped.rfoot.transforms.l[1] = e.actor.value.leg2_connector.points[1][1] - px + e.actor.value.originalX
+            e.biped.lfoot.transforms.l[2] = e.actor.value.leg1_connector.points[1][2] - py
 
+
+            
+            local gh = getGlobalHeight(px + e.biped.lfoot.transforms.l[1])
+            e.biped.lfoot.transforms.l[2] = e.biped.lfoot.transforms.l[2] + gh
+
+            
+
+	    e.biped.rfoot.transforms.l[1] = e.actor.value.leg2_connector.points[1][1] - px + e.actor.value.originalX
+	    e.biped.rfoot.transforms.l[2] = e.actor.value.leg2_connector.points[1][2] - py
+
+
+
+            gh = getGlobalHeight(px + e.biped.rfoot.transforms.l[1])
+            e.biped.rfoot.transforms.l[2] = e.biped.rfoot.transforms.l[2] + gh
+
+            
 	    e.biped.body.generatedMeshes = {}
 
 	    e.actor.value:oneLeg(e.actor.value.leg1_connector, e.biped.lfoot.transforms, -1)

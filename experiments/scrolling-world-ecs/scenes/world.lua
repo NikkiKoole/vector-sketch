@@ -123,14 +123,14 @@ function scene.load()
       foregroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
-                  --'plant5','plant6','plant7','plant8',
-                  --'plant9','plant10','plant11','plant12',
+                  'plant5','plant6','plant7','plant8',
+                  'plant9','plant10','plant11','plant12',
 		 'doosgroot', 'doosgroot', 'doosgroot',
 		  'doosgroot', 'doosgroot', 'doosgroot',
                  'plant13','bunnyhead', 'walrus','teckel_', 'teckel_','teckelagain', 'mouse_', 'mouse_','vosje_','verken', 'deurpaars', 'deurpaars'
             }),
-            index={min=-100, max= 100},
-            amountPerTile=1,
+            index={min=-400, max= 400},
+            amountPerTile=2,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')

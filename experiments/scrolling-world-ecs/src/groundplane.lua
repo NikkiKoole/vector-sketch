@@ -1,5 +1,5 @@
 
-local groundTiles = {}
+groundTiles = {}
 
 local minground = -2000
 local maxground = 2000
@@ -11,7 +11,7 @@ for i = minground, maxground do
    end
 
 
-   local cool = .5
+   local cool = 8.5
    
    local amplitude = 1000 * cool
    local frequency = 33
@@ -75,20 +75,26 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
          local useNew = true
 
          if useNew then
+            local tileIndex = 1
+
 	    love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.85)
 	    
 	    love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
 
 
-	    love.graphics.setColor(.5, .5, .3)
-	    if (y2 > y4) then
+	    --love.graphics.setColor(.5, .5, .3)
+            -- draw side triangle 
+            if false then
+            if (y2 > y4) then
 	       love.graphics.polygon("fill", {x2,y2, x4,y4, x4, math.max(y2,y4)})
 	    else
 	       love.graphics.polygon("fill", {x2,y2, x4,y4, x2, math.max(y2,y4)})
 	    end
+            end
+            
 	    local scale= cam:getScale()
-	    --love.graphics.setColor(1, .5, .3)
-	    love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.5)
+            love.graphics.setColor(1, .5, .3)
+            love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.5)
 	    love.graphics.polygon("fill", {x2,math.max(y2,y4) , x4,math.max(y2,y4) , x4, math.max(y2,y4) + 1000*scale, x2, math.max(y2,y4) + 1000*scale})
 
 	    

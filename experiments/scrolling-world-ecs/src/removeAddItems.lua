@@ -17,6 +17,14 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsW
    end
 end
 
+function getGlobalHeight(xPos)
+   local tileX = (math.floor(xPos/tileSize))
+   local offsetX = (xPos % tileSize)
+   local t = offsetX/tileSize
+   local h = lerp(groundTiles[tileX].height, groundTiles[tileX+1].height, t)
+   return h
+end
+
 
 function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    local data = parallaxData.assets
@@ -36,7 +44,10 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
             }
 
             child.transforms.l[1] = thing.x
-            child.transforms.l[2] = thing.y
+            child.transforms.l[2] = getGlobalHeight(thing.x) --thing.y
+            
+--            print(getGlobalHeight(thing.x))
+            
             --child.transforms.l[3] = love.math.random()--thing.y
 
             child.transforms.l[4] = thing.scaleX
