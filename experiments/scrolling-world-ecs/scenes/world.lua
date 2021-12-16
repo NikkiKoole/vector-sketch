@@ -33,10 +33,15 @@ function attachPointerCallbacks()
          SM.load('intro')
       end
       if key == 'up' then
-	 cam:translate(0, -10)
+         resetCameraTween()
+
+         cam:translate(0, -5)
+         
       end
       if key == 'down' then
-	 cam:translate(0, 10)
+         resetCameraTween()
+
+         cam:translate(0, 5)
       end
       love.keyboard.setKeyRepeat( true )
    end
@@ -96,10 +101,14 @@ function scene.load()
       gradients[timeIndex].from, gradients[timeIndex].to
    )
 
+   xAxisAllowed = true
+   yAxisAllowed = true
+   smoothValue = 5
+   
    if not hasBeenLoaded then
 
       depthMinMax =       {min=-1.0, max=1.0}
-      foregroundFactors = { far=.8, near=1}
+      foregroundFactors = { far=.7, near=1}
       backgroundFactors = { far=.4, near=.7}
       tileSize = 100
 
@@ -299,12 +308,12 @@ function scene.draw()
    love.graphics.setColor(1,1,1)
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
+   --drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
    arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[2], myWorld, 2)
    cam:push()
-   renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[2].p})
+   --renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[2].p})
    cam:pop()
 
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld, 1)

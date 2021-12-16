@@ -11,7 +11,7 @@ for i = minground, maxground do
    end
 
 
-   local cool = 8.5
+   local cool = 1.5
    
    local amplitude = 1000 * cool
    local frequency = 33

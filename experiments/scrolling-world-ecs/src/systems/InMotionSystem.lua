@@ -62,7 +62,7 @@ function InMotionSystem:itemThrow(target, dxn, dyn, speed)
 
       local impulse = Vector(dxn * speed * throwStrength ,
                              dyn * speed * throwStrength )
-
+      --print('motionsystem throw')
       applyForce(target.entity.inMotion, impulse)
    end
 end

@@ -194,9 +194,9 @@ function pointerMoved(x,y,dx,dy, id, layers, ecsWorld)
 	 if g.target == 'stage' and g.trigger == id then
 	    local scale = cam:getScale()
 
-	    local xAxisAllowed = true
+	    --local xAxisAllowed = true
 	    local xAxis =xAxisAllowed and  -dx/scale or 0
-	    local yAxisAllowed = false
+	    --local yAxisAllowed = true
 	    local yAxis =yAxisAllowed and  -dy/scale or 0
 
 	    cameraTranslateScheduler(xAxis, yAxis)
@@ -241,9 +241,12 @@ function pointerReleased(x,y, id, layers, ecsWorld)
    for i = #gestureState.list, 1, -1 do
       local g = gestureState.list[i]
       if g then
-	 if g.trigger == id then
+	 if g.trigger == id  then
 	    addGesturePoint(g, love.timer.getTime( ), x, y)
-	    gestureRecognizer(g, ecsWorld)
+--            if g.target ~= 'stage' then    -----  ----------------  hackerdesnack
+            gestureRecognizer(g, ecsWorld)
+  --          end
+            --print(g.target)
 	    removeGestureFromList(g)
 	 end
       end
@@ -417,10 +420,15 @@ function gestureRecognizer(gesture, ecsWorld)
    if #gesture.positions > 1 then
       local startP = gesture.positions[1]
       local endP = gesture.positions[#gesture.positions]
-      local gestureLength = 3
+      --      print(#gesture.positions)
+
+      -- i odnt want long lists because you can shoot (literally below) yourself like that
+      
+      local gestureLength = 5--math.max(3,math.floor(#gesture.positions))
       if (#gesture.positions > gestureLength) then
 	 startP = gesture.positions[#gesture.positions - gestureLength]
       end
+      print('looking at gesture with', #gesture.positions)
 
       local dx = endP.x - startP.x
       local dy = endP.y - startP.y
@@ -434,40 +442,79 @@ function gestureRecognizer(gesture, ecsWorld)
 	 local minDistance = 6
 	 local minDuration = 0.005
 
-	 local xAxisAllowed = true
-	 local yAxisAllowed = false
-
 	 if deltaTime > minDuration then
 	    local doTween = false
 	    local cx,cy = cam:getTranslation()
 	    local xAxis = cx
 	    local yAxis = cy
 
-	    if xAxisAllowed then
-	       if math.abs(dx) > minDistance then
-		  if math.abs(dx/deltaTime) >= minSpeed and  math.abs(dx/deltaTime) < maxSpeed then
-		     doTween = true
-		     local mx = dx < 0 and -1 or 1
-		     xAxis = cx -((dx) + (mx* speed/7.5) )
-		  end
-	       end
-	    end
+            if xAxisAllowed and yAxisAllowed then
+                  if distance > minDistance then
+                     if distance/deltaTime >= minSpeed and  distance/deltaTime < maxSpeed then
+                        doTween = true
 
-	    if yAxisAllowed then
-	       if math.abs(dy) > minDistance then
-		  if math.abs(dy/deltaTime) >= minSpeed and  math.abs(dy/deltaTime) < maxSpeed then
-		     doTween = true
-		     local my = dy < 0 and -1 or 1
-		     yAxis = cy -((dy) + (my* speed/7.5) )
-		  end
-	       end
-	    end
+                        --print(dx, dy)
+                        --if dx == 0 then dx = 0.0001 end
+                        --if dy == 0 then dy = 0.0001 end
+
+                        if dx ~=0 and dy ~= 0 then
+
+                           if math.abs(dy) > 5*math.abs(dx) then
+                              print('mostly vertical')
+                              dx=0
+                           end
+                           if math.abs(dx) > 5*math.abs(dy) then
+                              print('mostly horizontal')
+                              dy=0
+                           end
+                           
+
+                           --local smallest = math.min(dx,dy)
+                           --local biggest = math.max(dx,dy) 
+
+                           --print(biggest/smallest, smallest/biggest)
+                        end
+                        
+                        if dx ~= 0 then
+                        local mx = dx < 0 and -1 or 1
+                        xAxis = cx -((dx) + (mx* speed/7.5) )
+                        end
+
+                        if dy ~= 0 then
+                        local my = dy < 0 and -1 or 1
+                        yAxis = cy -((dy) + (my* speed/7.5) )
+                        end
+
+                     end
+                  end
+                  
+            else
+               if xAxisAllowed then
+                  if math.abs(dx) > minDistance then
+                     if math.abs(dx/deltaTime) >= minSpeed and  math.abs(dx/deltaTime) < maxSpeed then
+                        doTween = true
+                        local mx = dx < 0 and -1 or 1
+                        xAxis = cx -((dx) + (mx* speed/7.5) )
+                     end
+                  end
+               end
+
+               if yAxisAllowed then
+                  if math.abs(dy) > minDistance then
+                     if math.abs(dy/deltaTime) >= minSpeed and  math.abs(dy/deltaTime) < maxSpeed then
+                        doTween = true
+                        local my = dy < 0 and -1 or 1
+                        yAxis = cy -((dy) + (my* speed/7.5) )
+                     end
+                  end
+               end
+            end
 
 	    if doTween then
 	       cameraTween = {
 		  goalX=xAxis,
 		  goalY=yAxis,
-		  smoothValue=3.5,
+		  smoothValue=smoothValue,
 		  originalGesture=gesture
 	       }
 	    end

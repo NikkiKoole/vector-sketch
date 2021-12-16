@@ -157,7 +157,7 @@ function cameraApplyTranslate(dt, layer)
 	 translateScheduler.happenedByPressedItems = false
 	 local cx,cy = cam:getTranslation()
 	 local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
-	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
+	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=smoothValue}
       end
       ------ end that part
 
