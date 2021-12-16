@@ -79,9 +79,20 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
          
          love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
 
+
+	 love.graphics.setColor(.5, .5, .3)
+	 if (y2 > y4) then
+	    love.graphics.polygon("fill", {x2,y2, x4,y4, x4, math.max(y2,y4)})
+	 else
+	    love.graphics.polygon("fill", {x2,y2, x4,y4, x2, math.max(y2,y4)})
+	 end
+	 love.graphics.setColor(1, .5, .3)
+	 love.graphics.polygon("fill", {x2,math.max(y2,y4) , x4,math.max(y2,y4) , x4, math.max(y2,y4) + 100, x2, math.max(y2,y4) + 100})
+
+	 
          love.graphics.setColor(0,0,0,.85)
          love.graphics.line(x1,y1, x2,y2)
-         love.graphics.line(x3,y3, x2,y2)
+         --love.graphics.line(x3,y3, x2,y2)
          end
          
 
