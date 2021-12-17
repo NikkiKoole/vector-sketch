@@ -57,7 +57,8 @@ function InMotionSystem:itemThrow(target, dxn, dyn, speed)
          :ensure('inMotion', 1)
 
       local mass = target.entity.inMotion.mass
-      local throwStrength = 1
+      local d = (dxn*dxn)+(dyn*dyn)
+      local throwStrength = 1 --* math.sqrt(d)
       if mass < 0 then throwStrength = throwStrength / 100 end
 
       local impulse = Vector(dxn * speed * throwStrength ,

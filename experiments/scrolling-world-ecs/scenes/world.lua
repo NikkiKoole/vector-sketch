@@ -4,6 +4,16 @@ local hasBeenLoaded = false
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
+
+-- this is spring code migh beusefull for cars
+-- https://gist.github.com/Fraktality/1033625223e13c01aa7144abe4aaf54d
+
+-- what about this for cars ?
+-- https://github.com/DonHaul/2DCar/blob/master/carController.cs
+
+-- this has a nice simple example
+-- https://gamedev.stackexchange.com/questions/170271/math-needed-to-create-a-very-simple-2d-side-view-car-game
+
 local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
@@ -108,7 +118,7 @@ function scene.load()
    if not hasBeenLoaded then
 
       depthMinMax =       {min=-1.0, max=1.0}
-      foregroundFactors = { far=.7, near=1}
+      foregroundFactors = { far=.5, near=1}
       backgroundFactors = { far=.4, near=.7}
       tileSize = 100
 
