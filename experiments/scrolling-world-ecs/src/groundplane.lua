@@ -11,7 +11,7 @@ for i = minground, maxground do
    end
 
 
-   local cool = 10.5
+   local cool = .78
    
    local amplitude = 1000 * cool
    local frequency = 33
@@ -26,29 +26,29 @@ for i = minground, maxground do
 
    print(h)
 
-      
+   
 
    groundTiles[i].height = (h + (h2/2))/1.5
 
 
-    groundTiles[i].pathTop = 0.125 + love.math.random()* .25
+   groundTiles[i].pathTop = 0.125 + love.math.random()* .25
    groundTiles[i].pathBottom = 1 - 0.125 - love.math.random()* .25
    
-  -- groundTiles[i].height = h
+   -- groundTiles[i].height = h
    
 end
 
 
-         function isClockwise(vertices)
-            local sum = 0.0;
-            for i =1, #vertices do
-               local v1 = vertices[i]
-               local v2 = vertices[((i + 1) % #vertices)+1]
-               sum = sum + (v2[1] - v1[1]) * (v2[2] + v1[2])
-            end
-            return sum > 0
-            
-         end
+function isClockwise(vertices)
+   local sum = 0.0;
+   for i =1, #vertices do
+      local v1 = vertices[i]
+      local v2 = vertices[((i + 1) % #vertices)+1]
+      sum = sum + (v2[1] - v1[1]) * (v2[2] + v1[2])
+   end
+   return sum > 0
+   
+end
 
 
 function drawGroundPlaneWithTextures(cam, far, near, layerName)
@@ -73,7 +73,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
          local index = (i - s)/tileSize
 
 
---         print()
+         --         print()
 
          local height1 = groundTiles[groundIndex].height
          local height2 = groundTiles[groundIndex].height
@@ -102,29 +102,22 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
             local cw = isClockwise({{x1,y1},{x3,y3},{x4,y4}})
             --print(cw)
             if not cw then
-	    love.graphics.setColor(1, .5, .3, 1)
+               love.graphics.setColor(1, .5, .3, 1)
             end
 
-      
+            
 	    love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
 	    local scale= cam:getScale()
-
-
 
             
             local pt = .25 --groundTiles[groundIndex].pathTop
             local pb = .75 --groundTiles[groundIndex].pathBottom
 
---            print(pt)
-
-            
-            
             -- draw path   -- broken crap
             local topY = lerp(y1, y2, pt)
             local topX = lerp(x1, x2, pt)
             local bottomY = lerp(y2, y1, 1.0-pb)
             local bottomX = lerp(x2, x1, 1.0-pb)
-
 
             local topY3 = lerp(y3, y4, pt)
             local topX3 = lerp(x3, x4, pt)
@@ -140,11 +133,11 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
             love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.5)
 
             if true then
-            if (y2 > y4) then
-	       love.graphics.polygon("fill", {x2,y2, x4,y4, x4, math.max(y2,y4)})
-	    else
-	       love.graphics.polygon("fill", {x2,y2, x4,y4, x2, math.max(y2,y4)})
-	    end
+               if (y2 > y4) then
+                  love.graphics.polygon("fill", {x2,y2, x4,y4, x4, math.max(y2,y4)})
+               else
+                  love.graphics.polygon("fill", {x2,y2, x4,y4, x2, math.max(y2,y4)})
+               end
             end
             
             love.graphics.setColor(1, .5, .3)
