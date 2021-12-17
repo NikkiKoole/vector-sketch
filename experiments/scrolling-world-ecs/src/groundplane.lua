@@ -11,7 +11,7 @@ for i = minground, maxground do
    end
 
 
-   local cool = 1.5
+   local cool = 10.5
    
    local amplitude = 1000 * cool
    local frequency = 33
@@ -29,9 +29,26 @@ for i = minground, maxground do
       
 
    groundTiles[i].height = (h + (h2/2))/1.5
+
+
+    groundTiles[i].pathTop = 0.125 + love.math.random()* .25
+   groundTiles[i].pathBottom = 1 - 0.125 - love.math.random()* .25
+   
   -- groundTiles[i].height = h
    
 end
+
+
+         function isClockwise(vertices)
+            local sum = 0.0;
+            for i =1, #vertices do
+               local v1 = vertices[i]
+               local v2 = vertices[((i + 1) % #vertices)+1]
+               sum = sum + (v2[1] - v1[1]) * (v2[2] + v1[2])
+            end
+            return sum > 0
+            
+         end
 
 
 function drawGroundPlaneWithTextures(cam, far, near, layerName)
@@ -74,17 +91,55 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
          local useNew = true
 
+         
+         
          if useNew then
             local tileIndex = 1
 
 	    love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.85)
-	    
+
+            -- backface check, needs 3 vertices to determine
+            local cw = isClockwise({{x1,y1},{x3,y3},{x4,y4}})
+            --print(cw)
+            if not cw then
+	    love.graphics.setColor(1, .5, .3, 1)
+            end
+
+      
 	    love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
+	    local scale= cam:getScale()
 
 
-	    --love.graphics.setColor(.5, .5, .3)
-            -- draw side triangle 
-            if false then
+
+            
+            local pt = .25 --groundTiles[groundIndex].pathTop
+            local pb = .75 --groundTiles[groundIndex].pathBottom
+
+--            print(pt)
+
+            
+            
+            -- draw path   -- broken crap
+            local topY = lerp(y1, y2, pt)
+            local topX = lerp(x1, x2, pt)
+            local bottomY = lerp(y2, y1, 1.0-pb)
+            local bottomX = lerp(x2, x1, 1.0-pb)
+
+
+            local topY3 = lerp(y3, y4, pt)
+            local topX3 = lerp(x3, x4, pt)
+            local bottomY3 = lerp(y4, y3, 1.0-pb)
+            local bottomX3 = lerp(x4, x3, 1.0-pb)
+
+            
+            love.graphics.setColor(1,1,1, .5)
+            love.graphics.polygon("fill", {topX,topY, topX3,topY3,bottomX3,bottomY3,bottomX,bottomY})
+
+            
+            -- draw side triangle
+            love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.5)
+
+            if true then
             if (y2 > y4) then
 	       love.graphics.polygon("fill", {x2,y2, x4,y4, x4, math.max(y2,y4)})
 	    else
@@ -92,11 +147,11 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 	    end
             end
             
-	    local scale= cam:getScale()
             love.graphics.setColor(1, .5, .3)
             love.graphics.setColor(0.25,.5-(0.01*tileIndex),0.25,.5)
 	    love.graphics.polygon("fill", {x2,math.max(y2,y4) , x4,math.max(y2,y4) , x4, math.max(y2,y4) + 1000*scale, x2, math.max(y2,y4) + 1000*scale})
 
+            
 	    
 	    love.graphics.setColor(0,0,0,.85)
 	    love.graphics.line(x1,y1, x2,y2)

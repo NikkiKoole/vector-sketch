@@ -148,7 +148,10 @@ function drawDebugStrings()
 
    if uiState.showFPS then
       love.graphics.setFont(smallfont)
-      shadedText('fps: '..love.timer.getFPS(), 20, 20)
+
+--      print(string.format("%02d", ))
+--      print(string.format("%02d", (1.0/love.timer.getFPS()))
+      shadedText('s '..round2(1.0/love.timer.getFPS(), 3), 20, 20)
       love.graphics.setFont(font)
    end
 
@@ -275,7 +278,7 @@ function love.load()
    uiState = {
       show= false,
       showFPS = true,
-      showNumbers = true,
+      showNumbers = false,
       showBBoxes = false,
       showBouncy=true,
       showTouches = false,
