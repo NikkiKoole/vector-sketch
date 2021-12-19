@@ -107,12 +107,14 @@ function scene.load()
    
    if not hasBeenLoaded then
 
+      cam = createCamera()
+
+      -- these values should be loaded agian and again, 
       depthMinMax =       {min=-1.0, max=1.0}
       foregroundFactors = { far=.7, near=1}
       backgroundFactors = { far=.4, near=.7}
       tileSize = 100
 
-      cam = createCamera()
 
       backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
       backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)

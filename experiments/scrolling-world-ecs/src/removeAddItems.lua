@@ -21,6 +21,7 @@ function getGlobalHeight(xPos)
    local tileX = (math.floor(xPos/tileSize))
    local offsetX = (xPos % tileSize)
    local t = offsetX/tileSize
+   assert(t >= 0 and t <= 1)
    local h = lerp(groundTiles[tileX].height, groundTiles[tileX+1].height, t)
    return h
 end

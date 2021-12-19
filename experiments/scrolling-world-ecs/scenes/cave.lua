@@ -14,11 +14,13 @@ function scene.load()
       "vertical",
       gradients[timeIndex].from, gradients[timeIndex].to
    )
+
    if not hasBeenLoaded then
       depthMinMax =       {min=-1.0, max=1.0}
-      foregroundFactors = { far=.8, near=1}
+      foregroundFactors = { far=.7, near=1}
       foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
       foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+
       foregroundAssetBook2 = generateAssetBook({
             urls= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
