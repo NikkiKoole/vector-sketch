@@ -61,20 +61,20 @@ function drawBBoxAroundItems(layer, parallaxData)
          if c.pressed then
             local mx, my = getPointerPosition(c.pressed.id)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
-            --print(tlx, tly, brx, bry)
+	    
             love.graphics.setColor(1,1,1,.5)
-
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
 
 	    
 	    love.graphics.setColor(1,1,1,1)
 	    local px, py = c.transforms._g:transformPoint( c.transforms.l[6], c.transforms.l[7])
-
             local camData = createCamData(c, parallaxData)
 	    local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
 	    love.graphics.line(pivx-5, pivy, pivx+5, pivy)
 	    love.graphics.line(pivx, pivy-5, pivx, pivy+5)
+
+	    
 
             -- local checkAgainst = getItemsInLayerThatHaveMeta(layer)
 
