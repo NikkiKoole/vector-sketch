@@ -12,6 +12,8 @@ function WheelSystem:itemDrag( c, l, x, y, dx, dy)
 	 (rxdelta/c.entity.wheelCircumference.value)*(math.pi*2)
 
       c.transforms.l[1] = c.transforms.l[1] + rotateStep
+
+      c.transforms.l[2] = getGlobalHeight(c.transforms.l[1])
    end
 end
 

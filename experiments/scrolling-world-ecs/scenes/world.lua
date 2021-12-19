@@ -4,8 +4,7 @@ local hasBeenLoaded = false
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
-
--- this is spring code migh beusefull for cars
+-- this is spring code migh be useful for cars
 -- https://gist.github.com/Fraktality/1033625223e13c01aa7144abe4aaf54d
 
 -- what about this for cars ?
@@ -229,7 +228,14 @@ function scene.load()
       wheel.entity:give('rotatingPart', wheel.children[1])
       wheel.entity:remove('vanillaDraggable')
       table.insert(foregroundLayer.children, wheel)
-      
+
+
+      local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
+      wheel.entity:give('wheelCircumference', 282)
+      wheel.entity:give('rotatingPart', wheel.children[1])
+      wheel.entity:remove('vanillaDraggable')
+      table.insert(foregroundLayer.children, wheel)
+
       --table.insert(
       --   backgroundLayer.children,
       --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)

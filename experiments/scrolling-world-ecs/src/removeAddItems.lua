@@ -18,8 +18,9 @@ function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsW
 end
 
 function getGlobalHeight(xPos)
+   local tileX = (math.floor(xPos/tileSize))
+
    if (groundTiles[tileX] and groundTiles[tileX+1])  then
-      local tileX = (math.floor(xPos/tileSize))
       local offsetX = (xPos % tileSize)
       local t = offsetX/tileSize
       local h = lerp(groundTiles[tileX].height, groundTiles[tileX+1].height, t)
@@ -27,6 +28,7 @@ function getGlobalHeight(xPos)
    else
       return 0
    end
+
 end
 
 

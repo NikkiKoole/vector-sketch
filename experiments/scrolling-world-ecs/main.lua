@@ -150,8 +150,11 @@ function drawDebugStrings()
       love.graphics.setFont(smallfont)
 
 --      print(string.format("%02d", ))
---      print(string.format("%02d", (1.0/love.timer.getFPS()))
-      shadedText('s '..round2(1.0/love.timer.getFPS(), 3), 20, 20)
+      --      print(string.format("%02d", (1.0/love.timer.getFPS()))
+      local str = round2(1.0/love.timer.getFPS(), 3)
+      if str then
+         shadedText('s '..str, 20, 20)
+      end
       love.graphics.setFont(font)
    end
 
