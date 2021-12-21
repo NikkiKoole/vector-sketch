@@ -13,6 +13,10 @@ local hasBeenLoaded = false
 -- this has a nice simple example
 -- https://gamedev.stackexchange.com/questions/170271/math-needed-to-create-a-very-simple-2d-side-view-car-game
 
+
+-- this is about water partic;es
+-- https://blog.habrador.com/2019/04/fluid-simulations-unity-sprinkle-game.html
+
 local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
