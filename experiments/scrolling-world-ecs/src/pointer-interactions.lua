@@ -52,6 +52,9 @@ end
 
 
 function drawBBoxAroundItems(layer, parallaxData)
+   local max = math.max
+   local min = math.min
+
    for i = 1, #layer.children do
       local c = layer.children[i]
 
@@ -62,10 +65,18 @@ function drawBBoxAroundItems(layer, parallaxData)
             local mx, my = getPointerPosition(c.pressed.id)
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my,c, parallaxData)
 	    
-            love.graphics.setColor(1,1,1,.5)
+            love.graphics.setColor(1,0,0,1)
             love.graphics.rectangle('line', tlx, tly, brx-tlx, bry-tly)
 
+            love.graphics.setColor(1,0,1,1)
+            local minx= min(tlx,brx)
+            local miny= min(tly,bry)
+            local maxx= max(tlx,brx)
+            local maxy= max(tly,bry)
+--            print(minx, miny, maxx,maxy, maxx-minx, maxy-miny)
+            love.graphics.rectangle('line', minx, miny, maxx-minx, maxy-miny)
 
+            
 	    
 	    love.graphics.setColor(1,1,1,1)
 	    local px, py = c.transforms._g:transformPoint( c.transforms.l[6], c.transforms.l[7])
@@ -79,7 +90,7 @@ function drawBBoxAroundItems(layer, parallaxData)
             -- local checkAgainst = getItemsInLayerThatHaveMeta(layer)
 
             -- for j =1, #checkAgainst do
-            --    for k = 1, #checkAgainst[j].metaTags do
+            --    for k = 1, #checkAgain st[j].metaTags do
             --       local tag = checkAgainst[j].metaTags[k]
 
 	    -- 	  if (tag.name == 'connector' and checkAgainst[j] ~= c) then
@@ -95,7 +106,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
          end
 
-	 if c.mouseOver or uiState.showBBoxes then
+	 if false and c.mouseOver or uiState.showBBoxes then
 	    local mx, my = getPointerPosition('mouse')
 	    local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
 	    love.graphics.setColor(1,1,1,.5)
@@ -341,19 +352,25 @@ end
 
 
 function getScreenBBoxForItem(c, camData)
-   --setTransforms(c._parent)
-   --local tx, ty =c._parent.transforms._g:transformPoint(c.bbox[1],c.bbox[2])
-   local tx, ty = c.transforms._g:transformPoint(c.bbox[1],c.bbox[2])
-   local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
-   local bx, by = c.transforms._g:transformPoint(c.bbox[3],c.bbox[4])
-   local brx, bry = cam:getScreenCoordinates(bx, by, camData)
---   setTransforms(c)
-   --   print(tlx,tly,brx,bry)
-   local min = math.min
-   local max = math.max
 
+   -- problem here is this c.bbox data is stale
+   local bbox = c.bbox
+   --print(inspect(bbox))
+
+  -- function arrayIfy(bbox)
+  --    return {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
+  -- end
    
-   return  min(tlx, brx),min(tly, bry),max(brx, tlx),max(bry, tly)
+   
+  -- local bbox = #c.children > 0 and arrayIfy(getBBoxOfChildren(c.children)) or c.bbox
+  -- print(inspect(bbox), #c.children)
+   
+   local tx, ty = c.transforms._g:transformPoint(bbox[1],bbox[2])
+   local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
+   local bx, by = c.transforms._g:transformPoint(bbox[3],bbox[4])
+   local brx, bry = cam:getScreenCoordinates(bx, by, camData)
+   
+   return  tlx, tly, brx, bry
 end
 
 function createCamData(item, parallaxData)

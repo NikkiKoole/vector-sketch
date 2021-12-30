@@ -13,6 +13,12 @@ local hasBeenLoaded = false
 -- this has a nice simple example
 -- https://gamedev.stackexchange.com/questions/170271/math-needed-to-create-a-very-simple-2d-side-view-car-game
 
+--[[
+
+   de wielen draaien door als je ze los laat en rollen van een bergje af
+
+]]--
+
 local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
@@ -27,9 +33,11 @@ myWorld:addSystems(
    Systems.DraggableSystem,
    Systems.BipedSystem,
    Systems.WheelSystem,
+   Systems.VehicleSystem,
    Systems.HitAreaEventSystem,
    Systems.StackSystem,
    Systems.RotateOnMoveSystem
+   
 )
 
 function scene.modify(data)
@@ -150,7 +158,7 @@ function scene.load()
                  'plant13','bunnyhead', 'walrus','teckel_', 'teckel_','teckelagain', 'mouse_', 'mouse_','vosje_','verken', 'deurpaars', 'deurpaars'
             }),
             index={min=-400, max= 400},
-            amountPerTile=2,
+            amountPerTile=1,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
@@ -222,20 +230,67 @@ function scene.load()
 
       --recusiveLookForHitArea(node)
 
+      local carbod = makeObject('assets/carbody.polygons.txt', 100,0, 0, false)
+      local wheel1 = makeObject('assets/wielsimpler.polygons.txt', 100,0, 0)
+      local wheel2 = makeObject('assets/wielsimpler.polygons.txt', 100,0, 0)
 
-      local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
-      wheel.entity:give('wheelCircumference', 282)
-      wheel.entity:give('rotatingPart', wheel.children[1])
-      wheel.entity:remove('vanillaDraggable')
-      table.insert(foregroundLayer.children, wheel)
+      carbod.transforms.l[2] = getGlobalHeight(carbod.transforms.l[1])
+
+      local wheel1Pos = carbod.metaTags[1].points[1]
+      wheel1.transforms.l[1] = wheel1Pos[1]
+      wheel1.transforms.l[2] = wheel1Pos[2]
+      table.insert(carbod.children, wheel1)
+
+      local wheel2Pos = carbod.metaTags[2].points[1]
+      wheel2.transforms.l[1] = wheel2Pos[1]
+      wheel2.transforms.l[2] = wheel2Pos[2]
+      table.insert(carbod.children, wheel2)
+
+      table.insert(foregroundLayer.children, carbod)
+      carbod.entity:give('vehicle', carbod, wheel1, wheel2)
+     
+--      carbod.entity:remove('vanillaDraggable')
+      
+
+      --local wheel = makeObject('assets/wielsimpler.polygons.txt', 100,0, 0)
+      --wheel.entity:give('wheelCircumference', 282)
+      --wheel.entity:give('rotatingPart', wheel.children[1])
+      --wheel.entity:remove('vanillaDraggable')
+      --table.insert(foregroundLayer.children, wheel)
 
 
-      local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
-      wheel.entity:give('wheelCircumference', 282)
-      wheel.entity:give('rotatingPart', wheel.children[1])
-      wheel.entity:remove('vanillaDraggable')
-      table.insert(foregroundLayer.children, wheel)
 
+      
+     -- wheel.entity:give('wheelCircumference', 282)
+     -- wheel.entity:give('rotatingPart', wheel.children[1])
+--      wheel.entity:remove('vanillaDraggable')
+      --table.insert(foregroundLayer.children, carbod)
+
+
+
+      
+      
+
+     -- local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
+     -- wheel.entity:give('wheelCircumference', 282)
+     -- wheel.entity:give('rotatingPart', wheel.children[1])
+     -- wheel.entity:remove('vanillaDraggable')
+     -- table.insert(foregroundLayer.children, wheel)
+
+
+
+      
+
+      
+      -- add a  vehicle type; 2 wheels, front and back
+      -- have em work over the terain
+      -- also have a carbody
+      
+
+
+
+
+      
       --table.insert(
       --   backgroundLayer.children,
       --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
@@ -318,7 +373,7 @@ function scene.update(dt)
 end
 
 
-
+  
 
 function scene.draw()
 
@@ -345,6 +400,10 @@ function scene.draw()
    drawBBoxAroundItems(foregroundLayer, parallaxLayersData[1].p)
    drawBBoxAroundItems(backgroundLayer, parallaxLayersData[2].p)
 
+ --  myWorld:emit("draw")
+
+
+   
 end
 
 return scene

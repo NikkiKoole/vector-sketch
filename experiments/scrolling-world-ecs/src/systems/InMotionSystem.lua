@@ -31,12 +31,20 @@ function InMotionSystem:update(dt)
       local h = getGlobalHeight(transforms.l[1])
       bottomY = h--groundTiles[tileX].height
       if e.actor then
-         bottomY =h -e.actor.value.body.leglength
+         bottomY = h -e.actor.value.body.leglength
       end
+
+      if e.vehicle then
+--         print(e.vehicle.radius1)
+         --bottomY = h -e.vehicle.radius1
+      end
+      
 
       if transforms.l[2] >= bottomY then
          local dy2 = bottomY - transforms.l[2] 
          transforms.l[2] = transforms.l[2] + dy2
+--         print('this causing it ?', transforms.l[2], bottomY, dy2)
+
          if (e.inStack) then
             positionAllInStack(e, 0, dy2)
          end
@@ -63,7 +71,7 @@ function InMotionSystem:itemThrow(target, dxn, dyn, speed)
 
       local impulse = Vector(dxn * speed * throwStrength ,
                              dyn * speed * throwStrength )
-      --print('motionsystem throw')
+
       applyForce(target.entity.inMotion, impulse)
    end
 end

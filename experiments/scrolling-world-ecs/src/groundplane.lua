@@ -24,10 +24,6 @@ for i = minground, maxground do
    local h2 = love.math.noise(i/frequency, 1,1)*amplitude
    h2 = h2 - (amplitude/2)
 
-   print(h)
-
-   
-
    groundTiles[i].height = (h + (h2/2))/1.5
 
 

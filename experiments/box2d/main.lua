@@ -39,7 +39,7 @@ function love.load()
    objects.ball.body = love.physics.newBody(world, width/2, height/2, "dynamic")
    objects.ball.shape = love.physics.newCircleShape(20)
    objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
-   --objects.ball.fixture:setRestitution(0.5) -- let the ball bounce
+  objects.ball.fixture:setRestitution(0.5) -- let the ball bounce
    objects.ball.fixture:setUserData("ball")
    objects.ball.fixture:setDensity(3)
    -- let's create a couple blocks to play around with
@@ -96,6 +96,10 @@ objects.carousel4.fixture:setUserData("wall")
       block.fixture = love.physics.newFixture(block.body,
 					      block.shape,
 					      0.5 + love.math.random()*1)
+
+      block.body:setFixedRotation(true)
+      block.fixture:setRestitution(.5) -- let the ball bounce
+
       
       table.insert(objects.blocks, block)
    end
