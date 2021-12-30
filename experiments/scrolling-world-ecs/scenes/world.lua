@@ -19,6 +19,9 @@ local hasBeenLoaded = false
 
 ]]--
 
+-- this is about water partic;es
+-- https://blog.habrador.com/2019/04/fluid-simulations-unity-sprinkle-game.html
+
 local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
