@@ -335,13 +335,8 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 		  resetCameraTween()
 		  cameraTranslateScheduler(-speed*dt, 0)
 		  if ecsWorld then
-		     --local cam = createCamData(c, l.p)
-		     --local scale = cam:getScale()
-		     --local lc = createCamData(c, l.p)
-		     --ecsWorld:emit("itemDrag", c, l, x, y,  1, 0)
 		     ecsWorld:emit("itemDrag", c, l, x, y, -speed*dt, 0)
 		  end
-
 	       end
             end
          end
@@ -353,24 +348,25 @@ end
 
 function getScreenBBoxForItem(c, camData)
 
-   -- problem here is this c.bbox data is stale
    local bbox = c.bbox
-   --print(inspect(bbox))
 
-  -- function arrayIfy(bbox)
-  --    return {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
-  -- end
-   
-   
-  -- local bbox = #c.children > 0 and arrayIfy(getBBoxOfChildren(c.children)) or c.bbox
-  -- print(inspect(bbox), #c.children)
-   
-   local tx, ty = c.transforms._g:transformPoint(bbox[1],bbox[2])
-   local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
-   local bx, by = c.transforms._g:transformPoint(bbox[3],bbox[4])
-   local brx, bry = cam:getScreenCoordinates(bx, by, camData)
-   
-   return  tlx, tly, brx, bry
+   local stlx, stly = c.transforms._g:transformPoint(bbox[1],bbox[2])
+   local strx, stry = c.transforms._g:transformPoint(bbox[3],bbox[2])
+   local sblx, sbly = c.transforms._g:transformPoint(bbox[1],bbox[4])
+   local sbrx, sbry = c.transforms._g:transformPoint(bbox[3],bbox[4])
+
+   local tlx, tly = cam:getScreenCoordinates(stlx, stly, camData)
+   local brx, bry = cam:getScreenCoordinates(sbrx, sbry, camData)
+   local trx, try = cam:getScreenCoordinates(strx, stry, camData)
+   local blx, bly = cam:getScreenCoordinates(sblx, sbly, camData)
+
+   local smallestX = math.min(tlx, brx, trx, blx)
+   local smallestY = math.min(tly, bry, try, bly)
+   local biggestX = math.max(tlx, brx, trx, blx)
+   local biggestY = math.max(tly, bry, try, bly)
+
+   return smallestX, smallestY, biggestX, biggestY
+
 end
 
 function createCamData(item, parallaxData)

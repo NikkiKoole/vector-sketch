@@ -7,15 +7,17 @@ function VehicleSystem:update(dt)
       local base = e.transforms.transforms.l[1]
       local baseY = e.transforms.transforms.l[2]
       local x1 = e.vehicle.wheel1.transforms.l[1]
-      local y1 = getGlobalHeight(base + x1)
+      local y1 = getGlobalHeight(base + x1) + e.vehicle.radius1
       local x2 = e.vehicle.wheel2.transforms.l[1]
-      local y2 = getGlobalHeight(base + x2)
+      local y2 = getGlobalHeight(base + x2) + e.vehicle.radius2
+
+      
 
 
 
-      local stuckOnFloor = false
+      local stuckOnFloor = true
       if stuckOnFloor then
-         e.vehicle.body.transforms.l[2]= getGlobalHeight(base)
+         e.vehicle.body.transforms.l[2]= getGlobalHeight(base) - e.vehicle.radius1
          e.vehicle.body.transforms.l[3]= math.atan2(y2-y1,x2-x1)
       else
          --print(math.abs(e.transforms.transforms.l[2] - getGlobalHeight(e.transforms.transforms.l[1]) ))
