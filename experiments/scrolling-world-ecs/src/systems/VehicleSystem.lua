@@ -15,9 +15,9 @@ function VehicleSystem:update(dt)
 
 
 
-      local stuckOnFloor = true
+      local stuckOnFloor = false
       if stuckOnFloor then
-         e.vehicle.body.transforms.l[2]= getGlobalHeight(base) - e.vehicle.radius1
+         e.vehicle.body.transforms.l[2]= getGlobalHeight(base) -- e.vehicle.radius1
          e.vehicle.body.transforms.l[3]= math.atan2(y2-y1,x2-x1)
       else
          --print(math.abs(e.transforms.transforms.l[2] - getGlobalHeight(e.transforms.transforms.l[1]) ))

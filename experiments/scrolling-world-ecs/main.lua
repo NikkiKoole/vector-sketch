@@ -152,6 +152,7 @@ function drawDebugStrings()
 --      print(string.format("%02d", ))
       --      print(string.format("%02d", (1.0/love.timer.getFPS()))
       local str = round2(1.0/love.timer.getFPS(), 3)
+
       if str then
          shadedText('s '..str, 20, 20)
       end

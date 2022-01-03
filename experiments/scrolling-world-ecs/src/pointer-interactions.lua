@@ -401,22 +401,12 @@ end
 -- end
 
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
-
-   -- stuff is breakng if you rotate this item
-   -- and then mouseover it with this function
-
-   -- bounding box is wrong too but that doenst cause the crazyness
-   -- the inverse stuff is what goes wrong when rotated
    
    local camData = createCamData(item, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
   
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
---   setTransforms(item)
-   
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
-
-
    
    return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
@@ -441,7 +431,7 @@ function gestureRecognizer(gesture, ecsWorld)
       if (#gesture.positions > gestureLength) then
 	 startP = gesture.positions[#gesture.positions - gestureLength]
       end
-      print('looking at gesture with', #gesture.positions)
+      --print('looking at gesture with', #gesture.positions)
 
       local dx = endP.x - startP.x
       local dy = endP.y - startP.y
@@ -473,11 +463,11 @@ function gestureRecognizer(gesture, ecsWorld)
                         if dx ~=0 and dy ~= 0 then
 
                            if math.abs(dy) > 5*math.abs(dx) then
-                              print('mostly vertical')
+                              --print('mostly vertical')
                               dx=0
                            end
                            if math.abs(dx) > 5*math.abs(dy) then
-                              print('mostly horizontal')
+                              --print('mostly horizontal')
                               dy=0
                            end
                            
