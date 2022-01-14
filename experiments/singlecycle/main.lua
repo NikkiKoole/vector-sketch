@@ -53,6 +53,48 @@ function blendSoundDatas(d1, d2, t, blendInto)
    
 end
 
+scales = {
+   ["harmonicMinor"] = {0,2,3,5,7,8,11},
+   ["major"] = {0,2,4,5,7,9,11},
+   ["melodicMinorAscending"] =  {0,2,3,5,7,9,11},
+   ["melodicMinorDescending"]=  {0,2,3,5,7,8,10},
+   ["wholeTone"]= {0,2,4,6,8,10},
+   ["pentatonicMajor"] = {0,2,4,7,9},
+   ["pentatonicMinor"]= {0,3,5,7,10},
+   ["pentatonicBlues"]= {0,3,5,6,7,10},
+   ["pentatonicNeutral"]= {0,2,5,7,10},
+   ["dorian"]={0,2,3,5,7,9,10},
+   ["phrygian"]={0,2,3,5,7,8,10},
+   ["lydian"]= {0,2,4,6,7,9,11},
+   ["mixolydian"]= {0,2,4,5,7,9,10},
+   ["aeolian"]={0,2,3,5,7,8,10},
+   ["locrian"]= {0,2,3,5,6,8,10},
+   ["arabianA"]= {0,2,3,5,6,8,9,11},
+   ["arabianB"]= {0,2,4,5,6,8,10},
+   ["augmented"]= {0,3,4,6,8,11},
+   ["auxiliaryDiminishedBlues"]= {0,2,3,4,6,7,9,10},
+   ["blues"]= {0,3,5,6,7,10},
+   ["chinese"]= {0,4,6,7,11},
+   ["chineseMongolian"]= {0,2,4,7,9},
+   ["diatonic"]={0,2,4,7,9},
+   ["diminished"]= {0,2,3,5,6,8,9,11},
+   ["doubleHarmonic"]= {0,2,4,5,7,8,11},
+   ["egyptian"]= {0,2,5,7,10},
+   ["eightToneSpanish"]= {0,2,3,4,5,6,8,10},
+   ["ethiopian"]= {0,2,3,5,7,8,10},
+   ["hawaiian"]= {0,2,3,5,7,9,11},
+   ["hindu"]={0,2,4,5,7,8,10},
+   ["hungarianGypsy"]={0,2,3,6,7,8,11},
+   ["japaneseA"]= {0,2,5,7,8},
+   ["japaneseB"]={0,2,5,7,8},
+   ["jewishAdonaiMalakh"]= {0,2,2,3,5,7,9,10},
+   ["neopolitan"]= {0,2,3,5,7,8,11},
+   ["neopolitanMinor"]= {0,2,3,5,7,8,10},
+   ["orientalA"]= {0,2,4,5,6,8,10},
+   ["orientalB"]= {0,2,4,5,6,9,10},
+   ["persian"]= {0,2,4,5,6,8,11},
+   ["pureMinor"]={0,2,3,5,7,8,10}
+}
 
 function love.load()
    d1 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
@@ -68,7 +110,7 @@ function love.load()
    
    lfo = {cyclesPerSecond=8, thing=13, kind='sinus', value=0, output=0}
 
-   arp = {cyclesPerSecond=4, value=0, offsets={0,2,4,5,7,9,10}}
+   arp = {cyclesPerSecond=2, value=0, offsets=scales.pentatonicBlues}
 end
 
 
@@ -89,7 +131,7 @@ function love.update(dt)
    local w,h = love.graphics.getDimensions()
 
    local b = mapInto(mx, 0,w, 0, 1)
-   local p = mapInto(my, 0, h, 0.01, 1)
+   local p = mapInto(my, 0, h, 0.01, 3)
    lfo.cyclesPerSecond = p
    lfo.thing = 1 +  b 
    local count = qs:getFreeBufferCount()
@@ -129,54 +171,16 @@ function love.update(dt)
       
       --qs:setPitch(pitch )
       qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], 1))
-      --qs:setVolume(.5 + (lfo.output*.5))
+      qs:setVolume(.5 + (lfo.output*.5))
    end
    
 end
 
+
+
 --[[
 function populateDataScales() {
-        // Defines scales input is key, name, also known as, tags(array), notes(array)
-        populateDataScale("harmonicMinor", "Harmonic Minor", "", [], [0,2,3,5,7,8,11]);
-        populateDataScale("major", "Major", "Ionian Scale", [], [0,2,4,5,7,9,11]);
-        populateDataScale("melodicMinorAscending", "Melodic Minor (Ascending)", "", [], [0,2,3,5,7,9,11]);
-        populateDataScale("melodicMinorDescending", "Melodic Minor (Descending)", "", [], [0,2,3,5,7,8,10]);
-        populateDataScale("wholeTone", "Whole Tone", "", [], [0,2,4,6,8,10]);
-        populateDataScale("pentatonicMajor", "Pentatonic Major", "", [], [0,2,4,7,9]);
-        populateDataScale("pentatonicMinor", "Pentatonic Minor", "", [], [0,3,5,7,10]);
-        populateDataScale("pentatonicBlues", "Pentatonic Blues", "", [], [0,3,5,6,7,10]);
-        populateDataScale("pentatonicNeutral", "Pentatonic Neutral", "", [], [0,2,5,7,10]);
-        populateDataScale("dorian", "Dorian", "", [], [0,2,3,5,7,9,10]);
-        populateDataScale("phrygian", "Phrygian", "", [], [0,2,3,5,7,8,10]);
-        populateDataScale("lydian", "Lydian", "", [], [0,2,4,6,7,9,11]);
-        populateDataScale("mixolydian", "Mixolydian", "", [], [0,2,4,5,7,9,10]);
-        populateDataScale("aeolian", "Aeolian", "", [], [0,2,3,5,7,8,10]);
-        populateDataScale("locrian", "Locrian", "", [], [0,2,3,5,6,8,10]);
-        populateDataScale("arabianA", "Arabian (a)", "", ["Exotic"], [0,2,3,5,6,8,9,11]);
-        populateDataScale("arabianB", "Arabian (b)", "", ["Exotic"], [0,2,4,5,6,8,10]);
-        populateDataScale("augmented", "Augmented", "", ["Exotic"], [0,3,4,6,8,11]);
-        populateDataScale("auxiliaryDiminishedBlues", "Auxiliary Diminished Blues", "", ["Exotic"], [0,2,3,4,6,7,9,10]);
-        populateDataScale("blues", "Blues", "", ["Exotic"], [0,3,5,6,7,10]);
-        populateDataScale("chinese", "Chinese", "", ["Exotic"], [0,4,6,7,11]);
-        populateDataScale("chineseMongolian", "Chinese Mongolian", "", ["Exotic"], [0,2,4,7,9]);
-        populateDataScale("diatonic", "Diatonic", "", ["Exotic"], [0,2,4,7,9]);
-        populateDataScale("diminished", "Diminished", "", ["Exotic"], [0,2,3,5,6,8,9,11]);
-        populateDataScale("doubleHarmonic", "Double Harmonic", "", ["Exotic"], [0,2,4,5,7,8,11]);
-        populateDataScale("egyptian", "Egyptian", "", ["Exotic"], [0,2,5,7,10]);
-        populateDataScale("eightToneSpanish", "Eight Tone Spanish", "", ["Exotic"], [0,2,3,4,5,6,8,10]);
-        populateDataScale("ethiopian", "Ethiopian (Geez & Ezel)", "", ["Exotic"], [0,2,3,5,7,8,10]);
-        populateDataScale("hawaiian", "Hawaiian", "", ["Exotic"], [0,2,3,5,7,9,11]);
-        populateDataScale("hindu", "Hindu", "", ["Exotic"], [0,2,4,5,7,8,10]);
-        populateDataScale("hungarianGypsy", "Hungarian Gypsy", "", ["Exotic"], [0,2,3,6,7,8,11]);
-        populateDataScale("japaneseA", "Japanese (A)", "", ["Exotic"], [0,2,5,7,8]);
-        populateDataScale("japaneseB", "Japanese (B)", "", ["Exotic"], [0,2,5,7,8]);
-        populateDataScale("jewishAdonaiMalakh", "Jewish (Adonai Malakh)", "", ["Exotic"], [0,2,2,3,5,7,9,10]);
-        populateDataScale("neopolitan", "Neopolitan", "", ["Exotic"], [0,2,3,5,7,8,11]);
-        populateDataScale("neopolitanMinor", "Neopolitan Minor", "", ["Exotic"], [0,2,3,5,7,8,10]);
-        populateDataScale("orientalA", "Oriental (A)", "", ["Exotic"], [0,2,4,5,6,8,10]);
-        populateDataScale("orientalB", "Oriental (B)", "", ["Exotic"], [0,2,4,5,6,9,10]);
-        populateDataScale("persian", "Persian", "", ["Exotic"], [0,2,4,5,6,8,11]);
-        populateDataScale("pureMinor", "Pure Minor", "", ["Exotic"], [0,2,3,5,7,8,10]);
+        
     }
 
 ]]--
@@ -208,3 +212,7 @@ function love.keypressed(k)
    
 end
 
+function love.draw()
+
+   love.graphics.printf({{1,0,0},"red pill " , {0,0,1}, " blue pill"}, 25,25, 200)
+end
