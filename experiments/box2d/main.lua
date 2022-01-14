@@ -98,7 +98,9 @@ objects.carousel4.fixture:setUserData("wall")
 					      0.5 + love.math.random()*1)
 
       block.body:setFixedRotation(true)
-      block.fixture:setRestitution(.5) -- let the ball bounce
+      --block.fixture:setFriction(0.25)
+      --block.body:setAngularDamping( math.huge )
+      --block.fixture:setRestitution(.5) -- let the ball bounce
 
       
       table.insert(objects.blocks, block)
@@ -307,7 +309,7 @@ function drawBlock(thing)
    love.graphics.setLineWidth(3)
    love.graphics.polygon("line", thing.body:getWorldPoints(thing.shape:getPoints()))
    love.graphics.setColor(1, 1, 1)
-   love.graphics.rectangle("line", cx, cy, 1 ,1)
+   --love.graphics.rectangle("line", cx, cy, 1 ,1)
    
 
    --love.graphics.setColor(0, 0, 0)
@@ -369,7 +371,7 @@ function love.draw()
    drawBlock(objects.carousel)
    drawBlock(objects.carousel2)
    drawBlock(objects.carousel3)
-    drawBlock(objects.carousel4)
+   drawBlock(objects.carousel4)
 --   drawCircle(objects.carousel.body, objects.carousel.shape)
    
    

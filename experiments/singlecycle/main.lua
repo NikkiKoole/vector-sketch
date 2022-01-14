@@ -1,5 +1,5 @@
 
-
+sone = require "sone"
 
 function printSoundData(d1)
    print('samples: '..d1:getSampleCount()..', rate: '..d1:getSampleRate()..', bits:  '..d1:getBitDepth()..', channels:  '..d1:getChannelCount())
@@ -16,8 +16,10 @@ end
 function getPitch(semitone, octave)
    local plusoctave = 0
    --local octave = 2
+  
    if semitone > 11 then
-      plusoctave = 1
+      plusoctave = math.floor(semitone / 12)
+      print(semitone, plusoctave )
       semitone = semitone % 12
    end
 
@@ -58,12 +60,15 @@ function love.load()
    
    blended = love.sound.newSoundData(d1:getSampleCount(),  d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount())
 
-   qs = love.audio.newQueueableSource(d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount(), 8)
+   qs = love.audio.newQueueableSource(d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount(), 24)
 
    pitch = 1
+   semitone = 20
 
    
    lfo = {cyclesPerSecond=8, thing=13, kind='sinus', value=0, output=0}
+
+   arp = {cyclesPerSecond=4, value=0, offsets={0,2,4,5,7,9,10}}
 end
 
 
@@ -75,24 +80,56 @@ function love.update(dt)
    if lfo.output < 0 then
       lfo.output = 0 --lfo.output + math.pi*2
    end
-   
+
+   arp.value = arp.value + (dt * arp.cyclesPerSecond)
+   local arpIndex = math.floor(arp.value % (#arp.offsets)) + 1
+   --print(arp.value, arp.offsets[arpIndex])
    
    local mx,my =love.mouse.getPosition()
    local w,h = love.graphics.getDimensions()
 
    local b = mapInto(mx, 0,w, 0, 1)
-   local p = mapInto(my, 0, h, .7, 5)
+   local p = mapInto(my, 0, h, 0.01, 1)
    lfo.cyclesPerSecond = p
    lfo.thing = 1 +  b 
    local count = qs:getFreeBufferCount()
+
+
+   blendSoundDatas(d1,d2, b, blended)
    
+
+   local wet = sone.filter(sone.copy(blended), {
+			       type = "bandpass",
+			       frequency = 1000,
+			       Q = p,
+			       gain = 2,
+   })
+
+   -- local wet = sone.filter(sone.copy(blended), {
+   --          type = "lowpass",
+   --          frequency = 150,
+   --      })
+
+   
+   -- wet =  sone.filter(sone.copy(wet), {
+   -- 			       type = "peakeq",
+   -- 			       frequency = 1000,
+   -- 			       gain = 9,
+   -- })
+   -- wet = sone.filter(sone.copy(wet), {
+   -- 			      type = "notch",
+   -- 			      frequency = 1000,
+   -- 			      Q = 0.8*p,
+   -- 			      gain = 6*p,
+   -- })
+
    for i =1, count do
-      blendSoundDatas(d1,d2, b, blended)
-      qs:queue(blended)
+      qs:queue(wet)
       qs:play()
       
-      qs:setPitch(pitch )
-      qs:setVolume(.5 + (lfo.output*.5))
+      --qs:setPitch(pitch )
+      qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], 1))
+      --qs:setVolume(.5 + (lfo.output*.5))
    end
    
 end
@@ -153,14 +190,17 @@ function love.keypressed(k)
    local onScreenKeys = {'a', 'w', 's',
                          'e', 'd', 'f',
                          't', 'g', 'y',
-                         'h', 'u', 'j'}
+                         'h', 'u', 'j',
+			 'k', 'o', 'l', 'p', ';', "'"}
    for i=1, #onScreenKeys do
       if k==onScreenKeys[i] then
---         print(i-1)
-         pitch = getPitch(i-1, 1)
-         pitch = pitch* (1+( love.math.random() * 0.02 -0.01))
+	 semitone = i-1
+	 arpIndex = 0
+	 arp.value = 0
+         pitch = getPitch(semitone, 1)
+         pitch = pitch 
 
-         --lfo.value = 0  --sync
+
       end
       
    end
