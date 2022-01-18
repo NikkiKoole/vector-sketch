@@ -1,5 +1,8 @@
-
+inspect = require 'inspect'
 sone = require "sone"
+
+--https://beammyselfintothefuture.wordpress.com/2015/02/16/simple-c-code-for-resonant-lpf-hpf-filters-and-high-low-shelving-eqs/
+
 
 function printSoundData(d1)
    print('samples: '..d1:getSampleCount()..', rate: '..d1:getSampleRate()..', bits:  '..d1:getBitDepth()..', channels:  '..d1:getChannelCount())
@@ -98,7 +101,9 @@ scales = {
 
 function love.load()
    d1 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
-   d2 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
+   d2 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
+
+--   d2 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
    
    blended = love.sound.newSoundData(d1:getSampleCount(),  d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount())
 
@@ -108,9 +113,9 @@ function love.load()
    semitone = 20
 
    
-   lfo = {cyclesPerSecond=8, thing=13, kind='sinus', value=0, output=0}
+   lfo = {cyclesPerSecond=2, thing=1, kind='sinus', value=0, output=0}
 
-   arp = {cyclesPerSecond=2, value=0, offsets=scales.pentatonicBlues}
+   arp = {cyclesPerSecond=0, value=0, offsets=scales.pentatonicBlues}
 end
 
 
@@ -130,8 +135,8 @@ function love.update(dt)
    local mx,my =love.mouse.getPosition()
    local w,h = love.graphics.getDimensions()
 
-   local b = mapInto(mx, 0,w, 0, 1)
-   local p = mapInto(my, 0, h, 0.01, 3)
+   local b = mapInto(mx, 0,w, 0, .25)
+   local p = mapInto(my, 0, h, 0.01, .25)
    lfo.cyclesPerSecond = p
    lfo.thing = 1 +  b 
    local count = qs:getFreeBufferCount()
@@ -139,13 +144,56 @@ function love.update(dt)
 
    blendSoundDatas(d1,d2, b, blended)
    
+   --print(inspect(sone.copy(blended)))
+   --print(inspect(blended))
 
-   local wet = sone.filter(sone.copy(blended), {
-			       type = "bandpass",
-			       frequency = 1000,
-			       Q = p,
-			       gain = 2,
-   })
+
+   function LPFFilter(sound, cutoff)
+      local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(), sound:getChannels())
+      
+
+      local lastOutput = 0
+      local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
+      for i = 0, sampleCount do
+         --print(i)
+         local input = sound:getSample(i) 
+         local  distanceToGo = input - lastOutput;
+         lastOutput = lastOutput +  distanceToGo * cutoff
+         copy:setSample(i, lastOutput)
+      end
+      return copy
+   end
+
+   function resonantFilter(sound, cutoff, resonance)
+      local lastOutput=0
+      local momentum=0
+--      print('cutoff', cutoff, 'resonance', resonance)
+      local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(), sound:getChannels())
+      local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
+      for i = 0, sampleCount do
+         --print(i)
+         local input = sound:getSample(i)
+         local distanceToGo = input - lastOutput
+         momentum = momentum + distanceToGo * cutoff
+         lastOutput = lastOutput + momentum + distanceToGo*resonance
+         copy:setSample(i, lastOutput)
+      end
+      return copy
+
+   end
+   
+   --local wet = blended
+--   local wet = LPFFilter(blended, p)
+   local wet = resonantFilter(blended, p, b)
+      
+   
+   
+   -- local wet = sone.filter(sone.copy(blended), {
+   --      		       type = "bandpass",
+   --      		       frequency = 1000,
+   --      		       Q = p,
+   --      		       gain = 2,
+   -- })
 
    -- local wet = sone.filter(sone.copy(blended), {
    --          type = "lowpass",
@@ -171,7 +219,7 @@ function love.update(dt)
       
       --qs:setPitch(pitch )
       qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], 1))
-      qs:setVolume(.5 + (lfo.output*.5))
+      --qs:setVolume(.5 + (lfo.output*.5))
    end
    
 end
