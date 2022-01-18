@@ -101,9 +101,9 @@ scales = {
 
 function love.load()
    d1 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
-   d2 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
+--   d2 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
 
---   d2 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
+   d2 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
    
    blended = love.sound.newSoundData(d1:getSampleCount(),  d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount())
 
@@ -111,7 +111,7 @@ function love.load()
 
    pitch = 1
    semitone = 20
-
+   octave = 1
    
    lfo = {cyclesPerSecond=2, thing=1, kind='sinus', value=0, output=0}
 
@@ -135,8 +135,8 @@ function love.update(dt)
    local mx,my =love.mouse.getPosition()
    local w,h = love.graphics.getDimensions()
 
-   local b = mapInto(mx, 0,w, 0, .25)
-   local p = mapInto(my, 0, h, 0.01, .25)
+   local b = mapInto(mx, 0,w, 0, 1)
+   local p = mapInto(my, 0, h, 0.01, .5)
    lfo.cyclesPerSecond = p
    lfo.thing = 1 +  b 
    local count = qs:getFreeBufferCount()
@@ -183,8 +183,8 @@ function love.update(dt)
    end
    
    --local wet = blended
---   local wet = LPFFilter(blended, p)
-   local wet = resonantFilter(blended, p, b)
+   --local wet = LPFFilter(blended, 1)
+   local wet = resonantFilter(blended, b, p)
       
    
    
@@ -218,7 +218,7 @@ function love.update(dt)
       qs:play()
       
       --qs:setPitch(pitch )
-      qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], 1))
+      qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], octave))
       --qs:setVolume(.5 + (lfo.output*.5))
    end
    
@@ -249,7 +249,7 @@ function love.keypressed(k)
 	 semitone = i-1
 	 arpIndex = 0
 	 arp.value = 0
-         pitch = getPitch(semitone, 1)
+         pitch = getPitch(semitone, octave)
          pitch = pitch 
 
 
