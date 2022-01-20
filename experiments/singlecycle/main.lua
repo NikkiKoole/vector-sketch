@@ -116,13 +116,20 @@ function love.load()
    qs = love.audio.newQueueableSource(d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount(), amountOfBuffers)
 
    pitch = 1
-   semitone = 20
+   semitone = 0
    octave = 0
    
    lfo = {cyclesPerSecond=2, thing=.5, kind='sinus', value=0, output=0}
 
-   arp = {cyclesPerSecond=0, value=0, offsets=scales.pentatonicBlues}
+   onScreenKeys = {'a', 'w', 's',
+                         'e', 'd', 'f',
+                         't', 'g', 'y',
+                         'h', 'u', 'j',
+			 'k', 'o', 'l', 'p', ';', "'"}
+ 
    printSoundData(d1)
+   font = love.graphics.newFont( 'adlib.ttf', 16 )
+   love.graphics.setFont(font)
 end
 
 
@@ -209,22 +216,15 @@ function love.update(dt)
    end
    
    lfo.value = lfo.value + (dt *  lfo.cyclesPerSecond )
-   lfo.output = triOver2(lfo.value ) /2 + 0.5
-
-
-
-
-
-
-   arp.value = arp.value + (dt * arp.cyclesPerSecond)
-   local arpIndex = math.floor(arp.value % (#arp.offsets)) + 1
+   lfo.output = (detunedTri(lfo.value ) ) 
+   
   
    
    local mx,my =love.mouse.getPosition()
    local w,h = love.graphics.getDimensions()
 
    local b = mapInto(mx, 0,w, 0.1, 1)
-   local p = mapInto(my, 0, h, 0.001, 16)
+   local p = mapInto(my, 0, h, 0.001, 10)
    lfo.cyclesPerSecond = p
    --lfo.thing = 1 +  b 
   
@@ -243,12 +243,12 @@ function love.update(dt)
    --local wet = resonantHighPassFilter(blended, p, b)
    
    
-   -- local wet = sone.filter(sone.copy(blended), {
-   -- 			      type = "bandpass",
-   -- 			      frequency = 1000,
-   -- 			      Q = p,
-   -- 			      gain = 2,
-   -- })
+   local wet = sone.filter(sone.copy(blended), {
+			      type = "bandpass",
+			      frequency = 1000,
+			      Q = p,
+			      gain = 2,
+   })
 
    -- local wet = sone.filter(sone.copy(blended), {
    --          type = "lowpass",
@@ -277,13 +277,13 @@ function love.update(dt)
       local np = p + (lfo.output)
       --print(np)
       if np >= 0 then 
-	 qs:setPitch(np)
+	 qs:setPitch(p)
       end
-      
+      print(lfo.output)
       --qs:setPitch(pitch , octave)
       
       --qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], octave))
-      --qs:setVolume(.5 + (lfo.output*.5))
+      qs:setVolume(.5 + (lfo.output*.5))
    end
    --print(dt)
 end
@@ -303,16 +303,12 @@ function love.keypressed(k)
       love.event.quit()
    end
 
-   local onScreenKeys = {'a', 'w', 's',
-                         'e', 'd', 'f',
-                         't', 'g', 'y',
-                         'h', 'u', 'j',
-			 'k', 'o', 'l', 'p', ';', "'"}
+
    for i=1, #onScreenKeys do
       if k==onScreenKeys[i] then
 	 semitone = i-1
-	 arpIndex = 0
-	 arp.value = 0
+	 --arpIndex = 0
+	 --arp.value = 0
 	 lfo.value = 0
 	 --print(semitone, octave)
          pitch = getPitch(semitone, octave)
@@ -334,6 +330,61 @@ function love.keyreleased(k)
 end
 
 
+function drawScreenKeyboard(x,y)
+   local whiteWidth = 30
+   local whiteHeight = 100
+   local blackWidth = 15
+   local blackHeight = 50
+   
+   local function isBlack(semitone)
+      local blackSemitones = {1,3,6,8,10,13,15}
+      for j = 1, #blackSemitones do
+	 if (blackSemitones[j] == semitone) then
+	    return true
+	 end
+      end
+      return false
+   end
+
+   local keyOffset = 0
+
+   love.graphics.setColor(1,1,1)
+   
+   -- draw the keys
+   for i =1, #onScreenKeys do
+      if isBlack(i-1) then
+	 love.graphics.rectangle('fill', x + keyOffset*whiteWidth - blackWidth/2, y, blackWidth, blackHeight)
+      else
+	 love.graphics.rectangle('line', x + keyOffset*whiteWidth, y, whiteWidth, whiteHeight)
+	 keyOffset = keyOffset + 1
+      end
+   end
+   
+   keyOffset = 0
+   -- draw the letters on top
+   love.graphics.setColor(1,.5,.5)
+   for i =1, #onScreenKeys do
+      print(semitone, i-1)
+      if (semitone == (i-1)) then
+	 love.graphics.setColor(.5,.5,.5)
+      else
+	 love.graphics.setColor(1,.5,.5)
+
+      end
+      
+      if isBlack(i-1) then
+	 local width = font:getWidth( onScreenKeys[i] )
+	 love.graphics.print(onScreenKeys[i], x + (keyOffset*whiteWidth)- blackWidth/2 + (blackWidth-width)/2 , y)
+      else
+	 local width = font:getWidth( onScreenKeys[i] )
+	 --love.graphics.setColor(1,.5,.5)
+	 love.graphics.print(onScreenKeys[i],  x+keyOffset*whiteWidth  + (whiteWidth-width)/2, y + whiteHeight - 20)
+	 keyOffset = keyOffset + 1
+      end
+   end
+end
+
+
 function love.draw()
    -- draw the lfo graphically
    love.graphics.setColor(1,.5,.5)
@@ -343,4 +394,9 @@ function love.draw()
    love.graphics.circle('line', 100,100, 10 + lfo.output*5)
    
 
+
+   drawScreenKeyboard(400, 500)
+  
+
+   
 end
