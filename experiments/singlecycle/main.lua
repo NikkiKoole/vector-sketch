@@ -102,7 +102,7 @@ local scales = {
 }
 
 function love.load()
-   d1 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
+   d1 = love.sound.newSoundData("cycles/AKWF_cheeze_0003.wav")
   -- d2 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
 
 
@@ -216,7 +216,7 @@ function love.update(dt)
    end
    
    lfo.value = lfo.value + (dt *  lfo.cyclesPerSecond )
-   lfo.output = (detunedTri(lfo.value ) ) 
+   lfo.output =  tri(lfo.value )
    
   
    
@@ -243,12 +243,12 @@ function love.update(dt)
    --local wet = resonantHighPassFilter(blended, p, b)
    
    
-   local wet = sone.filter(sone.copy(blended), {
-			      type = "bandpass",
-			      frequency = 1000,
-			      Q = p,
-			      gain = 2,
-   })
+   -- local wet = sone.filter(sone.copy(blended), {
+   -- 			      type = "bandpass",
+   -- 			      frequency = 1000,
+   -- 			      Q = p,
+   -- 			      gain = 2,
+   -- })
 
    -- local wet = sone.filter(sone.copy(blended), {
    --          type = "lowpass",
@@ -279,7 +279,7 @@ function love.update(dt)
       if np >= 0 then 
 	 qs:setPitch(p)
       end
-      print(lfo.output)
+--      print(lfo.output)
       --qs:setPitch(pitch , octave)
       
       --qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], octave))
@@ -364,7 +364,7 @@ function drawScreenKeyboard(x,y)
    -- draw the letters on top
    love.graphics.setColor(1,.5,.5)
    for i =1, #onScreenKeys do
-      print(semitone, i-1)
+--      print(semitone, i-1)
       if (semitone == (i-1)) then
 	 love.graphics.setColor(.5,.5,.5)
       else
