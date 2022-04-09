@@ -1,8 +1,16 @@
 inspect = require 'inspect'
 sone = require "sone"
 
+-- some cheap filters, i am not using them though. sone is cleaner
 --https://beammyselfintothefuture.wordpress.com/2015/02/16/simple-c-code-for-resonant-lpf-hpf-filters-and-high-low-shelving-eqs/
 
+-- some logic about (polyphonic) glide, slide, legato, pizzicato etc
+--http://www.nurykabe.com/dump/docs/bindingNotes/
+
+-- a ringbuffer could be used for delay/echo
+--https://dobrian.github.io/cmp/topics/delay-based-effects/circularbuffer.html
+--https://blog.demofox.org/2015/03/17/diy-synth-delay-effect-echo/
+--   https://music.arts.uci.edu/dobrian/maxcookbook/diy-ring-buffer
 
 function printSoundData(d1)
    print('samples: '..d1:getSampleCount()..', rate: '..d1:getSampleRate()..', bits:  '..d1:getBitDepth()..', channels:  '..d1:getChannelCount())
@@ -14,6 +22,11 @@ end
 
 function mapInto(x, in_min, in_max, out_min, out_max)
    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+end
+
+
+function note_to_hz(note)
+   return 440*math.pow(2,(note-33)/12)
 end
 
 function getPitch(semitone, octave)
@@ -30,9 +43,9 @@ function getPitch(semitone, octave)
    local n = mapInto(freqs[semitone+1], 261.63, 523.25, 0, 1)
    local o = octave + plusoctave
    if o < -5 then o = -5 end
-   if o > 5 then  o = 5  end
+   if o > 7 then  o = 7  end
 
-   --print(o)
+--   print('octave', o)
    if o == -5 then return (0.0625 -(0.03125 -  n/32)) end
    if o == -4 then return (0.125 -(0.0625 -  n/16)) end
    if o == -3 then return (0.25 -(0.125 -  n/8)) end
@@ -44,6 +57,8 @@ function getPitch(semitone, octave)
    if o == 3 then return(8 + 8*n) end
    if o == 4 then return(16 + 16*n) end
    if o == 5 then return(32 + 32*n) end
+   if o == 6 then return(64 + 64*n) end
+   if o == 7 then return(128 + 128*n) end
 
 end
 
@@ -58,202 +73,190 @@ function blendSoundDatas(d1, d2, t, blendInto)
    
 end
 
-local scales = {
-   ["harmonicMinor"] = {0,2,3,5,7,8,11},
-   ["major"] = {0,2,4,5,7,9,11},
-   ["melodicMinorAscending"] =  {0,2,3,5,7,9,11},
-   ["melodicMinorDescending"]=  {0,2,3,5,7,8,10},
-   ["wholeTone"]= {0,2,4,6,8,10},
-   ["pentatonicMajor"] = {0,2,4,7,9},
-   ["pentatonicMinor"]= {0,3,5,7,10},
-   ["pentatonicBlues"]= {0,3,5,6,7,10},
-   ["pentatonicNeutral"]= {0,2,5,7,10},
-   ["dorian"]={0,2,3,5,7,9,10},
-   ["phrygian"]={0,2,3,5,7,8,10},
-   ["lydian"]= {0,2,4,6,7,9,11},
-   ["mixolydian"]= {0,2,4,5,7,9,10},
-   ["aeolian"]={0,2,3,5,7,8,10},
-   ["locrian"]= {0,2,3,5,6,8,10},
-   ["arabianA"]= {0,2,3,5,6,8,9,11},
-   ["arabianB"]= {0,2,4,5,6,8,10},
-   ["augmented"]= {0,3,4,6,8,11},
-   ["auxiliaryDiminishedBlues"]= {0,2,3,4,6,7,9,10},
-   ["blues"]= {0,3,5,6,7,10},
-   ["chinese"]= {0,4,6,7,11},
-   ["chineseMongolian"]= {0,2,4,7,9},
-   ["diatonic"]={0,2,4,7,9},
-   ["diminished"]= {0,2,3,5,6,8,9,11},
-   ["doubleHarmonic"]= {0,2,4,5,7,8,11},
-   ["egyptian"]= {0,2,5,7,10},
-   ["eightToneSpanish"]= {0,2,3,4,5,6,8,10},
-   ["ethiopian"]= {0,2,3,5,7,8,10},
-   ["hawaiian"]= {0,2,3,5,7,9,11},
-   ["hindu"]={0,2,4,5,7,8,10},
-   ["hungarianGypsy"]={0,2,3,6,7,8,11},
-   ["japaneseA"]= {0,2,5,7,8},
-   ["japaneseB"]={0,2,5,7,8},
-   ["jewishAdonaiMalakh"]= {0,2,2,3,5,7,9,10},
-   ["neopolitan"]= {0,2,3,5,7,8,11},
-   ["neopolitanMinor"]= {0,2,3,5,7,8,10},
-   ["orientalA"]= {0,2,4,5,6,8,10},
-   ["orientalB"]= {0,2,4,5,6,9,10},
-   ["persian"]= {0,2,4,5,6,8,11},
-   ["pureMinor"]={0,2,3,5,7,8,10}
-}
 
 function love.load()
-   d1 = love.sound.newSoundData("cycles/AKWF_cheeze_0003.wav")
+
+   waveFrames = {}
+   if true then
+      local indices = {1,13}
+      for i =1, #indices do
+         local index = indices[i]
+         --local url = "cycles/sinharm/AKWF_sinharm_"..string.format("%04d",i)..".wav"
+         --local url = "cycles/overtone/AKWF_overtone_"..string.format("%04d",i)..".wav"
+         --local url = "cycles/fmsynth/AKWF_fmsynth_"..string.format("%04d",i)..".wav"
+         local url = "cycles/bw_squrounded/rAsymSqu_"..string.format("%02d",i)..".wav"
+         --local url = "cycles/bw_squrounded/rSymSqu_"..string.format("%02d",index)..".wav"
+
+         print(url)
+         local sd = love.sound.newSoundData(url)
+         waveFrames[i] = sd
+      end
+   end
+
+   --waveFrames[1] = love.sound.newSoundData("cycles/nes/AKWF_nes_square.wav")
+   --waveFrames[2] = love.sound.newSoundData("cycles/nes/AKWF_nes_triangle.wav")
+   --d1 = love.sound.newSoundData("cycles/bw_squrounded/rAsymSqu_01.wav")w
+   --d2 = love.sound.newSoundData("cycles/bw_squrounded/rAsymSqu_26.wav")
   -- d2 = love.sound.newSoundData("cycles/AKWF_cheeze_0001.wav")
-
-
    --d1 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
-   d2 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
-   
-   blended = love.sound.newSoundData(d1:getSampleCount(),  d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount())
+   --d2 = love.sound.newSoundData("cycles/AKWF_ebass_0001.wav")
 
-   local amountOfBuffers = 16
+   local d1 = waveFrames[1]
    
-   qs = love.audio.newQueueableSource(d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount(), amountOfBuffers)
+   
 
+   
+   
+   --blended = 
+
+   local amountOfBuffers = 10
+
+   lfo1 = {hz=.4,   depth=1, value=0, output=0, shape='pulse'}
+   lfo2 = {hz=.3,  depth=1, value=0, output=0, shape='tri'}
+   lfo3 = {hz=.4, depth=1, value=0, output=0, shape='pulse'}
+   
+   voices = {{
+      sd = love.sound.newSoundData(d1:getSampleCount(),  d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount()),
+      qs = love.audio.newQueueableSource(d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount(), amountOfBuffers),
+      qsSub = love.audio.newQueueableSource(d1:getSampleRate(), d1:getBitDepth(), d1:getChannelCount(), amountOfBuffers)
+   }}
+   
    pitch = 1
    semitone = 0
    octave = 0
    
-   lfo = {cyclesPerSecond=2, thing=.5, kind='sinus', value=0, output=0}
+  
 
-   onScreenKeys = {'a', 'w', 's',
-                         'e', 'd', 'f',
-                         't', 'g', 'y',
-                         'h', 'u', 'j',
-			 'k', 'o', 'l', 'p', ';', "'"}
+   onScreenKeys = {
+      'a', 'w', 's',
+      'e', 'd', 'f',
+      't', 'g', 'y',
+      'h', 'u', 'j',
+      'k', 'o', 'l',
+      'p', ';', "'"
+   }
  
-   printSoundData(d1)
-   font = love.graphics.newFont( 'adlib.ttf', 16 )
+--   printSoundData(d1)
+--   printSoundData(d2)
+
+   font = love.graphics.newFont( 'Ac437_IBM_CGA.ttf', 16 )
    love.graphics.setFont(font)
+
+   mouseState = {
+      hoveredSomething = false,
+      down = false,
+      lastDown = false,
+      click = false,
+      offset = {x=0, y=0}
+   }
+  
+   
+end
+
+function makeSoundObject()
+   
 end
 
 
-function lowPassFilter(sound, cutoff)
-   local lastOutput = 0
-   local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(), sound:getChannels())
-   local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
-   for i = 0, sampleCount do
-      local input = sound:getSample(i) 
-      local  distanceToGo = input - lastOutput;
-      lastOutput = lastOutput +  distanceToGo * cutoff
-      copy:setSample(i, lastOutput)
-   end
-   return copy
-end
 
-function resonantLowPassFilter(sound, cutoff, resonance)
-   local lastOutput=0
-   local momentum=0
-   local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(), sound:getChannels())
-   local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
-   for i = 0, sampleCount do
-      --print(i)
-      local input = sound:getSample(i)
-      local distanceToGo = input - lastOutput
-      momentum = momentum + distanceToGo * cutoff
-      lastOutput = lastOutput + momentum + distanceToGo*resonance
-      copy:setSample(i, lastOutput)
-   end
-   return copy
+--lifted from https://github.com/picolove/picolove/blob/master/main.lua
+lfoWaveShapes = {
+   ['tri']=function(x)
+      return (math.abs((x % 1) * 2 - 1) * 2 - 1) * 0.7
+   end,
+   ['uneven_tri']=function(x)
+      local t = x % 1
+      return (((t < 0.875) and (t * 16 / 7) or ((1 - t) * 16)) - 1) * 0.7
+   end,
+   ['saw']=function(x)
+      return (x % 1 - 0.5) * 0.9
+   end,
+   ['square']=function(x)
+      return (x % 1 < 0.5 and 1 or -1) * 1 / 3
+   end,
+   ['pulse']=function (x)
+      return (x % 1 < 0.3125 and 1 or -1) * 1 / 3
+   end,
+   ['triOver2']=function(x)
+      x = x * 4
+      return (math.abs((x % 2) - 1) - 0.5 + (math.abs(((x * 0.5) % 2) - 1) - 0.5) / 2 - 0.1) * 0.7
+   end,
+    ['triOver3']=function(x)
+      x = x * 4
+      return (math.abs((x % 3) - 1.5) - 0.5 + (math.abs(((x * 0.33) % 3) - 1.5) - 0.5) / 2 - 0.1) * 0.5
+   end,
+   ['detunedTri']= function(x)
+      x = x * 2
+      return (math.abs((x % 2) - 1) - 0.5 + (math.abs(((x * 127 / 128) % 2) - 1) - 0.5) / 2) - 1 / 4
+   end,
+   ['sawLFO']=function(x)
+      return x % 1
+   end,
+}
+lfoWaveShapeNames = {
+   'tri', 'uneven_tri', 'saw', 'square','pulse','triOver2','triOver3', 'detunedTri','sawLFO'
+}
 
-end
+function updateLFO(lfo, dt)
+   -- 
+   
+   
+   lfo.value = lfo.value + (dt *  lfo.hz ) 
+   lfo.output =  lfoWaveShapes[lfo.shape](lfo.value )
 
-
-function resonantHighPassFilter(sound, cutoff, resonance)
-   local lastOutput=0
-   local lastInput=0
-   local momentum=0
-   local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(), sound:getChannels())
-   local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
-   for i = 0, sampleCount do
-
-      local input = sound:getSample(i)
-      lastOutput = lastOutput + momentum - lastInput +input
-      lastInput = input 
-      
-
-      momentum = momentum * resonance - lastOutput * cutoff
-      copy:setSample(i, lastOutput)
-   end
-   return copy
-
+   
+   
 end
 
 
 function love.update(dt)
-   -- lifted from https://github.com/picolove/picolove/blob/master/main.lua
-   function tri(x)
-      return (math.abs((x % 1) * 2 - 1) * 2 - 1) * 0.7
-   end
-   function uneven_tri(x)
-      local t = x % 1
-      return (((t < 0.875) and (t * 16 / 7) or ((1 - t) * 16)) - 1) * 0.7
-   end
-   function saw(x)
-      return (x % 1 - 0.5) * 0.9
-   end
-   function square(x)
-      return (x % 1 < 0.5 and 1 or -1) * 1 / 3
-   end
-   function pulse(x)
-      return (x % 1 < 0.3125 and 1 or -1) * 1 / 3
-   end
-   function triOver2(x)
-      x = x * 4
-      return (math.abs((x % 2) - 1) - 0.5 + (math.abs(((x * 0.5) % 2) - 1) - 0.5) / 2 - 0.1) * 0.7
-   end
-   function detunedTri(x)
-      x = x * 2
-      return (math.abs((x % 2) - 1) - 0.5 + (math.abs(((x * 127 / 128) % 2) - 1) - 0.5) / 2) - 1 / 4
-   end
-   function sawLFO(x)
-      return x % 1
-   end
-   
-   lfo.value = lfo.value + (dt *  lfo.cyclesPerSecond )
-   lfo.output =  tri(lfo.value )
-   
+
+--   print(1/44100, dt)
+   updateLFO(lfo1, dt)
+   updateLFO(lfo2, dt)
+   updateLFO(lfo3, dt)
+
   
-   
    local mx,my =love.mouse.getPosition()
    local w,h = love.graphics.getDimensions()
 
-   local b = mapInto(mx, 0,w, 0.1, 1)
+   local b = mapInto(mx, 0,w, 0, 1)
+   --print(w, #waveFrames, math.ceil(mx/(w/#waveFrames)))
    local p = mapInto(my, 0, h, 0.001, 10)
-   lfo.cyclesPerSecond = p
+   lfo1.hz = p
    --lfo.thing = 1 +  b 
   
+  -- print(w, #waveFrames-1)
 
 
-   blendSoundDatas(d1,d2, b, blended)
+
+
+   local t = (mx/(w/(#waveFrames-1))) % 1
+   local indx = math.max(math.ceil(mx/(w/(#waveFrames-1))), 1)
+   local index1 = indx 
+   local index2 = index1 + 1
+   --print(index1, index2, t)
+   blendSoundDatas(waveFrames[index1],waveFrames[index2], t, voices[1].sd)
+
    
 
 
 
    
-   local wet = blended
-   -- print(p)
-   --local wet = lowPassFilter(blended, p)
-   --local wet = resonantLowPassFilter(blended, p, b)
-   --local wet = resonantHighPassFilter(blended, p, b)
+   --local wet = blended
    
    
-   -- local wet = sone.filter(sone.copy(blended), {
-   -- 			      type = "bandpass",
-   -- 			      frequency = 1000,
-   -- 			      Q = p,
-   -- 			      gain = 2,
+   local wet = sone.filter(sone.copy(voices[1].sd), {
+			      type = "bandpass",
+			      frequency = 1000,
+			      Q = lfo2.value * .5,
+			      gain = 2,
+   })
+
+   -- wet = sone.filter(sone.copy(blended), {
+   --                      type = "highpass",
+   --                      frequency = 150*lfo3.value,
    -- })
-
-   -- local wet = sone.filter(sone.copy(blended), {
-   --          type = "lowpass",
-   --          frequency = 150*p,
-   --      })
 
    
    -- local wet =  sone.filter(sone.copy(wet), {
@@ -262,30 +265,37 @@ function love.update(dt)
    -- 			       gain = 9,
    -- })
    -- wet = sone.filter(sone.copy(wet), {
-   -- 			      type = "notch",
-   -- 			      frequency = 1000,
-   -- 			      Q = 0.8*p,
-   -- 			      gain = 6*p,
+   --      		      type = "notch",
+   --      		      frequency = 1000,
+   --      		      Q = 3,
+   --      		      gain = 6,
    -- })
-   
-   local count = qs:getFreeBufferCount()
-   for i =1, count do
-      qs:queue(wet)
+
+
+   function handleSource(source, octaveOffset)
+      local qs = source--voices[1].qs
+      local count = qs:getFreeBufferCount()
+      --   print('amount of buffers to add:', count)
+      for i =1, count do
+         qs:queue(wet)
+      end
+      
       qs:play()
 
-      local p = getPitch(semitone, octave)
-      local np = p + (lfo.output)
-      --print(np)
+      local p = getPitch(semitone, octave+(octaveOffset or 0))
+      local np = p + (lfo2.output) * .1
+      print(p, np)
+
       if np >= 0 then 
-	 qs:setPitch(p)
+         qs:setPitch(np)
       end
---      print(lfo.output)
-      --qs:setPitch(pitch , octave)
-      
-      --qs:setPitch(getPitch(semitone +  arp.offsets[arpIndex], octave))
-      qs:setVolume(.5 + (lfo.output*.5))
+      qs:setVolume(.5 + (lfo1.output))
    end
-   --print(dt)
+   
+
+   handleSource(voices[1].qs)
+   handleSource(voices[1].qsSub, -3)
+
 end
 
 
@@ -309,7 +319,10 @@ function love.keypressed(k)
 	 semitone = i-1
 	 --arpIndex = 0
 	 --arp.value = 0
-	 lfo.value = 0
+	 lfo1.value = math.pi*5
+         lfo2.value = math.pi*4
+         lfo3.value = math.pi*1
+
 	 --print(semitone, octave)
          pitch = getPitch(semitone, octave)
         
@@ -384,15 +397,80 @@ function drawScreenKeyboard(x,y)
    end
 end
 
+function renderLFO(index,lfo, x,y)
+   love.graphics.setColor(1,.5,.5)
+   love.graphics.circle('fill', x,y, 10)
+   love.graphics.setColor(1,1,1)
+   love.graphics.circle('line', x,y, 10 + lfo.output*16)
+
+
+   local str = lfo.shape
+   local w = font:getWidth(str)
+   local h = font:getHeight(str)
+
+   local rect = getUIRect('lfo'..index, x,y+20,w,h)
+   if rect.clicked then
+      local curIndex = nil
+      for i=1, #lfoWaveShapeNames do
+         if lfoWaveShapeNames[i]==str then
+            curIndex = i
+         end
+      end
+      local nextIndex = curIndex+1
+      if nextIndex > #lfoWaveShapeNames then
+         nextIndex = 1
+      end
+      local nextName = lfoWaveShapeNames[nextIndex]
+      lfo.shape = nextName
+     -- print('clicked the waveshape', str, nextName)
+   end
+   str = str
+   love.graphics.print(str,x,y+20)
+   love.graphics.print(string.format("%.2f",lfo.hz)..'Hz',x,y+50)
+
+end
+
+function handleMouseClickStart()
+   mouseState.hoveredSomething = false
+   mouseState.down = love.mouse.isDown(1 )
+   mouseState.click = false
+   mouseState.released = false
+   --print('what!')
+   if mouseState.down ~= mouseState.lastDown then
+      if mouseState.down  then
+         mouseState.click  = true
+      else
+	 mouseState.released = true
+      end
+   end
+   mouseState.lastDown =  mouseState.down
+end
+function pointInRect(x,y, rx, ry, rw, rh)
+   if x < rx or y < ry then return false end
+   if x > rx+rw or y > ry+rh then return false end
+   return true
+end
+function getUIRect(id, x,y,w,h)
+  local result = false
+  if mouseState.click then
+     local mx, my = love.mouse.getPosition( )
+     if pointInRect(mx,my,x,y,w,h) then
+        result = true
+     end
+   end
+
+   return {
+      clicked=result
+   }
+end
 
 function love.draw()
    -- draw the lfo graphically
-   love.graphics.setColor(1,.5,.5)
-   love.graphics.circle('fill', 100,100, 10)
-   love.graphics.setColor(1,1,1)
-
-   love.graphics.circle('line', 100,100, 10 + lfo.output*5)
+   handleMouseClickStart()
    
+   renderLFO(1,lfo1, 100,100)
+   renderLFO(2,lfo2, 200,100)
+   renderLFO(3,lfo3, 300,100)
 
 
    drawScreenKeyboard(400, 500)
