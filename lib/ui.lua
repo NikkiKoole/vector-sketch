@@ -216,7 +216,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 end
 
 
-function imgbutton(id, img, x, y, scale, disabled)
+function imgbutton(id, img, x, y, hoverText)
    scale = scale or 1
    local mx, my = love.mouse:getPosition()
    local imgW, h = img:getDimensions()
@@ -233,8 +233,14 @@ function imgbutton(id, img, x, y, scale, disabled)
 
    if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
       mouseState.hoveredSomething = true
+      love.graphics.setColor(1,1,1,1)
+     
+      if (hoverText) then
+	 love.graphics.print(hoverText, 200, 0)
+      end
       love.graphics.setColor(1,1,1,.5)
       love.mouse.setCursor(cursors.hand)
+      
       if (mouseState.click) then
 	 clicked = true
       end
