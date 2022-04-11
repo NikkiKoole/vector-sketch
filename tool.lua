@@ -333,7 +333,7 @@ function drawUIAroundGraphNodes(w,h)
 
       local runningY = 110
 
-      if imgbutton('polyline-clone', ui.clone,w - 300 , runningY).clicked then
+      if imgbutton('polyline-clone', ui.clone,w - 300 , runningY, 'clone').clicked then
          if (editingMode == 'polyline') then
             local cloned = copyShape(currentNode)
             cloned._parent = currentNode._parent
@@ -351,36 +351,36 @@ function drawUIAroundGraphNodes(w,h)
          end
       end
 
-      if imgbutton('delete', ui.delete,  w - 256, runningY).clicked then
+      if imgbutton('delete', ui.delete,  w - 256, runningY, 'delete').clicked then
          deleteNode(currentNode)
       end
 
       runningY = runningY + 40
 
-      if imgbutton('badge', ui.badge, w - 300, runningY).clicked then
+      if imgbutton('badge', ui.badge, w - 300, runningY, 'rename').clicked then
          changeName = not changeName
          local name = currentNode and currentNode.name
          changeNameCursor = name and utf8.len(name) or 1
       end
 
-      if imgbutton('connector', ui.parent, w - 256, runningY).clicked then
+      if imgbutton('connector', ui.parent, w - 256, runningY, 'parentize').clicked then
          lastDraggedElement = {id = 'connector', pos = {w - 256, runningY} }
       end
 
       runningY = runningY + 40
 
       if currentNode and currentNode.points and currentNode.type ~= 'meta' then
-         if imgbutton('mask', ui.mask, w - 320, runningY).clicked then
+         if imgbutton('mask', ui.mask, w - 320, runningY, 'turn to mask').clicked then
             currentNode.mask = not currentNode.mask
 	    currentNode.hole = false
 
          end
-         if imgbutton('hole', ui.hole, w - 280, runningY).clicked then
+         if imgbutton('hole', ui.hole, w - 280, runningY, 'turn to hole').clicked then
             currentNode.hole = not currentNode.hole
 	    currentNode.mask = false
 
          end
-	 if imgbutton('close-stencil', ui.close_stencil, w - 240, runningY).clicked then
+	 if imgbutton('close-stencil', ui.close_stencil, w - 240, runningY, 'close stencil marker').clicked then
 	    currentNode.closeStencil = not currentNode.closeStencil
 	    currentNode.mask = false
 	    currentNode.hole = false
@@ -390,7 +390,7 @@ function drawUIAroundGraphNodes(w,h)
 
       if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
 	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
-         if (imgbutton('transition', ui.transition, w - 300, runningY)).clicked then
+         if (imgbutton('transition', ui.transition, w - 300, runningY, 'pose animation')).clicked then
             if (currentNode.keyframes) then
                currentNode.keyframes = nil
                currentNode.lerpValue = nil
@@ -405,7 +405,7 @@ function drawUIAroundGraphNodes(w,h)
 
       if currentNode and currentNode.folder and #currentNode.children >= 4 and
 	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
-         if (imgbutton('joystick', ui.joystick, w - 256, runningY)).clicked then
+         if (imgbutton('joystick', ui.joystick, w - 256, runningY, '4-way pose animation')).clicked then
             if (currentNode.keyframes) then
                currentNode.keyframes = nil
                currentNode.lerpValue = nil
@@ -516,11 +516,11 @@ function drawUIAroundGraphNodes(w,h)
 	    runningY = runningY + 40
          end
 
-         if imgbutton('folder-move', ui.move, w-300, runningY).clicked then
+         if imgbutton('folder-move', ui.move, w-300, runningY, 'move whole').clicked then
             editingModeSub = 'folder-move'
          end
 
-         if imgbutton('change-perspective', ui.change, w-256, runningY).clicked then
+         if imgbutton('change-perspective', ui.change, w-256, runningY, 'debug perspective').clicked then
             editingModeSub = 'change-perspective'
             local bbox = getBBoxOfChildren(currentNode.children)
             local t = currentNode.transforms._g
@@ -531,7 +531,7 @@ function drawUIAroundGraphNodes(w,h)
 
 	 runningY = runningY + 40
 
-	 if imgbutton('optimizer', ui.layer_group, w-300, runningY).clicked then
+	 if imgbutton('optimizer', ui.layer_group, w-300, runningY, 'optimize check').clicked then
             if (currentNode.optimizedBatchMesh) then
                currentNode.optimizedBatchMesh = nil
             else
@@ -548,14 +548,14 @@ function drawUIAroundGraphNodes(w,h)
       end
 
       if (editingMode == 'polyline') and currentNode  then
-         if imgbutton('polyline-move', ui.move,  w - 256, runningY).clicked then
+         if imgbutton('polyline-move', ui.move,  w - 256, runningY, 'move thing').clicked then
             editingModeSub = 'polyline-move'
          end
 
       end
 
       if (editingMode == 'polyline') and currentNode and currentNode.type ~= 'meta'  then
-         if imgbutton('polyline-palette', ui.palette,  w - 300, runningY).clicked then
+         if imgbutton('polyline-palette', ui.palette,  w - 300, runningY, 'pick color').clicked then
             if editingModeSub == 'polyline-palette' then
                editingModeSub = 'polyline-edit'
             else
@@ -565,7 +565,7 @@ function drawUIAroundGraphNodes(w,h)
 
 
          runningY = runningY + 40  -- behind an if !!
-         if imgbutton('polyline-recenter', ui.pivot, w - 300, runningY).clicked then
+         if imgbutton('polyline-recenter', ui.pivot, w - 300, runningY, 'recenter').clicked then
             editingModeSub = 'polyline-recenter'
             print('this the one?')
             local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
@@ -578,7 +578,7 @@ function drawUIAroundGraphNodes(w,h)
          end
 
          if currentNode and currentNode.points then
-            if imgbutton('rectangle-point-select', ui.select, w - 256, runningY).clicked then
+            if imgbutton('rectangle-point-select', ui.select, w - 256, runningY, 'select points in child').clicked then
 	       if #childrenInRectangleSelect > 0 then
 		  editingModeSub = 0
 		  childrenInRectangleSelect = {}
@@ -611,7 +611,7 @@ function drawUIAroundGraphNodes(w,h)
                end
             end
 
-            if imgbutton('rotate', ui.rotate, w - 256, runningY).clicked then
+            if imgbutton('rotate', ui.rotate, w - 256, runningY, 'rotate with 22.5').clicked then
                rotateGroup(currentNode, 22.5)
             end
 

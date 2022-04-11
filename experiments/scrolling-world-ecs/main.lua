@@ -38,6 +38,17 @@ require 'src.stackStuff'
 
 random = love.math.random
 
+ -- cehck this on love2d to make an ingame editor and mount vector sketch files to edit ingame
+-- https://www.reddit.com/r/love2d/comments/i4u5kr/use_of_lovefilesystemgetuserdirectory/
+
+-- mounts a real file-location of a zip-file to a save-dir
+-- https://love2d.org/wiki/love.filesystem.mount
+function mountZip(filename, mountpoint)
+  local f = io.open(filename, 'r')
+  local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+  f:close()
+  return love.filesystem.mount(filedata, mountpoint or 'zip')
+end
 
 --[[
    TODO:
