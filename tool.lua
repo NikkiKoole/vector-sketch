@@ -1067,7 +1067,7 @@ function tryToCenterUI(node2)
    if ry > h then
       scrollviewOffset = ry
    else
-      scrollviewOffset = 30
+      scrollviewOffset = 0
    end
 end
 
@@ -1840,7 +1840,8 @@ function mylib:draw()
 
 	    love.graphics.setFont(small)
 	    local scrollBarH =  h*0.25
-	    if totalHeightGraphNodes > scrollBarH then
+            print(scrollviewOffset)
+	    if totalHeightGraphNodes > scrollBarH  then
 	       local ding = scrollbarV('hierarchyslider', 0, h*0.75 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
 	       if ding.value ~= nil then
 		  scrollviewOffset = ding.value
