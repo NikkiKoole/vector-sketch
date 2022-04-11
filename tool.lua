@@ -1077,9 +1077,9 @@ function getNodeYPosition(node, lookFor)
    return recursiveGetRunningYForNode(node, lookFor, 0)
 end
 
-function renderGraphNodes(node, level, startY)
+function renderGraphNodes(node, level, startY, beginX, totalHeight)
    local w, h = getDimensions() --love.graphics.getDimensions( )
-   local beginRightX = w - 210 + level*6
+   local beginRightX = beginX + level*6
    local rightX = beginRightX
    local nested = 0
    local runningY = 0
@@ -1118,11 +1118,11 @@ function renderGraphNodes(node, level, startY)
 
       local b = {}
       if (yPos >=0 and yPos <= h) then
-         b = iconlabelbutton('object-group'..i, icon, color, child == currentNode, child.name or "", rightX , yPos, 128+32, -4)
+         b = iconlabelbutton('object-group'..i, icon, color, child == currentNode, child.name or "", rightX , yPos, 128, -4)
       end
 
       if (child.folder and child.open ) then
-         local add = renderGraphNodes(child, level + 1, runningY + startY + rowHeight)
+         local add = renderGraphNodes(child, level + 1, runningY + startY + rowHeight, beginX, totalHeight)
          runningY = runningY + add
       end
 
@@ -1214,8 +1214,12 @@ function mylib:load(arg)
    --local ffont = "resources/fonts/MonacoB.otf"
    --local ffont = "resources/fonts/agave.ttf"
    local ffont = "resources/fonts/WindsorBT-Roman.otf"
-
+   local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
+   
+--   local otherfont = "resources/fonts/Monaco.ttf"
    supersmallest = love.graphics.newFont(ffont , 8)
+   smallester = love.graphics.newFont(ffont , 14)
+
    smallest = love.graphics.newFont(ffont , 16)
    small = love.graphics.newFont(ffont, 24)
    medium = love.graphics.newFont( ffont, 32)
@@ -1228,7 +1232,7 @@ function mylib:load(arg)
    introSound = love.audio.newSource("resources/sounds/supermarket.wav", "static")
    introSound:setVolume(0.1)
    introSound:setPitch(0.9 + 0.2*love.math.random())
-   introSound:play()
+   --introSound:play()
 
    simple_format = {
       {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
@@ -1822,16 +1826,22 @@ function mylib:draw()
 	       love.graphics.rectangle('fill',0,h-64,w,64)
 	    end
 
-	    love.graphics.setFont(smallest)
-	    local totalHeightGraphNodes = renderGraphNodes(root, 0, 16)
+	    love.graphics.setFont(smallester)
+
+            
+            love.graphics.setScissor( 0, h*0.75, 128+40, h*0.25 )
+
+	    local totalHeightGraphNodes = renderGraphNodes(root, 0, h*0.75, 40, h*0.25)
+            love.graphics.setScissor()
+            
 	    if (scrollviewOffset > totalHeightGraphNodes) then
 	       scrollviewOffset = totalHeightGraphNodes
 	    end
 
 	    love.graphics.setFont(small)
-	    local scrollBarH =  (h-32)
+	    local scrollBarH =  h*0.25
 	    if totalHeightGraphNodes > scrollBarH then
-	       local ding = scrollbarV('hierarchyslider', w-40, 16 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
+	       local ding = scrollbarV('hierarchyslider', 0, h*0.75 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
 	       if ding.value ~= nil then
 		  scrollviewOffset = ding.value
 	       end
