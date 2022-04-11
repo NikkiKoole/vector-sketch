@@ -641,15 +641,18 @@ function lerpArray(a1, a2, t)
 end
 
 function lerpPoints(p1, p2, t)
-   assert(#p1 == #p2)
-   local result = {}
-   for i=1, #p1 do
-      table.insert(result, {
-		      lerp(p1[i][1], p2[i][1], t),
-		      lerp(p1[i][2], p2[i][2], t)
-      })
+   if (#p1 == #p2) then
+      local result = {}
+      for i=1, #p1 do
+         table.insert(result, {
+                         lerp(p1[i][1], p2[i][1], t),
+                         lerp(p1[i][2], p2[i][2], t)
+         })
+      end
+      return result
    end
-   return result
+   print('lerping two arrays thta rent the same length')
+   return p1
 end
 
 
@@ -662,10 +665,12 @@ function lerpNodes(left, right, root, t)
 	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
       }
       root.children = {}
-      assert(#left.children == #right.children)
+      print(#left.children, #right.children)
+      if (#left.children == #right.children) then
       for i=1, #left.children do
 	 root.children[i] = {}
 	 lerpNodes(left.children[i], right.children[i], root.children[i], t)
+      end
       end
       --root._parent = left._parent
    elseif (left.points and right.points) then
