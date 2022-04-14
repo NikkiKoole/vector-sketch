@@ -81,6 +81,74 @@ local function getGlobalDelta(transform, dx, dy)
    return dx3, dy3
 end
 
+
+local function recursiveCloseAll(node)
+   if node.folder then
+      node.open = false
+   end
+
+   if node.children then
+      for i =1, #node.children do
+         recursiveCloseAll(node.children[i])
+      end
+   end
+end
+local function recursiveOpenSome(node, toOpen)
+   if node.folder then
+      for j=#toOpen, 1, -1 do
+         if toOpen[j] == node then
+            node.open = true
+            table.remove(toOpen, j)
+         end
+      end
+   end
+
+   if node.children then
+      for i = 1, #node.children do
+         recursiveOpenSome(node.children[i], toOpen)
+      end
+   end
+end
+local function recursiveGetRunningYForNode(node, lookFor, runningY)
+   -- this one assumes the nodes are already opened up correctly
+   local rowHeight = 27 - 4
+   for i = 1,#node.children do
+      local child = node.children[i]
+      if child == lookFor then
+         return runningY
+      else
+         runningY = runningY + rowHeight
+         if child.folder and child.open then
+            return recursiveGetRunningYForNode(node.children[i], lookFor, runningY)
+         end
+      end
+   end
+
+   return runningY
+end
+
+
+local function tryToCenterUI(node2)
+   recursiveCloseAll(root)
+   local reversePath = {}
+   local node = node2
+   while node ~= root do
+      table.insert(reversePath,node._parent)
+      node = node._parent
+   end
+   recursiveOpenSome(root, reversePath)
+   local ry = recursiveGetRunningYForNode(root, node2, 0)
+   local w, h = getDimensions()
+   --love.graphics.getDimensions( )
+   if ry > h then
+      scrollviewOffset = ry
+   else
+      scrollviewOffset = 0
+   end
+end
+
+
+
 local function setCurrentNode(newNode)
    if currentNode and not currentNode.folder then
       remeshNode(currentNode)
@@ -107,7 +175,7 @@ function countNestedChildren(node, total)
    return total
 end
 
-function nodeIsMyOwnOffspring(me, node)
+local function nodeIsMyOwnOffspring(me, node)
    if (me == node) then return true end
    if (node._parent == me) then
       return true
@@ -118,7 +186,7 @@ function nodeIsMyOwnOffspring(me, node)
    return nodeIsMyOwnOffspring(me, node._parent)
 end
 
-function rotateGroup(node, degrees)
+local function rotateGroup(node, degrees)
    local tlx, tly, brx, bry = getPointsBBox(node.points)
    local w2 = (brx - tlx)/2
    local h2 = (bry - tly)/2
@@ -142,7 +210,7 @@ function rotateGroup(node, degrees)
    remeshNode(node)
 end
 
-function recenterGroup(group, dx, dy)
+local function recenterGroup(group, dx, dy)
    for i =1, #group do
       for j = 1, #(group[i].points) do
          group[i].points[j][1] = group[i].points[j][1] + dx
@@ -185,7 +253,7 @@ local function resizeGroup(node, children, scale)
    end
 end
 
-function flipGroup(node, children, xaxis, yaxis)
+local function flipGroup(node, children, xaxis, yaxis)
    if type(children[1]) == 'number' then
       for p=1, #children do
 	 local index = children[p]
@@ -207,7 +275,14 @@ function flipGroup(node, children, xaxis, yaxis)
    end
 end
 
-function deleteNode(node)
+local function removeCurrentNode()
+   if (currentNode) then
+      return table.remove(currentNode._parent.children, getIndex(currentNode))
+   end
+end
+
+
+local function deleteNode(node)
    local index = getIndex(node)
    local taken_out = removeCurrentNode()
    if (index > 1) then
@@ -219,14 +294,14 @@ function deleteNode(node)
    end
 end
 
-function removeGroupOfThings(group)
+local function removeGroupOfThings(group)
    local root =  currentNode or root
    for i = 1, #group do
       table.remove(root.children, getIndex(group[i]))
    end
 end
 
-function addGroupAtEnd(group, parent)
+local function addGroupAtEnd(group, parent)
    for i = 1, #group do
       local thing = group[i]
       thing._parent = parent
@@ -234,33 +309,28 @@ function addGroupAtEnd(group, parent)
    end
 end
 
-function addThingAtEnd(thing, parent)
+local function addThingAtEnd(thing, parent)
    thing._parent = parent
    table.insert(parent.children, #parent.children + 1, thing)
 end
 
-function addShapeAtRoot(shape)
+local function addShapeAtRoot(shape)
    table.insert(root.children, #root.children + 1, shape)
 end
 
-function addShapeAfter(shape, after)
+local function addShapeAfter(shape, after)
    local index = getIndex(after)
    if (index > 0) then
       table.insert(after._parent.children, index+1, shape)
    end
 end
 
-function removeCurrentNode()
-   if (currentNode) then
-      return table.remove(currentNode._parent.children, getIndex(currentNode))
-   end
-end
 
-function removeShapeAtPath(path)
+local function removeShapeAtPath(path)
    return table.remove(root.children, path[1])
 end
 
-function moveItemsInRectangleSelect(dx, dy)
+local function moveItemsInRectangleSelect(dx, dy)
    for i = 1, #childrenInRectangleSelect do
       local child = childrenInRectangleSelect[i]
       if child then
@@ -273,7 +343,7 @@ function moveItemsInRectangleSelect(dx, dy)
 end
 
 
-function movePoints(node, dx, dy)
+local function movePoints(node, dx, dy)
    if node.folder then
       for i = 1, #childrenInRectangleSelect do
 	 local child = childrenInRectangleSelect[i]
@@ -305,7 +375,7 @@ local function arrayHas(tab, val)
    return false
 end
 
-function deletePoints(node)
+local function deletePoints(node)
    local newPoints = {}
    
    for i = 1, #node.points do
@@ -320,8 +390,78 @@ end
 
 ------------ editor specific code
 
-function drawUIAroundGraphNodes(w,h)
+local function drawUIAroundGraphNodes(w,h)
 
+   local rows = {}
+
+   
+   local row0 = {
+      startX=10,
+      startY=h*0.75 - 40,
+   }
+   row0.runningX = row0.startX
+   row0.runningY = row0.startY
+
+   table.insert(
+      row0,
+      {
+         'add-something', ui.add, 'add a new thing',
+         function()
+            openedAddPanel = not openedAddPanel
+
+         end
+         
+
+      }
+   )
+   if openedAddPanel then
+   table.insert(
+      row0,
+      {
+         'add-meta', ui.move, 'add a meta',
+         function()
+            --openedAddPanel = not openedAddPanel
+
+         end
+         
+
+      }
+   )
+   table.insert(
+      row0,
+      {
+         'add-shape', ui.object_group, 'add a shape',
+         function()
+            --openedAddPanel = not openedAddPanel
+
+         end
+         
+
+      }
+   )
+   table.insert(
+      row0,
+      {
+         'add-folder', ui.folder, 'add a folder',
+         function()
+            --openedAddPanel = not openedAddPanel
+
+         end
+         
+
+      }
+   )
+      
+      
+      
+   end
+   
+
+   
+
+   table.insert(rows, row0)
+
+   
    local row1 = {
       startX=10,
       startY=h*0.75,
@@ -432,7 +572,6 @@ function drawUIAroundGraphNodes(w,h)
       end
    end
 
-   local rows = {}
    table.insert(rows, row1)
 
 
@@ -444,9 +583,11 @@ function drawUIAroundGraphNodes(w,h)
    row2.runningY = row2.startY
 
 
+   -- folder
+   
    if editingMode == 'folder' and currentNode and currentNode.folder then
       --print('new stuff ayoo!')
-       table.insert(
+      table.insert(
          row2,
          {
             'transform-toggle', ui.transform, 'do the transformations',
@@ -454,9 +595,9 @@ function drawUIAroundGraphNodes(w,h)
                showTheParentTransforms = not showTheParentTransforms
             end
          }
-       )
+      )
 
-       table.insert(
+      table.insert(
          row2,
          {
             'folder-pan-pivot', ui.pan, 'pivot pooint',
@@ -468,8 +609,8 @@ function drawUIAroundGraphNodes(w,h)
                end
             end
          }
-       )
-       table.insert(
+      )
+      table.insert(
          row2,
          {
             'folder-move', ui.move,  'move whole',
@@ -479,44 +620,162 @@ function drawUIAroundGraphNodes(w,h)
 
             end
          }
-       )
-       table.insert(row2, 'whitespace')
-       table.insert(
+      )
+      table.insert(row2, 'whitespace')
+      table.insert(
          row2,
          {
             'optimizer', ui.layer_group,  'optimize check',
             function()
                if (currentNode.optimizedBatchMesh) then
                   currentNode.optimizedBatchMesh = nil
-            else
-	       makeOptimizedBatchMesh(currentNode)
-            end
+               else
+                  makeOptimizedBatchMesh(currentNode)
+               end
 
             end
          }
-       )
-       table.insert(row2, "printOptimizedBatchMesh")
-       table.insert(
+      )
+      table.insert(row2, "printOptimizedBatchMesh")
+      table.insert(
          row2,
          {
             'change-perspective', ui.change,  'debug perspective thing',
             function()
                editingModeSub = 'change-perspective'
-            local bbox = getBBoxOfChildren(currentNode.children)
-            local t = currentNode.transforms._g
-            local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
-            local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
-            perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
+               local bbox = getBBoxOfChildren(currentNode.children)
+               local t = currentNode.transforms._g
+               local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
+               local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
+               perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
 
 
 
             end
          }
-       )
-       
+      )
+      table.insert(row2, 'newline')
+      -- do the grid
+      table.insert(row2, '9grid')
+
+      if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and  (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+         
+         table.insert(
+            row2,
+            {
+               'transition', ui.transition, 'pose animation',
+               function()
+                  if (currentNode.keyframes) then
+                     currentNode.keyframes = nil
+                     currentNode.lerpValue = nil
+                     currentNode.frame = nil
+                  else
+                     currentNode.keyframes = 2
+                     currentNode.lerpValue = 0.5
+                     currentNode.frame = 1
+                  end
+               end
+            }
+
+         )
+      end
+
+      if currentNode and currentNode.folder and #currentNode.children >= 4 and
+	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+         table.insert(
+            row2,
+            {
+               'joystick', ui.joystick, '4way pose animation',
+               function()
+                  if (currentNode.keyframes) then
+                     currentNode.keyframes = nil
+                     currentNode.lerpValue = nil
+                     currentNode.lerpX = nil
+                     currentNode.lerpY = nil
+                     currentNode.frame = nil
+                  else
+                     currentNode.keyframes = #currentNode.children
+                     currentNode.lerpX = 0.5
+                     currentNode.lerpY = 0.5
+                     currentNode.frame = 1
+                  end
+
+               end
+            }
+
+         )
+         
+      end
+
+      -- avoid the 9grid from above
+      table.insert(row2, "newline")
+      table.insert(row2, "whitespace")
+      table.insert(row2, "whitespace")
+
+      
    end
+
    
 
+   -- this is adirect copy of code
+   if #childrenInRectangleSelect > 0  and type(childrenInRectangleSelect[1])=='table' then
+
+
+        table.insert(
+            row2,
+            {
+               'children-flip-vertical', ui.flip_vertical, 'flip vertically',
+               function()
+                  flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
+               end
+            }
+         )
+         table.insert(
+            row2,
+            {
+               'children-flip-horizontal', ui.flip_horizontal, 'flip vertically',
+               function()
+                  flipGroup(currentNode, childrenInRectangleSelect, -1,1)
+               end
+            }
+         )
+         table.insert(
+            row2,
+            {
+               'children-scale-up', ui.resize, 'scale up',
+               function()
+                  if love.keyboard.isDown('a') then
+                     resizeGroup(currentNode, childrenInRectangleSelect, .75)
+                  else
+                     resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+                  end
+
+               end
+            }
+         )
+         table.insert(
+            row2, 
+            {
+               'children-scale-down', ui.resize, 'scale down',
+               function()
+                  if love.keyboard.isDown('a') then
+                     resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+                  else
+                     resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+                  end
+
+               end
+            }
+         )
+
+      
+   end
+   
+      
+      
+   
+   
+---  polyline
    
    if (editingMode == 'polyline' and currentNode and currentNode.type ~= 'meta') then
       table.insert(
@@ -746,15 +1005,10 @@ function drawUIAroundGraphNodes(w,h)
          local v = row[i]
          --print(inspect(v))
          if (type(v) == 'table') then
-            --if v.printStr then
-            -- love.graphics.print("x", runningX, runningY)
-            --v.eval(runningX, runningY)
-            --else
             
             if imgbutton(v[1], v[2], row.runningX, row.runningY, v[3]).clicked then
                v[4]()
             end
-            --end
             
             row.runningX = row.runningX + 40
          end
@@ -772,32 +1026,120 @@ function drawUIAroundGraphNodes(w,h)
                if (#childrenInRectangleSelect > 0) then
                   love.graphics.print(#childrenInRectangleSelect, row.runningX-40, row.runningY)
                end
-               
             end
             if v == 'printOptimizedBatchMesh' then
                if currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
-                  
                   love.graphics.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
                end
-               
             end
-            
-            
-            
-            
+
+            if v =='9grid' then
+               love.graphics.setColor(1,1,1,.5)
+               ----------
+               local runningX = row.runningX
+               local runningY = row.runningY
+               local oldRunningX = row.runningX
+
+
+               runningX = runningX - 6
+               function get6(node)
+                  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+                  local mx = tlx + (brx - tlx)/2
+                  local my = tly + (bry - tly)/2
+                  return tlx, tly, brx, bry, mx, my
+               end
+               if (currentNode.children and #currentNode.children > 0) then
+                  love.graphics.rectangle("fill", runningX, runningY, 20, 20)
+                  if getUIRect('p1', runningX, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= tlx
+                     currentNode.transforms.l[7]= tly
+                  end
+
+                  love.graphics.rectangle("fill", runningX+24, runningY, 20, 20)
+                  if getUIRect('p2', runningX+24, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= mx
+                     currentNode.transforms.l[7]= tly
+                  end
+
+                  love.graphics.rectangle("fill", runningX+48, runningY, 20, 20)
+                  if getUIRect('p3', runningX+48, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= brx
+                     currentNode.transforms.l[7]= tly
+                  end
+
+                  runningY = runningY + 24
+
+                  love.graphics.rectangle("fill", runningX, runningY, 20, 20)
+                  if getUIRect('p4', runningX, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= tlx
+                     currentNode.transforms.l[7]= my
+                  end
+
+                  love.graphics.rectangle("fill", runningX+24, runningY, 20, 20)
+                  if getUIRect('p5', runningX+24, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= mx
+                     currentNode.transforms.l[7]= my
+                  end
+
+                  love.graphics.rectangle("fill", runningX+48, runningY, 20, 20)
+                  if getUIRect('p6', runningX+48, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= brx
+                     currentNode.transforms.l[7]= my
+                  end
+
+                  runningY = runningY + 24
+
+                  love.graphics.rectangle("fill", runningX, runningY, 20, 20)
+                  if getUIRect('p7', runningX, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= tlx
+                     currentNode.transforms.l[7]= bry
+                  end
+
+                  love.graphics.rectangle("fill", runningX+24, runningY, 20, 20)
+                  if getUIRect('p8', runningX+24, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= mx
+                     currentNode.transforms.l[7]= bry
+                  end
+
+                  love.graphics.rectangle("fill", runningX+48, runningY, 20, 20)
+                  if getUIRect('p9', runningX+48, runningY, 20,20).clicked then
+                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+                     currentNode.transforms.l[6]= brx
+                     currentNode.transforms.l[7]= bry
+                  end
+
+                  runningY = runningY + 40
+               end
+
+               row.runningX = oldRunningX + 80
+
+            end
+
+
+
          end
+
       end
+
    end
    
 
    
    if currentNode then
-      local panelWidth = 96
-      local panelHeight = 256
-      local panelX = w - 256-64
-      local panelY = 96
-      love.graphics.setColor(.3,.3,.35,.5)
-      love.graphics.rectangle("fill", panelX, panelY, panelWidth,panelHeight)
+      -- local panelWidth = 96
+      -- local panelHeight = 256
+      -- local panelX = w - 256-64
+      -- local panelY = 96
+      -- love.graphics.setColor(.3,.3,.35,.5)
+      -- love.graphics.rectangle("fill", panelX, panelY, panelWidth,panelHeight)
 
       local runningY = 110
 
@@ -826,46 +1168,54 @@ function drawUIAroundGraphNodes(w,h)
          
       end
 
-      if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
-	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
-         if (imgbutton('transition', ui.transition, w - 300, runningY, 'pose animation')).clicked then
-            if (currentNode.keyframes) then
-               currentNode.keyframes = nil
-               currentNode.lerpValue = nil
-               currentNode.frame = nil
-            else
-               currentNode.keyframes = 2
-               currentNode.lerpValue = 0.5
-               currentNode.frame = 1
-            end
-         end
-      end
+      -- if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
+      --    (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+      --    if (imgbutton('transition', ui.transition, w - 300, runningY, 'pose animation')).clicked then
+      --       if (currentNode.keyframes) then
+      --          currentNode.keyframes = nil
+      --          currentNode.lerpValue = nil
+      --          currentNode.frame = nil
+      --       else
+      --          currentNode.keyframes = 2
+      --          currentNode.lerpValue = 0.5
+      --          currentNode.frame = 1
+      --       end
+      --    end
+      -- end
 
-      if currentNode and currentNode.folder and #currentNode.children >= 4 and
-	 (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
-         if (imgbutton('joystick', ui.joystick, w - 256, runningY, '4-way pose animation')).clicked then
-            if (currentNode.keyframes) then
-               currentNode.keyframes = nil
-               currentNode.lerpValue = nil
-               currentNode.lerpX = nil
-               currentNode.lerpY = nil
-               currentNode.frame = nil
-            else
-               currentNode.keyframes = #currentNode.children
-               currentNode.lerpX = 0.5
-               currentNode.lerpY = 0.5
-               currentNode.frame = 1
-            end
-         end
-      end
+      -- if currentNode and currentNode.folder and #currentNode.children >= 4 and
+      --    (not isPartOfKeyframePose(currentNode) or currentNode.keyframes)  then
+      --    if (imgbutton('joystick', ui.joystick, w - 256, runningY, '4-way pose animation')).clicked then
+      --       if (currentNode.keyframes) then
+      --          currentNode.keyframes = nil
+      --          currentNode.lerpValue = nil
+      --          currentNode.lerpX = nil
+      --          currentNode.lerpY = nil
+      --          currentNode.frame = nil
+      --       else
+      --          currentNode.keyframes = #currentNode.children
+      --          currentNode.lerpX = 0.5
+      --          currentNode.lerpY = 0.5
+      --          currentNode.frame = 1
+      --       end
+      --    end
+      -- end
 
       runningY = runningY + 40
 
 
+
+
+      function draw9Grid()
+
+      end
+      
+      
+
       if (editingMode == 'folder') and currentNode then
-     --    if imgbutton('transform-toggle', ui.transform,  w - 300, runningY, 'do the transformations').clicked then
-     --       showTheParentTransforms = not showTheParentTransforms
-     --    end
+         --    if imgbutton('transform-toggle', ui.transform,  w - 300, runningY, 'do the transformations').clicked then
+         --       showTheParentTransforms = not showTheParentTransforms
+         --    end
          -- if imgbutton('folder-pan-pivot', ui.pan,  w-256, runningY, 'pivot point').clicked then
          --    if editingModeSub == 'folder-pan-pivot' then
          --       editingModeSub = nil
@@ -876,87 +1226,87 @@ function drawUIAroundGraphNodes(w,h)
          -- end
          -- runningY = runningY + 40
 
-         love.graphics.setColor(1,1,1,.5)
-         function get6(node)
-            local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-            local mx = tlx + (brx - tlx)/2
-            local my = tly + (bry - tly)/2
-            return tlx, tly, brx, bry, mx, my
-         end
-         if (currentNode.children and #currentNode.children > 0) then
-	    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
-	    if getUIRect('p1', w-300, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= tlx
-	       currentNode.transforms.l[7]= tly
-	    end
+         -- love.graphics.setColor(1,1,1,.5)
+         -- function get6(node)
+         --    local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+         --    local mx = tlx + (brx - tlx)/2
+         --    local my = tly + (bry - tly)/2
+         --    return tlx, tly, brx, bry, mx, my
+         -- end
+         -- if (currentNode.children and #currentNode.children > 0) then
+	 --    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	 --    if getUIRect('p1', w-300, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= tlx
+	 --       currentNode.transforms.l[7]= tly
+	 --    end
 
-	    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
-	    if getUIRect('p2', w-300+24, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= mx
-	       currentNode.transforms.l[7]= tly
-	    end
+	 --    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	 --    if getUIRect('p2', w-300+24, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= mx
+	 --       currentNode.transforms.l[7]= tly
+	 --    end
 
-	    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
-	    if getUIRect('p3', w-300+48, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= brx
-	       currentNode.transforms.l[7]= tly
-	    end
+	 --    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	 --    if getUIRect('p3', w-300+48, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= brx
+	 --       currentNode.transforms.l[7]= tly
+	 --    end
 
-	    runningY = runningY + 24
+	 --    runningY = runningY + 24
 
-	    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
-	    if getUIRect('p4', w-300, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= tlx
-	       currentNode.transforms.l[7]= my
-	    end
+	 --    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	 --    if getUIRect('p4', w-300, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= tlx
+	 --       currentNode.transforms.l[7]= my
+	 --    end
 
-	    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
-	    if getUIRect('p5', w-300+24, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= mx
-	       currentNode.transforms.l[7]= my
-	    end
+	 --    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	 --    if getUIRect('p5', w-300+24, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= mx
+	 --       currentNode.transforms.l[7]= my
+	 --    end
 
-	    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
-	    if getUIRect('p6', w-300+48, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= brx
-	       currentNode.transforms.l[7]= my
-	    end
+	 --    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	 --    if getUIRect('p6', w-300+48, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= brx
+	 --       currentNode.transforms.l[7]= my
+	 --    end
 
-	    runningY = runningY + 24
+	 --    runningY = runningY + 24
 
-	    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
-	    if getUIRect('p7', w-300, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= tlx
-	       currentNode.transforms.l[7]= bry
-	    end
+	 --    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	 --    if getUIRect('p7', w-300, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= tlx
+	 --       currentNode.transforms.l[7]= bry
+	 --    end
 
-	    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
-	    if getUIRect('p8', w-300+24, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= mx
-	       currentNode.transforms.l[7]= bry
-	    end
+	 --    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	 --    if getUIRect('p8', w-300+24, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= mx
+	 --       currentNode.transforms.l[7]= bry
+	 --    end
 
-	    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
-	    if getUIRect('p9', w-300+48, runningY, 20,20).clicked then
-	       local tlx, tly, brx, bry, mx, my = get6(currentNode)
-	       currentNode.transforms.l[6]= brx
-	       currentNode.transforms.l[7]= bry
-	    end
+	 --    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	 --    if getUIRect('p9', w-300+48, runningY, 20,20).clicked then
+	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	 --       currentNode.transforms.l[6]= brx
+	 --       currentNode.transforms.l[7]= bry
+	 --    end
 
-	    runningY = runningY + 40
-         end
+	 --    runningY = runningY + 40
+         -- end
 
---         if imgbutton('folder-move', ui.move, w-300, runningY, 'move whole').clicked then
-  --          editingModeSub = 'folder-move'
-    --     end
+         --         if imgbutton('folder-move', ui.move, w-300, runningY, 'move whole').clicked then
+         --          editingModeSub = 'folder-move'
+         --     end
 
          -- if imgbutton('change-perspective', ui.change, w-256, runningY, 'debug perspective').clicked then
          --    editingModeSub = 'change-perspective'
@@ -1391,78 +1741,16 @@ function mylib:mousemoved(x,y, dx, dy)
    end
 end
 
-function calcY(i)
+local function calcY(i)
    return (16 + (24 + 8 + 4) * i)
 end
-function calcX(i)
+local function calcX(i)
    return ((24 + 8 + 4) * i)
 end
 
-function recursiveCloseAll(node)
-   if node.folder then
-      node.open = false
-   end
 
-   if node.children then
-      for i =1, #node.children do
-         recursiveCloseAll(node.children[i])
-      end
-   end
-end
 
-function recursiveOpenSome(node, toOpen)
-   if node.folder then
-      for j=#toOpen, 1, -1 do
-         if toOpen[j] == node then
-            node.open = true
-            table.remove(toOpen, j)
-         end
-      end
-   end
 
-   if node.children then
-      for i = 1, #node.children do
-         recursiveOpenSome(node.children[i], toOpen)
-      end
-   end
-end
-
-function recursiveGetRunningYForNode(node, lookFor, runningY)
-   -- this one assumes the nodes are already opened up correctly
-   local rowHeight = 27 - 4
-   for i = 1,#node.children do
-      local child = node.children[i]
-      if child == lookFor then
-         return runningY
-      else
-         runningY = runningY + rowHeight
-         if child.folder and child.open then
-            return recursiveGetRunningYForNode(node.children[i], lookFor, runningY)
-         end
-      end
-   end
-
-   return runningY
-end
-
-local function tryToCenterUI(node2)
-   recursiveCloseAll(root)
-   local reversePath = {}
-   local node = node2
-   while node ~= root do
-      table.insert(reversePath,node._parent)
-      node = node._parent
-   end
-   recursiveOpenSome(root, reversePath)
-   local ry = recursiveGetRunningYForNode(root, node2, 0)
-   local w, h = getDimensions()
-   --love.graphics.getDimensions( )
-   if ry > h then
-      scrollviewOffset = ry
-   else
-      scrollviewOffset = 0
-   end
-end
 
 local startTime = love.timer.getTime()
 
@@ -1806,7 +2094,7 @@ function mylib:load(arg)
    openedAddPanel = false
 end
 
-function drawGrid()
+local function drawGrid()
    local scale = root.transforms.l[4]
    local size = backdrop.grid.cellsize * scale
    if (size < 10) then return end
@@ -1825,7 +2113,7 @@ function drawGrid()
    end
 end
 
-function  makeNewFolder()
+local function  makeNewFolder()
    local shape = {
       folder = true,
       transforms =  {l={0,0,0,1,1,0,0, 0,0}},
@@ -1848,7 +2136,7 @@ end
 
 local step = 0
 
-function labelPos(x,y)
+local function labelPos(x,y)
    return x,y-20
 end
 
@@ -2311,6 +2599,7 @@ function mylib:draw()
                   if (editingMode == 'rectangle-select') then
                      editingMode = nil
                      editingModeSub = nil
+                     print('todo take me where i came from')
                   else
                      editingMode = 'rectangle-select'
                   end
@@ -2321,7 +2610,7 @@ function mylib:draw()
                end
                -- todo hier was ik
 	       if true and #childrenInRectangleSelect > 0  then
-                  print(type (childrenInRectangleSelect[1]))
+                  --print(type (childrenInRectangleSelect[1]))
 		  if love.keyboard.isDown("delete") then
 		     local indexes = type(childrenInRectangleSelect[1]) == "number"
 		     if indexes then
@@ -2343,7 +2632,7 @@ function mylib:draw()
 
                   end
 
-
+                  
 
                   if true then
                      if imgbutton('group-scale-down', ui.resize, w - 300, 500).clicked  then
@@ -2526,11 +2815,11 @@ function mylib:draw()
 		  local cursorX = (love.graphics.getFont():getWidth(substr))
 		  local cursorH = (love.graphics.getFont():getHeight(str))
 		  love.graphics.setColor(1,1,1,0.5)
-		  love.graphics.rectangle('fill', w-700 - 10, calcY(4) + 8*4 - 10, 300 + 20,  cursorH + 20 )
+		  love.graphics.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
 		  love.graphics.setColor(1,1,1)
-		  love.graphics.print(str , w - 700, calcY(4) + 8*4)
+		  love.graphics.print(str , 0, h*0.75 - cursorH - 20)
 		  love.graphics.setColor(1,1,1, math.abs(math.sin(step/ 100)))
-		  love.graphics.rectangle('fill', w- 700 + cursorX+2, calcY(4) + 32,  2, cursorH)
+		  love.graphics.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
 		  love.graphics.setColor(1,1,1)
 
 		  if lastClickedGraphButton then

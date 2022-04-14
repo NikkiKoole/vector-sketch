@@ -310,7 +310,7 @@ function doDopeSheetEditing()
 
 	    local halfEases = math.floor(#eases/2)
 
-	    function makeEaseLabelButton(label, x, y, selectedEase)
+	    local function makeEaseLabelButton(label, x, y, selectedEase)
 	       love.graphics.setColor(0,0,0, 1)
 	       love.graphics.print(label, x+2, y+1)
 	       love.graphics.setColor(1,1,1, 1)
