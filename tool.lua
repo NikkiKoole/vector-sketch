@@ -1,6 +1,5 @@
 inspect = require 'vendor.inspect'
 
-
 console = require 'vendor.console'
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 
@@ -23,17 +22,15 @@ require 'lib.ui'
 utf8 = require('utf8')
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
---easing = require 'vendor.easing'
 
+--easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
 
 local mylib = {}
 
-
 function mylib:setDimensions(w,h)
    mylib.w =w
    mylib.h =h
-
 end
 
 
@@ -154,7 +151,7 @@ function recenterGroup(group, dx, dy)
    end
 end
 
-function recenterPoints(points)
+local function recenterPoints(points)
    local tlx, tly, brx, bry = getPointsBBox(points)
    local w2 = (brx - tlx)/2
    local h2 = (bry - tly)/2
@@ -165,7 +162,7 @@ function recenterPoints(points)
    return points
 end
 
-function resizeGroup(node, children, scale)
+local function resizeGroup(node, children, scale)
    if type(children[1]) == 'number' then
       for i = 1, #children do
 	 local index = children[i]
@@ -310,6 +307,7 @@ end
 
 function deletePoints(node)
    local newPoints = {}
+   
    for i = 1, #node.points do
       if not arrayHas(childrenInRectangleSelect, i) then
          table.insert(newPoints, {node.points[i][1], node.points[i][2]})
@@ -323,6 +321,476 @@ end
 ------------ editor specific code
 
 function drawUIAroundGraphNodes(w,h)
+
+   local row1 = {
+      startX=10,
+      startY=h*0.75,
+   }
+   row1.runningX = row1.startX
+   row1.runningY = row1.startY
+
+   if (currentNode) then
+
+      table.insert(
+         row1,
+         {
+            'polyline-clone', ui.clone, 'clone',
+            function()
+               if (editingMode == 'polyline') then
+                  local cloned = copyShape(currentNode)
+                  cloned._parent = currentNode._parent
+                  cloned.name = (cloned.name)
+                  addShapeAfter(cloned, currentNode)
+                  setCurrentNode(cloned)
+               elseif  (editingMode == 'folder') then
+                  local cloned = copyShape(currentNode)
+                  cloned._parent = currentNode._parent
+                  parentize(cloned)
+                  cloned.name = (cloned.name)..' copy'
+                  addShapeAfter(cloned, currentNode)
+                  meshAll(cloned)
+                  setCurrentNode(cloned)
+               end
+               
+            end
+      })
+      
+      table.insert(
+         row1,
+         {
+            'delete', ui.delete, 'delete',
+            function()
+               deleteNode(currentNode)
+            end
+         }
+      )
+
+      table.insert(row1, "newline")
+      
+      table.insert(
+         row1,
+         {
+            'badge', ui.badge, 'rename',
+            function()
+               changeName = not changeName
+               local name = currentNode and currentNode.name
+               changeNameCursor = name and utf8.len(name) or 1
+
+            end
+         }
+      )
+      table.insert(
+         row1,
+         {
+            'connector', ui.parent, 'parentize',
+            function()
+               lastDraggedElement = {id = 'connector', pos = {row1.runningX, row1.runningY} }
+            end
+         }
+      )
+   end
+
+   table.insert(row1, "newline")
+   table.insert(row1, "whitespace")
+   
+
+   if (currentNode) then
+      local index = getIndex(currentNode)
+      if index > 1 then
+         table.insert(
+            row1,
+            {
+               'polyline-move-up', ui.move_up, 'move up in tree',
+               function()
+                  local taken_out = removeCurrentNode()
+                  table.insert(taken_out._parent.children, index-1, taken_out)
+
+               end
+            }
+         )
+      end
+   end
+   table.insert(row1, "newline")
+   table.insert(row1, "whitespace")
+
+   if (currentNode) then
+      local index = getIndex(currentNode)
+      if index < #currentNode._parent.children then
+         table.insert(
+            row1,
+            {
+               'polyline-move-mown', ui.move_down, 'move down in tree',
+               function()
+                  local taken_out = removeCurrentNode()
+		  if (taken_out) then
+		     table.insert(taken_out._parent.children, index+1, taken_out)
+		  end
+               end
+            }
+         )
+
+      end
+   end
+
+   local rows = {}
+   table.insert(rows, row1)
+
+
+   local row2 = {
+      startX=256 + 40,
+      startY=h*0.75,
+   }
+   row2.runningX = row2.startX
+   row2.runningY = row2.startY
+
+
+   if editingMode == 'folder' and currentNode and currentNode.folder then
+      --print('new stuff ayoo!')
+       table.insert(
+         row2,
+         {
+            'transform-toggle', ui.transform, 'do the transformations',
+            function()
+               showTheParentTransforms = not showTheParentTransforms
+            end
+         }
+       )
+
+       table.insert(
+         row2,
+         {
+            'folder-pan-pivot', ui.pan, 'pivot pooint',
+            function()
+               if editingModeSub == 'folder-pan-pivot' then
+                  editingModeSub = nil
+               else
+                  editingModeSub = 'folder-pan-pivot'
+               end
+            end
+         }
+       )
+       table.insert(
+         row2,
+         {
+            'folder-move', ui.move,  'move whole',
+            function()
+               editingModeSub = 'folder-move'
+
+
+            end
+         }
+       )
+       table.insert(row2, 'whitespace')
+       table.insert(
+         row2,
+         {
+            'optimizer', ui.layer_group,  'optimize check',
+            function()
+               if (currentNode.optimizedBatchMesh) then
+                  currentNode.optimizedBatchMesh = nil
+            else
+	       makeOptimizedBatchMesh(currentNode)
+            end
+
+            end
+         }
+       )
+       table.insert(row2, "printOptimizedBatchMesh")
+       table.insert(
+         row2,
+         {
+            'change-perspective', ui.change,  'debug perspective thing',
+            function()
+               editingModeSub = 'change-perspective'
+            local bbox = getBBoxOfChildren(currentNode.children)
+            local t = currentNode.transforms._g
+            local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
+            local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
+            perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
+
+
+
+            end
+         }
+       )
+       
+   end
+   
+
+   
+   if (editingMode == 'polyline' and currentNode and currentNode.type ~= 'meta') then
+      table.insert(
+         row2,
+         {
+            'polyline-edit', ui.polyline_edit, 'move point in poly',
+            function()
+               editingModeSub = 'polyline-edit'
+            end
+         }
+      )
+      if (not isPartOfKeyframePose(currentNode)) then
+
+         table.insert(
+            row2,
+            {
+               'polyline-insert', ui.polyline_add, 'add point to poly',
+               function()
+                  editingModeSub = 'polyline-insert'
+
+               end
+            }
+         )
+
+         table.insert(
+            row2,
+            {
+               'polyline-remove', ui.polyline_remove, 'remove point from poly',
+               function()
+                  editingModeSub = 'polyline-remove'
+
+               end
+            }
+         )
+      end
+      table.insert(row2, "whitespace")
+      table.insert(
+         row2,
+         {
+            'polyline-palette', ui.palette, 'pick color',
+            function()
+               if editingModeSub == 'polyline-palette' then
+                  editingModeSub = 'polyline-edit'
+               else
+                  editingModeSub = 'polyline-palette'
+               end
+               
+            end
+         }
+      )
+      table.insert(
+         row2,
+         {
+            'polyline-move', ui.move, 'move thing',
+            function()
+               editingModeSub = 'polyline-move'
+
+            end
+         }
+      )
+      table.insert(row2, "newline")
+      table.insert(
+         row2,
+         {
+            'mask', ui.mask, 'turn to mask',
+            function()
+               currentNode.mask = not currentNode.mask
+               currentNode.hole = false
+            end
+         }
+      )
+      table.insert(
+         row2,
+         {
+            'hole', ui.hole, 'turn to hole',
+            function()
+               currentNode.hole = not currentNode.hole
+               currentNode.mask = false
+            end
+         }
+      )
+      table.insert(
+         row2,
+         {
+            'close_stencil', ui.close_stencil, 'close stencil marker',
+            function()
+               currentNode.closeStencil = not currentNode.closeStencil
+               currentNode.mask = false
+               currentNode.hole = false
+            end
+         }
+      )
+      table.insert(row2, "whitespace")
+      table.insert(
+         row2,
+         {
+            'polyline-recenter', ui.pivot, 'recenter',
+            function()
+               editingModeSub = 'polyline-recenter'
+               local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+               local w2 = (brx - tlx)/2
+               local h2 = (bry - tly)/2
+               for i=1, #currentNode.points do
+                  currentNode.points[i][1] = currentNode.points[i][1] -  (tlx + w2)
+                  currentNode.points[i][2] = currentNode.points[i][2] -  (tly + h2)
+               end
+
+            end
+         }
+      )
+      table.insert(
+         row2,
+         {
+            'rectangle-point-select', ui.select, 'select points in child',
+            function()
+               if #childrenInRectangleSelect > 0 then
+		  editingModeSub = 0
+		  childrenInRectangleSelect = {}
+	       else
+		  editingModeSub = 'rectangle-point-select'
+	       end
+
+            end
+         }
+      )
+
+      table.insert(row2, "printChildrenInRectangleSelect")
+      table.insert(row2, "newline")
+      
+      table.insert(
+         row2,
+         {
+            'border', ui.polygon, 'border settings',
+            function()
+               currentNode.border = not currentNode.border
+               if currentNode.border then
+                  if currentNode.borderThickness == nil then
+                     currentNode.borderThickness = 1
+                  end
+                  if currentNode.borderSpacing == nil then
+                     currentNode.borderSpacing = 10
+                  end
+                  if currentNode.borderTension == nil then
+                     currentNode.borderTension = 0
+                  end
+                  if currentNode.borderRandomizerMultiplier == nil then
+                     currentNode.borderRandomizerMultiplier = 0
+                  end
+               end
+            end
+         }
+      )
+      table.insert(
+         row2,
+         {
+            'rotate', ui.rotate, 'rotate with 22.5',
+            function()
+               rotateGroup(currentNode, 22.5)
+            end
+         }
+      )
+      table.insert(row2, "newline")
+      if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1])=='number' then
+
+         table.insert(
+            row2,
+            {
+               'children-flip-vertical', ui.flip_vertical, 'flip vertically',
+               function()
+                  flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
+               end
+            }
+         )
+         table.insert(
+            row2,
+            {
+               'children-flip-horizontal', ui.flip_horizontal, 'flip vertically',
+               function()
+                  flipGroup(currentNode, childrenInRectangleSelect, -1,1)
+               end
+            }
+         )
+         table.insert(
+            row2,
+            {
+               'children-scale-up', ui.resize, 'scale up',
+               function()
+                  if love.keyboard.isDown('a') then
+                     resizeGroup(currentNode, childrenInRectangleSelect, .75)
+                  else
+                     resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+                  end
+
+               end
+            }
+         )
+         table.insert(
+            row2, 
+            {
+               'children-scale-down', ui.resize, 'scale down',
+               function()
+                  if love.keyboard.isDown('a') then
+                     resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+                  else
+                     resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+                  end
+
+               end
+            }
+         )
+
+      end
+      
+      
+      
+      
+   end
+   
+
+   table.insert(rows, row2)
+   
+
+
+   for ri = 1, #rows do
+      local row = rows[ri]
+      for i =1, #row do
+         local v = row[i]
+         --print(inspect(v))
+         if (type(v) == 'table') then
+            --if v.printStr then
+            -- love.graphics.print("x", runningX, runningY)
+            --v.eval(runningX, runningY)
+            --else
+            
+            if imgbutton(v[1], v[2], row.runningX, row.runningY, v[3]).clicked then
+               v[4]()
+            end
+            --end
+            
+            row.runningX = row.runningX + 40
+         end
+         if (type(v) == 'string') then
+            if v == 'newline' then
+               row.runningX = row.startX
+               row.runningY = row.runningY + 40
+            end
+            if v == 'whitespace' then
+               row.runningX = row.runningX + 40
+            end
+            -- the 'exceptions or lets call them hacks'
+            love.graphics.setColor(1,1,1,1)
+            if v == 'printChildrenInRectangleSelect' then
+               if (#childrenInRectangleSelect > 0) then
+                  love.graphics.print(#childrenInRectangleSelect, row.runningX-40, row.runningY)
+               end
+               
+            end
+            if v == 'printOptimizedBatchMesh' then
+               if currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
+                  
+                  love.graphics.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
+               end
+               
+            end
+            
+            
+            
+            
+         end
+      end
+   end
+   
+
+   
    if currentNode then
       local panelWidth = 96
       local panelHeight = 256
@@ -333,59 +801,29 @@ function drawUIAroundGraphNodes(w,h)
 
       local runningY = 110
 
-      if imgbutton('polyline-clone', ui.clone,w - 300 , runningY, 'clone').clicked then
-         if (editingMode == 'polyline') then
-            local cloned = copyShape(currentNode)
-            cloned._parent = currentNode._parent
-            cloned.name = (cloned.name)
-            addShapeAfter(cloned, currentNode)
-            setCurrentNode(cloned)
-         elseif  (editingMode == 'folder') then
-            local cloned = copyShape(currentNode)
-            cloned._parent = currentNode._parent
-            parentize(cloned)
-            cloned.name = (cloned.name)..' copy'
-            addShapeAfter(cloned, currentNode)
-            meshAll(cloned)
-            setCurrentNode(cloned)
-         end
-      end
+      --if imgbutton('polyline-clone', ui.clone,w - 300 , runningY, 'clone').clicked then
+      --end
 
-      if imgbutton('delete', ui.delete,  w - 256, runningY, 'delete').clicked then
-         deleteNode(currentNode)
-      end
+      --   if imgbutton('delete', ui.delete,  w - 256, runningY, 'delete').clicked then
+      --    deleteNode(currentNode)
+      -- end
 
-      runningY = runningY + 40
+      --runningY = runningY + 40
 
-      if imgbutton('badge', ui.badge, w - 300, runningY, 'rename').clicked then
-         changeName = not changeName
-         local name = currentNode and currentNode.name
-         changeNameCursor = name and utf8.len(name) or 1
-      end
+      --if imgbutton('badge', ui.badge, w - 300, runningY, 'rename').clicked then
+      --       changeName = not changeName
+      --     local name = currentNode and currentNode.name
+      --   changeNameCursor = name and utf8.len(name) or 1
+      -- end
 
-      if imgbutton('connector', ui.parent, w - 256, runningY, 'parentize').clicked then
-         lastDraggedElement = {id = 'connector', pos = {w - 256, runningY} }
-      end
+      --      if imgbutton('connector', ui.parent, w - 256, runningY, 'parentize').clicked then
+      --lastDraggedElement = {id = 'connector', pos = {w - 256, runningY} }
+      --    end
 
       runningY = runningY + 40
 
       if currentNode and currentNode.points and currentNode.type ~= 'meta' then
-         if imgbutton('mask', ui.mask, w - 320, runningY, 'turn to mask').clicked then
-            currentNode.mask = not currentNode.mask
-	    currentNode.hole = false
-
-         end
-         if imgbutton('hole', ui.hole, w - 280, runningY, 'turn to hole').clicked then
-            currentNode.hole = not currentNode.hole
-	    currentNode.mask = false
-
-         end
-	 if imgbutton('close-stencil', ui.close_stencil, w - 240, runningY, 'close stencil marker').clicked then
-	    currentNode.closeStencil = not currentNode.closeStencil
-	    currentNode.mask = false
-	    currentNode.hole = false
-	 end
-	 
+         
       end
 
       if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
@@ -425,18 +863,18 @@ function drawUIAroundGraphNodes(w,h)
 
 
       if (editingMode == 'folder') and currentNode then
-         if imgbutton('transform-toggle', ui.transform,  w - 300, runningY).clicked then
-            showTheParentTransforms = not showTheParentTransforms
-         end
-         if imgbutton('folder-pan-pivot', ui.pan,  w-256, runningY).clicked then
-            if editingModeSub == 'folder-pan-pivot' then
-               editingModeSub = nil
-            else
-               editingModeSub = 'folder-pan-pivot'
-            end
-            print(editingModeSub)
-         end
-         runningY = runningY + 40
+     --    if imgbutton('transform-toggle', ui.transform,  w - 300, runningY, 'do the transformations').clicked then
+     --       showTheParentTransforms = not showTheParentTransforms
+     --    end
+         -- if imgbutton('folder-pan-pivot', ui.pan,  w-256, runningY, 'pivot point').clicked then
+         --    if editingModeSub == 'folder-pan-pivot' then
+         --       editingModeSub = nil
+         --    else
+         --       editingModeSub = 'folder-pan-pivot'
+         --    end
+         --    print(editingModeSub)
+         -- end
+         -- runningY = runningY + 40
 
          love.graphics.setColor(1,1,1,.5)
          function get6(node)
@@ -516,174 +954,126 @@ function drawUIAroundGraphNodes(w,h)
 	    runningY = runningY + 40
          end
 
-         if imgbutton('folder-move', ui.move, w-300, runningY, 'move whole').clicked then
-            editingModeSub = 'folder-move'
-         end
+--         if imgbutton('folder-move', ui.move, w-300, runningY, 'move whole').clicked then
+  --          editingModeSub = 'folder-move'
+    --     end
 
-         if imgbutton('change-perspective', ui.change, w-256, runningY, 'debug perspective').clicked then
-            editingModeSub = 'change-perspective'
-            local bbox = getBBoxOfChildren(currentNode.children)
-            local t = currentNode.transforms._g
-            local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
-            local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
-            perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
-         end
+         -- if imgbutton('change-perspective', ui.change, w-256, runningY, 'debug perspective').clicked then
+         --    editingModeSub = 'change-perspective'
+         --    local bbox = getBBoxOfChildren(currentNode.children)
+         --    local t = currentNode.transforms._g
+         --    local TLX,TLY = t:transformPoint( bbox.tl.x,bbox.tl.y )
+         --    local BRX,BRY = t:transformPoint( bbox.br.x, bbox.br.y )
+         --    perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
+         -- end
 
-	 runningY = runningY + 40
+	 -- runningY = runningY + 40
 
-	 if imgbutton('optimizer', ui.layer_group, w-300, runningY, 'optimize check').clicked then
-            if (currentNode.optimizedBatchMesh) then
-               currentNode.optimizedBatchMesh = nil
-            else
-	       makeOptimizedBatchMesh(currentNode)
-            end
-         end
+	 -- if imgbutton('optimizer', ui.layer_group, w-300, runningY, 'optimize check').clicked then
+         --    if (currentNode.optimizedBatchMesh) then
+         --       currentNode.optimizedBatchMesh = nil
+         --    else
+	 --       makeOptimizedBatchMesh(currentNode)
+         --    end
+         -- end
 
-         if (currentNode.optimizedBatchMesh) then
-            love.graphics.setColor(1,0,0)
-            love.graphics.rectangle("line", w-300-2, runningY-2, 28,28)
-            love.graphics.setColor(1,1,1)
-            love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
-         end
+         -- if (currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh) then
+         --    love.graphics.setColor(1,0,0)
+         --    love.graphics.rectangle("line", w-300-2, runningY-2, 28,28)
+         --    love.graphics.setColor(1,1,1)
+
+         --    love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
+         -- end
       end
 
-      if (editingMode == 'polyline') and currentNode  then
-         if imgbutton('polyline-move', ui.move,  w - 256, runningY, 'move thing').clicked then
-            editingModeSub = 'polyline-move'
-         end
-
-      end
 
       if (editingMode == 'polyline') and currentNode and currentNode.type ~= 'meta'  then
-         if imgbutton('polyline-palette', ui.palette,  w - 300, runningY, 'pick color').clicked then
-            if editingModeSub == 'polyline-palette' then
-               editingModeSub = 'polyline-edit'
-            else
-               editingModeSub = 'polyline-palette'
-            end
-         end
+         
+         -- if imgbutton('polyline-palette', ui.palette,  w - 300, runningY, 'pick color').clicked then
+         --    if editingModeSub == 'polyline-palette' then
+         --       editingModeSub = 'polyline-edit'
+         --    else
+         --       editingModeSub = 'polyline-palette'
+         --    end
+         -- end
 
 
          runningY = runningY + 40  -- behind an if !!
-         if imgbutton('polyline-recenter', ui.pivot, w - 300, runningY, 'recenter').clicked then
-            editingModeSub = 'polyline-recenter'
-            print('this the one?')
-            local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
-            local w2 = (brx - tlx)/2
-            local h2 = (bry - tly)/2
-            for i=1, #currentNode.points do
-               currentNode.points[i][1] = currentNode.points[i][1] -  (tlx + w2)
-               currentNode.points[i][2] = currentNode.points[i][2] -  (tly + h2)
-            end
-         end
 
-         if currentNode and currentNode.points then
-            if imgbutton('rectangle-point-select', ui.select, w - 256, runningY, 'select points in child').clicked then
-	       if #childrenInRectangleSelect > 0 then
-		  editingModeSub = 0
-		  childrenInRectangleSelect = {}
-	       else
-		  editingModeSub = 'rectangle-point-select'
-	       end
+         runningY = runningY + 40  -- behind an if !!
+
+         if currentNode and currentNode.border then
+            local v =  h_slider("splinetension", 100, 120, 200,  currentNode.borderTension , 0.00001, 1)
+            if v.value ~= nil then
+               currentNode.borderTension = v.value
             end
-	    if #childrenInRectangleSelect > 0 then
-	       love.graphics.print(#childrenInRectangleSelect, w - 256, runningY)
-	    end
+            local v =  h_slider("splineSpacing", 100, 160, 200,  currentNode.borderSpacing , 2, 50)
+            if v.value ~= nil then
+               currentNode.borderSpacing = v.value
+            end
+            local v =  h_slider("splineLinethick", 100, 200, 200,  currentNode.borderThickness , .1, 10)
+            if v.value ~= nil then
+               currentNode.borderThickness = v.value
+            end
+
+            local v =  h_slider("splinerndmul", 100, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
+            if v.value ~= nil then
+               currentNode.borderRandomizerMultiplier = v.value
+            end
          end
 
          runningY = runningY + 40  -- behind an if !!
-         if currentNode and currentNode.points then
-            if imgbutton('border', ui.polygon, w - 300, runningY).clicked  then
-               currentNode.border = not currentNode.border
-               if currentNode.border then
-                  if currentNode.borderThickness == nil then
-                     currentNode.borderThickness = 1
-                  end
-                  if currentNode.borderSpacing == nil then
-                     currentNode.borderSpacing = 10
-                  end
-                  if currentNode.borderTension == nil then
-                     currentNode.borderTension = 0
-                  end
-                  if currentNode.borderRandomizerMultiplier == nil then
-                     currentNode.borderRandomizerMultiplier = 0
-                  end
-               end
-            end
+      end
 
-            if imgbutton('rotate', ui.rotate, w - 256, runningY, 'rotate with 22.5').clicked then
-               rotateGroup(currentNode, 22.5)
-            end
+      if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1])=='number' then
+         
+         --       local first = type(childrenInRectangleSelect[1]=='number')
+         -- --      print(first)
+         --       if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, runningY, 'flip group vertically').clicked  then
+         --          flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
+         --       end
 
-            if currentNode and currentNode.border then
-               local v =  h_slider("splinetension", 600, 120, 200,  currentNode.borderTension , 0.00001, 1)
-               if v.value ~= nil then
-                  currentNode.borderTension = v.value
-               end
-               local v =  h_slider("splineSpacing", 600, 160, 200,  currentNode.borderSpacing , 2, 50)
-               if v.value ~= nil then
-                  currentNode.borderSpacing = v.value
-               end
-               local v =  h_slider("splineLinethick", 600, 200, 200,  currentNode.borderThickness , .1, 10)
-               if v.value ~= nil then
-                  currentNode.borderThickness = v.value
-               end
+         --       if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, runningY, 'flip group horizontally').clicked  then
+         --          flipGroup(currentNode, childrenInRectangleSelect, -1,1)
+         --       end
 
-               local v =  h_slider("splinerndmul", 600, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
-               if v.value ~= nil then
-                  currentNode.borderRandomizerMultiplier = v.value
-               end
-            end
+         --       runningY = runningY + 40  -- behind an if !!
 
-            runningY = runningY + 40  -- behind an if !!
-         end
+         --       if imgbutton('children-scale', ui.resize, w - 300, runningY, 'scale group up').clicked  then
+         --          if love.keyboard.isDown('a') then
+         --             resizeGroup(currentNode, childrenInRectangleSelect, .75)
+         --          else
+         --             resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+         --          end
+         --       end
 
-         if #childrenInRectangleSelect > 0 then
+         --       if imgbutton('children-scale', ui.resize, w - 256, runningY, 'scale group down').clicked  then
+         --          if love.keyboard.isDown('a') then
+         --             resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+         --          else
+         --             resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+         --          end
+         --       end
 
-            if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, runningY).clicked  then
-               flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
-            end
+         --       runningY = runningY + 40  -- behind an if !!
+         
+         
+         
+         -- if (editingMode == 'polyline') and currentNode  then
 
-            if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, runningY).clicked  then
-               flipGroup(currentNode, childrenInRectangleSelect, -1,1)
-            end
+         --    if imgbutton('polyline-edit', ui.polyline_edit,  w - 320, runningY, 'move point of poly').clicked then
+         --       editingModeSub = 'polyline-edit'
+         --    end
 
-            runningY = runningY + 40  -- behind an if !!
-
-            if imgbutton('children-scale', ui.resize, w - 300, runningY).clicked  then
-               if love.keyboard.isDown('a') then
-                  resizeGroup(currentNode, childrenInRectangleSelect, .75)
-               else
-                  resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
-               end
-            end
-
-            if imgbutton('children-scale', ui.resize, w - 256, runningY).clicked  then
-               if love.keyboard.isDown('a') then
-                  resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
-               else
-                  resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
-               end
-            end
-
-            runningY = runningY + 40  -- behind an if !!
-         end
-
-         if (editingMode == 'polyline') and currentNode  then
-
-            if imgbutton('polyline-edit', ui.polyline_edit,  w - 320, runningY).clicked then
-               editingModeSub = 'polyline-edit'
-            end
-
-            if (not isPartOfKeyframePose(currentNode)) then
-               if imgbutton('polyline-insert', ui.polyline_add,  w - 280, runningY).clicked then
-                  editingModeSub = 'polyline-insert'
-               end
-               if imgbutton('polyline-remove', ui.polyline_remove,  w - 240, runningY).clicked then
-                  editingModeSub = 'polyline-remove'
-               end
-            end
-         end
+         --    if (not isPartOfKeyframePose(currentNode)) then
+         --       if imgbutton('polyline-insert', ui.polyline_add,  w - 280, runningY, 'add point to poly').clicked then
+         --          editingModeSub = 'polyline-insert'
+         --       end
+         --       if imgbutton('polyline-remove', ui.polyline_remove,  w - 240, runningY, 'remove point from poly').clicked then
+         --          editingModeSub = 'polyline-remove'
+         --       end
+         --    end
+         -- end
       end
    end
 end
@@ -786,10 +1176,13 @@ function mylib:mousereleased(x,y, button)
          local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
          local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
          local childrenInRect = {}
-         for i=1, #currentNode.points do
-            local p = currentNode.points[i]
-            if p[1] >= tl.x and p[1] <= br.x  and  p[2] >= tl.y and p[2] <= br.y then
-               table.insert(childrenInRect, i)
+         -- todo without this can crash
+         if currentNode.points then
+            for i=1, #currentNode.points do
+               local p = currentNode.points[i]
+               if p[1] >= tl.x and p[1] <= br.x  and  p[2] >= tl.y and p[2] <= br.y then
+                  table.insert(childrenInRect, i)
+               end
             end
          end
          childrenInRectangleSelect = childrenInRect
@@ -934,7 +1327,7 @@ function mylib:mousemoved(x,y, dx, dy)
       end
    end
 
-   if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1)  then
+   if editingMode == 'polyline' and  editingModeSub == 'polyline-move' and love.mouse.isDown(1) and mouseState.hoveredSomething == false  then
       local points = currentNode and currentNode.points
       local dx3, dy3 = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
       if snap then
@@ -976,7 +1369,7 @@ function mylib:mousemoved(x,y, dx, dy)
       end
    end
 
-   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') then
+   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') and (mouseState.hoveredSomething == false) then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
          local dragIndex = lastDraggedElement.index
          if dragIndex > 0 then
@@ -1052,7 +1445,7 @@ function recursiveGetRunningYForNode(node, lookFor, runningY)
    return runningY
 end
 
-function tryToCenterUI(node2)
+local function tryToCenterUI(node2)
    recursiveCloseAll(root)
    local reversePath = {}
    local node = node2
@@ -1063,7 +1456,7 @@ function tryToCenterUI(node2)
    recursiveOpenSome(root, reversePath)
    local ry = recursiveGetRunningYForNode(root, node2, 0)
    local w, h = getDimensions()
-      --love.graphics.getDimensions( )
+   --love.graphics.getDimensions( )
    if ry > h then
       scrollviewOffset = ry
    else
@@ -1073,11 +1466,11 @@ end
 
 local startTime = love.timer.getTime()
 
-function getNodeYPosition(node, lookFor)
+local function getNodeYPosition(node, lookFor)
    return recursiveGetRunningYForNode(node, lookFor, 0)
 end
 
-function renderGraphNodes(node, level, startY, beginX, totalHeight)
+local function renderGraphNodes(node, level, startY, beginX, totalHeight)
    local w, h = getDimensions() --love.graphics.getDimensions( )
    local beginRightX = beginX + level*6
    local rightX = beginRightX
@@ -1179,7 +1572,7 @@ function mylib:wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
    local w, h = getDimensions() --love.graphics.getDimensions()
 
-   if posx > w-256 then
+   if posx < 128 then
       scrollviewOffset = scrollviewOffset + y*24
    else
       local scale = root.transforms.l[4]
@@ -1204,6 +1597,13 @@ end
 
 function mylib:load(arg)
    --if arg[#arg] == "-debug" then require("mobdebug").start() end
+   --print(inspect(_G))
+
+   for i in pairs( _G) do
+      print(i)
+   end
+   
+
    shapeName = 'untitled'
    shapePath = ''
    love.keyboard.setKeyRepeat( true )
@@ -1216,7 +1616,7 @@ function mylib:load(arg)
    local ffont = "resources/fonts/WindsorBT-Roman.otf"
    local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
    
---   local otherfont = "resources/fonts/Monaco.ttf"
+   --   local otherfont = "resources/fonts/Monaco.ttf"
    supersmallest = love.graphics.newFont(ffont , 8)
    smallester = love.graphics.newFont(ffont , 14)
 
@@ -1319,6 +1719,14 @@ function mylib:load(arg)
       offset = {x=0, y=0}
    }
 
+   local w,h = getDimensions()
+   sceneGraph = {
+      maximized = false,
+      topY = h*0.75,
+      height= h*0.25,
+      x = 128,
+   }
+   
    local generated = generatePolygon(0,0, 40, .05, .02 , 6)
    local points = {}
    for i = 1, #generated, 2 do
@@ -1723,17 +2131,23 @@ function mylib:draw()
 	 end
 
 	 if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
-	    local colorsInRow = 16
-	    local thumbSize = 20
 
+            local w,h = getDimensions()
+
+            local thumbSize = 14
+
+	    local colorsInRow = math.floor(w/(thumbSize))
+
+            local paletteHeight = (math.ceil(#palette.colors / colorsInRow) +1 ) * thumbSize
+            
 	    for i = 1, #palette.colors do
 	       local rgb = palette.colors[i].rgb
+               --((thumbSize+2)*colorsInRow) +
+	       local x =  ((i-1) % colorsInRow) * (thumbSize)
 
-	       local x = w - 400 -((thumbSize+2)*colorsInRow) + ((i-1) % colorsInRow)* (thumbSize+4)
-	       local y = math.ceil((i) / colorsInRow)* (thumbSize+4)
-	       y = y + 50
-	       x = x + 50
-
+	       local y = math.ceil((i) / colorsInRow)* (thumbSize)
+               y = h*0.75 - paletteHeight + y
+               
 	       if (currentNode.color[1] == rgb[1]/255 and
 		   currentNode.color[2] == rgb[2]/255 and
 		   currentNode.color[3] == rgb[3]/255) then
@@ -1744,6 +2158,10 @@ function mylib:draw()
 	       if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,thumbSize).clicked then
 		  currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
 	       end
+
+               --y = y + 50
+	       --x = x + 50
+
 	    end
 	    love.graphics.setColor(1,1,1, 1)
 	    love.graphics.print("alpha",  labelPos(calcX(0), calcY(10)) )
@@ -1755,14 +2173,14 @@ function mylib:draw()
 	 end
 
 	 if (editingMode == 'backdrop') then
-	    if imgbutton('polyline-wireframe', ui.lines,  calcX(0), calcY(0)).clicked then
+	    if imgbutton('polyline-wireframe', ui.lines,  calcX(0), calcY(0), 'wireframe mode').clicked then
 	       wireframe = not wireframe
 	    end
 
-	    if imgbutton('polyline-palette', ui.palette,  calcX(7), calcY(0)).clicked then
+	    if imgbutton('polyline-palette', ui.palette,  calcX(7), calcY(0), 'background palette').clicked then
 	       editingModeSub = 'backdrop-palette'
 	    end
-	    if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,  calcX(8), calcY(0)).clicked then
+	    if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible,  calcX(8), calcY(0), 'backdrop visible').clicked then
 	       editingModeSub = nil
 	       backdrop.visible = not backdrop.visible
 	    end
@@ -1776,7 +2194,7 @@ function mylib:draw()
 	    end
 
 	    if (backdrop.visible) then
-	       if imgbutton('backdrop-move', ui.move, calcX(9), calcY(1)).clicked then
+	       if imgbutton('backdrop-move', ui.move, calcX(9), calcY(1), 'move backdrop').clicked then
 		  if (editingModeSub == 'backdrop-move') then
 		     editingModeSub = nil
 		  else
@@ -1823,15 +2241,40 @@ function mylib:draw()
 	 if  editingMode ~= 'dopesheet' then
 	    if currentNode  then
 	       love.graphics.setColor(.1,.1,.1, 0.6)
-	       love.graphics.rectangle('fill',0,h-64,w,64)
-	    end
+	       --love.graphics.rectangle('fill',0,h-64,w,64)
+               
+            end
 
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.rectangle("fill", sceneGraph.x, sceneGraph.topY -20, 20, 20)
+            if getUIRect('grow-shrink-graph', sceneGraph.x, sceneGraph.topY -20, 20,20).clicked then
+
+               print(sceneGraph.maximized)
+               if sceneGraph.maximized then
+                  sceneGraph.maximized = false
+                  sceneGraph.topY = h*0.75
+                  sceneGraph.height = h*0.25
+                  sceneGraph.x = 128
+               else
+                  sceneGraph.maximized = true
+                  
+                  sceneGraph.topY = 20
+                  sceneGraph.height = h -40
+                  scrollviewOffset = 0
+                  sceneGraph.x = 0
+
+               end
+            end
+            
+            
 	    love.graphics.setFont(smallester)
 
             
-            love.graphics.setScissor( 0, h*0.75, 128+40, h*0.25 )
+            love.graphics.setScissor( 0, sceneGraph.topY, w, sceneGraph.height-20 )
 
-	    local totalHeightGraphNodes = renderGraphNodes(root, 0, h*0.75, 40, h*0.25)
+            
+            
+	    local totalHeightGraphNodes = renderGraphNodes(root, 0, sceneGraph.topY, sceneGraph.x, sceneGraph.height -20)
             love.graphics.setScissor()
             
 	    if (scrollviewOffset > totalHeightGraphNodes) then
@@ -1839,27 +2282,32 @@ function mylib:draw()
 	    end
 
 	    love.graphics.setFont(small)
-	    local scrollBarH =  h*0.25
-            print(scrollviewOffset)
+	    local scrollBarH =  sceneGraph.height -20
+            --print(scrollviewOffset)
 	    if totalHeightGraphNodes > scrollBarH  then
-	       local ding = scrollbarV('hierarchyslider', 0, h*0.75 , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
+
+	       local ding = scrollbarV('hierarchyslider', sceneGraph.x -40, sceneGraph.topY , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
 	       if ding.value ~= nil then
 		  scrollviewOffset = ding.value
 	       end
-	    end
+	    else
+
+               
+            end
+            
 
 
-	    if imgbutton('backdrop', ui.backdrop, 50, h-32).clicked then
-	       if (editingMode == 'backdrop') then
-		  editingMode = nil
-	       else
-		  editingMode = 'backdrop'
-	       end
-	       editingModeSub = nil
-	    end
+	    -- if imgbutton('backdrop', ui.backdrop, 50, h-32, 'backdrop').clicked then
+	    --    if (editingMode == 'backdrop') then
+	    --       editingMode = nil
+	    --    else
+	    --       editingMode = 'backdrop'
+	    --    end
+	    --    editingModeSub = nil
+	    -- end
 
 	    if true or (not currentNode or not currentNode.points) then
-	       if imgbutton('rectangle-select', ui.select, rightX - 100, calcY(0)).clicked then
+	       if imgbutton('rectangle-select', ui.select, rightX - 100, calcY(0), 'rectangle select').clicked then
                   if (editingMode == 'rectangle-select') then
                      editingMode = nil
                      editingModeSub = nil
@@ -1871,8 +2319,9 @@ function mylib:draw()
                if #childrenInRectangleSelect > 0 then
                   love.graphics.print(#childrenInRectangleSelect, rightX - 100, calcY(0))
                end
-
-	       if #childrenInRectangleSelect > 0 then
+               -- todo hier was ik
+	       if true and #childrenInRectangleSelect > 0  then
+                  print(type (childrenInRectangleSelect[1]))
 		  if love.keyboard.isDown("delete") then
 		     local indexes = type(childrenInRectangleSelect[1]) == "number"
 		     if indexes then
@@ -1885,7 +2334,7 @@ function mylib:draw()
 		     childrenInRectangleSelect = {}
 		  end
 
-                  if imgbutton('group-move', ui.move, rightX - 50, calcY(0)).clicked then
+                  if imgbutton('group-move', ui.move, rightX - 50, calcY(0), 'move group').clicked then
                      if (editingModeSub == 'group-move') then
                         editingModeSub = nil
                      else
@@ -2030,29 +2479,29 @@ function mylib:draw()
                end
             end
 
-	    if (currentNode) then
-	       -- what is y position of button in list ?
-	       --local yOffset = getNodeYPosition(root, currentNode)
-	       --yOffset = math.max(10, yOffset - scrollviewOffset)
-	       local index = getIndex(currentNode)
-	       if (currentNode and index > 1) then
-		  index = getIndex(currentNode)
-		  if index > 1 and imgbutton('polyline-move-up', ui.move_up,  w -256, 20 ).clicked then
-		     local taken_out = removeCurrentNode()
-		     table.insert(taken_out._parent.children, index-1, taken_out)
-		  end
-	       end
+	    --if (currentNode) then
+            -- what is y position of button in list ?
+            --local yOffset = getNodeYPosition(root, currentNode)
+            -- --yOffset = math.max(10, yOffset - scrollviewOffset)
+            -- local index = getIndex(currentNode)
+            -- if (currentNode and index > 1) then
+            --    index = getIndex(currentNode)
+            --    if index > 1 and imgbutton('polyline-move-up', ui.move_up,  w -256, 20, 'move up in tree' ).clicked then
+            --       local taken_out = removeCurrentNode()
+            --       table.insert(taken_out._parent.children, index-1, taken_out)
+            --    end
+            -- end
 
-	       if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  w -256,60 ).clicked then
-		  local taken_out = removeCurrentNode()
-		  if (taken_out) then
-		     table.insert(taken_out._parent.children, index+1, taken_out)
-		  end
-	       end
-	    end
-	    if currentNode then
-	       -- print(currentNode ,currentNode.keyframes)
-	    end
+            -- if (index < #currentNode._parent.children) and imgbutton('polyline-move-down', ui.move_down,  w -256,60, 'move down in tree' ).clicked then
+            --    local taken_out = removeCurrentNode()
+            --    if (taken_out) then
+            --       table.insert(taken_out._parent.children, index+1, taken_out)
+            --    end
+            -- end
+	    --end
+	    --if currentNode then
+            -- print(currentNode ,currentNode.keyframes)
+	    --end
 	    if currentNode and currentNode.keyframes then
 	       if (currentNode.keyframes == 2) then
 		  local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
@@ -2108,16 +2557,17 @@ function mylib:draw()
 	 end
 
 	 if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
+            --            print(inspect(lastDraggedElement))
 	    love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
 	 end
 
-	 if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
-	    dopesheetEditing = not dopesheetEditing
-	    editingMode = dopesheetEditing and 'dopesheet' or nil
-	    if dopesheetEditing then -- initialize
-	       initializeDopeSheet(cellCount)
-	    end
-	 end
+	 -- if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
+	 --    dopesheetEditing = not dopesheetEditing
+	 --    editingMode = dopesheetEditing and 'dopesheet' or nil
+	 --    if dopesheetEditing then -- initialize
+	 --       initializeDopeSheet(cellCount)
+	 --    end
+	 -- end
 
 	 local mousex = love.mouse.getX()
 	 local mousey = love.mouse.getY()

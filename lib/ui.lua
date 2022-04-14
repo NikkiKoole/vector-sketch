@@ -17,13 +17,19 @@ function handleMouseClickStart()
 end
 
 function getUIRect(id, x,y,w,h)
-  local result = false
+   local result = false
+
+   local mx, my = love.mouse.getPosition( )
+   if pointInRect(mx,my,x,y,w,h) then
+      mouseState.hoveredSomething = true
+   end
+
   if mouseState.click then
      local mx, my = love.mouse.getPosition( )
      if pointInRect(mx,my,x,y,w,h) then
         result = true
      end
-   end
+  end
 
    return {
       clicked=result

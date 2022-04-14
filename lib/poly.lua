@@ -1,5 +1,13 @@
 
-function split_poly(poly, intersection)
+function TableConcat(t1,t2)
+    for i=1,#t2 do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
+end
+
+
+local function split_poly(poly, intersection)
    local biggestIndex = math.max(intersection.i1, intersection.i2)
    local smallestIndex = math.min(intersection.i1, intersection.i2)
    local wrap = {}
@@ -33,15 +41,9 @@ function split_poly(poly, intersection)
    return wrap, back
 end
 
-function TableConcat(t1,t2)
-    for i=1,#t2 do
-        t1[#t1+1] = t2[i]
-    end
-    return t1
-end
 
 
-function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
+local function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
    local s1_x, s1_y, s2_x, s2_y
    local s1_x = p1_x - p0_x
    local s1_y = p1_y - p0_y
@@ -60,7 +62,7 @@ function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
 end
 
 
-function get_collisions(poly)
+local function get_collisions(poly)
    local collisions = {}
 
    for outeri = 1, #poly, 2 do

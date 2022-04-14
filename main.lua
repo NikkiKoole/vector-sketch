@@ -1,9 +1,9 @@
 local mylib = require('tool')
-print(inspect(mylib))
+--print(inspect(mylib))
 --https://blog.separateconcerns.com/2014-01-03-lua-module-policy.html
 --print(getDimensions())
 
-local part=0.65
+local part=.5
 
 function love.load(arg)
    local w,h = love.graphics.getDimensions()
@@ -18,6 +18,8 @@ function love.draw()
    love.graphics.clear(.3,0,0)
 
    mylib:draw()
+   love.graphics.setColor(1,1,1,0.5)
+   love.graphics.rectangle("fill", w*part,0,20,h)
 end
 
 function love.resize(w,h)
@@ -47,7 +49,11 @@ function love.mousereleased(x,y,button)
 end
 
 function love.mousepressed(x,y,button)
-   mylib:mousepressed(x,y, button)
+   local w,h = love.graphics.getDimensions()
+   if x <= w*part then
+      mylib:mousepressed(x,y, button)
+   end
+   
 end
 
 function love.wheelmoved(x,y)

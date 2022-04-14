@@ -6,48 +6,48 @@ end
 miffy = {
    name='miffy',
    colors={
-      {name="green", rgb={48,112,47}},
-      {name="blue", rgb={27,84,154}},
-      {name="yellow", rgb={250,199,0}},
-      {name="orange1", rgb={233,100,14}},
-      {name="orange2", rgb={237,76,6}},
-      {name="orange3", rgb={221,61,14}},
-      {name="black1", rgb={34,30,30}},
-      {name="black2", rgb={24,26,23}},
-      {name="black2", rgb={24,26,23}},
-      {name="brown1", rgb={145,77,35}},
-      {name="brown2", rgb={114,65,11}},
-      {name="brown3", rgb={136,95,62}},
-      {name="grey1", rgb={147,142,114}},
-      {name="grey2", rgb={149,164,151}},
+      {   rgb={48,112,47}},
+      {   rgb={27,84,154}},
+      {  rgb={250,199,0}},
+      { rgb={233,100,14}},
+      { rgb={237,76,6}},
+      { rgb={221,61,14}},
+      { rgb={34,30,30}},
+      { rgb={24,26,23}},
+      { rgb={24,26,23}},
+      { rgb={145,77,35}},
+      { rgb={114,65,11}},
+      { rgb={136,95,62}},
+      { rgb={147,142,114}},
+      {rgb={149,164,151}},
    }
 }
 lego = {
    name='lego-classic',
    colors={
       --{name="bright red", rgb={196,40,27}},
-      {name="bright blue", rgb={13,105,171}},
-      {name="bright yellow", rgb={245,205,47}},
-       {name="dark green", rgb={40,127,70}},
-     {name="white", rgb={242,243,242}},
-       {name="grey", rgb={161,165,162}},
-     {name="dark grey", rgb={109,110,108}},
+      { rgb={13,105,171}},
+      { rgb={245,205,47}},
+       { rgb={40,127,70}},
+     {rgb={242,243,242}},
+       { rgb={161,165,162}},
+     {rgb={109,110,108}},
       -- {name="black", rgb={27,42,52}},
    }
 }
 fabuland = {
    name='fabuland',
    colors={
-      {name="fabuland red", rgb={255, 128, 20}},
-      {name="fabuland green", rgb={120,252,120}},
-      {name="brick yellow", rgb={215,197,153}},
-      {name="nougat", rgb={204,142,104}},
-      {name="sky blue", rgb={137,181,196}},
-      {name="sky blue 2", rgb={183,215,213}},
-      {name="light orange brown", rgb={203,132,60}},
-      {name="fabuland orange", rgb={207, 138, 71}},
-      {name="fabuland brown", rgb={242, 112, 94}},
-      {name="earth orange", rgb={98, 71, 50}},
+      {rgb={255, 128, 20}},
+      {rgb={120,252,120}},
+      { rgb={215,197,153}},
+      { rgb={204,142,104}},
+      { rgb={137,181,196}},
+      { rgb={183,215,213}},
+      { rgb={203,132,60}},
+      { rgb={207, 138, 71}},
+      { rgb={242, 112, 94}},
+      { rgb={98, 71, 50}},
    }
 }
 
@@ -69,10 +69,10 @@ james = {
 
 for i = 1, #jamesGulliverHancock do
    local r,g,b = hex2rgb(jamesGulliverHancock[i])
-   table.insert(james.colors, {name='unknown', rgb={r,g,b}, hex=jamesGulliverHancock[i]})
+   table.insert(james.colors, { rgb={r,g,b}})
 end
 
-picoColors = {
+local picoColors = {
    '000000','1D2B53','7E2553','008751','AB5236','5F574F','C2C3C7','FFF1E8',
    'FF004D','FFA300','FFEC27','00E436','29ADFF','83769C','FF77A8','FFCCAA',
 }
@@ -83,10 +83,10 @@ pico = {
 }
 for i = 1, #picoColors do
    local r,g,b = hex2rgb(picoColors[i])
-   table.insert(pico.colors, {name='unknown', rgb={r,g,b}, hex=picoColors[i]})
+   table.insert(pico.colors, { rgb={r,g,b}})
 end
 
-childCraftColors = {
+local childCraftColors = {
 
    '4D391F',
    '4B6868',
@@ -118,11 +118,11 @@ childCraft = {
 
 for i = 1, #childCraftColors do
    local r,g,b = hex2rgb(childCraftColors[i])
-   table.insert(childCraft.colors, {name='unknown', rgb={r,g,b}})
+   table.insert(childCraft.colors, {rgb={r,g,b}})
 end
 
 
-gruvBoxColors = {
+local gruvBoxColors = {
 '1D2021',
 '282828',
 '32302F',
@@ -170,7 +170,7 @@ gruvBox = {
 
 for i = 1, #gruvBoxColors do
    local r,g,b = hex2rgb(gruvBoxColors[i])
-   table.insert(gruvBox.colors, {name='unknown', rgb={r,g,b}, hex=gruvBoxColors[i]})
+   table.insert(gruvBox.colors, { rgb={r,g,b}})
 end
 
 littleGreene = {
@@ -178,7 +178,7 @@ littleGreene = {
    colors= {}
 }
 
-littleGreeneColors = {
+local littleGreeneColors = {
 
     "FDFDFA",
     "F8F8F8",
@@ -311,7 +311,7 @@ littleGreeneColors = {
 }
 for i = 1, #littleGreeneColors do
    local r,g,b = hex2rgb(littleGreeneColors[i])
-   table.insert(littleGreene.colors, {name='unknown', rgb={r,g,b}, hex=littleGreeneColors[i]})
+   table.insert(littleGreene.colors, { rgb={r,g,b}})
 end
 
 
@@ -320,7 +320,7 @@ quentinBlake = {
    colors = {}
 }
 
-quentinBlakeColors = {
+local quentinBlakeColors = {
 'D9ccc5',
 'D1CCC0',
 'CCC4C9',
@@ -376,5 +376,5 @@ quentinBlakeColors = {
 
 for i = 1, #quentinBlakeColors do
    local r,g,b = hex2rgb(quentinBlakeColors[i])
-   table.insert(quentinBlake.colors, {name='unknown', rgb={r,g,b}, hex=quentinBlakeColors[i]})
+   table.insert(quentinBlake.colors, { rgb={r,g,b}})
 end

@@ -11,7 +11,7 @@ function doDopeSheetEditing()
       for k,v in pairs(dopesheet.refs) do
 
 	 local t = v._parent._globalTransform
-	 local t2 = v._globalTransform
+	 local t2 = v._globalTransform  --why is this not here? todo
 	 local mex, mey = t2:transformPoint(v.transforms.l[1], v.transforms.l[2])
 	 local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
 

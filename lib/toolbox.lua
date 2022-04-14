@@ -173,6 +173,7 @@ end
 
 
 function meshAll(root) -- this needs to be done recursive
+   if root.children then
    for i=1, #root.children do
       if (root.children[i].points) then
          if root.children[i].type == 'meta' then
@@ -188,6 +189,7 @@ function meshAll(root) -- this needs to be done recursive
       else
          meshAll(root.children[i])
       end
+   end
    end
 end
 function remeshNode(node)
