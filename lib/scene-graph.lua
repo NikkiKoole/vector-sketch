@@ -56,6 +56,7 @@ end
 
 
 function setTransforms(root)
+   -- todo this is not right
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then

@@ -3,7 +3,7 @@ function hex2rgb(hex)
     return tonumber("0x"..hex:sub(1,2)), tonumber("0x"..hex:sub(3,4)), tonumber("0x"..hex:sub(5,6))
 end
 
-miffy = {
+local miffy = {
    name='miffy',
    colors={
       {   rgb={48,112,47}},
@@ -22,7 +22,7 @@ miffy = {
       {rgb={149,164,151}},
    }
 }
-lego = {
+local lego = {
    name='lego-classic',
    colors={
       --{name="bright red", rgb={196,40,27}},
@@ -35,7 +35,7 @@ lego = {
       -- {name="black", rgb={27,42,52}},
    }
 }
-fabuland = {
+local fabuland = {
    name='fabuland',
    colors={
       {rgb={255, 128, 20}},
@@ -62,7 +62,7 @@ local jamesGulliverHancock = {
    'cb5f63','dfcaa7','ca3135','9a5e61','ad898a','454546',
 }
 
-james = {
+local james = {
    name="james",
    colors = {}
 }
@@ -77,7 +77,7 @@ local picoColors = {
    'FF004D','FFA300','FFEC27','00E436','29ADFF','83769C','FF77A8','FFCCAA',
 }
 
-pico = {
+local pico = {
    name='pico',
    colors = {}
 }
@@ -111,7 +111,7 @@ local childCraftColors = {
 
 
 
-childCraft = {
+local childCraft = {
    name='childCraft',
    colors = {}
 }
@@ -163,7 +163,8 @@ local gruvBoxColors = {
 '427B58',
 'AF3A03',
 }
-gruvBox = {
+
+local gruvBox = {
    name='gruvBox',
    colors = {}
 }
@@ -173,7 +174,7 @@ for i = 1, #gruvBoxColors do
    table.insert(gruvBox.colors, { rgb={r,g,b}})
 end
 
-littleGreene = {
+local littleGreene = {
    name='littleGreene',
    colors= {}
 }
@@ -315,7 +316,7 @@ for i = 1, #littleGreeneColors do
 end
 
 
-quentinBlake = {
+local quentinBlake = {
    name='quentinBlake',
    colors = {}
 }
@@ -377,4 +378,21 @@ local quentinBlakeColors = {
 for i = 1, #quentinBlakeColors do
    local r,g,b = hex2rgb(quentinBlakeColors[i])
    table.insert(quentinBlake.colors, { rgb={r,g,b}})
+end
+
+-- this is returned
+function getAllPalettes()
+   local palette = {
+      name='mix-and-match',
+      colors={}
+}
+
+   local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox, quentinBlake, littleGreene}
+   for i = 1, #palettes do
+      for j = 1, #palettes[i].colors do
+         table.insert(palette.colors,palettes[i].colors[j] )
+      end
+   end
+   
+   return palette
 end

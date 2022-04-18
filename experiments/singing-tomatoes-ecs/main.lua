@@ -1,5 +1,7 @@
 package.path = package.path .. ";../../?.lua"
 
+local mylib = require('tool')
+
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
@@ -31,6 +33,14 @@ Concord.component(
       c.x =x
       c.y =y
    end
+)
+
+Concord.component(
+   "hotReload",
+   function(c, b)
+      c.origin = b
+   end
+   
 )
 
 Concord.component(
@@ -87,6 +97,7 @@ function HitMeshSystem:pressed(x,y, elem)
    for _, e in ipairs(self.pool) do
       local body = e.bodyFirstChildMeshHit.body
       if isMouseInMesh(x,y, body, body.children[1].mesh) then
+
 	 e.onHitFunc.hitFunc(body)
       end
    end
@@ -106,14 +117,53 @@ function BlinkEyesSystem:update(dt)
    end
 end
 
+local HotReloadSystem = Concord.system({pool = {'hotReload'}})
+function HotReloadSystem:reloadPath(path)
+   print('want to reload with path:', path)
+   
+   local temp = parseFile(path)
+   for i = 1, #root.children do
+      if root.children[i].origin and root.children[i].origin.path == path then
+         local index = root.children[i].origin.index
+         root.children[i] = temp[index]
+      end
+   end
+
+   for _, e in ipairs(self.pool) do
+      if (e.hotReload.origin.path == path) then
+         myWorld:removeEntity(e)
+      end
+   end
+
+      
+   parentize(root)
+   meshAll(root)
+   renderThings(root)
+
+   print(path)
+   makeTomatoes(temp)
+
+   
+  -- print(#myWorld:getEntities())
+end
 
 
-myWorld:addSystems(MovePupilToMouseSystem, HitMeshSystem, BlinkEyesSystem)
+
+
+myWorld:addSystems(MovePupilToMouseSystem, HitMeshSystem, BlinkEyesSystem, HotReloadSystem)
 
 
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
+   if key == 'r' then
+      print('check out reloading a polygon file')
+      local p = 'assets/tomatoes.txt'
+
+      myWorld:emit("reloadPath", p)
+
+   end
+   
 end
 
 function love.update(dt)
@@ -124,12 +174,35 @@ end
 function love.draw()
    love.graphics.clear(0.52,0.56,0.28)
    renderThings(root)
-   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+--   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+   mylib:draw()
 
 end
 
+function love.mousemoved(x,y, dx, dy)
+   mylib:mousemoved(x,y, dx, dy)
+end
+
+function love.mousereleased(x,y,button)
+   mylib:mousereleased(x,y, button)
+end
+function love.resize(w,h)
+   mylib:setDimensions(w*part,h)
+end
+
+function love.wheelmoved(x,y)
+--   mylib:wheelmoved(x,y)
+end
+
+
 function love.mousepressed(x,y)
    myWorld:emit('pressed',x,y)
+
+   local w,h = love.graphics.getDimensions()
+   if x <= w*part then
+      mylib:mousepressed(x,y, button)
+   end
+
 end
 
 
@@ -194,7 +267,7 @@ end
 
 local function onHitXylo(body)
 
-   local semitones = {
+    local semitones = {
       rood = 0,
       oranje = 3,
       geel = 5,
@@ -216,9 +289,16 @@ local function onHitXylo(body)
    end
 
 function love.load()
-   love.window.setTitle( 'ecs tomatoes')
+   love.window.setTitle( 'ecs tomatoes, new NOW with hot-reloading')
    love.window.setMode(1024, 768, {resizable=true, vsync=true, minwidth=400, minheight=300, msaa=2, highdpi=true})
 
+
+   part = 0.5
+   local w,h = love.graphics.getDimensions()
+   mylib:setDimensions(w*part,h)
+   mylib:load(arg)
+
+   
    samples = {}
    glockSample =   love.audio.newSource(love.sound.newSoundData( 'assets/glock1.wav' ), 'static')
    voiceSamples = {}
@@ -235,9 +315,9 @@ function love.load()
       children ={}
    }
 
-   tomatoes = parseFile('assets/tomatoes.txt')
-   xylofoon = parseFile('assets/xylofoon.txt')[1]
-   cr78 = parseFile('assets/cr78.txt')[1]
+   local tomatoes = parseFile('assets/tomatoes.txt')
+   local xylofoon = parseFile('assets/xylofoon.txt')[1]
+   local cr78 = parseFile('assets/cr78.txt')[1]
 
    table.insert(root.children, xylofoon)
    xylofoon.transforms.l[1] = - 90
@@ -252,8 +332,29 @@ function love.load()
    end
    meshAll(root)
 
-   startPos = {}
-   for i =1, #tomatoes do
+   makeTomatoes(tomatoes)
+
+
+
+   
+   for i= 3, #xylofoon.children do
+      Concord.entity(myWorld)
+         :give('hotReload', xylofoon.origin)
+
+         :give('bodyFirstChildMeshHit',   xylofoon.children[i])
+	 :give('onHitFunc', onHitXylo)
+
+   end
+
+   parentize(root)
+   meshAll(root)
+   renderThings(root)
+
+end
+
+function makeTomatoes(tomatoes)
+      for i =1, #tomatoes do
+--      print(tomatoes[i].origin.path)
       local linkerOog = findNodeByName(tomatoes[i], 'linkeroog')
       local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
       local linkerPupil = findNodeByName(linkerOog, 'pupil')
@@ -261,31 +362,26 @@ function love.load()
 
       Concord.entity(myWorld)
          :give('bodyFirstChildMeshHit',  findNodeByName(tomatoes[i], 'lichaam'))
+         :give('hotReload', tomatoes[i].origin)
 	 :give('onHitFunc', onHitHead)
 
 
       Concord.entity(myWorld)
+         :give('hotReload', tomatoes[i].origin)
          :give('transforms', linkerPupil.transforms)
          :give('startPos', linkerPupil.transforms.l[1], linkerPupil.transforms.l[2])
          :give('pupil')
 
       Concord.entity(myWorld)
+         :give('hotReload', tomatoes[i].origin)
          :give('transforms', rechterPupil.transforms)
          :give('startPos', rechterPupil.transforms.l[1], rechterPupil.transforms.l[2])
          :give('pupil')
 
       Concord.entity(myWorld)
+         :give('hotReload', tomatoes[i].origin)
 	 :give('blink2Eyes', linkerPupil, rechterPupil)
    end
 
-   for i= 3, #xylofoon.children do
-      Concord.entity(myWorld)
-         :give('bodyFirstChildMeshHit',   xylofoon.children[i])
-	 :give('onHitFunc', onHitXylo)
-   end
-
-   parentize(root)
-   meshAll(root)
-   renderThings(root)
 
 end

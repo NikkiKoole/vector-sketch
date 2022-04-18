@@ -157,13 +157,12 @@ function love.load()
       folder = true,
       name = 'root',
       transforms =  {l={1024/2,768/2,0,4,4,0,0}},
-
    }
 
-   local doggo = parseFile('assets/doggo___.polygons.txt')
-   local worst_ =  parseFile('assets/worst_.polygons.txt')
-
-   root.children = {doggo[1], worst_[1]}
+   local doggo = parseFile('assets/doggo___.polygons.txt')[1]
+   local worst_ =  parseFile('assets/worst_.polygons.txt')[1]
+--   print(inspect(worst_))
+   root.children = {doggo, worst_}
    parentize(root)
    meshAll(root)
 

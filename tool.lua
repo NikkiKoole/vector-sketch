@@ -55,6 +55,9 @@ local function getCircumference()
 end
 
 
+
+
+
 local function getAngleAndDistance(x1,y1,x2,y2)
    local dx = x1 - x2
    local dy = y1 - y2
@@ -311,6 +314,17 @@ end
 
 local function addThingAtEnd(thing, parent)
    thing._parent = parent
+
+   --
+   -- todo this crashed on not having children
+   if not parent.children then
+      print('sasdasdasd')
+      print(inspect(thing))
+      print(inspect(parent))
+
+   end
+   
+
    table.insert(parent.children, #parent.children + 1, thing)
 end
 
@@ -387,6 +401,26 @@ local function deletePoints(node)
    remeshNode(node)
 end
 
+local function  makeNewFolder()
+   local shape = {
+      folder = true,
+      transforms =  {l={0,0,0,1,1,0,0, 0,0}},
+      children = {}
+   }
+
+   if currentNode and not currentNode.folder then
+      remeshNode(currentNode)
+   end
+   if (currentNode) then
+      shape._parent = currentNode and currentNode._parent
+      addShapeAfter(shape, currentNode)
+   else
+      shape._parent = root
+      addShapeAtRoot(shape)
+   end
+   return shape
+end
+
 
 ------------ editor specific code
 
@@ -415,44 +449,77 @@ local function drawUIAroundGraphNodes(w,h)
       }
    )
    if openedAddPanel then
-   table.insert(
-      row0,
-      {
-         'add-meta', ui.move, 'add a meta',
-         function()
-            --openedAddPanel = not openedAddPanel
+      table.insert(
+         row0,
+         {
+            'add-meta', ui.move, 'add a meta',
+            function()
+               --openedAddPanel = not openedAddPanel
 
-         end
-         
+               local shape = {
+                     color = {1,0,0,1},
+                     points = {{0,0}},
+                     type = 'meta'
+                  }
+                  if (currentNode) then
+                     shape._parent = currentNode and currentNode._parent
+                     addShapeAfter(shape, currentNode)
+                  else
+                     shape._parent = root
+                     addShapeAtRoot(shape)
+                  end
 
-      }
-   )
-   table.insert(
-      row0,
-      {
-         'add-shape', ui.object_group, 'add a shape',
-         function()
-            --openedAddPanel = not openedAddPanel
+            end
+            
 
-         end
-         
+         }
+      )
+      table.insert(
+         row0,
+         {
+            'add-shape', ui.object_group, 'add a shape',
+            function()
+               --openedAddPanel = not openedAddPanel
+                                 local shape = {
+                     color = {0,0,0,1},
+                     outline = true,
+                     points = {},
+                  }
 
-      }
-   )
-   table.insert(
-      row0,
-      {
-         'add-folder', ui.folder, 'add a folder',
-         function()
-            --openedAddPanel = not openedAddPanel
+                  if currentNode and not currentNode.folder then
+                     remeshNode(currentNode)
+                  end
+                  if (currentNode) then
+                     shape._parent = currentNode and currentNode._parent
+                     addShapeAfter(shape, currentNode)
+                  else
+                     shape._parent = root
+                     addShapeAtRoot(shape)
+                  end
 
-         end
-         
+                  editingMode = 'polyline'
+                  editingModeSub = 'polyline-insert'
 
-      }
-   )
-      
-      
+            end
+            
+
+         }
+      )
+      table.insert(
+         row0,
+         {
+            'add-folder', ui.folder, 'add a folder',
+            function()
+               --openedAddPanel = not openedAddPanel
+                  local f = makeNewFolder()
+                  editingMode = 'polyline'
+                  editingModeSub = 'polyline-insert'
+
+            end
+            
+
+         }
+      )
       
    end
    
@@ -720,6 +787,7 @@ local function drawUIAroundGraphNodes(w,h)
    -- this is adirect copy of code
    if #childrenInRectangleSelect > 0  and type(childrenInRectangleSelect[1])=='table' then
 
+      if currentNode and currentNode.folder then
 
         table.insert(
             row2,
@@ -767,7 +835,7 @@ local function drawUIAroundGraphNodes(w,h)
                end
             }
          )
-
+         end
       
    end
    
@@ -1028,7 +1096,7 @@ local function drawUIAroundGraphNodes(w,h)
                end
             end
             if v == 'printOptimizedBatchMesh' then
-               if currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
+               if currentNode and currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
                   love.graphics.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
                end
             end
@@ -1987,17 +2055,10 @@ function mylib:load(arg)
       arrow= love.mouse.getSystemCursor("arrow")
    }
 
-   palette = {
-      name='mix-and-match',
-      colors={}
-   }
-
-   local palettes = {miffy, pico, lego, fabuland, james, childCraft, gruvBox, quentinBlake, littleGreene}
-   for i = 1, #palettes do
-      for j = 1, #palettes[i].colors do
-         table.insert(palette.colors,palettes[i].colors[j] )
-      end
-   end
+   
+   palette = getAllPalettes()
+   
+   
 
    mouseState = {
       hoveredSomething = false,
@@ -2064,7 +2125,7 @@ function mylib:load(arg)
    backdrop = {
       grid = {cellsize=100}, -- cellsize is in px
       bg_color = {.53, .70, .76},
-      image = love.graphics.newImage("resources/backdrops/offshore-707.jpg"),
+      --image = love.graphics.newImage("resources/backdrops/offshore-707.jpg"),
       visible = false,
       alpha = 0.5,
       x = 0,
@@ -2113,25 +2174,6 @@ local function drawGrid()
    end
 end
 
-local function  makeNewFolder()
-   local shape = {
-      folder = true,
-      transforms =  {l={0,0,0,1,1,0,0, 0,0}},
-      children = {}
-   }
-
-   if currentNode and not currentNode.folder then
-      remeshNode(currentNode)
-   end
-   if (currentNode) then
-      shape._parent = currentNode and currentNode._parent
-      addShapeAfter(shape, currentNode)
-   else
-      shape._parent = root
-      addShapeAtRoot(shape)
-   end
-   return shape
-end
 
 
 local step = 0
@@ -2634,47 +2676,47 @@ function mylib:draw()
 
                   
 
-                  if true then
-                     if imgbutton('group-scale-down', ui.resize, w - 300, 500).clicked  then
-                        if love.keyboard.isDown('a') then
-                           resizeGroup(currentNode, childrenInRectangleSelect, .75)
-                        else
-                           resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
-                        end
-                     end
+                  -- if true then
+                  --    if imgbutton('group-scale-down', ui.resize, w - 300, 500).clicked  then
+                  --       if love.keyboard.isDown('a') then
+                  --          resizeGroup(currentNode, childrenInRectangleSelect, .75)
+                  --       else
+                  --          resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+                  --       end
+                  --    end
 
-                     if imgbutton('group-scale-up', ui.resize, w - 256, 500).clicked  then
-                        if love.keyboard.isDown('a') then
-                           resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
-                        else
-                           resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
-                        end
-                     end
+                  --    if imgbutton('group-scale-up', ui.resize, w - 256, 500).clicked  then
+                  --       if love.keyboard.isDown('a') then
+                  --          resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+                  --       else
+                  --          resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+                  --       end
+                  --    end
 
-                     if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, 550).clicked  then
-                        flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
-                     end
+                  --    if imgbutton('children-flip-vertical', ui.flip_vertical, w - 300, 550).clicked  then
+                  --       flipGroup(currentNode, childrenInRectangleSelect, 1,-1)
+                  --    end
 
-                     if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, 550).clicked  then
-                        flipGroup(currentNode, childrenInRectangleSelect, -1,1)
-                     end
-
-
-
-                  end
+                  --    if imgbutton('children-fliph-horizontal', ui.flip_horizontal, w - 256, 550).clicked  then
+                  --       flipGroup(currentNode, childrenInRectangleSelect, -1,1)
+                  --    end
 
 
+
+                  -- end
 
 
 
 
 
 
-		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0)).clicked then
+
+
+		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0),'parentize').clicked then
 		     lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
 		  end
 
-		  if imgbutton('object_group', ui.object_group, rightX - 200, calcY(0)).clicked   then
+		  if imgbutton('object_group', ui.object_group, rightX - 200, calcY(0), 'turn group to object').clicked   then
 		     for i =1, #childrenInRectangleSelect do
 			local n = childrenInRectangleSelect[i]
 			table.remove(n._parent.children, getIndex(n))
@@ -2714,59 +2756,59 @@ function mylib:draw()
 
 
 
-            if imgbutton('add-something', ui.add, rightX, 16).clicked then
-               openedAddPanel = not openedAddPanel
-            end
+--            if imgbutton('add-something', ui.add, rightX, 16).clicked then
+--               openedAddPanel = not openedAddPanel
+--            end
 
 
-            if openedAddPanel then
-               if iconlabelbutton('add-meta', ui.move, nil, false,  'meta',  rightX-400, 48, 128).clicked then
-                  local shape = {
-                     color = {1,0,0,1},
-                     points = {{0,0}},
-                     type = 'meta'
-                  }
-                  if (currentNode) then
-                     shape._parent = currentNode and currentNode._parent
-                     addShapeAfter(shape, currentNode)
-                  else
-                     shape._parent = root
-                     addShapeAtRoot(shape)
-                  end
+            -- if openedAddPanel then
+            --    if iconlabelbutton('add-meta', ui.move, nil, false,  'meta',  rightX-400, 48, 128).clicked then
+            --       local shape = {
+            --          color = {1,0,0,1},
+            --          points = {{0,0}},
+            --          type = 'meta'
+            --       }
+            --       if (currentNode) then
+            --          shape._parent = currentNode and currentNode._parent
+            --          addShapeAfter(shape, currentNode)
+            --       else
+            --          shape._parent = root
+            --          addShapeAtRoot(shape)
+            --       end
 
-               end
+            --    end
 
 
-               --ui.object-group
-               if iconlabelbutton('add-shape', ui.object_group, nil, false,  'shape',  rightX-250, 48, 128).clicked then
-                  local shape = {
-                     color = {0,0,0,1},
-                     outline = true,
-                     points = {},
-                  }
+            --    --ui.object-group
+            --    if iconlabelbutton('add-shape', ui.object_group, nil, false,  'shape',  rightX-250, 48, 128).clicked then
+            --       local shape = {
+            --          color = {0,0,0,1},
+            --          outline = true,
+            --          points = {},
+            --       }
 
-                  if currentNode and not currentNode.folder then
-                     remeshNode(currentNode)
-                  end
-                  if (currentNode) then
-                     shape._parent = currentNode and currentNode._parent
-                     addShapeAfter(shape, currentNode)
-                  else
-                     shape._parent = root
-                     addShapeAtRoot(shape)
-                  end
+            --       if currentNode and not currentNode.folder then
+            --          remeshNode(currentNode)
+            --       end
+            --       if (currentNode) then
+            --          shape._parent = currentNode and currentNode._parent
+            --          addShapeAfter(shape, currentNode)
+            --       else
+            --          shape._parent = root
+            --          addShapeAtRoot(shape)
+            --       end
 
-                  editingMode = 'polyline'
-                  editingModeSub = 'polyline-insert'
-               end
-               --ui.folder
-               if iconlabelbutton('add-parent', ui.folder, nil, false,  'folder',  rightX-100,48, 128).clicked then
+            --       editingMode = 'polyline'
+            --       editingModeSub = 'polyline-insert'
+            --    end
+            --    --ui.folder
+            --    if iconlabelbutton('add-parent', ui.folder, nil, false,  'folder',  rightX-100,48, 128).clicked then
 
-                  local f = makeNewFolder()
-                  editingMode = 'polyline'
-                  editingModeSub = 'polyline-insert'
-               end
-            end
+            --       local f = makeNewFolder()
+            --       editingMode = 'polyline'
+            --       editingModeSub = 'polyline-insert'
+            --    end
+            -- end
 
 	    --if (currentNode) then
             -- what is y position of button in list ?

@@ -3,7 +3,7 @@ local mylib = require('tool')
 --https://blog.separateconcerns.com/2014-01-03-lua-module-policy.html
 --print(getDimensions())
 
-local part=.5
+local part=.85
 
 function love.load(arg)
    local w,h = love.graphics.getDimensions()

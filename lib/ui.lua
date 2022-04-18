@@ -188,7 +188,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
       love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
       hover = true
-
+      --print('hovered', id)
       if (mouseState.click) then
 	 clicked = true
 
@@ -242,7 +242,7 @@ function imgbutton(id, img, x, y, hoverText)
       love.graphics.setColor(1,1,1,1)
      
       if (hoverText) then
-	 love.graphics.print(hoverText, 200, 0)
+	 love.graphics.print(hoverText, 300, 0)
       end
       love.graphics.setColor(1,1,1,.5)
       love.mouse.setCursor(cursors.hand)

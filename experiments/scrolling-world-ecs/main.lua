@@ -93,6 +93,9 @@ function copy3(obj, seen)
 end
 
 function readFileAndAddToCache(url)
+   -- todo this needs to work with hotrelaoding too,
+   -- i suppose its just a matter of overwriting the value in cache?
+   
    if not meshCache[url] then
       local g2 = parseFile(url)[1]
       parentize(g2)

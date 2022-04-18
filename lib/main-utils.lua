@@ -665,7 +665,7 @@ function lerpNodes(left, right, root, t)
 	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
       }
       root.children = {}
-      print(#left.children, #right.children)
+--      print(#left.children, #right.children)
       if (#left.children == #right.children) then
       for i=1, #left.children do
 	 root.children[i] = {}
@@ -680,6 +680,12 @@ function lerpNodes(left, right, root, t)
       if (left.hole and right.hole) then
 	 root.hole = true
       end
+
+      if (left.closeStencil and right.closeStencil) then
+         print('check!')
+	 root.closeStencil = true
+      end
+      
 
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
