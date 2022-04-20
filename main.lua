@@ -5,8 +5,41 @@ local mylib = require('tool')
 
 local part=.85
 
+
+local root = {
+      folder = true,
+      name = 'root',
+      transforms =  {l={0,0,0,1,1,0,0,0,0}},
+      children = {
+
+         {
+            folder = true,
+            transforms =  {l={0,0,0,1,1,100,0,0,0}},
+            name="rood",
+            children ={
+	       {
+                  name="roodchild:"..1,
+                  color = {.5,.1,0, 0.8},
+                  points = {{0,0},{200,0},{200,200},{0,200}},
+
+	       },
+	       {
+                  name="meta thing"..1,
+                  type='meta',
+                  color = {1,0,0, 0.8},
+                  points = {{0,0}},
+
+               },
+            },
+         },
+      }
+   }
+
+
 function love.load(arg)
    local w,h = love.graphics.getDimensions()
+   mylib:setRoot(root)
+
    mylib:setDimensions(w*part,h)
    mylib:load(arg)
 end

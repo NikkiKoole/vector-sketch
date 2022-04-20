@@ -28,6 +28,16 @@ json = require 'vendor.json'
 
 local mylib = {}
 
+function mylib:setRoot(root, folderPath)
+   -- not used yet
+   parentize(root)
+   meshAll(root)
+
+   mylib.root = root
+   mylib.folderPath = folderPath
+end
+
+
 function mylib:setDimensions(w,h)
    mylib.w =w
    mylib.h =h
@@ -132,6 +142,7 @@ end
 
 
 local function tryToCenterUI(node2)
+   local root = mylib.root
    recursiveCloseAll(root)
    local reversePath = {}
    local node = node2
@@ -160,6 +171,8 @@ local function setCurrentNode(newNode)
 end
 
 function isPartOfKeyframePose(node)
+   local root = mylib.root
+
    if (node.keyframes) then return true end
    if (node._parent == root) then return false end
    if (node._parent) then
@@ -298,7 +311,7 @@ local function deleteNode(node)
 end
 
 local function removeGroupOfThings(group)
-   local root =  currentNode or root
+   local root =  currentNode or mylib.root
    for i = 1, #group do
       table.remove(root.children, getIndex(group[i]))
    end
@@ -329,6 +342,8 @@ local function addThingAtEnd(thing, parent)
 end
 
 local function addShapeAtRoot(shape)
+   local root = mylib.root
+
    table.insert(root.children, #root.children + 1, shape)
 end
 
@@ -341,6 +356,8 @@ end
 
 
 local function removeShapeAtPath(path)
+   local root = mylib.root
+
    return table.remove(root.children, path[1])
 end
 
@@ -415,6 +432,8 @@ local function  makeNewFolder()
       shape._parent = currentNode and currentNode._parent
       addShapeAfter(shape, currentNode)
    else
+      local root = mylib.root
+
       shape._parent = root
       addShapeAtRoot(shape)
    end
@@ -465,6 +484,8 @@ local function drawUIAroundGraphNodes(w,h)
                      shape._parent = currentNode and currentNode._parent
                      addShapeAfter(shape, currentNode)
                   else
+                     local root = mylib.root
+
                      shape._parent = root
                      addShapeAtRoot(shape)
                   end
@@ -493,6 +514,8 @@ local function drawUIAroundGraphNodes(w,h)
                      shape._parent = currentNode and currentNode._parent
                      addShapeAfter(shape, currentNode)
                   else
+                     local root = mylib.root
+
                      shape._parent = root
                      addShapeAtRoot(shape)
                   end
@@ -1116,7 +1139,7 @@ local function drawUIAroundGraphNodes(w,h)
                   local my = tly + (bry - tly)/2
                   return tlx, tly, brx, bry, mx, my
                end
-               if (currentNode.children and #currentNode.children > 0) then
+               if (currentNode and currentNode.children and #currentNode.children > 0) then
                   love.graphics.rectangle("fill", runningX, runningY, 20, 20)
                   if getUIRect('p1', runningX, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
@@ -1499,6 +1522,7 @@ end
 
 function mylib:mousepressed(x,y, button)
    lastDraggedElement = nil
+      local root = mylib.root
 
    if editingMode == nil then
       editingMode = 'move'
@@ -1508,7 +1532,7 @@ function mylib:mousepressed(x,y, button)
       local d = findMeshThatsHit(root, x, y, love.keyboard.isDown( 'lctrl' ) )
       if d then
          setCurrentNode(d)
-         tryToCenterUI(d)
+         tryToCenterUI(d, root)
          editingMode = 'polyline'
       else
          setCurrentNode(nil)
@@ -1579,6 +1603,8 @@ end
 
 
 function mylib:mousereleased(x,y, button)
+   local root = mylib.root
+
    if editingMode == 'move' then
       editingMode = nil
    end
@@ -1686,6 +1712,8 @@ end
 
 
 function mylib:mousemoved(x,y, dx, dy)
+   local root = mylib.root
+
    currentlyHoveredUINode = nil
    local snap = false
    if  love.keyboard.isDown( 'r' ) then
@@ -1693,10 +1721,16 @@ function mylib:mousemoved(x,y, dx, dy)
    end
 
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and editingModeSub ~= 'group-move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
+      
+      local ddx,  ddy  = dx, dy
+      -- when ingame editing, sometimes you edit a root with a parent 
+      if root._parent ~= nil then
+         ddx, ddy = getLocalDelta(root.transforms._g, dx, dy)
+      end
 
       love.mouse.setCursor(handCursor)
-      root.transforms.l[1] = root.transforms.l[1] + dx
-      root.transforms.l[2] = root.transforms.l[2] + dy
+      root.transforms.l[1] = root.transforms.l[1] + ddx
+      root.transforms.l[2] = root.transforms.l[2] + ddy
    else
       love.mouse.setCursor()
    end
@@ -1927,6 +1961,7 @@ end
 function mylib:wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
    local w, h = getDimensions() --love.graphics.getDimensions()
+   local root = mylib.root
 
    if posx < 128 then
       scrollviewOffset = scrollviewOffset + y*24
@@ -2076,49 +2111,15 @@ function mylib:load(arg)
       x = 128,
    }
    
-   local generated = generatePolygon(0,0, 40, .05, .02 , 6)
-   local points = {}
-   for i = 1, #generated, 2 do
-      table.insert(points, {generated[i], generated[i+1]})
-   end
+--   local generated = generatePolygon(0,0, 40, .05, .02 , 6)
+--   local points = {}
+--   for i = 1, #generated, 2 do
+--      table.insert(points, {generated[i], generated[i+1]})
+--   end
 
-   root = {
-      folder = true,
-      name = 'root',
-      transforms =  {l={0,0,0,1,1,0,0,0,0}},
-      children = {
 
-         {
-            folder = true,
-            transforms =  {l={0,0,0,1,1,100,0,0,0}},
-            name="rood",
-            children ={
-               {
-                  name="roodline:"..1,
-                  color = {.5,1,0, 0.8},
-                  points = points,
-                  line=true
-               },
 
-	       {
-                  name="roodchild:"..1,
-                  color = {.5,.1,0, 0.8},
-                  points = {{0,0},{200,0},{200,200},{0,200}},
-
-	       },
-	       {
-                  name="meta thing"..1,
-                  type='meta',
-                  color = {1,0,0, 0.8},
-                  points = {{0,0}},
-
-               },
-            },
-         },
-      }
-   }
-
-   parentize(root)
+--   parentize(root)
    currentNode = nil
    currentlyHoveredUINode = nil
 
@@ -2143,7 +2144,7 @@ function mylib:load(arg)
    quitDialog = false
    rectangleSelect = {}
    childrenInRectangleSelect = {}
-   meshAll(root)
+   --meshAll(root)
    splineTension = 0
    splineSpacing = 20
    splineLineThickness = 2
@@ -2156,6 +2157,8 @@ function mylib:load(arg)
 end
 
 local function drawGrid()
+   local root = mylib.root
+
    local scale = root.transforms.l[4]
    local size = backdrop.grid.cellsize * scale
    if (size < 10) then return end
@@ -2185,10 +2188,12 @@ end
 
 
 function mylib:draw()
+
+   local root = mylib.root
    if openFileScreen then
       handleMouseClickStart()
 
-      renderOpenFileScreen()
+      renderOpenFileScreen(root)
    else
 
       if true then
@@ -2201,7 +2206,7 @@ function mylib:draw()
          love.graphics.setScissor( 0, 0, w, h )
          local rightX = w - (64 + 500+ 10)/2
 
-	 love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
+	-- love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.4)
          
 
 	 if  backdrop.visible then
@@ -2212,11 +2217,20 @@ function mylib:draw()
 	 love.graphics.setWireframe(wireframe )
 	 --print('need to recursivey make bbox so i can make fitting canvas')
 	 renderThings(root)
+         comparemode, comparevalue = love.graphics.getStencilTest( )
 
+         if (comparemode ~= 'always' or comparevalue ~= 0) then
+            print('disabling stencil for ya, you still hvae to fix something in the tree though, probably a missing close stencil command')
+            love.graphics.setStencilTest()
+         end
+         
 	 if (currentlyHoveredUINode) then
 	    local alpha = 0.5 + math.sin(step/100)
 	    love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
-	    local editing = makeVertices(currentlyHoveredUINode)
+
+            -- todo this is broken since i made root local ?!
+	    local editing = false --makeVertices(currentlyHoveredUINode)
+            --print(inspect(currentlyHoveredUINode))
 	    if (editing and #editing > 0) then
 	       local editingMesh = makeMeshFromVertices(editing)
 	       love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent.transforms._g)
@@ -2982,6 +2996,8 @@ function mylib:filedropped(file)
 end
 
 function mylib:keypressed(key, scancode, isrepeat)
+   local root = mylib.root
+
    console.keypressed(key, scancode, isrepeat)
    if not console.isEnabled() then
       if key == 'lshift' then
@@ -3073,6 +3089,44 @@ function mylib:keypressed(key, scancode, isrepeat)
 	 gatherData('')
       end
 
+      if key == 'h' then
+         print('this will be used to hot reload the thing you are working on into the origin file')
+         
+         local readurl = mylib.folderPath..'/'..mylib.root.origin.path
+         local writeurl = readurl
+         
+         local file = io.open(readurl, "r")
+         local contents = file:read("*all")
+         file:close()
+
+         local parsed = (loadstring("return ".. contents)())
+
+         if (mylib.root.origin.index >= 0) then
+            parsed[mylib.root.origin.index] = mylib.root
+         else
+            parsed[1] = mylib.root
+         end
+         
+         local toSave = {}
+	 for i=1 , #parsed do
+	    table.insert(toSave, copyShape(parsed[i]))
+	 end
+         
+         -- overwriting the file
+         file = io.open(writeurl, "w")
+
+         io.output(file)
+         io.write(inspect(toSave, {indent=""}))
+         io.close(file)
+
+         -- saving a backup file
+         file = io.open(writeurl..'-'..os.time()..'-.bak', "w")
+         io.output(file)
+         io.write(contents)
+         io.close(file)
+
+      end
+      
       if (key == 's' and not changeName) then
 	 local path = shapePath..shapeName..".polygons.txt"
 	 local info = love.filesystem.getInfo( path )

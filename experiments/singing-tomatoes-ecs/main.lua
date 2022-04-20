@@ -154,7 +154,7 @@ myWorld:addSystems(MovePupilToMouseSystem, HitMeshSystem, BlinkEyesSystem, HotRe
 
 
 
-function love.keypressed(key)
+function love.keypressed(key, scancode, isrepeat)
    if key == "escape" then love.event.quit() end
    if key == 'r' then
       print('check out reloading a polygon file')
@@ -163,7 +163,8 @@ function love.keypressed(key)
       myWorld:emit("reloadPath", p)
 
    end
-   
+   mylib:keypressed(key, scancode, isrepeat)
+      
 end
 
 function love.update(dt)
@@ -178,6 +179,8 @@ function love.draw()
    mylib:draw()
 
 end
+
+
 
 function love.mousemoved(x,y, dx, dy)
    mylib:mousemoved(x,y, dx, dy)
@@ -297,7 +300,6 @@ function love.load()
    local w,h = love.graphics.getDimensions()
    mylib:setDimensions(w*part,h)
    mylib:load(arg)
-
    
    samples = {}
    glockSample =   love.audio.newSource(love.sound.newSoundData( 'assets/glock1.wav' ), 'static')
@@ -308,12 +310,14 @@ function love.load()
       table.insert(voiceSamples, love.audio.newSource(data, 'static'))
    end
 
+   -- todo make local
    root = {
       folder = true,
       name = 'root',
       transforms =  {l={650,800,0,4,4,0,0}},
       children ={}
    }
+
 
    local tomatoes = parseFile('assets/tomatoes.txt')
    local xylofoon = parseFile('assets/xylofoon.txt')[1]
@@ -335,12 +339,12 @@ function love.load()
    makeTomatoes(tomatoes)
 
 
+   mylib:setRoot(cr78, love.filesystem.getRealDirectory( 'assets/cr78.txt'))
 
-   
+--   print(inspect(tomatoes[1].origin))
    for i= 3, #xylofoon.children do
       Concord.entity(myWorld)
          :give('hotReload', xylofoon.origin)
-
          :give('bodyFirstChildMeshHit',   xylofoon.children[i])
 	 :give('onHitFunc', onHitXylo)
 

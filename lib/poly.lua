@@ -366,7 +366,7 @@ function makeVertices(shape)
    if (shape.type == 'meta') then return end
    if (shape.folder) then return end
    local points = shape.points
-   if (#points >= 2 ) then
+   if (points and #points >= 2 ) then
 
       local scale = 1
       local coords = {}

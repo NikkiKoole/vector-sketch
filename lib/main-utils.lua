@@ -682,7 +682,7 @@ function lerpNodes(left, right, root, t)
       end
 
       if (left.closeStencil and right.closeStencil) then
-         print('check!')
+         --print('check!')
 	 root.closeStencil = true
       end
       

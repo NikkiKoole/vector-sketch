@@ -52,36 +52,37 @@ function stringFindLastSlash(str)
 end
 
 
+
 -- this function is actually just for the editor
 -- that shol dnot be in these files
-function batchProcessAllFiles()
-   local files = love.filesystem.getDirectoryItems('')
-   for k, file in ipairs(files) do
-      --print(k .. ". " .. file) --outputs something like "1. main.lua"
-      if ends_with(file, 'polygons.txt') then
-         print(file)
-         contents, size = love.filesystem.read(file )
-         --print(contents)
-         tab = (loadstring("return ".. contents)())
+-- function batchProcessAllFiles()
+--    local files = love.filesystem.getDirectoryItems('')
+--    for k, file in ipairs(files) do
+--       --print(k .. ". " .. file) --outputs something like "1. main.lua"
+--       if ends_with(file, 'polygons.txt') then
+--          print(file)
+--          contents, size = love.filesystem.read(file )
+--          --print(contents)
+--          tab = (loadstring("return ".. contents)())
 
-         _shapeName = file:sub(1, -14) --cutting off .polygons.txt
-         shapeName = _shapeName
+--          _shapeName = file:sub(1, -14) --cutting off .polygons.txt
+--          shapeName = _shapeName
 
-         print(shapeName)
-         root.children = tab -- TableConcat(root.children, tab)
-         parentize(root)
-         scrollviewOffset = 0
-         editingMode = nil
-         editingModeSub = nil
-         currentNode = nil
-         meshAll(root)
+--          print(shapeName)
+--          root.children = tab -- TableConcat(root.children, tab)
+--          parentize(root)
+--          scrollviewOffset = 0
+--          editingMode = nil
+--          editingModeSub = nil
+--          currentNode = nil
+--          meshAll(root)
 
-         renderNodeIntoCanvas(root, love.graphics.newCanvas(1024/2, 1024/2),  shapeName..".polygons.png")
-         --print(tab)
-      end
+--          renderNodeIntoCanvas(root, love.graphics.newCanvas(1024/2, 1024/2),  shapeName..".polygons.png")
+--          --print(tab)
+--       end
 
-   end
-end
+--    end
+-- end
 
 
 function getDataFromFile(file)
@@ -202,25 +203,22 @@ function meshAll(root) -- this needs to be done recursive
       if (root.children[i].points) then
          if root.children[i].type == 'meta' then
          else
-         remeshNode(root.children[i])
+            remeshNode(root.children[i])
          end
-         --root.children[i].mesh = makeMeshFromVertices(poly.makeVertices(root.children[i]))
-         --print(root.children[i])
          if root.children[i].border then
             print('this border should be meshed here')
          end
-
       else
          meshAll(root.children[i])
       end
    end
    end
 end
+
 function remeshNode(node)
    node.mesh = makeMeshFromVertices(makeVertices(node))
    if node.border then
       node.borderMesh =  makeBorderMesh(node)
-      --print('found a border need to mesh it')
    end
 end
 
@@ -344,7 +342,7 @@ function renderThings3d(root)
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
 
 
-   root.transforms._g = pg and (pg * root._localTransform) or root._localTransform
+   root.transforms._g = pg and (pg * root._localTransform) or rootcalTransform
 
    for i = 1, #root.children do
       local shape = root.children[i]

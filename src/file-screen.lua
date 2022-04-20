@@ -46,8 +46,7 @@ local function getPolygonFiles(rootPath, tree)
    return tree
 end
 
-function renderOpenFileScreen()
-
+function renderOpenFileScreen(root)
    love.graphics.setFont(small)
 
    love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3])
