@@ -48,7 +48,7 @@ end
 function love.draw()
    local w, h = love.graphics.getDimensions( )
    love.graphics.setScissor( 0, 0, w, h )
-   love.graphics.clear(.3,0,0)
+   love.graphics.clear(1,1,1)
 
    mylib:draw()
    love.graphics.setColor(1,1,1,0.5)
@@ -78,7 +78,12 @@ function love.mousemoved(x,y, dx, dy)
 end
 
 function love.mousereleased(x,y,button)
-   mylib:mousereleased(x,y, button)
+
+   local w,h = love.graphics.getDimensions()
+   if x <= w*part then
+      mylib:mousereleased(x,y, button)
+   end
+
 end
 
 function love.mousepressed(x,y,button)

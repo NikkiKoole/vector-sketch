@@ -1604,7 +1604,7 @@ end
 
 function mylib:mousereleased(x,y, button)
    local root = mylib.root
-
+   print('released',x,y, editingMode, editingModeSub)
    if editingMode == 'move' then
       editingMode = nil
    end
@@ -1636,14 +1636,23 @@ function mylib:mousereleased(x,y, button)
    end
 
    if (editingMode == 'rectangle-select') then
+      -- todo this doenst work 100% under ingame editing
+      print(rectangleSelect.startP, rectangleSelect.endP)
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
 	 print('why isnt this selcting children that have a parent again???')
-         local t = (not currentNode and  root.transforms and root.transforms._l) or (root.transforms and root.transforms._g)
 
+         local t = (not currentNode and  root.transforms and root.transforms._l) or (root.transforms and root.transforms._g)
+         
+         if root ~= currentNode and root._parent then
+            print('is this only hapening when ingame editing?')
+            t = (not currentNode and  root._parent.transforms and root.transforms._g)
+         end
+         
          if t then
             local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
             local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
+            print(sx,sy, ex,ey)
             local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
             local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
             local childrenInRect = {}
@@ -1725,7 +1734,8 @@ function mylib:mousemoved(x,y, dx, dy)
       local ddx,  ddy  = dx, dy
       -- when ingame editing, sometimes you edit a root with a parent 
       if root._parent ~= nil then
-         ddx, ddy = getLocalDelta(root.transforms._g, dx, dy)
+         print('todo this has issues too')
+         ddx, ddy = getLocalDelta(root._parent.transforms._g, dx, dy)
       end
 
       love.mouse.setCursor(handCursor)
@@ -1918,7 +1928,7 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
                dblClicked = true
                changeName=true
                changeNameCursor= child.name and #child.name or 0
-               lastClickedGraphButton = nil
+               --lastClickedGraphButton = nil
             end
          end
 
@@ -2206,7 +2216,11 @@ function mylib:draw()
          love.graphics.setScissor( 0, 0, w, h )
          local rightX = w - (64 + 500+ 10)/2
 
-	-- love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.4)
+         love.graphics.setColor(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.8)
+
+         love.graphics.rectangle('fill',0,0,w,h)
+
+--         love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.4)
          
 
 	 if  backdrop.visible then
@@ -2864,7 +2878,7 @@ function mylib:draw()
 	    end
 
 	    if (currentNode) then
-
+               
 	       if (changeName) then
 		  local str =  currentNode and currentNode.name  or ""
 		  local substr = string.sub(str, 1, changeNameCursor)
@@ -2876,19 +2890,32 @@ function mylib:draw()
 		  love.graphics.print(str , 0, h*0.75 - cursorH - 20)
 		  love.graphics.setColor(1,1,1, math.abs(math.sin(step/ 100)))
 		  love.graphics.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
-		  love.graphics.setColor(1,1,1)
+                  love.graphics.setColor(1,1,1)
 
 		  if lastClickedGraphButton then
-		     love.graphics.rectangle('line',
-					     lastClickedGraphButton.x+24+12,
-					     lastClickedGraphButton.y, 100,23)
-		     love.graphics.setColor(1,0,0)
-		     love.graphics.setFont(smallest)
-		     love.graphics.print(lastClickedGraphButton.childName or "",lastClickedGraphButton.x+24+12,
-					 lastClickedGraphButton.y)
 
-		  end
 
+                     local sx = lastClickedGraphButton.x+24+12
+                     local sy = lastClickedGraphButton.y+2
+                        
+		     love.graphics.rectangle('line',sx,sy , 100,23)
+		     love.graphics.setColor(1,0.75,0.75)
+		     love.graphics.setFont(smallester)
+                     
+		     love.graphics.print(str,sx,sy)
+                     
+                     love.graphics.setColor(1,1,1)
+
+                     
+                     --print(changeNameCursor)
+
+                     local substr =(string.sub(str, 1 , changeNameCursor))
+                     local cursorX = (love.graphics.getFont():getWidth(substr))
+                     --print(cursorX)
+                     love.graphics.rectangle('line', sx + cursorX, sy, 1, 23)
+
+                  end
+                  
 		  --
 	       end
 	    end
@@ -2988,6 +3015,7 @@ function mylib:textinput(t)
       changeNameCursor = changeNameCursor + 1
       currentNode.name = r
    end
+
    console.textinput(t)
 end
 
@@ -3089,7 +3117,7 @@ function mylib:keypressed(key, scancode, isrepeat)
 	 gatherData('')
       end
 
-      if key == 'h' then
+      if key == 'h' and not changeName then
          print('this will be used to hot reload the thing you are working on into the origin file')
          
          local readurl = mylib.folderPath..'/'..mylib.root.origin.path

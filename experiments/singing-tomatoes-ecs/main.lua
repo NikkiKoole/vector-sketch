@@ -37,8 +37,9 @@ Concord.component(
 
 Concord.component(
    "hotReload",
-   function(c, b)
+   function(c, b, d)
       c.origin = b
+      c.node = d
    end
    
 )
@@ -96,8 +97,14 @@ local HitMeshSystem = Concord.system({pool = {'bodyFirstChildMeshHit', 'onHitFun
 function HitMeshSystem:pressed(x,y, elem)
    for _, e in ipairs(self.pool) do
       local body = e.bodyFirstChildMeshHit.body
+      print(body.name)
       if isMouseInMesh(x,y, body, body.children[1].mesh) then
-
+         if (e.hotReload) then
+            reloadOrigin = e.hotReload.origin
+            reloadBody = e.hotReload.node
+            print('this entity has a reload tag too', e.hotReload.origin.path)
+         end
+         
 	 e.onHitFunc.hitFunc(body)
       end
    end
@@ -130,6 +137,7 @@ function HotReloadSystem:reloadPath(path)
    end
 
    for _, e in ipairs(self.pool) do
+      
       if (e.hotReload.origin.path == path) then
          myWorld:removeEntity(e)
       end
@@ -178,6 +186,24 @@ function love.draw()
 --   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
    mylib:draw()
 
+   local w,h = love.graphics.getDimensions()
+
+   if reloadOrigin then
+      if imgbutton('hot-reload-the-thing', ui.rotate,  w*part, 0, 'clik it to edit then click to reload').clicked then
+
+         if part == 0 then
+            mylib:setRoot(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
+            print(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
+            part = 0.7
+         else
+            part = 0
+         end
+         mylib:setDimensions(w*part,h)
+
+      end
+   end
+   
+
 end
 
 
@@ -187,7 +213,12 @@ function love.mousemoved(x,y, dx, dy)
 end
 
 function love.mousereleased(x,y,button)
-   mylib:mousereleased(x,y, button)
+   --mylib:mousereleased(x,y, button)
+   local w,h = love.graphics.getDimensions()
+   if x <= w*part then
+      mylib:mousereleased(x,y, button)
+   end
+
 end
 function love.resize(w,h)
    mylib:setDimensions(w*part,h)
@@ -199,13 +230,12 @@ end
 
 
 function love.mousepressed(x,y)
-   myWorld:emit('pressed',x,y)
-
    local w,h = love.graphics.getDimensions()
    if x <= w*part then
       mylib:mousepressed(x,y, button)
+   else
+      myWorld:emit('pressed',x,y)
    end
-
 end
 
 
@@ -275,8 +305,8 @@ local function onHitXylo(body)
       oranje = 3,
       geel = 5,
       groen = 7,
-      blauw = 9,
-      roze = 11
+      blauw = 10,
+      roze = 12
    }
 
    local s = glockSample:clone()
@@ -295,8 +325,8 @@ function love.load()
    love.window.setTitle( 'ecs tomatoes, new NOW with hot-reloading')
    love.window.setMode(1024, 768, {resizable=true, vsync=true, minwidth=400, minheight=300, msaa=2, highdpi=true})
 
-
-   part = 0.5
+   reloadOrigin = nil
+   part = 0.0
    local w,h = love.graphics.getDimensions()
    mylib:setDimensions(w*part,h)
    mylib:load(arg)
@@ -318,7 +348,7 @@ function love.load()
       children ={}
    }
 
-
+  
    local tomatoes = parseFile('assets/tomatoes.txt')
    local xylofoon = parseFile('assets/xylofoon.txt')[1]
    local cr78 = parseFile('assets/cr78.txt')[1]
@@ -328,8 +358,8 @@ function love.load()
    xylofoon.transforms.l[2] = - 150
 
    table.insert(root.children, cr78)
-   cr78.transforms.l[1] = 50
-   cr78.transforms.l[2] = - 165
+--   cr78.transforms.l[1] = 50
+--   cr78.transforms.l[2] = - 165
 
    for i = 1, #tomatoes do
       table.insert(root.children, tomatoes[i])
@@ -344,12 +374,23 @@ function love.load()
 --   print(inspect(tomatoes[1].origin))
    for i= 3, #xylofoon.children do
       Concord.entity(myWorld)
-         :give('hotReload', xylofoon.origin)
+         :give('hotReload', xylofoon.origin, xylofoon)
          :give('bodyFirstChildMeshHit',   xylofoon.children[i])
 	 :give('onHitFunc', onHitXylo)
 
    end
 
+
+   print(cr78.children[1], cr78.origin)
+   Concord.entity(myWorld)
+      :give('hotReload', cr78.origin, cr78)
+      :give('bodyFirstChildMeshHit',   cr78.children[1])
+      :give('onHitFunc', function() end)
+
+
+
+
+   
    parentize(root)
    meshAll(root)
    renderThings(root)
@@ -366,24 +407,24 @@ function makeTomatoes(tomatoes)
 
       Concord.entity(myWorld)
          :give('bodyFirstChildMeshHit',  findNodeByName(tomatoes[i], 'lichaam'))
-         :give('hotReload', tomatoes[i].origin)
+         :give('hotReload', tomatoes[i].origin, tomatoes[i])
 	 :give('onHitFunc', onHitHead)
 
 
       Concord.entity(myWorld)
-         :give('hotReload', tomatoes[i].origin)
+         :give('hotReload', tomatoes[i].origin, tomatoes[i])
          :give('transforms', linkerPupil.transforms)
          :give('startPos', linkerPupil.transforms.l[1], linkerPupil.transforms.l[2])
          :give('pupil')
 
       Concord.entity(myWorld)
-         :give('hotReload', tomatoes[i].origin)
+         :give('hotReload', tomatoes[i].origin, tomatoes[i])
          :give('transforms', rechterPupil.transforms)
          :give('startPos', rechterPupil.transforms.l[1], rechterPupil.transforms.l[2])
          :give('pupil')
 
       Concord.entity(myWorld)
-         :give('hotReload', tomatoes[i].origin)
+         :give('hotReload', tomatoes[i].origin, tomatoes[i])
 	 :give('blink2Eyes', linkerPupil, rechterPupil)
    end
 
