@@ -70,7 +70,7 @@ function drawNodeIntoRect(node, x,y,w,h)
 end
 
 
-function transferPoint (xI, yI, source, destination)
+local function transferPoint (xI, yI, source, destination)
 
    local ADDING = 0.00001 -- to avoid dividing by zero
 
@@ -226,7 +226,7 @@ function makeOptimizedBatchMesh(folder)
 
 end
 
-function signT(p1, p2, p3)
+local function signT(p1, p2, p3)
    return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
 end
 
@@ -263,7 +263,7 @@ function isMouseInMesh(mx, my, body, mesh)
    return false
 end
 
-function recusiveLookForHitArea(node)
+function recursiveLookForHitArea(node)
    if not node then return false end
    print('recusricve looking', node.name)
 
@@ -275,7 +275,7 @@ function recusiveLookForHitArea(node)
    else
       if node.children then
 	 for i = 1, #node.children do
-	    local result =  recusiveLookForHitArea(node.children[i])
+	    local result =  recursiveLookForHitArea(node.children[i])
 	    if result then
 	       return result
 	    end
@@ -325,7 +325,7 @@ function recursiveHitCheck(x,y, node)
    return false
 end
 
-function findMeshThatsHit(parent, mx, my, order)
+local function findMeshThatsHit(parent, mx, my, order)
    -- order decides which way we will walk,
    -- order = false will return the firts hitted one (usually below everything)
    -- order = true will return the last hitted
@@ -363,7 +363,7 @@ end
 
 
 
-function renderNormallyOrOptimized(shape)
+local function renderNormallyOrOptimized(shape)
    if true then
       if (shape.optimizedBatchMesh) then
 	 setTransforms(shape)
@@ -625,14 +625,14 @@ function unpackNodePoints(points)
 end
 
 
-function lerpColor(c1, c2, t)
+local function lerpColor(c1, c2, t)
    return {lerp(c1[1], c2[1], t),
 	   lerp(c1[2], c2[2], t),
 	   lerp(c1[3], c2[3], t),
 	   lerp(c1[4], c2[4], t)}
 end
 
-function lerpArray(a1, a2, t)
+local function lerpArray(a1, a2, t)
    local result = {}
    for i =1, #a1 do
       table.insert(result, lerp(a1[i], a2[i], t))
@@ -640,7 +640,7 @@ function lerpArray(a1, a2, t)
    return result
 end
 
-function lerpPoints(p1, p2, t)
+local function lerpPoints(p1, p2, t)
    if (#p1 == #p2) then
       local result = {}
       for i=1, #p1 do
@@ -696,7 +696,7 @@ function lerpNodes(left, right, root, t)
    return root
 end
 
-function createLerpedChild(ex1, ex2, t)
+local function createLerpedChild(ex1, ex2, t)
 
    local result = {}
    lerpNodes(ex1, ex2, result, t)

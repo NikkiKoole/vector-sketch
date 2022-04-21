@@ -29,7 +29,7 @@ local myWorld = Concord.world()
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 
-myWorld:addSystems(  
+myWorld:addSystems(
    Systems.AssetBookSystem,
    Systems.GravitySystem,
    Systems.InMotionSystem,
@@ -221,7 +221,7 @@ function scene.load()
 
       local cave = makeObject('assets/cavething.polygons.txt', 1000,0, 0)
 
-      if recusiveLookForHitArea(cave) then
+      if recursiveLookForHitArea(cave) then
 	 cave.entity:give('hitAreaEvent')
       end
 
@@ -231,7 +231,7 @@ function scene.load()
          cave
       )
 
-      --recusiveLookForHitArea(node)
+      --recursiveLookForHitArea(node)
 
       local carbod = makeObject('assets/carbody.polygons.txt', 100,0, 0, false)
       local wheel1 = makeObject('assets/wielsimpler.polygons.txt', 100,0, 0)

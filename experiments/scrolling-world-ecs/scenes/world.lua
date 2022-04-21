@@ -221,7 +221,7 @@ function scene.load()
 
       local cave = makeObject('assets/cavething.polygons.txt', 1000,0, 0)
 
-      if recusiveLookForHitArea(cave) then
+      if recursiveLookForHitArea(cave) then
 	 cave.entity:give('hitAreaEvent')
       end
 
