@@ -97,7 +97,7 @@ local HitMeshSystem = Concord.system({pool = {'bodyFirstChildMeshHit', 'onHitFun
 function HitMeshSystem:pressed(x,y, elem)
    for _, e in ipairs(self.pool) do
       local body = e.bodyFirstChildMeshHit.body
-      print(body.name)
+      --print(body.name)
       if isMouseInMesh(x,y, body, body.children[1].mesh) then
          if (e.hotReload) then
             reloadOrigin = e.hotReload.origin
@@ -148,7 +148,7 @@ function HotReloadSystem:reloadPath(path)
    meshAll(root)
    renderThings(root)
 
-   print(path)
+--   print(path)
    makeTomatoes(temp)
 
    
@@ -188,24 +188,26 @@ function love.draw()
    local w,h = love.graphics.getDimensions()
 
    if reloadOrigin then
-      if imgbutton('hot-reload-the-thing', ui.rotate,  w*part, 0, 'clik it to edit then click to reload').clicked then
-
+      if imgbutton('hot-reload-the-thing', ui.rotate,  w*part, 50, 'clik it to edit then click to reload').clicked then
+	 print(part)
          if part == 0 then
             mylib:setRoot(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
-            --print(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
+            print(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
             part = 0.7
          else
             part = 0
          end
          mylib:setDimensions(w*part,h)
 
+
       end
    end
-   print(part)
-
+   
+   --print(part)
+   --if part > 0 then
 
    mylib:draw()
-   
+   --end
 
 end
 

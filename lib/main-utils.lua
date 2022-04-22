@@ -325,7 +325,7 @@ function recursiveHitCheck(x,y, node)
    return false
 end
 
-local function findMeshThatsHit(parent, mx, my, order)
+function findMeshThatsHit(parent, mx, my, order)
    -- order decides which way we will walk,
    -- order = false will return the firts hitted one (usually below everything)
    -- order = true will return the last hitted
