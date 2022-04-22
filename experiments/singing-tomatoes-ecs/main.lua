@@ -184,8 +184,7 @@ function love.draw()
    love.graphics.clear(0.52,0.56,0.28)
    renderThings(root)
 --   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
-   mylib:draw()
-
+  
    local w,h = love.graphics.getDimensions()
 
    if reloadOrigin then
@@ -193,7 +192,7 @@ function love.draw()
 
          if part == 0 then
             mylib:setRoot(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
-            print(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
+            --print(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
             part = 0.7
          else
             part = 0
@@ -202,6 +201,10 @@ function love.draw()
 
       end
    end
+   print(part)
+
+
+   mylib:draw()
    
 
 end
@@ -323,7 +326,7 @@ local function onHitXylo(body)
 
 function love.load()
    love.window.setTitle( 'ecs tomatoes, new NOW with hot-reloading')
-   love.window.setMode(1024, 768, {resizable=true, vsync=true, minwidth=400, minheight=300, msaa=2, highdpi=true})
+   love.window.setMode(1024, 768, {resizable=true, vsync=false, minwidth=400, minheight=300, msaa=4, highdpi=true})
 
    reloadOrigin = nil
    part = 0.0
