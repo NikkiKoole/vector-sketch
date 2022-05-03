@@ -1,5 +1,6 @@
 
 
+
 function CreateTexturedCircle(image, segments)
 	segments = segments or 40
 	local vertices = {}
@@ -35,11 +36,12 @@ function createTexturedRectangle(image)
    print(w,h)
    local vertices = {}
    -- x,y,u,v,r,g,b,
-   table.insert(vertices, {0,     0,   0.5, 0.5, 0, 0, 0})
+   --table.insert(vertices, {0,     0,   0.5, 0.5, 0, 0, 0})
    table.insert(vertices, {-w/2, -h/2, 0, 0, 0, 0, 0})
    table.insert(vertices, { w/2, -h/2, 1, 0, 0, 0, 0})
    table.insert(vertices, { w/2,  h/2, 1, 1, 0, 0, 0})
    table.insert(vertices, {-w/2,  h/2, 0, 1, 0, 0, 0})
+   --table.insert(vertices, {-w/2, -h/2, 0, 0, 0, 0, 0})
 
 
    --simple_format = {
@@ -61,7 +63,7 @@ end
 function love.load()
    success = love.window.setMode( 2048,768, {highdpi=true, vsync=false} )
    image = love.graphics.newImage("cactuss2.png", {mipmaps=true})
-   image:setMipmapFilter( 'nearest', -1 )
+   image:setMipmapFilter( 'nearest', 1 )
    mesh = createTexturedRectangle(image)
 
 end
@@ -73,14 +75,21 @@ function love.draw()
 	love.graphics.clear(.4,.5,.4)
 	-- We created a unit-circle, so we can use the scale parameter for the radius directly.
 	local w, h = image:getDimensions( )
-	--mesh:setVertex( 1, love.math.random()*140, -h/2 + love.math.random()*100)
-	love.graphics.draw(mesh, mx, my, 0, 1, 1)
+	--mesh:setVertex( 1, -5 + love.math.random()*10, 0, .5, .5)
+	for i =1, 1000 do
+	   love.graphics.setColor(love.math.random(),1,1)
+	   love.graphics.draw(mesh, mx+love.math.random()*800, my+love.math.random()*600, 0, love.math.random(), .1)
+	end
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 
 	local stats = love.graphics.getStats()
 	
-	--print('#images', stats.images)
-	--print('img mem', stats.texturememory)
-	--print('#draw calls', stats.drawcalls)
+	print('#images', stats.images)
+	print('img mem', stats.texturememory)
+	print('#draw calls', stats.drawcalls)
+	print(stats.drawcallsbatched)
 
 end
+
+
+
