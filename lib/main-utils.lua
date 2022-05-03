@@ -545,6 +545,9 @@ function handleChild(shape,parallax)
       if (shape.mesh and not shape.mask) then
 
 	 love.graphics.setColor(shape.color)
+	 --print('this is drawing the mesh, can we texture it?')
+	 --image = love.graphics.newImage(  )
+	 --shape.mesh:setTexture( ui.backdrop )
          love.graphics.draw(shape.mesh, shape._parent.transforms._g )
 
          if (shape.borderMesh) then

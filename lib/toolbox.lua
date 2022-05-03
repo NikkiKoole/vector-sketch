@@ -229,6 +229,8 @@ simple_format = {
 function makeMeshFromVertices(vertices)
    if (vertices and vertices[1] and vertices[1][1]) then
       local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+      --local mesh = love.graphics.newMesh( vertices, "triangles")
+
       return mesh
    end
    return nil
