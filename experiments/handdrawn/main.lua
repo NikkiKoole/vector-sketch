@@ -70,14 +70,14 @@ function createTexturedTriangleStrip(image)
    local index = 0
    for i =1, segments do
       
-      vertices[index + 1] = {0, runningHP, 0,runningHV }
-      vertices[index +  2] = {w, runningHP, 1,runningHV }
+      vertices[index + 1] = {-w/2, runningHP, 0,runningHV }
+      vertices[index +  2] = {w/2, runningHP, 1,runningHV }
 
       runningHV = runningHV + hv
       runningHP = runningHP + hPart
       index = index + 2
    end
-   
+   --print(runningHP, runningHV)
    local mesh = love.graphics.newMesh(vertices, "strip")
    mesh:setTexture(image)
 
@@ -119,7 +119,7 @@ function love.draw()
 	love.graphics.clear(.4,.5,.4)
 
 	local w, h = image3:getDimensions( )
-	print(w,h)
+	--print(w,h)
 
 	local offsetW = 500
 	
@@ -134,10 +134,12 @@ function love.draw()
 
 	   for j =1, count, 2 do
 
-	      print(j-1)
-	      --print(j/count, j, count)
-	      local xl,yl = curveL:evaluate((j-1)/count)
-	      local xr,yr = curveR:evaluate((j-1)/count)
+	      print((j-1)/(count-2))
+	      --print(j-1)
+	      --print((j-1)/count, j-1, count)
+	     
+	      local xl,yl = curveL:evaluate((j-1)/ (count-2))
+	      local xr,yr = curveR:evaluate((j-1)/ (count-2)) 
 	      
 	      local x, y, u, v, r, g, b, a = mesh3:getVertex(j )
 	      mesh3:setVertex(j, {xl, yl, u,v})
