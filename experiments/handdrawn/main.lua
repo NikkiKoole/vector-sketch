@@ -37,10 +37,10 @@ function createTexturedRectangle(image)
    local vertices = {}
    -- x,y,u,v,r,g,b,
    --table.insert(vertices, {0,     0,   0.5, 0.5, 0, 0, 0})
-   table.insert(vertices, {-w/2, -h/2, 0, 0, 0, 0, 0})
-   table.insert(vertices, { w/2, -h/2, 1, 0, 0, 0, 0})
-   table.insert(vertices, { w/2,  h/2, 1, 1, 0, 0, 0})
-   table.insert(vertices, {-w/2,  h/2, 0, 1, 0, 0, 0})
+   table.insert(vertices, {-w/2, -h/2, 0, 0})
+   table.insert(vertices, { w/2, -h/2, 1, 0})
+   table.insert(vertices, { w/2,  h/2, 1, 1})
+   table.insert(vertices, {-w/2,  h/2, 0, 1})
    --table.insert(vertices, {-w/2, -h/2, 0, 0, 0, 0, 0})
 
 
@@ -58,14 +58,23 @@ function love.keypressed(key)
    if (key == 'escape') then love.event.quit() end
 end
 
+function love.mousepressed(x,y,button)
+   if flip == 1 then flip = -1 else flip = 1 end
+end
+
 
 
 function love.load()
-   success = love.window.setMode( 2048,768, {highdpi=true, vsync=false} )
-   image = love.graphics.newImage("cactuss2.png", {mipmaps=true})
+   success = love.window.setMode( 1024,768, {highdpi=true, vsync=false} )
+   image = love.graphics.newImage("dogman3.png", {mipmaps=true})
    image:setMipmapFilter( 'nearest', 1 )
    mesh = createTexturedRectangle(image)
 
+   image2 = love.graphics.newImage("kleed2.jpg", {mipmaps=true})
+   image2:setMipmapFilter( 'nearest', 1 )
+   mesh2 = createTexturedRectangle(image2)
+   
+   flip = 1
 end
 
 function love.draw()
@@ -74,20 +83,25 @@ function love.draw()
 
 	love.graphics.clear(.4,.5,.4)
 	-- We created a unit-circle, so we can use the scale parameter for the radius directly.
-	local w, h = image:getDimensions( )
+	--local w, h = image:getDimensions( )
 	--mesh:setVertex( 1, -5 + love.math.random()*10, 0, .5, .5)
-	for i =1, 1000 do
-	   love.graphics.setColor(love.math.random(),1,1)
-	   love.graphics.draw(mesh, mx+love.math.random()*800, my+love.math.random()*600, 0, love.math.random(), .1)
+
+        for i =1, 1 do
+	   --love.graphics.setColor(love.math.random(),1,1)
+	   love.graphics.draw(mesh2, mx, my, 0, flip, .5)
+           love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
+
+           love.graphics.draw(mesh, mx, my, 0, flip, 1)
+
 	end
-	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+--	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 
 	local stats = love.graphics.getStats()
 	
-	print('#images', stats.images)
-	print('img mem', stats.texturememory)
-	print('#draw calls', stats.drawcalls)
-	print(stats.drawcallsbatched)
+--	print('#images', stats.images)-
+--	print('img mem', stats.texturememory)-
+--	print('#draw calls', stats.drawcalls)
+--	print(stats.drawcallsbatched)
 
 end
 
