@@ -111,7 +111,14 @@ function love.load()
    image3:setMipmapFilter( 'nearest', 1 )
    mesh3 = createTexturedTriangleStrip(image3)
    flip = 1
+   time = 0
 end
+
+function love.update(dt)
+   time = time + dt
+   
+end
+
 
 function love.draw()
 	local mx, my = love.mouse.getPosition()
@@ -121,7 +128,8 @@ function love.draw()
 	local w, h = image3:getDimensions( )
 	--print(w,h)
 
-	local offsetW = 500
+	local offsetW = 500 + math.sin(time*5)*120
+	print(offsetW)
 	
 	local curveL = love.math.newBezierCurve({0, 0, 0+offsetW, h/2, 0, h})
 	local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
@@ -133,10 +141,6 @@ function love.draw()
 	   local count = mesh3:getVertexCount( )
 
 	   for j =1, count, 2 do
-
-	      print((j-1)/(count-2))
-	      --print(j-1)
-	      --print((j-1)/count, j-1, count)
 	     
 	      local xl,yl = curveL:evaluate((j-1)/ (count-2))
 	      local xr,yr = curveR:evaluate((j-1)/ (count-2)) 
