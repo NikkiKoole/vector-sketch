@@ -40,14 +40,16 @@ end
 
 
 
-function makeNode(graphic, transform)
+function makeNode(graphic, tl)
+   local tl = tl or {0, 0, 0, 1, 1, graphic.w/2, graphic.h, 0, 0}
    return {
       _parent = nil,
       children = {},
       graphic = graphic,
       dirty = true,
-      
-      transforms = {l = transform or love.math.newTransform( 0, 0, 0, 1, 1, graphic.w/2, graphic.h, 0, 0 )}
+       -- x, y, angle, sx, sy, ox, oy, kx, ky
+      transforms = {tl = tl,
+		    l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])}
    }
 end
 
@@ -87,12 +89,13 @@ function love.load()
    --dogmanhaar =  makeGraphic('assets/dogmanhaar.png')
 
    
-   root = makeNode(nil,  love.math.newTransform( 0, 0, 0, 1, 1, 0, 0, 0, 0 ))
+   root = makeNode(nil,  { 0, 0, 0, 1, 1, 0, 0, 0, 0 })
 
    local animals1 =  makeNode(makeGraphic('assets/animals4.png'))
    local animals2 =  makeNode(makeGraphic('assets/animals4.png'))
 
-   animals2.transforms.l:translate(400,0)
+   animals2.transforms.tl[1] = animals2.transforms.tl[1]+400
+   --animals2.transforms.l:translate(400,0)
    addChild(root, animals1)
    addChild(animals1, animals2)
    
@@ -108,7 +111,8 @@ function love.load()
 
    count = 0
 
-   print(love.math.newTransform( 1,2,3,4,5,6,7,8,9 ):getMatrix())
+
+   love.window.setTitle( 'handdrawn joy' )
 end
 
 function love.update(dt)
@@ -117,6 +121,8 @@ function love.update(dt)
    cam:update()
 
    count = count + dt/10
+
+   
 end
 
 function love.wheelmoved( dx, dy )
@@ -147,6 +153,8 @@ function renderRecursive(node, dirty)
    local isDirty = dirty or node.dirty
 
    if isDirty then
+      local tl = node.transforms.tl
+      node.transforms.l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
       if (node._parent) then
 	 node.transforms.g = node._parent.transforms.g * node.transforms.l
       else
@@ -188,9 +196,11 @@ function love.draw()
    love.graphics.clear(.5,.5,.3)
   
    
-   
+   root.transforms.tl[3] = root.transforms.tl[3] + .01
    --root.transforms.l:rotate(count )
-   --root.dirty = true
+
+   root.children[1].children[1].transforms.tl[3] = root.children[1].children[1].transforms.tl[3] - .02
+   root.dirty = true
    
    --root.transforms.l:setTransformation( 0,0,count )
    
