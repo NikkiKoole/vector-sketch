@@ -79,7 +79,7 @@ end
 
 
 function love.load()
-   love.window.setMode(1024, 768, {resizable=true, vsync=true, minwidth=0, minheight=0, msaa=2, highdpi=true})
+
 
    cam = createCamera()
 
@@ -120,8 +120,14 @@ function love.update(dt)
    manageCameraTween(dt)
    cam:update()
 
-   count = count + dt/10
 
+
+   root.transforms.tl[3] = root.transforms.tl[3] + 1 * dt
+
+   --root.transforms.l:rotate(count )
+
+   root.children[1].children[1].transforms.tl[3] = root.children[1].children[1].transforms.tl[3] - 1*dt
+   root.dirty = true
    
 end
 
@@ -196,11 +202,7 @@ function love.draw()
    love.graphics.clear(.5,.5,.3)
   
    
-   root.transforms.tl[3] = root.transforms.tl[3] + .01
-   --root.transforms.l:rotate(count )
-
-   root.children[1].children[1].transforms.tl[3] = root.children[1].children[1].transforms.tl[3] - .02
-   root.dirty = true
+   
    
    --root.transforms.l:setTransformation( 0,0,count )
    
@@ -217,5 +219,8 @@ function love.draw()
    love.graphics.rectangle('fill', 0, 0, 20,20)
   
    cam:pop()
+   love.graphics.setColor(1,1,1)
+   love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+   love.graphics.print(inspect(love.graphics.getStats()), 10, 40)
 end
 
