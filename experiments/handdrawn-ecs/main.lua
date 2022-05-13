@@ -26,7 +26,7 @@ local myWorld = Concord.world()
    in gimp, add alpha layer, convert white to transparent
    resize the image to 50%
 
-pushing them through https://tinypng.com/  shaves a lot off.
+   pushing them through https://tinypng.com/  shaves a lot off.
 ]]--
 
 
@@ -47,7 +47,7 @@ function makeNode(graphic, tl)
       children = {},
       graphic = graphic,
       dirty = true,
-       -- x, y, angle, sx, sy, ox, oy, kx, ky
+      -- x, y, angle, sx, sy, ox, oy, kx, ky
       transforms = {tl = tl,
 		    l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])}
    }
@@ -75,6 +75,23 @@ end
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
+
+
+   
+   if key == 'up' then
+      cam:translate(0, -5)
+   end
+   if key == 'down' then
+      cam:translate(0, 5)
+   end
+   if key == 'left' then
+      cam:translate(-5, 0)
+   end
+   if key == 'right' then
+      cam:translate(5, 0)
+   end
+   love.keyboard.setKeyRepeat( true )
+
 end
 
 
@@ -83,11 +100,25 @@ function love.load()
 
    cam = createCamera()
 
+   depthMinMax =       {min=-1.0, max=1.0}
+   foregroundFactors = { far=.7, near=1}
+   --backgroundFactors = { far=.4, near=.7}
+   tileSize = 500
 
+
+   --backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
+   --backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
+   foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
+   foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+
+   --dynamic = generateCameraLayer('dynamic', 1)
 
    --animals =  makeGraphic('assets/animals4.png')
    --dogmanhaar =  makeGraphic('assets/dogmanhaar.png')
 
+   groundimg = love.graphics.newImage('assets/kleed2.jpg', {mipmaps=true})
+   
+   -- groundimg = makeGraphic('assets/kleed2.jpg')
    
    root = makeNode(nil,  { 0, 0, 0, 1, 1, 0, 0, 0, 0 })
 
@@ -122,12 +153,12 @@ function love.update(dt)
 
 
 
-   root.transforms.tl[3] = root.transforms.tl[3] + 1 * dt
+   --root.transforms.tl[3] = root.transforms.tl[3] + 1 * dt
 
    --root.transforms.l:rotate(count )
 
-   root.children[1].children[1].transforms.tl[3] = root.children[1].children[1].transforms.tl[3] - 1*dt
-   root.dirty = true
+   --root.children[1].children[1].transforms.tl[3] = root.children[1].children[1].transforms.tl[3] - 1*dt
+   --root.dirty = true
    
 end
 
@@ -142,7 +173,7 @@ end
 
 function love.resize(w, h)
    setCameraViewport(cam, 100,100)
---   centerCameraOnPosition(50,50, 200,200)
+   --   centerCameraOnPosition(50,50, 200,200)
    centerCameraOnPosition(150,150, 600,600)
    cam:update(w,h)
 end
@@ -174,19 +205,19 @@ function renderRecursive(node, dirty)
 
    if node.graphic then
 
-       local mx, my = love.mouse.getPosition()
-       local wx, wy = cam:getWorldCoordinates(mx, my)
-       local xx, yy = node.transforms.g:inverseTransformPoint(wx, wy )
-       love.graphics.setColor(0,0,0)
-       if (xx > 0 and xx < node.graphic.w and yy >0 and yy< node.graphic.h) then
-	  love.graphics.setColor(.25,.25,.25)
-	  local r, g, b, a = node.graphic.imageData:getPixel( xx, yy )
-	  if (a > 0) then
-	     love.graphics.setColor(.25,.25,.5)
-	  end
-       end
+      local mx, my = love.mouse.getPosition()
+      local wx, wy = cam:getWorldCoordinates(mx, my)
+      local xx, yy = node.transforms.g:inverseTransformPoint(wx, wy )
+      love.graphics.setColor(0,0,0)
+      if (xx > 0 and xx < node.graphic.w and yy >0 and yy< node.graphic.h) then
+	 love.graphics.setColor(.25,.25,.25)
+	 local r, g, b, a = node.graphic.imageData:getPixel( xx, yy )
+	 if (a > 0) then
+	    love.graphics.setColor(.25,.25,.5)
+	 end
+      end
 
-       
+      
       love.graphics.draw(node.graphic.mesh, node.transforms.g)
    end
    
@@ -198,9 +229,60 @@ function renderRecursive(node, dirty)
 end
 
 
+function drawGroundPlaneLinesSimple(cam, far, near)
+
+   love.graphics.setColor(1,1,1)
+   love.graphics.setLineWidth(2)
+   local W, H = love.graphics.getDimensions()
+
+   local x1,y1 = cam:getWorldCoordinates(0,0, far)
+   local x2,y2 = cam:getWorldCoordinates(W,0, far)
+
+   local s = math.floor(x1/tileSize)*tileSize
+   local e = math.ceil(x2/tileSize)*tileSize
+
+   for i = s, e, tileSize do
+      local groundIndex = (i/tileSize)
+      local tileIndex = (groundIndex % 5) + 1
+      local index = (i - s)/tileSize
+      local height1 = 0
+      local height2 = 0
+
+      --print(cam:getScale()) -- 50 -> 0.01
+      
+      --local v = mapInto(cam:getScale(), 0, 50, 0.9, 1)
+      --local ffar = {scale=0.9, relativeScale=1}
+      --local fnear = {scale=1, relativeScale=1}
+
+      local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
+      local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, near)
+      local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
+      local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, near)
+
+
+      local mesh = createTexturedRectangle(groundimg)
+
+      mesh:setVertex(1, {x1,y1, 0,0})
+      mesh:setVertex(2, {x3,y3, 1,0})
+      mesh:setVertex(3, {x4,y4, 1,1})
+      mesh:setVertex(4, {x2,y2, 0,1})
+
+      love.graphics.draw(mesh)
+      
+      --love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
+      --love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
+      ---love.graphics.setColor(0.25,.5,0.25)
+
+      --love.graphics.line(x1,y1, x2,y2)
+      --love.graphics.line(x1,y1, x3,y3)
+   end
+end
+
+
+
 function love.draw()
    love.graphics.clear(.5,.5,.3)
-  
+   
    
    
    
@@ -208,16 +290,16 @@ function love.draw()
    
    --root.children[1].dirty = true
 
-  -- root.children[1].children[1].transforms.l:rotate( -count )
- --  root.children[1].children[1].dirty = true
-    
+   -- root.children[1].children[1].transforms.l:rotate( -count )
+   --  root.children[1].children[1].dirty = true
+   drawGroundPlaneLinesSimple( cam, 'foregroundFar', 'foregroundNear')
    cam:push()
 
    renderRecursive(root)
 
    love.graphics.setColor(1,0,0)
    love.graphics.rectangle('fill', 0, 0, 20,20)
-  
+   
    cam:pop()
    love.graphics.setColor(1,1,1)
    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
