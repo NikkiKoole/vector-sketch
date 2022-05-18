@@ -3,6 +3,9 @@ package.path = package.path .. ";../../?.lua"
 Camera = require 'custom-vendor.brady'
 
 require 'lib.scene-graph'
+require 'lib.generate-polygon'
+require 'lib.bbox'
+
 require 'lib.editor-utils'
 require 'lib.poly'
 require 'lib.basics'
@@ -27,6 +30,7 @@ local myWorld = Concord.world()
    resize the image to 50%
 
    pushing them through https://tinypng.com/  shaves a lot off.
+   https://www.imgonline.com.ua/eng/make-seamless-texture.php
 ]]--
 
 
@@ -101,9 +105,9 @@ function love.load()
    cam = createCamera()
 
    depthMinMax =       {min=-1.0, max=1.0}
-   foregroundFactors = { far=.7, near=1}
+   foregroundFactors = { far=.5, near=1}
    --backgroundFactors = { far=.4, near=.7}
-   tileSize = 500
+   tileSize = 800
 
 
    --backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
@@ -116,7 +120,22 @@ function love.load()
    --animals =  makeGraphic('assets/animals4.png')
    --dogmanhaar =  makeGraphic('assets/dogmanhaar.png')
 
-   groundimg = love.graphics.newImage('assets/kleed2.jpg', {mipmaps=true})
+   groundimg1 = love.graphics.newImage('assets/blub1.png', {mipmaps=true})
+   groundimg2 = love.graphics.newImage('assets/blub2.png', {mipmaps=true})
+   groundimg3 = love.graphics.newImage('assets/blub3.png', {mipmaps=true})
+   groundimg4 = love.graphics.newImage('assets/blub4.png', {mipmaps=true})
+   groundimg5 = love.graphics.newImage('assets/blub5.png', {mipmaps=true})
+   groundimg6 = love.graphics.newImage('assets/ground1.png', {mipmaps=true})
+   groundimg6b = love.graphics.newImage('assets/ground1b.png', {mipmaps=true})
+
+   groundimg7 = love.graphics.newImage('assets/ground2.png', {mipmaps=true})
+   groundimg8 = love.graphics.newImage('assets/ground3.png', {mipmaps=true})
+   groundimg9 = love.graphics.newImage('assets/ground4.png', {mipmaps=true})
+   groundimg10 = love.graphics.newImage('assets/ground5.png', {mipmaps=true})
+   groundimg11 = love.graphics.newImage('assets/ground6.png', {mipmaps=true})
+   groundimg12 = love.graphics.newImage('assets/ground7.png', {mipmaps=true})
+   groundimg13 = love.graphics.newImage('assets/ground8.png', {mipmaps=true})
+
    
    -- groundimg = makeGraphic('assets/kleed2.jpg')
    
@@ -125,7 +144,7 @@ function love.load()
    local animals1 =  makeNode(makeGraphic('assets/animals4.png'))
    local animals2 =  makeNode(makeGraphic('assets/animals4.png'))
 
-   animals2.transforms.tl[1] = animals2.transforms.tl[1]+400
+   animals2.transforms.tl[1] = animals2.transforms.tl[1]
    --animals2.transforms.l:translate(400,0)
    addChild(root, animals1)
    addChild(animals1, animals2)
@@ -141,6 +160,10 @@ function love.load()
    centerCameraOnPosition(150,-500, 1200,1200)
 
    count = 0
+
+
+   p = generatePolygon(200,200,300,0,5,14)
+   d = createTexturedPolygon(groundimg1, p)
 
 
    love.window.setTitle( 'handdrawn joy' )
@@ -241,14 +264,23 @@ function drawGroundPlaneLinesSimple(cam, far, near)
    local s = math.floor(x1/tileSize)*tileSize
    local e = math.ceil(x2/tileSize)*tileSize
 
+   local imgarr = {groundimg1, groundimg2, groundimg3, groundimg4, groundimg5,
+                   groundimg6, groundimg7, groundimg8, groundimg9, groundimg10,
+                   groundimg10, groundimg11, groundimg12,groundimg12,groundimg12,
+                   groundimg12,groundimg13,groundimg13,groundimg13}
+
+   local imgarr = {groundimg6b, groundimg6b}
+
    for i = s, e, tileSize do
       local groundIndex = (i/tileSize)
-      local tileIndex = (groundIndex % 5) + 1
+
+      local tileIndex = (groundIndex % (#imgarr)) + 1
+--      print(tileIndex)
       local index = (i - s)/tileSize
       local height1 = 0
       local height2 = 0
 
-      --print(cam:getScale()) -- 50 -> 0.01
+      local s = cam:getScale() -- 50 -> 0.01
       
       --local v = mapInto(cam:getScale(), 0, 50, 0.9, 1)
       --local ffar = {scale=0.9, relativeScale=1}
@@ -256,17 +288,36 @@ function drawGroundPlaneLinesSimple(cam, far, near)
 
       local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
       local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, near)
+
+      
       local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
       local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, near)
 
+--      y2 = y2+tileIndex-50
+--      y4 = y4+tileIndex*50
+      
+      local x1,y1 = x2, y2-s*tileSize/1
 
-      local mesh = createTexturedRectangle(groundimg)
+      local x3,y3 = x4, y4-s*tileSize/1
 
-      mesh:setVertex(1, {x1,y1, 0,0})
-      mesh:setVertex(2, {x3,y3, 1,0})
+
+      
+
+
+      local mesh = createTexturedRectangle(imgarr[tileIndex])
+
+   --   mesh:setVertex(1, {x1,y1, 0.5,0.5,1,1,1})
+
+      mesh:setVertex(1, {x1,y1, 0,0,1,1,1,.5})
+      mesh:setVertex(2, {x3,y3, 1,0,1,1,1,.5})
       mesh:setVertex(3, {x4,y4, 1,1})
       mesh:setVertex(4, {x2,y2, 0,1})
 
+     -- mesh:setVertex(6, {x1,y1, 0,0,.5,.5,1})
+
+      love.graphics.setColor(.6,0.3,0.15,0.9)
+
+      love.graphics.polygon('line', p)
       love.graphics.draw(mesh)
       
       --love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
@@ -279,9 +330,8 @@ function drawGroundPlaneLinesSimple(cam, far, near)
 end
 
 
-
 function love.draw()
-   love.graphics.clear(.5,.5,.3)
+   love.graphics.clear(.3,.5,.8)
    
    
    
@@ -297,6 +347,15 @@ function love.draw()
 
    renderRecursive(root)
 
+   -- render a textured polygon
+
+--   local poly = {}
+--   poly = p
+--   print(inspect(poly))
+
+   -- love.graphics.polygon('line', poly)
+   love.graphics.setColor(1,1,1)
+   love.graphics.draw(d)
    love.graphics.setColor(1,0,0)
    love.graphics.rectangle('fill', 0, 0, 20,20)
    

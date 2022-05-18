@@ -1,14 +1,40 @@
+function createTexturedPolygon(image, polygon)
+   
+   local tlx, tly, brx, bry = getPointsBBoxFlat(polygon)
+   local ufunc = function(x) return mapInto(x, tlx, brx, 0,1) end
+   local vfunc = function(y) return mapInto(y, tly, bry, 0,1) end
+
+   local vertices = {}
+   for i = 1, #polygon, 2 do
+      table.insert(
+         vertices, {polygon[i+0], polygon[i+1],
+                    ufunc(polygon[i+0]), vfunc(polygon[i+1])}
+      )
+   end
+
+   print(inspect(vertices))
+   local mesh = love.graphics.newMesh(vertices, "fan")
+   mesh:setTexture(image)
+
+   return mesh
+
+end
+
+
+
 function createTexturedRectangle(image)
    local w, h = image:getDimensions( )
    --print(w,h)
    local vertices = {}
    -- x,y,u,v,r,g,b,
    --table.insert(vertices, {0,     0,   0.5, 0.5, 0, 0, 0})
+
    table.insert(vertices, {0, 0, 0, 0})
    table.insert(vertices, { w, 0, 1, 0})
    table.insert(vertices, { w,  h, 1, 1})
    table.insert(vertices, {0,  h, 0, 1})
-   --table.insert(vertices, {-w/2, -h/2, 0, 0, 0, 0, 0})
+   
+   --table.insert(vertices, {0, 0, 0, 0, 0, 0, 0})
 
 
    --simple_format = {

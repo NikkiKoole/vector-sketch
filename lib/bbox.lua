@@ -13,6 +13,19 @@ function getPointsBBox(points)
    end
    return tlx, tly, brx, bry
 end
+function getPointsBBoxFlat(points)
+   local tlx = 9999999999
+   local tly = 9999999999
+   local brx = -9999999999
+   local bry = -9999999999
+   for ip=1, #points, 2 do
+      if points[ip + 0] < tlx then tlx = points[ip+0] end
+      if points[ip + 0] > brx then brx = points[ip+0] end
+      if points[ip + 1] < tly then tly = points[ip+1] end
+      if points[ip + 1] > bry then bry = points[ip+1] end
+   end
+   return tlx, tly, brx, bry
+end
 
 function getBBoxRecursive(node)
    if node.children then
