@@ -1,19 +1,36 @@
 function createTexturedPolygon(image, polygon)
    
    local tlx, tly, brx, bry = getPointsBBoxFlat(polygon)
-   local ufunc = function(x) return mapInto(x, tlx, brx, 0,1) end
-   local vfunc = function(y) return mapInto(y, tly, bry, 0,1) end
+   -- tweak feat
+   local ufunc = function(x) return mapInto(x, tlx, brx, 0,3) end
+   local vfunc = function(y) return mapInto(y, tly, bry, 0,3) end
 
+   -- this thing needs
+   local p = {}
+   reTriangulatePolygon(polygon, p)
    local vertices = {}
-   for i = 1, #polygon, 2 do
-      table.insert(
-         vertices, {polygon[i+0], polygon[i+1],
-                    ufunc(polygon[i+0]), vfunc(polygon[i+1])}
-      )
-   end
+   
+   -- for i = 1, #polygon, 2 do
+   --    table.insert(
+   --       vertices, {polygon[i+0], polygon[i+1],
+   --                  ufunc(polygon[i+0]), vfunc(polygon[i+1])}
+   --    )
+   -- end
 
-   print(inspect(vertices))
-   local mesh = love.graphics.newMesh(vertices, "fan")
+   
+   for i = 1 , #p do
+      local r = p[i]
+--      print(inspect(r))
+      table.insert(vertices, {r[1], r[2], ufunc(r[1]), vfunc(r[2])})
+      table.insert(vertices, {r[3], r[4], ufunc(r[3]), vfunc(r[4])})
+      table.insert(vertices, {r[5], r[6], ufunc(r[5]), vfunc(r[6])})
+   end
+   
+   
+   --print(inspect(vertices))
+   local mesh = love.graphics.newMesh(vertices, "triangles")
+
+   --local mesh = love.graphics.newMesh(vertices, "fan")
    mesh:setTexture(image)
 
    return mesh

@@ -245,18 +245,32 @@ function triangulate(type, poly)
 
       for i=1 , #polys do
          local p = polys[i]
-
-         local triangles = love.math.triangulate(p)
-         for j = 1, #triangles do
-            local t = triangles[j]
-            local cx, cy = getTriangleCentroid(t)
-            if isPointInPath(cx,cy, p) then
-               table.insert(result, t)
-            end
-         end
+         reTriangulatePolygon(p, result)
+         -- local triangles = love.math.triangulate(p)
+         -- for j = 1, #triangles do
+         --    local t = triangles[j]
+         --    local cx, cy = getTriangleCentroid(t)
+         --    if isPointInPath(cx,cy, p) then
+         --       table.insert(result, t)
+         --    end
+         -- end
       end
    end
    return result
+end
+
+function reTriangulatePolygon(poly, result)
+   local p = poly
+   local triangles = love.math.triangulate(p)
+   for j = 1, #triangles do
+      local t = triangles[j]
+      local cx, cy = getTriangleCentroid(t)
+      if isPointInPath(cx,cy, p) then
+         table.insert(result, t)
+      end
+   end
+
+
 end
 
 
@@ -361,13 +375,15 @@ function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
 end
 
 function makeVertices(shape)
-   local triangles = {}
-   local vertices = {}
+   --local triangles = {}
    if (shape.type == 'meta') then return end
    if (shape.folder) then return end
+   
    local points = shape.points
-   if (points and #points >= 2 ) then
+   local vertices = {}
 
+   if (points and #points >= 2 ) then
+      
       local scale = 1
       local coords = {}
       local ps = {}
@@ -385,17 +401,18 @@ function makeVertices(shape)
 	    local p = polys[k]
 	    if (#p >= 6) then
 	       -- if a import breaks on triangulation errors uncomment this
---	       print( #p, inspect(p))
-	       local triangles = love.math.triangulate(p)
-               --print(inspect(triangles))
-               --local triangles = { { 40, -4, 24, 32, -17, 36 }, { 40, -4, -17, 36, -41, 4 }, { 40, -4, -41, 4, -23, -33 }, { 40, -4, -23, -33, 17, -36 } }
-	       for j = 1, #triangles do
-		  local t = triangles[j]
-		  local cx, cy = getTriangleCentroid(t)
-		  if isPointInPath(cx,cy, p) then
-		     table.insert(result, t)
-		  end
-	       end
+               --	       print( #p, inspect(p))
+
+               reTriangulatePolygon(p, result)
+
+	       -- local triangles = love.math.triangulate(p)
+	       -- for j = 1, #triangles do
+	       --    local t = triangles[j]
+	       --    local cx, cy = getTriangleCentroid(t)
+	       --    if isPointInPath(cx,cy, p) then
+	       --       table.insert(result, t)
+	       --    end
+	       -- end
 	    end
 	 end
          

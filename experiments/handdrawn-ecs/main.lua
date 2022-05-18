@@ -121,12 +121,13 @@ function love.load()
    --dogmanhaar =  makeGraphic('assets/dogmanhaar.png')
 
    groundimg1 = love.graphics.newImage('assets/blub1.png', {mipmaps=true})
+   groundimg1:setWrap( 'repeat' )
    groundimg2 = love.graphics.newImage('assets/blub2.png', {mipmaps=true})
    groundimg3 = love.graphics.newImage('assets/blub3.png', {mipmaps=true})
    groundimg4 = love.graphics.newImage('assets/blub4.png', {mipmaps=true})
    groundimg5 = love.graphics.newImage('assets/blub5.png', {mipmaps=true})
    groundimg6 = love.graphics.newImage('assets/ground1.png', {mipmaps=true})
-   groundimg6b = love.graphics.newImage('assets/ground1b.png', {mipmaps=true})
+   groundimg6b = love.graphics.newImage('assets/ground1.png', {mipmaps=true})
 
    groundimg7 = love.graphics.newImage('assets/ground2.png', {mipmaps=true})
    groundimg8 = love.graphics.newImage('assets/ground3.png', {mipmaps=true})
@@ -162,9 +163,9 @@ function love.load()
    count = 0
 
 
-   p = generatePolygon(200,200,300,0,5,14)
+   p = generatePolygon(200,200,1000,.15,.15,14)
    d = createTexturedPolygon(groundimg1, p)
-
+   totaldt =0
 
    love.window.setTitle( 'handdrawn joy' )
 end
@@ -182,6 +183,15 @@ function love.update(dt)
 
    --root.children[1].children[1].transforms.tl[3] = root.children[1].children[1].transforms.tl[3] - 1*dt
    --root.dirty = true
+
+   
+
+   if totaldt % 2 < 0.1 then
+      p = generatePolygon(200,200,1000,.15,.15,14)
+      d = createTexturedPolygon(groundimg1, p)
+
+   end
+   totaldt = totaldt + dt
    
 end
 
@@ -344,6 +354,8 @@ function love.draw()
    --  root.children[1].children[1].dirty = true
    drawGroundPlaneLinesSimple( cam, 'foregroundFar', 'foregroundNear')
    cam:push()
+   love.graphics.setColor(1,1,1)
+   love.graphics.draw(d)
 
    renderRecursive(root)
 
@@ -355,7 +367,6 @@ function love.draw()
 
    -- love.graphics.polygon('line', poly)
    love.graphics.setColor(1,1,1)
-   love.graphics.draw(d)
    love.graphics.setColor(1,0,0)
    love.graphics.rectangle('fill', 0, 0, 20,20)
    
