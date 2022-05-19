@@ -167,6 +167,11 @@ function love.load()
    d = createTexturedPolygon(groundimg1, p)
    totaldt =0
 
+   heights = {}
+   for i =-100, 100 do
+      heights[i] = love.math.random()* 1000
+   end
+   
    love.window.setTitle( 'handdrawn joy' )
 end
 
@@ -287,21 +292,24 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       local tileIndex = (groundIndex % (#imgarr)) + 1
 --      print(tileIndex)
       local index = (i - s)/tileSize
-      local height1 = 0
-      local height2 = 0
-
+      local height1 =  heights[groundIndex]
+      local height2 = heights[groundIndex+1]
+      print(height1, height2)
       local s = cam:getScale() -- 50 -> 0.01
       
       --local v = mapInto(cam:getScale(), 0, 50, 0.9, 1)
       --local ffar = {scale=0.9, relativeScale=1}
       --local fnear = {scale=1, relativeScale=1}
 
-      local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
-      local x2,y2 = cam:getScreenCoordinates(i+0.0001, 0, near)
+      
+      
+      --local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
+      
+      local x2,y2 = cam:getScreenCoordinates(i+0.0001, height1, near)
 
       
-      local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
-      local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, 0, near)
+      --local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
+      local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, height2, near)
 
 --      y2 = y2+tileIndex-50
 --      y4 = y4+tileIndex*50
