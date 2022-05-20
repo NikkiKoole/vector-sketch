@@ -141,7 +141,7 @@ function love.load()
    groundimg12 = love.graphics.newImage('assets/ground7.png', {mipmaps=true})
    groundimg13 = love.graphics.newImage('assets/ground8.png', {mipmaps=true})
 
-   ding = love.graphics.newImage('assets/ding.png', {mipmaps=true})
+   ding = love.graphics.newImage('assets/ground5.png', {mipmaps=true})
 
    
    -- groundimg = makeGraphic('assets/kleed2.jpg')
@@ -175,7 +175,7 @@ function love.load()
 
    heights = {}
    for i =-1000, 1000 do
-      heights[i] = love.math.random()* 100
+      heights[i] = love.math.random()* 1000
    end
    
    love.window.setTitle( 'handdrawn joy' )
@@ -311,18 +311,18 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       
       --local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
       
-      local x2,y2 = cam:getScreenCoordinates(i+0.0001, height1, near)
+      local x4,y4 = cam:getScreenCoordinates(i+0.0001, height1, near)
 
       
       --local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
-      local x4, y4 = cam:getScreenCoordinates(i+tileSize+ .0001, height2, near)
+      local x3, y3 = cam:getScreenCoordinates(i+tileSize+ .0001, height2, near)
 
 --      y2 = y2+tileIndex-50
 --      y4 = y4+tileIndex*50
       
-      local x1,y1 = x2, y2-s*tileSize/1
+      local x1,y1 = x4, y4-s*tileSize/1
 
-      local x3,y3 = x4, y4-s*tileSize/1
+      local x2,y2 = x3, y3-s*tileSize/1
 
 
       
@@ -333,9 +333,9 @@ function drawGroundPlaneLinesSimple(cam, far, near)
    --   mesh:setVertex(1, {x1,y1, 0.5,0.5,1,1,1})
 
       mesh:setVertex(1, {x1,y1, 0,0,1,1,1,.5})
-      mesh:setVertex(2, {x3,y3, 1,0,1,1,1,.5})
-      mesh:setVertex(3, {x4,y4, 1,1})
-      mesh:setVertex(4, {x2,y2, 0,1})
+      mesh:setVertex(2, {x2,y2, 1,0,1,1,1,.5})
+      mesh:setVertex(3, {x3,y3, 1,1})
+      mesh:setVertex(4, {x4,y4, 0,1})
 
      -- mesh:setVertex(6, {x1,y1, 0,0,.5,.5,1})
 
@@ -343,6 +343,26 @@ function drawGroundPlaneLinesSimple(cam, far, near)
 
       love.graphics.polygon('line', p)
       love.graphics.draw(mesh)
+
+
+
+      local newuvs = {.05, .08, -- tl x and y}
+			 .92, .95-.14} --width and height
+
+
+
+      local rect1 = {x1,y1,x2,y2,x3,y3,x4,y4}
+      local outward = drawTheShizzle(rect1, newuvs)
+
+      local m = createTexturedRectangle(ding)
+      m:setVertex(1, {outward[1], outward[2], 0,0})
+      m:setVertex(2, {outward[3], outward[4], 1,0})
+      m:setVertex(3, {outward[5], outward[6], 1,1})
+      m:setVertex(4, {outward[7], outward[8], 0,1})
+
+      love.graphics.setColor(.5,1,.5,0.7)
+	 love.graphics.draw(m)
+      
       
       --love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
       --love.graphics.polygon("fill", {x1,y1, x3,y3,x4,y4,x2,y2})
@@ -442,27 +462,27 @@ end
 
 
 function drawTheShizzle(rect, uvData)
-   love.graphics.setColor(1,0,0)
-   love.graphics.line(rect[1], rect[2], rect[3], rect[4])
-   love.graphics.line(rect[3], rect[4], rect[5], rect[6])
-   love.graphics.line(rect[5], rect[6], rect[7], rect[8])
-   love.graphics.line(rect[7], rect[8], rect[1], rect[2])
+  -- love.graphics.setColor(1,0,0)
+   -- love.graphics.line(rect[1], rect[2], rect[3], rect[4])
+   -- love.graphics.line(rect[3], rect[4], rect[5], rect[6])
+   -- love.graphics.line(rect[5], rect[6], rect[7], rect[8])
+   -- love.graphics.line(rect[7], rect[8], rect[1], rect[2])
 
    -- middle lines
-   love.graphics.setColor(0,0,1)
+  -- love.graphics.setColor(0,0,1)
    local hx1 = lerp(rect[1], rect[7], 0.5)
    local hy1 = lerp(rect[2], rect[8], 0.5)
    local hx2 = lerp(rect[3], rect[5], 0.5)
    local hy2 = lerp(rect[4], rect[6], 0.5)
    
-   love.graphics.line(hx1, hy1, hx2, hy2)
+  -- love.graphics.line(hx1, hy1, hx2, hy2)
 
    local vx1 = lerp(rect[1], rect[3], 0.5)
    local vy1 = lerp(rect[2], rect[4], 0.5)
    local vx2 = lerp(rect[7], rect[5], 0.5)
    local vy2 = lerp(rect[8], rect[6], 0.5)
 
-   love.graphics.line(vx1, vy1, vx2, vy2)
+  -- love.graphics.line(vx1, vy1, vx2, vy2)
 
    -- ok so the top and bottom lines, where will the new ones be?
    --print(uvData[2], uvData[4])
@@ -546,109 +566,57 @@ function love.draw()
    cam:pop()
 
    local sin = function(a) return math.sin(totaldt)*100*(a or 1) end
-   local points = {100+sin(),100, 200, 100, 200+sin(),200-sin(.5),100+sin(-1),200}
+  -- local points = {100+sin(),100, 200, 100, 200+sin(),200-sin(.5),100+sin(-1),200}
    local margin = .1
 --   local uvs = {0+margin,0+margin,
 --                1-margin,0+margin,
 --                1-margin,1-margin,
 --                0+margin,1-margin}
 
-   local newuvs = {.14, .13, -- tl x and y}
-                   .92 -.14, .95-.14} --width and height
- --  love.graphics.setColor(0,1,0)
-   
-  -- love.graphics.polygon('line', points)
-
-  -- love.graphics.setColor(1,1,1)
-
-  -- local npoints = calculateOuterTexture(points, newuvs)
---   local npoints = {tln.x, tln.y, brn.x, tln.y, brn.x, brn.y, tln.x, brn.y}
-  -- love.graphics.polygon('line', npoints)
-
-  -- local m = createTexturedRectangle(ding)
---   print("start")
-  -- local _,_, u, v  = m:getVertex(1)
-  -- m:setVertex(1, {npoints[1],npoints[2], u,v})
-  -- _,_, u, v  = m:getVertex(2)
-  -- m:setVertex(2, {npoints[3],npoints[4], u,v})
-  -- _,_, u, v  = m:getVertex(3)
-  -- m:setVertex(3, {npoints[5],npoints[6], u,v})
-  -- _,_, u, v  = m:getVertex(4)
-  -- m:setVertex(4, {npoints[7],npoints[8], u,v})
-
-   --print(m:getVertex(1))
-   --print(m:getVertex(2))
-   --print(m:getVertex(3))
-   --print(m:getVertex(4))
-
-   --local m = createTexturedPolygon(groundimg6, points)
-  -- love.graphics.setColor(1,1,1, 0.4)
-
-  -- love.graphics.draw(m)
-
-   
-   -- _,_, u, v  = m:getVertex(1)
-   -- m:setVertex(1, {points[1],npoints[2], u,v})
-   -- _,_, u, v  = m:getVertex(2)
-   -- m:setVertex(2, {points[3],npoints[4], u,v})
-   -- _,_, u, v  = m:getVertex(3)
-   -- m:setVertex(3, {points[5],npoints[6], u,v})
-   -- _,_, u, v  = m:getVertex(4)
-   -- m:setVertex(4, {points[7],npoints[8], u,v})
-
-   -- love.graphics.setColor(1,0,0, .5)
-
---   love.graphics.draw(m)
+   local newuvs = {.05, .08, -- tl x and y}
+                   .92, .95-.14} --width and height
 
 
-   local rect1 = {400,400+sin(), 600,400+sin(), 600+sin(),600, 400+sin(), 600}
+
+   local rect1 = {400,400+sin(), 600,400+sin(), 600+sin(1),600, 400+sin(), 600}
    local outward = drawTheShizzle(rect1, newuvs)
 
-   love.graphics.polygon('line', rect1)
-   love.graphics.polygon('line', outward)
+   --love.graphics.polygon('line', rect1)
+   --love.graphics.polygon('line', outward)
 
 
     local m = createTexturedRectangle(ding)
---   print("start")
-   local _,_, u, v  = m:getVertex(1)
-   m:setVertex(1, {outward[1],outward[2], u,v})
-   _,_, u, v  = m:getVertex(2)
-   m:setVertex(2, {outward[3],outward[4], u,v})
-   _,_, u, v  = m:getVertex(3)
-   m:setVertex(3, {outward[5],outward[6], u,v})
-   _,_, u, v  = m:getVertex(4)
-   m:setVertex(4, {outward[7],outward[8], u,v})
-   love.graphics.setColor(1,0,0, .5)
+    m:setVertex(1, {outward[1], outward[2], 0,0})
+    m:setVertex(2, {outward[3], outward[4], 1,0})
+    m:setVertex(3, {outward[5], outward[6], 1,1})
+    m:setVertex(4, {outward[7], outward[8], 0,1})
+   
+    
+  
+
+    love.graphics.setColor(0,0,0,0.9)
    love.graphics.draw(m)
 
-   
-    local rect1 = {600,400+sin(), 800,400+sin(), 800+sin(),600, 600+sin(), 600}
+
+   local offset = 200
+    local rect1 = {400+offset,400+sin(), 600+offset,400+sin(), 600+offset+sin(),600, 400+offset+sin(), 600}
    local outward = drawTheShizzle(rect1, newuvs)
 
-   love.graphics.polygon('line', rect1)
-   love.graphics.polygon('line', outward)
+--   love.graphics.polygon('line', rect1)
+--   love.graphics.polygon('line', outward)
 
 
-    local m = createTexturedRectangle(ding)
---   print("start")
-   local _,_, u, v  = m:getVertex(1)
-   m:setVertex(1, {outward[1],outward[2], u,v})
-   _,_, u, v  = m:getVertex(2)
-   m:setVertex(2, {outward[3],outward[4], u,v})
-   _,_, u, v  = m:getVertex(3)
-   m:setVertex(3, {outward[5],outward[6], u,v})
-   _,_, u, v  = m:getVertex(4)
-   m:setVertex(4, {outward[7],outward[8], u,v})
-   love.graphics.setColor(1,0,0, .5)
+   local m = createTexturedRectangle(ding)
+
+   for j = 1, 4 do
+       local _,_, u, v  = m:getVertex(j)
+       m:setVertex(j, {outward[((j-1)*2)+1],outward[((j-1)*2)+2], u,v})
+    end
+
+   love.graphics.setColor(1,0,0)
    love.graphics.draw(m)
    
-   --local line = {200,200, 100,200}
-   --local parallel = makeParallelLine(line, 10)
-   --love.graphics.setColor(0,1,0)
-   --love.graphics.line(line[1], line[2], line[3], line[4])
-   --love.graphics.setColor(1,1,0)
-
-   --love.graphics.line(parallel[1], parallel[2], parallel[3], parallel[4])
+ 
    
    love.graphics.setColor(1,1,1)
    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
