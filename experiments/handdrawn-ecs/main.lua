@@ -390,6 +390,129 @@ function calculateOuterTexture(points, uvShape)
 end
 
 
+function makeParallelLine(line, offset)
+   local x1 = line[1]
+   local y1 = line[2]
+   local x2 = line[3]
+   local y2 = line[4]
+   local L = math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))
+
+   local x1p = x1 + offset * (y2-y1)/L
+   local x2p = x2 + offset * (y2-y1)/L
+   local y1p = y1 + offset * (x1-x2)/L
+   local y2p = y2 + offset * (x1-x2)/L
+   return {x1p, y1p, x2p, y2p}
+
+end
+
+function isectLineLine(line1, line2) 
+    --local a = line1.a
+    --local b = line1.b
+    --local c = line2.a
+   --local d = line2.b
+   local ax = line1[1]
+   local bx = line1[3]
+   local cx = line2[1]
+   local dx = line2[3]
+
+   
+   local ay = line1[2]
+   local by = line1[4]
+   local cy = line2[2]
+   local dy = line2[4]
+
+   
+    local dx12 = ax - bx;
+    local dx34 = cx - dx;
+    local dy12 = ay - by;
+    local dy34 = cy - dy;
+    local den = dx12 * dy34 - dy12 * dx34;
+    local EPSILON = 0.000001
+    
+    if (math.abs(den) < EPSILON) then
+        return undefined
+    else 
+        local det12 = ax * by - ay * bx
+        local det34 = cx * dy - cy * dx
+        local numx = det12 * dx34 - dx12 * det34
+        local numy = det12 * dy34 - dy12 * det34
+        return {x= numx / den, y= numy / den}
+    end
+end
+
+
+function drawTheShizzle(rect, uvData)
+   love.graphics.setColor(1,0,0)
+   love.graphics.line(rect[1], rect[2], rect[3], rect[4])
+   love.graphics.line(rect[3], rect[4], rect[5], rect[6])
+   love.graphics.line(rect[5], rect[6], rect[7], rect[8])
+   love.graphics.line(rect[7], rect[8], rect[1], rect[2])
+
+   -- middle lines
+   love.graphics.setColor(0,0,1)
+   local hx1 = lerp(rect[1], rect[7], 0.5)
+   local hy1 = lerp(rect[2], rect[8], 0.5)
+   local hx2 = lerp(rect[3], rect[5], 0.5)
+   local hy2 = lerp(rect[4], rect[6], 0.5)
+   
+   love.graphics.line(hx1, hy1, hx2, hy2)
+
+   local vx1 = lerp(rect[1], rect[3], 0.5)
+   local vy1 = lerp(rect[2], rect[4], 0.5)
+   local vx2 = lerp(rect[7], rect[5], 0.5)
+   local vy2 = lerp(rect[8], rect[6], 0.5)
+
+   love.graphics.line(vx1, vy1, vx2, vy2)
+
+   -- ok so the top and bottom lines, where will the new ones be?
+   --print(uvData[2], uvData[4])
+   local vertd = (distance(vx1, vy1, vx2, vy2))
+   --print(vertd)
+   local totalv = 1/uvData[4] * vertd
+   --print(totalv)
+
+   local topOff = uvData[2] * totalv
+   local bottomOff = (1-(uvData[4]+uvData[2])) * totalv
+
+   local pTop = makeParallelLine({rect[1], rect[2], rect[3], rect[4]}, topOff)
+   local pBottom = makeParallelLine({ rect[5], rect[6], rect[7], rect[8]}, bottomOff)
+  
+
+
+   local hord = (distance(hx1, hy1, hx2, hy2))
+   local totalh = 1/uvData[3] * hord
+   local leftOff = uvData[1] * totalh
+   local rightOff = (1-(uvData[3]+uvData[1])) * totalh
+   --print(leftOff + rightOff + hord, totalh)
+   local pLeft = makeParallelLine({ rect[7], rect[8], rect[1], rect[2]}, leftOff)
+   local pRight = makeParallelLine({ rect[3], rect[4], rect[5], rect[6]}, rightOff)
+   
+   function connectAtIntersection(l1, l2)
+      local i1 = isectLineLine(l1, l2)
+      l1[3] = i1.x
+      l1[4] = i1.y
+      l2[1] = i1.x
+      l2[2] = i1.y
+   end
+   
+   connectAtIntersection(pTop, pRight)
+   connectAtIntersection(pRight, pBottom)
+   connectAtIntersection(pBottom, pLeft)
+   connectAtIntersection(pLeft, pTop)
+
+   
+   
+   --love.graphics.line(pLeft[1], pLeft[2], pLeft[3], pLeft[4])
+   --love.graphics.line(pRight[1], pRight[2], pRight[3], pRight[4])
+   --love.graphics.line(pTop[1], pTop[2], pTop[3], pTop[4])
+   --love.graphics.line(pBottom[1], pBottom[2], pBottom[3], pBottom[4])
+   --print(topOff+bottomOff + vertd)
+   --print(uvData[2] * totalv)
+   --print((1-(uvData[4]+uvData[2])) * totalv)
+   return {pTop[1], pTop[2], pRight[1], pRight[2], pBottom[1], pBottom[2], pLeft[1], pLeft[2]}
+end
+
+
 function love.draw()
    love.graphics.clear(.3,.5,.8)
    
@@ -432,26 +555,26 @@ function love.draw()
 
    local newuvs = {.14, .14, -- tl x and y}
                    .90 -.14, .93-.14} --width and height
-   love.graphics.setColor(0,1,0)
+ --  love.graphics.setColor(0,1,0)
    
-   love.graphics.polygon('line', points)
+  -- love.graphics.polygon('line', points)
 
-   love.graphics.setColor(1,1,1)
+  -- love.graphics.setColor(1,1,1)
 
-   local npoints = calculateOuterTexture(points, newuvs)
+  -- local npoints = calculateOuterTexture(points, newuvs)
 --   local npoints = {tln.x, tln.y, brn.x, tln.y, brn.x, brn.y, tln.x, brn.y}
-   love.graphics.polygon('line', npoints)
+  -- love.graphics.polygon('line', npoints)
 
-   local m = createTexturedRectangle(ding)
+  -- local m = createTexturedRectangle(ding)
 --   print("start")
-   local _,_, u, v  = m:getVertex(1)
-   m:setVertex(1, {npoints[1],npoints[2], u,v})
-   _,_, u, v  = m:getVertex(2)
-   m:setVertex(2, {npoints[3],npoints[4], u,v})
-   _,_, u, v  = m:getVertex(3)
-   m:setVertex(3, {npoints[5],npoints[6], u,v})
-   _,_, u, v  = m:getVertex(4)
-   m:setVertex(4, {npoints[7],npoints[8], u,v})
+  -- local _,_, u, v  = m:getVertex(1)
+  -- m:setVertex(1, {npoints[1],npoints[2], u,v})
+  -- _,_, u, v  = m:getVertex(2)
+  -- m:setVertex(2, {npoints[3],npoints[4], u,v})
+  -- _,_, u, v  = m:getVertex(3)
+  -- m:setVertex(3, {npoints[5],npoints[6], u,v})
+  -- _,_, u, v  = m:getVertex(4)
+  -- m:setVertex(4, {npoints[7],npoints[8], u,v})
 
    --print(m:getVertex(1))
    --print(m:getVertex(2))
@@ -459,25 +582,52 @@ function love.draw()
    --print(m:getVertex(4))
 
    --local m = createTexturedPolygon(groundimg6, points)
-   love.graphics.setColor(1,1,1, 0.4)
+  -- love.graphics.setColor(1,1,1, 0.4)
 
-   love.graphics.draw(m)
+  -- love.graphics.draw(m)
 
    
-   _,_, u, v  = m:getVertex(1)
-   m:setVertex(1, {points[1],npoints[2], u,v})
-   _,_, u, v  = m:getVertex(2)
-   m:setVertex(2, {points[3],npoints[4], u,v})
-   _,_, u, v  = m:getVertex(3)
-   m:setVertex(3, {points[5],npoints[6], u,v})
-   _,_, u, v  = m:getVertex(4)
-   m:setVertex(4, {points[7],npoints[8], u,v})
+   -- _,_, u, v  = m:getVertex(1)
+   -- m:setVertex(1, {points[1],npoints[2], u,v})
+   -- _,_, u, v  = m:getVertex(2)
+   -- m:setVertex(2, {points[3],npoints[4], u,v})
+   -- _,_, u, v  = m:getVertex(3)
+   -- m:setVertex(3, {points[5],npoints[6], u,v})
+   -- _,_, u, v  = m:getVertex(4)
+   -- m:setVertex(4, {points[7],npoints[8], u,v})
 
-   love.graphics.setColor(1,0,0, .5)
+   -- love.graphics.setColor(1,0,0, .5)
 
 --   love.graphics.draw(m)
 
 
+   local rect1 = {400,400+sin(), 600,400+sin(), 600-sin(),600, 400+sin(), 600}
+   local outward = drawTheShizzle(rect1, newuvs)
+
+   love.graphics.polygon('line', rect1)
+   love.graphics.polygon('line', outward)
+
+
+    local m = createTexturedRectangle(ding)
+--   print("start")
+   local _,_, u, v  = m:getVertex(1)
+   m:setVertex(1, {outward[1],outward[2], u,v})
+   _,_, u, v  = m:getVertex(2)
+   m:setVertex(2, {outward[3],outward[4], u,v})
+   _,_, u, v  = m:getVertex(3)
+   m:setVertex(3, {outward[5],outward[6], u,v})
+   _,_, u, v  = m:getVertex(4)
+   m:setVertex(4, {outward[7],outward[8], u,v})
+   love.graphics.setColor(1,0,0, .5)
+   love.graphics.draw(m)
+   
+   --local line = {200,200, 100,200}
+   --local parallel = makeParallelLine(line, 10)
+   --love.graphics.setColor(0,1,0)
+   --love.graphics.line(line[1], line[2], line[3], line[4])
+   --love.graphics.setColor(1,1,0)
+
+   --love.graphics.line(parallel[1], parallel[2], parallel[3], parallel[4])
    
    love.graphics.setColor(1,1,1)
    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
