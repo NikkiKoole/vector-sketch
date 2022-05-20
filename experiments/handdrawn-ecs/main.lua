@@ -31,6 +31,10 @@ local myWorld = Concord.world()
 
    pushing them through https://tinypng.com/  shaves a lot off.
    https://www.imgonline.com.ua/eng/make-seamless-texture.php
+
+   -- inflate polygon
+   https://stackoverflow.com/questions/1109536/an-algorithm-for-inflating-deflating-offsetting-buffering-polygons
+
 ]]--
 
 
@@ -137,6 +141,8 @@ function love.load()
    groundimg12 = love.graphics.newImage('assets/ground7.png', {mipmaps=true})
    groundimg13 = love.graphics.newImage('assets/ground8.png', {mipmaps=true})
 
+   ding = love.graphics.newImage('assets/ding.png', {mipmaps=true})
+
    
    -- groundimg = makeGraphic('assets/kleed2.jpg')
    
@@ -168,7 +174,7 @@ function love.load()
    totaldt =0
 
    heights = {}
-   for i =-100, 100 do
+   for i =-1000, 1000 do
       heights[i] = love.math.random()* 1000
    end
    
@@ -294,7 +300,7 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       local index = (i - s)/tileSize
       local height1 =  heights[groundIndex]
       local height2 = heights[groundIndex+1]
-      print(height1, height2)
+--      print(height1, height2)
       local s = cam:getScale() -- 50 -> 0.01
       
       --local v = mapInto(cam:getScale(), 0, 50, 0.9, 1)
@@ -348,6 +354,42 @@ function drawGroundPlaneLinesSimple(cam, far, near)
 end
 
 
+
+
+function calculateOuterTexture(points, uvShape)
+   -- we generate the 4 points at uv=0 en uv=1
+   --local tlx, tly,brx,bry = getPointsBBoxFlat(points)
+   --local middleX = mapInto(.5, 0, 1, tlx, brx)
+   --local middleY = mapInto(.5, 0, 1, tly, bry)
+
+--   print(inspect(uvShape))
+
+  -- print(inspect(points))
+
+   local uvW = uvShape[1]+uvShape[3]
+   local uvH = uvShape[2]+uvShape[4]
+
+   local p1 = {
+      x= mapInto(0, uvShape[1], uvW, points[1], points[5] ),
+      y= mapInto(0, uvShape[2], uvH, points[2], points[6] )
+   }
+   local p2 = {
+      x= mapInto(1, uvW, uvShape[1], points[3], points[7] ),
+      y= mapInto(0, uvShape[2],uvH, points[4], points[8] )
+   }
+   local p3 = {
+      x= mapInto(1, uvW, uvShape[1], points[5], points[1] ),
+      y= mapInto(1, uvH, uvShape[2], points[6], points[2] )
+   }
+   local p4 = {
+      x= mapInto(0, uvShape[1], uvW, points[7], points[3] ),
+      y= mapInto(1, uvH, uvShape[2], points[8], points[4] )
+   }
+
+   return {p1.x,p1.y,p2.x,p2.y,p3.x,p3.y,p4.x,p4.y}
+end
+
+
 function love.draw()
    love.graphics.clear(.3,.5,.8)
    
@@ -379,6 +421,64 @@ function love.draw()
    love.graphics.rectangle('fill', 0, 0, 20,20)
    
    cam:pop()
+
+   local sin = function(a) return math.sin(totaldt)*100*(a or 1) end
+   local points = {100+sin(),100, 200, 100, 200+sin(),200-sin(.5),100+sin(-1),200}
+   local margin = .1
+--   local uvs = {0+margin,0+margin,
+--                1-margin,0+margin,
+--                1-margin,1-margin,
+--                0+margin,1-margin}
+
+   local newuvs = {.14, .14, -- tl x and y}
+                   .90 -.14, .93-.14} --width and height
+   love.graphics.setColor(0,1,0)
+   
+   love.graphics.polygon('line', points)
+
+   love.graphics.setColor(1,1,1)
+
+   local npoints = calculateOuterTexture(points, newuvs)
+--   local npoints = {tln.x, tln.y, brn.x, tln.y, brn.x, brn.y, tln.x, brn.y}
+   love.graphics.polygon('line', npoints)
+
+   local m = createTexturedRectangle(ding)
+--   print("start")
+   local _,_, u, v  = m:getVertex(1)
+   m:setVertex(1, {npoints[1],npoints[2], u,v})
+   _,_, u, v  = m:getVertex(2)
+   m:setVertex(2, {npoints[3],npoints[4], u,v})
+   _,_, u, v  = m:getVertex(3)
+   m:setVertex(3, {npoints[5],npoints[6], u,v})
+   _,_, u, v  = m:getVertex(4)
+   m:setVertex(4, {npoints[7],npoints[8], u,v})
+
+   --print(m:getVertex(1))
+   --print(m:getVertex(2))
+   --print(m:getVertex(3))
+   --print(m:getVertex(4))
+
+   --local m = createTexturedPolygon(groundimg6, points)
+   love.graphics.setColor(1,1,1, 0.4)
+
+   love.graphics.draw(m)
+
+   
+   _,_, u, v  = m:getVertex(1)
+   m:setVertex(1, {points[1],npoints[2], u,v})
+   _,_, u, v  = m:getVertex(2)
+   m:setVertex(2, {points[3],npoints[4], u,v})
+   _,_, u, v  = m:getVertex(3)
+   m:setVertex(3, {points[5],npoints[6], u,v})
+   _,_, u, v  = m:getVertex(4)
+   m:setVertex(4, {points[7],npoints[8], u,v})
+
+   love.graphics.setColor(1,0,0, .5)
+
+--   love.graphics.draw(m)
+
+
+   
    love.graphics.setColor(1,1,1)
    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
    love.graphics.print(inspect(love.graphics.getStats()), 10, 40)
