@@ -553,8 +553,8 @@ function love.draw()
 --                1-margin,1-margin,
 --                0+margin,1-margin}
 
-   local newuvs = {.14, .14, -- tl x and y}
-                   .90 -.14, .93-.14} --width and height
+   local newuvs = {.14, .13, -- tl x and y}
+                   .92 -.14, .95-.14} --width and height
  --  love.graphics.setColor(0,1,0)
    
   -- love.graphics.polygon('line', points)
@@ -601,7 +601,7 @@ function love.draw()
 --   love.graphics.draw(m)
 
 
-   local rect1 = {400,400+sin(), 600,400+sin(), 600-sin(),600, 400+sin(), 600}
+   local rect1 = {400+sin(),400, 600,400, 600,600, 400, 600}
    local outward = drawTheShizzle(rect1, newuvs)
 
    love.graphics.polygon('line', rect1)
