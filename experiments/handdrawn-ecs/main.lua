@@ -175,7 +175,7 @@ function love.load()
 
    heights = {}
    for i =-1000, 1000 do
-      heights[i] = love.math.random()* 1000
+      heights[i] = love.math.random()* 100
    end
    
    love.window.setTitle( 'handdrawn joy' )
@@ -601,7 +601,28 @@ function love.draw()
 --   love.graphics.draw(m)
 
 
-   local rect1 = {400+sin(),400, 600,400, 600,600, 400, 600}
+   local rect1 = {400,400+sin(), 600,400+sin(), 600+sin(),600, 400+sin(), 600}
+   local outward = drawTheShizzle(rect1, newuvs)
+
+   love.graphics.polygon('line', rect1)
+   love.graphics.polygon('line', outward)
+
+
+    local m = createTexturedRectangle(ding)
+--   print("start")
+   local _,_, u, v  = m:getVertex(1)
+   m:setVertex(1, {outward[1],outward[2], u,v})
+   _,_, u, v  = m:getVertex(2)
+   m:setVertex(2, {outward[3],outward[4], u,v})
+   _,_, u, v  = m:getVertex(3)
+   m:setVertex(3, {outward[5],outward[6], u,v})
+   _,_, u, v  = m:getVertex(4)
+   m:setVertex(4, {outward[7],outward[8], u,v})
+   love.graphics.setColor(1,0,0, .5)
+   love.graphics.draw(m)
+
+   
+    local rect1 = {600,400+sin(), 800,400+sin(), 800+sin(),600, 600+sin(), 600}
    local outward = drawTheShizzle(rect1, newuvs)
 
    love.graphics.polygon('line', rect1)
