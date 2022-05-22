@@ -4,7 +4,7 @@ function love.conf(t)
    t.window.height = 768
    --t.window.width = 2388
    --t.window.height= 1668
-
+   t.window.icon = "assets/icon.png"
    t.window.title = "handdrawn"
 
 

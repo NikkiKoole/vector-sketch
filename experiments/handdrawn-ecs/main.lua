@@ -81,6 +81,15 @@ function makeGraphic(path)
 end
 
 
+function love.mousemoved(x,y,dx,dy)
+   if love.mouse.isDown(1) then
+      local s=cam:getScale()
+      cam:translate(-dx/s,-dy/s)
+   end
+   
+end
+
+
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
 
@@ -109,15 +118,17 @@ function love.load()
    cam = createCamera()
 
    depthMinMax =       {min=-1.0, max=1.0}
-   foregroundFactors = { far=.5, near=1}
+  -- foregroundFactors = { far=.5, near=1}
    --backgroundFactors = { far=.4, near=.7}
-   tileSize = 800
+   tileSize = 400
 
 
    --backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
    --backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
-   foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
-   foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+   foregroundFar = generateCameraLayer('foregroundFar', .1)
+   foregroundNear = generateCameraLayer('foregroundNear', 1)
+--   foregroundNearer = generateCameraLayer('foregroundNearer', .7)
+--   foregroundNearer = generateCameraLayer('foregroundNearest', 1.2)
 
    --dynamic = generateCameraLayer('dynamic', 1)
 
@@ -175,7 +186,7 @@ function love.load()
 
    heights = {}
    for i =-1000, 1000 do
-      heights[i] = love.math.random()* 1000
+      heights[i] = love.math.random()* 100
    end
    
    love.window.setTitle( 'handdrawn joy' )
@@ -198,7 +209,7 @@ function love.update(dt)
    
 
    if totaldt % 2 < 0.1 then
-      p = generatePolygon(200,200,1000,.15,.15,14)
+      p = generatePolygon(200,200,1200,.15,.15,14)
       d = createTexturedPolygon(groundimg1, p)
 
    end
@@ -300,33 +311,13 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       local index = (i - s)/tileSize
       local height1 =  heights[groundIndex]
       local height2 = heights[groundIndex+1]
---      print(height1, height2)
       local s = cam:getScale() -- 50 -> 0.01
       
-      --local v = mapInto(cam:getScale(), 0, 50, 0.9, 1)
-      --local ffar = {scale=0.9, relativeScale=1}
-      --local fnear = {scale=1, relativeScale=1}
-
-      
-      
-      --local x1,y1 = cam:getScreenCoordinates(i+0.0001, height1, far)
       
       local x4,y4 = cam:getScreenCoordinates(i+0.0001, height1, near)
-
-      
-      --local x3, y3 = cam:getScreenCoordinates(i+tileSize + .0001, height2, far)
       local x3, y3 = cam:getScreenCoordinates(i+tileSize+ .0001, height2, near)
-
---      y2 = y2+tileIndex-50
---      y4 = y4+tileIndex*50
-      
-      local x1,y1 = x4, y4-s*tileSize/1
-
-      local x2,y2 = x3, y3-s*tileSize/1
-
-
-      
-
+      local x1,y1 = x4, y4-s*tileSize
+      local x2,y2 = x3, y3-s*tileSize
 
       local mesh = createTexturedRectangle(imgarr[tileIndex])
 
@@ -339,13 +330,23 @@ function drawGroundPlaneLinesSimple(cam, far, near)
 
      -- mesh:setVertex(6, {x1,y1, 0,0,.5,.5,1})
 
-      love.graphics.setColor(.6,0.3,0.15,0.9)
+      love.graphics.setColor(.6,0.3,0.3)
 
-      love.graphics.polygon('line', p)
+--      love.graphics.polygon('line', p)
       love.graphics.draw(mesh)
 
+      local o = 200
+      
+      mesh:setVertex(1, {x1,y1+o, 0,0,1,1,1,.5})
+      mesh:setVertex(2, {x2,y2+o, 1,0,1,1,1,.5})
+      mesh:setVertex(3, {x3,y3+o, 1,1})
+      mesh:setVertex(4, {x4,y4+o, 0,1})
+--      love.graphics.draw(mesh)
 
 
+      
+      
+      
       local newuvs = {.05, .08, -- tl x and y}
 			 .92, .95-.14} --width and height
 
@@ -360,8 +361,10 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       m:setVertex(3, {outward[5], outward[6], 1,1})
       m:setVertex(4, {outward[7], outward[8], 0,1})
 
+     
+
       love.graphics.setColor(.5,1,.5,0.7)
-	 love.graphics.draw(m)
+      love.graphics.draw(m)
       
       
       --love.graphics.setColor(0.25,1-(0.05*tileIndex),0.25,.5)
@@ -460,6 +463,60 @@ function isectLineLine(line1, line2)
     end
 end
 
+   function wildstuff()   
+   local sin = function(a) return math.sin(totaldt)*100*(a or 1) end
+  -- local points = {100+sin(),100, 200, 100, 200+sin(),200-sin(.5),100+sin(-1),200}
+   local margin = .1
+--   local uvs = {0+margin,0+margin,
+--                1-margin,0+margin,
+--                1-margin,1-margin,
+--                0+margin,1-margin}
+
+   local newuvs = {.05, .08, -- tl x and y}
+                   .92, .95-.14} --width and height
+
+
+
+   local rect1 = {400,400+sin(), 600,400+sin(), 600+sin(1),600, 400+sin(), 600}
+   local outward = drawTheShizzle(rect1, newuvs)
+
+   --love.graphics.polygon('line', rect1)
+   --love.graphics.polygon('line', outward)
+
+
+    local m = createTexturedRectangle(ding)
+    m:setVertex(1, {outward[1], outward[2], 0,0})
+    m:setVertex(2, {outward[3], outward[4], 1,0})
+    m:setVertex(3, {outward[5], outward[6], 1,1})
+    m:setVertex(4, {outward[7], outward[8], 0,1})
+   
+    
+  
+
+    love.graphics.setColor(0,0,0,0.9)
+    love.graphics.draw(m)
+
+
+    local offset = 200
+    local rect1 = {400+offset,400+sin(), 600+offset,400+sin(), 600+offset+sin(),600, 400+offset+sin(), 600}
+   local outward = drawTheShizzle(rect1, newuvs)
+
+--   love.graphics.polygon('line', rect1)
+--   love.graphics.polygon('line', outward)
+
+
+   local m = createTexturedRectangle(ding)
+
+   for j = 1, 4 do
+       local _,_, u, v  = m:getVertex(j)
+       m:setVertex(j, {outward[((j-1)*2)+1],outward[((j-1)*2)+2], u,v})
+    end
+
+   love.graphics.setColor(1,0,0)
+   love.graphics.draw(m)
+   
+   end
+
 
 function drawTheShizzle(rect, uvData)
   -- love.graphics.setColor(1,0,0)
@@ -535,10 +592,6 @@ end
 
 function love.draw()
    love.graphics.clear(.3,.5,.8)
-   
-   
-   
-   
    --root.transforms.l:setTransformation( 0,0,count )
    
    --root.children[1].dirty = true
@@ -546,78 +599,23 @@ function love.draw()
    -- root.children[1].children[1].transforms.l:rotate( -count )
    --  root.children[1].children[1].dirty = true
    drawGroundPlaneLinesSimple( cam, 'foregroundFar', 'foregroundNear')
+--   drawGroundPlaneLinesSimple( cam, 'foregroundNear', 'foregroundNearer')
+--   drawGroundPlaneLinesSimple( cam, 'foregroundNearer', 'foregroundNearest')
+   
    cam:push()
    love.graphics.setColor(1,1,1)
    love.graphics.draw(d)
 
    renderRecursive(root)
 
-   -- render a textured polygon
-
---   local poly = {}
---   poly = p
---   print(inspect(poly))
-
-   -- love.graphics.polygon('line', poly)
    love.graphics.setColor(1,1,1)
    love.graphics.setColor(1,0,0)
    love.graphics.rectangle('fill', 0, 0, 20,20)
    
    cam:pop()
 
-   local sin = function(a) return math.sin(totaldt)*100*(a or 1) end
-  -- local points = {100+sin(),100, 200, 100, 200+sin(),200-sin(.5),100+sin(-1),200}
-   local margin = .1
---   local uvs = {0+margin,0+margin,
---                1-margin,0+margin,
---                1-margin,1-margin,
---                0+margin,1-margin}
 
-   local newuvs = {.05, .08, -- tl x and y}
-                   .92, .95-.14} --width and height
-
-
-
-   local rect1 = {400,400+sin(), 600,400+sin(), 600+sin(1),600, 400+sin(), 600}
-   local outward = drawTheShizzle(rect1, newuvs)
-
-   --love.graphics.polygon('line', rect1)
-   --love.graphics.polygon('line', outward)
-
-
-    local m = createTexturedRectangle(ding)
-    m:setVertex(1, {outward[1], outward[2], 0,0})
-    m:setVertex(2, {outward[3], outward[4], 1,0})
-    m:setVertex(3, {outward[5], outward[6], 1,1})
-    m:setVertex(4, {outward[7], outward[8], 0,1})
-   
-    
-  
-
-    love.graphics.setColor(0,0,0,0.9)
-   love.graphics.draw(m)
-
-
-   local offset = 200
-    local rect1 = {400+offset,400+sin(), 600+offset,400+sin(), 600+offset+sin(),600, 400+offset+sin(), 600}
-   local outward = drawTheShizzle(rect1, newuvs)
-
---   love.graphics.polygon('line', rect1)
---   love.graphics.polygon('line', outward)
-
-
-   local m = createTexturedRectangle(ding)
-
-   for j = 1, 4 do
-       local _,_, u, v  = m:getVertex(j)
-       m:setVertex(j, {outward[((j-1)*2)+1],outward[((j-1)*2)+2], u,v})
-    end
-
-   love.graphics.setColor(1,0,0)
-   love.graphics.draw(m)
-   
- 
-   
+   wildstuff()
    love.graphics.setColor(1,1,1)
    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
    love.graphics.print(inspect(love.graphics.getStats()), 10, 40)
