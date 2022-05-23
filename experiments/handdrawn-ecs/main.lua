@@ -159,8 +159,8 @@ function love.load()
    
    root = makeNode(nil,  { 0, 0, 0, 1, 1, 0, 0, 0, 0 })
 
-   local animals1 =  makeNode(makeGraphic('assets/animals4.png'))
-   local animals2 =  makeNode(makeGraphic('assets/animals4.png'))
+   local animals1 =  makeNode(makeGraphic('assets/leaveanimals.png'))
+   local animals2 =  makeNode(makeGraphic('assets/animals2.png'))
 
    animals2.transforms.tl[1] = animals2.transforms.tl[1]
    --animals2.transforms.l:translate(400,0)
@@ -265,10 +265,10 @@ function renderRecursive(node, dirty)
       local xx, yy = node.transforms.g:inverseTransformPoint(wx, wy )
       love.graphics.setColor(0,0,0)
       if (xx > 0 and xx < node.graphic.w and yy >0 and yy< node.graphic.h) then
-	 love.graphics.setColor(.25,.25,.25)
+	 love.graphics.setColor(.5,.5,.5)
 	 local r, g, b, a = node.graphic.imageData:getPixel( xx, yy )
 	 if (a > 0) then
-	    love.graphics.setColor(.25,.25,.5)
+	    love.graphics.setColor(1,1,1,1)
 	 end
       end
 
@@ -362,8 +362,8 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       m:setVertex(4, {outward[7], outward[8], 0,1})
 
      
-
-      love.graphics.setColor(.5,1,.5,0.7)
+      love.graphics.setColor(168/255, 175/255, 97/255)
+      --love.graphics.setColor(.5,1,.5,0.7)
       love.graphics.draw(m)
       
       

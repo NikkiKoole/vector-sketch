@@ -205,7 +205,7 @@ function love.load()
    image2:setMipmapFilter( 'nearest', 1 )
    mesh2 = createTexturedRectangle(image2)
 
-   image3 = love.graphics.newImage("leg2.png", {mipmaps=true})
+   image3 = love.graphics.newImage("egg.png", {mipmaps=true})
    image3:setMipmapFilter( 'nearest', 1 )
    mesh3 = createTexturedTriangleStrip(image3)
    flip = 1
@@ -254,7 +254,7 @@ function love.draw()
          local a = math.atan2(dy,dx) + math.pi/2
          local a2 = math.atan2(dy,dx) - math.pi/2
 
-         local line  = 45/2  -- w/2
+         local line  = 300/2  -- w/2
          local x2 =   xl + line * math.cos(a)
          local y2 =  yl + line * math.sin(a)
          local x3 =   xl + line * math.cos(a2)
