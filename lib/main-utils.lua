@@ -395,6 +395,7 @@ function handleChild(shape,parallax)
 
    if not shape then return end
 
+
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
@@ -668,12 +669,12 @@ function lerpNodes(left, right, root, t)
 	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
       }
       root.children = {}
---      print(#left.children, #right.children)
+      --      print(#left.children, #right.children)
       if (#left.children == #right.children) then
-      for i=1, #left.children do
-	 root.children[i] = {}
-	 lerpNodes(left.children[i], right.children[i], root.children[i], t)
-      end
+         for i=1, #left.children do
+            root.children[i] = {}
+            lerpNodes(left.children[i], right.children[i], root.children[i], t)
+         end
       end
       --root._parent = left._parent
    elseif (left.points and right.points) then

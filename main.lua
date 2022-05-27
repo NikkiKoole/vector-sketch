@@ -6,6 +6,9 @@ local mylib = require('tool')
 local part=.85
 
 
+local tw = 2900
+local th = 1800
+
 local root = {
       folder = true,
       name = 'root',
@@ -15,14 +18,15 @@ local root = {
          {
             folder = true,
             transforms =  {l={0,0,0,1,1,100,0,0,0}},
-            name="rood",
+            name="rood folder",
             children ={
-	       {
-                  name="roodchild:"..1,
-                  color = {.5,.1,0, 0.8},
-                  points = {{0,0},{200,0},{200,200},{0,200}},
-
+               {
+                  name="textured vierkant:"..1,
+                  color = {1,1,1, 1},
+                  points = {{0,0},{tw,0},{tw,th},{0,th}},
+                  texture = {data='here'}
 	       },
+
 	       {
                   name="meta thing"..1,
                   type='meta',
@@ -37,6 +41,11 @@ local root = {
 
 
 function love.load(arg)
+   img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
+   img:setWrap( 'repeat' )
+   img:setFilter('linear')
+   print(inspect(img))
+
    local w,h = love.graphics.getDimensions()
    mylib:setRoot(root)
 

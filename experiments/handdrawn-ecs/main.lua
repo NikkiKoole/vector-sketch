@@ -159,8 +159,8 @@ function love.load()
    
    root = makeNode(nil,  { 0, 0, 0, 1, 1, 0, 0, 0, 0 })
 
-   local animals1 =  makeNode(makeGraphic('assets/house.png'))
-   local animals2 =  makeNode(makeGraphic('assets/clouds.png'))
+   local animals1 =  makeNode(makeGraphic('assets/animals3.png'))
+   local animals2 =  makeNode(makeGraphic('assets/plant.png'))
 
    animals2.transforms.tl[1] = animals2.transforms.tl[1]
    --animals2.transforms.l:translate(400,0)

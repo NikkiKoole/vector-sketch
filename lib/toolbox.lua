@@ -216,7 +216,71 @@ function meshAll(root) -- this needs to be done recursive
 end
 
 function remeshNode(node)
-   node.mesh = makeMeshFromVertices(makeVertices(node))
+   --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
+   local verts = makeVertices(node)
+   local tlx, tly, brx, bry = getPointsBBox(node.points)
+--   print(tlx, tly, brx, bry)
+   --print(inspect(verts))
+      
+   
+   if node.texture then
+
+      -- depending on img dimensions do something with uvs
+      -- xFactor and yFactor should default to 1,
+      --
+      
+      local keepAspect = true
+
+      local xFactor = 1
+      local yFactor = 1
+      
+      --local imgRatio = img:getHeight()/img:getWidth()
+      --local bboxRatio = (bry-tly)/(brx-tlx)
+      local xFactor = img:getWidth()/(brx-tlx)
+      local yFactor = img:getHeight()/(bry-tly)
+      print(xFactor, yFactor)
+      local mmin = math.min(xFactor, yFactor)
+      local mmax = math.max(xFactor, yFactor)
+
+      --xFactor = xFactor * mmax
+      --yFactor = yFactor * mmax
+
+      local scale = mmax
+
+   --   print()
+
+
+      
+      local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * scale) end
+      local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * scale) end
+
+         print('this needs extra texture work')
+      --   print(img, img:getWidth(), img:getHeight())
+         
+         for i =1, #verts do
+            local v =verts[i]
+            verts[i] ={v[1], v[2], ufunc(v[1]), vfunc(v[2])}
+            
+         end
+         --print(inspect(verts))
+         node.mesh = love.graphics.newMesh(verts, 'triangles')
+         node.mesh:setTexture(img)
+
+         -- for i = 1 , #p do
+         --    local r = p[i]
+         --    --      print(inspect(r))
+         --    table.insert(vertices, {r[1], r[2], ufunc(r[1]), vfunc(r[2])})
+         --    table.insert(vertices, {r[3], r[4], ufunc(r[3]), vfunc(r[4])})
+         --    table.insert(vertices, {r[5], r[6], ufunc(r[5]), vfunc(r[6])})
+         -- end
+
+   else
+         node.mesh = makeMeshFromVertices(verts)
+
+   end
+   
+   
+
    if node.border then
       node.borderMesh =  makeBorderMesh(node)
    end
@@ -227,6 +291,7 @@ simple_format = {
 }
 
 function makeMeshFromVertices(vertices)
+--   print('make mesh called, by whom?')
    if (vertices and vertices[1] and vertices[1][1]) then
       local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
       --local mesh = love.graphics.newMesh( vertices, "triangles")

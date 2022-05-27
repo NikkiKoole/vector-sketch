@@ -205,7 +205,7 @@ function love.load()
    image2:setMipmapFilter( 'nearest', 1 )
    mesh2 = createTexturedRectangle(image2)
 
-   image3 = love.graphics.newImage("blup.png", {mipmaps=true})
+   image3 = love.graphics.newImage("plant.png", {mipmaps=true})
    image3:setMipmapFilter( 'nearest', 1 )
    mesh3 = createTexturedTriangleStrip(image3)
    flip = 1
@@ -228,7 +228,7 @@ function love.draw()
    local w, h = image3:getDimensions( )
    print(w,h)
 
-   local offsetW = math.sin(time*5)*120
+   local offsetW = math.sin(time*5)*80
    --print(offsetW)
    
    local curveL = love.math.newBezierCurve({0, 0, 0+offsetW, h/2, 0, h})
@@ -254,7 +254,7 @@ function love.draw()
          local a = math.atan2(dy,dx) + math.pi/2
          local a2 = math.atan2(dy,dx) - math.pi/2
 
-         local line  = 160/2  -- w/2
+         local line  = 350/2  -- w/2
          local x2 =   xl + line * math.cos(a)
          local y2 =  yl + line * math.sin(a)
          local x3 =   xl + line * math.cos(a2)

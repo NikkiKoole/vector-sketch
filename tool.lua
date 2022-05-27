@@ -331,9 +331,9 @@ local function addThingAtEnd(thing, parent)
    --
    -- todo this crashed on not having children
    if not parent.children then
-      print('sasdasdasd')
-      print(inspect(thing))
-      print(inspect(parent))
+--      print('sasdasdasd')
+--      print(inspect(thing))
+--      print(inspect(parent))
 
    end
    
@@ -1562,7 +1562,7 @@ function mylib:mousepressed(x,y, button)
 	 end
 	 for i = 1, 4 do
 	    if simplecheck(perspective[i][1] - 5,perspective[i][2] - 5, 10) then
-	       print(i, 'set')
+	       --print(i, 'set')
 	       lastDraggedElement = {id='perspective-corner', index=i}
 	    end
 	 end
@@ -1604,7 +1604,7 @@ end
 
 function mylib:mousereleased(x,y, button)
    local root = mylib.root
-   print('released',x,y, editingMode, editingModeSub)
+   --print('released',x,y, editingMode, editingModeSub)
    if editingMode == 'move' then
       editingMode = nil
    end
@@ -1637,7 +1637,7 @@ function mylib:mousereleased(x,y, button)
 
    if (editingMode == 'rectangle-select') then
       -- todo this doenst work 100% under ingame editing
-      print(rectangleSelect.startP, rectangleSelect.endP)
+      --print(rectangleSelect.startP, rectangleSelect.endP)
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
 	 print('why isnt this selcting children that have a parent again???')
@@ -1652,7 +1652,7 @@ function mylib:mousereleased(x,y, button)
          if t then
             local sx, sy = t:inverseTransformPoint( rectangleSelect.startP.x, rectangleSelect.startP.y )
             local ex, ey = t:inverseTransformPoint( rectangleSelect.endP.x, rectangleSelect.endP.y )
-            print(sx,sy, ex,ey)
+            --print(sx,sy, ex,ey)
             local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
             local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
             local childrenInRect = {}
@@ -1924,7 +1924,7 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
          if lastClickedGraphButton and lastClickedGraphButton.name == 'object-group'..i then
             local duration = (love.timer.getTime() - lastClickedGraphButton.time )
             if duration < .5 then
-               print('dblclick', child.name)
+               --print('dblclick', child.name)
                dblClicked = true
                changeName=true
                changeNameCursor= child.name and #child.name or 0
@@ -2000,9 +2000,9 @@ function mylib:load(arg)
    --if arg[#arg] == "-debug" then require("mobdebug").start() end
    --print(inspect(_G))
 
-   for i in pairs( _G) do
-      print(i)
-   end
+   --for i in pairs( _G) do
+   --   print(i)
+   --end
    
 
    shapeName = 'untitled'
@@ -2450,7 +2450,8 @@ function mylib:draw()
 		  love.graphics.print(string.format("%0.2f", v.value), calcX(1),  calcY(3))
 	       end
 	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("scale y",  labelPos(calcX(1), calcY(4)) )
+	       love.graphics.print(
+                  "scale y",  labelPos(calcX(1), calcY(4)) )
 
 	       local v =  h_slider("folder-scale-y", calcX(1), calcY(4), scrollerWidth,  currentNode.transforms.l[5] , -2, 2)
 	       if (v.value ~= nil) then
