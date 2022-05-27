@@ -135,7 +135,7 @@ function love.load()
    --animals =  makeGraphic('assets/animals4.png')
    --dogmanhaar =  makeGraphic('assets/dogmanhaar.png')
 
-   groundimg1 = love.graphics.newImage('assets/blub1.png', {mipmaps=true})
+   groundimg1 = love.graphics.newImage('assets/blub1b.png', {mipmaps=true})
    groundimg1:setWrap( 'repeat' )
    groundimg2 = love.graphics.newImage('assets/blub2.png', {mipmaps=true})
    groundimg3 = love.graphics.newImage('assets/blub3.png', {mipmaps=true})
@@ -152,8 +152,8 @@ function love.load()
    groundimg12 = love.graphics.newImage('assets/ground7.png', {mipmaps=true})
    groundimg13 = love.graphics.newImage('assets/ground8.png', {mipmaps=true})
 
-   ding = love.graphics.newImage('assets/ground5.png', {mipmaps=true})
-
+   ding = love.graphics.newImage('assets/ground52.png', {mipmaps=true})
+   
    
    -- groundimg = makeGraphic('assets/kleed2.jpg')
    
