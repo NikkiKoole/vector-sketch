@@ -121,7 +121,7 @@ function createTexturedTriangleStrip(image)
    
    local w, h = image:getDimensions( )
    local vertices = {}
-   local segments = 15
+   local segments = 20
    local hPart = h / (segments-1)
    local hv = 1/ (segments-1)
    local runningHV = 0

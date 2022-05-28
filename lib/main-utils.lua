@@ -394,14 +394,14 @@ function handleChild(shape,parallax)
    -- this gets in the way of lerping between nodes...
 
    if not shape then return end
-
+--   print(shape.type)
 
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
 	 mesh = shape.mesh -- the standard way of rendering
       else
-	 mesh =  makeMeshFromVertices(makeVertices(shape)) -- realtime iupdating the thingie
+	 mesh =  makeMeshFromVertices(makeVertices(shape), shape.type) -- realtime iupdating the thingie
       end
 
       local parentIndex = getIndex(shape._parent) 
@@ -452,10 +452,6 @@ function handleChild(shape,parallax)
          parallax.camera.push()
 
       end
-
-
-
-
 
       -- if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
       --    print(inspect(hack))
@@ -573,7 +569,7 @@ function handleChild(shape,parallax)
    if currentNode == shape then
       local editing = makeVertices(shape)
       if (editing and #editing > 0) then
-	 local editingMesh = makeMeshFromVertices(editing)
+	 local editingMesh = makeMeshFromVertices(editing, currentNode.type)
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
       end
@@ -610,7 +606,7 @@ function unpackNodePointsLoop(points)
    return unpacked
 end
 
-function unpackNodePoints(points)
+function unpackNodePoints(points, noloop)
    local unpacked = {}
    if #points >= 1 then
       for i = 0, #points-1 do
@@ -619,9 +615,10 @@ function unpackNodePoints(points)
       end
 
       -- make it go round
+      if noloop == nil then
       unpacked[(#points*2)+1] =   points[1][1]
       unpacked[(#points*2)+2] =   points[1][2]
-
+      end
    end
 
    return unpacked
@@ -694,7 +691,7 @@ function lerpNodes(left, right, root, t)
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
-      root.mesh = makeMeshFromVertices(makeVertices(root))
+      root.mesh = makeMeshFromVertices(makeVertices(root), root.type)
    end
 
    return root
