@@ -8,7 +8,7 @@ end
 
 
 function love.load()
-   local filename = 'ground1b_.png' --'ding.png'
+   local filename = 'Naamloos.png' --'ding.png'
    local imageData     = love.image.newImageData(filename)
    local width, height = imageData:getDimensions()
    local format = imageData:getFormat( )
