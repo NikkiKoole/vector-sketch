@@ -152,7 +152,7 @@ function love.load()
    groundimg12 = love.graphics.newImage('assets/ground7.png', {mipmaps=true})
    groundimg13 = love.graphics.newImage('assets/ground8.png', {mipmaps=true})
 
-   ding = love.graphics.newImage('assets/ground52.png', {mipmaps=true})
+   ding = love.graphics.newImage('assets/ground1b_ 2.png', {mipmaps=true})
    
    
    -- groundimg = makeGraphic('assets/kleed2.jpg')
