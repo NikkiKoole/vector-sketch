@@ -6,8 +6,8 @@ local mylib = require('tool')
 local part=.85
 
 
-local tw = 2900
-local th = 1800
+local tw = 290
+local th = 180
 
 local root = {
       folder = true,
@@ -21,14 +21,15 @@ local root = {
             name="rood folder",
             children ={
                {
-                  name="textured vierkant:"..1,
+                  name="textured rope:"..1,
                   color = {1,1,1, 1},
-                  points = {{0,0},{tw,0},{tw,th},{0,th}},
-                  texture = {data='here'}
+                  points = {{200,200},{200,100},{200,0}},
+                  --texture = {data='here'},
+                  type='rope'
 	       },
 
 	       {
-                  name="meta thing"..1,
+                  name="meta label"..1,
                   type='meta',
                   color = {1,0,0, 0.8},
                   points = {{0,0}},

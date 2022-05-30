@@ -266,16 +266,9 @@ function remeshNode(node)
          node.mesh = love.graphics.newMesh(verts, 'triangles')
          node.mesh:setTexture(img)
 
-         -- for i = 1 , #p do
-         --    local r = p[i]
-         --    --      print(inspect(r))
-         --    table.insert(vertices, {r[1], r[2], ufunc(r[1]), vfunc(r[2])})
-         --    table.insert(vertices, {r[3], r[4], ufunc(r[3]), vfunc(r[4])})
-         --    table.insert(vertices, {r[5], r[6], ufunc(r[5]), vfunc(r[6])})
-         -- end
 
    else
-         node.mesh = makeMeshFromVertices(verts)
+         node.mesh = makeMeshFromVertices(verts, node.type)
 
    end
    
@@ -290,9 +283,15 @@ simple_format = {
    {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
 }
 
-function makeMeshFromVertices(vertices)
---   print('make mesh called, by whom?')
+function makeMeshFromVertices(vertices, nodetype)
+--   print('make mesh called, by whom?', nodetype)
+   if nodetype == 'rope' then
+      local mesh = love.graphics.newMesh(vertices, "strip")
+      return mesh
+   end
+   
    if (vertices and vertices[1] and vertices[1][1]) then
+      print('getting here!')
       local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
       --local mesh = love.graphics.newMesh( vertices, "triangles")
 

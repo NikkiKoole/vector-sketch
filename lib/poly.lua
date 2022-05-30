@@ -382,6 +382,7 @@ function makeVertices(shape)
    local points = shape.points
    local vertices = {}
 
+   if shape.type == nil or shape.type == 'poly' then
    if (points and #points >= 2 ) then
       
       local scale = 1
@@ -423,6 +424,19 @@ function makeVertices(shape)
 	 end
       end
    end
+   else
+
+      local coords = unpackNodePoints(points, false)
+    --  print(inspect(coords))
+      local verts, indices, draw_mode = polyline('miter',coords, {10,40,20})
+    --  print(inspect(verts))
+      print(draw_mode)
+
+--      print('not making vertices',shape.type )
+  --    print(inspect(shape.points))
+      vertices = verts
+   end
+
    return vertices
 end
 

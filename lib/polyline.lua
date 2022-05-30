@@ -41,6 +41,7 @@ local function renderEdgeNone(anchors, normals, s, len_s, ns, q, r, hw)
 end
 
 local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
+
   local tx, ty = r.x - q.x, r.y - q.y
   local len_t = math.sqrt(tx * tx + ty * ty)
   local ntx, nty = -ty * (hw / len_t), tx * (hw / len_t)
@@ -215,10 +216,12 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw)
 
   local len_s = length(s)
   local thick_index = 1
-
+--  print(inspect(half_width))
   local function getHalfWidth(index)
+     --print(index, inspect(half_width))
      if type(half_width) == "table" then
         if index > #half_width then return half_width[#half_width] end
+        
         return half_width[index]
      else
         return half_width
