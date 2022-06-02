@@ -41,6 +41,7 @@ local function renderEdgeNone(anchors, normals, s, len_s, ns, q, r, hw)
 end
 
 local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
+
   local tx, ty = r.x - q.x, r.y - q.y
   local len_t = math.sqrt(tx * tx + ty * ty)
   local ntx, nty = -ty * (hw / len_t), tx * (hw / len_t)
@@ -53,11 +54,17 @@ local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
     -- lines parallel, compute as u1 = q + ns * w/2, u2 = q - ns * w/2
     table.insert(normals, Vector(ns))
     table.insert(normals, Vector(-ns.x, -ns.y))
+
   else
     -- cramers rule
     local nx, ny = ntx - ns.x, nty - ns.y
     local lambda = cross(nx, ny, tx, ty) / det
     local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
+    --print('craners', dx,dy)
+    --if dx > math.pi*2 then dx = math.pi*2 end
+  --if dx < -math.pi*2 then dx = -math.pi*2 end
+    --if dy > math.pi*2 then dy = math.pi*2 end
+    --if dy < -math.pi*2 then dy = -math.pi*2 end
 
     table.insert(normals, Vector(dx, dy))
     table.insert(normals, Vector(-dx, -dy))
@@ -99,6 +106,7 @@ local function renderEdgeBevel(anchors, normals, s, len_s, ns, q, r, hw)
     table.insert(normals, Vector(-ns.x, -ns.y))
     table.insert(normals, Vector(dx, dy))
     table.insert(normals, Vector(-ntx, -nty))
+
   else
     table.insert(normals, Vector(ns.x, ns.y))
     table.insert(normals, Vector(-dx, -dy))
@@ -116,7 +124,7 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
     vertices[i + offset] = {vertices[i][1], vertices[i][2]}
     local length = length(normals[i])
     vertices[i + offset + 1] = {
-      vertices[i][1] + normals[i].x * (pixel_size / length),
+       vertices[i][1] + normals[i].x * (pixel_size / length),
       vertices[i][2] + normals[i].y * (pixel_size / length)
     }
   end
@@ -208,10 +216,12 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw)
 
   local len_s = length(s)
   local thick_index = 1
-
+--  print(inspect(half_width))
   local function getHalfWidth(index)
+     --print(index, inspect(half_width))
      if type(half_width) == "table" then
         if index > #half_width then return half_width[#half_width] end
+        
         return half_width[index]
      else
         return half_width
@@ -329,4 +339,168 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw)
   return vertices, indices, draw_mode
 end
 
---return polyline
+
+
+
+function polyline2(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+
+  local renderEdge = JOIN_TYPES[join_type]
+  assert(renderEdge, join_type .. ' is not a valid line join type.')
+
+  local anchors = {}
+  local normals = {}
+
+
+  local hw = half_width
+  local useMultipleWidths = false
+  if (type(half_width) == 'table' ) then
+     hw = half_width[1]
+     useMultipleWidths = true
+     assert(#half_width == #coords/2)
+  end
+
+
+  --if draw_overdraw and not half_width[1] then
+  --  half_width = half_width - pixel_size * 0.3
+  --end
+
+  local is_looping = (coords[1] == coords[#coords - 1]) and (coords[2] == coords[#coords])
+  local s
+  if is_looping then
+    s = Vector(coords[1] - coords[#coords - 3], coords[2] - coords[#coords - 2])
+  else
+    s = Vector(coords[3] - coords[1], coords[4] - coords[2])
+  end
+
+  local len_s = length(s)
+
+
+  local ns = normal({}, s, hw / len_s)
+
+  local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
+  local hw = half_width
+  for i=1,#coords-2,2 do
+    q.x, q.y = r.x, r.y
+    r.x, r.y = coords[i + 2], coords[i + 3]
+    --half_width = hw --+ (i % 4)/8  -- the bibbering
+    local j = (i/2)+.5
+    --print(i, j)
+    if (useMultipleWidths) then
+       ns = normal({}, s, half_width[j] / len_s)
+       hw = half_width[j]
+    end
+
+    len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, hw)
+  end
+
+  q.x, q.y = r.x, r.y
+  if is_looping then
+    r.x, r.y = coords[3], coords[4]
+  else
+    r.x, r.y = r.x + s.x, r.y + s.y
+  end
+  if (useMultipleWidths) then
+     hw = half_width[#half_width]
+  else
+     hw = half_width
+  end
+
+  len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, hw)
+
+  local vertices = {}
+  local indices = nil
+  local draw_mode = 'strip'
+  local vertex_count = #normals
+
+  local extra_vertices = 0
+  local overdraw_vertex_count = 0
+  if draw_overdraw then
+    if join_type == 'none' then
+      overdraw_vertex_count = 4 * (vertex_count - 4 - 1)
+    else
+      overdraw_vertex_count = 2 * vertex_count
+      if not is_looping then overdraw_vertex_count = overdraw_vertex_count + 2 end
+      extra_vertices = 2
+    end
+  end
+
+  if join_type == 'none' then
+    vertex_count = vertex_count - 4
+    for i=3,#normals-2 do
+      table.insert(vertices, {
+        anchors[i].x + normals[i].x,
+        anchors[i].y + normals[i].y,
+        --0, 0, 255, 255, 255, 255
+      })
+    end
+    draw_mode = 'triangles'
+  else
+     local firstR
+     love.math.setRandomSeed(1 )
+     for i=1,vertex_count do
+        local r = 1
+        if rndMultiplier ~= nil then
+           r =  love.math.random() * 4
+           if i == 1 then
+              firstR = r
+           end
+           if i == vertex_count then
+              r = firstR
+           end
+       -- end
+           r = 5*rndMultiplier + (love.math.random() * rndMultiplier)
+	end
+
+        --if rndMultiplier ~= 0 then
+      table.insert(vertices, {
+                      anchors[i].x + normals[i].x * (r)  ,
+                      anchors[i].y + normals[i].y * (r),
+
+      })
+
+        --end
+
+    end
+  end
+
+  if draw_overdraw then
+    if join_type == 'none' then
+      renderOverdrawNone(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
+      for i=vertex_count+1+extra_vertices,#vertices do
+        if ((i % 4) < 2) then
+          vertices[i][8] = 255
+        else
+          vertices[i][8] = 0
+        end
+      end
+    else
+      renderOverdraw(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
+      for i=vertex_count+1+extra_vertices,#vertices do
+        vertices[i][8] = 255 * (i % 2) -- alpha
+      end
+    end
+  end
+
+  if extra_vertices > 0 then
+    vertices[vertex_count + 1] = {vertices[vertex_count][1], vertices[vertex_count][2]}
+    vertices[vertex_count + 2] = {vertices[vertex_count + 3][1], vertices[vertex_count + 3][2]}
+  end
+
+  if draw_mode == 'triangles' then
+    indices = {}
+    local num_indices = (vertex_count + extra_vertices + overdraw_vertex_count) / 4
+    for i=0,num_indices-1 do
+      -- First triangle.
+      table.insert(indices, i * 4 + 0 + 1)
+      table.insert(indices, i * 4 + 1 + 1)
+      table.insert(indices, i * 4 + 2 + 1)
+
+      -- Second triangle.
+      table.insert(indices, i * 4 + 0 + 1)
+      table.insert(indices, i * 4 + 2 + 1)
+      table.insert(indices, i * 4 + 3 + 1)
+    end
+  end
+
+  return vertices, indices, draw_mode
+end
