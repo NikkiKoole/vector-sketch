@@ -199,7 +199,7 @@ local JOIN_TYPES = {
   bevel = renderEdgeBevel,
 }
 
-function polyline2(join_type, coords, half_width, pixel_size, draw_overdraw)
+function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
 
@@ -288,13 +288,36 @@ function polyline2(join_type, coords, half_width, pixel_size, draw_overdraw)
     end
     draw_mode = 'triangles'
   else
-    for i=1,vertex_count do
+     local firstR
+     love.math.setRandomSeed(1 )
+     for i=1,vertex_count do
+        local r = 1
+        if rndMultiplier ~= nil then
+           r =  love.math.random() * 4
+           if i == 1 then
+              firstR = r
+           end
+           if i == vertex_count then
+              r = firstR
+           end
+       -- end
+           r = 5*rndMultiplier + (love.math.random() * rndMultiplier)
+	end
+
+        --if rndMultiplier ~= 0 then
       table.insert(vertices, {
-        anchors[i].x + normals[i].x,
-        anchors[i].y + normals[i].y,
-        0, 0, 255, 255, 255, 255
+                      anchors[i].x + normals[i].x * (r)  ,
+                      anchors[i].y + normals[i].y * (r),
+
       })
-    end
+      end
+    -- for i=1,vertex_count do
+    --   table.insert(vertices, {
+    --     anchors[i].x + normals[i].x,
+    --     anchors[i].y + normals[i].y,
+    --     0, 0, 255, 255, 255, 255
+    --   })
+    -- end
   end
 
   if draw_overdraw then
@@ -342,7 +365,7 @@ end
 
 
 
-function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
 
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
@@ -460,7 +483,7 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
 
         --end
 
-    end
+     end
   end
 
   if draw_overdraw then
