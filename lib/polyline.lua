@@ -199,7 +199,7 @@ local JOIN_TYPES = {
   bevel = renderEdgeBevel,
 }
 
-function polyline(join_type, coords, half_width, pixel_size, draw_overdraw)
+function polyline2(join_type, coords, half_width, pixel_size, draw_overdraw)
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
 
@@ -342,7 +342,7 @@ end
 
 
 
-function polyline2(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
 
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
