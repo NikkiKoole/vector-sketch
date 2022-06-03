@@ -228,10 +228,10 @@ function love.draw()
    local w, h = image3:getDimensions( )
    print(w,h)
 
-   local offsetW = math.sin(time*5)*80
+   local offsetW = math.sin(time*5)*280
    --print(offsetW)
    
-   local curveL = love.math.newBezierCurve({0, 0, 0+offsetW, h/2, 0, h})
+   local curveL = love.math.newBezierCurve({100, 0, 100+offsetW, h/2, 100, h})
    local dl = curveL:getDerivative()
    --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
    --local dr = curveR:getDerivative()
