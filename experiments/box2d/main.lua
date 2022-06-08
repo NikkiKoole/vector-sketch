@@ -5,11 +5,15 @@ function love.resize(w, h)
    local margin = 20
    objects.border.body:destroy();
    objects.border.body = love.physics.newBody(world,0,0)
-   objects.border.shape = love.physics.newChainShape( true,
-						      margin,margin,
-						      w-margin,margin,
-						      w-margin,h-margin,
-						      margin,h-margin )
+   objects.border.shape =
+      love.physics.newChainShape(
+         true,
+         margin,margin,
+         w-margin,margin,
+         w-margin,h-margin,
+         margin,h-margin
+      )
+   
    objects.border.fixture = love.physics.newFixture(objects.border.body, objects.border.shape)
    objects.border.fixture:setUserData("wall")
 end
@@ -39,7 +43,7 @@ function love.load()
    objects.ball.body = love.physics.newBody(world, width/2, height/2, "dynamic")
    objects.ball.shape = love.physics.newCircleShape(20)
    objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
-  objects.ball.fixture:setRestitution(0.5) -- let the ball bounce
+   objects.ball.fixture:setRestitution(0.5) -- let the ball bounce
    objects.ball.fixture:setUserData("ball")
    objects.ball.fixture:setDensity(3)
    -- let's create a couple blocks to play around with
@@ -48,9 +52,9 @@ function love.load()
    objects.carousel.body = love.physics.newBody(world, 100 + width/2, height/2, "kinematic")
    --objects.carousel.shape = love.physics.newCircleShape(20)
    objects.carousel.shape = love.physics.newRectangleShape( 20, 660 )
-objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
-objects.carousel.body:setAngularVelocity(  angularVelocity )
-objects.carousel.fixture:setUserData("wall")
+   objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
+   objects.carousel.body:setAngularVelocity(  angularVelocity )
+   objects.carousel.fixture:setUserData("wall")
 
 
 
@@ -58,27 +62,27 @@ objects.carousel.fixture:setUserData("wall")
    objects.carousel2.body = love.physics.newBody(world, -100 + width/2, height/2, "kinematic")
    --objects.carousel.shape = love.physics.newCircleShape(20)
    objects.carousel2.shape = love.physics.newRectangleShape( 20, 660 )
-objects.carousel2.fixture = love.physics.newFixture(objects.carousel2.body, objects.carousel2.shape, 1)
-objects.carousel2.body:setAngularVelocity( -angularVelocity     )
-objects.carousel2.fixture:setUserData("wall")
+   objects.carousel2.fixture = love.physics.newFixture(objects.carousel2.body, objects.carousel2.shape, 1)
+   objects.carousel2.body:setAngularVelocity( -angularVelocity     )
+   objects.carousel2.fixture:setUserData("wall")
 
 
-objects.carousel3 = {}
+   objects.carousel3 = {}
    objects.carousel3.body = love.physics.newBody(world, 0+25, height-25, "kinematic")
    --objects.carousel.shape = love.physics.newCircleShape(20)
    objects.carousel3.shape = love.physics.newRectangleShape( 20, 100 )
-objects.carousel3.fixture = love.physics.newFixture(objects.carousel3.body, objects.carousel3.shape, 1)
-objects.carousel3.body:setAngularVelocity( angularVelocity )
-objects.carousel3.fixture:setUserData("wall")
+   objects.carousel3.fixture = love.physics.newFixture(objects.carousel3.body, objects.carousel3.shape, 1)
+   objects.carousel3.body:setAngularVelocity( angularVelocity )
+   objects.carousel3.fixture:setUserData("wall")
 
 
-objects.carousel4 = {}
+   objects.carousel4 = {}
    objects.carousel4.body = love.physics.newBody(world, width-25, height-25, "kinematic")
    --objects.carousel.shape = love.physics.newCircleShape(20)
    objects.carousel4.shape = love.physics.newRectangleShape( 20, 100 )
-objects.carousel4.fixture = love.physics.newFixture(objects.carousel4.body, objects.carousel4.shape, 1)
-objects.carousel4.body:setAngularVelocity( -angularVelocity )
-objects.carousel4.fixture:setUserData("wall")
+   objects.carousel4.fixture = love.physics.newFixture(objects.carousel4.body, objects.carousel4.shape, 1)
+   objects.carousel4.body:setAngularVelocity( -angularVelocity )
+   objects.carousel4.fixture:setUserData("wall")
 
    objects.blocks = {}
    for i=1, 100 do
@@ -141,7 +145,7 @@ function love.mousepressed(x,y)
 	 joint = love.physics.newMouseJoint( jointBody, x, y )
 	 joint:setDampingRatio( 1 )
 	 return
-		  
+         
       end
    end
    
@@ -181,7 +185,7 @@ function beginContact(a, b, coll)
 	 p = 1 + math.random()/(2000/total)
 	 s:setPitch(p)
       else 
-      
+         
 	 s = sound:clone()
 	 s:setVolume(0.5)
 	 p = 1 + math.random()/(3000/total)
@@ -191,16 +195,16 @@ function beginContact(a, b, coll)
       
       
 
-     
+      
       local x,y = coll:getNormal()
       s:setPosition( -x,y,0 )
       love.audio.play(s)
    end
-    --end
+   --end
 end
 
 function endContact(a, b, coll)
-  
+   
 end
 
 function preSolve(a, b, coll)
@@ -222,12 +226,12 @@ function capsule(w, h, cs)
 
    local result = {
 	 -w2, bt,
-	 bl, -h2,
-	 br, -h2,
-	 w2, bt,
-	 w2, bb,
-	 br, h2,
-	 bl, h2,
+      bl, -h2,
+      br, -h2,
+      w2, bt,
+      w2, bb,
+      br, h2,
+      bl, h2,
 	 -w2, bb
    }
    return result
@@ -355,10 +359,10 @@ function love.draw()
    -- drawBlock(objects.ground)
    -- drawBlock(objects.left)
    -- drawBlock(objects.right)
-  
+   
    drawCircle(objects.ball.body, objects.ball.shape)
    for i =1, #objects.blocks do
-       drawBlock(objects.blocks[i])
+      drawBlock(objects.blocks[i])
    end
    if (joint) then
       love.graphics.setColor(0,0,0)
@@ -372,7 +376,7 @@ function love.draw()
    drawBlock(objects.carousel2)
    drawBlock(objects.carousel3)
    drawBlock(objects.carousel4)
---   drawCircle(objects.carousel.body, objects.carousel.shape)
+   --   drawCircle(objects.carousel.body, objects.carousel.shape)
    
    
    -- local contacts = world:getContacts( )
@@ -386,7 +390,7 @@ function love.draw()
    -- 	 love.graphics.circle("fill", x2 , y2 , 2)
    --    end
 
-    -- end
-       love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,128)
+   -- end
+   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,128)
 
 end

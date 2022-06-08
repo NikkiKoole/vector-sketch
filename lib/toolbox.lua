@@ -289,6 +289,10 @@ function makeMeshFromVertices(vertices, nodetype)
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
    end
+   if nodetype == 'line' then
+      local mesh = love.graphics.newMesh(vertices, "strip")
+      return mesh
+   end
    
    if (vertices and vertices[1] and vertices[1][1]) then
       print('getting here!')

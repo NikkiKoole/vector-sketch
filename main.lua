@@ -25,8 +25,15 @@ local root = {
                   color = {1,1,1, 1},
                   points = {{200,200},{200,100},{200,0}},
                   --texture = {data='here'},
-                  type='rope'
+                  type='line'
 	       },
+               {
+                  name="ropey thing",
+                  color={.5,.5,1},
+                  points={{200,200}, {300,300}},
+                  data={length=100, flop=-1, borderRadius=0, width=10},
+                  type='ropey'
+               },
 
 	       {
                   name="meta label"..1,

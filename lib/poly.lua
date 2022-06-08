@@ -1,9 +1,9 @@
 
 function TableConcat(t1,t2)
-    for i=1,#t2 do
-        t1[#t1+1] = t2[i]
-    end
-    return t1
+   for i=1,#t2 do
+      t1[#t1+1] = t2[i]
+   end
+   return t1
 end
 
 
@@ -84,8 +84,8 @@ local function get_collisions(poly)
          if inneri ~= outeri then
             local result, opt = get_line_intersection(ax,ay,bx,by,cx,cy,dx,dy)
             if (ax == cx and ay == cy) or (ax == dx and ay == dy) or
-            (bx == cx and by == cy) or (bx == dx and by == dy) then
-              -- print("share corner")
+               (bx == cx and by == cy) or (bx == dx and by == dy) then
+               -- print("share corner")
             else
                if result ~= 0 then
                   local col = {i1=outeri, i2=inneri, x=result, y=opt }
@@ -151,8 +151,8 @@ function isPointInPath(x,y, poly)
    local c = false
    for i=1, #poly,2 do
       if ((poly[i+1] > y) ~= (poly[j+1] > y)) and
-      (x < (poly[j+0] - poly[i+0]) * (y - poly[i+1]) / (poly[j+1] - poly[i+1]) + poly[i+0]) then
-          c = not c
+         (x < (poly[j+0] - poly[i+0]) * (y - poly[i+1]) / (poly[j+1] - poly[i+1]) + poly[i+0]) then
+         c = not c
       end
       j = i
    end
@@ -225,15 +225,15 @@ function triangulate(type, poly)
          for i=1, #poly.vertices-2 do
             if (i % 2 == 0) then
                -- 0 1 2
-            table.insert(result, {poly.vertices[i+0][1], poly.vertices[i+0][2],
-                                  poly.vertices[i+1][1], poly.vertices[i+1][2],
-                                  poly.vertices[i+2][1], poly.vertices[i+2][2]})
+               table.insert(result, {poly.vertices[i+0][1], poly.vertices[i+0][2],
+                                     poly.vertices[i+1][1], poly.vertices[i+1][2],
+                                     poly.vertices[i+2][1], poly.vertices[i+2][2]})
 
             else
                -- 0 2 1
-            table.insert(result, {poly.vertices[i+0][1], poly.vertices[i+0][2],
-                                  poly.vertices[i+2][1], poly.vertices[i+2][2],
-                                  poly.vertices[i+1][1], poly.vertices[i+1][2]})
+               table.insert(result, {poly.vertices[i+0][1], poly.vertices[i+0][2],
+                                     poly.vertices[i+2][1], poly.vertices[i+2][2],
+                                     poly.vertices[i+1][1], poly.vertices[i+1][2]})
 
             end
 
@@ -280,18 +280,18 @@ end
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
 
 function inside(p, cp1, cp2)
-  return (cp2.x-cp1.x)*(p.y-cp1.y) > (cp2.y-cp1.y)*(p.x-cp1.x)
+   return (cp2.x-cp1.x)*(p.y-cp1.y) > (cp2.y-cp1.y)*(p.x-cp1.x)
 end
 
 function intersection(cp1, cp2, s, e)
-  local dcx, dcy = cp1.x-cp2.x, cp1.y-cp2.y
-  local dpx, dpy = s.x-e.x, s.y-e.y
-  local n1 = cp1.x*cp2.y - cp1.y*cp2.x
-  local n2 = s.x*e.y - s.y*e.x
-  local n3 = 1 / (dcx*dpy - dcy*dpx)
-  local x = (n1*dpx - n2*dcx) * n3
-  local y = (n1*dpy - n2*dcy) * n3
-  return {x=x, y=y}
+   local dcx, dcy = cp1.x-cp2.x, cp1.y-cp2.y
+   local dpx, dpy = s.x-e.x, s.y-e.y
+   local n1 = cp1.x*cp2.y - cp1.y*cp2.x
+   local n2 = s.x*e.y - s.y*e.x
+   local n3 = 1 / (dcx*dpy - dcy*dpx)
+   local x = (n1*dpx - n2*dcx) * n3
+   local y = (n1*dpy - n2*dcy) * n3
+   return {x=x, y=y}
 end
 
 function polygonClip(a, b) -- accepts 2 lists like {{x=1,y=y}, ...} with possible duplicated end
@@ -383,57 +383,58 @@ function makeVertices(shape)
    local vertices = {}
 
    if shape.type == nil or shape.type == 'poly' then
-   if (points and #points >= 2 ) then
-      
-      local scale = 1
-      local coords = {}
-      local ps = {}
-      
-      for l=1, #points do
-	 table.insert(coords, points[l][1])
-	 table.insert(coords, points[l][2])
-      end
-
-      if (shape.color) then
-	 local polys = decompose_complex_poly(coords, {})
+      print(shape.type)
+      if (points and #points >= 2 ) then
          
-	 local result = {}
-	 for k=1 , #polys do
-	    local p = polys[k]
-	    if (#p >= 6) then
-	       -- if a import breaks on triangulation errors uncomment this
-               --	       print( #p, inspect(p))
-
-               reTriangulatePolygon(p, result)
-
-	       -- local triangles = love.math.triangulate(p)
-	       -- for j = 1, #triangles do
-	       --    local t = triangles[j]
-	       --    local cx, cy = getTriangleCentroid(t)
-	       --    if isPointInPath(cx,cy, p) then
-	       --       table.insert(result, t)
-	       --    end
-	       -- end
-	    end
-	 end
+         local scale = 1
+         local coords = {}
+         local ps = {}
          
-	 for j = 1, #result do
-	    table.insert(vertices, {result[j][1], result[j][2]})
-	    table.insert(vertices, {result[j][3], result[j][4]})
-	    table.insert(vertices, {result[j][5], result[j][6]})
-	 end
+         for l=1, #points do
+            table.insert(coords, points[l][1])
+            table.insert(coords, points[l][2])
+         end
+
+         if (shape.color) then
+            local polys = decompose_complex_poly(coords, {})
+            
+            local result = {}
+            for k=1 , #polys do
+               local p = polys[k]
+               if (#p >= 6) then
+                  -- if a import breaks on triangulation errors uncomment this
+                  --	       print( #p, inspect(p))
+
+                  reTriangulatePolygon(p, result)
+
+                  -- local triangles = love.math.triangulate(p)
+                  -- for j = 1, #triangles do
+                  --    local t = triangles[j]
+                  --    local cx, cy = getTriangleCentroid(t)
+                  --    if isPointInPath(cx,cy, p) then
+                  --       table.insert(result, t)
+                  --    end
+                  -- end
+               end
+            end
+            
+            for j = 1, #result do
+               table.insert(vertices, {result[j][1], result[j][2]})
+               table.insert(vertices, {result[j][3], result[j][4]})
+               table.insert(vertices, {result[j][5], result[j][6]})
+            end
+         end
       end
-   end
    else
-
+      print(shape.type)
       local coords = unpackNodePoints(points, false)
-    --  print(inspect(coords))
+      --  print(inspect(coords))
       local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
-    --  print(inspect(verts))
-      print(draw_mode)
+      --  print(inspect(verts))
+--      print(draw_mode)
 
---      print('not making vertices',shape.type )
-  --    print(inspect(shape.points))
+      --      print('not making vertices',shape.type )
+      --    print(inspect(shape.points))
       vertices = verts
    end
 
