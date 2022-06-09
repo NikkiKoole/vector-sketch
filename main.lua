@@ -1,3 +1,4 @@
+
 local mylib = require('tool')
 --print(inspect(mylib))
 --https://blog.separateconcerns.com/2014-01-03-lua-module-policy.html
@@ -32,7 +33,7 @@ local root = {
                   color={.5,.5,1},
                   points={{200,200}, {300,300}},
                   data={length=100, flop=-1, borderRadius=0, width=10},
-                  type='ropey'
+                  type='rubberhose'
                },
 
 	       {

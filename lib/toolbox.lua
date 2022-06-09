@@ -285,7 +285,7 @@ simple_format = {
 
 function makeMeshFromVertices(vertices, nodetype)
 --   print('make mesh called, by whom?', nodetype)
-   if nodetype == 'rope' then
+   if nodetype == 'rubberhose' then
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
    end

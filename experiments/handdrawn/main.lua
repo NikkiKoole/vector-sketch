@@ -254,7 +254,7 @@ function love.draw()
          local a = math.atan2(dy,dx) + math.pi/2
          local a2 = math.atan2(dy,dx) - math.pi/2
 
-         local line  = 350/2  -- w/2
+         local line  = w/2  
          local x2 =   xl + line * math.cos(a)
          local y2 =  yl + line * math.sin(a)
          local x3 =   xl + line * math.cos(a2)
@@ -262,8 +262,6 @@ function love.draw()
          
          love.graphics.line(xl,yl, x2, y2)
          love.graphics.line(xl,yl, x3, y3)
-
-
          
          local x, y, u, v, r, g, b, a = mesh3:getVertex(j )
          mesh3:setVertex(j, {x2, y2, u,v})
