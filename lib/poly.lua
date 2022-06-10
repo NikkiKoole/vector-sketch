@@ -269,8 +269,6 @@ function reTriangulatePolygon(poly, result)
          table.insert(result, t)
       end
    end
-
-
 end
 
 
@@ -383,7 +381,6 @@ function makeVertices(shape)
    local vertices = {}
 
    if shape.type == nil or shape.type == 'poly' then
-      print(shape.type)
       if (points and #points >= 2 ) then
          
          local scale = 1
@@ -426,19 +423,62 @@ function makeVertices(shape)
          end
       end
    else
-      print(shape.type)
+      --print(shape.mesh)
+      if (shape.type == 'rubberhose') then
+	 print('create the vertices for this babe')
+	 --print(inspect(shape.data))
+	 --print(inspect(shape.points))
+	 local start = {
+	    x=shape.points[1][1],
+	    y=shape.points[1][2]
+	 }
+	 local eind = {
+	    x=shape.points[2][1],
+	    y=shape.points[2][2]
+	 }
+
+	 local   magic = 4.46
+
+	 
+	 local cp1, cp2 = positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop, shape.data.borderRadius)
+	 local curve = love.math.newBezierCurve({start.x,start.y,cp1.x,cp1.y,cp2.x,cp2.y,eind.x,eind.y})
+
+	 print(inspect(cp1), inspect(cp2))
+      end
+      
       local coords = unpackNodePoints(points, false)
       print(inspect(coords))
       local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
+      
       --  print(inspect(verts))
---      print(draw_mode)
-
+      --      print(draw_mode)
       --      print('not making vertices',shape.type )
       --    print(inspect(shape.points))
       vertices = verts
    end
 
    return vertices
+end
+
+function positionControlPoints(start, eind, hoseLength, flop, borderRadius)
+   local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
+   pxm = pxm * flop
+   pym = pym * -flop
+   local d = distance(start.x,start.y, eind.x, eind.y)
+
+   --   print(hoseLength, d)
+   -- why does this return nan?
+   -- it returns nan if the length is too small
+   local b = getEllipseWidth(hoseLength/math.pi, d)
+   --print(hoseLength/math.pi, d, b)
+   local perpL = b /2 -- why am i dividing this?
+
+   local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
+   local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
+
+   local startP = {x= sp2.x +(pxm*perpL), y= sp2.y + (pym*perpL)}
+   local endP = {x= ep2.x +(pxm*perpL), y= ep2.y + (pym*perpL)}
+   return startP, endP
 end
 
 
