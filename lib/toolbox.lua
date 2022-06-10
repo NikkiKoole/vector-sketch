@@ -268,7 +268,7 @@ function remeshNode(node)
 
 
    else
-         node.mesh = makeMeshFromVertices(verts, node.type)
+      node.mesh = makeMeshFromVertices(verts, node.type)
 
    end
    

@@ -426,6 +426,7 @@ function makeVertices(shape)
          end
       end
    else
+      print('here at the makevertices call i need to know if we are doing a rubberhose')
       print(shape.type)
       local coords = unpackNodePoints(points, false)
       --  print(inspect(coords))
