@@ -428,7 +428,7 @@ function makeVertices(shape)
    else
       print(shape.type)
       local coords = unpackNodePoints(points, false)
-      --  print(inspect(coords))
+      print(inspect(coords))
       local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
       --  print(inspect(verts))
 --      print(draw_mode)

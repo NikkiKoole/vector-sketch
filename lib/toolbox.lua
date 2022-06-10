@@ -268,7 +268,8 @@ function remeshNode(node)
 
 
    else
-         node.mesh = makeMeshFromVertices(verts, node.type)
+      print('called from here')
+      node.mesh = makeMeshFromVertices(verts, node.type)
 
    end
    
@@ -285,14 +286,14 @@ simple_format = {
 
 function makeMeshFromVertices(vertices, nodetype)
 --   print('make mesh called, by whom?', nodetype)
-   if nodetype == 'rope' then
+   if nodetype == 'rubberhose' then
+      print('ok but where the vertices come from?')
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
-   end
-   if nodetype == 'line' then
+   elseif nodetype == 'line' then
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
-   end
+   else
    
    if (vertices and vertices[1] and vertices[1][1]) then
       print('getting here!')
@@ -300,6 +301,7 @@ function makeMeshFromVertices(vertices, nodetype)
       --local mesh = love.graphics.newMesh( vertices, "triangles")
 
       return mesh
+   end
    end
    return nil
 end

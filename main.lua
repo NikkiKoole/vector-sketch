@@ -30,9 +30,9 @@ local root = {
                {
                   name="ropey thing",
                   color={.5,.5,1},
-                  points={{200,200}, {300,300}},
+                  points={{200,200}, {300,300}, {400,100}},
                   data={length=100, flop=-1, borderRadius=0, width=10},
-                  type='ropey'
+                  type='rubberhose'
                },
 
 	       {

@@ -401,6 +401,7 @@ function handleChild(shape,parallax)
       if currentNode ~= shape then
 	 mesh = shape.mesh -- the standard way of rendering
       else
+         print('making mesh in handlechild')
 	 mesh =  makeMeshFromVertices(makeVertices(shape), shape.type) -- realtime iupdating the thingie
       end
 
@@ -569,6 +570,7 @@ function handleChild(shape,parallax)
    if currentNode == shape then
       local editing = makeVertices(shape)
       if (editing and #editing > 0) then
+         print('makemesh in handlechild custom')
 	 local editingMesh = makeMeshFromVertices(editing, currentNode.type)
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
@@ -691,6 +693,7 @@ function lerpNodes(left, right, root, t)
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
+      print('make mesh from vertices lerp stuff' )
       root.mesh = makeMeshFromVertices(makeVertices(root), root.type)
    end
 
