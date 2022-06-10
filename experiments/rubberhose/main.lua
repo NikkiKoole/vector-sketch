@@ -101,7 +101,7 @@ function positionControlPoints(start, eind, hoseLength, flop)
    pxm = pxm * flop
    pym = pym * -flop
    local d = distance(start.x,start.y, eind.x, eind.y)
---   print(hoseLength, d)
+
    local b = getEllipseWidth(hoseLength/math.pi, d)
    local perpL = b /2 -- why am i dividing this?
 

@@ -10,6 +10,8 @@ local part=.85
 local tw = 290
 local th = 180
 
+--local   magic = 4.46
+
 local root = {
       folder = true,
       name = 'root',
@@ -32,7 +34,7 @@ local root = {
                   name="ropey thing",
                   color={.5,.5,1},
                   points={{200,200}, {300,300}},
-                  data={length=100, flop=-1, borderRadius=0, width=10},
+                  data={length=142, flop=-1, borderRadius=0, width=10},
                   type='rubberhose'
                },
 
