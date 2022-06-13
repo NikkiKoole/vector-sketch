@@ -70,7 +70,7 @@ function drawNodeIntoRect(node, x,y,w,h)
 end
 
 
-local function transferPoint (xI, yI, source, destination)
+function transferPoint (xI, yI, source, destination)
 
    local ADDING = 0.00001 -- to avoid dividing by zero
 
@@ -570,7 +570,7 @@ function handleChild(shape,parallax)
    if currentNode == shape then
       local editing = makeVertices(shape)
       if (editing and #editing > 0) then
-         print('makemesh in handlechild custom')
+         --print('makemesh in handlechild custom')
 	 local editingMesh = makeMeshFromVertices(editing, currentNode.type)
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )

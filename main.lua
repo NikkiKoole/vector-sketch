@@ -26,16 +26,15 @@ local root = {
                {
                   name="textured rope:"..1,
                   color = {1,1,1, 1},
-                  points = {{200,200},{200,100},{200,0}},
-                  --texture = {data='here'},
-                  type='line'
+                  points = {{200,200},{202,100},{200,0}},
+                  texture = {data='here'},
+                  --type='line'
 	       },
                {
-                  name="ropey thing",
+                  name="rubberhose",
                   color={.5,.5,1},
-
                   points={{200,200}, {300,300}},
-                  data={length=142, flop=-1, borderRadius=0, width=10},
+                  data={length=142, flop=-1, borderRadius=0.5, width=30, steps=13},
                   type='rubberhose'
                },
 

@@ -425,7 +425,7 @@ function makeVertices(shape)
    else
       --print(shape.mesh)
       if (shape.type == 'rubberhose') then
-	 print('create the vertices for this babe')
+	 --print('create the vertices for this babe')
 	 --print(inspect(shape.data))
 	 --print(inspect(shape.points))
 	 local start = {
@@ -438,23 +438,37 @@ function makeVertices(shape)
 	 }
 
 	 local   magic = 4.46
-
-	 
 	 local cp1, cp2 = positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop, shape.data.borderRadius)
 	 local curve = love.math.newBezierCurve({start.x,start.y,cp1.x,cp1.y,cp2.x,cp2.y,eind.x,eind.y})
 
-	 print(inspect(cp1), inspect(cp2))
+	
+	 -- let nbegin describing the vertices i need, should i just put the middle ones in ?
+	 local coords = {}
+	 if (tostring(cp1.x) == 'nan') then
+	    coords = {shape.points[1], shape.points[2]}
+	 else
+	    
+	    local steps = shape.data.steps
+	    for i = 0, steps do
+	       local px, py = curve:evaluate(i/steps)
+	       table.insert(coords, {px, py})
+	    end
+	 end
+	 --print(inspect(coords))
+	 local verts, indices, draw_mode = polyline('miter',unpackNodePoints(coords, false), {shape.data.width})
+
+	 
+	 vertices = verts
+	 
+      else
+	 --print(inspect(points))
+	 local coords = unpackNodePoints(points, false)
+	 --      print(inspect(coords))
+	 local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
+      
+
+	 vertices = verts
       end
-      
-      local coords = unpackNodePoints(points, false)
-      print(inspect(coords))
-      local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
-      
-      --  print(inspect(verts))
-      --      print(draw_mode)
-      --      print('not making vertices',shape.type )
-      --    print(inspect(shape.points))
-      vertices = verts
    end
 
    return vertices

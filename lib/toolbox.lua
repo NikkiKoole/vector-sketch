@@ -236,9 +236,12 @@ function remeshNode(node)
       
       --local imgRatio = img:getHeight()/img:getWidth()
       --local bboxRatio = (bry-tly)/(brx-tlx)
+      
+      assert(brx-tlx > 0 and bry-tly > 0)
       local xFactor = img:getWidth()/(brx-tlx)
       local yFactor = img:getHeight()/(bry-tly)
       print(xFactor, yFactor)
+
       local mmin = math.min(xFactor, yFactor)
       local mmax = math.max(xFactor, yFactor)
 
@@ -263,13 +266,17 @@ function remeshNode(node)
             
          end
          --print(inspect(verts))
+	 print(inspect(verts))
          node.mesh = love.graphics.newMesh(verts, 'triangles')
          node.mesh:setTexture(img)
 
 
    else
+
+      --if node.type ~= 'rubberhose' then
+	 node.mesh = makeMeshFromVertices(verts, node.type)
+      --end
       
-      node.mesh = makeMeshFromVertices(verts, node.type)
 
    end
    
@@ -287,10 +294,7 @@ simple_format = {
 function makeMeshFromVertices(vertices, nodetype)
 --   print('make mesh called, by whom?', nodetype)
    if nodetype == 'rubberhose' then
-<<<<<<< HEAD
-      print('ok but where the vertices come from?')
-=======
->>>>>>> 040e7f36bef5f63036f7d55ee584b0ca04137982
+      --print('rubberhose is  ot yet done with its vertices')
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
    elseif nodetype == 'line' then
@@ -299,7 +303,7 @@ function makeMeshFromVertices(vertices, nodetype)
    else
    
    if (vertices and vertices[1] and vertices[1][1]) then
-      print('getting here!')
+      --print('getting here!')
       local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
       --local mesh = love.graphics.newMesh( vertices, "triangles")
 
