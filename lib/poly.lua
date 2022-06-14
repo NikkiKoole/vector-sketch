@@ -445,6 +445,7 @@ function makeVertices(shape)
 	 -- let nbegin describing the vertices i need, should i just put the middle ones in ?
 	 local coords = {}
 	 if (tostring(cp1.x) == 'nan') then
+            --todo make this one use the line drawing algo with 1 step
 	    coords = {shape.points[1], shape.points[2]}
 	 else
 	    
@@ -456,9 +457,23 @@ function makeVertices(shape)
 	 end
 	 --print(inspect(coords))
 	 local verts, indices, draw_mode = polyline('miter',unpackNodePoints(coords, false), {shape.data.width})
+--         print(inspect(verts))
 
-	 
-	 vertices = verts
+         local h = 1 / (shape.data.steps-1 or 1)
+         
+         local vertsWithUVs = {}
+         for i =1, #verts do
+            local u = (i % 2 == 1) and 0 or 1
+            local v = math.floor(((i-1) / 2))/ (#verts/2 -1)
+            
+            vertsWithUVs[i] = {verts[i][1], verts[i][2],  u, v}
+            
+
+            --print(i, inspect(verts[i]), u, v, v/(#verts/2 -1))
+         end
+         
+         
+	 vertices = vertsWithUVs
 	 
       else
 	 --print(inspect(points))

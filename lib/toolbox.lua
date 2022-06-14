@@ -266,7 +266,7 @@ function remeshNode(node)
             
          end
          --print(inspect(verts))
-	 print(inspect(verts))
+--	 print(inspect(verts))
          node.mesh = love.graphics.newMesh(verts, 'triangles')
          node.mesh:setTexture(img)
 
@@ -275,7 +275,13 @@ function remeshNode(node)
 
       --if node.type ~= 'rubberhose' then
 	 node.mesh = makeMeshFromVertices(verts, node.type)
-      --end
+         --end
+
+         if node.type == 'rubberhose' then
+         node.mesh:setTexture(img)
+
+         end
+         
       
 
    end

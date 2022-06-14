@@ -10,7 +10,7 @@ local part=.85
 local tw = 290
 local th = 180
 
---local   magic = 4.46
+local   magic = 4.46
 
 local root = {
       folder = true,
@@ -32,9 +32,16 @@ local root = {
 	       },
                {
                   name="rubberhose",
-                  color={.5,.5,1},
-                  points={{200,200}, {300,300}},
-                  data={length=142, flop=-1, borderRadius=0.5, width=30, steps=13},
+                  color={.5,.5,1,1},
+                  points={{200,200}, {200,300}},
+                  data={length=500, flop=-1, borderRadius=0.15, width=30, steps=2},
+                  type='rubberhose'
+               },
+               {
+                  name="rubberhose",
+                  color={.5,.5,1,1},
+                  points={{400,400}, {400,500}},
+                  data={length=194 * magic, flop=-1, borderRadius=0.15, width=45*2, steps=13},
                   type='rubberhose'
                },
 
@@ -52,7 +59,7 @@ local root = {
 
 
 function love.load(arg)
-   img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
+   img = love.graphics.newImage('experiments/handdrawn-ecs/assets/leg3.png', {mipmaps=true})
    img:setWrap( 'repeat' )
    img:setFilter('linear')
    print(inspect(img))
