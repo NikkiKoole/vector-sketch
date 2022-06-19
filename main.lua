@@ -27,21 +27,32 @@ local root = {
                   name="textured rope:"..1,
                   color = {1,1,1, 1},
                   points = {{200,200},{202,100},{200,0}},
-                  texture = {data='here'},
-                  --type='line'
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/house.png',
+                     wrap='repeat', filter='linear'
+                  },
 	       },
                {
                   name="rubberhose",
                   color={.5,.5,1,1},
                   points={{200,200}, {200,300}},
                   data={length=500, flop=-1, borderRadius=0.15, width=30, steps=2},
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/leg3.png',
+                     wrap='repeat', filter='linear'
+                  },
                   type='rubberhose'
                },
                {
                   name="rubberhose",
                   color={.5,.5,1,1},
                   points={{400,400}, {400,500}},
-                  data={length=194 * magic, flop=-1, borderRadius=0.15, width=45*2, steps=13},
+                  data={length=194 * magic, flop=-1, borderRadius=0.15, width=45*2, steps=35},
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/ding3.png',
+                     wrap='repeat', filter='linear'
+                  },
+
                   type='rubberhose'
                },
 
@@ -58,12 +69,35 @@ local root = {
    }
 
 
+function recursivelyMakeTextures(root)
+
+   if root.texture then
+      if not imageCache[root.texture.url] then
+         local img = love.graphics.newImage(root.texture.url, {mipmaps=true})
+         img:setWrap( root.texture.wrap or 'repeat' )
+         img:setFilter(root.texture.filter or 'linear')
+         imageCache[root.texture.url] = img
+      end
+      
+   end
+   
+   if root.children then
+      for i=1, #root.children do
+         recursivelyMakeTextures(root.children[i])
+      end
+      
+   end
+   
+end
+
+
 function love.load(arg)
-   img = love.graphics.newImage('experiments/handdrawn-ecs/assets/leg3.png', {mipmaps=true})
+   imageCache = {}
+   img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
    img:setWrap( 'repeat' )
    img:setFilter('linear')
    print(inspect(img))
-
+   recursivelyMakeTextures(root)
    local w,h = love.graphics.getDimensions()
    mylib:setRoot(root)
 

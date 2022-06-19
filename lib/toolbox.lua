@@ -223,7 +223,7 @@ function remeshNode(node)
    --print(inspect(verts))
       
    
-   if node.texture then
+   if node.texture and node.type ~= 'rubberhose' then
 
       -- depending on img dimensions do something with uvs
       -- xFactor and yFactor should default to 1,
@@ -268,7 +268,9 @@ function remeshNode(node)
          --print(inspect(verts))
 --	 print(inspect(verts))
          node.mesh = love.graphics.newMesh(verts, 'triangles')
-         node.mesh:setTexture(img)
+         
+         node.mesh:setTexture(imageCache[node.texture.url])
+         
 
 
    else
@@ -278,7 +280,12 @@ function remeshNode(node)
          --end
 
          if node.type == 'rubberhose' then
-         node.mesh:setTexture(img)
+            --         node.mesh:setTexture(img)
+            
+         node.mesh:setTexture(imageCache[node.texture.url])
+        
+        
+        
 
          end
          
