@@ -1028,6 +1028,24 @@ local function drawUIAroundGraphNodes(w,h)
             end
          }
       )
+      if (currentNode.texture) then
+	 table.insert(
+	 row2,
+         {
+            'fit polygon to image', ui.backdrop, 'make fitting polygon for image',
+            function()
+	       local img =imageCache[currentNode.texture.url]
+	       local width, height = img:getDimensions( )
+	       currentNode.points = {};
+	       currentNode.points[1] = {0,0}
+	       currentNode.points[2] = {width,0}
+	       currentNode.points[3] = {width,height}
+	       currentNode.points[4] = {0,height}
+	       remeshNode(currentNode)
+            end
+         })
+      end
+      
       table.insert(row2, "newline")
       if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1])=='number' then
 

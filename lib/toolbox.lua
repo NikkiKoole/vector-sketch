@@ -236,7 +236,7 @@ function remeshNode(node)
       
       --local imgRatio = img:getHeight()/img:getWidth()
       --local bboxRatio = (bry-tly)/(brx-tlx)
-      
+      local img = imageCache[node.texture.url];
       assert(brx-tlx > 0 and bry-tly > 0)
       local xFactor = img:getWidth()/(brx-tlx)
       local yFactor = img:getHeight()/(bry-tly)

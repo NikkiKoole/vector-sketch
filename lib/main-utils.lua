@@ -570,7 +570,7 @@ function handleChild(shape,parallax)
    if currentNode == shape then
       local editing = makeVertices(shape)
       if (editing and #editing > 0) then
-         print('makemesh in handlechild custom, this doenst do textures yet')
+         --print('makemesh in handlechild custom, this doenst do textures yet')
 	 local editingMesh = makeMeshFromVertices(editing, currentNode.type)
 	 love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
