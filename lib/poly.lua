@@ -17,7 +17,6 @@ local function split_poly(poly, intersection)
       bb = bb + 2
       if bb > #poly-1 then
          bb = 1
-
       end
       table.insert(wrap, poly[bb])
       table.insert(wrap, poly[bb+1])
@@ -246,14 +245,6 @@ function triangulate(type, poly)
       for i=1 , #polys do
          local p = polys[i]
          reTriangulatePolygon(p, result)
-         -- local triangles = love.math.triangulate(p)
-         -- for j = 1, #triangles do
-         --    local t = triangles[j]
-         --    local cx, cy = getTriangleCentroid(t)
-         --    if isPointInPath(cx,cy, p) then
-         --       table.insert(result, t)
-         --    end
-         -- end
       end
    end
    return result
@@ -270,7 +261,6 @@ function reTriangulatePolygon(poly, result)
       end
    end
 end
-
 
 
 -- for the boyonce i prolly need thi algo:
@@ -394,8 +384,8 @@ function makeVertices(shape)
 
          if (shape.color) then
             local polys = decompose_complex_poly(coords, {})
-            
             local result = {}
+	    
             for k=1 , #polys do
                local p = polys[k]
                if (#p >= 6) then
@@ -403,15 +393,6 @@ function makeVertices(shape)
                   --	       print( #p, inspect(p))
 
                   reTriangulatePolygon(p, result)
-
-                  -- local triangles = love.math.triangulate(p)
-                  -- for j = 1, #triangles do
-                  --    local t = triangles[j]
-                  --    local cx, cy = getTriangleCentroid(t)
-                  --    if isPointInPath(cx,cy, p) then
-                  --       table.insert(result, t)
-                  --    end
-                  -- end
                end
             end
             
@@ -423,11 +404,9 @@ function makeVertices(shape)
          end
       end
    else
-      --print(shape.mesh)
+
       if (shape.type == 'rubberhose') then
-	 --print('create the vertices for this babe')
-	 --print(inspect(shape.data))
-	 --print(inspect(shape.points))
+
 	 local start = {
 	    x=shape.points[1][1],
 	    y=shape.points[1][2]
@@ -437,51 +416,36 @@ function makeVertices(shape)
 	    y=shape.points[2][2]
 	 }
 
-	 local   magic = 4.46
+	 local magic = 4.46
 	 local cp1, cp2 = positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop, shape.data.borderRadius)
 	 local curve = love.math.newBezierCurve({start.x,start.y,cp1.x,cp1.y,cp2.x,cp2.y,eind.x,eind.y})
 
-	
-	 -- let nbegin describing the vertices i need, should i just put the middle ones in ?
 	 local coords = {}
 	 if (tostring(cp1.x) == 'nan') then
-            --todo make this one use the line drawing algo with 1 step
 	    coords = {shape.points[1], shape.points[2]}
 	 else
-	    
 	    local steps = shape.data.steps
 	    for i = 0, steps do
 	       local px, py = curve:evaluate(i/steps)
 	       table.insert(coords, {px, py})
 	    end
 	 end
-	 --print(inspect(coords))
+	 
 	 local verts, indices, draw_mode = polyline('miter',unpackNodePoints(coords, false), {shape.data.width})
---         print(inspect(verts))
-
          local h = 1 / (shape.data.steps-1 or 1)
-         
          local vertsWithUVs = {}
+	 
          for i =1, #verts do
             local u = (i % 2 == 1) and 0 or 1
             local v = math.floor(((i-1) / 2))/ (#verts/2 -1)
-            
             vertsWithUVs[i] = {verts[i][1], verts[i][2],  u, v}
-            
-
-            --print(i, inspect(verts[i]), u, v, v/(#verts/2 -1))
          end
          
-         
 	 vertices = vertsWithUVs
-	 
       else
-	 --print(inspect(points))
-	 local coords = unpackNodePoints(points, false)
-	 --      print(inspect(coords))
-	 local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
-      
 
+	 local coords = unpackNodePoints(points, false)
+	 local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
 	 vertices = verts
       end
    end
@@ -494,12 +458,7 @@ function positionControlPoints(start, eind, hoseLength, flop, borderRadius)
    pxm = pxm * flop
    pym = pym * -flop
    local d = distance(start.x,start.y, eind.x, eind.y)
-
-   --   print(hoseLength, d)
-   -- why does this return nan?
-   -- it returns nan if the length is too small
    local b = getEllipseWidth(hoseLength/math.pi, d)
-   --print(hoseLength/math.pi, d, b)
    local perpL = b /2 -- why am i dividing this?
 
    local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)

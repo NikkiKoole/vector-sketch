@@ -24,7 +24,7 @@ local root = {
             name="rood folder",
             children ={
                {
-                  name="textured rope:"..1,
+                  name="house texture"..1,
                   color = {1,1,1, 1},
                   points = {{200,200},{202,100},{200,0}},
                   texture = {

@@ -219,59 +219,36 @@ function remeshNode(node)
    --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
    local tlx, tly, brx, bry = getPointsBBox(node.points)
---   print(tlx, tly, brx, bry)
-   --print(inspect(verts))
-      
-   
    if node.texture and node.type ~= 'rubberhose' then
 
-      -- depending on img dimensions do something with uvs
-      -- xFactor and yFactor should default to 1,
-      --
-      
       local keepAspect = true
-
       local xFactor = 1
       local yFactor = 1
       
-      --local imgRatio = img:getHeight()/img:getWidth()
-      --local bboxRatio = (bry-tly)/(brx-tlx)
       local img = imageCache[node.texture.url];
+
       assert(brx-tlx > 0 and bry-tly > 0)
+      
       local xFactor = img:getWidth()/(brx-tlx)
       local yFactor = img:getHeight()/(bry-tly)
+      
       print(xFactor, yFactor)
 
       local mmin = math.min(xFactor, yFactor)
       local mmax = math.max(xFactor, yFactor)
-
-      --xFactor = xFactor * mmax
-      --yFactor = yFactor * mmax
-
-      local scale = mmax
-
-   --   print()
-
-
+      local xscale = keepAspect and  mmax or xFactor
+      local yscale = keepAspect and mmax or yFactor
       
-      local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * scale) end
-      local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * scale) end
+      local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
+      local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
 
-         print('this needs extra texture work')
-      --   print(img, img:getWidth(), img:getHeight())
-         
          for i =1, #verts do
             local v =verts[i]
             verts[i] ={v[1], v[2], ufunc(v[1]), vfunc(v[2])}
-            
          end
-         --print(inspect(verts))
---	 print(inspect(verts))
-         node.mesh = love.graphics.newMesh(verts, 'triangles')
-         
-         node.mesh:setTexture(imageCache[node.texture.url])
-         
 
+         node.mesh = love.graphics.newMesh(verts, 'triangles')
+         node.mesh:setTexture(imageCache[node.texture.url])
 
    else
 
@@ -315,13 +292,10 @@ function makeMeshFromVertices(vertices, nodetype)
       return mesh
    else
    
-   if (vertices and vertices[1] and vertices[1][1]) then
-      --print('getting here!')
-      local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
-      --local mesh = love.graphics.newMesh( vertices, "triangles")
-
-      return mesh
-   end
+      if (vertices and vertices[1] and vertices[1][1]) then
+	 local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+	 return mesh
+      end
    end
    return nil
 end

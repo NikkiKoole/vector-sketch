@@ -48,16 +48,15 @@ function addAfterNode(element, after)
    table.insert(after._parent.children, getIndex(after), element)
 end
 
-
 function removeNodeFrom(element, from)
    assert(getIndex(element))
    return table.remove(from.children, getIndex(element))
 end
 
-
 function setTransforms(root)
    
    -- todo this is not right
+   -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
    local tl = root.transforms.l
    local pg = nil
    if (root._parent) then
@@ -70,6 +69,5 @@ end
 function getLocalizedDelta(element, dx, dy)
    local x1,y1 = element._parent.transforms._g:inverseTransformPoint(dx,dy)
    local x0, y0 = element._parent.transforms._g:inverseTransformPoint(0,0)
-
    return x1-x0, y1-y0
 end
