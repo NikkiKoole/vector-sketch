@@ -430,8 +430,8 @@ function makeVertices(shape)
 	       table.insert(coords, {px, py})
 	    end
 	 end
-	 
-	 local verts, indices, draw_mode = polyline('miter',unpackNodePoints(coords, false), {shape.data.width})
+	 coords = unpackNodePoints(coords, false)
+	 local verts, indices, draw_mode = polyline('miter',coords, {shape.data.width})
          local h = 1 / (shape.data.steps-1 or 1)
          local vertsWithUVs = {}
 	 
@@ -442,8 +442,29 @@ function makeVertices(shape)
          end
          
 	 vertices = vertsWithUVs
+      elseif (shape.type == 'bezier') then
+	    local curvedata = unpackNodePoints(points, false)
+	    local curve = love.math.newBezierCurve(curvedata)
+	    local steps = shape.data.steps
+	    local coords = {}
+	    for i = 0, steps do
+	       local px, py = curve:evaluate(i/steps)
+	       table.insert(coords, {px, py})
+	    end
+	    coords = unpackNodePoints(coords, false)
+	    
+	    local verts, indices, draw_mode = polyline('miter',coords, {shape.data.width})
+	    local h = 1 / (shape.data.steps-1 or 1)
+	    local vertsWithUVs = {}
+	 
+	    for i =1, #verts do
+	       local u = (i % 2 == 1) and 0 or 1
+	       local v = math.floor(((i-1) / 2))/ (#verts/2 -1)
+	       vertsWithUVs[i] = {verts[i][1], verts[i][2],  u, v}
+	    end
+	    vertices = vertsWithUVs
       else
-
+	 
 	 local coords = unpackNodePoints(points, false)
 	 local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
 	 vertices = verts

@@ -219,7 +219,7 @@ function remeshNode(node)
    --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
    local tlx, tly, brx, bry = getPointsBBox(node.points)
-   if node.texture and node.type ~= 'rubberhose' then
+   if node.texture and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
 
       local keepAspect = true
       local xFactor = 1
@@ -256,14 +256,8 @@ function remeshNode(node)
 	 node.mesh = makeMeshFromVertices(verts, node.type)
          --end
 
-         if node.type == 'rubberhose' then
-            --         node.mesh:setTexture(img)
-            
-         node.mesh:setTexture(imageCache[node.texture.url])
-        
-        
-        
-
+         if node.type == 'rubberhose' or node.type == 'bezier' then
+	    node.mesh:setTexture(imageCache[node.texture.url])
          end
          
       
@@ -282,12 +276,16 @@ simple_format = {
 }
 
 function makeMeshFromVertices(vertices, nodetype)
---   print('make mesh called, by whom?', nodetype)
+   --   print('make mesh called, by whom?', nodetype)
+
+   
    if nodetype == 'rubberhose' then
-      --print('rubberhose is  ot yet done with its vertices')
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
-   elseif nodetype == 'line' then
+   --elseif nodetype == 'line' then
+   --   local mesh = love.graphics.newMesh(vertices, "strip")
+   --   return mesh
+   elseif nodetype == 'bezier' then
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
    else
