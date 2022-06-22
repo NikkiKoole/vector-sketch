@@ -570,9 +570,12 @@ function handleChild(shape,parallax)
    if currentNode == shape then
       local editing = makeVertices(shape)
       if (editing and #editing > 0) then
-         --print('makemesh in handlechild custom, this doenst do textures yet')
+         print('makemesh in handlechild custom, this doenst do textured polygons yet')
 	 local editingMesh = makeMeshFromVertices(editing, currentNode.type)
-	 love.graphics.setColor(shape.color)
+         if shape.texture and shape.texture.url then
+            editingMesh:setTexture(imageCache[shape.texture.url])
+         end
+         love.graphics.setColor(shape.color)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
       end
       if currentNode.border and #currentNode.points > 2 then

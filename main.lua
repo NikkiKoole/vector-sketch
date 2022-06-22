@@ -35,10 +35,10 @@ local root = {
                {
                   name="rubberhose",
                   color={.5,.5,1,1},
-                  points={{200,200}, {200,300}},
-                  data={length=500, flop=-1, borderRadius=0.15, width=30, steps=2},
+                  points={{200,200}, {1200,300}},
+                  data={length=623*magic, flop=-1, borderRadius=0, width=357*2, steps=10},
                   texture = {
-                     url='experiments/handdrawn-ecs/assets/leg3.png',
+                     url='experiments/handdrawn/plant.png',
                      wrap='repeat', filter='linear'
                   },
                   type='rubberhose'
