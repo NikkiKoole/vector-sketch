@@ -402,7 +402,8 @@ function handleChild(shape,parallax)
 	 mesh = shape.mesh -- the standard way of rendering
       else
          print('making mesh in handlechild')
-	 mesh =  makeMeshFromVertices(makeVertices(shape), shape.type) -- realtime iupdating the thingie
+	 --remeshNode(shape)
+	 mesh =  makeMeshFromVertices(makeVertices(shape), shape.type, shape.texture) -- realtime iupdating the thingie
       end
 
       local parentIndex = getIndex(shape._parent) 
@@ -568,15 +569,37 @@ function handleChild(shape,parallax)
       end
    end
    if currentNode == shape then
+
       local editing = makeVertices(shape)
       if (editing and #editing > 0) then
-         print('makemesh in handlechild custom, this doenst do textured polygons yet')
-	 local editingMesh = makeMeshFromVertices(editing, currentNode.type)
+         --print('makemesh in handlechild custom, this doenst do textured polygons yet', currentNode.type)
+
+	
+	 if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier') then
+	    print('yo guys!')
+	    addUVToVerts(editing, imageCache[shape.texture.url], shape.points)
+	 end
+	 print(inspect(editing))
+	 local editingMesh = makeMeshFromVertices(editing, currentNode.type, currentNode.texture)
+	 --print(inspect(editingMesh))
+	 
+	 -- so the data here doesnt contain UV pairss
+	 -- that logic is in remeshNode, but works on another type of object (the parent)
+
+	 -- this is now fixed, but its still not working
+	 -- i still dont get it realtime updating wat the hell
+
+	 
          if shape.texture and shape.texture.url then
+	    print('using texture')
+	    
             editingMesh:setTexture(imageCache[shape.texture.url])
          end
          love.graphics.setColor(shape.color)
+	 --love.graphics.setColor(1,1,1)
 	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
+
+	 --love.graphics.draw(shape.mesh, shape._parent.transforms._g )
       end
       if currentNode.border and #currentNode.points > 2 then
          local borderMesh = makeBorderMesh(currentNode)
@@ -697,7 +720,7 @@ function lerpNodes(left, right, root, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
       print('make mesh from vertices lerp stuff' )
-      root.mesh = makeMeshFromVertices(makeVertices(root), root.type)
+      root.mesh = makeMeshFromVertices(makeVertices(root), root.type, root.texture)
    end
 
    return root

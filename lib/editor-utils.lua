@@ -91,7 +91,12 @@ function copyShape(shape)
          if shape.type then
 	    result.type = shape.type
 	 end
-
+	 if shape.data then
+	    result.data = deepcopy(shape.data)
+	 end
+	 if shape.texture then
+	    result.texture = deepcopy(shape.texture)
+	 end
          if shape.border then
 	    result.border = true
 	 end
@@ -115,6 +120,7 @@ function copyShape(shape)
 	 else
 	    result.color = {0,0,0,0}
 	 end
+	 
 
 	 for i=1, #shape.points do
 	    result.points[i]= {round2(shape.points[i][1], 3), round2(shape.points[i][2], 3)}

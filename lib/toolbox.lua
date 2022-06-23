@@ -53,38 +53,6 @@ end
 
 
 
--- this function is actually just for the editor
--- that shol dnot be in these files
--- function batchProcessAllFiles()
---    local files = love.filesystem.getDirectoryItems('')
---    for k, file in ipairs(files) do
---       --print(k .. ". " .. file) --outputs something like "1. main.lua"
---       if ends_with(file, 'polygons.txt') then
---          print(file)
---          contents, size = love.filesystem.read(file )
---          --print(contents)
---          tab = (loadstring("return ".. contents)())
-
---          _shapeName = file:sub(1, -14) --cutting off .polygons.txt
---          shapeName = _shapeName
-
---          print(shapeName)
---          root.children = tab -- TableConcat(root.children, tab)
---          parentize(root)
---          scrollviewOffset = 0
---          editingMode = nil
---          editingModeSub = nil
---          currentNode = nil
---          meshAll(root)
-
---          renderNodeIntoCanvas(root, love.graphics.newCanvas(1024/2, 1024/2),  shapeName..".polygons.png")
---          --print(tab)
---       end
-
---    end
--- end
-
-
 function getDataFromFile(file)
    local filename = file:getFilename()
    local tab
@@ -215,45 +183,55 @@ function meshAll(root) -- this needs to be done recursive
    end
 end
 
+
+function addUVToVerts(verts, img, points)
+   local tlx, tly, brx, bry = getPointsBBox(points)
+   local keepAspect = true
+   local xFactor = 1
+   local yFactor = 1
+
+   assert(brx-tlx > 0 and bry-tly > 0)
+   
+   local xFactor = img:getWidth()/(brx-tlx)
+   local yFactor = img:getHeight()/(bry-tly)
+   
+   print(xFactor, yFactor)
+
+   local mmin = math.min(xFactor, yFactor)
+   local mmax = math.max(xFactor, yFactor)
+   local xscale = keepAspect and  mmax or xFactor
+   local yscale = keepAspect and mmax or yFactor
+   
+   local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
+   local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
+   
+   
+   for i =1, #verts do
+      local v =verts[i]
+      verts[i] ={v[1], v[2], ufunc(v[1]), vfunc(v[2])}
+   end
+
+   -- todo should this return instead?
+
+end
+
+
 function remeshNode(node)
-   --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
+   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
-   local tlx, tly, brx, bry = getPointsBBox(node.points)
+
    if node.texture and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
-
-      local keepAspect = true
-      local xFactor = 1
-      local yFactor = 1
-      
       local img = imageCache[node.texture.url];
-
-      assert(brx-tlx > 0 and bry-tly > 0)
-      
-      local xFactor = img:getWidth()/(brx-tlx)
-      local yFactor = img:getHeight()/(bry-tly)
-      
-      print(xFactor, yFactor)
-
-      local mmin = math.min(xFactor, yFactor)
-      local mmax = math.max(xFactor, yFactor)
-      local xscale = keepAspect and  mmax or xFactor
-      local yscale = keepAspect and mmax or yFactor
-      
-      local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
-      local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
-
-         for i =1, #verts do
-            local v =verts[i]
-            verts[i] ={v[1], v[2], ufunc(v[1]), vfunc(v[2])}
-         end
-
+      addUVToVerts(verts, img, node.points)
+	 
          node.mesh = love.graphics.newMesh(verts, 'triangles')
-         node.mesh:setTexture(imageCache[node.texture.url])
+
+         node.mesh:setTexture(img)
 
    else
 
       --if node.type ~= 'rubberhose' then
-	 node.mesh = makeMeshFromVertices(verts, node.type)
+	 node.mesh = makeMeshFromVertices(verts, node.type, node.texture)
          --end
 
          if node.type == 'rubberhose' or node.type == 'bezier' then
@@ -275,7 +253,7 @@ simple_format = {
    {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
 }
 
-function makeMeshFromVertices(vertices, nodetype)
+function makeMeshFromVertices(vertices, nodetype, usesTexture)
    --   print('make mesh called, by whom?', nodetype)
 
    
@@ -289,12 +267,20 @@ function makeMeshFromVertices(vertices, nodetype)
       local mesh = love.graphics.newMesh(vertices, "strip")
       return mesh
    else
-   
+      --print(inspect(vertices))
       if (vertices and vertices[1] and vertices[1][1]) then
-	 local mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+	 local mesh
+
+	 if (usesTexture) then
+	    mesh = love.graphics.newMesh(vertices, "triangles")
+	 else
+	    mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+	 end
+	 
 	 return mesh
       end
    end
+
    return nil
 end
 
