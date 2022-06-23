@@ -38,7 +38,7 @@ local root = {
                   points={{200,200}, {1200,300}},
                   data={length=423*magic, flop=-1, borderRadius=0, width=357*2, steps=10},
                   texture = {
-                     url='experiments/handdrawn/plant.png',
+                     url='experiments/handdrawn-ecs/assets/leg3.png',
                      wrap='repeat', filter='linear'
                   },
                   type='rubberhose'
