@@ -33,7 +33,7 @@ local root = {
                   },
 	       },
                {
-                  name="rubberhose",
+                  name="rubberhose leg",
                   color={.5,.5,1,1},
                   points={{200,200}, {1200,300}},
                   data={length=423*magic, flop=-1, borderRadius=0, width=357*2, steps=10},
@@ -44,7 +44,7 @@ local root = {
                   type='rubberhose'
                },
                {
-                  name="rubberhose",
+                  name="rubberhose ding",
                   color={.5,.5,1,1},
                   points={{400,400}, {400,500}},
                   data={length=194 * magic, flop=-1, borderRadius=0.15, width=45*2, steps=35},

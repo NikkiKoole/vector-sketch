@@ -1036,12 +1036,23 @@ local function drawUIAroundGraphNodes(w,h)
             function()
 	       local img =imageCache[currentNode.texture.url]
 	       local width, height = img:getDimensions( )
+	       
+	       if (currentNode.type == 'rubberhose') then
+		  local   magic = 4.46
+		  currentNode.data.length = height * magic
+		  currentNode.data.width = width * 2
+		  remeshNode(currentNode)
+	       else
+		  
+	       
 	       currentNode.points = {};
 	       currentNode.points[1] = {0,0}
 	       currentNode.points[2] = {width,0}
 	       currentNode.points[3] = {width,height}
 	       currentNode.points[4] = {0,height}
 	       remeshNode(currentNode)
+	       end
+	       
             end
          })
       end
