@@ -36,7 +36,7 @@ local root = {
                   name="rubberhose",
                   color={.5,.5,1,1},
                   points={{200,200}, {1200,300}},
-                  data={length=623*magic, flop=-1, borderRadius=0, width=357*2, steps=10},
+                  data={length=423*magic, flop=-1, borderRadius=0, width=357*2, steps=10},
                   texture = {
                      url='experiments/handdrawn/plant.png',
                      wrap='repeat', filter='linear'
@@ -59,9 +59,9 @@ local root = {
                   name="beziered",
                   color={.5,.5,1,1},
                   points={{400,400},{500,100}, {600,600}},
-                  data={ width=5, steps=35},
+                  data={ width=350, steps=15},
                   texture = {
-                     url='experiments/handdrawn-ecs/assets/leg3.png',
+                     url='experiments/handdrawn/plant.png',
                      wrap='repeat', filter='linear'
                   },
 
