@@ -1045,6 +1045,15 @@ local function drawUIAroundGraphNodes(w,h)
             end
          })
       end
+
+      if currentNode.type == 'rubberhose' then
+         local v =  h_slider("flop", 100, 120, 200,  currentNode.data.flop , -1, 1)
+         if v.value ~= nil then
+            currentNode.data.flop = v.value
+         end
+         
+      end
+      
       
       table.insert(row2, "newline")
       if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1])=='number' then
