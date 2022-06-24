@@ -217,7 +217,7 @@ end
 
 
 function remeshNode(node)
-   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
+--   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
 
    if node.texture and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
