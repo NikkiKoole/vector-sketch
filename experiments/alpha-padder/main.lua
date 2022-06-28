@@ -8,7 +8,7 @@ end
 
 
 function love.load()
-   local filename = 'Naamloos.png' --'ding.png'
+   local filename = 'moreleaves3.png'--'Naamloos.png' --'ding.png'
    local imageData     = love.image.newImageData(filename)
    local width, height = imageData:getDimensions()
    local format = imageData:getFormat( )
@@ -20,9 +20,9 @@ function love.load()
    for y = 0, height -1 do
 	for x = 0, width-1 do
 	   local r, g, b, a = imageData:getPixel(x, y)
-           if a == 0 then
 
-              
+           
+           if a == 0 then
               for x2 = -1,1 do
                  for y2 = -1,1 do
                     if (x+x2) >=0 and (x+x2)<=width-1 then

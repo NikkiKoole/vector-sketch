@@ -24,6 +24,16 @@ local root = {
             name="rood folder",
             children ={
                {
+                  name="leaves"..1,
+                  color = {1,1,1, 1},
+                  points = {{200,200},{202,100},{200,0}},
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/moreleaves32.png',
+                     wrap='repeat', filter='linear'
+                  },
+	       },
+
+               {
                   name="house texture"..1,
                   color = {1,1,1, 1},
                   points = {{200,200},{202,100},{200,0}},
