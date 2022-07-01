@@ -56,6 +56,7 @@ function love.load()
 --   image = love.graphics.newImage(imageData, {mipmaps=true})
 
    result:encode("png",filename)
+     love.system.openURL("file://"..love.filesystem.getSaveDirectory())
 end
 
 function love.draw()
