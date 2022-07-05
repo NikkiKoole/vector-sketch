@@ -195,7 +195,7 @@ function addUVToVerts(verts, img, points)
    local xFactor = img:getWidth()/(brx-tlx)
    local yFactor = img:getHeight()/(bry-tly)
    
-   print(xFactor, yFactor)
+--   print(xFactor, yFactor)
 
    local mmin = math.min(xFactor, yFactor)
    local mmax = math.max(xFactor, yFactor)

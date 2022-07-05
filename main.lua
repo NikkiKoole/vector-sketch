@@ -106,7 +106,6 @@ function recursivelyMakeTextures(root)
       for i=1, #root.children do
          recursivelyMakeTextures(root.children[i])
       end
-      
    end
    
 end
@@ -117,7 +116,7 @@ function love.load(arg)
    img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
    img:setWrap( 'repeat' )
    img:setFilter('linear')
-   print(inspect(img))
+--   print(inspect(img))
    recursivelyMakeTextures(root)
    local w,h = love.graphics.getDimensions()
    mylib:setRoot(root)
@@ -144,7 +143,6 @@ end
 
 function love.filedropped(file)
    mylib:filedropped(file)
-   --fileDropPopup = file
 end
 
 function love.keypressed(key, scancode, isrepeat)

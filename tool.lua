@@ -1062,7 +1062,17 @@ local function drawUIAroundGraphNodes(w,h)
          if v.value ~= nil then
             currentNode.data.flop = v.value
          end
+         local v =  h_slider("steps", 100, 150, 200,  currentNode.data.steps , 1, 20)
+         if v.value ~= nil then
+            currentNode.data.steps = v.value
+         end
          
+      end
+      if currentNode.type == 'bezier' then
+         local v =  h_slider("steps", 100, 150, 200,  currentNode.data.steps , 1, 20)
+         if v.value ~= nil then
+            currentNode.data.steps = v.value
+         end
       end
       
       
@@ -2997,13 +3007,13 @@ function mylib:draw()
 	 end
 
 	 if fileDropPopup then
-	    love.graphics.setFont(small)
+	    love.graphics.setFont(smallest)
 	    love.graphics.setColor(1,1,1, 1)
 	    love.graphics.rectangle("fill", 100, 100, w-200, h-200)
 	    love.graphics.setColor(0,0,0)
 	    local name =  fileDropPopup:getFilename()
 	    love.graphics.print("dropped file: "..name, 140, 120)
-
+            
 	    if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
 	       if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
 		  local tab = getDataFromFile(fileDropPopup)
@@ -3012,8 +3022,10 @@ function mylib:draw()
 		  scrollviewOffset = 0
 		  editingMode = nil
 		  editingModeSub = nil
+
 		  currentNode = nil
 		  meshAll(root)
+                  recursivelyMakeTextures(root)
 		  fileDropPopup = nil
 	       end
 	       if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
@@ -3025,12 +3037,29 @@ function mylib:draw()
 		  editingModeSub = nil
 		  currentNode = nil
 		  meshAll(root)
+                  recursivelyMakeTextures(root)
 		  fileDropPopup = nil
 	       end
 
 	    else
-	       love.graphics.print("this isnt a good filetype", 140, 170)
-	       if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
+
+               
+	       --love.graphics.print("this isnt a good filetype", 140, 170)
+               if currentNode and currentNode.texture then
+                  --print(name, currentNode.type)
+
+                  local s, e = name:find("/experiments/")
+                  if s then
+                     local url = name:sub(s)
+                     -- todo check if png/jpg
+                     love.graphics.print("asset: "..url, 140, 150)
+                     currentNode.texture.url=url
+                     recursivelyMakeTextures(currentNode)
+                  end
+                  
+               end
+               
+               if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
 		  fileDropPopup = nil
 	       end
 	    end
@@ -3217,6 +3246,13 @@ function mylib:keypressed(key, scancode, isrepeat)
 	 --print('open url:', openURL)
 	 love.system.openURL(openURL)
       end
+
+      if key == 'a' and not changeName then
+         print("printing a large file")
+	 renderNodeIntoCanvas(root, love.graphics.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
+
+      end
+      
 
       if (key == 'j' and not changeName) then
 	 local path = shapeName..".polygons.txt.json"

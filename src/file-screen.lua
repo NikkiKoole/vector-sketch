@@ -150,6 +150,8 @@ function renderOpenFileScreen(root)
                editingMode = nil
                editingModeSub = nil
                currentNode = nil
+               recursivelyMakeTextures(root)
+
                meshAll(root)
                fileDropPopup = nil
                openFileScreen = false
