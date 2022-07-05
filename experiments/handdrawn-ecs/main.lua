@@ -67,7 +67,8 @@ function addChild(parent, node)
    table.insert(parent.children, node)
 end
 
-
+--- is this a doc
+-- @ asoapsoj
 
 function makeGraphic(path)
    local imageData = love.image.newImageData( path )
