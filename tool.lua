@@ -58,6 +58,7 @@ function mylib:setRoot(root, folderPath)
 
    mylib.root = root
    mylib.folderPath = folderPath
+   print('mylib folderpath at setroot', folderPath)
    if folderPath then
    local s, e = folderPath:find("experiments/")
    if (e) then
@@ -3133,6 +3134,9 @@ function mylib:draw()
 
                   local s, e = name:find("/experiments/")
                   if s then
+		     print('I might need some logic from mylib to get the inbetween path')
+		     print(mylib.folderPath)
+		     print('when the editor is run as an ingame editor, the path is off')
                      local url = name:sub(s)
                      -- todo check if png/jpg
                      love.graphics.print("asset: "..url, 140, 150)
