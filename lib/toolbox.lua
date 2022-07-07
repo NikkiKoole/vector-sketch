@@ -220,13 +220,15 @@ function remeshNode(node)
 --   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
 
-   if node.texture and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
+   if node.texture and (node.texture.url:len() > 0 ) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
+      print(node.texture.url, node.texture.url:len())
+
       local img = imageCache[node.texture.url];
       addUVToVerts(verts, img, node.points)
 	 
-         node.mesh = love.graphics.newMesh(verts, 'triangles')
+      node.mesh = love.graphics.newMesh(verts, 'triangles')
 
-         node.mesh:setTexture(img)
+      node.mesh:setTexture(img)
 
    else
 

@@ -27,6 +27,30 @@ json = require 'vendor.json'
 --https://github.com/rxi/lurker
 
 local mylib = {}
+imageCache = {}
+
+
+function recursivelyMakeTextures(root)
+
+   if root.texture then
+      if not imageCache[root.texture.url] then
+	 print(root.texture.url)
+         local img = love.graphics.newImage(root.texture.url, {mipmaps=true})
+         img:setWrap( root.texture.wrap or 'repeat' )
+         img:setFilter(root.texture.filter or 'linear')
+         imageCache[root.texture.url] = img
+      end
+      
+   end
+   
+   if root.children then
+      for i=1, #root.children do
+         recursivelyMakeTextures(root.children[i])
+      end
+   end
+   
+end
+
 
 function mylib:setRoot(root, folderPath)
    parentize(root)
@@ -1035,6 +1059,30 @@ local function drawUIAroundGraphNodes(w,h)
             end
          }
       )
+
+      if (currentNode) then
+	 table.insert(
+	 row2,
+         {
+            'enabledisabletext', ui.backdrop, 'enable/disable texture functionality',
+            function()
+	       if currentNode.texture then
+		  -- remove the texture
+		  currentNode.texture = nil
+	       else
+		  -- add the texture
+		  currentNode.texture = {}
+		  currentNode.texture.url = ''
+		  currentNode.texture.wrap='repeat'
+		  currentNode.texture.filter='linear'
+	       end
+	        remeshNode(currentNode)
+	       
+            end
+         })
+      end
+      
+      
       if (currentNode.texture) then
 	 table.insert(
 	 row2,
@@ -2088,7 +2136,6 @@ function mylib:load(arg)
    --   print(i)
    --end
    
-
    shapeName = 'untitled'
    shapePath = ''
    love.keyboard.setKeyRepeat( true )

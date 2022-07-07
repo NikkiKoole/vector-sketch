@@ -228,6 +228,9 @@ end
 function love.resize(w,h)
    mylib:setDimensions(w*part,h)
 end
+function love.filedropped(f)
+   mylib:filedropped(f)
+end
 
 function love.wheelmoved(x,y)
 --   mylib:wheelmoved(x,y)

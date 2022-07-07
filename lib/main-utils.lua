@@ -576,8 +576,10 @@ function handleChild(shape,parallax)
 
 	
 	 if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier') then
---	    print('yo guys!')
-	    addUVToVerts(editing, imageCache[shape.texture.url], shape.points)
+	    --	    print('yo guys!')
+	    if (shape.texture.url and shape.texture.url:len() > 0) then
+	       addUVToVerts(editing, imageCache[shape.texture.url], shape.points)
+	    end
 	 end
 --	 print(inspect(editing))
 	 local editingMesh = makeMeshFromVertices(editing, currentNode.type, currentNode.texture)

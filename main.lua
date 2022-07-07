@@ -90,29 +90,11 @@ local root = {
    }
 
 
-function recursivelyMakeTextures(root)
 
-   if root.texture then
-      if not imageCache[root.texture.url] then
-         local img = love.graphics.newImage(root.texture.url, {mipmaps=true})
-         img:setWrap( root.texture.wrap or 'repeat' )
-         img:setFilter(root.texture.filter or 'linear')
-         imageCache[root.texture.url] = img
-      end
-      
-   end
-   
-   if root.children then
-      for i=1, #root.children do
-         recursivelyMakeTextures(root.children[i])
-      end
-   end
-   
-end
 
 
 function love.load(arg)
-   imageCache = {}
+  
    img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
    img:setWrap( 'repeat' )
    img:setFilter('linear')
