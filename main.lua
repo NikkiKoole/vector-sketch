@@ -153,7 +153,7 @@ function love.mousepressed(x,y,button)
    if x <= w*part then
       mylib:mousepressed(x,y, button)
    end
-   
+
 end
 
 function love.wheelmoved(x,y)
