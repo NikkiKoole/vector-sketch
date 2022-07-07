@@ -29,12 +29,19 @@ json = require 'vendor.json'
 local mylib = {}
 
 function mylib:setRoot(root, folderPath)
-   -- not used yet
    parentize(root)
    meshAll(root)
 
    mylib.root = root
    mylib.folderPath = folderPath
+   if folderPath then
+   local s, e = folderPath:find("experiments/")
+   if (e) then
+      local prefix = folderPath:sub(e+1) 
+      print('texture prefix: ', prefix)
+   end
+   end
+  
 end
 
 
@@ -1058,10 +1065,18 @@ local function drawUIAroundGraphNodes(w,h)
       end
 
       if currentNode.type == 'rubberhose' then
+         love.graphics.setFont(smallest)
+
+         love.graphics.setColor(1,1,1, 1)
+
+         love.graphics.print("flipflop",   100, 100 )
+
          local v =  h_slider("flop", 100, 120, 200,  currentNode.data.flop , -1, 1)
          if v.value ~= nil then
             currentNode.data.flop = v.value
          end
+         love.graphics.print("steps",   100, 130 )
+         
          local v =  h_slider("steps", 100, 150, 200,  currentNode.data.steps , 1, 20)
          if v.value ~= nil then
             currentNode.data.steps = v.value
@@ -1069,6 +1084,12 @@ local function drawUIAroundGraphNodes(w,h)
          
       end
       if currentNode.type == 'bezier' then
+         love.graphics.setFont(smallest)
+
+         love.graphics.setColor(1,1,1, 1)
+
+         love.graphics.print("steps",   100, 130 )
+
          local v =  h_slider("steps", 100, 150, 200,  currentNode.data.steps , 1, 20)
          if v.value ~= nil then
             currentNode.data.steps = v.value
@@ -1492,18 +1513,33 @@ local function drawUIAroundGraphNodes(w,h)
          runningY = runningY + 40  -- behind an if !!
 
          if currentNode and currentNode.border then
+
+            love.graphics.setFont(smallest)
+
+            love.graphics.setColor(1,1,1, 1)
+
+
+
+            love.graphics.print("tension",   100, 100 )
+            
             local v =  h_slider("splinetension", 100, 120, 200,  currentNode.borderTension , 0.00001, 1)
             if v.value ~= nil then
                currentNode.borderTension = v.value
             end
+            love.graphics.print("spacing",   100, 140 )
+
             local v =  h_slider("splineSpacing", 100, 160, 200,  currentNode.borderSpacing , 2, 50)
             if v.value ~= nil then
                currentNode.borderSpacing = v.value
             end
+            love.graphics.print("thickness",   100, 180 )
+
             local v =  h_slider("splineLinethick", 100, 200, 200,  currentNode.borderThickness , .1, 10)
             if v.value ~= nil then
                currentNode.borderThickness = v.value
             end
+
+            love.graphics.print("rnd multiplier",   100, 220 )
 
             local v =  h_slider("splinerndmul", 100, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
             if v.value ~= nil then

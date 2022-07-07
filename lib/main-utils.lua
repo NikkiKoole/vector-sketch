@@ -719,7 +719,7 @@ function lerpNodes(left, right, root, t)
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
-      print('make mesh from vertices lerp stuff' )
+      --print('make mesh from vertices lerp stuff' )
       root.mesh = makeMeshFromVertices(makeVertices(root), root.type, root.texture)
    end
 
