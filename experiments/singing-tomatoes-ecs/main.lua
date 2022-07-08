@@ -192,6 +192,7 @@ function love.draw()
 	 print(part)
          if part == 0 then
             mylib:setRoot(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
+	    
             print(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
             part = 0.7
          else
@@ -372,6 +373,7 @@ function love.load()
    for i = 1, #tomatoes do
       table.insert(root.children, tomatoes[i])
    end
+   recursivelyMakeTextures(root)
    meshAll(root)
 
    makeTomatoes(tomatoes)
@@ -401,6 +403,9 @@ function love.load()
    
    parentize(root)
    meshAll(root)
+   
+  
+   
    renderThings(root)
 
 end

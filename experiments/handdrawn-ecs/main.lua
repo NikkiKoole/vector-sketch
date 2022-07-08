@@ -429,7 +429,7 @@ function makeParallelLine(line, offset)
 
 end
 
-function isectLineLine(line1, line2) 
+function isectLineLine(line1, line2)
     --local a = line1.a
     --local b = line1.b
     --local c = line2.a
@@ -454,7 +454,7 @@ function isectLineLine(line1, line2)
     local EPSILON = 0.000001
     
     if (math.abs(den) < EPSILON) then
-        return undefined
+        return nil
     else 
         local det12 = ax * by - ay * bx
         local det34 = cx * dy - cy * dx
@@ -567,10 +567,12 @@ function drawTheShizzle(rect, uvData)
    
    function connectAtIntersection(l1, l2)
       local i1 = isectLineLine(l1, l2)
-      l1[3] = i1.x
-      l1[4] = i1.y
-      l2[1] = i1.x
-      l2[2] = i1.y
+      if (i1 ~= nil) then
+         l1[3] = i1.x
+         l1[4] = i1.y
+         l2[1] = i1.x
+         l2[2] = i1.y
+      end
    end
    
    connectAtIntersection(pTop, pRight)

@@ -34,7 +34,7 @@ function recursivelyMakeTextures(root)
 
    if root.texture then
       if not imageCache[root.texture.url] then
-	 print(root.texture.url)
+	 print('making texture', root.texture.url)
          local img = love.graphics.newImage(root.texture.url, {mipmaps=true})
          img:setWrap( root.texture.wrap or 'repeat' )
          img:setFilter(root.texture.filter or 'linear')
@@ -60,11 +60,11 @@ function mylib:setRoot(root, folderPath)
    mylib.folderPath = folderPath
    print('mylib folderpath at setroot', folderPath)
    if folderPath then
-   local s, e = folderPath:find("experiments/")
-   if (e) then
-      local prefix = folderPath:sub(e+1) 
-      print('texture prefix: ', prefix)
-   end
+      local s, e = folderPath:find("experiments/")
+      if (e) then
+	 local prefix = folderPath:sub(e+1) 
+	 print('texture prefix: ', prefix)
+      end
    end
   
 end
@@ -3145,12 +3145,36 @@ function mylib:draw()
 		  end
 
                   local s, e = name:find("/experiments/")
+
+		  -- if folderPath then
+		  --    local s, e = folderPath:find("experiments/")
+		  --    if (e) then
+		--	 local prefix = folderPath:sub(e+1) 
+	--		 print('texture prefix: ', prefix)
+	--	      end
+	--	   end
+		   
                   if s then
-		     print('I might need some logic from mylib to get the inbetween path')
-		     print(mylib.folderPath)
+		     local url = name:sub(s)
 		     
-                     local url = name:sub(s)
-		     print('when the editor is run as an ingame editor, the path is off', url)
+		     if (mylib.folderPath) then
+			
+			local s1, e1 = mylib.folderPath:find("experiments/",1 , true)
+			if (e1) then
+			   local prefix = mylib.folderPath:sub(e1+1)
+			   local s2,e2 = url:find(prefix, 1, true)
+			   local postfix = url:sub(e2+2)
+			   print('postfix', postfix)
+			   url = postfix
+			end
+		     end
+		     
+		     
+		     --print('I might need some logic from mylib to get the inbetween path')
+		     --print(mylib.folderPath)
+		     
+                     --local url = name:sub(s)
+		     --print('when the editor is run as an ingame editor, the path is off', url)
 		     -- todo check if png/jpg
                      love.graphics.print("asset: "..url, 140, 150)
                      currentNode.texture.url= url
