@@ -3140,7 +3140,7 @@ function mylib:draw()
 		  --    local s, e = folderPath:find("experiments/")
 		  --    if (e) then
 		--	 local prefix = folderPath:sub(e+1) 
-	--		 print('texture prefix: ', prefix)
+		 --		 print('texture prefix: ', prefix)
 	--	      end
 	--	   end
 		   
