@@ -3132,19 +3132,9 @@ function mylib:draw()
                if currentNode and currentNode.texture then
                   --print(name, currentNode.type)
 		  -- dont know where to put this yet
-		  -- this code is also in alpha-padder
-		  function mysplit (inputstr, sep)
-		     if sep == nil then
-			sep = "%s"
-		     end
-		     local t={}
-		     for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-			table.insert(t, str)
-		     end
-		     return t
-		  end
+		 
 
-                  local s, e = name:find("/experiments/")
+                  local s, e = name:find("/experiments/", 1 , true)
 
 		  -- if folderPath then
 		  --    local s, e = folderPath:find("experiments/")
