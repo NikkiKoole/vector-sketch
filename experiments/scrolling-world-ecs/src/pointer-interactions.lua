@@ -209,7 +209,6 @@ function pointerMoved(x,y,dx,dy, id, layers, ecsWorld)
 	    local xAxis =xAxisAllowed and  -dx/scale or 0
 	    --local yAxisAllowed = true
 	    local yAxis =yAxisAllowed and  -dy/scale or 0
-
 	    cameraTranslateScheduler(xAxis, yAxis)
 	 end
       end
@@ -316,6 +315,10 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 	       
 
 	       local speed = 200
+	       -- this is so the zoom factor has an affect on the scroll factor
+	       local scale = cam:getScale()
+	       speed = speed / scale
+
 	       if ((brx + offset) > W) then
 		 
 
@@ -325,6 +328,7 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 		     --local cam = createCamData(c, l.p)
 		     --ecsWorld:emit("itemDrag", c, l, x, y, dx*cam.scale, dy*cam.scale)
 		     --ecsWorld:emit("itemDrag", c, l, x, y, 1, 0)
+		     print('this is the thing i am after I believe')
 		     ecsWorld:emit("itemDrag", c, l, x, y, speed*dt, 0)
 		  end
 
