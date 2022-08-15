@@ -1,5 +1,3 @@
-
-
 function getPointsBBox(points)
    local tlx = 9999999999
    local tly = 9999999999

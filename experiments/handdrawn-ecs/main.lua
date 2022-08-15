@@ -114,7 +114,7 @@ end
 
 
 function love.load()
-
+   --require("vendor.lurker").path = '../..'
 
    cam = createCamera()
 
@@ -194,6 +194,7 @@ function love.load()
 end
 
 function love.update(dt)
+   require("vendor.lurker").update()
    myWorld:emit("update", dt)
    manageCameraTween(dt)
    cam:update()
