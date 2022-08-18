@@ -558,5 +558,7 @@ function love.draw()
    love.graphics.setColor(1,1,1)
    love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
    love.graphics.print(inspect(love.graphics.getStats()), 10, 40)
+
+   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 400,40)
 end
 

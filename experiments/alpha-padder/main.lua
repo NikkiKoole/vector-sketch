@@ -96,5 +96,5 @@ function love.draw()
    love.graphics.setColor(1,1,1)
 
    love.graphics.print("drop image file to fix padding issues", 301,301)
-
+   love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
 end
