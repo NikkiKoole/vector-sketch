@@ -165,7 +165,7 @@ function scene.load()
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
-
+      
 
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({'fit1', 'fit2', 'fit3', 'fit4', 'fit5'}))
 

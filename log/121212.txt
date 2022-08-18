@@ -1,0 +1,83 @@
+###############################################################################################################
+#####  ProFi, a lua profiler. This profile was generated on: Thu Aug 18 15:30:29 2022
+#####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
+#####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
+#####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
+###############################################################################################################
+
+
+| TOTAL TIME = 1.182497
+| FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
+| [string "boot.lua"]                               : anonymous                               :  594                : 1.168       : 98.77%      :    1031     |
+| main.lua                                          : draw                                    :  114                : 0.928       : 78.45%      :    1031     |
+| tool.lua                                          : draw                                    : 2335                : 0.904       : 76.42%      :    1031     |
+| lib/main-utils.lua                                : renderThings                            :  748                : 0.246       : 20.84%      :    3093     |
+| lib/main-utils.lua                                : renderNormallyOrOptimized               :  366                : 0.171       : 14.43%      :    2062     |
+| lib/main-utils.lua                                : handleChild                             :  392                : 0.125       : 10.58%      :   13403     |
+| tool.lua                                          : drawUIAroundGraphNodes                  :  478                : 0.112       : 9.44%       :    1031     |
+| lib/ui.lua                                        : imgbutton                               :  225                : 0.079       : 6.70%       :    2062     |
+| tool.lua                                          : drawGrid                                : 2304                : 0.073       : 6.17%       :    1031     |
+| tool.lua                                          : renderGraphNodes                        : 2007                : 0.072       : 6.08%       :    1031     |
+| lib/ui.lua                                        : iconlabelbutton                         :  147                : 0.058       : 4.93%       :    1031     |
+| lib/ui.lua                                        : getUIRect                               :   19                : 0.011       : 0.97%       :    1031     |
+| lib/basics.lua                                    : pointInRect                             :   43                : 0.011       : 0.93%       :    4124     |
+| src/dopesheet.lua                                 : doDopeSheetEditing                      :    1                : 0.011       : 0.92%       :    1031     |
+| lib/scene-graph.lua                               : setTransforms                           :   56                : 0.008       : 0.66%       :    3093     |
+| tool.lua                                          : getDimensions                           :   79                : 0.008       : 0.65%       :    3093     |
+| lib/ui.lua                                        : handleMouseClickStart                   :    3                : 0.007       : 0.58%       :    1031     |
+| vendor/console.lua                                : draw                                    :  220                : 0.003       : 0.29%       :    1031     |
+| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.003       : 0.27%       :    1031     |
+| tool.lua                                          : calcY                                   : 1990                : 0.003       : 0.27%       :    1031     |
+| main.lua                                          : anonymous                               :  137                : 0.000       : 0.00%       :       1     |
+| tool.lua                                          : textinput                               : 3191                : 0.000       : 0.00%       :       1     |
+| vendor/ProFi.lua                                  : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
+| vendor/console.lua                                : textinput                               :  277                : 0.000       : 0.00%       :       1     |
+| [string "boot.lua"]                               : anonymous                               :  189                : 0.000       : 0.00%       :       1     |
+| vendor/console.lua                                : keypressed                              :  323                : 0.000       : 0.00%       :       1     |
+| vendor/console.lua                                : isEnabled                               :  130                : 0.000       : 0.00%       :       1     |
+| [C]                                               : getFont                                 :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : getHeight                               :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :    3093     |
+| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :    1031     |
+| vendor/ProFi.lua                                  : stop                                    :   88                : 0.000       : 0.00%       :       1     |
+| [C]                                               : getX                                    :   -1                : 0.000       : 0.00%       :    2062     |
+| [C]                                               : tostring                                :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : getY                                    :   -1                : 0.000       : 0.00%       :    2062     |
+| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : setFont                                 :   -1                : 0.000       : 0.00%       :    3093     |
+| [C]                                               : getFPS                                  :   -1                : 0.000       : 0.00%       :    1031     |
+| [string "boot.lua"]                               : anonymous                               :  186                : 0.000       : 0.00%       :       1     |
+| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :    1031     |
+| vendor/ProFi.lua                                  : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
+| [C]                                               : line                                    :   -1                : 0.000       : 0.00%       :   19589     |
+| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :    2062     |
+| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :    5155     |
+| [string "boot.lua"]                               : anonymous                               :  192                : 0.000       : 0.00%       :       1     |
+| main.lua                                          : anonymous                               :  133                : 0.000       : 0.00%       :       1     |
+| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :       2     |
+| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :    1034     |
+| vendor/ProFi.lua                                  : start                                   :   70                : 0.000       : 0.00%       :       0     |
+| tool.lua                                          : keypressed                              : 3211                : 0.000       : 0.00%       :       1     |
+| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : setScissor                              :   -1                : 0.000       : 0.00%       :    4124     |
+| [C]                                               : isDown                                  :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :   10310     |
+| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :    8248     |
+| vendor/ProFi.lua                                  : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
+| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :    2062     |
+| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :    3093     |
+| [C]                                               : getPosition                             :   -1                : 0.000       : 0.00%       :    5155     |
+| [C]                                               : getStencilTest                          :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :   13403     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :   28868     |
+| [C]                                               : setStencilTest                          :   -1                : 0.000       : 0.00%       :    1031     |
+| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :    9279     |
+| [C]                                               : setWireframe                            :   -1                : 0.000       : 0.00%       :    2062     |
+| [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |

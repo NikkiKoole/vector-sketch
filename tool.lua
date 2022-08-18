@@ -3185,6 +3185,8 @@ function mylib:draw()
    end
    local work =  nil
    console.draw()
+   --love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+   --love.graphics.print(inspect(love.graphics.getStats()), 10, 40)
 end
 
 
