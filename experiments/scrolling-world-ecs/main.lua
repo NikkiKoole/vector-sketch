@@ -310,6 +310,9 @@ function love.load()
       offset = {x=0, y=0}
    }
 
+   GLOBALS = {
+      parallax = nil
+   }
 
    SM.setPath("scenes/")
 

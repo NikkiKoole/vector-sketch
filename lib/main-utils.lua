@@ -442,16 +442,16 @@ function handleChild(shape,parallax)
 
    if shape.folder then
 
-      if (shape.depth ~= nil) and parallax then
+      if (shape.depth ~= nil) and GLOBALS and GLOBALS.parallax then
          
-         parallax.camera.scale = mapInto(
+         GLOBALS.parallax.camera.scale = mapInto(
             shape.depth,
-            parallax.p.minmax.min, parallax.p.minmax.max,
-            parallax.p.factors.far, parallax.p.factors.near
+            GLOBALS.parallax.p.minmax.min, GLOBALS.parallax.p.minmax.max,
+            GLOBALS.parallax.p.factors.far, GLOBALS.parallax.p.factors.near
          )
 
-         parallax.camera.relativeScale = 1
-         parallax.camera.push()
+         GLOBALS.parallax.camera.relativeScale = 1
+         GLOBALS.parallax.camera.push()
 
       end
 
@@ -612,8 +612,8 @@ function handleChild(shape,parallax)
 
    end
 
-   if (shape.depth ~= nil  and parallax) then
-      parallax.camera:pop()
+   if (shape.depth ~= nil  and GLOBALS and GLOBALS.parallax) then
+      GLOBALS.parallax.camera:pop()
    end
 
 end

@@ -394,7 +394,9 @@ function scene.draw()
 
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld, 1)
    cam:push()
-   renderThings( foregroundLayer, {camera=dynamic, p=parallaxLayersData[1].p })
+   GLOBALS.parallax = {camera=dynamic, p=parallaxLayersData[1].p }
+
+   renderThings( foregroundLayer)
    cam:pop()
 
    love.graphics.setColor(1,1,1)

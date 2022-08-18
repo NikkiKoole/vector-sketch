@@ -78,7 +78,8 @@ function scene.draw()
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData2[1])
    cam:push()
-   renderThings( foregroundLayer2, {camera=dynamic, p=parallaxLayersData2[1].p })
+   GLOBALS.parallax = {camera=dynamic, p=parallaxLayersData2[1].p }
+   renderThings( foregroundLayer2)
    cam:pop()
 
 end
