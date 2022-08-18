@@ -242,7 +242,7 @@ function renderRecursive(node, dirty)
       else
 	 node.transforms.g = node.transforms.l
       end
-      node.dirty = false
+      --node.dirty = false
    else
      
    end
