@@ -743,8 +743,9 @@ end
 ---- these calculations are only needed when some local transforms have changed
 -- they ought t o be more optimized
 -- in short: this needs a isDirty flag of sorts
+-- take the logic from the handdrawn-ecs renderrecursive
 
-function renderThings(root, parallax)
+function renderThings(root)
 
    setTransforms(root)
 
@@ -754,7 +755,7 @@ function renderThings(root, parallax)
       --love.graphics.setStencilTest()
       for i = 1, #root.children do
 	 local shape = root.children[i]
-	 handleChild(shape, parallax)
+	 handleChild(shape)
       end
       --love.graphics.setStencilTest()
    end

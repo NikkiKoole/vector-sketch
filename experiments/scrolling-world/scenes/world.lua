@@ -76,9 +76,6 @@ function scene.load()
       gradients[timeIndex].from, gradients[timeIndex].to
    )
 
-
-
-
    if not hasBeenLoaded then
 
          --print('world:', World)
