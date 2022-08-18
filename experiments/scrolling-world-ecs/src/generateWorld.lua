@@ -82,7 +82,8 @@ function makeContainerFolder(name)
       folder = true,
       name = name,
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
-      children = {}
+      children = {},
+      dirty = true
    }
 end
 

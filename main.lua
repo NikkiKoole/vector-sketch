@@ -16,6 +16,7 @@ local root = {
       folder = true,
       name = 'root',
       transforms =  {l={0,0,0,1,1,0,0,0,0}},
+     
       children = {
 
          {
@@ -101,6 +102,8 @@ function love.load(arg)
 --   print(inspect(img))
    recursivelyMakeTextures(root)
    local w,h = love.graphics.getDimensions()
+   print('setting root node to dirty')
+   root.dirty = true
    mylib:setRoot(root)
 
    mylib:setDimensions(w*part,h)

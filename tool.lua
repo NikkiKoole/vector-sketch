@@ -1874,6 +1874,7 @@ function mylib:mousemoved(x,y, dx, dy)
       love.mouse.setCursor(handCursor)
       root.transforms.l[1] = root.transforms.l[1] + ddx
       root.transforms.l[2] = root.transforms.l[2] + ddy
+      root.dirty=true
    else
       love.mouse.setCursor()
    end
@@ -2125,6 +2126,8 @@ function mylib:wheelmoved(x,y)
       local dx3, dy3 = getGlobalDelta(root.transforms._g, dx, dy)
       root.transforms.l[1] = root.transforms.l[1] - dx3
       root.transforms.l[2] = root.transforms.l[2] - dy3
+
+      root.dirty=true
    end
 end
 

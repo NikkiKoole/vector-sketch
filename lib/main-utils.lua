@@ -363,10 +363,10 @@ end
 
 
 
-local function renderNormallyOrOptimized(shape)
+local function renderNormallyOrOptimized(shape, isDirty)
    if true then
       if (shape.optimizedBatchMesh) then
-	 setTransforms(shape)
+	 setTransforms(shape, isDirty)
 	 for i=1, #shape.optimizedBatchMesh do
 	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
 	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent.transforms._g *  shape.transforms._l)
@@ -380,7 +380,7 @@ local function renderNormallyOrOptimized(shape)
             renderCount.normal = renderCount.normal + 1
          end
 
-	 renderThings(shape)
+	 renderThings(shape, isDirty)
       end
    end
 
@@ -389,7 +389,7 @@ end
 
 local maskIndex = 0
 
-function handleChild(shape,parallax)
+function handleChild(shape, isDirty)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
 
@@ -464,7 +464,7 @@ function handleChild(shape,parallax)
 
 
       if shape.generatedMeshes then
-         setTransforms(shape)
+         setTransforms(shape, isDirty)
 
 	 --print('there are some generatedMeshes here, are these rubberhose legs?')
          for i =1, #shape.generatedMeshes do
@@ -489,7 +489,7 @@ function handleChild(shape,parallax)
 
          if brx >= minX and tlx <= maxX then
             --print('yes')
-            renderNormallyOrOptimized(shape)
+            renderNormallyOrOptimized(shape, isDirty)
          else
 
             --print('not')
@@ -500,7 +500,7 @@ function handleChild(shape,parallax)
          --print(shape.transforms.l[2] + shape.transforms.l[7])
 
       else
-         renderNormallyOrOptimized(shape)
+         renderNormallyOrOptimized(shape, isDirty)
 
       end
 
@@ -511,18 +511,18 @@ function handleChild(shape,parallax)
 	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
 	 local extraOffset = 100
 	 if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
-	    renderNormallyOrOptimized(shape)
+	    renderNormallyOrOptimized(shape, isDirty)
 	 else
             print('not rendering someting cause of the aabb', inspect(shape.aabb), minX, maxX)
          end
 
       else
-	 renderNormallyOrOptimized(shape)
+	 renderNormallyOrOptimized(shape, isDirty)
       end
 
       if false then
 	 if shape.generatedMeshes then
-	    setTransforms(shape)
+	    setTransforms(shape, isDirty)
 
 	    --print('there are some generatedMeshes here, are these rubberhose legs?')
 	    for i =1, #shape.generatedMeshes do
@@ -745,17 +745,19 @@ end
 -- in short: this needs a isDirty flag of sorts
 -- take the logic from the handdrawn-ecs renderrecursive
 
-function renderThings(root)
+function renderThings(root, dirty)
 
-   setTransforms(root)
+   local isDirty = dirty or root.dirty
+   setTransforms(root, isDirty)
 
    if root.keyframes then
+      -- todo this needs to be fed isDirty too 
       renderThingsWithKeyFrames(root)
    else
       --love.graphics.setStencilTest()
       for i = 1, #root.children do
 	 local shape = root.children[i]
-	 handleChild(shape)
+	 handleChild(shape, isDirty)
       end
       --love.graphics.setStencilTest()
    end
