@@ -56,7 +56,9 @@ end
 function setTransforms(root, isDirty)
    -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
 
-   -- some items have issues with this, mostly things that have a _parent 
+   -- some items have issues with this, mostly things that have a _parent
+   -- I think the issue has todo with the hittesting returning a child of the thing instead of the thing itself
+   
    
    --if (isDirty==true) or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
       local tl = root.transforms.l
