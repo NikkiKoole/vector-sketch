@@ -302,8 +302,13 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
          local c = l.layer.children[i]
 
 	 if c.pressed then
-	    print(c.name)
+	    --print(c.name, c.url, c._parent)
+
 	    c.dirty = true
+	    if c._parent then 
+	       c._parent.dirty = true
+	    end
+	    
 	 end
 	 --c.dirty = true
 	 

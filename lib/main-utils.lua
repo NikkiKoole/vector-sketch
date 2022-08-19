@@ -392,7 +392,7 @@ local maskIndex = 0
 function handleChild(shape, isDirty)
    -- TODO i dont want to directly depend on my parents global transform that is not correct
    -- this gets in the way of lerping between nodes...
-
+   --print(shape.name, isDirty)
    if not shape then return end
 --   print(shape.type)
 

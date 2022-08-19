@@ -58,7 +58,7 @@ function setTransforms(root, isDirty)
 
    --print(root.name,root.url, root._parent == true)
    
-   if isDirty or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
+   --if isDirty or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
       local tl = root.transforms.l
       local pg = nil
       if (root._parent) then
@@ -68,7 +68,7 @@ function setTransforms(root, isDirty)
       root.transforms._g = pg and (pg * root.transforms._l) or root.transforms._l
       
       root.dirty = false
-   end
+   --end
    
 end
 

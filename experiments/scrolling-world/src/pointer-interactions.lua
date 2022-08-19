@@ -301,6 +301,10 @@ function handlePressedItemsOnStage(dt, layers)
 	
 	 if c.pressed then
 	    c.dirty = true
+	    if c._parent then 
+	       c._parent.dirty = true
+	    end
+
 	     --print(c.folder)
 	 end
 	 

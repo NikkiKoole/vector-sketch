@@ -147,7 +147,11 @@ function drawDebugStrings()
    if uiState.showFPS then
       love.graphics.setFont(smallfont)
       shadedText('fps: '..love.timer.getFPS(), 20, 20)
+      
+      local delta = love.timer.getAverageDelta()
+      shadedText(string.format("Avg. frame time: %.3f ms", 1000 * delta), 200, 20)
       love.graphics.setFont(font)
+      
    end
 
    if uiState.showNumbers then

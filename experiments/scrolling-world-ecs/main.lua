@@ -170,6 +170,10 @@ function drawDebugStrings()
       if str then
          shadedText('s '..str, 20, 20)
       end
+      local delta = love.timer.getAverageDelta()
+      shadedText(string.format("Avg. frame time: %.3f ms", 1000 * delta), 200, 20)
+      love.graphics.setFont(font)
+
       love.graphics.setFont(font)
    end
 
