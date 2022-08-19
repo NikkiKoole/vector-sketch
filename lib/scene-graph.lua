@@ -56,9 +56,9 @@ end
 function setTransforms(root, isDirty)
    -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
 
-   --print(root.name,root.url, root._parent == true)
+   -- some items have issues with this, mostly things that have a _parent 
    
-   --if isDirty or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
+   --if (isDirty==true) or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
       local tl = root.transforms.l
       local pg = nil
       if (root._parent) then
