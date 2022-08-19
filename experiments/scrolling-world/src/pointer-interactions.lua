@@ -298,7 +298,10 @@ function handlePressedItemsOnStage(dt, layers)
       for i = 1, #l.layer.children do
          local c = l.layer.children[i]
 
-
+	 if c.pressed then
+	    c.dirty = true
+	 end
+	 
 	 
          if c.bbox and c.transforms._l and c.depth ~= nil then
             if c.pressed  then
@@ -309,7 +312,7 @@ function handlePressedItemsOnStage(dt, layers)
                local mx, my = getPointerPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
-		  c.dirty = true
+		  --c.dirty = true
                   -- todo make these thing parameters
 
                   if c.hasDraggableChildren then -- aka feet

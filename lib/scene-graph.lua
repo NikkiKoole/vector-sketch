@@ -54,9 +54,8 @@ function removeNodeFrom(element, from)
 end
 
 function setTransforms(root, isDirty)
-   --print(isDirty)
-   -- todo this is not right
    -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
+   
    if isDirty or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
       local tl = root.transforms.l
       local pg = nil

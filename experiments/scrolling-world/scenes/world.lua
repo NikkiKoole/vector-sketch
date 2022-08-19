@@ -236,7 +236,7 @@ function scene.load()
    setCameraViewport(cam, 400,400)
    hasBeenLoaded = true
    attachPointerCallbacks()
-   foregroundLayer.dirty = true
+   --foregroundLayer.dirty = true
 
    --print(inspect(foregroundLayer.children[1]))
 end
