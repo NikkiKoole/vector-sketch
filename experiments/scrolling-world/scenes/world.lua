@@ -99,7 +99,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
             urls= createAssetPolyUrls({'doosgroot'}),
             index={min=-100, max= 100},
-            amountPerTile=0,
+            amountPerTile=1,
             depth=depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
@@ -212,7 +212,7 @@ function scene.load()
       parentize(foregroundLayer)
       sortOnDepth(foregroundLayer.children)
       recursivelyAddOptimizedMesh(foregroundLayer)
-
+     
       parallaxLayersData = {
 	 {
             layer=backgroundLayer,
@@ -229,40 +229,14 @@ function scene.load()
 
 
 
-      -- --- ecs new
-      -- Concord.component(
-      --    "position",
-      --    function(component, x, y)
-      --       --print(inspect(component))
-      --       component.x = x or 0
-      --       component.y = y or 0
-      --    end
-      -- )
-      -- Concord.component(
-      --    "transforms",
-      --    function(component, t)
-      --       --print(inspect(component))
-      --       component.transforms = t or {}
-      --    end
-      -- )
-
-      -- local myWorld = Concord.world()
-      -- local myEntity = Entity(myWorld)
-
-      -- myEntity:give('position', 100,100)
-      -- myEntity:give('transforms', {0,0,0,1,1,0,0,0,0})
-
-      -- print(inspect(myEntity:get('transforms')))
-
-
-      -- ecs
+    
    end
    perspectiveContainer = preparePerspectiveContainers({'foreground', 'background'})
 
    setCameraViewport(cam, 400,400)
    hasBeenLoaded = true
    attachPointerCallbacks()
-
+   foregroundLayer.dirty = true
 
    --print(inspect(foregroundLayer.children[1]))
 end

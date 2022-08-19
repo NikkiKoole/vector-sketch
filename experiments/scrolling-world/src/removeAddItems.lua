@@ -47,7 +47,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
                child.url = thing.url
                --child.groundTileIndex = i 
                child.bbox = read.bbox
-               
+               child.dirty = true
                table.insert(parallaxData.layer.children, child)
             --end
             

@@ -6,7 +6,7 @@ function updateMotionItems(layer, dt)
          --local gy = (6*980)
 	 local gy = uiState.gravityValue * thing.inMotion.mass * dt
 	 local gravity = Vector(0, gy);
-
+	 thing.dirty = true
 	 applyForce(thing.inMotion, gravity)
 
          -- applying half the velocity before position
