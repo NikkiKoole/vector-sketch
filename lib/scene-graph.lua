@@ -57,7 +57,7 @@ function setTransforms(root, isDirty)
    --print(isDirty)
    -- todo this is not right
    -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
-   --if isDirty or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
+   if isDirty or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
       local tl = root.transforms.l
       local pg = nil
       if (root._parent) then
@@ -66,7 +66,7 @@ function setTransforms(root, isDirty)
       root.transforms._l = love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8],tl[9])
       root.transforms._g = pg and (pg * root.transforms._l) or root.transforms._l
       root.dirty = false
-   --end
+   end
    
 end
 
