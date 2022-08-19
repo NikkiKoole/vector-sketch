@@ -217,7 +217,7 @@ function scene.load()
 --	 return thing
 --      end
 
-if false then
+if true then
 
       local cave = makeObject('assets/cavething.polygons.txt', 1000,0, 0)
 
