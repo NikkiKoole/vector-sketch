@@ -69,7 +69,7 @@ function generateAssetBook(recipe)
 	       depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
 	       scaleX=1,
 	       scaleY=1,
-	       url=pickRandom(recipe.urls)
+	       url=pickRandom(recipe.urls),
 	    }
 	 )
       end
