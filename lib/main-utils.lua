@@ -379,7 +379,7 @@ local function renderNormallyOrOptimized(shape, isDirty)
          if renderCount then
             renderCount.normal = renderCount.normal + 1
          end
-
+	 --print(shape.name, isDirty)
 	 renderThings(shape, isDirty)
       end
    end
@@ -748,15 +748,24 @@ end
 function renderThings(root, dirty)
 
    local isDirty = dirty or root.dirty
+   if (isDirty) then
+     -- print(root.name,root.url,  dirty, root.dirty)
+   end
+   
    setTransforms(root, isDirty)
 
    if root.keyframes then
-      -- todo this needs to be fed isDirty too 
+      -- todo this needs to be fed isDirty too
+      print('am i getting here already?')
       renderThingsWithKeyFrames(root)
    else
       --love.graphics.setStencilTest()
       for i = 1, #root.children do
 	 local shape = root.children[i]
+	 if (isDirty) then
+	    --print('dirty child', root.name, shape.name)
+	 end
+	 
 	 handleChild(shape, isDirty)
       end
       --love.graphics.setStencilTest()
@@ -772,6 +781,7 @@ end
 
 
 function renderThingsWithKeyFrames(root)
+   
    -- if (root.keyframes) then
    if (root.keyframes == 2 ) then
       if currentNode == root then

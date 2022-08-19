@@ -152,13 +152,16 @@ function scene.load()
       backgroundLayer = makeContainerFolder('backgroundLayer')
 
       foregroundAssetBook = generateAssetBook({
-            urls= createAssetPolyUrls(
+            urlsOLD= createAssetPolyUrls(
                { 'plant1','plant2','plant3','plant4',
                   'plant5','plant6','plant7','plant8',
                   'plant9','plant10','plant11','plant12',
 		 'doosgroot', 'doosgroot', 'doosgroot',
 		  'doosgroot', 'doosgroot', 'doosgroot',
                  'plant13','bunnyhead', 'walrus','teckel_', 'teckel_','teckelagain', 'mouse_', 'mouse_','vosje_','verken', 'deurpaars', 'deurpaars'
+            }),
+	    urls= createAssetPolyUrls(
+               { 'plant1', 'deurpaars'
             }),
             index={min=-400, max= 400},
             amountPerTile=1,
@@ -217,7 +220,7 @@ function scene.load()
 --	 return thing
 --      end
 
-
+if false then
 
       local cave = makeObject('assets/cavething.polygons.txt', 1000,0, 0)
 
@@ -326,6 +329,7 @@ function scene.load()
 	 )
 	 table.insert(actors, walterActor)
       end
+end
 
       parentize(foregroundLayer)
       sortOnDepth(foregroundLayer.children)
