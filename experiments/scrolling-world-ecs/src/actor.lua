@@ -118,8 +118,6 @@ function Actor:create(bodyparts)
 
    a.body = bodyparts.body
 
-   --   a.body.transforms.l[2] =    a.body.transforms.l[2] - 100
-
    a.lfoot = bodyparts.lfoot
    a.rfoot = bodyparts.rfoot
 
@@ -141,14 +139,14 @@ function Actor:create(bodyparts)
 
 
 
-   a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength
+    a.body.transforms.l[2] =    a.body.transforms.l[2] - a.body.leglength
 
 
-   a.originalX = a.body.transforms.l[1]
-   a.originalY = a.body.transforms.l[2]
+    a.originalX = a.body.transforms.l[1]
+    a.originalY = a.body.transforms.l[2]
 
-   a.body.actor = a
-   a:straightenLegs()
+    a.body.actor = a
+    a:straightenLegs()
    a.body.generatedMeshes = {} -- we can put the line meshes in here
    a.time= 0
 
@@ -181,10 +179,8 @@ end
 
 
 function Actor:oneLeg(connector, transforms, flip)
---   print('callin gone leg')
    local useRubber = self.useRubber
    local steps = self.steps
-   local rnd = love.math.random()*30
    local lineData = {
       outer = {20, 5},
       inner = {16, 3}
@@ -200,8 +196,6 @@ function Actor:oneLeg(connector, transforms, flip)
       lineData,
       flip
    )
-
-
 
    if not useRubber then
       result = {}
@@ -424,7 +418,7 @@ function Actor:update(dt)
       else
 
          if self.disabledFunnyLegs == true then
-         print('getting here!')
+        -- print('getting here!')
          self:straightenLegs()
          --print('is this another gravity one?')
 
