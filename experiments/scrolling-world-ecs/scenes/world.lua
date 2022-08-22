@@ -202,7 +202,7 @@ function scene.load()
                  'plant13','bunnyhead', 'walrus','teckel_', 'teckel_','teckelagain', 'mouse_', 'mouse_','vosje_','verken', 'deurpaars', 'deurpaars'
             }),
             index={min=-400, max= 400},
-            amountPerTile=1,
+            amountPerTile=10,
             depth=depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
