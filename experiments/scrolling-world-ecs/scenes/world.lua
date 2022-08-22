@@ -112,6 +112,47 @@ function attachPointerCallbacks()
 
 end
 
+local ecsWorld = myWorld
+function makeObject(url, x, y, depth, allowOptimized)
+
+   if allowOptimized == nil then allowOptimized = true end
+   local read = readFileAndAddToCache(url)
+   local doOptimized = read.optimizedBatchMesh ~= nil
+
+   local child = {
+      folder = true,
+      transforms = copy3(read.transforms),
+      name = 'generated '..url,
+      children = (allowOptimized and doOptimized) and {} or copy3(read.children)
+   }
+   if allowOptimized and doOptimized then
+      child.url = url
+   end
+
+   child.depth = depth
+   child.transforms.l[1] = x
+   child.transforms.l[2] = y
+   --print(depth)
+   child.bbox = read.bbox
+   child.metaTags = read.metaTags
+   -- print(inspect(child.bbox),x,y)
+   meshAll(child)
+
+   if ecsWorld then
+      local myEntity = Concord.entity()
+      myEntity
+	 :give('transforms', child.transforms)
+	 :give('bbox', child.bbox)
+	 :give('vanillaDraggable')
+      ecsWorld:addEntity(myEntity)
+      child.entity = myEntity
+   end
+
+
+   return child
+end
+
+
 function scene.load()
 
    local timeIndex = math.floor(1 + love.math.random()*24)
@@ -173,45 +214,7 @@ function scene.load()
    --   generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
       -- todo alot of duplication from removeAddItems
-      local ecsWorld = myWorld
-      function makeObject(url, x, y, depth, allowOptimized)
-         if allowOptimized == nil then allowOptimized = true end
-         local read = readFileAndAddToCache(url)
-	 local doOptimized = read.optimizedBatchMesh ~= nil
-
-	 local child = {
-	    folder = true,
-	    transforms = copy3(read.transforms),
-	    name = 'generated '..url,
-	    children = (allowOptimized and doOptimized) and {} or copy3(read.children)
-	 }
-         if allowOptimized and doOptimized then
-            child.url = url
-         end
-
-         child.depth = depth
-         child.transforms.l[1] = x
-         child.transforms.l[2] = y
-
-	 child.bbox = read.bbox
-         child.metaTags = read.metaTags
-        -- print(inspect(child.bbox),x,y)
-         meshAll(child)
-
-	 if ecsWorld then
-	    local myEntity = Concord.entity()
-	    myEntity
-	       :give('transforms', child.transforms)
-	       :give('bbox', child.bbox)
-	       :give('vanillaDraggable')
-	    ecsWorld:addEntity(myEntity)
-	    child.entity = myEntity
-	 end
-
-
-         return child
-      end
-
+      
 --      function makeWheel(thing, circumference)
 --         thing.wheelCircumference = circumference
 --	 return thing
@@ -309,23 +312,27 @@ function scene.load()
 
 
       actors  = {}
+ 
+      
       for i = 1, 10 do
-         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,love.math.random(), false)
-	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, 0)
-	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, 0)
+	 local depth = love.math.random()
+         walterBody =  makeObject('assets/walterbody.polygons.txt', 0,0,depth, false)
+	 walterLFoot =  makeObject('assets/walterhappyfeetleft_.polygons.txt', 0,0, depth)
+	 walterRFoot =  makeObject('assets/walterhappyfeetright_.polygons.txt', 0,0, depth)
 
 	 walterActor = Actor:create({body=walterBody, lfoot=walterLFoot, rfoot=walterRFoot})
 
          walterBody.entity:give('actor', walterActor)
-
          walterBody.entity:give('biped', walterBody, walterLFoot, walterRFoot)
 	 walterBody.entity:give('layer', 1)
+	 
 	 table.insert(
-	    foregroundLayer.children,
-	    walterActor.body
+	   foregroundLayer.children,
+	   walterActor.body
 	 )
 	 table.insert(actors, walterActor)
       end
+
 
       parentize(foregroundLayer)
       sortOnDepth(foregroundLayer.children)

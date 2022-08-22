@@ -289,7 +289,7 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
     draw_mode = 'triangles'
   else
      local firstR
-     love.math.setRandomSeed(1 )
+    -- love.math.setRandomSeed(1 )  -- i cant do this it breaks surrounding code that relies on rand
      for i=1,vertex_count do
         local r = 1
         if rndMultiplier ~= nil then
@@ -459,7 +459,7 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
     draw_mode = 'triangles'
   else
      local firstR
-     love.math.setRandomSeed(1 )
+--     love.math.setRandomSeed(1 )  -- you cant just set the randomseed somewhere
      for i=1,vertex_count do
         local r = 1
         if rndMultiplier ~= nil then
