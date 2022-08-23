@@ -305,9 +305,9 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
 	    --print(c.name, c.url, c._parent)
 
 	    c.dirty = true
-	    if c._parent then 
-	       c._parent.dirty = true
-	    end
+	    --if c._parent then 
+	    --   c._parent.dirty = true
+	    --end
 	    
 	 end
 	 --c.dirty = true
