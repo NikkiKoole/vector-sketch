@@ -367,13 +367,14 @@ local function renderNormallyOrOptimized(shape, isDirty)
    if true then
       if (shape.optimizedBatchMesh) then
 	 setTransforms(shape, isDirty)
+         -- todo this transform can be kept somewhere on shape and only recalculated when dirty
+         local transform = shape._parent.transforms._g *  shape.transforms._l
 	 for i=1, #shape.optimizedBatchMesh do
 	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
-	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh, shape._parent.transforms._g *  shape.transforms._l)
+	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh,  transform)
             if renderCount then
                renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
             end
-
 	 end
       else
          if renderCount then

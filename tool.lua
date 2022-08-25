@@ -26,6 +26,9 @@ json = require 'vendor.json'
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
 
+
+-- use multiline input code to improve my inputfields
+-- https://github.com/ReFreezed/InputField
 local mylib = {}
 imageCache = {}
 

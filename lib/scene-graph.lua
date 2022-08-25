@@ -53,6 +53,45 @@ function removeNodeFrom(element, from)
    return table.remove(from.children, getIndex(element))
 end
 
+function setX(node, x)
+   node.transforms.l[1] = x
+end
+function setY(node, y)
+   node.transforms.l[2] = y
+end
+function setPos(node, x,y)
+   node.transforms.l[1] = x
+   node.transforms.l[2] = y
+end
+function setRotation(node, r)
+   node.transforms.l[3] = r
+end
+function setScale(node, s)
+   node.transforms.l[4] = 3
+   node.transforms.l[5] = 3
+end
+function setScaleX(node, sx)
+   node.transforms.l[4] = sx
+end
+function setScaleY(node, sy)
+   node.transforms.l[5] = sy
+end
+function setPivotX(node, px)
+   node.transforms.l[6] = px
+end
+function setPivotY(node, py)
+   node.transforms.l[7] = py
+end
+function setPivot(node, px, py)
+   node.transforms.l[6] = px
+   node.transforms.l[7] = py
+end
+
+
+
+
+
+
 function setTransforms(root, isDirty)
    -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
 
@@ -60,7 +99,7 @@ function setTransforms(root, isDirty)
    -- I think the issue has todo with the hittesting returning a child of the thing instead of the thing itself
    
    
-  if (isDirty==true) or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
+  --if  (isDirty==true) or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
       local tl = root.transforms.l
       local pg = nil
       if (root._parent) then
@@ -76,7 +115,7 @@ function setTransforms(root, isDirty)
       root.transforms._g = pg and (pg * root.transforms._l) or root.transforms._l
       
       root.dirty = false
-    end
+    --end
    
 end
 
