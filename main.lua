@@ -4,7 +4,7 @@ local mylib = require('tool')
 --https://blog.separateconcerns.com/2014-01-03-lua-module-policy.html
 --print(getDimensions())
 
-local part=.85
+local part=1.0
 
 
 local tw = 290
