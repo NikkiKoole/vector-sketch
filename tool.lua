@@ -23,6 +23,10 @@ utf8 = require('utf8')
 ProFi = require 'vendor.ProFi'
 json = require 'vendor.json'
 
+local LG = love.graphics
+local LK = love.keyboard
+
+
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
 
@@ -38,7 +42,7 @@ function recursivelyMakeTextures(root)
    if root.texture then
       if not imageCache[root.texture.url] then
 	 print('making texture', root.texture.url)
-         local img = love.graphics.newImage(root.texture.url, {mipmaps=true})
+         local img = LG.newImage(root.texture.url, {mipmaps=true})
          img:setWrap( root.texture.wrap or 'repeat' )
          img:setFilter(root.texture.filter or 'linear')
          imageCache[root.texture.url] = img
@@ -69,7 +73,7 @@ function mylib:setRoot(root, folderPath)
 	 print('texture prefix: ', prefix)
       end
    end
-  
+   
 end
 
 
@@ -82,7 +86,7 @@ end
 local function getDimensions()
    return mylib.w, mylib.h
    --print(mylib.w, mylib.h)
-   --local w,h = love.graphics.getDimensions( )
+   --local w,h = LG.getDimensions( )
    --return w/2,h
 end
 
@@ -188,7 +192,7 @@ local function tryToCenterUI(node2)
    recursiveOpenSome(root, reversePath)
    local ry = recursiveGetRunningYForNode(root, node2, 0)
    local w, h = getDimensions()
-   --love.graphics.getDimensions( )
+   --LG.getDimensions( )
    if ry > h then
       scrollviewOffset = ry
    else
@@ -366,9 +370,9 @@ local function addThingAtEnd(thing, parent)
    --
    -- todo this crashed on not having children
    if not parent.children then
---      print('sasdasdasd')
---      print(inspect(thing))
---      print(inspect(parent))
+      --      print('sasdasdasd')
+      --      print(inspect(thing))
+      --      print(inspect(parent))
 
    end
    
@@ -511,19 +515,19 @@ local function drawUIAroundGraphNodes(w,h)
                --openedAddPanel = not openedAddPanel
 
                local shape = {
-                     color = {1,0,0,1},
-                     points = {{0,0}},
-                     type = 'meta'
-                  }
-                  if (currentNode) then
-                     shape._parent = currentNode and currentNode._parent
-                     addShapeAfter(shape, currentNode)
-                  else
-                     local root = mylib.root
+		  color = {1,0,0,1},
+		  points = {{0,0}},
+		  type = 'meta'
+	       }
+	       if (currentNode) then
+		  shape._parent = currentNode and currentNode._parent
+		  addShapeAfter(shape, currentNode)
+	       else
+		  local root = mylib.root
 
-                     shape._parent = root
-                     addShapeAtRoot(shape)
-                  end
+		  shape._parent = root
+		  addShapeAtRoot(shape)
+	       end
 
             end
             
@@ -536,27 +540,27 @@ local function drawUIAroundGraphNodes(w,h)
             'add-shape', ui.object_group, 'add a shape',
             function()
                --openedAddPanel = not openedAddPanel
-                                 local shape = {
-                     color = {0,0,0,1},
-                     outline = true,
-                     points = {},
-                  }
+	       local shape = {
+		  color = {0,0,0,1},
+		  outline = true,
+		  points = {},
+	       }
 
-                  if currentNode and not currentNode.folder then
-                     remeshNode(currentNode)
-                  end
-                  if (currentNode) then
-                     shape._parent = currentNode and currentNode._parent
-                     addShapeAfter(shape, currentNode)
-                  else
-                     local root = mylib.root
+	       if currentNode and not currentNode.folder then
+		  remeshNode(currentNode)
+	       end
+	       if (currentNode) then
+		  shape._parent = currentNode and currentNode._parent
+		  addShapeAfter(shape, currentNode)
+	       else
+		  local root = mylib.root
 
-                     shape._parent = root
-                     addShapeAtRoot(shape)
-                  end
+		  shape._parent = root
+		  addShapeAtRoot(shape)
+	       end
 
-                  editingMode = 'polyline'
-                  editingModeSub = 'polyline-insert'
+	       editingMode = 'polyline'
+	       editingModeSub = 'polyline-insert'
 
             end
             
@@ -569,9 +573,9 @@ local function drawUIAroundGraphNodes(w,h)
             'add-folder', ui.folder, 'add a folder',
             function()
                --openedAddPanel = not openedAddPanel
-                  local f = makeNewFolder()
-                  editingMode = 'polyline'
-                  editingModeSub = 'polyline-insert'
+	       local f = makeNewFolder()
+	       editingMode = 'polyline'
+	       editingModeSub = 'polyline-insert'
 
             end
             
@@ -847,7 +851,7 @@ local function drawUIAroundGraphNodes(w,h)
 
       if currentNode and currentNode.folder then
 
-        table.insert(
+	 table.insert(
             row2,
             {
                'children-flip-vertical', ui.flip_vertical, 'flip vertically',
@@ -870,7 +874,7 @@ local function drawUIAroundGraphNodes(w,h)
             {
                'children-scale-up', ui.resize, 'scale up',
                function()
-                  if love.keyboard.isDown('a') then
+                  if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, .75)
                   else
                      resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
@@ -884,7 +888,7 @@ local function drawUIAroundGraphNodes(w,h)
             {
                'children-scale-down', ui.resize, 'scale down',
                function()
-                  if love.keyboard.isDown('a') then
+                  if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
                   else
                      resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
@@ -893,15 +897,15 @@ local function drawUIAroundGraphNodes(w,h)
                end
             }
          )
-         end
+      end
       
    end
    
-      
-      
    
    
----  polyline
+   
+   
+   ---  polyline
    
    if (editingMode == 'polyline' and currentNode and currentNode.type ~= 'meta') then
       table.insert(
@@ -1066,68 +1070,68 @@ local function drawUIAroundGraphNodes(w,h)
 
       if (currentNode) then
 	 table.insert(
-	 row2,
-         {
-            'enabledisabletext', ui.backdrop, 'enable/disable texture functionality',
-            function()
-	       if currentNode.texture then
-		  -- remove the texture
-		  currentNode.texture = nil
-	       else
-		  -- add the texture
-		  currentNode.texture = {}
-		  currentNode.texture.url = ''
-		  currentNode.texture.wrap='repeat'
-		  currentNode.texture.filter='linear'
+	    row2,
+	    {
+	       'enabledisabletext', ui.backdrop, 'enable/disable texture functionality',
+	       function()
+		  if currentNode.texture then
+		     -- remove the texture
+		     currentNode.texture = nil
+		  else
+		     -- add the texture
+		     currentNode.texture = {}
+		     currentNode.texture.url = ''
+		     currentNode.texture.wrap='repeat'
+		     currentNode.texture.filter='linear'
+		  end
+		  remeshNode(currentNode)
+		  
 	       end
-	        remeshNode(currentNode)
-	       
-            end
          })
       end
       
       
       if (currentNode.texture) then
 	 table.insert(
-	 row2,
-         {
-            'fit polygon to image', ui.backdrop, 'make fitting polygon for image',
-            function()
-	       local img =imageCache[currentNode.texture.url]
-	       local width, height = img:getDimensions( )
-	       
-	       if (currentNode.type == 'rubberhose') then
-		  local   magic = 4.46
-		  currentNode.data.length = height * magic
-		  currentNode.data.width = width * 2
-		  remeshNode(currentNode)
-	       else
+	    row2,
+	    {
+	       'fit polygon to image', ui.backdrop, 'make fitting polygon for image',
+	       function()
+		  local img =imageCache[currentNode.texture.url]
+		  local width, height = img:getDimensions( )
 		  
-	       
-	       currentNode.points = {};
-	       currentNode.points[1] = {0,0}
-	       currentNode.points[2] = {width,0}
-	       currentNode.points[3] = {width,height}
-	       currentNode.points[4] = {0,height}
-	       remeshNode(currentNode)
+		  if (currentNode.type == 'rubberhose') then
+		     local   magic = 4.46
+		     currentNode.data.length = height * magic
+		     currentNode.data.width = width * 2
+		     remeshNode(currentNode)
+		  else
+		     
+		     
+		     currentNode.points = {};
+		     currentNode.points[1] = {0,0}
+		     currentNode.points[2] = {width,0}
+		     currentNode.points[3] = {width,height}
+		     currentNode.points[4] = {0,height}
+		     remeshNode(currentNode)
+		  end
+		  
 	       end
-	       
-            end
          })
       end
 
       if currentNode.type == 'rubberhose' then
-         love.graphics.setFont(smallest)
+         LG.setFont(smallest)
 
-         love.graphics.setColor(1,1,1, 1)
+         LG.setColor(1,1,1, 1)
 
-         love.graphics.print("flipflop",   100, 100 )
+         LG.print("flipflop",   100, 100 )
 
          local v =  h_slider("flop", 100, 120, 200,  currentNode.data.flop , -1, 1)
          if v.value ~= nil then
             currentNode.data.flop = v.value
          end
-         love.graphics.print("steps",   100, 130 )
+         LG.print("steps",   100, 130 )
          
          local v =  h_slider("steps", 100, 150, 200,  currentNode.data.steps , 1, 20)
          if v.value ~= nil then
@@ -1136,11 +1140,11 @@ local function drawUIAroundGraphNodes(w,h)
          
       end
       if currentNode.type == 'bezier' then
-         love.graphics.setFont(smallest)
+         LG.setFont(smallest)
 
-         love.graphics.setColor(1,1,1, 1)
+         LG.setColor(1,1,1, 1)
 
-         love.graphics.print("steps",   100, 130 )
+         LG.print("steps",   100, 130 )
 
          local v =  h_slider("steps", 100, 150, 200,  currentNode.data.steps , 1, 20)
          if v.value ~= nil then
@@ -1175,7 +1179,7 @@ local function drawUIAroundGraphNodes(w,h)
             {
                'children-scale-up', ui.resize, 'scale up',
                function()
-                  if love.keyboard.isDown('a') then
+                  if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, .75)
                   else
                      resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
@@ -1189,7 +1193,7 @@ local function drawUIAroundGraphNodes(w,h)
             {
                'children-scale-down', ui.resize, 'scale down',
                function()
-                  if love.keyboard.isDown('a') then
+                  if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
                   else
                      resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
@@ -1233,20 +1237,20 @@ local function drawUIAroundGraphNodes(w,h)
                row.runningX = row.runningX + 40
             end
             -- the 'exceptions or lets call them hacks'
-            love.graphics.setColor(1,1,1,1)
+            LG.setColor(1,1,1,1)
             if v == 'printChildrenInRectangleSelect' then
                if (#childrenInRectangleSelect > 0) then
-                  love.graphics.print(#childrenInRectangleSelect, row.runningX-40, row.runningY)
+                  LG.print(#childrenInRectangleSelect, row.runningX-40, row.runningY)
                end
             end
             if v == 'printOptimizedBatchMesh' then
                if currentNode and currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
-                  love.graphics.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
+                  LG.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
                end
             end
 
             if v =='9grid' then
-               love.graphics.setColor(1,1,1,.5)
+               LG.setColor(1,1,1,.5)
                ----------
                local runningX = row.runningX
                local runningY = row.runningY
@@ -1261,21 +1265,21 @@ local function drawUIAroundGraphNodes(w,h)
                   return tlx, tly, brx, bry, mx, my
                end
                if (currentNode and currentNode.children and #currentNode.children > 0) then
-                  love.graphics.rectangle("fill", runningX, runningY, 20, 20)
+                  LG.rectangle("fill", runningX, runningY, 20, 20)
                   if getUIRect('p1', runningX, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= tlx
                      currentNode.transforms.l[7]= tly
                   end
 
-                  love.graphics.rectangle("fill", runningX+24, runningY, 20, 20)
+                  LG.rectangle("fill", runningX+24, runningY, 20, 20)
                   if getUIRect('p2', runningX+24, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= mx
                      currentNode.transforms.l[7]= tly
                   end
 
-                  love.graphics.rectangle("fill", runningX+48, runningY, 20, 20)
+                  LG.rectangle("fill", runningX+48, runningY, 20, 20)
                   if getUIRect('p3', runningX+48, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= brx
@@ -1284,21 +1288,21 @@ local function drawUIAroundGraphNodes(w,h)
 
                   runningY = runningY + 24
 
-                  love.graphics.rectangle("fill", runningX, runningY, 20, 20)
+                  LG.rectangle("fill", runningX, runningY, 20, 20)
                   if getUIRect('p4', runningX, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= tlx
                      currentNode.transforms.l[7]= my
                   end
 
-                  love.graphics.rectangle("fill", runningX+24, runningY, 20, 20)
+                  LG.rectangle("fill", runningX+24, runningY, 20, 20)
                   if getUIRect('p5', runningX+24, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= mx
                      currentNode.transforms.l[7]= my
                   end
 
-                  love.graphics.rectangle("fill", runningX+48, runningY, 20, 20)
+                  LG.rectangle("fill", runningX+48, runningY, 20, 20)
                   if getUIRect('p6', runningX+48, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= brx
@@ -1307,21 +1311,21 @@ local function drawUIAroundGraphNodes(w,h)
 
                   runningY = runningY + 24
 
-                  love.graphics.rectangle("fill", runningX, runningY, 20, 20)
+                  LG.rectangle("fill", runningX, runningY, 20, 20)
                   if getUIRect('p7', runningX, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= tlx
                      currentNode.transforms.l[7]= bry
                   end
 
-                  love.graphics.rectangle("fill", runningX+24, runningY, 20, 20)
+                  LG.rectangle("fill", runningX+24, runningY, 20, 20)
                   if getUIRect('p8', runningX+24, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= mx
                      currentNode.transforms.l[7]= bry
                   end
 
-                  love.graphics.rectangle("fill", runningX+48, runningY, 20, 20)
+                  LG.rectangle("fill", runningX+48, runningY, 20, 20)
                   if getUIRect('p9', runningX+48, runningY, 20,20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      currentNode.transforms.l[6]= brx
@@ -1350,8 +1354,8 @@ local function drawUIAroundGraphNodes(w,h)
       -- local panelHeight = 256
       -- local panelX = w - 256-64
       -- local panelY = 96
-      -- love.graphics.setColor(.3,.3,.35,.5)
-      -- love.graphics.rectangle("fill", panelX, panelY, panelWidth,panelHeight)
+      -- LG.setColor(.3,.3,.35,.5)
+      -- LG.rectangle("fill", panelX, panelY, panelWidth,panelHeight)
 
       local runningY = 110
 
@@ -1438,7 +1442,7 @@ local function drawUIAroundGraphNodes(w,h)
          -- end
          -- runningY = runningY + 40
 
-         -- love.graphics.setColor(1,1,1,.5)
+         -- LG.setColor(1,1,1,.5)
          -- function get6(node)
          --    local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
          --    local mx = tlx + (brx - tlx)/2
@@ -1446,21 +1450,21 @@ local function drawUIAroundGraphNodes(w,h)
          --    return tlx, tly, brx, bry, mx, my
          -- end
          -- if (currentNode.children and #currentNode.children > 0) then
-	 --    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300, runningY, 20, 20)
 	 --    if getUIRect('p1', w-300, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= tlx
 	 --       currentNode.transforms.l[7]= tly
 	 --    end
 
-	 --    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300+24, runningY, 20, 20)
 	 --    if getUIRect('p2', w-300+24, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= mx
 	 --       currentNode.transforms.l[7]= tly
 	 --    end
 
-	 --    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300+48, runningY, 20, 20)
 	 --    if getUIRect('p3', w-300+48, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= brx
@@ -1469,21 +1473,21 @@ local function drawUIAroundGraphNodes(w,h)
 
 	 --    runningY = runningY + 24
 
-	 --    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300, runningY, 20, 20)
 	 --    if getUIRect('p4', w-300, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= tlx
 	 --       currentNode.transforms.l[7]= my
 	 --    end
 
-	 --    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300+24, runningY, 20, 20)
 	 --    if getUIRect('p5', w-300+24, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= mx
 	 --       currentNode.transforms.l[7]= my
 	 --    end
 
-	 --    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300+48, runningY, 20, 20)
 	 --    if getUIRect('p6', w-300+48, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= brx
@@ -1492,21 +1496,21 @@ local function drawUIAroundGraphNodes(w,h)
 
 	 --    runningY = runningY + 24
 
-	 --    love.graphics.rectangle("fill", w-300, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300, runningY, 20, 20)
 	 --    if getUIRect('p7', w-300, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= tlx
 	 --       currentNode.transforms.l[7]= bry
 	 --    end
 
-	 --    love.graphics.rectangle("fill", w-300+24, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300+24, runningY, 20, 20)
 	 --    if getUIRect('p8', w-300+24, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= mx
 	 --       currentNode.transforms.l[7]= bry
 	 --    end
 
-	 --    love.graphics.rectangle("fill", w-300+48, runningY, 20, 20)
+	 --    LG.rectangle("fill", w-300+48, runningY, 20, 20)
 	 --    if getUIRect('p9', w-300+48, runningY, 20,20).clicked then
 	 --       local tlx, tly, brx, bry, mx, my = get6(currentNode)
 	 --       currentNode.transforms.l[6]= brx
@@ -1540,11 +1544,11 @@ local function drawUIAroundGraphNodes(w,h)
          -- end
 
          -- if (currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh) then
-         --    love.graphics.setColor(1,0,0)
-         --    love.graphics.rectangle("line", w-300-2, runningY-2, 28,28)
-         --    love.graphics.setColor(1,1,1)
+         --    LG.setColor(1,0,0)
+         --    LG.rectangle("line", w-300-2, runningY-2, 28,28)
+         --    LG.setColor(1,1,1)
 
-         --    love.graphics.print(#currentNode.optimizedBatchMesh, w-300, runningY)
+         --    LG.print(#currentNode.optimizedBatchMesh, w-300, runningY)
          -- end
       end
 
@@ -1566,32 +1570,32 @@ local function drawUIAroundGraphNodes(w,h)
 
          if currentNode and currentNode.border then
 
-            love.graphics.setFont(smallest)
+            LG.setFont(smallest)
 
-            love.graphics.setColor(1,1,1, 1)
+            LG.setColor(1,1,1, 1)
 
 
 
-            love.graphics.print("tension",   100, 100 )
+            LG.print("tension",   100, 100 )
             
             local v =  h_slider("splinetension", 100, 120, 200,  currentNode.borderTension , 0.00001, 1)
             if v.value ~= nil then
                currentNode.borderTension = v.value
             end
-            love.graphics.print("spacing",   100, 140 )
+            LG.print("spacing",   100, 140 )
 
             local v =  h_slider("splineSpacing", 100, 160, 200,  currentNode.borderSpacing , 2, 50)
             if v.value ~= nil then
                currentNode.borderSpacing = v.value
             end
-            love.graphics.print("thickness",   100, 180 )
+            LG.print("thickness",   100, 180 )
 
             local v =  h_slider("splineLinethick", 100, 200, 200,  currentNode.borderThickness , .1, 10)
             if v.value ~= nil then
                currentNode.borderThickness = v.value
             end
 
-            love.graphics.print("rnd multiplier",   100, 220 )
+            LG.print("rnd multiplier",   100, 220 )
 
             local v =  h_slider("splinerndmul", 100, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
             if v.value ~= nil then
@@ -1617,7 +1621,7 @@ local function drawUIAroundGraphNodes(w,h)
          --       runningY = runningY + 40  -- behind an if !!
 
          --       if imgbutton('children-scale', ui.resize, w - 300, runningY, 'scale group up').clicked  then
-         --          if love.keyboard.isDown('a') then
+         --          if LK.isDown('a') then
          --             resizeGroup(currentNode, childrenInRectangleSelect, .75)
          --          else
          --             resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
@@ -1625,7 +1629,7 @@ local function drawUIAroundGraphNodes(w,h)
          --       end
 
          --       if imgbutton('children-scale', ui.resize, w - 256, runningY, 'scale group down').clicked  then
-         --          if love.keyboard.isDown('a') then
+         --          if LK.isDown('a') then
          --             resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
          --          else
          --             resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
@@ -1658,14 +1662,14 @@ end
 
 function mylib:mousepressed(x,y, button)
    lastDraggedElement = nil
-      local root = mylib.root
+   local root = mylib.root
 
    if editingMode == nil then
       editingMode = 'move'
    end
 
-   if ( love.keyboard.isDown( 'lctrl' )) then
-      local d = findMeshThatsHit(root, x, y, love.keyboard.isDown( 'lctrl' ) )
+   if ( LK.isDown( 'lctrl' )) then
+      local d = findMeshThatsHit(root, x, y, LK.isDown( 'lctrl' ) )
       if d then
          setCurrentNode(d)
          tryToCenterUI(d, root)
@@ -1861,11 +1865,11 @@ function mylib:mousemoved(x,y, dx, dy)
 
    currentlyHoveredUINode = nil
    local snap = false
-   if  love.keyboard.isDown( 'r' ) then
+   if  LK.isDown( 'r' ) then
       snap = true
    end
 
-   if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and editingModeSub ~= 'group-move' and love.mouse.isDown(1) or love.keyboard.isDown('space') then
+   if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and editingModeSub ~= 'group-move' and love.mouse.isDown(1) or LK.isDown('space') then
       
       local ddx,  ddy  = dx, dy
       -- when ingame editing, sometimes you edit a root with a parent 
@@ -2008,7 +2012,7 @@ local function getNodeYPosition(node, lookFor)
 end
 
 local function renderGraphNodes(node, level, startY, beginX, totalHeight)
-   local w, h = getDimensions() --love.graphics.getDimensions( )
+   local w, h = getDimensions() --LG.getDimensions( )
    local beginRightX = beginX + level*6
    local rightX = beginRightX
    local nested = 0
@@ -2107,7 +2111,7 @@ end
 
 function mylib:wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
-   local w, h = getDimensions() --love.graphics.getDimensions()
+   local w, h = getDimensions() --LG.getDimensions()
    local root = mylib.root
 
    if posx < 128 then
@@ -2145,7 +2149,7 @@ function mylib:load(arg)
    
    shapeName = 'untitled'
    shapePath = ''
-   love.keyboard.setKeyRepeat( true )
+   LK.setKeyRepeat( true )
    editingMode = nil
    editingModeSub = nil
    --local ffont = "resources/fonts/cooper-bold-bt.ttf"
@@ -2156,15 +2160,15 @@ function mylib:load(arg)
    local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
    
    --   local otherfont = "resources/fonts/Monaco.ttf"
-   supersmallest = love.graphics.newFont(ffont , 8)
-   smallester = love.graphics.newFont(ffont , 14)
+   supersmallest = LG.newFont(ffont , 8)
+   smallester = LG.newFont(ffont , 14)
 
-   smallest = love.graphics.newFont(ffont , 16)
-   small = love.graphics.newFont(ffont, 24)
-   medium = love.graphics.newFont( ffont, 32)
-   large = love.graphics.newFont(ffont , 48)
+   smallest = LG.newFont(ffont , 16)
+   small = LG.newFont(ffont, 24)
+   medium = LG.newFont( ffont, 32)
+   large = LG.newFont(ffont , 48)
 
-   canvas = love.graphics.newCanvas()
+   canvas = LG.newCanvas()
 
    handCursor = love.mouse.getSystemCursor("hand")
 
@@ -2181,56 +2185,56 @@ function mylib:load(arg)
       {"VertexColor", "float", 4}, -- The x,y position of each vertex.
    }
    ui = {
-      polyline = love.graphics.newImage("resources/ui/polyline.png"),
-      polyline_add = love.graphics.newImage("resources/ui/polyline-add.png"),
-      polyline_edit = love.graphics.newImage("resources/ui/polyline-edit.png"),
-      polyline_remove = love.graphics.newImage("resources/ui/polyline-remove.png"),
-      insert_link = love.graphics.newImage("resources/ui/insert-link.png"),
-      backdrop = love.graphics.newImage("resources/ui/backdrop.png"),
-      grid = love.graphics.newImage("resources/ui/grid.png"),
-      palette = love.graphics.newImage("resources/ui/palette.png"),
-      pen = love.graphics.newImage("resources/ui/pen.png"),
-      pencil = love.graphics.newImage("resources/ui/pencil.png"),
-      polygon = love.graphics.newImage("resources/ui/polygon.png"),
-      add = love.graphics.newImage("resources/ui/add.png"),
-      remove = love.graphics.newImage("resources/ui/remove.png"),
-      delete = love.graphics.newImage("resources/ui/delete.png"),
-      move = love.graphics.newImage("resources/ui/move.png"),
-      visible = love.graphics.newImage("resources/ui/visible.png"),
-      not_visible = love.graphics.newImage("resources/ui/not-visible.png"),
-      resize = love.graphics.newImage("resources/ui/resize.png"),
-      opacity = love.graphics.newImage("resources/ui/opacity.png"),
-      settings = love.graphics.newImage("resources/ui/settings.png"),
-      badge = love.graphics.newImage("resources/ui/badge.png"),
-      layer_group = love.graphics.newImage("resources/ui/layer-group.png"),
-      object_group = love.graphics.newImage("resources/ui/object-group.png"),
-      rotate = love.graphics.newImage("resources/ui/rotate.png"),
-      transform = love.graphics.newImage("resources/ui/transform.png"),
-      next = love.graphics.newImage("resources/ui/next.png"),
-      previous = love.graphics.newImage("resources/ui/previous.png"),
-      lines = love.graphics.newImage("resources/ui/lines.png"),
-      lines2 = love.graphics.newImage("resources/ui/lines2.png"),
-      move_up = love.graphics.newImage("resources/ui/move-up.png"),
-      move_down = love.graphics.newImage("resources/ui/move-down.png"),
-      mesh = love.graphics.newImage("resources/ui/mesh.png"),
-      parent = love.graphics.newImage("resources/ui/parent.png"),
-      folder = love.graphics.newImage("resources/ui/folder.png"),
-      folder_open = love.graphics.newImage("resources/ui/folderopen.png"),
-      pivot = love.graphics.newImage("resources/ui/pivot.png"),
-      pan = love.graphics.newImage("resources/ui/pan.png"),
-      mask = love.graphics.newImage("resources/ui/mask.png"),
-      clone = love.graphics.newImage("resources/ui/clone.png"),
-      joystick = love.graphics.newImage("resources/ui/joystick.png"),
-      transition = love.graphics.newImage("resources/ui/transition.png"),
-      select = love.graphics.newImage("resources/ui/select.png"),
-      hole = love.graphics.newImage("resources/ui/keyhole.png"),
-      change = love.graphics.newImage("resources/ui/change.png"),
-      add_to_list = love.graphics.newImage("resources/ui/add-to-list.png"),
-      flip_vertical = love.graphics.newImage("resources/ui/flip-vertical.png"),
-      flip_horizontal = love.graphics.newImage("resources/ui/flip-horizontal.png"),
-      dopesheet = love.graphics.newImage("resources/ui/spreadsheet.png"),
-      curve = love.graphics.newImage("resources/ui/curve.png"),
-      close_stencil = love.graphics.newImage("resources/ui/close-stencil.png"),
+      polyline = LG.newImage("resources/ui/polyline.png"),
+      polyline_add = LG.newImage("resources/ui/polyline-add.png"),
+      polyline_edit = LG.newImage("resources/ui/polyline-edit.png"),
+      polyline_remove = LG.newImage("resources/ui/polyline-remove.png"),
+      insert_link = LG.newImage("resources/ui/insert-link.png"),
+      backdrop = LG.newImage("resources/ui/backdrop.png"),
+      grid = LG.newImage("resources/ui/grid.png"),
+      palette = LG.newImage("resources/ui/palette.png"),
+      pen = LG.newImage("resources/ui/pen.png"),
+      pencil = LG.newImage("resources/ui/pencil.png"),
+      polygon = LG.newImage("resources/ui/polygon.png"),
+      add = LG.newImage("resources/ui/add.png"),
+      remove = LG.newImage("resources/ui/remove.png"),
+      delete = LG.newImage("resources/ui/delete.png"),
+      move = LG.newImage("resources/ui/move.png"),
+      visible = LG.newImage("resources/ui/visible.png"),
+      not_visible = LG.newImage("resources/ui/not-visible.png"),
+      resize = LG.newImage("resources/ui/resize.png"),
+      opacity = LG.newImage("resources/ui/opacity.png"),
+      settings = LG.newImage("resources/ui/settings.png"),
+      badge = LG.newImage("resources/ui/badge.png"),
+      layer_group = LG.newImage("resources/ui/layer-group.png"),
+      object_group = LG.newImage("resources/ui/object-group.png"),
+      rotate = LG.newImage("resources/ui/rotate.png"),
+      transform = LG.newImage("resources/ui/transform.png"),
+      next = LG.newImage("resources/ui/next.png"),
+      previous = LG.newImage("resources/ui/previous.png"),
+      lines = LG.newImage("resources/ui/lines.png"),
+      lines2 = LG.newImage("resources/ui/lines2.png"),
+      move_up = LG.newImage("resources/ui/move-up.png"),
+      move_down = LG.newImage("resources/ui/move-down.png"),
+      mesh = LG.newImage("resources/ui/mesh.png"),
+      parent = LG.newImage("resources/ui/parent.png"),
+      folder = LG.newImage("resources/ui/folder.png"),
+      folder_open = LG.newImage("resources/ui/folderopen.png"),
+      pivot = LG.newImage("resources/ui/pivot.png"),
+      pan = LG.newImage("resources/ui/pan.png"),
+      mask = LG.newImage("resources/ui/mask.png"),
+      clone = LG.newImage("resources/ui/clone.png"),
+      joystick = LG.newImage("resources/ui/joystick.png"),
+      transition = LG.newImage("resources/ui/transition.png"),
+      select = LG.newImage("resources/ui/select.png"),
+      hole = LG.newImage("resources/ui/keyhole.png"),
+      change = LG.newImage("resources/ui/change.png"),
+      add_to_list = LG.newImage("resources/ui/add-to-list.png"),
+      flip_vertical = LG.newImage("resources/ui/flip-vertical.png"),
+      flip_horizontal = LG.newImage("resources/ui/flip-horizontal.png"),
+      dopesheet = LG.newImage("resources/ui/spreadsheet.png"),
+      curve = LG.newImage("resources/ui/curve.png"),
+      close_stencil = LG.newImage("resources/ui/close-stencil.png"),
    }
 
    cursors = {
@@ -2259,22 +2263,22 @@ function mylib:load(arg)
       x = 128,
    }
    
---   local generated = generatePolygon(0,0, 40, .05, .02 , 6)
---   local points = {}
---   for i = 1, #generated, 2 do
---      table.insert(points, {generated[i], generated[i+1]})
---   end
+   --   local generated = generatePolygon(0,0, 40, .05, .02 , 6)
+   --   local points = {}
+   --   for i = 1, #generated, 2 do
+   --      table.insert(points, {generated[i], generated[i+1]})
+   --   end
 
 
 
---   parentize(root)
+   --   parentize(root)
    currentNode = nil
    currentlyHoveredUINode = nil
 
    backdrop = {
       grid = {cellsize=100}, -- cellsize is in px
       bg_color = {.53, .70, .76},
-      --image = love.graphics.newImage("resources/backdrops/offshore-707.jpg"),
+      --image = LG.newImage("resources/backdrops/offshore-707.jpg"),
       visible = false,
       alpha = 0.5,
       x = 0,
@@ -2311,17 +2315,17 @@ local function drawGrid()
    local size = backdrop.grid.cellsize * scale
    if (size < 10) then return end
 
-   local w, h = getDimensions() --love.graphics.getDimensions( )
+   local w, h = getDimensions() --LG.getDimensions( )
    local vlines = math.floor(w/size)
    local hlines = math.floor(h/size)
    local xOffset = (root.transforms.l[1]) % size
    local yOffset = (root.transforms.l[2]) % size
 
    for x =0, vlines do
-      love.graphics.line(xOffset + x*size, 0,xOffset +  x*size, h)
+      LG.line(xOffset + x*size, 0,xOffset +  x*size, h)
    end
    for y =0, hlines do
-      love.graphics.line( 0, yOffset + y*size, w, yOffset +  y*size)
+      LG.line( 0, yOffset + y*size, w, yOffset +  y*size)
    end
 end
 
@@ -2350,64 +2354,64 @@ function mylib:draw()
 
 	 handleMouseClickStart()
 
-	 local w, h = getDimensions() --love.graphics.getDimensions( )
-         love.graphics.setScissor( 0, 0, w, h )
+	 local w, h = getDimensions() --LG.getDimensions( )
+         LG.setScissor( 0, 0, w, h )
          local rightX = w - (64 + 500+ 10)/2
 
-         love.graphics.setColor(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.8)
+         LG.setColor(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.8)
 
-         love.graphics.rectangle('fill',0,0,w,h)
+         LG.rectangle('fill',0,0,w,h)
 
---         love.graphics.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.4)
+	 --         LG.clear(backdrop.bg_color[1], backdrop.bg_color[2], backdrop.bg_color[3], 0.4)
          
 
 	 if  backdrop.visible then
-	    love.graphics.setColor(1,1,1, backdrop.alpha)
-	    love.graphics.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
+	    LG.setColor(1,1,1, backdrop.alpha)
+	    LG.draw(backdrop.image, backdrop.x, backdrop.y, 0, backdrop.scale, backdrop.scale)
 	 end
 
-	 love.graphics.setWireframe(wireframe )
+	 LG.setWireframe(wireframe )
 	 --print('need to recursivey make bbox so i can make fitting canvas')
 	 renderThings(root)
-         comparemode, comparevalue = love.graphics.getStencilTest( )
+         comparemode, comparevalue = LG.getStencilTest( )
 
          if (comparemode ~= 'always' or comparevalue ~= 0) then
             print('disabling stencil for ya, you still hvae to fix something in the tree though, probably a missing close stencil command')
-            love.graphics.setStencilTest()
+            LG.setStencilTest()
          end
          
 	 if (currentlyHoveredUINode) then
 	    local alpha = 0.5 + math.sin(step/100)
-	    love.graphics.setColor(alpha,1,1, alpha) -- i want this blinkiung
+	    LG.setColor(alpha,1,1, alpha) -- i want this blinkiung
 
             -- todo this is broken since i made root local ?!
 	    local editing = false --makeVertices(currentlyHoveredUINode)
             --print(inspect(currentlyHoveredUINode))
 	    if (editing and #editing > 0) then
 	       local editingMesh = makeMeshFromVertices(editing)
-	       love.graphics.draw(editingMesh,  currentlyHoveredUINode._parent.transforms._g)
+	       LG.draw(editingMesh,  currentlyHoveredUINode._parent.transforms._g)
 	    end
 	 end
 
-	 love.graphics.setWireframe( false )
+	 LG.setWireframe( false )
 	 drawUIAroundGraphNodes(w,h)
 
 	 if currentNode then
 	    --local t = root.transforms._l
 	    local t = root.transforms._l
 	    local x,y = t:transformPoint(0,0)
-	    love.graphics.setColor(1,1,1)
-	    love.graphics.line(x-5, y, x+5, y)
-	    love.graphics.line(x, y-5, x, y+5)
+	    LG.setColor(1,1,1)
+	    LG.line(x-5, y, x+5, y)
+	    LG.line(x, y-5, x, y+5)
 	 end
 
 	 if currentNode and currentNode.folder and  currentNode.transforms._g then
 	    local t = currentNode.transforms.l
 	    local pivotX, pivotY = currentNode.transforms._g:transformPoint( t[6], t[7] )
-	    love.graphics.setColor(0,0,0)
-	    love.graphics.circle("line", pivotX-1, pivotY, 10)
-	    love.graphics.setColor(1,1,1)
-	    love.graphics.circle("line", pivotX, pivotY, 10)
+	    LG.setColor(0,0,0)
+	    LG.circle("line", pivotX-1, pivotY, 10)
+	    LG.setColor(1,1,1)
+	    LG.circle("line", pivotX, pivotY, 10)
 	 end
 
 	 if editingModeSub == 'change-perspective' and currentNode then
@@ -2444,21 +2448,21 @@ function mylib:draw()
 			   if currentNode.children[i].perspectiveMesh then
 			      -- make a new one if data is not same length
 			      if #result ~= currentNode.children[i].perspectiveMesh:getVertexCount() then
-				 currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+				 currentNode.children[i].perspectiveMesh = LG.newMesh(simple_format, result , "triangles", "stream")
 			      else
 				 --print('slushing')
 				 currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
 			      end
 			   else
 			      -- make new one cause
-			      currentNode.children[i].perspectiveMesh = love.graphics.newMesh(simple_format, result , "triangles", "stream")
+			      currentNode.children[i].perspectiveMesh = LG.newMesh(simple_format, result , "triangles", "stream")
 			   end
 
-			   love.graphics.setColor(currentNode.children[i].color[1],
-						  currentNode.children[i].color[2],
-						  currentNode.children[i].color[3],0.3)
-			   love.graphics.draw(currentNode.children[i].perspectiveMesh,
-					      currentNode.transforms._g)
+			   LG.setColor(currentNode.children[i].color[1],
+				       currentNode.children[i].color[2],
+				       currentNode.children[i].color[3],0.3)
+			   LG.draw(currentNode.children[i].perspectiveMesh,
+				   currentNode.transforms._g)
 
 			end
 		     end
@@ -2468,13 +2472,13 @@ function mylib:draw()
 	       local TLX,TLY = perspective[1][1], perspective[1][2]
 	       local BRX,BRY = perspective[3][1], perspective[3][2]
 
-	       love.graphics.setColor(1,1,1)
+	       LG.setColor(1,1,1)
 
 	       function simplehover(x,y, width)
 		  if pointInRect(mx,my, x, y, width,width) then
-		     love.graphics.rectangle('fill', x,y, width,width)
+		     LG.rectangle('fill', x,y, width,width)
 		  else
-		     love.graphics.rectangle('line', x,y, width,width)
+		     LG.rectangle('line', x,y, width,width)
 		  end
 	       end
 
@@ -2482,7 +2486,7 @@ function mylib:draw()
 		  local nxt = i -1
 		  if nxt < 1 then nxt = 4 end
 
-		  love.graphics.line(
+		  LG.line(
 		     perspective[i][1], perspective[i][2],
 		     perspective[nxt][1], perspective[nxt][2]
 		  )
@@ -2505,8 +2509,8 @@ function mylib:draw()
 	       table.insert(transformedPoints, {lx, ly})
 	    end
 
-	    love.graphics.setLineWidth(2.0  )
-	    love.graphics.setColor(1,1,1)
+	    LG.setLineWidth(2.0  )
+	    LG.setColor(1,1,1)
 	    local w, h = getLocalDelta(t, 10, 10)
 	    w = math.max(math.abs(w), math.abs(h))
 	    for i=1, #points do
@@ -2515,7 +2519,7 @@ function mylib:draw()
 		  local scale = root.transforms.l[4]
 		  if pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
 		     kind= "fill"
-		     love.graphics.print(round2(points[i][1],3)..", "..round2(points[i][2],3), 8, love.graphics.getHeight()-32)
+		     LG.print(round2(points[i][1],3)..", "..round2(points[i][2],3), 8, LG.getHeight()-32)
 
 		  end
 	       end
@@ -2532,63 +2536,63 @@ function mylib:draw()
 	       local dot_x = transformedPoints[i][1] - 5
 	       local dot_y =  transformedPoints[i][2] - 5
 	       local dot_size = 10
-	       love.graphics.setColor(0,0,0)
-	       love.graphics.rectangle(kind, dot_x-1, dot_y, dot_size, dot_size)
+	       LG.setColor(0,0,0)
+	       LG.rectangle(kind, dot_x-1, dot_y, dot_size, dot_size)
 
-	       love.graphics.setColor(1,1,1)
-	       love.graphics.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
+	       LG.setColor(1,1,1)
+	       LG.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
 	    end
 
 
 	 end
-	 love.graphics.setLineWidth(1)
-	 love.graphics.setColor(1,1,1, 1)
+	 LG.setLineWidth(1)
+	 LG.setColor(1,1,1, 1)
 
 	 if (editingMode == 'rectangle-select' or  editingModeSub =='rectangle-point-select')  and rectangleSelect.startP and rectangleSelect.endP then
-	    love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.startP.y)
-	    love.graphics.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
-	    love.graphics.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
-	    love.graphics.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
+	    LG.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.startP.y)
+	    LG.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
+	    LG.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
+	    LG.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
 
 	 end
 
-	 love.graphics.setColor(1,1,1, 0.1)
+	 LG.setColor(1,1,1, 0.1)
 	 drawGrid()
 
-	 love.graphics.push()
+	 LG.push()
 
 	 local s = 1
 
 	 if (editingMode == 'folder' and currentNode and  currentNode.transforms) then
 
 	    if (showTheParentTransforms) then
-	       love.graphics.setFont(smallest)
+	       LG.setFont(smallest)
 
-	       love.graphics.setColor(1,1,1, 1)
+	       LG.setColor(1,1,1, 1)
 
 	       local scrollerWidth = 314*2
-	       love.graphics.print("scale x and y",  labelPos(calcX(1), calcY(2))  )
+	       LG.print("scale x and y",  labelPos(calcX(1), calcY(2))  )
 	       if (currentNode.transforms.l[4] == currentNode.transforms.l[5]) then
 		  local v =  h_slider("folder-scale-xy", calcX(1), calcY(2), scrollerWidth,  currentNode.transforms.l[5] , 0.00001, 10)
 		  if (v.value ~= nil) then
 		     currentNode.transforms.l[4] = v.value
 		     currentNode.transforms.l[5] = v.value
 		     editingModeSub = 'folder-scale'
-		     love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(2))
+		     LG.print(string.format("%0.2f", v.value), calcX(1), calcY(2))
 		  end
 	       end
 
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("scale x",  labelPos(calcX(1), calcY(3)) )
+	       LG.setColor(1,1,1, 1)
+	       LG.print("scale x",  labelPos(calcX(1), calcY(3)) )
 	       local v =  h_slider("folder-scale-x", calcX(1),  calcY(3) , scrollerWidth,  currentNode.transforms.l[4] , -2, 2)
 	       if (v.value ~= nil) then
 		  currentNode.transforms.l[4] = v.value
 		  --currentNode.transforms.l[5] = v.value
 		  editingModeSub = 'folder-scale'
-		  love.graphics.print(string.format("%0.2f", v.value), calcX(1),  calcY(3))
+		  LG.print(string.format("%0.2f", v.value), calcX(1),  calcY(3))
 	       end
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print(
+	       LG.setColor(1,1,1, 1)
+	       LG.print(
                   "scale y",  labelPos(calcX(1), calcY(4)) )
 
 	       local v =  h_slider("folder-scale-y", calcX(1), calcY(4), scrollerWidth,  currentNode.transforms.l[5] , -2, 2)
@@ -2596,35 +2600,35 @@ function mylib:draw()
 		  --currentNode.transforms.l[4] = v.value
 		  currentNode.transforms.l[5] = v.value
 		  editingModeSub = 'folder-scale'
-		  love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(4))
+		  LG.print(string.format("%0.2f", v.value), calcX(1), calcY(4))
 	       end
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("skew x",  labelPos(calcX(1), calcY(5)) )
+	       LG.setColor(1,1,1, 1)
+	       LG.print("skew x",  labelPos(calcX(1), calcY(5)) )
 	       local v = h_slider('folder_skew_x', calcX(1), calcY(5), scrollerWidth, currentNode.transforms.l[8] or 0,  -math.pi, math.pi )
 	       if (v.value ~= nil) then
 		  currentNode.transforms.l[8] = v.value
-		  love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(5))
+		  LG.print(string.format("%0.2f", v.value), calcX(1), calcY(5))
 	       end
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("skew y",  labelPos(calcX(1), calcY(6))  )
+	       LG.setColor(1,1,1, 1)
+	       LG.print("skew y",  labelPos(calcX(1), calcY(6))  )
 	       local v = h_slider('folder_skew_y', calcX(1), calcY(6), scrollerWidth, currentNode.transforms.l[9] or 0,    -math.pi, math.pi )
 	       if (v.value ~= nil) then
 		  currentNode.transforms.l[9] = v.value
-		  love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(6))
+		  LG.print(string.format("%0.2f", v.value), calcX(1), calcY(6))
 	       end
 
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("rotate", labelPos(calcX(1), calcY(7)) )
+	       LG.setColor(1,1,1, 1)
+	       LG.print("rotate", labelPos(calcX(1), calcY(7)) )
 	       local v =  h_slider("folder-rotate", calcX(1),  calcY(7) , scrollerWidth,  currentNode.transforms.l[3] , -1 * math.pi, 1 * math.pi)
 
 	       if (v.value ~= nil) then
 		  currentNode.transforms.l[3] = v.value
 		  editingModeSub = 'folder-rotate'
-		  love.graphics.print(string.format("%0.2f", v.value), calcX(1), calcY(7))
+		  LG.print(string.format("%0.2f", v.value), calcX(1), calcY(7))
 	       end
 	       --end
 	    end
-	    love.graphics.setFont(small)
+	    LG.setFont(small)
 	 end
 
 	 if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
@@ -2648,8 +2652,8 @@ function mylib:draw()
 	       if (currentNode.color[1] == rgb[1]/255 and
 		   currentNode.color[2] == rgb[2]/255 and
 		   currentNode.color[3] == rgb[3]/255) then
-		  love.graphics.setColor(1,1,1)
-		  love.graphics.rectangle("fill",x-2,y-2,thumbSize+4,thumbSize+4)
+		  LG.setColor(1,1,1)
+		  LG.rectangle("fill",x-2,y-2,thumbSize+4,thumbSize+4)
 	       end
 
 	       if rgbbutton('palette#'..i, {rgb[1]/255,rgb[2]/255,rgb[3]/255}, x,y ,thumbSize).clicked then
@@ -2660,12 +2664,12 @@ function mylib:draw()
 	       --x = x + 50
 
 	    end
-	    love.graphics.setColor(1,1,1, 1)
-	    love.graphics.print("alpha",  labelPos(calcX(0), calcY(10)) )
+	    LG.setColor(1,1,1, 1)
+	    LG.print("alpha",  labelPos(calcX(0), calcY(10)) )
 	    local v =  h_slider("polyline_alpha", calcX(0), calcY(10), 100,  currentNode.color[4] , 0, 1)
 	    if (v.value ~= nil) then
 	       currentNode.color[4] = v.value
-	       love.graphics.print(currentNode.color[4], calcX(0), calcY(10))
+	       LG.print(currentNode.color[4], calcX(0), calcY(10))
 	    end
 	 end
 
@@ -2682,12 +2686,12 @@ function mylib:draw()
 	       backdrop.visible = not backdrop.visible
 	    end
 
-	    love.graphics.setColor(1,1,1, 1)
-	    love.graphics.print("simplify svg",  labelPos(calcX(1), calcY(1)) )
+	    LG.setColor(1,1,1, 1)
+	    LG.print("simplify svg",  labelPos(calcX(1), calcY(1)) )
 	    local v =  h_slider("simplify_value", calcX(1), calcY(1), 200,  simplifyValue , 0, 10)
 	    if (v.value ~= nil) then
 	       simplifyValue= v.value
-	       love.graphics.print(simplifyValue, calcX(1), 20)
+	       LG.print(simplifyValue, calcX(1), 20)
 	    end
 
 	    if (backdrop.visible) then
@@ -2699,22 +2703,22 @@ function mylib:draw()
 		  end
 	       end
 
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("alpha",  labelPos(calcX(10), calcY(1)) )
+	       LG.setColor(1,1,1, 1)
+	       LG.print("alpha",  labelPos(calcX(10), calcY(1)) )
 	       local vslider =  h_slider("backdrop_alpha", calcX(10), calcY(1), 200, backdrop.alpha, 0, 1)
 	       if (vslider.value ~= nil) then
 		  backdrop.alpha = vslider.value
 		  editingModeSub = nil
-		  love.graphics.print(string.format("%0.2f", vslider.value),  calcX(10), calcY(1))
+		  LG.print(string.format("%0.2f", vslider.value),  calcX(10), calcY(1))
 	       end
 
-	       love.graphics.setColor(1,1,1, 1)
-	       love.graphics.print("scale",  labelPos(calcX(18), calcY(1)) )
+	       LG.setColor(1,1,1, 1)
+	       LG.print("scale",  labelPos(calcX(18), calcY(1)) )
 	       local hslider =  h_slider("backdrop_scale", calcX(18), calcY(1), 200, backdrop.scale, 0, 5)
 	       if (hslider.value ~= nil) then
 		  backdrop.scale = hslider.value
 		  editingModeSub = nil
-		  love.graphics.print(string.format("%0.2f", hslider.value),  calcX(18), calcY(1))
+		  LG.print(string.format("%0.2f", hslider.value),  calcX(18), calcY(1))
 	       end
 	    end
 
@@ -2737,13 +2741,13 @@ function mylib:draw()
 
 	 if  editingMode ~= 'dopesheet' then
 	    if currentNode  then
-	       love.graphics.setColor(.1,.1,.1, 0.6)
-	       --love.graphics.rectangle('fill',0,h-64,w,64)
+	       LG.setColor(.1,.1,.1, 0.6)
+	       --LG.rectangle('fill',0,h-64,w,64)
                
             end
 
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.rectangle("fill", sceneGraph.x, sceneGraph.topY -20, 20, 20)
+            LG.setColor(0,0,0,1)
+            LG.rectangle("fill", sceneGraph.x, sceneGraph.topY -20, 20, 20)
             if getUIRect('grow-shrink-graph', sceneGraph.x, sceneGraph.topY -20, 20,20).clicked then
 
                print(sceneGraph.maximized)
@@ -2764,21 +2768,21 @@ function mylib:draw()
             end
             
             
-	    love.graphics.setFont(smallester)
+	    LG.setFont(smallester)
 
             
-            love.graphics.setScissor( 0, sceneGraph.topY, w, sceneGraph.height-20 )
+            LG.setScissor( 0, sceneGraph.topY, w, sceneGraph.height-20 )
 
             
             
 	    local totalHeightGraphNodes = renderGraphNodes(root, 0, sceneGraph.topY, sceneGraph.x, sceneGraph.height -20)
-            love.graphics.setScissor()
+            LG.setScissor()
             
 	    if (scrollviewOffset > totalHeightGraphNodes) then
 	       scrollviewOffset = totalHeightGraphNodes
 	    end
 
-	    love.graphics.setFont(small)
+	    LG.setFont(small)
 	    local scrollBarH =  sceneGraph.height -20
             --print(scrollviewOffset)
 	    if totalHeightGraphNodes > scrollBarH  then
@@ -2815,12 +2819,12 @@ function mylib:draw()
 
 	       end
                if #childrenInRectangleSelect > 0 then
-                  love.graphics.print(#childrenInRectangleSelect, rightX - 100, calcY(0))
+                  LG.print(#childrenInRectangleSelect, rightX - 100, calcY(0))
                end
                -- todo hier was ik
 	       if true and #childrenInRectangleSelect > 0  then
                   --print(type (childrenInRectangleSelect[1]))
-		  if love.keyboard.isDown("delete") then
+		  if LK.isDown("delete") then
 		     local indexes = type(childrenInRectangleSelect[1]) == "number"
 		     if indexes then
 		     else
@@ -2845,7 +2849,7 @@ function mylib:draw()
 
                   -- if true then
                   --    if imgbutton('group-scale-down', ui.resize, w - 300, 500).clicked  then
-                  --       if love.keyboard.isDown('a') then
+                  --       if LK.isDown('a') then
                   --          resizeGroup(currentNode, childrenInRectangleSelect, .75)
                   --       else
                   --          resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
@@ -2853,7 +2857,7 @@ function mylib:draw()
                   --    end
 
                   --    if imgbutton('group-scale-up', ui.resize, w - 256, 500).clicked  then
-                  --       if love.keyboard.isDown('a') then
+                  --       if LK.isDown('a') then
                   --          resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
                   --       else
                   --          resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
@@ -2923,9 +2927,9 @@ function mylib:draw()
 
 
 
---            if imgbutton('add-something', ui.add, rightX, 16).clicked then
---               openedAddPanel = not openedAddPanel
---            end
+	    --            if imgbutton('add-something', ui.add, rightX, 16).clicked then
+	    --               openedAddPanel = not openedAddPanel
+	    --            end
 
 
             -- if openedAddPanel then
@@ -3021,37 +3025,37 @@ function mylib:draw()
 	       if (changeName) then
 		  local str =  currentNode and currentNode.name  or ""
 		  local substr = string.sub(str, 1, changeNameCursor)
-		  local cursorX = (love.graphics.getFont():getWidth(substr))
-		  local cursorH = (love.graphics.getFont():getHeight(str))
-		  love.graphics.setColor(1,1,1,0.5)
-		  love.graphics.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
-		  love.graphics.setColor(1,1,1)
-		  love.graphics.print(str , 0, h*0.75 - cursorH - 20)
-		  love.graphics.setColor(1,1,1, math.abs(math.sin(step/ 100)))
-		  love.graphics.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
-                  love.graphics.setColor(1,1,1)
+		  local cursorX = (LG.getFont():getWidth(substr))
+		  local cursorH = (LG.getFont():getHeight(str))
+		  LG.setColor(1,1,1,0.5)
+		  LG.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
+		  LG.setColor(1,1,1)
+		  LG.print(str , 0, h*0.75 - cursorH - 20)
+		  LG.setColor(1,1,1, math.abs(math.sin(step/ 100)))
+		  LG.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
+                  LG.setColor(1,1,1)
 
 		  if lastClickedGraphButton then
 
 
                      local sx = lastClickedGraphButton.x+24+12
                      local sy = lastClickedGraphButton.y+2
-                        
-		     love.graphics.rectangle('line',sx,sy , 100,23)
-		     love.graphics.setColor(1,0.75,0.75)
-		     love.graphics.setFont(smallester)
+		     
+		     LG.rectangle('line',sx,sy , 100,23)
+		     LG.setColor(1,0.75,0.75)
+		     LG.setFont(smallester)
                      
-		     love.graphics.print(str,sx,sy)
+		     LG.print(str,sx,sy)
                      
-                     love.graphics.setColor(1,1,1)
+                     LG.setColor(1,1,1)
 
                      
                      --print(changeNameCursor)
 
                      local substr =(string.sub(str, 1 , changeNameCursor))
-                     local cursorX = (love.graphics.getFont():getWidth(substr))
+                     local cursorX = (LG.getFont():getWidth(substr))
                      --print(cursorX)
-                     love.graphics.rectangle('line', sx + cursorX, sy, 1, 23)
+                     LG.rectangle('line', sx + cursorX, sy, 1, 23)
 
                   end
                   
@@ -3060,16 +3064,16 @@ function mylib:draw()
 	    end
 	 end
 
-	 love.graphics.pop()
-	 love.graphics.setFont(small)
+	 LG.pop()
+	 LG.setFont(small)
 	 if not quitDialog then
-	    love.graphics.print(tostring(love.timer.getFPS( )), 2,0)
-	    love.graphics.print(shapeName, 64, 0)
+	    LG.print(tostring(love.timer.getFPS( )), 2,0)
+	    LG.print(shapeName, 64, 0)
 	 end
 
 	 if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
             --            print(inspect(lastDraggedElement))
-	    love.graphics.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
+	    LG.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
 	 end
 
 	 -- if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
@@ -3087,22 +3091,22 @@ function mylib:draw()
 
 	 if quitDialog then
 	    local quitStr = "Quit? Seriously?! [ESC] "
-	    love.graphics.setFont(large)
-	    love.graphics.setColor(0,0,0, 1)
-	    love.graphics.print(quitStr, 114, 11)
-	    love.graphics.setColor(1,0.5,0.5, 1)
-	    love.graphics.print(quitStr, 116, 13)
-	    love.graphics.setColor(1,1,1, 1)
-	    love.graphics.print(quitStr, 115, 12)
+	    LG.setFont(large)
+	    LG.setColor(0,0,0, 1)
+	    LG.print(quitStr, 114, 11)
+	    LG.setColor(1,0.5,0.5, 1)
+	    LG.print(quitStr, 116, 13)
+	    LG.setColor(1,1,1, 1)
+	    LG.print(quitStr, 115, 12)
 	 end
 
 	 if fileDropPopup then
-	    love.graphics.setFont(smallest)
-	    love.graphics.setColor(1,1,1, 1)
-	    love.graphics.rectangle("fill", 100, 100, w-200, h-200)
-	    love.graphics.setColor(0,0,0)
+	    LG.setFont(smallest)
+	    LG.setColor(1,1,1, 1)
+	    LG.rectangle("fill", 100, 100, w-200, h-200)
+	    LG.setColor(0,0,0)
 	    local name =  fileDropPopup:getFilename()
-	    love.graphics.print("dropped file: "..name, 140, 120)
+	    LG.print("dropped file: "..name, 140, 120)
             
 	    if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
 	       if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
@@ -3134,22 +3138,22 @@ function mylib:draw()
 	    else
 
                
-	       --love.graphics.print("this isnt a good filetype", 140, 170)
+	       --LG.print("this isnt a good filetype", 140, 170)
                if currentNode and currentNode.texture then
                   --print(name, currentNode.type)
 		  -- dont know where to put this yet
-		 
+		  
 
                   local s, e = name:find("/experiments/", 1 , true)
 
 		  -- if folderPath then
 		  --    local s, e = folderPath:find("experiments/")
 		  --    if (e) then
-		--	 local prefix = folderPath:sub(e+1) 
-		 --		 print('texture prefix: ', prefix)
-	--	      end
-	--	   end
-		   
+		  --	 local prefix = folderPath:sub(e+1) 
+		  --		 print('texture prefix: ', prefix)
+		  --	      end
+		  --	   end
+		  
                   if s then
 		     local url = name:sub(s)
 		     
@@ -3172,7 +3176,7 @@ function mylib:draw()
                      --local url = name:sub(s)
 		     --print('when the editor is run as an ingame editor, the path is off', url)
 		     -- todo check if png/jpg
-                     love.graphics.print("asset: "..url, 140, 150)
+                     LG.print("asset: "..url, 140, 150)
                      currentNode.texture.url= url
                      recursivelyMakeTextures(currentNode)
                   end
@@ -3188,8 +3192,8 @@ function mylib:draw()
    end
    local work =  nil
    console.draw()
-   --love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
-   --love.graphics.print(inspect(love.graphics.getStats()), 10, 40)
+   --LG.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+   --LG.print(inspect(LG.getStats()), 10, 40)
 end
 
 
@@ -3281,7 +3285,7 @@ function mylib:keypressed(key, scancode, isrepeat)
       end
       --if (key == 'i' and not changeName) then
       -- screenshot
-      --renderNodeIntoCanvas(root, love.graphics.newCanvas(1024, 1024),  shapeName..".polygons.png")
+      --renderNodeIntoCanvas(root, LG.newCanvas(1024, 1024),  shapeName..".polygons.png")
       --end
       if (key == 'p' and not changeName) then
 	 if not profiling then
@@ -3363,7 +3367,7 @@ function mylib:keypressed(key, scancode, isrepeat)
 	 end
 
 	 love.filesystem.write(path, inspect(toSave, {indent=""}))
-	 renderNodeIntoCanvas(root, love.graphics.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
+	 renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
 	 local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
 	 --print('open url:', openURL)
 	 love.system.openURL(openURL)
@@ -3371,7 +3375,7 @@ function mylib:keypressed(key, scancode, isrepeat)
 
       if key == 'a' and not changeName then
          print("printing a large file")
-	 renderNodeIntoCanvas(root, love.graphics.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
+	 renderNodeIntoCanvas(root, LG.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
 
       end
       
@@ -3399,7 +3403,7 @@ function mylib:keypressed(key, scancode, isrepeat)
       end
 
       if #childrenInRectangleSelect > 0 and currentNode then
-	 local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+	 local shift = LK.isDown("lshift") or LK.isDown("rshift")
 	 if (key == 'left') then
 	    movePoints(currentNode, shift and -10 or -1, 0)
 	 end
