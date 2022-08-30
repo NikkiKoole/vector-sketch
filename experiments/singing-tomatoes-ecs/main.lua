@@ -198,7 +198,7 @@ function love.draw()
          else
             part = 0
          end
-         mylib:setDimensions(w*part,h)
+         mylib:resize(w*part,h)
 
 
       end
@@ -227,7 +227,7 @@ function love.mousereleased(x,y,button)
 
 end
 function love.resize(w,h)
-   mylib:setDimensions(w*part,h)
+   mylib:resize(w*part,h)
 end
 function love.filedropped(f)
    mylib:filedropped(f)
@@ -337,7 +337,7 @@ function love.load()
    reloadOrigin = nil
    part = 0.0
    local w,h = love.graphics.getDimensions()
-   mylib:setDimensions(w*part,h)
+   mylib:resize(w*part,h)
    mylib:load(arg)
    
    samples = {}

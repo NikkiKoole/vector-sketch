@@ -106,7 +106,7 @@ function love.load(arg)
    root.dirty = true
    mylib:setRoot(root)
 
-   mylib:setDimensions(w*part,h)
+   mylib:resize(w*part,h)
    mylib:load(arg)
 end
 
@@ -122,8 +122,8 @@ function love.draw()
 end
 
 function love.resize(w,h)
-   mylib:setDimensions(w*part,h)
-
+   mylib:resize(w*part,h)
+   
 end
 
 function love.filedropped(file)

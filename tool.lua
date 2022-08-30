@@ -77,18 +77,22 @@ function mylib:setRoot(root, folderPath)
 end
 
 
-function mylib:setDimensions(w,h)
-   mylib.w =w
-   mylib.h =h
-end
-
-
 local function getDimensions()
    return mylib.w, mylib.h
-   --print(mylib.w, mylib.h)
-   --local w,h = LG.getDimensions( )
-   --return w/2,h
 end
+function mylib:resize(w,h)
+   mylib.w =w
+   mylib.h =h
+   sceneGraph = {
+      maximized = false,
+      topY = 90,
+      height= h-90,
+      x = w-160,
+   }
+end
+
+
+
 
 
 local function getCircumference()
@@ -192,7 +196,6 @@ local function tryToCenterUI(node2)
    recursiveOpenSome(root, reversePath)
    local ry = recursiveGetRunningYForNode(root, node2, 0)
    local w, h = getDimensions()
-   --LG.getDimensions( )
    if ry > h then
       scrollviewOffset = ry
    else
@@ -366,17 +369,6 @@ end
 
 local function addThingAtEnd(thing, parent)
    thing._parent = parent
-
-   --
-   -- todo this crashed on not having children
-   if not parent.children then
-      --      print('sasdasdasd')
-      --      print(inspect(thing))
-      --      print(inspect(parent))
-
-   end
-   
-
    table.insert(parent.children, #parent.children + 1, thing)
 end
 
@@ -483,13 +475,14 @@ end
 ------------ editor specific code
 
 local function drawUIAroundGraphNodes(w,h)
+   local root = mylib.root -- needed for some functions
 
    local rows = {}
 
    
    local row0 = {
-      startX=10,
-      startY=h*0.75 - 40,
+      startX=w - 200,
+      startY=10,
    }
    row0.runningX = row0.startX
    row0.runningY = row0.startY
@@ -539,7 +532,6 @@ local function drawUIAroundGraphNodes(w,h)
          {
             'add-shape', ui.object_group, 'add a shape',
             function()
-               --openedAddPanel = not openedAddPanel
 	       local shape = {
 		  color = {0,0,0,1},
 		  outline = true,
@@ -572,7 +564,6 @@ local function drawUIAroundGraphNodes(w,h)
          {
             'add-folder', ui.folder, 'add a folder',
             function()
-               --openedAddPanel = not openedAddPanel
 	       local f = makeNewFolder()
 	       editingMode = 'polyline'
 	       editingModeSub = 'polyline-insert'
@@ -592,12 +583,12 @@ local function drawUIAroundGraphNodes(w,h)
 
    
    local row1 = {
-      startX=10,
-      startY=h*0.75,
+      startX=w - 240,
+      startY=50,
    }
    row1.runningX = row1.startX
    row1.runningY = row1.startY
-
+   table.insert(row1, "whitespace")
    if (currentNode) then
 
       table.insert(
@@ -634,7 +625,7 @@ local function drawUIAroundGraphNodes(w,h)
          }
       )
 
-      table.insert(row1, "newline")
+     -- table.insert(row1, "newline")
       
       table.insert(
          row1,
@@ -660,7 +651,9 @@ local function drawUIAroundGraphNodes(w,h)
    end
 
    table.insert(row1, "newline")
-   table.insert(row1, "whitespace")
+   table.insert(row1, "newline")
+
+  -- table.insert(row1, "whitespace")
    
 
    if (currentNode) then
@@ -680,7 +673,7 @@ local function drawUIAroundGraphNodes(w,h)
       end
    end
    table.insert(row1, "newline")
-   table.insert(row1, "whitespace")
+   --table.insert(row1, "whitespace")
 
    if (currentNode) then
       local index = getIndex(currentNode)
@@ -705,8 +698,8 @@ local function drawUIAroundGraphNodes(w,h)
 
 
    local row2 = {
-      startX=256 + 40,
-      startY=h*0.75,
+      startX=w - 300 - 160,
+      startY=h - 150,
    }
    row2.runningX = row2.startX
    row2.runningY = row2.startY
@@ -715,7 +708,6 @@ local function drawUIAroundGraphNodes(w,h)
    -- folder
    
    if editingMode == 'folder' and currentNode and currentNode.folder then
-      --print('new stuff ayoo!')
       table.insert(
          row2,
          {
@@ -1212,210 +1204,263 @@ local function drawUIAroundGraphNodes(w,h)
    
 
    table.insert(rows, row2)
-   
+
+
+   local row3 = {
+      startX=w -400,
+      startY=10,
+   }
+   row3.runningX = row3.startX
+   row3.runningY = row3.startY
+
+   if (#childrenInRectangleSelect > 0) then
+      table.insert(
+	 row3,
+	 {
+	    'connector-group', ui.parent,'parentize',
+	    function()
+	       lastDraggedElement = {id = 'connector-group', pos = {row3.runningX, row3.runningY} }
+	    end
+	 }
+      )
+      
+      table.insert(
+	 row3,
+	 {
+	    'object_group', ui.object_group, 'turn group to object',
+	    function()
+	       for i =1, #childrenInRectangleSelect do
+			local n = childrenInRectangleSelect[i]
+			table.remove(n._parent.children, getIndex(n))
+		     end
+
+		     local shape = {
+			folder = true,
+			transforms =  {l={0,0,0,1,1,0,0, 0,0}},
+			children = {}
+		     }
+				     
+		     if not currentNode then
+			shape._parent = root
+			addShapeAtRoot(shape)
+		     else
+			addThingAtEnd(shape, currentNode)
+		     end
+		     local f = shape
+
+		     local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
+
+		     local w2 = (brx - tlx)/2
+		     local h2 = (bry - tly)/2
+		     local offX = -  (tlx + w2)
+		     local offY = -  (tly + h2)
+
+		     recenterGroup(childrenInRectangleSelect, offX, offY)
+		     f.children = childrenInRectangleSelect
+		     parentize(f._parent)
+		     setPos(f, -offX, -offY)
+		     meshAll(f._parent)
+		     childrenInRectangleSelect = {}
+
+
+	    end
+	 }
+      )
+      
+   end
+
+
+
+   table.insert(
+      row3,
+      {
+	 'rectangle-select', ui.select, 'rectangle select',
+	 function()
+	    if (editingMode == 'rectangle-select') then
+	       editingMode = nil
+	       editingModeSub = nil
+	       print('todo take me where i came from')
+	    else
+	       editingMode = 'rectangle-select'
+	    end
+	 end
+      }
+   )
+
+   if (#childrenInRectangleSelect > 0) then
+      table.insert(row3, "printChildrenInRectangleSelect")
+
+      table.insert(
+	 row3,
+	 {
+	    'group-move', ui.move, 'move group',
+	    function()
+	       if (editingModeSub == 'group-move') then
+		  editingModeSub = nil
+	       else
+		  editingModeSub = 'group-move'
+	       end
+	       
+	    end
+	 }
+      )
+      
+      
+   end
+
+   table.insert(rows, row3)
 
 
    for ri = 1, #rows do
       local row = rows[ri]
       for i =1, #row do
-         local v = row[i]
-         --print(inspect(v))
-         if (type(v) == 'table') then
-            
-            if imgbutton(v[1], v[2], row.runningX, row.runningY, v[3]).clicked then
-               v[4]()
-            end
-            
-            row.runningX = row.runningX + 40
-         end
-         if (type(v) == 'string') then
-            if v == 'newline' then
-               row.runningX = row.startX
-               row.runningY = row.runningY + 40
-            end
-            if v == 'whitespace' then
-               row.runningX = row.runningX + 40
-            end
-            -- the 'exceptions or lets call them hacks'
-            LG.setColor(1,1,1,1)
-            if v == 'printChildrenInRectangleSelect' then
-               if (#childrenInRectangleSelect > 0) then
-                  LG.print(#childrenInRectangleSelect, row.runningX-40, row.runningY)
-               end
-            end
-            if v == 'printOptimizedBatchMesh' then
-               if currentNode and currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
-                  LG.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
-               end
-            end
+	 local v = row[i]
+	 if (type(v) == 'table') then
+	    
+	    if imgbutton(v[1], v[2], row.runningX, row.runningY, v[3]).clicked then
+	       v[4]()
+	    end
+	    
+	    row.runningX = row.runningX + 40
+	 end
+	 if (type(v) == 'string') then
+	    if v == 'newline' then
+	       row.runningX = row.startX
+	       row.runningY = row.runningY + 40
+	    end
+	    if v == 'whitespace' then
+	       row.runningX = row.runningX + 40
+	    end
+	    -- the 'exceptions or lets call them hacks'
+	    LG.setColor(1,1,1,1)
+	    if v == 'printChildrenInRectangleSelect' then
+	       if (#childrenInRectangleSelect > 0) then
+		  LG.print(#childrenInRectangleSelect, row.runningX-40, row.runningY)
+	       end
+	    end
+	    if v == 'printOptimizedBatchMesh' then
+	       if currentNode and currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
+		  LG.print(#currentNode.optimizedBatchMesh, row.runningX-40, row.runningY)
+	       end
+	    end
 
-            if v =='9grid' then
-               LG.setColor(1,1,1,.5)
-               ----------
-               local runningX = row.runningX
-               local runningY = row.runningY
-               local oldRunningX = row.runningX
+	    if v =='9grid' then
+	       LG.setColor(1,1,1,.5)
+	       ----------
+	       local runningX = row.runningX
+	       local runningY = row.runningY
+	       local oldRunningX = row.runningX
 
 
-               runningX = runningX - 6
-               function get6(node)
-                  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
-                  local mx = tlx + (brx - tlx)/2
-                  local my = tly + (bry - tly)/2
-                  return tlx, tly, brx, bry, mx, my
-               end
-               if (currentNode and currentNode.children and #currentNode.children > 0) then
-                  LG.rectangle("fill", runningX, runningY, 20, 20)
-                  if getUIRect('p1', runningX, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+	       runningX = runningX - 6
+	       function get6(node)
+		  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+		  local mx = tlx + (brx - tlx)/2
+		  local my = tly + (bry - tly)/2
+		  return tlx, tly, brx, bry, mx, my
+	       end
+	       if (currentNode and currentNode.children and #currentNode.children > 0) then
+		  LG.rectangle("fill", runningX, runningY, 20, 20)
+		  if getUIRect('p1', runningX, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, tlx, tly)
-                  end
+		  end
 
-                  LG.rectangle("fill", runningX+24, runningY, 20, 20)
-                  if getUIRect('p2', runningX+24, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX+24, runningY, 20, 20)
+		  if getUIRect('p2', runningX+24, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, mx, tly)
-                  end
+		  end
 
-                  LG.rectangle("fill", runningX+48, runningY, 20, 20)
-                  if getUIRect('p3', runningX+48, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX+48, runningY, 20, 20)
+		  if getUIRect('p3', runningX+48, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, brx, tly)
-                  end
+		  end
 
-                  runningY = runningY + 24
+		  runningY = runningY + 24
 
-                  LG.rectangle("fill", runningX, runningY, 20, 20)
-                  if getUIRect('p4', runningX, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX, runningY, 20, 20)
+		  if getUIRect('p4', runningX, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, tlx, my)
 
-                  end
+		  end
 
-                  LG.rectangle("fill", runningX+24, runningY, 20, 20)
-                  if getUIRect('p5', runningX+24, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX+24, runningY, 20, 20)
+		  if getUIRect('p5', runningX+24, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, mx, my)
-                  end
+		  end
 
-                  LG.rectangle("fill", runningX+48, runningY, 20, 20)
-                  if getUIRect('p6', runningX+48, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX+48, runningY, 20, 20)
+		  if getUIRect('p6', runningX+48, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, brx, my)
-                  end
+		  end
 
-                  runningY = runningY + 24
+		  runningY = runningY + 24
 
-                  LG.rectangle("fill", runningX, runningY, 20, 20)
-                  if getUIRect('p7', runningX, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX, runningY, 20, 20)
+		  if getUIRect('p7', runningX, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, tlx, bry)
-                  end
+		  end
 
-                  LG.rectangle("fill", runningX+24, runningY, 20, 20)
-                  if getUIRect('p8', runningX+24, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX+24, runningY, 20, 20)
+		  if getUIRect('p8', runningX+24, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, mx, bry)
-                  end
+		  end
 
-                  LG.rectangle("fill", runningX+48, runningY, 20, 20)
-                  if getUIRect('p9', runningX+48, runningY, 20,20).clicked then
-                     local tlx, tly, brx, bry, mx, my = get6(currentNode)
+		  LG.rectangle("fill", runningX+48, runningY, 20, 20)
+		  if getUIRect('p9', runningX+48, runningY, 20,20).clicked then
+		     local tlx, tly, brx, bry, mx, my = get6(currentNode)
 		     setPivot(currentNode, brx, bry)
 
-                  end
+		  end
 
-                  runningY = runningY + 40
-               end
+		  runningY = runningY + 40
+	       end
 
-               row.runningX = oldRunningX + 80
-
-            end
-
-
-
-         end
-
+	       row.runningX = oldRunningX + 80
+	    end
+	 end
       end
-
    end
-   
 
-   
    if currentNode then
-    
-      local runningY = 110
-
-     
-      runningY = runningY + 40
-
-      if currentNode and currentNode.points and currentNode.type ~= 'meta' then
-         
-      end
-
-
-
-      runningY = runningY + 40
-
-
-
-
-      function draw9Grid()
-
-      end
-      
-      
-
-      if (editingMode == 'folder') and currentNode then
-       
-      end
-
-
       if (editingMode == 'polyline') and currentNode and currentNode.type ~= 'meta'  then
-         
-     
+	 if currentNode and currentNode.border then
 
+	    LG.setFont(smallest)
+	    LG.setColor(1,1,1, 1)
+	    LG.print("tension",   100, 100 )
+	    
+	    local v =  h_slider("splinetension", 100, 120, 200,  currentNode.borderTension , 0.00001, 1)
+	    if v.value ~= nil then
+	       currentNode.borderTension = v.value
+	    end
+	    LG.print("spacing",   100, 140 )
 
-         runningY = runningY + 40  -- behind an if !!
+	    local v =  h_slider("splineSpacing", 100, 160, 200,  currentNode.borderSpacing , 2, 50)
+	    if v.value ~= nil then
+	       currentNode.borderSpacing = v.value
+	    end
+	    LG.print("thickness",   100, 180 )
 
-         runningY = runningY + 40  -- behind an if !!
+	    local v =  h_slider("splineLinethick", 100, 200, 200,  currentNode.borderThickness , .1, 10)
+	    if v.value ~= nil then
+	       currentNode.borderThickness = v.value
+	    end
 
-         if currentNode and currentNode.border then
+	    LG.print("rnd multiplier",   100, 220 )
 
-            LG.setFont(smallest)
-            LG.setColor(1,1,1, 1)
-            LG.print("tension",   100, 100 )
-            
-            local v =  h_slider("splinetension", 100, 120, 200,  currentNode.borderTension , 0.00001, 1)
-            if v.value ~= nil then
-               currentNode.borderTension = v.value
-            end
-            LG.print("spacing",   100, 140 )
-
-            local v =  h_slider("splineSpacing", 100, 160, 200,  currentNode.borderSpacing , 2, 50)
-            if v.value ~= nil then
-               currentNode.borderSpacing = v.value
-            end
-            LG.print("thickness",   100, 180 )
-
-            local v =  h_slider("splineLinethick", 100, 200, 200,  currentNode.borderThickness , .1, 10)
-            if v.value ~= nil then
-               currentNode.borderThickness = v.value
-            end
-
-            LG.print("rnd multiplier",   100, 220 )
-
-            local v =  h_slider("splinerndmul", 100, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
-            if v.value ~= nil then
-               currentNode.borderRandomizerMultiplier = v.value
-            end
-         end
-
-         runningY = runningY + 40  -- behind an if !!
-      end
-
-      if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1])=='number' then
-
+	    local v =  h_slider("splinerndmul", 100, 240, 200,  currentNode.borderRandomizerMultiplier , 0, 10)
+	    if v.value ~= nil then
+	       currentNode.borderRandomizerMultiplier = v.value
+	    end
+	 end
       end
    end
 end
@@ -1448,7 +1493,6 @@ function mylib:mousepressed(x,y, button)
 
    if currentNode then
       local points = currentNode and currentNode.points
-      --local t = currentNode._parent.transforms._g
       local t = currentNode._parent.transforms._g
 
       local px, py = t:inverseTransformPoint( x, y )
@@ -1463,7 +1507,6 @@ function mylib:mousepressed(x,y, button)
 	 end
 	 for i = 1, 4 do
 	    if simplecheck(perspective[i][1] - 5,perspective[i][2] - 5, 10) then
-	       --print(i, 'set')
 	       lastDraggedElement = {id='perspective-corner', index=i}
 	    end
 	 end
@@ -1505,7 +1548,6 @@ end
 
 function mylib:mousereleased(x,y, button)
    local root = mylib.root
-   --print('released',x,y, editingMode, editingModeSub)
    if editingMode == 'move' then
       editingMode = nil
    end
@@ -1521,7 +1563,7 @@ function mylib:mousereleased(x,y, button)
          local tl = {x=math.min(sx, ex), y=math.min(sy, ey)}
          local br = {x=math.max(sx, ex), y=math.max(sy, ey)}
          local childrenInRect = {}
-         -- todo without this can crash
+
          if currentNode.points then
             for i=1, #currentNode.points do
                local p = currentNode.points[i]
@@ -1538,7 +1580,7 @@ function mylib:mousereleased(x,y, button)
 
    if (editingMode == 'rectangle-select') then
       -- todo this doenst work 100% under ingame editing
-      --print(rectangleSelect.startP, rectangleSelect.endP)
+
       if (rectangleSelect.startP and rectangleSelect.endP) then
          local root = currentNode or root
 	 print('why isnt this selcting children that have a parent again???')
@@ -1683,7 +1725,7 @@ function mylib:mousemoved(x,y, dx, dy)
             ddx = round2(ddx, 0)
             ddy = round2(ddy, 0)
          end
-	 -- todo movePivot
+	 -- todo make a movePivot ?
 	 setPivot(currentNode, currentNode.transforms.l[6] - ddx, currentNode.transforms.l[7] - ddy)
 
       end
@@ -1771,7 +1813,7 @@ local function getNodeYPosition(node, lookFor)
 end
 
 local function renderGraphNodes(node, level, startY, beginX, totalHeight)
-   local w, h = getDimensions() --LG.getDimensions( )
+   local w, h = getDimensions() 
    local beginRightX = beginX + level*6
    local rightX = beginRightX
    local nested = 0
@@ -1824,11 +1866,9 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
          if lastClickedGraphButton and lastClickedGraphButton.name == 'object-group'..i then
             local duration = (love.timer.getTime() - lastClickedGraphButton.time )
             if duration < .5 then
-               --print('dblclick', child.name)
                dblClicked = true
                changeName=true
                changeNameCursor= child.name and #child.name or 0
-               --lastClickedGraphButton = nil
             end
          end
 
@@ -1870,12 +1910,12 @@ end
 
 function mylib:wheelmoved(x,y)
    local posx, posy = love.mouse.getPosition()
-   local w, h = getDimensions() --LG.getDimensions()
+   local w, h = getDimensions() 
    local root = mylib.root
 
-   if posx < 128 then
-      scrollviewOffset = scrollviewOffset + y*24
-   else
+   --if posx > sceneGraph.x then
+     -- scrollviewOffset = scrollviewOffset + y*24
+   --else
       local scale = root.transforms.l[4]
       local ix1, iy1 = root.transforms._g:inverseTransformPoint(posx, posy)
 
@@ -1893,7 +1933,7 @@ function mylib:wheelmoved(x,y)
 
       movePos(root,  -dx3,  -dy3)
 
-   end
+   --end
 end
 
 
@@ -1999,11 +2039,8 @@ function mylib:load(arg)
       hand= love.mouse.getSystemCursor("hand"),
       arrow= love.mouse.getSystemCursor("arrow")
    }
-
    
    palette = getAllPalettes()
-   
-   
 
    mouseState = {
       hoveredSomething = false,
@@ -2012,15 +2049,6 @@ function mylib:load(arg)
       click = false,
       offset = {x=0, y=0}
    }
-
-   local w,h = getDimensions()
-   sceneGraph = {
-      maximized = false,
-      topY = h*0.75,
-      height= h*0.25,
-      x = 128,
-   }
-   
 
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -2045,7 +2073,6 @@ function mylib:load(arg)
    quitDialog = false
    rectangleSelect = {}
    childrenInRectangleSelect = {}
-   --meshAll(root)
    splineTension = 0
    splineSpacing = 20
    splineLineThickness = 2
@@ -2064,7 +2091,7 @@ local function drawGrid()
    local size = backdrop.grid.cellsize * scale
    if (size < 10) then return end
 
-   local w, h = getDimensions() --LG.getDimensions( )
+   local w, h = getDimensions() 
    local vlines = math.floor(w/size)
    local hlines = math.floor(h/size)
    local xOffset = (root.transforms.l[1]) % size
@@ -2103,7 +2130,7 @@ function mylib:draw()
 
 	 handleMouseClickStart()
 
-	 local w, h = getDimensions() --LG.getDimensions( )
+	 local w, h = getDimensions() 
          LG.setScissor( 0, 0, w, h )
          local rightX = w - (64 + 500+ 10)/2
 
@@ -2120,7 +2147,6 @@ function mylib:draw()
 	 end
 
 	 LG.setWireframe(wireframe )
-	 --print('need to recursivey make bbox so i can make fitting canvas')
 	 renderThings(root)
          comparemode, comparevalue = LG.getStencilTest( )
 
@@ -2133,9 +2159,8 @@ function mylib:draw()
 	    local alpha = 0.5 + math.sin(step/100)
 	    LG.setColor(alpha,1,1, alpha) -- i want this blinkiung
 
-            -- todo this is broken since i made root local ?!
-	    local editing = false --makeVertices(currentlyHoveredUINode)
-            --print(inspect(currentlyHoveredUINode))
+	    local editing = false 
+
 	    if (editing and #editing > 0) then
 	       local editingMesh = makeMeshFromVertices(editing)
 	       LG.draw(editingMesh,  currentlyHoveredUINode._parent.transforms._g)
@@ -2146,7 +2171,6 @@ function mylib:draw()
 	 drawUIAroundGraphNodes(w,h)
 
 	 if currentNode then
-	    --local t = root.transforms._l
 	    local t = root.transforms._l
 	    local x,y = t:transformPoint(0,0)
 	    LG.setColor(1,1,1)
@@ -2178,7 +2202,6 @@ function mylib:draw()
 
 		  local source = {bbox.tl.x,bbox.tl.y,  bbox.br.x, bbox.br.y}
 		  local dest = {{ip1x, ip1y},{ip2x, ip2y},{ip3x, ip3y},{ip4x, ip4y}}
-		  --perspective ={ {TLX, TLY},{BRX, TLY},{BRX, BRY}, {TLX, BRY}}
 		  for i = 1, #currentNode.children do
 
 		     if currentNode.children[i].points then
@@ -2195,15 +2218,12 @@ function mylib:draw()
 			   end
 
 			   if currentNode.children[i].perspectiveMesh then
-			      -- make a new one if data is not same length
 			      if #result ~= currentNode.children[i].perspectiveMesh:getVertexCount() then
 				 currentNode.children[i].perspectiveMesh = LG.newMesh(simple_format, result , "triangles", "stream")
 			      else
-				 --print('slushing')
 				 currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
 			      end
 			   else
-			      -- make new one cause
 			      currentNode.children[i].perspectiveMesh = LG.newMesh(simple_format, result , "triangles", "stream")
 			   end
 
@@ -2372,7 +2392,6 @@ function mylib:draw()
 		  editingModeSub = 'folder-rotate'
 		  LG.print(string.format("%0.2f", v.value), calcX(1), calcY(7))
 	       end
-	       --end
 	    end
 	    LG.setFont(small)
 	 end
@@ -2382,17 +2401,14 @@ function mylib:draw()
             local w,h = getDimensions()
 
             local thumbSize = 14
-
 	    local colorsInRow = math.floor(w/(thumbSize))
-
             local paletteHeight = (math.ceil(#palette.colors / colorsInRow) +1 ) * thumbSize
             
 	    for i = 1, #palette.colors do
 	       local rgb = palette.colors[i].rgb
-               --((thumbSize+2)*colorsInRow) +
 	       local x =  ((i-1) % colorsInRow) * (thumbSize)
-
 	       local y = math.ceil((i) / colorsInRow)* (thumbSize)
+	       
                y = h*0.75 - paletteHeight + y
                
 	       if (currentNode.color[1] == rgb[1]/255 and
@@ -2406,8 +2422,6 @@ function mylib:draw()
 		  currentNode.color =  {rgb[1]/255,rgb[2]/255,rgb[3]/255, currentNode.color[4] or 1}
 	       end
 
-               --y = y + 50
-	       --x = x + 50
 
 	    end
 	    LG.setColor(1,1,1, 1)
@@ -2488,35 +2502,11 @@ function mylib:draw()
 	 if  editingMode ~= 'dopesheet' then
 	    if currentNode  then
 	       LG.setColor(.1,.1,.1, 0.6)
-	       --LG.rectangle('fill',0,h-64,w,64)
-               
             end
 
             LG.setColor(0,0,0,1)
-            LG.rectangle("fill", sceneGraph.x, sceneGraph.topY -20, 20, 20)
-            if getUIRect('grow-shrink-graph', sceneGraph.x, sceneGraph.topY -20, 20,20).clicked then
-
-               print(sceneGraph.maximized)
-               if sceneGraph.maximized then
-                  sceneGraph.maximized = false
-                  sceneGraph.topY = h*0.75
-                  sceneGraph.height = h*0.25
-                  sceneGraph.x = 128
-               else
-                  sceneGraph.maximized = true
-                  
-                  sceneGraph.topY = 20
-                  sceneGraph.height = h -40
-                  scrollviewOffset = 0
-                  sceneGraph.x = 0
-
-               end
-            end
-            
             
 	    LG.setFont(smallester)
-
-            
             LG.setScissor( 0, sceneGraph.topY, w, sceneGraph.height-20 )
 
             
@@ -2530,7 +2520,7 @@ function mylib:draw()
 
 	    LG.setFont(small)
 	    local scrollBarH =  sceneGraph.height -20
-            --print(scrollviewOffset)
+
 	    if totalHeightGraphNodes > scrollBarH  then
 
 	       local ding = scrollbarV('hierarchyslider', sceneGraph.x -40, sceneGraph.topY , scrollBarH, totalHeightGraphNodes, scrollviewOffset)
@@ -2543,25 +2533,9 @@ function mylib:draw()
             end
             
 
-
-
 	    if true or (not currentNode or not currentNode.points) then
-	       if imgbutton('rectangle-select', ui.select, rightX - 100, calcY(0), 'rectangle select').clicked then
-                  if (editingMode == 'rectangle-select') then
-                     editingMode = nil
-                     editingModeSub = nil
-                     print('todo take me where i came from')
-                  else
-                     editingMode = 'rectangle-select'
-                  end
-
-	       end
-               if #childrenInRectangleSelect > 0 then
-                  LG.print(#childrenInRectangleSelect, rightX - 100, calcY(0))
-               end
-               -- todo hier was ik
+	      
 	       if true and #childrenInRectangleSelect > 0  then
-                  --print(type (childrenInRectangleSelect[1]))
 		  if LK.isDown("delete") then
 		     local indexes = type(childrenInRectangleSelect[1]) == "number"
 		     if indexes then
@@ -2573,513 +2547,417 @@ function mylib:draw()
 		     end
 		     childrenInRectangleSelect = {}
 		  end
+	       end
+	    end
 
-                  if imgbutton('group-move', ui.move, rightX - 50, calcY(0), 'move group').clicked then
-                     if (editingModeSub == 'group-move') then
-                        editingModeSub = nil
-                     else
-                        editingModeSub = 'group-move'
-                     end
-
-                  end
-
-
-
-
-
-		  if imgbutton('connector-group', ui.parent, rightX - 150, calcY(0),'parentize').clicked then
-		     lastDraggedElement = {id = 'connector-group', pos = {rightX - 150, 10} }
-		  end
-
-		  if imgbutton('object_group', ui.object_group, rightX - 200, calcY(0), 'turn group to object').clicked   then
-		     for i =1, #childrenInRectangleSelect do
-			local n = childrenInRectangleSelect[i]
-			table.remove(n._parent.children, getIndex(n))
+	       if currentNode and currentNode.keyframes then
+		  if (currentNode.keyframes == 2) then
+		     local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
+		     if v.value then
+			currentNode.lerpValue = v.value
 		     end
-
-		     local shape = {
-			folder = true,
-			transforms =  {l={0,0,0,1,1,0,0, 0,0}},
-			children = {}
-		     }
-		     if not currentNode then
-			shape._parent = root
-			addShapeAtRoot(shape)
-		     else
-			addThingAtEnd(shape, currentNode)
+		  end
+		  if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
+		     local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
+		     if v.value then
+			currentNode.lerpX = v.value.x
+			currentNode.lerpY = v.value.y
 		     end
-		     local f = shape
-
-		     local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
-
-		     local w2 = (brx - tlx)/2
-		     local h2 = (bry - tly)/2
-		     local offX = -  (tlx + w2)
-		     local offY = -  (tly + h2)
-
-		     recenterGroup(childrenInRectangleSelect, offX, offY)
-		     f.children = childrenInRectangleSelect
-		     parentize(f._parent)
-		     setPos(f, -offX, -offY)
-		     meshAll(f._parent)
-		     childrenInRectangleSelect = {}
 		  end
 	       end
-	    end
 
 
-	    if currentNode and currentNode.keyframes then
-	       if (currentNode.keyframes == 2) then
-		  local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
-		  if v.value then
-		     currentNode.lerpValue = v.value
-		  end
-	       end
-	       if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
-		  local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
-		  if v.value then
-		     currentNode.lerpX = v.value.x
-		     currentNode.lerpY = v.value.y
-		  end
-	       end
-	    end
+	       
+	       if (currentNode) then
+		  if (changeName) then
+		     local str =  currentNode and currentNode.name  or ""
+		     local substr = string.sub(str, 1, changeNameCursor)
+		     local cursorX = (LG.getFont():getWidth(substr))
+		     local cursorH = (LG.getFont():getHeight(str))
+		     LG.setColor(1,1,1,0.5)
+		     LG.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
+		     LG.setColor(1,1,1)
+		     LG.print(str , 0, h*0.75 - cursorH - 20)
+		     LG.setColor(1,1,1, math.abs(math.sin(step/ 100)))
+		     LG.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
+		     LG.setColor(1,1,1)
 
-	    if (currentNode) then
-               
-	       if (changeName) then
-		  local str =  currentNode and currentNode.name  or ""
-		  local substr = string.sub(str, 1, changeNameCursor)
-		  local cursorX = (LG.getFont():getWidth(substr))
-		  local cursorH = (LG.getFont():getHeight(str))
-		  LG.setColor(1,1,1,0.5)
-		  LG.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
-		  LG.setColor(1,1,1)
-		  LG.print(str , 0, h*0.75 - cursorH - 20)
-		  LG.setColor(1,1,1, math.abs(math.sin(step/ 100)))
-		  LG.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
-                  LG.setColor(1,1,1)
-
-		  if lastClickedGraphButton then
-
-
-                     local sx = lastClickedGraphButton.x+24+12
-                     local sy = lastClickedGraphButton.y+2
-		     
-		     LG.rectangle('line',sx,sy , 100,23)
-		     LG.setColor(1,0.75,0.75)
-		     LG.setFont(smallester)
-                     
-		     LG.print(str,sx,sy)
-                     
-                     LG.setColor(1,1,1)
-
-                     
-                     --print(changeNameCursor)
-
-                     local substr =(string.sub(str, 1 , changeNameCursor))
-                     local cursorX = (LG.getFont():getWidth(substr))
-                     --print(cursorX)
-                     LG.rectangle('line', sx + cursorX, sy, 1, 23)
-
-                  end
-                  
-		  --
-	       end
-	    end
-	 end
-
-	 LG.pop()
-	 LG.setFont(small)
-	 if not quitDialog then
-	    LG.print(tostring(love.timer.getFPS( )), 2,0)
-	    LG.print(shapeName, 64, 0)
-	 end
-
-	 if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
-            --            print(inspect(lastDraggedElement))
-	    LG.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
-	 end
-
-	 -- if (imgbutton('dopesheet', ui.dopesheet, 10, h - 32)).clicked then
-	 --    dopesheetEditing = not dopesheetEditing
-	 --    editingMode = dopesheetEditing and 'dopesheet' or nil
-	 --    if dopesheetEditing then -- initialize
-	 --       initializeDopeSheet(cellCount)
-	 --    end
-	 -- end
-
-	 local mousex = love.mouse.getX()
-	 local mousey = love.mouse.getY()
-
-	 doDopeSheetEditing(mousex, mousey)
-
-	 if quitDialog then
-	    local quitStr = "Quit? Seriously?! [ESC] "
-	    LG.setFont(large)
-	    LG.setColor(0,0,0, 1)
-	    LG.print(quitStr, 114, 11)
-	    LG.setColor(1,0.5,0.5, 1)
-	    LG.print(quitStr, 116, 13)
-	    LG.setColor(1,1,1, 1)
-	    LG.print(quitStr, 115, 12)
-	 end
-
-	 if fileDropPopup then
-	    LG.setFont(smallest)
-	    LG.setColor(1,1,1, 1)
-	    LG.rectangle("fill", 100, 100, w-200, h-200)
-	    LG.setColor(0,0,0)
-	    local name =  fileDropPopup:getFilename()
-	    LG.print("dropped file: "..name, 140, 120)
-            
-	    if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
-	       if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
-		  local tab = getDataFromFile(fileDropPopup)
-		  root.children = TableConcat(root.children, tab)
-		  parentize(root)
-		  scrollviewOffset = 0
-		  editingMode = nil
-		  editingModeSub = nil
-
-		  currentNode = nil
-		  meshAll(root)
-                  recursivelyMakeTextures(root)
-		  fileDropPopup = nil
-	       end
-	       if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
-		  local tab = getDataFromFile(fileDropPopup)
-		  root.children = tab -- TableConcat(root.children, tab)
-		  parentize(root)
-		  scrollviewOffset = 0
-		  editingMode = nil
-		  editingModeSub = nil
-		  currentNode = nil
-		  meshAll(root)
-                  recursivelyMakeTextures(root)
-		  fileDropPopup = nil
-	       end
-
-	    else
-
-               
-	       --LG.print("this isnt a good filetype", 140, 170)
-               if currentNode and currentNode.texture then
-                  --print(name, currentNode.type)
-		  -- dont know where to put this yet
-		  
-
-                  local s, e = name:find("/experiments/", 1 , true)
-
-		  -- if folderPath then
-		  --    local s, e = folderPath:find("experiments/")
-		  --    if (e) then
-		  --	 local prefix = folderPath:sub(e+1) 
-		  --		 print('texture prefix: ', prefix)
-		  --	      end
-		  --	   end
-		  
-                  if s then
-		     local url = name:sub(s)
-		     
-		     if (mylib.folderPath) then
+		     if lastClickedGraphButton then
+			local sx = lastClickedGraphButton.x+24+12
+			local sy = lastClickedGraphButton.y+2
 			
-			local s1, e1 = mylib.folderPath:find("experiments/",1 , true)
-			if (e1) then
-			   local prefix = mylib.folderPath:sub(e1+1)
-			   local s2,e2 = url:find(prefix, 1, true)
-			   local postfix = url:sub(e2+2)
-			   print('postfix', postfix)
-			   url = postfix
+			LG.rectangle('line',sx,sy , 100,23)
+			LG.setColor(1,0.75,0.75)
+			LG.setFont(smallester)
+			LG.print(str,sx,sy)
+			LG.setColor(1,1,1)
+
+			local substr =(string.sub(str, 1 , changeNameCursor))
+			local cursorX = (LG.getFont():getWidth(substr))
+
+			LG.rectangle('line', sx + cursorX, sy, 1, 23)
+		     end
+		  end
+	       end
+	    end
+
+	    LG.pop()
+	    LG.setFont(small)
+	    if not quitDialog then
+	       LG.print(tostring(love.timer.getFPS( )), 2,0)
+	       LG.print(shapeName, 64, 0)
+	    end
+
+	    if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
+	       LG.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
+	    end
+
+	    local mousex = love.mouse.getX()
+	    local mousey = love.mouse.getY()
+
+	    doDopeSheetEditing(mousex, mousey)
+
+	    if quitDialog then
+	       local quitStr = "Quit? Seriously?! [ESC] "
+	       LG.setFont(large)
+	       LG.setColor(0,0,0, 1)
+	       LG.print(quitStr, 114, 11)
+	       LG.setColor(1,0.5,0.5, 1)
+	       LG.print(quitStr, 116, 13)
+	       LG.setColor(1,1,1, 1)
+	       LG.print(quitStr, 115, 12)
+	    end
+
+	    if fileDropPopup then
+	       LG.setFont(smallest)
+	       LG.setColor(1,1,1, 1)
+	       LG.rectangle("fill", 100, 100, w-200, h-200)
+	       LG.setColor(0,0,0)
+	       local name =  fileDropPopup:getFilename()
+	       LG.print("dropped file: "..name, 140, 120)
+	       
+	       if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
+		  if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
+		     local tab = getDataFromFile(fileDropPopup)
+		     root.children = TableConcat(root.children, tab)
+		     parentize(root)
+		     scrollviewOffset = 0
+		     editingMode = nil
+		     editingModeSub = nil
+
+		     currentNode = nil
+		     meshAll(root)
+		     recursivelyMakeTextures(root)
+		     fileDropPopup = nil
+		  end
+		  if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
+		     local tab = getDataFromFile(fileDropPopup)
+		     root.children = tab -- TableConcat(root.children, tab)
+		     parentize(root)
+		     scrollviewOffset = 0
+		     editingMode = nil
+		     editingModeSub = nil
+		     currentNode = nil
+		     meshAll(root)
+		     recursivelyMakeTextures(root)
+		     fileDropPopup = nil
+		  end
+
+	       else
+
+		 
+		  if currentNode and currentNode.texture then
+		     local s, e = name:find("/experiments/", 1 , true)
+		     
+		     if s then
+			local url = name:sub(s)
+			
+			if (mylib.folderPath) then
+			   local s1, e1 = mylib.folderPath:find("experiments/",1 , true)
+			   if (e1) then
+			      local prefix = mylib.folderPath:sub(e1+1)
+			      local s2,e2 = url:find(prefix, 1, true)
+			      local postfix = url:sub(e2+2)
+			      print('postfix', postfix)
+			      url = postfix
+			   end
 			end
+	
+			LG.print("asset: "..url, 140, 150)
+			currentNode.texture.url= url
+			recursivelyMakeTextures(currentNode)
 		     end
 		     
-		     
-		     --print('I might need some logic from mylib to get the inbetween path')
-		     --print(mylib.folderPath)
-		     
-                     --local url = name:sub(s)
-		     --print('when the editor is run as an ingame editor, the path is off', url)
-		     -- todo check if png/jpg
-                     LG.print("asset: "..url, 140, 150)
-                     currentNode.texture.url= url
-                     recursivelyMakeTextures(currentNode)
-                  end
-                  
-               end
-               
-               if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
-		  fileDropPopup = nil
+		  end
+		  
+		  if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
+		     fileDropPopup = nil
+		  end
 	       end
 	    end
 	 end
       end
-   end
-   local work =  nil
-   console.draw()
-   --LG.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
-   --LG.print(inspect(LG.getStats()), 10, 40)
-end
-
-
-function mylib:textinput(t)
-   if (changeName and currentNode) then
-      local str = currentNode and currentNode.name or ""
-      if (changeNameCursor > #str) then
-         changeNameCursor = #str
-      end
-
-      local a,b = split(str, changeNameCursor+1)
-      local r = table.concat{a, t, b}
-      changeNameCursor = changeNameCursor + 1
-      currentNode.name = r
+      local work =  nil
+      console.draw()
+      --LG.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+      --LG.print(inspect(LG.getStats()), 10, 40)
    end
 
-   console.textinput(t)
-end
 
-function mylib:filedropped(file)
-   fileDropPopup = file
-end
-
-function mylib:keypressed(key, scancode, isrepeat)
-   local root = mylib.root
-
-   console.keypressed(key, scancode, isrepeat)
-   if not console.isEnabled() then
-      if key == 'lshift' then
-	 editingMode = 'rectangle-select'
-      end
-
-      if key == 't' then
-	 usePerspective = not usePerspective
-      end
-      if key == 'tab' then
-	 if editingMode ~= 'dopesheet' then
-	    editingMode = 'dopesheet'
-	    dopesheetEditing = true
-	    if not currentNode then
-	       currentNode = root.children[1]
-	    end
-	 else
-	    dopesheetEditing = false
-	    editingMode = nil
+   function mylib:textinput(t)
+      if (changeName and currentNode) then
+	 local str = currentNode and currentNode.name or ""
+	 if (changeNameCursor > #str) then
+	    changeNameCursor = #str
 	 end
 
-	 initializeDopeSheet()
+	 local a,b = split(str, changeNameCursor+1)
+	 local r = table.concat{a, t, b}
+	 changeNameCursor = changeNameCursor + 1
+	 currentNode.name = r
       end
-      if #childrenInRectangleSelect == 0 then
-	 if key == 'down' then
-	    if currentNode then
-	       local index = getIndex(currentNode)
-	       if #currentNode._parent.children > index + 1 then
-		  setCurrentNode(currentNode._parent.children[index + 1])
+
+      console.textinput(t)
+   end
+
+   function mylib:filedropped(file)
+      fileDropPopup = file
+   end
+
+   function mylib:keypressed(key, scancode, isrepeat)
+      local root = mylib.root
+
+      console.keypressed(key, scancode, isrepeat)
+      if not console.isEnabled() then
+	 if key == 'lshift' then
+	    editingMode = 'rectangle-select'
+	 end
+
+	 if key == 't' then
+	    usePerspective = not usePerspective
+	 end
+	 if key == 'tab' then
+	    if editingMode ~= 'dopesheet' then
+	       editingMode = 'dopesheet'
+	       dopesheetEditing = true
+	       if not currentNode then
+		  currentNode = root.children[1]
+	       end
+	    else
+	       dopesheetEditing = false
+	       editingMode = nil
+	    end
+
+	    initializeDopeSheet()
+	 end
+	 if #childrenInRectangleSelect == 0 then
+	    if key == 'down' then
+	       if currentNode then
+		  local index = getIndex(currentNode)
+		  if #currentNode._parent.children > index + 1 then
+		     setCurrentNode(currentNode._parent.children[index + 1])
+		  end
+	       end
+	    end
+	    if key == 'up' then
+	       if currentNode then
+		  local index = getIndex(currentNode)
+		  if index > 1 then
+		     setCurrentNode(currentNode._parent.children[index -1])
+		  end
 	       end
 	    end
 	 end
-	 if key == 'up' then
-	    if currentNode then
-	       local index = getIndex(currentNode)
-	       if index > 1 then
-		  setCurrentNode(currentNode._parent.children[index -1])
+
+	 if key == "escape" then
+	    if openFileScreen == true then
+	       openFileScreen = false
+	    elseif (editingModeSub ~= nil) then
+	       editingModeSub = nil
+	    elseif (editingMode ~= nil) then
+	       editingMode = nil
+	    else
+	       if (quitDialog == true) then
+		  love.event.quit()
+	       elseif (quitDialog == false) then
+		  quitDialog = true
 	       end
 	    end
-	 end
-      end
 
-      if key == "escape" then
-	 if openFileScreen == true then
-	    openFileScreen = false
-	 elseif (editingModeSub ~= nil) then
-	    editingModeSub = nil
-	 elseif (editingMode ~= nil) then
-	    editingMode = nil
 	 else
-	    if (quitDialog == true) then
-	       love.event.quit()
-	    elseif (quitDialog == false) then
-	       quitDialog = true
+	    if (quitDialog) then
+	       quitDialog = false
+	    end
+
+	 end
+
+	 if (key == 'p' and not changeName) then
+	    if not profiling then
+	       ProFi:start()
+	    else
+	       ProFi:stop()
+	       ProFi:writeReport( 'log/MyProfilingReport.txt' )
+	    end
+	    profiling = not profiling
+	 end
+	 if key == '-' and not changeName then
+	    love.wheelmoved(0,-1)
+	 end
+	 if key == '=' and not changeName then
+	    love.wheelmoved(0,1)
+	 end
+	 if key == '0' and not changeName then
+	    setPos(root, 0,0)
+	 end
+	 if key == 'o' and not changeName then 
+	    openFileScreen = not openFileScreen
+	    gatherData('')
+	 end
+
+	 if key == 'h' and not changeName then
+	    print('this will be used to hot reload the thing you are working on into the origin file')
+	    
+	    local readurl = mylib.folderPath..'/'..mylib.root.origin.path
+	    local writeurl = readurl
+	    
+	    local file = io.open(readurl, "r")
+	    local contents = file:read("*all")
+	    file:close()
+
+	    local parsed = (loadstring("return ".. contents)())
+
+	    if (mylib.root.origin.index >= 0) then
+	       parsed[mylib.root.origin.index] = mylib.root
+	    else
+	       parsed[1] = mylib.root
+	    end
+	    
+	    local toSave = {}
+	    for i=1 , #parsed do
+	       table.insert(toSave, copyShape(parsed[i]))
+	    end
+	    
+	    -- overwriting the file
+	    file = io.open(writeurl, "w")
+
+	    io.output(file)
+	    io.write(inspect(toSave, {indent=""}))
+	    io.close(file)
+
+	    -- saving a backup file
+	    file = io.open(writeurl..'-'..os.time()..'-.bak', "w")
+	    io.output(file)
+	    io.write(contents)
+	    io.close(file)
+
+	 end
+	 
+	 if (key == 's' and not changeName) then
+	    local path = shapePath..shapeName..".polygons.txt"
+	    local info = love.filesystem.getInfo( path )
+	    if (info) then
+	       shapeName = shapeName..'_'
+	       path =  shapePath..shapeName..".polygons.txt"
+	    end
+	    local toSave = {}
+	    for i=1 , #root.children do
+	       table.insert(toSave, copyShape(root.children[i]))
+	    end
+
+	    if #shapePath > 0 then
+	       love.filesystem.createDirectory( shapePath )
+	    end
+
+	    love.filesystem.write(path, inspect(toSave, {indent=""}))
+	    renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
+	    local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
+	    love.system.openURL(openURL)
+	 end
+
+	 if key == 'a' and not changeName then
+	    print("printing a large file")
+	    renderNodeIntoCanvas(root, LG.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
+
+	 end
+	 
+
+	 if (key == 'j' and not changeName) then
+	    local path = shapeName..".polygons.txt.json"
+	    local info = love.filesystem.getInfo( path )
+	    if (info) then
+	       shapeName = shapeName..'_'
+	       path =  shapeName..".polygons.txt.json"
+	    end
+	    local toSave = {}
+	    for i=1 , #root.children do
+	       table.insert(toSave, copyShape(root.children[i]))
+	    end
+
+	    love.filesystem.write(path, json.encode(toSave, {indent=""}))
+	    love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+	 end
+
+	 if not changeName and currentNode and not #childrenInRectangleSelect then
+	    if (key == 'delete') then
+	       deleteNode(currentNode)
 	    end
 	 end
 
-      else
-	 if (quitDialog) then
-	    quitDialog = false
+	 if #childrenInRectangleSelect > 0 and currentNode then
+	    local shift = LK.isDown("lshift") or LK.isDown("rshift")
+	    if (key == 'left') then
+	       movePoints(currentNode, shift and -10 or -1, 0)
+	    end
+	    if (key == 'right') then
+	       movePoints(currentNode, shift and 10 or 1, 0)
+	    end
+	    if (key == 'up') then
+	       movePoints(currentNode, 0, shift and -10 or -1)
+	    end
+	    if (key == 'down') then
+	       movePoints(currentNode, 0, shift and 10 or 1)
+	    end
+	    if key == 'delete' then
+	       print("yes i hope?")
+	       deletePoints(currentNode)
+	    end
 	 end
 
-      end
-      --if (key == 'i' and not changeName) then
-      -- screenshot
-      --renderNodeIntoCanvas(root, LG.newCanvas(1024, 1024),  shapeName..".polygons.png")
-      --end
-      if (key == 'p' and not changeName) then
-	 if not profiling then
-	    ProFi:start()
-	 else
-	    ProFi:stop()
-	    ProFi:writeReport( 'log/MyProfilingReport.txt' )
-	 end
-	 profiling = not profiling
-      end
-      if key == '-' and not changeName then
-	 love.wheelmoved(0,-1)
-      end
-      if key == '=' and not changeName then
-	 love.wheelmoved(0,1)
-      end
-      if key == '0' and not changeName then
-	 setPos(root, 0,0)
-      end
-      if key == 'o' and not changeName then -- trace
-	 openFileScreen = not openFileScreen
-	 gatherData('')
-      end
-
-      if key == 'h' and not changeName then
-         print('this will be used to hot reload the thing you are working on into the origin file')
-         
-         local readurl = mylib.folderPath..'/'..mylib.root.origin.path
-         local writeurl = readurl
-         
-         local file = io.open(readurl, "r")
-         local contents = file:read("*all")
-         file:close()
-
-         local parsed = (loadstring("return ".. contents)())
-
-         if (mylib.root.origin.index >= 0) then
-            parsed[mylib.root.origin.index] = mylib.root
-         else
-            parsed[1] = mylib.root
-         end
-         
-         local toSave = {}
-	 for i=1 , #parsed do
-	    table.insert(toSave, copyShape(parsed[i]))
-	 end
-         
-         -- overwriting the file
-         file = io.open(writeurl, "w")
-
-         io.output(file)
-         io.write(inspect(toSave, {indent=""}))
-         io.close(file)
-
-         -- saving a backup file
-         file = io.open(writeurl..'-'..os.time()..'-.bak', "w")
-         io.output(file)
-         io.write(contents)
-         io.close(file)
-
-      end
-      
-      if (key == 's' and not changeName) then
-	 local path = shapePath..shapeName..".polygons.txt"
-	 local info = love.filesystem.getInfo( path )
-	 if (info) then
-	    shapeName = shapeName..'_'
-	    path =  shapePath..shapeName..".polygons.txt"
-	 end
-	 local toSave = {}
-	 for i=1 , #root.children do
-	    table.insert(toSave, copyShape(root.children[i]))
-	 end
-
-	 if #shapePath > 0 then
-	    --print('creating directory', shapePath)
-	    love.filesystem.createDirectory( shapePath )
-	 end
-
-	 love.filesystem.write(path, inspect(toSave, {indent=""}))
-	 renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
-	 local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
-	 --print('open url:', openURL)
-	 love.system.openURL(openURL)
-      end
-
-      if key == 'a' and not changeName then
-         print("printing a large file")
-	 renderNodeIntoCanvas(root, LG.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
-
-      end
-      
-
-      if (key == 'j' and not changeName) then
-	 local path = shapeName..".polygons.txt.json"
-	 local info = love.filesystem.getInfo( path )
-	 if (info) then
-	    shapeName = shapeName..'_'
-	    path =  shapeName..".polygons.txt.json"
-	 end
-	 local toSave = {}
-	 for i=1 , #root.children do
-	    table.insert(toSave, copyShape(root.children[i]))
-	 end
-
-	 love.filesystem.write(path, json.encode(toSave, {indent=""}))
-	 love.system.openURL("file://"..love.filesystem.getSaveDirectory())
-      end
-
-      if not changeName and currentNode and not #childrenInRectangleSelect then
-	 if (key == 'delete') then
-	    deleteNode(currentNode)
-	 end
-      end
-
-      if #childrenInRectangleSelect > 0 and currentNode then
-	 local shift = LK.isDown("lshift") or LK.isDown("rshift")
-	 if (key == 'left') then
-	    movePoints(currentNode, shift and -10 or -1, 0)
-	 end
-	 if (key == 'right') then
-	    movePoints(currentNode, shift and 10 or 1, 0)
-	 end
-	 if (key == 'up') then
-	    movePoints(currentNode, 0, shift and -10 or -1)
-	 end
-	 if (key == 'down') then
-	    movePoints(currentNode, 0, shift and 10 or 1)
-	 end
-	 if key == 'delete' then
-	    print("yes i hope?")
-	    deletePoints(currentNode)
-	 end
-      end
-
-      if (changeName) then
-	 if (key == 'backspace') then
-	    local str = currentNode and currentNode.name or ""
-	    local a,b = split(str, changeNameCursor+1)
-	    currentNode.name = table.concat{split(a,utf8.len(a)), b}
-	    changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
-	 end
-
-	 if (key == 'delete') then
-	    local str = currentNode and currentNode.name or ""
-	    local a,b = split(str, changeNameCursor+2)
-	    if (#b > 0) then
+	 if (changeName) then
+	    if (key == 'backspace') then
+	       local str = currentNode and currentNode.name or ""
+	       local a,b = split(str, changeNameCursor+1)
 	       currentNode.name = table.concat{split(a,utf8.len(a)), b}
-	       changeNameCursor = math.min(#currentNode.name, changeNameCursor)
+	       changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
 	    end
-	 end
 
-	 if (key == 'left') then
-	    if (changeNameCursor > 0) then
-	       changeNameCursor = changeNameCursor - 1
+	    if (key == 'delete') then
+	       local str = currentNode and currentNode.name or ""
+	       local a,b = split(str, changeNameCursor+2)
+	       if (#b > 0) then
+		  currentNode.name = table.concat{split(a,utf8.len(a)), b}
+		  changeNameCursor = math.min(#currentNode.name, changeNameCursor)
+	       end
 	    end
-	 end
 
-	 if (key == 'right' ) then
-	    local str =  currentNode and currentNode.name or ""
-	    if (changeNameCursor < utf8.len(str)) then
-	       changeNameCursor = changeNameCursor + 1
+	    if (key == 'left') then
+	       if (changeNameCursor > 0) then
+		  changeNameCursor = changeNameCursor - 1
+	       end
 	    end
-	 end
 
-	 if (key == 'return') then
-	    changeName = false
+	    if (key == 'right' ) then
+	       local str =  currentNode and currentNode.name or ""
+	       if (changeNameCursor < utf8.len(str)) then
+		  changeNameCursor = changeNameCursor + 1
+	       end
+	    end
+
+	    if (key == 'return') then
+	       changeName = false
+	    end
 	 end
       end
    end
-end
 
-return mylib
+   return mylib
