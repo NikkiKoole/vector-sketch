@@ -625,7 +625,7 @@ local function drawUIAroundGraphNodes(w,h)
          }
       )
 
-     -- table.insert(row1, "newline")
+      -- table.insert(row1, "newline")
       
       table.insert(
          row1,
@@ -653,7 +653,7 @@ local function drawUIAroundGraphNodes(w,h)
    table.insert(row1, "newline")
    table.insert(row1, "newline")
 
-  -- table.insert(row1, "whitespace")
+   -- table.insert(row1, "whitespace")
    
 
    if (currentNode) then
@@ -1230,37 +1230,37 @@ local function drawUIAroundGraphNodes(w,h)
 	    'object_group', ui.object_group, 'turn group to object',
 	    function()
 	       for i =1, #childrenInRectangleSelect do
-			local n = childrenInRectangleSelect[i]
-			table.remove(n._parent.children, getIndex(n))
-		     end
+                  local n = childrenInRectangleSelect[i]
+                  table.remove(n._parent.children, getIndex(n))
+               end
 
-		     local shape = {
-			folder = true,
-			transforms =  {l={0,0,0,1,1,0,0, 0,0}},
-			children = {}
-		     }
-				     
-		     if not currentNode then
-			shape._parent = root
-			addShapeAtRoot(shape)
-		     else
-			addThingAtEnd(shape, currentNode)
-		     end
-		     local f = shape
+               local shape = {
+                  folder = true,
+                  transforms =  {l={0,0,0,1,1,0,0, 0,0}},
+                  children = {}
+               }
+               
+               if not currentNode then
+                  shape._parent = root
+                  addShapeAtRoot(shape)
+               else
+                  addThingAtEnd(shape, currentNode)
+               end
+               local f = shape
 
-		     local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
+               local tlx,tly,brx,bry = getGroupBBox(childrenInRectangleSelect)
 
-		     local w2 = (brx - tlx)/2
-		     local h2 = (bry - tly)/2
-		     local offX = -  (tlx + w2)
-		     local offY = -  (tly + h2)
+               local w2 = (brx - tlx)/2
+               local h2 = (bry - tly)/2
+               local offX = -  (tlx + w2)
+               local offY = -  (tly + h2)
 
-		     recenterGroup(childrenInRectangleSelect, offX, offY)
-		     f.children = childrenInRectangleSelect
-		     parentize(f._parent)
-		     setPos(f, -offX, -offY)
-		     meshAll(f._parent)
-		     childrenInRectangleSelect = {}
+               recenterGroup(childrenInRectangleSelect, offX, offY)
+               f.children = childrenInRectangleSelect
+               parentize(f._parent)
+               setPos(f, -offX, -offY)
+               meshAll(f._parent)
+               childrenInRectangleSelect = {}
 
 
 	    end
@@ -1914,24 +1914,24 @@ function mylib:wheelmoved(x,y)
    local root = mylib.root
 
    --if posx > sceneGraph.x then
-     -- scrollviewOffset = scrollviewOffset + y*24
+   -- scrollviewOffset = scrollviewOffset + y*24
    --else
-      local scale = root.transforms.l[4]
-      local ix1, iy1 = root.transforms._g:inverseTransformPoint(posx, posy)
+   local scale = root.transforms.l[4]
+   local ix1, iy1 = root.transforms._g:inverseTransformPoint(posx, posy)
 
-      setScale(root,  scale *  ((y>0) and 1.1 or 0.9))
+   setScale(root,  scale *  ((y>0) and 1.1 or 0.9))
 
-      local tl = root.transforms.l
-      root.transforms._l =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-      root.transforms._g = root.transforms._l
+   local tl = root.transforms.l
+   root.transforms._l =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
+   root.transforms._g = root.transforms._l
 
-      local ix2, iy2 = root.transforms._g:inverseTransformPoint(posx, posy)
-      local dx = ix1 - ix2
-      local dy = iy1 - iy2
+   local ix2, iy2 = root.transforms._g:inverseTransformPoint(posx, posy)
+   local dx = ix1 - ix2
+   local dy = iy1 - iy2
 
-      local dx3, dy3 = getGlobalDelta(root.transforms._g, dx, dy)
+   local dx3, dy3 = getGlobalDelta(root.transforms._g, dx, dy)
 
-      movePos(root,  -dx3,  -dy3)
+   movePos(root,  -dx3,  -dy3)
 
    --end
 end
@@ -2531,12 +2531,362 @@ function mylib:draw()
 
                
             end
-            
+  
+            if currentNode and currentNode.keyframes then
+               if (currentNode.keyframes == 2) then
+                  local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
+                  if v.value then
+                     currentNode.lerpValue = v.value
+                  end
+               end
+               if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
+                  local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
+                  if v.value then
+                     currentNode.lerpX = v.value.x
+                     currentNode.lerpY = v.value.y
+                  end
+               end
+            end
 
-	    if true or (not currentNode or not currentNode.points) then
-	      
-	       if true and #childrenInRectangleSelect > 0  then
-		  if LK.isDown("delete") then
+
+            
+            if (currentNode) then
+               if (changeName) then
+                  local str =  currentNode and currentNode.name  or ""
+                  local substr = string.sub(str, 1, changeNameCursor)
+                  local cursorX = (LG.getFont():getWidth(substr))
+                  local cursorH = (LG.getFont():getHeight(str))
+                  LG.setColor(1,1,1,0.5)
+                  LG.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
+                  LG.setColor(1,1,1)
+                  LG.print(str , 0, h*0.75 - cursorH - 20)
+                  LG.setColor(1,1,1, math.abs(math.sin(step/ 100)))
+                  LG.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
+                  LG.setColor(1,1,1)
+
+                  if lastClickedGraphButton then
+                     local sx = lastClickedGraphButton.x+24+12
+                     local sy = lastClickedGraphButton.y+2
+                     
+                     LG.rectangle('line',sx,sy , 100,23)
+                     LG.setColor(1,0.75,0.75)
+                     LG.setFont(smallester)
+                     LG.print(str,sx,sy)
+                     LG.setColor(1,1,1)
+
+                     local substr =(string.sub(str, 1 , changeNameCursor))
+                     local cursorX = (LG.getFont():getWidth(substr))
+
+                     LG.rectangle('line', sx + cursorX, sy, 1, 23)
+                  end
+               end
+            end
+         end
+
+         LG.pop()
+         LG.setFont(small)
+         if not quitDialog then
+            LG.print(tostring(love.timer.getFPS( )), 2,0)
+            LG.print(shapeName, 64, 0)
+         end
+
+         if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
+            LG.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
+         end
+
+         local mousex = love.mouse.getX()
+         local mousey = love.mouse.getY()
+
+         doDopeSheetEditing(mousex, mousey)
+
+         if quitDialog then
+            local quitStr = "Quit? Seriously?! [ESC] "
+            LG.setFont(large)
+            LG.setColor(0,0,0, 1)
+            LG.print(quitStr, 114, 11)
+            LG.setColor(1,0.5,0.5, 1)
+            LG.print(quitStr, 116, 13)
+            LG.setColor(1,1,1, 1)
+            LG.print(quitStr, 115, 12)
+         end
+
+         if fileDropPopup then
+            LG.setFont(smallest)
+            LG.setColor(1,1,1, 1)
+            LG.rectangle("fill", 100, 100, w-200, h-200)
+            LG.setColor(0,0,0)
+            local name =  fileDropPopup:getFilename()
+            LG.print("dropped file: "..name, 140, 120)
+            
+            if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
+               if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
+                  local tab = getDataFromFile(fileDropPopup)
+                  root.children = TableConcat(root.children, tab)
+                  parentize(root)
+                  scrollviewOffset = 0
+                  editingMode = nil
+                  editingModeSub = nil
+
+                  currentNode = nil
+                  meshAll(root)
+                  recursivelyMakeTextures(root)
+                  fileDropPopup = nil
+               end
+               if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
+                  local tab = getDataFromFile(fileDropPopup)
+                  root.children = tab -- TableConcat(root.children, tab)
+                  parentize(root)
+                  scrollviewOffset = 0
+                  editingMode = nil
+                  editingModeSub = nil
+                  currentNode = nil
+                  meshAll(root)
+                  recursivelyMakeTextures(root)
+                  fileDropPopup = nil
+               end
+
+            else
+
+               
+               if currentNode and currentNode.texture then
+                  local s, e = name:find("/experiments/", 1 , true)
+                  
+                  if s then
+                     local url = name:sub(s)
+                     
+                     if (mylib.folderPath) then
+                        local s1, e1 = mylib.folderPath:find("experiments/",1 , true)
+                        if (e1) then
+                           local prefix = mylib.folderPath:sub(e1+1)
+                           local s2,e2 = url:find(prefix, 1, true)
+                           local postfix = url:sub(e2+2)
+                           print('postfix', postfix)
+                           url = postfix
+                        end
+                     end
+                     
+                     LG.print("asset: "..url, 140, 150)
+                     currentNode.texture.url= url
+                     recursivelyMakeTextures(currentNode)
+                  end
+                  
+               end
+               
+               if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
+                  fileDropPopup = nil
+               end
+            end
+         end
+      end
+   end
+   local work =  nil
+   console.draw()
+   --LG.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
+   --LG.print(inspect(LG.getStats()), 10, 40)
+end
+
+
+function mylib:textinput(t)
+   if (changeName and currentNode) then
+      local str = currentNode and currentNode.name or ""
+      if (changeNameCursor > #str) then
+         changeNameCursor = #str
+      end
+
+      local a,b = split(str, changeNameCursor+1)
+      local r = table.concat{a, t, b}
+      changeNameCursor = changeNameCursor + 1
+      currentNode.name = r
+   end
+
+   console.textinput(t)
+end
+
+function mylib:filedropped(file)
+   fileDropPopup = file
+end
+
+function mylib:keypressed(key, scancode, isrepeat)
+   local root = mylib.root
+
+   console.keypressed(key, scancode, isrepeat)
+   if not console.isEnabled() then
+      if key == 'lshift' then
+         editingMode = 'rectangle-select'
+      end
+
+      if key == 't' then
+         usePerspective = not usePerspective
+      end
+      if key == 'tab' then
+         if editingMode ~= 'dopesheet' then
+            editingMode = 'dopesheet'
+            dopesheetEditing = true
+            if not currentNode then
+               currentNode = root.children[1]
+            end
+         else
+            dopesheetEditing = false
+            editingMode = nil
+         end
+
+         initializeDopeSheet()
+      end
+      if #childrenInRectangleSelect == 0 then
+         if key == 'down' then
+            if currentNode then
+               local index = getIndex(currentNode)
+               if #currentNode._parent.children > index + 1 then
+                  setCurrentNode(currentNode._parent.children[index + 1])
+               end
+            end
+         end
+         if key == 'up' then
+            if currentNode then
+               local index = getIndex(currentNode)
+               if index > 1 then
+                  setCurrentNode(currentNode._parent.children[index -1])
+               end
+            end
+         end
+      end
+
+      if key == "escape" then
+         if openFileScreen == true then
+            openFileScreen = false
+         elseif (editingModeSub ~= nil) then
+            editingModeSub = nil
+         elseif (editingMode ~= nil) then
+            editingMode = nil
+         else
+            if (quitDialog == true) then
+               love.event.quit()
+            elseif (quitDialog == false) then
+               quitDialog = true
+            end
+         end
+
+      else
+         if (quitDialog) then
+            quitDialog = false
+         end
+
+      end
+
+      if (key == 'p' and not changeName) then
+         if not profiling then
+            ProFi:start()
+         else
+            ProFi:stop()
+            ProFi:writeReport( 'log/MyProfilingReport.txt' )
+         end
+         profiling = not profiling
+      end
+      if key == '-' and not changeName then
+         love.wheelmoved(0,-1)
+      end
+      if key == '=' and not changeName then
+         love.wheelmoved(0,1)
+      end
+      if key == '0' and not changeName then
+         setPos(root, 0,0)
+      end
+      if key == 'o' and not changeName then 
+         openFileScreen = not openFileScreen
+         gatherData('')
+      end
+
+      if key == 'h' and not changeName then
+         print('this will be used to hot reload the thing you are working on into the origin file')
+         
+         local readurl = mylib.folderPath..'/'..mylib.root.origin.path
+         local writeurl = readurl
+         
+         local file = io.open(readurl, "r")
+         local contents = file:read("*all")
+         file:close()
+
+         local parsed = (loadstring("return ".. contents)())
+
+         if (mylib.root.origin.index >= 0) then
+            parsed[mylib.root.origin.index] = mylib.root
+         else
+            parsed[1] = mylib.root
+         end
+         
+         local toSave = {}
+         for i=1 , #parsed do
+            table.insert(toSave, copyShape(parsed[i]))
+         end
+         
+         -- overwriting the file
+         file = io.open(writeurl, "w")
+
+         io.output(file)
+         io.write(inspect(toSave, {indent=""}))
+         io.close(file)
+
+         -- saving a backup file
+         file = io.open(writeurl..'-'..os.time()..'-.bak', "w")
+         io.output(file)
+         io.write(contents)
+         io.close(file)
+
+      end
+      
+      if (key == 's' and not changeName) then
+         local path = shapePath..shapeName..".polygons.txt"
+         local info = love.filesystem.getInfo( path )
+         if (info) then
+            shapeName = shapeName..'_'
+            path =  shapePath..shapeName..".polygons.txt"
+         end
+         local toSave = {}
+         for i=1 , #root.children do
+            table.insert(toSave, copyShape(root.children[i]))
+         end
+
+         if #shapePath > 0 then
+            love.filesystem.createDirectory( shapePath )
+         end
+
+         love.filesystem.write(path, inspect(toSave, {indent=""}))
+         renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
+         local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
+         love.system.openURL(openURL)
+      end
+
+      if key == 'a' and not changeName then
+         print("printing a large file")
+         renderNodeIntoCanvas(root, LG.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
+
+      end
+      
+
+      if (key == 'j' and not changeName) then
+         local path = shapeName..".polygons.txt.json"
+         local info = love.filesystem.getInfo( path )
+         if (info) then
+            shapeName = shapeName..'_'
+            path =  shapeName..".polygons.txt.json"
+         end
+         local toSave = {}
+         for i=1 , #root.children do
+            table.insert(toSave, copyShape(root.children[i]))
+         end
+
+         love.filesystem.write(path, json.encode(toSave, {indent=""}))
+         love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+      end
+
+      if not changeName and currentNode and not #childrenInRectangleSelect then
+         if (key == 'delete') then
+            deleteNode(currentNode)
+         end
+      end
+      if not changeName and (not currentNode or not currentNode.points) then
+         if #childrenInRectangleSelect > 0 then
+             if LK.isDown("delete") then
 		     local indexes = type(childrenInRectangleSelect[1]) == "number"
 		     if indexes then
 		     else
@@ -2547,417 +2897,66 @@ function mylib:draw()
 		     end
 		     childrenInRectangleSelect = {}
 		  end
-	       end
-	    end
-
-	       if currentNode and currentNode.keyframes then
-		  if (currentNode.keyframes == 2) then
-		     local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
-		     if v.value then
-			currentNode.lerpValue = v.value
-		     end
-		  end
-		  if (currentNode.keyframes == 4 or currentNode.keyframes == 5  ) then
-		     local v = joystick('lerp-keyframes', rightX-300, 100, 200, currentNode.lerpX or 0,currentNode.lerpY or 0, 0, 1)
-		     if v.value then
-			currentNode.lerpX = v.value.x
-			currentNode.lerpY = v.value.y
-		     end
-		  end
-	       end
-
-
-	       
-	       if (currentNode) then
-		  if (changeName) then
-		     local str =  currentNode and currentNode.name  or ""
-		     local substr = string.sub(str, 1, changeNameCursor)
-		     local cursorX = (LG.getFont():getWidth(substr))
-		     local cursorH = (LG.getFont():getHeight(str))
-		     LG.setColor(1,1,1,0.5)
-		     LG.rectangle('fill', 0, h*0.75 - cursorH - 26, 300 + 20,  cursorH + 20 )
-		     LG.setColor(1,1,1)
-		     LG.print(str , 0, h*0.75 - cursorH - 20)
-		     LG.setColor(1,1,1, math.abs(math.sin(step/ 100)))
-		     LG.rectangle('fill', 0 + cursorX+2, h*0.75 - cursorH - 20,  2, cursorH)
-		     LG.setColor(1,1,1)
-
-		     if lastClickedGraphButton then
-			local sx = lastClickedGraphButton.x+24+12
-			local sy = lastClickedGraphButton.y+2
-			
-			LG.rectangle('line',sx,sy , 100,23)
-			LG.setColor(1,0.75,0.75)
-			LG.setFont(smallester)
-			LG.print(str,sx,sy)
-			LG.setColor(1,1,1)
-
-			local substr =(string.sub(str, 1 , changeNameCursor))
-			local cursorX = (LG.getFont():getWidth(substr))
-
-			LG.rectangle('line', sx + cursorX, sy, 1, 23)
-		     end
-		  end
-	       end
-	    end
-
-	    LG.pop()
-	    LG.setFont(small)
-	    if not quitDialog then
-	       LG.print(tostring(love.timer.getFPS( )), 2,0)
-	       LG.print(shapeName, 64, 0)
-	    end
-
-	    if lastDraggedElement and (lastDraggedElement.id == 'connector' or lastDraggedElement.id == 'connector-group' ) then
-	       LG.line(lastDraggedElement.pos[1]+16, lastDraggedElement.pos[2]+16, mx, my)
-	    end
-
-	    local mousex = love.mouse.getX()
-	    local mousey = love.mouse.getY()
-
-	    doDopeSheetEditing(mousex, mousey)
-
-	    if quitDialog then
-	       local quitStr = "Quit? Seriously?! [ESC] "
-	       LG.setFont(large)
-	       LG.setColor(0,0,0, 1)
-	       LG.print(quitStr, 114, 11)
-	       LG.setColor(1,0.5,0.5, 1)
-	       LG.print(quitStr, 116, 13)
-	       LG.setColor(1,1,1, 1)
-	       LG.print(quitStr, 115, 12)
-	    end
-
-	    if fileDropPopup then
-	       LG.setFont(smallest)
-	       LG.setColor(1,1,1, 1)
-	       LG.rectangle("fill", 100, 100, w-200, h-200)
-	       LG.setColor(0,0,0)
-	       local name =  fileDropPopup:getFilename()
-	       LG.print("dropped file: "..name, 140, 120)
-	       
-	       if ends_with(name, 'polygons.txt') or ends_with(name, '.svg') then
-		  if iconlabelbutton('add-shape', ui.add_to_list, nil, false,  'add shape',  120, 300).clicked then
-		     local tab = getDataFromFile(fileDropPopup)
-		     root.children = TableConcat(root.children, tab)
-		     parentize(root)
-		     scrollviewOffset = 0
-		     editingMode = nil
-		     editingModeSub = nil
-
-		     currentNode = nil
-		     meshAll(root)
-		     recursivelyMakeTextures(root)
-		     fileDropPopup = nil
-		  end
-		  if iconlabelbutton('add-shape-new', ui.add, nil, false,  'new project',  120, 200).clicked then
-		     local tab = getDataFromFile(fileDropPopup)
-		     root.children = tab -- TableConcat(root.children, tab)
-		     parentize(root)
-		     scrollviewOffset = 0
-		     editingMode = nil
-		     editingModeSub = nil
-		     currentNode = nil
-		     meshAll(root)
-		     recursivelyMakeTextures(root)
-		     fileDropPopup = nil
-		  end
-
-	       else
-
-		 
-		  if currentNode and currentNode.texture then
-		     local s, e = name:find("/experiments/", 1 , true)
-		     
-		     if s then
-			local url = name:sub(s)
-			
-			if (mylib.folderPath) then
-			   local s1, e1 = mylib.folderPath:find("experiments/",1 , true)
-			   if (e1) then
-			      local prefix = mylib.folderPath:sub(e1+1)
-			      local s2,e2 = url:find(prefix, 1, true)
-			      local postfix = url:sub(e2+2)
-			      print('postfix', postfix)
-			      url = postfix
-			   end
-			end
-	
-			LG.print("asset: "..url, 140, 150)
-			currentNode.texture.url= url
-			recursivelyMakeTextures(currentNode)
-		     end
-		     
-		  end
-		  
-		  if iconlabelbutton('ok-bye', ui.add, nil, false,  'ok bye',  120, 200).clicked then
-		     fileDropPopup = nil
-		  end
-	       end
-	    end
-	 end
+         end
+         
       end
-      local work =  nil
-      console.draw()
-      --LG.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
-      --LG.print(inspect(LG.getStats()), 10, 40)
-   end
+      
 
-
-   function mylib:textinput(t)
-      if (changeName and currentNode) then
-	 local str = currentNode and currentNode.name or ""
-	 if (changeNameCursor > #str) then
-	    changeNameCursor = #str
-	 end
-
-	 local a,b = split(str, changeNameCursor+1)
-	 local r = table.concat{a, t, b}
-	 changeNameCursor = changeNameCursor + 1
-	 currentNode.name = r
+      if #childrenInRectangleSelect > 0 and currentNode then
+         local shift = LK.isDown("lshift") or LK.isDown("rshift")
+         if (key == 'left') then
+            movePoints(currentNode, shift and -10 or -1, 0)
+         end
+         if (key == 'right') then
+            movePoints(currentNode, shift and 10 or 1, 0)
+         end
+         if (key == 'up') then
+            movePoints(currentNode, 0, shift and -10 or -1)
+         end
+         if (key == 'down') then
+            movePoints(currentNode, 0, shift and 10 or 1)
+         end
+         if key == 'delete' then
+            print("yes i hope?")
+            deletePoints(currentNode)
+         end
       end
 
-      console.textinput(t)
-   end
+      if (changeName) then
+         if (key == 'backspace') then
+            local str = currentNode and currentNode.name or ""
+            local a,b = split(str, changeNameCursor+1)
+            currentNode.name = table.concat{split(a,utf8.len(a)), b}
+            changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
+         end
 
-   function mylib:filedropped(file)
-      fileDropPopup = file
-   end
+         if (key == 'delete') then
+            local str = currentNode and currentNode.name or ""
+            local a,b = split(str, changeNameCursor+2)
+            if (#b > 0) then
+               currentNode.name = table.concat{split(a,utf8.len(a)), b}
+               changeNameCursor = math.min(#currentNode.name, changeNameCursor)
+            end
+         end
 
-   function mylib:keypressed(key, scancode, isrepeat)
-      local root = mylib.root
+         if (key == 'left') then
+            if (changeNameCursor > 0) then
+               changeNameCursor = changeNameCursor - 1
+            end
+         end
 
-      console.keypressed(key, scancode, isrepeat)
-      if not console.isEnabled() then
-	 if key == 'lshift' then
-	    editingMode = 'rectangle-select'
-	 end
+         if (key == 'right' ) then
+            local str =  currentNode and currentNode.name or ""
+            if (changeNameCursor < utf8.len(str)) then
+               changeNameCursor = changeNameCursor + 1
+            end
+         end
 
-	 if key == 't' then
-	    usePerspective = not usePerspective
-	 end
-	 if key == 'tab' then
-	    if editingMode ~= 'dopesheet' then
-	       editingMode = 'dopesheet'
-	       dopesheetEditing = true
-	       if not currentNode then
-		  currentNode = root.children[1]
-	       end
-	    else
-	       dopesheetEditing = false
-	       editingMode = nil
-	    end
-
-	    initializeDopeSheet()
-	 end
-	 if #childrenInRectangleSelect == 0 then
-	    if key == 'down' then
-	       if currentNode then
-		  local index = getIndex(currentNode)
-		  if #currentNode._parent.children > index + 1 then
-		     setCurrentNode(currentNode._parent.children[index + 1])
-		  end
-	       end
-	    end
-	    if key == 'up' then
-	       if currentNode then
-		  local index = getIndex(currentNode)
-		  if index > 1 then
-		     setCurrentNode(currentNode._parent.children[index -1])
-		  end
-	       end
-	    end
-	 end
-
-	 if key == "escape" then
-	    if openFileScreen == true then
-	       openFileScreen = false
-	    elseif (editingModeSub ~= nil) then
-	       editingModeSub = nil
-	    elseif (editingMode ~= nil) then
-	       editingMode = nil
-	    else
-	       if (quitDialog == true) then
-		  love.event.quit()
-	       elseif (quitDialog == false) then
-		  quitDialog = true
-	       end
-	    end
-
-	 else
-	    if (quitDialog) then
-	       quitDialog = false
-	    end
-
-	 end
-
-	 if (key == 'p' and not changeName) then
-	    if not profiling then
-	       ProFi:start()
-	    else
-	       ProFi:stop()
-	       ProFi:writeReport( 'log/MyProfilingReport.txt' )
-	    end
-	    profiling = not profiling
-	 end
-	 if key == '-' and not changeName then
-	    love.wheelmoved(0,-1)
-	 end
-	 if key == '=' and not changeName then
-	    love.wheelmoved(0,1)
-	 end
-	 if key == '0' and not changeName then
-	    setPos(root, 0,0)
-	 end
-	 if key == 'o' and not changeName then 
-	    openFileScreen = not openFileScreen
-	    gatherData('')
-	 end
-
-	 if key == 'h' and not changeName then
-	    print('this will be used to hot reload the thing you are working on into the origin file')
-	    
-	    local readurl = mylib.folderPath..'/'..mylib.root.origin.path
-	    local writeurl = readurl
-	    
-	    local file = io.open(readurl, "r")
-	    local contents = file:read("*all")
-	    file:close()
-
-	    local parsed = (loadstring("return ".. contents)())
-
-	    if (mylib.root.origin.index >= 0) then
-	       parsed[mylib.root.origin.index] = mylib.root
-	    else
-	       parsed[1] = mylib.root
-	    end
-	    
-	    local toSave = {}
-	    for i=1 , #parsed do
-	       table.insert(toSave, copyShape(parsed[i]))
-	    end
-	    
-	    -- overwriting the file
-	    file = io.open(writeurl, "w")
-
-	    io.output(file)
-	    io.write(inspect(toSave, {indent=""}))
-	    io.close(file)
-
-	    -- saving a backup file
-	    file = io.open(writeurl..'-'..os.time()..'-.bak', "w")
-	    io.output(file)
-	    io.write(contents)
-	    io.close(file)
-
-	 end
-	 
-	 if (key == 's' and not changeName) then
-	    local path = shapePath..shapeName..".polygons.txt"
-	    local info = love.filesystem.getInfo( path )
-	    if (info) then
-	       shapeName = shapeName..'_'
-	       path =  shapePath..shapeName..".polygons.txt"
-	    end
-	    local toSave = {}
-	    for i=1 , #root.children do
-	       table.insert(toSave, copyShape(root.children[i]))
-	    end
-
-	    if #shapePath > 0 then
-	       love.filesystem.createDirectory( shapePath )
-	    end
-
-	    love.filesystem.write(path, inspect(toSave, {indent=""}))
-	    renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
-	    local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
-	    love.system.openURL(openURL)
-	 end
-
-	 if key == 'a' and not changeName then
-	    print("printing a large file")
-	    renderNodeIntoCanvas(root, LG.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
-
-	 end
-	 
-
-	 if (key == 'j' and not changeName) then
-	    local path = shapeName..".polygons.txt.json"
-	    local info = love.filesystem.getInfo( path )
-	    if (info) then
-	       shapeName = shapeName..'_'
-	       path =  shapeName..".polygons.txt.json"
-	    end
-	    local toSave = {}
-	    for i=1 , #root.children do
-	       table.insert(toSave, copyShape(root.children[i]))
-	    end
-
-	    love.filesystem.write(path, json.encode(toSave, {indent=""}))
-	    love.system.openURL("file://"..love.filesystem.getSaveDirectory())
-	 end
-
-	 if not changeName and currentNode and not #childrenInRectangleSelect then
-	    if (key == 'delete') then
-	       deleteNode(currentNode)
-	    end
-	 end
-
-	 if #childrenInRectangleSelect > 0 and currentNode then
-	    local shift = LK.isDown("lshift") or LK.isDown("rshift")
-	    if (key == 'left') then
-	       movePoints(currentNode, shift and -10 or -1, 0)
-	    end
-	    if (key == 'right') then
-	       movePoints(currentNode, shift and 10 or 1, 0)
-	    end
-	    if (key == 'up') then
-	       movePoints(currentNode, 0, shift and -10 or -1)
-	    end
-	    if (key == 'down') then
-	       movePoints(currentNode, 0, shift and 10 or 1)
-	    end
-	    if key == 'delete' then
-	       print("yes i hope?")
-	       deletePoints(currentNode)
-	    end
-	 end
-
-	 if (changeName) then
-	    if (key == 'backspace') then
-	       local str = currentNode and currentNode.name or ""
-	       local a,b = split(str, changeNameCursor+1)
-	       currentNode.name = table.concat{split(a,utf8.len(a)), b}
-	       changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
-	    end
-
-	    if (key == 'delete') then
-	       local str = currentNode and currentNode.name or ""
-	       local a,b = split(str, changeNameCursor+2)
-	       if (#b > 0) then
-		  currentNode.name = table.concat{split(a,utf8.len(a)), b}
-		  changeNameCursor = math.min(#currentNode.name, changeNameCursor)
-	       end
-	    end
-
-	    if (key == 'left') then
-	       if (changeNameCursor > 0) then
-		  changeNameCursor = changeNameCursor - 1
-	       end
-	    end
-
-	    if (key == 'right' ) then
-	       local str =  currentNode and currentNode.name or ""
-	       if (changeNameCursor < utf8.len(str)) then
-		  changeNameCursor = changeNameCursor + 1
-	       end
-	    end
-
-	    if (key == 'return') then
-	       changeName = false
-	    end
-	 end
+         if (key == 'return') then
+            changeName = false
+         end
       end
    end
+end
 
-   return mylib
+return mylib
