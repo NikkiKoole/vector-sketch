@@ -43,7 +43,7 @@ function recursivelyMakeTextures(root)
       if not imageCache[root.texture.url] then
 	 print('making texture', root.texture.url)
          local img = LG.newImage(root.texture.url, {mipmaps=true})
-         img:setWrap( root.texture.wrap or 'repeat' )
+         img:setWrap( root.texture.wrap  )
          img:setFilter(root.texture.filter or 'linear')
          imageCache[root.texture.url] = img
       end
@@ -1087,16 +1087,21 @@ local function drawUIAroundGraphNodes(w,h)
 	 table.insert(
 	    row2,
 	    {
-	       'fit polygon to image', ui.backdrop, 'make fitting polygon for image',
+	       'fit polygon to image', ui.backdropscale, 'make fitting polygon for image',
 	       function()
 		  local img =imageCache[currentNode.texture.url]
 		  local width, height = img:getDimensions( )
-		  
+		  print(currentNode.type)
 		  if (currentNode.type == 'rubberhose') then
 		     local   magic = 4.46
 		     currentNode.data.length = height * magic
 		     currentNode.data.width = width * 2
 		     remeshNode(currentNode)
+		  elseif (currentNode.type == 'bezier') then
+		     currentNode.points = {};
+		     currentNode.points[1] = {0,0}
+		     currentNode.points[2] = {0,height/2 }
+		     currentNode.points[3] = {0,height}
 		  else
 		     
 		     
@@ -1989,6 +1994,7 @@ function mylib:load(arg)
       polyline_remove = LG.newImage("resources/ui/polyline-remove.png"),
       insert_link = LG.newImage("resources/ui/insert-link.png"),
       backdrop = LG.newImage("resources/ui/backdrop.png"),
+      backdropscale = LG.newImage("resources/ui/backdropscale.png"),
       grid = LG.newImage("resources/ui/grid.png"),
       palette = LG.newImage("resources/ui/palette.png"),
       pen = LG.newImage("resources/ui/pen.png"),

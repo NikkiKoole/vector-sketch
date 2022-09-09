@@ -30,7 +30,7 @@ local root = {
                   points = {{200,200},{202,100},{200,0}},
                   texture = {
                      url='experiments/handdrawn-ecs/assets/moreleaves32.png',
-                     wrap='repeat', filter='linear'
+                     wrap='clamp', filter='linear'
                   },
 	       },
 
@@ -40,7 +40,16 @@ local root = {
                   points = {{200,200},{202,100},{200,0}},
                   texture = {
                      url='experiments/handdrawn-ecs/assets/house.png',
-                     wrap='repeat', filter='linear'
+                     wrap='clamp', filter='linear', keepAspect=false
+                  },
+	       },
+	       {
+                  name="house texture2"..1,
+                  color = {1,1,1, 1},
+                  points = {{400,200},{402,100},{400,0}},
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/house.png',
+                     wrap='repeat', filter='linear', keepAspect=true
                   },
 	       },
                {
@@ -96,9 +105,9 @@ local root = {
 
 function love.load(arg)
   
-   img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
-   img:setWrap( 'repeat' )
-   img:setFilter('linear')
+   --img = love.graphics.newImage('experiments/handdrawn-ecs/assets/ding.png', {mipmaps=true})
+   --img:setWrap( 'repeat' )
+   --img:setFilter('linear')
 --   print(inspect(img))
    recursivelyMakeTextures(root)
    local w,h = love.graphics.getDimensions()
