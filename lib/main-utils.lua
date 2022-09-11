@@ -579,7 +579,7 @@ function handleChild(shape, isDirty)
 	 if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier') then
 	    --	    print('yo guys!')
 	    if (shape.texture.url and shape.texture.url:len() > 0) then
-	       addUVToVerts(editing, imageCache[shape.texture.url], shape.points)
+	       addUVToVerts(editing, imageCache[shape.texture.url], shape.points, shape.texture)
 	    end
 	 end
 --	 print(inspect(editing))

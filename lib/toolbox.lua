@@ -184,9 +184,10 @@ function meshAll(root) -- this needs to be done recursive
 end
 
 
-function addUVToVerts(verts, img, points)
+function addUVToVerts(verts, img, points, settings)
+   print('Im tweakibg around ion here atm, check the code for UV stuff')
    local tlx, tly, brx, bry = getPointsBBox(points)
-   local keepAspect = true
+   local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
    local xFactor = 1
    local yFactor = 1
 
@@ -204,6 +205,9 @@ function addUVToVerts(verts, img, points)
    
    local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
    local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
+
+  -- local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1) end
+  -- local vfunc = function(y) return mapInto(y, tly, bry, 0, 1) end
    
    
    for i =1, #verts do
@@ -217,14 +221,14 @@ end
 
 
 function remeshNode(node)
---   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
+   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
 
    if node.texture and (node.texture.url:len() > 0 ) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
       print(node.texture.url, node.texture.url:len())
 
       local img = imageCache[node.texture.url];
-      addUVToVerts(verts, img, node.points)
+      addUVToVerts(verts, img, node.points, node.texture )
 	 
       node.mesh = love.graphics.newMesh(verts, 'triangles')
 
