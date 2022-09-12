@@ -1118,14 +1118,25 @@ local function drawUIAroundGraphNodes(w,h)
 			
 			--currentNode.points[8] = {0,height/2}
 			currentNode.points = {};
-					     currentNode.points[1] = {0,0}
-		     currentNode.points[2] = {width,0}
-		     currentNode.points[3] = {width,height}
-		     currentNode.points[4] = {0,height}
+			--currentNode.points[1] = {width/2,height/2}
+
+			local useMiddle = true
+			if useMiddle then
+			   currentNode.points[1] = {width/2,height/2}
+			   
+			   currentNode.points[2] = {0,0}
+			   currentNode.points[3] = {width,0}
+			   currentNode.points[4] = {width,height}
+			   currentNode.points[5] = {0,height}
+			else
+			   currentNode.points[1] = {0,0}
+			   currentNode.points[2] = {width,0}
+			   currentNode.points[3] = {width,height}
+			   currentNode.points[4] = {0,height}
+			end
 
 
-
-		     remeshNode(currentNode)
+			remeshNode(currentNode)
 		     else
 		     
 		     

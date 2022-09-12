@@ -37,7 +37,7 @@ local root = {
                {
                   name="house texture squish"..1,
                   color = {1,1,1, 1},
-                  points = {{200,200},{202,100},{200,0}},
+                  points = {{250,250}, {200,200},{300,200},{300,300}, {300, 200}},
                   texture = {
                      url='experiments/handdrawn-ecs/assets/house.png',
                      wrap='clamp', filter='linear', keepAspect=true, squishable=true
