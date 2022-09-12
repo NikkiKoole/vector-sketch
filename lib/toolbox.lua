@@ -185,8 +185,28 @@ end
 
 
 function addUVToVerts(verts, img, points, settings)
-   print('Im tweakibg around ion here atm, check the code for UV stuff')
+   --print('Im tweakibg around ion here atm, check the code for UV stuff')
    local tlx, tly, brx, bry = getPointsBBox(points)
+
+   if (settings.squishable) then
+      --for i = 1, 4 do
+      --local v = verts[i]
+      local v = verts
+       -- this is working on triagles, it will be easier when i draw a fan and work on points,
+      -- makevertices
+      if (#verts == 6) then
+	 verts[1] = {v[1][1], v[1][2], 0, 0}
+	 verts[2] = {v[2][1], v[2][2], 1, 0}
+	 verts[3] = {v[3][1], v[3][2], 1,1 }
+	 -- second triangle
+	 verts[4] = {v[4][1], v[4][2], 0, 0}
+	 verts[5] = {v[5][1], v[5][2], 1, 1}
+	 verts[6] = {v[6][1], v[6][2], 0,1 }
+      end
+
+   else
+   
+   
    local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
    local xFactor = 1
    local yFactor = 1
@@ -203,18 +223,18 @@ function addUVToVerts(verts, img, points, settings)
    local xscale = keepAspect and  mmax or xFactor
    local yscale = keepAspect and mmax or yFactor
    
-   local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
-   local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
+ --  local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
+ --  local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
 
-  -- local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1) end
-  -- local vfunc = function(y) return mapInto(y, tly, bry, 0, 1) end
+   local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1) end
+   local vfunc = function(y) return mapInto(y, tly, bry, 0, 1) end
    
-   
+   print(#verts)
    for i =1, #verts do
       local v =verts[i]
       verts[i] ={v[1], v[2], ufunc(v[1]), vfunc(v[2])}
    end
-
+   end
    -- todo should this return instead?
 
 end
@@ -229,7 +249,10 @@ function remeshNode(node)
 
       local img = imageCache[node.texture.url];
       addUVToVerts(verts, img, node.points, node.texture )
-	 
+      if (node.texture.squishable == true) then
+	 print('need to make this a fan instead of trinagles I think')
+      end
+      
       node.mesh = love.graphics.newMesh(verts, 'triangles')
 
       node.mesh:setTexture(img)

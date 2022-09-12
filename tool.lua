@@ -1103,6 +1103,30 @@ local function drawUIAroundGraphNodes(w,h)
 		     currentNode.points[2] = {0,height/2 }
 		     currentNode.points[3] = {0,height}
 		  else
+		     if (currentNode.texture and currentNode.texture.squishable) then
+			--print('asadsasdasdasdasdasd')
+			--currentNode.points = {};
+			--currentNode.points[1] = {0,0}
+			--currentNode.points[2] = {width/2,0}
+			--currentNode.points[3] = {width,0}
+			--currentNode.points[4] = {width,height/2}
+
+			--currentNode.points[5] = {width,height}
+			--currentNode.points[6] = {width/2,height}
+
+			--currentNode.points[7] = {0,height}
+			
+			--currentNode.points[8] = {0,height/2}
+			currentNode.points = {};
+					     currentNode.points[1] = {0,0}
+		     currentNode.points[2] = {width,0}
+		     currentNode.points[3] = {width,height}
+		     currentNode.points[4] = {0,height}
+
+
+
+		     remeshNode(currentNode)
+		     else
 		     
 		     
 		     currentNode.points = {};
@@ -1111,6 +1135,8 @@ local function drawUIAroundGraphNodes(w,h)
 		     currentNode.points[3] = {width,height}
 		     currentNode.points[4] = {0,height}
 		     remeshNode(currentNode)
+		     end
+		     
 		  end
 		  
 	       end
