@@ -232,14 +232,15 @@ function makeSquishableUVsFromPoints(points)
    local use8points = true
    
    if useMiddle then
-   
+
+      if (#v >= 5 ) then
       verts[1] = {v[1][1], v[1][2], 0.5, 0.5}
       verts[2] = {v[2][1], v[2][2], 0, 0}
       verts[3] = {v[3][1], v[3][2], 1, 0}
       verts[4] = {v[4][1], v[4][2], 1, 1}
       verts[5] = {v[5][1], v[5][2], 0,1 }
       verts[6] = {v[2][1], v[2][2], 0,0 } -- this is an extra one to make it go round
-
+      end
 
       if (use8points and #v > 7) then
 	 verts[1] = {v[1][1], v[1][2], 0.5, 0.5}
@@ -282,7 +283,7 @@ function remeshNode(node)
 	 -- print('yo hello!')
 
 	 local verts = makeSquishableUVsFromPoints(node.points)
-	  node.mesh = love.graphics.newMesh(verts, 'fan')
+	 node.mesh = love.graphics.newMesh(verts, 'fan')
       else
       
 	 
