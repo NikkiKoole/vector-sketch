@@ -27,10 +27,10 @@ local root = {
                {
                   name="leaves"..1,
                   color = {1,1,1, 1},
-                  points = {{200,200},{202,100},{200,0}},
+                  points = {{200,200},{202,100},{200,0}, {100,100}, {300,200}},
                   texture = {
                      url='experiments/handdrawn-ecs/assets/moreleaves32.png',
-                     wrap='clamp', filter='linear'
+                     wrap='clamp', filter='linear', squishable=true
                   },
 	       },
 

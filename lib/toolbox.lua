@@ -229,7 +229,8 @@ function makeSquishableUVsFromPoints(points)
    local v = points
    --for i =1, #points do
    local useMiddle = true
-
+   local use8points = true
+   
    if useMiddle then
    
       verts[1] = {v[1][1], v[1][2], 0.5, 0.5}
@@ -238,6 +239,23 @@ function makeSquishableUVsFromPoints(points)
       verts[4] = {v[4][1], v[4][2], 1, 1}
       verts[5] = {v[5][1], v[5][2], 0,1 }
       verts[6] = {v[2][1], v[2][2], 0,0 } -- this is an extra one to make it go round
+
+
+      if (use8points and #v > 7) then
+	 verts[1] = {v[1][1], v[1][2], 0.5, 0.5}
+	 verts[2] = {v[2][1], v[2][2], 0, 0}
+	 verts[3] = {v[3][1], v[3][2], .5, 0}
+	 verts[4] = {v[4][1], v[4][2], 1, 0}
+	 verts[5] = {v[5][1], v[5][2], 1, .5}
+	 verts[6] = {v[6][1], v[6][2], 1, 1}
+	 verts[7] = {v[7][1], v[7][2], .5, 1}
+	 verts[8] = {v[8][1], v[8][2], 0, 1}
+	 verts[9] = {v[9][1], v[9][2], 0, .5}
+	 verts[10] = {v[2][1], v[2][2], 0,0 } -- this is an extra one to make it go round
+
+      end
+      
+      
    --end
    else
       verts[1] = {v[1][1], v[1][2], 0, 0}

@@ -1121,6 +1121,10 @@ local function drawUIAroundGraphNodes(w,h)
 			--currentNode.points[1] = {width/2,height/2}
 
 			local useMiddle = true
+			local use8points = true
+
+			local numberOfBorderNodes = 8 -- todo make this a dynamic number indeed
+			
 			if useMiddle then
 			   currentNode.points[1] = {width/2,height/2}
 			   
@@ -1128,6 +1132,24 @@ local function drawUIAroundGraphNodes(w,h)
 			   currentNode.points[3] = {width,0}
 			   currentNode.points[4] = {width,height}
 			   currentNode.points[5] = {0,height}
+
+			   if (use8points) then
+
+			   currentNode.points[1] = {width/2,height/2}
+			   
+			   currentNode.points[2] = {0,0}
+			   currentNode.points[3] = {width/2,0}
+			   currentNode.points[4] = {width,0}
+			   currentNode.points[5] = {width,height/2}
+
+			   currentNode.points[6] = {width,height}
+			   currentNode.points[7] = {width/2,height}
+
+			   currentNode.points[8] = {0,height}
+			   currentNode.points[9] = {0,height/2}
+
+			   end
+			   
 			else
 			   currentNode.points[1] = {0,0}
 			   currentNode.points[2] = {width,0}
