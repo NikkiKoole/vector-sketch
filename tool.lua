@@ -43,7 +43,7 @@ function recursivelyMakeTextures(root)
       if not imageCache[root.texture.url] then
 	 print('making texture', root.texture.url)
          local img = LG.newImage(root.texture.url, {mipmaps=true})
-         img:setWrap( root.texture.wrap  )
+         img:setWrap( root.texture.wrap  or 'clampzero')
          img:setFilter(root.texture.filter or 'linear')
          imageCache[root.texture.url] = img
       end
@@ -581,6 +581,30 @@ local function drawUIAroundGraphNodes(w,h)
 
    table.insert(rows, row0)
 
+   local row0b = {
+      startX = w-40,
+      startY = 10
+      
+   }
+   row0b.runningX = row0b.startX
+   row0b.runningY = row0b.startY
+   table.insert(
+         row0b,
+         {
+            'show help', ui.help, 'show-shortcuts',
+            function()
+	       showHelp = not showHelp
+	       --local f = makeNewFolder()
+	       --editingMode = 'polyline'
+	       --editingModeSub = 'polyline-insert'
+
+            end
+            
+
+         }
+      )
+   
+   table.insert(rows, row0b)
    
    local row1 = {
       startX=w - 240,
@@ -2085,6 +2109,7 @@ function mylib:load(arg)
       dopesheet = LG.newImage("resources/ui/spreadsheet.png"),
       curve = LG.newImage("resources/ui/curve.png"),
       close_stencil = LG.newImage("resources/ui/close-stencil.png"),
+      help = LG.newImage("resources/ui/help.png"),
    }
 
    cursors = {
@@ -2731,6 +2756,12 @@ function mylib:draw()
          end
       end
    end
+
+   if showHelp then
+      LG.setColor(1,1,1,1)
+      LG.print('KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nj: save json\narrows + optional shift: move selection around', 50, 50)
+   end
+   
    local work =  nil
    console.draw()
    --LG.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)

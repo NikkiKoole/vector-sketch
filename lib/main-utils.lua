@@ -762,7 +762,7 @@ function renderThings(root, dirty)
 
    if root.keyframes then
       -- todo this needs to be fed isDirty too
-      print('am i getting here already?')
+      --print('am i getting here already?')
       renderThingsWithKeyFrames(root)
    else
       --love.graphics.setStencilTest()

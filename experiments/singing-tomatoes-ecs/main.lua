@@ -189,7 +189,7 @@ function love.draw()
 
    if reloadOrigin then
       if imgbutton('hot-reload-the-thing', ui.rotate,  w*part, 50, 'clik it to edit then click to reload').clicked then
-	 print(part)
+	 --print(part)
          if part == 0 then
             mylib:setRoot(reloadBody, love.filesystem.getRealDirectory( reloadOrigin.path))
 	    
