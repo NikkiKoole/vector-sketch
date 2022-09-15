@@ -74,6 +74,17 @@ local root = {
                   },
                   type='rubberhose'
                },
+               {
+                   name="beziered",
+                  color={.5,.5,.1,1},
+                  points={{200,200}, {1200,300}},
+                  data={ width=45, steps=15},
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/leg3.png',
+                     wrap='repeat', filter='linear'
+                  },
+                  type='bezier'
+               },
 	       {
                   name="beziered",
                   color={.5,.5,.1,1},

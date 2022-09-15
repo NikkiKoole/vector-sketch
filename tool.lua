@@ -1105,7 +1105,7 @@ local function drawUIAroundGraphNodes(w,h)
 	       end
          })
       end
-      if (currentNode and currentNode.texture) then
+      if (currentNode and currentNode.texture and (currentNode.type ~= 'rubberhose' and currentNode.type ~= 'bezier' )) then
 	 table.insert(
 	    row2,
 	    {
@@ -1119,7 +1119,7 @@ local function drawUIAroundGraphNodes(w,h)
          })
       end
 
-      if (currentNode.texture and currentNode.type == 'rubberhose') then
+      if (currentNode.texture  and currentNode.type == 'rubberhose') then
 	 table.insert(
 	    row2,
 	    {

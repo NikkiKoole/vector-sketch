@@ -296,7 +296,8 @@ function remeshNode(node)
          --end
 
          if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
-	    local texture = imageCache[node.texture.url]
+            
+	    local texture = imageCache[node.texture and node.texture.url]
 	    if texture then
 	       node.mesh:setTexture(texture)
 	    end
