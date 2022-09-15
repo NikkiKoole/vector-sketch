@@ -589,20 +589,20 @@ local function drawUIAroundGraphNodes(w,h)
    row0b.runningX = row0b.startX
    row0b.runningY = row0b.startY
    table.insert(
-         row0b,
-         {
-            'show help', ui.help, 'show-shortcuts',
-            function()
-	       showHelp = not showHelp
-	       --local f = makeNewFolder()
-	       --editingMode = 'polyline'
-	       --editingModeSub = 'polyline-insert'
+      row0b,
+      {
+	 'show help', ui.help, 'show-shortcuts',
+	 function()
+	    showHelp = not showHelp
+	    --local f = makeNewFolder()
+	    --editingMode = 'polyline'
+	    --editingModeSub = 'polyline-insert'
 
-            end
-            
+	 end
+	 
 
-         }
-      )
+      }
+   )
    
    table.insert(rows, row0b)
    
@@ -1105,86 +1105,144 @@ local function drawUIAroundGraphNodes(w,h)
 	       end
          })
       end
-      
-      
-      if (currentNode.texture) then
+      if (currentNode and currentNode.texture) then
 	 table.insert(
 	    row2,
 	    {
-	       'fit polygon to image', ui.backdropscale, 'make fitting polygon for image',
+	       'squish', ui.squish, 'enable/disable squishable',
 	       function()
-		  local img =imageCache[currentNode.texture.url]
-		  local width, height = img:getDimensions( )
-		  print(currentNode.type)
-		  if (currentNode.type == 'rubberhose') then
-		     local   magic = 4.46
-		     currentNode.data.length = height * magic
-		     currentNode.data.width = width * 2
-		     remeshNode(currentNode)
-		  elseif (currentNode.type == 'bezier') then
-		     currentNode.points = {};
-		     currentNode.points[1] = {0,0}
-		     currentNode.points[2] = {0,height/2 }
-		     currentNode.points[3] = {0,height}
-		  else
-		     if (currentNode.texture and currentNode.texture.squishable) then
-			currentNode.points = {};
-
-			local useMiddle = true
-			local use8points = true
---			local numberOfBorderNodes = 4 -- todo make this a dynamic number indeed
-			-- todo make this a procedure
-			if useMiddle then
-
-
-			   currentNode.points[1] = {width/2,height/2}
-			   
-			   currentNode.points[2] = {0,0}
-			   currentNode.points[3] = {width,0}
-			   currentNode.points[4] = {width,height}
-			   currentNode.points[5] = {0,height}
-
-			   if (use8points) then
-
-			   currentNode.points[1] = {width/2,height/2}
-			   
-			   currentNode.points[2] = {0,0}
-			   currentNode.points[3] = {width/2,0}
-			   currentNode.points[4] = {width,0}
-			   currentNode.points[5] = {width,height/2}
-
-			   currentNode.points[6] = {width,height}
-			   currentNode.points[7] = {width/2,height}
-
-			   currentNode.points[8] = {0,height}
-			   currentNode.points[9] = {0,height/2}
-
-			   end
-			   
-			else
-			   currentNode.points[1] = {0,0}
-			   currentNode.points[2] = {width,0}
-			   currentNode.points[3] = {width,height}
-			   currentNode.points[4] = {0,height}
-			end
-
-
-			remeshNode(currentNode)
-		     else
-		     
-		     
-		     currentNode.points = {};
-		     currentNode.points[1] = {0,0}
-		     currentNode.points[2] = {width,0}
-		     currentNode.points[3] = {width,height}
-		     currentNode.points[4] = {0,height}
-		     remeshNode(currentNode)
-		     end
-		     
-		  end
+		  currentNode.texture.squishable = not  currentNode.texture.squishable
+		  
+		  remeshNode(currentNode)
 		  
 	       end
          })
+      end
+
+      if (currentNode.texture and currentNode.type == 'rubberhose') then
+	 table.insert(
+	    row2,
+	    {
+	       'fit rubberhose to image', ui.backdropscale, 'fit rubberhose to image',
+	       function()
+		  local img =imageCache[currentNode.texture.url]
+		  if not img then return end -- todo this exits early preventing a crash, but meh
+		  local width, height = img:getDimensions( )
+		  local   magic = 4.46
+		  currentNode.data.length = height * magic
+		  currentNode.data.width = width * 2
+		  remeshNode(currentNode)
+	       end
+	    }
+	 )
+      end
+
+      if (currentNode.texture and currentNode.type == 'bezier') then
+	 table.insert(
+	    row2,
+	    {
+	       'fit bezier to image', ui.backdropscale, 'fit bezier to image',
+	       function()
+		  local img =imageCache[currentNode.texture.url]
+		  if not img then return end -- todo this exits early preventing a crash, but meh
+		  local width, height = img:getDimensions( )
+		  currentNode.points = {};
+		  currentNode.points[1] = {0,0}
+		  currentNode.points[2] = {0,height/2 }
+		  currentNode.points[3] = {0,height}
+
+		  
+		  
+	       end
+	    }
+	 )
+      end
+      
+      
+      if (currentNode.texture and  currentNode.type ~= 'bezier' and  currentNode.type ~= 'rubberhose') then
+	 table.insert(
+	    row2,
+	    {
+	       'fit polygon to image', ui.backdropscale4, 'make fitting  4 point polygon for image',
+	       function()
+		  local img =imageCache[currentNode.texture.url]
+		  if not img then return end -- todo this exits early preventing a crash, but meh
+		  local width, height = img:getDimensions( )
+		  --local mx, my = getMiddleOfPoints(currentNode.points)
+		  local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+		  currentNode.points = {};
+		  currentNode.points[1] = {0,0}
+		  currentNode.points[2] = {width,0}
+		  currentNode.points[3] = {width,height}
+		  currentNode.points[4] = {0,height}
+
+		  for i =1 , #currentNode.points do
+		     currentNode.points[i][1] =  currentNode.points[i][1] + tlx
+		     currentNode.points[i][2] =  currentNode.points[i][2] + tly
+		  end
+		  
+		  remeshNode(currentNode)
+	       end
+         })
+	 if currentNode.texture.squishable then
+	    table.insert(
+	       row2,
+	       {
+		  'fit polygon to image', ui.backdropscale5, 'make fitting  5 point polygon for image',
+		  function()
+		     local img =imageCache[currentNode.texture.url]
+		     if not img then return end -- todo this exits early preventing a crash, but meh
+		     local width, height = img:getDimensions( )
+		     local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+		     currentNode.points = {};
+		     currentNode.points[1] = {width/2,height/2}
+		     
+		     currentNode.points[2] = {0,0}
+		     currentNode.points[3] = {width,0}
+		     currentNode.points[4] = {width,height}
+		     currentNode.points[5] = {0,height}
+		     
+		      for i =1 , #currentNode.points do
+		     currentNode.points[i][1] =  currentNode.points[i][1] + tlx
+		     currentNode.points[i][2] =  currentNode.points[i][2] + tly
+		     end
+		     remeshNode(currentNode)
+		  end
+	       }
+	    )
+	    table.insert(
+	       row2,
+	       {
+		  'fit polygon to image', ui.backdropscale9, 'make fitting  9 point polygon for image',
+		  function()
+		     local img =imageCache[currentNode.texture.url]
+		     if not img then return end -- todo this exits early preventing a crash, but meh
+		     local width, height = img:getDimensions( )
+		     local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+		     currentNode.points = {};
+		     
+		     currentNode.points[1] = {width/2,height/2}
+		     
+		     currentNode.points[2] = {0,0}
+		     currentNode.points[3] = {width/2,0}
+		     currentNode.points[4] = {width,0}
+		     currentNode.points[5] = {width,height/2}
+
+		     currentNode.points[6] = {width,height}
+		     currentNode.points[7] = {width/2,height}
+
+		     currentNode.points[8] = {0,height}
+		     currentNode.points[9] = {0,height/2}
+		     
+		     for i =1 , #currentNode.points do
+		     currentNode.points[i][1] =  currentNode.points[i][1] + tlx
+		     currentNode.points[i][2] =  currentNode.points[i][2] + tly
+		     end
+		     remeshNode(currentNode)
+		  end
+	       }
+	    )
+	 end
       end
 
       if currentNode.type == 'rubberhose' then
@@ -2065,6 +2123,10 @@ function mylib:load(arg)
       insert_link = LG.newImage("resources/ui/insert-link.png"),
       backdrop = LG.newImage("resources/ui/backdrop.png"),
       backdropscale = LG.newImage("resources/ui/backdropscale.png"),
+      backdropscale4 = LG.newImage("resources/ui/backdropscale4.png"),
+      backdropscale5 = LG.newImage("resources/ui/backdropscale5.png"),
+      backdropscale9 = LG.newImage("resources/ui/backdropscale9.png"),
+      squish = LG.newImage("resources/ui/squish.png"),
       grid = LG.newImage("resources/ui/grid.png"),
       palette = LG.newImage("resources/ui/palette.png"),
       pen = LG.newImage("resources/ui/pen.png"),
@@ -2608,7 +2670,7 @@ function mylib:draw()
 
                
             end
-  
+	    
             if currentNode and currentNode.keyframes then
                if (currentNode.keyframes == 2) then
                   local v = h_slider("lerp-keyframes", rightX-300, 100, 200,  currentNode.lerpValue , 0,1)
@@ -2940,7 +3002,7 @@ function mylib:keypressed(key, scancode, isrepeat)
       end
 
       if key == 'a' and not changeName then
-         print("printing a large file")
+         print("rendering a large file: "..shapePath..shapeName..".x4.polygons.png")
          renderNodeIntoCanvas(root, LG.newCanvas(1024*4, 1024*4),  shapePath..shapeName..".x4.polygons.png")
 
       end
@@ -2969,17 +3031,17 @@ function mylib:keypressed(key, scancode, isrepeat)
       end
       if not changeName and (not currentNode or not currentNode.points) then
          if #childrenInRectangleSelect > 0 then
-             if LK.isDown("delete") then
-		     local indexes = type(childrenInRectangleSelect[1]) == "number"
-		     if indexes then
-		     else
-			for i =1, #childrenInRectangleSelect do
-			   local n = childrenInRectangleSelect[i]
-			   table.remove(n._parent.children, getIndex(n))
-			end
-		     end
-		     childrenInRectangleSelect = {}
+	    if LK.isDown("delete") then
+	       local indexes = type(childrenInRectangleSelect[1]) == "number"
+	       if indexes then
+	       else
+		  for i =1, #childrenInRectangleSelect do
+		     local n = childrenInRectangleSelect[i]
+		     table.remove(n._parent.children, getIndex(n))
 		  end
+	       end
+	       childrenInRectangleSelect = {}
+	    end
          end
          
       end

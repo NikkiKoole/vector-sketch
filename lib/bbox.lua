@@ -11,6 +11,11 @@ function getPointsBBox(points)
    end
    return tlx, tly, brx, bry
 end
+function getMiddleOfPoints(points)
+   local tlx, tly, brx, bry = getPointsBBox(points)
+   return tlx + (brx - tlx)/2, tly + (bry - tly)/2
+end
+
 function getPointsBBoxFlat(points)
    local tlx = 9999999999
    local tly = 9999999999

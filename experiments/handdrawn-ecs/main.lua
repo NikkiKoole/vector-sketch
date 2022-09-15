@@ -32,6 +32,8 @@ local myWorld = Concord.world()
    pushing them through https://tinypng.com/  shaves a lot off.
    https://www.imgonline.com.ua/eng/make-seamless-texture.php
 
+   this breaks the alpha layer though so put them through experiments/alpha-padder afterwards
+
    -- inflate polygon
    https://stackoverflow.com/questions/1109536/an-algorithm-for-inflating-deflating-offsetting-buffering-polygons
 

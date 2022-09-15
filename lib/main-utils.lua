@@ -6,12 +6,13 @@ function renderNodeIntoCanvas(node, canvas, filename)
 
    love.graphics.setCanvas({canvas, stencil=true})
    love.graphics.clear()
-   love.graphics.setBlendMode("alpha")
+   -- this is the default already
+   --love.graphics.setBlendMode("alpha")
 
    drawNodeIntoRect(node, 0,0,canvas:getWidth(),canvas:getHeight())
 
    love.graphics.setCanvas()
-
+   
    canvas:newImageData():encode("png",filename)
 end
 
