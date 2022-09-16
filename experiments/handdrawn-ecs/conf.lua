@@ -11,6 +11,6 @@ function love.conf(t)
    t.window.resizable = true
    t.window.msaa = 0
    t.window.highdpi = true
-   t.window.vsync = true
+   t.window.vsync = false
    t.window.borderless = true -- setting this will hide the status bar
 end
