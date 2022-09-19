@@ -6,7 +6,7 @@ require 'lib.scene-graph'
 require 'lib.generate-polygon'
 require 'lib.bbox'
 
-require 'lib.editor-utils'
+require 'lib.copyshape'
 require 'lib.poly'
 require 'lib.basics'
 require 'lib.main-utils'
@@ -167,8 +167,9 @@ function love.load()
 
    animals2.transforms.tl[1] = animals2.transforms.tl[1]
    --animals2.transforms.l:translate(400,0)
-   addChild(root, animals1)
    addChild(animals1, animals2)
+   addChild(root, animals1)
+   parentize(root)
    
    --addNodeTo(animals, root)
    --addNodeTo(dogmanhaar, animals)
@@ -235,7 +236,9 @@ function renderRecursive(node, dirty)
    -- if we get a dirty tag somewhere, that means all transforms from that point on need to be redone
 
    local isDirty = dirty or node.dirty
+   --setTransforms(node)
 
+   
    if isDirty then
       local tl = node.transforms.tl
       node.transforms.l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
@@ -246,10 +249,11 @@ function renderRecursive(node, dirty)
       end
       node.dirty = false
    else
-     
+      
    end
-
    
+   -- todo this logic needs to be moved into the general code, but what is a graphics really ?
+   -- something with a texture urll ?
    if node.graphic then
       
       local mx, my = love.mouse.getPosition()
@@ -358,6 +362,7 @@ function love.draw()
    love.graphics.setColor(1,1,1)
    love.graphics.draw(d)
 
+   --renderThings(root)
    renderRecursive(root)
 
    love.graphics.setColor(1,1,1)

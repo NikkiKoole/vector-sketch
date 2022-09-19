@@ -9,7 +9,7 @@ require 'src.file-screen'
 
 require 'lib.scene-graph'
 require 'lib.basics'
-require 'lib.editor-utils'
+require 'lib.copyshape'
 require 'lib.main-utils'
 require 'lib.polyline'
 require 'lib.poly'
@@ -470,6 +470,54 @@ local function  makeNewFolder()
    end
    return shape
 end
+
+
+local function distancePointSegment(x,y, x1,y1, x2, y2)
+   local A = x - x1
+   local B = y - y1
+   local C = x2 - x1
+   local D = y2 - y1
+   local dot    = A * C + B * D
+   local len_sq = C * C + D * D
+   local param = -1
+
+   if (len_sq ~= 0) then
+      param = dot / len_sq
+   end
+
+   local xx, yy
+   if (param < 0) then
+      xx = x1
+      yy = y1
+   elseif (param > 1) then
+      xx = x2
+      yy = y2
+   else
+      xx = x1 + param * C
+      yy = y1 + param * D
+   end
+
+   local dx = x - xx
+   local dy = y - yy
+   return math.sqrt(dx * dx + dy*dy)
+end
+
+local function getClosestEdgeIndex(wx, wy, points)
+   local closestEdgeIndex = 0
+   local closestDistance = 99999999999999
+   for j = 1, #points do
+      local next = (j == #points and 1) or j+1
+      local d = distancePointSegment(wx, wy, points[j][1], points[j][2], points[next][1], points[next][2])
+      if (d < closestDistance) then
+	 closestDistance = d
+	 closestEdgeIndex = j
+      end
+   end
+   return closestEdgeIndex
+end
+
+
+
 
 
 ------------ editor specific code

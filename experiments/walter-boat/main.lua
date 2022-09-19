@@ -8,7 +8,7 @@ require 'lib.scene-graph'
 require 'lib.basics'
 require 'lib.bbox'
 require 'lib.toolbox'
-require 'lib.editor-utils'
+require 'lib.copyshape'
 require 'lib.poly'
 require 'lib.main-utils'
 

@@ -1,7 +1,7 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
-require 'lib.editor-utils'
+require 'lib.copyshape'
 require 'lib.poly'
 require 'lib.bbox'
 require 'lib.basics'
