@@ -2,6 +2,7 @@ package.path = package.path .. ";../../?.lua"
 
 Camera = require 'custom-vendor.brady'
 
+require 'lib.recursivelyMakeTextures'
 require 'lib.scene-graph'
 require 'lib.generate-polygon'
 require 'lib.bbox'
@@ -11,6 +12,8 @@ require 'lib.poly'
 require 'lib.basics'
 require 'lib.main-utils'
 require 'lib.toolbox'
+require 'lib.polyline'
+
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
@@ -39,6 +42,12 @@ local myWorld = Concord.world()
    https://stackoverflow.com/questions/1109536/an-algorithm-for-inflating-deflating-offsetting-buffering-polygons
 
 ]]--
+
+
+
+
+
+
 
 
 function centerCameraOnPosition(x,y,vw, vh)
@@ -162,15 +171,51 @@ function love.load()
    
    root = makeNode(nil,  { 0, 0, 0, 1, 1, 0, 0, 0, 0 })
 
+
+   
+
+   local ani =  {
+      children = { {
+	    color = { 1, 1, 1, 1 },
+	    data = {
+	       steps = 15,
+	       width = 178.5
+	    },
+	    name = "plant1",
+	    points = { { 0, 0 }, { 0, 311.5 }, { 0, 623 } },
+	    texture = {
+	       filter = "linear",
+	       squishable = true,
+	       url = "assets/plant.png",
+	       wrap = "clamp"
+	    },
+	    type = "bezier"
+      } },
+      folder = true,
+      name = "plant container",
+      transforms = {
+	 l = { 0, 0, 0, 1, 1, 100, 0, 0, 0 }
+      }
+   } 
+
+      addChild(root, ani)
+
+  -- ]]--
+
+
+
+   
    local animals1 =  makeNode(makeGraphic('assets/animals3.png'))
    local animals2 =  makeNode(makeGraphic('assets/plant.png'))
 
    animals2.transforms.tl[1] = animals2.transforms.tl[1]
    --animals2.transforms.l:translate(400,0)
-   addChild(animals1, animals2)
+   --addChild(animals1, animals2)
    addChild(root, animals1)
    parentize(root)
-   
+   recursivelyMakeTextures(root)
+    meshAll(root)
+    
    --addNodeTo(animals, root)
    --addNodeTo(dogmanhaar, animals)
   
@@ -362,8 +407,8 @@ function love.draw()
    love.graphics.setColor(1,1,1)
    love.graphics.draw(d)
 
-   --renderThings(root)
-   renderRecursive(root)
+   renderThings(root)
+   --renderRecursive(root)
 
    love.graphics.setColor(1,1,1)
    love.graphics.setColor(1,0,0)

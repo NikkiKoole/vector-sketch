@@ -230,11 +230,7 @@ function love.resize(w, h)
 end
 
 function love.filedropped(file)
-   --local tab = getDataFromFile(file)
-   --middleLayer.children = tab -- TableConcat(root.children, tab)
-   --parentize(middleLayer)
-   --meshAll(middleLayer)
-   --renderThings(middleLayer)
+ 
 end
 
 

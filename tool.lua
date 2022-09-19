@@ -2,6 +2,7 @@ inspect = require 'vendor.inspect'
 
 console = require 'vendor.console'
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
+require 'lib.recursivelyMakeTextures'
 
 require 'src.palettes'
 require 'src.dopesheet'
@@ -34,30 +35,6 @@ local LK = love.keyboard
 -- use multiline input code to improve my inputfields
 -- https://github.com/ReFreezed/InputField
 local mylib = {}
-imageCache = {}
-
-
-function recursivelyMakeTextures(root)
-
-   if root.texture then
-      if not imageCache[root.texture.url] then
-	 print('making texture', root.texture.url)
-         local img = LG.newImage(root.texture.url, {mipmaps=true})
-         img:setWrap( root.texture.wrap  or 'clampzero')
-         img:setFilter(root.texture.filter or 'linear')
-         imageCache[root.texture.url] = img
-      end
-      
-   end
-   
-   if root.children then
-      for i=1, #root.children do
-         recursivelyMakeTextures(root.children[i])
-      end
-   end
-   
-end
-
 
 function mylib:setRoot(root, folderPath)
    parentize(root)
@@ -1199,7 +1176,8 @@ local function drawUIAroundGraphNodes(w,h)
 		  currentNode.points[2] = {0,height/2 }
 		  currentNode.points[3] = {0,height}
 
-		  
+		  -- todo, i dont like this here, its correct though and it will be fed into polyline as halfwidth
+		  currentNode.data.width = width/2
 		  
 	       end
 	    }
@@ -2299,6 +2277,10 @@ local step = 0
 local function labelPos(x,y)
    return x,y-20
 end
+
+
+
+
 
 
 

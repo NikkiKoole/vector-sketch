@@ -25,13 +25,24 @@ local root = {
             name="rood folder",
             children ={
                {
-                  name="leaves"..1,
+                  name="animals3"..1,
                   color = {1,1,1, 1},
                   points = {{200,200},{202,100},{200,0}, {100,100}, {300,200}},
                   texture = {
-                     url='experiments/handdrawn-ecs/assets/moreleaves32.png',
+                     url='experiments/handdrawn-ecs/assets/animals3.png',
                      wrap='clamp', filter='linear', squishable=true
                   },
+	       },
+	        {
+                  name="plant"..1,
+                  color = {1,1,1, 1},
+                  points = {{200,200},{202,100},{200,0}, {100,100}, {300,200}},
+                  texture = {
+                     url='experiments/handdrawn-ecs/assets/plant.png',
+                     wrap='clamp', filter='linear', squishable=true
+                  },
+		  data={ width=45, steps=15},
+		  type='bezier'
 	       },
 
                {
