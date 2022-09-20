@@ -102,7 +102,7 @@ local root = {
                   points={{400,400},{500,100}, {600,600}},
                   data={ width=350, steps=15},
                   texture = {
-                     url='experiments/handdrawn/plant.png',
+                     url='experiments/handdrawn/assets/plant.png',
                      wrap='repeat', filter='linear'
                   },
 

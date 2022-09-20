@@ -1,9 +1,12 @@
+local numbers = require 'lib.numbers'
+
+
 function createTexturedPolygon(image, polygon)
    
    local tlx, tly, brx, bry = getPointsBBoxFlat(polygon)
 
-   local ufunc = function(x) return mapInto(x, tlx, brx, 0,3) end
-   local vfunc = function(y) return mapInto(y, tly, bry, 0,3) end
+   local ufunc = function(x) return numbers.mapInto(x, tlx, brx, 0,3) end
+   local vfunc = function(y) return numbers.mapInto(y, tly, bry, 0,3) end
 
    local p = {}
    reTriangulatePolygon(polygon, p)

@@ -1,23 +1,21 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
-require 'lib.copyshape'
 require 'lib.poly'
-require 'lib.basics'
 require 'lib.main-utils'
 require 'lib.toolbox'
+
+local numbers = require 'lib.numbers'
+
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
-
 Concord = require 'vendor.concord.init'
-
 
 Concord.component("mousefollowing")
 Concord.component("snoutbehaviour")
 Concord.component("pupil")
-
 
 local myWorld = Concord.world()
 
@@ -88,8 +86,8 @@ function SnoutWithMouseSystem:update(dt)
       for _, e in ipairs(self.pool) do
 	 local transforms = e.transforms.transforms
 	 local distance = math.sqrt((rx *rx) + (ry * ry))
-	 local newScale = mapInto(distance, 0, 150, 1.1, 1)
-	 local diff = mapInto(love.math.random(), 0, 1, -0.01, 0.01)
+	 local newScale = numbers.mapInto(distance, 0, 150, 1.1, 1)
+	 local diff = numbers.mapInto(love.math.random(), 0, 1, -0.01, 0.01)
 	 local newAngle = diff
 
          transforms.l[3] = newAngle

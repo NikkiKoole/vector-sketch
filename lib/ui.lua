@@ -1,4 +1,6 @@
 --require 'basics'
+local numbers = require 'lib.numbers'
+
 
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
@@ -69,6 +71,7 @@ function labelbutton(id, str, x,y,w,h, margin)
    local mx, my = love.mouse:getPosition()
    local clicked = false
    local alpha = 0.1
+   if margin == nil then margin = 10 end
 
    if (pointInRect(mx, my,  x, y, w, h)) then
        alpha = 0.5
@@ -281,7 +284,7 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
       scrollBarThumbH = (height / contentHeight) * height
    end
 
-   local pxScrollOffset = mapInto(scrollOffset, 0, contentHeight-height, 0, height-scrollBarThumbH)
+   local pxScrollOffset = numbers.mapInto(scrollOffset, 0, contentHeight-height, 0, height-scrollBarThumbH)
 
    local result= nil
    local draggedResult = false
@@ -315,7 +318,7 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
 	 love.mouse.setCursor(cursors.hand)
 
          local mx, my = love.mouse.getPosition( )
-         result = mapInto(my + mouseState.offset.y,
+         result = numbers.mapInto(my + mouseState.offset.y,
                           y, y+height-scrollBarThumbH,
                           0, height-scrollBarThumbH)
 	 if result < 0 then
@@ -325,7 +328,7 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
             result = height-scrollBarThumbH
          end
 
-         result = mapInto(result, 0, height-scrollBarThumbH, 0, contentHeight-height )
+         result = numbers.mapInto(result, 0, height-scrollBarThumbH, 0, contentHeight-height )
       end
 
 
@@ -349,7 +352,7 @@ function v_slider(id, x, y, height, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill',x+8,y,3,height )
    love.graphics.setColor(0, 0, 0)
-   local yOffset = mapInto(v, min, max, 0, height-20)
+   local yOffset = numbers.mapInto(v, min, max, 0, height-20)
    love.graphics.rectangle('fill',x, yOffset + y,20,20 )
 
 
@@ -378,7 +381,7 @@ function v_slider(id, x, y, height, v, min, max)
 	 love.mouse.setCursor(cursors.hand)
 
          local mx, my = love.mouse.getPosition( )
-         result = mapInto(my + mouseState.offset.y, y, y+height-20, min, max)
+         result = numbers.mapInto(my + mouseState.offset.y, y, y+height-20, min, max)
 	 if result < min then
 	    result = min
 	 else
@@ -399,8 +402,8 @@ function joystick(id, x, y, size, vx, vy, min, max)
    love.graphics.rectangle('fill',x,y,size,size )
    local result = nil
 
-   local thumbX =  mapInto(vx, min, max, 0, size-20)
-   local thumbY =  mapInto(vy, min, max, 0, size-20)
+   local thumbX =  numbers.mapInto(vx, min, max, 0, size-20)
+   local thumbY =  numbers.mapInto(vy, min, max, 0, size-20)
    love.graphics.setColor(0, 0, 0)
 
    love.graphics.line(x + size/2, y, x + size/2, y + size)
@@ -435,8 +438,8 @@ function joystick(id, x, y, size, vx, vy, min, max)
 	 mouseState.hoveredSomething = true
 	 love.mouse.setCursor(cursors.hand)
          local mx, my = love.mouse.getPosition( )
-         local resultX = mapInto(mx + mouseState.offset.x, x, x+size-20, min, max)
-	 local resultY = mapInto(my + mouseState.offset.y, y, y+size-20, min, max)
+         local resultX = numbers.mapInto(mx + mouseState.offset.x, x, x+size-20, min, max)
+	 local resultY = numbers.mapInto(my + mouseState.offset.y, y, y+size-20, min, max)
 
 	 if resultX < min then
 	    resultX = min
@@ -472,7 +475,7 @@ function h_slider(id, x, y, width, v, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill',x,y+8,width,3 )
    love.graphics.setColor(0, 0, 0)
-   local xOffset = mapInto(v, min, max, 0, width-20)
+   local xOffset = numbers.mapInto(v, min, max, 0, width-20)
    love.graphics.rectangle('fill',xOffset + x,y,20,20 )
 
 
@@ -503,7 +506,7 @@ function h_slider(id, x, y, width, v, min, max)
 	 mouseState.hoveredSomething = true
 	 love.mouse.setCursor(cursors.hand)
          local mx, my = love.mouse.getPosition( )
-         result = mapInto(mx + mouseState.offset.x, x, x+width-20, min, max)
+         result = numbers.mapInto(mx + mouseState.offset.x, x, x+width-20, min, max)
 	 if result < min then
 	    result = nil
 	 else

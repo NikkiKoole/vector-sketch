@@ -12,6 +12,8 @@ require 'lib.copyshape'
 require 'lib.poly'
 require 'lib.main-utils'
 
+local numbers = require 'lib.numbers'  --randomSign
+
 
 function elemIsAboveAnother(elem,  another)
    assert(another.children[1].points)
@@ -175,7 +177,7 @@ function love.load()
    fishRefs = {}
    for i = 1, #fishes.children do
       fishRefs[i] = fishes.children[i]
-      local dir = randomSign()
+      local dir = numbers.randomSign()
       fishes.children[i].type = 'fish'
       fishes.children[i].velocity =  dir  * (0.25 + math.random() * 0.25)
       fishes.children[i].transforms.l[1] = love.math.random() * 500

@@ -10,6 +10,9 @@ require 'src.file-screen'
 
 require 'lib.scene-graph'
 require 'lib.basics'
+--local numbers = require 'lib.numbers'
+--mapInto = numbers.mapInto
+
 require 'lib.copyshape'
 require 'lib.main-utils'
 require 'lib.polyline'

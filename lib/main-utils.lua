@@ -1,25 +1,23 @@
 -- these utils are used when you wanna use the shapes and all in another application
 
-
+local numbers = require 'lib.numbers'
+local lerp = numbers.lerp
 
 function renderNodeIntoCanvas(node, canvas, filename)
 
-   love.graphics.setCanvas({canvas, stencil=true})
+   love.graphics.setCanvas({ canvas, stencil = true })
    love.graphics.clear()
    -- this is the default already
    --love.graphics.setBlendMode("alpha")
 
-   drawNodeIntoRect(node, 0,0,canvas:getWidth(),canvas:getHeight())
+   drawNodeIntoRect(node, 0, 0, canvas:getWidth(), canvas:getHeight())
 
    love.graphics.setCanvas()
-   
-   canvas:newImageData():encode("png",filename)
+
+   canvas:newImageData():encode("png", filename)
 end
 
-
-
-
-function drawNodeIntoRect(node, x,y,w,h)
+function drawNodeIntoRect(node, x, y, w, h)
    -- first get the nodes bbox
    local bboxbefore = getBBoxRecursive(node)
    local cw = bboxbefore[3] - bboxbefore[1]
@@ -28,12 +26,12 @@ function drawNodeIntoRect(node, x,y,w,h)
    local oldScaleW = node.transforms.l[4]
    local oldScaleH = node.transforms.l[5]
 
-   local newScaleW = oldScaleW / (cw/w)
-   local newScaleH = oldScaleH / (ch/h)
+   local newScaleW = oldScaleW / (cw / w)
+   local newScaleH = oldScaleH / (ch / h)
 
    local biggestRatio = math.max(cw, ch)
-   local newScaleW2 = oldScaleW / (biggestRatio/w)
-   local newScaleH2 = oldScaleH / (biggestRatio/h)
+   local newScaleW2 = oldScaleW / (biggestRatio / w)
+   local newScaleH2 = oldScaleH / (biggestRatio / h)
 
 
    -- here i am scaling the original
@@ -53,8 +51,8 @@ function drawNodeIntoRect(node, x,y,w,h)
    local w2 = bboxafter2[3] - bboxafter2[1]
    local h1 = bboxafter[4] - bboxafter[2]
    local h2 = bboxafter2[4] - bboxafter2[2]
-   local offsetX = (w1 - w2)/2
-   local offsetY = (h1 - h2)/2
+   local offsetX = (w1 - w2) / 2
+   local offsetY = (h1 - h2) / 2
 
    love.graphics.push()
    love.graphics.translate(-bboxafter2[1] + x + offsetX, -bboxafter2[2] + y + offsetY)
@@ -70,8 +68,7 @@ function drawNodeIntoRect(node, x,y,w,h)
 
 end
 
-
-function transferPoint (xI, yI, source, destination)
+function transferPoint(xI, yI, source, destination)
 
    local ADDING = 0.00001 -- to avoid dividing by zero
 
@@ -96,61 +93,59 @@ function transferPoint (xI, yI, source, destination)
    --print(xAu,yAu,xBu,yBu,xCu,yCu,xDu,yDu)
    -- Calcultations
    -- if points are the same, have to add a ADDING to avoid dividing by zero
-   if (xBu==xCu) then xC = xC + ADDING end
-   if (xAu==xDu) then xDu= xDu+ ADDING end
-   if (xAu==xBu) then xBu =xBu + ADDING end
-   if (xDu==xCu) then xCu = xCu + ADDING end
+   if (xBu == xCu) then xC = xC + ADDING end
+   if (xAu == xDu) then xDu = xDu + ADDING end
+   if (xAu == xBu) then xBu = xBu + ADDING end
+   if (xDu == xCu) then xCu = xCu + ADDING end
    --print(xC,xDu,xBu,xCu)
-   local kBC = (yBu-yCu)/(xBu-xCu)
-   local kAD = (yAu-yDu)/(xAu-xDu)
-   local kAB = (yAu-yBu)/(xAu-xBu)
-   local kDC = (yDu-yCu)/(xDu-xCu)
+   local kBC = (yBu - yCu) / (xBu - xCu)
+   local kAD = (yAu - yDu) / (xAu - xDu)
+   local kAB = (yAu - yBu) / (xAu - xBu)
+   local kDC = (yDu - yCu) / (xDu - xCu)
 
-   if (kBC==kAD) then kAD =kAD + ADDING end
-   local xE = (kBC*xBu - kAD*xAu + yAu - yBu) / (kBC-kAD)
-   local yE = kBC*(xE - xBu) + yBu
+   if (kBC == kAD) then kAD = kAD + ADDING end
+   local xE = (kBC * xBu - kAD * xAu + yAu - yBu) / (kBC - kAD)
+   local yE = kBC * (xE - xBu) + yBu
 
-   if (kAB==kDC) then kDC = kDC + ADDING end
-   local xF = (kAB*xBu - kDC*xCu + yCu - yBu) / (kAB-kDC)
-   local yF = kAB*(xF - xBu) + yBu
+   if (kAB == kDC) then kDC = kDC + ADDING end
+   local xF = (kAB * xBu - kDC * xCu + yCu - yBu) / (kAB - kDC)
+   local yF = kAB * (xF - xBu) + yBu
 
-   if (xE==xF) then xF = xF + ADDING end
-   local kEF = (yE-yF) / (xE-xF)
+   if (xE == xF) then xF = xF + ADDING end
+   local kEF = (yE - yF) / (xE - xF)
 
-   if (kEF==kAB) then kAB = kAB + ADDING end
-   local xG = (kEF*xDu - kAB*xAu + yAu - yDu) / (kEF-kAB)
-   local yG = kEF*(xG - xDu) + yDu
+   if (kEF == kAB) then kAB = kAB + ADDING end
+   local xG = (kEF * xDu - kAB * xAu + yAu - yDu) / (kEF - kAB)
+   local yG = kEF * (xG - xDu) + yDu
 
-   if (kEF==kBC) then kBC = kBC + ADDING end
-   local xH = (kEF*xDu - kBC*xBu + yBu - yDu) / (kEF-kBC)
-   local yH = kEF*(xH - xDu) + yDu
+   if (kEF == kBC) then kBC = kBC + ADDING end
+   local xH = (kEF * xDu - kBC * xBu + yBu - yDu) / (kEF - kBC)
+   local yH = kEF * (xH - xDu) + yDu
 
-   local rG = (yC-yI)/(yC-yA)
-   local rH = (xI-xA)/(xC-xA)
+   local rG = (yC - yI) / (yC - yA)
+   local rH = (xI - xA) / (xC - xA)
 
-   local xJ = (xG-xDu)*rG + xDu
-   local yJ = (yG-yDu)*rG + yDu
+   local xJ = (xG - xDu) * rG + xDu
+   local yJ = (yG - yDu) * rG + yDu
 
-   local xK = (xH-xDu)*rH + xDu
-   local yK = (yH-yDu)*rH + yDu
+   local xK = (xH - xDu) * rH + xDu
+   local yK = (yH - yDu) * rH + yDu
 
-   if (xF==xJ) then xJ = xJ + ADDING end
-   if (xE==xK) then xK =xK + ADDING end
-   local kJF = (yF-yJ) / (xF-xJ) --//23
-   local kKE = (yE-yK) / (xE-xK) --//12
+   if (xF == xJ) then xJ = xJ + ADDING end
+   if (xE == xK) then xK = xK + ADDING end
+   local kJF = (yF - yJ) / (xF - xJ) --//23
+   local kKE = (yE - yK) / (xE - xK) --//12
 
    local xKE
-   if (kJF==kKE) then kKE= kKE + ADDING end
-   local xIu = (kJF*xF - kKE*xE + yE - yF) / (kJF-kKE)
+   if (kJF == kKE) then kKE = kKE + ADDING end
+   local xIu = (kJF * xF - kKE * xE + yE - yF) / (kJF - kKE)
    local yIu = kJF * (xIu - xJ) + yJ
 
-   local b={x=xIu,y=yIu}
+   local b = { x = xIu, y = yIu }
    --b.x=math.round(b.x)
    --b.y=math.round(b.y)
    return b
 end
-
-
 
 function makeOptimizedBatchMesh(folder)
    -- this one assumes all children are shapes, still need to think of what todo when
@@ -160,11 +155,11 @@ function makeOptimizedBatchMesh(folder)
       return
    end
 
-   for i=1, #folder.children do
+   for i = 1, #folder.children do
       if (folder.children[i].folder) then
-	 print("could not optimize shape, it contained a folder!!",folder.name,folder.children[i].name)
-	 print('havent fetched the metatags either',folder.name,folder.children[i].name)
-	 return
+         print("could not optimize shape, it contained a folder!!", folder.name, folder.children[i].name)
+         print('havent fetched the metatags either', folder.name, folder.children[i].name)
+         return
       end
    end
 
@@ -180,16 +175,16 @@ function makeOptimizedBatchMesh(folder)
    local batchIndex = 1
 
    local metaTags = {}
-   for i=1, #folder.children do
+   for i = 1, #folder.children do
       if folder.children[i].type == 'meta' then
-         local tagData = {name=folder.children[i].name,points=folder.children[i].points }
+         local tagData = { name = folder.children[i].name, points = folder.children[i].points }
          table.insert(metaTags, tagData)
          print('skipping meta node in optimize round')
       else
          local thisColor = folder.children[i].color
          if (thisColor[1] ~= lastColor[1]) or
-            (thisColor[2] ~= lastColor[2]) or
-            (thisColor[3] ~= lastColor[3]) then
+             (thisColor[2] ~= lastColor[2]) or
+             (thisColor[3] ~= lastColor[3]) then
 
             if folder.optimizedBatchMesh == nil then
                folder.optimizedBatchMesh = {}
@@ -200,7 +195,7 @@ function makeOptimizedBatchMesh(folder)
                print('the last node was meta and that in itself was the first node')
             else
                local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-               folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+               folder.optimizedBatchMesh[batchIndex] = { mesh = mesh, color = lastColor }
                batchIndex = batchIndex + 1
             end
 
@@ -212,12 +207,12 @@ function makeOptimizedBatchMesh(folder)
       end
    end
 
-   if #allVerts  >0 then
-      if  folder.optimizedBatchMesh == nil then
-	 folder.optimizedBatchMesh = {}
+   if #allVerts > 0 then
+      if folder.optimizedBatchMesh == nil then
+         folder.optimizedBatchMesh = {}
       end
       local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-      folder.optimizedBatchMesh[batchIndex] = {mesh=mesh, color=lastColor}
+      folder.optimizedBatchMesh[batchIndex] = { mesh = mesh, color = lastColor }
       --print('optimized: ', folder.name,)
    end
 
@@ -250,15 +245,15 @@ function isMouseInMesh(mx, my, body, mesh)
 
 
 
-	 local px,py = body.transforms._g:inverseTransformPoint(mx, my)
-	 for i = 1, count, 3 do
-	    if i+2 <= count then
-	       if pointInTriangle({px,py}, {mesh:getVertex(i)}, {mesh:getVertex(i+1)}, {mesh:getVertex(i+2)}) then
-		  return true
-	       end
-	    end
+         local px, py = body.transforms._g:inverseTransformPoint(mx, my)
+         for i = 1, count, 3 do
+            if i + 2 <= count then
+               if pointInTriangle({ px, py }, { mesh:getVertex(i) }, { mesh:getVertex(i + 1) }, { mesh:getVertex(i + 2) }) then
+                  return true
+               end
+            end
 
-	 end
+         end
       end
    end
    return false
@@ -270,24 +265,23 @@ function recursiveLookForHitArea(node)
 
    if node.points then
       if string.find(node.name, "-hitarea") then
-	 return true
+         return true
       end
 
    else
       if node.children then
-	 for i = 1, #node.children do
-	    local result =  recursiveLookForHitArea(node.children[i])
-	    if result then
-	       return result
-	    end
-	 end
+         for i = 1, #node.children do
+            local result = recursiveLookForHitArea(node.children[i])
+            if result then
+               return result
+            end
+         end
       end
    end
    return false
 end
 
-
-function recursiveHitCheck(x,y, node)
+function recursiveHitCheck(x, y, node)
    -- you want to check the first child IF IT HAS POINTS
    if not node then return false end
 
@@ -295,31 +289,31 @@ function recursiveHitCheck(x,y, node)
       local body = node
       local mesh = body.mesh
       if (body and mesh) then
-	 if isMouseInMesh(x,y, body._parent, mesh) then
-	    -- imma looking for hitareas
-	    if string.find(node.name, "-hitarea") then
-	       return node.name
-	    else
-	       return true
-	    end
+         if isMouseInMesh(x, y, body._parent, mesh) then
+            -- imma looking for hitareas
+            if string.find(node.name, "-hitarea") then
+               return node.name
+            else
+               return true
+            end
 
          end
       end
    else
-      if  node.optimizedBatchMesh then
-	 for i = 1, #node.optimizedBatchMesh do
-	    if isMouseInMesh(x,y, node, node.optimizedBatchMesh[i].mesh) then
-	       return true
-	    end
-	 end
+      if node.optimizedBatchMesh then
+         for i = 1, #node.optimizedBatchMesh do
+            if isMouseInMesh(x, y, node, node.optimizedBatchMesh[i].mesh) then
+               return true
+            end
+         end
 
       elseif node.children then
-	 local result = false
-	 for i = 1, #node.children do
-	    local result =  recursiveHitCheck(x,y, node.children[i])
-	    if result then
-	       return result
-	    end
+         local result = false
+         for i = 1, #node.children do
+            local result = recursiveHitCheck(x, y, node.children[i])
+            if result then
+               return result
+            end
          end
       end
    end
@@ -344,7 +338,7 @@ function findMeshThatsHit(parent, mx, my, order)
 
       else
 
-         local hit = isMouseInMesh(mx, my, parent,  parent.children[i].mesh)
+         local hit = isMouseInMesh(mx, my, parent, parent.children[i].mesh)
          if hit then
             if order then
                result = parent.children[i]
@@ -361,33 +355,29 @@ function findMeshThatsHit(parent, mx, my, order)
    end
 end
 
-
-
-
 local function renderNormallyOrOptimized(shape, isDirty)
    if true then
       if (shape.optimizedBatchMesh) then
-	 setTransforms(shape, isDirty)
+         setTransforms(shape, isDirty)
          -- todo this transform can be kept somewhere on shape and only recalculated when dirty
-         local transform = shape._parent.transforms._g *  shape.transforms._l
-	 for i=1, #shape.optimizedBatchMesh do
-	    love.graphics.setColor(shape.optimizedBatchMesh[i].color)
-	    love.graphics.draw(shape.optimizedBatchMesh[i].mesh,  transform)
+         local transform = shape._parent.transforms._g * shape.transforms._l
+         for i = 1, #shape.optimizedBatchMesh do
+            love.graphics.setColor(shape.optimizedBatchMesh[i].color)
+            love.graphics.draw(shape.optimizedBatchMesh[i].mesh, transform)
             if renderCount then
-               renderCount.optimized =  renderCount.optimized +1 --= {normal=0, optimized=0}
+               renderCount.optimized = renderCount.optimized + 1 --= {normal=0, optimized=0}
             end
-	 end
+         end
       else
          if renderCount then
             renderCount.normal = renderCount.normal + 1
          end
-	 --print(shape.name, isDirty)
-	 renderThings(shape, isDirty)
+         --print(shape.name, isDirty)
+         renderThings(shape, isDirty)
       end
    end
 
 end
-
 
 local maskIndex = 0
 
@@ -396,48 +386,48 @@ function handleChild(shape, isDirty)
    -- this gets in the way of lerping between nodes...
    --print(shape.name, isDirty)
    if not shape then return end
---   print(shape.type)
+   --   print(shape.type)
 
    if shape.mask or shape.hole then
       local mesh
       if currentNode ~= shape then
-	 mesh = shape.mesh -- the standard way of rendering
+         mesh = shape.mesh -- the standard way of rendering
       else
          print('making mesh in handlechild')
-	 --remeshNode(shape)
-	 mesh =  makeMeshFromVertices(makeVertices(shape), shape.type, shape.texture) -- realtime iupdating the thingie
+         --remeshNode(shape)
+         mesh = makeMeshFromVertices(makeVertices(shape), shape.type, shape.texture) -- realtime iupdating the thingie
       end
 
-      local parentIndex = getIndex(shape._parent) 
+      local parentIndex = getIndex(shape._parent)
       maskIndex = maskIndex + 1
       local thisIndex = (maskIndex % 255) + 1
 
       if shape.hole and mesh then
-	 love.graphics.stencil(
-	    function()
-	       love.graphics.draw(mesh, shape._parent.transforms._g )
-	    end, "replace", parentIndex, true)
+         love.graphics.stencil(
+            function()
+               love.graphics.draw(mesh, shape._parent.transforms._g)
+            end, "replace", parentIndex, true)
 
       end
-      
+
       if shape.mask and mesh then
          love.graphics.stencil(
-	    function()
-	       love.graphics.draw(mesh, shape._parent.transforms._g )
-	    end, "replace", thisIndex, true)
+            function()
+               love.graphics.draw(mesh, shape._parent.transforms._g)
+            end, "replace", thisIndex, true)
       end
 
       if shape.hole then
-	 love.graphics.setStencilTest("notequal", parentIndex)
+         love.graphics.setStencilTest("notequal", parentIndex)
       else
-	 love.graphics.setStencilTest("equal", thisIndex)
+         love.graphics.setStencilTest("equal", thisIndex)
       end
    end
 
    if shape.closeStencil then
       love.graphics.setStencilTest()
    end
-   
+
 
 
 
@@ -445,8 +435,8 @@ function handleChild(shape, isDirty)
    if shape.folder then
 
       if (shape.depth ~= nil) and GLOBALS and GLOBALS.parallax then
-         
-         GLOBALS.parallax.camera.scale = mapInto(
+
+         GLOBALS.parallax.camera.scale = numbers.mapInto(
             shape.depth,
             GLOBALS.parallax.p.minmax.min, GLOBALS.parallax.p.minmax.max,
             GLOBALS.parallax.p.factors.far, GLOBALS.parallax.p.factors.near
@@ -468,26 +458,26 @@ function handleChild(shape, isDirty)
       if shape.generatedMeshes then
          setTransforms(shape, isDirty)
 
-	 --print('there are some generatedMeshes here, are these rubberhose legs?')
-         for i =1, #shape.generatedMeshes do
+         --print('there are some generatedMeshes here, are these rubberhose legs?')
+         for i = 1, #shape.generatedMeshes do
             love.graphics.setColor(shape.generatedMeshes[i].color)
-            love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
+            love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g)
          end
       end
 
 
       if shape.bbox then
          -- no need to repeat this calc
-	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
-	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
+         local minX = cam.translationX - ((cam.w / 2) / cam.scale)
+         local maxX = cam.translationX + ((cam.w / 2) / cam.scale)
          local extraOffset = tileSize
          minX = minX - extraOffset
          maxX = maxX + extraOffset
 
-         local tlx = shape.transforms.l[1]  + (shape.bbox[1] )
-         local tly = shape.transforms.l[2]  + shape.bbox[2]
-         local brx = shape.transforms.l[1]  + (shape.bbox[3] )
-         local bry = shape.transforms.l[2]  + shape.bbox[4]
+         local tlx = shape.transforms.l[1] + (shape.bbox[1])
+         local tly = shape.transforms.l[2] + shape.bbox[2]
+         local brx = shape.transforms.l[1] + (shape.bbox[3])
+         local bry = shape.transforms.l[2] + shape.bbox[4]
 
          if brx >= minX and tlx <= maxX then
             --print('yes')
@@ -509,29 +499,29 @@ function handleChild(shape, isDirty)
 
 
       if false and shape.aabb then
-	 local minX = cam.translationX - ((cam.w/2) / cam.scale)
-	 local maxX = cam.translationX + ((cam.w/2) / cam.scale)
-	 local extraOffset = 100
-	 if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
-	    renderNormallyOrOptimized(shape, isDirty)
-	 else
+         local minX = cam.translationX - ((cam.w / 2) / cam.scale)
+         local maxX = cam.translationX + ((cam.w / 2) / cam.scale)
+         local extraOffset = 100
+         if shape.aabb > minX - extraOffset and shape.aabb < maxX + extraOffset then
+            renderNormallyOrOptimized(shape, isDirty)
+         else
             print('not rendering someting cause of the aabb', inspect(shape.aabb), minX, maxX)
          end
 
       else
-	 renderNormallyOrOptimized(shape, isDirty)
+         renderNormallyOrOptimized(shape, isDirty)
       end
 
       if false then
-	 if shape.generatedMeshes then
-	    setTransforms(shape, isDirty)
+         if shape.generatedMeshes then
+            setTransforms(shape, isDirty)
 
-	    --print('there are some generatedMeshes here, are these rubberhose legs?')
-	    for i =1, #shape.generatedMeshes do
-	       love.graphics.setColor(shape.generatedMeshes[i].color)
-	       love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g )
-	    end
-	 end
+            --print('there are some generatedMeshes here, are these rubberhose legs?')
+            for i = 1, #shape.generatedMeshes do
+               love.graphics.setColor(shape.generatedMeshes[i].color)
+               love.graphics.draw(shape.generatedMeshes[i].mesh, shape.transforms._g)
+            end
+         end
       end
 
 
@@ -545,26 +535,26 @@ function handleChild(shape, isDirty)
 
       if (shape.mesh and not shape.mask) then
 
-	 love.graphics.setColor(shape.color)
-	 --print('this is drawing the mesh, can we texture it?')
-	 --image = love.graphics.newImage(  )
-	 --shape.mesh:setTexture( ui.backdrop )
-         love.graphics.draw(shape.mesh, shape._parent.transforms._g )
+         love.graphics.setColor(shape.color)
+         --print('this is drawing the mesh, can we texture it?')
+         --image = love.graphics.newImage(  )
+         --shape.mesh:setTexture( ui.backdrop )
+         love.graphics.draw(shape.mesh, shape._parent.transforms._g)
 
          if (shape.borderMesh) then
-            love.graphics.setColor(0,0,0)
-            love.graphics.draw(shape.borderMesh, shape._parent.transforms._g )
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(shape.borderMesh, shape._parent.transforms._g)
          end
 
 
          if false and shape.points then
             -- render outline!!!!!
-            local work =  unpackNodePoints(shape.points)
-            local verts, indices, draw_mode = polyline('bevel',work, 10, 1, true)
+            local work = unpackNodePoints(shape.points)
+            local verts, indices, draw_mode = polyline('bevel', work, 10, 1, true)
             local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
-            love.graphics.setColor(shape.color[1]-.2,shape.color[2]-.2,shape.color[3]-.2,shape.color[4])
-            love.graphics.setColor(1,1,1)
-            love.graphics.draw(mesh, shape._parent.transforms._g )
+            love.graphics.setColor(shape.color[1] - .2, shape.color[2] - .2, shape.color[3] - .2, shape.color[4])
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(mesh, shape._parent.transforms._g)
          end
 
 
@@ -576,50 +566,50 @@ function handleChild(shape, isDirty)
       if (editing and #editing > 0) then
          --print('makemesh in handlechild custom, this doenst do textured polygons yet', currentNode.type)
 
-	
-	 if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier') then
-	    --	    print('yo guys!')
-	    if (shape.texture.url and shape.texture.url:len() > 0) then
-	       if (shape.texture.squishable) then
-		  editing = makeSquishableUVsFromPoints(shape.points)
-	       else
-		  
-		     addUVToVerts(editing, imageCache[shape.texture.url], shape.points, shape.texture)
-		  end
-	    end
-	 end
---	 print(inspect(editing))
-	 local editingMesh = makeMeshFromVertices(editing, currentNode.type, currentNode.texture)
-	 --print(inspect(editingMesh))
-	 
-	 -- so the data here doesnt contain UV pairss
-	 -- that logic is in remeshNode, but works on another type of object (the parent)
 
-	 -- this is now fixed, but its still not working
-	 -- i still dont get it realtime updating wat the hell
+         if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier') then
+            --	    print('yo guys!')
+            if (shape.texture.url and shape.texture.url:len() > 0) then
+               if (shape.texture.squishable) then
+                  editing = makeSquishableUVsFromPoints(shape.points)
+               else
 
-	 
+                  addUVToVerts(editing, imageCache[shape.texture.url], shape.points, shape.texture)
+               end
+            end
+         end
+         --	 print(inspect(editing))
+         local editingMesh = makeMeshFromVertices(editing, currentNode.type, currentNode.texture)
+         --print(inspect(editingMesh))
+
+         -- so the data here doesnt contain UV pairss
+         -- that logic is in remeshNode, but works on another type of object (the parent)
+
+         -- this is now fixed, but its still not working
+         -- i still dont get it realtime updating wat the hell
+
+
          if shape.texture and shape.texture.url then
---	    print('using texture')
-	    
+            --	    print('using texture')
+
             editingMesh:setTexture(imageCache[shape.texture.url])
          end
          love.graphics.setColor(shape.color)
-	 --love.graphics.setColor(1,1,1)
-	 love.graphics.draw(editingMesh,  shape._parent.transforms._g )
+         --love.graphics.setColor(1,1,1)
+         love.graphics.draw(editingMesh, shape._parent.transforms._g)
 
-	 --love.graphics.draw(shape.mesh, shape._parent.transforms._g )
+         --love.graphics.draw(shape.mesh, shape._parent.transforms._g )
       end
       if currentNode.border and #currentNode.points > 2 then
          local borderMesh = makeBorderMesh(currentNode)
-	 love.graphics.setColor(0,0,0)
-         love.graphics.draw(borderMesh,  shape._parent.transforms._g )
+         love.graphics.setColor(0, 0, 0)
+         love.graphics.draw(borderMesh, shape._parent.transforms._g)
          --print('need to mesh the direct one too')
       end
 
    end
 
-   if (shape.depth ~= nil  and GLOBALS and GLOBALS.parallax) then
+   if (shape.depth ~= nil and GLOBALS and GLOBALS.parallax) then
       GLOBALS.parallax.camera:pop()
    end
 
@@ -629,15 +619,15 @@ function unpackNodePointsLoop(points)
    local unpacked = {}
 
    for i = 0, #points do
-      local nxt = i == #points and 1 or i+1
-      unpacked[1 + (i*2)] = points[nxt][1]
-      unpacked[2 + (i*2)] =  points[nxt][2]
+      local nxt = i == #points and 1 or i + 1
+      unpacked[1 + (i * 2)] = points[nxt][1]
+      unpacked[2 + (i * 2)] = points[nxt][2]
    end
 
    for i = 0, #points do
-      local nxt = i == #points and 1 or i+1
-      unpacked[(#points*2) + 1 + (i*2)] = points[nxt][1]
-      unpacked[(#points*2) + 2 + (i*2)] =  points[nxt][2]
+      local nxt = i == #points and 1 or i + 1
+      unpacked[(#points * 2) + 1 + (i * 2)] = points[nxt][1]
+      unpacked[(#points * 2) + 2 + (i * 2)] = points[nxt][2]
    end
 
    return unpacked
@@ -646,15 +636,15 @@ end
 function unpackNodePoints(points, noloop)
    local unpacked = {}
    if #points >= 1 then
-      for i = 0, #points-1 do
-         unpacked[1 + (i*2)] = points[i+1][1]
-         unpacked[2 + (i*2)] =  points[i+1][2]
+      for i = 0, #points - 1 do
+         unpacked[1 + (i * 2)] = points[i + 1][1]
+         unpacked[2 + (i * 2)] = points[i + 1][2]
       end
 
       -- make it go round
       if noloop == nil then
-      unpacked[(#points*2)+1] =   points[1][1]
-      unpacked[(#points*2)+2] =   points[1][2]
+         unpacked[(#points * 2) + 1] = points[1][1]
+         unpacked[(#points * 2) + 2] = points[1][2]
       end
    end
 
@@ -662,17 +652,16 @@ function unpackNodePoints(points, noloop)
 
 end
 
-
 local function lerpColor(c1, c2, t)
-   return {lerp(c1[1], c2[1], t),
-	   lerp(c1[2], c2[2], t),
-	   lerp(c1[3], c2[3], t),
-	   lerp(c1[4], c2[4], t)}
+   return { lerp(c1[1], c2[1], t),
+      lerp(c1[2], c2[2], t),
+      lerp(c1[3], c2[3], t),
+      lerp(c1[4], c2[4], t) }
 end
 
 local function lerpArray(a1, a2, t)
    local result = {}
-   for i =1, #a1 do
+   for i = 1, #a1 do
       table.insert(result, lerp(a1[i], a2[i], t))
    end
    return result
@@ -681,10 +670,10 @@ end
 local function lerpPoints(p1, p2, t)
    if (#p1 == #p2) then
       local result = {}
-      for i=1, #p1 do
+      for i = 1, #p1 do
          table.insert(result, {
-                         lerp(p1[i][1], p2[i][1], t),
-                         lerp(p1[i][2], p2[i][2], t)
+            lerp(p1[i][1], p2[i][1], t),
+            lerp(p1[i][2], p2[i][2], t)
          })
       end
       return result
@@ -693,19 +682,17 @@ local function lerpPoints(p1, p2, t)
    return p1
 end
 
-
-
 function lerpNodes(left, right, root, t)
    if (left.folder and right.folder) then
       root.folder = true
       root.transforms = {
-	 l = lerpArray(left.transforms.l, right.transforms.l, t),
-	 --g = lerpArray(left.transforms.g, right.transforms.g, t)
+         l = lerpArray(left.transforms.l, right.transforms.l, t),
+         --g = lerpArray(left.transforms.g, right.transforms.g, t)
       }
       root.children = {}
       --      print(#left.children, #right.children)
       if (#left.children == #right.children) then
-         for i=1, #left.children do
+         for i = 1, #left.children do
             root.children[i] = {}
             lerpNodes(left.children[i], right.children[i], root.children[i], t)
          end
@@ -713,17 +700,17 @@ function lerpNodes(left, right, root, t)
       --root._parent = left._parent
    elseif (left.points and right.points) then
       if (left.mask and right.mask) then
-	 root.mask = true
+         root.mask = true
       end
       if (left.hole and right.hole) then
-	 root.hole = true
+         root.hole = true
       end
 
       if (left.closeStencil and right.closeStencil) then
          --print('check!')
-	 root.closeStencil = true
+         root.closeStencil = true
       end
-      
+
 
       root.color = lerpColor(left.color, right.color, t)
       root.points = lerpPoints(left.points, right.points, t)
@@ -745,7 +732,6 @@ local function createLerpedChild(ex1, ex2, t)
 
 end
 
-
 -- this function is just for the bacthMeshcurrently
 ---- these calculations are only needed when some local transforms have changed
 -- they ought t o be more optimized
@@ -756,9 +742,9 @@ function renderThings(root, dirty)
 
    local isDirty = dirty or root.dirty
    if (isDirty) then
-     -- print(root.name,root.url,  dirty, root.dirty)
+      -- print(root.name,root.url,  dirty, root.dirty)
    end
-   
+
    setTransforms(root, isDirty)
 
    if root.keyframes then
@@ -768,12 +754,12 @@ function renderThings(root, dirty)
    else
       --love.graphics.setStencilTest()
       for i = 1, #root.children do
-	 local shape = root.children[i]
-	 if (isDirty) then
-	    --print('dirty child', root.name, shape.name)
-	 end
-	 
-	 handleChild(shape, isDirty)
+         local shape = root.children[i]
+         if (isDirty) then
+            --print('dirty child', root.name, shape.name)
+         end
+
+         handleChild(shape, isDirty)
       end
       --love.graphics.setStencilTest()
    end
@@ -786,23 +772,22 @@ function renderThings(root, dirty)
 
 end
 
-
 function renderThingsWithKeyFrames(root)
-   
-   -- if (root.keyframes) then
-   if (root.keyframes == 2 ) then
-      if currentNode == root then
-	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
 
-	 if lerped then handleChild(lerped) end
+   -- if (root.keyframes) then
+   if (root.keyframes == 2) then
+      if currentNode == root then
+         local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+
+         if lerped then handleChild(lerped) end
       elseif (not root.lastLerp or root.needsLerp) then
-	 local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
-	 if lerped then handleChild(lerped) end
-	 root.lastLerp = lerped
+         local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
+         if lerped then handleChild(lerped) end
+         root.lastLerp = lerped
 
       else
 
-	 handleChild(root.children[root.frame])
+         handleChild(root.children[root.frame])
       end
    end
 
@@ -835,78 +820,78 @@ function renderThingsWithKeyFrames(root)
       return cUV;
       }
 
-   ]]--
+   ]] --
 
    if (root.keyframes == 4) then
       if currentNode == root then
-	 local cTop = createLerpedChild(root.children[1], root.children[2], root.lerpX)
-	 local cBot = createLerpedChild(root.children[3], root.children[4], root.lerpX)
-	 local lerped = createLerpedChild(cTop, cBot, root.lerpY)
-	 --print(root.lerpX, root.lerpY)
-	 --local lerped = createLerpedChild(root.children[1], root.children[2], 0.5)
+         local cTop = createLerpedChild(root.children[1], root.children[2], root.lerpX)
+         local cBot = createLerpedChild(root.children[3], root.children[4], root.lerpX)
+         local lerped = createLerpedChild(cTop, cBot, root.lerpY)
+         --print(root.lerpX, root.lerpY)
+         --local lerped = createLerpedChild(root.children[1], root.children[2], 0.5)
 
-	 if lerped then handleChild(lerped) end
+         if lerped then handleChild(lerped) end
       else
-	 handleChild(root.children[root.frame])
+         handleChild(root.children[root.frame])
       end
    end
    if (root.keyframes == 5) then
       if currentNode == root then
-	 print("doing the 5 way")
-	 local lerpX = root.lerpX or 0.5
-	 local lerpY = root.lerpY or 0.5
-	 local newLerpX =0
-	 local newLerpY =0
-	 if lerpX == .5 and lerpY == .5 then
-	    handleChild(root.children[1])
-	 else
-	    local tl, tr, bl, br
-	    if (lerpX < 0.5 and lerpY < 0.5) then
-	       tl = root.children[2]
-	       tr = createLerpedChild(root.children[2], root.children[3], 0.5)
-	       bl = createLerpedChild(root.children[2], root.children[4], 0.5)
-	       br =  root.children[1]
-	       newLerpX = lerpX *2
-	       newLerpY = lerpY *2
+         print("doing the 5 way")
+         local lerpX = root.lerpX or 0.5
+         local lerpY = root.lerpY or 0.5
+         local newLerpX = 0
+         local newLerpY = 0
+         if lerpX == .5 and lerpY == .5 then
+            handleChild(root.children[1])
+         else
+            local tl, tr, bl, br
+            if (lerpX < 0.5 and lerpY < 0.5) then
+               tl = root.children[2]
+               tr = createLerpedChild(root.children[2], root.children[3], 0.5)
+               bl = createLerpedChild(root.children[2], root.children[4], 0.5)
+               br = root.children[1]
+               newLerpX = lerpX * 2
+               newLerpY = lerpY * 2
 
-	    end
-	    if (lerpX >= 0.5 and lerpY < 0.5) then
-	       tl = createLerpedChild(root.children[2], root.children[3], 0.5)
-	       tr = root.children[3]
-	       bl =  root.children[1]
-	       br = createLerpedChild(root.children[3], root.children[5], 0.5)
-	       newLerpX = (lerpX-0.5) *2
-	       newLerpY = lerpY *2
+            end
+            if (lerpX >= 0.5 and lerpY < 0.5) then
+               tl = createLerpedChild(root.children[2], root.children[3], 0.5)
+               tr = root.children[3]
+               bl = root.children[1]
+               br = createLerpedChild(root.children[3], root.children[5], 0.5)
+               newLerpX = (lerpX - 0.5) * 2
+               newLerpY = lerpY * 2
 
-	    end
-	    if (lerpX < 0.5 and lerpY >= 0.5) then
-	       tl =  createLerpedChild(root.children[2], root.children[4], 0.5)
-	       tr = root.children[1]
-	       bl = root.children[4]
-	       br =  createLerpedChild(root.children[4], root.children[5], 0.5)
+            end
+            if (lerpX < 0.5 and lerpY >= 0.5) then
+               tl = createLerpedChild(root.children[2], root.children[4], 0.5)
+               tr = root.children[1]
+               bl = root.children[4]
+               br = createLerpedChild(root.children[4], root.children[5], 0.5)
 
-	       newLerpX = (lerpX) *2
-	       newLerpY = (lerpY-0.5) *2
+               newLerpX = (lerpX) * 2
+               newLerpY = (lerpY - 0.5) * 2
 
-	    end
-	    if (lerpX >= 0.5 and lerpY >= 0.5) then
-	       tl =   root.children[1]
-	       tr = createLerpedChild(root.children[3], root.children[5], 0.5)
-	       bl =  createLerpedChild(root.children[4], root.children[5], 0.5)
-	       br =  root.children[5]
+            end
+            if (lerpX >= 0.5 and lerpY >= 0.5) then
+               tl = root.children[1]
+               tr = createLerpedChild(root.children[3], root.children[5], 0.5)
+               bl = createLerpedChild(root.children[4], root.children[5], 0.5)
+               br = root.children[5]
 
-	       newLerpX = (lerpX-0.5) *2
-	       newLerpY = (lerpY-0.5) *2
+               newLerpX = (lerpX - 0.5) * 2
+               newLerpY = (lerpY - 0.5) * 2
 
-	    end
-	    local cTop = createLerpedChild(tl, tr, newLerpX)
-	    local cBot = createLerpedChild(bl, br, newLerpX)
-	    local lerped = createLerpedChild(cTop, cBot, newLerpY)
-	    if lerped then handleChild(lerped) end
-	 end
-	 --if lerped then handleChild(lerped) end
+            end
+            local cTop = createLerpedChild(tl, tr, newLerpX)
+            local cBot = createLerpedChild(bl, br, newLerpX)
+            local lerped = createLerpedChild(cTop, cBot, newLerpY)
+            if lerped then handleChild(lerped) end
+         end
+         --if lerped then handleChild(lerped) end
       else
-	 handleChild(root.children[root.frame])
+         handleChild(root.children[root.frame])
       end
    end
 end

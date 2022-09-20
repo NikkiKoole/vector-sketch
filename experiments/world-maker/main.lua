@@ -1,7 +1,13 @@
-require 'ui'
-require 'basics'
-require 'main-utils'
-inspect = require "inspect"
+package.path = package.path .. ";../../?.lua"
+
+
+require 'lib.ui'
+require 'lib.basics'
+require 'lib.main-utils'
+require 'lib.scene-graph'
+require 'lib.toolbox'
+
+inspect = require "vendor.inspect"
 
 function love.keypressed(key)
    if key == 'escape' then
@@ -78,7 +84,7 @@ function love.wheelmoved(x,y)
    local scale = root.transforms.l[4]
 
    local posx, posy = love.mouse.getPosition()
-   local ix1, iy1 = root._globalTransform:inverseTransformPoint(posx, posy)
+   local ix1, iy1 = root.transforms._g:inverseTransformPoint(posx, posy)
 
    root.transforms.l[4] = scale *  ((y>0) and 1.05 or 0.95)
    root.transforms.l[5] = scale *  ((y>0) and 1.05 or 0.95)
@@ -86,21 +92,21 @@ function love.wheelmoved(x,y)
    --- ugh
    local tl = root.transforms.l
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-   root._globalTransform = root._localTransform
+   root.transforms._g = root._localTransform
    ---
 
-   local ix2, iy2 = root._globalTransform:inverseTransformPoint(posx, posy)
+   local ix2, iy2 = root.transforms._g:inverseTransformPoint(posx, posy)
    local dx = ix1 - ix2
    local dy = iy1 - iy2
 
-   local dx3, dy3 = getGlobalDelta(root._globalTransform, dx, dy)
+   local dx3, dy3 = getGlobalDelta(root.transforms._g, dx, dy)
    root.transforms.l[1] = root.transforms.l[1] - dx3
    root.transforms.l[2] = root.transforms.l[2] - dy3
 
    -- do it again
    tl = root.transforms.l
    root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7])
-   root._globalTransform = root._localTransform
+   root.transforms._g = root._localTransform
 end
 
 function getGlobalDelta(transform, dx, dy)
@@ -154,19 +160,19 @@ function drawGrid(width, height)
    love.graphics.setLineWidth(root.transforms.l[5])
    local m2cm = 100
    for x = -width/2 * m2cm, width/2 * m2cm, m2cm do
-      local sx, y = root._globalTransform:transformPoint(x,0)
+      local sx, y = root.transforms._g:transformPoint(x,0)
       if sx >= 0 and sx <= 1024 then
          love.graphics.line(sx,0, sx, 768)
       end
    end
    for y = -height/2 * m2cm, height/2 * m2cm, m2cm do
-      local x, sy = root._globalTransform:transformPoint(0,y)
+      local x, sy = root.transforms._g:transformPoint(0,y)
       if sy >= 0 and sy <= 768 then
           love.graphics.line(0,sy, 1024,sy)
       end
    end
 
-   local cx,cy = root._globalTransform:transformPoint(0,0)
+   local cx,cy = root.transforms._g:transformPoint(0,0)
    love.graphics.rectangle("fill", cx-5, cy-5, 10, 10)
 
    love.graphics.setLineWidth(1)

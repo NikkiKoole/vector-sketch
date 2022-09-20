@@ -1,3 +1,6 @@
+local numbers = require 'lib.numbers'
+local lerp = numbers.lerp
+
 function makeBorderMesh(node)
    local work = unpackNodePointsLoop(node.points)
 

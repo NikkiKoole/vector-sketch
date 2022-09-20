@@ -1,67 +1,9 @@
+package.path = package.path .. ";../../?.lua"
 
--- comes from basics.lua
-function getPerpOfLine(x1,y1,x2,y2)
-   local nx = x2 - x1
-   local ny = y2 - y1
-   local len = math.sqrt(nx * nx + ny * ny)
-   nx = nx/len
-   ny = ny/len
-   return ny, nx
-end
-
-function distance(x1,y1,x2,y2)
-   local nx = x2 - x1
-   local ny = y2 - y1
-   return math.sqrt(nx * nx + ny * ny)
-end
-function lerp(v0, v1, t)
-   return v0*(1-t)+v1*t
-end
-
-function mapInto(x, in_min, in_max, out_min, out_max)
-   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-end
-
-
-function lerpLine(x1,y1, x2,y2, t)
-   return {x=lerp(x1, x2, t), y= lerp(y1, y2, t)}
-end
-
-function getEllipseWidth(circumf, h)
-   return math.sqrt((circumf*circumf) - (2* (h*h))) / math.sqrt(2)
-end
-
-function pointInCircle(x,y, cx, cy, cr)
-   local dx = x - cx
-   local dy = y - cy
-   local d  = math.sqrt ((dx*dx) + (dy*dy))
-
-   return cr > d
-end
-
-
--- end comes from basics
-
--- comes from rubberhose main
-function positionControlPoints(start, eind, hoseLength, flop)
-   local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
-   pxm = pxm * flop
-   pym = pym * -flop
-   local d = distance(start.x,start.y, eind.x, eind.y)
-   --   print(hoseLength, d)
-   local b = getEllipseWidth(hoseLength/math.pi, d)
-   local perpL = b /2 -- why am i dividing this?
-
-   local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
-   local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
-
-   local startP = {x= sp2.x +(pxm*perpL), y= sp2.y + (pym*perpL)}
-   local endP = {x= ep2.x +(pxm*perpL), y= ep2.y + (pym*perpL)}
-   return startP, endP
-end
-
--- end comes from rubberhose main
-
+require 'lib.basic-tools'
+require 'lib.basics'
+require 'lib.poly'
+local numbers = require 'lib.numbers'
 
 function CreateTexturedCircle(image, segments)
    segments = segments or 40
@@ -193,19 +135,19 @@ function love.load()
    hoses = {
       {start={x=325, y=125}, eind={x=325, y=400}, hoseLength=550, flop=1}
    }
-   borderRadius = 0.25
+  -- borderRadius = 0.25
    lineWidth = 10
    
    
-   image = love.graphics.newImage("dogman3.png", {mipmaps=true})
+   image = love.graphics.newImage("assets/dogman3.png", {mipmaps=true})
    image:setMipmapFilter( 'nearest', 1 )
    mesh = createTexturedRectangle(image)
 
-   image2 = love.graphics.newImage("kleed2.jpg", {mipmaps=true})
+   image2 = love.graphics.newImage("assets/kleed2.jpg", {mipmaps=true})
    image2:setMipmapFilter( 'nearest', 1 )
    mesh2 = createTexturedRectangle(image2)
 
-   image3 = love.graphics.newImage("plant.png", {mipmaps=true})
+   image3 = love.graphics.newImage("assets/plant.png", {mipmaps=true})
    image3:setMipmapFilter( 'nearest', 1 )
    mesh3 = createTexturedTriangleStrip(image3)
    flip = 1
@@ -226,7 +168,7 @@ function love.draw()
    love.graphics.clear(.4,.5,.4)
 
    local w, h = image3:getDimensions( )
-   print(w,h)
+   --print(w,h)
 
    local offsetW = math.sin(time*5)*280
    --print(offsetW)
@@ -297,7 +239,7 @@ function love.draw()
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
-      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop)
+      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, 0.25)
       local eind = hoses[i].eind
       local d = distance(start.x,start.y, eind.x, eind.y)
       local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
@@ -319,7 +261,7 @@ function love.draw()
       if (tostring(cp.x) == 'nan') then
          -- i want the linewidth to be stretchy
          --print(d, hoseLength/magic)
-         local dd = mapInto(d - hose.hoseLength/magic, 0, 100, lineWidth, 1)
+         local dd = numbers.mapInto(d - hose.hoseLength/magic, 0, 100, lineWidth, 1)
          if dd < 1 then dd = 1 end
          love.graphics.setLineWidth(dd)
          love.graphics.setColor(1,.5,.5)

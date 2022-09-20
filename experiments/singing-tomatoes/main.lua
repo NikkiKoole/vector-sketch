@@ -4,10 +4,11 @@ inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
 require 'lib.scene-graph'
-require 'lib.basics'
 require 'lib.toolbox'
 require 'lib.main-utils'
 poly = require 'lib.poly'
+
+local numbers = require 'lib.numbers'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -100,7 +101,7 @@ function love.mousemoved(x,y)
 	 if  (linkerWenkbrauw.transforms._g) then
 	    local lx, ly =  (body.transforms._g):inverseTransformPoint(x, y)
 	    local distance = math.sqrt((lx *lx) + (ly * ly))
-	    local r2 = mapInto(distance, 0, 100,  -.03, .03)
+	    local r2 = numbers.mapInto(distance, 0, 100,  -.03, .03)
 	    linkerWenkbrauw.transforms.l[3] = r2
 	 end
 
@@ -122,7 +123,7 @@ function love.mousemoved(x,y)
 	 if  (rechterWenkbrauw.transforms._g) then
 	    local lx, ly =  (rechterWenkbrauw.transforms._g):inverseTransformPoint(x, y)
 	    local distance = math.sqrt((lx *lx) + (ly * ly))
-	    local r2 = mapInto(distance, 0, 100,  .03, -.03)
+	    local r2 = numbers.mapInto(distance, 0, 100,  .03, -.03)
 	    rechterWenkbrauw.transforms.l[3] = r2
 	 end
 	 if (rechterPupil.transforms._g) then

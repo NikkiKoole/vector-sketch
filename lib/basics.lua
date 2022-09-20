@@ -1,27 +1,10 @@
+local numbers = require 'lib.numbers'
+
 function hex2rgb(hex)
     hex = hex:gsub("#","")
     return tonumber("0x"..hex:sub(1,2))/255, tonumber("0x"..hex:sub(3,4))/255, tonumber("0x"..hex:sub(5,6))/255
 end
 
-function mapInto(x, in_min, in_max, out_min, out_max)
-   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-end
-
-function clamp(x, min, max)
-  return x < min and min or (x > max and max or x)
-end
-
---function lerp(a, b, amount)
---  return a + (b - a) * clamp(amount, 0, 1)
---end
-
-function lerp(v0, v1, t)
-   return v0*(1-t)+v1*t
-end
-
-function randomSign()
-   return love.math.random() < 0.5 and 1 or -1
-end
 function deepcopy(orig)
     local orig_type = type(orig)
     local copy
@@ -65,7 +48,11 @@ function pointInEllipse (px, py, cx, cy, rx, ry, rotation)
     return (tdx * tdx) / (rx * rx) + (tdy * tdy) / (ry * ry) <= 1;
 end
 
-
+function distance(x1,y1,x2,y2)
+   local nx = x2 - x1
+   local ny = y2 - y1
+   return math.sqrt(nx * nx + ny * ny)
+end
 
 function getPerpOfLine(x1,y1,x2,y2)
     local nx = x2 - x1
@@ -76,16 +63,11 @@ function getPerpOfLine(x1,y1,x2,y2)
     return ny, nx
 end
 
-function distance(x1,y1,x2,y2)
-   local nx = x2 - x1
-   local ny = y2 - y1
-   return math.sqrt(nx * nx + ny * ny)
-end
-
 
 function lerpLine(x1,y1, x2,y2, t)
-   return {x=lerp(x1, x2, t), y= lerp(y1, y2, t)}
+   return {x=numbers.lerp(x1, x2, t), y= numbers.lerp(y1, y2, t)}
 end
+
 
 function getEllipseCircumference(w, h)
    return 2 * math.pi * math.sqrt(((w*w) + (h*h))/2)
@@ -117,13 +99,3 @@ function copyArray(original)
    return result
 end
 
-function round2durp(num, numDecimalPlaces)
-    local mult = 10^(numDecimalPlaces or 0)
-   return math.floor(num * mult + 0.5) / mult
- end
-
-
-function round2(num, numDecimalPlaces)
-local r = tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
-return r
-end

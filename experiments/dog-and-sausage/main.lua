@@ -1,14 +1,14 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
-require 'lib.copyshape'
 require 'lib.poly'
-require 'lib.basics'
 require 'lib.main-utils'
 require 'lib.toolbox'
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
+
+local numbers = require 'lib.numbers'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -51,8 +51,8 @@ function love.mousemoved(x,y)
    if (snuit.transforms._g) then
       local rx, ry = snuit.transforms._g:inverseTransformPoint( x , y )
       local distance = math.sqrt((rx *rx) + (ry * ry))
-      local diff2 = mapInto(distance, 0, 150, 1.1, 1)
-      local diff = mapInto(love.math.random(), 0, 1, -0.01, 0.01)
+      local diff2 = numbers.mapInto(distance, 0, 150, 1.1, 1)
+      local diff = numbers.mapInto(love.math.random(), 0, 1, -0.01, 0.01)
       local newAngle = diff
 
       flux.to(snuit.transforms.l, 0.3, {[3]=newAngle, [4]=diff2, [5]=diff2})

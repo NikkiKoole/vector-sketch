@@ -1,4 +1,4 @@
-
+local numbers = require 'lib.numbers'
 
 function makeParallelLine(line, offset)
    local x1 = line[1]
@@ -60,6 +60,7 @@ end
 -- for example {.05, .08, .92, .8}
 -- here the actual border of the image lies at .05 from the left, .08 from the top, and the width/height is clear.
 function coloredOutsideTheLines(rect, uvData)
+   local lerp = numbers.lerp
    
    local hx1 = lerp(rect[1], rect[7], 0.5)
    local hy1 = lerp(rect[2], rect[8], 0.5)

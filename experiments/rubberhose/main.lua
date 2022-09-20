@@ -10,7 +10,9 @@ require 'lib.basics'
 require 'lib.toolbox'
 require 'lib.ui'
 require 'lib.segment'
+require 'lib.poly'
 
+local numbers = require 'lib.numbers'
 
 require 'lib.polyline'
 
@@ -93,24 +95,6 @@ end
 
 function love.update(dt2)
    dt = dt2
-end
-
-
-function positionControlPoints(start, eind, hoseLength, flop)
-   local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
-   pxm = pxm * flop
-   pym = pym * -flop
-   local d = distance(start.x,start.y, eind.x, eind.y)
-
-   local b = getEllipseWidth(hoseLength/math.pi, d)
-   local perpL = b /2 -- why am i dividing this?
-
-   local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
-   local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
-
-   local startP = {x= sp2.x +(pxm*perpL), y= sp2.y + (pym*perpL)}
-   local endP = {x= ep2.x +(pxm*perpL), y= ep2.y + (pym*perpL)}
-   return startP, endP
 end
 
 
@@ -232,7 +216,7 @@ function love.draw()
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
-      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop)
+      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, borderRadius)
       local eind = hoses[i].eind
       local d = distance(start.x,start.y, eind.x, eind.y)
       local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
@@ -252,7 +236,7 @@ function love.draw()
       if (tostring(cp.x) == 'nan') then
          -- i want the linewidth to be stretchy
          --print(d, hoseLength/magic)
-         local dd = mapInto(d - hose.hoseLength/magic, 0, 100, lineWidth, 1)
+         local dd = numbers.mapInto(d - hose.hoseLength/magic, 0, 100, lineWidth, 1)
          if dd < 1 then dd = 1 end
          love.graphics.setLineWidth(dd)
          love.graphics.setColor(1,.5,.5)

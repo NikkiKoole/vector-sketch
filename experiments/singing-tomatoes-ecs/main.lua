@@ -7,10 +7,13 @@ flux = require "vendor.flux"
 
 require 'lib.basic-tools'
 require 'lib.scene-graph'
-require 'lib.basics'
+--require 'lib.basics'
 require 'lib.toolbox'
 require 'lib.main-utils'
 poly = require 'lib.poly'
+
+local numbers = require 'lib.numbers'
+
 
 Concord = require 'vendor.concord.init'
 
@@ -259,7 +262,7 @@ function getPitch(semitone, octave)
    end
 
    local freqs = {261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25}
-   local n = mapInto(freqs[semitone+1], 261.63, 523.25, 0, 1)
+   local n = numbers.mapInto(freqs[semitone+1], 261.63, 523.25, 0, 1)
    local o = octave + plusoctave
 
 

@@ -391,7 +391,7 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       
       love.graphics.setColor(168/255, 175/255, 97/255)
       love.graphics.draw(m)
-      
+            
    end
 end
 

@@ -1,3 +1,5 @@
+local numbers = require 'lib.numbers'
+
 function parseFile(url)
    local contents, size = love.filesystem.read( url)
    if contents == nil then
@@ -207,8 +209,8 @@ function addUVToVerts(verts, img, points, settings)
  --  local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
  --  local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
 
-   local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1) end
-   local vfunc = function(y) return mapInto(y, tly, bry, 0, 1) end
+   local ufunc = function(x) return numbers.mapInto(x, tlx, brx, 0, 1) end
+   local vfunc = function(y) return numbers.mapInto(y, tly, bry, 0, 1) end
    
    --print(#verts)
    for i =1, #verts do
