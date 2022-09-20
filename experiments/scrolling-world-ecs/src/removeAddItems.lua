@@ -1,3 +1,5 @@
+local numbers = require 'lib.numbers'
+
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    for i = #parallaxData.layer.children, 1, -1 do
       local child = parallaxData.layer.children[i]---map[layerName][i]
@@ -23,7 +25,7 @@ function getGlobalHeight(xPos)
    if (groundTiles[tileX] and groundTiles[tileX+1])  then
       local offsetX = (xPos % tileSize)
       local t = offsetX/tileSize
-      local h = lerp(groundTiles[tileX].height, groundTiles[tileX+1].height, t)
+      local h = numbers.lerp(groundTiles[tileX].height, groundTiles[tileX+1].height, t)
       return h
    else
       return 0

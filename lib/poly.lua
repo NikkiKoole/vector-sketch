@@ -1,3 +1,6 @@
+local geom = require 'lib.geom'
+local bezier = require 'lib.bezier'
+
 
 function TableConcat(t1,t2)
    for i=1,#t2 do
@@ -417,7 +420,7 @@ function makeVertices(shape)
 	 }
 
 	 local magic = 4.46
-	 local cp1, cp2 = positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop, shape.data.borderRadius)
+	 local cp1, cp2 = bezier.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop, shape.data.borderRadius)
 	 local curve = love.math.newBezierCurve({start.x,start.y,cp1.x,cp1.y,cp2.x,cp2.y,eind.x,eind.y})
 
 	 local coords = {}
@@ -473,23 +476,6 @@ function makeVertices(shape)
 
    return vertices
 end
-
-function positionControlPoints(start, eind, hoseLength, flop, borderRadius)
-   local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
-   pxm = pxm * flop
-   pym = pym * -flop
-   local d = distance(start.x,start.y, eind.x, eind.y)
-   local b = getEllipseWidth(hoseLength/math.pi, d)
-   local perpL = b /2 -- why am i dividing this?
-
-   local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
-   local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
-
-   local startP = {x= sp2.x +(pxm*perpL), y= sp2.y + (pym*perpL)}
-   local endP = {x= ep2.x +(pxm*perpL), y= ep2.y + (pym*perpL)}
-   return startP, endP
-end
-
 
 return {
    polygonClip = polygonClip,

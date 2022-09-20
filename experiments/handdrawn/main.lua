@@ -4,6 +4,8 @@ require 'lib.basic-tools'
 require 'lib.basics'
 require 'lib.poly'
 local numbers = require 'lib.numbers'
+local bezier = require 'lib.bezier'
+local geom = require 'lib.geom'
 
 function CreateTexturedCircle(image, segments)
    segments = segments or 40
@@ -239,9 +241,9 @@ function love.draw()
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
-      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, 0.25)
+      local cp, cp2 =  bezier.positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, 0.25)
       local eind = hoses[i].eind
-      local d = distance(start.x,start.y, eind.x, eind.y)
+      local d = geom.distance(start.x,start.y, eind.x, eind.y)
       local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
       love.graphics.setColor(1,0,0)
       love.graphics.circle('fill', start.x, start.y, 10)

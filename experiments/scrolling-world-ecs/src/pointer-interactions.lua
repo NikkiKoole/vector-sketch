@@ -1,4 +1,4 @@
-
+local numbers = require 'lib.numbers'
 
 function getPointerPosition(id)
    local x, y
@@ -390,7 +390,7 @@ function createCamData(item, parallaxData)
    if parallaxData and parallaxData.factors then
 
       camData = {}
-      camData.scale = mapInto(item.depth,
+      camData.scale = numbers.mapInto(item.depth,
                               parallaxData.minmax.min,
                               parallaxData.minmax.max,
                               parallaxData.factors.far,

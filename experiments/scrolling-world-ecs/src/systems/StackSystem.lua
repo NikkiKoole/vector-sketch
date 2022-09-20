@@ -1,3 +1,5 @@
+local geom = require 'lib.geom'
+
 --[[
 stackable :  means this is a normal item that is allowed to be placed in a stack
 inStack   :  means this thing is in a stack, inStack has a prev & next link (double linked list)
@@ -39,7 +41,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 		     local camData = createCamData(checkAgainst[j], pdata)
 		     local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
 
-		     local dis = distance(pivx, pivy, kx2, ky2)
+		     local dis = geom.distance(pivx, pivy, kx2, ky2)
 		     if dis < nearest.distance then
 			nearest.distance = dis
 			nearest.elem = checkAgainst[j]

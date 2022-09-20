@@ -1,3 +1,4 @@
+local numbers = require 'lib.numbers'
 
 groundTiles = {}
 
@@ -48,7 +49,7 @@ end
 
 
 function drawGroundPlaneWithTextures(cam, far, near, layerName)
-
+   local lerp = numbers.lerp
    local W, H = love.graphics.getDimensions()
 
    local x1,y1 = cam:getWorldCoordinates(0,0, far)

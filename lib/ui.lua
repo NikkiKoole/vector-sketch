@@ -1,5 +1,6 @@
 --require 'basics'
 local numbers = require 'lib.numbers'
+local hit = require 'lib.hit'
 
 
 function handleMouseClickStart()
@@ -22,13 +23,13 @@ function getUIRect(id, x,y,w,h)
    local result = false
 
    local mx, my = love.mouse.getPosition( )
-   if pointInRect(mx,my,x,y,w,h) then
+   if hit.pointInRect(mx,my,x,y,w,h) then
       mouseState.hoveredSomething = true
    end
 
   if mouseState.click then
      local mx, my = love.mouse.getPosition( )
-     if pointInRect(mx,my,x,y,w,h) then
+     if hit.pointInRect(mx,my,x,y,w,h) then
         result = true
      end
   end
@@ -42,7 +43,7 @@ function getUICircle(id, x,y,r)
    local hover = false
    local mx, my = love.mouse.getPosition( )
 
-   if pointInCircle(mx, my, x, y, r) then
+   if hit.pointInCircle(mx, my, x, y, r) then
       hover = true
    end
    if mouseState.click and hover then
@@ -73,7 +74,7 @@ function labelbutton(id, str, x,y,w,h, margin)
    local alpha = 0.1
    if margin == nil then margin = 10 end
 
-   if (pointInRect(mx, my,  x, y, w, h)) then
+   if (hit.pointInRect(mx, my,  x, y, w, h)) then
        alpha = 0.5
        mouseState.hoveredSomething = true
        love.mouse.setCursor(cursors.hand)
@@ -102,7 +103,7 @@ function rgbbutton(id, rgb, x, y, size)
    love.graphics.setColor(rgb[1] ,rgb[2],rgb[3], 1)
    love.graphics.rectangle("fill", x*scale, y*scale, (w)*scale,( h)*scale)
 
-   if (pointInRect(mx, my,  x*scale, y*scale, (w)*scale,( h)*scale)) then
+   if (hit.pointInRect(mx, my,  x*scale, y*scale, (w)*scale,( h)*scale)) then
       mouseState.hoveredSomething = true
       love.mouse.setCursor(cursors.hand)
       if (mouseState.click) then
@@ -186,7 +187,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 
    love.graphics.setLineWidth(1)
 
-   if (pointInRect(mx, my,  x, y, buttonWidth,h)) then
+   if (hit.pointInRect(mx, my,  x, y, buttonWidth,h)) then
       mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,1)
       love.mouse.setCursor(cursors.hand)
@@ -240,7 +241,7 @@ function imgbutton(id, img, x, y, hoverText)
    love.graphics.setColor(1,1,1,1)
    love.graphics.rectangle("line", x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)
 
-   if (pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
+   if (hit.pointInRect(mx, my,  x-4*scale, y-4*scale, (8+ w)*scale,(8+ h)*scale)) then
       mouseState.hoveredSomething = true
       love.graphics.setColor(1,1,1,1)
      
@@ -290,7 +291,7 @@ function scrollbarV(id, x,y, height, contentHeight, scrollOffset)
    local draggedResult = false
    local mx, my = love.mouse.getPosition( )
    local hover = false
-   if pointInRect(mx, my, x, y+pxScrollOffset,32,scrollBarThumbH) then
+   if hit.pointInRect(mx, my, x, y+pxScrollOffset,32,scrollBarThumbH) then
        hover = true
    end
 
@@ -361,7 +362,7 @@ function v_slider(id, x, y, height, v, min, max)
    local result= nil
    local mx, my = love.mouse.getPosition( )
    local hover = false
-   if pointInRect(mx,my, x, (yOffset +y),20,20) then
+   if hit.pointInRect(mx,my, x, (yOffset +y),20,20) then
       hover = true
    end
 
@@ -417,7 +418,7 @@ function joystick(id, x, y, size, vx, vy, min, max)
    local mx, my = love.mouse.getPosition( )
    local hover = false
 
-   if pointInRect(mx,my,  thumbX + x, thumbY + y,20,20) then
+   if hit.pointInRect(mx,my,  thumbX + x, thumbY + y,20,20) then
       hover = true
    end
 
@@ -483,7 +484,7 @@ function h_slider(id, x, y, width, v, min, max)
    local draggedResult = false
    local mx, my = love.mouse.getPosition( )
    local hover = false
-   if pointInRect(mx,my, xOffset+x,y,20,20) then
+   if hit.pointInRect(mx,my, xOffset+x,y,20,20) then
       hover = true
    end
 

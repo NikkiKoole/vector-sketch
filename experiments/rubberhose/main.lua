@@ -13,6 +13,9 @@ require 'lib.segment'
 require 'lib.poly'
 
 local numbers = require 'lib.numbers'
+local bezier = require 'lib.bezier'
+local hit = require 'lib.hit'
+local geom = require 'lib.geom'
 
 require 'lib.polyline'
 
@@ -61,11 +64,11 @@ end
 
 function love.mousepressed(mx, my)
    for i = 1, #hoses do
-      if pointInCircle(hoses[i].start.x, hoses[i].start.y, mx,my,10) then
+      if hit.pointInCircle(hoses[i].start.x, hoses[i].start.y, mx,my,10) then
          hoses[i].start.dragging = true
          return
       end
-      if pointInCircle(hoses[i].eind.x, hoses[i].eind.y, mx,my,10) then
+      if hit.pointInCircle(hoses[i].eind.x, hoses[i].eind.y, mx,my,10) then
          hoses[i].eind.dragging = true
          return
       end
@@ -162,7 +165,7 @@ function love.draw()
 
    love.graphics.setColor(0,1,.5)
 
-   if pointInEllipse (mx, my, body.x, body.y, body.w, body.h, body.rotation) then
+   if hit.pointInEllipse (mx, my, body.x, body.y, body.w, body.h, body.rotation) then
       love.graphics.setColor(1,1,.5)
 
    end
@@ -216,9 +219,9 @@ function love.draw()
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
-      local cp, cp2 =  positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, borderRadius)
+      local cp, cp2 =  bezier.positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, borderRadius)
       local eind = hoses[i].eind
-      local d = distance(start.x,start.y, eind.x, eind.y)
+      local d = geom.distance(start.x,start.y, eind.x, eind.y)
       local curve = love.math.newBezierCurve({start.x,start.y,cp.x,cp.y,cp2.x,cp2.y,eind.x,eind.y})
       love.graphics.setColor(1,0,0)
       love.graphics.circle('fill', start.x, start.y, 10)

@@ -1,33 +1,21 @@
-Actor = {}
-Actor.__index = Actor
+local geom = require 'lib.geom'
+local numbers = require 'lib.numbers'
+local bezier = require 'lib.bezier'
 
 require 'lib.segment'
 
-function positionControlPoints(start, eind, hoseLength, flop)
-   local borderRadius = 0
+Actor = {}
+Actor.__index = Actor
 
-   local pxm,pym = getPerpOfLine(start.x,start.y, eind.x, eind.y)
-   pxm = pxm * flop
-   pym = pym * -flop
-   local d = distance(start.x,start.y, eind.x, eind.y)
-   -- theze caluclations are off but i am using some magic numebr here and there
-   local b = getEllipseWidth(hoseLength/math.pi, d)
-   local perpL = b /2 -- why am i dividing this?
 
-   local sp2 = lerpLine(start.x,start.y, eind.x, eind.y, borderRadius)
-   local ep2 = lerpLine(start.x,start.y, eind.x, eind.y, 1 - borderRadius)
 
-   local startP = {x= sp2.x +(pxm*perpL), y= sp2.y + (pym*perpL)}
-   local endP = {x= ep2.x +(pxm*perpL), y= ep2.y + (pym*perpL)}
-   return startP, endP
-end
 
 
 function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    local start = a
    local eind = b
 
-   local d = distance(a.x,a.y, b.x, b.y)
+   local d = geom.distance(a.x,a.y, b.x, b.y)
 
       -- if upside down the flop th flip
    if eind.y < start.y then
@@ -39,7 +27,7 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    end
 
 
-   local cp, cp2 = positionControlPoints(a, b, length, flip)
+   local cp, cp2 = bezier.positionControlPoints(a, b, length, flip, 0)
    local result = {}
 
    local widths = {}
@@ -54,10 +42,10 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
 
 
 
-
+   
    for i =0, steps do
-      local w = mapInto(i, 0,steps,lineData.outer[1], lineData.outer[2] )
-      local w2 = mapInto(i, 0,steps,lineData.inner[1], lineData.inner[2] )
+      local w = numbers.mapInto(i, 0,steps,lineData.outer[1], lineData.outer[2] )
+      local w2 = numbers.mapInto(i, 0,steps,lineData.inner[1], lineData.inner[2] )
       widths[i] = w
       widths2[i] = w2
    end
@@ -100,8 +88,8 @@ function Actor:getWidths()
    local widths2 = {}
 
    for i =0, self.steps do
-      local w = mapInto(i, 0,self.steps,lineData.outer[1], lineData.outer[2] )
-      local w2 = mapInto(i, 0,self.steps,lineData.inner[1], lineData.inner[2] )
+      local w = numbers.mapInto(i, 0,self.steps,lineData.outer[1], lineData.outer[2] )
+      local w2 = numbers.mapInto(i, 0,self.steps,lineData.inner[1], lineData.inner[2] )
       widths[i] = w
       widths2[i] = w2
    end
@@ -232,11 +220,11 @@ function Actor:doTheLegs()
 
    if false and useRubber then
       local m = math.sin(self.time*13)
-      local o = mapInto(m, -1, 1, 0, 0.5)
+      local o = numbers/mapInto(m, -1, 1, 0, 0.5)
       self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o
 
       local m = math.sin(self.time*13)
-      local o = mapInto(m, -1, 1, 0, 0.5)
+      local o = numbers.mapInto(m, -1, 1, 0, 0.5)
       self.rfoot.transforms.l[2] = self.leg2_connector.points[1][2] + (self.leglength/self.magic) - (self.leglength/self.magic)*o
    else
       self.lfoot.transforms.l[2] = self.leg1_connector.points[1][2] + (self.leglength/self.magic)

@@ -1,4 +1,5 @@
 local numbers = require 'lib.numbers'
+local geom = require 'lib.geom'
 
 function makeParallelLine(line, offset)
    local x1 = line[1]
@@ -72,7 +73,7 @@ function coloredOutsideTheLines(rect, uvData)
    local vx2 = lerp(rect[7], rect[5], 0.5)
    local vy2 = lerp(rect[8], rect[6], 0.5)
 
-   local vertd = (distance(vx1, vy1, vx2, vy2))
+   local vertd = (geom.distance(vx1, vy1, vx2, vy2))
    local totalv = 1/uvData[4] * vertd
    
    local topOff = uvData[2] * totalv
@@ -81,7 +82,7 @@ function coloredOutsideTheLines(rect, uvData)
    local pTop = makeParallelLine({rect[1], rect[2], rect[3], rect[4]}, topOff)
    local pBottom = makeParallelLine({ rect[5], rect[6], rect[7], rect[8]}, bottomOff)
 
-   local hord = (distance(hx1, hy1, hx2, hy2))
+   local hord = (geom.distance(hx1, hy1, hx2, hy2))
    local totalh = 1/uvData[3] * hord
    local leftOff = uvData[1] * totalh
    local rightOff = (1-(uvData[3]+uvData[1])) * totalh

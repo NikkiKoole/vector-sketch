@@ -23,63 +23,6 @@ end
 function starts_with(str, start)
    return str:sub(1, #start) == start
 end
-function pointInRect(x,y, rx, ry, rw, rh)
-   if x < rx or y < ry then return false end
-   if x > rx+rw or y > ry+rh then return false end
-   return true
-end
-function pointInCircle(x,y, cx, cy, cr)
-   local dx = x - cx
-   local dy = y - cy
-   local d  = math.sqrt ((dx*dx) + (dy*dy))
-
-   return cr > d
-end
-
-function pointInEllipse (px, py, cx, cy, rx, ry, rotation)
-    local rotation = rotation or 0
-    local cos = math.cos(rotation)
-    local sin = math.sin(rotation)
-    local dx  = (px - cx)
-    local dy  = (py - cy)
-    local tdx = cos * dx + sin * dy
-    local tdy = sin * dx - cos * dy
-
-    return (tdx * tdx) / (rx * rx) + (tdy * tdy) / (ry * ry) <= 1;
-end
-
-function distance(x1,y1,x2,y2)
-   local nx = x2 - x1
-   local ny = y2 - y1
-   return math.sqrt(nx * nx + ny * ny)
-end
-
-function getPerpOfLine(x1,y1,x2,y2)
-    local nx = x2 - x1
-    local ny = y2 - y1
-    local len = math.sqrt(nx * nx + ny * ny)
-    nx = nx/len
-    ny = ny/len
-    return ny, nx
-end
-
-
-function lerpLine(x1,y1, x2,y2, t)
-   return {x=numbers.lerp(x1, x2, t), y= numbers.lerp(y1, y2, t)}
-end
-
-
-function getEllipseCircumference(w, h)
-   return 2 * math.pi * math.sqrt(((w*w) + (h*h))/2)
-end
-
-function getEllipseWidth(circumf, h)
-   return math.sqrt((circumf*circumf) - (2* (h*h))) / math.sqrt(2)
-end
-
-function getEllipseWidth2(c, a)
-   return  math.sqrt((((c/(2* math.pi))^2)*2) - a^2)
-end
 
 
 function ends_with(str, ending)

@@ -1,3 +1,5 @@
+local numbers = require 'lib.numbers'
+
 local VehicleSystem = Concord.system({pool = {'vehicle'}})
 
 function VehicleSystem:update(dt)
@@ -41,7 +43,7 @@ function VehicleSystem:update(dt)
          
          local distanceFromOptimal = math.abs(baseY - getGlobalHeight(base) )
          
-         local v = mapInto(clamp(distanceFromOptimal,0,100), 0, 100, math.atan2(y2-y1,x2-x1), 0)
+         local v = numbers.mapInto(numbers.clamp(distanceFromOptimal,0,100), 0, 100, math.atan2(y2-y1,x2-x1), 0)
 --         print(v)
 --         if  distanceFromOptimal <= 100 then
   --          e.vehicle.body.transforms.l[3]= math.atan2(y2-y1,x2-x1)

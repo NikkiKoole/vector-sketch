@@ -1,3 +1,5 @@
+local numbers = require 'lib.numbers'
+
 function test()
    local start = love.timer.getTime()
    for x = 1, 100 do
@@ -66,7 +68,7 @@ function generateAssetBook(recipe)
 	    {
 	       x=(i*tileSize) + random()*tileSize,
                y=-100,
-	       depth = mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
+	       depth = numbers.mapInto(random(),0,1,recipe.depth.min, recipe.depth.max),
 	       scaleX=1,
 	       scaleY=1,
 	       url=pickRandom(recipe.urls),
@@ -100,7 +102,7 @@ function generateRandomPolysAndAddToContainer(amount, factors, container)
       local r,g,b = hex2rgb('4D391F')
       r = random()*255
       local rnd = 0.45 + random()*0.1
-      local rndDepth =  mapInto(rnd, 0,1,factors.far,factors.near )
+      local rndDepth =  numbers.mapInto(rnd, 0,1,factors.far,factors.near )
       local xPos = -1000 + random()*2000
       local randomShape = {
 	 folder = true,
