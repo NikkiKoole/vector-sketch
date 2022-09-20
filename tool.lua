@@ -30,6 +30,7 @@ json = require 'vendor.json'
 local LG = love.graphics
 local LK = love.keyboard
 
+local text = require 'lib.text'
 
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
@@ -2871,7 +2872,7 @@ function mylib:textinput(t)
          changeNameCursor = #str
       end
 
-      local a,b = split(str, changeNameCursor+1)
+      local a,b = text.split(str, changeNameCursor+1)
       local r = table.concat{a, t, b}
       changeNameCursor = changeNameCursor + 1
       currentNode.name = r
@@ -3103,16 +3104,16 @@ function mylib:keypressed(key, scancode, isrepeat)
       if (changeName) then
          if (key == 'backspace') then
             local str = currentNode and currentNode.name or ""
-            local a,b = split(str, changeNameCursor+1)
-            currentNode.name = table.concat{split(a,utf8.len(a)), b}
+            local a,b = text.split(str, changeNameCursor+1)
+            currentNode.name = table.concat{text.split(a,utf8.len(a)), b}
             changeNameCursor = math.max(0, (changeNameCursor or 0)-1)
          end
 
          if (key == 'delete') then
             local str = currentNode and currentNode.name or ""
-            local a,b = split(str, changeNameCursor+2)
+            local a,b = text.split(str, changeNameCursor+2)
             if (#b > 0) then
-               currentNode.name = table.concat{split(a,utf8.len(a)), b}
+               currentNode.name = table.concat{text.split(a,utf8.len(a)), b}
                changeNameCursor = math.min(#currentNode.name, changeNameCursor)
             end
          end

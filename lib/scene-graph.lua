@@ -4,16 +4,6 @@
 -- a bunch of global functions in editor need to go here
 
 
-function parentize(node)
-   if (node.children) then
-   for i = 1, #node.children do
-      node.children[i]._parent = node
-      if (node.children[i].folder) then
-	 parentize(node.children[i])
-      end
-   end
-   end
-end
 
 function getIndex(item)
    if (item and item._parent) then

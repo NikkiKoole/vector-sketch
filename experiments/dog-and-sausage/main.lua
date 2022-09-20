@@ -9,6 +9,7 @@ inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
 local numbers = require 'lib.numbers'
+local parse = require 'lib.parse-file'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -105,8 +106,8 @@ function love.load()
 
    }
 
-   local doggo = parseFile('assets/doggo__.polygons.txt')
-   local worst_ =  parseFile('assets/worst.polygons.txt')
+   local doggo = parse.parseFile('assets/doggo__.polygons.txt')
+   local worst_ =  parse.parseFile('assets/worst.polygons.txt')
 
    root.children = {doggo[1], worst_[1]}
    parentize(root)

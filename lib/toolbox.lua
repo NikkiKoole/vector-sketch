@@ -1,38 +1,6 @@
 local numbers = require 'lib.numbers'
+local bbox = require 'lib.bbox'
 
-function parseFile(url)
-   local contents, size = love.filesystem.read( url)
-   if contents == nil then
-      print(printC({fg='red'}, "file not found: ", url))
-   end
-
-   local parsed = (loadstring("return ".. contents)())
-
-   local figuredItOut = false
-   if (#parsed == 1 and parsed[1].folder) then
-      parsed[1].origin = {path=url, index=-1}
-      figuredItOut = true
-   end
-   if #parsed > 1 then
-      -- first check if all descendants are folders
-      local allAreFolders = true
-      for i =1, #parsed do
-         if (not parsed[i].folder) then
-            allAreFolders = false
-         end
-      end
-      if (allAreFolders) then
-         for i =1, #parsed do
-            parsed[i].origin = {path=url, index=i}
-         end
-         figuredItOut = true
-      end
-   end
-   if (not figuredItOut) then
-      print('I dont know what type of origin url to put in here', url)
-   end
-   return parsed
-end
 
 function stringSplit(str, sep)
    local result = {}
@@ -167,28 +135,9 @@ end
 
 
 
-function meshAll(root) -- this needs to be done recursive
-   if root.children then
-   for i=1, #root.children do
-      if (root.children[i].points) then
-         if root.children[i].type == 'meta' then
-         else
-            remeshNode(root.children[i])
-         end
-         if root.children[i].border then
-            print('this border should be meshed here')
-         end
-      else
-         meshAll(root.children[i])
-      end
-   end
-   end
-end
-
-
 function addUVToVerts(verts, img, points, settings)
    --print('Im tweakibg around ion here atm, check the code for UV stuff')
-   local tlx, tly, brx, bry = getPointsBBox(points)
+   local tlx, tly, brx, bry = bbox.getPointsBBox(points)
 
    local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
    local xFactor = 1
@@ -374,98 +323,3 @@ function makeBorderMesh(node)
    local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
    return mesh
 end
-
---[[
-function meshAll3d(root) -- this needs to be done recursive
-
-   for i=1, #root.children do
-      local child = root.children[i]
-      if (not child.folder) then
-         --remeshNode(root.children[i])
-
-         if child.border then
-            print('this border should be meshed here')
-         end
-
-         -- i am not sure its needed to make normals
-         local verts= makeVertices(child)
-         local shape3d = generate3dShapeFrom2d(verts, i*0.00001)
-         if #shape3d > 0 then
-
-            local pt = child._parent.transforms._g
-            --print(child._parent.transforms._g)
-            local m = G4d.Model(shape3d, nil, {0,0,0}, nil,nil, pt)
-            m:set_shader_data('color',  root.children[i].color)
-            --m:makeNormals()
-            root.children[i].m3d= m
-
-            local thick = .05
-            local a = extrudeShape(verts, child.points,thick, i*0.00)
-            --print(inspect(a))
-            local n = G4d.Model(a.sides, nil, {0,0,0},nil,nil, pt)
-            --n:makeNormals()
-            root.children[i].m3dSides = n
-            local o = G4d.Model(shape3d, nil, {0,0,thick},nil,nil, pt)
-             o:set_shader_data('color',  root.children[i].color)
-            ---o:makeNormals()
-            root.children[i].m3dOther=  o
-            --print(a.sides)
-            --extrudeShape(shape, border,thickness)
-         end
-      else
-         meshAll(root.children[i])
-      end
-   end
-end
-
-
-function handleChild3d(shape, t)
-   if shape.folder then
-      renderThings3d(shape)
-   else
-      if shape.m3d then
-         love.graphics.setColor(shape.color[1], shape.color[2], shape.color[3])
-         --local t= love.math.newTransform(0,0,Timer,1,1,Timer % 4,0,0,0)
-         --shape.m3d:draw2(shader )
-         --print('yo shape:', shape)
-
-         localX, localY = shape._parent.transforms._g:transformPoint( 0, 0)
-         shape.m3d:move(localX, localY)
-         shape.m3d:draw()
-         if shape.m3dSides then
-            shape.m3dSides:move(localX, localY)
-           shape.m3dSides:draw(defaultShader)
-
-         end
-         if shape.m3dOther then
-            shape.m3dOther:move(localX, localY)
-            shape.m3dOther:draw(defaultShader)
-
-         end
-
-      end
-   end
-
-
-end
-
-
-function renderThings3d(root)
-
-   local tl = root.transforms.l
-   local pg = nil
-   if (root._parent) then
-      pg = root._parent.transforms._g
-   end
-   root._localTransform =  love.math.newTransform( tl[1], tl[2], tl[3], tl[4], tl[5], tl[6],tl[7], tl[8],tl[9])
-
-
-   root.transforms._g = pg and (pg * root._localTransform) or rootcalTransform
-
-   for i = 1, #root.children do
-      local shape = root.children[i]
-      handleChild3d(shape)
-   end
-   lg.setColor(1,1,1,1)
-end
-]]--

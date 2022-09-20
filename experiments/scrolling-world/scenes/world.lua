@@ -1,3 +1,5 @@
+local mesh = require 'lib.mesh'
+
 local scene = {}
 local hasBeenLoaded = false
 
@@ -11,6 +13,8 @@ local hasBeenLoaded = false
 
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
+
+local parentize = require 'lib.parentize'
 
 function scene.modify(data)
 end
@@ -146,7 +150,7 @@ function scene.load()
 	 child.bbox = read.bbox
          child.metaTags = read.metaTags
          print(inspect(child.bbox),x,y)
-         meshAll(child)
+         mesh.meshAll(child)
          return child
       end
 
@@ -209,7 +213,7 @@ function scene.load()
 	 table.insert(actors, walterActor)
       end
 
-      parentize(foregroundLayer)
+      parentize.parentize(foregroundLayer)
       sortOnDepth(foregroundLayer.children)
       recursivelyAddOptimizedMesh(foregroundLayer)
      

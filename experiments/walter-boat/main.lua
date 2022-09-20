@@ -13,13 +13,15 @@ require 'lib.poly'
 require 'lib.main-utils'
 
 local numbers = require 'lib.numbers'  --randomSign
-
+local bbox = require 'lib.bbox'
+local parse = require 'lib.parse-file'
+local parseFile = parse.parseFile
 
 function elemIsAboveAnother(elem,  another)
    assert(another.children[1].points)
 
    local px,py = elem.transforms._g:transformPoint(0,0)
-   local tlx, tly, brx, bry = getPointsBBox(another.children[1].points)
+   local tlx, tly, brx, bry = bbox.getPointsBBox(another.children[1].points)
    local tlx2, tly2 = another.transforms._g:transformPoint(tlx, tly)
    local brx2, bry2 = another.transforms._g:transformPoint(brx, bry)
 

@@ -9,6 +9,7 @@ require 'lib.main-utils'
 poly = require 'lib.poly'
 
 local numbers = require 'lib.numbers'
+local parse = require 'lib.parse-file'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -176,9 +177,9 @@ function love.load()
       children ={}
    }
 
-   tomatoes = parseFile('assets/tomatoes.txt')
-   xylofoon = parseFile('assets/xylofoon.txt')[1]
-   cr78 = parseFile('assets/cr78.txt')[1]
+   tomatoes = parse.parseFile('assets/tomatoes.txt')
+   xylofoon = parse.parseFile('assets/xylofoon.txt')[1]
+   cr78 = parse.parseFile('assets/cr78.txt')[1]
 
    table.insert(root.children, xylofoon)
    xylofoon.transforms.l[1] = - 90

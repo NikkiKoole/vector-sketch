@@ -50,6 +50,7 @@ local myWorld = Concord.world()
 
 
 
+
 function centerCameraOnPosition(x,y,vw, vh)
    local cw, ch = cam:getContainerDimensions()
    local targetScale = math.min(cw/vw, ch/vh)

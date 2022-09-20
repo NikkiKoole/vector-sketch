@@ -1,4 +1,6 @@
 local numbers = require 'lib.numbers'
+local hit = require 'lib.hit'
+
 
 function getPointerPosition(id)
    local x, y
@@ -15,6 +17,7 @@ function getPointerPosition(id)
       end
    end
    return nil,nil,false
+   
 end
 
 
@@ -423,7 +426,7 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
    
-   return pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
+   return hit.pointInRect(mx, my, tlx, tly, brx-tlx, bry-tly), invx, invy, tlx, tly, brx, bry
 end
 
 function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)

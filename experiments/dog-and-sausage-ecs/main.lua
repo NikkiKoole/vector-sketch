@@ -18,6 +18,7 @@ Concord.component("snoutbehaviour")
 Concord.component("pupil")
 
 local myWorld = Concord.world()
+local parse = require 'lib.parse-file'
 
 Concord.component(
    'transforms',
@@ -157,8 +158,8 @@ function love.load()
       transforms =  {l={1024/2,768/2,0,4,4,0,0}},
    }
 
-   local doggo = parseFile('assets/doggo___.polygons.txt')[1]
-   local worst_ =  parseFile('assets/worst_.polygons.txt')[1]
+   local doggo = parse.parseFile('assets/doggo___.polygons.txt')[1]
+   local worst_ =  parse.parseFile('assets/worst_.polygons.txt')[1]
 --   print(inspect(worst_))
    root.children = {doggo, worst_}
    parentize(root)

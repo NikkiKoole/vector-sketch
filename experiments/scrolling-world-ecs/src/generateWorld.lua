@@ -1,5 +1,6 @@
 local numbers = require 'lib.numbers'
 
+
 function test()
    local start = love.timer.getTime()
    for x = 1, 100 do

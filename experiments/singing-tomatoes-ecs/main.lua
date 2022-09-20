@@ -13,7 +13,7 @@ require 'lib.main-utils'
 poly = require 'lib.poly'
 
 local numbers = require 'lib.numbers'
-
+local parse = require 'lib.parse-file'
 
 Concord = require 'vendor.concord.init'
 
@@ -131,7 +131,7 @@ local HotReloadSystem = Concord.system({pool = {'hotReload'}})
 function HotReloadSystem:reloadPath(path)
    print('want to reload with path:', path)
    
-   local temp = parseFile(path)
+   local temp = parse.parseFile(path)
    for i = 1, #root.children do
       if root.children[i].origin and root.children[i].origin.path == path then
          local index = root.children[i].origin.index
@@ -361,9 +361,9 @@ function love.load()
    }
 
   
-   local tomatoes = parseFile('assets/tomatoes.txt')
-   local xylofoon = parseFile('assets/xylofoon.txt')[1]
-   local cr78 = parseFile('assets/cr78.txt')[1]
+   local tomatoes = parse.parseFile('assets/tomatoes.txt')
+   local xylofoon = parse.parseFile('assets/xylofoon.txt')[1]
+   local cr78 = parse.parseFile('assets/cr78.txt')[1]
 
    table.insert(root.children, xylofoon)
    xylofoon.transforms.l[1] = - 90

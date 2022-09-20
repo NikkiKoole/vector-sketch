@@ -12,6 +12,7 @@ flux = require "vendor.flux"
 require 'lib.main-utils'
 inspect = require 'vendor.inspect'
 
+local parse = require 'lib.parse-file'
 
 function love.keypressed(key)
    if key == 'escape' then
@@ -31,7 +32,7 @@ function love.load()
       children ={}
    }
 
-   baas = parseFile('deurlaag3.polygons.txt')[1]
+   baas = parse.parseFile('deurlaag3.polygons.txt')[1]
 
    table.insert(root.children, baas)
 

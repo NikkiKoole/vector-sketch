@@ -20,19 +20,6 @@ function deepcopy(orig)
     return copy
 end
 
-function starts_with(str, start)
-   return str:sub(1, #start) == start
-end
-
-
-function ends_with(str, ending)
-   return ending == "" or str:sub(-#ending) == ending
-end
-
-function split(str, pos)
-   local offset = utf8.offset(str, pos) or 0
-   return str:sub(1, offset-1), str:sub(offset)
-end
 
 function copyArray(original)
    local result = {}

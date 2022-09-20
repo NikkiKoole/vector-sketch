@@ -1,4 +1,6 @@
-function getPointsBBox(points)
+local bbox = {}
+
+bbox.getPointsBBox = function(points)
    local tlx = 9999999999
    local tly = 9999999999
    local brx = -9999999999
@@ -30,14 +32,14 @@ function getPointsBBoxFlat(points)
    return tlx, tly, brx, bry
 end
 
-function getBBoxRecursive(node)
+bbox.getBBoxRecursive = function(node)
    if node.children then
       setTransforms(node)
       -- first try to get as deep as possible
       local p1 = {math.huge, math.huge, -math.huge, -math.huge}
       for i = 1, #node.children do
          if node.children[i].folder then
-            local r= getBBoxRecursive(node.children[i])
+            local r= bbox.getBBoxRecursive(node.children[i])
             --print('r', inspect(r))
             if r[1] < p1[1] then p1[1] = r[1] end
             if r[2] < p1[2] then p1[2] = r[2] end
@@ -50,7 +52,7 @@ function getBBoxRecursive(node)
       for i = 1, #node.children do
          if node.children[i].points then
             --local r = getBBoxR2(node.children[i])
-            local tlx, tly, brx, bry = getPointsBBox(node.children[i].points)
+            local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
             if tlx < p2[1] then p2[1] = tlx end
             if tly < p2[2] then p2[2] = tly end
             if brx > p2[3] then p2[3] = brx end
@@ -148,3 +150,5 @@ function getBBoxOfChildren(children)
 
    return {tl = {x=minX, y=minY}, br={x=maxX, y=maxY}}
 end
+
+return bbox
