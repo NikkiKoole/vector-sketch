@@ -1,3 +1,4 @@
+local transform = require 'lib.transform'
 
 function positionAllInStack(element, dx, dy)
    local nextLink = element.inStack.next
@@ -49,7 +50,7 @@ function arrangeDepthOfStack(someNode)
       current.transforms.l[1] = nextX
       current.transforms.l[2] = nextY
       current.transforms.l[3] = counter*0.1
-      setTransforms(current)  -- this was needed!!!!!!
+      transform.setTransforms(current)  -- this was needed!!!!!!
       
       nextX, nextY = getPositionForNext(current)
       depth = depth + 0.000001

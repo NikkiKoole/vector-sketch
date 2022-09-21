@@ -1,3 +1,5 @@
+local transform = require 'lib.transform'
+
 local BipedSystem = Concord.system({pool={'biped', 'actor'}})
 
 function BipedSystem:update(dt)
@@ -29,7 +31,7 @@ function BipedSystem:update(dt)
 
       if (e.biped.body.pressed) then
 	 e.actor.value.wasPressed = true
-	 setTransforms(e.biped.body)
+	 transform.setTransforms(e.biped.body)
 
 	 local pivx = e.biped.body.transforms.l[6]
 	 local pivy = e.biped.body.transforms.l[7]

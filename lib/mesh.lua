@@ -1,5 +1,90 @@
 local mesh = {}
 
+function makeMeshFromVertices(vertices, nodetype, usesTexture)
+   --   print('make mesh called, by whom?', nodetype)
+   local simple_format = {
+      {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
+   }
+
+   
+   if nodetype == 'rubberhose' then
+      local mesh = love.graphics.newMesh(vertices, "strip")
+      return mesh
+   --elseif nodetype == 'line' then
+   --   local mesh = love.graphics.newMesh(vertices, "strip")
+   --   return mesh
+   elseif nodetype == 'bezier' then
+      local mesh = love.graphics.newMesh(vertices, "strip")
+      return mesh
+   else
+      --print(inspect(vertices))
+      if (vertices and vertices[1] and vertices[1][1]) then
+	 local mesh
+	 
+	 if (usesTexture) then
+	    
+	    mesh = love.graphics.newMesh(vertices, "fan")
+	 else
+	    mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
+	 end
+	 
+	 return mesh
+      end
+   end
+
+   return nil
+end
+
+function remeshNode(node)
+   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
+   local verts = makeVertices(node)
+
+   if node.texture and (node.texture.url:len() > 0 ) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
+      print(node.texture.url, node.texture.url:len())
+
+      local img = imageCache[node.texture.url];
+
+      if (node.texture.squishable) then
+	 -- print('yo hello!')
+
+	 local verts = makeSquishableUVsFromPoints(node.points)
+	 node.mesh = love.graphics.newMesh(verts, 'fan')
+      else
+      
+	 
+	 addUVToVerts(verts, img, node.points, node.texture )
+	 if (node.texture.squishable == true) then
+	    print('need to make this a fan instead of trinagles I think')
+	 end
+	 
+	 node.mesh = love.graphics.newMesh(verts, 'triangles')
+      end
+      
+      node.mesh:setTexture(img)
+
+   else
+
+      --if node.type ~= 'rubberhose' then
+	 node.mesh = makeMeshFromVertices(verts, node.type, node.texture)
+         --end
+
+         if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
+            
+	    local texture = imageCache[node.texture and node.texture.url]
+	    if texture then
+	       node.mesh:setTexture(texture)
+	    end
+         end
+   end
+   
+   
+
+   if node.border then
+      node.borderMesh =  makeBorderMesh(node)
+   end
+end
+
+
 mesh.meshAll = function(root) -- this needs to be done recursive
    if root.children then
    for i=1, #root.children do
@@ -17,6 +102,25 @@ mesh.meshAll = function(root) -- this needs to be done recursive
    end
    end
 end
+
+
+
+mesh.recursivelyAddOptimizedMesh = function(root)
+   if root.folder then
+      if root.url then
+	root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
+      end
+   end
+
+   if root.children then
+      for i=1, #root.children do
+         if root.children[i].folder then
+            mesh.recursivelyAddOptimizedMesh(root.children[i])
+         end
+      end
+   end
+end
+
 
 mesh.makeOptimizedBatchMesh = function(folder)
    -- this one assumes all children are shapes, still need to think of what todo when

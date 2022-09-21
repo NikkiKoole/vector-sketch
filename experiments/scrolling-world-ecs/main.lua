@@ -41,6 +41,8 @@ random = love.math.random
 local parse = require 'lib.parse-file'
 local parentize =  require 'lib.parentize'
 local mesh =  require 'lib.mesh'
+local bbox = require 'lib.bbox'
+--local parallax = require 'lib.parallax'
 
 -- cehck this on love2d to make an ingame editor and mount vector sketch files to edit ingame
 -- https://www.reddit.com/r/love2d/comments/i4u5kr/use_of_lovefilesystemgetuserdirectory/
@@ -121,7 +123,7 @@ function readFileAndAddToCache(url)
    return meshCache[url]
 end
 
-
+--[[
 function recursivelyAddOptimizedMesh(root)
    if root.folder then
       if root.url then
@@ -137,7 +139,7 @@ function recursivelyAddOptimizedMesh(root)
       end
    end
 end
-
+]]--
 -- end utility functions
 
 
@@ -156,9 +158,9 @@ function love.keypressed( key )
 end
 
 
-function sortOnDepth(list)
-   table.sort( list, function(a,b) return a.depth <  b.depth end)
-end
+--function sortOnDepth(list)-
+--   table.sort( list, function(a,b) return a.depth <  b.depth end)
+--end
 
 
 

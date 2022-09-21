@@ -1,5 +1,5 @@
    if (false) then
-      sortOnDepth(stuff)
+      --sortOnDepth(stuff)
       for _, v in pairs(stuff) do
 
          hack.scale = mapInto(v.depth, depthMinMax.min, depthMinMax.max, depthScaleFactors.min, depthScaleFactors.max)

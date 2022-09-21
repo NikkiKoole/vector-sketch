@@ -1,5 +1,7 @@
 local bbox = {}
 
+local transform = require 'lib.transform'
+
 bbox.getPointsBBox = function(points)
    local tlx = 9999999999
    local tly = 9999999999
@@ -34,7 +36,7 @@ end
 
 bbox.getBBoxRecursive = function(node)
    if node.children then
-      setTransforms(node)
+      transform.setTransforms(node)
       -- first try to get as deep as possible
       local p1 = {math.huge, math.huge, -math.huge, -math.huge}
       for i = 1, #node.children do

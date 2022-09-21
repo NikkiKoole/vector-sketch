@@ -1,4 +1,7 @@
 local numbers = require 'lib.numbers'
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
+local parallax = require 'lib.parallax'
 
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    for i = #parallaxData.layer.children, 1, -1 do
@@ -87,9 +90,9 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
       end
    end
 
-   parentize(parallaxData.layer)
-   sortOnDepth(parallaxData.layer.children)
-   recursivelyAddOptimizedMesh(parallaxData.layer)
+   parentize.parentize(parallaxData.layer)
+   parallax.sortOnDepth(parallaxData.layer.children)
+   mesh.recursivelyAddOptimizedMesh(parallaxData.layer)
 
 end
 

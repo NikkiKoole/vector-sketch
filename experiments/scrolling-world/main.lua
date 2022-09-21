@@ -105,7 +105,7 @@ function readFileAndAddToCache(url)
    return meshCache[url]
 end
 
-
+--[[
 function recursivelyAddOptimizedMesh(root)
    if root.folder then
       if root.url then
@@ -121,7 +121,7 @@ function recursivelyAddOptimizedMesh(root)
       end
    end
 end
-
+]]--
 -- end utility functions
 
 
@@ -140,9 +140,9 @@ function love.keypressed( key )
 end
 
 
-function sortOnDepth(list)
-   table.sort( list, function(a,b) return a.depth <  b.depth end)
-end
+--function sortOnDepth(list)
+--   table.sort( list, function(a,b) return a.depth <  b.depth end)
+--end
 
 
 

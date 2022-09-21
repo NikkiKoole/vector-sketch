@@ -442,7 +442,7 @@ end
 function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    local camData = createCamData(item, parallaxData)
    local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
-   local hit = recursiveHitCheck(mx2, my2, item)
+   local hit = hit.recursiveHitCheck(mx2, my2, item)
    return hit
 end
 

@@ -19,6 +19,7 @@ Concord.component("pupil")
 
 local myWorld = Concord.world()
 local parse = require 'lib.parse-file'
+local render = require 'lib.render'
 
 Concord.component(
    'transforms',
@@ -220,6 +221,6 @@ end
 function love.draw()
    local m = makeBackdropMesh()
    love.graphics.draw(m)
-   renderThings(root)
+   render.renderThings(root)
 --   myWorld:emit("draw")
 end

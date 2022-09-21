@@ -2,13 +2,16 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
-require 'lib.copyshape'
+--require 'lib.copyshape'
 require 'lib.poly'
-require 'lib.main-utils'
-require 'lib.toolbox'
+--require 'lib.main-utils'
+--require 'lib.toolbox'
 
 inspect = require 'vendor.inspect'
 
+local render = require 'lib.render'
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
 
 function love.keypressed(key)
    if key == 'escape' then
@@ -22,8 +25,8 @@ function love.keypressed(key)
 
 
       addNodeInGroup(group, root2)
-      renderThings(root)
-      renderThings(root2)
+      render.renderThings(root)
+      render.renderThings(root2)
       local x2,y2 = group.transforms._g:transformPoint(0,0)
       local dx, dy = x1-x2, y1-y2
 
@@ -77,18 +80,18 @@ function love.load()
 
    group = findNodeByName(root, 'group')
 
-   parentize(root)
-   parentize(root2)
-   meshAll(root)
-   meshAll(root2)
-   renderThings(root)
-   renderThings(root2)
+   parentize.parentize(root)
+   parentize.parentize(root2)
+   mesh.meshAll(root)
+   mesh.meshAll(root2)
+   render.renderThings(root)
+   render.renderThings(root2)
 
 
 end
 
 function love.draw()
-   renderThings(root)
-   renderThings(root2)
+   render.renderThings(root)
+   render.renderThings(root2)
 
 end

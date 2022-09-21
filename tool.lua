@@ -31,6 +31,11 @@ local LG = love.graphics
 local LK = love.keyboard
 
 local text = require 'lib.text'
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
+local render = require 'lib.render'
+local hit = require 'lib.hit'
+local bbox = require 'lib.bbox'
 
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
@@ -41,8 +46,8 @@ local text = require 'lib.text'
 local mylib = {}
 
 function mylib:setRoot(root, folderPath)
-   parentize(root)
-   meshAll(root)
+   parentize.parentize(root)
+   mesh.meshAll(root)
 
    mylib.root = root
    mylib.folderPath = folderPath
@@ -226,7 +231,7 @@ local function nodeIsMyOwnOffspring(me, node)
 end
 
 local function rotateGroup(node, degrees)
-   local tlx, tly, brx, bry = getPointsBBox(node.points)
+   local tlx, tly, brx, bry = bbox.getPointsBBox(node.points)
    local w2 = (brx - tlx)/2
    local h2 = (bry - tly)/2
    local cx = tlx+w2
@@ -259,7 +264,7 @@ local function recenterGroup(group, dx, dy)
 end
 
 local function recenterPoints(points)
-   local tlx, tly, brx, bry = getPointsBBox(points)
+   local tlx, tly, brx, bry = bbox.getPointsBBox(points)
    local w2 = (brx - tlx)/2
    local h2 = (bry - tly)/2
    for i=1, #points do
@@ -1050,7 +1055,7 @@ local function drawUIAroundGraphNodes(w,h)
             'polyline-recenter', ui.pivot, 'recenter',
             function()
                editingModeSub = 'polyline-recenter'
-               local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+               local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
                local w2 = (brx - tlx)/2
                local h2 = (bry - tly)/2
                for i=1, #currentNode.points do
@@ -1199,7 +1204,7 @@ local function drawUIAroundGraphNodes(w,h)
 		  if not img then return end -- todo this exits early preventing a crash, but meh
 		  local width, height = img:getDimensions( )
 		  --local mx, my = getMiddleOfPoints(currentNode.points)
-		  local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+		  local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
 		  currentNode.points = {};
 		  currentNode.points[1] = {0,0}
 		  currentNode.points[2] = {width,0}
@@ -1223,7 +1228,7 @@ local function drawUIAroundGraphNodes(w,h)
 		     local img =imageCache[currentNode.texture.url]
 		     if not img then return end -- todo this exits early preventing a crash, but meh
 		     local width, height = img:getDimensions( )
-		     local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+		     local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
 		     currentNode.points = {};
 		     currentNode.points[1] = {width/2,height/2}
 		     
@@ -1248,7 +1253,7 @@ local function drawUIAroundGraphNodes(w,h)
 		     local img =imageCache[currentNode.texture.url]
 		     if not img then return end -- todo this exits early preventing a crash, but meh
 		     local width, height = img:getDimensions( )
-		     local tlx, tly, brx, bry = getPointsBBox(currentNode.points)
+		     local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
 		     currentNode.points = {};
 		     
 		     currentNode.points[1] = {width/2,height/2}
@@ -1663,7 +1668,7 @@ function mylib:mousepressed(x,y, button)
 
       if editingModeSub == 'change-perspective' and currentNode then
 	 function simplecheck(x2,y2, width)
-	    if pointInRect(x,y, x2, y2, width,width) then
+	    if hit.pointInRect(x,y, x2, y2, width,width) then
 	       return true
 	    end
 	    return false
@@ -1682,7 +1687,7 @@ function mylib:mousepressed(x,y, button)
 
 	    local index =  0
 	    for i = 1, #points do
-	       if pointInRect(px,py,
+	       if hit.pointInRect(px,py,
 			      points[i][1] - w/2,
 			      points[i][2] - w/2,
 			      w, w) then
@@ -2320,7 +2325,7 @@ function mylib:draw()
 	 end
 
 	 LG.setWireframe(wireframe )
-	 renderThings(root)
+	 render.renderThings(root)
          comparemode, comparevalue = LG.getStencilTest( )
 
          if (comparemode ~= 'always' or comparevalue ~= 0) then
@@ -2417,7 +2422,7 @@ function mylib:draw()
 	       LG.setColor(1,1,1)
 
 	       function simplehover(x,y, width)
-		  if pointInRect(mx,my, x, y, width,width) then
+		  if hit.pointInRect(mx,my, x, y, width,width) then
 		     LG.rectangle('fill', x,y, width,width)
 		  else
 		     LG.rectangle('line', x,y, width,width)
@@ -2459,7 +2464,7 @@ function mylib:draw()
 	       local kind = "line"
 	       if (editingModeSub == 'polyline-remove' or editingModeSub == 'polyline-edit') then
 		  local scale = root.transforms.l[4]
-		  if pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
+		  if hit.pointInRect(globalX,globalY,  points[i][1] - w/2, points[i][2] - w/2,   w, w) then
 		     kind= "fill"
 		     LG.print(round2(points[i][1],3)..", "..round2(points[i][2],3), 8, LG.getHeight()-32)
 
@@ -3030,7 +3035,7 @@ function mylib:keypressed(key, scancode, isrepeat)
          end
 
          love.filesystem.write(path, inspect(toSave, {indent=""}))
-         renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
+         render.renderNodeIntoCanvas(root, LG.newCanvas(1024/2, 1024/2),  shapePath..shapeName..".polygons.png")
          local openURL = "file://"..love.filesystem.getSaveDirectory()..'/'..shapePath
          love.system.openURL(openURL)
       end

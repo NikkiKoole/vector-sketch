@@ -15,6 +15,8 @@ local hasBeenLoaded = false
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
 local parentize = require 'lib.parentize'
+local parallax = require 'lib.parallax'
+local render = require 'lib.render'
 
 function scene.modify(data)
 end
@@ -214,8 +216,8 @@ function scene.load()
       end
 
       parentize.parentize(foregroundLayer)
-      sortOnDepth(foregroundLayer.children)
-      recursivelyAddOptimizedMesh(foregroundLayer)
+      parallax.sortOnDepth(foregroundLayer.children)
+      mesh.recursivelyAddOptimizedMesh(foregroundLayer)
      
       parallaxLayersData = {
 	 {
@@ -290,14 +292,14 @@ function scene.draw()
    cam:push()
    GLOBALS.parallax = {camera=dynamic, p=parallaxLayersData[1].p }
 
-   renderThings(backgroundLayer)
+   render.renderThings(backgroundLayer)
    cam:pop()
 
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
    cam:push()
    GLOBALS.parallax = {camera=dynamic, p=parallaxLayersData[2].p }
 
-   renderThings( foregroundLayer)
+   render.renderThings( foregroundLayer)
    cam:pop()
 
    love.graphics.setColor(1,1,1)

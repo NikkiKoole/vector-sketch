@@ -6,16 +6,20 @@ ProFi = require 'vendor.ProFi'
 
 require 'lib.scene-graph'
 require 'lib.basics'
-require 'lib.bbox'
+--require 'lib.bbox'
 require 'lib.toolbox'
 require 'lib.copyshape'
 require 'lib.poly'
-require 'lib.main-utils'
+--require 'lib.main-utils'
 
 local numbers = require 'lib.numbers'  --randomSign
 local bbox = require 'lib.bbox'
 local parse = require 'lib.parse-file'
 local parseFile = parse.parseFile
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
+local render = require 'lib.render'
+local hit = require 'lib.hit'
 
 function elemIsAboveAnother(elem,  another)
    assert(another.children[1].points)
@@ -41,7 +45,7 @@ function moveNodeBetweenParentsAndPosition(node, newParent)
    local x1,y1 = node.transforms._g:transformPoint(0,0)
    removeNodeFrom(node, node._parent)
    addNodeInGroup(node, newParent)
-   renderThings(newParent)
+   render.renderThings(newParent)
    local x2,y2 = node.transforms._g:transformPoint(0,0)
    local dx, dy = x1-x2, y1-y2
    local x0,y0 = node.transforms._g:inverseTransformPoint(0,0)
@@ -200,9 +204,9 @@ function love.load()
    olivia = parseFile('assets/olivia.polygons.txt')[1]
    table.insert(root.children, olivia)
 
-   parentize(root)
-   meshAll(root)
-   parentize(overlayer)
+   parentize.parentize(root)
+   mesh.meshAll(root)
+   parentize.parentize(overlayer)
 
    schoorsteentje = findNodeByName(justboat, 'schoorsteentje')
    schroef = findNodeByName(justboat, 'schroef')
@@ -393,7 +397,7 @@ function love.mousepressed(x,y)
    renderInfoForElement = nil
    local body = kajuitdeur.children[3]
    local mesh = kajuitdeur.children[3].mesh
-   if isMouseInMesh(x,y, body._parent, mesh) then
+   if hit.pointInMesh(x,y, body._parent, mesh) then
       if (kajuitdeur.transforms.l[1]  < - 400) then
          flux.to(kajuitdeur.transforms.l, .3, {[1]=-390.81}):ease("circinout")
       else
@@ -402,31 +406,31 @@ function love.mousepressed(x,y)
       renderInfoForElement = body
    end
 
-   if recursiveHitCheck(x,y, boei) then
+   if hit.recursiveHitCheck(x,y, boei) then
       dragged = boei
       moveNodeBetweenParentsAndPosition(boei, overlayer)
       renderInfoForElement = boei
    end
-   if recursiveHitCheck(x,y, hengel) then
+   if hit.recursiveHitCheck(x,y, hengel) then
       dragged = hengel
       moveNodeBetweenParentsAndPosition(hengel, overlayer)
       renderInfoForElement = hengel
    end
 
-   if recursiveHitCheck(x,y, walter) then
+   if hit.recursiveHitCheck(x,y, walter) then
       dragged = walter
       moveNodeBetweenParentsAndPosition(walter, overlayer)
       renderInfoForElement = walter
    end
 
-   if recursiveHitCheck(x,y, olivia) then
+   if hit.recursiveHitCheck(x,y, olivia) then
       dragged = olivia
       moveNodeBetweenParentsAndPosition(olivia, overlayer)
       renderInfoForElement = olivia
    end
 
    for i = 1, #fishRefs do
-      if recursiveHitCheck(x,y, fishRefs[i]) then
+      if hit.recursiveHitCheck(x,y, fishRefs[i]) then
          dragged = fishRefs[i]
          moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[getIndex(fishRefs[i])], overlayer)
          renderInfoForElement = dragged
@@ -435,7 +439,7 @@ function love.mousepressed(x,y)
 
    for i =1, #overlayer.children do
       if #overlayer.children and overlayer.children[i] and  overlayer.children[i].type == 'fish' then
-         if recursiveHitCheck(x,y, overlayer.children[i]) then
+         if hit.recursiveHitCheck(x,y, overlayer.children[i]) then
             dragged = nil
             moveNodeBetweenParentsAndPosition(overlayer.children[i], fishes)
             renderInfoForElement = overlayer.children[i]
@@ -487,10 +491,10 @@ function love.draw()
 
 
    justboat.transforms.l[2] = 0 +  extraY
-   renderThings(root)
+   render.renderThings(root)
 
    anotherWaveFunction(waveCounter, startY+105+ extraY/0.9, 26, 1.5 * waveAmplitude, 0.4)
-   renderThings(overlayer)
+   render.renderThings(overlayer)
    anotherWaveFunction(waveCounter, startY+135+ extraY/0.8, 24, 2.0 * waveAmplitude, 0.4)
 
 

@@ -1,4 +1,5 @@
 local geom = require 'lib.geom'
+local parallax = require 'lib.parallax'
 
 --[[
 stackable :  means this is a normal item that is allowed to be placed in a stack
@@ -82,7 +83,7 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
             arrangeDepthOfStack(target)
 	    if changeDepth then
 	       local layer, pdata = retrieveLayerAndParallax(target.entity.layer.index)
-	       sortOnDepth(layer.children)
+	       parallax.sortOnDepth(layer.children)
 	    end
 	   
 

@@ -1,6 +1,8 @@
 local geom = require 'lib.geom'
 local bezier = require 'lib.bezier'
 local numbers = require 'lib.numbers'
+local transform = require 'lib.transform'
+
 Actor = {}
 Actor.__index = Actor
 
@@ -277,7 +279,7 @@ function Actor:update(dt)
 
    if self.body.pressed and true then
       self.beingPressed = true
-      setTransforms(self.body)
+      transform.setTransforms(self.body)
       local pivx = self.body.transforms.l[6]
       local pivy = self.body.transforms.l[7]
       local px,py = self.body.transforms._g:transformPoint(pivx, pivy)
@@ -323,7 +325,7 @@ function Actor:update(dt)
             local fx =self.leg1_connector.points[1][1]
             local fy =self.leg1_connector.points[1][2]
 
-            setTransforms(self.body)
+            transform.setTransforms(self.body)
 
             last:follow(self.body.transforms.l[1] + fx, self.body.transforms.l[2] + fy)
             last:updateB()

@@ -1,6 +1,8 @@
 local scene = {}
 local hasBeenLoaded = false
 
+local render = require 'lib.render'
+
 function scene.modify(obj)
 end
 
@@ -81,7 +83,7 @@ function scene.draw()
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData2[1])
    cam:push()
    GLOBALS.parallax = {camera=dynamic, p=parallaxLayersData2[1].p} 
-   renderThings( foregroundLayer2)
+   render.renderThings( foregroundLayer2)
    cam:pop()
 
 end

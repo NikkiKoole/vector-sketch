@@ -1,3 +1,8 @@
+local mesh = require 'lib.mesh'
+local parentize = require 'lib.parentize'
+local parallax = require 'lib.parallax'
+local render = require 'lib.render'
+
 local scene = {}
 local hasBeenLoaded = false
 
@@ -136,7 +141,7 @@ function makeObject(url, x, y, depth, allowOptimized)
    child.bbox = read.bbox
    child.metaTags = read.metaTags
    -- print(inspect(child.bbox),x,y)
-   meshAll(child)
+   mesh.meshAll(child)
 
    if ecsWorld then
       local myEntity = Concord.entity()
@@ -335,9 +340,9 @@ if true then
 end
 
 
-      parentize(foregroundLayer)
-      sortOnDepth(foregroundLayer.children)
-      recursivelyAddOptimizedMesh(foregroundLayer)
+      parentize.parentize(foregroundLayer)
+      parallax.sortOnDepth(foregroundLayer.children)
+      mesh.recursivelyAddOptimizedMesh(foregroundLayer)
 
       parallaxLayersData = {
 	 {
@@ -404,7 +409,7 @@ function scene.draw()
    cam:push()
    GLOBALS.parallax = {camera=dynamic, p=parallaxLayersData[1].p }
 
-   renderThings( foregroundLayer)
+   render.renderThings( foregroundLayer)
    cam:pop()
 
    love.graphics.setColor(1,1,1)

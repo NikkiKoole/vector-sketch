@@ -3,13 +3,13 @@ package.path = package.path .. ";../../?.lua"
 Camera = require 'custom-vendor.brady'
 
 require 'lib.recursivelyMakeTextures'
-require 'lib.scene-graph'
+--require 'lib.scene-graph'
 require 'lib.generate-polygon'
-require 'lib.bbox'
+--require 'lib.bbox'
 
 require 'lib.copyshape'
 require 'lib.poly'
-require 'lib.basics'
+--require 'lib.basics'
 require 'lib.main-utils'
 require 'lib.toolbox'
 require 'lib.polyline'
@@ -23,6 +23,10 @@ require 'src.mesh'
 require 'src.outwardRectangle'
 
 Concord = require 'vendor.concord.init'
+
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
+local render = require 'lib.render'
 
 local myWorld = Concord.world()
 
@@ -213,9 +217,9 @@ function love.load()
    --animals2.transforms.l:translate(400,0)
    --addChild(animals1, animals2)
    addChild(root, animals1)
-   parentize(root)
+   parentize.parentize(root)
    recursivelyMakeTextures(root)
-    meshAll(root)
+   mesh.meshAll(root)
     
    --addNodeTo(animals, root)
    --addNodeTo(dogmanhaar, animals)
@@ -408,7 +412,7 @@ function love.draw()
    love.graphics.setColor(1,1,1)
    love.graphics.draw(d)
 
-   renderThings(root)
+   render.renderThings(root)
    --renderRecursive(root)
 
    love.graphics.setColor(1,1,1)

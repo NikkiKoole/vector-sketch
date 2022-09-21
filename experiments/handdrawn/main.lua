@@ -1,11 +1,13 @@
 package.path = package.path .. ";../../?.lua"
 
-require 'lib.basic-tools'
-require 'lib.basics'
-require 'lib.poly'
+--require 'lib.basic-tools'
+--require 'lib.basics'
+--require 'lib.poly'
+
 local numbers = require 'lib.numbers'
 local bezier = require 'lib.bezier'
 local geom = require 'lib.geom'
+local hit = require 'lib.hit'
 
 function CreateTexturedCircle(image, segments)
    segments = segments or 40
@@ -95,11 +97,11 @@ end
 function love.mousepressed(mx,my,button)
    if flip == 1 then flip = -1 else flip = 1 end
     for i = 1, #hoses do
-      if pointInCircle(hoses[i].start.x, hoses[i].start.y, mx,my,10) then
+      if hit.pointInCircle(hoses[i].start.x, hoses[i].start.y, mx,my,10) then
          hoses[i].start.dragging = true
          return
       end
-      if pointInCircle(hoses[i].eind.x, hoses[i].eind.y, mx,my,10) then
+      if hit.pointInCircle(hoses[i].eind.x, hoses[i].eind.y, mx,my,10) then
          hoses[i].eind.dragging = true
          return
       end

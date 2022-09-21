@@ -14,7 +14,8 @@ poly = require 'lib.poly'
 
 local numbers = require 'lib.numbers'
 local parse = require 'lib.parse-file'
-
+local mesh = require 'lib.mesh'
+local parentize = require 'lib.parentize'
 Concord = require 'vendor.concord.init'
 
 
@@ -147,8 +148,8 @@ function HotReloadSystem:reloadPath(path)
    end
 
       
-   parentize(root)
-   meshAll(root)
+   parentize.parentize(root)
+   mesh.meshAll(root)
    renderThings(root)
 
 --   print(path)
@@ -377,7 +378,7 @@ function love.load()
       table.insert(root.children, tomatoes[i])
    end
    recursivelyMakeTextures(root)
-   meshAll(root)
+   mesh.meshAll(root)
 
    makeTomatoes(tomatoes)
 
@@ -404,8 +405,8 @@ function love.load()
 
 
    
-   parentize(root)
-   meshAll(root)
+   parentize.parentize(root)
+   mesh.meshAll(root)
    
   
    

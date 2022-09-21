@@ -1,18 +1,22 @@
 package.path = package.path .. ";../../?.lua"
 
-require 'lib.scene-graph'
+--require 'lib.scene-graph'
 require 'lib.copyshape'
 require 'lib.poly'
 require 'lib.bbox'
-require 'lib.basics'
+--require 'lib.basics'
 
-require 'lib.toolbox'
+--require 'lib.toolbox'
 
 flux = require "vendor.flux"
-require 'lib.main-utils'
+--require 'lib.main-utils'
 inspect = require 'vendor.inspect'
 
 local parse = require 'lib.parse-file'
+local parentize = require 'lib.parentize'
+local render = require 'lib.render'
+local mesh = require 'lib.mesh'
+local bbox = require 'lib.bbox'
 
 function love.keypressed(key)
    if key == 'escape' then
@@ -78,11 +82,11 @@ function love.load()
       }
    }
 
-   parentize(root)
-   meshAll(root)
-   renderThings(root)
+   parentize.parentize(root)
+   mesh.meshAll(root)
+   render.renderThings(root)
 
-   b = getBBoxRecursive(root)
+   b = bbox.getBBoxRecursive(root)
 
   --- canvas = love.graphics.newCanvas(1000, 1000)
 end
@@ -91,7 +95,7 @@ end
 
 function love.draw()
 
-   renderThings(root)
+   render.renderThings(root)
    love.graphics.setColor(1,1,1)
    love.graphics.line(b[1], b[2], b[3], b[2])
    love.graphics.line(b[1], b[2], b[1], b[4])

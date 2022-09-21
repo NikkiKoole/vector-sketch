@@ -3,11 +3,17 @@ package.path = package.path .. ";../../?.lua"
 
 require 'lib.ui'
 require 'lib.basics'
-require 'lib.main-utils'
-require 'lib.scene-graph'
-require 'lib.toolbox'
+
+--require 'lib.main-utils'
+--require 'lib.scene-graph'
+--require 'lib.toolbox'
 
 inspect = require "vendor.inspect"
+
+local parentize = require 'lib.parentize'
+local render = require 'lib.render'
+local mesh = require 'lib.mesh'
+--local bbox = require 'lib.bbox'
 
 function love.keypressed(key)
    if key == 'escape' then
@@ -61,9 +67,9 @@ function love.load()
       children ={}
    }
 
-   parentize(root)
-   meshAll(root)
-   renderThings(root)
+   parentize.parentize(root)
+   mesh.meshAll(root)
+   render.renderThings(root)
 
 end
 
@@ -186,7 +192,7 @@ function love.draw()
 
    drawGrid(100, 10)
 
-   renderThings(root)
+   render.renderThings(root)
 
    drawUI()
 end

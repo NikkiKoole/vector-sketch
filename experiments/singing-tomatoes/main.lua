@@ -4,12 +4,16 @@ inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
 require 'lib.scene-graph'
-require 'lib.toolbox'
+--require 'lib.toolbox'
 require 'lib.main-utils'
 poly = require 'lib.poly'
 
 local numbers = require 'lib.numbers'
 local parse = require 'lib.parse-file'
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
+local render = require 'lib.render'
+local hit = require 'lib.hit'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -17,7 +21,7 @@ end
 
 function love.draw()
    love.graphics.clear(0.52,0.56,0.28)
-   renderThings(root)
+   render.renderThings(root)
 end
 
 function blinkEyes(index)
@@ -149,7 +153,7 @@ function love.mousepressed(x,y)
       local body =  findNodeByName(tomatoes[i], 'lichaam')
       local mesh = body.children[1].mesh
 
-      if isMouseInMesh(x,y, body, mesh) then
+      if hit.pointInMesh(x,y, body, mesh) then
 	 print('hit head')
 	 onHitHead(i)
       end
@@ -158,7 +162,7 @@ function love.mousepressed(x,y)
    for i= 3, #xylofoon.children do
       local body = xylofoon.children[i]
       local mesh = body.children[1].mesh
-      if isMouseInMesh(x,y, body, mesh) then
+      if hit.pointInMesh(x,y, body, mesh) then
 	 print('hit', body.name)
 	 onHitXylofoonChild(i)
       end
@@ -208,8 +212,8 @@ function love.load()
 		     rightEye = {rechterPupil.transforms.l[1], rechterPupil.transforms.l[2]}}
    end
 
-   parentize(root)
-   meshAll(root)
-   renderThings(root)
+   parentize.parentize(root)
+   mesh.meshAll(root)
+   render.renderThings(root)
 
 end
