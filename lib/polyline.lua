@@ -2,9 +2,9 @@ local LINES_PARALLEL_EPS = 0.05;
 
 local function Vector(x, y)
   if y then
-    return {x = x, y = y}
+    return { x = x, y = y }
   else -- clone vector
-    return {x = x.x, y = x.y}
+    return { x = x.x, y = x.y }
   end
 end
 
@@ -62,7 +62,7 @@ local function renderEdgeMiter(anchors, normals, s, len_s, ns, q, r, hw)
     local dx, dy = ns.x + (s.x * lambda), ns.y + (s.y * lambda)
     --print('craners', dx,dy)
     --if dx > math.pi*2 then dx = math.pi*2 end
-  --if dx < -math.pi*2 then dx = -math.pi*2 end
+    --if dx < -math.pi*2 then dx = -math.pi*2 end
     --if dy > math.pi*2 then dy = math.pi*2 end
     --if dy < -math.pi*2 then dy = -math.pi*2 end
 
@@ -120,18 +120,18 @@ local function renderEdgeBevel(anchors, normals, s, len_s, ns, q, r, hw)
 end
 
 local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
-  for i=1,vertex_count,2 do
-    vertices[i + offset] = {vertices[i][1], vertices[i][2]}
+  for i = 1, vertex_count, 2 do
+    vertices[i + offset] = { vertices[i][1], vertices[i][2] }
     local length = length(normals[i])
     vertices[i + offset + 1] = {
-       vertices[i][1] + normals[i].x * (pixel_size / length),
+      vertices[i][1] + normals[i].x * (pixel_size / length),
       vertices[i][2] + normals[i].y * (pixel_size / length)
     }
   end
 
-  for i=1,vertex_count,2 do
+  for i = 1, vertex_count, 2 do
     local k = vertex_count - i + 1
-    vertices[offset + vertex_count + i] = {vertices[k][1], vertices[k][2]}
+    vertices[offset + vertex_count + i] = { vertices[k][1], vertices[k][2] }
     local length = length(normals[i])
     vertices[offset + vertex_count + i + 1] = {
       vertices[k][1] + normals[k].x * (pixel_size / length),
@@ -140,10 +140,12 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
   end
 
   if not is_looping then
-    local spacerx, spacery = vertices[offset + 1][1] - vertices[offset + 3][1], vertices[offset + 1][2] - vertices[offset + 3][2]
+    local spacerx, spacery = vertices[offset + 1][1] - vertices[offset + 3][1],
+        vertices[offset + 1][2] - vertices[offset + 3][2]
     local spacer_length = math.sqrt(spacerx * spacerx + spacery * spacery)
     spacerx, spacery = spacerx * (pixel_size / spacer_length), spacery * (pixel_size / spacer_length)
-    vertices[offset + 2][1], vertices[offset + 2][2] = vertices[offset + 2][1] + spacerx, vertices[offset + 2][2] + spacery
+    vertices[offset + 2][1], vertices[offset + 2][2] = vertices[offset + 2][1] + spacerx,
+        vertices[offset + 2][2] + spacery
     vertices[offset + overdraw_vertex_count - 2][1] = vertices[offset + overdraw_vertex_count - 2][1] + spacerx
     vertices[offset + overdraw_vertex_count - 2][2] = vertices[offset + overdraw_vertex_count - 2][2] + spacery
 
@@ -162,7 +164,7 @@ local function renderOverdraw(vertices, offset, vertex_count, overdraw_vertex_co
 end
 
 local function renderOverdrawNone(vertices, offset, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
-  for i=1,vertex_count-1,4 do
+  for i = 1, vertex_count - 1, 4 do
     local sx, sy = vertices[i][1] - vertices[i + 3][1], vertices[i][2] - vertices[i + 3][2]
     local tx, ty = vertices[i][1] - vertices[i + 1][1], vertices[i][2] - vertices[i + 1][2]
     local sl = math.sqrt(sx * sx + sy * sy)
@@ -171,25 +173,25 @@ local function renderOverdrawNone(vertices, offset, vertex_count, overdraw_verte
     tx, ty = tx * (pixel_size / tl), ty * (pixel_size / tl)
 
     local k = 4 * (i - 1) + 1 + offset
-    vertices[k + 00] = {vertices[i + 0][1], vertices[i + 0][2]}
-    vertices[k + 01] = {vertices[i + 0][1] + sx + tx, vertices[i + 0][2] + sy + ty}
-    vertices[k + 02] = {vertices[i + 1][1] + sx - tx, vertices[i + 1][2] + sy - ty}
-    vertices[k + 03] = {vertices[i + 1][1], vertices[i + 1][2]}
+    vertices[k + 00] = { vertices[i + 0][1], vertices[i + 0][2] }
+    vertices[k + 01] = { vertices[i + 0][1] + sx + tx, vertices[i + 0][2] + sy + ty }
+    vertices[k + 02] = { vertices[i + 1][1] + sx - tx, vertices[i + 1][2] + sy - ty }
+    vertices[k + 03] = { vertices[i + 1][1], vertices[i + 1][2] }
 
-    vertices[k + 04] = {vertices[i + 1][1], vertices[i + 1][2]}
-    vertices[k + 05] = {vertices[i + 1][1] + sx - tx, vertices[i + 1][2] + sy - ty}
-    vertices[k + 06] = {vertices[i + 2][1] - sx - tx, vertices[i + 2][2] - sy - ty}
-    vertices[k + 07] = {vertices[i + 2][1], vertices[i + 2][2]}
+    vertices[k + 04] = { vertices[i + 1][1], vertices[i + 1][2] }
+    vertices[k + 05] = { vertices[i + 1][1] + sx - tx, vertices[i + 1][2] + sy - ty }
+    vertices[k + 06] = { vertices[i + 2][1] - sx - tx, vertices[i + 2][2] - sy - ty }
+    vertices[k + 07] = { vertices[i + 2][1], vertices[i + 2][2] }
 
-    vertices[k + 08] = {vertices[i + 2][1], vertices[i + 2][2]}
-    vertices[k + 09] = {vertices[i + 2][1] - sx - tx, vertices[i + 2][2] - sy - ty}
-    vertices[k + 10] = {vertices[i + 3][1] - sx + tx, vertices[i + 3][2] - sy + ty}
-    vertices[k + 11] = {vertices[i + 3][1], vertices[i + 3][2]}
+    vertices[k + 08] = { vertices[i + 2][1], vertices[i + 2][2] }
+    vertices[k + 09] = { vertices[i + 2][1] - sx - tx, vertices[i + 2][2] - sy - ty }
+    vertices[k + 10] = { vertices[i + 3][1] - sx + tx, vertices[i + 3][2] - sy + ty }
+    vertices[k + 11] = { vertices[i + 3][1], vertices[i + 3][2] }
 
-    vertices[k + 12] = {vertices[i + 3][1], vertices[i + 3][2]}
-    vertices[k + 13] = {vertices[i + 3][1] - sx + tx, vertices[i + 3][2] - sy + ty}
-    vertices[k + 14] = {vertices[i + 0][1] + sx + tx, vertices[i + 0][2] + sy + ty}
-    vertices[k + 15] = {vertices[i + 0][1], vertices[i + 0][2]}
+    vertices[k + 12] = { vertices[i + 3][1], vertices[i + 3][2] }
+    vertices[k + 13] = { vertices[i + 3][1] - sx + tx, vertices[i + 3][2] - sy + ty }
+    vertices[k + 14] = { vertices[i + 0][1] + sx + tx, vertices[i + 0][2] + sy + ty }
+    vertices[k + 15] = { vertices[i + 0][1], vertices[i + 0][2] }
   end
 end
 
@@ -216,26 +218,25 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
 
   local len_s = length(s)
   local thick_index = 1
---  print(inspect(half_width))
+  --  print(inspect(half_width))
   local function getHalfWidth(index)
-     --print(index, inspect(half_width))
-     if type(half_width) == "table" then
-        if index > #half_width then return half_width[#half_width] end
-        
-        return half_width[index]
-     else
-        return half_width
-     end
+    --print(index, inspect(half_width))
+    if type(half_width) == "table" then
+      if index > #half_width then return half_width[#half_width] end
+
+      return half_width[index]
+    else
+      return half_width
+    end
 
   end
-
 
   local ns = normal({}, s, getHalfWidth(thick_index) / len_s)
 
   local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
-  for i=1,#coords-2,2 do
-     if draw_overdraw then
-       half_width[thick_index] = getHalfWidth(thick_index) - pixel_size * 0.3
+  for i = 1, #coords - 2, 2 do
+    if draw_overdraw then
+      half_width[thick_index] = getHalfWidth(thick_index) - pixel_size * 0.3
     end
 
     q.x, q.y = r.x, r.y
@@ -278,8 +279,8 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
   end
 
   if join_type == 'none' then
-   vertex_count = vertex_count - 4
-    for i=3,#normals-2 do
+    vertex_count = vertex_count - 4
+    for i = 3, #normals - 2 do
       table.insert(vertices, {
         anchors[i].x + normals[i].x,
         anchors[i].y + normals[i].y,
@@ -288,29 +289,29 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
     end
     draw_mode = 'triangles'
   else
-     local firstR
+    local firstR
     -- love.math.setRandomSeed(1 )  -- i cant do this it breaks surrounding code that relies on rand
-     for i=1,vertex_count do
-        local r = 1
-        if rndMultiplier ~= nil then
-           r =  love.math.random() * 4
-           if i == 1 then
-              firstR = r
-           end
-           if i == vertex_count then
-              r = firstR
-           end
-       -- end
-           r = 5*rndMultiplier + (love.math.random() * rndMultiplier)
-	end
+    for i = 1, vertex_count do
+      local r = 1
+      if rndMultiplier ~= nil then
+        r = love.math.random() * 4
+        if i == 1 then
+          firstR = r
+        end
+        if i == vertex_count then
+          r = firstR
+        end
+        -- end
+        r = 5 * rndMultiplier + (love.math.random() * rndMultiplier)
+      end
 
-        --if rndMultiplier ~= 0 then
+      --if rndMultiplier ~= 0 then
       table.insert(vertices, {
-                      anchors[i].x + normals[i].x * (r)  ,
-                      anchors[i].y + normals[i].y * (r),
+        anchors[i].x + normals[i].x * (r),
+        anchors[i].y + normals[i].y * (r),
 
       })
-      end
+    end
     -- for i=1,vertex_count do
     --   table.insert(vertices, {
     --     anchors[i].x + normals[i].x,
@@ -322,8 +323,9 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
 
   if draw_overdraw then
     if join_type == 'none' then
-      renderOverdrawNone(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
-      for i=vertex_count+1+extra_vertices,#vertices do
+      renderOverdrawNone(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals,
+        pixel_size, is_looping)
+      for i = vertex_count + 1 + extra_vertices, #vertices do
         if ((i % 4) < 2) then
           vertices[i][8] = 255
         else
@@ -331,22 +333,23 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
         end
       end
     else
-      renderOverdraw(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
-      for i=vertex_count+1+extra_vertices,#vertices do
+      renderOverdraw(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size,
+        is_looping)
+      for i = vertex_count + 1 + extra_vertices, #vertices do
         vertices[i][8] = 255 * (i % 2) -- alpha
       end
     end
   end
 
   if extra_vertices > 0 then
-    vertices[vertex_count + 1] = {vertices[vertex_count][1], vertices[vertex_count][2]}
-    vertices[vertex_count + 2] = {vertices[vertex_count + 3][1], vertices[vertex_count + 3][2]}
+    vertices[vertex_count + 1] = { vertices[vertex_count][1], vertices[vertex_count][2] }
+    vertices[vertex_count + 2] = { vertices[vertex_count + 3][1], vertices[vertex_count + 3][2] }
   end
 
   if draw_mode == 'triangles' then
     indices = {}
     local num_indices = (vertex_count + extra_vertices + overdraw_vertex_count) / 4
-    for i=0,num_indices-1 do
+    for i = 0, num_indices - 1 do
       -- First triangle.
       table.insert(indices, i * 4 + 0 + 1)
       table.insert(indices, i * 4 + 1 + 1)
@@ -362,9 +365,6 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
   return vertices, indices, draw_mode
 end
 
-
-
-
 function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
 
   local renderEdge = JOIN_TYPES[join_type]
@@ -376,10 +376,10 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
 
   local hw = half_width
   local useMultipleWidths = false
-  if (type(half_width) == 'table' ) then
-     hw = half_width[1]
-     useMultipleWidths = true
-     assert(#half_width == #coords/2)
+  if (type(half_width) == 'table') then
+    hw = half_width[1]
+    useMultipleWidths = true
+    assert(#half_width == #coords / 2)
   end
 
 
@@ -402,15 +402,15 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
 
   local r, q = Vector(coords[1], coords[2]), Vector(0, 0)
   local hw = half_width
-  for i=1,#coords-2,2 do
+  for i = 1, #coords - 2, 2 do
     q.x, q.y = r.x, r.y
     r.x, r.y = coords[i + 2], coords[i + 3]
     --half_width = hw --+ (i % 4)/8  -- the bibbering
-    local j = (i/2)+.5
+    local j = (i / 2) + .5
     --print(i, j)
     if (useMultipleWidths) then
-       ns = normal({}, s, half_width[j] / len_s)
-       hw = half_width[j]
+      ns = normal({}, s, half_width[j] / len_s)
+      hw = half_width[j]
     end
 
     len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, hw)
@@ -423,9 +423,9 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
     r.x, r.y = r.x + s.x, r.y + s.y
   end
   if (useMultipleWidths) then
-     hw = half_width[#half_width]
+    hw = half_width[#half_width]
   else
-     hw = half_width
+    hw = half_width
   end
 
   len_s = renderEdge(anchors, normals, s, len_s, ns, q, r, hw)
@@ -449,7 +449,7 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
 
   if join_type == 'none' then
     vertex_count = vertex_count - 4
-    for i=3,#normals-2 do
+    for i = 3, #normals - 2 do
       table.insert(vertices, {
         anchors[i].x + normals[i].x,
         anchors[i].y + normals[i].y,
@@ -458,38 +458,39 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
     end
     draw_mode = 'triangles'
   else
-     local firstR
---     love.math.setRandomSeed(1 )  -- you cant just set the randomseed somewhere
-     for i=1,vertex_count do
-        local r = 1
-        if rndMultiplier ~= nil then
-           r =  love.math.random() * 4
-           if i == 1 then
-              firstR = r
-           end
-           if i == vertex_count then
-              r = firstR
-           end
-       -- end
-           r = 5*rndMultiplier + (love.math.random() * rndMultiplier)
-	end
+    local firstR
+    --     love.math.setRandomSeed(1 )  -- you cant just set the randomseed somewhere
+    for i = 1, vertex_count do
+      local r = 1
+      if rndMultiplier ~= nil then
+        r = love.math.random() * 4
+        if i == 1 then
+          firstR = r
+        end
+        if i == vertex_count then
+          r = firstR
+        end
+        -- end
+        r = 5 * rndMultiplier + (love.math.random() * rndMultiplier)
+      end
 
-        --if rndMultiplier ~= 0 then
+      --if rndMultiplier ~= 0 then
       table.insert(vertices, {
-                      anchors[i].x + normals[i].x * (r)  ,
-                      anchors[i].y + normals[i].y * (r),
+        anchors[i].x + normals[i].x * (r),
+        anchors[i].y + normals[i].y * (r),
 
       })
 
-        --end
+      --end
 
-     end
+    end
   end
 
   if draw_overdraw then
     if join_type == 'none' then
-      renderOverdrawNone(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
-      for i=vertex_count+1+extra_vertices,#vertices do
+      renderOverdrawNone(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals,
+        pixel_size, is_looping)
+      for i = vertex_count + 1 + extra_vertices, #vertices do
         if ((i % 4) < 2) then
           vertices[i][8] = 255
         else
@@ -497,22 +498,23 @@ function polylineNOTUSEDSANYMORE(join_type, coords, half_width, pixel_size, draw
         end
       end
     else
-      renderOverdraw(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size, is_looping)
-      for i=vertex_count+1+extra_vertices,#vertices do
+      renderOverdraw(vertices, vertex_count + extra_vertices, vertex_count, overdraw_vertex_count, normals, pixel_size,
+        is_looping)
+      for i = vertex_count + 1 + extra_vertices, #vertices do
         vertices[i][8] = 255 * (i % 2) -- alpha
       end
     end
   end
 
   if extra_vertices > 0 then
-    vertices[vertex_count + 1] = {vertices[vertex_count][1], vertices[vertex_count][2]}
-    vertices[vertex_count + 2] = {vertices[vertex_count + 3][1], vertices[vertex_count + 3][2]}
+    vertices[vertex_count + 1] = { vertices[vertex_count][1], vertices[vertex_count][2] }
+    vertices[vertex_count + 2] = { vertices[vertex_count + 3][1], vertices[vertex_count + 3][2] }
   end
 
   if draw_mode == 'triangles' then
     indices = {}
     local num_indices = (vertex_count + extra_vertices + overdraw_vertex_count) / 4
-    for i=0,num_indices-1 do
+    for i = 0, num_indices - 1 do
       -- First triangle.
       table.insert(indices, i * 4 + 0 + 1)
       table.insert(indices, i * 4 + 1 + 1)

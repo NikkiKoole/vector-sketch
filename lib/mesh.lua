@@ -40,8 +40,8 @@ function remeshNode(node)
       local img = imageCache[node.texture.url];
 
       if (node.texture.squishable) then
-         local verts = makeSquishableUVsFromPoints(node.points)
-         node.mesh = love.graphics.newMesh(verts, 'fan')
+         local v = makeSquishableUVsFromPoints(node.points)
+         node.mesh = love.graphics.newMesh(v, 'fan')
       else
          addUVToVerts(verts, img, node.points, node.texture)
          if (node.texture.squishable == true) then

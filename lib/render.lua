@@ -65,8 +65,6 @@ local function renderNormallyOrOptimized(shape, isDirty)
 
 end
 
-
-
 local maskIndex = 0
 
 function handleChild(shape, isDirty)
@@ -367,8 +365,5 @@ function drawNodeIntoRect(node, x, y, w, h)
 
 
 end
-
-
-
 
 return render

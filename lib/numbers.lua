@@ -5,7 +5,7 @@ numbers.mapInto = function(x, in_min, in_max, out_min, out_max)
 end
 
 numbers.clamp = function(x, min, max)
-  return x < min and min or (x > max and max or x)
+   return x < min and min or (x > max and max or x)
 end
 --function lerp(a, b, amount)
 --  return a + (b - a) * clamp(amount, 0, 1)
@@ -13,7 +13,7 @@ end
 
 -- todo move all lerp things into its own file (a few more in main-utils)
 numbers.lerp = function(v0, v1, t)
-   return v0*(1-t)+v1*t
+   return v0 * (1 - t) + v1 * t
 end
 
 numbers.randomSign = function()
@@ -22,7 +22,7 @@ end
 
 --unused
 local function round2durp(num, numDecimalPlaces)
-    local mult = 10^(numDecimalPlaces or 0)
+   local mult = 10 ^ (numDecimalPlaces or 0)
    return math.floor(num * mult + 0.5) / mult
 end
 

@@ -3,7 +3,7 @@
 local numbers = require 'lib.numbers'
 local lerp = numbers.lerp
 local parentize = require 'lib.parentize'
-
+local hit = require 'lib.hit'
 
 
 
@@ -32,8 +32,6 @@ function recursiveLookForHitArea(node)
    return false
 end
 
-
-
 function findMeshThatsHit(parent, mx, my, order)
    -- order decides which way we will walk,
    -- order = false will return the firts hitted one (usually below everything)
@@ -52,7 +50,7 @@ function findMeshThatsHit(parent, mx, my, order)
 
       else
 
-         local hit = isMouseInMesh(mx, my, parent, parent.children[i].mesh)
+         local hit = hit.pointInMesh(mx, my, parent, parent.children[i].mesh)
          if hit then
             if order then
                result = parent.children[i]
@@ -69,12 +67,11 @@ function findMeshThatsHit(parent, mx, my, order)
    end
 end
 
-
 local function lerpColor(c1, c2, t)
    return { lerp(c1[1], c2[1], t),
-            lerp(c1[2], c2[2], t),
-            lerp(c1[3], c2[3], t),
-            lerp(c1[4], c2[4], t) }
+      lerp(c1[2], c2[2], t),
+      lerp(c1[3], c2[3], t),
+      lerp(c1[4], c2[4], t) }
 end
 
 local function lerpArray(a1, a2, t)
@@ -90,8 +87,8 @@ local function lerpPoints(p1, p2, t)
       local result = {}
       for i = 1, #p1 do
          table.insert(result, {
-                         lerp(p1[i][1], p2[i][1], t),
-                         lerp(p1[i][2], p2[i][2], t)
+            lerp(p1[i][1], p2[i][1], t),
+            lerp(p1[i][2], p2[i][2], t)
          })
       end
       return result

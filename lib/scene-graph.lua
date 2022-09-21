@@ -7,22 +7,21 @@
 
 function getIndex(item)
    if (item and item._parent) then
-      for k,v in ipairs(item._parent.children) do
+      for k, v in ipairs(item._parent.children) do
          if v == item then return k end
       end
    end
    return -1
 end
 
-
 function findNodeByName(root, name)
    if (root.name == name) then
       return root
    end
    if root.children then
-      for i=1, #root.children do
-	 local result = findNodeByName(root.children[i], name)
-	 if result then return result end
+      for i = 1, #root.children do
+         local result = findNodeByName(root.children[i], name)
+         if result then return result end
       end
    end
    return nil
@@ -46,13 +45,16 @@ end
 function setX(node, x)
    node.transforms.l[1] = x
 end
+
 function setY(node, y)
    node.transforms.l[2] = y
 end
-function setPos(node, x,y)
+
+function setPos(node, x, y)
    node.transforms.l[1] = x
    node.transforms.l[2] = y
 end
+
 function movePos(node, dx, dy)
    node.transforms.l[1] = node.transforms.l[1] + dx
    node.transforms.l[2] = node.transforms.l[2] + dy
@@ -61,42 +63,43 @@ end
 function setRotation(node, r)
    node.transforms.l[3] = r
 end
+
 function setScale(node, s)
    node.transforms.l[4] = s
    node.transforms.l[5] = s
 end
+
 function setScaleX(node, sx)
    node.transforms.l[4] = sx
 end
+
 function setScaleY(node, sy)
    node.transforms.l[5] = sy
 end
+
 function setPivotX(node, px)
    node.transforms.l[6] = px
 end
+
 function setPivotY(node, py)
    node.transforms.l[7] = py
 end
+
 function setPivot(node, px, py)
    node.transforms.l[6] = px
    node.transforms.l[7] = py
 end
+
 function setSkewX(node, x)
    node.transforms.l[8] = x
 end
+
 function setSkewY(node, y)
    node.transforms.l[9] = y
 end
 
-
-
-
-
-
-
-
 function getLocalizedDelta(element, dx, dy)
-   local x1,y1 = element._parent.transforms._g:inverseTransformPoint(dx,dy)
-   local x0, y0 = element._parent.transforms._g:inverseTransformPoint(0,0)
-   return x1-x0, y1-y0
+   local x1, y1 = element._parent.transforms._g:inverseTransformPoint(dx, dy)
+   local x0, y0 = element._parent.transforms._g:inverseTransformPoint(0, 0)
+   return x1 - x0, y1 - y0
 end

@@ -2,13 +2,12 @@ local geom = require 'lib.geom'
 local bezier = require 'lib.bezier'
 local unloop = require 'lib.unpack-points'
 
-function TableConcat(t1,t2)
-   for i=1,#t2 do
-      t1[#t1+1] = t2[i]
+function TableConcat(t1, t2)
+   for i = 1, #t2 do
+      t1[#t1 + 1] = t2[i]
    end
    return t1
 end
-
 
 local function split_poly(poly, intersection)
    local biggestIndex = math.max(intersection.i1, intersection.i2)
@@ -18,11 +17,11 @@ local function split_poly(poly, intersection)
 
    while bb ~= smallestIndex do
       bb = bb + 2
-      if bb > #poly-1 then
+      if bb > #poly - 1 then
          bb = 1
       end
       table.insert(wrap, poly[bb])
-      table.insert(wrap, poly[bb+1])
+      table.insert(wrap, poly[bb + 1])
    end
 
    table.insert(wrap, intersection.x)
@@ -33,8 +32,8 @@ local function split_poly(poly, intersection)
 
    while bk ~= smallestIndex do
       table.insert(back, poly[bk])
-      table.insert(back, poly[bk+1])
-      bk = bk -2
+      table.insert(back, poly[bk + 1])
+      bk = bk - 2
    end
 
    table.insert(back, intersection.x)
@@ -42,8 +41,6 @@ local function split_poly(poly, intersection)
 
    return wrap, back
 end
-
-
 
 local function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_y)
    local s1_x, s1_y, s2_x, s2_y
@@ -54,7 +51,7 @@ local function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p
 
    local s, t
    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y)
-   t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
+   t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
 
    if (s >= 0 and s <= 1 and t >= 0 and t <= 1) then
       return p0_x + (t * s1_x), p0_y + (t * s1_y)
@@ -63,39 +60,38 @@ local function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p
    return 0
 end
 
-
 local function get_collisions(poly)
    local collisions = {}
 
    for outeri = 1, #poly, 2 do
       local ax = poly[outeri]
-      local ay = poly[outeri+1]
-      local ni = outeri+2
-      if outeri == #poly-1 then ni = 1 end
+      local ay = poly[outeri + 1]
+      local ni = outeri + 2
+      if outeri == #poly - 1 then ni = 1 end
       local bx = poly[ni]
-      local by = poly[ni+1]
+      local by = poly[ni + 1]
 
       for inneri = 1, #poly, 2 do
          local cx = poly[inneri]
-         local cy = poly[inneri+1]
-         local ni = inneri+2
-         if inneri==#poly-1 then ni =1 end
+         local cy = poly[inneri + 1]
+         local ni = inneri + 2
+         if inneri == #poly - 1 then ni = 1 end
          local dx = poly[ni]
-         local dy = poly[ni+1]
+         local dy = poly[ni + 1]
 
          if inneri ~= outeri then
-            local result, opt = get_line_intersection(ax,ay,bx,by,cx,cy,dx,dy)
+            local result, opt = get_line_intersection(ax, ay, bx, by, cx, cy, dx, dy)
             if (ax == cx and ay == cy) or (ax == dx and ay == dy) or
-               (bx == cx and by == cy) or (bx == dx and by == dy) then
+                (bx == cx and by == cy) or (bx == dx and by == dy) then
                -- print("share corner")
             else
                if result ~= 0 then
-                  local col = {i1=outeri, i2=inneri, x=result, y=opt }
+                  local col = { i1 = outeri, i2 = inneri, x = result, y = opt }
                   local alreadyfound = false
 
-                  for i=1, #collisions do
+                  for i = 1, #collisions do
                      if (collisions[i].i1 == inneri and collisions[i].i2 == outeri) then
-                        alreadyfound=true
+                        alreadyfound = true
                      else
                      end
                   end
@@ -111,49 +107,48 @@ local function get_collisions(poly)
    return collisions
 end
 
-
 function decompose_complex_poly(poly, result)
    local intersections = get_collisions(poly)
    if #intersections == 0 then
-      result = TableConcat(result, {poly})
+      result = TableConcat(result, { poly })
    end
    if #intersections > 1 then
       local p1, p2 = split_poly(poly, intersections[1])
-      local p1c, p2c = get_collisions(p1),get_collisions(p2)
+      local p1c, p2c = get_collisions(p1), get_collisions(p2)
       if (#p1c > 0) then
          result = decompose_complex_poly(p1, result)
       else
-         result = TableConcat(result, {p1})
+         result = TableConcat(result, { p1 })
       end
 
       if (#p2c > 0) then
          result = decompose_complex_poly(p2, result)
       else
-         result = TableConcat(result, {p2})
+         result = TableConcat(result, { p2 })
       end
    end
    if #intersections == 1 then
       local p1, p2 = split_poly(poly, intersections[1])
-      result = TableConcat(result, {p1})
-      result = TableConcat(result, {p2})
+      result = TableConcat(result, { p1 })
+      result = TableConcat(result, { p2 })
    end
 
    return result
 end
 
 function getTriangleCentroid(triangle)
-   local x = (triangle[1] + triangle[3] + triangle[5])/3
-   local y = (triangle[2] + triangle[4] + triangle[6])/3
+   local x = (triangle[1] + triangle[3] + triangle[5]) / 3
+   local y = (triangle[2] + triangle[4] + triangle[6]) / 3
    return x, y
 end
 
-function isPointInPath(x,y, poly)
+function isPointInPath(x, y, poly)
    local num = #poly
    local j = num - 1
    local c = false
-   for i=1, #poly,2 do
-      if ((poly[i+1] > y) ~= (poly[j+1] > y)) and
-         (x < (poly[j+0] - poly[i+0]) * (y - poly[i+1]) / (poly[j+1] - poly[i+1]) + poly[i+0]) then
+   for i = 1, #poly, 2 do
+      if ((poly[i + 1] > y) ~= (poly[j + 1] > y)) and
+          (x < (poly[j + 0] - poly[i + 0]) * (y - poly[i + 1]) / (poly[j + 1] - poly[i + 1]) + poly[i + 0]) then
          c = not c
       end
       j = i
@@ -161,17 +156,16 @@ function isPointInPath(x,y, poly)
    return c
 end
 
-
 function triangulate(type, poly)
    local result = {}
 
-   if type=="mesh3d" then
-      for x=1, poly.width do
-         for y=1,poly.height do
-            local p1 = {x=poly.cells[x][y].x,     y=poly.cells[x][y].y}
-            local p2 = {x=poly.cells[x+1][y].x,   y=poly.cells[x+1][y].y}
-            local p3 = {x=poly.cells[x+1][y+1].x, y=poly.cells[x+1][y+1].y}
-            local p4 = {x=poly.cells[x][y+1].x,   y=poly.cells[x][y+1].y}
+   if type == "mesh3d" then
+      for x = 1, poly.width do
+         for y = 1, poly.height do
+            local p1 = { x = poly.cells[x][y].x, y = poly.cells[x][y].y }
+            local p2 = { x = poly.cells[x + 1][y].x, y = poly.cells[x + 1][y].y }
+            local p3 = { x = poly.cells[x + 1][y + 1].x, y = poly.cells[x + 1][y + 1].y }
+            local p4 = { x = poly.cells[x][y + 1].x, y = poly.cells[x][y + 1].y }
 
             p1.x = p1.x + poly.cx
             p2.x = p2.x + poly.cx
@@ -185,21 +179,21 @@ function triangulate(type, poly)
 
             local triangle1, triangle2
 
-            if x%2==1 then
-               if y%2==1 then
-                  triangle1 = {p1.x,p1.y,p2.x,p2.y,p3.x,p3.y}
-                  triangle2 = {p1.x,p1.y,p3.x,p3.y,p4.x,p4.y}
+            if x % 2 == 1 then
+               if y % 2 == 1 then
+                  triangle1 = { p1.x, p1.y, p2.x, p2.y, p3.x, p3.y }
+                  triangle2 = { p1.x, p1.y, p3.x, p3.y, p4.x, p4.y }
                else
-                  triangle1 = {p4.x,p4.y,p1.x,p1.y,p2.x,p2.y}
-                  triangle2 = {p4.x,p4.y,p3.x,p3.y,p2.x,p2.y}
+                  triangle1 = { p4.x, p4.y, p1.x, p1.y, p2.x, p2.y }
+                  triangle2 = { p4.x, p4.y, p3.x, p3.y, p2.x, p2.y }
                end
             else
-               if y%2==1 then
-                  triangle1 = {p4.x,p4.y,p1.x,p1.y,p2.x,p2.y}
-                  triangle2 = {p4.x,p4.y,p3.x,p3.y,p2.x,p2.y}
+               if y % 2 == 1 then
+                  triangle1 = { p4.x, p4.y, p1.x, p1.y, p2.x, p2.y }
+                  triangle2 = { p4.x, p4.y, p3.x, p3.y, p2.x, p2.y }
                else
-                  triangle1 = {p1.x,p1.y,p2.x,p2.y,p3.x,p3.y}
-                  triangle2 = {p1.x,p1.y,p3.x,p3.y,p4.x,p4.y}
+                  triangle1 = { p1.x, p1.y, p2.x, p2.y, p3.x, p3.y }
+                  triangle2 = { p1.x, p1.y, p3.x, p3.y, p4.x, p4.y }
                end
             end
 
@@ -208,34 +202,34 @@ function triangulate(type, poly)
          end
       end
 
-   elseif type=="polyline" or type=="rope" or type=="smartline" then
+   elseif type == "polyline" or type == "rope" or type == "smartline" then
       assert(poly.draw_mode)
       if (poly.draw_mode == "triangles") then
-         for i=1, #poly.indices, 3 do
+         for i = 1, #poly.indices, 3 do
             local i1 = poly.indices[i]
-            local i2 = poly.indices[i+1]
-            local i3 = poly.indices[i+2]
-            table.insert(result, {poly.vertices[i1][1], poly.vertices[i1][2],
-                                  poly.vertices[i2][1], poly.vertices[i2][2],
-                                  poly.vertices[i3][1], poly.vertices[i3][2]})
+            local i2 = poly.indices[i + 1]
+            local i3 = poly.indices[i + 2]
+            table.insert(result, { poly.vertices[i1][1], poly.vertices[i1][2],
+               poly.vertices[i2][1], poly.vertices[i2][2],
+               poly.vertices[i3][1], poly.vertices[i3][2] })
          end
       elseif (poly.draw_mode == "strip") then
          -- this is quite dumb, the input data is very efficient and now i go and make separate triangles from it again
          -- this is only for as long as I am not using meshes.
 
          --print(#poly.vertices)
-         for i=1, #poly.vertices-2 do
+         for i = 1, #poly.vertices - 2 do
             if (i % 2 == 0) then
                -- 0 1 2
-               table.insert(result, {poly.vertices[i+0][1], poly.vertices[i+0][2],
-                                     poly.vertices[i+1][1], poly.vertices[i+1][2],
-                                     poly.vertices[i+2][1], poly.vertices[i+2][2]})
+               table.insert(result, { poly.vertices[i + 0][1], poly.vertices[i + 0][2],
+                  poly.vertices[i + 1][1], poly.vertices[i + 1][2],
+                  poly.vertices[i + 2][1], poly.vertices[i + 2][2] })
 
             else
                -- 0 2 1
-               table.insert(result, {poly.vertices[i+0][1], poly.vertices[i+0][2],
-                                     poly.vertices[i+2][1], poly.vertices[i+2][2],
-                                     poly.vertices[i+1][1], poly.vertices[i+1][2]})
+               table.insert(result, { poly.vertices[i + 0][1], poly.vertices[i + 0][2],
+                  poly.vertices[i + 2][1], poly.vertices[i + 2][2],
+                  poly.vertices[i + 1][1], poly.vertices[i + 1][2] })
 
             end
 
@@ -245,7 +239,7 @@ function triangulate(type, poly)
    else
       local polys = decompose_complex_poly(poly, {})
 
-      for i=1 , #polys do
+      for i = 1, #polys do
          local p = polys[i]
          reTriangulatePolygon(p, result)
       end
@@ -259,62 +253,63 @@ function reTriangulatePolygon(poly, result)
    for j = 1, #triangles do
       local t = triangles[j]
       local cx, cy = getTriangleCentroid(t)
-      if isPointInPath(cx,cy, p) then
+      if isPointInPath(cx, cy, p) then
          table.insert(result, t)
       end
    end
 end
-
 
 -- for the boyonce i prolly need thi algo:
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#JavaScript
 
 function inside(p, cp1, cp2)
-   return (cp2.x-cp1.x)*(p.y-cp1.y) > (cp2.y-cp1.y)*(p.x-cp1.x)
+   return (cp2.x - cp1.x) * (p.y - cp1.y) > (cp2.y - cp1.y) * (p.x - cp1.x)
 end
 
 function intersection(cp1, cp2, s, e)
-   local dcx, dcy = cp1.x-cp2.x, cp1.y-cp2.y
-   local dpx, dpy = s.x-e.x, s.y-e.y
-   local n1 = cp1.x*cp2.y - cp1.y*cp2.x
-   local n2 = s.x*e.y - s.y*e.x
-   local n3 = 1 / (dcx*dpy - dcy*dpx)
-   local x = (n1*dpx - n2*dcx) * n3
-   local y = (n1*dpy - n2*dcy) * n3
-   return {x=x, y=y}
+   local dcx, dcy = cp1.x - cp2.x, cp1.y - cp2.y
+   local dpx, dpy = s.x - e.x, s.y - e.y
+   local n1 = cp1.x * cp2.y - cp1.y * cp2.x
+   local n2 = s.x * e.y - s.y * e.x
+   local n3 = 1 / (dcx * dpy - dcy * dpx)
+   local x = (n1 * dpx - n2 * dcx) * n3
+   local y = (n1 * dpy - n2 * dcy) * n3
+   return { x = x, y = y }
 end
 
 function polygonClip(a, b) -- accepts 2 lists like {{x=1,y=y}, ...} with possible duplicated end
 
    local aList = {}
-   local aEnd = (a.points[#a.points].x == a.points[1].x) and (a.points[#a.points].y == a.points[1].y) and #a.points -1 or  #a.points
+   local aEnd = (a.points[#a.points].x == a.points[1].x) and (a.points[#a.points].y == a.points[1].y) and #a.points - 1
+       or #a.points
    for i = 1, aEnd do
-      table.insert(aList, {x=a.points[i].x, y=a.points[i].y})
+      table.insert(aList, { x = a.points[i].x, y = a.points[i].y })
    end
 
    local bList = {}
-   local bEnd = (b.points[#b.points].x == b.points[1].x) and (b.points[#b.points].y == b.points[1].y) and #b.points -1 or  #b.points
+   local bEnd = (b.points[#b.points].x == b.points[1].x) and (b.points[#b.points].y == b.points[1].y) and #b.points - 1
+       or #b.points
    for i = 1, bEnd do
-      table.insert(bList, {x=b.points[i].x, y=b.points[i].y})
+      table.insert(bList, { x = b.points[i].x, y = b.points[i].y })
    end
 
    local outputList = aList
    local cp1 = bList[#bList]
-   for _, cp2 in ipairs(bList) do  -- WP clipEdge is cp1,cp2 here
+   for _, cp2 in ipairs(bList) do -- WP clipEdge is cp1,cp2 here
       local inputList = outputList
       outputList = {}
       local s = inputList[#inputList]
       for _, e in ipairs(inputList) do
-	 if inside(e, cp1, cp2) then
-	    if not inside(s, cp1, cp2) then
-	       outputList[#outputList+1] = intersection(cp1, cp2, s, e)
-	    end
-	    outputList[#outputList+1] = e
-	 elseif inside(s, cp1, cp2) then
-	    outputList[#outputList+1] = intersection(cp1, cp2, s, e)
-	 end
-	 s = e
+         if inside(e, cp1, cp2) then
+            if not inside(s, cp1, cp2) then
+               outputList[#outputList + 1] = intersection(cp1, cp2, s, e)
+            end
+            outputList[#outputList + 1] = e
+         elseif inside(s, cp1, cp2) then
+            outputList[#outputList + 1] = intersection(cp1, cp2, s, e)
+         end
+         s = e
       end
       cp1 = cp2
    end
@@ -323,12 +318,11 @@ function polygonClip(a, b) -- accepts 2 lists like {{x=1,y=y}, ...} with possibl
 
 end
 
-
 function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
    -- https://stackoverflow.com/questions/9692448/how-can-you-find-the-centroid-of-a-concave-irregular-polygon-in-javascript
 
-   local first = {pts[1], pts[2]}
-   local last = {pts[#pts-1], pts[#pts]}
+   local first = { pts[1], pts[2] }
+   local last = { pts[#pts - 1], pts[#pts] }
    if (first[1] ~= last[1] or first[2] ~= last[2]) then
       assert('getPolygon centroid should be fed an array with duplicate')
       table.insert(pts, first[1], first[2])
@@ -338,9 +332,9 @@ function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
    local x = 0
    local y = 0
    for i = 1, #pts, 2 do
-      local prev = (i == 1 and #pts-2) or i - 2
-      local p1 = {pts[i], pts[i+1]}
-      local p2 = {pts[prev], pts[prev+1]}
+      local prev = (i == 1 and #pts - 2) or i - 2
+      local p1 = { pts[i], pts[i + 1] }
+      local p2 = { pts[prev], pts[prev + 1] }
 
       assert(prev >= 1)
       assert(p1)
@@ -355,13 +349,13 @@ function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
 
       local f = (p1[2] - first[2]) * (p2[1] - first[1]) - (p2[2] - first[2]) * (p1[1] - first[1])
       twicearea = twicearea + f
-      x = x +  (p1[1] + p2[1] - 2 * first[1]) * f
-      y = y +  (p1[2] + p2[2] - 2 * first[2]) * f;
+      x = x + (p1[1] + p2[1] - 2 * first[1]) * f
+      y = y + (p1[2] + p2[2] - 2 * first[2]) * f;
    end
 
    f = twicearea * 3
 
-   return {x/f + first[1], y/f + first[2]}
+   return { x / f + first[1], y / f + first[2] }
 
 end
 
@@ -369,18 +363,18 @@ function makeVertices(shape)
    --local triangles = {}
    if (shape.type == 'meta') then return end
    if (shape.folder) then return end
-   
+
    local points = shape.points
    local vertices = {}
 
    if shape.type == nil or shape.type == 'poly' then
-      if (points and #points >= 2 ) then
-         
+      if (points and #points >= 2) then
+
          local scale = 1
          local coords = {}
          local ps = {}
-         
-         for l=1, #points do
+
+         for l = 1, #points do
             table.insert(coords, points[l][1])
             table.insert(coords, points[l][2])
          end
@@ -388,8 +382,8 @@ function makeVertices(shape)
          if (shape.color) then
             local polys = decompose_complex_poly(coords, {})
             local result = {}
-	    
-            for k=1 , #polys do
+
+            for k = 1, #polys do
                local p = polys[k]
                if (#p >= 6) then
                   -- if a import breaks on triangulation errors uncomment this
@@ -398,11 +392,11 @@ function makeVertices(shape)
                   reTriangulatePolygon(p, result)
                end
             end
-            
+
             for j = 1, #result do
-               table.insert(vertices, {result[j][1], result[j][2]})
-               table.insert(vertices, {result[j][3], result[j][4]})
-               table.insert(vertices, {result[j][5], result[j][6]})
+               table.insert(vertices, { result[j][1], result[j][2] })
+               table.insert(vertices, { result[j][3], result[j][4] })
+               table.insert(vertices, { result[j][5], result[j][6] })
             end
          end
       end
@@ -410,67 +404,68 @@ function makeVertices(shape)
 
       if (shape.type == 'rubberhose') then
 
-	 local start = {
-	    x=shape.points[1][1],
-	    y=shape.points[1][2]
-	 }
-	 local eind = {
-	    x=shape.points[2][1],
-	    y=shape.points[2][2]
-	 }
+         local start = {
+            x = shape.points[1][1],
+            y = shape.points[1][2]
+         }
+         local eind = {
+            x = shape.points[2][1],
+            y = shape.points[2][2]
+         }
 
-	 local magic = 4.46
-	 local cp1, cp2 = bezier.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop, shape.data.borderRadius)
-	 local curve = love.math.newBezierCurve({start.x,start.y,cp1.x,cp1.y,cp2.x,cp2.y,eind.x,eind.y})
+         local magic = 4.46
+         local cp1, cp2 = bezier.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop,
+            shape.data.borderRadius)
+         local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
 
-	 local coords = {}
-	 if (tostring(cp1.x) == 'nan') then
-	    coords = {shape.points[1], shape.points[2]}
-	 else
-	    local steps = shape.data.steps
-	    for i = 0, steps do
-	       local px, py = curve:evaluate(i/steps)
-	       table.insert(coords, {px, py})
-	    end
-	 end
-	 coords = unloop.unpackNodePoints(coords, false)
-	 local verts, indices, draw_mode = polyline('miter',coords, {shape.data.width})
-         local h = 1 / (shape.data.steps-1 or 1)
-         local vertsWithUVs = {}
-	 
-         for i =1, #verts do
-            local u = (i % 2 == 1) and 0 or 1
-            local v = math.floor(((i-1) / 2))/ (#verts/2 -1)
-            vertsWithUVs[i] = {verts[i][1], verts[i][2],  u, v}
+         local coords = {}
+         if (tostring(cp1.x) == 'nan') then
+            coords = { shape.points[1], shape.points[2] }
+         else
+            local steps = shape.data.steps
+            for i = 0, steps do
+               local px, py = curve:evaluate(i / steps)
+               table.insert(coords, { px, py })
+            end
          end
-         
-	 vertices = vertsWithUVs
+         coords = unloop.unpackNodePoints(coords, false)
+         local verts, indices, draw_mode = polyline('miter', coords, { shape.data.width })
+         local h = 1 / (shape.data.steps - 1 or 1)
+         local vertsWithUVs = {}
+
+         for i = 1, #verts do
+            local u = (i % 2 == 1) and 0 or 1
+            local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+            vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+         end
+
+         vertices = vertsWithUVs
       elseif (shape.type == 'bezier') then
-	    local curvedata = unloop.unpackNodePoints(points, false)
-	    local curve = love.math.newBezierCurve(curvedata)
-	    local steps = shape.data.steps
-	    local coords = {}
-	    for i = 0, steps do
-	       local px, py = curve:evaluate(i/steps)
-	       table.insert(coords, {px, py})
-	    end
-	    coords = unloop.unpackNodePoints(coords, false)
-	    
-	    local verts, indices, draw_mode = polyline('miter',coords, {shape.data.width})
-	    local h = 1 / (shape.data.steps-1 or 1)
-	    local vertsWithUVs = {}
-	 
-	    for i =1, #verts do
-	       local u = (i % 2 == 1) and 0 or 1
-	       local v = math.floor(((i-1) / 2))/ (#verts/2 -1)
-	       vertsWithUVs[i] = {verts[i][1], verts[i][2],  u, v}
-	    end
-	    vertices = vertsWithUVs
+         local curvedata = unloop.unpackNodePoints(points, false)
+         local curve = love.math.newBezierCurve(curvedata)
+         local steps = shape.data.steps
+         local coords = {}
+         for i = 0, steps do
+            local px, py = curve:evaluate(i / steps)
+            table.insert(coords, { px, py })
+         end
+         coords = unloop.unpackNodePoints(coords, false)
+
+         local verts, indices, draw_mode = polyline('miter', coords, { shape.data.width })
+         local h = 1 / (shape.data.steps - 1 or 1)
+         local vertsWithUVs = {}
+
+         for i = 1, #verts do
+            local u = (i % 2 == 1) and 0 or 1
+            local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+            vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+         end
+         vertices = vertsWithUVs
       else
-	 
-	 local coords = unloop.unpackNodePoints(points, false)
-	 local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
-	 vertices = verts
+
+         local coords = unloop.unpackNodePoints(points, false)
+         local verts, indices, draw_mode = polyline('miter', coords, { 10, 40, 20, 100, 10 })
+         vertices = verts
       end
    end
 
@@ -480,6 +475,6 @@ end
 return {
    polygonClip = polygonClip,
    getPolygonCentroid = getPolygonCentroid,
-   triangulate=triangulate,
+   triangulate = triangulate,
    makeVertices = makeVertices
 }
