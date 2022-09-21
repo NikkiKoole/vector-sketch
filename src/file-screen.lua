@@ -1,3 +1,8 @@
+local text = require 'lib.text'
+local hit = require 'lib.hit'
+local parentize = require 'lib.parentize'
+local mesh = require 'lib.mesh'
+
 local function getFiles(rootPath, tree)
    tree = tree or {}
    local lfs = love.filesystem
@@ -26,7 +31,7 @@ local function getPolygonFiles(rootPath, tree)
       
       local file = lfs.getInfo(path)
       if file.type == 'file' and
-	 ends_with(path, 'polygons.txt') then
+	 text.ends_with(path, 'polygons.txt') then
 	 local pngPath = path:gsub('polygons.txt', 'polygons.png')
 	 local png = love.filesystem.getInfo(pngPath)
 --         print(path, string.sub(path, 2))
@@ -94,7 +99,7 @@ function renderOpenFileScreen(root)
          love.graphics.rectangle('fill', dirX, dirY, labelW, labelH )
       end
       
-      if pointInRect(mx, my, dirX,dirY, labelW, labelH ) then
+      if hit.pointInRect(mx, my, dirX,dirY, labelW, labelH ) then
          love.graphics.setColor(1,0,0)
          love.graphics.rectangle('fill', dirX, dirY, labelW, labelH )
          --print(inspect(mouseState))
@@ -129,14 +134,14 @@ function renderOpenFileScreen(root)
          local y = (math.ceil(usedIndex / columns)) - 1
          
          love.graphics.draw(gatheredData[i].img,x * smallsize, yOffset+ y * smallsize, 0, .125, .125)
-         if pointInRect(mx, my, x*smallsize,yOffset+ y*smallsize, smallsize, smallsize) then
+         if hit.pointInRect(mx, my, x*smallsize,yOffset+ y*smallsize, smallsize, smallsize) then
             overIndex = i
             if love.mouse.isDown(1) then
                local contents, size = love.filesystem.read(gatheredData[i].path)
 
                local tab = readStrAsShape(contents, 'vector-sketch/'..gatheredData[i].path)
                root.children = tab -- TableConcat(root.children, tab)
-               parentize(root)
+               parentize.parentize(root)
 
                --local bbox  = getBBoxRecursive(root)
                --print(inspect(bbox))
@@ -152,7 +157,7 @@ function renderOpenFileScreen(root)
                currentNode = nil
                recursivelyMakeTextures(root)
 
-               meshAll(root)
+               mesh.meshAll(root)
                fileDropPopup = nil
                openFileScreen = false
             end

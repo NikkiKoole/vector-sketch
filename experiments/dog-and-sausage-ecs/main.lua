@@ -18,8 +18,11 @@ Concord.component("snoutbehaviour")
 Concord.component("pupil")
 
 local myWorld = Concord.world()
+
 local parse = require 'lib.parse-file'
 local render = require 'lib.render'
+local mesh = require 'lib.mesh'
+local parentize = require 'lib.parentize'
 
 Concord.component(
    'transforms',
@@ -31,34 +34,34 @@ Concord.component(
 Concord.component(
    "startPos",
    function(c, x, y)
-      c.x =x
-      c.y =y
+      c.x = x
+      c.y = y
    end
 )
 
 
-local MoveWithMouseSystem = Concord.system({pool = {'transforms', 'mousefollowing'}})
+local MoveWithMouseSystem = Concord.system({ pool = { 'transforms', 'mousefollowing' } })
 function MoveWithMouseSystem:update(dt)
-   local mx,my =love.mouse.getPosition()
+   local mx, my = love.mouse.getPosition()
 
    if root.transforms._g then
-      local rx, ry = root.transforms._g:inverseTransformPoint( mx , my )
+      local rx, ry = root.transforms._g:inverseTransformPoint(mx, my)
       for _, e in ipairs(self.pool) do
-	 local transforms = e.transforms.transforms
+         local transforms = e.transforms.transforms
          transforms.l[1] = rx
          transforms.l[2] = ry
       end
    end
 end
 
-local MovePupilToMouseSystem = Concord.system({pool = {'transforms', 'pupil', 'startPos'}})
+local MovePupilToMouseSystem = Concord.system({ pool = { 'transforms', 'pupil', 'startPos' } })
 function MovePupilToMouseSystem:update(dt)
-   local mx,my =love.mouse.getPosition()
+   local mx, my = love.mouse.getPosition()
 
    for _, e in ipairs(self.pool) do
       local transforms = e.transforms.transforms
       if (transforms._g) then
-         local lx, ly = transforms._g:inverseTransformPoint( mx , my )
+         local lx, ly = transforms._g:inverseTransformPoint(mx, my)
          local r = math.atan2(ly, lx)
          local dx = 2 * math.cos(r)
          local dy = 2 * math.sin(r)
@@ -68,9 +71,10 @@ function MovePupilToMouseSystem:update(dt)
    end
 
 end
-function MovePupilToMouseSystem:pressed(x,y, elem)
+
+function MovePupilToMouseSystem:pressed(x, y, elem)
    --print('movepupil sytem receiving click', x,y)
-   local newScale = love.math.random()*2 -1 + 1
+   local newScale = love.math.random() * 2 - 1 + 1
    for _, e in ipairs(self.pool) do
       local transforms = e.transforms.transforms
       transforms.l[4] = newScale
@@ -78,27 +82,25 @@ function MovePupilToMouseSystem:pressed(x,y, elem)
    end
 end
 
-
-local SnoutWithMouseSystem = Concord.system({pool = {'transforms', 'snoutbehaviour'}})
+local SnoutWithMouseSystem = Concord.system({ pool = { 'transforms', 'snoutbehaviour' } })
 function SnoutWithMouseSystem:update(dt)
-   local mx,my =love.mouse.getPosition()
+   local mx, my = love.mouse.getPosition()
 
    if root.transforms._g then
-      local rx, ry = root.transforms._g:inverseTransformPoint( mx , my )
+      local rx, ry = root.transforms._g:inverseTransformPoint(mx, my)
       for _, e in ipairs(self.pool) do
-	 local transforms = e.transforms.transforms
-	 local distance = math.sqrt((rx *rx) + (ry * ry))
-	 local newScale = numbers.mapInto(distance, 0, 150, 1.1, 1)
-	 local diff = numbers.mapInto(love.math.random(), 0, 1, -0.01, 0.01)
-	 local newAngle = diff
+         local transforms = e.transforms.transforms
+         local distance = math.sqrt((rx * rx) + (ry * ry))
+         local newScale = numbers.mapInto(distance, 0, 150, 1.1, 1)
+         local diff = numbers.mapInto(love.math.random(), 0, 1, -0.01, 0.01)
+         local newAngle = diff
 
          transforms.l[3] = newAngle
-	 transforms.l[4] = newScale
+         transforms.l[4] = newScale
          transforms.l[5] = newScale
       end
    end
 end
-
 
 myWorld:addSystems(MoveWithMouseSystem, MovePupilToMouseSystem, SnoutWithMouseSystem)
 
@@ -107,64 +109,61 @@ function love.keypressed(key)
    if key == "escape" then love.event.quit() end
 end
 
-
-
-function love.mousemoved(x,y)
+function love.mousemoved(x, y)
 
 
 end
 
-
 function makeBackdropMesh()
    local format = {
-    {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-    {"VertexColor", "byte", 4} -- The r,g,b,a color of each vertex.
+      { "VertexPosition", "float", 2 }, -- The x,y position of each vertex.
+      { "VertexColor", "byte", 4 } -- The r,g,b,a color of each vertex.
    }
-   local w,h = love.graphics.getDimensions()
+   local w, h = love.graphics.getDimensions()
 
    local vertices = {
       {
-   	 -- top-left corner (red-tinted)
-   	 0, 0, -- position of the vertex
-   	 1, 0, 0, -- color of the vertex
+         -- top-left corner (red-tinted)
+         0, 0, -- position of the vertex
+         1, 0, 0, -- color of the vertex
       },
       {
-   	 -- top-right corner (green-tinted)
-   	w, 0,
-   	0, 1, 0
+         -- top-right corner (green-tinted)
+         w, 0,
+         0, 1, 0
       },
       {
-   	 -- bottom-right corner (blue-tinted)
-   	 w, h,
-   	 0, 0, 1
+         -- bottom-right corner (blue-tinted)
+         w, h,
+         0, 0, 1
       },
       {
-   	 -- bottom-left corner (yellow-tinted)
-   	 0, h,
-   	 0, 1, 1
+         -- bottom-left corner (yellow-tinted)
+         0, h,
+         0, 1, 1
       },
    }
    local mesh = love.graphics.newMesh(format, vertices)
    return mesh
 end
 
-
 function love.load()
-   love.window.setMode(1024, 768, {resizable=true, vsync=true, minwidth=400, minheight=300, msaa=2, highdpi=true})
+   love.window.setMode(1024, 768, { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2,
+      highdpi = true })
 
 
    root = {
       folder = true,
       name = 'root',
-      transforms =  {l={1024/2,768/2,0,4,4,0,0}},
+      transforms = { l = { 1024 / 2, 768 / 2, 0, 4, 4, 0, 0 } },
    }
 
    local doggo = parse.parseFile('assets/doggo___.polygons.txt')[1]
-   local worst_ =  parse.parseFile('assets/worst_.polygons.txt')[1]
---   print(inspect(worst_))
-   root.children = {doggo, worst_}
-   parentize(root)
-   meshAll(root)
+   local worst_ = parse.parseFile('assets/worst_.polygons.txt')[1]
+   --   print(inspect(worst_))
+   root.children = { doggo, worst_ }
+   parentize.parentize(root)
+   mesh.meshAll(root)
 
    worst = findNodeByName(root, 'worst')
 
@@ -178,26 +177,26 @@ function love.load()
 
 
    Concord.entity(myWorld)
-      :give('transforms', leftPupil.transforms)
-      :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
-      :give('pupil')
+       :give('transforms', leftPupil.transforms)
+       :give('startPos', leftPupil.transforms.l[1], leftPupil.transforms.l[2])
+       :give('pupil')
 
    Concord.entity(myWorld)
-      :give('transforms', rightPupil.transforms)
-      :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
-      :give('pupil')
+       :give('transforms', rightPupil.transforms)
+       :give('startPos', rightPupil.transforms.l[1], rightPupil.transforms.l[2])
+       :give('pupil')
 
    Concord.entity(myWorld)
-      :give('transforms', worst.transforms)
-      :give('mousefollowing')
+       :give('transforms', worst.transforms)
+       :give('mousefollowing')
 
    local myEntity = Concord.entity()
    myEntity
-      :give('transforms', snuit.transforms)
-      :give('snoutbehaviour')
-   
+       :give('transforms', snuit.transforms)
+       :give('snoutbehaviour')
+
    myWorld:addEntity(myEntity)
-   
+
    --Concord.entity(myWorld)
    --   :give('transforms', snuit.transforms)
    --   :give('snoutbehaviour')
@@ -209,9 +208,9 @@ function myWorld:onEntityAdded(e)
    print('added something!')
 end
 
-function love.mousepressed(x,y)
+function love.mousepressed(x, y)
    --print('mousepressed', x,y)
-   myWorld:emit('pressed',x,y, leftPupil)
+   myWorld:emit('pressed', x, y, leftPupil)
 end
 
 function love.update(dt)
@@ -222,5 +221,5 @@ function love.draw()
    local m = makeBackdropMesh()
    love.graphics.draw(m)
    render.renderThings(root)
---   myWorld:emit("draw")
+   --   myWorld:emit("draw")
 end

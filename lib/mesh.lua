@@ -1,105 +1,86 @@
 local mesh = {}
 
+local formats = require 'lib.formats'
+
 function makeMeshFromVertices(vertices, nodetype, usesTexture)
    --   print('make mesh called, by whom?', nodetype)
-   local simple_format = {
-      {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-   }
 
-   
+   local m = nil
    if nodetype == 'rubberhose' then
-      local mesh = love.graphics.newMesh(vertices, "strip")
-      return mesh
-   --elseif nodetype == 'line' then
-   --   local mesh = love.graphics.newMesh(vertices, "strip")
-   --   return mesh
+
+      m = love.graphics.newMesh(vertices, "strip")
    elseif nodetype == 'bezier' then
-      local mesh = love.graphics.newMesh(vertices, "strip")
-      return mesh
+      m = love.graphics.newMesh(vertices, "strip")
+
    else
-      --print(inspect(vertices))
       if (vertices and vertices[1] and vertices[1][1]) then
-	 local mesh
-	 
-	 if (usesTexture) then
-	    
-	    mesh = love.graphics.newMesh(vertices, "fan")
-	 else
-	    mesh = love.graphics.newMesh(simple_format, vertices, "triangles")
-	 end
-	 
-	 return mesh
+         --local mesh
+
+         if (usesTexture) then
+
+            m = love.graphics.newMesh(vertices, "fan")
+         else
+            m = love.graphics.newMesh(formats.simple_format, vertices, "triangles")
+         end
+
+         --return mesh
       end
    end
 
-   return nil
+   return m
 end
 
 function remeshNode(node)
    print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
 
-   if node.texture and (node.texture.url:len() > 0 ) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
+   if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
       print(node.texture.url, node.texture.url:len())
 
       local img = imageCache[node.texture.url];
 
       if (node.texture.squishable) then
-	 -- print('yo hello!')
-
-	 local verts = makeSquishableUVsFromPoints(node.points)
-	 node.mesh = love.graphics.newMesh(verts, 'fan')
+         local verts = makeSquishableUVsFromPoints(node.points)
+         node.mesh = love.graphics.newMesh(verts, 'fan')
       else
-      
-	 
-	 addUVToVerts(verts, img, node.points, node.texture )
-	 if (node.texture.squishable == true) then
-	    print('need to make this a fan instead of trinagles I think')
-	 end
-	 
-	 node.mesh = love.graphics.newMesh(verts, 'triangles')
-      end
-      
-      node.mesh:setTexture(img)
-
-   else
-
-      --if node.type ~= 'rubberhose' then
-	 node.mesh = makeMeshFromVertices(verts, node.type, node.texture)
-         --end
-
-         if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
-            
-	    local texture = imageCache[node.texture and node.texture.url]
-	    if texture then
-	       node.mesh:setTexture(texture)
-	    end
+         addUVToVerts(verts, img, node.points, node.texture)
+         if (node.texture.squishable == true) then
+            print('need to make this a fan instead of trinagles I think')
          end
+         node.mesh = love.graphics.newMesh(verts, 'triangles')
+      end
+
+      node.mesh:setTexture(img)
+   else
+      node.mesh = makeMeshFromVertices(verts, node.type, node.texture)
+      if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
+         local texture = imageCache[node.texture and node.texture.url]
+         if texture then
+            node.mesh:setTexture(texture)
+         end
+      end
    end
-   
-   
 
    if node.border then
-      node.borderMesh =  makeBorderMesh(node)
+      node.borderMesh = makeBorderMesh(node)
    end
 end
 
-
 mesh.meshAll = function(root) -- this needs to be done recursive
    if root.children then
-   for i=1, #root.children do
-      if (root.children[i].points) then
-         if root.children[i].type == 'meta' then
+      for i = 1, #root.children do
+         if (root.children[i].points) then
+            if root.children[i].type == 'meta' then
+            else
+               remeshNode(root.children[i])
+            end
+            if root.children[i].border then
+               print('this border should be meshed here')
+            end
          else
-            remeshNode(root.children[i])
+            mesh.meshAll(root.children[i])
          end
-         if root.children[i].border then
-            print('this border should be meshed here')
-         end
-      else
-         mesh.meshAll(root.children[i])
       end
-   end
    end
 end
 
@@ -108,12 +89,12 @@ end
 mesh.recursivelyAddOptimizedMesh = function(root)
    if root.folder then
       if root.url then
-	root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
+         root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
       end
    end
 
    if root.children then
-      for i=1, #root.children do
+      for i = 1, #root.children do
          if root.children[i].folder then
             mesh.recursivelyAddOptimizedMesh(root.children[i])
          end
@@ -169,8 +150,8 @@ mesh.makeOptimizedBatchMesh = function(folder)
                -- this is possible since te last node could have been a meta one, then we skip some steps
                print('the last node was meta and that in itself was the first node')
             else
-               local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
-               folder.optimizedBatchMesh[batchIndex] = { mesh = mesh, color = lastColor }
+               local me = love.graphics.newMesh(formats.simple_format, allVerts, "triangles")
+               folder.optimizedBatchMesh[batchIndex] = { mesh = me, color = lastColor }
                batchIndex = batchIndex + 1
             end
 
@@ -186,7 +167,7 @@ mesh.makeOptimizedBatchMesh = function(folder)
       if folder.optimizedBatchMesh == nil then
          folder.optimizedBatchMesh = {}
       end
-      local mesh = love.graphics.newMesh(simple_format, allVerts, "triangles")
+      local mesh = love.graphics.newMesh(formats.simple_format, allVerts, "triangles")
       folder.optimizedBatchMesh[batchIndex] = { mesh = mesh, color = lastColor }
       --print('optimized: ', folder.name,)
    end

@@ -1,6 +1,6 @@
 local geom = require 'lib.geom'
 local bezier = require 'lib.bezier'
-
+local unloop = require 'lib.unpack-points'
 
 function TableConcat(t1,t2)
    for i=1,#t2 do
@@ -433,7 +433,7 @@ function makeVertices(shape)
 	       table.insert(coords, {px, py})
 	    end
 	 end
-	 coords = unpackNodePoints(coords, false)
+	 coords = unloop.unpackNodePoints(coords, false)
 	 local verts, indices, draw_mode = polyline('miter',coords, {shape.data.width})
          local h = 1 / (shape.data.steps-1 or 1)
          local vertsWithUVs = {}
@@ -446,7 +446,7 @@ function makeVertices(shape)
          
 	 vertices = vertsWithUVs
       elseif (shape.type == 'bezier') then
-	    local curvedata = unpackNodePoints(points, false)
+	    local curvedata = unloop.unpackNodePoints(points, false)
 	    local curve = love.math.newBezierCurve(curvedata)
 	    local steps = shape.data.steps
 	    local coords = {}
@@ -454,7 +454,7 @@ function makeVertices(shape)
 	       local px, py = curve:evaluate(i/steps)
 	       table.insert(coords, {px, py})
 	    end
-	    coords = unpackNodePoints(coords, false)
+	    coords = unloop.unpackNodePoints(coords, false)
 	    
 	    local verts, indices, draw_mode = polyline('miter',coords, {shape.data.width})
 	    local h = 1 / (shape.data.steps-1 or 1)
@@ -468,7 +468,7 @@ function makeVertices(shape)
 	    vertices = vertsWithUVs
       else
 	 
-	 local coords = unpackNodePoints(points, false)
+	 local coords = unloop.unpackNodePoints(points, false)
 	 local verts, indices, draw_mode = polyline('miter',coords, {10,40,20,100, 10})
 	 vertices = verts
       end

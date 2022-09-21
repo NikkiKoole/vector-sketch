@@ -1,8 +1,9 @@
 local numbers = require 'lib.numbers'
 local lerp = numbers.lerp
-
+local unloop = require 'lib.unpack-points'
+local formats = require 'lib.formats'
 function makeBorderMesh(node)
-   local work = unpackNodePointsLoop(node.points)
+   local work = unloop.unpackNodePointsLoop(node.points)
 
    local output = {}
 
@@ -17,9 +18,9 @@ function makeBorderMesh(node)
    local rrr = {}
    local r2 = evenlySpreadPath(rrr, output, 1, 0, node.borderSpacing)
 
-   output = unpackNodePoints(rrr)
+   output = unloop.unpackNodePoints(rrr)
    local verts, indices, draw_mode = polyline('miter',output, node.borderThickness, nil, nil, node.borderRandomizerMultiplier)
-   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    return mesh
 end
 
@@ -242,7 +243,7 @@ end
 --    local verts, indices, draw_mode = polyline('bevel',work, 3 , 0, false)
 --       --print(indices, draw_mode, inspect(verts))
 --       love.graphics.setColor(1,1,1)
---       local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+--       local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
 
 --       love.graphics.draw(mesh, currentNode._parent.transforms._g)
 

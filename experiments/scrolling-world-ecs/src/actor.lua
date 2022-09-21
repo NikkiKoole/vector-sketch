@@ -2,6 +2,7 @@ local geom = require 'lib.geom'
 local bezier = require 'lib.bezier'
 local numbers = require 'lib.numbers'
 local transform = require 'lib.transform'
+local formats = require 'lib.formats'
 
 Actor = {}
 Actor.__index = Actor
@@ -194,12 +195,12 @@ function Actor:oneLeg(connector, transforms, flip)
    end
 
    local verts, indices, draw_mode = polyline('bevel',result, widths)
-   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
 
 
    local verts, indices, draw_mode = polyline('bevel',result, widths2)
-   local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+   local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0.67, 0.32, 0.21, 1 }})
 
 end
@@ -349,7 +350,7 @@ function Actor:update(dt)
             end
 
             local verts, indices, draw_mode = polyline('bevel',result, 3)
-            local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+            local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
             table.insert(self.body.generatedMeshes, {mesh=mesh, color = { 0,0,0 }})
 
 

@@ -3,6 +3,8 @@ local render = {}
 local numbers = require 'lib.numbers'
 local bbox = require 'lib.bbox'
 local transform = require 'lib.transform'
+local unloop = require 'lib.unpack-points'
+local formats = require 'lib.formats'
 
 render.renderThings = function(root, dirty)
 
@@ -235,9 +237,9 @@ function handleChild(shape, isDirty)
 
          if false and shape.points then
             -- render outline!!!!!
-            local work = unpackNodePoints(shape.points)
+            local work = unloop.unpackNodePoints(shape.points)
             local verts, indices, draw_mode = polyline('bevel', work, 10, 1, true)
-            local mesh = love.graphics.newMesh(simple_format, verts, draw_mode)
+            local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
             love.graphics.setColor(shape.color[1] - .2, shape.color[2] - .2, shape.color[3] - .2, shape.color[4])
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(mesh, shape._parent.transforms._g)
