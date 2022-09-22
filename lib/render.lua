@@ -6,6 +6,8 @@ local transform = require 'lib.transform'
 local unloop = require 'lib.unpack-points'
 local formats = require 'lib.formats'
 
+-- todo @global GLOBALS.parallax
+
 render.renderThings = function(root, dirty)
 
    local isDirty = dirty or root.dirty

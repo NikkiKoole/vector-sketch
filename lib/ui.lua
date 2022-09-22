@@ -2,6 +2,8 @@
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 
+-- todo @global mouseState
+-- todo @global editingMode, edtigingModesub
 
 function handleMouseClickStart()
    mouseState.hoveredSomething = false

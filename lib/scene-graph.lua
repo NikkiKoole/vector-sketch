@@ -3,7 +3,7 @@
 
 -- a bunch of global functions in editor need to go here
 
-
+-- todo move parentize here
 
 function getIndex(item)
    if (item and item._parent) then

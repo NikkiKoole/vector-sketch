@@ -1,5 +1,6 @@
 -- where should this thing go, its duplciated all over the place right now
 -- THIS IS MIGHTY GLOBAL
+-- todo @global imageCache
 imageCache = {}
 function recursivelyMakeTextures(root)
 

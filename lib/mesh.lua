@@ -2,6 +2,8 @@ local mesh = {}
 
 local formats = require 'lib.formats'
 
+-- todo @global imageCache
+
 function makeMeshFromVertices(vertices, nodetype, usesTexture)
    --   print('make mesh called, by whom?', nodetype)
 
@@ -31,7 +33,7 @@ function makeMeshFromVertices(vertices, nodetype, usesTexture)
 end
 
 function remeshNode(node)
-   print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
+   --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = makeVertices(node)
 
    if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then

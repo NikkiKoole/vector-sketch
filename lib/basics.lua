@@ -20,12 +20,3 @@ function deepcopy(orig)
     return copy
 end
 
-
-function copyArray(original)
-   local result = {}
-   for i=1, #original do
-      table.insert(result, round2(original[i], 3))
-   end
-   return result
-end
-
