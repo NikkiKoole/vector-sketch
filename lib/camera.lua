@@ -92,6 +92,12 @@ function manageCameraTween(dt)
 
 end
 
+
+
+function generateCameraLayer(name, zoom)
+   return cam:addLayer(name, zoom, {relativeScale=(1.0/zoom) * zoom})
+end
+
 function cameraTranslateScheduleJustItem(dx,dy)
    -- this comes from just the cameraTween
    translateScheduler.justItem.x = dx
@@ -104,11 +110,6 @@ function cameraTranslateScheduler(dx, dy)
 --   print(dx, 'try to average instead of adding')
    translateScheduler.x = translateScheduler.x + dx
    translateScheduler.y = translateScheduler.y + dy
-end
-
-
-function generateCameraLayer(name, zoom)
-   return cam:addLayer(name, zoom, {relativeScale=(1.0/zoom) * zoom})
 end
 
 function checkForBounceBack(dt)

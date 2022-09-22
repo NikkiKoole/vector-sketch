@@ -12,6 +12,7 @@ local border = require 'lib.border-mesh'
 require 'lib.basics' --tableconcat
 
 -- todo @global imageCache
+-- todo @global meshCache
 
 local function split_poly(poly, intersection)
    local biggestIndex = math.max(intersection.i1, intersection.i2)
