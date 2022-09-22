@@ -44,6 +44,7 @@ local n = require 'lib.node'
 local getIndex = n.getIndex
 local setPos = n.setPos
 local setPivot = n.setPivot
+local parse = require 'lib.parse-file'
 
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
@@ -2312,7 +2313,7 @@ local function getDataFromFile(file)
 
    if text.ends_with(filename, 'polygons.txt') then
       local str = file:read('string')
-      tab = readStrAsShape(str, filename)
+      tab = parse.readStrAsShape(str, filename)
    end
    return tab
 end

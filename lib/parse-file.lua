@@ -1,6 +1,6 @@
 local parse = {}
 
-
+local text = require 'lib.text'
 parse.parseFile = function(url)
    local contents, size = love.filesystem.read(url)
    if contents == nil then
@@ -35,5 +35,20 @@ parse.parseFile = function(url)
    return parsed
 end
 
+parse.readStrAsShape = function(str, filename)
+   local tab = (loadstring("return " .. str)())
+
+   local vsketchIndex = (string.find(filename, 'vector-sketch/', 1, true)) + #'vector-sketch/'
+   local lookFurther = filename:sub(vsketchIndex)
+   local index2 = text.stringFindLastSlash(lookFurther)
+   local fname = lookFurther
+   shapePath = ''
+   if index2 then
+      fname = lookFurther:sub(index2 + 1)
+      shapePath = lookFurther:sub(1, index2)
+   end
+   shapeName = fname:sub(1, -14)
+   return tab
+end
 
 return parse

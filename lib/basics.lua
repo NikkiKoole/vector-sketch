@@ -18,6 +18,20 @@ function deepcopy(orig)
     return copy
 end
 
+
+function copy3(obj, seen)
+    -- Handle non-tables and previously-seen tables.
+    if type(obj) ~= 'table' then return obj end
+    if seen and seen[obj] then return seen[obj] end
+ 
+    -- New table; mark it as seen and copy recursively.
+    local s = seen or {}
+    local res = {}
+    s[obj] = res
+    for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
+    return setmetatable(res, getmetatable(obj))
+ end
+
 function TableConcat(t1, t2)
     for i = 1, #t2 do
        t1[#t1 + 1] = t2[i]

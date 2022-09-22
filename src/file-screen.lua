@@ -3,6 +3,7 @@ local hit = require 'lib.hit'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local text = require 'lib.text'
+local parse = require 'lib.parse-file'
 
 local function getFiles(rootPath, tree)
    tree = tree or {}
@@ -140,7 +141,7 @@ function renderOpenFileScreen(root)
             if love.mouse.isDown(1) then
                local contents, size = love.filesystem.read(gatheredData[i].path)
 
-               local tab = readStrAsShape(contents, 'vector-sketch/'..gatheredData[i].path)
+               local tab = parse.readStrAsShape(contents, 'vector-sketch/'..gatheredData[i].path)
                root.children = tab -- TableConcat(root.children, tab)
                parentize.parentize(root)
 

@@ -4,34 +4,6 @@ local unloop = require 'lib.unpack-points'
 local formats = require 'lib.formats'
 local text = require 'lib.text'
 
-function stringSplit(str, sep)
-   local result = {}
-   local regex = ("([^%s]+)"):format(sep)
-   for each in str:gmatch(regex) do
-      table.insert(result, each)
-   end
-   return result
-end
-
-
-
-
-function readStrAsShape(str, filename)
-   local tab = (loadstring("return " .. str)())
-
-   local vsketchIndex = (string.find(filename, 'vector-sketch/', 1, true)) + #'vector-sketch/'
-   local lookFurther = filename:sub(vsketchIndex)
-   local index2 = text.stringFindLastSlash(lookFurther)
-   local fname = lookFurther
-   shapePath = ''
-   if index2 then
-      fname = lookFurther:sub(index2 + 1)
-      shapePath = lookFurther:sub(1, index2)
-   end
-   shapeName = fname:sub(1, -14)
-   return tab
-end
-
 -- this was for a 3d experiment
 function makeScaleFit(root, multipier)
    for i = 1, #root.children do
@@ -93,7 +65,7 @@ function generate3dShapeFrom2d(shape, z)
 end
 
 
-
+--[[
 function makeBorderMesh(node)
    local work = unloop.unpackNodePointsLoop(node.points)
 
@@ -116,3 +88,4 @@ function makeBorderMesh(node)
    local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    return mesh
 end
+]]--

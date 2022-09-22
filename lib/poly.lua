@@ -1,5 +1,5 @@
 local geom = require 'lib.geom'
-local bezier = require 'lib.bezier'
+--local bezier = require 'lib.bezier'
 local unloop = require 'lib.unpack-points'
 local hit = require 'lib.hit'
 

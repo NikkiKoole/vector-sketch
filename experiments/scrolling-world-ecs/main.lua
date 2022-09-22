@@ -9,18 +9,11 @@ Vector = require 'vendor.brinevector'
 Concord = require 'vendor.concord.init'
 SM = require 'vendor.SceneMgr'
 
---require  'lib.scene-graph'
+
 require 'lib.basic-tools'
-require 'lib.basics'
-require 'lib.poly'
-require 'lib.toolbox'
---require 'lib.main-utils'
-require 'lib.bbox'
 require 'lib.polyline'
-require 'lib.border-mesh'
 require 'lib.generate-polygon'
 require 'lib.ui'
-
 
 
 require 'src.generateWorld'
@@ -87,18 +80,7 @@ function shuffleAndMultiply(items, mul)
    return result
 end
 
-function copy3(obj, seen)
-   -- Handle non-tables and previously-seen tables.
-   if type(obj) ~= 'table' then return obj end
-   if seen and seen[obj] then return seen[obj] end
 
-   -- New table; mark it as seen and copy recursively.
-   local s = seen or {}
-   local res = {}
-   s[obj] = res
-   for k, v in pairs(obj) do res[copy3(k, s)] = copy3(v, s) end
-   return setmetatable(res, getmetatable(obj))
-end
 
 function readFileAndAddToCache(url)
    -- todo this needs to work with hotrelaoding too,
