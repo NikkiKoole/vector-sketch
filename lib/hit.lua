@@ -149,4 +149,28 @@ hit.recursiveHitCheck = function(x, y, node)
 end
 
 
+hit.findHitArea = function(node)
+   if not node then return false end
+   print('recusricve looking', node.name)
+
+   if node.points then
+      if string.find(node.name, "-hitarea") then
+         return true
+      end
+
+   else
+      if node.children then
+         for i = 1, #node.children do
+            local result = hit.findHitArea(node.children[i])
+            if result then
+               return result
+            end
+         end
+      end
+   end
+   return false
+end
+
+
+
 return hit

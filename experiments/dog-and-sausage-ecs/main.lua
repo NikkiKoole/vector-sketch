@@ -1,15 +1,15 @@
 package.path = package.path .. ";../../?.lua"
 
-require 'lib.scene-graph'
---require 'lib.poly'
---require 'lib.main-utils'
---require 'lib.toolbox'
-
-local numbers = require 'lib.numbers'
-
-
 local inspect = require 'vendor.inspect'
 local flux = require "vendor.flux"
+
+local numbers = require 'lib.numbers'
+local parse = require 'lib.parse-file'
+local render = require 'lib.render'
+local mesh = require 'lib.mesh'
+local parentize = require 'lib.parentize'
+local formats = require 'lib.formats'
+local node = require 'lib.node'
 
 Concord = require 'vendor.concord.init'
 
@@ -18,12 +18,6 @@ Concord.component("snoutbehaviour")
 Concord.component("pupil")
 
 local myWorld = Concord.world()
-
-local parse = require 'lib.parse-file'
-local render = require 'lib.render'
-local mesh = require 'lib.mesh'
-local parentize = require 'lib.parentize'
-local formats = require 'lib.formats'
 
 Concord.component(
    'transforms',
@@ -163,15 +157,15 @@ function love.load()
    parentize.parentize(root)
    mesh.meshAll(root)
 
-   worst = findNodeByName(root, 'worst')
+   worst = node.findNodeByName(root, 'worst')
 
-   leftEye = findNodeByName(root, 'left eye')
-   leftPupil = findNodeByName(leftEye, 'pupil')
+   leftEye = node.findNodeByName(root, 'left eye')
+   leftPupil = node.findNodeByName(leftEye, 'pupil')
 
-   rightEye = findNodeByName(root, 'right eye')
-   rightPupil = findNodeByName(rightEye, 'pupil')
+   rightEye = node.findNodeByName(root, 'right eye')
+   rightPupil = node.findNodeByName(rightEye, 'pupil')
 
-   snuit = findNodeByName(root, 'snuit')
+   snuit = node.findNodeByName(root, 'snuit')
 
 
    Concord.entity(myWorld)

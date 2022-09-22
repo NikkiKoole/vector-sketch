@@ -2,7 +2,7 @@ local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 local parallax = require 'lib.parallax'
 local render = require 'lib.render'
-
+local hit = require 'lib.hit'
 local scene = {}
 local hasBeenLoaded = false
 
@@ -229,7 +229,7 @@ if true then
 
       local cave = makeObject('assets/cavething.polygons.txt', 1000,0, 0)
 
-      if recursiveLookForHitArea(cave) then
+      if hit.findHitArea(cave) then
 	 cave.entity:give('hitAreaEvent')
       end
 

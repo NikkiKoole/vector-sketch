@@ -2,15 +2,8 @@ package.path = package.path .. ";../../?.lua"
 
 local mylib = require('tool')
 
-inspect = require 'vendor.inspect'
-flux = require "vendor.flux"
-
-require 'lib.basic-tools'
-require 'lib.scene-graph'
---require 'lib.basics'
-require 'lib.toolbox'
-require 'lib.main-utils'
-poly = require 'lib.poly'
+local inspect = require 'vendor.inspect'
+local flux = require "vendor.flux"
 
 local numbers = require 'lib.numbers'
 local parse = require 'lib.parse-file'
@@ -18,12 +11,11 @@ local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 local render = require 'lib.render'
 local hit = require 'lib.hit'
+local node = require 'lib.node'
+
 Concord = require 'vendor.concord.init'
-
-
 Concord.component("mousefollowing")
 Concord.component("pupil")
-
 
 local myWorld = Concord.world()
 
@@ -293,13 +285,13 @@ local function onHitHead(body)
    s:setPitch(pitch + love.math.random() * .02 - .01)
    love.audio.play(s)
 
-   local firstMouth = findNodeByName(body._parent, 'mond')
+   local firstMouth = node.findNodeByName(body._parent, 'mond')
    firstMouth.needsLerp = true
    flux.to(firstMouth, 0.5, { lerpValue = 1 })
        :after(firstMouth, 0.5, { lerpValue = 0 }):delay(0.5)
        :oncomplete(function() firstMouth.needsLerp = false end)
 
-   local kroontje = findNodeByName(body._parent, 'kroontje')
+   local kroontje = node.findNodeByName(body._parent, 'kroontje')
    flux.to(kroontje.transforms.l, 0.1, { [5] = 1.2, [4] = 1.2 })
        :after(kroontje.transforms.l, 0.1, { [5] = 1, [4] = 1 }):delay(0.1)
 end
@@ -411,13 +403,13 @@ end
 function makeTomatoes(tomatoes)
    for i = 1, #tomatoes do
       --      print(tomatoes[i].origin.path)
-      local linkerOog = findNodeByName(tomatoes[i], 'linkeroog')
-      local rechterOog = findNodeByName(tomatoes[i], 'rechteroog')
-      local linkerPupil = findNodeByName(linkerOog, 'pupil')
-      local rechterPupil = findNodeByName(rechterOog, 'pupil')
+      local linkerOog = node.findNodeByName(tomatoes[i], 'linkeroog')
+      local rechterOog = node.findNodeByName(tomatoes[i], 'rechteroog')
+      local linkerPupil = node.findNodeByName(linkerOog, 'pupil')
+      local rechterPupil = node.findNodeByName(rechterOog, 'pupil')
 
       Concord.entity(myWorld)
-          :give('bodyFirstChildMeshHit', findNodeByName(tomatoes[i], 'lichaam'))
+          :give('bodyFirstChildMeshHit', node.findNodeByName(tomatoes[i], 'lichaam'))
           :give('hotReload', tomatoes[i].origin, tomatoes[i])
           :give('onHitFunc', onHitHead)
 

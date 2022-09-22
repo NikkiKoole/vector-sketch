@@ -1,12 +1,7 @@
 package.path = package.path .. ";../../?.lua"
 
-inspect = require 'vendor.inspect'
-flux = require "vendor.flux"
-
-require 'lib.scene-graph'
---require 'lib.toolbox'
-require 'lib.main-utils'
-poly = require 'lib.poly'
+local inspect = require 'vendor.inspect'
+local flux = require "vendor.flux"
 
 local numbers = require 'lib.numbers'
 local parse = require 'lib.parse-file'
@@ -14,6 +9,8 @@ local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local render = require 'lib.render'
 local hit = require 'lib.hit'
+local node = require 'lib.node'
+local findNodeByName = node.findNodeByName
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end

@@ -375,7 +375,7 @@ function initializeDopeSheet()
       dopesheet.names = d
       local refs = {}
       for i = 1, #d do
-	 refs[d[i]] = findNodeByName(root, d[i])
+	 refs[d[i]] = node.findNodeByName(root, d[i])
       end
       dopesheet.refs = refs
    end

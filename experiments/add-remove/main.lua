@@ -1,13 +1,8 @@
 package.path = package.path .. ";../../?.lua"
 
-require 'lib.scene-graph'
---require 'lib.copyshape'
-require 'lib.poly'
---require 'lib.main-utils'
---require 'lib.toolbox'
 
-inspect = require 'vendor.inspect'
-
+local inspect = require 'vendor.inspect'
+local node = require 'lib.node'
 local render = require 'lib.render'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
@@ -20,10 +15,10 @@ function love.keypressed(key)
    if key == 'space' then
       root = root2
       local x1, y1 = group.transforms._g:transformPoint(0, 0)
-      removeNodeFrom(group, group._parent)
+      node.removeNodeFrom(group, group._parent)
 
 
-      addNodeInGroup(group, root2)
+      node.addNodeInGroup(group, root2)
       render.renderThings(root)
       render.renderThings(root2)
       local x2, y2 = group.transforms._g:transformPoint(0, 0)
@@ -79,7 +74,7 @@ function love.load()
 
 
 
-   group = findNodeByName(root, 'group')
+   group = node.findNodeByName(root, 'group')
 
    parentize.parentize(root)
    parentize.parentize(root2)

@@ -1,9 +1,7 @@
 package.path = package.path .. ";../../?.lua"
 
-require 'lib.scene-graph'
-
-inspect = require 'vendor.inspect'
-flux = require "vendor.flux"
+local inspect = require 'vendor.inspect'
+local flux = require "vendor.flux"
 
 local numbers = require 'lib.numbers'
 local parentize = require 'lib.parentize'
@@ -11,6 +9,7 @@ local parse = require 'lib.parse-file'
 local render = require 'lib.render'
 local mesh = require 'lib.mesh'
 local formats = require 'lib.formats'
+local node = require 'lib.node'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -111,15 +110,15 @@ function love.load()
    parentize.parentize(root)
    mesh.meshAll(root)
 
-   worst = findNodeByName(root, 'worst')
-   leftEye = findNodeByName(root, 'left eye')
-   leftPupil = findNodeByName(leftEye, 'pupil')
+   worst =  node.findNodeByName(root, 'worst')
+   leftEye = node.findNodeByName(root, 'left eye')
+   leftPupil = node.findNodeByName(leftEye, 'pupil')
    leftPupil.startPos = { leftPupil.transforms.l[1], leftPupil.transforms.l[2] }
-   rightEye = findNodeByName(root, 'right eye')
-   rightPupil = findNodeByName(rightEye, 'pupil')
+   rightEye = node.findNodeByName(root, 'right eye')
+   rightPupil = node.findNodeByName(rightEye, 'pupil')
    rightPupil.startPos = { rightPupil.transforms.l[1], rightPupil.transforms.l[2] }
 
-   snuit = findNodeByName(root, 'snuit')
+   snuit = node.findNodeByName(root, 'snuit')
 
    print(inspect(_G))
 end

@@ -4,9 +4,9 @@ local flux = require "vendor.flux"
 local inspect = require 'vendor.inspect'
 local ProFi = require 'vendor.ProFi'
 
-require 'lib.scene-graph'
+--require 'lib.scene-graph'
 
-
+local node = require 'lib.node'
 local numbers = require 'lib.numbers'  --randomSign
 local bbox = require 'lib.bbox'
 local parse = require 'lib.parse-file'
@@ -15,6 +15,7 @@ local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local render = require 'lib.render'
 local hit = require 'lib.hit'
+local transform = require 'lib.transform'
 
 function elemIsAboveAnother(elem,  another)
    assert(another.children[1].points)
@@ -34,19 +35,19 @@ function elemIsAboveAnother(elem,  another)
 end
 
 
-function moveNodeBetweenParentsAndPosition(node, newParent)
+function moveNodeBetweenParentsAndPosition(n, newParent)
    -- this will keep the position intact
 
-   local x1,y1 = node.transforms._g:transformPoint(0,0)
-   removeNodeFrom(node, node._parent)
-   addNodeInGroup(node, newParent)
+   local x1,y1 = n.transforms._g:transformPoint(0,0)
+   node.removeNodeFrom(n, n._parent)
+   node.addNodeInGroup(n, newParent)
    render.renderThings(newParent)
-   local x2,y2 = node.transforms._g:transformPoint(0,0)
+   local x2,y2 = n.transforms._g:transformPoint(0,0)
    local dx, dy = x1-x2, y1-y2
-   local x0,y0 = node.transforms._g:inverseTransformPoint(0,0)
-   local dx1, dy1 =  node.transforms._g:inverseTransformPoint(dx,dy)
-   node.transforms.l[1] = node.transforms.l[1] - (x0-dx1)
-   node.transforms.l[2] = node.transforms.l[2] - (y0-dy1)
+   local x0,y0 = n.transforms._g:inverseTransformPoint(0,0)
+   local dx1, dy1 =  n.transforms._g:inverseTransformPoint(dx,dy)
+   n.transforms.l[1] = n.transforms.l[1] - (x0-dx1)
+   n.transforms.l[2] = n.transforms.l[2] - (y0-dy1)
 
 end
 
@@ -203,23 +204,23 @@ function love.load()
    mesh.meshAll(root)
    parentize.parentize(overlayer)
 
-   schoorsteentje = findNodeByName(justboat, 'schoorsteentje')
-   schroef = findNodeByName(justboat, 'schroef')
-   kajuitdeur = findNodeByName(justboat, 'kajuitdeur')
-   kajuitvoor = findNodeByName(justboat, 'kajuit voor')
-   bootdak = findNodeByName(justboat, 'dak')
-   bootdek = findNodeByName(justboat, 'dek')
+   schoorsteentje = node.findNodeByName(justboat, 'schoorsteentje')
+   schroef = node.findNodeByName(justboat, 'schroef')
+   kajuitdeur = node.findNodeByName(justboat, 'kajuitdeur')
+   kajuitvoor = node.findNodeByName(justboat, 'kajuit voor')
+   bootdak = node.findNodeByName(justboat, 'dak')
+   bootdek = node.findNodeByName(justboat, 'dek')
    --
 
-   local o = removeNodeFrom(olivia, root)
+   local o = node.removeNodeFrom(olivia, root)
    o.transforms.l[1]= -100
    o.transforms.l[2]= 200
-   addAfterNode(o, kajuitvoor)
+   node.addAfterNode(o, kajuitvoor)
 
-   local w = removeNodeFrom(walter, root)
+   local w = node.removeNodeFrom(walter, root)
    w.transforms.l[1]= -200
    w.transforms.l[2]= 200
-   addAfterNode(w, kajuitvoor)
+   node.addAfterNode(w, kajuitvoor)
 
 end
 
@@ -346,7 +347,7 @@ end
 
 function love.mousemoved(x,y,dx,dy)
    if (dragged) then
-      local dx2, dy2 = getLocalizedDelta(dragged, dx,dy)
+      local dx2, dy2 = transform.getLocalizedDelta(dragged, dx,dy)
       dragged.transforms.l[1] = dragged.transforms.l[1] + dx2
       dragged.transforms.l[2] = dragged.transforms.l[2] + dy2
    end
@@ -427,7 +428,7 @@ function love.mousepressed(x,y)
    for i = 1, #fishRefs do
       if hit.recursiveHitCheck(x,y, fishRefs[i]) then
          dragged = fishRefs[i]
-         moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[getIndex(fishRefs[i])], overlayer)
+         moveNodeBetweenParentsAndPosition(fishRefs[i]._parent.children[node.getIndex(fishRefs[i])], overlayer)
          renderInfoForElement = dragged
       end
    end

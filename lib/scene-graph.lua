@@ -5,43 +5,13 @@
 
 -- todo move parentize here
 
-function getIndex(item)
-   if (item and item._parent) then
-      for k, v in ipairs(item._parent.children) do
-         if v == item then return k end
-      end
-   end
-   return -1
-end
+local graph = {}
 
-function findNodeByName(root, name)
-   if (root.name == name) then
-      return root
-   end
-   if root.children then
-      for i = 1, #root.children do
-         local result = findNodeByName(root.children[i], name)
-         if result then return result end
-      end
-   end
-   return nil
-end
 
-function addNodeInGroup(node, group)
-   node._parent = group
-   table.insert(group.children, node)
-end
 
-function addAfterNode(element, after)
-   element._parent = after._parent
-   table.insert(after._parent.children, getIndex(after), element)
-end
 
-function removeNodeFrom(element, from)
-   assert(getIndex(element))
-   return table.remove(from.children, getIndex(element))
-end
 
+--[[
 function setX(node, x)
    node.transforms.l[1] = x
 end
@@ -97,9 +67,7 @@ end
 function setSkewY(node, y)
    node.transforms.l[9] = y
 end
+--]]
 
-function getLocalizedDelta(element, dx, dy)
-   local x1, y1 = element._parent.transforms._g:inverseTransformPoint(dx, dy)
-   local x0, y0 = element._parent.transforms._g:inverseTransformPoint(0, 0)
-   return x1 - x0, y1 - y0
-end
+
+return graph
