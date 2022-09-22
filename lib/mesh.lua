@@ -4,6 +4,9 @@ local formats = require 'lib.formats'
 local geom = require 'lib.geom'
 local unloop = require 'lib.unpack-points'
 local hit = require 'lib.hit'
+local bbox = require 'lib.bbox'
+local numbers = require 'lib.numbers'
+
 require 'lib.basics' --tableconcat
 
 -- todo @global imageCache
@@ -295,6 +298,83 @@ mesh.makeMeshFromVertices = function(vertices, nodetype, usesTexture)
    return m
 end
 
+mesh.makeSquishableUVsFromPoints = function(points)
+   local verts = {}
+
+   --assert(#points == 4)
+
+   local v = points
+
+   if #v == 4 then
+      verts[1] = { v[1][1], v[1][2], 0, 0 }
+      verts[2] = { v[2][1], v[2][2], 1, 0 }
+      verts[3] = { v[3][1], v[3][2], 1, 1 }
+      verts[4] = { v[4][1], v[4][2], 0, 1 }
+   end
+   if #v == 5 then
+      verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
+      verts[2] = { v[2][1], v[2][2], 0, 0 }
+      verts[3] = { v[3][1], v[3][2], 1, 0 }
+      verts[4] = { v[4][1], v[4][2], 1, 1 }
+      verts[5] = { v[5][1], v[5][2], 0, 1 }
+      verts[6] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
+   end
+   if #v == 9 then
+      verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
+      verts[2] = { v[2][1], v[2][2], 0, 0 }
+      verts[3] = { v[3][1], v[3][2], .5, 0 }
+      verts[4] = { v[4][1], v[4][2], 1, 0 }
+      verts[5] = { v[5][1], v[5][2], 1, .5 }
+      verts[6] = { v[6][1], v[6][2], 1, 1 }
+      verts[7] = { v[7][1], v[7][2], .5, 1 }
+      verts[8] = { v[8][1], v[8][2], 0, 1 }
+      verts[9] = { v[9][1], v[9][2], 0, .5 }
+      verts[10] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
+   end
+
+
+
+   return verts
+end
+
+
+mesh.addUVToVerts =function(verts, img, points, settings)
+   --print('Im tweakibg around ion here atm, check the code for UV stuff')
+   local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+
+   local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
+   local xFactor = 1
+   local yFactor = 1
+
+   assert(brx - tlx > 0 and bry - tly > 0)
+
+   local xFactor = img:getWidth() / (brx - tlx)
+   local yFactor = img:getHeight() / (bry - tly)
+
+   --   print(xFactor, yFactor)
+
+   local mmin = math.min(xFactor, yFactor)
+   local mmax = math.max(xFactor, yFactor)
+   local xscale = keepAspect and mmax or xFactor
+   local yscale = keepAspect and mmax or yFactor
+
+   --  local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
+   --  local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
+
+   local ufunc = function(x) return numbers.mapInto(x, tlx, brx, 0, 1) end
+   local vfunc = function(y) return numbers.mapInto(y, tly, bry, 0, 1) end
+
+   --print(#verts)
+   for i = 1, #verts do
+      local v = verts[i]
+      verts[i] = { v[1], v[2], ufunc(v[1]), vfunc(v[2]) }
+   end
+
+   -- todo should this return instead?
+
+end
+
+
 mesh.remeshNode = function(node)
    --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = mesh.makeVertices(node)
@@ -305,10 +385,10 @@ mesh.remeshNode = function(node)
       local img = imageCache[node.texture.url];
 
       if (node.texture.squishable) then
-         local v = makeSquishableUVsFromPoints(node.points)
+         local v = mesh.makeSquishableUVsFromPoints(node.points)
          node.mesh = love.graphics.newMesh(v, 'fan')
       else
-         addUVToVerts(verts, img, node.points, node.texture)
+         mesh.addUVToVerts(verts, img, node.points, node.texture)
          if (node.texture.squishable == true) then
             print('need to make this a fan instead of trinagles I think')
          end

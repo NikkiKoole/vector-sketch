@@ -470,10 +470,10 @@ function handleChild(shape, isDirty)
             --	    print('yo guys!')
             if (shape.texture.url and shape.texture.url:len() > 0) then
                if (shape.texture.squishable) then
-                  editing = makeSquishableUVsFromPoints(shape.points)
+                  editing = mesh.makeSquishableUVsFromPoints(shape.points)
                else
 
-                  addUVToVerts(editing, imageCache[shape.texture.url], shape.points, shape.texture)
+                  mesh.addUVToVerts(editing, imageCache[shape.texture.url], shape.points, shape.texture)
                end
             end
          end

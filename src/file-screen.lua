@@ -2,6 +2,7 @@ local text = require 'lib.text'
 local hit = require 'lib.hit'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
+local text = require 'lib.text'
 
 local function getFiles(rootPath, tree)
    tree = tree or {}
@@ -66,7 +67,7 @@ function renderOpenFileScreen(root)
    local gatheredPaths = {}
    --print(#gatheredData)
    for i=1, #gatheredData do
-      local index = stringFindLastSlash(gatheredData[i].path) or 0
+      local index = text.stringFindLastSlash(gatheredData[i].path) or 0
       if index > 0 then
          local dir = gatheredData[i].path:sub(1, index-1)
          --print(dir)
@@ -128,7 +129,7 @@ function renderOpenFileScreen(root)
    local yOffset = dirY + 30 
    
    for i =1, #gatheredData do
-      local index = stringFindLastSlash(gatheredData[i].path) or 0
+      local index = text.stringFindLastSlash(gatheredData[i].path) or 0
       if (gatheredData[i].img ) then
          local x = (usedIndex % columns) - 1
          local y = (math.ceil(usedIndex / columns)) - 1
@@ -184,7 +185,7 @@ function gatherData(path)
    for i = 1, #gatheredData do
       local folderPath = ''
       local p = gatheredData[i].path
-      local index = stringFindLastSlash(p)
+      local index = text.stringFindLastSlash(p)
       if index then
          folderPath = (string.sub(p, 0, index-1))
       end

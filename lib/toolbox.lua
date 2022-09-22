@@ -2,7 +2,7 @@ local numbers = require 'lib.numbers'
 local bbox = require 'lib.bbox'
 local unloop = require 'lib.unpack-points'
 local formats = require 'lib.formats'
-
+local text = require 'lib.text'
 
 function stringSplit(str, sep)
    local result = {}
@@ -13,56 +13,15 @@ function stringSplit(str, sep)
    return result
 end
 
-function stringFindLastSlash(str)
-   --return str:match'^.*()'..char
-   local index = string.find(str, "/[^/]*$")
-   if index == nil then -- windows ? i dunno?
-      index = string.find(str, "\\[^\\]*$")
-   end
-   return index
-   --index = string.find(your_string, "/[^/]*$")
-end
 
-function getDataFromFile(file)
-   local filename = file:getFilename()
-   local tab
-   local _shapeName
 
-   if ends_with(filename, '.svg') then
-      local command = 'node ' .. 'resources/svg_to_love/index.js ' .. filename .. ' ' .. simplifyValue
-      print(command)
-      if string.match(filename, " ") then
-         print(":::ERROR::: path string should not contain any spaces")
-      end
-
-      local p = io.popen(command)
-      local str = p:read('*all')
-      p:close()
-      local obj = ('{' .. str .. '}')
-      tab = (loadstring("return " .. obj)())
-      local charIndex = string.find(filename, "/[^/]*$")
-      if charIndex == nil then
-         charIndex = string.find(filename, "\\[^\\]*$")
-      end
-
-      _shapeName = filename:sub(charIndex + 1, -5) -- cutting off .svg
-      shapeName = _shapeName
-
-   end
-
-   if ends_with(filename, 'polygons.txt') then
-      local str = file:read('string')
-      tab = readStrAsShape(str, filename)
-   end
-   return tab
-end
 
 function readStrAsShape(str, filename)
    local tab = (loadstring("return " .. str)())
 
    local vsketchIndex = (string.find(filename, 'vector-sketch/', 1, true)) + #'vector-sketch/'
    local lookFurther = filename:sub(vsketchIndex)
-   local index2 = stringFindLastSlash(lookFurther)
+   local index2 = text.stringFindLastSlash(lookFurther)
    local fname = lookFurther
    shapePath = ''
    if index2 then
@@ -133,80 +92,7 @@ function generate3dShapeFrom2d(shape, z)
    return result
 end
 
-function addUVToVerts(verts, img, points, settings)
-   --print('Im tweakibg around ion here atm, check the code for UV stuff')
-   local tlx, tly, brx, bry = bbox.getPointsBBox(points)
 
-   local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
-   local xFactor = 1
-   local yFactor = 1
-
-   assert(brx - tlx > 0 and bry - tly > 0)
-
-   local xFactor = img:getWidth() / (brx - tlx)
-   local yFactor = img:getHeight() / (bry - tly)
-
-   --   print(xFactor, yFactor)
-
-   local mmin = math.min(xFactor, yFactor)
-   local mmax = math.max(xFactor, yFactor)
-   local xscale = keepAspect and mmax or xFactor
-   local yscale = keepAspect and mmax or yFactor
-
-   --  local ufunc = function(x) return mapInto(x, tlx, brx, 0, 1/xFactor * xscale) end
-   --  local vfunc = function(y) return mapInto(y, tly, bry, 0, 1/yFactor * yscale) end
-
-   local ufunc = function(x) return numbers.mapInto(x, tlx, brx, 0, 1) end
-   local vfunc = function(y) return numbers.mapInto(y, tly, bry, 0, 1) end
-
-   --print(#verts)
-   for i = 1, #verts do
-      local v = verts[i]
-      verts[i] = { v[1], v[2], ufunc(v[1]), vfunc(v[2]) }
-   end
-
-   -- todo should this return instead?
-
-end
-
-function makeSquishableUVsFromPoints(points)
-   local verts = {}
-
-   --assert(#points == 4)
-
-   local v = points
-
-   if #v == 4 then
-      verts[1] = { v[1][1], v[1][2], 0, 0 }
-      verts[2] = { v[2][1], v[2][2], 1, 0 }
-      verts[3] = { v[3][1], v[3][2], 1, 1 }
-      verts[4] = { v[4][1], v[4][2], 0, 1 }
-   end
-   if #v == 5 then
-      verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
-      verts[2] = { v[2][1], v[2][2], 0, 0 }
-      verts[3] = { v[3][1], v[3][2], 1, 0 }
-      verts[4] = { v[4][1], v[4][2], 1, 1 }
-      verts[5] = { v[5][1], v[5][2], 0, 1 }
-      verts[6] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
-   end
-   if #v == 9 then
-      verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
-      verts[2] = { v[2][1], v[2][2], 0, 0 }
-      verts[3] = { v[3][1], v[3][2], .5, 0 }
-      verts[4] = { v[4][1], v[4][2], 1, 0 }
-      verts[5] = { v[5][1], v[5][2], 1, .5 }
-      verts[6] = { v[6][1], v[6][2], 1, 1 }
-      verts[7] = { v[7][1], v[7][2], .5, 1 }
-      verts[8] = { v[8][1], v[8][2], 0, 1 }
-      verts[9] = { v[9][1], v[9][2], 0, .5 }
-      verts[10] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
-   end
-
-
-
-   return verts
-end
 
 function makeBorderMesh(node)
    local work = unloop.unpackNodePointsLoop(node.points)

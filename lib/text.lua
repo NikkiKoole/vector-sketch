@@ -14,5 +14,16 @@ text.split = function(str, pos)
    return str:sub(1, offset - 1), str:sub(offset)
 end
 
+text.stringFindLastSlash =function(str)
+   --return str:match'^.*()'..char
+   local index = string.find(str, "/[^/]*$")
+   if index == nil then -- windows ? i dunno?
+      index = string.find(str, "\\[^\\]*$")
+   end
+   return index
+   --index = string.find(your_string, "/[^/]*$")
+end
+
+
 
 return text

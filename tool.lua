@@ -2281,6 +2281,42 @@ local function labelPos(x, y)
    return x, y - 20
 end
 
+
+
+local function getDataFromFile(file)
+   local filename = file:getFilename()
+   local tab
+   local _shapeName
+
+   if text.ends_with(filename, '.svg') then
+      local command = 'node ' .. 'resources/svg_to_love/index.js ' .. filename .. ' ' .. simplifyValue
+      print(command)
+      if string.match(filename, " ") then
+         print(":::ERROR::: path string should not contain any spaces")
+      end
+
+      local p = io.popen(command)
+      local str = p:read('*all')
+      p:close()
+      local obj = ('{' .. str .. '}')
+      tab = (loadstring("return " .. obj)())
+      local charIndex = string.find(filename, "/[^/]*$")
+      if charIndex == nil then
+         charIndex = string.find(filename, "\\[^\\]*$")
+      end
+
+      _shapeName = filename:sub(charIndex + 1, -5) -- cutting off .svg
+      shapeName = _shapeName
+
+   end
+
+   if text.ends_with(filename, 'polygons.txt') then
+      local str = file:read('string')
+      tab = readStrAsShape(str, filename)
+   end
+   return tab
+end
+
 function mylib:draw()
 
    local root = mylib.root
