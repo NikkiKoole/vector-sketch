@@ -112,7 +112,7 @@ local function getTriangleCentroid(triangle)
    return x, y
 end
 
-local function reTriangulatePolygon(poly, result)
+mesh.reTriangulatePolygon = function(poly, result)
    local p = poly
    local triangles = love.math.triangulate(p)
    for j = 1, #triangles do
@@ -183,7 +183,7 @@ mesh.makeVertices = function(shape)
                   -- if a import breaks on triangulation errors uncomment this
                   --	       print( #p, inspect(p))
 
-                  reTriangulatePolygon(p, result)
+                  mesh.reTriangulatePolygon(p, result)
                end
             end
 

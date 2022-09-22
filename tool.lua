@@ -39,6 +39,11 @@ local hit = require 'lib.hit'
 local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
 local formats = require 'lib.formats'
+local n = require 'lib.node'
+local getIndex = n.getIndex
+local setPos = n.setPos
+local setPivot = n.setPivot
+
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
 
@@ -1839,7 +1844,7 @@ function mylib:mousemoved(x, y, dx, dy)
 
       love.mouse.setCursor(handCursor)
 
-      movePos(root, ddx, ddy)
+      n.movePos(root, ddx, ddy)
    else
       love.mouse.setCursor()
    end
@@ -1872,7 +1877,7 @@ function mylib:mousemoved(x, y, dx, dy)
             ddx = round2(ddx, 0)
             ddy = round2(ddy, 0)
          end
-         movePos(currentNode, ddx, ddy)
+         n.movePos(currentNode, ddx, ddy)
       end
    end
 
@@ -2077,7 +2082,7 @@ function mylib:wheelmoved(x, y)
    local scale = root.transforms.l[4]
    local ix1, iy1 = root.transforms._g:inverseTransformPoint(posx, posy)
 
-   setScale(root, scale * ((y > 0) and 1.1 or 0.9))
+   n.setScale(root, scale * ((y > 0) and 1.1 or 0.9))
 
    local tl = root.transforms.l
    root.transforms._l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7])
@@ -2089,7 +2094,7 @@ function mylib:wheelmoved(x, y)
 
    local dx3, dy3 = getGlobalDelta(root.transforms._g, dx, dy)
 
-   movePos(root, -dx3, -dy3)
+   n.movePos(root, -dx3, -dy3)
 
    --end
 end
@@ -2508,7 +2513,7 @@ function mylib:draw()
                   local v = h_slider("folder-scale-xy", calcX(1), calcY(2), scrollerWidth, currentNode.transforms.l[5],
                      0.00001, 10)
                   if (v.value ~= nil) then
-                     setScale(currentNode, v.value)
+                     n.setScale(currentNode, v.value)
                      editingModeSub = 'folder-scale'
                      LG.print(string.format("%0.2f", v.value), calcX(1), calcY(2))
                   end
@@ -2518,7 +2523,7 @@ function mylib:draw()
                LG.print("scale x", labelPos(calcX(1), calcY(3)))
                local v = h_slider("folder-scale-x", calcX(1), calcY(3), scrollerWidth, currentNode.transforms.l[4], -2, 2)
                if (v.value ~= nil) then
-                  setScaleX(currentNode, v.value)
+                  n.setScaleX(currentNode, v.value)
                   editingModeSub = 'folder-scale'
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(3))
                end
@@ -2528,7 +2533,7 @@ function mylib:draw()
 
                local v = h_slider("folder-scale-y", calcX(1), calcY(4), scrollerWidth, currentNode.transforms.l[5], -2, 2)
                if (v.value ~= nil) then
-                  setScaleY(currentNode, v.value)
+                  n.setScaleY(currentNode, v.value)
                   editingModeSub = 'folder-scale'
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(4))
                end
@@ -2537,7 +2542,7 @@ function mylib:draw()
                local v = h_slider('folder_skew_x', calcX(1), calcY(5), scrollerWidth, currentNode.transforms.l[8] or 0,
                   -math.pi, math.pi)
                if (v.value ~= nil) then
-                  setSkewX(currentNode, v.value)
+                  n.setSkewX(currentNode, v.value)
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(5))
                end
                LG.setColor(1, 1, 1, 1)
@@ -2545,7 +2550,7 @@ function mylib:draw()
                local v = h_slider('folder_skew_y', calcX(1), calcY(6), scrollerWidth, currentNode.transforms.l[9] or 0,
                   -math.pi, math.pi)
                if (v.value ~= nil) then
-                  setSkewY(currentNode, v.value)
+                  n.setSkewY(currentNode, v.value)
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(6))
                end
 
@@ -2555,7 +2560,7 @@ function mylib:draw()
                   -1 * math.pi, 1 * math.pi)
 
                if (v.value ~= nil) then
-                  setRotation(currentNode, v.value)
+                  n.setRotation(currentNode, v.value)
                   editingModeSub = 'folder-rotate'
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(7))
                end

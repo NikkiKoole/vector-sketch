@@ -37,5 +37,60 @@ node.addNodeInGroup = function(n, group)
     return table.remove(from.children, node.getIndex(element))
  end
 
+node.setX = function(n, x)
+   n.transforms.l[1] = x
+end
+
+node.setY = function(n, y)
+   n.transforms.l[2] = y
+end
+
+node.setPos = function(n, x, y)
+   n.transforms.l[1] = x
+   n.transforms.l[2] = y
+end
+
+node.movePos = function(n, dx, dy)
+   n.transforms.l[1] = n.transforms.l[1] + dx
+   n.transforms.l[2] = n.transforms.l[2] + dy
+end
+
+node.setRotation = function(n, r)
+   n.transforms.l[3] = r
+end
+
+node.setScale = function(n, s)
+   n.transforms.l[4] = s
+   n.transforms.l[5] = s
+end
+
+node.setScaleX = function(n, sx)
+   n.transforms.l[4] = sx
+end
+
+node.setScaleY = function(n, sy)
+   n.transforms.l[5] = sy
+end
+
+node.setPivotX = function(n, px)
+   n.transforms.l[6] = px
+end
+
+node.setPivotY = function(n, py)
+   n.transforms.l[7] = py
+end
+
+node.setPivot = function(n, px, py)
+   n.transforms.l[6] = px
+   n.transforms.l[7] = py
+end
+
+node.setSkewX = function(n, x)
+   n.transforms.l[8] = x
+end
+
+node.setSkewY = function(n, y)
+   n.transforms.l[9] = y
+end
 
 return node

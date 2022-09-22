@@ -1,15 +1,5 @@
 package.path = package.path .. ";../../?.lua"
 
---require 'lib.scene-graph'
-require 'lib.copyshape'
---require 'lib.poly'
---require 'lib.bbox'
---require 'lib.basics'
-
---require 'lib.toolbox'
-
---flux = require "vendor.flux"
---require 'lib.main-utils'
 local inspect = require 'vendor.inspect'
 
 local parse = require 'lib.parse-file'

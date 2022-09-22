@@ -10,7 +10,7 @@ require 'lib.generate-polygon'
 require 'lib.copyshape'
 require 'lib.poly'
 --require 'lib.basics'
-require 'lib.main-utils'
+--require 'lib.main-utils'
 require 'lib.toolbox'
 require 'lib.polyline'
 
@@ -91,10 +91,10 @@ function makeGraphic(path)
    local imageData = love.image.newImageData( path )
    local img = love.graphics.newImage(imageData, {mipmaps=true})
    img:setMipmapFilter('nearest', 0)
-   local mesh = createTexturedRectangle(img)
-   local w,h = mesh:getTexture():getDimensions()
+   local m = createTexturedRectangle(img)
+   local w,h = m:getTexture():getDimensions()
 
-   return {imageData=imageData, img=img,  mesh=mesh, path=path, w=w, h=h}
+   return {imageData=imageData, img=img,  mesh=m, path=path, w=w, h=h}
 end
 
 

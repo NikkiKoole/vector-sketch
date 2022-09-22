@@ -1,5 +1,5 @@
 local numbers = require 'lib.numbers'
-
+local mesh = require 'lib.mesh'
 
 function createTexturedPolygon(image, polygon)
    
@@ -9,7 +9,7 @@ function createTexturedPolygon(image, polygon)
    local vfunc = function(y) return numbers.mapInto(y, tly, bry, 0,3) end
 
    local p = {}
-   reTriangulatePolygon(polygon, p)
+   mesh.reTriangulatePolygon(polygon, p)
    local vertices = {}
 
    
@@ -21,10 +21,10 @@ function createTexturedPolygon(image, polygon)
    end
    
    
-   local mesh = love.graphics.newMesh(vertices, "triangles")
-   mesh:setTexture(image)
+   local m = love.graphics.newMesh(vertices, "triangles")
+   m:setTexture(image)
 
-   return mesh
+   return m
 
 end
 
