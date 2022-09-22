@@ -2,13 +2,15 @@ local geom = require 'lib.geom'
 local numbers = require 'lib.numbers'
 local transform = require 'lib.transform'
 local formats = require 'lib.formats'
+local polyline = require 'lib.polyline'
+local Segment = require 'lib.segment'
 
 Actor = {}
 Actor.__index = Actor
 
 -- todo make this a system/component or better yet move it in with the biped stuff
 
-require 'lib.segment'
+--require 'lib.segment'
 
 function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    local start = a
@@ -190,12 +192,12 @@ function Actor:oneLeg(connector, transforms, flip)
       end
    end
 
-   local verts, indices, draw_mode = polyline('bevel', result, widths)
+   local verts, indices, draw_mode = polyline.render('bevel', result, widths)
    local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    table.insert(self.body.generatedMeshes, { mesh = mesh, color = { 0, 0, 0 } })
 
 
-   local verts, indices, draw_mode = polyline('bevel', result, widths2)
+   local verts, indices, draw_mode = polyline.render('bevel', result, widths2)
    local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    table.insert(self.body.generatedMeshes, { mesh = mesh, color = { 0.67, 0.32, 0.21, 1 } })
 
@@ -345,7 +347,7 @@ function Actor:update(dt)
                table.insert(result, segments[i].a.y - self.body.transforms.l[2])
             end
 
-            local verts, indices, draw_mode = polyline('bevel', result, 3)
+            local verts, indices, draw_mode = polyline.render('bevel', result, 3)
             local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
             table.insert(self.body.generatedMeshes, { mesh = mesh, color = { 0, 0, 0 } })
 

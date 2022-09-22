@@ -15,7 +15,7 @@ function love.keypressed(key)
 end
 
 function love.load()
-   bgColor = {r,g,b}
+   bgColor = {r=0,g=0,b=0}
    bgColor.r, bgColor.g, bgColor.b = hex2rgb('af9f5e')
    font = love.graphics.newFont( "WindsorBT-Roman.otf", 24)
    love.graphics.setFont(font)

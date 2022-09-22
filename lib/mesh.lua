@@ -6,6 +6,7 @@ local unloop = require 'lib.unpack-points'
 local hit = require 'lib.hit'
 local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
+local polyline = require 'lib.polyline'
 
 require 'lib.basics' --tableconcat
 
@@ -226,7 +227,7 @@ mesh.makeVertices = function(shape)
             end
          end
          coords = unloop.unpackNodePoints(coords, false)
-         local verts, indices, draw_mode = polyline('miter', coords, { shape.data.width })
+         local verts, indices, draw_mode = polyline.render('miter', coords, { shape.data.width })
          local h = 1 / (shape.data.steps - 1 or 1)
          local vertsWithUVs = {}
 
@@ -248,7 +249,7 @@ mesh.makeVertices = function(shape)
          end
          coords = unloop.unpackNodePoints(coords, false)
 
-         local verts, indices, draw_mode = polyline('miter', coords, { shape.data.width })
+         local verts, indices, draw_mode = polyline.render('miter', coords, { shape.data.width })
          local h = 1 / (shape.data.steps - 1 or 1)
          local vertsWithUVs = {}
 
@@ -261,7 +262,7 @@ mesh.makeVertices = function(shape)
       else
 
          local coords = unloop.unpackNodePoints(points, false)
-         local verts, indices, draw_mode = polyline('miter', coords, { 10, 40, 20, 100, 10 })
+         local verts, indices, draw_mode = polyline.render('miter', coords, { 10, 40, 20, 100, 10 })
          vertices = verts
       end
    end

@@ -8,6 +8,7 @@ local formats = require 'lib.formats'
 local mesh = require 'lib.mesh'
 local node = require 'lib.node'
 local parentize = require 'lib.parentize'
+local polyline = require 'lib.polyline'
 -- todo @global GLOBALS.parallax
 
 local lerp = numbers.lerp
@@ -292,7 +293,7 @@ function handleChild(shape, isDirty)
       if currentNode ~= shape then
          m = shape.mesh -- the standard way of rendering
       else
-         print('making mesh in handlechild')
+         --print('making mesh in handlechild')
          --remeshNode(shape)
          m = mesh.makeMeshFromVertices(mesh.makeVertices(shape), shape.type, shape.texture) -- realtime iupdating the thingie
       end
@@ -449,7 +450,7 @@ function handleChild(shape, isDirty)
          if false and shape.points then
             -- render outline!!!!!
             local work = unloop.unpackNodePoints(shape.points)
-            local verts, indices, draw_mode = polyline('bevel', work, 10, 1, true)
+            local verts, indices, draw_mode = polyline.render('bevel', work, 10, 1, true)
             local m = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
             love.graphics.setColor(shape.color[1] - .2, shape.color[2] - .2, shape.color[3] - .2, shape.color[4])
             love.graphics.setColor(1, 1, 1)

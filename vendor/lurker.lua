@@ -43,8 +43,8 @@ local lovecallbacknames = {
 function lurker.init()
   lurker.print("Initing lurker")
   lurker.path = "."
-  lurker.preswap = function() end
-  lurker.postswap = function() end
+  lurker.preswap = function(d) end
+  lurker.postswap = function(d) end
   lurker.interval = .5
   lurker.protected = true
   lurker.quiet = false

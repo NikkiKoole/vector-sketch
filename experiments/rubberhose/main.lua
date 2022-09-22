@@ -6,19 +6,14 @@ package.path = package.path .. ";../../?.lua"
 -- https://github.com/datlass/fabrik-ik-motor6d/blob/master/src/ReplicatedStorage/LimbChain/FabrikSolver.lua
 
 local inspect = require 'vendor.inspect'
-require 'lib.basics'
-require 'lib.toolbox'
-require 'lib.ui'
-require 'lib.segment'
-require 'lib.poly'
 
+require 'lib.ui'
+local Segment = require 'lib.segment'
+local polyline = require 'lib.polyline'
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 local geom = require 'lib.geom'
 local formats = require 'lib.formats'
-
-require 'lib.polyline'
-
 
 function love.keypressed(k)
    if k == 'escape' then
@@ -57,7 +52,7 @@ function love.load()
    for i = 1, 23 do
       segments[i] = Segment:create(200, 300, 0, 12)
    end
-
+   print(inspect(_G))
 end
 
 function love.mousepressed(mx, my)
@@ -293,7 +288,7 @@ function love.draw()
          --print(#widths)
          --widths = {10,10,10,10,10,10,10,10,10,14,
          --	    13,11,10,10,8, 6, 5, 3, 3, 3}
-         local verts, indices, draw_mode = polyline('bevel', result, widths)
+         local verts, indices, draw_mode = polyline.render('bevel', result, widths)
          --print(draw_mode)
          local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
 

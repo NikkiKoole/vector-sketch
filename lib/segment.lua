@@ -1,4 +1,4 @@
-Segment = {}
+local Segment = {}
 Segment.__index = Segment
 
 Vector = require "vendor.brinevector"
@@ -31,3 +31,5 @@ function Segment:follow(tx, ty)
    dir = dir:getNormalized() * self.length * -1
    self.a = target + dir
 end
+
+return Segment

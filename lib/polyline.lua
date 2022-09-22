@@ -1,3 +1,5 @@
+local polyline = {}
+
 local LINES_PARALLEL_EPS = 0.05;
 
 local function Vector(x, y)
@@ -201,7 +203,7 @@ local JOIN_TYPES = {
   bevel = renderEdgeBevel,
 }
 
-function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
+polyline.render = function(join_type, coords, half_width, pixel_size, draw_overdraw, rndMultiplier)
   local renderEdge = JOIN_TYPES[join_type]
   assert(renderEdge, join_type .. ' is not a valid line join type.')
 
@@ -364,3 +366,5 @@ function polyline(join_type, coords, half_width, pixel_size, draw_overdraw, rndM
 
   return vertices, indices, draw_mode
 end
+
+return polyline
