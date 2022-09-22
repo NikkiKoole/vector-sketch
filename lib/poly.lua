@@ -6,10 +6,7 @@ local hit = require 'lib.hit'
 require 'lib.basics' --vanwege tableconcat
 
 
-
-
-
-function triangulate(type, poly)
+local function triangulate(type, poly)
    local result = {}
 
    if type == "mesh3d" then
@@ -206,6 +203,6 @@ end
 return {
    polygonClip = polygonClip,
    getPolygonCentroid = getPolygonCentroid,
-   triangulate = triangulate,
+   
 
 }

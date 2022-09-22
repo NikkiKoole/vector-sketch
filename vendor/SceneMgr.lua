@@ -112,6 +112,7 @@ pathDefined = function(path)
 
   if major == 0 and minor == 9 and revision >= 1 then
     -- File system calls for love 0.9.1 and up to 0.11.0
+---@diagnostic disable-next-line: undefined-field
     if love.filesystem.exists(path) then
       return true
     else
@@ -119,6 +120,7 @@ pathDefined = function(path)
     end
   elseif major == 11 and minor >= 0 and revision >= 0 then
     -- File system calls for love 0.11.0 and up to most recent
+---@diagnostic disable-next-line: undefined-global
     if love.filesystem.getInfo(path, filtertype) then
       return true
     else
