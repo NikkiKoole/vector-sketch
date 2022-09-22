@@ -64,7 +64,6 @@ function generate3dShapeFrom2d(shape, z)
    return result
 end
 
-
 --[[
 function makeBorderMesh(node)
    local work = unloop.unpackNodePointsLoop(node.points)
@@ -88,4 +87,4 @@ function makeBorderMesh(node)
    local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    return mesh
 end
-]]--
+]] --

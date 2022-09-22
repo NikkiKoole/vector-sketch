@@ -14,7 +14,7 @@ text.split = function(str, pos)
    return str:sub(1, offset - 1), str:sub(offset)
 end
 
-text.stringFindLastSlash =function(str)
+text.stringFindLastSlash = function(str)
    --return str:match'^.*()'..char
    local index = string.find(str, "/[^/]*$")
    if index == nil then -- windows ? i dunno?
@@ -32,6 +32,5 @@ local function stringSplit(str, sep)
    end
    return result
 end
-
 
 return text

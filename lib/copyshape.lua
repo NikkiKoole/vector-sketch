@@ -3,39 +3,37 @@ local round2 = numbers.round2
 
 local function copyArray(original)
    local result = {}
-   for i=1, #original do
+   for i = 1, #original do
       table.insert(result, round2(original[i], 3))
    end
    return result
 end
 
-
-
 function copyShape(shape)
    if (shape.folder) then
       local result = {
-	 folder = true,
-	 name = shape.name or "",
-	 transforms = {
-	    l = copyArray(shape.transforms.l),
-	    --g = copyArray(shape.transforms.g)
-	 },
-	 children = {}
+         folder = true,
+         name = shape.name or "",
+         transforms = {
+            l = copyArray(shape.transforms.l),
+            --g = copyArray(shape.transforms.g)
+         },
+         children = {}
       }
       if (shape.keyframes) then
-	 result.frame = shape.frame
-	 result.keyframes = shape.keyframes
-	 if shape.keyframes == 2 then
+         result.frame = shape.frame
+         result.keyframes = shape.keyframes
+         if shape.keyframes == 2 then
             result.lerpValue = shape.lerpValue
-	 end
-	 if shape.keyframes == 4 or shape.keyframes == 5 then
-	    result.lerpX = shape.lerpX
-	    result.lerpY = shape.lerpY
-	 end
+         end
+         if shape.keyframes == 4 or shape.keyframes == 5 then
+            result.lerpX = shape.lerpX
+            result.lerpY = shape.lerpY
+         end
       end
 
-      for i=1, #shape.children do
-	 result.children[i] = copyShape(shape.children[i])
+      for i = 1, #shape.children do
+         result.children[i] = copyShape(shape.children[i])
       end
 
       return result
@@ -80,16 +78,16 @@ function copyShape(shape)
       end
 
       if (shape.color) then
-         for i=1, #shape.color do
-            result.color[i] = round2(shape.color[i],3)
+         for i = 1, #shape.color do
+            result.color[i] = round2(shape.color[i], 3)
          end
       else
-         result.color = {0,0,0,0}
+         result.color = { 0, 0, 0, 0 }
       end
-      
 
-      for i=1, #shape.points do
-         result.points[i]= {round2(shape.points[i][1], 3), round2(shape.points[i][2], 3)}
+
+      for i = 1, #shape.points do
+         result.points[i] = { round2(shape.points[i][1], 3), round2(shape.points[i][2], 3) }
       end
       return result
    end

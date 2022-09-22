@@ -96,7 +96,6 @@ local function createLerpedChild(ex1, ex2, t)
 
 end
 
-
 render.renderThingsWithKeyFrames = function(root)
 
    -- if (root.keyframes) then

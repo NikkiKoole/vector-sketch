@@ -30,6 +30,6 @@ transform.getLocalizedDelta = function(element, dx, dy)
     local x1, y1 = element._parent.transforms._g:inverseTransformPoint(dx, dy)
     local x0, y0 = element._parent.transforms._g:inverseTransformPoint(0, 0)
     return x1 - x0, y1 - y0
- end
+end
 
 return transform

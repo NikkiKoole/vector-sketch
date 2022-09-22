@@ -1,8 +1,8 @@
 local Camera = require 'vendor.brady'
 
-function resizeCamera( self, w, h )
+function resizeCamera(self, w, h)
    local scaleW, scaleH = w / self.w, h / self.h
-   local scale = math.min( scaleW, scaleH )
+   local scale = math.min(scaleW, scaleH)
    -- the line below keeps aspect
    --self.w, self.h = scale * self.w, scale * self.h
    -- the line below deosnt keep aspect
@@ -12,18 +12,17 @@ function resizeCamera( self, w, h )
    offset = offset * scale
 end
 
-
 function createCamera()
    offset = 0
    local W, H = love.graphics.getDimensions()
-  
+
    return Camera(
       W - 2 * offset,
       H - 2 * offset,
       {
          x = offset, y = offset, resizable = true, maintainAspectRatio = true,
-         resizingFunction = function( self, w, h )
-            resizeCamera( self, w, h )
+         resizingFunction = function(self, w, h)
+            resizeCamera(self, w, h)
             local W, H = love.graphics.getDimensions()
             self.x = offset
             self.y = offset
@@ -34,7 +33,7 @@ function createCamera()
          end
       }
    )
-   
+
 
 end
 
@@ -42,25 +41,24 @@ local _c = createCamera()
 function getCamera()
    return _c
 end
+
 local cam = getCamera()
 
 --local _c = createCamera()
 
 function setCameraViewport(cam, w, h)
-   local cx,cy = cam:getTranslation()
+   local cx, cy = cam:getTranslation()
 
    local cw, ch = cam:getContainerDimensions()
-   local targetScale = math.min(cw/w, ch/h)
+   local targetScale = math.min(cw / w, ch / h)
    cam:setScale(targetScale)
-   cam:setTranslation(cx, -1 * h/2)
+   cam:setTranslation(cx, -1 * h / 2)
    --print(_c)
 end
 
-
-function drawCameraBounds( cam, mode )
-   love.graphics.rectangle( mode, cam.x, cam.y, cam.w, cam.h )
+function drawCameraBounds(cam, mode)
+   love.graphics.rectangle(mode, cam.x, cam.y, cam.w, cam.h)
 end
-
 
 function manageCameraTween(dt)
    if cameraTween then
@@ -76,7 +74,7 @@ function manageCameraTween(dt)
       end
 
       if (delta.x + delta.y) == 0 then
-         for i = #gestureState.list, 1 -1 do
+         for i = #gestureState.list, 1 - 1 do
             if cameraTween.originalGesture == gestureState.list[i] then
                if gestureState.list[i] ~= nil then
                   removeGestureFromList(gestureState.list[i])
@@ -92,22 +90,19 @@ function manageCameraTween(dt)
 
 end
 
-
-
 function generateCameraLayer(name, zoom)
-   return cam:addLayer(name, zoom, {relativeScale=(1.0/zoom) * zoom})
+   return cam:addLayer(name, zoom, { relativeScale = (1.0 / zoom) * zoom })
 end
 
-function cameraTranslateScheduleJustItem(dx,dy)
+function cameraTranslateScheduleJustItem(dx, dy)
    -- this comes from just the cameraTween
    translateScheduler.justItem.x = dx
    translateScheduler.justItem.y = dy
 
 end
 
-
 function cameraTranslateScheduler(dx, dy)
---   print(dx, 'try to average instead of adding')
+   --   print(dx, 'try to average instead of adding')
    translateScheduler.x = translateScheduler.x + dx
    translateScheduler.y = translateScheduler.y + dy
 end
@@ -117,70 +112,69 @@ function checkForBounceBack(dt)
    -- ah right, its the elements that will bounce in opposite direction of a camera tween
    -- just the little line right now that displays that
    if translateScheduler.x ~= 0 then
-      translateScheduler.cache.triggered= false
+      translateScheduler.cache.triggered = false
       translateScheduler.cache.stopped = false
       translateScheduler.cache.value = translateScheduler.cache.value + translateScheduler.x
       translateScheduler.cache.cacheValue = translateScheduler.cache.value
    else
       if translateScheduler.cache.stopped == false then
-	 translateScheduler.cache.stopped = true
-	 translateScheduler.cache.stoppedAt = translateScheduler.cache.value
+         translateScheduler.cache.stopped = true
+         translateScheduler.cache.stoppedAt = translateScheduler.cache.value
       end
-      local multiplier = (0.5 ^ (dt*300))
+      local multiplier = (0.5 ^ (dt * 300))
       translateScheduler.cache.cacheValue = translateScheduler.cache.cacheValue * multiplier
-      
+
       -- https://love2d.org/forums/viewtopic.php?f=3&t=82046&start=10
       if math.abs(translateScheduler.cache.cacheValue) < 0.01 and translateScheduler.cache.triggered == false then
-	 translateScheduler.cache.cacheValue = 0
-	 translateScheduler.cache.value = 0
+         translateScheduler.cache.cacheValue = 0
+         translateScheduler.cache.value = 0
 
-	 translateScheduler.cache.triggered= true
-	 translateScheduler.cache.tweenValue = translateScheduler.cache.stoppedAt
-	 bouncetween = tween.new(1, translateScheduler.cache, {tweenValue=0}, 'outElastic')
+         translateScheduler.cache.triggered = true
+         translateScheduler.cache.tweenValue = translateScheduler.cache.stoppedAt
+         bouncetween = tween.new(1, translateScheduler.cache, { tweenValue = 0 }, 'outElastic')
       end
    end
 end
 
-
 function cameraApplyTranslate(dt, layer)
 
-   cam:translate( translateScheduler.x, translateScheduler.y)
+   cam:translate(translateScheduler.x, translateScheduler.y)
    local translateByPressed = false
 
 
    if true then
 
-      for i =1 ,#layer.children do
-	 local c = layer.children[i]
-	 if c.pressed then
+      for i = 1, #layer.children do
+         local c = layer.children[i]
+         if c.pressed then
             -- this line cause the jerkyness, have to check it on multitouch
-	   -- c.transforms.l[1] =
-	   --    c.transforms.l[1] + translateScheduler.x + translateScheduler.justItem.x
-	    translateByPressed = (translateScheduler.x + translateScheduler.justItem.x) ~= 0
-	 end
+            -- c.transforms.l[1] =
+            --    c.transforms.l[1] + translateScheduler.x + translateScheduler.justItem.x
+            translateByPressed = (translateScheduler.x + translateScheduler.justItem.x) ~= 0
+         end
       end
 
 
       --- this part is here for triggering a tween on ending item pressed drag
       if translateByPressed == true then
-	 translateScheduler.happenedByPressedItems = true
+         translateScheduler.happenedByPressedItems = true
       end
 
-      if translateScheduler.happenedByPressedItems == true and  translateByPressed == false then
-	 translateScheduler.happenedByPressedItems = false
-	 local cx,cy = cam:getTranslation()
-	 local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
-	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=smoothValue}
+      if translateScheduler.happenedByPressedItems == true and translateByPressed == false then
+         translateScheduler.happenedByPressedItems = false
+         local cx, cy = cam:getTranslation()
+         local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
+         cameraTween = { goalX = cx + delta, goalY = cy, smoothValue = smoothValue }
       end
       ------ end that part
 
    end
-      checkForBounceBack(dt)
-   
-      translateScheduler.x = 0
-      translateScheduler.y = 0
-      translateScheduler.justItem.x = 0
-      translateScheduler.justItem.y = 0
+   checkForBounceBack(dt)
+
+   translateScheduler.x = 0
+   translateScheduler.y = 0
+   translateScheduler.justItem.x = 0
+   translateScheduler.justItem.y = 0
 
 end
 
@@ -190,4 +184,3 @@ function resetCameraTween()
       tweenCameraDelta = 0
    end
 end
-

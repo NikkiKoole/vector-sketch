@@ -1,7 +1,3 @@
-
-
-
-
 function require_all(path, opts)
    local items = love.filesystem.getDirectoryItems(path)
    for _, item in pairs(items) do
@@ -12,12 +8,11 @@ function require_all(path, opts)
    if opts and opts.recursive then
       for _, item in pairs(items) do
          if love.filesystem.getInfo(path .. '/' .. item, 'directory') then
-            require_all(path .. '/' .. item, {recursive = true})
+            require_all(path .. '/' .. item, { recursive = true })
          end
       end
    end
 end
-
 
 local TESTING__ = true
 if TESTING__ then
@@ -26,7 +21,7 @@ if TESTING__ then
       local info = debug.getinfo(2, "Sl")
       local source = info.source
       if source:sub(-4) == ".lua" then source = source:sub(1, -5) end
-      if source:sub(1,1) == "@" then source = source:sub(2) end
+      if source:sub(1, 1) == "@" then source = source:sub(2) end
       local msg = ("%s:%i"):format(source, info.currentline)
       old_print(msg, ...)
    end
@@ -65,11 +60,11 @@ function printC(c, ...)
       io.write(bg_codes[c.bg])
    end
 
-  print(...)
-  io.write(reset)
+   print(...)
+   io.write(reset)
 end
 
 if os.setlocale(nil) ~= 'C' then
-   printC({fg='black', bg='yellow'}, 'wrong locale:', os.setlocale(nil))
+   printC({ fg = 'black', bg = 'yellow' }, 'wrong locale:', os.setlocale(nil))
    os.setlocale("C")
 end

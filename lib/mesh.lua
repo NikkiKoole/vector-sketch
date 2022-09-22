@@ -341,7 +341,7 @@ mesh.makeSquishableUVsFromPoints = function(points)
 end
 
 
-mesh.addUVToVerts =function(verts, img, points, settings)
+mesh.addUVToVerts = function(verts, img, points, settings)
    --print('Im tweakibg around ion here atm, check the code for UV stuff')
    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
 

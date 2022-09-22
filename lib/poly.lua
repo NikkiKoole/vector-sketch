@@ -199,10 +199,9 @@ function getPolygonCentroid(pts) -- accepts a flat array {x,y,x,y,x,y ...}
 
 end
 
-
 return {
    polygonClip = polygonClip,
    getPolygonCentroid = getPolygonCentroid,
-   
+
 
 }
