@@ -1,7 +1,7 @@
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local parallax = require 'lib.parallax'
-
+local cam = getCamera()
 
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
    for i = #parallaxData.layer.children, 1, -1 do

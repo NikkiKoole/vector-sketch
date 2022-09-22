@@ -38,6 +38,12 @@ function createCamera()
 
 end
 
+local _c = createCamera()
+function getCamera()
+   return _c
+end
+local cam = getCamera()
+
 --local _c = createCamera()
 
 function setCameraViewport(cam, w, h)

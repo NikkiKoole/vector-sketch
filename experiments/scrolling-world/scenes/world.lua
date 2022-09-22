@@ -17,7 +17,7 @@ local hasBeenLoaded = false
 local parentize = require 'lib.parentize'
 local parallax = require 'lib.parallax'
 local render = require 'lib.render'
-
+local cam = getCamera()
 function scene.modify(data)
 end
 
@@ -92,7 +92,7 @@ function scene.load()
       backgroundFactors = { far=.4, near=.7}
       tileSize = 100
 
-      cam = createCamera()
+      --cam = createCamera()
 
 
       backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)

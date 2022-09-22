@@ -2,6 +2,7 @@ local scene = {}
 local hasBeenLoaded = false
 
 local render = require 'lib.render'
+local cam = getCamera()
 
 function scene.modify(obj)
 end

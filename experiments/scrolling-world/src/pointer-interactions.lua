@@ -1,6 +1,6 @@
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
-
+local cam = getCamera()
 function getPointerPosition(id)
    local x, y
    if id == 'mouse' then

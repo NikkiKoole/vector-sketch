@@ -5,7 +5,7 @@ local render = require 'lib.render'
 local hit = require 'lib.hit'
 local scene = {}
 local hasBeenLoaded = false
-
+local cam = getCamera()
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
@@ -173,7 +173,7 @@ function scene.load()
    
    if not hasBeenLoaded then
 
-      cam = createCamera()
+      --cam = createCamera()
 
       -- these values should be loaded agian and again, 
       depthMinMax =       {min=-1.0, max=1.0}

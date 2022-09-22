@@ -1,6 +1,6 @@
 local numbers = require 'lib.numbers'
 local formats = require 'lib.formats'
-
+local cam = getCamera()
 
 local groundTiles = {}
 

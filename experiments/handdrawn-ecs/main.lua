@@ -30,6 +30,7 @@ local render = require 'lib.render'
 
 local myWorld = Concord.world()
 
+local cam = getCamera()
 --[[
    the process of geting the right handdrawn images
    draw an image with pencil, the size of my hand is roughly the size of a person
@@ -132,7 +133,7 @@ end
 function love.load()
    --require("vendor.lurker").path = '../..'
 
-   cam = createCamera()
+   --cam = getCamera()--createCamera()
 
    depthMinMax =       {min=-1.0, max=1.0}
    -- foregroundFactors = { far=.5, near=1}

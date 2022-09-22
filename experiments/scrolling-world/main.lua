@@ -14,6 +14,7 @@ require 'lib.basic-tools'
 --require 'lib.generate-polygon'
 require 'lib.ui'
 require 'lib.camera'
+local cam = getCamera()
 require 'lib.generateWorld'
 
 

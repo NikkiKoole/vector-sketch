@@ -17,6 +17,8 @@ require 'lib.ui'
 require 'lib.camera'
 require 'lib.generateWorld'
 
+local cam = getCamera()
+
 require 'src.gradient'
 require 'src.groundplane'
 require 'src.fillstuf'
