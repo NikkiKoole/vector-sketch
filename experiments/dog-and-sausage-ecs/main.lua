@@ -1,15 +1,15 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
-require 'lib.poly'
-require 'lib.main-utils'
-require 'lib.toolbox'
+--require 'lib.poly'
+--require 'lib.main-utils'
+--require 'lib.toolbox'
 
 local numbers = require 'lib.numbers'
 
 
-inspect = require 'vendor.inspect'
-flux = require "vendor.flux"
+local inspect = require 'vendor.inspect'
+local flux = require "vendor.flux"
 
 Concord = require 'vendor.concord.init'
 
@@ -23,6 +23,7 @@ local parse = require 'lib.parse-file'
 local render = require 'lib.render'
 local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
+local formats = require 'lib.formats'
 
 Concord.component(
    'transforms',
@@ -115,10 +116,7 @@ function love.mousemoved(x, y)
 end
 
 function makeBackdropMesh()
-   local format = {
-      { "VertexPosition", "float", 2 }, -- The x,y position of each vertex.
-      { "VertexColor", "byte", 4 } -- The r,g,b,a color of each vertex.
-   }
+  
    local w, h = love.graphics.getDimensions()
 
    local vertices = {
@@ -143,8 +141,8 @@ function makeBackdropMesh()
          0, 1, 1
       },
    }
-   local mesh = love.graphics.newMesh(format, vertices)
-   return mesh
+   local m = love.graphics.newMesh(formats.other_format_colors, vertices)
+   return m
 end
 
 function love.load()

@@ -10,6 +10,7 @@ local parentize = require 'lib.parentize'
 local parse = require 'lib.parse-file'
 local render = require 'lib.render'
 local mesh = require 'lib.mesh'
+local formats = require 'lib.formats'
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
@@ -62,10 +63,7 @@ function love.mousemoved(x, y)
 end
 
 function makeBackdropMesh()
-   local format = {
-      { "VertexPosition", "float", 2 }, -- The x,y position of each vertex.
-      { "VertexColor", "byte", 4 } -- The r,g,b,a color of each vertex.
-   }
+
    local w, h = love.graphics.getDimensions()
 
    local vertices = {
@@ -90,8 +88,8 @@ function makeBackdropMesh()
          1, 1, 0
       },
    }
-   local mesh = love.graphics.newMesh(format, vertices)
-   return mesh
+   local m = love.graphics.newMesh(formats.other_format_colors, vertices)
+   return m
 end
 
 function love.load()
@@ -122,4 +120,6 @@ function love.load()
    rightPupil.startPos = { rightPupil.transforms.l[1], rightPupil.transforms.l[2] }
 
    snuit = findNodeByName(root, 'snuit')
+
+   print(inspect(_G))
 end

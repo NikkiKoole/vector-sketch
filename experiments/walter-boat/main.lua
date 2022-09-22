@@ -1,16 +1,11 @@
 package.path = package.path .. ";../../?.lua"
 
-flux = require "vendor.flux"
-inspect = require 'vendor.inspect'
-ProFi = require 'vendor.ProFi'
+local flux = require "vendor.flux"
+local inspect = require 'vendor.inspect'
+local ProFi = require 'vendor.ProFi'
 
 require 'lib.scene-graph'
-require 'lib.basics'
---require 'lib.bbox'
-require 'lib.toolbox'
-require 'lib.copyshape'
-require 'lib.poly'
---require 'lib.main-utils'
+
 
 local numbers = require 'lib.numbers'  --randomSign
 local bbox = require 'lib.bbox'
@@ -336,7 +331,7 @@ function anotherWaveFunction(waveCounter, middleY, waves, amplitude, alpha)
    table.insert(coords, coords[1])
    table.insert(coords, coords[2])
    love.graphics.setColor(0,0.4,0.58, alpha)
-   local polys = decompose_complex_poly(coords, {})
+   local polys = mesh.decompose_complex_poly(coords, {})
    for i=1 , #polys do
       local p = polys[i]
       local triangles = love.math.triangulate(p)

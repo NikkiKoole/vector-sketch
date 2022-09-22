@@ -7,11 +7,6 @@ require 'lib.basics' --vanwege tableconcat
 
 
 
-function getTriangleCentroid(triangle)
-   local x = (triangle[1] + triangle[3] + triangle[5]) / 3
-   local y = (triangle[2] + triangle[4] + triangle[6]) / 3
-   return x, y
-end
 
 
 function triangulate(type, poly)
@@ -105,17 +100,7 @@ function triangulate(type, poly)
    return result
 end
 
-function reTriangulatePolygon(poly, result)
-   local p = poly
-   local triangles = love.math.triangulate(p)
-   for j = 1, #triangles do
-      local t = triangles[j]
-      local cx, cy = getTriangleCentroid(t)
-      if hit.pointInPath(cx, cy, p) then
-         table.insert(result, t)
-      end
-   end
-end
+
 
 -- for the boyonce i prolly need thi algo:
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua

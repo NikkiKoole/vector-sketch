@@ -124,7 +124,7 @@ local function reTriangulatePolygon(poly, result)
    end
 end
 
-local function decompose_complex_poly(poly, result)
+mesh.decompose_complex_poly = function(poly, result)
    local intersections = get_collisions(poly)
    if #intersections == 0 then
       result = TableConcat(result, { poly })
@@ -133,13 +133,13 @@ local function decompose_complex_poly(poly, result)
       local p1, p2 = split_poly(poly, intersections[1])
       local p1c, p2c = get_collisions(p1), get_collisions(p2)
       if (#p1c > 0) then
-         result = decompose_complex_poly(p1, result)
+         result = mesh.decompose_complex_poly(p1, result)
       else
          result = TableConcat(result, { p1 })
       end
 
       if (#p2c > 0) then
-         result = decompose_complex_poly(p2, result)
+         result = mesh.decompose_complex_poly(p2, result)
       else
          result = TableConcat(result, { p2 })
       end
@@ -174,7 +174,7 @@ mesh.makeVertices = function(shape)
          end
 
          if (shape.color) then
-            local polys = decompose_complex_poly(coords, {})
+            local polys = mesh.decompose_complex_poly(coords, {})
             local result = {}
 
             for k = 1, #polys do
