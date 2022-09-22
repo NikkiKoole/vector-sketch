@@ -42,6 +42,8 @@ local parse = require 'lib.parse-file'
 local parentize =  require 'lib.parentize'
 local mesh =  require 'lib.mesh'
 local bbox = require 'lib.bbox'
+local numbers = require 'lib.numbers'
+local round2 = numbers.round2
 --local parallax = require 'lib.parallax'
 
 -- cehck this on love2d to make an ingame editor and mount vector sketch files to edit ingame

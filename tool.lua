@@ -8,7 +8,7 @@ require 'src.palettes'
 require 'src.dopesheet'
 require 'src.file-screen'
 
-require 'lib.scene-graph'
+--require 'lib.scene-graph'
 require 'lib.basics'
 --local numbers = require 'lib.numbers'
 --mapInto = numbers.mapInto
@@ -38,6 +38,7 @@ local render = require 'lib.render'
 local hit = require 'lib.hit'
 local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
+local round2 = numbers.round2
 local formats = require 'lib.formats'
 local n = require 'lib.node'
 local getIndex = n.getIndex

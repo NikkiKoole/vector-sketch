@@ -1,4 +1,5 @@
-
+local numbers = require 'lib.numbers'
+local round2 = numbers.round2
 
 local function copyArray(original)
    local result = {}

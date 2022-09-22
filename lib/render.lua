@@ -42,7 +42,7 @@ local function lerpPoints(p1, p2, t)
    return p1
 end
 
-function lerpNodes(left, right, root, t)
+local function lerpNodes(left, right, root, t)
    if (left.folder and right.folder) then
       root.folder = true
       root.transforms = {

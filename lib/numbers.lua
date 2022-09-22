@@ -26,7 +26,7 @@ local function round2durp(num, numDecimalPlaces)
    return math.floor(num * mult + 0.5) / mult
 end
 
-function round2(num, numDecimalPlaces)
+numbers.round2 = function(num, numDecimalPlaces)
    local r = tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
    return r
 end
