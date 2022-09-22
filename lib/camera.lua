@@ -12,10 +12,11 @@ function resizeCamera( self, w, h )
    offset = offset * scale
 end
 
+
 function createCamera()
    offset = 0
    local W, H = love.graphics.getDimensions()
-
+  
    return Camera(
       W - 2 * offset,
       H - 2 * offset,
@@ -33,8 +34,11 @@ function createCamera()
          end
       }
    )
+   
 
 end
+
+--local _c = createCamera()
 
 function setCameraViewport(cam, w, h)
    local cx,cy = cam:getTranslation()
@@ -43,6 +47,7 @@ function setCameraViewport(cam, w, h)
    local targetScale = math.min(cw/w, ch/h)
    cam:setScale(targetScale)
    cam:setTranslation(cx, -1 * h/2)
+   --print(_c)
 end
 
 

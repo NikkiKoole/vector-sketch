@@ -14,9 +14,9 @@ require 'lib.basic-tools'
 --require 'lib.generate-polygon'
 require 'lib.ui'
 require 'lib.camera'
+require 'lib.generateWorld'
 
 
-require 'src.generateWorld'
 require 'src.gradient'
 require 'src.groundplane'
 --require 'src.fillstuf'
