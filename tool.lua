@@ -85,6 +85,7 @@ function mylib:resize(w, h)
       x = w - 160,
    }
 end
+
 local function getAngleAndDistance(x1, y1, x2, y2)
    local dx = x1 - x2
    local dy = y1 - y2
@@ -93,6 +94,7 @@ local function getAngleAndDistance(x1, y1, x2, y2)
 
    return angle, distance
 end
+
 local function getCircumference()
    local total = 0
    for i = 1, #currentNode.points - 1 do
@@ -104,8 +106,6 @@ local function getCircumference()
    end
    return total
 end
-
-
 
 local function getLocalDelta(transform, dx, dy)
    local dx1, dy1 = transform:inverseTransformPoint(0, 0)
@@ -1640,7 +1640,7 @@ function mylib:mousepressed(x, y, button)
       local d = hit.findMeshThatsHit(root, x, y, LK.isDown('lctrl'))
       if d then
          setCurrentNode(d)
-         tryToCenterUI(d, root)
+         tryToCenterUI(d)
          editingMode = 'polyline'
       else
          setCurrentNode(nil)
@@ -2282,8 +2282,6 @@ local function labelPos(x, y)
    return x, y - 20
 end
 
-
-
 local function getDataFromFile(file)
    local filename = file:getFilename()
    local tab
@@ -2297,17 +2295,19 @@ local function getDataFromFile(file)
       end
 
       local p = io.popen(command)
-      local str = p:read('*all')
-      p:close()
-      local obj = ('{' .. str .. '}')
-      tab = (loadstring("return " .. obj)())
-      local charIndex = string.find(filename, "/[^/]*$")
-      if charIndex == nil then
-         charIndex = string.find(filename, "\\[^\\]*$")
-      end
+      if p then
+         local str = p:read('*all')
+         p:close()
+         local obj = ('{' .. str .. '}')
+         tab = (loadstring("return " .. obj)())
+         local charIndex = string.find(filename, "/[^/]*$")
+         if charIndex == nil then
+            charIndex = string.find(filename, "\\[^\\]*$")
+         end
 
-      _shapeName = filename:sub(charIndex + 1, -5) -- cutting off .svg
-      shapeName = _shapeName
+         _shapeName = filename:sub(charIndex + 1, -5) -- cutting off .svg
+         shapeName = _shapeName
+      end
 
    end
 
@@ -2810,7 +2810,7 @@ function mylib:draw()
          local mousex = love.mouse.getX()
          local mousey = love.mouse.getY()
 
-         doDopeSheetEditing(mousex, mousey)
+         doDopeSheetEditing()
 
          if quitDialog then
             local quitStr = "Quit? Seriously?! [ESC] "
@@ -3022,8 +3022,11 @@ function mylib:keypressed(key, scancode, isrepeat)
          local writeurl = readurl
 
          local file = io.open(readurl, "r")
-         local contents = file:read("*all")
-         file:close()
+         local contents
+         if file then
+            contents = file:read("*all")
+            file:close()
+         end
 
          local parsed = (loadstring("return " .. contents)())
 

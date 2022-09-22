@@ -1,3 +1,5 @@
+---@diagnostic disable: undefined-doc-param, undefined-doc-name, doc-field-no-class
+
 --- @module sone
 local sone = {
     _VERSION     = 'sone v1.0.0',
@@ -64,13 +66,13 @@ end
 
 local function outInQuad(t, b, c, d)
     if t < d / 2 then
-        return outQuad (t * 2, b, c / 2, d)
+        return outQuad(t * 2, b, c / 2, d)
     else
         return inQuad((t * 2) - d, b + c / 2, c / 2, d)
     end
 end
 
-local function inCubic (t, b, c, d)
+local function inCubic(t, b, c, d)
     t = t / d
     return c * pow(t, 3) + b
 end
@@ -170,7 +172,7 @@ local function outInSine(t, b, c, d)
     if t < d / 2 then
         return outSine(t * 2, b, c / 2, d)
     else
-        return inSine((t * 2) -d, b + c / 2, c / 2, d)
+        return inSine((t * 2) - d, b + c / 2, c / 2, d)
     end
 end
 
@@ -212,12 +214,12 @@ end
 
 local function inCirc(t, b, c, d)
     t = t / d
-    return(-c * (sqrt(1 - pow(t, 2)) - 1) + b)
+    return (-c * (sqrt(1 - pow(t, 2)) - 1) + b)
 end
 
 local function outCirc(t, b, c, d)
     t = t / d - 1
-    return(c * sqrt(1 - pow(t, 2)) + b)
+    return (c * sqrt(1 - pow(t, 2)) + b)
 end
 
 local function inOutCirc(t, b, c, d)
@@ -239,35 +241,35 @@ local function outInCirc(t, b, c, d)
 end
 
 local easing = {
-    linear = linear,
-    inQuad = inQuad,
-    outQuad = outQuad,
-    inOutQuad = inOutQuad,
-    outInQuad = outInQuad,
-    inCubic  = inCubic ,
-    outCubic = outCubic,
+    linear     = linear,
+    inQuad     = inQuad,
+    outQuad    = outQuad,
+    inOutQuad  = inOutQuad,
+    outInQuad  = outInQuad,
+    inCubic    = inCubic,
+    outCubic   = outCubic,
     inOutCubic = inOutCubic,
     outInCubic = outInCubic,
-    inQuart = inQuart,
-    outQuart = outQuart,
+    inQuart    = inQuart,
+    outQuart   = outQuart,
     inOutQuart = inOutQuart,
     outInQuart = outInQuart,
-    inQuint = inQuint,
-    outQuint = outQuint,
+    inQuint    = inQuint,
+    outQuint   = outQuint,
     inOutQuint = inOutQuint,
     outInQuint = outInQuint,
-    inSine = inSine,
-    outSine = outSine,
-    inOutSine = inOutSine,
-    outInSine = outInSine,
-    inExpo = inExpo,
-    outExpo = outExpo,
-    inOutExpo = inOutExpo,
-    outInExpo = outInExpo,
-    inCirc = inCirc,
-    outCirc = outCirc,
-    inOutCirc = inOutCirc,
-    outInCirc = outInCirc,
+    inSine     = inSine,
+    outSine    = outSine,
+    inOutSine  = inOutSine,
+    outInSine  = outInSine,
+    inExpo     = inExpo,
+    outExpo    = outExpo,
+    inOutExpo  = inOutExpo,
+    outInExpo  = outInExpo,
+    inCirc     = inCirc,
+    outCirc    = outCirc,
+    inOutCirc  = inOutCirc,
+    outInCirc  = outInCirc,
 }
 
 local function clamp(val, low, hi)
@@ -291,14 +293,14 @@ local function biquadFilter(sound, parameters)
     local type = parameters.type
 
     local a0, a1, a2, b0, b1, b2
-    local x0, x1, x2 = 0, 0, 0    
+    local x0, x1, x2 = 0, 0, 0
     local y0, y1, y2 = 0, 0, 0
 
     local w0 = 2 * pi * freq / sr
     local alpha = sin(w0) / (2 * Q)
     local cos_w0 = cos(w0)
     local A = 10 ^ (gain / 40)
-    
+
     local function process(x0)
         y2, y1 = y1, y0
         y0 = (b0 / a0) * x0 + (b1 / a0) * x1 + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2
@@ -307,68 +309,68 @@ local function biquadFilter(sound, parameters)
     end
 
     if type == "lowpass" then
-        b0 =  (1 - cos_w0)/2
-        b1 =   1 - cos_w0
-        b2 =  (1 - cos_w0)/2
-        a0 =   1 + alpha
-        a1 =  -2*cos_w0
-        a2 =   1 - alpha
+        b0 = (1 - cos_w0) / 2
+        b1 = 1 - cos_w0
+        b2 = (1 - cos_w0) / 2
+        a0 = 1 + alpha
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha
     elseif type == "highpass" then
-        b0 =  (1 + cos_w0)/2
+        b0 = (1 + cos_w0) / 2
         b1 = -(1 + cos_w0)
-        b2 =  (1 + cos_w0)/2
-        a0 =   1 + alpha
-        a1 =  -2*cos_w0
-        a2 =   1 - alpha
+        b2 = (1 + cos_w0) / 2
+        a0 = 1 + alpha
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha
     elseif type == "bandpass" then
-        b0 =   Q * alpha
-        b1 =   0
-        b2 =   Q * alpha
-        a0 =   1 + alpha
-        a1 =  -2*cos_w0
-        a2 =   1 - alpha
+        b0 = Q * alpha
+        b1 = 0
+        b2 = Q * alpha
+        a0 = 1 + alpha
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha
     elseif type == "notch" then
-        b0 =   1
-        b1 =  -2*cos_w0
-        b2 =   1
-        a0 =   1 + alpha
-        a1 =  -2*cos_w0
-        a2 =   1 - alpha
+        b0 = 1
+        b1 = -2 * cos_w0
+        b2 = 1
+        a0 = 1 + alpha
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha
     elseif type == "allpass" then
-        b0 =   1 - alpha
-        b1 =  -2*cos_w0
-        b2 =   1 + alpha
-        a0 =   1 + alpha
-        a1 =  -2*cos_w0
-        a2 =   1 - alpha
+        b0 = 1 - alpha
+        b1 = -2 * cos_w0
+        b2 = 1 + alpha
+        a0 = 1 + alpha
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha
     elseif type == "peakeq" then
-        b0 =   1 + alpha*A
-        b1 =  -2*cos_w0
-        b2 =   1 - alpha*A
-        a0 =   1 + alpha/A
-        a1 =  -2*cos_w0
-        a2 =   1 - alpha/A
+        b0 = 1 + alpha * A
+        b1 = -2 * cos_w0
+        b2 = 1 - alpha * A
+        a0 = 1 + alpha / A
+        a1 = -2 * cos_w0
+        a2 = 1 - alpha / A
     elseif type == "lowshelf" then
         local tsaa = 2 * sqrt(A) * alpha
-        b0 =    A*( (A+1) - (A-1)*cos_w0 + tsaa            )
-        b1 =  2*A*( (A-1) - (A+1)*cos_w0                   )
-        b2 =    A*( (A+1) - (A-1)*cos_w0 - tsaa            )
-        a0 =        (A+1) + (A-1)*cos_w0 + tsaa
-        a1 =   -2*( (A-1) + (A+1)*cos_w0                   )
-        a2 =        (A+1) + (A-1)*cos_w0 - tsaa
+        b0 = A * ((A + 1) - (A - 1) * cos_w0 + tsaa)
+        b1 = 2 * A * ((A - 1) - (A + 1) * cos_w0)
+        b2 = A * ((A + 1) - (A - 1) * cos_w0 - tsaa)
+        a0 = (A + 1) + (A - 1) * cos_w0 + tsaa
+        a1 = -2 * ((A - 1) + (A + 1) * cos_w0)
+        a2 = (A + 1) + (A - 1) * cos_w0 - tsaa
     elseif type == "highshelf" then
         local tsaa = 2 * sqrt(A) * alpha
-        b0 =    A*( (A+1) + (A-1)*cos_w0 + tsaa            )
-        b1 = -2*A*( (A-1) + (A+1)*cos_w0                   )
-        b2 =    A*( (A+1) + (A-1)*cos_w0 - tsaa            )
-        a0 =        (A+1) - (A-1)*cos_w0 + tsaa
-        a1 =    2*( (A-1) - (A+1)*cos_w0                   )
-        a2 =        (A+1) - (A-1)*cos_w0 - tsaa
+        b0 = A * ((A + 1) + (A - 1) * cos_w0 + tsaa)
+        b1 = -2 * A * ((A - 1) + (A + 1) * cos_w0)
+        b2 = A * ((A + 1) + (A - 1) * cos_w0 - tsaa)
+        a0 = (A + 1) - (A - 1) * cos_w0 + tsaa
+        a1 = 2 * ((A - 1) - (A + 1) * cos_w0)
+        a2 = (A + 1) - (A - 1) * cos_w0 - tsaa
     else
         if type == nil then
             error("Filter type is a nil value")
         else
-            error("Unsupported filter type: '"..type.."'")
+            error("Unsupported filter type: '" .. type .. "'")
         end
     end
 
@@ -397,7 +399,7 @@ local function biquadFilter(sound, parameters)
     for j = 1, ch do
         x0, x1, x2 = 0, 0, 0
         y0, y1, y2 = 0, 0, 0
-        for i=startSample + j - 1, finishSample, ch do
+        for i = startSample + j - 1, finishSample, ch do
             local inputSample = sound:getSample(i)
             local outputSample = process(sound:getSample(i))
             outputSample = inputSample * (1 - wet) + (outputSample * wet)
@@ -479,8 +481,8 @@ function sone.pan(sound, pan)
     }
 
     local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
-    for i=0, sampleCount do
-        sound:setSample(i, sound:getSample(i) * gains[i%2])
+    for i = 0, sampleCount do
+        sound:setSample(i, sound:getSample(i) * gains[i % 2])
     end
 
     return sound
@@ -514,7 +516,7 @@ function sone.fadeIn(sound, seconds, fadeType)
 
     assert(finish <= sampleCount, "Fade in cannot be longer than the sound")
 
-    for i=start, finish do
+    for i = start, finish do
         t = ease(i, start, 1, finish)
         sound:setSample(i, t * sound:getSample(i))
     end
@@ -551,7 +553,7 @@ function sone.fadeOut(sound, seconds, fadeType)
 
     assert(start >= 0, "Fade out cannot be longer than the sound")
 
-    for i=start, finish do
+    for i = start, finish do
         t = 1 - ease(i - start, 0, 1, finish - start)
         sound:setSample(i, t * sound:getSample(i))
     end
@@ -591,12 +593,13 @@ end
 --- @param boolean copyOverData (optional) If false, only a new SoundData will be created with the same sample count, sample rate, bit depth, and channels. The actual signal data will not be copied.
 --- @return SoundData The copied sound.
 function sone.copy(sound, copyOverData)
-    local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(), sound:getChannels())
+    local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(),
+        sound:getChannels())
     copyOverData = copyOverData == nil and true or copyOverData
-   
+
     if copyOverData then
         local sampleCount = sound:getSampleCount() * sound:getChannels() - 1
-        for i=0, sampleCount do
+        for i = 0, sampleCount do
             copy:setSample(i, sound:getSample(i))
         end
     end
@@ -723,7 +726,7 @@ end
 --- Default: 1 (100%). Ranges from 0 (0%) to 1 (100%).
 
 --- @type SoundData
---- A SoundData object from LOVE. 
+--- A SoundData object from LOVE.
 --- https://www.love2d.org/wiki/SoundData
 --- @end type
 
