@@ -1,3 +1,5 @@
+local Camera = require 'vendor.brady'
+
 function resizeCamera( self, w, h )
    local scaleW, scaleH = w / self.w, h / self.h
    local scale = math.min( scaleW, scaleH )
@@ -40,7 +42,6 @@ function setCameraViewport(cam, w, h)
    local cw, ch = cam:getContainerDimensions()
    local targetScale = math.min(cw/w, ch/h)
    cam:setScale(targetScale)
-
    cam:setTranslation(cx, -1 * h/2)
 end
 
@@ -157,7 +158,7 @@ function cameraApplyTranslate(dt, layer)
 	 translateScheduler.happenedByPressedItems = false
 	 local cx,cy = cam:getTranslation()
 	 local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
-	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=5}
+	 cameraTween = {goalX=cx + delta, goalY=cy, smoothValue=smoothValue}
       end
       ------ end that part
 

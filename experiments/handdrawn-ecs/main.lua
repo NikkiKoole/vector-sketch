@@ -1,6 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
-Camera = require 'custom-vendor.brady'
+--Camera = require 'vendor.brady'
 
 require 'lib.recursivelyMakeTextures'
 --require 'lib.scene-graph'
@@ -13,12 +13,12 @@ require 'lib.poly'
 --require 'lib.main-utils'
 require 'lib.toolbox'
 require 'lib.polyline'
-
+require 'lib.camera'
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
-require 'src.camera'
+
 require 'src.mesh'
 require 'src.outwardRectangle'
 

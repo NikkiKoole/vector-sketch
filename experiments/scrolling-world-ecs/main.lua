@@ -1,7 +1,7 @@
 --https://grafiek.royscholten.nl/project/50-vogels/
 package.path = package.path .. ";../../?.lua"
 
-Camera = require 'vendor.brady'
+--Camera = require 'vendor.brady'
 inspect = require 'vendor.inspect'
 tween = require 'vendor.tween'
 ProFi = require 'vendor.ProFi'
@@ -14,7 +14,7 @@ require 'lib.basic-tools'
 require 'lib.polyline'
 require 'lib.generate-polygon'
 require 'lib.ui'
-
+require 'lib.camera'
 
 require 'src.generateWorld'
 require 'src.gradient'
@@ -22,7 +22,7 @@ require 'src.groundplane'
 require 'src.fillstuf'
 require 'src.removeAddItems'
 require 'src.pointer-interactions'
-require 'src.camera'
+
 require 'src.newton'
 require 'src.actor'
 require 'src.stackStuff'
@@ -46,8 +46,10 @@ local round2 = numbers.round2
 -- https://love2d.org/wiki/love.filesystem.mount
 function mountZip(filename, mountpoint)
   local f = io.open(filename, 'r')
+  
   local filedata = love.filesystem.newFileData(f:read("*all"), filename)
   f:close()
+  
   return love.filesystem.mount(filedata, mountpoint or 'zip')
 end
 
