@@ -1,7 +1,7 @@
 --https://grafiek.royscholten.nl/project/50-vogels/
 package.path = package.path .. ";../../?.lua"
 
-Camera = require 'custom-vendor.brady'
+Camera = require 'vendor.brady'
 inspect = require 'vendor.inspect'
 tween = require 'vendor.tween'
 ProFi = require 'vendor.ProFi'

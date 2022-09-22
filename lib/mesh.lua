@@ -8,6 +8,7 @@ local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
 local polyline = require 'lib.polyline'
 
+local border = require 'lib.border-mesh'
 require 'lib.basics' --tableconcat
 
 -- todo @global imageCache
@@ -408,7 +409,7 @@ mesh.remeshNode = function(node)
    end
 
    if node.border then
-      node.borderMesh = makeBorderMesh(node)
+      node.borderMesh = border.makeBorderMesh(node)
    end
 end
 

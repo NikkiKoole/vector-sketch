@@ -5,7 +5,7 @@ local hit = require 'lib.hit'
 
 require 'lib.basics' --vanwege tableconcat
 
-
+--[[
 local function triangulate(type, poly)
    local result = {}
 
@@ -97,7 +97,7 @@ local function triangulate(type, poly)
    return result
 end
 
-
+--]]
 
 -- for the boyonce i prolly need thi algo:
 -- http://rosettacode.org/wiki/Sutherland-Hodgman_polygon_clipping#Lua

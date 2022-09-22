@@ -9,6 +9,7 @@ local mesh = require 'lib.mesh'
 local node = require 'lib.node'
 local parentize = require 'lib.parentize'
 local polyline = require 'lib.polyline'
+local border = require 'lib.border-mesh'
 -- todo @global GLOBALS.parallax
 
 local lerp = numbers.lerp
@@ -501,7 +502,7 @@ function handleChild(shape, isDirty)
          --love.graphics.draw(shape.mesh, shape._parent.transforms._g )
       end
       if currentNode.border and #currentNode.points > 2 then
-         local borderMesh = makeBorderMesh(currentNode)
+         local borderMesh = border.makeBorderMesh(currentNode)
          love.graphics.setColor(0, 0, 0)
          love.graphics.draw(borderMesh, shape._parent.transforms._g)
          --print('need to mesh the direct one too')

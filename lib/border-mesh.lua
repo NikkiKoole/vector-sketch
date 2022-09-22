@@ -3,110 +3,18 @@ local lerp = numbers.lerp
 local unloop = require 'lib.unpack-points'
 local formats = require 'lib.formats'
 local polyline = require 'lib.polyline'
-function makeBorderMesh(node)
-   local work = unloop.unpackNodePointsLoop(node.points)
 
-   local output = {}
+local bordermesh ={}
 
-   for i =50, 100 do
-      local t = (i/100)
-      if t >= 1 then t = 0.99999999 end
+local function getDistance(x1,y1,x2,y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local distance =  math.sqrt ((dx*dx) + (dy*dy))
 
-      local x,y = GetSplinePos(work, t, node.borderTension)
-      table.insert(output, {x,y})
-   end
-
-   local rrr = {}
-   local r2 = evenlySpreadPath(rrr, output, 1, 0, node.borderSpacing)
-
-   output = unloop.unpackNodePoints(rrr)
-   local verts, indices, draw_mode = polyline.render('miter',output, node.borderThickness, nil, nil, node.borderRandomizerMultiplier)
-   local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
-   return mesh
+   return distance
 end
 
-
-function evenlySpreadPath(result, path, index, running, spacing)
-   local here = path[index]
-   if index == #path then return end
-
-   local nextIndex = index+1
-   local there = path[nextIndex]
-   local d = getDistance(here[1], here[2], there[1], there[2])
-   if (d + running) < spacing then
-
-      running = running + d
-      return evenlySpreadPath(result, path, index+1, running, spacing)
-   else
-      if running >= d then
-         --print('missing one here i think', running/d)
-         local x = lerp(here[1], there[1], 1 or running/d)
-         local y = lerp(here[2], there[2], 1 or running/d)
-         --if index < #path-2 then
-         table.insert(result, {x,y, {1,0,0}} )
-         --end
-         --running = d
-      end
-
-      while running <= d do
-
-         local x = lerp(here[1], there[1], running/d)
-         local y = lerp(here[2], there[2], running/d)
-         table.insert(result, {x,y, {1,0,1}})
-
-         running = running + spacing
-      end
-
-      if running >= d then
-         running = running - d
-         return evenlySpreadPath(result, path, index+1, running, spacing)
-      end
-   end
-
-
-end
-
-function evenlySpreadPath(result, path, index, running, spacing)
-   local here = path[index]
-   if index == #path then return end
-
-   local nextIndex = index+1
-   local there = path[nextIndex]
-   local d = getDistance(here[1], here[2], there[1], there[2])
-   if (d + running) < spacing then
-
-      running = running + d
-      return evenlySpreadPath(result, path, index+1, running, spacing)
-   else
-      if running >= d then
-         --print('missing one here i think', running/d)
-         local x = lerp(here[1], there[1], 1 or running/d)
-         local y = lerp(here[2], there[2], 1 or running/d)
-         --if index < #path-2 then
-         table.insert(result, {x,y, {1,0,0}} )
-         --end
-         --running = d
-      end
-
-      while running <= d do
-
-         local x = lerp(here[1], there[1], running/d)
-         local y = lerp(here[2], there[2], running/d)
-         table.insert(result, {x,y, {1,0,1}})
-
-         running = running + spacing
-      end
-
-      if running >= d then
-         running = running - d
-         return evenlySpreadPath(result, path, index+1, running, spacing)
-      end
-   end
-
-
-end
-
-function getLengthOfPath(path)
+local function getLengthOfPath(path)
    local result = 0
    for i = 1, #path-1 do
       local a = path[i]
@@ -118,17 +26,48 @@ function getLengthOfPath(path)
 end
 
 
-function getDistance(x1,y1,x2,y2)
-   local dx = x1 - x2
-   local dy = y1 - y2
-   local distance =  math.sqrt ((dx*dx) + (dy*dy))
+local function evenlySpreadPath(result, path, index, running, spacing)
+   local here = path[index]
+   if index == #path then return end
 
-   return distance
+   local nextIndex = index+1
+   local there = path[nextIndex]
+   local d = getDistance(here[1], here[2], there[1], there[2])
+   if (d + running) < spacing then
+
+      running = running + d
+      return evenlySpreadPath(result, path, index+1, running, spacing)
+   else
+      if running >= d then
+         --print('missing one here i think', running/d)
+         local x = lerp(here[1], there[1], 1 or running/d)
+         local y = lerp(here[2], there[2], 1 or running/d)
+         --if index < #path-2 then
+         table.insert(result, {x,y, {1,0,0}} )
+         --end
+         --running = d
+      end
+
+      while running <= d do
+
+         local x = lerp(here[1], there[1], running/d)
+         local y = lerp(here[2], there[2], running/d)
+         table.insert(result, {x,y, {1,0,1}})
+
+         running = running + spacing
+      end
+
+      if running >= d then
+         running = running - d
+         return evenlySpreadPath(result, path, index+1, running, spacing)
+      end
+   end
+
+
 end
 
-
 --https://love2d.org/forums/viewtopic.php?t=1401
-function GetSplinePos(tab, percent, tension)		--returns the position at 'percent' distance along the spline.
+local function GetSplinePos(tab, percent, tension)		--returns the position at 'percent' distance along the spline.
    if(tab and (#tab >= 4)) then
       local pos = (((#tab)/2) - 1) * percent
       local lowpnt, percent_2 = math.modf(pos)
@@ -171,3 +110,29 @@ function GetSplinePos(tab, percent, tension)		--returns the position at 'percent
       return px, py
    end
 end
+
+
+bordermesh.makeBorderMesh = function(node)
+   local work = unloop.unpackNodePointsLoop(node.points)
+
+   local output = {}
+
+   for i =50, 100 do
+      local t = (i/100)
+      if t >= 1 then t = 0.99999999 end
+
+      local x,y = GetSplinePos(work, t, node.borderTension)
+      table.insert(output, {x,y})
+   end
+
+   local rrr = {}
+   local r2 = evenlySpreadPath(rrr, output, 1, 0, node.borderSpacing)
+
+   output = unloop.unpackNodePoints(rrr)
+   local verts, indices, draw_mode = polyline.render('miter',output, node.borderThickness, nil, nil, node.borderRandomizerMultiplier)
+   local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
+   return mesh
+end
+
+
+return bordermesh

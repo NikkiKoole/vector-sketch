@@ -104,7 +104,7 @@ function getDirectChildrenBBox(node)
 
 end
 
-function getGroupBBox(group)
+ function getGroupBBox(group)
    local tlx = math.huge
    local tly = math.huge
    local brx = -math.huge
