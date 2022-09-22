@@ -244,7 +244,7 @@ end
 function love.mousepressed(x, y)
    local w, h = love.graphics.getDimensions()
    if x <= w * part then
-      mylib:mousepressed(x, y, button)
+      mylib:mousepressed(x, y)
    else
       myWorld:emit('pressed', x, y)
    end

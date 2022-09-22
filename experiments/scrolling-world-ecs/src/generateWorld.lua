@@ -1,6 +1,6 @@
 local numbers = require 'lib.numbers'
-
-
+local bbox = require 'lib.bbox'
+local mesh = require 'lib.mesh'
 function test()
    local start = love.timer.getTime()
    for x = 1, 100 do
@@ -98,7 +98,7 @@ function generateRandomPolysAndAddToContainer(amount, factors, container)
 	 table.insert(points, {generated[i], generated[i+1]})
       end
 
-      local tlx, tly, brx, bry = getPointsBBox(points)
+      local tlx, tly, brx, bry = bbox.getPointsBBox(points)
       local pointsHeight = math.floor((bry - tly)/2)
 
       local r,g,b = hex2rgb('4D391F')
@@ -122,7 +122,7 @@ function generateRandomPolysAndAddToContainer(amount, factors, container)
 	    },
 	 }
       }
-      meshAll(randomShape)
+      mesh.meshAll(randomShape)
 
       table.insert(container.children, randomShape)
    end

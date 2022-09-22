@@ -16,7 +16,7 @@ bbox.getPointsBBox = function(points)
    return tlx, tly, brx, bry
 end
 function getMiddleOfPoints(points)
-   local tlx, tly, brx, bry = getPointsBBox(points)
+   local tlx, tly, brx, bry = bbox.getPointsBBox(points)
    return tlx + (brx - tlx)/2, tly + (bry - tly)/2
 end
 
@@ -112,7 +112,7 @@ function getGroupBBox(group)
    for i = 1, #group do
 
       if group[i].points then
-         local tlx2, tly2, brx2, bry2 = getPointsBBox(group[i].points)
+         local tlx2, tly2, brx2, bry2 = bbox.getPointsBBox(group[i].points)
          if tlx2 < tlx then
             tlx = tlx2
          end

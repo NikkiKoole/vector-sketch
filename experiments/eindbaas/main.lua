@@ -2,15 +2,15 @@ package.path = package.path .. ";../../?.lua"
 
 --require 'lib.scene-graph'
 require 'lib.copyshape'
-require 'lib.poly'
-require 'lib.bbox'
+--require 'lib.poly'
+--require 'lib.bbox'
 --require 'lib.basics'
 
 --require 'lib.toolbox'
 
-flux = require "vendor.flux"
+--flux = require "vendor.flux"
 --require 'lib.main-utils'
-inspect = require 'vendor.inspect'
+local inspect = require 'vendor.inspect'
 
 local parse = require 'lib.parse-file'
 local parentize = require 'lib.parentize'
@@ -23,7 +23,7 @@ function love.keypressed(key)
       love.event.quit()
    end
    if key == 'p' then
-      renderNodeIntoCanvas(root, love.graphics.newCanvas(1000, 1000))
+      render.renderNodeIntoCanvas(root, love.graphics.newCanvas(1000, 1000))
    end
 end
 

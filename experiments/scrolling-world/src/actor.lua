@@ -28,7 +28,7 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    end
 
 
-   local cp, cp2 = bezier.positionControlPoints(a, b, length, flip, .25)
+   local cp, cp2 = bezier.positionControlPoints(a, b, length, flip, 0.25)
    local result = {}
 
    local widths = {}
@@ -255,7 +255,7 @@ function Actor:update(dt)
          local oldLeftFootY = self.lfoot.transforms.l[2]
          local oldLeftFootX = self.lfoot.transforms.l[1]
 
-         --self.beingPressed = false ??????
+         -- self.beingPressed = false --??????
          
          self:straightenLegs()
          local newLeftFootY = self.lfoot.transforms.l[2]

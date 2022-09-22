@@ -9,7 +9,7 @@ function recursivelyMakeTextures(root)
          print('making texture', root.texture.url)
          local img = love.graphics.newImage(root.texture.url, { mipmaps = true })
          img:setWrap(root.texture.wrap or 'clampzero')
-         img:setFilter(root.texture.filter or 'linear')
+         img:setFilter(root.texture.filter or 'linear', root.texture.filter or 'linear')
          imageCache[root.texture.url] = img
       end
 

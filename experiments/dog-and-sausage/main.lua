@@ -1,9 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
 require 'lib.scene-graph'
-require 'lib.poly'
-require 'lib.main-utils'
-require 'lib.toolbox'
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"

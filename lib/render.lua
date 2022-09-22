@@ -5,7 +5,7 @@ local bbox = require 'lib.bbox'
 local transform = require 'lib.transform'
 local unloop = require 'lib.unpack-points'
 local formats = require 'lib.formats'
-
+local mesh = require 'lib.mesh'
 -- todo @global GLOBALS.parallax
 
 render.renderThings = function(root, dirty)
@@ -77,31 +77,31 @@ function handleChild(shape, isDirty)
    --   print(shape.type)
 
    if shape.mask or shape.hole then
-      local mesh
+      local m
       if currentNode ~= shape then
-         mesh = shape.mesh -- the standard way of rendering
+         m = shape.mesh -- the standard way of rendering
       else
          print('making mesh in handlechild')
          --remeshNode(shape)
-         mesh = makeMeshFromVertices(makeVertices(shape), shape.type, shape.texture) -- realtime iupdating the thingie
+         m = mesh.makeMeshFromVertices(mesh.makeVertices(shape), shape.type, shape.texture) -- realtime iupdating the thingie
       end
 
       local parentIndex = getIndex(shape._parent)
       maskIndex = maskIndex + 1
       local thisIndex = (maskIndex % 255) + 1
 
-      if shape.hole and mesh then
+      if shape.hole and m then
          love.graphics.stencil(
             function()
-               love.graphics.draw(mesh, shape._parent.transforms._g)
+               love.graphics.draw(m, shape._parent.transforms._g)
             end, "replace", parentIndex, true)
 
       end
 
-      if shape.mask and mesh then
+      if shape.mask and m then
          love.graphics.stencil(
             function()
-               love.graphics.draw(mesh, shape._parent.transforms._g)
+               love.graphics.draw(m, shape._parent.transforms._g)
             end, "replace", thisIndex, true)
       end
 
@@ -239,10 +239,10 @@ function handleChild(shape, isDirty)
             -- render outline!!!!!
             local work = unloop.unpackNodePoints(shape.points)
             local verts, indices, draw_mode = polyline('bevel', work, 10, 1, true)
-            local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
+            local m = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
             love.graphics.setColor(shape.color[1] - .2, shape.color[2] - .2, shape.color[3] - .2, shape.color[4])
             love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(mesh, shape._parent.transforms._g)
+            love.graphics.draw(m, shape._parent.transforms._g)
          end
 
 
@@ -250,7 +250,7 @@ function handleChild(shape, isDirty)
    end
    if currentNode == shape then
 
-      local editing = makeVertices(shape)
+      local editing = mesh.makeVertices(shape)
       if (editing and #editing > 0) then
          --print('makemesh in handlechild custom, this doenst do textured polygons yet', currentNode.type)
 
@@ -267,7 +267,7 @@ function handleChild(shape, isDirty)
             end
          end
          --	 print(inspect(editing))
-         local editingMesh = makeMeshFromVertices(editing, currentNode.type, currentNode.texture)
+         local editingMesh = mesh.makeMeshFromVertices(editing, currentNode.type, currentNode.texture)
          --print(inspect(editingMesh))
 
          -- so the data here doesnt contain UV pairss

@@ -33,6 +33,7 @@ local LK = love.keyboard
 local text = require 'lib.text'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
+local remeshNode = mesh.remeshNode
 local render = require 'lib.render'
 local hit = require 'lib.hit'
 local bbox = require 'lib.bbox'
@@ -77,7 +78,14 @@ function mylib:resize(w, h)
       x = w - 160,
    }
 end
+local function getAngleAndDistance(x1, y1, x2, y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local angle = math.atan2(dy, dx)
+   local distance = math.sqrt((dx * dx) + (dy * dy))
 
+   return angle, distance
+end
 local function getCircumference()
    local total = 0
    for i = 1, #currentNode.points - 1 do
@@ -90,14 +98,7 @@ local function getCircumference()
    return total
 end
 
-local function getAngleAndDistance(x1, y1, x2, y2)
-   local dx = x1 - x2
-   local dy = y1 - y2
-   local angle = math.atan2(dy, dx)
-   local distance = math.sqrt((dx * dx) + (dy * dy))
 
-   return angle, distance
-end
 
 local function getLocalDelta(transform, dx, dy)
    local dx1, dy1 = transform:inverseTransformPoint(0, 0)
@@ -1489,12 +1490,12 @@ local function drawUIAroundGraphNodes(w, h)
             LG.setColor(1, 1, 1, 1)
             if v == 'printChildrenInRectangleSelect' then
                if (#childrenInRectangleSelect > 0) then
-                  LG.print(#childrenInRectangleSelect, row.runningX - 40, row.runningY)
+                  LG.print(tostring(#childrenInRectangleSelect), row.runningX - 40, row.runningY)
                end
             end
             if v == 'printOptimizedBatchMesh' then
                if currentNode and currentNode.optimizedBatchMesh and #currentNode.optimizedBatchMesh then
-                  LG.print(#currentNode.optimizedBatchMesh, row.runningX - 40, row.runningY)
+                  LG.print(tostring(#currentNode.optimizedBatchMesh), row.runningX - 40, row.runningY)
                end
             end
 
@@ -1629,7 +1630,7 @@ function mylib:mousepressed(x, y, button)
    end
 
    if (LK.isDown('lctrl')) then
-      local d = findMeshThatsHit(root, x, y, LK.isDown('lctrl'))
+      local d = hit.findMeshThatsHit(root, x, y, LK.isDown('lctrl'))
       if d then
          setCurrentNode(d)
          tryToCenterUI(d, root)
@@ -2321,7 +2322,7 @@ function mylib:draw()
             local editing = false
 
             if (editing and #editing > 0) then
-               local editingMesh = makeMeshFromVertices(editing)
+               local editingMesh = mesh.makeMeshFromVertices(editing)
                LG.draw(editingMesh, currentlyHoveredUINode._parent.transforms._g)
             end
          end
@@ -2595,7 +2596,7 @@ function mylib:draw()
             local v = h_slider("polyline_alpha", calcX(0), calcY(10), 100, currentNode.color[4], 0, 1)
             if (v.value ~= nil) then
                currentNode.color[4] = v.value
-               LG.print(currentNode.color[4], calcX(0), calcY(10))
+               LG.print(tostring(currentNode.color[4]), calcX(0), calcY(10))
             end
          end
 
@@ -3033,7 +3034,7 @@ function mylib:keypressed(key, scancode, isrepeat)
 
       if key == 'a' and not changeName then
          print("rendering a large file: " .. shapePath .. shapeName .. ".x4.polygons.png")
-         renderNodeIntoCanvas(root, LG.newCanvas(1024 * 4, 1024 * 4), shapePath .. shapeName .. ".x4.polygons.png")
+         render.renderNodeIntoCanvas(root, LG.newCanvas(1024 * 4, 1024 * 4), shapePath .. shapeName .. ".x4.polygons.png")
 
       end
 

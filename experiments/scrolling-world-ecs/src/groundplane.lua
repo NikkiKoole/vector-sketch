@@ -1,5 +1,5 @@
 local numbers = require 'lib.numbers'
-local fromats = require 'lib.formats'
+local formats = require 'lib.formats'
 groundTiles = {}
 
 local minground = -2000
@@ -292,7 +292,7 @@ function drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
 
       for v = 1, count do
          local x, y = thing.optimizedBatchMesh[j].mesh:getVertex(v)
-         local r = transferPoint(x, y, source, dest)
+         local r =  numbers.transferPoint(x, y, source, dest)
          table.insert(result, { r.x, r.y })
       end
 

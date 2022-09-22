@@ -4,7 +4,7 @@ local numbers = require 'lib.numbers'
 local lerp = numbers.lerp
 local parentize = require 'lib.parentize'
 local hit = require 'lib.hit'
-
+local mesh = require 'lib.mesh'
 
 
 
@@ -32,40 +32,6 @@ function recursiveLookForHitArea(node)
    return false
 end
 
-function findMeshThatsHit(parent, mx, my, order)
-   -- order decides which way we will walk,
-   -- order = false will return the firts hitted one (usually below everything)
-   -- order = true will return the last hitted
-   local result = nil
-   for i = 1, #parent.children do
-      if parent.children[i].children then
-         if order then
-            local temp = findMeshThatsHit(parent.children[i], mx, my, order)
-            if temp then
-               result = temp
-            end
-         else
-            return findMeshThatsHit(parent.children[i], mx, my, order)
-         end
-
-      else
-
-         local hit = hit.pointInMesh(mx, my, parent, parent.children[i].mesh)
-         if hit then
-            if order then
-               result = parent.children[i]
-            else
-               return parent.children[i]
-            end
-         end
-      end
-   end
-   if (order) then
-      return result
-   else
-      return nil
-   end
-end
 
 local function lerpColor(c1, c2, t)
    return { lerp(c1[1], c2[1], t),
@@ -131,7 +97,7 @@ function lerpNodes(left, right, root, t)
       root.points = lerpPoints(left.points, right.points, t)
       --root._parent = left._parent
       --print('make mesh from vertices lerp stuff' )
-      root.mesh = makeMeshFromVertices(makeVertices(root), root.type, root.texture)
+      root.mesh = mesh.makeMeshFromVertices(mesh.makeVertices(root), root.type, root.texture)
    end
 
    return root

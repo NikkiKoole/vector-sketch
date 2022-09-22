@@ -1,3 +1,4 @@
+
    if (false) then
       sortOnDepth(stuff)
       for _, v in pairs(stuff) do
@@ -117,3 +118,4 @@ function drawCameraCross(W,H)
    love.graphics.line(0,0,W,H)
    love.graphics.line(0,H,W,0)
 end
+

@@ -292,7 +292,7 @@ function love.load()
    }
 
    GLOBALS = {
-      parallax = undefined
+      parallax = nil
    }
 
    SM.setPath("scenes/")

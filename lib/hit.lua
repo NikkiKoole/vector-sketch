@@ -26,6 +26,55 @@ hit.pointInRect = function(x, y, rx, ry, rw, rh)
    return true
 end
 
+hit.pointInPath = function(x, y, poly)
+   local num = #poly
+   local j = num - 1
+   local c = false
+   for i = 1, #poly, 2 do
+      if ((poly[i + 1] > y) ~= (poly[j + 1] > y)) and
+          (x < (poly[j + 0] - poly[i + 0]) * (y - poly[i + 1]) / (poly[j + 1] - poly[i + 1]) + poly[i + 0]) then
+         c = not c
+      end
+      j = i
+   end
+   return c
+end
+
+hit.findMeshThatsHit = function(parent, mx, my, order)
+   -- order decides which way we will walk,
+   -- order = false will return the firts hitted one (usually below everything)
+   -- order = true will return the last hitted
+   local result = nil
+   for i = 1, #parent.children do
+      if parent.children[i].children then
+         if order then
+            local temp = hit.findMeshThatsHit(parent.children[i], mx, my, order)
+            if temp then
+               result = temp
+            end
+         else
+            return hit.findMeshThatsHit(parent.children[i], mx, my, order)
+         end
+
+      else
+
+         local hitted = hit.pointInMesh(mx, my, parent, parent.children[i].mesh)
+         if hitted then
+            if order then
+               result = parent.children[i]
+            else
+               return parent.children[i]
+            end
+         end
+      end
+   end
+   if (order) then
+      return result
+   else
+      return nil
+   end
+end
+
 
 local function signT(p1, p2, p3)
    return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
