@@ -10,7 +10,7 @@ local node = require 'lib.node'
 local parentize = require 'lib.parentize'
 local polyline = require 'lib.polyline'
 local border = require 'lib.border-mesh'
-
+require 'lib.camera'
 local cam = getCamera()
 -- todo @global GLOBALS.parallax
 

@@ -1,17 +1,5 @@
 local Camera = require 'vendor.brady'
 
-function resizeCamera(self, w, h)
-   local scaleW, scaleH = w / self.w, h / self.h
-   local scale = math.min(scaleW, scaleH)
-   -- the line below keeps aspect
-   --self.w, self.h = scale * self.w, scale * self.h
-   -- the line below deosnt keep aspect
-   self.w, self.h = scaleW * self.w, scaleH * self.h
-   self.aspectRatio = self.w / w
-   self.offsetX, self.offsetY = self.w / 2, self.h / 2
-   offset = offset * scale
-end
-
 function createCamera()
    offset = 0
    local W, H = love.graphics.getDimensions()
@@ -33,8 +21,6 @@ function createCamera()
          end
       }
    )
-
-
 end
 
 local _c = createCamera()
@@ -43,6 +29,18 @@ function getCamera()
 end
 
 local cam = getCamera()
+
+function resizeCamera(self, w, h)
+   local scaleW, scaleH = w / self.w, h / self.h
+   local scale = math.min(scaleW, scaleH)
+   -- the line below keeps aspect
+   --self.w, self.h = scale * self.w, scale * self.h
+   -- the line below deosnt keep aspect
+   self.w, self.h = scaleW * self.w, scaleH * self.h
+   self.aspectRatio = self.w / w
+   self.offsetX, self.offsetY = self.w / 2, self.h / 2
+   offset = offset * scale
+end
 
 --local _c = createCamera()
 
