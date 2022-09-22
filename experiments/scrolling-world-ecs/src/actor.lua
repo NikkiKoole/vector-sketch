@@ -1,5 +1,4 @@
 local geom = require 'lib.geom'
-local bezier = require 'lib.bezier'
 local numbers = require 'lib.numbers'
 local transform = require 'lib.transform'
 local formats = require 'lib.formats'
@@ -27,7 +26,7 @@ function makeRubberHoseLeg(a, b, length, steps, lineData, flip)
    end
 
 
-   local cp, cp2 = bezier.positionControlPoints(a, b, length, flip, .25)
+   local cp, cp2 = geom.positionControlPoints(a, b, length, flip, .25)
    local result = {}
 
    local widths = {}

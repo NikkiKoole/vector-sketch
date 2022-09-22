@@ -1,19 +1,12 @@
 package.path = package.path .. ";../../?.lua"
 
-
-require 'lib.ui'
-require 'lib.basics'
-
---require 'lib.main-utils'
---require 'lib.scene-graph'
---require 'lib.toolbox'
-
-inspect = require "vendor.inspect"
+local inspect = require "vendor.inspect"
 
 local parentize = require 'lib.parentize'
 local render = require 'lib.render'
 local mesh = require 'lib.mesh'
---local bbox = require 'lib.bbox'
+
+require 'lib.ui'
 
 function love.keypressed(key)
    if key == 'escape' then

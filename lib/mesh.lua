@@ -1,7 +1,7 @@
 local mesh = {}
 
 local formats = require 'lib.formats'
-local bezier = require 'lib.bezier'
+local geom = require 'lib.geom'
 local unloop = require 'lib.unpack-points'
 local hit = require 'lib.hit'
 require 'lib.basics' --tableconcat
@@ -208,7 +208,7 @@ mesh.makeVertices = function(shape)
          }
 
          local magic = 4.46
-         local cp1, cp2 = bezier.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop,
+         local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop,
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
 

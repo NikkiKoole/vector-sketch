@@ -13,7 +13,6 @@ require 'lib.segment'
 require 'lib.poly'
 
 local numbers = require 'lib.numbers'
-local bezier = require 'lib.bezier'
 local hit = require 'lib.hit'
 local geom = require 'lib.geom'
 local formats = require 'lib.formats'
@@ -213,7 +212,7 @@ function love.draw()
    for i = 1, #hoses do
       local hose = hoses[i]
       local start = hose.start
-      local cp, cp2 = bezier.positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, borderRadius)
+      local cp, cp2 = geom.positionControlPoints(hose.start, hose.eind, hose.hoseLength, hose.flop, borderRadius)
       local eind = hoses[i].eind
       local d = geom.distance(start.x, start.y, eind.x, eind.y)
       local curve = love.math.newBezierCurve({ start.x, start.y, cp.x, cp.y, cp2.x, cp2.y, eind.x, eind.y })
