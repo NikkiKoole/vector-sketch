@@ -17,7 +17,8 @@ local hasBeenLoaded = false
 local parentize = require 'lib.parentize'
 local parallax = require 'lib.parallax'
 local render = require 'lib.render'
-local cam = getCamera()
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 function scene.modify(data)
 end
 

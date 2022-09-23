@@ -5,7 +5,8 @@ local render = require 'lib.render'
 local hit = require 'lib.hit'
 local scene = {}
 local hasBeenLoaded = false
-local cam = getCamera()
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 

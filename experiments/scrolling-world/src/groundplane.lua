@@ -1,7 +1,7 @@
 local numbers = require 'lib.numbers'
 local formats = require 'lib.formats'
-local cam = getCamera()
-
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 local groundTiles = {}
 
 local minground = -200

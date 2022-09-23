@@ -1,6 +1,7 @@
 local geom = require 'lib.geom'
 local parallax = require 'lib.parallax'
-local cam = getCamera()
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 --[[
 stackable :  means this is a normal item that is allowed to be placed in a stack
 inStack   :  means this thing is in a stack, inStack has a prev & next link (double linked list)

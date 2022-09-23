@@ -29,8 +29,8 @@ local mesh = require 'lib.mesh'
 local render = require 'lib.render'
 
 local myWorld = Concord.world()
-
-local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
+--local cam = getCamera()
 --[[
    the process of geting the right handdrawn images
    draw an image with pencil, the size of my hand is roughly the size of a person

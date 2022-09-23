@@ -1,6 +1,7 @@
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
-local cam = getCamera()
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 local gesture = require 'lib.gesture'
 local gestureState = gesture.getState()
 local pointer = require 'lib.pointer'

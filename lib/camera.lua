@@ -1,39 +1,8 @@
-local Camera = require 'vendor.brady'
 local gesture = require 'lib.gesture'
 local gestureState = gesture.getState()
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
-
-function createCamera()
-   offset = 0
-   local W, H = love.graphics.getDimensions()
-
-   return Camera(
-      W - 2 * offset,
-      H - 2 * offset,
-      {
-         x = offset, y = offset, resizable = true, maintainAspectRatio = true,
-         resizingFunction = function(self, w, h)
-            resizeCamera(self, w, h)
-            local W, H = love.graphics.getDimensions()
-            self.x = offset
-            self.y = offset
-         end,
-         getContainerDimensions = function()
-            local W, H = love.graphics.getDimensions()
-            return W - 2 * offset, H - 2 * offset
-         end
-      }
-   )
-end
-
--- todo @global singleton camera
-local _c = createCamera()
-function getCamera()
-   return _c
-end
-
-local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 
 function createCamData(item, parallaxData)
    local camData = nil -- its important to be nil at start
@@ -54,6 +23,7 @@ function createCamData(item, parallaxData)
 
    return camData
 end
+
 
 function camDataToScreen(c, parallaxData, px, py)
       local camData = createCamData(c, parallaxData)
@@ -98,9 +68,9 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
    local camData = createCamData(item, parallaxData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
 
-   
+
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
-   
+
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
    return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
@@ -109,18 +79,12 @@ end
 function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    local camData = createCamData(item, parallaxData)
    local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
-   local hit = hit.recursiveHitCheck(mx2, my2, item)
-   return hit
+   return hit.recursiveHitCheck(mx2, my2, item)
+
 end
+
 
 -- todo @global cameratween
-local _cameraTween = nil
-local _tweenCameraDelta = nil
-
-function setCameraTween(data)
-   print(inspect(data))
-   _cameraTween = data
-end
 
 local translateScheduler = {
    x = 0,
@@ -164,60 +128,7 @@ end
 function drawCameraBounds(cam, mode)
    love.graphics.rectangle(mode, cam.x, cam.y, cam.w, cam.h)
 end
-function resetCameraTween()
-   if _cameraTween then
-      _cameraTween = nil
-      _tweenCameraDelta = 0
-   end
-end
 
-function manageCameraTween(dt)
-   --print(inspect(#gestureState.list))
-   --[[
-if cameraFollowPlayer then
-      local distanceAhead = math.floor(300*v.x)
-      followPlayerCameraDelta = cam:setTranslationSmooth(
-         player.x + player.width/2 ,
-         player.y - 350,
-         dt,
-         10
-      )
-   end
-   ]]--
-
-   if _cameraTween then
-      local delta = cam:setTranslationSmooth(
-         _cameraTween.goalX,
-         _cameraTween.goalY,
-         dt,
-         _cameraTween.smoothValue
-      )
-
-      if delta.x ~= 0 then
-
-         cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
-      end
-      -- todo @ get rid of this gesturestate here
-      if (delta.x + delta.y) == 0 then
-
-         print('yoyoyo')
-         for i = #gestureState.list, 1, - 1 do
-            print(_cameraTween.originalGesture, gestureState.list[i] )
-            if _cameraTween.originalGesture == gestureState.list[i] then
-               if gestureState.list[i] ~= nil then
-                  print('removed gesture', inspect(gestureState.list[i]) )
-                  removeGestureFromList(gestureState.list[i])
-               end
-            end
-         end
-
-         _cameraTween = nil
-
-      end
-      _tweenCameraDelta = (delta.x + delta.y)
-   end
-
-end
 
 function generateCameraLayer(name, zoom)
    return cam:addLayer(name, zoom, { relativeScale = (1.0 / zoom) * zoom })
@@ -308,3 +219,74 @@ function cameraApplyTranslate(dt, layer)
 
 end
 
+
+-- take it out please!!! this below is in camera-tween....
+-- not yet 100% on how to continue
+
+local _cameraTween = nil
+local _tweenCameraDelta = nil
+
+function setCameraTween(data)
+   print(inspect(data))
+   _cameraTween = data
+end
+
+function resetCameraTween()
+    if _cameraTween then
+       _cameraTween = nil
+       _tweenCameraDelta = 0
+    end
+ end
+
+ function manageCameraTween(dt)
+    --print(inspect(#gestureState.list))
+    --[[
+ if cameraFollowPlayer then
+       local distanceAhead = math.floor(300*v.x)
+       followPlayerCameraDelta = cam:setTranslationSmooth(
+          player.x + player.width/2 ,
+          player.y - 350,
+          dt,
+          10
+       )
+    end
+    ]]--
+ 
+    if _cameraTween then
+       local delta = cam:setTranslationSmooth(
+          _cameraTween.goalX,
+          _cameraTween.goalY,
+          dt,
+          _cameraTween.smoothValue
+       )
+ 
+       if delta.x ~= 0 then
+ 
+          cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
+       end
+       -- todo @ get rid of this gesturestate here
+       -- it alos involves _cameratween
+       -- basically I look for a gesture that is identical to cameratween.original and then remove it.
+       -- but there inst a safe plaace where i have acces to both th etween and the gesturestatelist
+ 
+       if (delta.x + delta.y) == 0 then
+ 
+          print('yoyoyo')
+          for i = #gestureState.list, 1, - 1 do
+             print(_cameraTween.originalGesture, gestureState.list[i] )
+             if _cameraTween.originalGesture == gestureState.list[i] then
+                if gestureState.list[i] ~= nil then
+                   print('removed gesture', inspect(gestureState.list[i]) )
+                   removeGestureFromList(gestureState.list[i])
+                end
+             end
+          end
+ 
+          _cameraTween = nil
+ 
+       end
+       _tweenCameraDelta = (delta.x + delta.y)
+    end
+ 
+ end
+     

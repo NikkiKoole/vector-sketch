@@ -2,7 +2,8 @@ local scene = {}
 local hasBeenLoaded = false
 
 local render = require 'lib.render'
-local cam = getCamera()
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 
 function scene.modify(obj)
 end

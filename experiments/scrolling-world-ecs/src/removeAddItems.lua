@@ -2,8 +2,8 @@ local numbers = require 'lib.numbers'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local parallax = require 'lib.parallax'
-local cam = getCamera()
-
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld, layerIndex)
    for i = #parallaxData.layer.children, 1, -1 do
       local child = parallaxData.layer.children[i]---map[layerName][i]

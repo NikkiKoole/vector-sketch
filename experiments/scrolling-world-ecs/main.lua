@@ -17,7 +17,8 @@ require 'lib.ui'
 require 'lib.camera'
 require 'lib.generateWorld'
 
-local cam = getCamera()
+--local cam = getCamera()
+local cam = require('lib.cameraBase').getInstance()
 
 require 'src.gradient'
 require 'src.groundplane'
