@@ -64,13 +64,9 @@ function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
 end
 
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
-
    local camData = createCamData(item, parallaxData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
-
-
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
-
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
 
    return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
@@ -79,8 +75,8 @@ end
 function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    local camData = createCamData(item, parallaxData)
    local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
-   return hit.recursiveHitCheck(mx2, my2, item)
 
+   return hit.recursiveHitCheck(mx2, my2, item)
 end
 
 
@@ -219,9 +215,6 @@ function cameraApplyTranslate(dt, layer)
 
 end
 
-
--- take it out please!!! this below is in camera-tween....
--- not yet 100% on how to continue
 
 local _cameraTween = nil
 local _tweenCameraDelta = nil

@@ -76,6 +76,7 @@ function maybeTriggerGesture(id, x, y, cx, cy, throw)
    end
 end
 
+-- cx and cy can be got from the camera base again
 function gestureRecognizer(gesture, cx, cy, throwfunc)
    if #gesture.positions > 1 then
       local startP = gesture.positions[1]
