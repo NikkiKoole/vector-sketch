@@ -14,9 +14,10 @@ local translateScheduler = {
 
 local lib = {}
 
-local _c = gestureState
+-- todo @ global singleton gestureState
+local _gs = gestureState
 lib.getState = function()
-    return _c
+    return _gs
 end
 
 return lib

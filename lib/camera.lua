@@ -23,6 +23,7 @@ function createCamera()
    )
 end
 
+-- todo @global singleton camera
 local _c = createCamera()
 function getCamera()
    return _c
@@ -42,8 +43,6 @@ function resizeCamera(self, w, h)
    offset = offset * scale
 end
 
---local _c = createCamera()
-
 function setCameraViewport(cam, w, h)
    local cx, cy = cam:getTranslation()
 
@@ -59,6 +58,7 @@ function drawCameraBounds(cam, mode)
 end
 
 function manageCameraTween(dt)
+   print(inspect(gestureState))
    if cameraTween then
       local delta = cam:setTranslationSmooth(
          cameraTween.goalX,
