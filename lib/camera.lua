@@ -38,6 +38,7 @@ local _cameraTween = nil
 local _tweenCameraDelta = nil
 
 function setCameraTween(data)
+   print(inspect(data))
    _cameraTween = data
 end
 
@@ -116,9 +117,12 @@ if cameraFollowPlayer then
 
          cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
       end
-    
+      -- todo @ get rid of this gesturestate here
       if (delta.x + delta.y) == 0 then
+
+         print('yoyoyo')
          for i = #gestureState.list, 1, - 1 do
+            print(_cameraTween.originalGesture, gestureState.list[i] )
             if _cameraTween.originalGesture == gestureState.list[i] then
                if gestureState.list[i] ~= nil then
                   print('removed gesture', inspect(gestureState.list[i]) )
@@ -209,7 +213,7 @@ function cameraApplyTranslate(dt, layer)
          translateScheduler.happenedByPressedItems = false
          local cx, cy = cam:getTranslation()
          local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
-         setCameraTween({ goalX = cx + delta, goalY = cy, smoothValue = smoothValue })
+         setCameraTween({ goalX = cx + delta, goalY = cy, smoothValue = smoothValue or 3.5 })
          --cameraTween = 
       end
       ------ end that part

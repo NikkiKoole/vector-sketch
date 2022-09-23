@@ -3,53 +3,9 @@ local hit = require 'lib.hit'
 local cam = getCamera()
 local gesture = require 'lib.gesture'
 local gestureState = gesture.getState()
+local pointer = require 'lib.pointer'
 
-function getPointerPosition(id)
-   local x, y
-   if id == 'mouse' then
-      x, y = love.mouse.getPosition()
-      return x, y, true
-   else
-      local touches = love.touch.getTouches()
-      for i = 1, #touches do
-         if touches[i] == id then
-            x, y = love.touch.getPosition(id)
-            return x, y, true
-         end
-      end
-   end
-   return nil, nil, false
-end
 
-function addGesturePoint(gesture, time, x, y)
-   assert(gesture)
-   table.insert(gesture.positions, { time = time, x = x, y = y })
-end
-
-function removeGestureFromList(gesture)
-   --local found = false
-   for i = #gestureState.list, 1, -1 do
-      if gestureState.list[i] == gesture then
-         table.remove(gestureState.list, i)
-         --found = true
-      end
-   end
-end
-
-function updateGestureCounter(dt)
-   gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
-
-   if gestureState.updateResolutionCounter > gestureState.updateResolution then
-      gestureState.updateResolutionCounter = 0
-      for i = 1, #gestureState.list do
-         local g = gestureState.list[i]
-         local x, y, success = getPointerPosition(g.trigger)
-         if success then
-            addGesturePoint(g, love.timer.getTime(), x, y)
-         end
-      end
-   end
-end
 
 function drawBBoxAroundItems(layer, parallaxData)
    for i = 1, #layer.children do
@@ -59,7 +15,7 @@ function drawBBoxAroundItems(layer, parallaxData)
       if c.bbox and c.transforms._l and c.depth ~= nil then
 
          if c.pressed then
-            local mx, my = getPointerPosition(c.pressed.id)
+            local mx, my = pointer.getPosition(c.pressed.id)
             local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
             --print(tlx, tly, brx, bry)
             love.graphics.setColor(1, 1, 1, .5)
@@ -91,7 +47,7 @@ function drawBBoxAroundItems(layer, parallaxData)
          end
 
          if c.mouseOver or uiState.showBBoxes then
-            local mx, my = getPointerPosition('mouse')
+            local mx, my = pointer.getPosition('mouse')
             local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
             love.graphics.setColor(1, 1, 1, .5)
             love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
@@ -181,27 +137,17 @@ function pointerPressed(x, y, id, layers)
 
    if not itemPressed then
       if not cameraFollowPlayer then
-
-         local hasOneAlready = false
-         for i = 1, #gestureState.list do
-            if gestureState.list[i].target == 'stage' then
-               hasOneAlready = true
-            end
-         end
-
+         local hasOneAlready = hasGestureWithTarget('stage')
          if not hasOneAlready then
-            local g = { positions = {}, target = 'stage', trigger = id }
-            table.insert(gestureState.list, g)
-            addGesturePoint(g, love.timer.getTime(), x, y)
+            addGesture('stage', id, love.timer.getTime(), x, y)
          end
       end
    else
       resetCameraTween()
-
-      local g = { positions = {}, target = itemPressed, trigger = id }
-      table.insert(gestureState.list, g)
-      addGesturePoint(g, love.timer.getTime(), x, y)
+      addGesture(itemPressed, id, love.timer.getTime(), x, y)
    end
+
+   
 end
 
 function checkForItemMouseOver(x, y, layer, parallaxData)
@@ -256,16 +202,23 @@ function pointerReleased(x, y, id, layers)
       end
    end
 
-   for i = #gestureState.list, 1, -1 do
-      local g = gestureState.list[i]
-      if g then
-         if g.trigger == id then
-            addGesturePoint(g, love.timer.getTime(), x, y)
-            gestureRecognizer(g)
-            removeGestureFromList(g)
-         end
-      end
+   local function throw(gesture, dxn, dyn, speed)
+      gesture.target.inMotion = makeMotionObject()
+      local mass = gesture.target.inMotion.mass
+
+      local throwStrength = 1
+      if mass < 0 then throwStrength = throwStrength / 100 end
+
+      local impulse = Vector(dxn * speed * throwStrength,
+         dyn * speed * throwStrength)
+
+      applyForce(gesture.target.inMotion, impulse)
+
    end
+   local cx, cy = cam:getTranslation()
+   maybeTriggerGesture(id, x, y, cx, cy, throw)
+
+  
 end
 
 function getItemsInLayerThatHaveMeta(layer, me)
@@ -303,7 +256,7 @@ function handlePressedItemsOnStage(dt, layers)
 
                --print(inspect(c.bbox))
 
-               local mx, my = getPointerPosition(c.pressed.id)
+               local mx, my = pointer.getPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
                   c.dirty = true
@@ -364,24 +317,14 @@ end
 
 function getScreenBBoxForItem(c, camData)
 
-   -- todo allways create a new bbox to be sure
-   -- local bbox = getBBoxRecursive(c)
-   -- local tlx, tly = c.transforms._g:inverseTransformPoint(bbox[1], bbox[2])
-   -- local brx, bry = c.transforms._g:inverseTransformPoint(bbox[3], bbox[4])
-
-   -- c.bbox = {tlx, tly, brx, bry }--bbox
-
-
 
    local tx, ty = c.transforms._g:transformPoint(c.bbox[1], c.bbox[2])
    local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
    local bx, by = c.transforms._g:transformPoint(c.bbox[3], c.bbox[4])
    local brx, bry = cam:getScreenCoordinates(bx, by, camData)
-
+   --print(tlx, tly, brx, bry)
    return tlx, tly, brx, bry
 
-   --return math.min(tlx, brx), math.min(tly, bry),
-   --   math.max(brx, tlx), math.max(bry, tly)
 end
 
 function createCamData(item, parallaxData)
@@ -431,90 +374,4 @@ function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    return hit
 end
 
-function gestureRecognizer(gesture)
-   if #gesture.positions > 1 then
-      local startP = gesture.positions[1]
-      local endP = gesture.positions[#gesture.positions]
-      local gestureLength = 3
-      if (#gesture.positions > gestureLength) then
-         startP = gesture.positions[#gesture.positions - gestureLength]
-      end
 
-      local dx = endP.x - startP.x
-      local dy = endP.y - startP.y
-      local distance = math.sqrt(dx * dx + dy * dy)
-      local deltaTime = endP.time - startP.time
-      local speed = distance / deltaTime
-
-      if gesture.target == 'stage' then
-         local minSpeed = 200
-         local maxSpeed = 15000
-         local minDistance = 6
-         local minDuration = 0.005
-
-         local xAxisAllowed = true
-         local yAxisAllowed = false
-
-         if deltaTime > minDuration then
-            local doTween = false
-            local cx, cy = cam:getTranslation()
-            local xAxis = cx
-            local yAxis = cy
-
-            if xAxisAllowed then
-               if math.abs(dx) > minDistance then
-                  if math.abs(dx / deltaTime) >= minSpeed and math.abs(dx / deltaTime) < maxSpeed then
-                     doTween = true
-                     local mx = dx < 0 and -1 or 1
-                     xAxis = cx - ((dx) + (mx * speed / 7.5))
-                  end
-               end
-            end
-
-            if yAxisAllowed then
-               if math.abs(dy) > minDistance then
-                  if math.abs(dy / deltaTime) >= minSpeed and math.abs(dy / deltaTime) < maxSpeed then
-                     doTween = true
-                     local my = dy < 0 and -1 or 1
-                     yAxis = cy - ((dy) + (my * speed / 7.5))
-                  end
-               end
-            end
-
-            if doTween then
-               setCameraTween({
-                  goalX = xAxis,
-                  goalY = yAxis,
-                  smoothValue = 3.5,
-                  originalGesture = gesture
-               })
-            end
-         else
-            --print('failed at distance')
-         end
-      else -- this is gesture target something else, items basically!
-
-         if distance < 0.00001 then
-            distance = 0.00001
-         end
-         local dxn = dx / distance
-         local dyn = dy / distance
-
-         function itemThrow()
-            gesture.target.inMotion = makeMotionObject()
-            local mass = gesture.target.inMotion.mass
-
-            local throwStrength = 1
-            if mass < 0 then throwStrength = throwStrength / 100 end
-
-            local impulse = Vector(dxn * speed * throwStrength,
-               dyn * speed * throwStrength)
-
-            applyForce(gesture.target.inMotion, impulse)
-         end
-
-         itemThrow()
-      end
-   end
-
-end

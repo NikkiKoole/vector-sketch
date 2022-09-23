@@ -3,42 +3,10 @@ local hit = require 'lib.hit'
 local cam = getCamera()
 local gesture = require 'lib.gesture'
 local gestureState = gesture.getState()
-
-function getPointerPosition(id)
-   local x, y
-   if id == 'mouse' then
-      x, y = love.mouse.getPosition()
-      return x, y, true
-   else
-      local touches = love.touch.getTouches()
-      for i = 1, #touches do
-         if touches[i] == id then
-            x, y = love.touch.getPosition(id)
-            return x, y, true
-         end
-      end
-   end
-   return nil, nil, false
-
-end
+local pointer = require 'lib.pointer'
 
 
 
-function updateGestureCounter(dt)
-   gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
-
-   if gestureState.updateResolutionCounter > gestureState.updateResolution then
-      gestureState.updateResolutionCounter = 0
-      for i = 1, #gestureState.list do
-         local g = gestureState.list[i]
-         local x, y, success = getPointerPosition(g.trigger)
-         --print(g.trigger)
-         if success then
-            addGesturePoint(g, love.timer.getTime(), x, y)
-         end
-      end
-   end
-end
 
 function drawBBoxAroundItems(layer, parallaxData)
    local max = math.max
@@ -51,7 +19,7 @@ function drawBBoxAroundItems(layer, parallaxData)
       if c.bbox and c.transforms._l and c.depth ~= nil then
 
          if c.pressed then
-            local mx, my = getPointerPosition(c.pressed.id)
+            local mx, my = pointer.getPosition(c.pressed.id)
             local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
 
             love.graphics.setColor(1, 0, 0, 1)
@@ -96,7 +64,7 @@ function drawBBoxAroundItems(layer, parallaxData)
          end
 
          if false and c.mouseOver or uiState.showBBoxes then
-            local mx, my = getPointerPosition('mouse')
+            local mx, my = pointer.getPosition('mouse')
             local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
             love.graphics.setColor(1, 1, 1, .5)
             love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
@@ -135,30 +103,19 @@ function pointerPressed(x, y, id, layers, ecsWorld)
       end
    end
 
-
+   --print(itemPressed)
    if not itemPressed then
       if not cameraFollowPlayer then
-
-         local hasOneAlready = false
-         for i = 1, #gestureState.list do
-            if gestureState.list[i].target == 'stage' then
-               hasOneAlready = true
-            end
-         end
-
+         local hasOneAlready = hasGestureWithTarget('stage')
          if not hasOneAlready then
-            local g = { positions = {}, target = 'stage', trigger = id }
-            table.insert(gestureState.list, g)
-            addGesturePoint(g, love.timer.getTime(), x, y)
+            addGesture('stage', id, love.timer.getTime(), x, y)
          end
       end
    else
       resetCameraTween()
-
-      local g = { positions = {}, target = itemPressed, trigger = id }
-      table.insert(gestureState.list, g)
-      addGesturePoint(g, love.timer.getTime(), x, y)
+      addGesture(itemPressed, id, love.timer.getTime(), x, y)
    end
+
 end
 
 function checkForItemMouseOver(x, y, layer, parallaxData)
@@ -195,6 +152,7 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
             --local yAxisAllowed = true
             local yAxis = yAxisAllowed and -dy / scale or 0
             cameraTranslateScheduler(xAxis, yAxis)
+            --print('resetted hard baby')
          end
       end
    end
@@ -232,19 +190,13 @@ function pointerReleased(x, y, id, layers, ecsWorld)
       end
    end
 
-   for i = #gestureState.list, 1, -1 do
-      local g = gestureState.list[i]
-      if g then
-         if g.trigger == id then
-            addGesturePoint(g, love.timer.getTime(), x, y)
-            --            if g.target ~= 'stage' then    -----  ----------------  hackerdesnack
-            gestureRecognizer(g, ecsWorld)
-            --          end
-            --print(g.target)
-            removeGestureFromList(g)
-         end
-      end
+   local function throw(gesture, dxn, dyn, speed)
+      ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
    end
+   local cx, cy = cam:getTranslation()
+   maybeTriggerGesture(id, x, y, cx, cy, throw)
+
+   
 end
 
 function getItemsInLayerThatHaveMeta(layer)
@@ -296,7 +248,7 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
          if c.bbox and c.transforms._l and c.depth ~= nil then
             if c.pressed then
 
-               local mx, my = getPointerPosition(c.pressed.id)
+               local mx, my = pointer.getPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
 
 
@@ -411,124 +363,3 @@ function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    return hit
 end
 
-function gestureRecognizer(gesture, ecsWorld)
-   if #gesture.positions > 1 then
-      local startP = gesture.positions[1]
-      local endP = gesture.positions[#gesture.positions]
-      --      print(#gesture.positions)
-
-      -- i odnt want long lists because you can shoot (literally below) yourself like that
-
-      local gestureLength = 5 --math.max(3,math.floor(#gesture.positions))
-      if (#gesture.positions > gestureLength) then
-         startP = gesture.positions[#gesture.positions - gestureLength]
-      end
-      --print('looking at gesture with', #gesture.positions)
-
-      local dx = endP.x - startP.x
-      local dy = endP.y - startP.y
-      local distance = math.sqrt(dx * dx + dy * dy)
-      local deltaTime = endP.time - startP.time
-      local speed = distance / deltaTime
-
-      if gesture.target == 'stage' then
-         local minSpeed = 200
-         local maxSpeed = 15000
-         local minDistance = 6
-         local minDuration = 0.005
-
-         if deltaTime > minDuration then
-            local doTween = false
-            local cx, cy = cam:getTranslation()
-            local xAxis = cx
-            local yAxis = cy
-
-            if xAxisAllowed and yAxisAllowed then
-               if distance > minDistance then
-                  if distance / deltaTime >= minSpeed and distance / deltaTime < maxSpeed then
-                     doTween = true
-
-                     --print(dx, dy)
-                     --if dx == 0 then dx = 0.0001 end
-                     --if dy == 0 then dy = 0.0001 end
-
-                     if dx ~= 0 and dy ~= 0 then
-
-                        if math.abs(dy) > 5 * math.abs(dx) then
-                           --print('mostly vertical')
-                           dx = 0
-                        end
-                        if math.abs(dx) > 5 * math.abs(dy) then
-                           --print('mostly horizontal')
-                           dy = 0
-                        end
-
-
-                        --local smallest = math.min(dx,dy)
-                        --local biggest = math.max(dx,dy)
-
-                        --print(biggest/smallest, smallest/biggest)
-                     end
-
-                     if dx ~= 0 then
-                        local mx = dx < 0 and -1 or 1
-                        xAxis = cx - ((dx) + (mx * speed / 7.5))
-                     end
-
-                     if dy ~= 0 then
-                        local my = dy < 0 and -1 or 1
-                        yAxis = cy - ((dy) + (my * speed / 7.5))
-                     end
-
-                  end
-               end
-
-            else
-               if xAxisAllowed then
-                  if math.abs(dx) > minDistance then
-                     if math.abs(dx / deltaTime) >= minSpeed and math.abs(dx / deltaTime) < maxSpeed then
-                        doTween = true
-                        local mx = dx < 0 and -1 or 1
-                        xAxis = cx - ((dx) + (mx * speed / 7.5))
-                     end
-                  end
-               end
-
-               if yAxisAllowed then
-                  if math.abs(dy) > minDistance then
-                     if math.abs(dy / deltaTime) >= minSpeed and math.abs(dy / deltaTime) < maxSpeed then
-                        doTween = true
-                        local my = dy < 0 and -1 or 1
-                        yAxis = cy - ((dy) + (my * speed / 7.5))
-                     end
-                  end
-               end
-            end
-
-            if doTween then
-               setCameraTween({
-                  goalX = xAxis,
-                  goalY = yAxis,
-                  smoothValue = smoothValue,
-                  originalGesture = gesture
-               })
-               
-            end
-         else
-            --print('failed at distance')
-         end
-      else -- this is gesture target something else, items basically!
-
-         if distance < 0.00001 then
-            distance = 0.00001
-         end
-         local dxn = dx / distance
-         local dyn = dy / distance
-
-         if ecsWorld then
-            ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
-         end
-
-      end
-   end
-end
