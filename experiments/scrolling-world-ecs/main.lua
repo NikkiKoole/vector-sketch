@@ -257,13 +257,13 @@ function love.load()
    --   updateResolution = 0.0167
    --}
 
-   translateScheduler = {
-      x = 0,
-      y = 0,
-      justItem = { x = 0, y = 0 },
-      happenedByPressedItems = false,
-      cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
-   }
+   --translateScheduler = {
+   --   x = 0,
+   --   y = 0,
+   --   justItem = { x = 0, y = 0 },
+   --   happenedByPressedItems = false,
+   --   cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
+   --}
 
    tweenCameraDelta = 0
    followPlayerCameraDelta = 0
@@ -329,11 +329,13 @@ function love.draw()
    SM.draw()
    local W, H = love.graphics.getDimensions()
    if uiState.showBouncy then
-      if translateScheduler.cache.value ~= 0 then
-         love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.value, 0)
-      else
-         love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.tweenValue, 0)
-      end
+      local value = getTranslateSchedulerValues()
+      love.graphics.line(W / 2, 100, W / 2 + value, 0)
+      --if translateScheduler.cache.value ~= 0 then
+      --   love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.value, 0)
+      --else
+      --   love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.tweenValue, 0)
+      --end
    end
    if uiState.showTouches then
       local touches = love.touch.getTouches()

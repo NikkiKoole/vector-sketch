@@ -35,10 +35,28 @@ local cam = getCamera()
 
 -- todo @global cameratween
 local _cameraTween = nil
+local _tweenCameraDelta = nil
+
 function setCameraTween(data)
    _cameraTween = data
 end
 
+local translateScheduler = {
+   x = 0,
+   y = 0,
+   justItem = { x = 0, y = 0 },
+   happenedByPressedItems = false,
+   cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
+}
+
+function getTranslateSchedulerValues()
+   if (translateScheduler.cache.value ~= 0) then
+      return translateScheduler.cache.value
+   else
+      return translateScheduler.cache.tweenValue
+   end
+
+end
 
 function resizeCamera(self, w, h)
    local scaleW, scaleH = w / self.w, h / self.h
@@ -74,6 +92,18 @@ end
 
 function manageCameraTween(dt)
    --print(inspect(#gestureState.list))
+   --[[
+if cameraFollowPlayer then
+      local distanceAhead = math.floor(300*v.x)
+      followPlayerCameraDelta = cam:setTranslationSmooth(
+         player.x + player.width/2 ,
+         player.y - 350,
+         dt,
+         10
+      )
+   end
+   ]]--
+
    if _cameraTween then
       local delta = cam:setTranslationSmooth(
          _cameraTween.goalX,
@@ -100,7 +130,7 @@ function manageCameraTween(dt)
          _cameraTween = nil
 
       end
-      tweenCameraDelta = (delta.x + delta.y)
+      _tweenCameraDelta = (delta.x + delta.y)
    end
 
 end
