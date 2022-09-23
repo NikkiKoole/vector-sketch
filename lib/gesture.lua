@@ -20,4 +20,21 @@ lib.getState = function()
     return _gs
 end
 
+function addGesturePoint(gest, time, x, y)
+    assert(gest)
+    print('adding gesture')
+    table.insert(gest.positions, { time = time, x = x, y = y })
+ end
+
+ function removeGestureFromList(gesture)
+    
+    for i = #gestureState.list, 1, -1 do
+       if gestureState.list[i] == gesture then
+        print('removing gesture')
+          table.remove(gestureState.list, i)
+       end
+    end
+ end 
+
+
 return lib

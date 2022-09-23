@@ -482,12 +482,12 @@ function gestureRecognizer(gesture)
             end
 
             if doTween then
-               cameraTween = {
+               setCameraTween({
                   goalX = xAxis,
                   goalY = yAxis,
                   smoothValue = 3.5,
                   originalGesture = gesture
-               }
+               })
             end
          else
             --print('failed at distance')

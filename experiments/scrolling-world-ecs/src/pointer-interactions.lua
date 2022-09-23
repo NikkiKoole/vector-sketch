@@ -22,18 +22,7 @@ function getPointerPosition(id)
 
 end
 
-function addGesturePoint(gesture, time, x, y)
-   assert(gesture)
-   table.insert(gesture.positions, { time = time, x = x, y = y })
-end
 
-function removeGestureFromList(gesture)
-   for i = #gestureState.list, 1, -1 do
-      if gestureState.list[i] == gesture then
-         table.remove(gestureState.list, i)
-      end
-   end
-end
 
 function updateGestureCounter(dt)
    gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
@@ -43,6 +32,7 @@ function updateGestureCounter(dt)
       for i = 1, #gestureState.list do
          local g = gestureState.list[i]
          local x, y, success = getPointerPosition(g.trigger)
+         --print(g.trigger)
          if success then
             addGesturePoint(g, love.timer.getTime(), x, y)
          end
@@ -516,12 +506,13 @@ function gestureRecognizer(gesture, ecsWorld)
             end
 
             if doTween then
-               cameraTween = {
+               setCameraTween({
                   goalX = xAxis,
                   goalY = yAxis,
                   smoothValue = smoothValue,
                   originalGesture = gesture
-               }
+               })
+               
             end
          else
             --print('failed at distance')

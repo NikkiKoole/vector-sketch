@@ -1,4 +1,6 @@
 local Camera = require 'vendor.brady'
+local gesture = require 'lib.gesture'
+local gestureState = gesture.getState()
 
 function createCamera()
    offset = 0
@@ -31,6 +33,13 @@ end
 
 local cam = getCamera()
 
+-- todo @global cameratween
+local _cameraTween = nil
+function setCameraTween(data)
+   _cameraTween = data
+end
+
+
 function resizeCamera(self, w, h)
    local scaleW, scaleH = w / self.w, h / self.h
    local scale = math.min(scaleW, scaleH)
@@ -56,31 +65,39 @@ end
 function drawCameraBounds(cam, mode)
    love.graphics.rectangle(mode, cam.x, cam.y, cam.w, cam.h)
 end
+function resetCameraTween()
+   if _cameraTween then
+      _cameraTween = nil
+      _tweenCameraDelta = 0
+   end
+end
 
 function manageCameraTween(dt)
-   print(inspect(gestureState))
-   if cameraTween then
+   --print(inspect(#gestureState.list))
+   if _cameraTween then
       local delta = cam:setTranslationSmooth(
-         cameraTween.goalX,
-         cameraTween.goalY,
+         _cameraTween.goalX,
+         _cameraTween.goalY,
          dt,
-         cameraTween.smoothValue
+         _cameraTween.smoothValue
       )
 
       if delta.x ~= 0 then
-         cameraTranslateScheduleJustItem(delta.x * cameraTween.smoothValue * dt, 0)
-      end
 
+         cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
+      end
+    
       if (delta.x + delta.y) == 0 then
-         for i = #gestureState.list, 1 - 1 do
-            if cameraTween.originalGesture == gestureState.list[i] then
+         for i = #gestureState.list, 1, - 1 do
+            if _cameraTween.originalGesture == gestureState.list[i] then
                if gestureState.list[i] ~= nil then
+                  print('removed gesture', inspect(gestureState.list[i]) )
                   removeGestureFromList(gestureState.list[i])
                end
             end
          end
 
-         cameraTween = nil
+         _cameraTween = nil
 
       end
       tweenCameraDelta = (delta.x + delta.y)
@@ -162,7 +179,8 @@ function cameraApplyTranslate(dt, layer)
          translateScheduler.happenedByPressedItems = false
          local cx, cy = cam:getTranslation()
          local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
-         cameraTween = { goalX = cx + delta, goalY = cy, smoothValue = smoothValue }
+         setCameraTween({ goalX = cx + delta, goalY = cy, smoothValue = smoothValue })
+         --cameraTween = 
       end
       ------ end that part
 
@@ -176,9 +194,3 @@ function cameraApplyTranslate(dt, layer)
 
 end
 
-function resetCameraTween()
-   if cameraTween then
-      cameraTween = nil
-      tweenCameraDelta = 0
-   end
-end
