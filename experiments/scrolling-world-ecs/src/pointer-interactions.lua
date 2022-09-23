@@ -35,7 +35,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
 
 
-            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setColor(1, 0, 0, 1)
             local px, py = c.transforms._g:transformPoint(c.transforms.l[6], c.transforms.l[7])
             local camData = createCamData(c, parallaxData)
             local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
