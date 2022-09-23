@@ -1,6 +1,8 @@
 local Camera = require 'vendor.brady'
 local gesture = require 'lib.gesture'
 local gestureState = gesture.getState()
+local numbers = require 'lib.numbers'
+local hit = require 'lib.hit'
 
 function createCamera()
    offset = 0
@@ -32,6 +34,84 @@ function getCamera()
 end
 
 local cam = getCamera()
+
+function createCamData(item, parallaxData)
+   local camData = nil -- its important to be nil at start
+   -- that way i can feed the nil to brady and get default behaviours
+   if parallaxData and parallaxData.factors then
+
+      camData = {}
+      camData.scale = numbers.mapInto(item.depth,
+         parallaxData.minmax.min,
+         parallaxData.minmax.max,
+         parallaxData.factors.far,
+         parallaxData.factors.near)
+      camData.relativeScale = 1 --(1.0/ hack.scale) * hack.scale
+   end
+   if camData == nil then
+      print('hope you know')
+   end
+
+   return camData
+end
+
+function camDataToScreen(c, parallaxData, px, py)
+      local camData = createCamData(c, parallaxData)
+      local x, y = cam:getScreenCoordinates(px, py, camData)
+      return x,y
+end
+
+function getScreenBBoxForItem(c, camData)
+
+   local bbox = c.bbox
+
+   local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
+   local strx, stry = c.transforms._g:transformPoint(bbox[3], bbox[2])
+   local sblx, sbly = c.transforms._g:transformPoint(bbox[1], bbox[4])
+   local sbrx, sbry = c.transforms._g:transformPoint(bbox[3], bbox[4])
+
+   local tlx, tly = cam:getScreenCoordinates(stlx, stly, camData)
+   local brx, bry = cam:getScreenCoordinates(sbrx, sbry, camData)
+   local trx, try = cam:getScreenCoordinates(strx, stry, camData)
+   local blx, bly = cam:getScreenCoordinates(sblx, sbly, camData)
+
+   local smallestX = math.min(tlx, brx, trx, blx)
+   local smallestY = math.min(tly, bry, try, bly)
+   local biggestX = math.max(tlx, brx, trx, blx)
+   local biggestY = math.max(tly, bry, try, bly)
+
+   return smallestX, smallestY, biggestX, biggestY
+
+end
+
+function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
+   local camData = createCamData(child, parallaxData)
+   local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
+   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
+   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
+
+   return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
+end
+
+function mouseIsOverItemBBox(mx, my, item, parallaxData)
+
+   local camData = createCamData(item, parallaxData)
+   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
+
+   
+   local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
+   
+   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
+
+   return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
+end
+
+function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
+   local camData = createCamData(item, parallaxData)
+   local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
+   local hit = hit.recursiveHitCheck(mx2, my2, item)
+   return hit
+end
 
 -- todo @global cameratween
 local _cameraTween = nil

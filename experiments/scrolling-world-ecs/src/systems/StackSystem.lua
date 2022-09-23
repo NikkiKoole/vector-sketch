@@ -24,8 +24,9 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 	 local nearest = {distance=math.huge, elem=nil}
 
 	 local px, py = target.transforms._g:transformPoint( target.transforms.l[6], target.transforms.l[7])
-	 local camData = createCamData(target, pdata)
-	 local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
+	 local pivx, pivy = camDataToScreen(target, pdata, px, py)
+	 --local camData = createCamData(target, pdata)
+	 --local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
 	 
 	 for j =1, #checkAgainst do
 	    for k = 1, #checkAgainst[j].metaTags do
@@ -39,8 +40,9 @@ function StackSystem:itemThrow(target, dxn, dyn, speed)
 		  else
 		     local pos = tag.points[1] -- there is just one point in this collection
 		     local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
-		     local camData = createCamData(checkAgainst[j], pdata)
-		     local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+			 local kx2, ky2 = camDataToScreen(checkAgainst[j], pdata, kx, ky)
+		     --local camData = createCamData(checkAgainst[j], pdata)
+		     --local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
 
 		     local dis = geom.distance(pivx, pivy, kx2, ky2)
 		     if dis < nearest.distance then

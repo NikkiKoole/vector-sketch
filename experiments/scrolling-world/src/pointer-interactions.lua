@@ -24,9 +24,10 @@ function drawBBoxAroundItems(layer, parallaxData)
 
             love.graphics.setColor(1, 1, 1, 1)
             local px, py = c.transforms._g:transformPoint(c.transforms.l[6], c.transforms.l[7])
+            local pivx, pivy = camDataToScreen(c, parallaxData, px, py)
 
-            local camData = createCamData(c, parallaxData)
-            local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
+            --local camData = createCamData(c, parallaxData)
+            --local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
             love.graphics.line(pivx - 5, pivy, pivx + 5, pivy)
             love.graphics.line(pivx, pivy - 5, pivx, pivy + 5)
 
@@ -37,8 +38,9 @@ function drawBBoxAroundItems(layer, parallaxData)
                   local tag = checkAgainst[j].metaTags[k]
                   local pos = tag.points[1] -- there is just one point in this collection
                   local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
-                  local camData = createCamData(checkAgainst[j], parallaxData)
-                  local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
+                  local kx2, ky2 = camDataToScreen(checkAgainst[j], parallaxData, kx, ky)
+                  --local camData = createCamData(checkAgainst[j], parallaxData)
+                  --local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
                   love.graphics.setColor(1, 1, 1, .2)
                   love.graphics.line(pivx, pivy, kx2, ky2)
                end
@@ -315,63 +317,7 @@ function handlePressedItemsOnStage(dt, layers)
    end
 end
 
-function getScreenBBoxForItem(c, camData)
-
-
-   local tx, ty = c.transforms._g:transformPoint(c.bbox[1], c.bbox[2])
-   local tlx, tly = cam:getScreenCoordinates(tx, ty, camData)
-   local bx, by = c.transforms._g:transformPoint(c.bbox[3], c.bbox[4])
-   local brx, bry = cam:getScreenCoordinates(bx, by, camData)
-   --print(tlx, tly, brx, bry)
-   return tlx, tly, brx, bry
-
-end
-
-function createCamData(item, parallaxData)
-   local camData = nil -- its important to be nil at start
-   -- that way i can feed the nil to brady and get default behaviours
-   if parallaxData and parallaxData.factors then
-
-      camData = {}
-      camData.scale = numbers.mapInto(item.depth,
-         parallaxData.minmax.min,
-         parallaxData.minmax.max,
-         parallaxData.factors.far,
-         parallaxData.factors.near)
-      camData.relativeScale = 1 --(1.0/ hack.scale) * hack.scale
-   end
-   if camData == nil then
-      print('hope you know')
-   end
-
-   return camData
-end
 
 -- this function is only for nested children of a thing, as for FEET
-function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
-   local camData = createCamData(child, parallaxData)
-   local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
-   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
-   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
-
-   return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
-end
-
-function mouseIsOverItemBBox(mx, my, item, parallaxData)
-
-   local camData = createCamData(item, parallaxData)
-   local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
-   local wx, wy = cam:getWorldCoordinates(mx, my, camData)
-   local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
-
-   return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
-end
-
-function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
-   local camData = createCamData(item, parallaxData)
-   local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
-   local hit = hit.recursiveHitCheck(mx2, my2, item)
-   return hit
-end
 
 
