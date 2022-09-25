@@ -1,4 +1,5 @@
-local GravitySystem = Concord.system({pool={'inMotion'}})
+--todo @global uiState
+local GravitySystem = Concord.system({ pool = { 'inMotion' } })
 function GravitySystem:update(dt)
    for _, e in ipairs(self.pool) do
       local gy = uiState.gravityValue * e.inMotion.mass * dt
@@ -6,4 +7,5 @@ function GravitySystem:update(dt)
       applyForce(e.inMotion, gravity)
    end
 end
+
 return GravitySystem

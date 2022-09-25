@@ -1,6 +1,5 @@
 inspect = require 'vendor.inspect'
 
-console = require 'vendor.console'
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 --require 'lib.recursivelyMakeTextures'
 
@@ -45,7 +44,7 @@ local getIndex = n.getIndex
 local setPos = n.setPos
 local setPivot = n.setPivot
 local parse = require 'lib.parse-file'
-
+console = require 'vendor.console'
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
 
@@ -54,7 +53,20 @@ local parse = require 'lib.parse-file'
 -- https://github.com/ReFreezed/InputField
 local mylib = {}
 
+function mountZip(filename, mountpoint)
+   print(filename)
+   local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
+      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
+      print(inspect(result))
+      return result
+   end
+end
+
 function mylib:setRoot(root, folderPath)
+
    parentize.parentize(root)
    mesh.meshAll(root)
 
@@ -68,6 +80,7 @@ function mylib:setRoot(root, folderPath)
          print('texture prefix: ', prefix)
       end
    end
+
 
 end
 
@@ -2113,19 +2126,26 @@ function mylib:load(arg)
    --   print(i)
    --end
 
+
+   -- todo @improve
+   local base = '/Users/nikkikoole/Projects/love/vector-sketch'
+   --print('mountzip')
+   mountZip(base .. '/ui.zip', '')
+
+
    shapeName = 'untitled'
    shapePath = ''
    LK.setKeyRepeat(true)
    editingMode = nil
    editingModeSub = nil
-   --local ffont = "resources/fonts/cooper-bold-bt.ttf"
-   --local ffont = "resources/fonts/Turbo Pascal Font.ttf"
-   --local ffont = "resources/fonts/MonacoB.otf"
-   --local ffont = "resources/fonts/agave.ttf"
+   --local ffont = "/fonts/cooper-bold-bt.ttf"
+   --local ffont = "/fonts/Turbo Pascal Font.ttf"
+   --local ffont = "/fonts/MonacoB.otf"
+   --local ffont = "/fonts/agave.ttf"
    local ffont = "resources/fonts/WindsorBT-Roman.otf"
    local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
 
-   --   local otherfont = "resources/fonts/Monaco.ttf"
+   --   local otherfont = "/fonts/Monaco.ttf"
    supersmallest = LG.newFont(ffont, 8)
    smallester = LG.newFont(ffont, 14)
 
@@ -2143,71 +2163,65 @@ function mylib:load(arg)
    introSound:setPitch(0.9 + 0.2 * love.math.random())
    --introSound:play()
 
-   --simple_format = {
-   --    {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-   -- }
-   -- simple_format_colors = {
-   --    {"VertexPosition", "float", 2}, -- The x,y position of each vertex.
-   --    {"VertexColor", "float", 4}, -- The x,y position of each vertex.
-   -- }
-   --print(inspect(_G))
+   local cwd = love.filesystem.getWorkingDirectory()
+   print('CWD', cwd)
    ui = {
-      polyline = LG.newImage("resources/ui/polyline.png"),
-      polyline_add = LG.newImage("resources/ui/polyline-add.png"),
-      polyline_edit = LG.newImage("resources/ui/polyline-edit.png"),
-      polyline_remove = LG.newImage("resources/ui/polyline-remove.png"),
-      insert_link = LG.newImage("resources/ui/insert-link.png"),
-      backdrop = LG.newImage("resources/ui/backdrop.png"),
-      backdropscale = LG.newImage("resources/ui/backdropscale.png"),
-      backdropscale4 = LG.newImage("resources/ui/backdropscale4.png"),
-      backdropscale5 = LG.newImage("resources/ui/backdropscale5.png"),
-      backdropscale9 = LG.newImage("resources/ui/backdropscale9.png"),
-      squish = LG.newImage("resources/ui/squish.png"),
-      grid = LG.newImage("resources/ui/grid.png"),
-      palette = LG.newImage("resources/ui/palette.png"),
-      pen = LG.newImage("resources/ui/pen.png"),
-      pencil = LG.newImage("resources/ui/pencil.png"),
-      polygon = LG.newImage("resources/ui/polygon.png"),
-      add = LG.newImage("resources/ui/add.png"),
-      remove = LG.newImage("resources/ui/remove.png"),
-      delete = LG.newImage("resources/ui/delete.png"),
-      move = LG.newImage("resources/ui/move.png"),
-      visible = LG.newImage("resources/ui/visible.png"),
-      not_visible = LG.newImage("resources/ui/not-visible.png"),
-      resize = LG.newImage("resources/ui/resize.png"),
-      opacity = LG.newImage("resources/ui/opacity.png"),
-      settings = LG.newImage("resources/ui/settings.png"),
-      badge = LG.newImage("resources/ui/badge.png"),
-      layer_group = LG.newImage("resources/ui/layer-group.png"),
-      object_group = LG.newImage("resources/ui/object-group.png"),
-      rotate = LG.newImage("resources/ui/rotate.png"),
-      transform = LG.newImage("resources/ui/transform.png"),
-      next = LG.newImage("resources/ui/next.png"),
-      previous = LG.newImage("resources/ui/previous.png"),
-      lines = LG.newImage("resources/ui/lines.png"),
-      lines2 = LG.newImage("resources/ui/lines2.png"),
-      move_up = LG.newImage("resources/ui/move-up.png"),
-      move_down = LG.newImage("resources/ui/move-down.png"),
-      mesh = LG.newImage("resources/ui/mesh.png"),
-      parent = LG.newImage("resources/ui/parent.png"),
-      folder = LG.newImage("resources/ui/folder.png"),
-      folder_open = LG.newImage("resources/ui/folderopen.png"),
-      pivot = LG.newImage("resources/ui/pivot.png"),
-      pan = LG.newImage("resources/ui/pan.png"),
-      mask = LG.newImage("resources/ui/mask.png"),
-      clone = LG.newImage("resources/ui/clone.png"),
-      joystick = LG.newImage("resources/ui/joystick.png"),
-      transition = LG.newImage("resources/ui/transition.png"),
-      select = LG.newImage("resources/ui/select.png"),
-      hole = LG.newImage("resources/ui/keyhole.png"),
-      change = LG.newImage("resources/ui/change.png"),
-      add_to_list = LG.newImage("resources/ui/add-to-list.png"),
-      flip_vertical = LG.newImage("resources/ui/flip-vertical.png"),
-      flip_horizontal = LG.newImage("resources/ui/flip-horizontal.png"),
-      dopesheet = LG.newImage("resources/ui/spreadsheet.png"),
-      curve = LG.newImage("resources/ui/curve.png"),
-      close_stencil = LG.newImage("resources/ui/close-stencil.png"),
-      help = LG.newImage("resources/ui/help.png"),
+      polyline = LG.newImage("ui/polyline.png"),
+      polyline_add = LG.newImage("ui/polyline-add.png"),
+      polyline_edit = LG.newImage("ui/polyline-edit.png"),
+      polyline_remove = LG.newImage("ui/polyline-remove.png"),
+      insert_link = LG.newImage("ui/insert-link.png"),
+      backdrop = LG.newImage("ui/backdrop.png"),
+      backdropscale = LG.newImage("/ui/backdropscale.png"),
+      backdropscale4 = LG.newImage("/ui/backdropscale4.png"),
+      backdropscale5 = LG.newImage("/ui/backdropscale5.png"),
+      backdropscale9 = LG.newImage("/ui/backdropscale9.png"),
+      squish = LG.newImage("/ui/squish.png"),
+      grid = LG.newImage("/ui/grid.png"),
+      palette = LG.newImage("/ui/palette.png"),
+      pen = LG.newImage("/ui/pen.png"),
+      pencil = LG.newImage("/ui/pencil.png"),
+      polygon = LG.newImage("/ui/polygon.png"),
+      add = LG.newImage("/ui/add.png"),
+      remove = LG.newImage("/ui/remove.png"),
+      delete = LG.newImage("/ui/delete.png"),
+      move = LG.newImage("/ui/move.png"),
+      visible = LG.newImage("/ui/visible.png"),
+      not_visible = LG.newImage("/ui/not-visible.png"),
+      resize = LG.newImage("/ui/resize.png"),
+      opacity = LG.newImage("/ui/opacity.png"),
+      settings = LG.newImage("/ui/settings.png"),
+      badge = LG.newImage("/ui/badge.png"),
+      layer_group = LG.newImage("/ui/layer-group.png"),
+      object_group = LG.newImage("/ui/object-group.png"),
+      rotate = LG.newImage("/ui/rotate.png"),
+      transform = LG.newImage("/ui/transform.png"),
+      next = LG.newImage("/ui/next.png"),
+      previous = LG.newImage("/ui/previous.png"),
+      lines = LG.newImage("/ui/lines.png"),
+      lines2 = LG.newImage("/ui/lines2.png"),
+      move_up = LG.newImage("/ui/move-up.png"),
+      move_down = LG.newImage("/ui/move-down.png"),
+      mesh = LG.newImage("/ui/mesh.png"),
+      parent = LG.newImage("/ui/parent.png"),
+      folder = LG.newImage("/ui/folder.png"),
+      folder_open = LG.newImage("/ui/folderopen.png"),
+      pivot = LG.newImage("/ui/pivot.png"),
+      pan = LG.newImage("/ui/pan.png"),
+      mask = LG.newImage("/ui/mask.png"),
+      clone = LG.newImage("/ui/clone.png"),
+      joystick = LG.newImage("/ui/joystick.png"),
+      transition = LG.newImage("/ui/transition.png"),
+      select = LG.newImage("/ui/select.png"),
+      hole = LG.newImage("/ui/keyhole.png"),
+      change = LG.newImage("/ui/change.png"),
+      add_to_list = LG.newImage("/ui/add-to-list.png"),
+      flip_vertical = LG.newImage("/ui/flip-vertical.png"),
+      flip_horizontal = LG.newImage("/ui/flip-horizontal.png"),
+      dopesheet = LG.newImage("/ui/spreadsheet.png"),
+      curve = LG.newImage("/ui/curve.png"),
+      close_stencil = LG.newImage("/ui/close-stencil.png"),
+      help = LG.newImage("/ui/help.png"),
    }
 
    cursors = {
@@ -2293,7 +2307,7 @@ local function getDataFromFile(file)
    local _shapeName
 
    if text.ends_with(filename, '.svg') then
-      local command = 'node ' .. 'resources/svg_to_love/index.js ' .. filename .. ' ' .. simplifyValue
+      local command = 'node ' .. '/svg_to_love/index.js ' .. filename .. ' ' .. simplifyValue
       print(command)
       if string.match(filename, " ") then
          print(":::ERROR::: path string should not contain any spaces")

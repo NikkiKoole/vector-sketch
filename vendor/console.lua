@@ -13,16 +13,17 @@
    OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
    DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
    ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-]]--
+]] --
 
 local console = {}
 
 -- Utilty functions for manipulating tables.
 local function map(tbl, f)
    local t = {}
-   for k,v in pairs(tbl) do t[k] = f(v) end
+   for k, v in pairs(tbl) do t[k] = f(v) end
    return t
 end
+
 local function filter(tbl, f)
    local t, i = {}, 1
    for _, v in ipairs(tbl) do
@@ -30,8 +31,9 @@ local function filter(tbl, f)
    end
    return t
 end
+
 local function push(tbl, ...)
-   for _, v in ipairs({...}) do table.insert(tbl, v) end
+   for _, v in ipairs({ ... }) do table.insert(tbl, v) end
 end
 
 console.HORIZONTAL_MARGIN = 10 -- Horizontal margin between the text and window.
@@ -42,19 +44,19 @@ console.MAX_LINES = 200 -- How many lines to store in the buffer.
 console.HISTORY_SIZE = 100 -- How much of history to store.
 
 -- Color configurations.
-console.BACKGROUND_COLOR = {0, 0, 0, 0.4}
-console.TEXT_COLOR = {1, 1, 1, 1}
-console.ERROR_COLOR = {1, 0, 0, 1}
+console.BACKGROUND_COLOR = { 0, 0, 0, 0.4 }
+console.TEXT_COLOR = { 1, 1, 1, 1 }
+console.ERROR_COLOR = { 1, 0, 0, 1 }
 
 console.FONT_SIZE = 16
-console.FONT_PATH =  "/resources/fonts/Turbo Pascal Font.ttf" 
+console.FONT_PATH = "/resources/fonts/Turbo Pascal Font.ttf"
 if console.FONT_PATH then
    console.FONT = love.graphics.newFont(console.FONT_PATH, console.FONT_SIZE)
 else
    console.FONT = love.graphics.newFont(console.FONT_SIZE)
 end
 -- The scope in which lines in the console are executed.
-console.ENV = setmetatable({}, {__index = _G})
+console.ENV = setmetatable({}, { __index = _G })
 
 -- The default help text shown.
 console.HELP_TEXT = [[==== Welcome to the In-Game Console ====
@@ -68,7 +70,7 @@ console.COMMANDS = {
    exit = function() love.event.quit(0) end,
    help = function() print(console.HELP_TEXT) end,
    commands = function()
-      print ("=== Available Commands ===")
+      print("=== Available Commands ===")
       for k, _ in pairs(console.COMMANDS) do
          if console.COMMAND_HELP[k] then
             print(k .. " - " .. console.COMMAND_HELP[k])
@@ -88,7 +90,7 @@ console.COMMAND_HELP = {
 }
 
 function console.inspect(val)
-   if type(val) == "table"  then
+   if type(val) == "table" then
       -- If this table has a tostring function, just use that.
       local mt = getmetatable(val)
       if mt and mt.__tostring then return tostring(val) end
@@ -117,7 +119,7 @@ end
 
 -- Overrideable function that is used for formatting return values.
 console.INSPECT_FUNCTION = function(...)
-   local args = {...}
+   local args = { ... }
    if #args == 0 then
       return "nil"
    else
@@ -148,8 +150,8 @@ function console.colorprint(coloredtext) table.insert(lines, coloredtext) end
 local normal_print = print
 _G.print = function(...)
    normal_print(...) -- Call original print function.
-   local args = {...}
-   local line = table.concat(map({...}, tostring), "\t")
+   local args = { ... }
+   local line = table.concat(map({ ... }, tostring), "\t")
    push(lines, line)
 
    while #lines > console.MAX_LINES do
@@ -166,14 +168,14 @@ local command = {
    insert = function(self, input)
       -- Inert text at the cursor.
       self.text = self.text:sub(0, self.cursor) ..
-         input .. self.text:sub(self.cursor + 1)
+          input .. self.text:sub(self.cursor + 1)
       self.cursor = self.cursor + 1
    end,
    delete_backward = function(self)
       -- Delete the character before the cursor.
       if self.cursor > 0 then
          self.text = self.text:sub(0, self.cursor - 1) ..
-            self.text:sub(self.cursor + 1)
+             self.text:sub(self.cursor + 1)
          self.cursor = self.cursor - 1
       end
    end,
@@ -224,20 +226,20 @@ function console.draw()
    -- Fill the background color.
    love.graphics.setColor(unpack(console.BACKGROUND_COLOR))
    love.graphics.rectangle('fill', 0, 0, love.graphics.getWidth(),
-                           love.graphics.getHeight())
+      love.graphics.getHeight())
 
    love.graphics.setColor(255, 255, 255, 255)
    love.graphics.setFont(console.FONT)
 
-   local line_start = love.graphics.getHeight() - console.VERTICAL_MARGIN*3 - console.FONT:getHeight()
-   local wraplimit = love.graphics.getWidth() - console.HORIZONTAL_MARGIN*2
+   local line_start = love.graphics.getHeight() - console.VERTICAL_MARGIN * 3 - console.FONT:getHeight()
+   local wraplimit = love.graphics.getWidth() - console.HORIZONTAL_MARGIN * 2
 
    for i = #lines, 1, -1 do
       local textonly = lines[i]
       if type(lines[i]) == "table" then
          textonly = table.concat(filter(lines[i], function(val)
-                                           return type(val) == "string"
-                                       end), "")
+            return type(val) == "string"
+         end), "")
       end
       width, wrapped = console.FONT:getWrap(textonly, wraplimit)
 
@@ -251,21 +253,21 @@ function console.draw()
    love.graphics.setLineWidth(1)
 
    love.graphics.line(0,
-                      love.graphics.getHeight() - console.VERTICAL_MARGIN
-                      - console.FONT:getHeight() - console.VERTICAL_MARGIN,
-                      love.graphics.getWidth(),
-                      love.graphics.getHeight() - console.VERTICAL_MARGIN
-                      - console.FONT:getHeight() - console.VERTICAL_MARGIN)
+      love.graphics.getHeight() - console.VERTICAL_MARGIN
+      - console.FONT:getHeight() - console.VERTICAL_MARGIN,
+      love.graphics.getWidth(),
+      love.graphics.getHeight() - console.VERTICAL_MARGIN
+      - console.FONT:getHeight() - console.VERTICAL_MARGIN)
 
    love.graphics.printf(
       console.PROMPT .. command.text,
       console.HORIZONTAL_MARGIN,
       love.graphics.getHeight() - console.VERTICAL_MARGIN - console.FONT:getHeight(),
-      love.graphics.getWidth() - console.HORIZONTAL_MARGIN*2, "left")
+      love.graphics.getWidth() - console.HORIZONTAL_MARGIN * 2, "left")
 
    if love.timer.getTime() % 1 > 0.5 then
       local cursorx = console.HORIZONTAL_MARGIN +
-         console.FONT:getWidth(console.PROMPT .. command.text:sub(0, command.cursor))
+          console.FONT:getWidth(console.PROMPT .. command.text:sub(0, command.cursor))
       love.graphics.line(
          cursorx,
          love.graphics.getHeight() - console.VERTICAL_MARGIN - console.FONT:getHeight(),
@@ -313,10 +315,10 @@ function console.execute(command)
          console.ENV._ = values[1]
          console.ENV.last = values
       else
-         console.colorprint({console.ERROR_COLOR, values[2]})
+         console.colorprint({ console.ERROR_COLOR, values[2] })
       end
    else
-      console.colorprint({console.ERROR_COLOR, error})
+      console.colorprint({ console.ERROR_COLOR, error })
    end
 end
 
