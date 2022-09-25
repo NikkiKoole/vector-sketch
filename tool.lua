@@ -1655,7 +1655,7 @@ function mylib:mousepressed(x, y, button)
       end
 
       if points then
-         if editingMode == 'polyline' and not ui.mouseHovered then
+         if editingMode == 'polyline' and not ui.mouseHovered() then
             local w, h = getLocalDelta(t, 10, 10)
             w = math.max(math.abs(w), math.abs(h))
 
@@ -1850,7 +1850,7 @@ function mylib:mousemoved(x, y, dx, dy)
    end
 
    if (
-       editingMode == 'folder' and editingModeSub == 'folder-move' and ui.mouseHovered == false and
+       editingMode == 'folder' and editingModeSub == 'folder-move' and not ui.mouseHovered() and
            not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
          local ddx, ddy = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
@@ -1876,7 +1876,7 @@ function mylib:mousemoved(x, y, dx, dy)
    end
 
    if editingMode == 'polyline' and editingModeSub == 'polyline-move' and love.mouse.isDown(1) and
-       ui.mouseHovered == false then
+       not ui.mouseHovered() then
       local points = currentNode and currentNode.points
       local dx3, dy3 = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
       if snap then
@@ -1918,7 +1918,7 @@ function mylib:mousemoved(x, y, dx, dy)
       end
    end
 
-   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') and (ui.mouseHovered == false) then
+   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') and not ui.mouseHovered() then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
          local dragIndex = lastDraggedElement.index
          if dragIndex > 0 then

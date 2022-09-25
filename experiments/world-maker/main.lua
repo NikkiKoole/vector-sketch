@@ -62,7 +62,7 @@ end
 
 function love.mousereleased()
 
-   if not ui.mouseHovered then
+   if not ui.mouseHovered() then
       activeButton = nil
    end
 end

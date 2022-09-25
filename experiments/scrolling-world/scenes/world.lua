@@ -40,7 +40,7 @@ function attachPointerCallbacks()
    end
 
    function love.mousepressed(x, y, button, istouch, presses)
-      if (ui.mouseHovered) then return end
+      if (ui.mouseHovered()) then return end
       if not istouch then
          pointerPressed(x, y, 'mouse', parallaxLayersData)
       end
