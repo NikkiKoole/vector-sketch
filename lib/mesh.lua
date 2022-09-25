@@ -7,7 +7,8 @@ local hit = require 'lib.hit'
 local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
 local polyline = require 'lib.polyline'
-
+local parse = require 'lib.parse-file'
+local parentize = require 'lib.parentize'
 local border = require 'lib.border-mesh'
 require 'lib.basics' --tableconcat
 
@@ -395,7 +396,10 @@ mesh.remeshNode = function(node)
          if (node.texture.squishable == true) then
             print('need to make this a fan instead of trinagles I think')
          end
-         node.mesh = love.graphics.newMesh(verts, 'triangles')
+         if verts then
+            node.mesh = love.graphics.newMesh(verts, 'triangles')
+
+         end
       end
 
       node.mesh:setTexture(img)
@@ -432,6 +436,30 @@ mesh.meshAll = function(root) -- this needs to be done recursive
    end
 end
 
+mesh.readFileAndAddToCache = function(url)
+   -- todo this needs to work with hotrelaoding too,
+   -- i suppose its just a matter of overwriting the value in cache?
+
+   if not meshCache[url] then
+      local g2 = parse.parseFile(url)[1]
+      parentize.parentize(g2)
+      mesh.meshAll(g2)
+      mesh.makeOptimizedBatchMesh(g2)
+
+      local bb = bbox.getBBoxRecursive(g2)
+      -- ok this is needed cause i do a bit of transforming in the function
+      local tlx, tly = g2.transforms._g:inverseTransformPoint(bb[1], bb[2])
+      local brx, bry = g2.transforms._g:inverseTransformPoint(bb[3], bb[4])
+
+      g2.bbox = { tlx, tly, brx, bry } --bbox
+
+      --local bbox = getBBoxOfChildren(g2.children)
+      --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
+      meshCache[url] = g2
+   end
+
+   return meshCache[url]
+end
 
 
 mesh.recursivelyAddOptimizedMesh = function(root)

@@ -66,49 +66,6 @@ function shuffleAndMultiply(items, mul)
    return result
 end
 
--- todo her its at these are my properiess!!
-function readFileAndAddToCache(url)
-   if not meshCache[url] then
-      local g2 = parse.parseFile(url)[1]
-      parentize.parentize(g2)
-      mesh.meshAll(g2)
-      mesh.makeOptimizedBatchMesh(g2)
-
-      local bb = bbox.getBBoxRecursive(g2)
-      -- ok this is needed cause i do a bit of transforming in the function
-      local tlx, tly = g2.transforms._g:inverseTransformPoint(bb[1], bb[2])
-      local brx, bry = g2.transforms._g:inverseTransformPoint(bb[3], bb[4])
-
-      g2.bbox = { tlx, tly, brx, bry } --bbox
-
-      --local bbox = getBBoxOfChildren(g2.children)
-      --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
-      meshCache[url] = g2
-   end
-
-   return meshCache[url]
-end
-
---[[
-function recursivelyAddOptimizedMesh(root)
-   if root.folder then
-      if root.url then
-	root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
-      end
-   end
-
-   if root.children then
-      for i=1, #root.children do
-         if root.children[i].folder then
-            recursivelyAddOptimizedMesh(root.children[i])
-         end
-      end
-   end
-end
-]] --
--- end utility functions
-
-
 function love.keypressed(key)
    if key == 'escape' then love.event.quit() end
    if key == 'space' then cameraFollowPlayer = not cameraFollowPlayer end

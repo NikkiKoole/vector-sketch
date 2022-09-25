@@ -518,14 +518,14 @@ function handleChild(shape, isDirty)
 
 end
 
-render.renderNodeIntoCanvas = function(node, canvas, filename)
+render.renderNodeIntoCanvas = function(n, canvas, filename)
 
    love.graphics.setCanvas({ canvas, stencil = true })
    love.graphics.clear()
    -- this is the default already
    --love.graphics.setBlendMode("alpha")
 
-   drawNodeIntoRect(node, 0, 0, canvas:getWidth(), canvas:getHeight())
+   drawNodeIntoRect(n, 0, 0, canvas:getWidth(), canvas:getHeight())
 
    love.graphics.setCanvas()
 

@@ -46,7 +46,7 @@ function makeGroundPlaneBook(urls)
    local result = {}
    for i = 1, #urls do
       local url = urls[i]
-      local thing = readFileAndAddToCache(url)
+      local thing = mesh.readFileAndAddToCache(url)
       result[i] = {
          url = url,
          thing = thing,

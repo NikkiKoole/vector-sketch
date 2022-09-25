@@ -138,7 +138,7 @@ function scene.load()
       -- todo alot of duplication from removeAddItems
       function makeObject(url, x, y, depth, allowOptimized)
          if allowOptimized == nil then allowOptimized = true end
-         local read = readFileAndAddToCache(url)
+         local read = mesh.readFileAndAddToCache(url)
          local doOptimized = read.optimizedBatchMesh ~= nil
 
          local child = {

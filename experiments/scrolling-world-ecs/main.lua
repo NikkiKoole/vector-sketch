@@ -49,11 +49,12 @@ local round2 = numbers.round2
 -- https://love2d.org/wiki/love.filesystem.mount
 function mountZip(filename, mountpoint)
    local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
 
-   local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-   f:close()
-
-   return love.filesystem.mount(filedata, mountpoint or 'zip')
+      return love.filesystem.mount(filedata, mountpoint or 'zip')
+   end
 end
 
 --[[
@@ -84,51 +85,6 @@ function shuffleAndMultiply(items, mul)
    return result
 end
 
-function readFileAndAddToCache(url)
-   -- todo this needs to work with hotrelaoding too,
-   -- i suppose its just a matter of overwriting the value in cache?
-
-   if not meshCache[url] then
-      local g2 = parse.parseFile(url)[1]
-      parentize.parentize(g2)
-      mesh.meshAll(g2)
-      mesh.makeOptimizedBatchMesh(g2)
-
-      local bb = bbox.getBBoxRecursive(g2)
-      -- ok this is needed cause i do a bit of transforming in the function
-      local tlx, tly = g2.transforms._g:inverseTransformPoint(bb[1], bb[2])
-      local brx, bry = g2.transforms._g:inverseTransformPoint(bb[3], bb[4])
-
-      g2.bbox = { tlx, tly, brx, bry } --bbox
-
-      --local bbox = getBBoxOfChildren(g2.children)
-      --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
-      meshCache[url] = g2
-   end
-
-   return meshCache[url]
-end
-
---[[
-function recursivelyAddOptimizedMesh(root)
-   if root.folder then
-      if root.url then
-	root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
-      end
-   end
-
-   if root.children then
-      for i=1, #root.children do
-         if root.children[i].folder then
-            recursivelyAddOptimizedMesh(root.children[i])
-         end
-      end
-   end
-end
-]] --
--- end utility functions
-
-
 function love.keypressed(key)
    if key == 'escape' then love.event.quit() end
    if key == 'space' then cameraFollowPlayer = not cameraFollowPlayer end
@@ -142,12 +98,6 @@ function love.keypressed(key)
       profiling = not profiling
    end
 end
-
---function sortOnDepth(list)-
---   table.sort( list, function(a,b) return a.depth <  b.depth end)
---end
-
-
 
 function drawDebugStrings()
 
@@ -266,6 +216,8 @@ function love.load()
    --   cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
    --}
 
+
+   -- todo move into camera (tween)
    tweenCameraDelta = 0
    followPlayerCameraDelta = 0
 

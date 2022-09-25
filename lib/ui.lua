@@ -5,6 +5,7 @@ local hit = require 'lib.hit'
 -- todo @global mouseState
 -- todo @global editingMode, edtigingModesub
 
+
 function handleMouseClickStart()
    mouseState.hoveredSomething = false
    mouseState.down = love.mouse.isDown(1)
@@ -117,10 +118,6 @@ function rgbbutton(id, rgb, x, y, size)
       love.graphics.setColor(1, 1, 1, 1)
       love.graphics.rectangle("line", x * scale, y * scale, (w) * scale, (h) * scale)
    end
-   if (editingMode == id) then
-   end
-   if (editingModeSub == id) then
-   end
 
    return {
       clicked = clicked
@@ -159,7 +156,7 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
    local buttonWidth = buttonWidth or 200
    local clicked = false
    local hover = false
-   local fontHeight = love.graphics.getFont():getHeight(label)
+   local fontHeight = love.graphics.getFont():getHeight()
 
    if (active) then
       love.graphics.setColor(0.2, 0.2, 0.2, .75)
@@ -202,21 +199,13 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
    else
       love.graphics.setColor(1, 1, 1, .5)
    end
-   if (editingMode == id) then
-      love.graphics.setColor(1, 1, 1, 1)
-   end
-   if (editingModeSub == id) then
-      love.graphics.setColor(1, 1, 1, 1)
-   end
+
    if (active) then
       love.graphics.setColor(1, 1, 1, 1)
 
    end
 
-   if (disabled) then
-      love.graphics.setColor(1, 0, 1, .5)
-      clicked = false
-   end
+
 
    love.graphics.print(label, x + 32 + 4, y + (h - fontHeight) / 2)
    love.graphics.draw(img, x, y, 0, imgScale, imgScale)
@@ -258,17 +247,14 @@ function imgbutton(id, img, x, y, hoverText)
    else
       love.graphics.setColor(1, 1, 1, .3)
    end
+   -- todo this highlighting needs to be done somewhere outside of here.
    if (editingMode == id) then
       love.graphics.setColor(1, 1, 1, 1)
    end
    if (editingModeSub == id) then
       love.graphics.setColor(1, 1, 1, 1)
    end
-   if (disabled) then
-      love.graphics.setColor(1, 0, 1, .3)
-      clicked = false
 
-   end
 
    love.graphics.draw(img, x, y, 0, imgScale, imgScale)
 
