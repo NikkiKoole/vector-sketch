@@ -184,7 +184,7 @@ function love.draw()
    local w, h = love.graphics.getDimensions()
 
    if reloadOrigin then
-      if imgbutton('hot-reload-the-thing', ui.rotate, w * part, 50, 'clik it to edit then click to reload').clicked then
+      if imgbutton('hot-reload-the-thing', icon.rotate, w * part, 50, 'clik it to edit then click to reload').clicked then
          --print(part)
          if part == 0 then
             mylib:setRoot(reloadBody, love.filesystem.getRealDirectory(reloadOrigin.path))

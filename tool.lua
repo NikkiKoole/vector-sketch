@@ -487,7 +487,7 @@ local function drawUIAroundGraphNodes(w, h)
    table.insert(
       row0,
       {
-         'add-something', ui.add, 'add a new thing',
+         'add-something', icon.add, 'add a new thing',
          function()
             openedAddPanel = not openedAddPanel
 
@@ -500,7 +500,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row0,
          {
-            'add-meta', ui.move, 'add a meta',
+            'add-meta', icon.move, 'add a meta',
             function()
                --openedAddPanel = not openedAddPanel
 
@@ -527,7 +527,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row0,
          {
-            'add-shape', ui.object_group, 'add a shape',
+            'add-shape', icon.object_group, 'add a shape',
             function()
                local shape = {
                   color = { 0, 0, 0, 1 },
@@ -559,7 +559,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row0,
          {
-            'add-folder', ui.folder, 'add a folder',
+            'add-folder', icon.folder, 'add a folder',
             function()
                local f = makeNewFolder()
                editingMode = 'polyline'
@@ -588,7 +588,7 @@ local function drawUIAroundGraphNodes(w, h)
    table.insert(
       row0b,
       {
-         'show help', ui.help, 'show-shortcuts',
+         'show help', icon.help, 'show-shortcuts',
          function()
             showHelp = not showHelp
             --local f = makeNewFolder()
@@ -615,7 +615,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row1,
          {
-            'polyline-clone', ui.clone, 'clone',
+            'polyline-clone', icon.clone, 'clone',
             function()
                if (editingMode == 'polyline') then
                   local cloned = copyShape(currentNode)
@@ -639,7 +639,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row1,
          {
-            'delete', ui.delete, 'delete',
+            'delete', icon.delete, 'delete',
             function()
                deleteNode(currentNode)
             end
@@ -651,7 +651,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row1,
          {
-            'badge', ui.badge, 'rename',
+            'badge', icon.badge, 'rename',
             function()
                changeName = not changeName
                local name = currentNode and currentNode.name
@@ -663,7 +663,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row1,
          {
-            'connector', ui.parent, 'parentize',
+            'connector', icon.parent, 'parentize',
             function()
                lastDraggedElement = { id = 'connector', pos = { row1.runningX, row1.runningY } }
             end
@@ -683,7 +683,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row1,
             {
-               'polyline-move-up', ui.move_up, 'move up in tree',
+               'polyline-move-up', icon.move_up, 'move up in tree',
                function()
                   local taken_out = removeCurrentNode()
                   table.insert(taken_out._parent.children, index - 1, taken_out)
@@ -702,7 +702,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row1,
             {
-               'polyline-move-mown', ui.move_down, 'move down in tree',
+               'polyline-move-mown', icon.move_down, 'move down in tree',
                function()
                   local taken_out = removeCurrentNode()
                   if (taken_out) then
@@ -732,7 +732,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'transform-toggle', ui.transform, 'do the transformations',
+            'transform-toggle', icon.transform, 'do the transformations',
             function()
                showTheParentTransforms = not showTheParentTransforms
             end
@@ -742,7 +742,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'folder-pan-pivot', ui.pan, 'pivot pooint',
+            'folder-pan-pivot', icon.pan, 'pivot pooint',
             function()
                if editingModeSub == 'folder-pan-pivot' then
                   editingModeSub = nil
@@ -755,7 +755,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'folder-move', ui.move, 'move whole',
+            'folder-move', icon.move, 'move whole',
             function()
                editingModeSub = 'folder-move'
 
@@ -767,7 +767,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'optimizer', ui.layer_group, 'optimize check',
+            'optimizer', icon.layer_group, 'optimize check',
             function()
                if (currentNode.optimizedBatchMesh) then
                   currentNode.optimizedBatchMesh = nil
@@ -782,7 +782,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'change-perspective', ui.change, 'debug perspective thing',
+            'change-perspective', icon.change, 'debug perspective thing',
             function()
                editingModeSub = 'change-perspective'
                local bbox = getBBoxOfChildren(currentNode.children)
@@ -806,7 +806,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'transition', ui.transition, 'pose animation',
+               'transition', icon.transition, 'pose animation',
                function()
                   if (currentNode.keyframes) then
                      currentNode.keyframes = nil
@@ -828,7 +828,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'joystick', ui.joystick, '4way pose animation',
+               'joystick', icon.joystick, '4way pose animation',
                function()
                   if (currentNode.keyframes) then
                      currentNode.keyframes = nil
@@ -868,7 +868,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-flip-vertical', ui.flip_vertical, 'flip vertically',
+               'children-flip-vertical', icon.flip_vertical, 'flip vertically',
                function()
                   flipGroup(currentNode, childrenInRectangleSelect, 1, -1)
                end
@@ -877,7 +877,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-flip-horizontal', ui.flip_horizontal, 'flip vertically',
+               'children-flip-horizontal', icon.flip_horizontal, 'flip vertically',
                function()
                   flipGroup(currentNode, childrenInRectangleSelect, -1, 1)
                end
@@ -886,7 +886,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-scale-up', ui.resize, 'scale up',
+               'children-scale-up', icon.resize, 'scale up',
                function()
                   if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, .75)
@@ -900,7 +900,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-scale-down', ui.resize, 'scale down',
+               'children-scale-down', icon.resize, 'scale down',
                function()
                   if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
@@ -925,7 +925,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'polyline-edit', ui.polyline_edit, 'move point in poly',
+            'polyline-edit', icon.polyline_edit, 'move point in poly',
             function()
                editingModeSub = 'polyline-edit'
             end
@@ -936,7 +936,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'polyline-insert', ui.polyline_add, 'add point to poly',
+               'polyline-insert', icon.polyline_add, 'add point to poly',
                function()
                   editingModeSub = 'polyline-insert'
 
@@ -947,7 +947,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'polyline-remove', ui.polyline_remove, 'remove point from poly',
+               'polyline-remove', icon.polyline_remove, 'remove point from poly',
                function()
                   editingModeSub = 'polyline-remove'
 
@@ -959,7 +959,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'polyline-palette', ui.palette, 'pick color',
+            'polyline-palette', icon.palette, 'pick color',
             function()
                if editingModeSub == 'polyline-palette' then
                   editingModeSub = 'polyline-edit'
@@ -973,7 +973,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'polyline-move', ui.move, 'move thing',
+            'polyline-move', icon.move, 'move thing',
             function()
                editingModeSub = 'polyline-move'
 
@@ -984,7 +984,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'mask', ui.mask, 'turn to mask',
+            'mask', icon.mask, 'turn to mask',
             function()
                currentNode.mask = not currentNode.mask
                currentNode.hole = false
@@ -994,7 +994,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'hole', ui.hole, 'turn to hole',
+            'hole', icon.hole, 'turn to hole',
             function()
                currentNode.hole = not currentNode.hole
                currentNode.mask = false
@@ -1004,7 +1004,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'close_stencil', ui.close_stencil, 'close stencil marker',
+            'close_stencil', icon.close_stencil, 'close stencil marker',
             function()
                currentNode.closeStencil = not currentNode.closeStencil
                currentNode.mask = false
@@ -1016,7 +1016,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'polyline-recenter', ui.pivot, 'recenter',
+            'polyline-recenter', icon.pivot, 'recenter',
             function()
                editingModeSub = 'polyline-recenter'
                local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
@@ -1033,7 +1033,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'rectangle-point-select', ui.select, 'select points in child',
+            'rectangle-point-select', icon.select, 'select points in child',
             function()
                if #childrenInRectangleSelect > 0 then
                   editingModeSub = 0
@@ -1052,7 +1052,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'border', ui.polygon, 'border settings',
+            'border', icon.polygon, 'border settings',
             function()
                currentNode.border = not currentNode.border
                if currentNode.border then
@@ -1075,7 +1075,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row2,
          {
-            'rotate', ui.rotate, 'rotate with 22.5',
+            'rotate', icon.rotate, 'rotate with 22.5',
             function()
                rotateGroup(currentNode, 22.5)
             end
@@ -1086,7 +1086,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'enabledisabletext', ui.backdrop, 'enable/disable texture functionality',
+               'enabledisabletext', icon.backdrop, 'enable/disable texture functionality',
                function()
                   if currentNode.texture then
                      -- remove the texture
@@ -1107,7 +1107,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'squish', ui.squish, 'enable/disable squishable',
+               'squish', icon.squish, 'enable/disable squishable',
                function()
                   currentNode.texture.squishable = not currentNode.texture.squishable
 
@@ -1121,7 +1121,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'fit rubberhose to image', ui.backdropscale, 'fit rubberhose to image',
+               'fit rubberhose to image', icon.backdropscale, 'fit rubberhose to image',
                function()
                   local img = mesh.getImage(currentNode.texture.url)
                   if not img then return end -- todo this exits early preventing a crash, but meh
@@ -1139,7 +1139,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'fit bezier to image', ui.backdropscale, 'fit bezier to image',
+               'fit bezier to image', icon.backdropscale, 'fit bezier to image',
                function()
                   local img = mesh.getImage(currentNode.texture.url)
 
@@ -1163,7 +1163,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'fit polygon to image', ui.backdropscale4, 'make fitting  4 point polygon for image',
+               'fit polygon to image', icon.backdropscale4, 'make fitting  4 point polygon for image',
                function()
                   local img = mesh.getImage(currentNode.texture.url)
 
@@ -1189,7 +1189,7 @@ local function drawUIAroundGraphNodes(w, h)
             table.insert(
                row2,
                {
-                  'fit polygon to image', ui.backdropscale5, 'make fitting  5 point polygon for image',
+                  'fit polygon to image', icon.backdropscale5, 'make fitting  5 point polygon for image',
                   function()
                      local img = mesh.getImage(currentNode.texture.url)
 
@@ -1215,7 +1215,7 @@ local function drawUIAroundGraphNodes(w, h)
             table.insert(
                row2,
                {
-                  'fit polygon to image', ui.backdropscale9, 'make fitting  9 point polygon for image',
+                  'fit polygon to image', icon.backdropscale9, 'make fitting  9 point polygon for image',
                   function()
                      local img = mesh.getImage(currentNode.texture.url)
 
@@ -1287,7 +1287,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-flip-vertical', ui.flip_vertical, 'flip vertically',
+               'children-flip-vertical', icon.flip_vertical, 'flip vertically',
                function()
                   flipGroup(currentNode, childrenInRectangleSelect, 1, -1)
                end
@@ -1296,7 +1296,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-flip-horizontal', ui.flip_horizontal, 'flip vertically',
+               'children-flip-horizontal', icon.flip_horizontal, 'flip vertically',
                function()
                   flipGroup(currentNode, childrenInRectangleSelect, -1, 1)
                end
@@ -1305,7 +1305,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-scale-up', ui.resize, 'scale up',
+               'children-scale-up', icon.resize, 'scale up',
                function()
                   if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, .75)
@@ -1319,7 +1319,7 @@ local function drawUIAroundGraphNodes(w, h)
          table.insert(
             row2,
             {
-               'children-scale-down', ui.resize, 'scale down',
+               'children-scale-down', icon.resize, 'scale down',
                function()
                   if LK.isDown('a') then
                      resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
@@ -1353,7 +1353,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row3,
          {
-            'connector-group', ui.parent, 'parentize',
+            'connector-group', icon.parent, 'parentize',
             function()
                lastDraggedElement = { id = 'connector-group', pos = { row3.runningX, row3.runningY } }
             end
@@ -1365,7 +1365,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row3,
          {
-            'object_group', ui.object_group, 'turn group to object',
+            'object_group', icon.object_group, 'turn group to object',
             function()
                for i = 1, #childrenInRectangleSelect do
                   local n = childrenInRectangleSelect[i]
@@ -1412,7 +1412,7 @@ local function drawUIAroundGraphNodes(w, h)
    table.insert(
       row3,
       {
-         'rectangle-select', ui.select, 'rectangle select',
+         'rectangle-select', icon.select, 'rectangle select',
          function()
             if (editingMode == 'rectangle-select') then
                editingMode = nil
@@ -1431,7 +1431,7 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(
          row3,
          {
-            'group-move', ui.move, 'move group',
+            'group-move', icon.move, 'move group',
             function()
                if (editingModeSub == 'group-move') then
                   editingModeSub = nil
@@ -1951,6 +1951,10 @@ local function getNodeYPosition(node, lookFor)
    return recursiveGetRunningYForNode(node, lookFor, 0)
 end
 
+local function getIcon(child)
+
+end
+
 local function renderGraphNodes(node, level, startY, beginX, totalHeight)
    local w, h = getDimensions()
    local beginRightX = beginX + level * 6
@@ -1963,36 +1967,38 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
 
       local yPos = -scrollviewOffset + startY + runningY
       local child = node.children[i]
-      local icon = ui.object_group
+
+      local myIcon = icon.object_group
 
       if (child.folder) then
-         icon = child.open and ui.folder_open or ui.folder
+         myIcon = child.open and icon.folder_open or icon.folder
       end
       if (child.line) then
-         icon = ui.polyline
+         myIcon = icon.polyline
       end
       if (child.type and child.type == 'meta') then
-         icon = ui.move
+         myIcon = icon.move
       end
 
       local color = child.color
 
       if child.mask then
-         icon = ui.mask
+         myIcon = icon.mask
          color = { 0, 0, 0 }
       end
       if child.hole then
-         icon = ui.hole
+         myIcon = icon.hole
          color = { 0, 0, 0 }
       end
       if child.closeStencil then
-         icon = ui.close_stencil
+         myIcon = icon.close_stencil
          color = { 0, 0, 0 }
       end
 
       local b = {}
       if (yPos >= 0 and yPos <= h) then
-         b = iconlabelbutton('object-group' .. i, icon, color, child == currentNode, child.name or "", rightX, yPos, 128
+         b = iconlabelbutton('object-group' .. i, myIcon, color, child == currentNode, child.name or "", rightX, yPos,
+            128
             , -4)
       end
 
@@ -2169,7 +2175,7 @@ function mylib:load(arg)
    local cwd = love.filesystem.getWorkingDirectory()
    print('CWD', cwd)
    local p = '/resources/ui/'
-   ui = {
+   icon = {
       polyline = LG.newImage(p .. "polyline.png"),
       polyline_add = LG.newImage(p .. "polyline-add.png"),
       polyline_edit = LG.newImage(p .. "polyline-edit.png"),
@@ -2667,14 +2673,15 @@ function mylib:draw()
          end
 
          if (editingMode == 'backdrop') then
-            if imgbutton('polyline-wireframe', ui.lines, calcX(0), calcY(0), 'wireframe mode').clicked then
+            if imgbutton('polyline-wireframe', icon.lines, calcX(0), calcY(0), 'wireframe mode').clicked then
                wireframe = not wireframe
             end
 
-            if imgbutton('polyline-palette', ui.palette, calcX(7), calcY(0), 'background palette').clicked then
+            if imgbutton('polyline-palette', icon.palette, calcX(7), calcY(0), 'background palette').clicked then
                editingModeSub = 'backdrop-palette'
             end
-            if imgbutton('backdrop_visibility', backdrop.visible and ui.visible or ui.not_visible, calcX(8), calcY(0),
+            if imgbutton('backdrop_visibility', backdrop.visible and icon.visible or icon.not_visible, calcX(8), calcY(0)
+               ,
                'backdrop visible').clicked then
                editingModeSub = nil
                backdrop.visible = not backdrop.visible
@@ -2689,7 +2696,7 @@ function mylib:draw()
             end
 
             if (backdrop.visible) then
-               if imgbutton('backdrop-move', ui.move, calcX(9), calcY(1), 'move backdrop').clicked then
+               if imgbutton('backdrop-move', icon.move, calcX(9), calcY(1), 'move backdrop').clicked then
                   if (editingModeSub == 'backdrop-move') then
                      editingModeSub = nil
                   else
@@ -2855,7 +2862,7 @@ function mylib:draw()
             LG.print("dropped file: " .. name, 140, 120)
 
             if text.ends_with(name, 'polygons.txt') or text.ends_with(name, '.svg') then
-               if iconlabelbutton('add-shape', ui.add_to_list, nil, false, 'add shape', 120, 300).clicked then
+               if iconlabelbutton('add-shape', icon.add_to_list, nil, false, 'add shape', 120, 300).clicked then
                   local tab = getDataFromFile(fileDropPopup)
                   root.children = TableConcat(root.children, tab)
                   parentize.parentize(root)
@@ -2868,7 +2875,7 @@ function mylib:draw()
                   mesh.recursivelyMakeTextures(root)
                   fileDropPopup = nil
                end
-               if iconlabelbutton('add-shape-new', ui.add, nil, false, 'new project', 120, 200).clicked then
+               if iconlabelbutton('add-shape-new', icon.add, nil, false, 'new project', 120, 200).clicked then
                   local tab = getDataFromFile(fileDropPopup)
                   root.children = tab -- TableConcat(root.children, tab)
                   parentize.parentize(root)
@@ -2908,7 +2915,7 @@ function mylib:draw()
 
                end
 
-               if iconlabelbutton('ok-bye', ui.add, nil, false, 'ok bye', 120, 200).clicked then
+               if iconlabelbutton('ok-bye', icon.add, nil, false, 'ok bye', 120, 200).clicked then
                   fileDropPopup = nil
                end
             end
