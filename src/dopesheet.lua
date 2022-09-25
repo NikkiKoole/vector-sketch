@@ -1,4 +1,5 @@
 local numbers = require 'lib.numbers'
+local ui = require 'lib.ui'
 local round2 = numbers.round2
 
 function doDopeSheetEditing()
@@ -22,7 +23,7 @@ function doDopeSheetEditing()
 			love.graphics.circle("fill", lx, ly, 10)
 			love.graphics.setColor(0, 0, 0)
 			local id = k .. "thing"
-			local b = getUICircle(id, lx, ly, 10)
+			local b = ui.getUICircle(id, lx, ly, 10)
 			love.graphics.setColor(1, 0, 1, 0.8)
 			if b.hover then
 				love.graphics.setColor(0.5, 0.5, 0.5)
@@ -84,7 +85,8 @@ function doDopeSheetEditing()
 
 
 
-		local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and icon.dopesheet or icon.pencil, 0, h /
+		local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and icon.dopesheet or icon.pencil, 0,
+			h /
 			2)
 		if drawUseToggle.clicked then
 			dopesheet.drawMode = (dopesheet.drawMode == 'draw') and 'sheet' or 'draw'

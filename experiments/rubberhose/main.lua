@@ -7,7 +7,7 @@ package.path = package.path .. ";../../?.lua"
 
 local inspect = require 'vendor.inspect'
 
-require 'lib.ui'
+local ui = require 'lib.ui'
 local Segment = require 'lib.segment'
 local polyline = require 'lib.polyline'
 local numbers = require 'lib.numbers'
@@ -29,18 +29,7 @@ function love.load()
       { start = { x = 425, y = 125 }, eind = { x = 425, y = 400 }, hoseLength = 550, flop = -1 }
    }
    positionLegsFromBody()
-   mouseState = {
-      hoveredSomething = false,
-      down = false,
-      lastDown = false,
-      click = false,
-      offset = { x = 0, y = 0 }
-   }
-   lastDraggedElement = {}
-   cursors = {
-      hand = love.mouse.getSystemCursor("hand"),
-      arrow = love.mouse.getSystemCursor("arrow")
-   }
+
 
 
    borderRadius = 0
@@ -110,7 +99,7 @@ end
 
 function love.draw()
 
-   handleMouseClickStart()
+   ui.handleMouseClickStart()
 
    --- some ui
    love.graphics.print('hose length: ' .. hoses[1].hoseLength, 30, 30 - 20)

@@ -13,7 +13,7 @@ SM = require 'vendor.SceneMgr'
 require 'lib.basic-tools'
 require 'lib.polyline'
 require 'lib.generate-polygon'
-require 'lib.ui'
+local ui = require 'lib.ui'
 require 'lib.camera'
 require 'lib.generateWorld'
 
@@ -268,7 +268,7 @@ function love.draw()
 
    renderCount = { normal = 0, optimized = 0, groundMesh = 0 }
 
-   handleMouseClickStart()
+   ui.handleMouseClickStart()
 
    SM.draw()
    local W, H = love.graphics.getDimensions()

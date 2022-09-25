@@ -4,9 +4,27 @@ local hit = require 'lib.hit'
 
 -- todo @global mouseState
 -- todo @global editingMode, edtigingModesub
+local ui = {}
 
+local mouseState = {
+   hoveredSomething = false,
+   down = false,
+   lastDown = false,
+   click = false,
+   released = false,
+   offset = { x = 0, y = 0 }
+}
+ui.mouseHovered = function()
+   return mouseState.hoveredSomething
 
-function handleMouseClickStart()
+end
+lastDraggedElement = {}
+cursors = {
+   hand = love.mouse.getSystemCursor("hand"),
+   arrow = love.mouse.getSystemCursor("arrow")
+}
+
+ui.handleMouseClickStart = function()
    mouseState.hoveredSomething = false
    mouseState.down = love.mouse.isDown(1)
    mouseState.click = false
@@ -22,7 +40,7 @@ function handleMouseClickStart()
    mouseState.lastDown = mouseState.down
 end
 
-function getUIRect(id, x, y, w, h)
+ui.getUIRect = function(id, x, y, w, h)
    local result = false
 
    local mx, my = love.mouse.getPosition()
@@ -42,7 +60,7 @@ function getUIRect(id, x, y, w, h)
    }
 end
 
-function getUICircle(id, x, y, r)
+ui.getUICircle = function(id, x, y, r)
    local clicked = false
    local hover = false
    local mx, my = love.mouse.getPosition()
@@ -511,3 +529,5 @@ function h_slider(id, x, y, width, v, min, max)
       value = result
    }
 end
+
+return ui

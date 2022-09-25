@@ -12,7 +12,7 @@ SM = require 'vendor.SceneMgr'
 require 'lib.basic-tools'
 --require 'lib.polyline'
 --require 'lib.generate-polygon'
-require 'lib.ui'
+local ui = require 'lib.ui'
 require 'lib.camera'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
@@ -212,7 +212,7 @@ function love.load()
 
 
    uiState = {
-      show = false,
+      show = true,
       showFPS = true,
       showNumbers = true,
       showBBoxes = false,
@@ -220,13 +220,7 @@ function love.load()
       showTouches = false,
       gravityValue = 5000
    }
-   mouseState = {
-      hoveredSomething = false,
-      down = false,
-      lastDown = false,
-      click = false,
-      offset = { x = 0, y = 0 }
-   }
+
 
    GLOBALS = {
       parallax = nil
@@ -255,7 +249,7 @@ function love.draw()
 
    renderCount = { normal = 0, optimized = 0, groundMesh = 0 }
 
-   handleMouseClickStart()
+   ui.handleMouseClickStart()
 
    SM.draw()
    local W, H = love.graphics.getDimensions()

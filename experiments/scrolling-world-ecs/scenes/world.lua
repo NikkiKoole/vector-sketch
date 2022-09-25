@@ -4,6 +4,7 @@ local parallax = require 'lib.parallax'
 local render = require 'lib.render'
 local hit = require 'lib.hit'
 local gradient = require 'lib.gradient'
+local ui = require 'lib.ui'
 local scene = {}
 local hasBeenLoaded = false
 --local cam = getCamera()
@@ -74,7 +75,7 @@ function attachPointerCallbacks()
    end
 
    function love.mousepressed(x, y, button, istouch, presses)
-      if (mouseState.hoveredSomething) then return end
+      if (ui.mouseHovered == true) then return end
       if not istouch then
          pointerPressed(x, y, 'mouse', parallaxLayersData, myWorld)
       end

@@ -20,7 +20,9 @@ require 'lib.copyshape'
 --require 'lib.border-mesh'
 require 'lib.generate-polygon'
 require 'lib.toolbox'
-require 'lib.ui'
+--require 'lib.ui'
+
+local ui = require 'lib.ui'
 
 utf8 = require('utf8')
 ProFi = require 'vendor.ProFi'
@@ -1498,6 +1500,7 @@ local function drawUIAroundGraphNodes(w, h)
                   return tlx, tly, brx, bry, mx, my
                end
 
+               local getUIRect = ui.getUIRect
                if (currentNode and currentNode.children and #currentNode.children > 0) then
                   LG.rectangle("fill", runningX, runningY, 20, 20)
                   if getUIRect('p1', runningX, runningY, 20, 20).clicked then
@@ -1652,7 +1655,7 @@ function mylib:mousepressed(x, y, button)
       end
 
       if points then
-         if editingMode == 'polyline' and not mouseState.hoveredSomething then
+         if editingMode == 'polyline' and not ui.mouseHovered then
             local w, h = getLocalDelta(t, 10, 10)
             w = math.max(math.abs(w), math.abs(h))
 
@@ -1847,7 +1850,7 @@ function mylib:mousemoved(x, y, dx, dy)
    end
 
    if (
-       editingMode == 'folder' and editingModeSub == 'folder-move' and mouseState.hoveredSomething == false and
+       editingMode == 'folder' and editingModeSub == 'folder-move' and ui.mouseHovered == false and
            not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
          local ddx, ddy = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
@@ -1873,7 +1876,7 @@ function mylib:mousemoved(x, y, dx, dy)
    end
 
    if editingMode == 'polyline' and editingModeSub == 'polyline-move' and love.mouse.isDown(1) and
-       mouseState.hoveredSomething == false then
+       ui.mouseHovered == false then
       local points = currentNode and currentNode.points
       local dx3, dy3 = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
       if snap then
@@ -1915,7 +1918,7 @@ function mylib:mousemoved(x, y, dx, dy)
       end
    end
 
-   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') and (mouseState.hoveredSomething == false) then
+   if (editingMode == 'polyline') and (editingModeSub == 'polyline-edit') and (ui.mouseHovered == false) then
       if (lastDraggedElement and lastDraggedElement.id == 'polyline') then
          local dragIndex = lastDraggedElement.index
          if dragIndex > 0 then
@@ -2234,21 +2237,10 @@ function mylib:load(arg)
       help = LG.newImage(p .. "help.png"),
    }
 
-   cursors = {
-      hand = love.mouse.getSystemCursor("hand"),
-      arrow = love.mouse.getSystemCursor("arrow")
-   }
+
 
    palette = getAllPalettes()
 
-   mouseState = {
-      hoveredSomething = false,
-      down = false,
-      lastDown = false,
-      click = false,
-      offset = { x = 0, y = 0 }
-   }
-   lastDraggedElement = {}
 
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -2351,7 +2343,7 @@ function mylib:draw()
 
    local root = mylib.root
    if openFileScreen then
-      handleMouseClickStart()
+      ui.handleMouseClickStart()
 
       renderOpenFileScreen(root)
    else
@@ -2360,7 +2352,7 @@ function mylib:draw()
          step = step + 1
          local mx, my = love.mouse.getPosition()
 
-         handleMouseClickStart()
+         ui.handleMouseClickStart()
 
          local w, h = getDimensions()
          LG.setScissor(0, 0, w, h)

@@ -18,6 +18,7 @@ local parentize = require 'lib.parentize'
 local parallax = require 'lib.parallax'
 local render = require 'lib.render'
 local gradient = require 'lib.gradient'
+local ui = require 'lib.ui'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
 function scene.modify(data)
@@ -39,7 +40,7 @@ function attachPointerCallbacks()
    end
 
    function love.mousepressed(x, y, button, istouch, presses)
-      if (mouseState.hoveredSomething) then return end
+      if (ui.mouseHovered) then return end
       if not istouch then
          pointerPressed(x, y, 'mouse', parallaxLayersData)
       end
