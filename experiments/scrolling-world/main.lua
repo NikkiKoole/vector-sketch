@@ -19,7 +19,7 @@ local cam = require('lib.cameraBase').getInstance()
 require 'lib.generateWorld'
 
 
-require 'src.gradient'
+
 require 'src.groundplane'
 --require 'src.fillstuf'
 require 'src.removeAddItems'
@@ -306,7 +306,7 @@ function love.draw()
       local value = getTranslateSchedulerValues()
       love.graphics.line(W / 2, 100, W / 2 + value, 0)
       --if translateScheduler.cache.value ~= 0 then
-       --  love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.value, 0)
+      --  love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.value, 0)
       --else
       --   love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.tweenValue, 0)
       --end

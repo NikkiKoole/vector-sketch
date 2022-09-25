@@ -20,7 +20,7 @@ require 'lib.generateWorld'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
 
-require 'src.gradient'
+
 require 'src.groundplane'
 require 'src.fillstuf'
 require 'src.removeAddItems'

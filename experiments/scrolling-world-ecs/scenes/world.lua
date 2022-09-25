@@ -3,6 +3,7 @@ local parentize = require 'lib.parentize'
 local parallax = require 'lib.parallax'
 local render = require 'lib.render'
 local hit = require 'lib.hit'
+local gradient = require 'lib.gradient'
 local scene = {}
 local hasBeenLoaded = false
 --local cam = getCamera()
@@ -168,12 +169,10 @@ end
 
 function scene.load()
 
-   local timeIndex = math.floor(1 + love.math.random() * 24)
 
-   skygradient = gradientMesh(
-      "vertical",
-      gradients[timeIndex].from, gradients[timeIndex].to
-   )
+   local timeIndex = math.floor(1 + love.math.random() * 24)
+   skygradient = gradient.makeSkyGradient(timeIndex)
+
 
    xAxisAllowed = true
    yAxisAllowed = true

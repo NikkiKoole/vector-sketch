@@ -10,6 +10,7 @@ local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 local formats = require 'lib.formats'
 local node = require 'lib.node'
+local gradient = require 'lib.gradient'
 
 Concord = require 'vendor.concord.init'
 
@@ -109,36 +110,6 @@ function love.mousemoved(x, y)
 
 end
 
-function makeBackdropMesh()
-  
-   local w, h = love.graphics.getDimensions()
-
-   local vertices = {
-      {
-         -- top-left corner (red-tinted)
-         0, 0, -- position of the vertex
-         1, 0, 0, -- color of the vertex
-      },
-      {
-         -- top-right corner (green-tinted)
-         w, 0,
-         0, 1, 0
-      },
-      {
-         -- bottom-right corner (blue-tinted)
-         w, h,
-         0, 0, 1
-      },
-      {
-         -- bottom-left corner (yellow-tinted)
-         0, h,
-         0, 1, 1
-      },
-   }
-   local m = love.graphics.newMesh(formats.other_format_colors, vertices)
-   return m
-end
-
 function love.load()
    love.window.setMode(1024, 768, { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2,
       highdpi = true })
@@ -150,6 +121,7 @@ function love.load()
       transforms = { l = { 1024 / 2, 768 / 2, 0, 4, 4, 0, 0 } },
    }
 
+   backdrop = gradient.makeBackdropMesh()
    local doggo = parse.parseFile('assets/doggo___.polygons.txt')[1]
    local worst_ = parse.parseFile('assets/worst_.polygons.txt')[1]
    --   print(inspect(worst_))
@@ -210,8 +182,8 @@ function love.update(dt)
 end
 
 function love.draw()
-   local m = makeBackdropMesh()
-   love.graphics.draw(m)
+
+   love.graphics.draw(backdrop)
    render.renderThings(root)
    --   myWorld:emit("draw")
 end
