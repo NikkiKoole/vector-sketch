@@ -2011,7 +2011,7 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
       local b = {}
       local dblClicked = false
       if (yPos >= 0 and yPos <= h) then
-         b = iconlabelbutton('object-group' .. i, myIcon, { 0, 0, 1 }, child == currentNode, child.name or "", rightX,
+         b = iconlabelbutton('object-group' .. i, myIcon, color, child == currentNode, child.name or "", rightX,
             yPos
             ,
             128
@@ -2032,11 +2032,28 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
                   changeNameCursor = child.name and #child.name or 0
                   -- but i dont know how to capture events for just this elemnt if needed
 
+                  --[[   
+                  runningY = runningY - rowHeight
                   b = iconlabelbutton('object-group' .. i, myIcon, { 1, 0, 0 }, child == currentNode, child.name or "",
                      rightX, yPos,
                      128
                      , -4)
 
+                  local str = currentNode and currentNode.name or ""
+                  local sx = rightX + 24 + 12
+                  local sy = yPos + 2
+                
+                  local substr = (string.sub(str, 1, changeNameCursor))
+                  local cursorX = (LG.getFont():getWidth(substr))
+                  --print(dt % 10)
+                  --love.graphics.setColor(love.math.random(), 1, 1)
+                  LG.setColor(1, 1, 1)
+                  local d = (math.sin(love.timer.getTime() * 10))
+                  love.graphics.setColor(1, 1, 1, d)
+                  print(d)
+                  LG.rectangle('line', sx + cursorX, sy - 5, 1, 23 + 10)
+                        love.graphics.setColor(1, 1, 1, 1)
+                  ]] --
                end
             end
          end
@@ -2834,22 +2851,18 @@ function mylib:draw()
                   LG.setColor(1, 1, 1)
 
                   if lastClickedGraphButton then
+
+
                      local sx = lastClickedGraphButton.x + 24 + 12
                      local sy = lastClickedGraphButton.y + 2
-
-                     --LG.rectangle('line', sx, sy, 100, 23)
-                     --LG.setColor(1, 0.5, 0.5)
-                     --LG.setFont(smallester)
-
-                     --LG.print(str, sx, sy)
-                     --LG.setColor(1, 1, 1)
-
                      local substr = (string.sub(str, 1, changeNameCursor))
                      local cursorX = (LG.getFont():getWidth(substr))
                      --print(dt % 10)
                      --love.graphics.setColor(love.math.random(), 1, 1)
+                     LG.setColor(1, 1, 1)
                      local d = (math.sin(love.timer.getTime() * 10))
                      love.graphics.setColor(1, 1, 1, d)
+                     --print(d)
                      LG.rectangle('line', sx + cursorX, sy - 5, 1, 23 + 10)
                      love.graphics.setColor(1, 1, 1, 1)
                   end

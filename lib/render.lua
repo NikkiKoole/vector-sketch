@@ -10,11 +10,9 @@ local node = require 'lib.node'
 local parentize = require 'lib.parentize'
 local polyline = require 'lib.polyline'
 local border = require 'lib.border-mesh'
-require 'lib.camera'
---local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
--- todo @global GLOBALS.parallax
 
+-- todo @global GLOBALS.parallax
 local lerp = numbers.lerp
 
 local function lerpColor(c1, c2, t)
