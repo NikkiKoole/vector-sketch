@@ -436,11 +436,13 @@ mesh.meshAll = function(root) -- this needs to be done recursive
    end
 end
 
+
+local _meshCache = {}
 mesh.readFileAndAddToCache = function(url)
    -- todo this needs to work with hotrelaoding too,
    -- i suppose its just a matter of overwriting the value in cache?
 
-   if not meshCache[url] then
+   if not _meshCache[url] then
       local g2 = parse.parseFile(url)[1]
       parentize.parentize(g2)
       mesh.meshAll(g2)
@@ -455,17 +457,17 @@ mesh.readFileAndAddToCache = function(url)
 
       --local bbox = getBBoxOfChildren(g2.children)
       --g2.bbox = {bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y}
-      meshCache[url] = g2
+      _meshCache[url] = g2
    end
 
-   return meshCache[url]
+   return _meshCache[url]
 end
 
 
 mesh.recursivelyAddOptimizedMesh = function(root)
    if root.folder then
       if root.url then
-         root.optimizedBatchMesh = meshCache[root.url].optimizedBatchMesh
+         root.optimizedBatchMesh = _meshCache[root.url].optimizedBatchMesh
       end
    end
 

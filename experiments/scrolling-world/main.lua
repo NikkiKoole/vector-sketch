@@ -180,7 +180,7 @@ end
 function love.load()
    -- Set path of your scene files
    renderCount = { normal = 0, optimized = 0, groundMesh = 0 }
-   meshCache = {}
+   --meshCache = {}
 
    --gestureState = {
    --   list = {},
