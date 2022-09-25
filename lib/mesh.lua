@@ -378,25 +378,25 @@ mesh.addUVToVerts = function(verts, img, points, settings)
 
 end
 
-local imageCache = {}
+local _imageCache = {}
 
 local function addToImageCache(url, settings)
-   if not imageCache[url] then
+   if not _imageCache[url] then
       local wrap = settings and settings.wrap or 'clampzero'
       local filter = settings and settings.filter or 'linear'
       print('making texture', url)
       local img = love.graphics.newImage(url, { mipmaps = true })
       img:setWrap(wrap)
       img:setFilter(filter, filter)
-      imageCache[url] = img
+      _imageCache[url] = img
    end
 end
 
 mesh.getImage = function(url)
-   if not imageCache[url] then
+   if not _imageCache[url] then
       addToImageCache(url)
    end
-   return imageCache[url]
+   return _imageCache[url]
 
 end
 
@@ -422,7 +422,7 @@ mesh.remeshNode = function(node)
    if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
       print(node.texture.url, node.texture.url:len())
 
-      local img = imageCache[node.texture.url];
+      local img = _imageCache[node.texture.url];
 
       if (node.texture.squishable) then
          local v = mesh.makeSquishableUVsFromPoints(node.points)
@@ -442,7 +442,7 @@ mesh.remeshNode = function(node)
    else
       node.mesh = mesh.makeMeshFromVertices(verts, node.type, node.texture)
       if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
-         local texture = imageCache[node.texture and node.texture.url]
+         local texture = _imageCache[node.texture and node.texture.url]
          if texture then
             node.mesh:setTexture(texture)
          end

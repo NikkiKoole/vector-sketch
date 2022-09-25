@@ -2,7 +2,7 @@ package.path = package.path .. ";../../?.lua"
 
 --Camera = require 'vendor.brady'
 
-require 'lib.recursivelyMakeTextures'
+--require 'lib.recursivelyMakeTextures'
 --require 'lib.scene-graph'
 require 'lib.generate-polygon'
 --require 'lib.bbox'
