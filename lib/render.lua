@@ -477,7 +477,7 @@ function handleChild(shape, isDirty)
                   editing = mesh.makeSquishableUVsFromPoints(shape.points)
                else
 
-                  mesh.addUVToVerts(editing, imageCache[shape.texture.url], shape.points, shape.texture)
+                  mesh.addUVToVerts(editing, mesh.getImage(shape.texture.url), shape.points, shape.texture)
                end
             end
          end
@@ -495,7 +495,7 @@ function handleChild(shape, isDirty)
          if shape.texture and shape.texture.url then
             --	    print('using texture')
 
-            editingMesh:setTexture(imageCache[shape.texture.url])
+            editingMesh:setTexture(mesh.getImage(shape.texture.url))
          end
          love.graphics.setColor(shape.color)
          --love.graphics.setColor(1,1,1)

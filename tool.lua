@@ -2,7 +2,7 @@ inspect = require 'vendor.inspect'
 
 console = require 'vendor.console'
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
-require 'lib.recursivelyMakeTextures'
+--require 'lib.recursivelyMakeTextures'
 
 require 'src.palettes'
 require 'src.dopesheet'
@@ -1151,7 +1151,7 @@ local function drawUIAroundGraphNodes(w, h)
             {
                'fit rubberhose to image', ui.backdropscale, 'fit rubberhose to image',
                function()
-                  local img = imageCache[currentNode.texture.url]
+                  local img = mesh.getImage(currentNode.texture.url)
                   if not img then return end -- todo this exits early preventing a crash, but meh
                   local width, height = img:getDimensions()
                   local magic = 4.46
@@ -1169,7 +1169,8 @@ local function drawUIAroundGraphNodes(w, h)
             {
                'fit bezier to image', ui.backdropscale, 'fit bezier to image',
                function()
-                  local img = imageCache[currentNode.texture.url]
+                  local img = mesh.getImage(currentNode.texture.url)
+
                   if not img then return end -- todo this exits early preventing a crash, but meh
                   local width, height = img:getDimensions()
                   currentNode.points = {};
@@ -1192,7 +1193,8 @@ local function drawUIAroundGraphNodes(w, h)
             {
                'fit polygon to image', ui.backdropscale4, 'make fitting  4 point polygon for image',
                function()
-                  local img = imageCache[currentNode.texture.url]
+                  local img = mesh.getImage(currentNode.texture.url)
+
                   if not img then return end -- todo this exits early preventing a crash, but meh
                   local width, height = img:getDimensions()
                   --local mx, my = getMiddleOfPoints(currentNode.points)
@@ -1217,7 +1219,8 @@ local function drawUIAroundGraphNodes(w, h)
                {
                   'fit polygon to image', ui.backdropscale5, 'make fitting  5 point polygon for image',
                   function()
-                     local img = imageCache[currentNode.texture.url]
+                     local img = mesh.getImage(currentNode.texture.url)
+
                      if not img then return end -- todo this exits early preventing a crash, but meh
                      local width, height = img:getDimensions()
                      local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
@@ -1242,7 +1245,8 @@ local function drawUIAroundGraphNodes(w, h)
                {
                   'fit polygon to image', ui.backdropscale9, 'make fitting  9 point polygon for image',
                   function()
-                     local img = imageCache[currentNode.texture.url]
+                     local img = mesh.getImage(currentNode.texture.url)
+
                      if not img then return end -- todo this exits early preventing a crash, but meh
                      local width, height = img:getDimensions()
                      local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
@@ -2768,7 +2772,7 @@ function mylib:draw()
                   local str = currentNode and currentNode.name or ""
                   local substr = string.sub(str, 1, changeNameCursor)
                   local cursorX = (LG.getFont():getWidth(substr))
-                  local cursorH = (LG.getFont():getHeight(str))
+                  local cursorH = (LG.getFont():getHeight())
                   LG.setColor(1, 1, 1, 0.5)
                   LG.rectangle('fill', 0, h * 0.75 - cursorH - 26, 300 + 20, cursorH + 20)
                   LG.setColor(1, 1, 1)
@@ -2842,7 +2846,7 @@ function mylib:draw()
 
                   currentNode = nil
                   mesh.meshAll(root)
-                  recursivelyMakeTextures(root)
+                  mesh.recursivelyMakeTextures(root)
                   fileDropPopup = nil
                end
                if iconlabelbutton('add-shape-new', ui.add, nil, false, 'new project', 120, 200).clicked then
@@ -2854,7 +2858,7 @@ function mylib:draw()
                   editingModeSub = nil
                   currentNode = nil
                   mesh.meshAll(root)
-                  recursivelyMakeTextures(root)
+                  mesh.recursivelyMakeTextures(root)
                   fileDropPopup = nil
                end
 
@@ -2880,7 +2884,7 @@ function mylib:draw()
 
                      LG.print("asset: " .. url, 140, 150)
                      currentNode.texture.url = url
-                     recursivelyMakeTextures(currentNode)
+                     mesh.recursivelyMakeTextures(currentNode)
                   end
 
                end
@@ -3097,7 +3101,7 @@ function mylib:keypressed(key, scancode, isrepeat)
             table.insert(toSave, copyShape(root.children[i]))
          end
 
-         love.filesystem.write(path, json.encode(toSave, { indent = "" }))
+         love.filesystem.write(path, json.encode(toSave))
          love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
       end
 

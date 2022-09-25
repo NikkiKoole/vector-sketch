@@ -378,6 +378,42 @@ mesh.addUVToVerts = function(verts, img, points, settings)
 
 end
 
+local imageCache = {}
+
+local function addToImageCache(url, settings)
+   if not imageCache[url] then
+      local wrap = settings and settings.wrap or 'clampzero'
+      local filter = settings and settings.filter or 'linear'
+      print('making texture', url)
+      local img = love.graphics.newImage(url, { mipmaps = true })
+      img:setWrap(wrap)
+      img:setFilter(filter, filter)
+      imageCache[url] = img
+   end
+end
+
+mesh.getImage = function(url)
+   if not imageCache[url] then
+      addToImageCache(url)
+   end
+   return imageCache[url]
+
+end
+
+mesh.recursivelyMakeTextures = function(root)
+
+   if root.texture then
+      addToImageCache(root.texture.url, root.texture)
+   end
+
+   if root.children then
+      for i = 1, #root.children do
+         mesh.recursivelyMakeTextures(root.children[i])
+      end
+   end
+end
+
+
 
 mesh.remeshNode = function(node)
    --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
