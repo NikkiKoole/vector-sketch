@@ -47,15 +47,6 @@ local round2 = numbers.round2
 
 -- mounts a real file-location of a zip-file to a save-dir
 -- https://love2d.org/wiki/love.filesystem.mount
-function mountZip(filename, mountpoint)
-   local f = io.open(filename, 'r')
-   if f then
-      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-      f:close()
-
-      return love.filesystem.mount(filedata, mountpoint or 'zip')
-   end
-end
 
 --[[
    TODO:

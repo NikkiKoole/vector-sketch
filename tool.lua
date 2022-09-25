@@ -2144,7 +2144,7 @@ function mylib:load(arg)
    --local ffont = "/fonts/MonacoB.otf"
    --local ffont = "/fonts/agave.ttf"
    local ffont = "resources/fonts/WindsorBT-Roman.otf"
-   local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
+   --local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
 
    print("Initializing console")
    console = require 'vendor.console'

@@ -49,7 +49,8 @@ console.TEXT_COLOR = { 1, 1, 1, 1 }
 console.ERROR_COLOR = { 1, 0, 0, 1 }
 
 console.FONT_SIZE = 16
-console.FONT_PATH = "/resources/fonts/Turbo Pascal Font.ttf"
+--console.FONT_PATH = "/resources/fonts/Turbo Pascal Font.ttf"
+console.FONT_PATH = "/resources/fonts/WindsorBT-Roman.otf"
 if console.FONT_PATH then
    console.FONT = love.graphics.newFont(console.FONT_PATH, console.FONT_SIZE)
 else
