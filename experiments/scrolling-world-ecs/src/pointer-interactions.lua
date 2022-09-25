@@ -3,7 +3,7 @@ local hit = require 'lib.hit'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
 local gesture = require 'lib.gesture'
-local gestureState = gesture.getState()
+
 local pointer = require 'lib.pointer'
 
 
@@ -41,7 +41,7 @@ function drawBBoxAroundItems(layer, parallaxData)
             local pivx, pivy = camDataToScreen(c, parallaxData, px, py)
             --local camData = createCamData(c, parallaxData)
             --local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
-            
+
             love.graphics.line(pivx - 5, pivy, pivx + 5, pivy)
             love.graphics.line(pivx, pivy - 5, pivx, pivy + 5)
 
@@ -144,20 +144,17 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
    if (id == 'mouse' and love.mouse.isDown(1)) or id ~= 'mouse' then
 
       resetCameraTween()
-
-      for i = 1, #gestureState.list do
-         local g = gestureState.list[i]
-         if g.target == 'stage' and g.trigger == id then
-            local scale = cam:getScale()
-
-            --local xAxisAllowed = true
-            local xAxis = xAxisAllowed and -dx / scale or 0
-            --local yAxisAllowed = true
-            local yAxis = yAxisAllowed and -dy / scale or 0
-            cameraTranslateScheduler(xAxis, yAxis)
-            --print('resetted hard baby')
-         end
+      local g = getGestureWithTargetAndId('stage', id)
+      if g then
+         local scale = cam:getScale()
+         --local xAxisAllowed = true
+         local xAxis = xAxisAllowed and -dx / scale or 0
+         --local yAxisAllowed = true
+         local yAxis = yAxisAllowed and -dy / scale or 0
+         cameraTranslateScheduler(xAxis, yAxis)
       end
+
+
    end
 
    -- if items are pressed i have the id that caused thta,
@@ -172,7 +169,10 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
             if ecsWorld then
                local scale = cam:getScale()
                local lc = createCamData(c, l.p)
-               ecsWorld:emit("itemDrag", c, l, x, y, dx / lc.scale / scale, dy / lc.scale / scale)
+               if (lc) then
+                  ecsWorld:emit("itemDrag", c, l, x, y, dx / lc.scale / scale, dy / lc.scale / scale)
+               end
+
             end
          end
 
@@ -196,10 +196,10 @@ function pointerReleased(x, y, id, layers, ecsWorld)
    local function throw(gesture, dxn, dyn, speed)
       ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
    end
-   local cx, cy = cam:getTranslation()
-   maybeTriggerGesture(id, x, y, cx, cy, throw)
 
-   
+   maybeTriggerGesture(id, x, y, throw)
+
+
 end
 
 function getItemsInLayerThatHaveMeta(layer)

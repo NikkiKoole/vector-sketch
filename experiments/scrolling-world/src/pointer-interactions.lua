@@ -1,9 +1,9 @@
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 --local cam = getCamera(
-   local cam = require('lib.cameraBase').getInstance()
+local cam = require('lib.cameraBase').getInstance()
 local gesture = require 'lib.gesture'
-local gestureState = gesture.getState()
+
 local pointer = require 'lib.pointer'
 
 
@@ -150,7 +150,7 @@ function pointerPressed(x, y, id, layers)
       addGesture(itemPressed, id, love.timer.getTime(), x, y)
    end
 
-   
+
 end
 
 function checkForItemMouseOver(x, y, layer, parallaxData)
@@ -176,20 +176,19 @@ function pointerMoved(x, y, dx, dy, id, layers)
    if (id == 'mouse' and love.mouse.isDown(1)) or id ~= 'mouse' then
 
       resetCameraTween()
+      local g = getGestureWithTargetAndId('stage', id)
+      if g then
+         local scale = cam:getScale()
 
-      for i = 1, #gestureState.list do
-         local g = gestureState.list[i]
-         if g.target == 'stage' and g.trigger == id then
-            local scale = cam:getScale()
+         local xAxisAllowed = true
+         local xAxis = xAxisAllowed and -dx / scale or 0
+         local yAxisAllowed = false
+         local yAxis = yAxisAllowed and -dy / scale or 0
 
-            local xAxisAllowed = true
-            local xAxis = xAxisAllowed and -dx / scale or 0
-            local yAxisAllowed = false
-            local yAxis = yAxisAllowed and -dy / scale or 0
-
-            cameraTranslateScheduler(xAxis, yAxis)
-         end
+         cameraTranslateScheduler(xAxis, yAxis)
       end
+
+
    end
 end
 
@@ -218,10 +217,10 @@ function pointerReleased(x, y, id, layers)
       applyForce(gesture.target.inMotion, impulse)
 
    end
-   local cx, cy = cam:getTranslation()
-   maybeTriggerGesture(id, x, y, cx, cy, throw)
 
-  
+   maybeTriggerGesture(id, x, y, throw)
+
+
 end
 
 function getItemsInLayerThatHaveMeta(layer, me)
@@ -318,7 +317,4 @@ function handlePressedItemsOnStage(dt, layers)
    end
 end
 
-
 -- this function is only for nested children of a thing, as for FEET
-
-

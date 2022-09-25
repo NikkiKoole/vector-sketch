@@ -1,5 +1,4 @@
 local gesture = require 'lib.gesture'
-local gestureState = gesture.getState()
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 local cam = require('lib.cameraBase').getInstance()
@@ -24,14 +23,13 @@ function createCamData(item, parallaxData)
    return camData
 end
 
-
 function camDataToScreen(c, parallaxData, px, py)
-      local camData = createCamData(c, parallaxData)
-      local x, y = cam:getScreenCoordinates(px, py, camData)
-      return x,y
+   local camData = createCamData(c, parallaxData)
+   local x, y = cam:getScreenCoordinates(px, py, camData)
+   return x, y
 end
 
-function getScreenBBoxForItem(c, camData)
+local function getScreenBBoxForItem(c, camData)
 
    local bbox = c.bbox
 
@@ -79,9 +77,6 @@ function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
    return hit.recursiveHitCheck(mx2, my2, item)
 end
 
-
--- todo @global cameratween
-
 local translateScheduler = {
    x = 0,
    y = 0,
@@ -99,32 +94,19 @@ function getTranslateSchedulerValues()
 
 end
 
-function resizeCamera(self, w, h)
-   local scaleW, scaleH = w / self.w, h / self.h
-   local scale = math.min(scaleW, scaleH)
-   -- the line below keeps aspect
-   --self.w, self.h = scale * self.w, scale * self.h
-   -- the line below deosnt keep aspect
-   self.w, self.h = scaleW * self.w, scaleH * self.h
-   self.aspectRatio = self.w / w
-   self.offsetX, self.offsetY = self.w / 2, self.h / 2
-   offset = offset * scale
-end
+function setCameraViewport(c, w, h)
+   local cx, cy = c:getTranslation()
 
-function setCameraViewport(cam, w, h)
-   local cx, cy = cam:getTranslation()
-
-   local cw, ch = cam:getContainerDimensions()
+   local cw, ch = c:getContainerDimensions()
    local targetScale = math.min(cw / w, ch / h)
-   cam:setScale(targetScale)
-   cam:setTranslation(cx, -1 * h / 2)
+   c:setScale(targetScale)
+   c:setTranslation(cx, -1 * h / 2)
    --print(_c)
 end
 
 function drawCameraBounds(cam, mode)
    love.graphics.rectangle(mode, cam.x, cam.y, cam.w, cam.h)
 end
-
 
 function generateCameraLayer(name, zoom)
    return cam:addLayer(name, zoom, { relativeScale = (1.0 / zoom) * zoom })
@@ -201,7 +183,7 @@ function cameraApplyTranslate(dt, layer)
          local cx, cy = cam:getTranslation()
          local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
          setCameraTween({ goalX = cx + delta, goalY = cy, smoothValue = smoothValue or 3.5 })
-         --cameraTween = 
+         --cameraTween =
       end
       ------ end that part
 
@@ -215,25 +197,26 @@ function cameraApplyTranslate(dt, layer)
 
 end
 
+-- todo @global cameratween
 
 local _cameraTween = nil
 local _tweenCameraDelta = nil
 
 function setCameraTween(data)
-   print(inspect(data))
+   --print(inspect(data))
    _cameraTween = data
 end
 
 function resetCameraTween()
-    if _cameraTween then
-       _cameraTween = nil
-       _tweenCameraDelta = 0
-    end
- end
+   if _cameraTween then
+      _cameraTween = nil
+      _tweenCameraDelta = 0
+   end
+end
 
- function manageCameraTween(dt)
-    --print(inspect(#gestureState.list))
-    --[[
+function manageCameraTween(dt)
+   --print(inspect(#gestureState.list))
+   --[[
  if cameraFollowPlayer then
        local distanceAhead = math.floor(300*v.x)
        followPlayerCameraDelta = cam:setTranslationSmooth(
@@ -243,43 +226,36 @@ function resetCameraTween()
           10
        )
     end
-    ]]--
- 
-    if _cameraTween then
-       local delta = cam:setTranslationSmooth(
-          _cameraTween.goalX,
-          _cameraTween.goalY,
-          dt,
-          _cameraTween.smoothValue
-       )
- 
-       if delta.x ~= 0 then
- 
-          cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
-       end
-       -- todo @ get rid of this gesturestate here
-       -- it alos involves _cameratween
-       -- basically I look for a gesture that is identical to cameratween.original and then remove it.
-       -- but there inst a safe plaace where i have acces to both th etween and the gesturestatelist
- 
-       if (delta.x + delta.y) == 0 then
- 
-          print('yoyoyo')
-          for i = #gestureState.list, 1, - 1 do
-             print(_cameraTween.originalGesture, gestureState.list[i] )
-             if _cameraTween.originalGesture == gestureState.list[i] then
-                if gestureState.list[i] ~= nil then
-                   print('removed gesture', inspect(gestureState.list[i]) )
-                   removeGestureFromList(gestureState.list[i])
-                end
-             end
-          end
- 
-          _cameraTween = nil
- 
-       end
-       _tweenCameraDelta = (delta.x + delta.y)
-    end
- 
- end
-     
+    ]] --
+
+   if _cameraTween then
+      local delta = cam:setTranslationSmooth(
+         _cameraTween.goalX,
+         _cameraTween.goalY,
+         dt,
+         _cameraTween.smoothValue
+      )
+
+      if delta.x ~= 0 then
+
+         cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
+      end
+      -- todo @ get rid of this gesturestate here
+      -- it alos involves _cameratween
+      -- basically I look for a gesture that is identical to cameratween.original and then remove it.
+      -- but there inst a safe plaace where i have acces to both th etween and the gesturestatelist
+
+      if (delta.x + delta.y) == 0 then
+
+         if (_cameraTween.originalGesture ~= nil) then
+            print('remvoing the cameratween original, test on touch!')
+            removeGestureFromList(_cameraTween.originalGesture)
+         end
+
+         _cameraTween = nil
+
+      end
+      _tweenCameraDelta = (delta.x + delta.y)
+   end
+
+end

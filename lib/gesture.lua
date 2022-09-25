@@ -1,53 +1,54 @@
 local pointer = require 'lib.pointer'
 
 local gestureState = {
-    list = {},
-    updateResolutionCounter = 0,
-    updateResolution = 0.0167
+   list = {},
+   updateResolutionCounter = 0,
+   updateResolution = 0.0167
 }
-
+local cam = require('lib.cameraBase').getInstance()
 
 local lib = {}
 
--- todo @ global singleton gestureState
-
-lib.getState = function()
-    return gestureState
+local function addGesturePoint(gest, time, x, y)
+   assert(gest)
+   table.insert(gest.positions, { time = time, x = x, y = y })
 end
 
-function addGesturePoint(gest, time, x, y)
-    assert(gest)
-
-    table.insert(gest.positions, { time = time, x = x, y = y })
- end
-
- function addGesture(target, trigger, time, x, y)
-
+function addGesture(target, trigger, time, x, y)
    local g = { positions = {}, target = target, trigger = trigger }
    table.insert(gestureState.list, g)
    addGesturePoint(g, time, x, y)
 end
 
 function hasGestureWithTarget(target)
-   for i = 1, #gestureState.list do 
+   for i = 1, #gestureState.list do
       if gestureState.list[i].target == target then
-        return true
+         return true
       end
    end
    return false
 end
 
- function removeGestureFromList(gesture)
-    
-    for i = #gestureState.list, 1, -1 do
-       if gestureState.list[i] == gesture then
-        print('removing gesture')
-          table.remove(gestureState.list, i)
-       end
-    end
- end 
+function removeGestureFromList(gesture)
+   for i = #gestureState.list, 1, -1 do
+      if gestureState.list[i] == gesture then
+         print('removing gesture')
+         table.remove(gestureState.list, i)
+      end
+   end
+end
 
- function updateGestureCounter(dt)
+function getGestureWithTargetAndId(target, id)
+   for i = 1, #gestureState.list do
+      local g = gestureState.list[i]
+      if g.target == target and g.trigger == id then
+         return g
+      end
+   end
+   return nil
+end
+
+function updateGestureCounter(dt)
    gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
 
    if gestureState.updateResolutionCounter > gestureState.updateResolution then
@@ -63,26 +64,14 @@ end
    end
 end
 
-function maybeTriggerGesture(id, x, y, cx, cy, throw)
-   for i = #gestureState.list, 1, -1 do
-      local g = gestureState.list[i]
-      if g then
-         if g.trigger == id then
-            addGesturePoint(g, love.timer.getTime(), x, y)
-            gestureRecognizer(g, cx, cy, throw)
-            removeGestureFromList(g)
-         end
-      end
-   end
-end
-
 -- cx and cy can be got from the camera base again
-function gestureRecognizer(gesture, cx, cy, throwfunc)
+local function gestureRecognizer(gesture, throwfunc)
    if #gesture.positions > 1 then
+      local cx, cy = cam:getTranslation()
       local startP = gesture.positions[1]
       local endP = gesture.positions[#gesture.positions]
       local gestureLength = 5 --math.max(3,math.floor(#gesture.positions))
-      
+
       if (#gesture.positions > gestureLength) then
          startP = gesture.positions[#gesture.positions - gestureLength]
       end
@@ -99,11 +88,11 @@ function gestureRecognizer(gesture, cx, cy, throwfunc)
          local maxSpeed = 15000
          local minDistance = 6
          local minDuration = 0.005
-         local xAxisAllowed = true  -- todo set this somehwere esle
-         local yAxisAllowed = true  -- todo same
+         local xAxisAllowed = true -- todo set this somehwere esle
+         local yAxisAllowed = true -- todo same
          if deltaTime > minDuration then
             local doTween = false
-            
+
             local xAxis = cx
             local yAxis = cy
 
@@ -163,7 +152,7 @@ function gestureRecognizer(gesture, cx, cy, throwfunc)
                   smoothValue = 3.5,
                   originalGesture = gesture
                })
-               
+
             end
          else
             --print('failed at distance')
@@ -184,5 +173,17 @@ function gestureRecognizer(gesture, cx, cy, throwfunc)
    end
 end
 
+function maybeTriggerGesture(id, x, y, throw)
+   for i = #gestureState.list, 1, -1 do
+      local g = gestureState.list[i]
+      if g then
+         if g.trigger == id then
+            addGesturePoint(g, love.timer.getTime(), x, y)
+            gestureRecognizer(g, throw)
+            removeGestureFromList(g)
+         end
+      end
+   end
+end
 
 return lib
