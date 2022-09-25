@@ -1958,6 +1958,16 @@ local function getIcon(child)
 
 end
 
+local function getBetterCursorPos(button, str)
+   --print(inspect(button))
+   print('todo')
+   local sx = button.x + 24 + 12
+   local sy = button.y + 2
+   love.graphics.line(sx, sy - 10, sx, sy + 10)
+
+
+end
+
 local function renderGraphNodes(node, level, startY, beginX, totalHeight)
    local w, h = getDimensions()
    local beginRightX = beginX + level * 6
@@ -1999,10 +2009,37 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
       end
 
       local b = {}
+      local dblClicked = false
       if (yPos >= 0 and yPos <= h) then
-         b = iconlabelbutton('object-group' .. i, myIcon, color, child == currentNode, child.name or "", rightX, yPos,
+         b = iconlabelbutton('object-group' .. i, myIcon, { 0, 0, 1 }, child == currentNode, child.name or "", rightX,
+            yPos
+            ,
             128
             , -4)
+
+         if b.clicked then
+
+            if lastClickedGraphButton then
+               local duration = (love.timer.getTime() - lastClickedGraphButton.time)
+               if duration < .5 then
+
+                  dblClicked = true
+                  -- print magic
+                  changeName = true
+                  -- todo make this go tho the right place with the mouse
+                  print(rightX, yPos)
+                  getBetterCursorPos(lastClickedGraphButton, child.name)
+                  changeNameCursor = child.name and #child.name or 0
+                  -- but i dont know how to capture events for just this elemnt if needed
+
+                  b = iconlabelbutton('object-group' .. i, myIcon, { 1, 0, 0 }, child == currentNode, child.name or "",
+                     rightX, yPos,
+                     128
+                     , -4)
+
+               end
+            end
+         end
       end
 
       if (child.folder and child.open) then
@@ -2011,16 +2048,6 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
       end
 
       if b.clicked then
-         local dblClicked = false
-         if lastClickedGraphButton and lastClickedGraphButton.name == 'object-group' .. i then
-            local duration = (love.timer.getTime() - lastClickedGraphButton.time)
-            if duration < .5 then
-               dblClicked = true
-               changeName = true
-               changeNameCursor = child.name and #child.name or 0
-            end
-         end
-
          if not dblClicked then
             changeName = false
             if currentNode == child then
@@ -2045,8 +2072,8 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
                   editingModeSub = 'polyline-edit'
                end
             end
-            lastClickedGraphButton = { name = 'object-group' .. i, time = love.timer.getTime(), x = rightX, y = yPos,
-               childName = child.name }
+            --print(inspect(b))
+            lastClickedGraphButton = { time = love.timer.getTime(), x = rightX, y = yPos }
          end
       end
 
@@ -2086,7 +2113,7 @@ function mylib:wheelmoved(x, y)
    --end
 end
 
-function mountZip(filename, mountpoint)
+local function mountZip(filename, mountpoint)
    print(filename)
    local f = io.open(filename, 'r')
    if f then
@@ -2128,6 +2155,11 @@ function mylib:resize(w, h)
    }
 end
 
+local base = '/Users/nikkikoole/Projects/love/vector-sketch'
+print('mountzip', base)
+mountZip(base .. '/resources.zip', '')
+console = require 'vendor.console'
+
 function mylib:load(arg)
    --if arg[#arg] == "-debug" then require("mobdebug").start() end
    --print(inspect(_G))
@@ -2138,9 +2170,7 @@ function mylib:load(arg)
 
 
    -- todo @improve
-   local base = '/Users/nikkikoole/Projects/love/vector-sketch'
-   print('mountzip', base)
-   mountZip(base .. '/resources.zip', '')
+
 
 
    shapeName = 'untitled'
@@ -2155,8 +2185,8 @@ function mylib:load(arg)
    local ffont = "resources/fonts/WindsorBT-Roman.otf"
    --local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
 
-   print("Initializing console")
-   console = require 'vendor.console'
+   --print("Initializing console")
+
    --   local otherfont = "/fonts/Monaco.ttf"
    supersmallest = LG.newFont(ffont, 8)
    smallester = LG.newFont(ffont, 14)
@@ -2274,6 +2304,9 @@ function mylib:load(arg)
    openFileScreen = false
    gatheredData = {}
    openedAddPanel = false
+
+   changeName = nil
+   changeNameCursor = nil
 end
 
 local function drawGrid()
@@ -2787,32 +2820,38 @@ function mylib:draw()
 
             if (currentNode) then
                if (changeName) then
+                  LG.setFont(smallester)
                   local str = currentNode and currentNode.name or ""
-                  local substr = string.sub(str, 1, changeNameCursor)
-                  local cursorX = (LG.getFont():getWidth(substr))
-                  local cursorH = (LG.getFont():getHeight())
-                  LG.setColor(1, 1, 1, 0.5)
-                  LG.rectangle('fill', 0, h * 0.75 - cursorH - 26, 300 + 20, cursorH + 20)
-                  LG.setColor(1, 1, 1)
-                  LG.print(str, 0, h * 0.75 - cursorH - 20)
-                  LG.setColor(1, 1, 1, math.abs(math.sin(step / 100)))
-                  LG.rectangle('fill', 0 + cursorX + 2, h * 0.75 - cursorH - 20, 2, cursorH)
+                  --local substr = string.sub(str, 1, changeNameCursor)
+                  --local cursorX = (LG.getFont():getWidth(substr))
+                  --local cursorH = (LG.getFont():getHeight())
+                  --LG.setColor(1, 1, 1, 0.5)
+                  --  LG.rectangle('fill', 0, h * 0.75 - cursorH - 26, 300 + 20, cursorH + 20)
+                  --LG.setColor(1, 1, 1)
+                  --LG.print(str, 0, h * 0.75 - cursorH - 20)
+                  --LG.setColor(1, 1, 1, math.abs(math.sin(step / 100)))
+                  --LG.rectangle('fill', 0 + cursorX + 2, h * 0.75 - cursorH - 20, 2, cursorH)
                   LG.setColor(1, 1, 1)
 
                   if lastClickedGraphButton then
                      local sx = lastClickedGraphButton.x + 24 + 12
                      local sy = lastClickedGraphButton.y + 2
 
-                     LG.rectangle('line', sx, sy, 100, 23)
-                     LG.setColor(1, 0.75, 0.75)
-                     LG.setFont(smallester)
-                     LG.print(str, sx, sy)
-                     LG.setColor(1, 1, 1)
+                     --LG.rectangle('line', sx, sy, 100, 23)
+                     --LG.setColor(1, 0.5, 0.5)
+                     --LG.setFont(smallester)
+
+                     --LG.print(str, sx, sy)
+                     --LG.setColor(1, 1, 1)
 
                      local substr = (string.sub(str, 1, changeNameCursor))
                      local cursorX = (LG.getFont():getWidth(substr))
-
-                     LG.rectangle('line', sx + cursorX, sy, 1, 23)
+                     --print(dt % 10)
+                     --love.graphics.setColor(love.math.random(), 1, 1)
+                     local d = (math.sin(love.timer.getTime() * 10))
+                     love.graphics.setColor(1, 1, 1, d)
+                     LG.rectangle('line', sx + cursorX, sy - 5, 1, 23 + 10)
+                     love.graphics.setColor(1, 1, 1, 1)
                   end
                end
             end
@@ -2822,6 +2861,8 @@ function mylib:draw()
          LG.setFont(small)
          if not quitDialog then
             LG.print(tostring(love.timer.getFPS()), 2, 0)
+            -- printing name!!
+            -- todo make them go click and edit!
             LG.print(shapeName, 64, 0)
          end
 
@@ -2928,6 +2969,7 @@ function mylib:draw()
 end
 
 function mylib:textinput(t)
+   print(t)
    if (changeName and currentNode) then
       local str = currentNode and currentNode.name or ""
       if (changeNameCursor > #str) then
@@ -3166,10 +3208,15 @@ function mylib:keypressed(key, scancode, isrepeat)
          end
       end
 
-      if (changeName) then
+      local setter = function(v)
+         currentNode.name = v
+      end
+
+      if (changeName and currentNode) then
          if (key == 'backspace') then
             local str = currentNode and currentNode.name or ""
             local a, b = text.split(str, changeNameCursor + 1)
+            --setter(table.concat { text.split(a, utf8.len(a)), b })
             currentNode.name = table.concat { text.split(a, utf8.len(a)), b }
             changeNameCursor = math.max(0, (changeNameCursor or 0) - 1)
          end
