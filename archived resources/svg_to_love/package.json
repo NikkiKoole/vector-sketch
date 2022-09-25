@@ -1,0 +1,25 @@
+{
+  "name": "svg2poly",
+  "version": "1.0.0",
+  "description": "turning an svg file into a bunch of polygons maybe triangles",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bound-points": "^1.0.0",
+    "cdt2d": "^1.0.0",
+    "clean-pslg": "^1.1.2",
+    "hex-rgb": "^4.1.0",
+    "hexrgb": "0.0.2",
+    "normalize-path-scale": "^2.0.0",
+    "object-assign": "^4.1.1",
+    "parse-svg-path": "^0.1.2",
+    "poly-decomp": "^0.3.0",
+    "simplify-path": "^1.1.0",
+    "svg-path-contours": "^2.0.0",
+    "xml2js": "^0.4.23"
+  }
+}

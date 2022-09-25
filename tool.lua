@@ -44,7 +44,7 @@ local getIndex = n.getIndex
 local setPos = n.setPos
 local setPivot = n.setPivot
 local parse = require 'lib.parse-file'
-console = require 'vendor.console'
+--console = require 'vendor.console'
 --easing = require 'vendor.easing'
 --https://github.com/rxi/lurker
 
@@ -53,50 +53,9 @@ console = require 'vendor.console'
 -- https://github.com/ReFreezed/InputField
 local mylib = {}
 
-function mountZip(filename, mountpoint)
-   print(filename)
-   local f = io.open(filename, 'r')
-   if f then
-      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-      f:close()
-      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
-      print(inspect(result))
-      return result
-   end
-end
-
-function mylib:setRoot(root, folderPath)
-
-   parentize.parentize(root)
-   mesh.meshAll(root)
-
-   mylib.root = root
-   mylib.folderPath = folderPath
-   print('mylib folderpath at setroot', folderPath)
-   if folderPath then
-      local s, e = folderPath:find("experiments/")
-      if (e) then
-         local prefix = folderPath:sub(e + 1)
-         print('texture prefix: ', prefix)
-      end
-   end
-
-
-end
 
 local function getDimensions()
    return mylib.w, mylib.h
-end
-
-function mylib:resize(w, h)
-   mylib.w = w
-   mylib.h = h
-   sceneGraph = {
-      maximized = false,
-      topY = 90,
-      height = h - 90,
-      x = w - 160,
-   }
 end
 
 local function getAngleAndDistance(x1, y1, x2, y2)
@@ -2118,6 +2077,48 @@ function mylib:wheelmoved(x, y)
    --end
 end
 
+function mountZip(filename, mountpoint)
+   print(filename)
+   local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
+      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
+      print(inspect(result))
+      return result
+   end
+end
+
+function mylib:setRoot(root, folderPath)
+
+   parentize.parentize(root)
+   mesh.meshAll(root)
+
+   mylib.root = root
+   mylib.folderPath = folderPath
+   print('mylib folderpath at setroot', folderPath)
+   if folderPath then
+      local s, e = folderPath:find("experiments/")
+      if (e) then
+         local prefix = folderPath:sub(e + 1)
+         print('texture prefix: ', prefix)
+      end
+   end
+
+
+end
+
+function mylib:resize(w, h)
+   mylib.w = w
+   mylib.h = h
+   sceneGraph = {
+      maximized = false,
+      topY = 90,
+      height = h - 90,
+      x = w - 160,
+   }
+end
+
 function mylib:load(arg)
    --if arg[#arg] == "-debug" then require("mobdebug").start() end
    --print(inspect(_G))
@@ -2129,8 +2130,8 @@ function mylib:load(arg)
 
    -- todo @improve
    local base = '/Users/nikkikoole/Projects/love/vector-sketch'
-   --print('mountzip')
-   mountZip(base .. '/ui.zip', '')
+   print('mountzip', base)
+   mountZip(base .. '/resources.zip', '')
 
 
    shapeName = 'untitled'
@@ -2145,6 +2146,8 @@ function mylib:load(arg)
    local ffont = "resources/fonts/WindsorBT-Roman.otf"
    local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
 
+   print("Initializing console")
+   console = require 'vendor.console'
    --   local otherfont = "/fonts/Monaco.ttf"
    supersmallest = LG.newFont(ffont, 8)
    smallester = LG.newFont(ffont, 14)
@@ -2165,63 +2168,64 @@ function mylib:load(arg)
 
    local cwd = love.filesystem.getWorkingDirectory()
    print('CWD', cwd)
+   local p = '/resources/ui/'
    ui = {
-      polyline = LG.newImage("ui/polyline.png"),
-      polyline_add = LG.newImage("ui/polyline-add.png"),
-      polyline_edit = LG.newImage("ui/polyline-edit.png"),
-      polyline_remove = LG.newImage("ui/polyline-remove.png"),
-      insert_link = LG.newImage("ui/insert-link.png"),
-      backdrop = LG.newImage("ui/backdrop.png"),
-      backdropscale = LG.newImage("/ui/backdropscale.png"),
-      backdropscale4 = LG.newImage("/ui/backdropscale4.png"),
-      backdropscale5 = LG.newImage("/ui/backdropscale5.png"),
-      backdropscale9 = LG.newImage("/ui/backdropscale9.png"),
-      squish = LG.newImage("/ui/squish.png"),
-      grid = LG.newImage("/ui/grid.png"),
-      palette = LG.newImage("/ui/palette.png"),
-      pen = LG.newImage("/ui/pen.png"),
-      pencil = LG.newImage("/ui/pencil.png"),
-      polygon = LG.newImage("/ui/polygon.png"),
-      add = LG.newImage("/ui/add.png"),
-      remove = LG.newImage("/ui/remove.png"),
-      delete = LG.newImage("/ui/delete.png"),
-      move = LG.newImage("/ui/move.png"),
-      visible = LG.newImage("/ui/visible.png"),
-      not_visible = LG.newImage("/ui/not-visible.png"),
-      resize = LG.newImage("/ui/resize.png"),
-      opacity = LG.newImage("/ui/opacity.png"),
-      settings = LG.newImage("/ui/settings.png"),
-      badge = LG.newImage("/ui/badge.png"),
-      layer_group = LG.newImage("/ui/layer-group.png"),
-      object_group = LG.newImage("/ui/object-group.png"),
-      rotate = LG.newImage("/ui/rotate.png"),
-      transform = LG.newImage("/ui/transform.png"),
-      next = LG.newImage("/ui/next.png"),
-      previous = LG.newImage("/ui/previous.png"),
-      lines = LG.newImage("/ui/lines.png"),
-      lines2 = LG.newImage("/ui/lines2.png"),
-      move_up = LG.newImage("/ui/move-up.png"),
-      move_down = LG.newImage("/ui/move-down.png"),
-      mesh = LG.newImage("/ui/mesh.png"),
-      parent = LG.newImage("/ui/parent.png"),
-      folder = LG.newImage("/ui/folder.png"),
-      folder_open = LG.newImage("/ui/folderopen.png"),
-      pivot = LG.newImage("/ui/pivot.png"),
-      pan = LG.newImage("/ui/pan.png"),
-      mask = LG.newImage("/ui/mask.png"),
-      clone = LG.newImage("/ui/clone.png"),
-      joystick = LG.newImage("/ui/joystick.png"),
-      transition = LG.newImage("/ui/transition.png"),
-      select = LG.newImage("/ui/select.png"),
-      hole = LG.newImage("/ui/keyhole.png"),
-      change = LG.newImage("/ui/change.png"),
-      add_to_list = LG.newImage("/ui/add-to-list.png"),
-      flip_vertical = LG.newImage("/ui/flip-vertical.png"),
-      flip_horizontal = LG.newImage("/ui/flip-horizontal.png"),
-      dopesheet = LG.newImage("/ui/spreadsheet.png"),
-      curve = LG.newImage("/ui/curve.png"),
-      close_stencil = LG.newImage("/ui/close-stencil.png"),
-      help = LG.newImage("/ui/help.png"),
+      polyline = LG.newImage(p .. "polyline.png"),
+      polyline_add = LG.newImage(p .. "polyline-add.png"),
+      polyline_edit = LG.newImage(p .. "polyline-edit.png"),
+      polyline_remove = LG.newImage(p .. "polyline-remove.png"),
+      insert_link = LG.newImage(p .. "insert-link.png"),
+      backdrop = LG.newImage(p .. "backdrop.png"),
+      backdropscale = LG.newImage(p .. "backdropscale.png"),
+      backdropscale4 = LG.newImage(p .. "backdropscale4.png"),
+      backdropscale5 = LG.newImage(p .. "backdropscale5.png"),
+      backdropscale9 = LG.newImage(p .. "backdropscale9.png"),
+      squish = LG.newImage(p .. "squish.png"),
+      grid = LG.newImage(p .. "grid.png"),
+      palette = LG.newImage(p .. "palette.png"),
+      pen = LG.newImage(p .. "pen.png"),
+      pencil = LG.newImage(p .. "pencil.png"),
+      polygon = LG.newImage(p .. "polygon.png"),
+      add = LG.newImage(p .. "add.png"),
+      remove = LG.newImage(p .. "remove.png"),
+      delete = LG.newImage(p .. "delete.png"),
+      move = LG.newImage(p .. "move.png"),
+      visible = LG.newImage(p .. "visible.png"),
+      not_visible = LG.newImage(p .. "not-visible.png"),
+      resize = LG.newImage(p .. "resize.png"),
+      opacity = LG.newImage(p .. "opacity.png"),
+      settings = LG.newImage(p .. "settings.png"),
+      badge = LG.newImage(p .. "badge.png"),
+      layer_group = LG.newImage(p .. "layer-group.png"),
+      object_group = LG.newImage(p .. "object-group.png"),
+      rotate = LG.newImage(p .. "rotate.png"),
+      transform = LG.newImage(p .. "transform.png"),
+      next = LG.newImage(p .. "next.png"),
+      previous = LG.newImage(p .. "previous.png"),
+      lines = LG.newImage(p .. "lines.png"),
+      lines2 = LG.newImage(p .. "lines2.png"),
+      move_up = LG.newImage(p .. "move-up.png"),
+      move_down = LG.newImage(p .. "move-down.png"),
+      mesh = LG.newImage(p .. "mesh.png"),
+      parent = LG.newImage(p .. "parent.png"),
+      folder = LG.newImage(p .. "folder.png"),
+      folder_open = LG.newImage(p .. "folderopen.png"),
+      pivot = LG.newImage(p .. "pivot.png"),
+      pan = LG.newImage(p .. "pan.png"),
+      mask = LG.newImage(p .. "mask.png"),
+      clone = LG.newImage(p .. "clone.png"),
+      joystick = LG.newImage(p .. "joystick.png"),
+      transition = LG.newImage(p .. "transition.png"),
+      select = LG.newImage(p .. "select.png"),
+      hole = LG.newImage(p .. "keyhole.png"),
+      change = LG.newImage(p .. "change.png"),
+      add_to_list = LG.newImage(p .. "add-to-list.png"),
+      flip_vertical = LG.newImage(p .. "flip-vertical.png"),
+      flip_horizontal = LG.newImage(p .. "flip-horizontal.png"),
+      dopesheet = LG.newImage(p .. "spreadsheet.png"),
+      curve = LG.newImage(p .. "curve.png"),
+      close_stencil = LG.newImage(p .. "close-stencil.png"),
+      help = LG.newImage(p .. "help.png"),
    }
 
    cursors = {
