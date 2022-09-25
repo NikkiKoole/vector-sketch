@@ -2224,6 +2224,7 @@ function mylib:load(arg)
       click = false,
       offset = { x = 0, y = 0 }
    }
+   lastDraggedElement = {}
 
    currentNode = nil
    currentlyHoveredUINode = nil
@@ -2244,7 +2245,7 @@ function mylib:load(arg)
    profiling = false
    simplifyValue = 0.2
    scrollviewOffset = 0
-   lastDraggedElement = {}
+
    quitDialog = false
    rectangleSelect = {}
    childrenInRectangleSelect = {}

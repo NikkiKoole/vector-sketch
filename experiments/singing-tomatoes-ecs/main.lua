@@ -363,7 +363,7 @@ function love.load()
    for i = 1, #tomatoes do
       table.insert(root.children, tomatoes[i])
    end
-   recursivelyMakeTextures(root)
+   mesh.recursivelyMakeTextures(root)
    mesh.meshAll(root)
 
    makeTomatoes(tomatoes)
