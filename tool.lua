@@ -3006,6 +3006,7 @@ function mylib:keypressed(key, scancode, isrepeat)
    local root = mylib.root
 
    console.keypressed(key, scancode, isrepeat)
+
    if not console.isEnabled() then
       if key == 'lshift' then
          editingMode = 'rectangle-select'
