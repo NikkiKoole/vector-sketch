@@ -56,11 +56,6 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
 
             child.transforms.l[1] = thing.x
             child.transforms.l[2] = getGlobalHeight(thing.x) --thing.y
-
-            --            print(getGlobalHeight(thing.x))
-
-            --child.transforms.l[3] = love.math.random()--thing.y
-
             child.transforms.l[4] = thing.scaleX
             child.transforms.l[5] = thing.scaleY
             child.metaTags = read.metaTags
@@ -68,7 +63,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
             child.url = thing.url
             child.bbox = read.bbox
 
-            table.insert(parallaxData.layer.children, child)
+
 
             if ecsWorld then
                local myEntity = Concord.entity()
@@ -86,6 +81,8 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
                ecsWorld:addEntity(myEntity)
                child.entity = myEntity
             end
+
+            table.insert(parallaxData.layer.children, child)
          end
       end
    end

@@ -61,28 +61,6 @@ end
 
 function pointerPressed(x, y, id, layers)
 
-   -- local W, H = love.graphics.getDimensions()
-
-   -- ------------ begin ui
-   -- local leftdis = getDistance(x,y, 50, (H/2)-25)
-   -- local rightdis = getDistance(x,y, W-50, (H/2)-25)
-   -- local toprightdis = getDistance(x,y, W-25, 25)
-
-   -- if uiState.showWalkButtons then
-   -- if leftdis < 50 then
-   --    moving = 'left'
-   -- end
-   -- if rightdis < 50 then
-   --    moving = 'right'
-   -- end
-   -- end
-   -- if toprightdis < 50 then
-   --    --showNumbersOnScreen = not showNumbersOnScreen
-   --    uiState.show = not uiState.show
-   -- end
-   -- ------------- end ui
-
-
    local itemPressed = false
 
    for j = #layers, 1, -1 do
@@ -103,6 +81,7 @@ function pointerPressed(x, y, id, layers)
                   --                  c.groundTileIndex = nil
                   --                  local indices = c.originalIndices
                   local first = c.assetBookIndex
+                  print('assetbookindex', first)
                   -- todo ouch i dunno about this
                   if first and l.assets[first] then
                      --l.assets[indices[1]][indices[2]].hasBeenPressed = true

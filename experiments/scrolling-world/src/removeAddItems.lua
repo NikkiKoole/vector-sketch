@@ -37,8 +37,7 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
                children = doOptimized and {} or copy3(read.children)
             }
 
-            child.assetBookRef = thing
-            child.assetBookIndex = i
+
 
 
             child.transforms.l[1] = thing.x
@@ -47,11 +46,14 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
             child.transforms.l[5] = thing.scaleY
             child.metaTags = read.metaTags
             child.depth = thing.depth
-            --child.depthLayer = thing.depthLayer
             child.url = thing.url
-            --child.groundTileIndex = i
             child.bbox = read.bbox
+
             child.dirty = true
+
+            child.assetBookRef = thing
+            child.assetBookIndex = i
+            print('setting assetbookindex', i)
             table.insert(parallaxData.layer.children, child)
             --end
 
