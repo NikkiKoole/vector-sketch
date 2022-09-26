@@ -18,6 +18,9 @@ ui.mouseHovered = function()
    return mouseState.hoveredSomething
 
 end
+ui.mouseReleased = function()
+   return mouseState.released
+end   
 lastDraggedElement = {}
 cursors = {
    hand = love.mouse.getSystemCursor("hand"),

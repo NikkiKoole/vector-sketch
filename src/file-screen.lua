@@ -4,6 +4,7 @@ local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local text = require 'lib.text'
 local parse = require 'lib.parse-file'
+local ui = require 'lib.ui'
 
 local function getFiles(rootPath, tree)
    tree = tree or {}
@@ -104,7 +105,8 @@ function renderOpenFileScreen(root)
          love.graphics.setColor(1, 0, 0)
          love.graphics.rectangle('fill', dirX, dirY, labelW, labelH)
          --print(inspect(mouseState))
-         if mouseState.released then
+         if ui.mouseReleased() then
+         --if mouseState.released then
             if k == '< back' then
                gatherData('')
             else
