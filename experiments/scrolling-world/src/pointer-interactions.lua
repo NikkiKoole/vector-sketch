@@ -1,6 +1,6 @@
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
---local cam = getCamera(
+local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
 local gesture = require 'lib.gesture'
 
@@ -25,7 +25,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
             love.graphics.setColor(1, 1, 1, 1)
             local px, py = c.transforms._g:transformPoint(c.transforms.l[6], c.transforms.l[7])
-            local pivx, pivy = camDataToScreen(c, parallaxData, px, py)
+            local pivx, pivy = camera.camDataToScreen(c, parallaxData, px, py)
 
             --local camData = createCamData(c, parallaxData)
             --local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
@@ -39,7 +39,7 @@ function drawBBoxAroundItems(layer, parallaxData)
                   local tag = checkAgainst[j].metaTags[k]
                   local pos = tag.points[1] -- there is just one point in this collection
                   local kx, ky = checkAgainst[j].transforms._g:transformPoint(pos[1], pos[2])
-                  local kx2, ky2 = camDataToScreen(checkAgainst[j], parallaxData, kx, ky)
+                  local kx2, ky2 = camera.camDataToScreen(checkAgainst[j], parallaxData, kx, ky)
                   --local camData = createCamData(checkAgainst[j], parallaxData)
                   --local kx2, ky2 = cam:getScreenCoordinates(kx, ky, camData)
                   love.graphics.setColor(1, 1, 1, .2)

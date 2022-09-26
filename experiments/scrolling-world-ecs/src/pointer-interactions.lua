@@ -2,6 +2,7 @@ local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
+local camera = require 'lib.camera'
 local gesture = require 'lib.gesture'
 
 local pointer = require 'lib.pointer'
@@ -38,7 +39,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
             love.graphics.setColor(1, 0, 0, 1)
             local px, py = c.transforms._g:transformPoint(c.transforms.l[6], c.transforms.l[7])
-            local pivx, pivy = camDataToScreen(c, parallaxData, px, py)
+            local pivx, pivy = camera.camDataToScreen(c, parallaxData, px, py)
             --local camData = createCamData(c, parallaxData)
             --local pivx, pivy = cam:getScreenCoordinates(px, py, camData)
 
@@ -163,14 +164,14 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
       local l = layers[j]
 
       for i = #l.layer.children, 1, -1 do
-         local c = l.layer.children[i]
-         if c.pressed and c.pressed.id == id then
+         local child = l.layer.children[i]
+         if child.pressed and child.pressed.id == id then
             -- this works correctly ( \0/ )  I just need to scale it
             if ecsWorld then
                local scale = cam:getScale()
-               local lc = createCamData(c, l.p)
+               local lc = camera.createCamData(child, l.p)
                if (lc) then
-                  ecsWorld:emit("itemDrag", c, l, x, y, dx / lc.scale / scale, dy / lc.scale / scale)
+                  ecsWorld:emit("itemDrag", child, l, x, y, dx / lc.scale / scale, dy / lc.scale / scale)
                end
 
             end

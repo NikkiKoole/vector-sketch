@@ -3,31 +3,6 @@ local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 local cam = require('lib.cameraBase').getInstance()
 
-function createCamData(item, parallaxData)
-   local camData = nil -- its important to be nil at start
-   -- that way i can feed the nil to brady and get default behaviours
-   if parallaxData and parallaxData.factors then
-
-      camData = {}
-      camData.scale = numbers.mapInto(item.depth,
-         parallaxData.minmax.min,
-         parallaxData.minmax.max,
-         parallaxData.factors.far,
-         parallaxData.factors.near)
-      camData.relativeScale = 1 --(1.0/ hack.scale) * hack.scale
-   end
-   if camData == nil then
-      print('hope you know')
-   end
-
-   return camData
-end
-
-function camDataToScreen(c, parallaxData, px, py)
-   local camData = createCamData(c, parallaxData)
-   local x, y = cam:getScreenCoordinates(px, py, camData)
-   return x, y
-end
 
 local function getScreenBBoxForItem(c, camData)
 
@@ -52,8 +27,37 @@ local function getScreenBBoxForItem(c, camData)
 
 end
 
-function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
-   local camData = createCamData(child, parallaxData)
+local c = {}
+c.createCamData = function(item, parallaxData)
+   local camData = nil -- its important to be nil at start
+   -- that way i can feed the nil to brady and get default behaviours
+   if parallaxData and parallaxData.factors then
+
+      camData = {}
+      camData.scale = numbers.mapInto(item.depth,
+         parallaxData.minmax.min,
+         parallaxData.minmax.max,
+         parallaxData.factors.far,
+         parallaxData.factors.near)
+      camData.relativeScale = 1 --(1.0/ hack.scale) * hack.scale
+   end
+   if camData == nil then
+      print('hope you know')
+   end
+
+   return camData
+end
+
+c.camDataToScreen = function(cd, parallaxData, px, py)
+   local camData = c.createCamData(cd, parallaxData)
+   local x, y = cam:getScreenCoordinates(px, py, camData)
+   return x, y
+end
+
+
+
+local function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
+   local camData = c.createCamData(child, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
@@ -62,7 +66,7 @@ function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
 end
 
 function mouseIsOverItemBBox(mx, my, item, parallaxData)
-   local camData = createCamData(item, parallaxData)
+   local camData = c.createCamData(item, parallaxData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
    local invx, invy = item.transforms._g:inverseTransformPoint(wx, wy)
@@ -71,7 +75,7 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
 end
 
 function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
-   local camData = createCamData(item, parallaxData)
+   local camData = c.createCamData(item, parallaxData)
    local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
 
    return hit.recursiveHitCheck(mx2, my2, item)
@@ -94,25 +98,25 @@ function getTranslateSchedulerValues()
 
 end
 
-function setCameraViewport(c, w, h)
-   local cx, cy = c:getTranslation()
+function setCameraViewport(c2, w, h)
+   local cx, cy = c2:getTranslation()
 
-   local cw, ch = c:getContainerDimensions()
+   local cw, ch = c2:getContainerDimensions()
    local targetScale = math.min(cw / w, ch / h)
-   c:setScale(targetScale)
-   c:setTranslation(cx, -1 * h / 2)
+   c2:setScale(targetScale)
+   c2:setTranslation(cx, -1 * h / 2)
    --print(_c)
 end
 
-function drawCameraBounds(cam, mode)
-   love.graphics.rectangle(mode, cam.x, cam.y, cam.w, cam.h)
+function drawCameraBounds(c2, mode)
+   love.graphics.rectangle(mode, c2.x, c2.y, c2.w, c2.h)
 end
 
 function generateCameraLayer(name, zoom)
    return cam:addLayer(name, zoom, { relativeScale = (1.0 / zoom) * zoom })
 end
 
-function cameraTranslateScheduleJustItem(dx, dy)
+local function cameraTranslateScheduleJustItem(dx, dy)
    -- this comes from just the cameraTween
    translateScheduler.justItem.x = dx
    translateScheduler.justItem.y = dy
@@ -125,7 +129,7 @@ function cameraTranslateScheduler(dx, dy)
    translateScheduler.y = translateScheduler.y + dy
 end
 
-function checkForBounceBack(dt)
+local function checkForBounceBack(dt)
    -- this thing is meant for the elastic bounce back of items
    -- ah right, its the elements that will bounce in opposite direction of a camera tween
    -- just the little line right now that displays that
@@ -259,3 +263,5 @@ function manageCameraTween(dt)
    end
 
 end
+
+return c

@@ -79,16 +79,10 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
          local x1, y1 = cam:getScreenCoordinates(i + 0.0001, height1, far)
          local x2, y2 = cam:getScreenCoordinates(i + 0.0001, height2, near)
-         local x3, y3 = cam:getScreenCoordinates(
-            i + tileSize + .0001, height3, far)
-         local x4, y4 = cam:getScreenCoordinates(
-            i + tileSize + .0001, height4, near)
-
+         local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height3, far)
+         local x4, y4 = cam:getScreenCoordinates(i + tileSize + .0001, height4, near)
 
          local useNew = true
-
-
-
          if useNew then
             local tileIndex = 1
 
@@ -153,6 +147,7 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
 
          if not useNew then
+            --[[
             if tileIndex > -1 then
                if boundsAreSame then
                   if index >= 0 and index <= 100 then
@@ -193,7 +188,8 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
 
                --love.graphics.line(x1,y1, x2,y2)
                --love.graphics.line(x1,y1, x3,y3)
-            end
+                end
+            --]]
          end
       end
 
@@ -249,6 +245,7 @@ function drawGroundPlanesSameSame(index, tileIndex, layerName)
 
 end
 
+--[[
 function drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
    print('assuming groundplanes')
    local thing = groundPlanes[tileIndex].thing
@@ -282,3 +279,4 @@ function drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
    love.graphics.setColor(1, 1, 1)
 
 end
+]] --

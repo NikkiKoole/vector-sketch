@@ -81,7 +81,9 @@ function drawGroundPlaneWithTextures(cam, far, near, layerName)
                local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2, far)
                local x4, y4 = cam:getScreenCoordinates(i + tileSize + .0001, 0, near)
                local dest = { { x1, y1 }, { x3, y3 }, { x4, y4 }, { x2, y2 } }
+               --print(inspect(dest))
                if index >= 0 and index <= 100 then
+
                   drawGroundPlaneInPosition(dest, index, tileIndex, layerName)
                end
 
