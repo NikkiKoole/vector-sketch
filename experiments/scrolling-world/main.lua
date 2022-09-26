@@ -37,6 +37,7 @@ local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 local numbers = require 'lib.numbers'
 local round2 = numbers.round2
+local gesture = require 'lib.gesture'
 
 --[[
    TODO:
@@ -238,7 +239,7 @@ end
 
 function love.update(dt)
    -- Run your scene files update function
-   updateGestureCounter(dt)
+   gesture.update(dt)
 
 
    SM.update(dt)

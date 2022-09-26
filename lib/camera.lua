@@ -253,7 +253,7 @@ function manageCameraTween(dt)
 
          if (_cameraTween.originalGesture ~= nil) then
             print('remvoing the cameratween original, test on touch!')
-            removeGestureFromList(_cameraTween.originalGesture)
+            gesture.remove(_cameraTween.originalGesture)
          end
 
          _cameraTween = nil

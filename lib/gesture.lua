@@ -14,13 +14,13 @@ local function addGesturePoint(gest, time, x, y)
    table.insert(gest.positions, { time = time, x = x, y = y })
 end
 
-function addGesture(target, trigger, time, x, y)
+lib.add = function(target, trigger, time, x, y)
    local g = { positions = {}, target = target, trigger = trigger }
    table.insert(gestureState.list, g)
    addGesturePoint(g, time, x, y)
 end
 
-function hasGestureWithTarget(target)
+lib.findWithTarget = function(target)
    for i = 1, #gestureState.list do
       if gestureState.list[i].target == target then
          return true
@@ -28,17 +28,7 @@ function hasGestureWithTarget(target)
    end
    return false
 end
-
-function removeGestureFromList(gesture)
-   for i = #gestureState.list, 1, -1 do
-      if gestureState.list[i] == gesture then
-         print('removing gesture')
-         table.remove(gestureState.list, i)
-      end
-   end
-end
-
-function getGestureWithTargetAndId(target, id)
+lib.findWithTargetAndId = function(target, id)
    for i = 1, #gestureState.list do
       local g = gestureState.list[i]
       if g.target == target and g.trigger == id then
@@ -48,7 +38,18 @@ function getGestureWithTargetAndId(target, id)
    return nil
 end
 
-function updateGestureCounter(dt)
+lib.remove = function(gesture)
+   for i = #gestureState.list, 1, -1 do
+      if gestureState.list[i] == gesture then
+         print('removing gesture')
+         table.remove(gestureState.list, i)
+      end
+   end
+end
+
+
+
+lib.update = function(dt)
    gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
 
    if gestureState.updateResolutionCounter > gestureState.updateResolution then
@@ -173,14 +174,14 @@ local function gestureRecognizer(gesture, throwfunc)
    end
 end
 
-function maybeTriggerGesture(id, x, y, throw)
+lib.maybeTrigger = function(id, x, y, throw)
    for i = #gestureState.list, 1, -1 do
       local g = gestureState.list[i]
       if g then
          if g.trigger == id then
             addGesturePoint(g, love.timer.getTime(), x, y)
             gestureRecognizer(g, throw)
-            removeGestureFromList(g)
+            lib.remove(g)
          end
       end
    end

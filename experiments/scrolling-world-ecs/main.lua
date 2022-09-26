@@ -40,6 +40,7 @@ local mesh = require 'lib.mesh'
 local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
 local round2 = numbers.round2
+local gesture = require 'lib.gesture'
 --local parallax = require 'lib.parallax'
 
 -- cehck this on love2d to make an ingame editor and mount vector sketch files to edit ingame
@@ -257,7 +258,7 @@ end
 
 function love.update(dt)
    -- Run your scene files update function
-   updateGestureCounter(dt)
+   gesture.update(dt)
 
 
    SM.update(dt)

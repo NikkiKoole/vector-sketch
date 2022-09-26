@@ -119,14 +119,14 @@ function pointerPressed(x, y, id, layers)
 
    if not itemPressed then
       if not cameraFollowPlayer then
-         local hasOneAlready = hasGestureWithTarget('stage')
+         local hasOneAlready = gesture.findWithTarget('stage')
          if not hasOneAlready then
-            addGesture('stage', id, love.timer.getTime(), x, y)
+            gesture.add('stage', id, love.timer.getTime(), x, y)
          end
       end
    else
       resetCameraTween()
-      addGesture(itemPressed, id, love.timer.getTime(), x, y)
+      gesture.add(itemPressed, id, love.timer.getTime(), x, y)
    end
 
 
@@ -155,7 +155,7 @@ function pointerMoved(x, y, dx, dy, id, layers)
    if (id == 'mouse' and love.mouse.isDown(1)) or id ~= 'mouse' then
 
       resetCameraTween()
-      local g = getGestureWithTargetAndId('stage', id)
+      local g = gesture.findWithTargetAndId('stage', id)
       if g then
          local scale = cam:getScale()
 
@@ -197,7 +197,7 @@ function pointerReleased(x, y, id, layers)
 
    end
 
-   maybeTriggerGesture(id, x, y, throw)
+   gesture.maybeTrigger(id, x, y, throw)
 
 
 end
