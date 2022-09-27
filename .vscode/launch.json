@@ -22,20 +22,7 @@
       },
       "args": []
     },
-    {
-      "name": "Debug Love love",
-      "type": "lua-local",
-      "request": "launch",
-      "program": {
-        "command": "/Applications/love 2.app/Contents/MacOS/love"
-      },
-      "args": [
-        "."
-      ],
-      "scriptRoots": [
-        "."
-      ]
-    },
+
     {
       "name": "Debug Love 114",
       "type": "lua-local",

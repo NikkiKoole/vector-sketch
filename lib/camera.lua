@@ -48,6 +48,18 @@ c.createCamData = function(item, parallaxData)
    return camData
 end
 
+c.maybePan = function(dx, dy, id)
+   resetCameraTween()
+      local g = gesture.findWithTargetAndId('stage', id)
+      if g then
+         local scale = cam:getScale()
+         local xAllowed, yAllowed = gesture.getAllowedAxis()
+         local xAxis = xAllowed and -dx / scale or 0
+         local yAxis = yAllowed and -dy / scale or 0
+         cameraTranslateScheduler(xAxis, yAxis)
+      end
+end
+
 c.camDataToScreen = function(cd, parallaxData, px, py)
    local camData = c.createCamData(cd, parallaxData)
    local x, y = cam:getScreenCoordinates(px, py, camData)

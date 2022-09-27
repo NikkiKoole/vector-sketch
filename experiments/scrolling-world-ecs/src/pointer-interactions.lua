@@ -1,13 +1,10 @@
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
---local cam = getCamera()
+
 local cam = require('lib.cameraBase').getInstance()
 local camera = require 'lib.camera'
 local gesture = require 'lib.gesture'
-
 local pointer = require 'lib.pointer'
-
-
 
 
 function drawBBoxAroundItems(layer, parallaxData)
@@ -143,19 +140,7 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
 
 
    if (id == 'mouse' and love.mouse.isDown(1)) or id ~= 'mouse' then
-
-      resetCameraTween()
-      local g = gesture.findWithTargetAndId('stage', id)
-      if g then
-         local scale = cam:getScale()
-         --local xAxisAllowed = true
-         local xAxis = xAxisAllowed and -dx / scale or 0
-         --local yAxisAllowed = true
-         local yAxis = yAxisAllowed and -dy / scale or 0
-         cameraTranslateScheduler(xAxis, yAxis)
-      end
-
-
+      camera.maybePan(dx, dy, id)
    end
 
    -- if items are pressed i have the id that caused thta,

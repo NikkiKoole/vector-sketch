@@ -5,6 +5,9 @@ local gestureState = {
    updateResolutionCounter = 0,
    updateResolution = 0.0167
 }
+local xAxisAllowed = true
+local yAxisAllowed = true
+
 local cam = require('lib.cameraBase').getInstance()
 
 local lib = {}
@@ -12,6 +15,10 @@ local lib = {}
 local function addGesturePoint(gest, time, x, y)
    assert(gest)
    table.insert(gest.positions, { time = time, x = x, y = y })
+end
+
+lib.getAllowedAxis = function()
+   return xAxisAllowed, yAxisAllowed
 end
 
 lib.add = function(target, trigger, time, x, y)
@@ -92,8 +99,7 @@ local function gestureRecognizer(gesture, throwfunc)
          local maxSpeed = 15000
          local minDistance = 6
          local minDuration = 0.005
-         local xAxisAllowed = true -- todo set this somehwere esle
-         local yAxisAllowed = true -- todo same
+
          if deltaTime > minDuration then
             local doTween = false
 

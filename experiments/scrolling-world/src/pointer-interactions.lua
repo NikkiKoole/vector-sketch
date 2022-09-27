@@ -153,21 +153,7 @@ function pointerMoved(x, y, dx, dy, id, layers)
 
 
    if (id == 'mouse' and love.mouse.isDown(1)) or id ~= 'mouse' then
-
-      resetCameraTween()
-      local g = gesture.findWithTargetAndId('stage', id)
-      if g then
-         local scale = cam:getScale()
-
-         local xAxisAllowed = true
-         local xAxis = xAxisAllowed and -dx / scale or 0
-         local yAxisAllowed = false
-         local yAxis = yAxisAllowed and -dy / scale or 0
-
-         cameraTranslateScheduler(xAxis, yAxis)
-      end
-
-
+      camera.maybePan(dx, dy, id)
    end
 end
 
