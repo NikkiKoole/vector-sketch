@@ -200,7 +200,7 @@ function scene.load()
       backgroundAssetBook = generateAssetBook({
          urls = createAssetPolyUrls({ 'doosgroot' }),
          index = { min = -100, max = 100 },
-         amountPerTile = 0,
+         amountPerTile = 10,
          depth = depthMinMax,
       })
       backgroundLayer = makeContainerFolder('backgroundLayer')
@@ -356,12 +356,14 @@ function scene.load()
             p = { factors = foregroundFactors, minmax = depthMinMax },
             assets = foregroundAssetBook,
             tileBounds = { math.huge, -math.huge },
+            layerIndex =1
          },
          {
             layer = backgroundLayer,
             p = { factors = backgroundFactors, minmax = depthMinMax },
             assets = backgroundAssetBook,
             tileBounds = { math.huge, -math.huge },
+            layerIndex = 2
          }
       }
    end
@@ -402,12 +404,13 @@ function scene.draw()
    --drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[2], myWorld, 2)
+   --parallax.setDynamicThing(parallaxLayersData[2].p)
+   --arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[2], myWorld)
    cam:push()
-   --renderThings(backgroundLayer, {camera=dynamic, p=parallaxLayersData[2].p})
+   --render.renderThings(backgroundLayer)
    cam:pop()
 
-   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld, 1)
+   arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld)
    cam:push()
    parallax.setDynamicThing(parallaxLayersData[1].p)
    --GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[1].p }

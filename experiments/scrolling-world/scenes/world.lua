@@ -232,11 +232,13 @@ function scene.load()
             p = { factors = backgroundFactors, minmax = depthMinMax },
             assets = backgroundAssetBook,
             tileBounds = { math.huge, -math.huge },
+            layerIndex = 1,
          }, {
             layer = foregroundLayer,
             p = { factors = foregroundFactors, minmax = depthMinMax },
             assets = foregroundAssetBook,
             tileBounds = { math.huge, -math.huge },
+            layerIndex = 2
          }
       }
 
