@@ -5,6 +5,7 @@ local render = require 'lib.render'
 local gradient = require 'lib.gradient'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
+local parallax = require 'lib.parallax'
 function scene.modify(obj)
 end
 
@@ -85,7 +86,8 @@ function scene.draw()
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData2[1])
    cam:push()
-   GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData2[1].p }
+   parallax.setDynamicThing(parallaxLayersData2[1].p)
+   --GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData2[1].p }
    render.renderThings(foregroundLayer2)
    cam:pop()
 

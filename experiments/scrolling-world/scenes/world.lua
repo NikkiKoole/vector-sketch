@@ -107,7 +107,7 @@ function scene.load()
       foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
       foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
 
-      dynamic = generateCameraLayer('dynamic', 1)
+      --dynamic = generateCameraLayer('dynamic', 1)
 
       backgroundAssetBook = generateAssetBook({
          urls = createAssetPolyUrls({ 'doosgroot' }),
@@ -296,14 +296,16 @@ function scene.draw()
 
    arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[1])
    cam:push()
-   GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[1].p }
+   parallax.setDynamicThing(parallaxLayersData[1].p)
+   --GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[1].p }
 
    render.renderThings(backgroundLayer)
    cam:pop()
 
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[2])
    cam:push()
-   GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[2].p }
+   parallax.setDynamicThing(parallaxLayersData[2].p)
+   --GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[2].p }
 
    render.renderThings(foregroundLayer)
    cam:pop()

@@ -175,8 +175,8 @@ function scene.load()
    skygradient = gradient.makeSkyGradient(timeIndex)
 
 
-   xAxisAllowed = true
-   yAxisAllowed = true
+   --xAxisAllowed = true
+   --yAxisAllowed = true
    smoothValue = 5
 
    if not hasBeenLoaded then
@@ -220,10 +220,7 @@ function scene.load()
          depth = depthMinMax,
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
-
-
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({ 'fit1', 'fit2', 'fit3', 'fit4', 'fit5' }))
-
 
       --   generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
 
@@ -412,7 +409,8 @@ function scene.draw()
 
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld, 1)
    cam:push()
-   GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[1].p }
+   parallax.setDynamicThing(parallaxLayersData[1].p)
+   --GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[1].p }
 
    render.renderThings(foregroundLayer)
    cam:pop()

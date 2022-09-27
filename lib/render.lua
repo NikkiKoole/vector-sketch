@@ -11,6 +11,7 @@ local parentize = require 'lib.parentize'
 local polyline = require 'lib.polyline'
 local border = require 'lib.border-mesh'
 local cam = require('lib.cameraBase').getInstance()
+local parallax = require 'lib.parallax'
 
 -- todo @global GLOBALS.parallax
 local lerp = numbers.lerp
@@ -335,16 +336,19 @@ function handleChild(shape, isDirty)
 
    if shape.folder then
 
-      if (shape.depth ~= nil) and GLOBALS and GLOBALS.parallax then
+      if (shape.depth ~= nil)  and parallax.getDynamicThing() then
 
-         GLOBALS.parallax.camera.scale = numbers.mapInto(
+         local p = parallax.getDynamicThing()
+         local c = parallax.getDynamicCam()
+
+         c.scale = numbers.mapInto(
             shape.depth,
-            GLOBALS.parallax.p.minmax.min, GLOBALS.parallax.p.minmax.max,
-            GLOBALS.parallax.p.factors.far, GLOBALS.parallax.p.factors.near
+            p.minmax.min, p.minmax.max,
+            p.factors.far, p.factors.near
          )
 
-         GLOBALS.parallax.camera.relativeScale = 1
-         GLOBALS.parallax.camera.push()
+         c.relativeScale = 1
+         c.push()
 
       end
 
@@ -510,8 +514,8 @@ function handleChild(shape, isDirty)
 
    end
 
-   if (shape.depth ~= nil and GLOBALS and GLOBALS.parallax) then
-      GLOBALS.parallax.camera:pop()
+   if (shape.depth ~= nil  and parallax.getDynamicThing()) then
+      parallax.getDynamicCam():pop()
    end
 
 end

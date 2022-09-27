@@ -75,7 +75,7 @@ end
 ---
 ---Creates a new Image from a filepath, FileData, an ImageData, or a CompressedImageData, and optionally generates or specifies mipmaps for the image.
 ---
----@param gesture  # look at this gesture
+---@param gesture table # look at this gesture
 local function gestureRecognizer(gesture, throwfunc)
    if #gesture.positions > 1 then
       local cx, cy = cam:getTranslation()
@@ -175,10 +175,6 @@ local function gestureRecognizer(gesture, throwfunc)
          local dxn = dx / distance
          local dyn = dy / distance
          throwfunc(gesture, dxn, dyn, speed)
-         --if ecsWorld then
-         --   ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
-         --end
-
       end
    end
 end

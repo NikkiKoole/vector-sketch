@@ -234,17 +234,6 @@ function love.load()
       showTouches = false,
       gravityValue = 5000
    }
-   mouseState = {
-      hoveredSomething = false,
-      down = false,
-      lastDown = false,
-      click = false,
-      offset = { x = 0, y = 0 }
-   }
-
-   GLOBALS = {
-      parallax = nil
-   }
 
    SM.setPath("scenes/")
 

@@ -223,10 +223,6 @@ function love.load()
    }
 
 
-   GLOBALS = {
-      parallax = nil
-   }
-
    SM.setPath("scenes/")
 
    -- Add scene "intro" to scene table
