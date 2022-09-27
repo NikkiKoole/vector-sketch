@@ -196,9 +196,10 @@ function scene.load()
 
       actors = {}
       for i = 1, 1 do
-         walterBody = makeObject('assets/walterbody.polygons.txt', 0, 0, love.math.random(), false)
-         walterLFoot = makeObject('assets/walterhappyfeetleft_.polygons.txt', 0, 0, 0)
-         walterRFoot = makeObject('assets/walterhappyfeetright_.polygons.txt', 0, 0, 0)
+         local depth = love.math.random()
+         walterBody = makeObject('assets/walterbody.polygons.txt', 0, 0, depth, false)
+         walterLFoot = makeObject('assets/walterhappyfeetleft_.polygons.txt', 0, 0, depth)
+         walterRFoot = makeObject('assets/walterhappyfeetright_.polygons.txt', 0, 0, depth)
 
 
          walterBody.hasDraggableChildren = true
