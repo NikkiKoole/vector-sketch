@@ -43,24 +43,6 @@ local round2 = numbers.round2
 local gesture = require 'lib.gesture'
 --local parallax = require 'lib.parallax'
 
--- cehck this on love2d to make an ingame editor and mount vector sketch files to edit ingame
--- https://www.reddit.com/r/love2d/comments/i4u5kr/use_of_lovefilesystemgetuserdirectory/
-
--- mounts a real file-location of a zip-file to a save-dir
--- https://love2d.org/wiki/love.filesystem.mount
-
---[[
-   TODO:
-   * the bbox functions have 2 ways of returning the data
-   {tlx, tly, brx, bry} and {tl={x,y}, br={x,y}}
-   make that just one way
-
-   https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
-
-]] --
-
-
--- utility functions that ought to be somewehre else
 
 function pickRandom(array)
    --   plantUrls[math.ceil(random()* #plantUrls)]
@@ -192,35 +174,12 @@ end
 function love.load()
    -- Set path of your scene files
    renderCount = { normal = 0, optimized = 0, groundMesh = 0 }
-   --meshCache = {}
 
-   --gestureState = {
-   --   list = {},
-   --   updateResolutionCounter = 0,
-   --   updateResolution = 0.0167
-   --}
-
-   --translateScheduler = {
-   --   x = 0,
-   --   y = 0,
-   --   justItem = { x = 0, y = 0 },
-   --   happenedByPressedItems = false,
-   --   cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
-   --}
-
-
-   -- todo move into camera (tween)
    tweenCameraDelta = 0
    followPlayerCameraDelta = 0
 
    font = love.graphics.newFont("assets/adlib.ttf", 32)
    smallfont = love.graphics.newFont("assets/adlib.ttf", 20)
-
-   cursors = {
-      --   hand= love.mouse.getSystemCursor("hand"),
-      --   arrow= love.mouse.getSystemCursor("arrow")
-   }
-
 
    love.graphics.setFont(font)
 
@@ -240,16 +199,11 @@ function love.load()
    -- Add scene "intro" to scene table
    SM.load("world")
 
-
-
-
 end
 
 function love.update(dt)
    -- Run your scene files update function
    gesture.update(dt)
-
-
    SM.update(dt)
 end
 
@@ -265,11 +219,7 @@ function love.draw()
    if uiState.showBouncy then
       local value = getTranslateSchedulerValues()
       love.graphics.line(W / 2, 100, W / 2 + value, 0)
-      --if translateScheduler.cache.value ~= 0 then
-      --   love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.value, 0)
-      --else
-      --   love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.tweenValue, 0)
-      --end
+
    end
    if uiState.showTouches then
       local touches = love.touch.getTouches()

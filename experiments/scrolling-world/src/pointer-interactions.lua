@@ -220,9 +220,6 @@ function handlePressedItemsOnStage(dt, layers)
          if c.bbox and c.transforms._l and c.depth ~= nil then
             if c.pressed then
 
-
-               --print(inspect(c.bbox))
-
                local mx, my = pointer.getPosition(c.pressed.id)
                local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
