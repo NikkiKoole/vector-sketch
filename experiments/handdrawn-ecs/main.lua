@@ -1,29 +1,18 @@
 package.path = package.path .. ";../../?.lua"
 
---Camera = require 'vendor.brady'
 
---require 'lib.recursivelyMakeTextures'
---require 'lib.scene-graph'
 require 'lib.generate-polygon'
---require 'lib.bbox'
-
-require 'lib.copyshape'
-require 'lib.poly'
---require 'lib.basics'
---require 'lib.main-utils'
-require 'lib.toolbox'
-require 'lib.polyline'
 require 'lib.camera'
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
-
-require 'src.mesh'
+--require 'src.mesh'
 require 'src.outwardRectangle'
 
 Concord = require 'vendor.concord.init'
 
+local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local render = require 'lib.render'
@@ -48,14 +37,6 @@ local cam = require('lib.cameraBase').getInstance()
 
 ]]
 --
-
-
-
-
-
-
-
-
 
 function centerCameraOnPosition(x, y, vw, vh)
    local cw, ch = cam:getContainerDimensions()
@@ -90,7 +71,7 @@ function makeGraphic(path)
    local imageData = love.image.newImageData(path)
    local img = love.graphics.newImage(imageData, { mipmaps = true })
    img:setMipmapFilter('nearest', 0)
-   local m = createTexturedRectangle(img)
+   local m = mesh.createTexturedRectangle(img)
    local w, h = m:getTexture():getDimensions()
 
    return { imageData = imageData, img = img, mesh = m, path = path, w = w, h = h }
@@ -106,8 +87,6 @@ end
 
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
-
-
 
    if key == 'up' then
       cam:translate(0, -5)
@@ -217,17 +196,13 @@ function love.load()
    mesh.recursivelyMakeTextures(root)
    mesh.meshAll(root)
 
-   --addNodeTo(animals, root)
-   --addNodeTo(dogmanhaar, animals)
 
-
-   --setCameraViewport(cam, 100,100)
    centerCameraOnPosition(150, -500, 1200, 1200)
    count = 0
 
 
    p = generatePolygon(200, 200, 1000, .15, .15, 14)
-   d = createTexturedPolygon(groundimg1, p)
+   d = mesh.createTexturedPolygon(groundimg1, p)
    totaldt = 0
 
    heights = {}
@@ -260,7 +235,7 @@ end
 function updateBlobShape()
    if totaldt % 2 < 0.1 then
       p = generatePolygon(200, 200, 1200, .15, .15, 14)
-      d = createTexturedPolygon(groundimg1, p)
+      d = mesh.createTexturedPolygon(groundimg1, p)
    end
 end
 
@@ -357,21 +332,21 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       local x1, y1 = x4, y4 - s * tileSize
       local x2, y2 = x3, y3 - s * tileSize
 
-      local mesh = createTexturedRectangle(imgarr[tileIndex])
+      local m = mesh.createTexturedRectangle(imgarr[tileIndex])
 
-      mesh:setVertex(1, { x1, y1, 0, 0, 1, 1, 1, .5 })
-      mesh:setVertex(2, { x2, y2, 1, 0, 1, 1, 1, .5 })
-      mesh:setVertex(3, { x3, y3, 1, 1 })
-      mesh:setVertex(4, { x4, y4, 0, 1 })
+      m:setVertex(1, { x1, y1, 0, 0, 1, 1, 1, .5 })
+      m:setVertex(2, { x2, y2, 1, 0, 1, 1, 1, .5 })
+      m:setVertex(3, { x3, y3, 1, 1 })
+      m:setVertex(4, { x4, y4, 0, 1 })
 
       love.graphics.setColor(.6, 0.3, 0.3)
-      love.graphics.draw(mesh)
+      love.graphics.draw(m)
 
       local o = 200
-      mesh:setVertex(1, { x1, y1 + o, 0, 0, 1, 1, 1, .5 })
-      mesh:setVertex(2, { x2, y2 + o, 1, 0, 1, 1, 1, .5 })
-      mesh:setVertex(3, { x3, y3 + o, 1, 1 })
-      mesh:setVertex(4, { x4, y4 + o, 0, 1 })
+      m:setVertex(1, { x1, y1 + o, 0, 0, 1, 1, 1, .5 })
+      m:setVertex(2, { x2, y2 + o, 1, 0, 1, 1, 1, .5 })
+      m:setVertex(3, { x3, y3 + o, 1, 1 })
+      m:setVertex(4, { x4, y4 + o, 0, 1 })
 
       local newuvs = { .05, .08, -- tl x and y}
          .92, .95 - .09 } --width and height
@@ -379,7 +354,7 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
       local outward = coloredOutsideTheLines(rect1, newuvs)
 
-      local m = createTexturedRectangle(ding)
+      local m = mesh.createTexturedRectangle(ding)
       m:setVertex(1, { outward[1], outward[2], 0, 0 })
       m:setVertex(2, { outward[3], outward[4], 1, 0 })
       m:setVertex(3, { outward[5], outward[6], 1, 1 })
