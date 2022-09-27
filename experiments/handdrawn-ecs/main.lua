@@ -315,7 +315,9 @@ function drawGroundPlaneLinesSimple(cam, far, near)
                    groundimg10, groundimg11, groundimg12,groundimg12,groundimg12,
                    groundimg12,groundimg13,groundimg13,groundimg13}
    ]] --
-   local imgarr = { groundimg6b, groundimg3 }
+   local imgarr = { groundimg6b, groundimg3, groundimg8, groundimg9, groundimg10 }
+
+   local woohoo = 1
 
    for i = s, e, tileSize do
       local groundIndex = (i / tileSize)
@@ -327,8 +329,8 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       local s = cam:getScale() -- 50 -> 0.01
 
 
-      local x4, y4 = cam:getScreenCoordinates(i + 0.0001, height1, near)
-      local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2, near)
+      local x4, y4 = cam:getScreenCoordinates(i + 0.0001, height1 * woohoo, near)
+      local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2 * woohoo, near)
       local x1, y1 = x4, y4 - s * tileSize
       local x2, y2 = x3, y3 - s * tileSize
 
@@ -339,7 +341,7 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       m:setVertex(3, { x3, y3, 1, 1 })
       m:setVertex(4, { x4, y4, 0, 1 })
 
-      love.graphics.setColor(.6, 0.3, 0.3)
+      love.graphics.setColor(.3, 0.3, 0.3, 0.6)
       love.graphics.draw(m)
 
       local o = 200
@@ -361,7 +363,7 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       m:setVertex(4, { outward[7], outward[8], 0, 1 })
 
 
-      love.graphics.setColor(168 / 255, 175 / 255, 97 / 255)
+      love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, 0.6)
       love.graphics.draw(m)
 
    end
