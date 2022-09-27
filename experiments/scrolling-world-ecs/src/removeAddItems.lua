@@ -4,10 +4,11 @@ local mesh = require 'lib.mesh'
 local parallax = require 'lib.parallax'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
+local generator = require 'lib.generateWorld'
 
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorld)
    for i = #parallaxData.layer.children, 1, -1 do
-      local child = parallaxData.layer.children[i] 
+      local child = parallaxData.layer.children[i]
       if child.entity and child.entity.assetBook then -- only allowed to r
 
          local groundTileIndex = math.floor(child.transforms.l[1] / tileSize)
@@ -45,24 +46,17 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData, ecsWorl
       if (data[i]) then
          for j = 1, #data[i] do
             local thing = data[i][j]
-            local url = thing.url
-            local read = mesh.readFileAndAddToCache(url)
-            local doOptimized = read.optimizedBatchMesh ~= nil
-            local child = {
-               folder = true,
-               transforms = copy3(read.transforms),
-               name = 'generated ' .. url,
-               children = doOptimized and {} or copy3(read.children)
-            }
+
+            local child = generator.makeThing(thing.url)
 
             child.transforms.l[1] = thing.x
             child.transforms.l[2] = getGlobalHeight(thing.x) --thing.y
             child.transforms.l[4] = thing.scaleX
             child.transforms.l[5] = thing.scaleY
-            child.metaTags = read.metaTags
+
             child.depth = thing.depth
             child.url = thing.url
-            child.bbox = read.bbox
+
 
 
 

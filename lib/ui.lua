@@ -20,12 +20,14 @@ ui.mouseHovered = function()
 end
 ui.mouseReleased = function()
    return mouseState.released
-end   
+end
 lastDraggedElement = {}
-cursors = {
-   hand = love.mouse.getSystemCursor("hand"),
-   arrow = love.mouse.getSystemCursor("arrow")
-}
+if love.system.getOS() ~= 'iOS' then
+   cursors = {
+      hand = love.mouse.getSystemCursor("hand"),
+      arrow = love.mouse.getSystemCursor("arrow")
+   }
+end
 
 ui.handleMouseClickStart = function()
    mouseState.hoveredSomething = false

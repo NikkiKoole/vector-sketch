@@ -474,6 +474,8 @@ end
 
 
 local _meshCache = {}
+--read  file and addU
+
 mesh.readFileAndAddToCache = function(url)
    -- todo this needs to work with hotrelaoding too,
    -- i suppose its just a matter of overwriting the value in cache?

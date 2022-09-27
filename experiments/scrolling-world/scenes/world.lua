@@ -21,6 +21,8 @@ local gradient = require 'lib.gradient'
 local ui = require 'lib.ui'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
+local generator = require 'lib.generateWorld'
+
 function scene.modify(data)
 end
 
@@ -138,17 +140,10 @@ function scene.load()
 
       -- todo alot of duplication from removeAddItems
       function makeObject(url, x, y, depth, allowOptimized)
-         if allowOptimized == nil then allowOptimized = true end
-         local read = mesh.readFileAndAddToCache(url)
-         local doOptimized = read.optimizedBatchMesh ~= nil
 
-         local child = {
-            folder = true,
-            transforms = copy3(read.transforms),
-            name = 'generated ' .. url,
-            children = (allowOptimized and doOptimized) and {} or copy3(read.children)
-         }
-         if allowOptimized and doOptimized then
+         local child, optimize = generator.makeThing(url, allowOptimized)
+
+         if optimize then
             child.url = url
          end
 
@@ -156,8 +151,6 @@ function scene.load()
          child.transforms.l[1] = x
          child.transforms.l[2] = y
 
-         child.bbox = read.bbox
-         child.metaTags = read.metaTags
          print(inspect(child.bbox), x, y)
          mesh.meshAll(child)
          return child

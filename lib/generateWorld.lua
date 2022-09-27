@@ -2,6 +2,7 @@ local numbers = require 'lib.numbers'
 local bbox = require 'lib.bbox'
 local mesh = require 'lib.mesh'
 
+local lib = {}
 function test()
    local start = love.timer.getTime()
    for x = 1, 100 do
@@ -40,6 +41,25 @@ function createAssetPolyUrls(strings)
       table.insert(result, 'assets/' .. strings[i] .. '.polygons.txt')
    end
    return result
+end
+
+lib.makeThing = function(url, allowOptimized)
+   if allowOptimized == nil then allowOptimized = true end
+
+   local read = mesh.readFileAndAddToCache(url)
+   local doOptimized = read.optimizedBatchMesh ~= nil -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
+   local optimize = (allowOptimized and doOptimized)
+   local child = {
+      folder = true,
+      transforms = copy3(read.transforms),
+      name = 'generated ' .. url,
+      children = optimize and {} or copy3(read.children),
+      metaTags = read.metaTags,
+      bbox = read.bbox
+   }
+
+
+   return child, optimize
 end
 
 function makeGroundPlaneBook(urls)
@@ -127,3 +147,5 @@ function generateRandomPolysAndAddToContainer(amount, factors, container)
 
 
 end
+
+return lib

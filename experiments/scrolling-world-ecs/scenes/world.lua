@@ -5,6 +5,7 @@ local render = require 'lib.render'
 local hit = require 'lib.hit'
 local gradient = require 'lib.gradient'
 local ui = require 'lib.ui'
+local generator = require 'lib.generateWorld'
 local scene = {}
 local hasBeenLoaded = false
 --local cam = getCamera()
@@ -130,28 +131,16 @@ end
 
 local ecsWorld = myWorld
 function makeObject(url, x, y, depth, allowOptimized)
+   local child, optimize = generator.makeThing(url, allowOptimized)
 
-   if allowOptimized == nil then allowOptimized = true end
-   local read = mesh.readFileAndAddToCache(url)
-   local doOptimized = read.optimizedBatchMesh ~= nil
-
-   local child = {
-      folder = true,
-      transforms = copy3(read.transforms),
-      name = 'generated ' .. url,
-      children = (allowOptimized and doOptimized) and {} or copy3(read.children)
-   }
-   if allowOptimized and doOptimized then
+   if optimize then
       child.url = url
    end
 
    child.depth = depth
    child.transforms.l[1] = x
    child.transforms.l[2] = y
-   --print(depth)
-   child.bbox = read.bbox
-   child.metaTags = read.metaTags
-   -- print(inspect(child.bbox),x,y)
+
    mesh.meshAll(child)
 
    if ecsWorld then
@@ -173,11 +162,6 @@ function scene.load()
 
    local timeIndex = math.floor(1 + love.math.random() * 24)
    skygradient = gradient.makeSkyGradient(timeIndex)
-
-
-   --xAxisAllowed = true
-   --yAxisAllowed = true
-   smoothValue = 5
 
    if not hasBeenLoaded then
 
@@ -238,7 +222,7 @@ function scene.load()
          if hit.findHitArea(cave) then
             cave.entity:give('hitAreaEvent')
          end
-
+         -- todo why is this 1 and not somethign dynamic?
          cave.entity:give('layer', 1)
          table.insert(
             foregroundLayer.children,
@@ -265,61 +249,6 @@ function scene.load()
 
          table.insert(foregroundLayer.children, carbod)
          carbod.entity:give('vehicle', carbod, wheel1, wheel2)
-
-         --      carbod.entity:remove('vanillaDraggable')
-
-
-         --local wheel = makeObject('assets/wielsimpler.polygons.txt', 100,0, 0)
-         --wheel.entity:give('wheelCircumference', 282)
-         --wheel.entity:give('rotatingPart', wheel.children[1])
-         --wheel.entity:remove('vanillaDraggable')
-         --table.insert(foregroundLayer.children, wheel)
-
-
-
-
-         -- wheel.entity:give('wheelCircumference', 282)
-         -- wheel.entity:give('rotatingPart', wheel.children[1])
-         --      wheel.entity:remove('vanillaDraggable')
-         --table.insert(foregroundLayer.children, carbod)
-
-
-
-
-
-
-         -- local wheel = makeObject('assets/wiel.polygons.txt', 100,0, 0)
-         -- wheel.entity:give('wheelCircumference', 282)
-         -- wheel.entity:give('rotatingPart', wheel.children[1])
-         -- wheel.entity:remove('vanillaDraggable')
-         -- table.insert(foregroundLayer.children, wheel)
-
-
-
-
-
-
-         -- add a  vehicle type; 2 wheels, front and back
-         -- have em work over the terain
-         -- also have a carbody
-
-
-
-
-
-
-         --table.insert(
-         --   backgroundLayer.children,
-         --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
-         -- )
-         --table.insert(
-         --   foregroundLayer.children,
-         --   makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, 1), 282)
-         -- )
-         --table.insert(
-         --  foregroundLayer.children,
-         --  makeWheel(makeObject('assets/wiel.polygons.txt', 100,0, -1), 282)
-         -- )
 
 
          actors = {}
@@ -356,7 +285,7 @@ function scene.load()
             p = { factors = foregroundFactors, minmax = depthMinMax },
             assets = foregroundAssetBook,
             tileBounds = { math.huge, -math.huge },
-            layerIndex =1
+            layerIndex = 1
          },
          {
             layer = backgroundLayer,

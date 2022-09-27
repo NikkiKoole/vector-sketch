@@ -1,6 +1,7 @@
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
 local parallax = require 'lib.parallax'
+local generator = require 'lib.generateWorld'
 --local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
 function removeTheContenstOfGroundTiles(startIndex, endIndex, parallaxData)
@@ -27,27 +28,19 @@ function addTheContentsOfGroundTiles(startIndex, endIndex, parallaxData)
             -- if an item has been pressed and moved it shouldnt be readded (it not removed either)
             --if not thing.hasBeenPressed then
             --local urlIndex = (thing.urlIndex)
-            local url = thing.url --urls[urlIndex]
-            local read = mesh.readFileAndAddToCache(url)
-            local doOptimized = read.optimizedBatchMesh ~= nil -- <<<<<<<<<<<<<<<<<<<<<<<<  HERE IT IS
-            local child = {
-               folder = true,
-               transforms = copy3(read.transforms),
-               name = 'generated ' .. url,
-               children = doOptimized and {} or copy3(read.children)
-            }
 
 
 
+            local child = generator.makeThing(thing.url)
 
             child.transforms.l[1] = thing.x
             child.transforms.l[2] = thing.y
             child.transforms.l[4] = thing.scaleX
             child.transforms.l[5] = thing.scaleY
-            child.metaTags = read.metaTags
+
             child.depth = thing.depth
             child.url = thing.url
-            child.bbox = read.bbox
+
 
             child.dirty = true
 
