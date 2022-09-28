@@ -1,6 +1,8 @@
 --https://grafiek.royscholten.nl/project/50-vogels/
 package.path = package.path .. ";../../?.lua"
-
+if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+   require("lldebugger").start()
+end
 --Camera = require 'vendor.brady'
 inspect = require 'vendor.inspect'
 tween = require 'vendor.tween'

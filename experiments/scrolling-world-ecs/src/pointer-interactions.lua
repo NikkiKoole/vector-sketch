@@ -74,35 +74,47 @@ function drawBBoxAroundItems(layer, parallaxData)
    end
 end
 
+function setItemsPressedInLayer(x, y, l, id, ecsWorld)
+
+   local pressed = false
+   for i = #l.layer.children, 1, -1 do
+      local c = l.layer.children[i]
+
+      if c.bbox and c.transforms._l and c.depth and not pressed then
+
+         local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, l.p)
+         if mouseover then
+            local justBBoxCheck = false
+            local hitcheck = mouseIsOverObjectInCamLayer(x, y, c, l.p)
+            if (justBBoxCheck == true or hitcheck) then
+               if ecsWorld then
+                  ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
+               end
+               --
+               --print('pressed')
+               c.pressed = { id = id }
+               pressed = c
+
+            end
+         end
+      end
+   end
+   return pressed
+end
+
 function pointerPressed(x, y, id, layers, ecsWorld)
    local itemPressed = false
 
    for j = 1, #layers do
       local l = layers[j]
 
-      for i = #l.layer.children, 1, -1 do
-         local c = l.layer.children[i]
+      itemPressed = itemPressed or setItemsPressedInLayer(x, y, l, id, ecsWorld)
 
-         if c.bbox and c.transforms._l and c.depth and not itemPressed then
 
-            local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, l.p)
-            if mouseover then
-               local justBBoxCheck = false
-               local hitcheck = mouseIsOverObjectInCamLayer(x, y, c, l.p)
-               if (justBBoxCheck == true or hitcheck) then
-                  if ecsWorld then
-                     ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
-                  end
-                  --
-                  --print('pressed')
-                  c.pressed = { id = id }
-                  itemPressed = c
-
-               end
-            end
-         end
-      end
    end
+
+
+
 
    --print(itemPressed)
    if not itemPressed then
@@ -156,6 +168,7 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
                local scale = cam:getScale()
                local lc = camera.createCamData(child, l.p)
                if (lc) then
+                  print("item drag!")
                   ecsWorld:emit("itemDrag", child, l, x, y, dx / lc.scale / scale, dy / lc.scale / scale)
                end
 
@@ -253,20 +266,12 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
                speed = speed / scale
 
                if ((brx + offset) > W) then
-
-
+                  resetCameraTween()
+                  cameraTranslateScheduler(speed * dt, 0)
                   if ecsWorld then
-                     --local scale = cam:getScale()
-                     --local lc = createCamData(c, l.p)
-                     --local cam = createCamData(c, l.p)
-                     --ecsWorld:emit("itemDrag", c, l, x, y, dx*cam.scale, dy*cam.scale)
-                     --ecsWorld:emit("itemDrag", c, l, x, y, 1, 0)
-                     print('this is the thing i am after I believe')
                      ecsWorld:emit("itemDrag", c, l, x, y, speed * dt, 0)
                   end
 
-                  resetCameraTween()
-                  cameraTranslateScheduler(speed * dt, 0)
                end
                if ((tlx - offset) < 0) then
                   resetCameraTween()

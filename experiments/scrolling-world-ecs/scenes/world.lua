@@ -170,7 +170,7 @@ function scene.load()
       -- these values should be loaded agian and again,
       depthMinMax = { min = -1.0, max = 1.0 }
       foregroundFactors = { far = .5, near = 1 }
-      backgroundFactors = { far = .4, near = .7 }
+      backgroundFactors = { far = .2, near = .5 }
       tileSize = 100
 
 
@@ -205,15 +205,6 @@ function scene.load()
       })
       foregroundLayer = makeContainerFolder('foregroundLayer')
       groundPlanes = makeGroundPlaneBook(createAssetPolyUrls({ 'fit1', 'fit2', 'fit3', 'fit4', 'fit5' }))
-
-      --   generateRandomPolysAndAddToContainer(30, foregroundFactors, foregroundLayer)
-
-      -- todo alot of duplication from removeAddItems
-
-      --      function makeWheel(thing, circumference)
-      --         thing.wheelCircumference = circumference
-      --	 return thing
-      --      end
 
       if true then
 
@@ -330,25 +321,25 @@ function scene.draw()
    love.graphics.setColor(1, 1, 1)
    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
-   --drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear' ,'background')
+   drawGroundPlaneWithTextures(cam, 'backgroundFar', 'backgroundNear', 'background')
    drawGroundPlaneWithTextures(cam, 'foregroundFar', 'foregroundNear', 'foreground')
 
-   --parallax.setDynamicThing(parallaxLayersData[2].p)
-   --arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[2], myWorld)
+
+   parallax.setDynamicThing(parallaxLayersData[2].p)
+   arrangeParallaxLayerVisibility('backgroundFar', parallaxLayersData[2], myWorld)
    cam:push()
-   --render.renderThings(backgroundLayer)
+   render.renderThings(backgroundLayer)
    cam:pop()
 
+
+   parallax.setDynamicThing(parallaxLayersData[1].p)
    arrangeParallaxLayerVisibility('foregroundFar', parallaxLayersData[1], myWorld)
    cam:push()
-   parallax.setDynamicThing(parallaxLayersData[1].p)
-   --GLOBALS.parallax = { camera = dynamic, p = parallaxLayersData[1].p }
-
    render.renderThings(foregroundLayer)
    cam:pop()
 
    love.graphics.setColor(1, 1, 1)
-   --drawUI()
+
    drawDebugStrings()
    drawBBoxAroundItems(foregroundLayer, parallaxLayersData[1].p)
    drawBBoxAroundItems(backgroundLayer, parallaxLayersData[2].p)

@@ -22,7 +22,6 @@
       },
       "args": []
     },
-
     {
       "name": "Debug Love 114",
       "type": "lua-local",
@@ -31,7 +30,7 @@
         "command": "/Applications/love114.app/Contents/MacOS/love"
       },
       "args": [
-        "." //"experiments/scrolling-world"
+        "experiments/scrolling-world-ecs"
       ],
       "scriptRoots": [
         "."
