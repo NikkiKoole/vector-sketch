@@ -270,8 +270,7 @@ c.manageCameraTween = function(dt)
             print('remvoing the cameratween original, test on touch!')
             gesture.remove(_cameraTween.originalGesture)
          end
-
-         _cameraTween = nil
+         ctween.setCameraTween(nil)
 
       end
       ctween.setDelta((delta.x + delta.y))
