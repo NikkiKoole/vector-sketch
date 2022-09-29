@@ -1,4 +1,7 @@
-function gaussian(mean, stdev)
+
+local lib = {}
+
+local function gaussian(mean, stdev)
    -- TODO get rid of returning a function, just return the result already
    local y2
    local use_last = false
@@ -30,14 +33,14 @@ function gaussian(mean, stdev)
    end
 end
 
-function clip(value, min, max)
+local function clip(value, min, max)
    if (min > max) then return value
    elseif (value < min) then return min
    elseif (value > max) then return max
    else return value end
 end
 
-function generatePolygon(ctrX, ctrY, aveRadius, irregularity, spikeyness, numVerts)
+lib.generatePolygon = function(ctrX, ctrY, aveRadius, irregularity, spikeyness, numVerts)
    irregularity = clip(irregularity, 0, 1) * 2 * math.pi / numVerts
    spikeyness = clip(spikeyness, 0, 1) * aveRadius
    angleSteps = {}
@@ -68,3 +71,5 @@ function generatePolygon(ctrX, ctrY, aveRadius, irregularity, spikeyness, numVer
    end
    return points
 end
+
+return lib

@@ -1,26 +1,12 @@
 inspect = require 'vendor.inspect'
 
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
---require 'lib.recursivelyMakeTextures'
 
 require 'src.palettes'
 require 'src.dopesheet'
 require 'src.file-screen'
 
---require 'lib.scene-graph'
 require 'lib.basics'
---local numbers = require 'lib.numbers'
---mapInto = numbers.mapInto
-
-require 'lib.copyshape'
---require 'lib.main-utils'
---require 'lib.polyline'
---require 'lib.poly'
---require 'lib.bbox'
---require 'lib.border-mesh'
-require 'lib.generate-polygon'
-require 'lib.toolbox'
---require 'lib.ui'
 
 local ui = require 'lib.ui'
 
@@ -31,6 +17,7 @@ local json = require 'vendor.json'
 local LG = love.graphics
 local LK = love.keyboard
 
+local copyShape = require('lib.copyshape').copyShape
 local text = require 'lib.text'
 local parentize = require 'lib.parentize'
 local mesh = require 'lib.mesh'
@@ -3027,7 +3014,7 @@ function mylib:keypressed(key, scancode, isrepeat)
             editingMode = nil
          end
 
-         initializeDopeSheet()
+         initializeDopeSheet(root)
       end
       if #childrenInRectangleSelect == 0 then
          if key == 'down' then

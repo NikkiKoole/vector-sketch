@@ -9,7 +9,8 @@ local function copyArray(original)
    return result
 end
 
-function copyShape(shape)
+local lib = {}
+lib.copyShape = function(shape)
    if (shape.folder) then
       local result = {
          folder = true,
@@ -33,7 +34,7 @@ function copyShape(shape)
       end
 
       for i = 1, #shape.children do
-         result.children[i] = copyShape(shape.children[i])
+         result.children[i] = lib.copyShape(shape.children[i])
       end
 
       return result
@@ -93,3 +94,5 @@ function copyShape(shape)
    end
 
 end
+
+return lib;

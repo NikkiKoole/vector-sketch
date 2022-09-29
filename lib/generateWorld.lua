@@ -1,7 +1,7 @@
 local numbers = require 'lib.numbers'
 local bbox = require 'lib.bbox'
 local mesh = require 'lib.mesh'
-
+local generatePolygon = require('lib.generate-polygon').generatePolygon
 local lib = {}
 function test()
    local start = love.timer.getTime()

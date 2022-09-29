@@ -1,18 +1,20 @@
 package.path = package.path .. ";../../?.lua"
 
 
-require 'lib.generate-polygon'
+
 require 'lib.camera'
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
 
 --require 'src.mesh'
-require 'src.outwardRectangle'
+--require 'src.outwardRectangle'
 
 Concord = require 'vendor.concord.init'
 
+local generatePolygon = require('lib.generate-polygon').generatePolygon
 local mesh = require 'lib.mesh'
+local geom = require 'lib.geom'
 local parentize = require 'lib.parentize'
 --local mesh = require 'lib.mesh'
 local render = require 'lib.render'
@@ -354,7 +356,7 @@ function drawGroundPlaneLinesSimple(far, near)
          .92, .95 - .09 } --width and height
 
       local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
-      local outward = coloredOutsideTheLines(rect1, newuvs)
+      local outward = geom.coloredOutsideTheLines(rect1, newuvs)
 
       local m = mesh.createTexturedRectangle(ding)
       m:setVertex(1, { outward[1], outward[2], 0, 0 })

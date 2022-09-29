@@ -1,6 +1,24 @@
 local numbers = require 'lib.numbers'
 local ui = require 'lib.ui'
+local mesh = require 'lib.mesh'
+local node = require 'lib.node'
 local round2 = numbers.round2
+local transform = require 'lib.transform'
+local function getAngleAndDistance(x1, y1, x2, y2)
+	local dx = x1 - x2
+	local dy = y1 - y2
+	local angle = math.atan2(dy, dx)
+	local distance = math.sqrt((dx * dx) + (dy * dy))
+ 
+	return angle, distance
+ end
+ local function setCurrentNode(newNode)
+	if currentNode and not currentNode.folder then
+	   mesh.remeshNode(currentNode)
+	end
+	currentNode = newNode
+ end
+ 
 
 function doDopeSheetEditing()
 	local w, h = love.graphics.getDimensions()
@@ -14,8 +32,12 @@ function doDopeSheetEditing()
 
 		for k, v in pairs(dopesheet.refs) do
 
-			local t = v._parent._globalTransform
-			local t2 = v._globalTransform --why is this not here? todo
+			local t = v._parent.transforms._g
+				
+			--transform.setTransforms(v)
+			print(inspect(v))
+			local t2 = v.transforms._g --why is this not here? todo
+
 			local mex, mey = t2:transformPoint(v.transforms.l[1], v.transforms.l[2])
 			local lx, ly = t:transformPoint(v.transforms.l[1], v.transforms.l[2])
 
@@ -114,7 +136,7 @@ function doDopeSheetEditing()
 				local y1 = 32 + h / 2 + ((i - 1) * (h1 + h2))
 				y1 = y1 - dopesheet.scrollOffset
 				local w1 = 200
-				local b = getUIRect('dope-bone' .. i, x1, y1, w1, h1)
+				local b = ui.getUIRect('dope-bone' .. i, x1, y1, w1, h1)
 
 
 				local node = dopesheet.refs[dopesheet.names[i]]
@@ -163,7 +185,7 @@ function doDopeSheetEditing()
 							end
 						end
 
-						b = getUIRect(i .. ci .. 'cell', myX, myY, cellWidth, cellHeight)
+						b = ui.getUIRect(i .. ci .. 'cell', myX, myY, cellWidth, cellHeight)
 						if b.clicked then
 
 							if dopesheet.drawMode == 'draw' then
@@ -365,7 +387,7 @@ function doDopeSheetEditing()
 	end
 end
 
-function initializeDopeSheet()
+function initializeDopeSheet(root)
 	dopesheet = {
 		scrollOffset = 0,
 		node = currentNode,
@@ -410,17 +432,13 @@ function calculateDopesheetRotations(sliderValue)
 		local nodeBefore, nodeBeforeIndex = lookForFirstRotationIndexBefore(dopesheet.data[i], frameIndex)
 		local nodeAfter, nodeAfterIndex = lookForFirstRotationIndexAfter(dopesheet.data[i], frameIndex)
 		local durp = mapInto(1 + sliderValue * (cellCount - 1), nodeBeforeIndex, nodeAfterIndex, 0, 1)
-
-
-		-- local beginVal = 0
-		-- local endVal = 1
-		-- local change = endVal - beginVal
-		-- local duration = 1
+		if nodeBefore and nodeAfter then
 		local ease = nodeBefore.ease or 'linear'
 		local l1 = easing[ease](durp, 0, 1, 1, 1 / 10, 1 / 3)
 
 		local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
 		dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
+		end
 	end
 end
 
