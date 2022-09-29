@@ -1,10 +1,10 @@
 local scene = {}
-
+--https://gitlab.com/V3X3D/love-libs/-/blob/master/SceneMgr/scenes/title.lua
 function scene.modify(obj)
 end
 
 function scene.load()
-   font = love.graphics.newFont( "assets/adlib.ttf", 32)
+   font = love.graphics.newFont("assets/adlib.ttf", 32)
 
    love.graphics.setFont(font)
 
@@ -15,24 +15,23 @@ function scene.update(dt)
       if key == 'escape' then love.event.quit() end
       SM.load("world")
    end
+
    function love.touchpressed(key, unicode)
---      if key == 'escape' then love.event.quit() end
+      --      if key == 'escape' then love.event.quit() end
       SM.load("world")
    end
+
    function love.mousepressed(key, unicode)
---      if key == 'escape' then love.event.quit() end
+      --      if key == 'escape' then love.event.quit() end
       SM.load("world")
    end
 
 end
 
 function scene.draw()
-   love.graphics.clear(1,1,1)
-   love.graphics.setColor(0,0,0)
-   love.graphics.print("This is the intro <!NEW!>, press any key to go to the world.", 10,10)
+   love.graphics.clear(1, 1, 1)
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.print("This is the intro <!NEW!>, press any key to go to the world.", 10, 10)
 end
 
 return scene
-
-
- 

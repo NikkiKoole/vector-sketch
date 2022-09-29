@@ -14,7 +14,7 @@ Concord = require 'vendor.concord.init'
 
 local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
-local mesh = require 'lib.mesh'
+--local mesh = require 'lib.mesh'
 local render = require 'lib.render'
 
 local myWorld = Concord.world()
@@ -297,7 +297,7 @@ function renderRecursive(node, dirty)
 
 end
 
-function drawGroundPlaneLinesSimple(cam, far, near)
+function drawGroundPlaneLinesSimple(far, near)
 
    love.graphics.setColor(1, 1, 1)
    love.graphics.setLineWidth(2)
@@ -341,14 +341,14 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       m:setVertex(3, { x3, y3, 1, 1 })
       m:setVertex(4, { x4, y4, 0, 1 })
 
-      love.graphics.setColor(.3, 0.3, 0.3, 0.6)
+      love.graphics.setColor(.9, .9, .9, .5)
       love.graphics.draw(m)
 
-      local o = 200
-      m:setVertex(1, { x1, y1 + o, 0, 0, 1, 1, 1, .5 })
-      m:setVertex(2, { x2, y2 + o, 1, 0, 1, 1, 1, .5 })
-      m:setVertex(3, { x3, y3 + o, 1, 1 })
-      m:setVertex(4, { x4, y4 + o, 0, 1 })
+      --local o = 200
+      --m:setVertex(1, { x1, y1 + o, 0, 0, 1, 1, 1, .5 })
+      --m:setVertex(2, { x2, y2 + o, 1, 0, 1, 1, 1, .5 })
+      --m:setVertex(3, { x3, y3 + o, 1, 1 })
+      --m:setVertex(4, { x4, y4 + o, 0, 1 })
 
       local newuvs = { .05, .08, -- tl x and y}
          .92, .95 - .09 } --width and height
@@ -363,7 +363,7 @@ function drawGroundPlaneLinesSimple(cam, far, near)
       m:setVertex(4, { outward[7], outward[8], 0, 1 })
 
 
-      love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, 0.6)
+      love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .5)
       love.graphics.draw(m)
 
    end
@@ -371,7 +371,7 @@ end
 
 function love.draw()
    love.graphics.clear(.3, .5, .8)
-   drawGroundPlaneLinesSimple(cam, 'foregroundFar', 'foregroundNear')
+   drawGroundPlaneLinesSimple('foregroundFar', 'foregroundNear')
 
    cam:push()
    love.graphics.setColor(1, 1, 1)
@@ -380,9 +380,9 @@ function love.draw()
    render.renderThings(root)
    --renderRecursive(root)
 
-   love.graphics.setColor(1, 1, 1)
-   love.graphics.setColor(1, 0, 0)
-   love.graphics.rectangle('fill', 0, 0, 20, 20)
+   --love.graphics.setColor(1, 1, 1)
+   --love.graphics.setColor(1, 0, 0)
+   --love.graphics.rectangle('fill', 0, 0, 20, 20)
 
    cam:pop()
 
