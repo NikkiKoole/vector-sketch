@@ -11,16 +11,16 @@ local function getAngleAndDistance(x1, y1, x2, y2)
 	local dy = y1 - y2
 	local angle = math.atan2(dy, dx)
 	local distance = math.sqrt((dx * dx) + (dy * dy))
- 
+
 	return angle, distance
- end
- local function setCurrentNode(newNode)
+end
+
+local function setCurrentNode(newNode)
 	if currentNode and not currentNode.folder then
-	   mesh.remeshNode(currentNode)
+		mesh.remeshNode(currentNode)
 	end
 	currentNode = newNode
- end
- 
+end
 
 function doDopeSheetEditing()
 	local w, h = love.graphics.getDimensions()
@@ -35,7 +35,7 @@ function doDopeSheetEditing()
 		for k, v in pairs(dopesheet.refs) do
 
 			local t = v._parent.transforms._g
-				
+
 			--transform.setTransforms(v)
 			print(inspect(v))
 			local t2 = v.transforms._g --why is this not here? todo
@@ -141,15 +141,15 @@ function doDopeSheetEditing()
 				local b = ui.getUIRect('dope-bone' .. i, x1, y1, w1, h1)
 
 
-				local node = dopesheet.refs[dopesheet.names[i]]
+				local node2 = dopesheet.refs[dopesheet.names[i]]
 
 				if y1 >= h / 2 then -- dont draw things that are scrolled away
 
 					if b.clicked then
-						setCurrentNode(node)
+						setCurrentNode(node2)
 					end
 
-					if currentNode == node then
+					if currentNode == node2 then
 						love.graphics.setLineWidth(3)
 						love.graphics.setColor(0, 0, 0)
 					else
@@ -233,7 +233,7 @@ function doDopeSheetEditing()
 					love.graphics.setFont(smallest)
 
 
-					local rotStr = "rotation: " .. round2(node.transforms.l[3], 3)
+					local rotStr = "rotation: " .. round2(node2.transforms.l[3], 3)
 					local str2W = smallest:getWidth(rotStr)
 
 					love.graphics.setColor(0, 0, 0, 1)
@@ -255,15 +255,15 @@ function doDopeSheetEditing()
 					dopesheet.showEases = not dopesheet.showEases
 					print("showEases", dopesheet.showEases)
 				end
-				node = dopesheet.data[indx[1]][indx[2]]
+				node2 = dopesheet.data[indx[1]][indx[2]]
 
-				rotStr = "rotation: " .. round2(node.rotation, 3)
+				rotStr = "rotation: " .. round2(node2.rotation, 3)
 
-				local rotSlider = h_slider("dopesheetrotsliderstuff", w / 2, h / 4, 600, node.rotation, -math.pi, math.pi)
+				local rotSlider = h_slider("dopesheetrotsliderstuff", w / 2, h / 4, 600, node2.rotation, -math.pi, math.pi)
 				if rotSlider.value then
 					local name = dopesheet.names[indx[1]]
 					dopesheet.refs[name].transforms.l[3] = rotSlider.value
-					node.rotation = rotSlider.value
+					node2.rotation = rotSlider.value
 
 				end
 
@@ -352,7 +352,7 @@ function doDopeSheetEditing()
 					love.graphics.print(label, x, y)
 					local labelWidth = smallest:getWidth(label)
 					love.graphics.setColor(1, 0, 1, 0.2)
-					return getUIRect('ease-select-' .. label, x, y, labelWidth, 20)
+					return ui.getUIRect('ease-select-' .. label, x, y, labelWidth, 20)
 				end
 
 				for i = 1, #eases do
@@ -389,10 +389,10 @@ function doDopeSheetEditing()
 	end
 end
 
-function initializeDopeSheet(root)
+function initializeDopeSheet(root, currentNode)
 	dopesheet = {
 		scrollOffset = 0,
-		node = currentNode,
+		node2 = currentNode,
 		names = {},
 		refs = {}
 	}
@@ -433,13 +433,13 @@ function calculateDopesheetRotations(sliderValue)
 	for i = 1, #dopesheet.names do
 		local nodeBefore, nodeBeforeIndex = lookForFirstRotationIndexBefore(dopesheet.data[i], frameIndex)
 		local nodeAfter, nodeAfterIndex = lookForFirstRotationIndexAfter(dopesheet.data[i], frameIndex)
-		local durp = mapInto(1 + sliderValue * (cellCount - 1), nodeBeforeIndex, nodeAfterIndex, 0, 1)
+		local durp = numbers.mapInto(1 + sliderValue * (cellCount - 1), nodeBeforeIndex, nodeAfterIndex, 0, 1)
 		if nodeBefore and nodeAfter then
-		local ease = nodeBefore.ease or 'linear'
-		local l1 = easing[ease](durp, 0, 1, 1, 1 / 10, 1 / 3)
+			local ease = nodeBefore.ease or 'linear'
+			local l1 = easing[ease](durp, 0, 1, 1, 1 / 10, 1 / 3)
 
-		local newRotation = mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
-		dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
+			local newRotation = numbers.mapInto(l1, 0, 1, nodeBefore.rotation, nodeAfter.rotation)
+			dopesheet.refs[dopesheet.names[i]].transforms.l[3] = newRotation
 		end
 	end
 end

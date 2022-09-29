@@ -202,7 +202,9 @@ function love.load()
    totaldt = 0
 
    heights = {}
-   for i = -1000, 1000 do
+   minpos = -1000
+   maxpos = 1000
+   for i = minpos, maxpos do
       heights[i] = love.math.random() * 100
    end
 
@@ -320,48 +322,50 @@ function drawGroundPlaneLinesSimple(far, near)
       local tileIndex = (groundIndex % (#imgarr)) + 1
       --      print(tileIndex)
       local index = (i - s) / tileSize
-      local height1 = heights[groundIndex]
-      local height2 = heights[groundIndex + 1]
-      local s = cam:getScale() -- 50 -> 0.01
+
+      if groundIndex >= minpos and groundIndex <= maxpos - 1 then
+         local height1 = heights[groundIndex]
+         local height2 = heights[groundIndex + 1]
+         local s = cam:getScale() -- 50 -> 0.01
 
 
-      local x4, y4 = cam:getScreenCoordinates(i + 0.0001, height1 * woohoo, near)
-      local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2 * woohoo, near)
-      local x1, y1 = x4, y4 - s * tileSize
-      local x2, y2 = x3, y3 - s * tileSize
+         local x4, y4 = cam:getScreenCoordinates(i + 0.0001, height1 * woohoo, near)
+         local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2 * woohoo, near)
+         local x1, y1 = x4, y4 - s * tileSize
+         local x2, y2 = x3, y3 - s * tileSize
 
-      local m = mesh.createTexturedRectangle(imgarr[tileIndex])
+         local m = mesh.createTexturedRectangle(imgarr[tileIndex])
 
-      m:setVertex(1, { x1, y1, 0, 0, 1, 1, 1, .5 })
-      m:setVertex(2, { x2, y2, 1, 0, 1, 1, 1, .5 })
-      m:setVertex(3, { x3, y3, 1, 1 })
-      m:setVertex(4, { x4, y4, 0, 1 })
+         m:setVertex(1, { x1, y1, 0, 0, 1, 1, 1, .5 })
+         m:setVertex(2, { x2, y2, 1, 0, 1, 1, 1, .5 })
+         m:setVertex(3, { x3, y3, 1, 1 })
+         m:setVertex(4, { x4, y4, 0, 1 })
 
-      love.graphics.setColor(.9, .9, .9, .5)
-      love.graphics.draw(m)
-
-      --local o = 200
-      --m:setVertex(1, { x1, y1 + o, 0, 0, 1, 1, 1, .5 })
-      --m:setVertex(2, { x2, y2 + o, 1, 0, 1, 1, 1, .5 })
-      --m:setVertex(3, { x3, y3 + o, 1, 1 })
-      --m:setVertex(4, { x4, y4 + o, 0, 1 })
-
-      local newuvs = { .05, .08, -- tl x and y}
-         .92, .95 - .09 } --width and height
-
-      local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
-      local outward = geom.coloredOutsideTheLines(rect1, newuvs)
-
-      local m = mesh.createTexturedRectangle(ding)
-      m:setVertex(1, { outward[1], outward[2], 0, 0 })
-      m:setVertex(2, { outward[3], outward[4], 1, 0 })
-      m:setVertex(3, { outward[5], outward[6], 1, 1 })
-      m:setVertex(4, { outward[7], outward[8], 0, 1 })
+         love.graphics.setColor(.9, .9, .9, .9)
+         love.graphics.draw(m)
+         --love.graphics.setColor(.1, .9, .3, .9)
+         love.graphics.draw(m, 0, 400 * s)
 
 
-      love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .5)
-      love.graphics.draw(m)
+         local newuvs = { .05, .08, -- tl x and y}
+            .92, .95 - .09 } --width and height
 
+         local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
+         local outward = geom.coloredOutsideTheLines(rect1, newuvs)
+
+         local m = mesh.createTexturedRectangle(ding)
+         m:setVertex(1, { outward[1], outward[2], 0, 0 })
+         m:setVertex(2, { outward[3], outward[4], 1, 0 })
+         m:setVertex(3, { outward[5], outward[6], 1, 1 })
+         m:setVertex(4, { outward[7], outward[8], 0, 1 })
+
+
+         -- love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .9)
+         love.graphics.setColor(.4, .8, .2, 1)
+         love.graphics.draw(m)
+         love.graphics.draw(m, 0, 400 * s)
+
+      end
    end
 end
 
@@ -372,14 +376,7 @@ function love.draw()
    cam:push()
    love.graphics.setColor(1, 1, 1)
    love.graphics.draw(d)
-
    render.renderThings(root)
-   --renderRecursive(root)
-
-   --love.graphics.setColor(1, 1, 1)
-   --love.graphics.setColor(1, 0, 0)
-   --love.graphics.rectangle('fill', 0, 0, 20, 20)
-
    cam:pop()
 
 

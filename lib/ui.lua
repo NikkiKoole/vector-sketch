@@ -54,7 +54,7 @@ ui.getUIRect = function(id, x, y, w, h)
    end
 
    if mouseState.click then
-      local mx, my = love.mouse.getPosition()
+      
       if hit.pointInRect(mx, my, x, y, w, h) then
          result = true
       end
@@ -147,7 +147,7 @@ function rgbbutton(id, rgb, x, y, size)
    }
 end
 
-function doubleiconlabelbutton(id, img1, img2, x, y)
+local function doubleiconlabelbutton(id, img1, img2, x, y)
    local mx, my = love.mouse:getPosition()
    local img1W, img1H = img1:getDimensions()
    local margin = 16

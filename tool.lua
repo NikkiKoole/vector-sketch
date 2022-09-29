@@ -1,5 +1,24 @@
 inspect = require 'vendor.inspect'
 
+
+
+local base = '/Users/nikkikoole/Projects/love/vector-sketch'
+--print('mountzip', base)
+local function mountZip(filename, mountpoint)
+   print(filename)
+   local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
+      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
+      print(inspect(result))
+      return result
+   end
+end
+
+mountZip(base .. '/resources.zip', '')
+console = require 'vendor.console'
+
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 
 require 'src.palettes'
@@ -2117,18 +2136,6 @@ function mylib:wheelmoved(x, y)
    --end
 end
 
-local function mountZip(filename, mountpoint)
-   print(filename)
-   local f = io.open(filename, 'r')
-   if f then
-      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-      f:close()
-      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
-      print(inspect(result))
-      return result
-   end
-end
-
 function mylib:setRoot(root, folderPath)
 
    parentize.parentize(root)
@@ -2158,11 +2165,6 @@ function mylib:resize(w, h)
       x = w - 160,
    }
 end
-
-local base = '/Users/nikkikoole/Projects/love/vector-sketch'
-print('mountzip', base)
-mountZip(base .. '/resources.zip', '')
-console = require 'vendor.console'
 
 function mylib:load(arg)
    --if arg[#arg] == "-debug" then require("mobdebug").start() end
@@ -2969,7 +2971,7 @@ function mylib:draw()
 end
 
 function mylib:textinput(t)
-   print(t)
+   print(t) -- i odnt get when this triggers
    if (changeName and currentNode) then
       local str = currentNode and currentNode.name or ""
       if (changeNameCursor > #str) then
@@ -3014,7 +3016,7 @@ function mylib:keypressed(key, scancode, isrepeat)
             editingMode = nil
          end
 
-         initializeDopeSheet(root)
+         initializeDopeSheet(root, currentNode)
       end
       if #childrenInRectangleSelect == 0 then
          if key == 'down' then

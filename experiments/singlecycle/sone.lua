@@ -1,6 +1,7 @@
 ---@diagnostic disable: undefined-doc-param, undefined-doc-name, doc-field-no-class
 
---- @module sone
+--- name--
+
 local sone = {
     _VERSION     = 'sone v1.0.0',
     _DESCRIPTION = 'Sound processing library for LOVE.',
