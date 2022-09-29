@@ -70,7 +70,7 @@ function makeGroundPlaneBook(urls)
       result[i] = {
          url = url,
          thing = thing,
-         bbox = getBBoxOfChildren(thing.children),
+         bbox = bbox.getBBoxOfChildren(thing.children),
       }
    end
    return result

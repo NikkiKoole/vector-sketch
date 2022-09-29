@@ -1,9 +1,11 @@
+local easing = require 'vendor.easing'
 local numbers = require 'lib.numbers'
 local ui = require 'lib.ui'
 local mesh = require 'lib.mesh'
 local node = require 'lib.node'
 local round2 = numbers.round2
 local transform = require 'lib.transform'
+
 local function getAngleAndDistance(x1, y1, x2, y2)
 	local dx = x1 - x2
 	local dy = y1 - y2

@@ -15,12 +15,13 @@ bbox.getPointsBBox = function(points)
    end
    return tlx, tly, brx, bry
 end
-function getMiddleOfPoints(points)
+
+local function getMiddleOfPoints(points)
    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
    return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2
 end
 
-function getPointsBBoxFlat(points)
+bbox.getPointsBBoxFlat = function(points)
    local tlx = 9999999999
    local tly = 9999999999
    local brx = -9999999999
@@ -77,7 +78,7 @@ bbox.getBBoxRecursive = function(node)
 end
 
 
-function getDirectChildrenBBox(node)
+bbox.getDirectChildrenBBox = function(node)
    local tlx = 9999999999
    local tly = 9999999999
    local brx = -9999999999
@@ -104,7 +105,7 @@ function getDirectChildrenBBox(node)
 
 end
 
-function getGroupBBox(group)
+bbox.getGroupBBox = function(group)
    local tlx = math.huge
    local tly = math.huge
    local brx = -math.huge
@@ -131,7 +132,7 @@ function getGroupBBox(group)
    return tlx, tly, brx, bry
 end
 
-function getBBoxOfChildren(children)
+bbox.getBBoxOfChildren = function(children)
    local minX = math.huge
    local minY = math.huge
    local maxX = -math.huge

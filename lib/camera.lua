@@ -2,7 +2,9 @@ local gesture = require 'lib.gesture'
 local numbers = require 'lib.numbers'
 local hit = require 'lib.hit'
 local cam = require('lib.cameraBase').getInstance()
+local ctween = require 'lib.cameraTween'
 
+local tween = require 'vendor.tween'
 
 local function getScreenBBoxForItem(c, camData)
 
@@ -49,14 +51,14 @@ c.createCamData = function(item, parallaxData)
 end
 
 c.maybePan = function(dx, dy, id)
-   resetCameraTween()
+   c.resetCameraTween()
    local g = gesture.findWithTargetAndId('stage', id)
    if g then
       local scale = cam:getScale()
       local xAllowed, yAllowed = gesture.getAllowedAxis()
       local xAxis = xAllowed and -dx / scale or 0
       local yAxis = yAllowed and -dy / scale or 0
-      cameraTranslateScheduler(xAxis, yAxis)
+      c.cameraTranslateScheduler(xAxis, yAxis)
    end
 end
 
@@ -77,7 +79,7 @@ local function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
    return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
 end
 
-function mouseIsOverItemBBox(mx, my, item, parallaxData)
+c.mouseIsOverItemBBox = function(mx, my, item, parallaxData)
    local camData = c.createCamData(item, parallaxData)
    local wx, wy = cam:getWorldCoordinates(mx, my, camData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(item, camData)
@@ -86,7 +88,7 @@ function mouseIsOverItemBBox(mx, my, item, parallaxData)
    return hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly), invx, invy, tlx, tly, brx, bry
 end
 
-function mouseIsOverObjectInCamLayer(mx, my, item, parallaxData)
+c.mouseIsOverObjectInCamLayer = function(mx, my, item, parallaxData)
    local camData = c.createCamData(item, parallaxData)
    local mx2, my2 = cam:getWorldCoordinates(mx, my, camData)
 
@@ -101,7 +103,7 @@ local translateScheduler = {
    cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
 }
 
-function getTranslateSchedulerValues()
+c.getTranslateSchedulerValues = function()
    if (translateScheduler.cache.value ~= 0) then
       return translateScheduler.cache.value
    else
@@ -110,7 +112,16 @@ function getTranslateSchedulerValues()
 
 end
 
-function setCameraViewport(c2, w, h)
+c.centerCameraOnPosition = function(x, y, vw, vh)
+   local cw, ch = cam:getContainerDimensions()
+   local targetScale = math.min(cw / vw, ch / vh)
+   cam:setScale(targetScale)
+   --cam:setTranslation(x + vw/2, y + vh/2)
+   cam:setTranslation(x, y)
+end
+
+
+c.setCameraViewport= function(c2, w, h)
    local cx, cy = c2:getTranslation()
 
    local cw, ch = c2:getContainerDimensions()
@@ -120,11 +131,11 @@ function setCameraViewport(c2, w, h)
    --print(_c)
 end
 
-function drawCameraBounds(c2, mode)
+local function drawCameraBounds(c2, mode)
    love.graphics.rectangle(mode, c2.x, c2.y, c2.w, c2.h)
 end
 
-function generateCameraLayer(name, zoom)
+c.generateCameraLayer = function(name, zoom)
    return cam:addLayer(name, zoom, { relativeScale = (1.0 / zoom) * zoom })
 end
 
@@ -135,7 +146,7 @@ local function cameraTranslateScheduleJustItem(dx, dy)
 
 end
 
-function cameraTranslateScheduler(dx, dy)
+c.cameraTranslateScheduler = function(dx, dy)
    --   print(dx, 'try to average instead of adding')
    translateScheduler.x = translateScheduler.x + dx
    translateScheduler.y = translateScheduler.y + dy
@@ -198,7 +209,7 @@ function cameraApplyTranslate(dt, layer)
          translateScheduler.happenedByPressedItems = false
          local cx, cy = cam:getTranslation()
          local delta = (translateScheduler.x + translateScheduler.justItem.x) * 50
-         setCameraTween({ goalX = cx + delta, goalY = cy, smoothValue = 3.5 })
+         c.setCameraTween({ goalX = cx + delta, goalY = cy, smoothValue = 3.5 })
          --cameraTween =
       end
       ------ end that part
@@ -215,22 +226,14 @@ end
 
 -- todo @global cameratween
 
-local _cameraTween = nil
-local _tweenCameraDelta = nil
-
-function setCameraTween(data)
-   --print(inspect(data))
-   _cameraTween = data
+c.resetCameraTween = function()
+  ctween.resetCameraTween()
 end
 
-function resetCameraTween()
-   if _cameraTween then
-      _cameraTween = nil
-      _tweenCameraDelta = 0
-   end
+c.setCameraTween = function(data)
+   ctween.setCameraTween(data)
 end
-
-function manageCameraTween(dt)
+c.manageCameraTween = function(dt)
    --print(inspect(#gestureState.list))
    --[[
  if cameraFollowPlayer then
@@ -243,7 +246,7 @@ function manageCameraTween(dt)
        )
     end
     ]] --
-
+    local _cameraTween = ctween.getTween()
    if _cameraTween then
       local delta = cam:setTranslationSmooth(
          _cameraTween.goalX,
@@ -271,7 +274,8 @@ function manageCameraTween(dt)
          _cameraTween = nil
 
       end
-      _tweenCameraDelta = (delta.x + delta.y)
+      ctween.setDelta((delta.x + delta.y))
+
    end
 
 end

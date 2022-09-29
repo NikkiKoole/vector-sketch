@@ -4,6 +4,7 @@ local hasBeenLoaded = false
 local render = require 'lib.render'
 local gradient = require 'lib.gradient'
 --local cam = getCamera()
+local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
 local parallax = require 'lib.parallax'
 function scene.modify(obj)
@@ -22,8 +23,8 @@ function scene.load()
    if not hasBeenLoaded then
       depthMinMax = { min = -1.0, max = 1.0 }
       foregroundFactors = { far = .5, near = 1 }
-      foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
-      foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+      foregroundFar = camera.generateCameraLayer('foregroundFar', foregroundFactors.far)
+      foregroundNear = camera.generateCameraLayer('foregroundNear', foregroundFactors.near)
 
       foregroundAssetBook2 = generateAssetBook({
          urls = createAssetPolyUrls(
@@ -52,7 +53,7 @@ function scene.load()
    perspectiveContainer = preparePerspectiveContainers({ 'foreground' })
 
 
-   setCameraViewport(cam, 300, 300)
+   camera.setCameraViewport(cam, 300, 300)
    hasBeenLoaded = true
 end
 

@@ -596,7 +596,7 @@ end
 
 mesh.createTexturedPolygon = function(image, polygon)
 
-   local tlx, tly, brx, bry = getPointsBBoxFlat(polygon)
+   local tlx, tly, brx, bry = bbox.getPointsBBoxFlat(polygon)
 
    local ufunc = function(x) return numbers.mapInto(x, tlx, brx, 0, 3) end
    local vfunc = function(y) return numbers.mapInto(y, tly, bry, 0, 3) end

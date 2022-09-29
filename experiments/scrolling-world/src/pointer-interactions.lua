@@ -17,7 +17,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
          if c.pressed then
             local mx, my = pointer.getPosition(c.pressed.id)
-            local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
+            local mouseover, invx, invy, tlx, tly, brx, bry = camera.mouseIsOverItemBBox(mx, my, c, parallaxData)
             --print(tlx, tly, brx, bry)
             love.graphics.setColor(1, 1, 1, .5)
 
@@ -51,7 +51,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
          if c.mouseOver or uiState.showBBoxes then
             local mx, my = pointer.getPosition('mouse')
-            local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
+            local mouseover, invx, invy, tlx, tly, brx, bry = camera.mouseIsOverItemBBox(mx, my, c, parallaxData)
             love.graphics.setColor(1, 1, 1, .5)
             love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
          end
@@ -72,10 +72,10 @@ function pointerPressed(x, y, id, layers)
 
          if c.bbox and c.transforms._l and c.depth and not itemPressed then
 
-            local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, l.p)
+            local mouseover, invx, invy = camera.mouseIsOverItemBBox(x, y, c, l.p)
             if mouseover then
                local justBBoxCheck = false
-               local hitcheck = mouseIsOverObjectInCamLayer(x, y, c, l.p)
+               local hitcheck = camera.mouseIsOverObjectInCamLayer(x, y, c, l.p)
                if (justBBoxCheck == true or hitcheck) then
 
                   --                  c.groundTileIndex = nil
@@ -125,7 +125,7 @@ function pointerPressed(x, y, id, layers)
          end
       end
    else
-      resetCameraTween()
+      camera.resetCameraTween()
       gesture.add(itemPressed, id, love.timer.getTime(), x, y)
    end
 
@@ -136,7 +136,7 @@ function checkForItemMouseOver(x, y, layer, parallaxData)
    for i = 1, #layer.children do
       local c = layer.children[i]
       if c.bbox and c.transforms._l and c.depth then
-         local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, parallaxData)
+         local mouseover, invx, invy = camera.mouseIsOverItemBBox(x, y, c, parallaxData)
          c.mouseOver = mouseover
       end
    end
@@ -221,7 +221,7 @@ function handlePressedItemsOnStage(dt, layers)
             if c.pressed then
 
                local mx, my = pointer.getPosition(c.pressed.id)
-               local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
+               local mouseover, invx, invy, tlx, tly, brx, bry = camera.mouseIsOverItemBBox(mx, my, c, l.p)
                if c.pressed then
                   c.dirty = true
                   -- todo make these thing parameters
@@ -262,12 +262,12 @@ function handlePressedItemsOnStage(dt, layers)
                   --end
                   local speed = 300
                   if ((brx + offset) > W) then
-                     resetCameraTween()
-                     cameraTranslateScheduler(speed * dt, 0)
+                     camera.resetCameraTween()
+                     camera.cameraTranslateScheduler(speed * dt, 0)
                   end
                   if ((tlx - offset) < 0) then
-                     resetCameraTween()
-                     cameraTranslateScheduler(-speed * dt, 0)
+                     camera.resetCameraTween()
+                     camera.cameraTranslateScheduler(-speed * dt, 0)
                   end
 
 

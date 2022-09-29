@@ -591,7 +591,7 @@ end
 --]=]
 --- @param SoundData sound The sound to copy.
 --- @param boolean copyOverData (optional) If false, only a new SoundData will be created with the same sample count, sample rate, bit depth, and channels. The actual signal data will not be copied.
---- @return SoundData The copied sound.
+--- @return love.SoundData The copied sound.
 function sone.copy(sound, copyOverData)
     local copy = love.sound.newSoundData(sound:getSampleCount(), sound:getSampleRate(), sound:getBitDepth(),
         sound:getChannels())

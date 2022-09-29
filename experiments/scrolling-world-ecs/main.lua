@@ -3,7 +3,7 @@ package.path = package.path .. ";../../?.lua"
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
    require("lldebugger").start()
 end
---Camera = require 'vendor.brady'
+
 inspect = require 'vendor.inspect'
 tween = require 'vendor.tween'
 ProFi = require 'vendor.ProFi'
@@ -11,17 +11,11 @@ Vector = require 'vendor.brinevector'
 Concord = require 'vendor.concord.init'
 SM = require 'vendor.SceneMgr'
 
-
 require 'lib.basic-tools'
-require 'lib.polyline'
-require 'lib.generate-polygon'
+
 local ui = require 'lib.ui'
-require 'lib.camera'
-require 'lib.generateWorld'
-
---local cam = getCamera()
 local cam = require('lib.cameraBase').getInstance()
-
+local camera = require 'lib.camera'
 
 require 'src.groundplane'
 require 'src.fillstuf'
@@ -43,7 +37,7 @@ local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
 local round2 = numbers.round2
 local gesture = require 'lib.gesture'
---local parallax = require 'lib.parallax'
+
 
 
 function pickRandom(array)
@@ -164,7 +158,7 @@ function love.wheelmoved(dx, dy)
 end
 
 function love.resize(w, h)
-   setCameraViewport(cam, 1000, 1000)
+   camera.setCameraViewport(cam, 1000, 1000)
 
    cam:update(w, h)
 end
@@ -219,7 +213,7 @@ function love.draw()
    SM.draw()
    local W, H = love.graphics.getDimensions()
    if uiState.showBouncy then
-      local value = getTranslateSchedulerValues()
+      local value = camera.getTranslateSchedulerValues()
       love.graphics.line(W / 2, 100, W / 2 + value, 0)
 
    end

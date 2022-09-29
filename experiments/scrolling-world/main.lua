@@ -10,21 +10,18 @@ Concord = require 'vendor.concord.init'
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
---require 'lib.polyline'
---require 'lib.generate-polygon'
+
 local ui = require 'lib.ui'
-require 'lib.camera'
---local cam = getCamera()
+local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
+
 require 'lib.generateWorld'
 
 
 
 require 'src.groundplane'
---require 'src.fillstuf'
 require 'src.removeAddItems'
 require 'src.pointer-interactions'
-
 require 'src.newton'
 require 'src.actor'
 
@@ -169,7 +166,7 @@ function love.wheelmoved(dx, dy)
 end
 
 function love.resize(w, h)
-   setCameraViewport(cam, 1000, 1000)
+   camera.setCameraViewport(cam, 1000, 1000)
 
    cam:update(w, h)
 end
@@ -251,7 +248,7 @@ function love.draw()
    SM.draw()
    local W, H = love.graphics.getDimensions()
    if uiState.showBouncy then
-      local value = getTranslateSchedulerValues()
+      local value = camera.getTranslateSchedulerValues()
       love.graphics.line(W / 2, 100, W / 2 + value, 0)
       --if translateScheduler.cache.value ~= 0 then
       --  love.graphics.line(W / 2, 100, W / 2 + translateScheduler.cache.value, 0)

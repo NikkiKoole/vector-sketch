@@ -774,7 +774,7 @@ local function drawUIAroundGraphNodes(w, h)
             'change-perspective', icon.change, 'debug perspective thing',
             function()
                editingModeSub = 'change-perspective'
-               local bbox = getBBoxOfChildren(currentNode.children)
+               local bbox = bbox.getBBoxOfChildren(currentNode.children)
                local t = currentNode.transforms._g
                local TLX, TLY = t:transformPoint(bbox.tl.x, bbox.tl.y)
                local BRX, BRY = t:transformPoint(bbox.br.x, bbox.br.y)
@@ -1375,7 +1375,7 @@ local function drawUIAroundGraphNodes(w, h)
                end
                local f = shape
 
-               local tlx, tly, brx, bry = getGroupBBox(childrenInRectangleSelect)
+               local tlx, tly, brx, bry = bbox.getGroupBBox(childrenInRectangleSelect)
 
                local w2 = (brx - tlx) / 2
                local h2 = (bry - tly) / 2
@@ -1481,7 +1481,7 @@ local function drawUIAroundGraphNodes(w, h)
 
                runningX = runningX - 6
                function get6(node)
-                  local tlx, tly, brx, bry = getDirectChildrenBBox(currentNode)
+                  local tlx, tly, brx, bry = bbox.getDirectChildrenBBox(currentNode)
                   local mx = tlx + (brx - tlx) / 2
                   local my = tly + (bry - tly) / 2
                   return tlx, tly, brx, bry, mx, my
@@ -1773,7 +1773,7 @@ function mylib:mousereleased(x, y, button)
 
       if (currentlyHoveredUINode and currentlyHoveredUINode.folder) then
          removeGroupOfThings(childrenInRectangleSelect)
-         local tlx, tly, brx, bry = getGroupBBox(childrenInRectangleSelect)
+         local tlx, tly, brx, bry = bbox.getGroupBBox(childrenInRectangleSelect)
          local w2 = (brx - tlx) / 2
          local h2 = (bry - tly) / 2
          local offX = -(tlx + w2)
@@ -2451,7 +2451,7 @@ function mylib:draw()
          if editingModeSub == 'change-perspective' and currentNode then
             if currentNode.children then
                if (true) then
-                  local bbox = getBBoxOfChildren(currentNode.children)
+                  local bbox = bbox.getBBoxOfChildren(currentNode.children)
                   local t = currentNode.transforms._g
                   local TLX, TLY = t:transformPoint(bbox.tl.x, bbox.tl.y)
                   local BRX, BRY = t:transformPoint(bbox.br.x, bbox.br.y)

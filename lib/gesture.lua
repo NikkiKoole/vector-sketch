@@ -9,7 +9,7 @@ local xAxisAllowed = true
 local yAxisAllowed = true
 
 local cam = require('lib.cameraBase').getInstance()
-
+local tween = require 'lib.cameraTween'
 local lib = {}
 
 local function addGesturePoint(gest, time, x, y)
@@ -158,7 +158,7 @@ local function gestureRecognizer(gesture, throwfunc)
             end
 
             if doTween then
-               setCameraTween({
+               tween.setCameraTween({
                   goalX = xAxis,
                   goalY = yAxis,
                   smoothValue = 3.5,

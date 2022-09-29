@@ -19,7 +19,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
          if c.pressed then
             local mx, my = pointer.getPosition(c.pressed.id)
-            local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
+            local mouseover, invx, invy, tlx, tly, brx, bry = camera.mouseIsOverItemBBox(mx, my, c, parallaxData)
 
             love.graphics.setColor(1, 0, 0, 1)
             love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
@@ -66,7 +66,7 @@ function drawBBoxAroundItems(layer, parallaxData)
 
          if false and c.mouseOver or uiState.showBBoxes then
             local mx, my = pointer.getPosition('mouse')
-            local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, parallaxData)
+            local mouseover, invx, invy, tlx, tly, brx, bry = camera.mouseIsOverItemBBox(mx, my, c, parallaxData)
             love.graphics.setColor(1, 1, 1, .5)
             love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
          end
@@ -82,10 +82,10 @@ function setItemsPressedInLayer(x, y, l, id, ecsWorld)
 
       if c.bbox and c.transforms._l and c.depth and not pressed then
 
-         local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, l.p)
+         local mouseover, invx, invy = camera.mouseIsOverItemBBox(x, y, c, l.p)
          if mouseover then
             local justBBoxCheck = false
-            local hitcheck = mouseIsOverObjectInCamLayer(x, y, c, l.p)
+            local hitcheck = camera.mouseIsOverObjectInCamLayer(x, y, c, l.p)
             if (justBBoxCheck == true or hitcheck) then
                if ecsWorld then
                   ecsWorld:emit("itemPressed", c, l, x, y, hitcheck)
@@ -125,7 +125,7 @@ function pointerPressed(x, y, id, layers, ecsWorld)
          end
       end
    else
-      resetCameraTween()
+      camera.resetCameraTween()
       gesture.add(itemPressed, id, love.timer.getTime(), x, y)
    end
 
@@ -135,7 +135,7 @@ function checkForItemMouseOver(x, y, layer, parallaxData)
    for i = 1, #layer.children do
       local c = layer.children[i]
       if c.bbox and c.transforms._l and c.depth then
-         local mouseover, invx, invy = mouseIsOverItemBBox(x, y, c, parallaxData)
+         local mouseover, invx, invy = camera.mouseIsOverItemBBox(x, y, c, parallaxData)
          c.mouseOver = mouseover
       end
    end
@@ -251,7 +251,7 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
             if c.pressed then
 
                local mx, my = pointer.getPosition(c.pressed.id)
-               local mouseover, invx, invy, tlx, tly, brx, bry = mouseIsOverItemBBox(mx, my, c, l.p)
+               local mouseover, invx, invy, tlx, tly, brx, bry = camera.mouseIsOverItemBBox(mx, my, c, l.p)
 
 
                -- remove this from here, instead handle this is mousemvoe where i know the real dx and yd and dont need tyo rely on inverting the transformation which leds to issues
@@ -266,16 +266,16 @@ function handlePressedItemsOnStage(dt, layers, ecsWorld)
                speed = speed / scale
 
                if ((brx + offset) > W) then
-                  resetCameraTween()
-                  cameraTranslateScheduler(speed * dt, 0)
+                  camera.resetCameraTween()
+                  camera.cameraTranslateScheduler(speed * dt, 0)
                   if ecsWorld then
                      ecsWorld:emit("itemDrag", c, l, x, y, speed * dt, 0)
                   end
 
                end
                if ((tlx - offset) < 0) then
-                  resetCameraTween()
-                  cameraTranslateScheduler(-speed * dt, 0)
+                  camera.resetCameraTween()
+                  camera.cameraTranslateScheduler(-speed * dt, 0)
                   if ecsWorld then
                      ecsWorld:emit("itemDrag", c, l, x, y, -speed * dt, 0)
                   end

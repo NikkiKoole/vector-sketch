@@ -6,6 +6,7 @@ local hit = require 'lib.hit'
 local gradient = require 'lib.gradient'
 local ui = require 'lib.ui'
 local generator = require 'lib.generateWorld'
+local camera = require 'lib.camera'
 local scene = {}
 local hasBeenLoaded = false
 --local cam = getCamera()
@@ -58,17 +59,17 @@ end
 function attachPointerCallbacks()
    function love.keypressed(key, unicode)
       if key == 'escape' then
-         resetCameraTween()
+         camera.resetCameraTween()
          SM.load('intro')
       end
       if key == 'up' then
-         resetCameraTween()
+         camera.resetCameraTween()
 
          cam:translate(0, -5)
 
       end
       if key == 'down' then
-         resetCameraTween()
+         camera.resetCameraTween()
 
          cam:translate(0, 5)
       end
@@ -174,12 +175,12 @@ function scene.load()
       tileSize = 100
 
 
-      backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
-      backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
-      foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
-      foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+      backgroundFar = camera.generateCameraLayer('backgroundFar', backgroundFactors.far)
+      backgroundNear = camera.generateCameraLayer('backgroundNear', backgroundFactors.near)
+      foregroundFar = camera.generateCameraLayer('foregroundFar', foregroundFactors.far)
+      foregroundNear = camera.generateCameraLayer('foregroundNear', foregroundFactors.near)
 
-      dynamic = generateCameraLayer('dynamic', 1)
+      dynamic = camera.generateCameraLayer('dynamic', 1)
 
       backgroundAssetBook = generateAssetBook({
          urls = createAssetPolyUrls({ 'doosgroot' }),
@@ -289,7 +290,7 @@ function scene.load()
    end
    perspectiveContainer = preparePerspectiveContainers({ 'foreground', 'background' })
 
-   setCameraViewport(cam, 400, 400)
+   camera.setCameraViewport(cam, 400, 400)
    hasBeenLoaded = true
    attachPointerCallbacks()
 
@@ -300,7 +301,7 @@ function scene.update(dt)
       print(inspect(walter.metaTags))
    end
 
-   manageCameraTween(dt)
+   camera.manageCameraTween(dt)
    cam:update()
 
    cameraApplyTranslate(dt, foregroundLayer)

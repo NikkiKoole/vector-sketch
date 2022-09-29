@@ -20,6 +20,7 @@ local render = require 'lib.render'
 local gradient = require 'lib.gradient'
 local ui = require 'lib.ui'
 --local cam = getCamera()
+local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
 local generator = require 'lib.generateWorld'
 
@@ -29,7 +30,7 @@ end
 function attachPointerCallbacks()
    function love.keypressed(key, unicode)
       if key == 'escape' then
-         resetCameraTween()
+         camera.resetCameraTween()
          SM.load('intro')
       end
       if key == 'up' then
@@ -104,10 +105,10 @@ function scene.load()
       --cam = createCamera()
 
 
-      backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
-      backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
-      foregroundFar = generateCameraLayer('foregroundFar', foregroundFactors.far)
-      foregroundNear = generateCameraLayer('foregroundNear', foregroundFactors.near)
+      backgroundFar = camera.generateCameraLayer('backgroundFar', backgroundFactors.far)
+      backgroundNear = camera.generateCameraLayer('backgroundNear', backgroundFactors.near)
+      foregroundFar = camera.generateCameraLayer('foregroundFar', foregroundFactors.far)
+      foregroundNear = camera.generateCameraLayer('foregroundNear', foregroundFactors.near)
 
       --dynamic = generateCameraLayer('dynamic', 1)
 
@@ -241,7 +242,7 @@ function scene.load()
    end
    perspectiveContainer = preparePerspectiveContainers({ 'foreground', 'background' })
 
-   setCameraViewport(cam, 400, 400)
+   camera.setCameraViewport(cam, 400, 400)
    hasBeenLoaded = true
    attachPointerCallbacks()
    --foregroundLayer.dirty = true
@@ -254,7 +255,7 @@ function scene.update(dt)
       print(inspect(walter.metaTags))
    end
 
-   manageCameraTween(dt)
+   camera.manageCameraTween(dt)
    cam:update()
 
    cameraApplyTranslate(dt, foregroundLayer)

@@ -2,11 +2,11 @@ package.path = package.path .. ";../../?.lua"
 
 
 
-require 'lib.camera'
+--require 'lib.camera'
 
 inspect = require 'vendor.inspect'
 flux = require "vendor.flux"
-
+local camera = require 'lib.camera'
 --require 'src.mesh'
 --require 'src.outwardRectangle'
 
@@ -40,13 +40,7 @@ local cam = require('lib.cameraBase').getInstance()
 ]]
 --
 
-function centerCameraOnPosition(x, y, vw, vh)
-   local cw, ch = cam:getContainerDimensions()
-   local targetScale = math.min(cw / vw, ch / vh)
-   cam:setScale(targetScale)
-   --cam:setTranslation(x + vw/2, y + vh/2)
-   cam:setTranslation(x, y)
-end
+
 
 function makeNode(graphic, tl)
    local tl = tl or { 0, 0, 0, 1, 1, graphic.w / 2, graphic.h, 0, 0 }
@@ -119,8 +113,8 @@ function love.load()
 
    --backgroundFar = generateCameraLayer('backgroundFar', backgroundFactors.far)
    --backgroundNear = generateCameraLayer('backgroundNear', backgroundFactors.near)
-   foregroundFar = generateCameraLayer('foregroundFar', .1)
-   foregroundNear = generateCameraLayer('foregroundNear', 1)
+   foregroundFar = camera.generateCameraLayer('foregroundFar', .1)
+   foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
    --   foregroundNearer = generateCameraLayer('foregroundNearer', .7)
    --   foregroundNearer = generateCameraLayer('foregroundNearest', 1.2)
 
@@ -199,7 +193,7 @@ function love.load()
    mesh.meshAll(root)
 
 
-   centerCameraOnPosition(150, -500, 1200, 1200)
+   camera.centerCameraOnPosition(150, -500, 1200, 1200)
    count = 0
 
 
@@ -219,7 +213,7 @@ function love.update(dt)
    require("vendor.lovebird").update()
    require("vendor.lurker").update()
    myWorld:emit("update", dt)
-   manageCameraTween(dt)
+   camera.manageCameraTween(dt)
    cam:update()
 
    updateBlobShape()
@@ -242,9 +236,9 @@ function updateBlobShape()
 end
 
 function love.resize(w, h)
-   setCameraViewport(cam, 100, 100)
+   camera.setCameraViewport(cam, 100, 100)
    --   centerCameraOnPosition(50,50, 200,200)
-   centerCameraOnPosition(150, 150, 600, 600)
+   camera.centerCameraOnPosition(150, 150, 600, 600)
    cam:update(w, h)
 end
 
