@@ -21,6 +21,24 @@ console = require 'vendor.console'
 
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 
+
+local function mountZip(filename, mountpoint)
+   print(filename)
+   local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
+      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
+      print(inspect(result))
+      return result
+   end
+end
+
+local base = '/Users/nikkikoole/Projects/love/vector-sketch'
+print('mountzip', base)
+mountZip(base .. '/resources.zip', '')
+console = require 'vendor.console'
+
 require 'src.palettes'
 require 'src.dopesheet'
 require 'src.file-screen'
@@ -989,37 +1007,119 @@ local function drawUIAroundGraphNodes(w, h)
          }
       )
       table.insert(row2, "newline")
-      table.insert(
-         row2,
-         {
-            'mask', icon.mask, 'turn to mask',
-            function()
-               currentNode.mask = not currentNode.mask
-               currentNode.hole = false
-            end
-         }
-      )
-      table.insert(
-         row2,
-         {
-            'hole', icon.hole, 'turn to hole',
-            function()
-               currentNode.hole = not currentNode.hole
-               currentNode.mask = false
-            end
-         }
-      )
-      table.insert(
-         row2,
-         {
-            'close_stencil', icon.close_stencil, 'close stencil marker',
-            function()
-               currentNode.closeStencil = not currentNode.closeStencil
-               currentNode.mask = false
-               currentNode.hole = false
-            end
-         }
-      )
+      -- instead i want 1 button that can toggle between these 3/ or 4 options, also polyline
+      -- object_group, mask, hole, close_stenicl
+      if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil) then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.object_group, 'now its normal click to make mask',
+               function()
+                  currentNode.mask = true
+                  currentNode.hole = false
+                  currentNode.closeStencil = false
+
+               end
+            }
+         )
+      end
+      if (currentNode.mask and not currentNode.hole and not currentNode.closeStencil) then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.mask, 'now its mask click to make hole',
+               function()
+
+                  currentNode.mask = false
+                  currentNode.hole = true
+                  currentNode.closeStencil = false
+               end
+            }
+         )
+      end
+
+      if (not currentNode.mask and currentNode.hole and not currentNode.closeStencil) then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.hole, 'now its hole click to make close stencil',
+               function()
+
+                  currentNode.mask = false
+                  currentNode.hole = false
+                  currentNode.closeStencil = true
+               end
+            }
+         )
+      end
+
+      if (not currentNode.mask and not currentNode.hole and currentNode.closeStencil) then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.close_stencil, 'now its close stencil click to make normal',
+               function()
+
+                  currentNode.mask = false
+                  currentNode.hole = false
+                  currentNode.closeStencil = false
+               end
+            }
+         )
+      end
+
+
+      if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type ~= 'bezier' then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.texture, 'now its normal texture click to make rope',
+               function()
+
+
+                  currentNode.type = 'rubberhose'
+
+                  local img = mesh.getImage(currentNode.texture.url)
+                  if not img then return end -- todo this exits early preventing a crash, but meh
+                  local width, height = img:getDimensions()
+                  local magic = 4.46
+                  currentNode.data = currentNode.data or {}
+                  currentNode.data.length = height * magic
+                  currentNode.data.width = width * 2
+                  currentNode.data.flop = 1
+                  currentNode.data.borderRadius = 0
+                  currentNode.data.steps = 10
+
+                  remeshNode(currentNode)
+               end
+            }
+         )
+      end
+      if (currentNode.texture and currentNode.type == 'rubberhose') and currentNode.type ~= 'bezier' then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.rope, 'now its rubberhose click to make bezier',
+               function()
+
+                  currentNode.type = 'bezier'
+               end
+            }
+         )
+      end
+      if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type == 'bezier' then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.bezier, 'now its bezier click to make normla',
+               function()
+
+                  currentNode.type = nil
+               end
+            }
+         )
+      end
+
       table.insert(row2, "whitespace")
       table.insert(
          row2,
@@ -2271,6 +2371,9 @@ function mylib:load(arg)
       curve = LG.newImage(p .. "curve.png"),
       close_stencil = LG.newImage(p .. "close-stencil.png"),
       help = LG.newImage(p .. "help.png"),
+      bezier = LG.newImage(p .. "bezier.png"),
+      rope = LG.newImage(p .. "rope.png"),
+      texture = LG.newImage(p .. "texture.png"),
    }
 
 

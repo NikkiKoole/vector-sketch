@@ -74,10 +74,7 @@ lib.update = function(dt)
    end
 end
 
----
----Creates a new Image from a filepath, FileData, an ImageData, or a CompressedImageData, and optionally generates or specifies mipmaps for the image.
----
----@param gesture table # look at this gesture
+
 local function gestureRecognizer(gesture, throwfunc)
    if #gesture.positions > 1 then
       local cx, cy = cam:getTranslation()
