@@ -970,37 +970,68 @@ local function drawUIAroundGraphNodes(w, h)
          }
       )
       table.insert(row2, "newline")
-      table.insert(
-         row2,
+      -- instead i want 1 button that can toggle between these 3/ or 4 options, also polyline
+      -- object_group, mask, hole, close_stenicl
+      if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil) then
+         table.insert(
+         row2, 
          {
-            'mask', icon.mask, 'turn to mask',
+            'vanilla', icon.object_group, 'now its normal click to make mask',
             function()
-               currentNode.mask = not currentNode.mask
+               currentNode.mask = true
                currentNode.hole = false
+               currentNode.closeStencil = false
+               
             end
          }
       )
-      table.insert(
-         row2,
+      end
+      if (currentNode.mask and not currentNode.hole and not currentNode.closeStencil) then
+         table.insert(
+         row2, 
          {
-            'hole', icon.hole, 'turn to hole',
+            'vanilla', icon.mask, 'now its mask click to make hole',
             function()
-               currentNode.hole = not currentNode.hole
+
                currentNode.mask = false
+               currentNode.hole = true
+               currentNode.closeStencil = false
             end
          }
       )
-      table.insert(
-         row2,
+      end
+
+      if (not currentNode.mask and currentNode.hole and not currentNode.closeStencil) then
+         table.insert(
+         row2, 
          {
-            'close_stencil', icon.close_stencil, 'close stencil marker',
+            'vanilla', icon.hole, 'now its hole click to make close stencil',
             function()
-               currentNode.closeStencil = not currentNode.closeStencil
+
                currentNode.mask = false
                currentNode.hole = false
+               currentNode.closeStencil = true
             end
          }
       )
+      end
+      
+      if (not currentNode.mask and not currentNode.hole and currentNode.closeStencil) then
+         table.insert(
+         row2, 
+         {
+            'vanilla', icon.close_stencil, 'now its close stencil click to make normal',
+            function()
+
+               currentNode.mask = false
+               currentNode.hole = false
+               currentNode.closeStencil = false
+            end
+         }
+      )
+      end
+
+      
       table.insert(row2, "whitespace")
       table.insert(
          row2,
