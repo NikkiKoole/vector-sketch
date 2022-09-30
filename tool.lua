@@ -2,6 +2,24 @@ inspect = require 'vendor.inspect'
 
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
 
+
+local function mountZip(filename, mountpoint)
+   print(filename)
+   local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
+      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
+      print(inspect(result))
+      return result
+   end
+end
+
+local base = '/Users/nikkikoole/Projects/love/vector-sketch'
+print('mountzip', base)
+mountZip(base .. '/resources.zip', '')
+console = require 'vendor.console'
+
 require 'src.palettes'
 require 'src.dopesheet'
 require 'src.file-screen'
@@ -1031,6 +1049,57 @@ local function drawUIAroundGraphNodes(w, h)
       )
       end
 
+
+      if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type ~= 'bezier' then
+         table.insert(
+            row2, 
+            {
+               'vanilla', icon.texture, 'now its normal texture click to make rope',
+               function()
+
+   
+                  currentNode.type = 'rubberhose'
+
+                  local img = mesh.getImage(currentNode.texture.url)
+                  if not img then return end -- todo this exits early preventing a crash, but meh
+                  local width, height = img:getDimensions()
+                  local magic = 4.46
+                  currentNode.data = currentNode.data or {}
+                  currentNode.data.length = height * magic
+                  currentNode.data.width = width * 2
+                  currentNode.data.flop = 1
+                  currentNode.data.borderRadius = 0
+                  currentNode.data.steps = 10
+                  
+                  remeshNode(currentNode)
+               end
+            }
+         )
+      end
+      if (currentNode.texture and currentNode.type == 'rubberhose') and currentNode.type ~= 'bezier' then
+         table.insert(
+            row2, 
+            {
+               'vanilla', icon.rope, 'now its rubberhose click to make bezier',
+               function()
+   
+                  currentNode.type = 'bezier'
+               end
+            }
+         )
+      end
+      if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type == 'bezier' then
+         table.insert(
+            row2, 
+            {
+               'vanilla', icon.bezier, 'now its bezier click to make normla',
+               function()
+   
+                  currentNode.type = nil
+               end
+            }
+         )
+      end
       
       table.insert(row2, "whitespace")
       table.insert(
@@ -2148,17 +2217,7 @@ function mylib:wheelmoved(x, y)
    --end
 end
 
-local function mountZip(filename, mountpoint)
-   print(filename)
-   local f = io.open(filename, 'r')
-   if f then
-      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-      f:close()
-      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
-      print(inspect(result))
-      return result
-   end
-end
+
 
 function mylib:setRoot(root, folderPath)
 
@@ -2190,10 +2249,7 @@ function mylib:resize(w, h)
    }
 end
 
-local base = '/Users/nikkikoole/Projects/love/vector-sketch'
-print('mountzip', base)
-mountZip(base .. '/resources.zip', '')
-console = require 'vendor.console'
+
 
 function mylib:load(arg)
    --if arg[#arg] == "-debug" then require("mobdebug").start() end
@@ -2300,6 +2356,9 @@ function mylib:load(arg)
       curve = LG.newImage(p .. "curve.png"),
       close_stencil = LG.newImage(p .. "close-stencil.png"),
       help = LG.newImage(p .. "help.png"),
+      bezier = LG.newImage(p .. "bezier.png"),
+      rope = LG.newImage(p .. "rope.png"),
+      texture = LG.newImage(p .. "texture.png"),
    }
 
 

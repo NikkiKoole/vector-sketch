@@ -496,8 +496,9 @@ function handleChild(shape, isDirty)
 
          if shape.texture and shape.texture.url then
             --	    print('using texture')
-
+            if editingMesh then
             editingMesh:setTexture(mesh.getImage(shape.texture.url))
+            end
          end
          love.graphics.setColor(shape.color)
          --love.graphics.setColor(1,1,1)
