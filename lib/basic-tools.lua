@@ -1,18 +1,20 @@
-function require_all(path, opts)
-   local items = love.filesystem.getDirectoryItems(path)
-   for _, item in pairs(items) do
-      if love.filesystem.getInfo(path .. '/' .. item, 'file') then
-         require(path .. '/' .. item:gsub('.lua', ''))
-      end
-   end
-   if opts and opts.recursive then
-      for _, item in pairs(items) do
-         if love.filesystem.getInfo(path .. '/' .. item, 'directory') then
-            require_all(path .. '/' .. item, { recursive = true })
-         end
-      end
+local base = '/Users/nikkikoole/Projects/love/vector-sketch'
+local function mountZip(filename, mountpoint)
+   --print(filename)
+   local f = io.open(filename, 'r')
+   if f then
+      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
+      f:close()
+      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
+      --print(inspect(result))
+      return result
    end
 end
+
+mountZip(base .. '/resources.zip', '')
+
+-- you need require console. before the rpint overwrite below
+console = require 'vendor.console'
 
 local TESTING__ = true
 if TESTING__ then
@@ -67,4 +69,6 @@ end
 if os.setlocale(nil) ~= 'C' then
    printC({ fg = 'black', bg = 'yellow' }, 'wrong locale:', os.setlocale(nil))
    os.setlocale("C")
+else
+   printC({ fg = 'black', bg = 'yellow' }, 'good locale!')
 end

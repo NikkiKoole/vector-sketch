@@ -1,43 +1,7 @@
 inspect = require 'vendor.inspect'
 
 
-
-local base = '/Users/nikkikoole/Projects/love/vector-sketch'
---print('mountzip', base)
-local function mountZip(filename, mountpoint)
-   print(filename)
-   local f = io.open(filename, 'r')
-   if f then
-      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-      f:close()
-      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
-      print(inspect(result))
-      return result
-   end
-end
-
-mountZip(base .. '/resources.zip', '')
-
-
-
-require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
-console = require 'vendor.console'
-local function mountZip(filename, mountpoint)
-   print(filename)
-   local f = io.open(filename, 'r')
-   if f then
-      local filedata = love.filesystem.newFileData(f:read("*all"), filename)
-      f:close()
-      local result = love.filesystem.mount(filedata, mountpoint or 'zip')
-      print(inspect(result))
-      return result
-   end
-end
-
-local base = '/Users/nikkikoole/Projects/love/vector-sketch'
-print('mountzip', base)
-mountZip(base .. '/resources.zip', '')
-console = require 'vendor.console'
+require 'lib.basic-tools'
 
 require 'src.palettes'
 require 'src.dopesheet'
@@ -70,10 +34,6 @@ local getIndex = n.getIndex
 local setPos = n.setPos
 local setPivot = n.setPivot
 local parse = require 'lib.parse-file'
---console = require 'vendor.console'
---easing = require 'vendor.easing'
---https://github.com/rxi/lurker
-
 
 -- use multiline input code to improve my inputfields
 -- https://github.com/ReFreezed/InputField
