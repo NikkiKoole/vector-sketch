@@ -2411,7 +2411,7 @@ local function getDataFromFile(file)
    local _shapeName
 
    if text.ends_with(filename, '.svg') then
-      local command = 'node ' .. '/svg_to_love/index.js ' .. filename .. ' ' .. simplifyValue
+      local command = 'node ' .. 'resources/svg_to_love/index.js ' .. filename .. ' ' .. simplifyValue
       print(command)
       if string.match(filename, " ") then
          print(":::ERROR::: path string should not contain any spaces")
