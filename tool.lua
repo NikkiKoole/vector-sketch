@@ -17,11 +17,11 @@ local function mountZip(filename, mountpoint)
 end
 
 mountZip(base .. '/resources.zip', '')
-console = require 'vendor.console'
+
+
 
 require 'lib.basic-tools' -- needs to be before console (they both overwrite print)
-
-
+console = require 'vendor.console'
 local function mountZip(filename, mountpoint)
    print(filename)
    local f = io.open(filename, 'r')
