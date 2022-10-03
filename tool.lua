@@ -3079,7 +3079,7 @@ function mylib:keypressed(key, scancode, isrepeat)
             editingMode = nil
          end
 
-         initializeDopeSheet(root, currentNode)
+         initializeDopeSheet(root)
       end
       if #childrenInRectangleSelect == 0 then
          if key == 'down' then
