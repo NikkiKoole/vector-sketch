@@ -29,7 +29,19 @@ I think I'll use it to format all of my documents from now on.
 }
 ```
 
-`code`
+`code want het staat in die quotose of wat?`
+
+# iets adners
+code beneden
+
+
+    function writePost(path, data)
+      local file = io.open(path, "w")
+      file:write(data)
+      file:close()
+    end
+
+
 
 > blockquote
   wdwqewqed

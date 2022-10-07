@@ -15,33 +15,33 @@ function printGreen(...)
 end
 
 function scandir(directory)
-    local i, t, popen = 0, {}, io.popen
-    local pfile = popen('ls -a "'..directory..'"') -- no joy on windows
-    for filename in pfile:lines() do
-        i = i + 1
-        t[i] = filename
-    end
-    pfile:close()
-    return t
+   local i, t, popen = 0, {}, io.popen
+   local pfile = popen('ls -a "' .. directory .. '"') -- no joy on windows
+   for filename in pfile:lines() do
+      i = i + 1
+      t[i] = filename
+   end
+   pfile:close()
+   return t
 end
 
 function ends_with(str, ending)
-   return ending == "" or str:sub(-#ending) == ending
+   return ending == "" or str:sub(- #ending) == ending
 end
 
 function split(str, delimiter)
-    local result = {}
-    for match in (str..delimiter):gmatch("(.-)"..delimiter) do
-        table.insert(result, match);
-    end
-    return result;
+   local result = {}
+   for match in (str .. delimiter):gmatch("(.-)" .. delimiter) do
+      table.insert(result, match);
+   end
+   return result;
 end
 
 function readAll(file)
-    local f = assert(io.open(file, "rb"))
-    local content = f:read("*all")
-    f:close()
-    return content
+   local f = assert(io.open(file, "rb"))
+   local content = f:read("*all")
+   f:close()
+   return content
 end
 
 function readSource(source)
@@ -49,11 +49,11 @@ function readSource(source)
    local secondIndex = (string.find(source, '---\n', 4))
    local frontmatter = nil
 
-   if firstIndex and secondIndex  then
-      frontmatter = string.sub(source,firstIndex,secondIndex+3)
+   if firstIndex and secondIndex then
+      frontmatter = string.sub(source, firstIndex, secondIndex + 3)
       frontmatter = string.gsub(frontmatter, '---\n', '')
       frontmatter = toml.parse(frontmatter)
-      source = string.sub(source, secondIndex+4)
+      source = string.sub(source, secondIndex + 4)
    end
 
    return markdown(source), frontmatter
@@ -70,38 +70,38 @@ if arg then
 
       local answer
       repeat
-	 io.write("ok, you want a new post, should it be (a) app-post, or a (b) blog-post ? ")
-	 io.flush()
-	 answer=io.read()
-      until answer=="a" or answer=="b"
+         io.write("ok, you want a new post, should it be (a) app-post, or a (b) blog-post ? ")
+         io.flush()
+         answer = io.read()
+      until answer == "a" or answer == "b"
 
       if not arg[2] then
          print('you forgot to write a new name')
       else
          local frontmatter =
-            "---\n"..
-            "timestamp="..os.time().."\n"..
-	    "date="..(os.date ("'%d %h %Y'")).."\n"..
-            "title='"..arg[2].."'\n"..
-            "---\n"
-	 local prefix = 'content/'
-	 if answer == 'a' then prefix = prefix..'apps/' end
-	 if answer == 'b' then prefix = prefix..'blog/' end
+         "---\n" ..
+             "timestamp=" .. os.time() .. "\n" ..
+             "date=" .. (os.date("'%d %h %Y'")) .. "\n" ..
+             "title='" .. arg[2] .. "'\n" ..
+             "---\n"
+         local prefix = 'content/'
+         if answer == 'a' then prefix = prefix .. 'apps/' end
+         if answer == 'b' then prefix = prefix .. 'blog/' end
 
-         local path = prefix..arg[2]:gsub(' ', '-')..'.md'
-         print('creating '..path)
+         local path = prefix .. arg[2]:gsub(' ', '-') .. '.md'
+         print('creating ' .. path)
          writePost(path, frontmatter)
       end
    end
 end
 
 
-local writtenFileCount =0
+local writtenFileCount = 0
 
 function doSimple(template, content, values, valueStorage)
-   local t = readAll('templates/'..template..'.template')
+   local t = readAll('templates/' .. template .. '.template')
    local firstPathPart = split(content, '/')[1]
-   local source = readAll('content/'..content..'.md')
+   local source = readAll('content/' .. content .. '.md')
    local html, frontmatter = readSource(source)
    values.frontmatter = frontmatter
    values.html = html
@@ -116,47 +116,46 @@ function doSimple(template, content, values, valueStorage)
 
    local compiled_template = liluat.compile(t)
    local rendered_template = liluat.render(compiled_template, values)
-   writePost('public/'..content..'.html', rendered_template)
+   writePost('public/' .. content .. '.html', rendered_template)
    writtenFileCount = writtenFileCount + 1
-   printGreen('public/'..content..'.html')
+   printGreen('public/' .. content .. '.html')
 end
 
-
 function doBunch(dir)
-   local files = scandir('content/'..dir)
+   local files = scandir('content/' .. dir)
    local result = {}
 
    for _, file in ipairs(files) do
       if (file ~= 'index.md') then
-	 if ends_with(file, '.md') then
-	    local content = file:gsub('.md', '')
-	    doSimple('general', dir..'/'..content, {path=content..'.html'}, result)
-	 end
+         if ends_with(file, '.md') then
+            local content = file:gsub('.md', '')
+            doSimple('general', dir .. '/' .. content, { path = content .. '.html' }, result)
+         end
       end
    end
 
 
-   table.sort(result, function (left, right)
-		 return left.frontmatter.timestamp < right.frontmatter.timestamp
+   table.sort(result, function(left, right)
+      return left.frontmatter.timestamp > right.frontmatter.timestamp
    end)
 
    local list = {}
    for _, post in ipairs(result) do
-      table.insert(list, {title=post.frontmatter.title, path=post.path, frontmatter=post.frontmatter})
+      table.insert(list, { title = post.frontmatter.title, path = post.path, frontmatter = post.frontmatter })
    end
 
    return list
 end
 
 local list = doBunch('apps')
-doSimple('collection', 'apps/index', {title="Apps", posts=list})
+doSimple('collection', 'apps/index', { title = "Apps", posts = list })
 
 local list = doBunch('blog')
-doSimple('collection', 'blog/index', {title="Blog", posts=list})
+doSimple('collection', 'blog/index', { title = "Blog", posts = list })
 
-doSimple('general', 'about/index', {title="About"})
-doSimple('general', 'index', {title='Happy apps for young children'})
+doSimple('general', 'about/index', { title = "About" })
+doSimple('general', 'index', { title = 'Happy apps for young children' })
 
 
 
-print('Done!, written '..writtenFileCount..' files in '..(os.time()-now)..' seconds.' )
+print('Done!, written ' .. writtenFileCount .. ' files in ' .. (os.time() - now) .. ' seconds.')
