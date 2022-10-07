@@ -1,18 +1,22 @@
 @font-face {
   font-family: cooper;
   src: url(assets/fonts/cooper-bold-bt.ttf);
+
 }
 @font-face {
   font-family: moonflower;
   src: url(assets/fonts/MoonFlower-YzXXq.ttf);
+
 }
 @font-face {
   font-family: sans-shaded;
   src: url(assets/fonts/SansSerifShaded.ttf);
+
 }
 @font-face {
   font-family: volta;
   src: url(assets/fonts/VoltaT-Regu.ttf);
+
 }
 
 
@@ -80,9 +84,14 @@ footer nav {
 
 }
 
+footer li {
+    padding: 6px;
+}
 footer a {
     text-decoration: none;
     color: white;
+    
+
 }
 header {
 
@@ -95,7 +104,7 @@ header h1 {
     transform: rotate(1deg);
 }
 header h1 a {
-    color: #e595ab;
+    color: #845562;
     text-decoration: none;
     font-size: 4.5rem;
 }
@@ -170,7 +179,7 @@ header nav a:hover:after {
     transition: all .2s;
 }
 .apps .post .content b {
-    color: #f0b364;
+    color: #534431;
     transform: rotate(1deg);
 
 }
@@ -195,6 +204,10 @@ header nav a:hover:after {
     width: 100%;
     transition: all .2s;
     filter: sepia(0.25);
+
+}
+video {
+    width: 280px;
 }
 .post:hover .postimg {
     transform: scale(1.1);
@@ -202,10 +215,17 @@ header nav a:hover:after {
 }
 
 .post .content .date {
-    left: 20px;
+   
     font-family: volta;
-    background: #5d5a4a;
+    background: rgba(90,90,70,0.5);
     color: white;
+    width: 110px;
+    border-radius: 10px;
+    margin-top: -10px;
+    margin-left: -10px;
+    text-transform: lowercase;
+    line-height: 30px;
+    text-align: center;
 }
 
 .apps .post:hover {
@@ -247,6 +267,9 @@ article h2 {
 article p {
     font-size: 1.25rem;
 }
+
+/* beginning to style the google calendar */
+
 
 
 /* begin media queries */
@@ -301,3 +324,4 @@ article p {
     }
 }
 /* end media queries */
+

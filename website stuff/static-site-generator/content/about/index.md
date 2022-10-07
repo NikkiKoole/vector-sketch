@@ -15,4 +15,6 @@ I love math and drawing and music and programming, and how apps are this little 
 ## Making apps for young children.
 
 
+<iframe title="calendar" src="https://calendar.google.com/calendar/embed?height=400&wkst=1&bgcolor=%23ffffff&ctz=Europe%2FParis&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&src=NTQxMGIwNGY5NzkxOWZmNTBmYzE0OGRjMmNiNTEzZTQyMWI4OTFiY2I4OGI1YTdlM2RmODQzZjM3OTU3NjE0MEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%23C0CA33" style="border:solid 4px #777;border-radius: 10px;background-color: rgba(0,0,0,0.15)" width="420" height="420" frameborder="0" scrolling="no"></iframe>
+
 Read more over at [blog](/blog)

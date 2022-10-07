@@ -19,10 +19,22 @@
 	  <div class='post'>
 	    <a href={{= post.path}}>
 	      <div class='content'>
+		  {{if post.frontmatter.thumb then}}
 		<div class='picture_container'>
-		  <img class="picture" src={{= post.frontmatter.thumb}}>
+		  <img class="picture"  src={{= post.frontmatter.thumb}}>
 		</div>
+		{{end}}
+
+		{{if post.frontmatter.webm then}}
+		<video autoplay loop muted playsinline>
+  <source src={{= post.frontmatter.webm}} type="video/webm">
+
+</video>
+{{end}}
+
+		{{if post.frontmatter.date then}}
                 <div class='date'>{{= post.frontmatter.date}}</div>
+		{{end}}
 		<b>{{= post.title}}</b>
 		<p>{{= post.frontmatter.intro}}</p>
 	      </div>
