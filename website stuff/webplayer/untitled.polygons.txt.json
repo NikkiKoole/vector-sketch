@@ -1,1 +1,0 @@
-[{"children":[],"folder":true,"name":"group ","transforms":{"l":[0,0,0,1,1,0,0]}},{"points":[[0,0],[200,0],[200,200],[0,200]],"name":"child1 ","color":[1,1,0,0.8]},{"points":[[500,0],[500,200],[300,200]],"name":"child2 ","color":[1,1,0,0.8]}]
