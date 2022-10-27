@@ -1,3 +1,5 @@
+package.path = package.path .. ";../../?.lua"
+
 inspect = require 'inspect'
 sone = require "sone"
 local ui = require 'lib.ui'

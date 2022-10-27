@@ -35,6 +35,7 @@ end
 
 local base1 = '/Users/nikkikoole/Projects/love/vector-sketch'
 local base2 = '/Users/nikkikoole/Projects/vector-sketch'
+
 local function mountZip(filename, mountpoint)
    --print(filename)
    local f = io.open(filename, 'r')
@@ -52,6 +53,7 @@ end
 
 mountZip(base1 .. '/resources.zip', '')
 mountZip(base2 .. '/resources.zip', '')
+--mountZip('resources.zip', '')
 -- you need require console. before the rpint overwrite below
 console = require 'vendor.console'
 
