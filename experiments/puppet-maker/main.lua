@@ -1,4 +1,9 @@
 package.path = package.path .. ";../../?.lua"
+if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+   require("lldebugger").start()
+end
+
+SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
 
@@ -12,11 +17,20 @@ end
 
 function love.load()
    love.window.setMode(1024, 768, { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
-   love.window.setTitle('☺♥ character creation kit ♥☺')
+   love.window.setTitle('☺♥ Puppet Maker ♥☺')
 
+   SM.setPath("scenes/")
+    SM.load("splash")
 end
 
 
+function love.update(dt)
+   SM.update(dt)
+end
+
+function love.draw()
+   SM.draw() 
+end
 
    
 function love.resize(w, h)

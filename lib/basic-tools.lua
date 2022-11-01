@@ -53,7 +53,8 @@ end
 
 mountZip(base1 .. '/resources.zip', '')
 mountZip(base2 .. '/resources.zip', '')
---mountZip('resources.zip', '')
+--local cwd = love.filesystem.getWorkingDirectory()
+--mountZip(cwd .. 'resources.zip', '')
 -- you need require console. before the rpint overwrite below
 console = require 'vendor.console'
 
