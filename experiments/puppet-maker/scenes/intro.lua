@@ -1,5 +1,6 @@
 local scene = {}
 local poppetjeMaker = love.graphics.newImage('assets/puppetmaker.png' )
+local doggie = love.graphics.newImage('assets/doggie.png' )
 local time = 0
 function scene.load()
   
@@ -32,14 +33,26 @@ end
 function scene.draw()
    love.graphics.clear(238/255,226/255,188/255)
    screenWidth, screenHeight = love.graphics.getDimensions( )
-   blobWidth, blobHeight = poppetjeMaker:getDimensions()
+   blobWidth, blobHeight = doggie:getDimensions()
+   
    local scaleX = screenWidth/blobWidth
    local scaleY = screenHeight/blobHeight
    local scale = math.min(scaleX, scaleY)
+   scale = scale * 0.7
+
+   love.graphics.setColor(1,1,1,1)
+   love.graphics.draw(doggie, screenWidth*0.75, screenHeight,  0, scale, scale, blobWidth/2, blobHeight)
+   
+   
+   blobWidth, blobHeight = poppetjeMaker:getDimensions()
+   scaleX = screenWidth/blobWidth
+   scaleY = screenHeight/blobHeight
+   scale = math.min(scaleX, scaleY)
    scale = scale * 0.8
    scale = scale + (math.sin(time)* 0.01)
    love.graphics.setColor(0,0,0,0.5)
-   love.graphics.draw(poppetjeMaker, screenWidth/2, screenHeight/2,0,scale,scale, blobWidth/2, blobHeight/2)
+   love.graphics.draw(poppetjeMaker, screenWidth/2.5, screenHeight/2 ,0,scale,scale, blobWidth/2, blobHeight/2)
+   
 end
 
 
