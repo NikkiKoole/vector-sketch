@@ -23,6 +23,10 @@ function scene.load()
    guyX = 0.75
 end
 
+function gotoNext()
+   SM.load("mainPage")
+end
+
 function scene.update(dt)
    if splashSound:isPlaying() then
       local volume = splashSound:getVolume()
@@ -30,15 +34,15 @@ function scene.update(dt)
    end
    function love.keypressed(key, unicode)
       if key == 'escape' then love.event.quit() end
-      
+      gotoNext()
    end
 
    function love.touchpressed(key, unicode)
-
+      gotoNext()
    end
 
    function love.mousepressed(key, unicode)
-
+      gotoNext()
    end
    time = time + dt
    flux.update(dt)
@@ -91,7 +95,7 @@ function scene.draw()
    g = numbers.mapInto(value, -1, 1, 167/255, 150/255)
    b = numbers.mapInto(value, -1, 1, 43/255, 0/255)
 
-   love.graphics.setColor(r,g,b, .5)
+   love.graphics.setColor(r,g,b, 1)
    love.graphics.draw(poppetjeMaker, (screenWidth/2.5) - ((1-fluxObject.headerOffset)*screenWidth/1.5), screenHeight/2 ,0,scale,scale, blobWidth/2, blobHeight/2)
 
   
