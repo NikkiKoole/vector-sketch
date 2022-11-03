@@ -1,6 +1,13 @@
+local flux = require "vendor.flux"
+local cron = require 'vendor.cron'
+
+local fluxObject = {blobScale=0, blobOffset=0, headerOffset=0}
+
 local scene = {}
 local header = love.graphics.newImage('assets/splash-header.png' )
 local blob = love.graphics.newImage('assets/splash-blob.png')
+
+local c1 = nil
 
 function scene.modify(obj)
 end
@@ -8,10 +15,14 @@ end
 function scene.load()
    splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
    splashSound:setVolume(.25)
-   splashSound:play()
+   clock1 = cron.after(.5, function() splashSound:play() end) 
+
+   flux.to(fluxObject, 3, {blobScale=1}):ease("elasticout"):delay(.2)
+   flux.to(fluxObject, 1, {blobOffset=1}):delay(.2)
+   flux.to(fluxObject, 3, {headerOffset=1}):ease("elasticout"):delay(.1)
 end
 
-function scene.update()
+function scene.update(dt)
    function gotoNext()
        SM.load("intro")
    end
@@ -28,6 +39,9 @@ function scene.update()
    function love.mousepressed(key, unicode)
       gotoNext()
    end
+
+   flux.update(dt)
+   clock1:update(dt)
 end
 
 
@@ -41,8 +55,9 @@ function scene.draw()
    local scaleY = screenHeight/blobHeight
    local scale = math.min(scaleX, scaleY)
    scale = scale * 0.8
+   scale = scale * fluxObject.blobScale
    love.graphics.setColor(0,0,0, 0.1)
-   love.graphics.draw(blob,screenWidth/2,screenHeight/2,0,scale,scale, blobWidth/2, blobHeight/2)
+   love.graphics.draw(blob,screenWidth/2,(screenHeight/2)+((1-fluxObject.blobOffset)*blobHeight),0,scale,scale, blobWidth/2, blobHeight/2)
 
    headerWidth, headerHeight = header:getDimensions( )
 
@@ -51,7 +66,7 @@ function scene.draw()
    scale = math.min(scaleX, scaleY)
    scale = scale * 0.8
    love.graphics.setColor(222/255,166/255,40/255, .25)
-   love.graphics.draw(header,screenWidth/2,screenHeight,0,scale,scale, headerWidth/2, headerHeight)
+   love.graphics.draw(header,screenWidth/2,screenHeight+(1-fluxObject.headerOffset)*headerHeight,0,scale,scale, headerWidth/2, headerHeight)
  
 end
 
