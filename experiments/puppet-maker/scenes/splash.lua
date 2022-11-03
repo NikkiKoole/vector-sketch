@@ -7,15 +7,21 @@ local scene = {}
 local header = love.graphics.newImage('assets/splash-header.png' )
 local blob = love.graphics.newImage('assets/splash-blob.png')
 
-local c1 = nil
+local clock1 = nil
+local clock2 = nil
 
 function scene.modify(obj)
 end
 
+function gotoNext()
+   SM.load("intro")
+end
+ 
 function scene.load()
    splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
    splashSound:setVolume(.25)
-   clock1 = cron.after(.5, function() splashSound:play() end) 
+   clock1 = cron.after(.5, function() splashSound:play() end)
+   clock2 = cron.after(7, gotoNext)
 
    flux.to(fluxObject, 3, {blobScale=1}):ease("elasticout"):delay(.2)
    flux.to(fluxObject, 1, {blobOffset=1}):delay(.2)
@@ -23,10 +29,6 @@ function scene.load()
 end
 
 function scene.update(dt)
-   function gotoNext()
-       SM.load("intro")
-   end
-   
    function love.keypressed(key, unicode)
       if key == 'escape' then love.event.quit() end
       gotoNext()
@@ -42,6 +44,7 @@ function scene.update(dt)
 
    flux.update(dt)
    clock1:update(dt)
+   clock2:update(dt)
 end
 
 
