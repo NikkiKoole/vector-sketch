@@ -11,7 +11,7 @@ local numbers = require 'lib.numbers'
 
 function scene.load()
    
-   introSound = love.audio.newSource("assets/introloop.mp3", "static")
+  
    introSound:setLooping(true)
    introSound:play()
 

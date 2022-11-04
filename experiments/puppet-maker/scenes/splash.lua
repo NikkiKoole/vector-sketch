@@ -18,8 +18,8 @@ function gotoNext()
 end
  
 function scene.load()
-   splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
-   splashSound:setVolume(.25)
+  
+   splashSound:setVolume(.25) 
    clock1 = cron.after(.5, function() splashSound:play() end)
    clock2 = cron.after(7, gotoNext)
 
