@@ -212,7 +212,7 @@ function love.load()
 end
 
 function love.update(dt)
-   require("vendor.lovebird").update()
+   --require("vendor.lovebird").update()
    require("vendor.lurker").update()
    myWorld:emit("update", dt)
    camera.manageCameraTween(dt)

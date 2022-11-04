@@ -81,7 +81,7 @@ function scene.draw()
    scale = scale + (math.sin(time)* 0.01)
 
 
-   love.graphics.setColor(0,0,0, 0.5 * (fluxObject.headerOffset))
+   love.graphics.setColor(1,1,1, 0.5 * (fluxObject.headerOffset))
    love.graphics.draw(poppetjeMaker,5+ (screenWidth/2.5) - ((1-fluxObject.headerOffset)*screenWidth/1.5),5 + screenHeight/2 ,0,scale,scale, blobWidth/2, blobHeight/2)
 
 
@@ -90,10 +90,9 @@ function scene.draw()
    local b = 0
    local value = (math.sin(time)) -- [-1,1]
 
-
-   r = numbers.mapInto(value, -1, 1, 224/255, 255/255)
-   g = numbers.mapInto(value, -1, 1, 167/255, 150/255)
-   b = numbers.mapInto(value, -1, 1, 43/255, 0/255)
+   r = numbers.mapInto(value, -1, 1, 224/255, 222/255)
+   g = numbers.mapInto(value, -1, 1, 167/255, 166/255)
+   b = numbers.mapInto(value, -1, 1, 43/255, 40/255)
 
    love.graphics.setColor(r,g,b, 1)
    love.graphics.draw(poppetjeMaker, (screenWidth/2.5) - ((1-fluxObject.headerOffset)*screenWidth/1.5), screenHeight/2 ,0,scale,scale, blobWidth/2, blobHeight/2)
