@@ -5,18 +5,27 @@ local poppetjeMaker = love.graphics.newImage('assets/puppetmaker.png' )
 local doggie = love.graphics.newImage('assets/doggie.png' )
 local time = 0
 
-local flux = require "vendor.flux"
+local Timer = require 'vendor.timer'
 local fluxObject = {headerOffset=0, guyY=0}
 local numbers = require 'lib.numbers'
 
 function scene.load()
-   
   
    introSound:setLooping(true)
    introSound:play()
-
-   flux.to(fluxObject, 3, {headerOffset=1}):ease("elasticout"):delay(0)
-   flux.to(fluxObject, 2, {guyY=1}):ease("elasticout"):delay(1)
+   
+   Timer.after(
+      .1,
+      function()
+         Timer.tween(3, fluxObject, {headerOffset = 1}, 'out-elastic')
+      end
+   )
+   Timer.after(
+      1,
+      function()
+         Timer.tween(2, fluxObject, {guyY = 1}, 'out-elastic')
+      end
+   )
 
    guyFacing = -1
 
@@ -24,6 +33,7 @@ function scene.load()
 end
 
 function gotoNext()
+   Timer.clear()
    SM.load("mainPage")
 end
 
@@ -45,9 +55,11 @@ function scene.update(dt)
       gotoNext()
    end
    time = time + dt
-   flux.update(dt)
+   --flux.update(dt)
+   Timer.update(dt)
 
-   if (fluxObject.guyY == 1) then
+   print(fluxObject.guyY)
+   if (math.floor(fluxObject.guyY) == 1) then
       
       guyX = guyX + (0.007 * guyFacing)
       if (guyX < -0.1 or guyX > 1.1) then

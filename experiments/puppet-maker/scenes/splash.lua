@@ -1,5 +1,4 @@
-local flux = require "vendor.flux"
-local cron = require 'vendor.cron'
+local Timer = require 'vendor.timer'
 
 local fluxObject = {blobScale=0, blobOffset=0, headerOffset=0}
 
@@ -14,18 +13,35 @@ function scene.modify(obj)
 end
 
 function gotoNext()
+   Timer.clear()
    SM.load("intro")
 end
  
 function scene.load()
   
    splashSound:setVolume(.25) 
-   clock1 = cron.after(.5, function() splashSound:play() end)
-   clock2 = cron.after(7, gotoNext)
 
-   flux.to(fluxObject, 3, {blobScale=1}):ease("elasticout"):delay(.2)
-   flux.to(fluxObject, 1, {blobOffset=1}):delay(.2)
-   flux.to(fluxObject, 3, {headerOffset=1}):ease("elasticout"):delay(.1)
+   Timer.after(.5, function() splashSound:play() end)
+   Timer.after(7, gotoNext)
+   Timer.after(
+      .2,
+      function()
+          Timer.tween(3, fluxObject, {blobScale = 1}, 'out-elastic')
+      end
+   )
+   Timer.after(
+      .2,
+      function()
+          Timer.tween(1, fluxObject, {blobOffset = 1})
+      end
+   )
+   Timer.after(
+      .1,
+      function()
+          Timer.tween(3, fluxObject, {headerOffset = 1}, 'out-elastic')
+      end
+   )
+ 
 end
 
 function scene.update(dt)
@@ -42,9 +58,8 @@ function scene.update(dt)
       gotoNext()
    end
 
-   flux.update(dt)
-   clock1:update(dt)
-   clock2:update(dt)
+
+   Timer.update(dt)
 end
 
 

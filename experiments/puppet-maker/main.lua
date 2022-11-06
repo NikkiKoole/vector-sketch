@@ -23,7 +23,7 @@ function love.load()
    introSound = love.audio.newSource("assets/introloop.mp3", "static")
    
    SM.setPath("scenes/")
-   SM.load("mainPage")
+   SM.load("splash")
 end
 
 
