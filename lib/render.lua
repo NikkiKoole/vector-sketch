@@ -494,10 +494,11 @@ function handleChild(shape, isDirty)
          -- i still dont get it realtime updating wat the hell
 
 
-         if shape.texture and shape.texture.url then
+         if shape.texture and shape.texture.url and #(shape.texture.url) > 0 then
             --	    print('using texture')
             if editingMesh then
-            editingMesh:setTexture(mesh.getImage(shape.texture.url))
+
+               editingMesh:setTexture(mesh.getImage(shape.texture.url))
             end
          end
          love.graphics.setColor(shape.color)

@@ -1042,12 +1042,12 @@ local function drawUIAroundGraphNodes(w, h)
                   local img = mesh.getImage(currentNode.texture.url)
                   if not img then return end -- todo this exits early preventing a crash, but meh
                   local width, height = img:getDimensions()
-                  local magic = 4.46
+                  local magic = 1 --4.46
                   currentNode.data = currentNode.data or {}
                   currentNode.data.length = height * magic
-                  currentNode.data.width = width * 2
+                  currentNode.data.width = width 
                   currentNode.data.flop = 1
-                  currentNode.data.borderRadius = 0
+                  currentNode.data.borderRadius = 1
                   currentNode.data.steps = 10
 
                   remeshNode(currentNode)
@@ -2457,6 +2457,7 @@ function mylib:draw()
          ui.handleMouseClickStart()
 
          local w, h = getDimensions()
+
          LG.setScissor(0, 0, w, h)
          local rightX = w - (64 + 500 + 10) / 2
 

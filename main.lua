@@ -143,6 +143,10 @@ function love.load(arg)
    mylib:resize(w * part, h)
    mylib:load(arg)
 end
+function love.update()
+   require("vendor.lurker").update()
+end
+
 
 function love.draw()
    local w, h = love.graphics.getDimensions()

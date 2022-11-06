@@ -1,0 +1,55 @@
+{ {
+children = { {
+color = { 0.804, 0.541, 0.643, 1 },
+name = "",
+points = { { -152.009, -203.969 }, { -123.226, -84.294 }, { -114.429, 141.48 }, { -141.169, 218.802 }, { -139.62, 283.843 }, { -86.967, 330.302 }, { -46.704, 339.593 }, { 12.144, 327.204 }, { 86.477, 249.774 }, { 142.227, 98.01 }, { 143.775, -106.406 }, { 95.768, -326.309 }, { 43.116, -344.892 }, { -4.891, -341.795 }, { -63.738, -334.052 }, { -104.002, -299.983 } }
+}, {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/romp1.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 624.406, 627, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+color = { 0.016, 0.055, 0.059, 1 },
+data = {
+borderRadius = 0,
+flop = -0.98888888888889,
+length = 2167.56,
+steps = 13.377777777778,
+width = 132
+},
+name = "leg",
+points = { { 543.73, 929.794 }, { 543.73, 1216.984 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/line1.png",
+wrap = "repeat"
+},
+type = "rubberhose"
+}, {
+color = { 0.016, 0.055, 0.059, 1 },
+data = {
+borderRadius = 0,
+flop = 1,
+length = 2323.66,
+steps = 13.377777777778,
+width = 168
+},
+name = "leg",
+points = { { 669.622, 898.322 }, { 665.688, 1138.302 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/line2.png",
+wrap = "repeat"
+},
+type = "rubberhose"
+} }

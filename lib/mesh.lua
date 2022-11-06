@@ -214,7 +214,7 @@ mesh.makeVertices = function(shape)
             y = shape.points[2][2]
          }
 
-         local magic = 4.46
+         local magic = 1-- 4.46
          local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop,
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
@@ -230,7 +230,7 @@ mesh.makeVertices = function(shape)
             end
          end
          coords = unloop.unpackNodePoints(coords, false)
-         local verts, indices, draw_mode = polyline.render('miter', coords, { shape.data.width })
+         local verts, indices, draw_mode = polyline.render('miter', coords, { shape.data.width/3 })
          local h = 1 / (shape.data.steps - 1 or 1)
          local vertsWithUVs = {}
 
