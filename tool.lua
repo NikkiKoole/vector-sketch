@@ -1050,6 +1050,8 @@ local function drawUIAroundGraphNodes(w, h)
                   currentNode.data.borderRadius = 1
                   currentNode.data.steps = 10
 
+                  currentNode.data.scale = 1
+
                   remeshNode(currentNode)
                end
             }
@@ -1334,6 +1336,30 @@ local function drawUIAroundGraphNodes(w, h)
             currentNode.data.steps = v.value
          end
 
+         LG.print("border radius", 100, 160)
+         local v = h_slider("bradius", 100, 180, 200, currentNode.data.borderRadius, 0, 2)
+         if v.value ~= nil then
+            currentNode.data.borderRadius = v.value
+         end
+
+         LG.print("scale", 100, 190)
+         local v = h_slider("scale", 100, 210, 200, currentNode.data.scale or 1 , 0.1, 5)
+         if v.value ~= nil then
+            currentNode.data.scale = v.value
+         end
+
+         LG.print("scaleX", 100, 220)
+         local v = h_slider("scaleX", 100, 240, 200, currentNode.data.scaleX or 1 , 0.1, 5)
+         if v.value ~= nil then
+            currentNode.data.scaleX = v.value
+         end
+          LG.print("scaleY", 100, 250)
+         local v = h_slider("scaleY", 100, 270, 200, currentNode.data.scaleY or 1 , 0.1, 5)
+         if v.value ~= nil then
+            currentNode.data.scaleY = v.value
+         end
+         
+         
       end
       if currentNode.type == 'bezier' then
          LG.setFont(smallest)
@@ -3024,7 +3050,7 @@ function mylib:draw()
 
    if showHelp then
       LG.setColor(1, 1, 1, 1)
-      LG.print('KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nj: save json\narrows + optional shift: move selection around'
+      LG.print('KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nu: update lurker\nj: save json\narrows + optional shift: move selection around'
          , 50, 50)
    end
 

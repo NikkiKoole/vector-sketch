@@ -213,14 +213,28 @@ mesh.makeVertices = function(shape)
             x = shape.points[2][1],
             y = shape.points[2][2]
          }
+         -- 4.46 is a number i need to
+
+         local scale = shape.data.scale or 1
+         local scaleX = (shape.data.scaleX or 1 ) * scale
+         local scaleY = (shape.data.scaleY or 1 ) * scale
 
          local magic = 1-- 4.46
-         local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * magic, shape.data.flop,
+         local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY , shape.data.flop,
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
 
          local coords = {}
+         local stretchyWidthDivider = 1
          if (tostring(cp1.x) == 'nan') then
+            -- 4.46 is a number thats needed in the calc below
+            local d = (geom.distance(start.x, start.y, eind.x, eind.y))
+            local m = ((shape.data.length*scaleX) / 4.46)
+            if (d > m) then
+               --(numbers.mapInto(d, 0, m, 0,1)) -- this should give an umber higher then 1
+               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 0,1))  
+            end
+            
             coords = { shape.points[1], shape.points[2] }
          else
             local steps = shape.data.steps
@@ -230,7 +244,9 @@ mesh.makeVertices = function(shape)
             end
          end
          coords = unloop.unpackNodePoints(coords, false)
-         local verts, indices, draw_mode = polyline.render('miter', coords, { shape.data.width/3 })
+         -- todo why the /3 ????
+         -- it looks correct but what the hell
+         local verts, indices, draw_mode = polyline.render('miter', coords, { scaleX * (shape.data.width / 3) / stretchyWidthDivider })
          local h = 1 / (shape.data.steps - 1 or 1)
          local vertsWithUVs = {}
 
@@ -381,6 +397,7 @@ end
 local _imageCache = {}
 
 local function addToImageCache(url, settings)
+   if (url and #url > 0) then
    if not _imageCache[url] then
       local wrap = settings and settings.wrap or 'clampzero'
       local filter = settings and settings.filter or 'linear'
@@ -389,6 +406,7 @@ local function addToImageCache(url, settings)
       img:setWrap(wrap)
       img:setFilter(filter, filter)
       _imageCache[url] = img
+   end
    end
 end
 
@@ -402,7 +420,7 @@ end
 
 mesh.recursivelyMakeTextures = function(root)
 
-   if root.texture then
+   if root.texture and root.texture.url and #(root.texture.url) > 0 then
       addToImageCache(root.texture.url, root.texture)
    end
 

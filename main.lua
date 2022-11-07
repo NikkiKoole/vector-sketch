@@ -144,7 +144,7 @@ function love.load(arg)
    mylib:load(arg)
 end
 function love.update()
-   require("vendor.lurker").update()
+--   
 end
 
 
@@ -168,6 +168,10 @@ function love.filedropped(file)
 end
 
 function love.keypressed(key, scancode, isrepeat)
+   if key == 'u' then
+      require("vendor.lurker").update()
+   end
+   
    mylib:keypressed(key, scancode, isrepeat)
 end
 

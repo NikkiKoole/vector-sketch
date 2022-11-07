@@ -60,12 +60,13 @@ function renderOpenFileScreen(root)
    love.graphics.setColor(1, 1, 1)
 
    local w, h = love.graphics.getDimensions()
-   local smallsize = (1024 / 2) / 8
+   local smallsize = (1024 / 2) / 12
    local columns = math.ceil(w / smallsize)
    local mx, my = love.mouse.getPosition()
    local overIndex = -1
    local usedIndex = 1
    local gatheredPaths = {}
+
    --print(#gatheredData)
    for i = 1, #gatheredData do
       local index = text.stringFindLastSlash(gatheredData[i].path) or 0
@@ -78,6 +79,9 @@ function renderOpenFileScreen(root)
 
    local index = 2
    local pathArray = {}
+   -- now sort gatheredPaths
+   table.sort(gatheredPaths)
+   print(inspect(gatheredPaths))
    for k in pairs(gatheredPaths) do
       pathArray[index] = k
       index = index + 1
@@ -136,7 +140,7 @@ function renderOpenFileScreen(root)
          local x = (usedIndex % columns) - 1
          local y = (math.ceil(usedIndex / columns)) - 1
 
-         love.graphics.draw(gatheredData[i].img, x * smallsize, yOffset + y * smallsize, 0, .125, .125)
+         love.graphics.draw(gatheredData[i].img, x * smallsize, yOffset + y * smallsize, 0, .06, .06)
          if hit.pointInRect(mx, my, x * smallsize, yOffset + y * smallsize, smallsize, smallsize) then
             overIndex = i
             if love.mouse.isDown(1) then
@@ -183,6 +187,7 @@ end
 function gatherData(path)
 
    gatheredData = getPolygonFiles(path)
+
    for i = 1, #gatheredData do
       local folderPath = ''
       local p = gatheredData[i].path
