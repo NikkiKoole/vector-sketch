@@ -40,10 +40,7 @@ function doImage(url, name, data)
                     if (x+x2) >=0 and (x+x2)<=width-1 then
                        if (y+y2) >=0 and (y+y2)<=height-1 then
                           local r, g, b, a = imageData:getPixel(x+x2, y+y2)
-
                           if (a>0) then
-                             
-
                              count = count + 1
                              result:setPixel(x,y,r,g,b,0)
                           end
@@ -52,15 +49,13 @@ function doImage(url, name, data)
                  end
               end
            else
-              -- i could just multiply the a here and have the image be more opaque
+
               result:setPixel(x,y,r,g,b,a*alphaMultiplier)
            end
            
 	end
    end
 
-   print('biggestALpha:', biggestAlpha)
-   
    image = love.graphics.newImage(result, {mipmaps=true})
    if (alphaMultiplier ~= 1) then
       local t = mysplit(name, '.')
