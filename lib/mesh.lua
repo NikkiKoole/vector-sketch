@@ -440,7 +440,10 @@ mesh.remeshNode = function(node)
    if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
       print(node.texture.url, node.texture.url:len())
 
-      local img = _imageCache[node.texture.url];
+      
+      local img = mesh.getImage(node.texture.url)
+
+      
 
       if (node.texture.squishable) then
          local v = mesh.makeSquishableUVsFromPoints(node.points)

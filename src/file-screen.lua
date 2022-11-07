@@ -81,15 +81,12 @@ function renderOpenFileScreen(root)
    local pathArray = {}
    -- now sort gatheredPaths
    table.sort(gatheredPaths)
-   print(inspect(gatheredPaths))
+
    for k in pairs(gatheredPaths) do
       pathArray[index] = k
       index = index + 1
    end
    pathArray[1] = '< back'
-
-
-
 
    local dirX = 0
    local dirY = 0
@@ -108,9 +105,8 @@ function renderOpenFileScreen(root)
       if hit.pointInRect(mx, my, dirX, dirY, labelW, labelH) then
          love.graphics.setColor(1, 0, 0)
          love.graphics.rectangle('fill', dirX, dirY, labelW, labelH)
-         --print(inspect(mouseState))
+
          if ui.mouseReleased() then
-         --if mouseState.released then
             if k == '< back' then
                gatherData('')
             else

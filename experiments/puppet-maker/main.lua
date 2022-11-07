@@ -3,6 +3,10 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
    require("lldebugger").start()
 end
 
+-- cool webdeveloper doing lots of nice generative stuff
+--https://codepen.io/georgedoescode/pens/popular?cursor=ZD0xJm89MCZwPTQ=
+
+
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
