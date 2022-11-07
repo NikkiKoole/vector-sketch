@@ -26,7 +26,7 @@ function doImage(url, name, data)
    local count = 0
 
 
-   local biggestAlpha = -math.huge
+
    
    
    for y = 0, height -1 do
