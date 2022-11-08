@@ -31,6 +31,9 @@ function scene.load()
    grunge = love.graphics.newImage('assets/layered/grunge kopie.png')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
    m = 0
+    local lw, lh = lineart:getDimensions()
+
+   canvas = love.graphics.newCanvas(lw, lh)  
 end
 
 function scene.update(dt)
@@ -72,14 +75,45 @@ function myStencilFunction()
 end
 
 
+local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+--local b='ABCDEF'
+-- encoding
+function enc(data)
+    return ((data:gsub('.', function(x) 
+        local r,b='',x:byte()
+        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return b:sub(c+1,c+1)
+    end)..({ '', '==', '=' })[#data%3+1])
+end
+
+-- decoding
+function dec(data)
+    data = string.gsub(data, '[^'..b..'=]', '')
+    return (data:gsub('.', function(x)
+        if (x == '=') then return '' end
+        local r,f='',(b:find(x)-1)
+        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if (#x ~= 8) then return '' end
+        local c=0
+        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+        return string.char(c)
+    end))
+end
+
+
 function scene.draw()
    love.graphics.clear(bgColor)
    love.graphics.setColor(0,0,0)
    love.graphics.print("Let's create the layered furry skin thing", 400,10)
 
    local lw, lh = lineart:getDimensions()
-
-   canvas = love.graphics.newCanvas(lw, lh)  
    --print(lw, lh)
    love.graphics.setCanvas({canvas,   stencil = true })  --<<<
    love.graphics.clear(0, 0, 0, 0)  ---<<<<
@@ -91,7 +125,7 @@ function scene.draw()
    local maxGrungeWidth = gw - lw
    local maxGrungeHeight = gh - lh
    
-   love.graphics.setColor(m,m*2,0)
+   love.graphics.setColor(1,1,1)
    love.graphics.setStencilTest("greater", 0)
    love.graphics.stencil(myStencilFunction)
 
@@ -107,6 +141,7 @@ function scene.draw()
    -- height of these images is not big enough, redraw them bigger lazy bum
 
    love.graphics.setColor(0,0,0, m/2)
+   --
    love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
    love.graphics.setStencilTest()
 
@@ -115,13 +150,13 @@ function scene.draw()
 
    -- woohoo!
    love.graphics.setColor(1,1,1)
-   love.graphics.draw(canvas)
+  -- love.graphics.draw(canvas)
    
    love.graphics.setColor(0.2,0,0)
-   love.graphics.draw(lineart)
+  -- love.graphics.draw(lineart)
 
-
-   
+   --local encoded = (enc('122445678905102202'))
+   --print(encoded, dec(encoded))
    
    -- go and implement it on a canvas
    -- https://love2d.org/wiki/Canvas
