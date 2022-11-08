@@ -2,10 +2,13 @@ local scene = {}
 
 local vivid = require 'vendor.vivid'
 local Timer = require 'vendor.timer'
+local inspect = require 'vendor.inspect'
 
 local numbers = require 'lib.numbers'
-
 local creamColor = {238/255, 226/255, 188/255, 1}
+
+local ui = require 'lib.ui'
+
 
 function scene.load()
    
@@ -33,7 +36,15 @@ function scene.load()
    m = 0
     local lw, lh = lineart:getDimensions()
 
-   canvas = love.graphics.newCanvas(lw, lh)  
+    canvas = love.graphics.newCanvas(lw, lh)
+
+
+    
+    skinFurHSL = {vivid.RGBtoHSL(238/255,173/255,25/255)}
+    skinBackHSL = {vivid.RGBtoHSL(154/255, 65/255,22/255)}
+    
+    --print(inspect(skinBackHSL))
+    --redB = 154/255
 end
 
 function scene.update(dt)
@@ -107,14 +118,22 @@ function dec(data)
     end))
 end
 
+function love.mousereleased()
+   lastDraggedElement = nil
+end
+
 
 function scene.draw()
+
+   ui.handleMouseClickStart()
    love.graphics.clear(bgColor)
    love.graphics.setColor(0,0,0)
    love.graphics.print("Let's create the layered furry skin thing", 400,10)
 
    local lw, lh = lineart:getDimensions()
    --print(lw, lh)
+
+   --canvas = love.graphics.newCanvas(lw, lh)  
    love.graphics.setCanvas({canvas,   stencil = true })  --<<<
    love.graphics.clear(0, 0, 0, 0)  ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<< 
@@ -126,6 +145,9 @@ function scene.draw()
    local maxGrungeHeight = gh - lh
    
    love.graphics.setColor(1,1,1)
+   
+   love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
+
    love.graphics.setStencilTest("greater", 0)
    love.graphics.stencil(myStencilFunction)
 
@@ -140,7 +162,9 @@ function scene.draw()
    local maxT1Height = th - lh
    -- height of these images is not big enough, redraw them bigger lazy bum
 
-   love.graphics.setColor(0,0,0, m/2)
+   love.graphics.setColor(0,0,0)
+   love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
+
    --
    love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
    love.graphics.setStencilTest()
@@ -150,11 +174,44 @@ function scene.draw()
 
    -- woohoo!
    love.graphics.setColor(1,1,1)
-  -- love.graphics.draw(canvas)
+   love.graphics.draw(canvas)
    
-   love.graphics.setColor(0.2,0,0)
-  -- love.graphics.draw(lineart)
+   love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
+   love.graphics.draw(lineart)
+   local stats = love.graphics.getStats()
+   print('img mem', stats.texturememory)
+   print('Memory actually used (in kB): ' .. collectgarbage('count'))
 
+   --love.graphics.print('hose length: ' .. (redB), 30, 30 - 20)
+   local slider = h_slider('skin hue', 30, 30, 200, skinBackHSL[1], 0, 1)
+   if slider.value ~= nil then
+      skinBackHSL[1] = slider.value
+   end
+   local slider = h_slider('skin sat', 30, 70, 200, skinBackHSL[2], 0, 1)
+   if slider.value ~= nil then
+      skinBackHSL[2] = math.floor((slider.value)*3) / 3
+   end
+   local slider = h_slider('skin light', 30, 100, 200, skinBackHSL[3], 0, 1)
+   if slider.value ~= nil then
+
+      skinBackHSL[3] = math.floor((slider.value)*7) / 7
+   end
+
+   local slider = h_slider('fur hue', 330, 30, 200, skinFurHSL[1], 0, 1)
+   if slider.value ~= nil then
+      skinFurHSL[1] = slider.value
+   end
+   local slider = h_slider('fur sat', 330, 70, 200, skinFurHSL[2], 0, 1)
+   if slider.value ~= nil then
+      skinFurHSL[2] =math.floor((slider.value)*3) / 3
+   end
+   local slider = h_slider('fur light', 330, 100, 200, skinFurHSL[3], 0, 1)
+   if slider.value ~= nil then
+      skinFurHSL[3] = math.floor((slider.value)*7) / 7
+   end
+
+   
+   
    --local encoded = (enc('122445678905102202'))
    --print(encoded, dec(encoded))
    
