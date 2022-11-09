@@ -226,6 +226,16 @@ mesh.makeVertices = function(shape)
 
          local coords = {}
          local stretchyWidthDivider = 1
+         local thickness = {scaleX * (shape.data.width / 3) / stretchyWidthDivider}  -- this could be an array of thicknesss tooo instead of just 1
+         print(shape.data.steps, thickness[1])
+         
+         for i=1, shape.data.steps do
+            local t = numbers.mapInto(i/shape.data.steps, 0, 1, thickness[1], 1)
+            print(i, t)
+            table.insert(thickness, t)
+         end
+         thickness = {thickness[1]}
+         
          if (tostring(cp1.x) == 'nan') then
             -- 4.46 is a number thats needed in the calc below
             local d = (geom.distance(start.x, start.y, eind.x, eind.y))
@@ -236,17 +246,21 @@ mesh.makeVertices = function(shape)
             end
             
             coords = { shape.points[1], shape.points[2] }
+            thickness = {thickness[1], thickness[1]/3, 1}
+            thickness = {thickness[1]}
          else
             local steps = shape.data.steps
+            
             for i = 0, steps do
                local px, py = curve:evaluate(i / steps)
                table.insert(coords, { px, py })
             end
          end
+         
          coords = unloop.unpackNodePoints(coords, false)
          -- todo why the /3 ????
          -- it looks correct but what the hell
-         local verts, indices, draw_mode = polyline.render('miter', coords, { scaleX * (shape.data.width / 3) / stretchyWidthDivider })
+         local verts, indices, draw_mode = polyline.render('miter', coords, thickness)
          local h = 1 / (shape.data.steps - 1 or 1)
          local vertsWithUVs = {}
 

@@ -31,8 +31,8 @@ function scene.load()
 
    mask = love.graphics.newImage("assets/layered/romp1-mask.png")
    lineart = love.graphics.newImage('assets/layered/romp1.png')
-   --grunge = love.graphics.newImage('assets/layered/grunge kopie.png')
-   grunge = love.graphics.newImage('assets/layered/fur2.jpg')
+   grunge = love.graphics.newImage('assets/layered/grunge kopie.png')
+   --grunge = love.graphics.newImage('assets/layered/fur2.jpg')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
    m = 0
     local lw, lh = lineart:getDimensions()
