@@ -6,6 +6,8 @@ end
 -- cool webdeveloper doing lots of nice generative stuff
 --https://codepen.io/georgedoescode/pens/popular?cursor=ZD0xJm89MCZwPTQ=
 
+-- get inner rectangle from rotated outer rectangle
+-- https://stackoverflow.com/questions/5789239/calculate-largest-inscribed-rectangle-in-a-rotated-rectangle
 
 SM = require 'vendor.SceneMgr'
 
