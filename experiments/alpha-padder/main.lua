@@ -32,7 +32,7 @@ function doImage(url, name, data)
    for y = 0, height -1 do
 	for x = 0, width-1 do
 	   local r, g, b, a = imageData:getPixel(x, y)
-           if a > biggestAlpha then biggestAlpha = a end
+           --if a > biggestAlpha then biggestAlpha = a end
            
            if a == 0 then
               for x2 = -1,1 do

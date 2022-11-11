@@ -34,70 +34,41 @@ function scene.load()
    grunge = love.graphics.newImage('assets/layered/ice.jpg')
    --grunge = love.graphics.newImage('assets/layered/fur2.jpg')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
+   blup1 = love.graphics.newImage('assets/blup1.png')
    m = 0
    tx = 0
    ty = 0
-    local lw, lh = lineart:getDimensions()
+   local lw, lh = lineart:getDimensions()
 
-    canvas = love.graphics.newCanvas(lw, lh)
+   canvas = love.graphics.newCanvas(lw, lh)
 
---[[
-{ {
-color = { 0.18, 0.176, 0.18, 1 },
-name = "zwart",
-points = { { 412.76, 280.527 }, { 492.76, 276.527 }, { 495.76, 360.527 }, { 407.76, 363.527 } }
-}, {
-color = { 0.447, 0.255, 0.043, 1 },
-name = "bruin",
-points = { { 516.76, 276.236 }, { 596.76, 272.236 }, { 599.76, 356.236 }, { 511.76, 359.236 } }
-}, {
-color = { 0.882, 0.753, 0.133, 1 },
-name = "geel",
-points = { { 1284.916, 273.527 }, { 1364.916, 269.527 }, { 1367.916, 353.527 }, { 1279.916, 356.527 } }
-}, {
-color = { 0.929, 0.91, 0.835, 1 },
-name = "wit",
-points = { { 1399.548, 273.527 }, { 1479.548, 269.527 }, { 1482.548, 353.527 }, { 1394.548, 356.527 } }
-}, {
-color = { 0.467, 0.498, 0.176, 1 },
-name = "groen",
-points = { { 619, 269 }, { 699, 265 }, { 702, 349 }, { 614, 352 } }
-}, {
-color = { 0.137, 0.333, 0.502, 1 },
-name = "blauw",
-points = { { 722, 271 }, { 802, 267 }, { 805, 351 }, { 717, 354 } }
-}, {
-color = { 0.396, 0.604, 0.698, 1 },
-name = "lblauw",
-points = { { 778.254, 170.334 }, { 858.254, 166.334 }, { 861.254, 250.334 }, { 773.254, 253.334 } }
-}, {
-color = { 0.475, 0.408, 0.439, 1 },
-name = "vies",
-points = { { 828.322, 269.832 }, { 908.322, 265.832 }, { 911.322, 349.832 }, { 823.322, 352.832 } }
-}, {
-color = { 0.561, 0.247, 0.443, 1 },
-name = "paars",
-points = { { 942.823, 273.337 }, { 1022.823, 269.337 }, { 1025.823, 353.337 }, { 937.823, 356.337 } }
-}, {
-color = { 0.89, 0.388, 0.294, 1 },
-name = "oranje1",
-points = { { 1047.917, 268.272 }, { 1127.917, 264.272 }, { 1130.917, 348.272 }, { 1042.917, 351.272 } }
-}, {
-color = { 0.941, 0.518, 0.122, 1 },
-name = "oranje2",
-points = { { 1159.85, 266.342 }, { 1239.85, 262.342 }, { 1242.85, 346.342 }, { 1154.85, 349.342 } }
-} }
---]]
 
-    
-    
-    skinFurHSL = {vivid.RGBtoHSL(238/255,173/255,25/255)}
-    skinBackHSL = {vivid.RGBtoHSL(154/255, 65/255,22/255)}
+   palettes = {
+      { 0.18, 0.176, 0.18, 1 },
+      { 0.447, 0.255, 0.043, 1 },
+      { 0.882, 0.753, 0.133, 1 },
+      { 0.929, 0.91, 0.835, 1 },
+      { 0.467, 0.498, 0.176, 1 },
+      { 0.137, 0.333, 0.502, 1 },
+      { 0.396, 0.604, 0.698, 1 },
+      { 0.475, 0.408, 0.439, 1 },
+      { 0.561, 0.247, 0.443, 1 },
+      { 0.89, 0.388, 0.294, 1 },
+      { 0.941, 0.518, 0.122, 1 }
+   }
+   
+   
 
-    --skinFurHSL = {vivid.RGBtoHSL( 0.89, 0.388, 0.294)}
-    
-    --print(inspect(skinBackHSL))
-    --redB = 154/255
+   
+   
+   skinFurHSL = {vivid.RGBtoHSL(238/255,173/255,25/255)}
+   skinBackHSL = {vivid.RGBtoHSL(154/255, 65/255,22/255)}
+
+   --skinFurHSL = {vivid.RGBtoHSL( 0.89, 0.388, 0.294)}
+   
+   --print(inspect(skinBackHSL))
+   --redB = 154/255
+   delta = 0
 end
 
 function scene.update(dt)
@@ -122,13 +93,13 @@ function scene.update(dt)
    end
    function love.mousemoved(x,y,dx,dy)
       print('yoyo')
-   if love.mouse.isDown(1) then
-      tx = tx + dx
-      ty = ty + dy
+      if love.mouse.isDown(1) then
+	 tx = tx + dx
+	 ty = ty + dy
+      end
+      
    end
-   
-   end
-
+   delta = delta + dt
    Timer.update(dt)
 end
 
@@ -152,38 +123,79 @@ local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 --local b='ABCDEF'
 -- encoding
 function enc(data)
-    return ((data:gsub('.', function(x) 
-        local r,b='',x:byte()
-        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-        if (#x < 6) then return '' end
-        local c=0
-        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-        return b:sub(c+1,c+1)
-    end)..({ '', '==', '=' })[#data%3+1])
+   return ((data:gsub('.', function(x) 
+			 local r,b='',x:byte()
+			 for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+			 return r;
+		     end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+					   if (#x < 6) then return '' end
+					   local c=0
+					   for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+					   return b:sub(c+1,c+1)
+				       end)..({ '', '==', '=' })[#data%3+1])
 end
 
 -- decoding
 function dec(data)
-    data = string.gsub(data, '[^'..b..'=]', '')
-    return (data:gsub('.', function(x)
-        if (x == '=') then return '' end
-        local r,f='',(b:find(x)-1)
-        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-        return r;
-    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-        if (#x ~= 8) then return '' end
-        local c=0
-        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-        return string.char(c)
-    end))
+   data = string.gsub(data, '[^'..b..'=]', '')
+   return (data:gsub('.', function(x)
+			if (x == '=') then return '' end
+			local r,f='',(b:find(x)-1)
+			for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+			return r;
+		    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+				 if (#x ~= 8) then return '' end
+				 local c=0
+				 for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+				 return string.char(c)
+   end))
 end
 
 function love.mousereleased()
    lastDraggedElement = nil
 end
 
+
+
+
+function calculateLargestRect(angle, origWidth, origHeight) 
+   local w0, h0;
+   if (origWidth <= origHeight) then
+      w0 = origWidth;
+      h0 = origHeight;
+      
+   else 
+      w0 = origHeight;
+      h0 = origWidth;
+   end
+   
+   --// Angle normalization in range [-PI..PI)
+   local ang = angle - math.floor((angle + math.pi) / (2*math.pi)) * 2*math.pi; 
+   ang = math.abs(ang);      
+   if (ang > math.pi / 2) then
+      ang = math.pi - ang
+   end
+   
+   local sina = math.sin(ang);
+   local cosa = math.cos(ang);
+   local sinAcosA = sina * cosa;
+   local w1 = w0 * cosa + h0 * sina;
+   local h1 = w0 * sina + h0 * cosa;
+   local c = h0 * sinAcosA / (2 * h0 * sinAcosA + w0);
+   local x = w1 * c;
+   local y = h1 * c;
+   local w, h;
+   if (origWidth <= origHeight) then
+      w = w1 - 2 * x;
+      h = h1 - 2 * y;
+      
+   else 
+      w = h1 - 2 * y;
+      h = w1 - 2 * x;
+   end
+
+   return x,y,w,h
+end
 
 function scene.draw()
    love.graphics.push()
@@ -198,25 +210,24 @@ function scene.draw()
    --print(lw, lh)
 
    --canvas = love.graphics.newCanvas(lw, lh)  
-  love.graphics.setCanvas({canvas,   stencil = true })  --<<<
-  love.graphics.clear(0, 0, 0, 0)  ---<<<<
-  love.graphics.setBlendMode("alpha") ---<<<< 
-   
+   love.graphics.setCanvas({canvas,   stencil = true })  --<<<
+   love.graphics.clear(0, 0, 0, 0)  ---<<<<
+   love.graphics.setBlendMode("alpha") ---<<<< 
+   local ow, oh = grunge:getDimensions()
    local gw, gh = grunge:getDimensions()
+   local rotation = delta
+   local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
+
+   --gw = rw
+   --gh = rh
    
    if not love.mouse.isDown(1) then
       m = love.math.random()
    end
 
-   local scaleX = m*5 + 1
-   local scaleY = m*5 + 1 
+   local scaleX = 1
+   local scaleY = 1 
 
-   --local maxGrungeWidth = gw 
-   --local maxGrungeHeight = gh 
-    
-   --print(gw, gh)
-   --print(lw, lh)
-   --print(maxGrungeWidth, maxGrungeHeight)
    love.graphics.setColor(1,1,1)
    
    love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
@@ -226,16 +237,16 @@ function scene.draw()
    --love.graphics.stencil(myStencilFunction)
 
 
-   local xMin = lw+ -((gw/2) *  scaleX)  
-   local xMax = (gw/2)*scaleX
-   local xOffset = 0--xMin  
+   local xMin = lw+ -((gw/2) *  scaleX) + (rx*scaleX)
+   local xMax = (gw/2)*scaleX - (ry*scaleX)
+   local xOffset = xMin  
 
-   local yMin = lh+ -((gh/2) *  scaleY)
-   local yMax =  (gh/2)*scaleY
-   local yOffset = 0--yMax 
-  
+   local yMin = lh+ -((gh/2) *  scaleY) + (rx * scaleY)
+   local yMax =  (gh/2)*scaleY - (ry*scaleY)
+   local yOffset = yMin
+   
    print('offsets', xOffset, yOffset)
-   local rotation = m
+   
 
    
    love.graphics.draw(grunge, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
@@ -253,7 +264,7 @@ function scene.draw()
    
 
    
-   love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
+   --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
    love.graphics.setStencilTest()
 
    
@@ -268,7 +279,7 @@ function scene.draw()
    love.graphics.draw(grunge, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
    
    love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
-   love.graphics.draw(lineart)
+   -- love.graphics.draw(lineart)
    local stats = love.graphics.getStats()
    print('img mem', stats.texturememory)
    print('Memory actually used (in kB): ' .. collectgarbage('count'))
@@ -301,7 +312,10 @@ function scene.draw()
       skinFurHSL[3] = math.floor((slider.value)*7) / 7
    end
 
-   
+   for i =1, #palettes do
+      love.graphics.setColor(palettes[i])   
+      love.graphics.draw(blup1, i*50, 400, 0, .1, .1)
+   end
    
    --local encoded = (enc('122445678905102202'))
    --print(encoded, dec(encoded))
