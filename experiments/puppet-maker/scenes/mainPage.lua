@@ -8,8 +8,8 @@ local numbers = require 'lib.numbers'
 local creamColor = {238/255, 226/255, 188/255, 1}
 
 local ui = require 'lib.ui'
-
-
+-- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
+-- http://bamanda.com/locos/locos_subsite/locos_gallery.html
 function scene.load()
    
    bgColor = creamColor
@@ -31,10 +31,12 @@ function scene.load()
 
    mask = love.graphics.newImage("assets/layered/romp1-mask.png")
    lineart = love.graphics.newImage('assets/layered/romp1.png')
-   grunge = love.graphics.newImage('assets/layered/grunge kopie.png')
+   grunge = love.graphics.newImage('assets/layered/ice.jpg')
    --grunge = love.graphics.newImage('assets/layered/fur2.jpg')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
    m = 0
+   tx = 0
+   ty = 0
     local lw, lh = lineart:getDimensions()
 
     canvas = love.graphics.newCanvas(lw, lh)
@@ -118,6 +120,15 @@ function scene.update(dt)
    function love.mousepressed(key, unicode)
 
    end
+   function love.mousemoved(x,y,dx,dy)
+      print('yoyo')
+   if love.mouse.isDown(1) then
+      tx = tx + dx
+      ty = ty + dy
+   end
+   
+   end
+
    Timer.update(dt)
 end
 
@@ -175,7 +186,9 @@ end
 
 
 function scene.draw()
-
+   love.graphics.push()
+   --love.graphics.scale(1,1)
+   --love.graphics.translate(tx,ty)
    ui.handleMouseClickStart()
    love.graphics.clear(bgColor)
    love.graphics.setColor(0,0,0)
@@ -185,28 +198,47 @@ function scene.draw()
    --print(lw, lh)
 
    --canvas = love.graphics.newCanvas(lw, lh)  
-   love.graphics.setCanvas({canvas,   stencil = true })  --<<<
-   love.graphics.clear(0, 0, 0, 0)  ---<<<<
-   love.graphics.setBlendMode("alpha") ---<<<< 
+  love.graphics.setCanvas({canvas,   stencil = true })  --<<<
+  love.graphics.clear(0, 0, 0, 0)  ---<<<<
+  love.graphics.setBlendMode("alpha") ---<<<< 
    
    local gw, gh = grunge:getDimensions()
-   --print(gw, gh)
-
-   local maxGrungeWidth = gw - lw
-   local maxGrungeHeight = gh - lh
    
-   love.graphics.setColor(1,1,1)
-   
-   love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
-
-   love.graphics.setStencilTest("greater", 0)
-   love.graphics.stencil(myStencilFunction)
-
    if not love.mouse.isDown(1) then
       m = love.math.random()
    end
+
+   local scaleX = m*5 + 1
+   local scaleY = m*5 + 1 
+
+   --local maxGrungeWidth = gw 
+   --local maxGrungeHeight = gh 
+    
+   --print(gw, gh)
+   --print(lw, lh)
+   --print(maxGrungeWidth, maxGrungeHeight)
+   love.graphics.setColor(1,1,1)
    
-   love.graphics.draw(grunge, m*-maxGrungeWidth, m*-maxGrungeHeight)
+   love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
+   
+   
+   -- love.graphics.setStencilTest("greater", 0)
+   --love.graphics.stencil(myStencilFunction)
+
+
+   local xMin = lw+ -((gw/2) *  scaleX)  
+   local xMax = (gw/2)*scaleX
+   local xOffset = 0--xMin  
+
+   local yMin = lh+ -((gh/2) *  scaleY)
+   local yMax =  (gh/2)*scaleY
+   local yOffset = 0--yMax 
+  
+   print('offsets', xOffset, yOffset)
+   local rotation = m
+
+   
+   love.graphics.draw(grunge, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
 
    local tw, th = texture1:getDimensions()
    local maxT1Width = tw - lw
@@ -217,6 +249,10 @@ function scene.draw()
    love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
 
    --
+
+   
+
+   
    love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
    love.graphics.setStencilTest()
 
@@ -224,8 +260,12 @@ function scene.draw()
    love.graphics.setCanvas()  --- <<<<<
 
    -- woohoo!
-   love.graphics.setColor(1,1,1)
+   love.graphics.setColor(1,0,1)
    love.graphics.draw(canvas)
+
+   -- temp
+   love.graphics.setColor(1,1,1,.5)
+   love.graphics.draw(grunge, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
    
    love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
    love.graphics.draw(lineart)
@@ -268,6 +308,7 @@ function scene.draw()
    
    -- go and implement it on a canvas
    -- https://love2d.org/wiki/Canvas
+   love.graphics.pop() 
 end
 
 return scene

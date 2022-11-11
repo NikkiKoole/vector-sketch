@@ -9,6 +9,9 @@ end
 -- get inner rectangle from rotated outer rectangle
 -- https://stackoverflow.com/questions/5789239/calculate-largest-inscribed-rectangle-in-a-rotated-rectangle
 
+
+--https://nl.pinterest.com/pin/568086940505956798/
+
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
