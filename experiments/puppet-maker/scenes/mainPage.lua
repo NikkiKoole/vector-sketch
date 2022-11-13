@@ -32,9 +32,11 @@ function scene.load()
    mask = love.graphics.newImage("assets/layered/romp1-mask.png")
    lineart = love.graphics.newImage('assets/layered/romp1.png')
    grunge = love.graphics.newImage('assets/layered/ice.jpg')
-   --grunge = love.graphics.newImage('assets/layered/fur2.jpg')
+   grunge2 = love.graphics.newImage('assets/layered/grunge.png')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
    blup1 = love.graphics.newImage('assets/blup1.png')
+   blup2 = love.graphics.newImage('assets/blup5.png')
+
    m = 0
    tx = 0
    ty = 0
@@ -197,92 +199,16 @@ function calculateLargestRect(angle, origWidth, origHeight)
    return x,y,w,h
 end
 
-function scene.draw()
-   love.graphics.push()
-   --love.graphics.scale(1,1)
-   --love.graphics.translate(tx,ty)
-   ui.handleMouseClickStart()
-   love.graphics.clear(bgColor)
-   love.graphics.setColor(0,0,0)
-   love.graphics.print("Let's create the layered furry skin thing", 400,10)
 
-   local lw, lh = lineart:getDimensions()
-   --print(lw, lh)
+-- hallo obs does this work ?
+-- ok i havent seen it working, does it work now?
+-- why wasnt it working, does it just need more time or something ?
+--  still no joy, this is gonna be something?
 
-   --canvas = love.graphics.newCanvas(lw, lh)  
-   love.graphics.setCanvas({canvas,   stencil = true })  --<<<
-   love.graphics.clear(0, 0, 0, 0)  ---<<<<
-   love.graphics.setBlendMode("alpha") ---<<<< 
-   local ow, oh = grunge:getDimensions()
-   local gw, gh = grunge:getDimensions()
-   local rotation = delta
-   local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
-
-   --gw = rw
-   --gh = rh
-   
-   if not love.mouse.isDown(1) then
-      m = love.math.random()
-   end
-
-   local scaleX = 1
-   local scaleY = 1 
-
-   love.graphics.setColor(1,1,1)
-   
-   love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
-   
-   
-   -- love.graphics.setStencilTest("greater", 0)
-   --love.graphics.stencil(myStencilFunction)
-
-
-   local xMin = lw+ -((gw/2) *  scaleX) + (rx*scaleX)
-   local xMax = (gw/2)*scaleX - (ry*scaleX)
-   local xOffset = xMin  
-
-   local yMin = lh+ -((gh/2) *  scaleY) + (rx * scaleY)
-   local yMax =  (gh/2)*scaleY - (ry*scaleY)
-   local yOffset = yMin
-   
-   print('offsets', xOffset, yOffset)
-   
-
-   
-   love.graphics.draw(grunge, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
-
-   local tw, th = texture1:getDimensions()
-   local maxT1Width = tw - lw
-   local maxT1Height = th - lh
-   -- height of these images is not big enough, redraw them bigger lazy bum
-
-   love.graphics.setColor(0,0,0)
-   love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
-
-   --
-
-   
-
-   
-   --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
-   love.graphics.setStencilTest()
-
-   
-   love.graphics.setCanvas()  --- <<<<<
-
-   -- woohoo!
-   love.graphics.setColor(1,0,1)
-   love.graphics.draw(canvas)
-
-   -- temp
-   love.graphics.setColor(1,1,1,.5)
-   love.graphics.draw(grunge, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
-   
-   love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
-   -- love.graphics.draw(lineart)
+function drawUI()
    local stats = love.graphics.getStats()
-   print('img mem', stats.texturememory)
-   print('Memory actually used (in kB): ' .. collectgarbage('count'))
+--   print('img mem', stats.texturememory)
+--   print('Memory actually used (in kB): ' .. collectgarbage('count'))
 
    --love.graphics.print('hose length: ' .. (redB), 30, 30 - 20)
    local slider = h_slider('skin hue', 30, 30, 200, skinBackHSL[1], 0, 1)
@@ -314,15 +240,92 @@ function scene.draw()
 
    for i =1, #palettes do
       love.graphics.setColor(palettes[i])   
-      love.graphics.draw(blup1, i*50, 400, 0, .1, .1)
+      love.graphics.draw(blup2, i*50, 400, 0, .2, .2)
+      --love.graphics.circle('fill', i*50, 400, 50)
    end
+end
+
+function makeTexturedCanvas(lw,lh, texture, color, canvas)
+   love.graphics.setCanvas({canvas,   stencil = true })  --<<<
+   love.graphics.clear(0, 0, 0, 0)  ---<<<<
+   love.graphics.setBlendMode("alpha") ---<<<<
+   love.graphics.setStencilTest("greater", 0)
+   love.graphics.stencil(myStencilFunction)
+
+   --local ow, oh = grunge:getDimensions()
+   local gw, gh = texture:getDimensions()
+   local rotation = 0--delta
+   local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
+
+   local scaleX = .5
+   local scaleY = .5 
+
+   local xMin = lw+ -((gw/2) *  scaleX) + (rx*scaleX)
+   local xMax = (gw/2)*scaleX - (ry*scaleX)
+   local xOffset = xMin  
+
+   local yMin = lh+ -((gh/2) *  scaleY) + (rx * scaleY)
+   local yMax =  (gh/2)*scaleY - (ry*scaleY)
+   local yOffset = yMin
+
+   love.graphics.setColor(color)
+   love.graphics.draw(texture, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
+
    
-   --local encoded = (enc('122445678905102202'))
-   --print(encoded, dec(encoded))
+   local gw, gh = texture1:getDimensions()
+   local rotation = 0--delta
+   local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
+
+   local scaleX = 2
+   local scaleY = 2 
+
+   local xMin = lw+ -((gw/2) *  scaleX) + (rx*scaleX)
+   local xMax = (gw/2)*scaleX - (ry*scaleX)
+   local xOffset = xMin  
+
+   local yMin = lh+ -((gh/2) *  scaleY) + (rx * scaleY)
+   local yMax =  (gh/2)*scaleY - (ry*scaleY)
+   local yOffset = yMin
    
-   -- go and implement it on a canvas
-   -- https://love2d.org/wiki/Canvas
-   love.graphics.pop() 
+   
+   
+   -- height of these images is not big enough, redraw them bigger lazy bum
+
+   love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
+   love.graphics.setColor(1,1,1)
+
+   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
+
+   --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
+
+
+   love.graphics.setStencilTest()
+
+   
+   love.graphics.setCanvas()  --- <<<<<
+   return canvas
+end
+
+
+
+function scene.draw()
+
+   ui.handleMouseClickStart()
+   love.graphics.clear(bgColor)
+   love.graphics.setColor(0,0,0)
+   love.graphics.print("Let's create the layered furry skin thing", 400,10)
+
+   
+   local lw, lh = lineart:getDimensions()
+   canvas = makeTexturedCanvas(lw, lh, grunge2, {vivid.HSLtoRGB(skinBackHSL)}, canvas)
+   
+   love.graphics.setColor(1,1,1)
+   love.graphics.draw(canvas)
+   
+   love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
+   love.graphics.draw(lineart)
+
+   drawUI()
 end
 
 return scene
