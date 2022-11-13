@@ -36,7 +36,9 @@ function scene.load()
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
    blup1 = love.graphics.newImage('assets/blup1.png')
    blup2 = love.graphics.newImage('assets/blup5.png')
+   
 
+   
    m = 0
    tx = 0
    ty = 0
@@ -271,7 +273,7 @@ function makeTexturedCanvas(lw,lh, texture, color, canvas)
    love.graphics.setColor(color)
    love.graphics.draw(texture, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
 
-   
+   -- second texture
    local gw, gh = texture1:getDimensions()
    local rotation = 0--delta
    local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
