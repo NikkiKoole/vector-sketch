@@ -242,7 +242,7 @@ render.renderThings = function(root, dirty)
          if (isDirty) then
             --print('dirty child', root.name, shape.name)
          end
-
+         --print('handling child', shape)
          handleChild(shape, isDirty)
       end
       --love.graphics.setStencilTest()
@@ -336,7 +336,7 @@ function handleChild(shape, isDirty)
 
    if shape.folder then
 
-      if (shape.depth ~= nil)  and parallax.getDynamicThing() then
+      if (shape.depth ~= nil) and parallax.getDynamicThing() then
 
          local p = parallax.getDynamicThing()
          local c = parallax.getDynamicCam()
@@ -516,7 +516,7 @@ function handleChild(shape, isDirty)
 
    end
 
-   if (shape.depth ~= nil  and parallax.getDynamicThing()) then
+   if (shape.depth ~= nil and parallax.getDynamicThing()) then
       parallax.getDynamicCam():pop()
    end
 

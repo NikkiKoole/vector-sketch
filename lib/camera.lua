@@ -121,13 +121,14 @@ c.centerCameraOnPosition = function(x, y, vw, vh)
 end
 
 
-c.setCameraViewport= function(c2, w, h)
+c.setCameraViewport = function(c2, w, h)
    local cx, cy = c2:getTranslation()
 
    local cw, ch = c2:getContainerDimensions()
    local targetScale = math.min(cw / w, ch / h)
    c2:setScale(targetScale)
    c2:setTranslation(cx, -1 * h / 2)
+
    --print(_c)
 end
 
@@ -227,7 +228,7 @@ end
 -- todo @global cameratween
 
 c.resetCameraTween = function()
-  ctween.resetCameraTween()
+   ctween.resetCameraTween()
 end
 
 c.setCameraTween = function(data)
@@ -246,7 +247,7 @@ c.manageCameraTween = function(dt)
        )
     end
     ]] --
-    local _cameraTween = ctween.getTween()
+   local _cameraTween = ctween.getTween()
    if _cameraTween then
       local delta = cam:setTranslationSmooth(
          _cameraTween.goalX,

@@ -10,6 +10,8 @@ local polyline = require 'lib.polyline'
 local parse = require 'lib.parse-file'
 local parentize = require 'lib.parentize'
 local border = require 'lib.border-mesh'
+
+local inspect = require 'vendor.inspect'
 require 'lib.basics' --tableconcat
 
 -- todo @global imageCache
@@ -216,47 +218,47 @@ mesh.makeVertices = function(shape)
          -- 4.46 is a number i need to
 
          local scale = shape.data.scale or 1
-         local scaleX = (shape.data.scaleX or 1 ) * scale
-         local scaleY = (shape.data.scaleY or 1 ) * scale
+         local scaleX = (shape.data.scaleX or 1) * scale
+         local scaleY = (shape.data.scaleY or 1) * scale
 
-         local magic = 1-- 4.46
-         local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY , shape.data.flop,
+         local magic = 1 -- 4.46
+         local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY, shape.data.flop,
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
 
          local coords = {}
          local stretchyWidthDivider = 1
-         local thickness = {scaleX * (shape.data.width / 3) / stretchyWidthDivider}  -- this could be an array of thicknesss tooo instead of just 1
+         local thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
          print(shape.data.steps, thickness[1])
-         
-         for i=1, shape.data.steps do
-            local t = numbers.mapInto(i/shape.data.steps, 0, 1, thickness[1], 1)
-            print(i, t)
+
+         for i = 1, shape.data.steps do
+            local t = numbers.mapInto(i / shape.data.steps, 0, 1, thickness[1], 1)
+            -- print(i, t)
             table.insert(thickness, t)
          end
-         thickness = {thickness[1]}
-         
+         thickness = { thickness[1] }
+
          if (tostring(cp1.x) == 'nan') then
             -- 4.46 is a number thats needed in the calc below
             local d = (geom.distance(start.x, start.y, eind.x, eind.y))
-            local m = ((shape.data.length*scaleX) / 4.46)
+            local m = ((shape.data.length * scaleX) / 4.46)
             if (d > m) then
                --(numbers.mapInto(d, 0, m, 0,1)) -- this should give an umber higher then 1
-               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 0,1))  
+               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 0, 1))
             end
-            
+
             coords = { shape.points[1], shape.points[2] }
-            thickness = {thickness[1], thickness[1]/3, 1}
-            thickness = {thickness[1]}
+            thickness = { thickness[1], thickness[1] / 3, 1 }
+            thickness = { thickness[1] }
          else
             local steps = shape.data.steps
-            
+
             for i = 0, steps do
                local px, py = curve:evaluate(i / steps)
                table.insert(coords, { px, py })
             end
          end
-         
+
          coords = unloop.unpackNodePoints(coords, false)
          -- todo why the /3 ????
          -- it looks correct but what the hell
@@ -308,6 +310,7 @@ mesh.makeMeshFromVertices = function(vertices, nodetype, usesTexture)
    --   print('make mesh called, by whom?', nodetype)
 
    local m = nil
+   print(nodetype)
    if nodetype == 'rubberhose' then
 
       m = love.graphics.newMesh(vertices, "strip")
@@ -411,16 +414,17 @@ end
 local _imageCache = {}
 
 local function addToImageCache(url, settings)
+   print(url)
    if (url and #url > 0) then
-   if not _imageCache[url] then
-      local wrap = settings and settings.wrap or 'clampzero'
-      local filter = settings and settings.filter or 'linear'
-      print('making texture', url)
-      local img = love.graphics.newImage(url, { mipmaps = true })
-      img:setWrap(wrap)
-      img:setFilter(filter, filter)
-      _imageCache[url] = img
-   end
+      if not _imageCache[url] then
+         local wrap = settings and settings.wrap or 'clampzero'
+         local filter = settings and settings.filter or 'linear'
+         print('making texture', url)
+         local img = love.graphics.newImage(url, { mipmaps = true })
+         img:setWrap(wrap)
+         img:setFilter(filter, filter)
+         _imageCache[url] = img
+      end
    end
 end
 
@@ -435,6 +439,7 @@ end
 mesh.recursivelyMakeTextures = function(root)
 
    if root.texture and root.texture.url and #(root.texture.url) > 0 then
+      print(root.texture.url)
       addToImageCache(root.texture.url, root.texture)
    end
 
@@ -454,10 +459,10 @@ mesh.remeshNode = function(node)
    if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
       print(node.texture.url, node.texture.url:len())
 
-      
+
       local img = mesh.getImage(node.texture.url)
 
-      
+
 
       if (node.texture.squishable) then
          local v = mesh.makeSquishableUVsFromPoints(node.points)
@@ -477,7 +482,11 @@ mesh.remeshNode = function(node)
    else
       node.mesh = mesh.makeMeshFromVertices(verts, node.type, node.texture)
       if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
-         local texture = _imageCache[node.texture and node.texture.url]
+         local texture = mesh.getImage(node.texture and node.texture.url) --_imageCache[node.texture and node.texture.url]
+         --print(inspect(_imageCache))
+         --print(node.texture.url)
+
+         --print(texture)
          if texture then
             node.mesh:setTexture(texture)
          end

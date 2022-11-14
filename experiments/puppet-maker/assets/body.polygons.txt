@@ -1,0 +1,73 @@
+{ {
+children = { {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "",
+points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/romp1.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 631.606, 943.641, 0.041, 1, 0.98, 0, 359, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.094, 0.102, 0.09, 1 },
+data = {
+borderRadius = 0,
+flop = 1,
+length = 2323.66,
+steps = 13.377777777778,
+width = 168
+},
+name = "legr",
+points = { { 703.403, 885.046 }, { 738.786, 1408.18 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/line1.png",
+wrap = "repeat"
+},
+type = "rubberhose"
+} },
+folder = true,
+name = "leg",
+transforms = {
+l = { 709.123, 875.17, 0, 1, 1, 721.094, 885.046, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+data = {
+borderRadius = 0,
+flop = -0.98888888888889,
+length = 2167.56,
+scaleY = 0.97277777777778,
+steps = 13.377777777778,
+width = 132
+},
+name = "legl",
+points = { { 528.126, 930.883 }, { 519.362, 1426.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/line1.png",
+wrap = "repeat"
+},
+type = "rubberhose"
+} },
+folder = true,
+name = "leg",
+transforms = {
+l = { 543.246, 914.093, 0, 1, 1, 523.744, 930.883, 0, 0 }
+}
+} },
+folder = true,
+name = "",
+transforms = {
+l = { 0, 0, 0.041, 1, 1, 630.954, 949.299, 0, 0 }
+}
+} }

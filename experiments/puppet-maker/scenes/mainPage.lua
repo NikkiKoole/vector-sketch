@@ -3,14 +3,21 @@
 
 local scene = {}
 
+local render = require 'lib.render'
+local mesh = require 'lib.mesh'
+local parentize = require 'lib.parentize'
+
 local vivid = require 'vendor.vivid'
 local Timer = require 'vendor.timer'
 local inspect = require 'vendor.inspect'
-
+local transforms = require 'lib.transform'
 local numbers = require 'lib.numbers'
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local ui = require 'lib.ui'
+
+local camera = require 'lib.camera'
+local cam = require('lib.cameraBase').getInstance()
 
 local Components = {}
 local Systems = {}
@@ -20,6 +27,14 @@ Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BasicSystem)
 
+local function makeContainerFolder(name)
+   return {
+      folder = true,
+      name = name,
+      transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+      children = {}
+   }
+end
 
 function scene.load()
 
@@ -80,14 +95,118 @@ function scene.load()
    --print(inspect(skinBackHSL))
    --redB = 154/255
    delta = 0
+   foregroundLayer = makeContainerFolder('foregroundLayer')
+
+   local again = { {
+      children = { {
+         children = { {
+            color = { 0.133, 0.118, 0.118, 1 },
+            name = "",
+            points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
+            texture = {
+               filter = "linear",
+               url = "assets/parts/romp1.png",
+               wrap = "repeat"
+            }
+         } },
+         folder = true,
+         name = "body",
+         transforms = {
+            l = { 631.606, 943.641, 0.041, 1, 0.98, 0, 359, 0, 0 }
+         }
+      }, {
+         children = { {
+            color = { 0.094, 0.102, 0.09, 1 },
+            data = {
+               borderRadius = 0,
+               flop = 1,
+               length = 2323.66,
+               steps = 13.377777777778,
+               width = 168,
+               scaleX = 1,
+               scaleY = 1
+            },
+            name = "legr",
+            points = { { 703.403, 885.046 }, { 738.786, 1408.18 } },
+            texture = {
+               filter = "linear",
+               url = "assets/parts/line2.png",
+               wrap = "repeat"
+            },
+            type = "rubberhose"
+         } },
+         folder = true,
+         name = "leg",
+         transforms = {
+            l = { 709.123, 875.17, 0, 1, 1, 721.094, 885.046, 0, 0 }
+         }
+      }, {
+         children = { {
+            color = { 0.133, 0.118, 0.118, 1 },
+            data = {
+               borderRadius = 0,
+               flop = -0.98888888888889,
+               length = 2167.56,
+               scaleY = 0.97277777777778,
+               steps = 13.377777777778,
+               width = 132
+            },
+            name = "legl",
+            points = { { 528.126, 930.883 }, { 519.362, 1426.5 } },
+            texture = {
+               filter = "linear",
+               url = "assets/parts/line1.png",
+               wrap = "repeat"
+            },
+            type = "rubberhose"
+         } },
+         folder = true,
+         name = "leg",
+         transforms = {
+            l = { 543.246, 914.093, 0, 1, 1, 523.744, 930.883, 0, 0 }
+         }
+      } },
+      folder = true,
+      name = "",
+      transforms = {
+         l = { 0, 0, 0, 1, 1, 630.954, 949.299, 0, 0 }
+      }
+   } }
+
+   foregroundLayer.children = again
+
+
+   parentize.parentize(foregroundLayer)
+   mesh.meshAll(foregroundLayer)
+   mesh.recursivelyMakeTextures(foregroundLayer)
+   --mesh.recursivelyAddOptimizedMesh(foregroundLayer)
+
    attachCallbacks()
 
    local myEntity = Concord.entity()
    myEntity
        :give('basic')
+       :give('texturedBody', lineart, mask, grunge2)
+
    print(myWorld)
    myWorld:addEntity(myEntity)
 
+   local w, h = love.graphics.getDimensions()
+
+   --local sx, sy = cam:getScreenCoordinates(-512, -768 / 2)
+   --transforms.setTransforms(foregroundLayer)
+   --transforms.setTransforms(foregroundLayer.children[1])
+   --transforms.setTransforms(foregroundLayer.children[1].children[1])
+   --local ax, ay = foregroundLayer.children[1].children[1].transforms._g:inverseTransformPoint(0, 0)
+   --print(ax, ay)
+   --local wx, wy = cam:getScreenCoordinates(0, 0)
+   --print(wx, wy)
+   --camera.setCameraViewport(cam, w, h)
+   --camera.centerCameraOnPosition(ax, ay, w, h)
+
+
+   camera.setCameraViewport(cam, w / 2, h / 2)
+   camera.centerCameraOnPosition(0, 0, w * 2, h * 2)
 end
 
 function attachCallbacks()
@@ -111,6 +230,15 @@ function attachCallbacks()
          ty = ty + dy
       end
 
+   end
+
+   function love.resize(w, h)
+      local lw, lh = lineart:getDimensions()
+      --local w, h = love.graphics.getDimensions()
+      print(w, h)
+
+      camera.setCameraViewport(cam, w, h)
+      camera.centerCameraOnPosition(0, 0, w, h)
    end
 end
 
@@ -231,6 +359,7 @@ function drawUI()
    end
 end
 
+-- make order the same as the
 function makeTexturedCanvas(lw, lh, texture, mask, color, canvas)
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
    love.graphics.clear(0, 0, 0, 0) ---<<<<
@@ -300,16 +429,21 @@ function scene.draw()
    love.graphics.print("Let's create the layered furry skin thing", 400, 10)
 
 
+
    local lw, lh = lineart:getDimensions()
    canvas = makeTexturedCanvas(lw, lh, grunge2, mask, { vivid.HSLtoRGB(skinBackHSL) }, canvas)
 
+   cam:push()
    love.graphics.setColor(1, 1, 1)
    love.graphics.draw(canvas)
 
    love.graphics.setColor({ vivid.HSLtoRGB(skinFurHSL) })
-   love.graphics.draw(lineart)
+   --love.graphics.draw(lineart)
 
-   drawUI()
+
+   render.renderThings(foregroundLayer)
+   cam:pop()
+   --drawUI()
 end
 
 return scene
