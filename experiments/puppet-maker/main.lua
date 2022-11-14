@@ -16,6 +16,9 @@ SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
 
+Concord = require 'vendor.concord.init'
+
+
 local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
 

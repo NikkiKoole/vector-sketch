@@ -1,7 +1,0 @@
-*.lnk
-
-local/
-
-/*.sublime-*
-/.run
-/InputField-*.lua

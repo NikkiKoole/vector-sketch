@@ -1,3 +1,6 @@
+-- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
+-- http://bamanda.com/locos/locos_subsite/locos_gallery.html
+
 local scene = {}
 
 local vivid = require 'vendor.vivid'
@@ -5,13 +8,21 @@ local Timer = require 'vendor.timer'
 local inspect = require 'vendor.inspect'
 
 local numbers = require 'lib.numbers'
-local creamColor = {238/255, 226/255, 188/255, 1}
+local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local ui = require 'lib.ui'
--- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
--- http://bamanda.com/locos/locos_subsite/locos_gallery.html
+
+local Components = {}
+local Systems = {}
+local myWorld = Concord.world()
+
+Concord.utils.loadNamespace("src/components", Components)
+Concord.utils.loadNamespace("src/systems", Systems)
+myWorld:addSystems(Systems.BasicSystem)
+
+
 function scene.load()
-   
+
    bgColor = creamColor
 
    Timer.after(
@@ -20,10 +31,10 @@ function scene.load()
          Timer.during(
             .3,
             function(dt)
-               local h,s,l,a = vivid.RGBtoHSL(bgColor) 
-               l = l*0.99
-               local r,g,b,a = vivid.HSLtoRGB(h,s,l,a)
-               bgColor = {r,g,b,a}
+               local h, s, l, a = vivid.RGBtoHSL(bgColor)
+               l = l * 0.99
+               local r, g, b, a = vivid.HSLtoRGB(h, s, l, a)
+               bgColor = { r, g, b, a }
             end
          )
       end
@@ -36,9 +47,9 @@ function scene.load()
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
    blup1 = love.graphics.newImage('assets/blup1.png')
    blup2 = love.graphics.newImage('assets/blup5.png')
-   
 
-   
+
+
    m = 0
    tx = 0
    ty = 0
@@ -60,32 +71,29 @@ function scene.load()
       { 0.89, 0.388, 0.294, 1 },
       { 0.941, 0.518, 0.122, 1 }
    }
-   
-   
 
-   
-   
-   skinFurHSL = {vivid.RGBtoHSL(238/255,173/255,25/255)}
-   skinBackHSL = {vivid.RGBtoHSL(154/255, 65/255,22/255)}
+   skinFurHSL = { vivid.RGBtoHSL(238 / 255, 173 / 255, 25 / 255) }
+   skinBackHSL = { vivid.RGBtoHSL(154 / 255, 65 / 255, 22 / 255) }
 
    --skinFurHSL = {vivid.RGBtoHSL( 0.89, 0.388, 0.294)}
-   
+
    --print(inspect(skinBackHSL))
    --redB = 154/255
    delta = 0
+   attachCallbacks()
+
+   local myEntity = Concord.entity()
+   myEntity
+       :give('basic')
+   print(myWorld)
+   myWorld:addEntity(myEntity)
+
 end
 
-function scene.update(dt)
-   if introSound:isPlaying() then
-      local volume = introSound:getVolume()
-      introSound:setVolume(volume * .90)
-      if (volume < 0) then
-	 introSound:stop()
-      end
-   end
+function attachCallbacks()
    function love.keypressed(key, unicode)
       if key == 'escape' then love.event.quit() end
-      
+
    end
 
    function love.touchpressed(key, unicode)
@@ -95,19 +103,32 @@ function scene.update(dt)
    function love.mousepressed(key, unicode)
 
    end
-   function love.mousemoved(x,y,dx,dy)
-      print('yoyo')
+
+   function love.mousemoved(x, y, dx, dy)
+      --print('yoyo')
       if love.mouse.isDown(1) then
-	 tx = tx + dx
-	 ty = ty + dy
+         tx = tx + dx
+         ty = ty + dy
       end
-      
+
    end
-   delta = delta + dt
-   Timer.update(dt)
 end
 
-local mask_effect = love.graphics.newShader[[
+function scene.update(dt)
+   if introSound:isPlaying() then
+      local volume = introSound:getVolume()
+      introSound:setVolume(volume * .90)
+      if (volume < 0) then
+         introSound:stop()
+      end
+   end
+
+   delta = delta + dt
+   Timer.update(dt)
+   myWorld:emit("update", dt)
+end
+
+local mask_effect = love.graphics.newShader [[
    vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
       if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
          // a discarded pixel wont be applied as the stencil.
@@ -116,70 +137,34 @@ local mask_effect = love.graphics.newShader[[
       return vec4(1.0);
    }
 ]]
-function myStencilFunction()
+function myStencilFunction(mask)
    love.graphics.setShader(mask_effect)
    love.graphics.draw(mask, 0, 0)
    love.graphics.setShader()
-end
-
-
-local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
---local b='ABCDEF'
--- encoding
-function enc(data)
-   return ((data:gsub('.', function(x) 
-			 local r,b='',x:byte()
-			 for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
-			 return r;
-		     end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
-					   if (#x < 6) then return '' end
-					   local c=0
-					   for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
-					   return b:sub(c+1,c+1)
-				       end)..({ '', '==', '=' })[#data%3+1])
-end
-
--- decoding
-function dec(data)
-   data = string.gsub(data, '[^'..b..'=]', '')
-   return (data:gsub('.', function(x)
-			if (x == '=') then return '' end
-			local r,f='',(b:find(x)-1)
-			for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
-			return r;
-		    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
-				 if (#x ~= 8) then return '' end
-				 local c=0
-				 for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
-				 return string.char(c)
-   end))
 end
 
 function love.mousereleased()
    lastDraggedElement = nil
 end
 
-
-
-
-function calculateLargestRect(angle, origWidth, origHeight) 
+function calculateLargestRect(angle, origWidth, origHeight)
    local w0, h0;
    if (origWidth <= origHeight) then
       w0 = origWidth;
       h0 = origHeight;
-      
-   else 
+
+   else
       w0 = origHeight;
       h0 = origWidth;
    end
-   
+
    --// Angle normalization in range [-PI..PI)
-   local ang = angle - math.floor((angle + math.pi) / (2*math.pi)) * 2*math.pi; 
-   ang = math.abs(ang);      
+   local ang = angle - math.floor((angle + math.pi) / (2 * math.pi)) * 2 * math.pi;
+   ang = math.abs(ang);
    if (ang > math.pi / 2) then
       ang = math.pi - ang
    end
-   
+
    local sina = math.sin(ang);
    local cosa = math.cos(ang);
    local sinAcosA = sina * cosa;
@@ -192,15 +177,14 @@ function calculateLargestRect(angle, origWidth, origHeight)
    if (origWidth <= origHeight) then
       w = w1 - 2 * x;
       h = h1 - 2 * y;
-      
-   else 
+
+   else
       w = h1 - 2 * y;
       h = w1 - 2 * x;
    end
 
-   return x,y,w,h
+   return x, y, w, h
 end
-
 
 -- hallo obs does this work ?
 -- ok i havent seen it working, does it work now?
@@ -209,8 +193,8 @@ end
 
 function drawUI()
    local stats = love.graphics.getStats()
---   print('img mem', stats.texturememory)
---   print('Memory actually used (in kB): ' .. collectgarbage('count'))
+   --   print('img mem', stats.texturememory)
+   --   print('Memory actually used (in kB): ' .. collectgarbage('count'))
 
    --love.graphics.print('hose length: ' .. (redB), 30, 30 - 20)
    local slider = h_slider('skin hue', 30, 30, 200, skinBackHSL[1], 0, 1)
@@ -219,12 +203,12 @@ function drawUI()
    end
    local slider = h_slider('skin sat', 30, 70, 200, skinBackHSL[2], 0, 1)
    if slider.value ~= nil then
-      skinBackHSL[2] = math.floor((slider.value)*3) / 3
+      skinBackHSL[2] = math.floor((slider.value) * 3) / 3
    end
    local slider = h_slider('skin light', 30, 100, 200, skinBackHSL[3], 0, 1)
    if slider.value ~= nil then
 
-      skinBackHSL[3] = math.floor((slider.value)*7) / 7
+      skinBackHSL[3] = math.floor((slider.value) * 7) / 7
    end
 
    local slider = h_slider('fur hue', 330, 30, 200, skinFurHSL[1], 0, 1)
@@ -233,98 +217,96 @@ function drawUI()
    end
    local slider = h_slider('fur sat', 330, 70, 200, skinFurHSL[2], 0, 1)
    if slider.value ~= nil then
-      skinFurHSL[2] =math.floor((slider.value)*3) / 3
+      skinFurHSL[2] = math.floor((slider.value) * 3) / 3
    end
    local slider = h_slider('fur light', 330, 100, 200, skinFurHSL[3], 0, 1)
    if slider.value ~= nil then
-      skinFurHSL[3] = math.floor((slider.value)*7) / 7
+      skinFurHSL[3] = math.floor((slider.value) * 7) / 7
    end
 
-   for i =1, #palettes do
-      love.graphics.setColor(palettes[i])   
-      love.graphics.draw(blup2, i*50, 400, 0, .2, .2)
+   for i = 1, #palettes do
+      love.graphics.setColor(palettes[i])
+      love.graphics.draw(blup2, i * 50, 400, 0, .2, .2)
       --love.graphics.circle('fill', i*50, 400, 50)
    end
 end
 
-function makeTexturedCanvas(lw,lh, texture, color, canvas)
-   love.graphics.setCanvas({canvas,   stencil = true })  --<<<
-   love.graphics.clear(0, 0, 0, 0)  ---<<<<
+function makeTexturedCanvas(lw, lh, texture, mask, color, canvas)
+   love.graphics.setCanvas({ canvas, stencil = true }) --<<<
+   love.graphics.clear(0, 0, 0, 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
-   love.graphics.stencil(myStencilFunction)
+   love.graphics.stencil(function() myStencilFunction(mask) end)
 
    --local ow, oh = grunge:getDimensions()
    local gw, gh = texture:getDimensions()
-   local rotation = 0--delta
-   local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
+   local rotation = 0 --delta
+   local rx, ry, rw, rh = calculateLargestRect(rotation, gw, gh)
 
    local scaleX = .5
-   local scaleY = .5 
+   local scaleY = .5
 
-   local xMin = lw+ -((gw/2) *  scaleX) + (rx*scaleX)
-   local xMax = (gw/2)*scaleX - (ry*scaleX)
-   local xOffset = xMin  
+   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+   local xMax = (gw / 2) * scaleX - (ry * scaleX)
+   local xOffset = xMin
 
-   local yMin = lh+ -((gh/2) *  scaleY) + (rx * scaleY)
-   local yMax =  (gh/2)*scaleY - (ry*scaleY)
+   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+   local yMax = (gh / 2) * scaleY - (ry * scaleY)
    local yOffset = yMin
 
    love.graphics.setColor(color)
-   love.graphics.draw(texture, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
+   love.graphics.draw(texture, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
    -- second texture
    local gw, gh = texture1:getDimensions()
-   local rotation = 0--delta
-   local rx, ry, rw, rh = calculateLargestRect(rotation, gw,gh)
+   local rotation = 0 --delta
+   local rx, ry, rw, rh = calculateLargestRect(rotation, gw, gh)
 
    local scaleX = 2
-   local scaleY = 2 
+   local scaleY = 2
 
-   local xMin = lw+ -((gw/2) *  scaleX) + (rx*scaleX)
-   local xMax = (gw/2)*scaleX - (ry*scaleX)
-   local xOffset = xMin  
+   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+   local xMax = (gw / 2) * scaleX - (ry * scaleX)
+   local xOffset = xMin
 
-   local yMin = lh+ -((gh/2) *  scaleY) + (rx * scaleY)
-   local yMax =  (gh/2)*scaleY - (ry*scaleY)
+   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+   local yMax = (gh / 2) * scaleY - (ry * scaleY)
    local yOffset = yMin
-   
-   
-   
+
+
+
    -- height of these images is not big enough, redraw them bigger lazy bum
 
-   love.graphics.setColor({vivid.HSLtoRGB(skinBackHSL)})
-   love.graphics.setColor(1,1,1)
+   love.graphics.setColor({ vivid.HSLtoRGB(skinBackHSL) })
+   love.graphics.setColor(1, 1, 1)
 
-   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw/2, gh/2)
+   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
    --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
 
    love.graphics.setStencilTest()
 
-   
-   love.graphics.setCanvas()  --- <<<<<
+
+   love.graphics.setCanvas() --- <<<<<
    return canvas
 end
-
-
 
 function scene.draw()
 
    ui.handleMouseClickStart()
    love.graphics.clear(bgColor)
-   love.graphics.setColor(0,0,0)
-   love.graphics.print("Let's create the layered furry skin thing", 400,10)
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.print("Let's create the layered furry skin thing", 400, 10)
 
-   
+
    local lw, lh = lineart:getDimensions()
-   canvas = makeTexturedCanvas(lw, lh, grunge2, {vivid.HSLtoRGB(skinBackHSL)}, canvas)
-   
-   love.graphics.setColor(1,1,1)
+   canvas = makeTexturedCanvas(lw, lh, grunge2, mask, { vivid.HSLtoRGB(skinBackHSL) }, canvas)
+
+   love.graphics.setColor(1, 1, 1)
    love.graphics.draw(canvas)
-   
-   love.graphics.setColor({vivid.HSLtoRGB(skinFurHSL)})
+
+   love.graphics.setColor({ vivid.HSLtoRGB(skinFurHSL) })
    love.graphics.draw(lineart)
 
    drawUI()
