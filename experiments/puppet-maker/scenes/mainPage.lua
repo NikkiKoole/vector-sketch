@@ -163,6 +163,18 @@ function scene.load()
 
    --print(inspect(body))
    root.children = { body, leg1, leg2 }
+
+
+   -- al lot of charcaters int he replcace string need escaping
+   local function replace(str, what, with)
+      what = string.gsub(what, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1") -- escape pattern
+      with = string.gsub(with, "[%%]", "%%%%") -- escape replacement
+      return string.gsub(str, what, with)
+   end
+
+   local path = 'experiments/puppet-maker/'
+   print(string.gsub(path, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")) -- this generates the % in the right place
+   --print(replace(path))
    stripPath(root, '/experiments/puppet%-maker/')
    --table.insert(root.children, body)
 
