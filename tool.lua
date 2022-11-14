@@ -1045,7 +1045,7 @@ local function drawUIAroundGraphNodes(w, h)
                   local magic = 1 --4.46
                   currentNode.data = currentNode.data or {}
                   currentNode.data.length = height * magic
-                  currentNode.data.width = width 
+                  currentNode.data.width = width
                   currentNode.data.flop = 1
                   currentNode.data.borderRadius = 1
                   currentNode.data.steps = 10
@@ -1343,23 +1343,23 @@ local function drawUIAroundGraphNodes(w, h)
          end
 
          LG.print("scale", 100, 190)
-         local v = h_slider("scale", 100, 210, 200, currentNode.data.scale or 1 , 0.1, 5)
+         local v = h_slider("scale", 100, 210, 200, currentNode.data.scale or 1, 0.1, 5)
          if v.value ~= nil then
             currentNode.data.scale = v.value
          end
 
          LG.print("scaleX", 100, 220)
-         local v = h_slider("scaleX", 100, 240, 200, currentNode.data.scaleX or 1 , 0.1, 5)
+         local v = h_slider("scaleX", 100, 240, 200, currentNode.data.scaleX or 1, 0.1, 5)
          if v.value ~= nil then
             currentNode.data.scaleX = v.value
          end
-          LG.print("scaleY", 100, 250)
-         local v = h_slider("scaleY", 100, 270, 200, currentNode.data.scaleY or 1 , 0.1, 5)
+         LG.print("scaleY", 100, 250)
+         local v = h_slider("scaleY", 100, 270, 200, currentNode.data.scaleY or 1, 0.1, 5)
          if v.value ~= nil then
             currentNode.data.scaleY = v.value
          end
-         
-         
+
+
       end
       if currentNode.type == 'bezier' then
          LG.setFont(smallest)

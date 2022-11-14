@@ -229,7 +229,7 @@ mesh.makeVertices = function(shape)
          local coords = {}
          local stretchyWidthDivider = 1
          local thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
-         print(shape.data.steps, thickness[1])
+         -- print(shape.data.steps, thickness[1])
 
          for i = 1, shape.data.steps do
             local t = numbers.mapInto(i / shape.data.steps, 0, 1, thickness[1], 1)
@@ -414,7 +414,7 @@ end
 local _imageCache = {}
 
 local function addToImageCache(url, settings)
-   print(url)
+   -- print(url)
    if (url and #url > 0) then
       if not _imageCache[url] then
          local wrap = settings and settings.wrap or 'clampzero'
@@ -439,7 +439,7 @@ end
 mesh.recursivelyMakeTextures = function(root)
 
    if root.texture and root.texture.url and #(root.texture.url) > 0 then
-      print(root.texture.url)
+      --print(root.texture.url)
       addToImageCache(root.texture.url, root.texture)
    end
 
@@ -457,7 +457,7 @@ mesh.remeshNode = function(node)
    local verts = mesh.makeVertices(node)
 
    if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
-      print(node.texture.url, node.texture.url:len())
+      --print(node.texture.url, node.texture.url:len())
 
 
       local img = mesh.getImage(node.texture.url)

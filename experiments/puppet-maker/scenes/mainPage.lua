@@ -7,6 +7,7 @@ local render = require 'lib.render'
 local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 
+local parse = require 'lib.parse-file'
 local vivid = require 'vendor.vivid'
 local Timer = require 'vendor.timer'
 local inspect = require 'vendor.inspect'
@@ -34,6 +35,29 @@ local function makeContainerFolder(name)
       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
       children = {}
    }
+end
+
+function stripPath(root, path)
+   --print(root, root.children)
+   --    print(inspect(root))
+   if root and root.texture and #root.texture.url > 0 then
+      local str = root.texture.url
+      local shortened = string.gsub(str, path, '')
+      root.texture.url = shortened
+      print(shortened)
+      --print(str, path, str2)
+
+   end
+   if root.children then
+      for i = 1, #root.children do
+         stripPath(root.children[i], path)
+      end
+   end
+   return root
+end
+
+function recursiveStripPath(root, path)
+
 end
 
 function scene.load()
@@ -95,90 +119,60 @@ function scene.load()
    --print(inspect(skinBackHSL))
    --redB = 154/255
    delta = 0
-   foregroundLayer = makeContainerFolder('foregroundLayer')
-
-   local again = { {
-      children = { {
-         children = { {
-            color = { 0.133, 0.118, 0.118, 1 },
-            name = "",
-            points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
-            texture = {
-               filter = "linear",
-               url = "assets/parts/romp1.png",
-               wrap = "repeat"
-            }
-         } },
-         folder = true,
-         name = "body",
-         transforms = {
-            l = { 631.606, 943.641, 0.041, 1, 0.98, 0, 359, 0, 0 }
-         }
-      }, {
-         children = { {
-            color = { 0.094, 0.102, 0.09, 1 },
-            data = {
-               borderRadius = 0,
-               flop = 1,
-               length = 2323.66,
-               steps = 13.377777777778,
-               width = 168,
-               scaleX = 1,
-               scaleY = 1
-            },
-            name = "legr",
-            points = { { 703.403, 885.046 }, { 738.786, 1408.18 } },
-            texture = {
-               filter = "linear",
-               url = "assets/parts/line2.png",
-               wrap = "repeat"
-            },
-            type = "rubberhose"
-         } },
-         folder = true,
-         name = "leg",
-         transforms = {
-            l = { 709.123, 875.17, 0, 1, 1, 721.094, 885.046, 0, 0 }
-         }
-      }, {
-         children = { {
-            color = { 0.133, 0.118, 0.118, 1 },
-            data = {
-               borderRadius = 0,
-               flop = -0.98888888888889,
-               length = 2167.56,
-               scaleY = 0.97277777777778,
-               steps = 13.377777777778,
-               width = 132
-            },
-            name = "legl",
-            points = { { 528.126, 930.883 }, { 519.362, 1426.5 } },
-            texture = {
-               filter = "linear",
-               url = "assets/parts/line1.png",
-               wrap = "repeat"
-            },
-            type = "rubberhose"
-         } },
-         folder = true,
-         name = "leg",
-         transforms = {
-            l = { 543.246, 914.093, 0, 1, 1, 523.744, 930.883, 0, 0 }
-         }
-      } },
+   --foregroundLayer = makeContainerFolder('foregroundLayer')
+   root = {
       folder = true,
-      name = "",
-      transforms = {
-         l = { 0, 0, 0, 1, 1, 630.954, 949.299, 0, 0 }
-      }
-   } }
+      name = 'root',
+      transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+      children = {}
+   }
 
-   foregroundLayer.children = again
+   body = parse.parseFile('assets/body.polygons.txt')[1]
+
+   function createRubberHoseFromImage(url)
+      local img = mesh.getImage(url)
+      local width, height = img:getDimensions()
+      local magic = 4.46
+      local currentNode = {}
+      currentNode.type = 'rubberhose'
+      currentNode.data = currentNode.data or {}
+      currentNode.texture = {}
+      currentNode.texture.url = url
+      currentNode.texture.wrap = 'repeat'
+      currentNode.texture.filter = 'linear'
+      currentNode.data.length = height * magic
+      currentNode.data.width = width * 2
+      currentNode.data.flop = 1
+      currentNode.data.borderRadius = .25
+      currentNode.data.steps = 10
+      currentNode.color = { 0.094, 0.102, 0.09, 1 }
+      currentNode.data.scale = 1
+      --      currentNode.data.scaleY = 2
+      currentNode.points = { { 0, 0 }, { 0, height / 1.5 } }
+      mesh.remeshNode(currentNode)
+      return currentNode
+   end
+
+   --print(mesh.getImage('assets/parts/line1.png'))
+   leg1 = createRubberHoseFromImage('assets/parts/line1.png')
+   leg1.points[1][1] = -100
+   leg1.points[2][1] = -100
+   leg1.data.flop = -1
+   mesh.remeshNode(leg1)
+   leg2 = createRubberHoseFromImage('assets/parts/line2.png')
+
+   --print(inspect(body))
+   root.children = { body, leg1, leg2 }
+   stripPath(root, '/experiments/puppet%-maker/')
+   --table.insert(root.children, body)
 
 
-   parentize.parentize(foregroundLayer)
-   mesh.meshAll(foregroundLayer)
-   mesh.recursivelyMakeTextures(foregroundLayer)
+   --foregroundLayer.children = again
+
+
+   parentize.parentize(root)
+   mesh.meshAll(root)
+   mesh.recursivelyMakeTextures(root)
    --mesh.recursivelyAddOptimizedMesh(foregroundLayer)
 
    attachCallbacks()
@@ -194,7 +188,10 @@ function scene.load()
    local w, h = love.graphics.getDimensions()
 
    --local sx, sy = cam:getScreenCoordinates(-512, -768 / 2)
-   --transforms.setTransforms(foregroundLayer)
+   transforms.setTransforms(root)
+   transforms.setTransforms(body)
+   local dx, dy = body.transforms._g:transformPoint(0, 0)
+   print(dx, dy)
    --transforms.setTransforms(foregroundLayer.children[1])
    --transforms.setTransforms(foregroundLayer.children[1].children[1])
    --local ax, ay = foregroundLayer.children[1].children[1].transforms._g:inverseTransformPoint(0, 0)
@@ -204,9 +201,9 @@ function scene.load()
    --camera.setCameraViewport(cam, w, h)
    --camera.centerCameraOnPosition(ax, ay, w, h)
 
-
-   camera.setCameraViewport(cam, w / 2, h / 2)
-   camera.centerCameraOnPosition(0, 0, w * 2, h * 2)
+   print(inspect(body.transforms))
+   camera.setCameraViewport(cam, w, h)
+   camera.centerCameraOnPosition(dx, dy, w, h * 2)
 end
 
 function attachCallbacks()
@@ -441,7 +438,7 @@ function scene.draw()
    --love.graphics.draw(lineart)
 
 
-   render.renderThings(foregroundLayer)
+   render.renderThings(root)
    cam:pop()
    --drawUI()
 end
