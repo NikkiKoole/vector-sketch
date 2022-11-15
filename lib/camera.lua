@@ -116,7 +116,7 @@ c.centerCameraOnPosition = function(x, y, vw, vh)
    local cw, ch = cam:getContainerDimensions()
    local targetScale = math.min(cw / vw, ch / vh)
    cam:setScale(targetScale)
-   --cam:setTranslation(x + vw/2, y + vh/2)
+   --cam:setTranslation(x + vw / 2, y + vh / 2)
    cam:setTranslation(x, y)
 end
 

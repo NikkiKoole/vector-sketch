@@ -7,6 +7,7 @@ local render = require 'lib.render'
 local mesh = require 'lib.mesh'
 local parentize = require 'lib.parentize'
 
+local node = require 'lib.node'
 local parse = require 'lib.parse-file'
 local vivid = require 'vendor.vivid'
 local Timer = require 'vendor.timer'
@@ -129,6 +130,7 @@ function scene.load()
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
 
+
    function createRubberHoseFromImage(url)
       local img = mesh.getImage(url)
       local width, height = img:getDimensions()
@@ -148,18 +150,35 @@ function scene.load()
       currentNode.color = { 0.094, 0.102, 0.09, 1 }
       currentNode.data.scale = 1
       --      currentNode.data.scaleY = 2
-      currentNode.points = { { 0, 0 }, { 0, height / 1.5 } }
+      currentNode.points = { { 0, 0 }, { 0, height / 2 } }
       mesh.remeshNode(currentNode)
       return currentNode
    end
 
+   transforms.setTransforms(root)
+   transforms.setTransforms(body)
+
+   local leg1connector = node.findNodeByName(body, 'leg1')
+
+   print(inspect(leg1connector))
    --print(mesh.getImage('assets/parts/line1.png'))
    leg1 = createRubberHoseFromImage('assets/parts/line1.png')
-   leg1.points[1][1] = -100
-   leg1.points[2][1] = -100
+
+   local dx1, dy1 = body.transforms._g:transformPoint(leg1connector.points[1][1], leg1connector.points[1][2])
+
+   leg1.points[1][1] = dx1
+   leg1.points[1][2] = dy1
+
    leg1.data.flop = -1
    mesh.remeshNode(leg1)
+
    leg2 = createRubberHoseFromImage('assets/parts/line2.png')
+   local leg2connector = node.findNodeByName(body, 'leg2')
+   local dx1, dy1 = body.transforms._g:transformPoint(leg2connector.points[1][1], leg1connector.points[1][2])
+
+   leg2.points[1][1] = dx1
+   leg2.points[1][2] = dy1
+
 
    --print(inspect(body))
    root.children = { body, leg1, leg2 }
@@ -199,23 +218,13 @@ function scene.load()
 
    local w, h = love.graphics.getDimensions()
 
-   --local sx, sy = cam:getScreenCoordinates(-512, -768 / 2)
+
    transforms.setTransforms(root)
    transforms.setTransforms(body)
-   local dx, dy = body.transforms._g:transformPoint(0, 0)
-   print(dx, dy)
-   --transforms.setTransforms(foregroundLayer.children[1])
-   --transforms.setTransforms(foregroundLayer.children[1].children[1])
-   --local ax, ay = foregroundLayer.children[1].children[1].transforms._g:inverseTransformPoint(0, 0)
-   --print(ax, ay)
-   --local wx, wy = cam:getScreenCoordinates(0, 0)
-   --print(wx, wy)
-   --camera.setCameraViewport(cam, w, h)
-   --camera.centerCameraOnPosition(ax, ay, w, h)
 
-   print(inspect(body.transforms))
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(dx, dy, w, h * 2)
+   camera.centerCameraOnPosition(0, 0, w, lh * 2)
+   cam:update(w, h)
 end
 
 function attachCallbacks()
@@ -243,11 +252,11 @@ function attachCallbacks()
 
    function love.resize(w, h)
       local lw, lh = lineart:getDimensions()
-      --local w, h = love.graphics.getDimensions()
-      print(w, h)
 
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(0, 0, w, h)
+      camera.centerCameraOnPosition(0, 0, w, lh * 2)
+      cam:update(w, h)
+
    end
 end
 
@@ -260,9 +269,15 @@ function scene.update(dt)
       end
    end
 
+   --leg2.points[2][1] = love.math.random() * 800
+   --leg2.points[2][2] = love.math.random() * 800
+   mesh.remeshNode(leg2)
+
+
    delta = delta + dt
    Timer.update(dt)
    myWorld:emit("update", dt)
+
 end
 
 local mask_effect = love.graphics.newShader [[

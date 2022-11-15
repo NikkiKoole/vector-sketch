@@ -310,7 +310,7 @@ mesh.makeMeshFromVertices = function(vertices, nodetype, usesTexture)
    --   print('make mesh called, by whom?', nodetype)
 
    local m = nil
-   print(nodetype)
+
    if nodetype == 'rubberhose' then
 
       m = love.graphics.newMesh(vertices, "strip")
