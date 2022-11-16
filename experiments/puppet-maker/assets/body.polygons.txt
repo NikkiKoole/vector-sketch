@@ -11,12 +11,12 @@ wrap = "repeat"
 }, {
 color = { 1, 0, 0, 1 },
 name = "leg1",
-points = { { -114.082, 320.635 } },
+points = { { -97.741, 289.615 } },
 type = "meta"
 }, {
 color = { 1, 0, 0, 1 },
 name = "leg2",
-points = { { 52.907, 312.838 } },
+points = { { 42.223, 276.629 } },
 type = "meta"
 } },
 folder = true,

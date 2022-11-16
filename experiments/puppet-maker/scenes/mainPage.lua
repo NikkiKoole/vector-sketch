@@ -9,6 +9,8 @@ local parentize = require 'lib.parentize'
 
 local node = require 'lib.node'
 local parse = require 'lib.parse-file'
+local bbox = require 'lib.bbox'
+local hit = require 'lib.hit'
 local vivid = require 'vendor.vivid'
 local Timer = require 'vendor.timer'
 local inspect = require 'vendor.inspect'
@@ -28,7 +30,7 @@ local myWorld = Concord.world()
 local makeTexturedCanvas = require('lib.canvas').makeTexturedCanvas
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
-myWorld:addSystems(Systems.BasicSystem)
+myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
 
 local function makeContainerFolder(name)
    return {
@@ -73,7 +75,7 @@ function addChildBefore(beforeThis, elem)
 
 end
 
-function createRubberHoseFromImage(url)
+function createRubberHoseFromImage(url, flop)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
    local magic = 4.46
@@ -86,7 +88,7 @@ function createRubberHoseFromImage(url)
    currentNode.texture.filter = 'linear'
    currentNode.data.length = height * magic
    currentNode.data.width = width * 2
-   currentNode.data.flop = 1
+   currentNode.data.flop = flop
    currentNode.data.borderRadius = .25
    currentNode.data.steps = 20
    currentNode.color = { 0, 0, 0 }
@@ -97,13 +99,10 @@ function createRubberHoseFromImage(url)
    return currentNode
 end
 
-function makeDynamicCanvas(canvas, mesh)
+function makeDynamicCanvas(canvas, mymesh)
    local w, h = canvas:getDimensions()
    local w2 = w / 2
    local h2 = h / 2
-
-
-
 
    local result = {}
    result.color = { 1, 1, 1 }
@@ -111,7 +110,7 @@ function makeDynamicCanvas(canvas, mesh)
    result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
    result.texture = {
       filter = "linear",
-      canvas = mesh,
+      canvas = mymesh,
       wrap = "repeat"
    }
 
@@ -153,11 +152,11 @@ function scene.load()
 
    mask = love.graphics.newImage("assets/layered/romp1-mask.png")
    lineart = love.graphics.newImage('assets/layered/romp1.png')
-   grunge = love.graphics.newImage('assets/layered/ice.jpg')
+   --grunge = love.graphics.newImage('assets/layered/ice.jpg')
    grunge2 = love.graphics.newImage('assets/layered/grunge.png')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
-   blup1 = love.graphics.newImage('assets/blup1.png')
-   blup2 = love.graphics.newImage('assets/blup5.png')
+   --blup1 = love.graphics.newImage('assets/blups/blup1.png')
+   --blup2 = love.graphics.newImage('assets/blups/blup5.png')
 
 
 
@@ -199,156 +198,91 @@ function scene.load()
    -------
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/line1.png')
-   leg2 = createRubberHoseFromImage('assets/parts/line2.png')
+   head = parse.parseFile('assets/head1.polygons.txt')[1]
+   leg1 = createRubberHoseFromImage('assets/parts/line1.png', -1)
+   leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1)
+   feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
+   feet2 = parse.parseFile('assets/feet2.polygons.txt')[1]
+   print(feet1)
 
-
-   root.children = { body, leg1, leg2 }
+   root.children = { body, leg1, leg2, feet1, feet2, head }
 
    stripPath(root, '/experiments/puppet%-maker/')
+   -- make bboxes
 
 
    parentize.parentize(root)
    mesh.meshAll(root)
    mesh.recursivelyMakeTextures(root)
+
    render.renderThings(root)
 
-   -- shoul
-   canvas = makeTexturedCanvas(canvas,
-      lineart, mask,
-      grunge2, { vivid.HSLtoRGB(skinBackHSL) },
-      texture1, { vivid.HSLtoRGB(skinFurHSL) })
+   --- custom background
+   if true then
+      local canvas = makeTexturedCanvas(canvas,
+         lineart, mask,
+         grunge2, { vivid.HSLtoRGB(skinBackHSL) },
+         texture1, { vivid.HSLtoRGB(skinFurHSL) })
 
+      local romp = node.findNodeByName(body, 'romp')
+      local m = makeMeshFromSibling(romp, canvas)
+      local dynamic = makeDynamicCanvas(canvas, m)
 
+      addChildBefore(romp, dynamic)
 
-   local romp = node.findNodeByName(body, 'romp')
-   local m = makeMeshFromSibling(romp, canvas)
-   local dynamic = makeDynamicCanvas(canvas, m)
-
-   addChildBefore(romp, dynamic)
-
-   --print(inspect(romp))
-
-
-
-
-   --addChildAt(body, dynamic, 1)
-
-
-   --[[
-   transforms.setTransforms(root)
-   transforms.setTransforms(body)
-
-   local leg1connector = node.findNodeByName(body, 'leg1')
-
-   print(inspect(leg1connector))
-   --print(mesh.getImage('assets/parts/line1.png'))
-   leg1 = createRubberHoseFromImage('assets/parts/line1.png')
-
-   local dx1, dy1 = body.transforms._g:transformPoint(leg1connector.points[1][1], leg1connector.points[1][2])
-
-   leg1.points[1][1] = dx1
-   leg1.points[1][2] = dy1
-
-   leg1.data.flop = -1
-   mesh.remeshNode(leg1)
-
-   leg2 = createRubberHoseFromImage('assets/parts/line2.png')
-   local leg2connector = node.findNodeByName(body, 'leg2')
-   local dx1, dy1 = body.transforms._g:transformPoint(leg2connector.points[1][1], leg1connector.points[1][2])
-
-   leg2.points[1][1] = dx1
-   leg2.points[1][2] = dy1
-
-
-   --print(inspect(body))
-   root.children = { body, leg1, leg2 }
-   parentize.parentize(root)
-   render.renderThings(root)
-
-   -- al lot of charcaters int he replcace string need escaping
-   local function replace(str, what, with)
-      what = string.gsub(what, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1") -- escape pattern
-      with = string.gsub(with, "[%%]", "%%%%") -- escape replacement
-      return string.gsub(str, what, with)
    end
-
-   local path = 'experiments/puppet-maker/'
-   print(string.gsub(path, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")) -- this generates the % in the right place
-   --print(replace(path))
-   stripPath(root, '/experiments/puppet%-maker/')
-   --table.insert(root.children, body)
+   -- end custom background
 
 
+   -- position legs
+   head.transforms.l[2] = -600
 
-   canvas = makeTexturedCanvas(canvas,
-      lineart, mask,
-      grunge2, { vivid.HSLtoRGB(skinBackHSL) },
-      texture1, { vivid.HSLtoRGB(skinFurHSL) })
-
-   local dynamic = makeDynamicCanvas(canvas)
-
-   addChildAt(body, dynamic, 1)
-   --print(inspect(body.transforms.g))
-   --print(inspect(body.transforms))
-   --print(inspect(body))
-
-
-   --foregroundLayer.children = again
-
-
-   parentize.parentize(root)
-   mesh.meshAll(root)
-   mesh.recursivelyMakeTextures(root)
-   --mesh.recursivelyAddOptimizedMesh(foregroundLayer)
-
+   local biped = Concord.entity()
+   biped:give('biped', body, leg1, leg2, feet1, feet2)
+   myWorld:addEntity(biped)
    attachCallbacks()
 
-   local myEntity = Concord.entity()
-   myEntity
-       :give('basic')
-       :give('texturedBody', lineart, mask, grunge2)
 
-   print(myWorld)
-   myWorld:addEntity(myEntity)
-
-   local w, h = love.graphics.getDimensions()
-
-
-
-
-
-   transforms.setTransforms(root)
-   transforms.setTransforms(body)
-   -- transforms.setTransforms(leg1)
    local bx, by = body.transforms._g:transformPoint(0, 0)
-   --print(bx, by)
+   local w, h = love.graphics.getDimensions()
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w, lh * 2)
+   camera.centerCameraOnPosition(bx, by, w, lh * 4)
    cam:update(w, h)
 
-   function recursiveCheck(node)
-      if node.points then
-         print(node.name, inspect(node.points))
-      end
-      if node.children then
-         for i = 1, #node.children do
-            recursiveCheck(node.children[i])
+end
+
+function pointerPressed(x, y, id)
+   print(x, y, id)
+   --print(cam:getWorldCoordinates(x, y))
+   local wx, wy = cam:getWorldCoordinates(x, y)
+   for i = 1, #root.children do
+
+      local item = root.children[i]
+      local b = bbox.getBBoxRecursive(item)
+      if b and item.folder then
+         local c = item._parent
+         local stlx, stly = c.transforms._g:transformPoint(b[1], b[2])
+         local strx, stry = c.transforms._g:transformPoint(b[3], b[2])
+         local sblx, sbly = c.transforms._g:transformPoint(b[1], b[4])
+         local sbrx, sbry = c.transforms._g:transformPoint(b[3], b[4])
+
+         local smallestX = math.min(stlx, sbrx, strx, sblx)
+         local smallestY = math.min(stly, sbry, stry, sbly)
+         local biggestX = math.max(stlx, sbrx, strx, sblx)
+         local biggestY = math.max(stly, sbry, stry, sbly)
+
+         --local tlx, tly = item._parent.transforms._g:inverseTransformPoint(b[1], b[2])
+         --local brx, bry = item._parent.transforms._g:inverseTransformPoint(b[3], b[4])
+         local tlx, tly = smallestX, smallestY
+         local brx, bry = biggestX, biggestY
+
+         if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
+            print("HIT!")
+         else
+            print("NOT HIT")
          end
       end
-
    end
-
-   recursiveCheck(root)
---]]
-
-   attachCallbacks()
-
-   local bx, by = body.transforms._g:transformPoint(0, 0)
-   local w, h = love.graphics.getDimensions()
-   camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w, lh * 2)
-   cam:update(w, h)
 
 end
 
@@ -358,12 +292,14 @@ function attachCallbacks()
 
    end
 
-   function love.touchpressed(key, unicode)
-
+   function love.touchpressed(id, x, y, dx, dy, pressure)
+      pointerPressed(x, y, id)
    end
 
-   function love.mousepressed(key, unicode)
-
+   function love.mousepressed(x, y, button, istouch, presses)
+      if not istouch then
+         pointerPressed(x, y, 'mouse')
+      end
    end
 
    function love.mousemoved(x, y, dx, dy)
@@ -378,12 +314,10 @@ function attachCallbacks()
    function love.resize(w, h)
       local lw, lh = lineart:getDimensions()
 
-
-
       local bx, by = body.transforms._g:transformPoint(0, 0)
-      local w, h = love.graphics.getDimensions()
+      --      local w, h = love.graphics.getDimensions()
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(bx, by, w, lh * 2)
+      camera.centerCameraOnPosition(bx, by, w, lh * 3)
       cam:update(w, h)
 
 
@@ -399,12 +333,13 @@ function scene.update(dt)
       end
    end
 
-   --leg2.points[2][1] = love.math.random() * 800
-   --leg2.points[2][2] = love.math.random() * 800
+   --leg2.points[2][1] = -400 + love.math.random() * 800
+   --leg2.points[2][2] = -400 + love.math.random() * 800
    --mesh.remeshNode(leg2)
-
+   --body.transforms.l[1] = -400 + love.math.random() * 800
 
    delta = delta + dt
+   body.transforms.l[3] = delta
    Timer.update(dt)
    myWorld:emit("update", dt)
 
@@ -421,8 +356,7 @@ end
 
 function drawUI()
    local stats = love.graphics.getStats()
-   --print('img mem', stats.texturememory)
-   --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
+
 
    --love.graphics.print('hose length: ' .. (redB), 30, 30 - 20)
    local slider = h_slider('skin hue', 30, 30, 200, skinBackHSL[1], 0, 1)
@@ -460,7 +394,7 @@ function drawUI()
 end
 
 function scene.draw()
-
+   local stats = love.graphics.getStats()
    ui.handleMouseClickStart()
    love.graphics.clear(bgColor)
    love.graphics.setColor(0, 0, 0)
@@ -469,7 +403,15 @@ function scene.draw()
    cam:push()
    render.renderThings(root)
    cam:pop()
-   drawUI()
+   --drawUI()
+
+   local str = string.format("Estimated amount of texture memory used: %.2f MB", stats.texturememory / 1024 / 1024)
+   love.graphics.print(str, 10, 10)
+
+   --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+   -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
+   --print('img mem', stats.texturememory)
+   --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
 end
 
 return scene
