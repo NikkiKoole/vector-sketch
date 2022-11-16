@@ -25,6 +25,7 @@ local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
 
+local makeTexturedCanvas = require('lib.canvas').makeTexturedCanvas
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BasicSystem)
@@ -39,15 +40,11 @@ local function makeContainerFolder(name)
 end
 
 function stripPath(root, path)
-   --print(root, root.children)
-   --    print(inspect(root))
    if root and root.texture and #root.texture.url > 0 then
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
       root.texture.url = shortened
       print(shortened)
-      --print(str, path, str2)
-
    end
    if root.children then
       for i = 1, #root.children do
@@ -57,8 +54,82 @@ function stripPath(root, path)
    return root
 end
 
-function recursiveStripPath(root, path)
+function addChild(parent, elem)
+   node._parent = parent
+   table.insert(parent.children, elem)
+end
 
+function addChildAt(parent, elem, index)
+   node._parent = parent
+   table.insert(parent.children, index, elem)
+end
+
+-- todo
+function addChildBefore(beforeThis, elem)
+   local p = beforeThis._parent
+   local index = node.getIndex(beforeThis)
+   elem._parent = p
+   table.insert(p.children, index, elem)
+
+end
+
+function createRubberHoseFromImage(url)
+   local img = mesh.getImage(url)
+   local width, height = img:getDimensions()
+   local magic = 4.46
+   local currentNode = {}
+   currentNode.type = 'rubberhose'
+   currentNode.data = currentNode.data or {}
+   currentNode.texture = {}
+   currentNode.texture.url = url
+   currentNode.texture.wrap = 'repeat'
+   currentNode.texture.filter = 'linear'
+   currentNode.data.length = height * magic
+   currentNode.data.width = width * 2
+   currentNode.data.flop = 1
+   currentNode.data.borderRadius = .25
+   currentNode.data.steps = 20
+   currentNode.color = { 0, 0, 0 }
+   currentNode.data.scale = 1
+   --      currentNode.data.scaleY = 2
+   currentNode.points = { { 0, 0 }, { 0, height / 2 } }
+   mesh.remeshNode(currentNode)
+   return currentNode
+end
+
+function makeDynamicCanvas(canvas, mesh)
+   local w, h = canvas:getDimensions()
+   local w2 = w / 2
+   local h2 = h / 2
+
+
+
+
+   local result = {}
+   result.color = { 1, 1, 1 }
+   result.name = 'generated'
+   result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
+   result.texture = {
+      filter = "linear",
+      canvas = mesh,
+      wrap = "repeat"
+   }
+
+   return result
+end
+
+function makeMeshFromSibling(sib, canvas)
+   local texture = canvas
+   local data = texture:newImageData()
+   local img = love.graphics.newImage(data)
+
+   local editing = mesh.makeVertices(sib)
+
+   mesh.addUVToVerts(editing, img, sib.points, sib.texture)
+   local made = mesh.makeMeshFromVertices(editing, sib.type, sib.texture)
+
+   made:setTexture(img)
+   return made
 end
 
 function scene.load()
@@ -115,12 +186,9 @@ function scene.load()
    skinFurHSL = { vivid.RGBtoHSL(238 / 255, 173 / 255, 25 / 255) }
    skinBackHSL = { vivid.RGBtoHSL(154 / 255, 65 / 255, 22 / 255) }
 
-   --skinFurHSL = {vivid.RGBtoHSL( 0.89, 0.388, 0.294)}
 
-   --print(inspect(skinBackHSL))
-   --redB = 154/255
    delta = 0
-   --foregroundLayer = makeContainerFolder('foregroundLayer')
+
    root = {
       folder = true,
       name = 'root',
@@ -128,33 +196,46 @@ function scene.load()
       children = {}
    }
 
+   -------
+
    body = parse.parseFile('assets/body.polygons.txt')[1]
+   leg1 = createRubberHoseFromImage('assets/parts/line1.png')
+   leg2 = createRubberHoseFromImage('assets/parts/line2.png')
 
 
-   function createRubberHoseFromImage(url)
-      local img = mesh.getImage(url)
-      local width, height = img:getDimensions()
-      local magic = 4.46
-      local currentNode = {}
-      currentNode.type = 'rubberhose'
-      currentNode.data = currentNode.data or {}
-      currentNode.texture = {}
-      currentNode.texture.url = url
-      currentNode.texture.wrap = 'repeat'
-      currentNode.texture.filter = 'linear'
-      currentNode.data.length = height * magic
-      currentNode.data.width = width * 2
-      currentNode.data.flop = 1
-      currentNode.data.borderRadius = .25
-      currentNode.data.steps = 10
-      currentNode.color = { 0.094, 0.102, 0.09, 1 }
-      currentNode.data.scale = 1
-      --      currentNode.data.scaleY = 2
-      currentNode.points = { { 0, 0 }, { 0, height / 2 } }
-      mesh.remeshNode(currentNode)
-      return currentNode
-   end
+   root.children = { body, leg1, leg2 }
 
+   stripPath(root, '/experiments/puppet%-maker/')
+
+
+   parentize.parentize(root)
+   mesh.meshAll(root)
+   mesh.recursivelyMakeTextures(root)
+   render.renderThings(root)
+
+   -- shoul
+   canvas = makeTexturedCanvas(canvas,
+      lineart, mask,
+      grunge2, { vivid.HSLtoRGB(skinBackHSL) },
+      texture1, { vivid.HSLtoRGB(skinFurHSL) })
+
+
+
+   local romp = node.findNodeByName(body, 'romp')
+   local m = makeMeshFromSibling(romp, canvas)
+   local dynamic = makeDynamicCanvas(canvas, m)
+
+   addChildBefore(romp, dynamic)
+
+   --print(inspect(romp))
+
+
+
+
+   --addChildAt(body, dynamic, 1)
+
+
+   --[[
    transforms.setTransforms(root)
    transforms.setTransforms(body)
 
@@ -182,7 +263,8 @@ function scene.load()
 
    --print(inspect(body))
    root.children = { body, leg1, leg2 }
-
+   parentize.parentize(root)
+   render.renderThings(root)
 
    -- al lot of charcaters int he replcace string need escaping
    local function replace(str, what, with)
@@ -196,6 +278,20 @@ function scene.load()
    --print(replace(path))
    stripPath(root, '/experiments/puppet%-maker/')
    --table.insert(root.children, body)
+
+
+
+   canvas = makeTexturedCanvas(canvas,
+      lineart, mask,
+      grunge2, { vivid.HSLtoRGB(skinBackHSL) },
+      texture1, { vivid.HSLtoRGB(skinFurHSL) })
+
+   local dynamic = makeDynamicCanvas(canvas)
+
+   addChildAt(body, dynamic, 1)
+   --print(inspect(body.transforms.g))
+   --print(inspect(body.transforms))
+   --print(inspect(body))
 
 
    --foregroundLayer.children = again
@@ -219,12 +315,41 @@ function scene.load()
    local w, h = love.graphics.getDimensions()
 
 
+
+
+
    transforms.setTransforms(root)
    transforms.setTransforms(body)
-
+   -- transforms.setTransforms(leg1)
+   local bx, by = body.transforms._g:transformPoint(0, 0)
+   --print(bx, by)
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(0, 0, w, lh * 2)
+   camera.centerCameraOnPosition(bx, by, w, lh * 2)
    cam:update(w, h)
+
+   function recursiveCheck(node)
+      if node.points then
+         print(node.name, inspect(node.points))
+      end
+      if node.children then
+         for i = 1, #node.children do
+            recursiveCheck(node.children[i])
+         end
+      end
+
+   end
+
+   recursiveCheck(root)
+--]]
+
+   attachCallbacks()
+
+   local bx, by = body.transforms._g:transformPoint(0, 0)
+   local w, h = love.graphics.getDimensions()
+   camera.setCameraViewport(cam, w, h)
+   camera.centerCameraOnPosition(bx, by, w, lh * 2)
+   cam:update(w, h)
+
 end
 
 function attachCallbacks()
@@ -253,9 +378,14 @@ function attachCallbacks()
    function love.resize(w, h)
       local lw, lh = lineart:getDimensions()
 
+
+
+      local bx, by = body.transforms._g:transformPoint(0, 0)
+      local w, h = love.graphics.getDimensions()
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(0, 0, w, lh * 2)
+      camera.centerCameraOnPosition(bx, by, w, lh * 2)
       cam:update(w, h)
+
 
    end
 end
@@ -271,7 +401,7 @@ function scene.update(dt)
 
    --leg2.points[2][1] = love.math.random() * 800
    --leg2.points[2][2] = love.math.random() * 800
-   mesh.remeshNode(leg2)
+   --mesh.remeshNode(leg2)
 
 
    delta = delta + dt
@@ -280,62 +410,8 @@ function scene.update(dt)
 
 end
 
-local mask_effect = love.graphics.newShader [[
-   vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
-         // a discarded pixel wont be applied as the stencil.
-         discard;
-      }
-      return vec4(1.0);
-   }
-]]
-function myStencilFunction(mask)
-   love.graphics.setShader(mask_effect)
-   love.graphics.draw(mask, 0, 0)
-   love.graphics.setShader()
-end
-
 function love.mousereleased()
    lastDraggedElement = nil
-end
-
-function calculateLargestRect(angle, origWidth, origHeight)
-   local w0, h0;
-   if (origWidth <= origHeight) then
-      w0 = origWidth;
-      h0 = origHeight;
-
-   else
-      w0 = origHeight;
-      h0 = origWidth;
-   end
-
-   --// Angle normalization in range [-PI..PI)
-   local ang = angle - math.floor((angle + math.pi) / (2 * math.pi)) * 2 * math.pi;
-   ang = math.abs(ang);
-   if (ang > math.pi / 2) then
-      ang = math.pi - ang
-   end
-
-   local sina = math.sin(ang);
-   local cosa = math.cos(ang);
-   local sinAcosA = sina * cosa;
-   local w1 = w0 * cosa + h0 * sina;
-   local h1 = w0 * sina + h0 * cosa;
-   local c = h0 * sinAcosA / (2 * h0 * sinAcosA + w0);
-   local x = w1 * c;
-   local y = h1 * c;
-   local w, h;
-   if (origWidth <= origHeight) then
-      w = w1 - 2 * x;
-      h = h1 - 2 * y;
-
-   else
-      w = h1 - 2 * y;
-      h = w1 - 2 * x;
-   end
-
-   return x, y, w, h
 end
 
 -- hallo obs does this work ?
@@ -345,8 +421,8 @@ end
 
 function drawUI()
    local stats = love.graphics.getStats()
-   --   print('img mem', stats.texturememory)
-   --   print('Memory actually used (in kB): ' .. collectgarbage('count'))
+   --print('img mem', stats.texturememory)
+   --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
 
    --love.graphics.print('hose length: ' .. (redB), 30, 30 - 20)
    local slider = h_slider('skin hue', 30, 30, 200, skinBackHSL[1], 0, 1)
@@ -383,68 +459,6 @@ function drawUI()
    end
 end
 
--- make order the same as the
-function makeTexturedCanvas(lw, lh, texture, mask, color, canvas)
-   love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   love.graphics.clear(0, 0, 0, 0) ---<<<<
-   love.graphics.setBlendMode("alpha") ---<<<<
-   love.graphics.setStencilTest("greater", 0)
-   love.graphics.stencil(function() myStencilFunction(mask) end)
-
-   --local ow, oh = grunge:getDimensions()
-   local gw, gh = texture:getDimensions()
-   local rotation = 0 --delta
-   local rx, ry, rw, rh = calculateLargestRect(rotation, gw, gh)
-
-   local scaleX = .5
-   local scaleY = .5
-
-   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-   local xMax = (gw / 2) * scaleX - (ry * scaleX)
-   local xOffset = xMin
-
-   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-   local yMax = (gh / 2) * scaleY - (ry * scaleY)
-   local yOffset = yMin
-
-   love.graphics.setColor(color)
-   love.graphics.draw(texture, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
-
-   -- second texture
-   local gw, gh = texture1:getDimensions()
-   local rotation = 0 --delta
-   local rx, ry, rw, rh = calculateLargestRect(rotation, gw, gh)
-
-   local scaleX = 2
-   local scaleY = 2
-
-   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-   local xMax = (gw / 2) * scaleX - (ry * scaleX)
-   local xOffset = xMin
-
-   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-   local yMax = (gh / 2) * scaleY - (ry * scaleY)
-   local yOffset = yMin
-
-
-
-   -- height of these images is not big enough, redraw them bigger lazy bum
-
-   love.graphics.setColor({ vivid.HSLtoRGB(skinBackHSL) })
-   love.graphics.setColor(1, 1, 1)
-
-   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
-
-   --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
-
-
-   love.graphics.setStencilTest()
-
-
-   love.graphics.setCanvas() --- <<<<<
-   return canvas
-end
-
 function scene.draw()
 
    ui.handleMouseClickStart()
@@ -452,22 +466,10 @@ function scene.draw()
    love.graphics.setColor(0, 0, 0)
    love.graphics.print("Let's create the layered furry skin thing", 400, 10)
 
-
-
-   local lw, lh = lineart:getDimensions()
-   canvas = makeTexturedCanvas(lw, lh, grunge2, mask, { vivid.HSLtoRGB(skinBackHSL) }, canvas)
-
    cam:push()
-   love.graphics.setColor(1, 1, 1)
-   love.graphics.draw(canvas)
-
-   love.graphics.setColor({ vivid.HSLtoRGB(skinFurHSL) })
-   --love.graphics.draw(lineart)
-
-
    render.renderThings(root)
    cam:pop()
-   --drawUI()
+   drawUI()
 end
 
 return scene

@@ -38,6 +38,46 @@ geom.positionControlPoints = function(start, eind, hoseLength, flop, borderRadiu
 end
 
 
+geom.calculateLargestRect = function(angle, origWidth, origHeight)
+   local w0, h0;
+   if (origWidth <= origHeight) then
+      w0 = origWidth;
+      h0 = origHeight;
+
+   else
+      w0 = origHeight;
+      h0 = origWidth;
+   end
+
+   --// Angle normalization in range [-PI..PI)
+   local ang = angle - math.floor((angle + math.pi) / (2 * math.pi)) * 2 * math.pi;
+   ang = math.abs(ang);
+   if (ang > math.pi / 2) then
+      ang = math.pi - ang
+   end
+
+   local sina = math.sin(ang);
+   local cosa = math.cos(ang);
+   local sinAcosA = sina * cosa;
+   local w1 = w0 * cosa + h0 * sina;
+   local h1 = w0 * sina + h0 * cosa;
+   local c = h0 * sinAcosA / (2 * h0 * sinAcosA + w0);
+   local x = w1 * c;
+   local y = h1 * c;
+   local w, h;
+   if (origWidth <= origHeight) then
+      w = w1 - 2 * x;
+      h = h1 - 2 * y;
+
+   else
+      w = h1 - 2 * y;
+      h = w1 - 2 * x;
+   end
+
+   return x, y, w, h
+end
+
+
 --function getEllipseCircumference(w, h)
 --   return 2 * math.pi * math.sqrt(((w*w) + (h*h))/2)
 --end
@@ -56,13 +96,13 @@ local function makeParallelLine(line, offset)
    local y1 = line[2]
    local x2 = line[3]
    local y2 = line[4]
-   local L = math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))
+   local L = math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
 
-   local x1p = x1 + offset * (y2-y1)/L
-   local x2p = x2 + offset * (y2-y1)/L
-   local y1p = y1 + offset * (x1-x2)/L
-   local y2p = y2 + offset * (x1-x2)/L
-   return {x1p, y1p, x2p, y2p}
+   local x1p = x1 + offset * (y2 - y1) / L
+   local x2p = x2 + offset * (y2 - y1) / L
+   local y1p = y1 + offset * (x1 - x2) / L
+   local y2p = y2 + offset * (x1 - x2) / L
+   return { x1p, y1p, x2p, y2p }
 
 end
 
@@ -71,27 +111,27 @@ local function isectLineLine(line1, line2)
    local bx = line1[3]
    local cx = line2[1]
    local dx = line2[3]
-   
+
    local ay = line1[2]
    local by = line1[4]
    local cy = line2[2]
    local dy = line2[4]
-   
+
    local dx12 = ax - bx;
    local dx34 = cx - dx;
    local dy12 = ay - by;
    local dy34 = cy - dy;
    local den = dx12 * dy34 - dy12 * dx34;
    local EPSILON = 0.000001
-   
+
    if (math.abs(den) < EPSILON) then
       return nil
-   else 
+   else
       local det12 = ax * by - ay * bx
       local det34 = cx * dy - cy * dx
       local numx = det12 * dx34 - dx12 * det34
       local numy = det12 * dy34 - dy12 * det34
-      return {x= numx / den, y= numy / den}
+      return { x = numx / den, y = numy / den }
    end
 end
 
@@ -112,7 +152,7 @@ end
 -- here the actual border of the image lies at .05 from the left, .08 from the top, and the width/height is clear.
 geom.coloredOutsideTheLines = function(rect, uvData)
    local lerp = numbers.lerp
-   
+
    local hx1 = lerp(rect[1], rect[7], 0.5)
    local hy1 = lerp(rect[2], rect[8], 0.5)
    local hx2 = lerp(rect[3], rect[5], 0.5)
@@ -124,29 +164,29 @@ geom.coloredOutsideTheLines = function(rect, uvData)
    local vy2 = lerp(rect[8], rect[6], 0.5)
 
    local vertd = (geom.distance(vx1, vy1, vx2, vy2))
-   local totalv = 1/uvData[4] * vertd
-   
-   local topOff = uvData[2] * totalv
-   local bottomOff = (1-(uvData[4]+uvData[2])) * totalv
+   local totalv = 1 / uvData[4] * vertd
 
-   local pTop = makeParallelLine({rect[1], rect[2], rect[3], rect[4]}, topOff)
-   local pBottom = makeParallelLine({ rect[5], rect[6], rect[7], rect[8]}, bottomOff)
+   local topOff = uvData[2] * totalv
+   local bottomOff = (1 - (uvData[4] + uvData[2])) * totalv
+
+   local pTop = makeParallelLine({ rect[1], rect[2], rect[3], rect[4] }, topOff)
+   local pBottom = makeParallelLine({ rect[5], rect[6], rect[7], rect[8] }, bottomOff)
 
    local hord = (geom.distance(hx1, hy1, hx2, hy2))
-   local totalh = 1/uvData[3] * hord
+   local totalh = 1 / uvData[3] * hord
    local leftOff = uvData[1] * totalh
-   local rightOff = (1-(uvData[3]+uvData[1])) * totalh
-   
-   local pLeft = makeParallelLine({ rect[7], rect[8], rect[1], rect[2]}, leftOff)
-   local pRight = makeParallelLine({ rect[3], rect[4], rect[5], rect[6]}, rightOff)
-   
-  
+   local rightOff = (1 - (uvData[3] + uvData[1])) * totalh
+
+   local pLeft = makeParallelLine({ rect[7], rect[8], rect[1], rect[2] }, leftOff)
+   local pRight = makeParallelLine({ rect[3], rect[4], rect[5], rect[6] }, rightOff)
+
+
    connectAtIntersection(pTop, pRight)
    connectAtIntersection(pRight, pBottom)
    connectAtIntersection(pBottom, pLeft)
    connectAtIntersection(pLeft, pTop)
 
-   return {pTop[1], pTop[2], pRight[1], pRight[2], pBottom[1], pBottom[2], pLeft[1], pLeft[2]}
+   return { pTop[1], pTop[2], pRight[1], pRight[2], pBottom[1], pBottom[2], pLeft[1], pLeft[2] }
 end
 
 

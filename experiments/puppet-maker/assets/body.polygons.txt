@@ -1,7 +1,7 @@
 { {
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
-name = "",
+name = "romp",
 points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
 texture = {
 filter = "linear",

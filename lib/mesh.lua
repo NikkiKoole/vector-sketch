@@ -456,7 +456,18 @@ mesh.remeshNode = function(node)
    --print('remesh node called, lets try and make a textured mesh', node, node.points, #node.points)
    local verts = mesh.makeVertices(node)
 
-   if node.texture and (node.texture.url:len() > 0) and (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
+   if node.texture and node.texture.canvas then
+      --print('oohlala')
+      --print(node.texture.canvas:newImageData())
+      --local img = love.graphics.newImage(url, { mipmaps = true })
+      --img:setWrap(wrap)
+      --img:setFilter(filter, filter)
+
+      return
+   end
+
+   if node.texture and (node.texture.url and node.texture.url:len() > 0) and
+       (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
       --print(node.texture.url, node.texture.url:len())
 
 
