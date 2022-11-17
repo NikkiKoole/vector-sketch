@@ -18,6 +18,7 @@ require 'lib.basic-tools'
 
 Concord = require 'vendor.concord.init'
 
+inspect = require 'vendor.inspect'
 
 --local camera = require 'lib.camera'
 --local cam = require('lib.cameraBase').getInstance()

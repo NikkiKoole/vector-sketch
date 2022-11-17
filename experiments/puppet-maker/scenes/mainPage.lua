@@ -41,6 +41,70 @@ local function makeContainerFolder(name)
    }
 end
 
+local pointerInteractees = {}
+
+
+function pointerPressed(x, y, id)
+   --print(x, y, id)
+   --print(cam:getWorldCoordinates(x, y))
+   local wx, wy = cam:getWorldCoordinates(x, y)
+   --i have a root with zero or more guys, that each have things i need to look at
+   for i = 1, #root.children do
+
+      local item = root.children[i]
+      local b = bbox.getBBoxRecursive(item)
+      if b and item.folder then
+         local c = item._parent
+         local stlx, stly = c.transforms._g:transformPoint(b[1], b[2])
+         local strx, stry = c.transforms._g:transformPoint(b[3], b[2])
+         local sblx, sbly = c.transforms._g:transformPoint(b[1], b[4])
+         local sbrx, sbry = c.transforms._g:transformPoint(b[3], b[4])
+
+         local smallestX = math.min(stlx, sbrx, strx, sblx)
+         local smallestY = math.min(stly, sbry, stry, sbly)
+         local biggestX = math.max(stlx, sbrx, strx, sblx)
+         local biggestY = math.max(stly, sbry, stry, sbly)
+
+         --local tlx, tly = item._parent.transforms._g:inverseTransformPoint(b[1], b[2])
+         --local brx, bry = item._parent.transforms._g:inverseTransformPoint(b[3], b[4])
+         local tlx, tly = smallestX, smallestY
+         local brx, bry = biggestX, biggestY
+
+         if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
+            table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+         else
+         end
+      end
+   end
+end
+
+--print(inspect(pointerInteractees))
+
+
+
+
+function pointerMoved(x, y, dx, dy, id)
+   for i = 1, #pointerInteractees do
+      if pointerInteractees[i].id == id then
+         local scale = cam:getScale()
+         myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
+         print('dragging', pointerInteractees[i].item)
+      end
+   end
+
+end
+
+function pointerReleased(x, y, id)
+   for i = #pointerInteractees, 1, -1 do
+      if pointerInteractees[i].id == id then
+         table.remove(pointerInteractees, i)
+
+      end
+      --print(i)
+   end
+   --print('pointer released', x, y)
+end
+
 function stripPath(root, path)
    if root and root.texture and #root.texture.url > 0 then
       local str = root.texture.url
@@ -160,6 +224,7 @@ function scene.load()
 
 
 
+
    m = 0
    tx = 0
    ty = 0
@@ -200,13 +265,14 @@ function scene.load()
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head1.polygons.txt')[1]
    leg1 = createRubberHoseFromImage('assets/parts/line1.png', -1)
-   leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1)
+   leg2 = createRubberHoseFromImage('assets/parts/line2.png', -1)
    feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
-   feet2 = parse.parseFile('assets/feet2.polygons.txt')[1]
-   print(feet1)
+   feet2 = copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
+   --print(feet1)
+   --guy = makeContainerFolder('guy')
+   --guy.children = { body, leg1, leg2, feet1, feet2, head }
 
    root.children = { body, leg1, leg2, feet1, feet2, head }
-
    stripPath(root, '/experiments/puppet%-maker/')
    -- make bboxes
 
@@ -231,6 +297,10 @@ function scene.load()
       addChildBefore(romp, dynamic)
 
    end
+   --grunge2:release()
+   --texture1:release()
+   --mask:release()
+   --lineart:release()
    -- end custom background
 
 
@@ -239,6 +309,7 @@ function scene.load()
 
    local biped = Concord.entity()
    biped:give('biped', body, leg1, leg2, feet1, feet2)
+   --guy.enity = biped
    myWorld:addEntity(biped)
    attachCallbacks()
 
@@ -248,41 +319,6 @@ function scene.load()
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w, lh * 4)
    cam:update(w, h)
-
-end
-
-function pointerPressed(x, y, id)
-   print(x, y, id)
-   --print(cam:getWorldCoordinates(x, y))
-   local wx, wy = cam:getWorldCoordinates(x, y)
-   for i = 1, #root.children do
-
-      local item = root.children[i]
-      local b = bbox.getBBoxRecursive(item)
-      if b and item.folder then
-         local c = item._parent
-         local stlx, stly = c.transforms._g:transformPoint(b[1], b[2])
-         local strx, stry = c.transforms._g:transformPoint(b[3], b[2])
-         local sblx, sbly = c.transforms._g:transformPoint(b[1], b[4])
-         local sbrx, sbry = c.transforms._g:transformPoint(b[3], b[4])
-
-         local smallestX = math.min(stlx, sbrx, strx, sblx)
-         local smallestY = math.min(stly, sbry, stry, sbly)
-         local biggestX = math.max(stlx, sbrx, strx, sblx)
-         local biggestY = math.max(stly, sbry, stry, sbly)
-
-         --local tlx, tly = item._parent.transforms._g:inverseTransformPoint(b[1], b[2])
-         --local brx, bry = item._parent.transforms._g:inverseTransformPoint(b[3], b[4])
-         local tlx, tly = smallestX, smallestY
-         local brx, bry = biggestX, biggestY
-
-         if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
-            print("HIT!")
-         else
-            print("NOT HIT")
-         end
-      end
-   end
 
 end
 
@@ -302,13 +338,25 @@ function attachCallbacks()
       end
    end
 
-   function love.mousemoved(x, y, dx, dy)
-      --print('yoyo')
-      if love.mouse.isDown(1) then
-         tx = tx + dx
-         ty = ty + dy
+   function love.mousemoved(x, y, dx, dy, istouch)
+      if not istouch then
+         pointerMoved(x, y, dx, dy, 'mouse')
       end
+   end
 
+   function love.touchmoved(id, x, y, dx, dy, pressure)
+      pointerMoved(x, y, dx, dy, id)
+   end
+
+   function love.mousereleased(x, y, button, istouch)
+      --lastDraggedElement = nil
+      if not istouch then
+         pointerReleased(x, y, 'mouse')
+      end
+   end
+
+   function love.touchreleased(id, x, y, dx, dy, pressure)
+      pointerReleased(x, y, id)
    end
 
    function love.resize(w, h)
@@ -323,6 +371,8 @@ function attachCallbacks()
 
    end
 end
+
+--
 
 function scene.update(dt)
    if introSound:isPlaying() then
@@ -339,7 +389,7 @@ function scene.update(dt)
    --body.transforms.l[1] = -400 + love.math.random() * 800
 
    delta = delta + dt
-   body.transforms.l[3] = delta
+   --body.transforms.l[3] = delta
    Timer.update(dt)
    myWorld:emit("update", dt)
 
