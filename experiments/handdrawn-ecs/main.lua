@@ -21,6 +21,7 @@ local render = require 'lib.render'
 
 local myWorld = Concord.world()
 local cam = require('lib.cameraBase').getInstance()
+
 --local cam = getCamera()
 --[[
    the process of geting the right handdrawn images

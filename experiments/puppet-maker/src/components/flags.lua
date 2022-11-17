@@ -10,12 +10,13 @@ Concord.component('texturedBody',
     end
 )
 Concord.component('biped',
-    function(c, body, leg1, leg2, feet1, feet2)
+    function(c, body, leg1, leg2, feet1, feet2, head)
         c.body = body
         c.leg1 = leg1
         c.leg2 = leg2
         c.feet1 = feet1
         c.feet2 = feet2
+        c.head = head
     end
 )
 Concord.component('draggingRopeEnd',

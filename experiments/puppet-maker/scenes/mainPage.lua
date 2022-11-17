@@ -32,23 +32,11 @@ Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
 
-local function makeContainerFolder(name)
-   return {
-      folder = true,
-      name = name,
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-      children = {}
-   }
-end
 
 local pointerInteractees = {}
 
-
 function pointerPressed(x, y, id)
-   --print(x, y, id)
-   --print(cam:getWorldCoordinates(x, y))
    local wx, wy = cam:getWorldCoordinates(x, y)
-   --i have a root with zero or more guys, that each have things i need to look at
    for i = 1, #root.children do
 
       local item = root.children[i]
@@ -65,30 +53,21 @@ function pointerPressed(x, y, id)
          local biggestX = math.max(stlx, sbrx, strx, sblx)
          local biggestY = math.max(stly, sbry, stry, sbly)
 
-         --local tlx, tly = item._parent.transforms._g:inverseTransformPoint(b[1], b[2])
-         --local brx, bry = item._parent.transforms._g:inverseTransformPoint(b[3], b[4])
          local tlx, tly = smallestX, smallestY
          local brx, bry = biggestX, biggestY
 
          if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
             table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
-         else
          end
       end
    end
 end
-
---print(inspect(pointerInteractees))
-
-
-
 
 function pointerMoved(x, y, dx, dy, id)
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
          local scale = cam:getScale()
          myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
-         print('dragging', pointerInteractees[i].item)
       end
    end
 
@@ -98,11 +77,8 @@ function pointerReleased(x, y, id)
    for i = #pointerInteractees, 1, -1 do
       if pointerInteractees[i].id == id then
          table.remove(pointerInteractees, i)
-
       end
-      --print(i)
    end
-   --print('pointer released', x, y)
 end
 
 function stripPath(root, path)
@@ -112,11 +88,13 @@ function stripPath(root, path)
       root.texture.url = shortened
       print(shortened)
    end
+
    if root.children then
       for i = 1, #root.children do
          stripPath(root.children[i], path)
       end
    end
+
    return root
 end
 
@@ -130,13 +108,11 @@ function addChildAt(parent, elem, index)
    table.insert(parent.children, index, elem)
 end
 
--- todo
 function addChildBefore(beforeThis, elem)
    local p = beforeThis._parent
    local index = node.getIndex(beforeThis)
    elem._parent = p
    table.insert(p.children, index, elem)
-
 end
 
 function createRubberHoseFromImage(url, flop)
@@ -153,11 +129,11 @@ function createRubberHoseFromImage(url, flop)
    currentNode.data.length = height * magic
    currentNode.data.width = width * 2
    currentNode.data.flop = flop
-   currentNode.data.borderRadius = .25
+   currentNode.data.borderRadius = .2
    currentNode.data.steps = 20
    currentNode.color = { 0, 0, 0 }
    currentNode.data.scale = 1
-   --      currentNode.data.scaleY = 2
+   currentNode.data.scaleY = 1.5
    currentNode.points = { { 0, 0 }, { 0, height / 2 } }
    mesh.remeshNode(currentNode)
    return currentNode
@@ -219,17 +195,11 @@ function scene.load()
    --grunge = love.graphics.newImage('assets/layered/ice.jpg')
    grunge2 = love.graphics.newImage('assets/layered/grunge.png')
    texture1 = love.graphics.newImage('assets/layered/texture-type1.png')
-   --blup1 = love.graphics.newImage('assets/blups/blup1.png')
-   --blup2 = love.graphics.newImage('assets/blups/blup5.png')
+   blup1 = love.graphics.newImage('assets/blups/blup1.png')
+   blup2 = love.graphics.newImage('assets/blups/blup5.png')
 
 
-
-
-   m = 0
-   tx = 0
-   ty = 0
    local lw, lh = lineart:getDimensions()
-
    canvas = love.graphics.newCanvas(lw, lh)
 
 
@@ -265,22 +235,19 @@ function scene.load()
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head1.polygons.txt')[1]
    leg1 = createRubberHoseFromImage('assets/parts/line1.png', -1)
-   leg2 = createRubberHoseFromImage('assets/parts/line2.png', -1)
+   leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1)
    feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
    feet2 = copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
-   --print(feet1)
+
    --guy = makeContainerFolder('guy')
    --guy.children = { body, leg1, leg2, feet1, feet2, head }
 
    root.children = { body, leg1, leg2, feet1, feet2, head }
    stripPath(root, '/experiments/puppet%-maker/')
-   -- make bboxes
-
 
    parentize.parentize(root)
    mesh.meshAll(root)
    mesh.recursivelyMakeTextures(root)
-
    render.renderThings(root)
 
    --- custom background
@@ -297,20 +264,12 @@ function scene.load()
       addChildBefore(romp, dynamic)
 
    end
-   --grunge2:release()
-   --texture1:release()
-   --mask:release()
-   --lineart:release()
-   -- end custom background
-
-
-   -- position legs
-   head.transforms.l[2] = -600
 
    local biped = Concord.entity()
-   biped:give('biped', body, leg1, leg2, feet1, feet2)
-   --guy.enity = biped
+   biped:give('biped', body, leg1, leg2, feet1, feet2, head)
+
    myWorld:addEntity(biped)
+   myWorld:emit("bipedInit", biped)
    attachCallbacks()
 
 
@@ -383,13 +342,8 @@ function scene.update(dt)
       end
    end
 
-   --leg2.points[2][1] = -400 + love.math.random() * 800
-   --leg2.points[2][2] = -400 + love.math.random() * 800
-   --mesh.remeshNode(leg2)
-   --body.transforms.l[1] = -400 + love.math.random() * 800
 
    delta = delta + dt
-   --body.transforms.l[3] = delta
    Timer.update(dt)
    myWorld:emit("update", dt)
 
@@ -398,11 +352,6 @@ end
 function love.mousereleased()
    lastDraggedElement = nil
 end
-
--- hallo obs does this work ?
--- ok i havent seen it working, does it work now?
--- why wasnt it working, does it just need more time or something ?
---  still no joy, this is gonna be something?
 
 function drawUI()
    local stats = love.graphics.getStats()

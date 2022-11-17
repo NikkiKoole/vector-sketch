@@ -10,11 +10,6 @@ wrap = "repeat"
 }
 }, {
 color = { 1, 0, 0, 1 },
-name = "neck",
-points = { { -1.124, -320.019 } },
-type = "meta"
-}, {
-color = { 1, 0, 0, 1 },
 name = "leg1",
 points = { { -97.741, 289.615 } },
 type = "meta"
