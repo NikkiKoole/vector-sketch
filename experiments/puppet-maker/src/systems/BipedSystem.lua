@@ -99,6 +99,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
 
+            e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
             local lc1 = node.findNodeByName(body, 'leg1')
             local lc2 = node.findNodeByName(body, 'leg2')
 

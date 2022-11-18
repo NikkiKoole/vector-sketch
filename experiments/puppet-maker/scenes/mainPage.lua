@@ -35,6 +35,20 @@ myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
 
 local pointerInteractees = {}
 
+function hittestPixel()
+   local mx, my = love.mouse.getPosition()
+   local wx, wy = cam:getWorldCoordinates(mx, my)
+   local xx, yy = node.transforms.g:inverseTransformPoint(wx, wy)
+   love.graphics.setColor(0, 0, 0)
+   if (xx > 0 and xx < node.graphic.w and yy > 0 and yy < node.graphic.h) then
+      love.graphics.setColor(.5, .5, .5)
+      local r, g, b, a = node.graphic.imageData:getPixel(xx, yy)
+      if (a > 0) then
+         love.graphics.setColor(1, 1, 1, 1)
+      end
+   end
+end
+
 function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
    for i = 1, #root.children do
@@ -55,8 +69,30 @@ function pointerPressed(x, y, id)
 
          local tlx, tly = smallestX, smallestY
          local brx, bry = biggestX, biggestY
-
+         print(wx, wy, tlx, tly, brx - tlx, bry - tly)
          if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
+
+            if (
+                item.children and item.children[1].texture and item.children[1].texture.canvas and
+                    item.children[1].texture.imageData) then
+               -- item == body
+               print(item.name)
+               local texture = item.children[1].texture
+               local imgData = texture.imageData
+               local canvas = texture.canvas
+               --print('hittesting pixels ?')
+               --print(item.transforms._g)
+               --rint(item.children[1])
+               --local px, py = item.transforms._g:transformPoint(0, 0)
+               local xx, yy = item.transforms._g:inverseTransformPoint(wx, wy)
+               --print(inspect(item.transforms.l))
+               -- print('xy', xx, yy)
+               -- print('dims', texture.dimensions[1], texture.dimensions[2])
+               --print(xx, yy, wx, wy)
+               --local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
+               --print(xx, yy, r, g, b, a)
+            end
+
             table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
          end
       end
@@ -151,7 +187,9 @@ function makeDynamicCanvas(canvas, mymesh)
    result.texture = {
       filter = "linear",
       canvas = mymesh,
-      wrap = "repeat"
+      imageData = canvas:newImageData(),
+      wrap = "repeat",
+      dimensions = { w, h }
    }
 
    return result
