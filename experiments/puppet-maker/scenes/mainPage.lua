@@ -294,7 +294,7 @@ function scene.load()
    --guy = makeContainerFolder('guy')
    --guy.children = { body, leg1, leg2, feet1, feet2, head }
 
-   root.children = { body, leg1, leg2, feet1, feet2, head }
+   root.children = { leg1, leg2, feet1, feet2, body, head }
    stripPath(root, '/experiments/puppet%-maker/')
 
    parentize.parentize(root)
@@ -465,7 +465,7 @@ function scene.draw()
    love.graphics.push() -- stores the default coordinate system
    local w, h = love.graphics.getDimensions()
    love.graphics.translate(w / 2, h / 2)
-   love.graphics.scale(.5) -- zoom the camera
+   love.graphics.scale(.25) -- zoom the camera
    if love.mouse.isDown(1) then
       local mx, my = love.mouse:getPosition()
       local wx, wy = cam:getWorldCoordinates(mx, my)
@@ -489,6 +489,31 @@ function scene.draw()
             love.graphics.print(item.name, tlx2, tly2)
             love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
 
+            if item.children then
+               if (item.children[1].name == 'generated') then
+                  -- todo this part is still not correct?
+                  local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
+                  local tlxg, tlyg = item.transforms._g:transformPoint(tlx, tly)
+                  local brxg, bryg = item.transforms._g:transformPoint(brx, bry)
+                  love.graphics.setColor(1, 0, 0, 0.5)
+                  love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+                  love.graphics.setColor(0, 0, 0)
+                  -- how to map that location ino the texture dimensions ?
+                  local imgW, imgH = item.children[1].texture.imageData:getDimensions()
+                  local xx = numbers.mapInto(mx1, tlx, brx, 0, imgW)
+                  local yy = numbers.mapInto(my1, tly, bry, 0, imgH)
+                  if (xx >= 0 and xx <= imgW and yy >= 0 and yy <= imgH) then
+                     local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
+                     if (a > 0) then
+                        love.graphics.setColor(1, 0, 1, 1)
+                        love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+                        love.graphics.setColor(0, 0, 0)
+                     end
+                  end
+               end
+
+               --local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
+            end
          end
          --print(item)
 
