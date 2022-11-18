@@ -49,6 +49,7 @@ function BipedSystem:bipedInit(e)
     local body = e.biped.body
     local lc1 = node.findNodeByName(body, 'leg1')
     local lc2 = node.findNodeByName(body, 'leg2')
+    e.biped.body.transforms.l[3] = math.pi / 3
     if lc1 and lc2 then
         local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
         e.biped.leg1.points[1] = { dx1, dy1 }
@@ -99,7 +100,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
 
-            e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
+            --e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
             local lc1 = node.findNodeByName(body, 'leg1')
             local lc2 = node.findNodeByName(body, 'leg2')
 

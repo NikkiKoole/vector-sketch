@@ -49,14 +49,39 @@ function hittestPixel()
    end
 end
 
+local function getScreenBBoxForItem(c, bbox)
+
+   local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
+   local strx, stry = c.transforms._g:transformPoint(bbox[3], bbox[2])
+   local sblx, sbly = c.transforms._g:transformPoint(bbox[1], bbox[4])
+   local sbrx, sbry = c.transforms._g:transformPoint(bbox[3], bbox[4])
+
+   local tlx, tly = cam:getScreenCoordinates(stlx, stly)
+   local brx, bry = cam:getScreenCoordinates(sbrx, sbry)
+   local trx, try = cam:getScreenCoordinates(strx, stry)
+   local blx, bly = cam:getScreenCoordinates(sblx, sbly)
+
+   local smallestX = math.min(tlx, brx, trx, blx)
+   local smallestY = math.min(tly, bry, try, bly)
+   local biggestX = math.max(tlx, brx, trx, blx)
+   local biggestY = math.max(tly, bry, try, bly)
+
+   return smallestX, smallestY, biggestX, biggestY
+
+end
+
 function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
    for i = 1, #root.children do
 
       local item = root.children[i]
       local b = bbox.getBBoxRecursive(item)
+      --print(inspect(b))
       if b and item.folder then
+
+
          local c = item._parent
+         --print(getScreenBBoxForItem(item, b))
          local stlx, stly = c.transforms._g:transformPoint(b[1], b[2])
          local strx, stry = c.transforms._g:transformPoint(b[3], b[2])
          local sblx, sbly = c.transforms._g:transformPoint(b[1], b[4])
@@ -67,14 +92,17 @@ function pointerPressed(x, y, id)
          local biggestX = math.max(stlx, sbrx, strx, sblx)
          local biggestY = math.max(stly, sbry, stry, sbly)
 
+         --local smallestX, smallestY, biggestX, biggestY = getScreenBBoxForItem(c, b)
+
          local tlx, tly = smallestX, smallestY
          local brx, bry = biggestX, biggestY
-         print(wx, wy, tlx, tly, brx - tlx, bry - tly)
-         if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
 
-            if (
+         --print(wx, wy, tlx, tly, brx - tlx, bry - tly)
+         if (hit.pointInRect(wx, wy, tlx, tly, brx - tlx, bry - tly)) then
+            --print('bbox hit', item.name)
+            if (false and
                 item.children and item.children[1].texture and item.children[1].texture.canvas and
-                    item.children[1].texture.imageData) then
+                item.children[1].texture.imageData) then
                -- item == body
                print(item.name)
                local texture = item.children[1].texture
@@ -93,7 +121,7 @@ function pointerPressed(x, y, id)
                --print(xx, yy, r, g, b, a)
             end
 
-            table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+            --table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
          end
       end
    end
@@ -314,7 +342,7 @@ function scene.load()
    local bx, by = body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w, lh * 4)
+   camera.centerCameraOnPosition(bx, by, w * 10, lh * 10)
    cam:update(w, h)
 
 end
@@ -362,7 +390,7 @@ function attachCallbacks()
       local bx, by = body.transforms._g:transformPoint(0, 0)
       --      local w, h = love.graphics.getDimensions()
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(bx, by, w, lh * 3)
+      camera.centerCameraOnPosition(bx, by, w * 10, lh * 10)
       cam:update(w, h)
 
 
@@ -439,12 +467,71 @@ function scene.draw()
 
    cam:push()
    render.renderThings(root)
+
+
    cam:pop()
    --drawUI()
 
    local str = string.format("Estimated amount of texture memory used: %.2f MB", stats.texturememory / 1024 / 1024)
    love.graphics.print(str, 10, 10)
 
+   --drawBBoxAroundItems()
+   love.graphics.push() -- stores the default coordinate system
+   local w, h = love.graphics.getDimensions()
+   love.graphics.translate(w / 2, h / 2)
+   love.graphics.scale(.5) -- zoom the camera
+   if love.mouse.isDown(1) then
+      local mx, my = love.mouse:getPosition()
+      local wx, wy = cam:getWorldCoordinates(mx, my)
+      --print(mx, my)
+
+      for i = 1, #root.children do
+         local item = root.children[i]
+         local b = bbox.getBBoxRecursive(item)
+         --print(inspect(b))
+
+
+
+         if b then
+            local c = item
+            local stlx, stly = c.transforms._g:transformPoint(b[1], b[2])
+            local strx, stry = c.transforms._g:transformPoint(b[3], b[2])
+            local sblx, sbly = c.transforms._g:transformPoint(b[1], b[4])
+            local sbrx, sbry = c.transforms._g:transformPoint(b[3], b[4])
+
+            local smallestX = math.min(stlx, sbrx, strx, sblx)
+            local smallestY = math.min(stly, sbry, stry, sbly)
+            local biggestX = math.max(stlx, sbrx, strx, sblx)
+            local biggestY = math.max(stly, sbry, stry, sbly)
+
+            local tlx, tly = smallestX, smallestY
+            local brx, bry = biggestX, biggestY
+
+            local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
+            local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
+            local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])
+            --local tlx1, tly1 = item.transforms._g:inverseTransformPoint(b[1], b[2])
+            --local brx1, bry1 = item.transforms._g:inverseTransformPoint(b[3], b[4])
+            --print(tlx1, tly1)
+            --local tlx, tly, brx, bry = getScreenBBoxForItem(item, b)
+            --love.graphics.print(item.name, b[1], b[2])
+            --love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+            --love.graphics.rectangle('line', b[1], b[2], b[3] - b[1], b[4] - b[2])
+
+            --love.graphics.circle('line', wx, wy, 10)
+            love.graphics.print(item.name, mx1, my1)
+            love.graphics.circle('line', mx1, my1, 10)
+            --love.graphics.circle('line', tlx2, tly2, 10)
+            love.graphics.print(item.name, tlx2, tly2)
+            love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
+            print(mx1, my1)
+            --love.graphics.circle('line', mx, my, 10)
+         end
+         --print(item)
+
+      end
+   end
+   love.graphics.pop() -- stores the default coordinate system
    --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
    --print('img mem', stats.texturememory)
