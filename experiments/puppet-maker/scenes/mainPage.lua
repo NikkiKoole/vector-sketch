@@ -84,6 +84,7 @@ function pointerPressed(x, y, id)
          local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
          --print(wx, wy, tlx, tly, brx - tlx, bry - tly)
+
          if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
             --print('bbox hit', item.name)
             if (false and
@@ -493,8 +494,7 @@ function scene.draw()
                if (item.children[1].name == 'generated') then
                   -- todo this part is still not correct?
                   local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
-                  local tlxg, tlyg = item.transforms._g:transformPoint(tlx, tly)
-                  local brxg, bryg = item.transforms._g:transformPoint(brx, bry)
+
                   love.graphics.setColor(1, 0, 0, 0.5)
                   love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
                   love.graphics.setColor(0, 0, 0)
