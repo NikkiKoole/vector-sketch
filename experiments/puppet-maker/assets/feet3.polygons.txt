@@ -1,0 +1,17 @@
+{ {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { 427, 271 }, { 721, 271 }, { 721, 439 }, { 427, 439 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet3.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "feet1",
+transforms = {
+l = { 0, 0, 0, 1, 1, 647.392, 354.867, 0, 0 }
+}
+} }

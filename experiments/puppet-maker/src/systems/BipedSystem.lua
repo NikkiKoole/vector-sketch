@@ -49,7 +49,7 @@ function BipedSystem:bipedInit(e)
     local body = e.biped.body
     local lc1 = node.findNodeByName(body, 'leg1')
     local lc2 = node.findNodeByName(body, 'leg2')
-    e.biped.body.transforms.l[3] = (math.pi * 2) * 0.65
+    e.biped.body.transforms.l[3] = 0 -- (math.pi * 2) * 0.65
     if lc1 and lc2 then
         local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
         e.biped.leg1.points[1] = { dx1, dy1 }
@@ -76,6 +76,38 @@ function BipedSystem:bipedInit(e)
 
 end
 
+function setLegs(body, e)
+    local lc1 = node.findNodeByName(body, 'leg1')
+    local lc2 = node.findNodeByName(body, 'leg2')
+
+    if lc1 and lc2 then
+        local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
+        e.biped.leg1.points[1] = { dx1, dy1 }
+        e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
+        e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+        e.biped.feet1.transforms.l[3] = 0
+        mesh.remeshNode(e.biped.leg1)
+
+
+        local dx1, dy1 = body.transforms._g:transformPoint(lc2.points[1][1], lc2.points[1][2])
+        e.biped.leg2.points[1] = { dx1, dy1 }
+        mesh.remeshNode(e.biped.leg2)
+
+    end
+end
+
+function BipedSystem:itemRotate(elem, dx, dy, scale)
+    for _, e in ipairs(self.pool) do
+
+        if e.biped.body == elem.item then
+            local body = e.biped.body
+            e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
+            transforms.setTransforms(e.biped.body)
+            setLegs(body, e)
+        end
+    end
+end
+
 function BipedSystem:itemDrag(elem, dx, dy, scale)
 
     for _, e in ipairs(self.pool) do
@@ -100,24 +132,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
 
-            e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
-            local lc1 = node.findNodeByName(body, 'leg1')
-            local lc2 = node.findNodeByName(body, 'leg2')
-
-            if lc1 and lc2 then
-                local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
-                e.biped.leg1.points[1] = { dx1, dy1 }
-                e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
-                e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
-                e.biped.feet1.transforms.l[3] = 0
-                mesh.remeshNode(e.biped.leg1)
-
-
-                local dx1, dy1 = body.transforms._g:transformPoint(lc2.points[1][1], lc2.points[1][2])
-                e.biped.leg2.points[1] = { dx1, dy1 }
-                mesh.remeshNode(e.biped.leg2)
-
-            end
+            setLegs(body, e)
 
 
             -- cpoy pasta
@@ -130,6 +145,31 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             transforms.setTransforms(e.biped.body)
             transforms.setTransforms(e.biped.head)
 
+        end
+        if e.biped.head == elem.item then
+            e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
+            e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
+
+            e.biped.head.transforms.l[1] = e.biped.head.transforms.l[1] + dx / scale
+            e.biped.head.transforms.l[2] = e.biped.head.transforms.l[2] + dy / scale
+
+            e.biped.leg1.points[1] = { e.biped.leg1.points[1][1] + dx / scale, e.biped.leg1.points[1][2] + dy / scale }
+            e.biped.leg1.points[2] = { e.biped.leg1.points[2][1] + dx / scale, e.biped.leg1.points[2][2] + dy / scale }
+
+            e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
+            e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+
+
+            e.biped.leg2.points[1] = { e.biped.leg2.points[1][1] + dx / scale, e.biped.leg2.points[1][2] + dy / scale }
+            e.biped.leg2.points[2] = { e.biped.leg2.points[2][1] + dx / scale, e.biped.leg2.points[2][2] + dy / scale }
+
+            e.biped.feet2.transforms.l[1] = e.biped.leg2.points[2][1]
+            e.biped.feet2.transforms.l[2] = e.biped.leg2.points[2][2]
+
+            mesh.remeshNode(e.biped.leg1)
+            mesh.remeshNode(e.biped.leg2)
+            transforms.setTransforms(e.biped.body)
+            transforms.setTransforms(e.biped.head)
         end
     end
 

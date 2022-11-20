@@ -87,26 +87,6 @@ function pointerPressed(x, y, id)
 
          if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
             --print('bbox hit', item.name)
-            if (false and
-                item.children and item.children[1].texture and item.children[1].texture.canvas and
-                item.children[1].texture.imageData) then
-               -- item == body
-               print(item.name)
-               local texture = item.children[1].texture
-               local imgData = texture.imageData
-               local canvas = texture.canvas
-               --print('hittesting pixels ?')
-               --print(item.transforms._g)
-               --rint(item.children[1])
-               --local px, py = item.transforms._g:transformPoint(0, 0)
-               local xx, yy = item.transforms._g:inverseTransformPoint(wx, wy)
-               --print(inspect(item.transforms.l))
-               -- print('xy', xx, yy)
-               -- print('dims', texture.dimensions[1], texture.dimensions[2])
-               --print(xx, yy, wx, wy)
-               --local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
-               --print(xx, yy, r, g, b, a)
-            end
 
             table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
          end
@@ -118,7 +98,15 @@ function pointerMoved(x, y, dx, dy, id)
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
          local scale = cam:getScale()
-         myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
+
+         if love.mouse.isDown(1) then
+            myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
+
+         end
+         if love.mouse.isDown(2) then
+            myWorld:emit("itemRotate", pointerInteractees[i], dx, dy, scale)
+
+         end
       end
    end
 
@@ -166,9 +154,12 @@ function addChildBefore(beforeThis, elem)
    table.insert(p.children, index, elem)
 end
 
-function createRubberHoseFromImage(url, flop)
+function createRubberHoseFromImage(url, flop, length)
+   -- we should be able to make it of a specific height/length
+
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
+   print(height, length)
    local magic = 4.46
    local currentNode = {}
    currentNode.type = 'rubberhose'
@@ -183,8 +174,9 @@ function createRubberHoseFromImage(url, flop)
    currentNode.data.borderRadius = .2
    currentNode.data.steps = 20
    currentNode.color = { 0, 0, 0 }
-   currentNode.data.scale = 1
-   currentNode.data.scaleY = 1.5
+   currentNode.data.scaleX = 1
+   currentNode.data.scaleY = length / height
+   --   currentNode.data.scaleY =
    currentNode.points = { { 0, 0 }, { 0, height / 2 } }
    mesh.remeshNode(currentNode)
    return currentNode
@@ -286,10 +278,12 @@ function scene.load()
    -------
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
-   head = parse.parseFile('assets/head1.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/line1.png', -1)
-   leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1)
-   feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
+   head = parse.parseFile('assets/head4.polygons.txt')[1]
+   leg1 = createRubberHoseFromImage('assets/parts/line2.png', -1, 700)
+   --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
+   leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1, 700)
+
+   feet1 = parse.parseFile('assets/feet4.polygons.txt')[1]
    feet2 = copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
 
    --guy = makeContainerFolder('guy')
@@ -346,7 +340,7 @@ function attachCallbacks()
 
    function love.mousepressed(x, y, button, istouch, presses)
       if not istouch then
-         pointerPressed(x, y, 'mouse')
+         pointerPressed(x, y, 'mouse', button)
       end
    end
 
@@ -387,6 +381,7 @@ end
 --
 
 function scene.update(dt)
+   require("vendor.lurker").update()
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
       introSound:setVolume(volume * .90)
@@ -463,63 +458,65 @@ function scene.draw()
    love.graphics.print(str, 10, 10)
 
    --drawBBoxAroundItems()
-   love.graphics.push() -- stores the default coordinate system
-   local w, h = love.graphics.getDimensions()
-   love.graphics.translate(w / 2, h / 2)
-   love.graphics.scale(.25) -- zoom the camera
-   if love.mouse.isDown(1) then
-      local mx, my = love.mouse:getPosition()
-      local wx, wy = cam:getWorldCoordinates(mx, my)
+   if false then
+      love.graphics.push() -- stores the default coordinate system
+      local w, h = love.graphics.getDimensions()
+      love.graphics.translate(w / 2, h / 2)
+      love.graphics.scale(.25) -- zoom the camera
+      if love.mouse.isDown(1) then
+         local mx, my = love.mouse:getPosition()
+         local wx, wy = cam:getWorldCoordinates(mx, my)
 
 
-      for i = 1, #root.children do
-         local item = root.children[i]
-         local b = bbox.getBBoxRecursive(item)
+         for i = 1, #root.children do
+            local item = root.children[i]
+            local b = bbox.getBBoxRecursive(item)
 
 
-         if b then
+            if b then
 
 
-            local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
-            local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
-            local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])
+               local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
+               local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
+               local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
-            love.graphics.print(item.name, mx1, my1)
-            love.graphics.circle('line', mx1, my1, 10)
+               love.graphics.print(item.name, mx1, my1)
+               love.graphics.circle('line', mx1, my1, 10)
 
-            love.graphics.print(item.name, tlx2, tly2)
-            love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
+               love.graphics.print(item.name, tlx2, tly2)
+               love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
 
-            if item.children then
-               if (item.children[1].name == 'generated') then
-                  -- todo this part is still not correct?
-                  local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
+               if item.children then
+                  if (item.children[1].name == 'generated') then
+                     -- todo this part is still not correct?
+                     local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
 
-                  love.graphics.setColor(1, 0, 0, 0.5)
-                  love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
-                  love.graphics.setColor(0, 0, 0)
-                  -- how to map that location ino the texture dimensions ?
-                  local imgW, imgH = item.children[1].texture.imageData:getDimensions()
-                  local xx = numbers.mapInto(mx1, tlx, brx, 0, imgW)
-                  local yy = numbers.mapInto(my1, tly, bry, 0, imgH)
-                  if (xx >= 0 and xx <= imgW and yy >= 0 and yy <= imgH) then
-                     local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
-                     if (a > 0) then
-                        love.graphics.setColor(1, 0, 1, 1)
-                        love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
-                        love.graphics.setColor(0, 0, 0)
+                     love.graphics.setColor(1, 0, 0, 0.5)
+                     love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+                     love.graphics.setColor(0, 0, 0)
+                     -- how to map that location ino the texture dimensions ?
+                     local imgW, imgH = item.children[1].texture.imageData:getDimensions()
+                     local xx = numbers.mapInto(mx1, tlx, brx, 0, imgW)
+                     local yy = numbers.mapInto(my1, tly, bry, 0, imgH)
+                     if (xx >= 0 and xx < imgW and yy >= 0 and yy < imgH) then
+                        local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
+                        if (a > 0) then
+                           love.graphics.setColor(1, 0, 1, 1)
+                           love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+                           love.graphics.setColor(0, 0, 0)
+                        end
                      end
                   end
+
+                  --local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
                end
-
-               --local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
             end
-         end
-         --print(item)
+            --print(item)
 
+         end
       end
+      love.graphics.pop() -- stores the default coordinate system
    end
-   love.graphics.pop() -- stores the default coordinate system
    --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
    --print('img mem', stats.texturememory)

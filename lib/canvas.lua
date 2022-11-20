@@ -11,73 +11,73 @@ local mask_effect = love.graphics.newShader [[
    }
 ]]
 local function myStencilFunction(mask)
-    love.graphics.setShader(mask_effect)
-    love.graphics.draw(mask, 0, 0)
-    love.graphics.setShader()
+   love.graphics.setShader(mask_effect)
+   love.graphics.draw(mask, 0, 0)
+   love.graphics.setShader()
 end
 
 -- make order the same as the system
 --c, lineart, mask, texture1, color1, texture2, color2
 lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, texture2, color2)
-    local lw, lh = lineart:getDimensions()
-    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-    love.graphics.clear(0, 0, 0, 0) ---<<<<
-    love.graphics.setBlendMode("alpha") ---<<<<
-    love.graphics.setStencilTest("greater", 0)
-    love.graphics.stencil(function() myStencilFunction(mask) end)
+   local lw, lh = lineart:getDimensions()
+   love.graphics.setCanvas({ canvas, stencil = true }) --<<<
+   love.graphics.clear(0, 0, 0, 0) ---<<<<
+   love.graphics.setBlendMode("alpha") ---<<<<
+   love.graphics.setStencilTest("greater", 0)
+   love.graphics.stencil(function() myStencilFunction(mask) end)
 
-    --local ow, oh = grunge:getDimensions()
-    local gw, gh = texture1:getDimensions()
-    local rotation = 0 --delta
-    local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+   --local ow, oh = grunge:getDimensions()
+   local gw, gh = texture1:getDimensions()
+   local rotation = 0 --delta
+   local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
 
-    local scaleX = .5
-    local scaleY = .5
+   local scaleX = .5
+   local scaleY = .5
 
-    local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-    local xMax = (gw / 2) * scaleX - (ry * scaleX)
-    local xOffset = xMin
+   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+   local xMax = (gw / 2) * scaleX - (ry * scaleX)
+   local xOffset = xMin
 
-    local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-    local yMax = (gh / 2) * scaleY - (ry * scaleY)
-    local yOffset = yMin
+   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+   local yMax = (gh / 2) * scaleY - (ry * scaleY)
+   local yOffset = yMin
 
-    love.graphics.setColor(color1)
-    love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+   love.graphics.setColor(color1)
+   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
-    -- second texture
-    local gw, gh = texture2:getDimensions()
-    local rotation = 0 --delta
-    local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+   -- second texture
+   local gw, gh = texture2:getDimensions()
+   local rotation = 0 --delta
+   local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
 
-    local scaleX = 2
-    local scaleY = 2
+   local scaleX = 2
+   local scaleY = 2
 
-    local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-    local xMax = (gw / 2) * scaleX - (ry * scaleX)
-    local xOffset = xMin
+   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+   local xMax = (gw / 2) * scaleX - (ry * scaleX)
+   local xOffset = xMin
 
-    local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-    local yMax = (gh / 2) * scaleY - (ry * scaleY)
-    local yOffset = yMin
-
-
-
-    -- height of these images is not big enough, redraw them bigger lazy bum
-
-    love.graphics.setColor(color2)
-    love.graphics.setColor(1, 1, 1)
-
-    love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
-
-    --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
+   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+   local yMax = (gh / 2) * scaleY - (ry * scaleY)
+   local yOffset = yMin
 
 
-    love.graphics.setStencilTest()
+
+   -- height of these images is not big enough, redraw them bigger lazy bum
+
+   love.graphics.setColor(color2)
+   love.graphics.setColor(1, 1, 1)
+
+   love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+
+   --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
 
-    love.graphics.setCanvas() --- <<<<<
-    return canvas
+   love.graphics.setStencilTest()
+
+
+   love.graphics.setCanvas() --- <<<<<
+   return canvas
 end
 
 

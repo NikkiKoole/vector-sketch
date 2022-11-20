@@ -1,0 +1,17 @@
+{ {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { 252.02, 41.583 }, { 738.02, 41.583 }, { 738.02, 597.583 }, { 252.02, 597.583 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/headshapebuff.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "head",
+transforms = {
+l = { 0, 0, 0, 1, 1, 489.375, 524.197, 0, 0 }
+}
+} }
