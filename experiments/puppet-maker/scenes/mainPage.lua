@@ -72,26 +72,30 @@ end
 
 function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
-   for i = 1, #root.children do
+   for j = 1, #root.children do
+      local guy = root.children[j]
+      for i = 1, #guy.children do
 
-      local item = root.children[i]
-      local b = bbox.getBBoxRecursive(item)
-      --print(inspect(b))
-      if b and item.folder then
+         local item = guy.children[i]
+         local b = bbox.getBBoxRecursive(item)
+         --print(inspect(b))
+         if b and item.folder then
 
-         local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
-         local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
-         local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
+            local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
+            local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
+            local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
-         --print(wx, wy, tlx, tly, brx - tlx, bry - tly)
+            --print(wx, wy, tlx, tly, brx - tlx, bry - tly)
 
-         if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
-            --print('bbox hit', item.name)
+            if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
+               --print('bbox hit', item.name)
 
-            table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+               table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+            end
          end
       end
    end
+
 end
 
 function pointerMoved(x, y, dx, dy, id)
@@ -283,13 +287,19 @@ function scene.load()
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
    leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1, 700)
 
-   feet1 = parse.parseFile('assets/feet4.polygons.txt')[1]
+   feet1 = parse.parseFile('assets/feet3.polygons.txt')[1]
    feet2 = copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
 
-   --guy = makeContainerFolder('guy')
-   --guy.children = { body, leg1, leg2, feet1, feet2, head }
+   guy = {
+      folder = true,
+      name = 'guy',
+      transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+      children = {}
+   }
+   guy.children = { body, leg1, leg2, feet1, feet2, head }
+   root.children = { guy }
 
-   root.children = { leg1, leg2, feet1, feet2, body, head }
+   --root.children = { leg1, leg2, feet1, feet2, body, head }
    stripPath(root, '/experiments/puppet%-maker/')
 
    parentize.parentize(root)
@@ -331,6 +341,8 @@ end
 function attachCallbacks()
    function love.keypressed(key, unicode)
       if key == 'escape' then love.event.quit() end
+      -- todo make some keys to change bodyparts
+      local partToChange = 'feet'
 
    end
 
@@ -458,7 +470,7 @@ function scene.draw()
    love.graphics.print(str, 10, 10)
 
    --drawBBoxAroundItems()
-   if false then
+   if true then
       love.graphics.push() -- stores the default coordinate system
       local w, h = love.graphics.getDimensions()
       love.graphics.translate(w / 2, h / 2)
@@ -467,52 +479,55 @@ function scene.draw()
          local mx, my = love.mouse:getPosition()
          local wx, wy = cam:getWorldCoordinates(mx, my)
 
+         for j = 1, #root.children do
+            local guy = root.children[j]
 
-         for i = 1, #root.children do
-            local item = root.children[i]
-            local b = bbox.getBBoxRecursive(item)
+            for i = 1, #guy.children do
+               local item = guy.children[i]
+               local b = bbox.getBBoxRecursive(item)
 
 
-            if b then
+               if b then
 
 
-               local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
-               local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
-               local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])
+                  local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
+                  local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
+                  local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
-               love.graphics.print(item.name, mx1, my1)
-               love.graphics.circle('line', mx1, my1, 10)
+                  love.graphics.print(item.name, mx1, my1)
+                  love.graphics.circle('line', mx1, my1, 10)
 
-               love.graphics.print(item.name, tlx2, tly2)
-               love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
+                  love.graphics.print(item.name, tlx2, tly2)
+                  love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
 
-               if item.children then
-                  if (item.children[1].name == 'generated') then
-                     -- todo this part is still not correct?
-                     local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
+                  if item.children then
+                     if (item.children[1].name == 'generated') then
+                        -- todo this part is still not correct?
+                        local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
 
-                     love.graphics.setColor(1, 0, 0, 0.5)
-                     love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
-                     love.graphics.setColor(0, 0, 0)
-                     -- how to map that location ino the texture dimensions ?
-                     local imgW, imgH = item.children[1].texture.imageData:getDimensions()
-                     local xx = numbers.mapInto(mx1, tlx, brx, 0, imgW)
-                     local yy = numbers.mapInto(my1, tly, bry, 0, imgH)
-                     if (xx >= 0 and xx < imgW and yy >= 0 and yy < imgH) then
-                        local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
-                        if (a > 0) then
-                           love.graphics.setColor(1, 0, 1, 1)
-                           love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
-                           love.graphics.setColor(0, 0, 0)
+                        love.graphics.setColor(1, 0, 0, 0.5)
+                        love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+                        love.graphics.setColor(0, 0, 0)
+                        -- how to map that location ino the texture dimensions ?
+                        local imgW, imgH = item.children[1].texture.imageData:getDimensions()
+                        local xx = numbers.mapInto(mx1, tlx, brx, 0, imgW)
+                        local yy = numbers.mapInto(my1, tly, bry, 0, imgH)
+                        if (xx >= 0 and xx < imgW and yy >= 0 and yy < imgH) then
+                           local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
+                           if (a > 0) then
+                              love.graphics.setColor(1, 0, 1, 1)
+                              love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
+                              love.graphics.setColor(0, 0, 0)
+                           end
                         end
                      end
+
+                     --local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
                   end
-
-                  --local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
                end
-            end
-            --print(item)
+               --print(item)
 
+            end
          end
       end
       love.graphics.pop() -- stores the default coordinate system
