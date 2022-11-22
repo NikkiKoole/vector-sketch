@@ -225,7 +225,8 @@ mesh.makeVertices = function(shape)
          local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY, shape.data.flop,
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
-
+	 -- i re-use this in puppetmaker to get the angle for the feet
+	 shape._curve = curve 
          local coords = {}
          local stretchyWidthDivider = 1
          local thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
@@ -233,14 +234,12 @@ mesh.makeVertices = function(shape)
 
          for i = 1, shape.data.steps do
             local t = numbers.mapInto(i / shape.data.steps, 0, 1, thickness[1], 1)
-            -- print(i, t)
             table.insert(thickness, t)
          end
          thickness = { thickness[1] }
 
          if (tostring(cp1.x) == 'nan') then
             -- 4.46 is a number thats needed in the calc below
-            --print('coming heer')
             local d = (geom.distance(start.x, start.y, eind.x, eind.y))
             local m = ((shape.data.length * scaleX) / 4.46)
             if (d > m) then
