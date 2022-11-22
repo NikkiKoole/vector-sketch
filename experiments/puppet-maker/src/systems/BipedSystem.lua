@@ -167,7 +167,6 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
 
     for _, e in ipairs(self.pool) do
         if e.biped.feet1 == elem.item then
-            --print("FEET1")
             e.biped.feet1.transforms.l[1] = e.biped.feet1.transforms.l[1] + dx / scale
             e.biped.feet1.transforms.l[2] = e.biped.feet1.transforms.l[2] + dy / scale
             e.biped.leg1.points[2] = { e.biped.feet1.transforms.l[1], e.biped.feet1.transforms.l[2] }
@@ -179,7 +178,6 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
 	    e.biped.feet1.transforms.l[3] = angle
         end
         if e.biped.feet2 == elem.item then
-            --print("FEET1")
             e.biped.feet2.transforms.l[1] = e.biped.feet2.transforms.l[1] + dx / scale
             e.biped.feet2.transforms.l[2] = e.biped.feet2.transforms.l[2] + dy / scale
             e.biped.leg2.points[2] = { e.biped.feet2.transforms.l[1], e.biped.feet2.transforms.l[2] }
