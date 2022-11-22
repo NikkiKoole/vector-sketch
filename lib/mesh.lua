@@ -226,6 +226,7 @@ mesh.makeVertices = function(shape)
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
 	 -- i re-use this in puppetmaker to get the angle for the feet
+	 print(cp1.x, cp1.y, cp2.x, cp2.y)
 	 shape._curve = curve 
          local coords = {}
          local stretchyWidthDivider = 1

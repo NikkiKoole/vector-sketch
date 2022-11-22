@@ -1,3 +1,4 @@
+
 local BipedSystem = Concord.system({ pool = { 'biped' } })
 local node = require 'lib.node'
 local mesh = require 'lib.mesh'
@@ -174,7 +175,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
 
 	    local derivative = e.biped.leg1._curve:getDerivative()
 	    local dx,dy = derivative:evaluate(1)
-	    local angle = math.atan2(dy,dx)+math.pi/2
+	    local angle = math.atan2(dy,dx) 
 	    e.biped.feet1.transforms.l[3] = angle
         end
         if e.biped.feet2 == elem.item then
