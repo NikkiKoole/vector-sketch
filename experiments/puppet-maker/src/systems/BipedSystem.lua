@@ -175,7 +175,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
 
 	    local derivative = e.biped.leg1._curve:getDerivative()
 	    local dx,dy = derivative:evaluate(1)
-	    local angle = math.atan2(dy,dx) 
+	    local angle = math.atan2(dy,dx)
 	    e.biped.feet1.transforms.l[3] = angle
         end
         if e.biped.feet2 == elem.item then
@@ -184,6 +184,11 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.feet2.transforms.l[2] = e.biped.feet2.transforms.l[2] + dy / scale
             e.biped.leg2.points[2] = { e.biped.feet2.transforms.l[1], e.biped.feet2.transforms.l[2] }
             mesh.remeshNode(e.biped.leg2)
+
+	    local derivative = e.biped.leg2._curve:getDerivative()
+	    local dx,dy = derivative:evaluate(1)
+	    local angle = math.atan2(dy,dx) 
+	    e.biped.feet2.transforms.l[3] = angle
         end
         if e.biped.body == elem.item then
 
