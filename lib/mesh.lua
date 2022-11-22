@@ -225,10 +225,17 @@ mesh.makeVertices = function(shape)
          local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY, shape.data.flop,
             shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
-	 -- i re-use this in puppetmaker to get the angle for the feet
-	 print(cp1.x, cp1.y, cp2.x, cp2.y)
-	 -- todo whne the curve is null we make a perfect one for it using lerp
-	 shape._curve = curve 
+         -- i re-use this in puppetmaker to get the angle for the feet
+         --print(cp1.x, cp1.y, cp2.x, cp2.y)
+         -- todo whne the curve is null we make a perfect one for it using lerp
+
+         shape._curve = curve
+         if tostring(cp1.x) == 'nan' then
+            -- hacky way to keep the right oreinted curve even when the rope thing has failed
+            local curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
+               numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
+            shape._curve = curve
+         end
          local coords = {}
          local stretchyWidthDivider = 1
          local thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1

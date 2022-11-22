@@ -1,4 +1,3 @@
-
 local BipedSystem = Concord.system({ pool = { 'biped' } })
 local node = require 'lib.node'
 local mesh = require 'lib.mesh'
@@ -14,6 +13,8 @@ function BipedSystem:update(dt)
 
         e.biped.head.transforms.l[1] = dx1
         e.biped.head.transforms.l[2] = dy1
+
+        setLegs(body, e)
 
         if false and lc1 and lc2 then
             --left
@@ -46,7 +47,7 @@ function BipedSystem:update(dt)
 end
 
 function BipedSystem:bipedDirection(e, dir)
-    print(dir)
+
     if dir == 'left' then
 
         e.biped.guy.children = { e.biped.leg1, e.biped.body, e.biped.leg2, e.biped.feet1, e.biped.feet2, e.biped.head }
@@ -71,6 +72,19 @@ function BipedSystem:bipedDirection(e, dir)
         e.biped.feet1.transforms.l[4] = 1
         e.biped.feet2.transforms.l[4] = -1
     end
+
+
+    --- pff really
+    local derivative = e.biped.leg1._curve:getDerivative()
+    local dx, dy = derivative:evaluate(1)
+    local angle = math.atan2(dy, dx) - math.pi / 2
+    e.biped.feet1.transforms.l[3] = angle
+
+    local derivative = e.biped.leg2._curve:getDerivative()
+    local dx, dy = derivative:evaluate(1)
+    local angle = math.atan2(dy, dx) - math.pi / 2
+    e.biped.feet2.transforms.l[3] = angle
+
     mesh.remeshNode(e.biped.leg1)
     mesh.remeshNode(e.biped.leg2)
 end
@@ -109,8 +123,8 @@ function BipedSystem:bipedInit(e)
     print(e.biped.head)
     --print(e.biped.leg1._curve:getDerivative())
     local derivative = e.biped.leg1._curve:getDerivative()
-    local dx,dy = derivative:evaluate(0.9)
-    local angle = math.atan2(dy,dx)+math.pi/2
+    local dx, dy = derivative:evaluate(0.9)
+    local angle = math.atan2(dy, dx) + math.pi / 2
     print(angle)
 
 end
@@ -122,8 +136,8 @@ function setLegs(body, e)
     if lc1 and lc2 then
         local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
         e.biped.leg1.points[1] = { dx1, dy1 }
-        e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
-        e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+        --e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
+        --e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
         -- e.biped.feet1.transforms.l[3] = 0
         mesh.remeshNode(e.biped.leg1)
 
@@ -164,7 +178,7 @@ function BipedSystem:bipedAttachFeet(e)
 end
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)
-
+    --print(elem.item.name)
     for _, e in ipairs(self.pool) do
         if e.biped.feet1 == elem.item then
             e.biped.feet1.transforms.l[1] = e.biped.feet1.transforms.l[1] + dx / scale
@@ -172,10 +186,10 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.leg1.points[2] = { e.biped.feet1.transforms.l[1], e.biped.feet1.transforms.l[2] }
             mesh.remeshNode(e.biped.leg1)
 
-	    local derivative = e.biped.leg1._curve:getDerivative()
-	    local dx,dy = derivative:evaluate(1)
-	    local angle = math.atan2(dy,dx) - math.pi/2
-	    e.biped.feet1.transforms.l[3] = angle
+            local derivative = e.biped.leg1._curve:getDerivative()
+            local dx, dy = derivative:evaluate(1)
+            local angle = math.atan2(dy, dx) - math.pi / 2
+            e.biped.feet1.transforms.l[3] = angle
         end
         if e.biped.feet2 == elem.item then
             e.biped.feet2.transforms.l[1] = e.biped.feet2.transforms.l[1] + dx / scale
@@ -183,10 +197,10 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.leg2.points[2] = { e.biped.feet2.transforms.l[1], e.biped.feet2.transforms.l[2] }
             mesh.remeshNode(e.biped.leg2)
 
-	    local derivative = e.biped.leg2._curve:getDerivative()
-	    local dx,dy = derivative:evaluate(1)
-	    local angle = math.atan2(dy,dx) - math.pi/2
-	    e.biped.feet2.transforms.l[3] = angle
+            local derivative = e.biped.leg2._curve:getDerivative()
+            local dx, dy = derivative:evaluate(1)
+            local angle = math.atan2(dy, dx) - math.pi / 2
+            e.biped.feet2.transforms.l[3] = angle
         end
         if e.biped.body == elem.item then
 
