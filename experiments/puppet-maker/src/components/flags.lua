@@ -9,13 +9,17 @@ Concord.component('texturedBody',
         c.color2 = color2
     end
 )
+
+-- 1 means the bipeds' right, 2 means the bipeds' left.
+-- when facing me, 1 == left and 2 == right (for me)
 Concord.component('biped',
-    function(c, body, leg1, leg2, feet1, feet2, head)
-        c.body = body
-        c.leg1 = leg1
-        c.leg2 = leg2
-        c.feet1 = feet1
-        c.feet2 = feet2
+    function(c, parts)
+        c.guy = parts.guy
+        c.body = parts.body
+        c.leg1 = parts.leg1
+        c.leg2 = parts.leg2
+        c.feet1 = parts.feet1
+        c.feet2 = parts.feet2
         c.head = head
     end
 )

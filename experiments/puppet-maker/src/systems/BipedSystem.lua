@@ -44,7 +44,40 @@ function BipedSystem:update(dt)
 
 end
 
+function BipedSystem:bipedDirection(e, dir)
+    print(dir)
+    if dir == 'left' then
+
+        e.biped.guy.children = { e.biped.leg1, e.biped.body, e.biped.leg2, e.biped.feet1, e.biped.feet2, e.biped.head }
+        e.biped.leg1.data.flop = -1
+        e.biped.leg2.data.flop = -1
+        e.biped.feet1.transforms.l[4] = 1
+        e.biped.feet2.transforms.l[4] = 1
+    elseif dir == 'right' then
+
+        e.biped.guy.children = { e.biped.leg2, e.biped.body, e.biped.leg1, e.biped.feet1, e.biped.feet2, e.biped.head }
+        e.biped.leg1.data.flop = 1
+        e.biped.leg2.data.flop = 1
+
+        e.biped.feet1.transforms.l[4] = -1
+        e.biped.feet2.transforms.l[4] = -1
+    elseif dir == 'down' then
+
+        e.biped.guy.children = { e.biped.body, e.biped.leg1, e.biped.leg2, e.biped.feet1, e.biped.feet2, e.biped.head }
+        e.biped.leg1.data.flop = -1
+        e.biped.leg2.data.flop = 1
+
+        e.biped.feet1.transforms.l[4] = 1
+        e.biped.feet2.transforms.l[4] = -1
+    end
+    mesh.remeshNode(e.biped.leg1)
+    mesh.remeshNode(e.biped.leg2)
+end
+
 function BipedSystem:bipedInit(e)
+
+
+
 
     local body = e.biped.body
     local lc1 = node.findNodeByName(body, 'leg1')
@@ -85,7 +118,7 @@ function setLegs(body, e)
         e.biped.leg1.points[1] = { dx1, dy1 }
         e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
         e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
-        e.biped.feet1.transforms.l[3] = 0
+        -- e.biped.feet1.transforms.l[3] = 0
         mesh.remeshNode(e.biped.leg1)
 
 
@@ -105,7 +138,23 @@ function BipedSystem:itemRotate(elem, dx, dy, scale)
             transforms.setTransforms(e.biped.body)
             setLegs(body, e)
         end
+        if e.biped.feet1 == elem.item then
+            e.biped.feet1.transforms.l[3] = e.biped.feet1.transforms.l[3] + 0.1
+            transforms.setTransforms(e.biped.feet1)
+        end
+        if e.biped.feet2 == elem.item then
+            e.biped.feet2.transforms.l[3] = e.biped.feet2.transforms.l[3] + 0.1
+            transforms.setTransforms(e.biped.feet2)
+        end
     end
+end
+
+function BipedSystem:bipedAttachFeet(e)
+    --local body = e.biped.body
+    e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
+    e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+    --print(body)
+
 end
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)

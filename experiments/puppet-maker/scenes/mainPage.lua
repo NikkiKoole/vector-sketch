@@ -23,6 +23,7 @@ local ui = require 'lib.ui'
 local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
 
+
 local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
@@ -163,7 +164,7 @@ function createRubberHoseFromImage(url, flop, length)
 
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
-   print(height, length)
+   --print(height, length)
    local magic = 4.46
    local currentNode = {}
    currentNode.type = 'rubberhose'
@@ -175,7 +176,7 @@ function createRubberHoseFromImage(url, flop, length)
    currentNode.data.length = height * magic
    currentNode.data.width = width * 2
    currentNode.data.flop = flop
-   currentNode.data.borderRadius = .2
+   currentNode.data.borderRadius = .5
    currentNode.data.steps = 20
    currentNode.color = { 0, 0, 0 }
    currentNode.data.scaleX = 1
@@ -283,13 +284,16 @@ function scene.load()
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/line2.png', -1, 700)
+   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
-   leg2 = createRubberHoseFromImage('assets/parts/line2.png', 1, 700)
+   leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
 
-   feet1 = parse.parseFile('assets/feet3.polygons.txt')[1]
+
+   feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
    feet2 = copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
 
+   feet3 = parse.parseFile('assets/feet3.polygons.txt')[1]
+   stripPath(feet3, '/experiments/puppet%-maker/')
    guy = {
       folder = true,
       name = 'guy',
@@ -322,8 +326,8 @@ function scene.load()
 
    end
 
-   local biped = Concord.entity()
-   biped:give('biped', body, leg1, leg2, feet1, feet2, head)
+   biped = Concord.entity()
+   biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 
    myWorld:addEntity(biped)
    myWorld:emit("bipedInit", biped)
@@ -343,7 +347,38 @@ function attachCallbacks()
       if key == 'escape' then love.event.quit() end
       -- todo make some keys to change bodyparts
       local partToChange = 'feet'
+      if key == 'left' then
+         myWorld:emit('bipedDirection', biped, 'left')
+      end
+      if key == 'right' then
+         myWorld:emit('bipedDirection', biped, 'right')
+      end
+      if key == 'down' then
+         myWorld:emit('bipedDirection', biped, 'down')
+      end
+      if key == 'f' then
+         --print('changing?', inspect(guy.children))
+         for i = 1, #guy.children do
+            if (guy.children[i] == feet1) then
+               guy.children[i] = feet3
+               biped:give('biped',
+                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet3, feet2 = feet2, head = head })
+               myWorld:emit("bipedAttachFeet", biped)
+               parentize.parentize(root)
+               mesh.meshAll(root)
 
+            elseif (guy.children[i] == feet3) then
+               guy.children[i] = feet1
+               biped:give('biped',
+                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+               myWorld:emit("bipedAttachFeet", biped)
+               parentize.parentize(root)
+               mesh.meshAll(root)
+
+            end
+         end
+
+      end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -393,7 +428,7 @@ end
 --
 
 function scene.update(dt)
-   require("vendor.lurker").update()
+   --require("vendor.lurker").update()
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
       introSound:setVolume(volume * .90)
@@ -470,7 +505,7 @@ function scene.draw()
    love.graphics.print(str, 10, 10)
 
    --drawBBoxAroundItems()
-   if true then
+   if false then
       love.graphics.push() -- stores the default coordinate system
       local w, h = love.graphics.getDimensions()
       love.graphics.translate(w / 2, h / 2)
