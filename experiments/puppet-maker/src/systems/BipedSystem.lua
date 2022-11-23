@@ -2,6 +2,46 @@ local BipedSystem = Concord.system({ pool = { 'biped' } })
 local node = require 'lib.node'
 local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
+
+function BipedSystem:bipedInit(e)
+
+    local body = e.biped.body
+    local lc1 = node.findNodeByName(body, 'leg1')
+    local lc2 = node.findNodeByName(body, 'leg2')
+    e.biped.body.transforms.l[3] = 0 -- (math.pi * 2) * 0.65
+    e.biped.body.transforms.l[4] = 1.3
+    e.biped.body.transforms.l[5] = .5
+    if lc1 and lc2 then
+        local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
+        e.biped.leg1.points[1] = { dx1, dy1 }
+        e.biped.leg1.points[2] = { dx1, dy1 + (leg1.data.length / 4.46) / 1 }
+        e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
+        e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+        mesh.remeshNode(e.biped.leg1)
+
+        local dx1, dy1 = body.transforms._g:transformPoint(lc2.points[1][1], lc2.points[1][2])
+        e.biped.leg2.points[1] = { dx1, dy1 }
+        e.biped.leg2.points[2] = { dx1, dy1 + (leg2.data.length / 4.46) / 1 }
+        e.biped.feet2.transforms.l[1] = e.biped.leg2.points[2][1]
+        e.biped.feet2.transforms.l[2] = e.biped.leg2.points[2][2]
+        e.biped.feet2.transforms.l[4] = -1
+        mesh.remeshNode(e.biped.leg2)
+    end
+
+    local nc = node.findNodeByName(body, 'neck')
+    local dx1, dy1 = body.transforms._g:transformPoint(nc.points[1][1], nc.points[1][2])
+
+    e.biped.head.transforms.l[1] = dx1
+    e.biped.head.transforms.l[2] = dy1
+    print(e.biped.head)
+    --print(e.biped.leg1._curve:getDerivative())
+    local derivative = e.biped.leg1._curve:getDerivative()
+    local dx, dy = derivative:evaluate(0.9)
+    local angle = math.atan2(dy, dx) + math.pi / 2
+    print(angle)
+
+end
+
 function BipedSystem:update(dt)
     for _, e in ipairs(self.pool) do
 
@@ -87,46 +127,6 @@ function BipedSystem:bipedDirection(e, dir)
 
     mesh.remeshNode(e.biped.leg1)
     mesh.remeshNode(e.biped.leg2)
-end
-
-function BipedSystem:bipedInit(e)
-
-
-
-
-    local body = e.biped.body
-    local lc1 = node.findNodeByName(body, 'leg1')
-    local lc2 = node.findNodeByName(body, 'leg2')
-    e.biped.body.transforms.l[3] = 0 -- (math.pi * 2) * 0.65
-    if lc1 and lc2 then
-        local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
-        e.biped.leg1.points[1] = { dx1, dy1 }
-        e.biped.leg1.points[2] = { dx1, dy1 + (leg1.data.length / 4.46) / 1 }
-        e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
-        e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
-        mesh.remeshNode(e.biped.leg1)
-
-        local dx1, dy1 = body.transforms._g:transformPoint(lc2.points[1][1], lc2.points[1][2])
-        e.biped.leg2.points[1] = { dx1, dy1 }
-        e.biped.leg2.points[2] = { dx1, dy1 + (leg2.data.length / 4.46) / 1 }
-        e.biped.feet2.transforms.l[1] = e.biped.leg2.points[2][1]
-        e.biped.feet2.transforms.l[2] = e.biped.leg2.points[2][2]
-        e.biped.feet2.transforms.l[4] = -1
-        mesh.remeshNode(e.biped.leg2)
-    end
-
-    local nc = node.findNodeByName(body, 'neck')
-    local dx1, dy1 = body.transforms._g:transformPoint(nc.points[1][1], nc.points[1][2])
-
-    e.biped.head.transforms.l[1] = dx1
-    e.biped.head.transforms.l[2] = dy1
-    print(e.biped.head)
-    --print(e.biped.leg1._curve:getDerivative())
-    local derivative = e.biped.leg1._curve:getDerivative()
-    local dx, dy = derivative:evaluate(0.9)
-    local angle = math.atan2(dy, dx) + math.pi / 2
-    print(angle)
-
 end
 
 function setLegs(body, e)

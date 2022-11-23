@@ -12,6 +12,9 @@ end
 
 --https://nl.pinterest.com/pin/568086940505956798/
 
+-- async image loading
+--https://github.com/MikuAuahDark/lily
+
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'

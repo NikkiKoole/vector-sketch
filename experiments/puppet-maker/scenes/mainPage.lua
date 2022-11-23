@@ -267,9 +267,10 @@ function scene.load()
       { 0.941, 0.518, 0.122, 1 }
    }
 
-   skinFurHSL = { vivid.RGBtoHSL(238 / 255, 173 / 255, 25 / 255) }
-   skinBackHSL = { vivid.RGBtoHSL(154 / 255, 65 / 255, 22 / 255) }
+   skinFurHSL = { vivid.RGBtoHSL(0, 0, 0) }
+   skinBackHSL = { vivid.RGBtoHSL(0.396, 0.604, 0.698) }
 
+   uiImg = love.graphics.newImage('assets/ui2.png')
 
    delta = 0
 
@@ -284,7 +285,7 @@ function scene.load()
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
+   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 1300)
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
    leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
 
@@ -567,6 +568,12 @@ function scene.draw()
       end
       love.graphics.pop() -- stores the default coordinate system
    end
+
+   local imgW, imgH = uiImg:getDimensions()
+   local w, h = love.graphics:getDimensions()
+
+   local smallestScale = (w / imgW) / 4 --math.min(w / imgW, h / imgH)
+   love.graphics.draw(uiImg, 0, 0, 0, smallestScale, smallestScale)
    --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
    --print('img mem', stats.texturememory)
