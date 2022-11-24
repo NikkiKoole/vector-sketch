@@ -181,7 +181,6 @@ function createRubberHoseFromImage(url, flop, length)
    currentNode.color = { 0, 0, 0 }
    currentNode.data.scaleX = 1
    currentNode.data.scaleY = length / height
-   --   currentNode.data.scaleY =
    currentNode.points = { { 0, 0 }, { 0, height / 2 } }
    mesh.remeshNode(currentNode)
    return currentNode
@@ -267,7 +266,7 @@ function scene.load()
       { 0.941, 0.518, 0.122, 1 }
    }
 
-   skinFurHSL = { vivid.RGBtoHSL(0, 0, 0) }
+   skinFurHSL = { vivid.RGBtoHSL( 0.396, 0.604, 0.698) }
    skinBackHSL = { vivid.RGBtoHSL(0.396, 0.604, 0.698) }
 
    uiImg = love.graphics.newImage('assets/ui2.png')
@@ -285,7 +284,7 @@ function scene.load()
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 1300)
+   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
    leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
 
@@ -334,8 +333,9 @@ function scene.load()
    myWorld:emit("bipedInit", biped)
    attachCallbacks()
 
-
-   local bx, by = body.transforms._g:transformPoint(0, 0)
+   -- dont understand how imma gonna center on head, body and legs yet
+   local bx, by = head.transforms._g:transformPoint(0, 0)
+   --local gx, gy = guy.transforms._g:transformPoint(bx, by)
    local w, h = love.graphics.getDimensions()
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, lh * 4)
@@ -574,6 +574,7 @@ function scene.draw()
 
    local smallestScale = (w / imgW) / 4 --math.min(w / imgW, h / imgH)
    love.graphics.draw(uiImg, 0, 0, 0, smallestScale, smallestScale)
+   
    --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
    --print('img mem', stats.texturememory)

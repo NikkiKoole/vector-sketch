@@ -9,8 +9,8 @@ function BipedSystem:bipedInit(e)
     local lc1 = node.findNodeByName(body, 'leg1')
     local lc2 = node.findNodeByName(body, 'leg2')
     e.biped.body.transforms.l[3] = 0 -- (math.pi * 2) * 0.65
-    e.biped.body.transforms.l[4] = 1.3
-    e.biped.body.transforms.l[5] = .5
+    --e.biped.body.transforms.l[4] = 1.3
+    --e.biped.body.transforms.l[5] = .5
     if lc1 and lc2 then
         local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
         e.biped.leg1.points[1] = { dx1, dy1 }
