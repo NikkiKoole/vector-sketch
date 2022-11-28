@@ -270,7 +270,8 @@ function scene.load()
    skinBackHSL = { vivid.RGBtoHSL(0.396, 0.604, 0.698) }
 
    uiImg = love.graphics.newImage('assets/ui2.png')
-
+   uiBlup = love.graphics.newImage('assets/blups/blup8.png')
+   
    delta = 0
 
    root = {
@@ -571,9 +572,33 @@ function scene.draw()
 
    local imgW, imgH = uiImg:getDimensions()
    local w, h = love.graphics:getDimensions()
-
    local smallestScale = (w / imgW) / 4 --math.min(w / imgW, h / imgH)
-   love.graphics.draw(uiImg, 0, 0, 0, smallestScale, smallestScale)
+
+
+   function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
+      love.graphics.circle('line', cx,cy, buttonRadius)
+      love.graphics.print(label, cx, cy)
+
+      local other = {'hair', 'headshape', 'eyes', 'ears', 'nose', 'mouth', 'chin'}
+      local angleStep = (180 / (#other-1))
+      local angle = - 90
+      for i = 1, #other do
+	 
+	 local px = cx + r * math.cos(angle * math.pi/180)
+	 local py = cy + r * math.sin(angle * math.pi/180)
+	 angle = angle + angleStep
+	 love.graphics.circle('line', px,py, smallButtonRadius)
+      end
+   end
+   
+
+ 
+   drawCirclesAroundCenterCircle(30, h/3,      'head', 50, 120, 30)
+
+   
+   drawCirclesAroundCenterCircle(30, (h/3) * 2,'body', 50, 120, 30)
+   
+
    
    --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
