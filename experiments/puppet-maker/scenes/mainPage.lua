@@ -593,10 +593,8 @@ function scene.draw()
    
 
  
-   drawCirclesAroundCenterCircle(30, h/3,      'head', 50, 120, 30)
-
-   
-   drawCirclesAroundCenterCircle(30, (h/3) * 2,'body', 50, 120, 30)
+   drawCirclesAroundCenterCircle(30, h/3,      'head', h/20, h/6, h/24)
+   drawCirclesAroundCenterCircle(30, (h/3) * 2,'body', h/20, h/6, h/24)
    
 
    
