@@ -285,14 +285,15 @@ function scene.load()
 
 
    values = {
-      legLength = 700
+      legLength = 700,
+      legWidthMultiplier = 1,
    }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1)
+   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier)
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
-   leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1)
+   leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier)
 
 
    feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
@@ -604,8 +605,25 @@ function scene.draw()
    if v.value then
       print(values.legLength)
       values.legLength = v.value
-      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1, leg1.points)
-      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1, leg2.points)
+      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+         leg1.points)
+      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+         leg2.points)
+      guy.children = { body, leg1, leg2, feet1, feet2, head }
+      parentize.parentize(root)
+      biped:give('biped',
+         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+      myWorld:emit("bipedAttachFeet", biped)
+      mesh.meshAll(root)
+   end
+   local v = h_slider("leg-width-multiplier", 100, 200, 200, values.legWidthMultiplier, 0.1, 5)
+   if v.value then
+      print(values.legLength)
+      values.legWidthMultiplier = v.value
+      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+         leg1.points)
+      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+         leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
       parentize.parentize(root)
       biped:give('biped',
