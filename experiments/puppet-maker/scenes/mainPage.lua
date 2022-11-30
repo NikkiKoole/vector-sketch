@@ -603,7 +603,6 @@ function scene.draw()
 
    local v = h_slider("leg-length", 100, 100, 200, values.legLength, 200, 1000)
    if v.value then
-      print(values.legLength)
       values.legLength = v.value
       leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
          leg1.points)
@@ -618,7 +617,6 @@ function scene.draw()
    end
    local v = h_slider("leg-width-multiplier", 100, 200, 200, values.legWidthMultiplier, 0.1, 5)
    if v.value then
-      print(values.legLength)
       values.legWidthMultiplier = v.value
       leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
          leg1.points)
