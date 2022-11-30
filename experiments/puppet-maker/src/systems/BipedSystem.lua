@@ -173,6 +173,9 @@ function BipedSystem:bipedAttachFeet(e)
     --local body = e.biped.body
     e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
     e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+
+    e.biped.feet2.transforms.l[1] = e.biped.leg2.points[2][1]
+    e.biped.feet2.transforms.l[2] = e.biped.leg2.points[2][2]
     --print(body)
 
 end

@@ -159,7 +159,7 @@ function addChildBefore(beforeThis, elem)
    table.insert(p.children, index, elem)
 end
 
-function createRubberHoseFromImage(url, flop, length)
+function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalPoints)
    -- we should be able to make it of a specific height/length
 
    local img = mesh.getImage(url)
@@ -174,14 +174,14 @@ function createRubberHoseFromImage(url, flop, length)
    currentNode.texture.wrap = 'repeat'
    currentNode.texture.filter = 'linear'
    currentNode.data.length = height * magic
-   currentNode.data.width = width * 2
+   currentNode.data.width = width * 2 * widthMultiplier
    currentNode.data.flop = flop
    currentNode.data.borderRadius = .5
    currentNode.data.steps = 20
    currentNode.color = { 0, 0, 0 }
    currentNode.data.scaleX = 1
    currentNode.data.scaleY = length / height
-   currentNode.points = { { 0, 0 }, { 0, height / 2 } }
+   currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
    mesh.remeshNode(currentNode)
    return currentNode
 end
@@ -266,12 +266,12 @@ function scene.load()
       { 0.941, 0.518, 0.122, 1 }
    }
 
-   skinFurHSL = { vivid.RGBtoHSL( 0.396, 0.604, 0.698) }
+   skinFurHSL = { vivid.RGBtoHSL(0.396, 0.604, 0.698) }
    skinBackHSL = { vivid.RGBtoHSL(0.396, 0.604, 0.698) }
 
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
-   
+
    delta = 0
 
    root = {
@@ -283,11 +283,16 @@ function scene.load()
 
    -------
 
+
+   values = {
+      legLength = 700
+   }
+
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
+   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1)
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
-   leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, 700)
+   leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1)
 
 
    feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
@@ -404,7 +409,7 @@ function attachCallbacks()
    end
 
    function love.mousereleased(x, y, button, istouch)
-      --lastDraggedElement = nil
+      lastDraggedElement = nil
       if not istouch then
          pointerReleased(x, y, 'mouse')
       end
@@ -576,28 +581,38 @@ function scene.draw()
 
 
    function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
-      love.graphics.circle('line', cx,cy, buttonRadius)
+      love.graphics.circle('line', cx, cy, buttonRadius)
       love.graphics.print(label, cx, cy)
 
-      local other = {'hair', 'headshape', 'eyes', 'ears', 'nose', 'mouth', 'chin'}
-      local angleStep = (180 / (#other-1))
-      local angle = - 90
+      local other = { 'hair', 'headshape', 'eyes', 'ears', 'nose', 'mouth', 'chin' }
+      local angleStep = (180 / (#other - 1))
+      local angle = -90
       for i = 1, #other do
-	 
-	 local px = cx + r * math.cos(angle * math.pi/180)
-	 local py = cy + r * math.sin(angle * math.pi/180)
-	 angle = angle + angleStep
-	 love.graphics.circle('line', px,py, smallButtonRadius)
+
+         local px = cx + r * math.cos(angle * math.pi / 180)
+         local py = cy + r * math.sin(angle * math.pi / 180)
+         angle = angle + angleStep
+         love.graphics.circle('line', px, py, smallButtonRadius)
       end
    end
-   
 
- 
-   drawCirclesAroundCenterCircle(30, h/3,      'head', h/20, h/6, h/24)
-   drawCirclesAroundCenterCircle(30, (h/3) * 2,'body', h/20, h/6, h/24)
-   
+   drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
+   drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
 
-   
+
+   local v = h_slider("leg-length", 100, 100, 200, values.legLength, 200, 1000)
+   if v.value then
+      print(values.legLength)
+      values.legLength = v.value
+      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1, leg1.points)
+      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, 1, leg2.points)
+      guy.children = { body, leg1, leg2, feet1, feet2, head }
+      parentize.parentize(root)
+      biped:give('biped',
+         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+      myWorld:emit("bipedAttachFeet", biped)
+      mesh.meshAll(root)
+   end
    --   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
    --print('img mem', stats.texturememory)
