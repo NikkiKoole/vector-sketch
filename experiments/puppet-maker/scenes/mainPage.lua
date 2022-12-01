@@ -290,8 +290,16 @@ function scene.load()
       legWidthMultiplier = 1,
       leg1flop = 1,
       leg2flop = 1,
+      feetTypeIndex = 1
    }
-
+   
+   feetUrls = {'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt'}
+   feetParts = {}
+   for i = 1, #feetUrls do
+      feetParts[i] =  parse.parseFile(feetUrls[i])[1]
+      stripPath(feetParts[i], '/experiments/puppet%-maker/')
+   end
+   
    legImages = {'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png', 'assets/parts/leg5.png'}
    
    body = parse.parseFile('assets/body.polygons.txt')[1]
@@ -302,11 +310,11 @@ function scene.load()
    leg2 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg2flop, values.legLength, values.legWidthMultiplier)
 
 
-   feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
-   feet2 = copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
+   feet1 = copy3(feetParts[values.feetTypeIndex]) --parse.parseFile('assets/feet1.polygons.txt')[1]
+   feet2 = copy3(feetParts[values.feetTypeIndex])--copy3(feet1) --parse.parseFile('assets/feet2.polygons.txt')[1]
 
-   feet3 = parse.parseFile('assets/feet3.polygons.txt')[1]
-   stripPath(feet3, '/experiments/puppet%-maker/')
+   --feet3 = parse.parseFile('assets/feet3.polygons.txt')[1]
+   --stripPath(feet3, '/experiments/puppet%-maker/')
    guy = {
       folder = true,
       name = 'guy',
@@ -316,7 +324,6 @@ function scene.load()
    guy.children = { body, leg1, leg2, feet1, feet2, head }
    root.children = { guy }
 
-   --root.children = { leg1, leg2, feet1, feet2, body, head }
    stripPath(root, '/experiments/puppet%-maker/')
 
    parentize.parentize(root)
@@ -378,17 +385,23 @@ function attachCallbacks()
       end
       if key == 'f' then
          --print('changing?', inspect(guy.children))
+	 values.feetTypeIndex = values.feetTypeIndex + 1
+	 if (values.feetTypeIndex > #feetParts) then values.feetTypeIndex =1 end
+	 
          for i = 1, #guy.children do
             if (guy.children[i] == feet1) then
-               guy.children[i] = feet3
+	       feet1 = copy3(feetParts[values.feetTypeIndex])
+	       guy.children[i] = feet1
                biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet3, feet2 = feet2, head = head })
+                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
                myWorld:emit("bipedAttachFeet", biped)
                parentize.parentize(root)
                mesh.meshAll(root)
-
-            elseif (guy.children[i] == feet3) then
-               guy.children[i] = feet1
+	    end
+	    
+            if (guy.children[i] == feet2) then
+	       feet2 = copy3(feetParts[values.feetTypeIndex])
+	       guy.children[i] = feet2
                biped:give('biped',
                   { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
                myWorld:emit("bipedAttachFeet", biped)
