@@ -136,9 +136,6 @@ function setLegs(body, e)
     if lc1 and lc2 then
         local dx1, dy1 = body.transforms._g:transformPoint(lc1.points[1][1], lc1.points[1][2])
         e.biped.leg1.points[1] = { dx1, dy1 }
-        --e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
-        --e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
-        -- e.biped.feet1.transforms.l[3] = 0
         mesh.remeshNode(e.biped.leg1)
 
 

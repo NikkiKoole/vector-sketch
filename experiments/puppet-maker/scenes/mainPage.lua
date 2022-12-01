@@ -390,7 +390,13 @@ function attachCallbacks()
 	 
          for i = 1, #guy.children do
             if (guy.children[i] == feet1) then
+	       local r = feet1.transforms.l[3]
+	       local sx = feet1.transforms.l[4]
+	       
 	       feet1 = copy3(feetParts[values.feetTypeIndex])
+	       feet1.transforms.l[3] = r
+	       feet1.transforms.l[4] = sx
+	       
 	       guy.children[i] = feet1
                biped:give('biped',
                   { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
@@ -400,7 +406,13 @@ function attachCallbacks()
 	    end
 	    
             if (guy.children[i] == feet2) then
-	       feet2 = copy3(feetParts[values.feetTypeIndex])
+	        local r = feet2.transforms.l[3]
+		local sx = feet2.transforms.l[4]
+		
+		feet2 = copy3(feetParts[values.feetTypeIndex])
+		  feet2.transforms.l[3] = r
+		  feet2.transforms.l[4] = sx
+		  
 	       guy.children[i] = feet2
                biped:give('biped',
                   { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
