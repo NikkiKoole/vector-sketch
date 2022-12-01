@@ -253,7 +253,7 @@ mesh.makeVertices = function(shape)
             local m = ((shape.data.length * scaleX) / 4.46)
             if (d > m) then
 
-               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 0.9, stretchyWidthDivider))
+               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 0.6, stretchyWidthDivider))
                thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
 
             end

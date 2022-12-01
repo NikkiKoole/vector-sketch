@@ -287,13 +287,15 @@ function scene.load()
    values = {
       legLength = 700,
       legWidthMultiplier = 1,
+      leg1flop = 1,
+      leg2flop = 1,
    }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier)
+   leg1 = createRubberHoseFromImage('assets/parts/leg5.png', values.leg1flop, values.legLength, values.legWidthMultiplier)
    --leg2 = createRubberHoseFromImage('assets/parts/neck.png', 1)
-   leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier)
+   leg2 = createRubberHoseFromImage('assets/parts/leg3.png', values.leg2flop, values.legLength, values.legWidthMultiplier)
 
 
    feet1 = parse.parseFile('assets/feet1.polygons.txt')[1]
@@ -356,12 +358,18 @@ function attachCallbacks()
       -- todo make some keys to change bodyparts
       local partToChange = 'feet'
       if key == 'left' then
+         values.leg1flop = -1
+         values.leg2flop = -1
          myWorld:emit('bipedDirection', biped, 'left')
       end
       if key == 'right' then
+         values.leg1flop = 1
+         values.leg2flop = 1
          myWorld:emit('bipedDirection', biped, 'right')
       end
       if key == 'down' then
+         values.leg1flop = -1
+         values.leg2flop = 1
          myWorld:emit('bipedDirection', biped, 'down')
       end
       if key == 'f' then
@@ -597,16 +605,18 @@ function scene.draw()
       end
    end
 
-   drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
-   drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
+   --drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
+   --drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
 
 
    local v = h_slider("leg-length", 100, 100, 200, values.legLength, 200, 1000)
    if v.value then
       values.legLength = v.value
-      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', values.leg1flop, values.legLength,
+         values.legWidthMultiplier,
          leg1.points)
-      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', values.leg2flop, values.legLength,
+         values.legWidthMultiplier,
          leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
       parentize.parentize(root)
@@ -615,12 +625,14 @@ function scene.draw()
       myWorld:emit("bipedAttachFeet", biped)
       mesh.meshAll(root)
    end
-   local v = h_slider("leg-width-multiplier", 100, 200, 200, values.legWidthMultiplier, 0.1, 5)
+   local v = h_slider("leg-width-multiplier", 100, 200, 200, values.legWidthMultiplier, 0.1, 2)
    if v.value then
       values.legWidthMultiplier = v.value
-      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+      leg1 = createRubberHoseFromImage('assets/parts/leg5.png', values.leg1flop, values.legLength,
+         values.legWidthMultiplier,
          leg1.points)
-      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', 1, values.legLength, values.legWidthMultiplier,
+      leg2 = createRubberHoseFromImage('assets/parts/leg5.png', values.leg2flop, values.legLength,
+         values.legWidthMultiplier,
          leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
       parentize.parentize(root)
