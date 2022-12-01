@@ -293,7 +293,7 @@ function scene.load()
       feetTypeIndex = 1
    }
    
-   feetUrls = {'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt'}
+   feetUrls = {'assets/feet1.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt'}
    feetParts = {}
    for i = 1, #feetUrls do
       feetParts[i] =  parse.parseFile(feetUrls[i])[1]
