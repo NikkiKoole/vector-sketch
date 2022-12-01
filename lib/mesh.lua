@@ -252,8 +252,8 @@ mesh.makeVertices = function(shape)
             local d = (geom.distance(start.x, start.y, eind.x, eind.y))
             local m = ((shape.data.length * scaleX) / 4.46)
             if (d > m) then
-
-               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 0.6, stretchyWidthDivider))
+               -- todo this .1 is somethign i want to parametrize
+               stretchyWidthDivider = (numbers.mapInto(d, 0, m * scaleY, .1, stretchyWidthDivider))
                thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
 
             end
