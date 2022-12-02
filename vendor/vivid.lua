@@ -97,6 +97,16 @@ function vivid.RGBtoHSV(...)
   else
     s = delta_max / max
 
+    
+    if     r == max then h = (g - b) / delta_max
+    elseif g == max then h = (b - r) / delta_max + 2
+    else                 h = (r - g) / delta_max + 4 end
+
+    h = ((h + 6) % 6) / 6
+
+    -- https://github.com/WetDesertRock/vivid/pull/5/commits/af28c3034ac531f3f7a85aad39ae755f14efe816
+    
+    --[[
     local delta_r = (((max-r)/6) + (delta_max/2)) / delta_max
     local delta_g = (((max-g)/6) + (delta_max/2)) / delta_max
     local delta_b = (((max-b)/6) + (delta_max/2)) / delta_max
@@ -111,6 +121,8 @@ function vivid.RGBtoHSV(...)
 
     if h < 0 then h = h + 1 end
     if h > 1 then h = h - 1 end
+    --]]
+    
   end
 
   return h,s,v,a

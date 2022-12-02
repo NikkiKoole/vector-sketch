@@ -97,6 +97,17 @@ function pointerPressed(x, y, id)
       end
    end
 
+   -- somethign about the ui too, this needs more thought
+   hittestImagePlusTransform(blup2, x,y, 50, 400, .2, .2, function()
+				values.bodyBGPalIndex = values.bodyBGPalIndex + 1
+	    if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
+	     updateBodyGeneratedCanvas()			
+   end)
+   hittestImagePlusTransform(blup2, x,y, 150, 400, .2, .2, function()
+				values.bodyFGPalIndex = values.bodyFGPalIndex + 1
+	    if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
+	     updateBodyGeneratedCanvas()			
+   end)
 end
 
 function pointerMoved(x, y, dx, dy, id)
@@ -306,7 +317,7 @@ function scene.load()
       leg2flop = 1,
       feetTypeIndex = 1,
       bodyBGPalIndex = 1,
-      bodyFGPalIndex = 2
+      bodyFGPalIndex = 10
    }
 
    feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt' }
@@ -352,24 +363,15 @@ function scene.load()
    --function updateTexturedCanvas(lineart, mask)
 
    --end
-   if true then
-      local lw, lh = lineart:getDimensions()
-      local _canvas = love.graphics.newCanvas(lw, lh)
-      local canvas = makeTexturedCanvas(_canvas,
-         lineart, mask,
-         grunge2, palettes[values.bodyBGPalIndex],
-         texture1, palettes[values.bodyFGPalIndex])
-
-      local romp = node.findNodeByName(body, 'romp')
-      local m = makeMeshFromSibling(romp, canvas)
-      local dynamic = makeDynamicCanvas(canvas, m)
-
-      addChildBefore(romp, dynamic)
-
-   end
+  
 
    biped = Concord.entity()
    biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+    if true then
+      updateBodyGeneratedCanvas()
+    
+
+   end
 
    myWorld:addEntity(biped)
    myWorld:emit("bipedInit", biped)
@@ -385,6 +387,33 @@ function scene.load()
    cam:update(w, h)
 
 end
+
+function updateBodyGeneratedCanvas()
+     local romp = node.findNodeByName(body, 'romp')
+	    local before = getSiblingBefore(romp)
+
+	    -- ill just remove the last one and make a new one
+	    if before and before.name == 'generated' then
+	       --            print('remeoving todo')
+	       removeChild(before)
+	    end
+	    local lw, lh = lineart:getDimensions()
+	    local _canvas = love.graphics.newCanvas(lw, lh)
+	    local canvas = makeTexturedCanvas(_canvas,
+					      lineart, mask,
+					      grunge2, palettes[values.bodyBGPalIndex],
+					      texture1, palettes[values.bodyFGPalIndex])
+
+
+	    local m = makeMeshFromSibling(romp, canvas)
+	    local dynamic = makeDynamicCanvas(canvas, m)
+
+	    addChildBefore(romp, dynamic)
+	    biped:give('biped',
+		       { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+
+end
+
 
 function attachCallbacks()
    function love.keypressed(key, unicode)
@@ -406,36 +435,7 @@ function attachCallbacks()
          values.leg2flop = 1
          myWorld:emit('bipedDirection', biped, 'down')
       end
-      if key == 'p' then
-         -- change the color of body
-         values.bodyBGPalIndex = values.bodyBGPalIndex + 1
-         if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-
-
-         local romp = node.findNodeByName(body, 'romp')
-         local before = getSiblingBefore(romp)
-
-         -- ill just remove the last one and make a new one
-         if before and before.name == 'generated' then
-            --            print('remeoving todo')
-            removeChild(before)
-         end
-         local lw, lh = lineart:getDimensions()
-         local _canvas = love.graphics.newCanvas(lw, lh)
-         local canvas = makeTexturedCanvas(_canvas,
-            lineart, mask,
-            grunge2, palettes[values.bodyBGPalIndex],
-            texture1, palettes[values.bodyFGPalIndex])
-
-
-         local m = makeMeshFromSibling(romp, canvas)
-         local dynamic = makeDynamicCanvas(canvas, m)
-
-         addChildBefore(romp, dynamic)
-         biped:give('biped',
-            { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-      end
+     
       if key == 'f' then
          --print('changing?', inspect(guy.children))
          values.feetTypeIndex = values.feetTypeIndex + 1
@@ -699,9 +699,28 @@ function scene.draw()
    local smallestScale = (w / imgW) / 4 --math.min(w / imgW, h / imgH)
 
 
+   function hittestImagePlusTransform(img,px, py,  x, y, sx, sy, callback)
+	 local imgW, imgH = img:getDimensions();
+	 
+	 if hit.pointInRect(px, py, x, y, imgW*sx, imgH*sy) then
+	    callback()
+	 end
+   end
+
+
+   --print('orig:', inspect(palettes[values.bodyBGPalIndex]))
+   --local h,s,v,a = vivid.RGBtoHSV(palettes[values.bodyBGPalIndex])
+   --print('hsva', h,s,v,a)
+   --local r,g,b,a = vivid.HSVtoRGB(h,s,v,a)
+   --print('rgba', r,g,b,a)
+   
    love.graphics.setColor(palettes[values.bodyBGPalIndex])
    love.graphics.draw(blup2, 50, 400, 0, .2, .2)
 
+    love.graphics.setColor(palettes[values.bodyFGPalIndex])
+   love.graphics.draw(blup2, 150, 400, 0, .2, .2)
+
+   
    function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
       love.graphics.circle('line', cx, cy, buttonRadius)
       love.graphics.print(label, cx, cy)

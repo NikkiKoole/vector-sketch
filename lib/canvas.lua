@@ -16,8 +16,7 @@ local function myStencilFunction(mask)
    love.graphics.setShader()
 end
 
--- make order the same as the system
---c, lineart, mask, texture1, color1, texture2, color2
+
 lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, texture2, color2)
    local lw, lh = lineart:getDimensions()
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
