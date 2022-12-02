@@ -184,12 +184,11 @@ function removeChild(elem)
    if index >= 0 then table.remove(elem._parent.children, index) end
 end
 
-function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalPoints)
-   -- we should be able to make it of a specific height/length
+-- todo how todo the combined canvas rubberhose thing (the filled in images?)
 
+function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalPoints)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
-   --print(height, length)
    local magic = 4.46
    local currentNode = {}
    currentNode.type = 'rubberhose'
@@ -317,7 +316,7 @@ function scene.load()
       leg2flop = 1,
       feetTypeIndex = 1,
       bodyBGPalIndex = 1,
-      bodyFGPalIndex = 10
+      bodyFGPalIndex = 1
    }
 
    feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt' }
