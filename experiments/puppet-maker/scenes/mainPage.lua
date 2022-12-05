@@ -411,7 +411,7 @@ function updateBodyGeneratedCanvas()
    local dynamic = makeDynamicCanvas(canvas, m)
    
    addChildBefore(romp, dynamic)
-   removeChild(romp)
+   --removeChild(romp)
    biped:give('biped',
 	      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 
