@@ -315,7 +315,7 @@ function scene.load()
       leg1flop = 1,
       leg2flop = 1,
       feetTypeIndex = 1,
-      bodyBGPalIndex = 1,
+      bodyBGPalIndex = 4,
       bodyFGPalIndex = 1
    }
 
@@ -388,28 +388,30 @@ function scene.load()
 end
 
 function updateBodyGeneratedCanvas()
-     local romp = node.findNodeByName(body, 'romp')
-	    local before = getSiblingBefore(romp)
+   local romp = node.findNodeByName(body, 'romp')
+   local before = getSiblingBefore(romp)
 
-	    -- ill just remove the last one and make a new one
-	    if before and before.name == 'generated' then
-	       --            print('remeoving todo')
-	       removeChild(before)
-	    end
-	    local lw, lh = lineart:getDimensions()
-	    local _canvas = love.graphics.newCanvas(lw, lh)
-	    local canvas = makeTexturedCanvas(_canvas,
-					      lineart, mask,
-					      grunge2, palettes[values.bodyBGPalIndex],
-					      texture1, palettes[values.bodyFGPalIndex])
+   -- ill just remove the last one and make a new one
+
+   if before and before.name == 'generated' then
+      removeChild(before)
+   end
+   
+   local lw, lh = lineart:getDimensions()
+   local _canvas = love.graphics.newCanvas(lw, lh)
+   local canvas = makeTexturedCanvas(_canvas,
+				     lineart, mask,
+				     grunge2, palettes[values.bodyBGPalIndex],
+				     texture1, palettes[values.bodyFGPalIndex])
 
 
-	    local m = makeMeshFromSibling(romp, canvas)
-	    local dynamic = makeDynamicCanvas(canvas, m)
-
-	    addChildBefore(romp, dynamic)
-	    biped:give('biped',
-		       { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   local m = makeMeshFromSibling(romp, canvas)
+   local dynamic = makeDynamicCanvas(canvas, m)
+   
+   addChildBefore(romp, dynamic)
+   --removeChild(romp)
+   biped:give('biped',
+	      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 
 end
 

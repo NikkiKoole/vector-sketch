@@ -20,7 +20,7 @@ end
 lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, texture2, color2)
    local lw, lh = lineart:getDimensions()
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   love.graphics.clear(0, 0, 0, 0) ---<<<<
+   love.graphics.clear(0,0,0, 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
    love.graphics.stencil(function() myStencilFunction(mask) end)
@@ -30,8 +30,8 @@ lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, textu
    local rotation = 0 --delta
    local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
 
-   local scaleX = .5
-   local scaleY = .5
+   local scaleX = 1
+   local scaleY = 1
 
    local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
    local xMax = (gw / 2) * scaleX - (ry * scaleX)
@@ -72,7 +72,7 @@ lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, textu
    --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
    --love.graphics.scale(2,2)
-   --love.graphics.setColor(1,1,1)
+   --love.graphics.setColor(0,0,0)
    --love.graphics.draw(lineart)
 
    love.graphics.setStencilTest()
