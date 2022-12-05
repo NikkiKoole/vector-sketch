@@ -41,8 +41,15 @@ lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, textu
    local yMax = (gh / 2) * scaleY - (ry * scaleY)
    local yOffset = yMin
 
+
+
+   -- this works too, and like this i dont need to put in big images
+  -- love.graphics.setColor(1,0,1, .1)
+  -- love.graphics.rectangle('fill', 0,0,1024,1024)
+
    love.graphics.setColor(color1)
    love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+
 
    -- second texture
    local gw, gh = texture2:getDimensions()
@@ -71,13 +78,15 @@ lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, textu
 
    --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
-   --love.graphics.scale(2,2)
-   --love.graphics.setColor(0,0,0)
-   --love.graphics.draw(lineart)
+   
 
    love.graphics.setStencilTest()
 
-
+   -- experimenting with drawing the outline in the canvas itself.
+   -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
+  -- love.graphics.setColor(0,0,0)
+  -- love.graphics.draw(lineart)
+   
    love.graphics.setCanvas() --- <<<<<
    return canvas
 end

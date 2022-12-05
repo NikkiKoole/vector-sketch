@@ -190,6 +190,7 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
    local magic = 4.46
+
    local currentNode = {}
    currentNode.type = 'rubberhose'
    currentNode.data = currentNode.data or {}
@@ -207,6 +208,7 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
    mesh.remeshNode(currentNode)
+  -- result.children = {currentNode}
    return currentNode
 end
 
@@ -409,7 +411,7 @@ function updateBodyGeneratedCanvas()
    local dynamic = makeDynamicCanvas(canvas, m)
    
    addChildBefore(romp, dynamic)
-   --removeChild(romp)
+  -- removeChild(romp)
    biped:give('biped',
 	      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 
