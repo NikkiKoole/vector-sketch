@@ -212,8 +212,8 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    return currentNode
 end
 
-function makeDynamicCanvas(canvas, mymesh)
-   local w, h = canvas:getDimensions()
+function makeDynamicCanvas(imageData, mymesh)
+   local w, h = imageData:getDimensions()
    local w2 = w / 2
    local h2 = h / 2
 
@@ -224,7 +224,7 @@ function makeDynamicCanvas(canvas, mymesh)
    result.texture = {
       filter = "linear",
       canvas = mymesh,
-      imageData = canvas:newImageData(),
+      imageData = imageData,
       wrap = "repeat",
       dimensions = { w, h }
    }
@@ -232,10 +232,10 @@ function makeDynamicCanvas(canvas, mymesh)
    return result
 end
 
-function makeMeshFromSibling(sib, canvas)
-   local texture = canvas
-   local data = texture:newImageData()
-   local img = love.graphics.newImage(data)
+function makeMeshFromSibling(sib, imageData)
+   --local texture = canvas
+   --local data = texture:newImageData()
+   local img = love.graphics.newImage(imageData)
 
    local editing = mesh.makeVertices(sib)
 
@@ -411,7 +411,7 @@ function updateBodyGeneratedCanvas()
    local dynamic = makeDynamicCanvas(canvas, m)
    
    addChildBefore(romp, dynamic)
-  -- removeChild(romp)
+   removeChild(romp)
    biped:give('biped',
 	      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 

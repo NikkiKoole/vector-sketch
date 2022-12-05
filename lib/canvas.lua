@@ -16,6 +16,43 @@ local function myStencilFunction(mask)
    love.graphics.setShader()
 end
 
+local function smoocheCanvas(canvas)
+   -- lifted from alpha padder
+   local imageData = canvas:newImageData( )
+   local width, height = imageData:getDimensions()
+   local format = imageData:getFormat( )
+   local result = love.image.newImageData( width, height,format)
+   local count = 0
+
+   for y = 0, height -1 do
+      for x = 0, width-1 do
+	 local r, g, b, a = imageData:getPixel(x, y)
+	 --if a > biggestAlpha then biggestAlpha = a end
+	 
+	 if a == 0 then
+	    for x2 = -1,1 do
+	       for y2 = -1,1 do
+		  if (x+x2) >=0 and (x+x2)<=width-1 then
+		     if (y+y2) >=0 and (y+y2)<=height-1 then
+			local r, g, b, a = imageData:getPixel(x+x2, y+y2)
+			if (a>0) then
+			   count = count + 1
+			   result:setPixel(x,y,r,g,b,0)
+			end
+		     end
+		  end
+	       end
+	    end
+	 else
+
+	    result:setPixel(x,y,r,g,b,a*1)
+	 end
+	 
+      end
+   end
+   return result
+end
+
 
 lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, texture2, color2)
    local lw, lh = lineart:getDimensions()
@@ -84,11 +121,16 @@ lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, textu
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-  -- love.graphics.setColor(0,0,0)
-  -- love.graphics.draw(lineart)
+   love.graphics.setColor(0,0,0)
+   love.graphics.draw(lineart)
    
    love.graphics.setCanvas() --- <<<<<
-   return canvas
+
+   -- how to smooch the canvas ?
+   
+   --return result
+   local imageData = smoocheCanvas(canvas) --canvas:newImageData( )
+   return imageData
 end
 
 
