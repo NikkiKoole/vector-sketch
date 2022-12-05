@@ -71,6 +71,9 @@ lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, textu
 
    --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
+   --love.graphics.scale(2,2)
+   --love.graphics.setColor(1,1,1)
+   --love.graphics.draw(lineart)
 
    love.graphics.setStencilTest()
 
