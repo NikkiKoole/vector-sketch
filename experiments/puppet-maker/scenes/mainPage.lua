@@ -549,6 +549,13 @@ function attachCallbacks()
 
 
    end
+   function love.wheelmoved(dx, dy)
+   local newScale = cam.scale * (1 + dy / 10)
+   if (newScale > 0.01 and newScale < 50) then
+      cam:scaleToPoint(1 + dy / 10)
+   end
+   end
+
 end
 
 --
