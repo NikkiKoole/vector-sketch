@@ -206,7 +206,7 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.flop = flop
    currentNode.data.borderRadius = .5
    currentNode.data.steps = 20
-   currentNode.color = { 0, 0, 0 }
+   currentNode.color = { 1, 1, 1 }
    currentNode.data.scaleX = 1
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
@@ -367,7 +367,7 @@ function scene.load()
 
    -- ok i dont get the mask images displaying correctly, i dunno why
    legImages = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-		 'assets/parts/leg5.png', 'assets/parts/leg2-mask.png' }
+		 'assets/parts/leg5.png', 'assets/parts/leg2-mask3.png' }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    stripPath(body, '/experiments/puppet%-maker/')
