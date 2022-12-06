@@ -16,8 +16,9 @@ local function myStencilFunction(mask)
    love.graphics.setShader()
 end
 
+-- lifted from alpha padder
 local function smoocheCanvas(canvas)
-   -- lifted from alpha padder
+   
    local imageData = canvas:newImageData( )
    local width, height = imageData:getDimensions()
    local format = imageData:getFormat( )
@@ -54,8 +55,10 @@ local function smoocheCanvas(canvas)
 end
 
 
-lib.makeTexturedCanvas = function(canvas, lineart, mask, texture1, color1, texture2, color2)
+lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, color2)
    local lw, lh = lineart:getDimensions()
+   local canvas = love.graphics.newCanvas(lw, lh)
+
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
    love.graphics.clear(0,0,0, 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<

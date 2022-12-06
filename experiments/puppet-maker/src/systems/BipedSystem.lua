@@ -90,14 +90,14 @@ function BipedSystem:bipedDirection(e, dir)
 
     if dir == 'left' then
 
-        e.biped.guy.children = { e.biped.leg1, e.biped.body, e.biped.leg2, e.biped.feet1, e.biped.feet2, e.biped.head }
+        e.biped.guy.children = { e.biped.leg1, e.biped.feet1, e.biped.body, e.biped.leg2, e.biped.feet2, e.biped.head }
         e.biped.leg1.data.flop = -1
         e.biped.leg2.data.flop = -1
         e.biped.feet1.transforms.l[4] = 1
         e.biped.feet2.transforms.l[4] = 1
     elseif dir == 'right' then
 
-        e.biped.guy.children = { e.biped.leg2, e.biped.body, e.biped.leg1, e.biped.feet1, e.biped.feet2, e.biped.head }
+        e.biped.guy.children = { e.biped.leg2,e.biped.feet2, e.biped.body, e.biped.leg1, e.biped.feet1,  e.biped.head }
         e.biped.leg1.data.flop = 1
         e.biped.leg2.data.flop = 1
 

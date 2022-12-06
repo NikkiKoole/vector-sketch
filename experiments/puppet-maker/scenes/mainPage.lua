@@ -28,7 +28,8 @@ local Components = {}
 local Systems = {}
 local myWorld = Concord.world()
 
-local makeTexturedCanvas = require('lib.canvas').makeTexturedCanvas
+local canvas = require('lib.canvas')
+
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
@@ -100,13 +101,13 @@ function pointerPressed(x, y, id)
    -- somethign about the ui too, this needs more thought
    hittestImagePlusTransform(blup2, x,y, 50, 400, .2, .2, function()
 				values.bodyBGPalIndex = values.bodyBGPalIndex + 1
-	    if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-	     updateBodyGeneratedCanvas()			
+				if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
+				updateBodyGeneratedCanvas()			
    end)
    hittestImagePlusTransform(blup2, x,y, 150, 400, .2, .2, function()
 				values.bodyFGPalIndex = values.bodyFGPalIndex + 1
-	    if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
-	     updateBodyGeneratedCanvas()			
+				if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
+				updateBodyGeneratedCanvas()			
    end)
 end
 
@@ -208,7 +209,7 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
    mesh.remeshNode(currentNode)
-  -- result.children = {currentNode}
+   -- result.children = {currentNode}
    return currentNode
 end
 
@@ -224,7 +225,7 @@ function makeDynamicCanvas(imageData, mymesh)
    result.texture = {
       filter = "linear",
       canvas = mymesh,
-      imageData = imageData,
+      --imageData = imageData,
       wrap = "repeat",
       dimensions = { w, h }
    }
@@ -329,16 +330,16 @@ function scene.load()
    end
 
    legImages = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-      'assets/parts/leg5.png' }
+		 'assets/parts/leg5.png' }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    head = parse.parseFile('assets/head4.polygons.txt')[1]
 
    leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
-      values.legWidthMultiplier)
+				    values.legWidthMultiplier)
 
    leg2 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg2flop, values.legLength,
-      values.legWidthMultiplier)
+				    values.legWidthMultiplier)
 
 
    feet1 = copy3(feetParts[values.feetTypeIndex])
@@ -364,14 +365,12 @@ function scene.load()
    --function updateTexturedCanvas(lineart, mask)
 
    --end
-  
+   
 
    biped = Concord.entity()
    biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-    if true then
+   if true then
       updateBodyGeneratedCanvas()
-    
-
    end
 
    myWorld:addEntity(biped)
@@ -398,20 +397,20 @@ function updateBodyGeneratedCanvas()
    if before and before.name == 'generated' then
       removeChild(before)
    end
+
    
-   local lw, lh = lineart:getDimensions()
-   local _canvas = love.graphics.newCanvas(lw, lh)
-   local canvas = makeTexturedCanvas(_canvas,
-				     lineart, mask,
-				     grunge2, palettes[values.bodyBGPalIndex],
-				     texture1, palettes[values.bodyFGPalIndex])
+   
+   local canvas = canvas.makeTexturedCanvas(
+      lineart, mask,
+      grunge2, palettes[values.bodyBGPalIndex],
+      texture1, palettes[values.bodyFGPalIndex])
 
 
    local m = makeMeshFromSibling(romp, canvas)
    local dynamic = makeDynamicCanvas(canvas, m)
    
    addChildBefore(romp, dynamic)
-   --removeChild(romp)
+   --   removeChild(romp)
    biped:give('biped',
 	      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 
@@ -438,7 +437,7 @@ function attachCallbacks()
          values.leg2flop = 1
          myWorld:emit('bipedDirection', biped, 'down')
       end
-     
+      
       if key == 'f' then
          --print('changing?', inspect(guy.children))
          values.feetTypeIndex = values.feetTypeIndex + 1
@@ -455,7 +454,7 @@ function attachCallbacks()
 
                guy.children[i] = feet1
                biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+			  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
                myWorld:emit("bipedAttachFeet", biped)
                parentize.parentize(root)
                mesh.meshAll(root)
@@ -471,7 +470,7 @@ function attachCallbacks()
 
                guy.children[i] = feet2
                biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+			  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
                myWorld:emit("bipedAttachFeet", biped)
                parentize.parentize(root)
                mesh.meshAll(root)
@@ -486,20 +485,20 @@ function attachCallbacks()
          for i = 1, #guy.children do
             if (guy.children[i] == leg1) then
                leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
-                  values.legWidthMultiplier, leg1.points)
+						values.legWidthMultiplier, leg1.points)
                guy.children[i] = leg1
                biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+			  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
                myWorld:emit("bipedAttachFeet", biped)
                parentize.parentize(root)
                mesh.meshAll(root)
             end
             if (guy.children[i] == leg2) then
                leg2 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg2flop, values.legLength,
-                  values.legWidthMultiplier, leg2.points)
+						values.legWidthMultiplier, leg2.points)
                guy.children[i] = leg2
                biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+			  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
                myWorld:emit("bipedAttachFeet", biped)
                parentize.parentize(root)
                mesh.meshAll(root)
@@ -553,10 +552,10 @@ function attachCallbacks()
 
    end
    function love.wheelmoved(dx, dy)
-   local newScale = cam.scale * (1 + dy / 10)
-   if (newScale > 0.01 and newScale < 50) then
-      cam:scaleToPoint(1 + dy / 10)
-   end
+      local newScale = cam.scale * (1 + dy / 10)
+      if (newScale > 0.01 and newScale < 50) then
+	 cam:scaleToPoint(1 + dy / 10)
+      end
    end
 
 end
@@ -710,11 +709,11 @@ function scene.draw()
 
 
    function hittestImagePlusTransform(img,px, py,  x, y, sx, sy, callback)
-	 local imgW, imgH = img:getDimensions();
-	 
-	 if hit.pointInRect(px, py, x, y, imgW*sx, imgH*sy) then
-	    callback()
-	 end
+      local imgW, imgH = img:getDimensions();
+      
+      if hit.pointInRect(px, py, x, y, imgW*sx, imgH*sy) then
+	 callback()
+      end
    end
 
 
@@ -727,7 +726,7 @@ function scene.draw()
    love.graphics.setColor(palettes[values.bodyBGPalIndex])
    love.graphics.draw(blup2, 50, 400, 0, .2, .2)
 
-    love.graphics.setColor(palettes[values.bodyFGPalIndex])
+   love.graphics.setColor(palettes[values.bodyFGPalIndex])
    love.graphics.draw(blup2, 150, 400, 0, .2, .2)
 
    
@@ -755,15 +754,15 @@ function scene.draw()
    if v.value then
       values.legLength = v.value
       leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
-         values.legWidthMultiplier,
-         leg1.points)
+				       values.legWidthMultiplier,
+				       leg1.points)
       leg2 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg2flop, values.legLength,
-         values.legWidthMultiplier,
-         leg2.points)
+				       values.legWidthMultiplier,
+				       leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
       parentize.parentize(root)
       biped:give('biped',
-         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+		 { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
       myWorld:emit("bipedAttachFeet", biped)
       mesh.meshAll(root)
    end
@@ -771,15 +770,15 @@ function scene.draw()
    if v.value then
       values.legWidthMultiplier = v.value
       leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
-         values.legWidthMultiplier,
-         leg1.points)
+				       values.legWidthMultiplier,
+				       leg1.points)
       leg2 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg2flop, values.legLength,
-         values.legWidthMultiplier,
-         leg2.points)
+				       values.legWidthMultiplier,
+				       leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
       parentize.parentize(root)
       biped:give('biped',
-         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+		 { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
       myWorld:emit("bipedAttachFeet", biped)
       mesh.meshAll(root)
    end
