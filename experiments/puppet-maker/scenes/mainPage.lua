@@ -102,12 +102,14 @@ function pointerPressed(x, y, id)
    hittestImagePlusTransform(blup2, x,y, 50, 400, .2, .2, function()
 				values.bodyBGPalIndex = values.bodyBGPalIndex + 1
 				if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-				updateBodyGeneratedCanvas()			
+				redoTheGraphicInPart(body)
+				--updateBodyGeneratedCanvas()			
    end)
    hittestImagePlusTransform(blup2, x,y, 150, 400, .2, .2, function()
 				values.bodyFGPalIndex = values.bodyFGPalIndex + 1
 				if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
-				updateBodyGeneratedCanvas()			
+				redoTheGraphicInPart(body)
+				--updateBodyGeneratedCanvas()			
    end)
 end
 
@@ -247,6 +249,27 @@ function makeMeshFromSibling(sib, imageData)
    return made
 end
 
+
+function redoTheGraphicInPart(part)
+   -- to be used for the body for now, i want to fill it with patterns and colors -inplace
+   -- this assumes a polygon file with the texture as a first child
+   --print(part.children[1].texture.url)
+   local lineart = (mesh.getImage(part.children[1].texture.url, part.children[1].texture))
+   local mask = love.graphics.newImage("assets/parts/romp1-mask.png") -- todo get this from somewhere
+   -- now we have the lineart image
+
+   local canvas = canvas.makeTexturedCanvas(
+      lineart, mask,
+      grunge2, palettes[values.bodyBGPalIndex],
+      texture1, palettes[values.bodyFGPalIndex])
+   print(canvas)
+   local m = makeMeshFromSibling(part.children[1], canvas)
+   part.children[1].texture.canvas = m
+   --   part.children[1].texture.
+ 
+end
+
+
 function scene.load()
 
    bgColor = creamColor
@@ -333,6 +356,9 @@ function scene.load()
 		 'assets/parts/leg5.png' }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
+   stripPath(body, '/experiments/puppet%-maker/')
+   redoTheGraphicInPart(body)
+   
    head = parse.parseFile('assets/head4.polygons.txt')[1]
 
    leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
@@ -369,9 +395,9 @@ function scene.load()
 
    biped = Concord.entity()
    biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-   if true then
-      updateBodyGeneratedCanvas()
-   end
+   --if true then
+     --updateBodyGeneratedCanvas()
+   --end
 
    myWorld:addEntity(biped)
    myWorld:emit("bipedInit", biped)

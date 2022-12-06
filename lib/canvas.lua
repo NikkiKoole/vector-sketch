@@ -124,8 +124,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-   --love.graphics.setColor(0,0,0)
-   --love.graphics.draw(lineart)
+   love.graphics.setColor(0,0,0)
+   love.graphics.draw(lineart)
    
    love.graphics.setCanvas() --- <<<<<
 

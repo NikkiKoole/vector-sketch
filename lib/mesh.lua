@@ -428,9 +428,10 @@ local function addToImageCache(url, settings)
    -- print(url)
    if (url and #url > 0) then
       if not _imageCache[url] then
+--	 print(inspect(settings))
          local wrap = settings and settings.wrap or 'clampzero'
          local filter = settings and settings.filter or 'linear'
-         print('making texture', url)
+         --print('making texture', url)
          local img = love.graphics.newImage(url, { mipmaps = true })
          img:setWrap(wrap)
          img:setFilter(filter, filter)
@@ -439,9 +440,9 @@ local function addToImageCache(url, settings)
    end
 end
 
-mesh.getImage = function(url)
+mesh.getImage = function(url, settings)
    if not _imageCache[url] then
-      addToImageCache(url)
+      addToImageCache(url, settings)
    end
    return _imageCache[url]
 
