@@ -144,7 +144,7 @@ function stripPath(root, path)
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
       root.texture.url = shortened
-      print(shortened)
+      --print(shortened)
    end
 
    if root.children then
@@ -414,6 +414,7 @@ function scene.load()
 
 end
 
+--[[
 function updateBodyGeneratedCanvas()
    local romp = node.findNodeByName(body, 'romp')
    local before = getSiblingBefore(romp)
@@ -423,8 +424,6 @@ function updateBodyGeneratedCanvas()
    if before and before.name == 'generated' then
       removeChild(before)
    end
-
-   
    
    local canvas = canvas.makeTexturedCanvas(
       lineart, mask,
@@ -441,7 +440,7 @@ function updateBodyGeneratedCanvas()
 	      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
 
 end
-
+--]]
 
 function attachCallbacks()
    function love.keypressed(key, unicode)
