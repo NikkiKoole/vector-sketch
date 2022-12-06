@@ -471,23 +471,14 @@ mesh.remeshNode = function(node)
    local verts = mesh.makeVertices(node)
 
    if node.texture and node.texture.canvas then
-      --print('oohlala')
-      --print(node.texture.canvas:newImageData())
-      --local img = love.graphics.newImage(url, { mipmaps = true })
-      --img:setWrap(wrap)
-      --img:setFilter(filter, filter)
-
       return
    end
 
    if node.texture and (node.texture.url and node.texture.url:len() > 0) and
        (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
-      --print(node.texture.url, node.texture.url:len())
 
 
       local img = mesh.getImage(node.texture.url)
-
-
 
       if (node.texture.squishable) then
          local v = mesh.makeSquishableUVsFromPoints(node.points)
@@ -515,10 +506,12 @@ mesh.remeshNode = function(node)
          if texture then
 	    --print(texture)
             node.mesh:setTexture(texture)
+	    print('remesh in rubberhose')
          end
-	 --if (node.texture.wild) then
-	 --   node.mesh:setTexture(node.texture.wild)
-	 --end
+	 if (node.texture.wild) then
+	    node.mesh:setTexture(node.texture.wild)
+	    print('remesh in rubberhose 2')
+	 end
 	 
       end
    end

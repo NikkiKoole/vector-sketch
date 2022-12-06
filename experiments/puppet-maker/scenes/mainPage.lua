@@ -198,7 +198,7 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.type = 'rubberhose'
    currentNode.data = currentNode.data or {}
    currentNode.texture = {}
-   currentNode.texture.url = url
+   currentNode.texture.url = url -- 'assets/parts/leg2-mask.png' --url
    currentNode.texture.wrap = 'repeat'
    currentNode.texture.filter = 'linear'
    currentNode.data.length = height * magic
@@ -210,14 +210,9 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.scaleX = 1
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
-   --mesh.remeshNode(currentNode)
 
-   -- maybe i can set the combined texture of the mesh in here?
+   --currentNode.texture.wild =  mesh.getImage('assets/parts/leg2-mask.png')
    
-   --local img2 = love.graphics.newImage('assets/parts/leg2-mask.png')
-   --currentNode.mesh:setTexture(img)
-   --currentNode.texture.wild = img2
-   -- result.children = {currentNode}
    return currentNode
 end
 
@@ -233,7 +228,6 @@ function makeDynamicCanvas(imageData, mymesh)
    result.texture = {
       filter = "linear",
       canvas = mymesh,
-      --imageData = imageData,
       wrap = "repeat",
       dimensions = { w, h }
    }
@@ -371,8 +365,9 @@ function scene.load()
       stripPath(feetParts[i], '/experiments/puppet%-maker/')
    end
 
+   -- ok i dont get the mask images displaying correctly, i dunno why
    legImages = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-		 'assets/parts/leg5.png' }
+		 'assets/parts/leg5.png', 'assets/parts/leg2-mask.png' }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    stripPath(body, '/experiments/puppet%-maker/')
