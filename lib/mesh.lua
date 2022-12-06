@@ -506,11 +506,11 @@ mesh.remeshNode = function(node)
          if texture then
 	    --print(texture)
             node.mesh:setTexture(texture)
-	    print('remesh in rubberhose')
+	    --print('remesh in rubberhose')
          end
 	 if (node.texture.retexture) then
 	    node.mesh:setTexture(node.texture.retexture)
-	    print('remesh in rubberhose 2')
+	    --print('remesh in rubberhose 2')
 	 end
 	 
       end

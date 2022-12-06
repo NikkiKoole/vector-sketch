@@ -211,15 +211,16 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 
-
+   if (true) then
    local lineart = img
    local mask = mesh.getImage('assets/parts/leg2-mask.png')
-    local canvas = canvas.makeTexturedCanvas(
+   local canvas = canvas.makeTexturedCanvas(
       lineart, mask,
       grunge2, palettes[values.bodyBGPalIndex],
       texture1, palettes[values.bodyFGPalIndex])
+    
    currentNode.texture.retexture =  love.graphics.newImage(canvas)
-   
+   end
    return currentNode
 end
 
