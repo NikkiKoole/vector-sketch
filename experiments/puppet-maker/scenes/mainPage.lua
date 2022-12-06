@@ -211,7 +211,14 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 
-   --currentNode.texture.wild =  mesh.getImage('assets/parts/leg2-mask.png')
+
+   local lineart = img
+   local mask = mesh.getImage('assets/parts/leg2-mask.png')
+    local canvas = canvas.makeTexturedCanvas(
+      lineart, mask,
+      grunge2, palettes[values.bodyBGPalIndex],
+      texture1, palettes[values.bodyFGPalIndex])
+   currentNode.texture.retexture =  love.graphics.newImage(canvas)
    
    return currentNode
 end
@@ -367,7 +374,7 @@ function scene.load()
 
    -- ok i dont get the mask images displaying correctly, i dunno why
    legImages = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-		 'assets/parts/leg5.png', 'assets/parts/leg2-mask3.png' }
+		 'assets/parts/leg5.png', 'assets/parts/leg2-mask.png' }
 
    body = parse.parseFile('assets/body.polygons.txt')[1]
    stripPath(body, '/experiments/puppet%-maker/')
