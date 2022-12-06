@@ -132,7 +132,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    -- how to smooch the canvas ?
    
    --return result
-   local imageData = smoocheCanvas(canvas) --canvas:newImageData( )
+   local imageData = smoocheCanvas(canvas) --
+   --local imageData = canvas:newImageData( )
    return imageData
 end
 
