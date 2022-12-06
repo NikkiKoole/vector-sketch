@@ -236,10 +236,8 @@ function makeDynamicCanvas(imageData, mymesh)
 end
 
 function makeMeshFromSibling(sib, imageData)
-   --local texture = canvas
-   --local data = texture:newImageData()
+   
    local img = love.graphics.newImage(imageData)
-
    local editing = mesh.makeVertices(sib)
 
    mesh.addUVToVerts(editing, img, sib.points, sib.texture)
@@ -262,7 +260,7 @@ function redoTheGraphicInPart(part)
       lineart, mask,
       grunge2, palettes[values.bodyBGPalIndex],
       texture1, palettes[values.bodyFGPalIndex])
-   print(canvas)
+
    local m = makeMeshFromSibling(part.children[1], canvas)
    part.children[1].texture.canvas = m
    --   part.children[1].texture.
