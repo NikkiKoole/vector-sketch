@@ -210,7 +210,13 @@ function createRubberHoseFromImage(url, flop, length, widthMultiplier, optionalP
    currentNode.data.scaleX = 1
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
-   mesh.remeshNode(currentNode)
+   --mesh.remeshNode(currentNode)
+
+   -- maybe i can set the combined texture of the mesh in here?
+   
+   --local img2 = love.graphics.newImage('assets/parts/leg2-mask.png')
+   --currentNode.mesh:setTexture(img)
+   --currentNode.texture.wild = img2
    -- result.children = {currentNode}
    return currentNode
 end
@@ -249,20 +255,37 @@ end
 
 
 function redoTheGraphicInPart(part)
-   -- to be used for the body for now, i want to fill it with patterns and colors -inplace
-   -- this assumes a polygon file with the texture as a first child
-   --print(part.children[1].texture.url)
-   local lineart = (mesh.getImage(part.children[1].texture.url, part.children[1].texture))
-   local mask = love.graphics.newImage("assets/parts/romp1-mask.png") -- todo get this from somewhere
-   -- now we have the lineart image
 
+   local lineartToMask = {
+      ['assets/parts/romp1.png'] = 'assets/parts/romp1-mask.png',
+      ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png'
+   }
+
+   local p
+   if part.children then
+      p = part.children[1]
+   else
+      p = part
+   end
+   
+   
+   local lineartUrl = p.texture.url
+   local lineart = (mesh.getImage(lineartUrl, p.texture))
+
+   local mask 
+   if lineartToMask[lineartUrl] then
+      mask = mesh.getImage(lineartToMask[lineartUrl] )
+   end
+   print(lineart, mask)
+   if (lineart and mask) then
    local canvas = canvas.makeTexturedCanvas(
       lineart, mask,
       grunge2, palettes[values.bodyBGPalIndex],
       texture1, palettes[values.bodyFGPalIndex])
 
-   local m = makeMeshFromSibling(part.children[1], canvas)
-   part.children[1].texture.canvas = m
+   local m = makeMeshFromSibling(p, canvas)
+   p.texture.canvas = m
+   end
    --   part.children[1].texture.
  
 end
@@ -331,7 +354,7 @@ function scene.load()
 
 
    values = {
-      legImgIndex = 1,
+      legImgIndex = 2,
       legLength = 700,
       legWidthMultiplier = 1,
       leg1flop = 1,
@@ -359,6 +382,7 @@ function scene.load()
 
    leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
 				    values.legWidthMultiplier)
+   --redoTheGraphicInPart(leg1)
 
    leg2 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg2flop, values.legLength,
 				    values.legWidthMultiplier)
@@ -380,7 +404,7 @@ function scene.load()
 
    parentize.parentize(root)
    mesh.meshAll(root)
-   mesh.recursivelyMakeTextures(root)
+   --mesh.recursivelyMakeTextures(root)
    render.renderThings(root)
 
    --- custom background

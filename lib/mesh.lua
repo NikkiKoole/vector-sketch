@@ -387,13 +387,15 @@ end
 
 
 mesh.addUVToVerts = function(verts, img, points, settings)
+   -- ok this breask if you want to do it with an rubberhose.....
+   -- because that doenst have 4 points to it.
    --print('Im tweakibg around ion here atm, check the code for UV stuff')
    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
 
    local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
    local xFactor = 1
    local yFactor = 1
-
+   print(brx, tlx, bry, tly)
    assert(brx - tlx > 0 and bry - tly > 0)
 
    local xFactor = img:getWidth() / (brx - tlx)
@@ -511,8 +513,13 @@ mesh.remeshNode = function(node)
 
          --print(texture)
          if texture then
+	    --print(texture)
             node.mesh:setTexture(texture)
          end
+	 --if (node.texture.wild) then
+	 --   node.mesh:setTexture(node.texture.wild)
+	 --end
+	 
       end
    end
 
