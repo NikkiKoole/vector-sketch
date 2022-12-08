@@ -253,7 +253,7 @@ mesh.makeVertices = function(shape)
             local m = ((shape.data.length * scaleX) / 4.46)
             if (d > m) then
                -- todo this .1 is somethign i want to parametrize
-               stretchyWidthDivider = (numbers.mapInto(d, 0, m * scaleY, .1, stretchyWidthDivider))
+               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 1, stretchyWidthDivider))
                thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
 
             end
@@ -430,7 +430,7 @@ local function addToImageCache(url, settings)
    -- print(url)
    if (url and #url > 0) then
       if not _imageCache[url] then
---	 print(inspect(settings))
+         --	 print(inspect(settings))
          local wrap = settings and settings.wrap or 'clampzero'
          local filter = settings and settings.filter or 'linear'
          --print('making texture', url)
@@ -504,15 +504,15 @@ mesh.remeshNode = function(node)
 
          --print(texture)
          if texture then
-	    --print(texture)
+            --print(texture)
             node.mesh:setTexture(texture)
-	    --print('remesh in rubberhose')
+            --print('remesh in rubberhose')
          end
-	 if (node.texture.retexture) then
-	    node.mesh:setTexture(node.texture.retexture)
-	    --print('remesh in rubberhose 2')
-	 end
-	 
+         if (node.texture.retexture) then
+            node.mesh:setTexture(node.texture.retexture)
+            --print('remesh in rubberhose 2')
+         end
+
       end
    end
 

@@ -18,49 +18,48 @@ end
 
 -- lifted from alpha padder
 local function smoocheCanvas(canvas)
-   
-   local imageData = canvas:newImageData( )
+
+   local imageData = canvas:newImageData()
    local width, height = imageData:getDimensions()
-   local format = imageData:getFormat( )
-   local result = love.image.newImageData( width, height,format)
+   local format = imageData:getFormat()
+   local result = love.image.newImageData(width, height, format)
    local count = 0
 
-   for y = 0, height -1 do
-      for x = 0, width-1 do
-	 local r, g, b, a = imageData:getPixel(x, y)
-	 --if a > biggestAlpha then biggestAlpha = a end
-	 
-	 if a == 0 then
-	    for x2 = -1,1 do
-	       for y2 = -1,1 do
-		  if (x+x2) >=0 and (x+x2)<=width-1 then
-		     if (y+y2) >=0 and (y+y2)<=height-1 then
-			local r, g, b, a = imageData:getPixel(x+x2, y+y2)
-			if (a>0) then
-			   count = count + 1
-			   result:setPixel(x,y,r,g,b,0)
-			end
-		     end
-		  end
-	       end
-	    end
-	 else
+   for y = 0, height - 1 do
+      for x = 0, width - 1 do
+         local r, g, b, a = imageData:getPixel(x, y)
+         --if a > biggestAlpha then biggestAlpha = a end
 
-	    result:setPixel(x,y,r,g,b,a*1)
-	 end
-	 
+         if a == 0 then
+            for x2 = -1, 1 do
+               for y2 = -1, 1 do
+                  if (x + x2) >= 0 and (x + x2) <= width - 1 then
+                     if (y + y2) >= 0 and (y + y2) <= height - 1 then
+                        local r, g, b, a = imageData:getPixel(x + x2, y + y2)
+                        if (a > 0) then
+                           count = count + 1
+                           result:setPixel(x, y, r, g, b, 0)
+                        end
+                     end
+                  end
+               end
+            end
+         else
+
+            result:setPixel(x, y, r, g, b, a * 1)
+         end
+
       end
    end
    return result
 end
-
 
 lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, color2)
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
 
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   love.graphics.clear(0,0,0, 0) ---<<<<
+   love.graphics.clear(0, 0, 0, 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
    love.graphics.stencil(function() myStencilFunction(mask) end)
@@ -84,11 +83,11 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
 
    -- this works too, and like this i dont need to put in big images
-  -- love.graphics.setColor(1,0,1, .1)
-  -- love.graphics.rectangle('fill', 0,0,1024,1024)
+   love.graphics.setColor(1, 0, 1, 1)
+   love.graphics.rectangle('fill', 0, 0, 1024, 1024)
 
-   love.graphics.setColor(color1)
-   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+   --love.graphics.setColor(color1)
+   --love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
 
    -- second texture
@@ -118,23 +117,23 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
    --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
-   
+
 
    love.graphics.setStencilTest()
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-   love.graphics.setColor(0,0,0)
+   love.graphics.setColor(0, 0, 0)
    love.graphics.draw(lineart)
-   
+
    love.graphics.setCanvas() --- <<<<<
 
    -- how to smooch the canvas ?
-   
+
    --return result
    -- smooche is slow!!!!
    --local imageData = smoocheCanvas(canvas) --
-   local imageData = canvas:newImageData( )
+   local imageData = canvas:newImageData()
    return imageData
 end
 
