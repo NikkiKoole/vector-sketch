@@ -83,11 +83,11 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
 
    -- this works too, and like this i dont need to put in big images
-   love.graphics.setColor(1, 0, 1, 1)
-   love.graphics.rectangle('fill', 0, 0, 1024, 1024)
+   --love.graphics.setColor(1, 0, 1, 1)
+   --love.graphics.rectangle('fill', 0, 0, 1024, 1024)
 
-   --love.graphics.setColor(color1)
-   --love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+   love.graphics.setColor(color1)
+   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
 
    -- second texture
