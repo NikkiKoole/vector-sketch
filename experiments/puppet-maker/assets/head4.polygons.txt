@@ -8,6 +8,21 @@ filter = "linear",
 url = "/experiments/puppet-maker/assets/parts/headshapebuff.png",
 wrap = "repeat"
 }
+}, {
+color = { 1, 0, 0, 1 },
+name = "",
+points = { { 446.385, 272.714 } },
+type = "meta"
+}, {
+color = { 1, 0, 0, 1 },
+name = "",
+points = { { 614.147, 269.119 } },
+type = "meta"
+}, {
+color = { 1, 0, 0, 1 },
+name = "",
+points = { { 496.713, 428.493 } },
+type = "meta"
 } },
 folder = true,
 name = "head",

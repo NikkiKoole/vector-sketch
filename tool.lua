@@ -3050,7 +3050,7 @@ function mylib:draw()
 
    if showHelp then
       LG.setColor(1, 1, 1, 1)
-      LG.print('KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nu: update lurker\nj: save json\narrows + optional shift: move selection around'
+      LG.print('KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nu: update lurker\nj: save json\narrows + optional shift: move selection around\nr: snap to pixel'
          , 50, 50)
    end
 

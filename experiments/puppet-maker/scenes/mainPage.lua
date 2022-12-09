@@ -247,7 +247,7 @@ function makeDynamicCanvas(imageData, mymesh)
       filter = "linear",
       canvas = mymesh,
       wrap = "repeat",
-      dimensions = { w, h }
+      --dimensions = { w, h }
    }
 
    return result
@@ -269,7 +269,8 @@ function redoTheGraphicInPart(part)
 
    local lineartToMask = {
       ['assets/parts/romp1.png'] = 'assets/parts/romp1-mask.png',
-      ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png'
+      ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png',
+      ['assets/parts/headshapebuff.png'] = 'assets/parts/headshapebuff-mask.png'
    }
 
    local p
@@ -385,8 +386,9 @@ function scene.load()
    stripPath(body, '/experiments/puppet%-maker/')
    redoTheGraphicInPart(body)
 
-   head = parse.parseFile('assets/head2.polygons.txt')[1]
-
+   head = parse.parseFile('assets/head4.polygons.txt')[1]
+   stripPath(head, '/experiments/puppet%-maker/')
+   redoTheGraphicInPart(head)
    leg1 = createRubberHoseFromImage(legImages[values.legImgIndex], values.leg1flop, values.legLength,
       values.legWidthMultiplier)
    --redoTheGraphicInPart(leg1)
