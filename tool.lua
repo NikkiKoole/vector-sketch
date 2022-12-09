@@ -907,7 +907,7 @@ local function drawUIAroundGraphNodes(w, h)
 
    ---  polyline
 
-   if (editingMode == 'polyline' and currentNode and currentNode.type ~= 'meta') then
+   if (editingMode == 'polyline' and currentNode ) then
       table.insert(
          row2,
          {
@@ -969,16 +969,30 @@ local function drawUIAroundGraphNodes(w, h)
       table.insert(row2, "newline")
       -- instead i want 1 button that can toggle between these 3/ or 4 options, also polyline
       -- object_group, mask, hole, close_stenicl
-      if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil) then
+      --print((not currentNode.mask and not currentNode.hole and not currentNode.closeStencil and currentNode.type == nil))
+      if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil and currentNode.type == nil) then
          table.insert(
             row2,
             {
-               'vanilla', icon.object_group, 'now its normal click to make mask',
+               'vanilla', icon.object_group, 'now its normal click to make meta',
+               function()
+       
+                  currentNode.type ='meta'
+               end
+            }
+         )
+      end
+      if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil and currentNode.type == 'meta') then
+         table.insert(
+            row2,
+            {
+               'vanilla', icon.move, 'now its meta click to make mask',
                function()
                   currentNode.mask = true
                   currentNode.hole = false
                   currentNode.closeStencil = false
-
+                  currentNode.type = nil
+                 
                end
             }
          )
@@ -1023,6 +1037,7 @@ local function drawUIAroundGraphNodes(w, h)
                   currentNode.mask = false
                   currentNode.hole = false
                   currentNode.closeStencil = false
+               
                end
             }
          )
