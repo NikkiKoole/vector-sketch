@@ -827,6 +827,12 @@ function scene.draw()
    --local r,g,b,a = vivid.HSVtoRGB(h,s,v,a)
    --print('rgba', r,g,b,a)
 
+
+   love.graphics.setColor(0,0,0,.25)
+   love.graphics.draw(blup2, 50, 400, 0, .2, .2)
+
+   -- draw the pattern
+
    love.graphics.setColor(palettes[values.bodyBGPalIndex])
    love.graphics.draw(blup2, 150, 400, 0, .2, .2)
 
