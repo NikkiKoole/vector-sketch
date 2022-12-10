@@ -23,6 +23,12 @@ Concord.component('biped',
         c.head = head
     end
 )
+Concord.component('head',
+    function (c, parts)
+        c.eye1 = parts.eye1
+        c.eye2 = parts.eye2
+    end
+)
 Concord.component('draggingRopeEnd',
     function(c, rope, anchorName, attachedTo)
         c.rope = rope

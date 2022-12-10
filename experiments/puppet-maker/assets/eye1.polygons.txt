@@ -1,0 +1,17 @@
+{ {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { 427, 271 }, { 729, 271 }, { 729, 581 }, { 427, 581 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/eye1.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "eye1",
+transforms = {
+l = { 0, 0, 0, 1, 1, 578, 426, 0, 0 }
+}
+} }

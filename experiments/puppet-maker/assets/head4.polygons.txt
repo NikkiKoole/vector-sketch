@@ -9,19 +9,9 @@ url = "/experiments/puppet-maker/assets/parts/headshapebuff.png",
 wrap = "repeat"
 }
 }, {
-color = { 1, 0, 0, 1 },
-name = "",
-points = { { 446.385, 272.714 } },
-type = "meta"
-}, {
-color = { 1, 0, 0, 1 },
-name = "",
-points = { { 614.147, 269.119 } },
-type = "meta"
-}, {
-color = { 1, 0, 0, 1 },
-name = "",
-points = { { 496.713, 428.493 } },
+color = { 0, 0, 0, 1 },
+name = "shape8",
+points = { { 513.645, 91.205 }, { 401.745, 193.374 }, { 350.66, 355.142 }, { 301.913, 505.04 }, { 494.184, 571.644 }, { 678.149, 519.723 }, { 679.984, 361.887 }, { 650.619, 198.546 } },
 type = "meta"
 } },
 folder = true,
