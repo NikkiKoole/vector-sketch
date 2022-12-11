@@ -72,123 +72,6 @@ local function getScreenBBoxForItem(c, bbox)
 
 end
 
-function pointerPressed(x, y, id)
-   local wx, wy = cam:getWorldCoordinates(x, y)
-   for j = 1, #root.children do
-      local guy = root.children[j]
-      for i = 1, #guy.children do
-
-         local item = guy.children[i]
-         local b = bbox.getBBoxRecursive(item)
-         --print(inspect(b))
-         if b and item.folder then
-
-            local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
-            local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
-            local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
-
-            --print(wx, wy, tlx, tly, brx - tlx, bry - tly)
-
-            if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
-               --print('bbox hit', item.name)
-
-               table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
-            end
-         end
-      end
-   end
-
-   -- somethign about the ui too, this needs more thought
-   hittestImagePlusTransform(blup2, x, y, 150, 400, .2, .2, function()
-      values.bodyBGPalIndex = values.bodyBGPalIndex + 1
-      if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex])
-      --updateBodyGeneratedCanvas()
-   end)
-   hittestImagePlusTransform(blup2, x, y, 250, 400, .2, .2, function()
-      values.bodyFGPalIndex = values.bodyFGPalIndex + 1
-      if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
-      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex]) 
-      --updateBodyGeneratedCanvas()
-   end)
-
-   hittestImagePlusTransform(blup2, x, y, 150, 500, .2, .2, function()
-      values.legBGPalIndex = values.legBGPalIndex + 1
-      if (values.legBGPalIndex > #palettes) then values.legBGPalIndex = 1 end
-      --redoTheGraphicInPart(body, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
-      print('hello',  values.legBGPalIndex)
-      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg1flop, values.legLength,
-         values.legWidthMultiplier,
-         leg1.points)
-      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg2flop, values.legLength,
-         values.legWidthMultiplier,
-         leg2.points)
-
-
-         guy.children = { body, leg1, leg2, feet1, feet2, head }
-         parentize.parentize(root)
-         biped:give('biped',
-            { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-         mesh.meshAll(root)
-       
-      --redoTheGraphicInPart(leg2, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
-      --updateBodyGeneratedCanvas()
-   end)
-   hittestImagePlusTransform(blup2, x, y, 250, 500, .2, .2, function()
-      values.legFGPalIndex = values.legFGPalIndex + 1
-      if (values.legFGPalIndex > #palettes) then values.legFGPalIndex = 1 end
-
-      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg1flop, values.legLength,
-         values.legWidthMultiplier,
-         leg1.points)
-      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg2flop, values.legLength,
-         values.legWidthMultiplier,
-         leg2.points)
-
-               
-
-               guy.children = { body, leg1, leg2, feet1, feet2, head }
-               parentize.parentize(root)
-               biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-      
-               mesh.meshAll(root)
-      --redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex]) 
-      --updateBodyGeneratedCanvas()
-   end)
-
-   hittestImagePlusTransform(blup2, x, y, 50, 500, .2, .2, function()
-      print('jo')
-      values.legImgIndex = values.legImgIndex + 1
-      if values.legImgIndex > #legUrls then values.legImgIndex = 1 end
-
-      for i = 1, #guy.children do
-         if (guy.children[i] == leg1) then
-            leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex],  palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],values.leg1flop, values.legLength,
-               values.legWidthMultiplier, leg1.points)
-            guy.children[i] = leg1
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-            myWorld:emit("bipedAttachFeet", biped)
-            parentize.parentize(root)
-            mesh.meshAll(root)
-         end
-         if (guy.children[i] == leg2) then
-            leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex], values.leg2flop, values.legLength,
-               values.legWidthMultiplier, leg2.points)
-            guy.children[i] = leg2
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-            myWorld:emit("bipedAttachFeet", biped)
-            parentize.parentize(root)
-            mesh.meshAll(root)
-         end
-
-      end
-   end)
-end
-
 function pointerMoved(x, y, dx, dy, id)
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
@@ -265,7 +148,7 @@ end
 
 -- todo how todo the combined canvas rubberhose thing (the filled in images?)
 
-function createRubberHoseFromImage(url, fg, bg, flop, length, widthMultiplier, optionalPoints)
+function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMultiplier, optionalPoints)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
    local magic = 4.46
@@ -301,8 +184,8 @@ function createRubberHoseFromImage(url, fg, bg, flop, length, widthMultiplier, o
       local mask = mesh.getImage(maskUrls[url])
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
-         grunge2, bg or palettes[values.bodyBGPalIndex],
-         texture1, fg or palettes[values.bodyFGPalIndex])
+         bgp, bg or palettes[values.bodyBGPalIndex],
+         fgp, fg or palettes[values.bodyFGPalIndex])
 
       currentNode.texture.retexture = love.graphics.newImage(canvas)
       --canvas:release()
@@ -368,8 +251,8 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp)
    if (lineart and mask) then
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
-         bgp or grunge2, bg or palettes[values.bodyBGPalIndex],
-         fgp or texture1, fg or palettes[values.bodyFGPalIndex])
+         bgp, bg,
+         fgp, fg)
 
       local m = makeMeshFromSibling(p, canvas)
       p.texture.canvas = m
@@ -400,13 +283,16 @@ function scene.load()
    mask = love.graphics.newImage("assets/parts/romp1-mask.png")
    lineart = love.graphics.newImage('assets/parts/romp1.png')
    --grunge = love.graphics.newImage('assets/layered/ice.jpg')
-   grunge2 = love.graphics.newImage('assets/layered/fur.jpg')
-   texture1 = love.graphics.newImage('assets/layered/texture-type2t.png')
+
 
    blup1 = love.graphics.newImage('assets/blups/blup1.png')
    blup2 = love.graphics.newImage('assets/blups/blup5.png')
 
-
+   textures = {
+      love.graphics.newImage('assets/layered/fur.jpg'),
+      love.graphics.newImage('assets/layered/texture-type2t.png'),
+      love.graphics.newImage('assets/layered/texture-type1.png')
+   }
 
    palettes = {
       { 0.18, 0.176, 0.18, 1 },
@@ -446,8 +332,13 @@ function scene.load()
       feetTypeIndex = 1,
       legBGPalIndex = 4,
       legFGPalIndex = 1,
+      legBGTexIndex = 1,
+      legFGTexIndex = 2,
+
       bodyBGPalIndex = 4,
       bodyFGPalIndex = 1,
+      bodyBGTexIndex = 1,
+      bodyFGTexIndex = 3,
 
       eyeTypeIndex = 1,
    }
@@ -459,32 +350,32 @@ function scene.load()
       stripPath(feetParts[i], '/experiments/puppet%-maker/')
    end
 
-   eyeUrls = {'assets/eye1.polygons.txt'}
+   eyeUrls = { 'assets/eye1.polygons.txt' }
    eyeParts = {}
    for i = 1, #eyeUrls do
       eyeParts[i] = parse.parseFile(eyeUrls[i])[1]
       stripPath(feetParts[i], '/experiments/puppet%-maker/')
    end
---   print(inspect(eyeParts))
+   --   print(inspect(eyeParts))
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
       'assets/parts/leg5.png' }
 
-   bodyUrls = {'assets/body.polygons.txt', 'assets/body2.polygons.txt'}   
+   bodyUrls = { 'assets/body.polygons.txt', 'assets/body2.polygons.txt' }
    bodyParts = {}
    for i = 1, #bodyUrls do
       bodyParts[i] = parse.parseFile(bodyUrls[i])[1]
       stripPath(bodyParts[i], '/experiments/puppet%-maker/')
    end
    body = copy3(bodyParts[1])
-   redoTheGraphicInPart(body)
-  
- 
-
+   -- print(palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex], textures[values.bodyBGTexIndex],
+   --    textures[values.bodyFGTexIndex])
+   redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
+      textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
 
    head = parse.parseFile('assets/head4.polygons.txt')[1]
-   print(inspect(head))
-   
+   --   print(inspect(head))
+
    eye1 = copy3(eyeParts[values.eyeTypeIndex])
    eye2 = copy3(eyeParts[values.eyeTypeIndex])
 
@@ -494,12 +385,17 @@ function scene.load()
 
 
    stripPath(head, '/experiments/puppet%-maker/')
-   redoTheGraphicInPart(head)
-   leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex],values.leg1flop, values.legLength,
+   redoTheGraphicInPart(head, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
+      textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
+   leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+      palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg1flop,
+      values.legLength,
       values.legWidthMultiplier)
    --redoTheGraphicInPart(leg1)
 
-   leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg2flop, values.legLength,
+   leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+      palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg2flop,
+      values.legLength,
       values.legWidthMultiplier)
 
 
@@ -730,6 +626,144 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
    end
 end
 
+function pointerPressed(x, y, id)
+   local wx, wy = cam:getWorldCoordinates(x, y)
+   for j = 1, #root.children do
+      local guy = root.children[j]
+      for i = 1, #guy.children do
+
+         local item = guy.children[i]
+         local b = bbox.getBBoxRecursive(item)
+         --print(inspect(b))
+         if b and item.folder then
+
+            local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
+            local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
+            local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
+
+            --print(wx, wy, tlx, tly, brx - tlx, bry - tly)
+
+            if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
+               --print('bbox hit', item.name)
+
+               table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+            end
+         end
+      end
+   end
+
+   -- somethign about the ui too, this needs more thought
+   hittestImagePlusTransform(blup2, x, y, 50, 400, .2, .2, function()
+      print('yo txture')
+      --values.bodyBGPalIndex = values.bodyBGPalIndex + 1
+      --if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
+      --redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex])
+      --updateBodyGeneratedCanvas()
+   end)
+   hittestImagePlusTransform(blup2, x, y, 150, 400, .2, .2, function()
+      values.bodyBGPalIndex = values.bodyBGPalIndex + 1
+      if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
+      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
+         textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
+      --updateBodyGeneratedCanvas()
+   end)
+   hittestImagePlusTransform(blup2, x, y, 250, 400, .2, .2, function()
+      values.bodyFGPalIndex = values.bodyFGPalIndex + 1
+      if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
+      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
+         textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
+      --updateBodyGeneratedCanvas()
+   end)
+
+   hittestImagePlusTransform(blup2, x, y, 150, 500, .2, .2, function()
+      values.legBGPalIndex = values.legBGPalIndex + 1
+      if (values.legBGPalIndex > #palettes) then values.legBGPalIndex = 1 end
+      --redoTheGraphicInPart(body, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
+      print('hello', values.legBGPalIndex)
+      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg1flop
+         , values.legLength,
+         values.legWidthMultiplier,
+         leg1.points)
+      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg2flop
+         , values.legLength,
+         values.legWidthMultiplier,
+         leg2.points)
+
+
+      guy.children = { body, leg1, leg2, feet1, feet2, head }
+      parentize.parentize(root)
+      biped:give('biped',
+         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+
+      mesh.meshAll(root)
+
+      --redoTheGraphicInPart(leg2, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
+      --updateBodyGeneratedCanvas()
+   end)
+   hittestImagePlusTransform(blup2, x, y, 250, 500, .2, .2, function()
+      values.legFGPalIndex = values.legFGPalIndex + 1
+      if (values.legFGPalIndex > #palettes) then values.legFGPalIndex = 1 end
+
+      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg1flop
+         , values.legLength,
+         values.legWidthMultiplier,
+         leg1.points)
+      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg2flop
+         , values.legLength,
+         values.legWidthMultiplier,
+         leg2.points)
+
+
+
+      guy.children = { body, leg1, leg2, feet1, feet2, head }
+      parentize.parentize(root)
+      biped:give('biped',
+         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+
+      mesh.meshAll(root)
+      --redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex])
+      --updateBodyGeneratedCanvas()
+   end)
+
+   hittestImagePlusTransform(blup2, x, y, 50, 500, .2, .2, function()
+      print('jo')
+      values.legImgIndex = values.legImgIndex + 1
+      if values.legImgIndex > #legUrls then values.legImgIndex = 1 end
+
+      for i = 1, #guy.children do
+         if (guy.children[i] == leg1) then
+            leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+               palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex],
+               values.leg1flop, values.legLength,
+               values.legWidthMultiplier, leg1.points)
+            guy.children[i] = leg1
+            biped:give('biped',
+               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+            myWorld:emit("bipedAttachFeet", biped)
+            parentize.parentize(root)
+            mesh.meshAll(root)
+         end
+         if (guy.children[i] == leg2) then
+            leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+               palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex],
+               values.leg2flop, values.legLength,
+               values.legWidthMultiplier, leg2.points)
+            guy.children[i] = leg2
+            biped:give('biped',
+               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+            myWorld:emit("bipedAttachFeet", biped)
+            parentize.parentize(root)
+            mesh.meshAll(root)
+         end
+
+      end
+   end)
+end
+
 function scene.draw()
    local stats = love.graphics.getStats()
    ui.handleMouseClickStart()
@@ -743,6 +777,7 @@ function scene.draw()
 
    local str = string.format("Estimated amount of texture memory used: %.2f MB", stats.texturememory / 1024 / 1024)
    love.graphics.print(str, 10, 10)
+   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 30)
 
    --drawBBoxAroundItems()
    if false then
@@ -828,7 +863,7 @@ function scene.draw()
    --print('rgba', r,g,b,a)
 
 
-   love.graphics.setColor(0,0,0,.25)
+   love.graphics.setColor(0, 0, 0, .25)
    love.graphics.draw(blup2, 50, 400, 0, .2, .2)
 
    -- draw the pattern
@@ -848,25 +883,29 @@ function scene.draw()
    -- draw the image im using fro the leg
 
    local img = mesh.getImage(legUrls[values.legImgIndex])
-   love.graphics.setColor(0,0,0,.5)
+   love.graphics.setColor(0, 0, 0, .5)
    love.graphics.draw(blup2, 50, 500, 0, .2, .2)
-   love.graphics.setColor(0,0,0,1)
+   love.graphics.setColor(0, 0, 0, 1)
    love.graphics.draw(img, 50 + 25, 500, 0, .2, .2)
 
 
    --drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
    --drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
 
-   love.graphics.setColor(0,0,0,.5)
+   love.graphics.setColor(0, 0, 0, .5)
    love.graphics.draw(blup2, 350, 500, 0, .2, .2)
 
    local v = h_slider("leg-length", 380, 520, 50, values.legLength, 200, 2000)
    if v.value then
       values.legLength = v.value
-      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg1flop, values.legLength,
+      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg1flop
+         , values.legLength,
          values.legWidthMultiplier,
          leg1.points)
-      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg2flop, values.legLength,
+      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg2flop
+         , values.legLength,
          values.legWidthMultiplier,
          leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
@@ -879,10 +918,14 @@ function scene.draw()
    local v = h_slider("leg-width-multiplier", 380, 550, 50, values.legWidthMultiplier, 0.1, 2)
    if v.value then
       values.legWidthMultiplier = v.value
-      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg1flop, values.legLength,
+      leg1 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg1flop
+         , values.legLength,
          values.legWidthMultiplier,
          leg1.points)
-      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex], palettes[values.legFGPalIndex], values.leg2flop, values.legLength,
+      leg2 = createRubberHoseFromImage(legUrls[values.legImgIndex], palettes[values.legBGPalIndex],
+         palettes[values.legFGPalIndex], textures[values.legBGTexIndex], textures[values.legFGTexIndex], values.leg2flop
+         , values.legLength,
          values.legWidthMultiplier,
          leg2.points)
       guy.children = { body, leg1, leg2, feet1, feet2, head }
@@ -892,7 +935,7 @@ function scene.draw()
       myWorld:emit("bipedAttachFeet", biped)
       mesh.meshAll(root)
    end
-   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+
    -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
    --print('img mem', stats.texturememory)
    --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
