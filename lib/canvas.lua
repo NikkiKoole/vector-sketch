@@ -65,57 +65,72 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    love.graphics.stencil(function() myStencilFunction(mask) end)
 
    --local ow, oh = grunge:getDimensions()
-   local gw, gh = texture1:getDimensions()
-   local rotation = 0 --delta
-   local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+   if texture1 and texture1 ~= 1 then
+      local gw, gh = texture1:getDimensions()
+      local rotation = 0 --delta
+      local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
 
-   local scaleX = 1
-   local scaleY = 1
+      local scaleX = 2
+      local scaleY = 2
 
-   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-   local xMax = (gw / 2) * scaleX - (ry * scaleX)
-   local xOffset = xMin
+      local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+      local xMax = (gw / 2) * scaleX - (ry * scaleX)
+      local xOffset = xMin
 
-   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-   local yMax = (gh / 2) * scaleY - (ry * scaleY)
-   local yOffset = yMin
+      local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+      local yMax = (gh / 2) * scaleY - (ry * scaleY)
+      local yOffset = yMin
 
 
 
-   -- this works too, and like this i dont need to put in big images
-   --love.graphics.setColor(1, 0, 1, 1)
-   --love.graphics.rectangle('fill', 0, 0, 1024, 1024)
+      -- this works too, and like this i dont need to put in big images
 
-   love.graphics.setColor(color1)
-   love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
+
+      love.graphics.setColor(color1)
+      love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+   end
+
+   if texture1 == 1 then
+      love.graphics.setColor(color1)
+      love.graphics.rectangle('fill', 0, 0, 1024, 1024)
+   end
 
    -- second texture
-   local gw, gh = texture2:getDimensions()
-   local rotation = 0 --delta
-   local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+   if texture2 and texture2 ~= 1 then
+      local gw, gh = texture2:getDimensions()
+      local rotation = 0 --delta
+      local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
 
-   local scaleX = 2
-   local scaleY = 2
+      local scaleX = 2
+      local scaleY = 2
 
-   local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-   local xMax = (gw / 2) * scaleX - (ry * scaleX)
-   local xOffset = xMin
+      local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+      local xMax = (gw / 2) * scaleX - (ry * scaleX)
+      local xOffset = xMin
 
-   local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-   local yMax = (gh / 2) * scaleY - (ry * scaleY)
-   local yOffset = yMin
+      local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+      local yMax = (gh / 2) * scaleY - (ry * scaleY)
+      local yOffset = yMin
 
 
 
-   -- height of these images is not big enough, redraw them bigger lazy bum
+      -- height of these images is not big enough, redraw them bigger lazy bum
 
-   love.graphics.setColor(color2)
-   --love.graphics.setColor(1, 1, 1)
+      love.graphics.setColor(color2)
+      --love.graphics.setColor(1, 1, 1)
 
-   love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+      love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
-   --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
+      --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
+
+
+   end
+
+   if texture2 == 1 then
+      love.graphics.setColor(color2)
+      love.graphics.rectangle('fill', 0, 0, 1024, 1024)
+   end
 
 
 
@@ -132,8 +147,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
    --return result
    -- smooche is slow!!!!
-   --local imageData = smoocheCanvas(canvas) --
-   local imageData = canvas:newImageData()
+   local imageData = smoocheCanvas(canvas) --
+   --local imageData = canvas:newImageData()
    return imageData
 end
 

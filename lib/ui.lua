@@ -54,7 +54,7 @@ ui.getUIRect = function(id, x, y, w, h)
    end
 
    if mouseState.click then
-      
+
       if hit.pointInRect(mx, my, x, y, w, h) then
          result = true
       end
@@ -236,6 +236,27 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
    return {
       clicked = clicked,
       hover = hover
+   }
+end
+
+function hittestImagePlusTransform(img, px, py, x, y, sx, sy, callback)
+
+end
+
+function newImageButton(img, x, y, sx, sy)
+   local imgW, imgH = img:getDimensions();
+   local mx, my = love.mouse:getPosition()
+   local clicked = false
+   if hit.pointInRect(mx, my, x, y, imgW * sx, imgH * sy) then
+      if (mouseState.click) then
+         clicked = true
+      end
+   end
+
+   love.graphics.draw(img, x, y, sx, sy)
+
+   return {
+      clicked = clicked
    }
 end
 
