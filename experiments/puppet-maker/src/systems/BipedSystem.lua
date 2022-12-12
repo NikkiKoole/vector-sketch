@@ -33,12 +33,12 @@ function BipedSystem:bipedInit(e)
 
     e.biped.head.transforms.l[1] = dx1
     e.biped.head.transforms.l[2] = dy1
-    print(e.biped.head)
+    --print(e.biped.head)
     --print(e.biped.leg1._curve:getDerivative())
     local derivative = e.biped.leg1._curve:getDerivative()
     local dx, dy = derivative:evaluate(0.9)
     local angle = math.atan2(dy, dx) + math.pi / 2
-    print(angle)
+    --print(angle)
 
 end
 
@@ -97,7 +97,7 @@ function BipedSystem:bipedDirection(e, dir)
         e.biped.feet2.transforms.l[4] = 1
     elseif dir == 'right' then
 
-        e.biped.guy.children = { e.biped.leg2,e.biped.feet2, e.biped.body, e.biped.leg1, e.biped.feet1,  e.biped.head }
+        e.biped.guy.children = { e.biped.leg2, e.biped.feet2, e.biped.body, e.biped.leg1, e.biped.feet1, e.biped.head }
         e.biped.leg1.data.flop = 1
         e.biped.leg2.data.flop = 1
 

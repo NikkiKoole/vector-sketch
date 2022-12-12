@@ -180,7 +180,7 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
 
       }
       local lineart = img
-      print(url)
+      --print(url)
       local mask = mesh.getImage(maskUrls[url])
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
@@ -299,6 +299,7 @@ function scene.load()
       love.graphics.newImage('assets/layered/texture-type4.png'),
       love.graphics.newImage('assets/layered/texture-type5.png'),
       love.graphics.newImage('assets/layered/texture-type6.png'),
+      love.graphics.newImage('assets/layered/texture-type7.png'),
       nil
    }
 

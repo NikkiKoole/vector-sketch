@@ -395,7 +395,7 @@ mesh.addUVToVerts = function(verts, img, points, settings)
    local keepAspect = settings.keepAspect ~= nil and settings.keepAspect or true
    local xFactor = 1
    local yFactor = 1
-   print(brx, tlx, bry, tly)
+   --print(brx, tlx, bry, tly)
    assert(brx - tlx > 0 and bry - tly > 0)
 
    local xFactor = img:getWidth() / (brx - tlx)
