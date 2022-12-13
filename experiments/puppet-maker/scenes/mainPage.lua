@@ -313,8 +313,45 @@ function scene.load()
       { 0.475, 0.408, 0.439, 1 },
       { 0.561, 0.247, 0.443, 1 },
       { 0.89, 0.388, 0.294, 1 },
-      { 0.941, 0.518, 0.122, 1 }
+      { 0.941, 0.518, 0.122, 1 },  --- llast one beore pico8
+      
+    --[[  
+      {29/255, 43/255, 83/255},
+      {126/255, 37/255, 83/255},
+      {0/255, 135/255, 81/255},
+      {171/255, 82/255, 54/255},
+      {95/255, 87/255, 79/255},
+      {194/255, 195/255, 199/255},
+      {255/255,241/255,232/255},
+      {255/255,0/255,77/255}, 
+      {255/255,163/255, 0},
+      {255/255,236/255,39/255},
+      {0/255,228/255,54/255},
+      {41/255,173/255,255/255},
+      {131/255, 118/255, 156/255},
+      {255/255,119/255,168/255},
+      {255/255, 204/255, 170/255},
+      { 41/255,  24/255,  20/255},
+      {17/255,  29/255,  53/255},
+      {66/255,  33/255,  54/255},
+      {18/255 ,  3/255,  89/255	},
+      {116/255,  47/255,  41/255},
+      { 73/255,  51/255,  59/255	},
+      {162/255, 136/255, 121/255},
+      {243/255, 239/255, 125/255},
+      {190/255,  18/255,  80/255},
+      {255/255, 108/255,  36/255},
+      {168/255, 231/255,  46/255},
+      { 0/255, 181/255,  67/255},
+      { 6/255,  90/255, 181/255},
+      {117/255 , 70/255, 101/255	},
+      {255/255, 110/255,  89/255},
+      {255/255, 157/255, 129/255}
+      --]]
    }
+
+
+ print(inspect(palettes))
 
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -332,7 +369,7 @@ function scene.load()
 
 
    values = {
-      legImgIndex = 2,
+      legImgIndex = 1,
       legLength = 700,
       legWidthMultiplier = 1,
       leg1flop = 1,
@@ -349,7 +386,7 @@ function scene.load()
       bodyFGTexIndex = 3,
 
       bodyWidthMultiplier = 1,
-      bodyHeightMultiplier =1 ,
+      bodyHeightMultiplier = 1 ,
       eyeTypeIndex = 1,
    }
 
@@ -433,6 +470,7 @@ function scene.load()
    --local gx, gy = guy.transforms._g:transformPoint(bx, by)
    local w, h = love.graphics.getDimensions()
    local lw, lh = lineart:getDimensions()
+
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, lh * 4)
    cam:update(w, h)
@@ -732,7 +770,7 @@ function scene.draw()
 
 
    ---- start body buttons
-
+   --print(blup4:getWidth() * .2)
    if false then
       -- we dont want to change th eBG pattern, it should just be 1
       love.graphics.setColor(0, 0, 0, .25)
