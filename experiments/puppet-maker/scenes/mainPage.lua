@@ -348,6 +348,8 @@ function scene.load()
       bodyBGTexIndex = 1,
       bodyFGTexIndex = 3,
 
+      bodyWidthMultiplier = 1,
+      bodyHeightMultiplier =1 ,
       eyeTypeIndex = 1,
    }
 
@@ -778,9 +780,19 @@ function scene.draw()
       --updateBodyGeneratedCanvas()
    end
 
+   local v = h_slider("body-width", 380, 400, 50, values.bodyWidthMultiplier, .1, 3)
+   if v.value then
+      values.bodyWidthMultiplier = v.value
+      body.transforms.l[4] = v.value
+   end
+   local v = h_slider("body-height", 380, 450, 50, values.bodyHeightMultiplier, .1, 3)
+   if v.value then
+      values.bodyHeightMultiplier = v.value
+      body.transforms.l[5] = v.value
+   end
    ------  end body buttons
 
-   
+
    love.graphics.setColor(0, 0, 0, .5)
    b = newImageButton(blup2, 50, 500, .2, .2)
    local img = mesh.getImage(legUrls[values.legImgIndex])
