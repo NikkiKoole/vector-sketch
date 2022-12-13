@@ -180,7 +180,7 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
 
       }
       local lineart = img
-      print(url)
+     
       local mask = mesh.getImage(maskUrls[url])
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
@@ -364,7 +364,7 @@ function scene.load()
       eyeParts[i] = parse.parseFile(eyeUrls[i])[1]
       stripPath(feetParts[i], '/experiments/puppet%-maker/')
    end
-   --   print(inspect(eyeParts))
+
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
       'assets/parts/leg5.png' }
@@ -729,19 +729,32 @@ function scene.draw()
    end
 
 
+   ---- start body buttons
+
+   if false then
+      -- we dont want to change th eBG pattern, it should just be 1
+      love.graphics.setColor(0, 0, 0, .25)
+      local b = newImageButton(blup4, 50, 400, .2, .2)
+      renderMaskedTexture(blup4, textures[values.bodyBGTexIndex], 40, 410, .2, .2)
+
+      if b.clicked then
+         values.bodyBGTexIndex = values.bodyBGTexIndex + 1
+         if (values.bodyBGTexIndex > #textures) then values.bodyBGTexIndex = 1 end
+         redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
+            textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
+      end
+   end
 
 
-
-   love.graphics.setColor(0, 0, 0, .25)
-   local b = newImageButton(blup4, 50, 400, .2, .2)
-   renderMaskedTexture(blup4, textures[values.bodyBGTexIndex], 40, 410, .2, .2)
-
+   love.graphics.setColor(palettes[values.bodyBGPalIndex])
+   b = newImageButton(blup2, 50, 400, .2, .2)
    if b.clicked then
-      values.bodyBGTexIndex = values.bodyBGTexIndex + 1
-      if (values.bodyBGTexIndex > #textures) then values.bodyBGTexIndex = 1 end
+      values.bodyBGPalIndex = values.bodyBGPalIndex + 1
+      if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
       redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
          textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
    end
+
 
    love.graphics.setColor(0, 0, 0, .25)
    b = newImageButton(blup2, 150, 400, .2, .2)
@@ -755,22 +768,8 @@ function scene.draw()
    end
 
 
-
-   --love.graphics.setColor(0, 0, 0, 1)
-
-   -- draw the pattern
-   love.graphics.setColor(palettes[values.bodyBGPalIndex])
-   b = newImageButton(blup2, 250, 400, .2, .2)
-   if b.clicked then
-      values.bodyBGPalIndex = values.bodyBGPalIndex + 1
-      if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-         textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
-   end
-
-
    love.graphics.setColor(palettes[values.bodyFGPalIndex])
-   b = newImageButton(blup2, 350, 400, .2, .2)
+   b = newImageButton(blup2, 250, 400, .2, .2)
    if b.clicked then
       values.bodyFGPalIndex = values.bodyFGPalIndex + 1
       if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
@@ -779,6 +778,9 @@ function scene.draw()
       --updateBodyGeneratedCanvas()
    end
 
+   ------  end body buttons
+
+   
    love.graphics.setColor(0, 0, 0, .5)
    b = newImageButton(blup2, 50, 500, .2, .2)
    local img = mesh.getImage(legUrls[values.legImgIndex])
