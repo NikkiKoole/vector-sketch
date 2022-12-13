@@ -222,6 +222,27 @@ render.renderThingsWithKeyFrames = function(root)
 end
 
 
+render.justDoTransforms = function(root, dirty)
+   local isDirty = dirty or root.dirty
+   if root.transforms then
+      transform.setTransforms(root, isDirty)
+   end
+
+
+   if root.keyframes then
+
+   else
+      --love.graphics.setStencilTest()
+      if root.children then
+         for i = 1, #root.children do
+            render.justDoTransforms(root.children[i], isDirty)
+
+         end
+      end
+      --love.graphics.setStencilTest()
+   end
+
+end
 
 render.renderThings = function(root, dirty)
 

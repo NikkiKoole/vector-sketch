@@ -2,26 +2,26 @@
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
 name = "romp",
-points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
+points = { { -181, -359 }, { 121, -359 }, { 121, 343 }, { -181, 343 } },
 texture = {
 filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/romp2.png",
+url = "/experiments/puppet-maker/assets/parts/romp3.png",
 wrap = "repeat"
 }
 }, {
 color = { 1, 0, 0, 1 },
 name = "neck",
-points = { { -1.124, -320.019 } },
+points = { { -28.942, -325.347 } },
 type = "meta"
 }, {
 color = { 1, 0, 0, 1 },
 name = "leg1",
-points = { { -84.495, 242.857 } },
+points = { { -97.741, 289.615 } },
 type = "meta"
 }, {
 color = { 1, 0, 0, 1 },
 name = "leg2",
-points = { { 81.26, 247.548 } },
+points = { { -1.066, 292.214 } },
 type = "meta"
 } },
 folder = true,

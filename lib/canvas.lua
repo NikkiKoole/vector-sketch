@@ -54,12 +54,14 @@ local function smoocheCanvas(canvas)
    return result
 end
 
-lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, color2)
+lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, color2, lineColor)
+   local lineartColor = lineColor or { 0, 0, 0, 1 }
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
 
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   love.graphics.clear(0, 0, 0, 0) ---<<<<
+   --love.graphics.clear(0, 0, 0, 0) ---<<<<
+   love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
    love.graphics.stencil(function() myStencilFunction(mask) end)
@@ -116,9 +118,9 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
 
       -- height of these images is not big enough, redraw them bigger lazy bum
-
+      -- print(inspect(color2))
       love.graphics.setColor(color2)
-      --love.graphics.setColor(1, 1, 1)
+      -- love.graphics.setColor(0, 0, 0)
 
       love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
 
@@ -138,7 +140,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-   love.graphics.setColor(0, 0, 0)
+   love.graphics.setColor(lineartColor)
    love.graphics.draw(lineart)
 
    love.graphics.setCanvas() --- <<<<<
@@ -147,8 +149,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
    --return result
    -- smooche is slow!!!!
-   local imageData = smoocheCanvas(canvas) --
-   --local imageData = canvas:newImageData()
+   --local imageData = smoocheCanvas(canvas) --
+   local imageData = canvas:newImageData()
    return imageData
 end
 

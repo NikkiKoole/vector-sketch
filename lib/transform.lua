@@ -8,23 +8,27 @@ transform.setTransforms = function(root, isDirty)
 
 
     --if  (isDirty==true) or (isDirty==nil) then -- isdirty == nil check so unset dirty flags are also treated as true
-    local tl = root.transforms.l
-    local pg = nil
-    if (root._parent) then
-        pg = root._parent.transforms._g
+    if root.transforms then
+        local tl = root.transforms.l
+        local pg = nil
+        if (root._parent) then
+            pg = root._parent.transforms._g
+        end
+
+        if (root.transforms._l == nil) then
+            root.transforms._l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
+        else -- this works but doesnt really improve anything measurable at this time
+            root.transforms._l:setTransformation(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
+        end
+
+        root.transforms._g = pg and (pg * root.transforms._l) or root.transforms._l
     end
-
-    if (root.transforms._l == nil) then
-        root.transforms._l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
-    else -- this works but doesnt really improve anything measurable at this time
-        root.transforms._l:setTransformation(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
-    end
-
-    root.transforms._g = pg and (pg * root.transforms._l) or root.transforms._l
-
     root.dirty = false
 
 end
+
+
+
 
 transform.getLocalizedDelta = function(element, dx, dy)
     local x1, y1 = element._parent.transforms._g:inverseTransformPoint(dx, dy)

@@ -1,6 +1,6 @@
 -- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
 -- http://bamanda.com/locos/locos_subsite/locos_gallery.html
-
+-- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
 local scene = {}
 
 local render = require 'lib.render'
@@ -223,10 +223,13 @@ function makeMeshFromSibling(sib, imageData)
    return made
 end
 
-function redoTheGraphicInPart(part, bg, fg, bgp, fgp)
+function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
 
    local lineartToMask = {
       ['assets/parts/romp1.png'] = 'assets/parts/romp1-mask.png',
+      ['assets/parts/romp2.png'] = 'assets/parts/romp2-mask.png',
+      ['assets/parts/romp3.png'] = 'assets/parts/romp3-mask.png',
+      ['assets/parts/romp4.png'] = 'assets/parts/romp4-mask.png',
       ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png',
       ['assets/parts/headshapebuff.png'] = 'assets/parts/headshapebuff-mask.png'
    }
@@ -245,13 +248,15 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp)
    local mask
    if lineartToMask[lineartUrl] then
       mask = mesh.getImage(lineartToMask[lineartUrl])
+   else
+      print('no maks found', lineartUrl)
    end
    --print(lineart, mask)
    if (lineart and mask) then
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
          bgp, bg,
-         fgp, fg)
+         fgp, fg, lineColor)
 
       local m = makeMeshFromSibling(p, canvas)
       p.texture.canvas = m
@@ -279,11 +284,6 @@ function scene.load()
       end
    )
 
-   mask = love.graphics.newImage("assets/parts/romp1-mask.png")
-   lineart = love.graphics.newImage('assets/parts/romp1.png')
-   --grunge = love.graphics.newImage('assets/layered/ice.jpg')
-
-
    blup0 = love.graphics.newImage('assets/blups/blup1.png')
    blup1 = love.graphics.newImage('assets/blups/blup5.png')
    blup2 = love.graphics.newImage('assets/blups/blup2.png')
@@ -304,6 +304,7 @@ function scene.load()
    }
 
    palettes = {
+      { 0, 0, 0, 1 },
       { 0.18, 0.176, 0.18, 1 },
       { 0.447, 0.255, 0.043, 1 },
       { 0.882, 0.753, 0.133, 1 },
@@ -316,43 +317,43 @@ function scene.load()
       { 0.89, 0.388, 0.294, 1 },
       { 0.941, 0.518, 0.122, 1 }, --- llast one beore pico8
 
-      --[[  
-      {29/255, 43/255, 83/255},
-      {126/255, 37/255, 83/255},
-      {0/255, 135/255, 81/255},
-      {171/255, 82/255, 54/255},
-      {95/255, 87/255, 79/255},
-      {194/255, 195/255, 199/255},
-      {255/255,241/255,232/255},
-      {255/255,0/255,77/255}, 
-      {255/255,163/255, 0},
-      {255/255,236/255,39/255},
-      {0/255,228/255,54/255},
-      {41/255,173/255,255/255},
-      {131/255, 118/255, 156/255},
-      {255/255,119/255,168/255},
-      {255/255, 204/255, 170/255},
-      { 41/255,  24/255,  20/255},
-      {17/255,  29/255,  53/255},
-      {66/255,  33/255,  54/255},
-      {18/255 ,  3/255,  89/255	},
-      {116/255,  47/255,  41/255},
-      { 73/255,  51/255,  59/255	},
-      {162/255, 136/255, 121/255},
-      {243/255, 239/255, 125/255},
-      {190/255,  18/255,  80/255},
-      {255/255, 108/255,  36/255},
-      {168/255, 231/255,  46/255},
-      { 0/255, 181/255,  67/255},
-      { 6/255,  90/255, 181/255},
-      {117/255 , 70/255, 101/255	},
-      {255/255, 110/255,  89/255},
-      {255/255, 157/255, 129/255}
+      --[[
+      { 29 / 255, 43 / 255, 83 / 255 },
+      { 126 / 255, 37 / 255, 83 / 255 },
+      { 0 / 255, 135 / 255, 81 / 255 },
+      { 171 / 255, 82 / 255, 54 / 255 },
+      { 95 / 255, 87 / 255, 79 / 255 },
+      { 194 / 255, 195 / 255, 199 / 255 },
+      { 255 / 255, 241 / 255, 232 / 255 },
+      { 255 / 255, 0 / 255, 77 / 255 },
+      { 255 / 255, 163 / 255, 0 },
+      { 255 / 255, 236 / 255, 39 / 255 },
+      { 0 / 255, 228 / 255, 54 / 255 },
+      { 41 / 255, 173 / 255, 255 / 255 },
+      { 131 / 255, 118 / 255, 156 / 255 },
+      { 255 / 255, 119 / 255, 168 / 255 },
+      { 255 / 255, 204 / 255, 170 / 255 },
+      { 41 / 255, 24 / 255, 20 / 255 },
+      { 17 / 255, 29 / 255, 53 / 255 },
+      { 66 / 255, 33 / 255, 54 / 255 },
+      { 18 / 255, 3 / 255, 89 / 255 },
+      { 116 / 255, 47 / 255, 41 / 255 },
+      { 73 / 255, 51 / 255, 59 / 255 },
+      { 162 / 255, 136 / 255, 121 / 255 },
+      { 243 / 255, 239 / 255, 125 / 255 },
+      { 190 / 255, 18 / 255, 80 / 255 },
+      { 255 / 255, 108 / 255, 36 / 255 },
+      { 168 / 255, 231 / 255, 46 / 255 },
+      { 0 / 255, 181 / 255, 67 / 255 },
+      { 6 / 255, 90 / 255, 181 / 255 },
+      { 117 / 255, 70 / 255, 101 / 255 },
+      { 255 / 255, 110 / 255, 89 / 255 },
+      { 255 / 255, 157 / 255, 129 / 255 }
       --]]
    }
 
 
-   print(inspect(palettes))
+
 
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -381,6 +382,8 @@ function scene.load()
       legBGTexIndex = 1,
       legFGTexIndex = 2,
 
+      bodyImgIndex = 3,
+      bodyLinePalIndex = 4,
       bodyBGPalIndex = 4,
       bodyFGPalIndex = 1,
       bodyBGTexIndex = 1,
@@ -405,20 +408,19 @@ function scene.load()
       stripPath(feetParts[i], '/experiments/puppet%-maker/')
    end
 
-
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
       'assets/parts/leg5.png' }
 
-   bodyUrls = { 'assets/body.polygons.txt', 'assets/body2.polygons.txt' }
+   bodyThumbUrls = { 'assets/parts/romp1.png', 'assets/parts/romp2.png', 'assets/parts/romp3.png' }
+   bodyUrls = { 'assets/body1.polygons.txt', 'assets/body2.polygons.txt', 'assets/body3.polygons.txt' }
    bodyParts = {}
    for i = 1, #bodyUrls do
       bodyParts[i] = parse.parseFile(bodyUrls[i])[1]
       stripPath(bodyParts[i], '/experiments/puppet%-maker/')
    end
-   body = copy3(bodyParts[1])
+   body = copy3(bodyParts[values.bodyImgIndex])
+   redoBody()
 
-   redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-      textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
 
    head = parse.parseFile('assets/head4.polygons.txt')[1]
    --   print(inspect(head))
@@ -470,10 +472,10 @@ function scene.load()
    local bx, by = head.transforms._g:transformPoint(0, 0)
    --local gx, gy = guy.transforms._g:transformPoint(bx, by)
    local w, h = love.graphics.getDimensions()
-   local lw, lh = lineart:getDimensions()
+   --local lw, lh = lineart:getDimensions()
 
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w * 1, lh * 4)
+   camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
    cam:update(w, h)
 
 end
@@ -576,12 +578,12 @@ function attachCallbacks()
    end
 
    function love.resize(w, h)
-      local lw, lh = lineart:getDimensions()
+      -- local lw, lh = lineart:getDimensions()
 
       local bx, by = body.transforms._g:transformPoint(0, 0)
       --      local w, h = love.graphics.getDimensions()
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(bx, by, w * 1, lh * 4)
+      camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
       cam:update(w, h)
 
 
@@ -665,6 +667,18 @@ function createLegRubberhose(legNr, points)
       points)
 end
 
+local mask_shader = love.graphics.newShader [[
+      vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+         if (Texel(texture, texture_coords).rgba != vec4(1.0)) {
+            // a discarded pixel wont be applied as the stencil.
+            discard;
+         }
+         return vec4(1.0);
+      }
+   ]]
+
+
+
 function renderMaskedTexture(maskShape, texture, x, y, sx, sy)
    if not texture or not maskShape then return end
    if texture == 1 then return end
@@ -672,16 +686,6 @@ function renderMaskedTexture(maskShape, texture, x, y, sx, sy)
    local bw, bh = maskShape:getDimensions()
    local iw, ih = texture:getDimensions()
    local s = math.max(bw / iw, bh / ih)
-
-   local mask_shader = love.graphics.newShader [[
-      vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-         if (Texel(texture, texture_coords).rgb != vec3(1.0)) {
-            // a discarded pixel wont be applied as the stencil.
-            discard;
-         }
-         return vec4(1.0);
-      }
-   ]]
 
    local function myStencilFunction()
       love.graphics.setShader(mask_shader)
@@ -693,24 +697,18 @@ function renderMaskedTexture(maskShape, texture, x, y, sx, sy)
    love.graphics.setStencilTest("greater", 0)
    love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
    love.graphics.setStencilTest()
+
 end
 
-function scene.draw()
-   local stats = love.graphics.getStats()
-   ui.handleMouseClickStart()
-   love.graphics.clear(bgColor)
-   love.graphics.setColor(0, 0, 0)
+function createFittinScale(img, desired_w, desired_h)
+   local w, h = img:getDimensions()
+   local sx, sy = desired_w / w, desired_h / h
+   --   print(sx, sy)
+   return sx, sy
+end
 
-   cam:push()
-   render.renderThings(root)
-   cam:pop()
-
-   local str = string.format("Estimated amount of texture memory used: %.2f MB", stats.texturememory / 1024 / 1024)
-   love.graphics.print(str, 10, 10)
-   love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 30)
-
-   --drawBBoxAroundItems()
-   if false then
+function drawBBoxDebug()
+   if true then
       love.graphics.push() -- stores the default coordinate system
       local w, h = love.graphics.getDimensions()
       love.graphics.translate(w / 2, h / 2)
@@ -769,179 +767,273 @@ function scene.draw()
       love.graphics.pop() -- stores the default coordinate system
    end
 
+end
 
-   ---- start body buttons
-   --print(blup4:getWidth() * .2)
-   if false then
-      -- we dont want to change th eBG pattern, it should just be 1
-      love.graphics.setColor(0, 0, 0, .25)
-      local b = newImageButton(blup4, 50, 400, .2, .2)
-      renderMaskedTexture(blup4, textures[values.bodyBGTexIndex], 40, 410, .2, .2)
+function ColoredPatternUI(x, y)
 
-      if b.clicked then
-         values.bodyBGTexIndex = values.bodyBGTexIndex + 1
-         if (values.bodyBGTexIndex > #textures) then values.bodyBGTexIndex = 1 end
-         redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-            textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
+   love.graphics.circle("line", x, y, 60)
+   local rad = { -math.pi / 4 + 0, -math.pi / 4 + .2 * math.pi, -math.pi / 4 + .4 * math.pi }
+
+
+   for i = 1, 3 do
+
+      local new_x = x + math.cos(rad[i]) * 110
+      local new_y = y + math.sin(rad[i]) * 110
+      love.graphics.circle("line", new_x, new_y, 30)
+      love.graphics.print(i, new_x, new_y)
+   end
+
+end
+
+function redoBody()
+   redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
+      textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex], palettes[values.bodyLinePalIndex])
+end
+
+function scene.draw()
+   if true then
+      local stats = love.graphics.getStats()
+      ui.handleMouseClickStart()
+      love.graphics.clear(bgColor)
+      love.graphics.setColor(0, 0, 0)
+
+      cam:push()
+      render.renderThings(root)
+      cam:pop()
+
+
+
+      --print(blup4:getWidth() * .2)
+      if false then
+         -- we dont want to change th eBG pattern, it should just be 1
+         love.graphics.setColor(0, 0, 0, .25)
+         local b = newImageButton(blup4, 50, 400, .2, .2)
+         renderMaskedTexture(blup4, textures[values.bodyBGTexIndex], 40, 410, .2, .2)
+
+         if b.clicked then
+            values.bodyBGTexIndex = values.bodyBGTexIndex + 1
+            if (values.bodyBGTexIndex > #textures) then values.bodyBGTexIndex = 1 end
+            redoBody()
+         end
       end
-   end
 
 
-   love.graphics.setColor(palettes[values.bodyBGPalIndex])
-   b = newImageButton(blup2, 50, 400, .2, .2)
-   if b.clicked then
-      values.bodyBGPalIndex = values.bodyBGPalIndex + 1
-      if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-         textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
-   end
+      if true then -- this block leaks memory
+
+         --ColoredPatternUI(50, 400)
 
 
-   love.graphics.setColor(0, 0, 0, .25)
-   b = newImageButton(blup2, 150, 400, .2, .2)
-   renderMaskedTexture(blup2, textures[values.bodyFGTexIndex], 140, 410, .2, .2)
+         love.graphics.setColor(0, 0, 0, .5)
 
-   if b.clicked then
-      values.bodyFGTexIndex = values.bodyFGTexIndex + 1
-      if (values.bodyFGTexIndex > #textures) then values.bodyFGTexIndex = 1 end
-      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-         textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
-   end
+         local img = mesh.getImage(bodyThumbUrls[values.bodyImgIndex])
+         local sx, sy = createFittinScale(img, 40, 40)
+         b = newImageButton(blup2, 50, 400, .2, .2)
+         love.graphics.setColor(0, 0, 0, .75)
+         love.graphics.draw(img, 50 + 25, 400 + 40, 0, sx, sy)
 
 
-   love.graphics.setColor(palettes[values.bodyFGPalIndex])
-   b = newImageButton(blup2, 250, 400, .2, .2)
-   if b.clicked then
-      values.bodyFGPalIndex = values.bodyFGPalIndex + 1
-      if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
-      redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-         textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
-      --updateBodyGeneratedCanvas()
-   end
+         -- why does this give the boundary pixels?
+         if b.clicked then
+            values.bodyImgIndex = values.bodyImgIndex + 1
+            if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
 
-   local v = h_slider("body-width", 380, 400, 50, values.bodyWidthMultiplier, .1, 3)
-   if v.value then
-      values.bodyWidthMultiplier = v.value
-      body.transforms.l[4] = v.value
-   end
-   local v = h_slider("body-height", 380, 450, 50, values.bodyHeightMultiplier, .1, 3)
-   if v.value then
-      values.bodyHeightMultiplier = v.value
-      body.transforms.l[5] = v.value
-   end
-   ------  end body buttons
+            local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
+            body = copy3(bodyParts[values.bodyImgIndex])
 
+            body.transforms.l[1] = temp_x
+            body.transforms.l[2] = temp_y
+            body.transforms.l[4] = values.bodyWidthMultiplier
+            body.transforms.l[5] = values.bodyHeightMultiplier
+            guy.children = { body, leg1, leg2, feet1, feet2, head }
+            parentize.parentize(root)
 
-   love.graphics.setColor(0, 0, 0, .5)
-   b = newImageButton(blup2, 50, 500, .2, .2)
-   local img = mesh.getImage(legUrls[values.legImgIndex])
-   love.graphics.setColor(0, 0, 0, .75)
-   love.graphics.draw(img, 50 + 25, 500, 0, .2, .2)
-
-   if b.clicked then
-
-      values.legImgIndex = values.legImgIndex + 1
-      if values.legImgIndex > #legUrls then values.legImgIndex = 1 end
-
-      for i = 1, #guy.children do
-         if (guy.children[i] == leg1) then
-            leg1 = createLegRubberhose(1, leg1.points)
-
-            guy.children[i] = leg1
+            mesh.meshAll(root)
+            --mesh.recursivelyMakeTextures(root)
+            --render.renderThings(root)
+            render.justDoTransforms(root)
+            --transforms.setRecursive(root)
             biped:give('biped',
                { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-            myWorld:emit("bipedAttachFeet", biped)
-            parentize.parentize(root)
-            mesh.meshAll(root)
+
+
+
+            redoBody()
          end
-         if (guy.children[i] == leg2) then
+
+
+         love.graphics.setColor(palettes[values.bodyBGPalIndex])
+         b = newImageButton(blup2, 150, 400, .2, .2)
+         if b.clicked then
+            values.bodyBGPalIndex = values.bodyBGPalIndex + 1
+            if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
+            redoBody()
+         end
+
+
+         love.graphics.setColor(0, 0, 0, .25)
+         b = newImageButton(blup2, 250, 400, .2, .2)
+         renderMaskedTexture(blup2, textures[values.bodyFGTexIndex], 240, 410, .2, .2)
+
+         if b.clicked then
+            values.bodyFGTexIndex = values.bodyFGTexIndex + 1
+            if (values.bodyFGTexIndex > #textures) then values.bodyFGTexIndex = 1 end
+            redoBody()
+         end
+
+
+         love.graphics.setColor(palettes[values.bodyFGPalIndex])
+         b = newImageButton(blup2, 350, 400, .2, .2)
+         if b.clicked then
+            values.bodyFGPalIndex = values.bodyFGPalIndex + 1
+            if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
+            redoBody()
+            --updateBodyGeneratedCanvas()
+         end
+
+         love.graphics.setColor(palettes[values.bodyLinePalIndex])
+         b = newImageButton(blup2, 450, 400, .2, .2)
+         if b.clicked then
+            values.bodyLinePalIndex = values.bodyLinePalIndex + 1
+            if (values.bodyLinePalIndex > #palettes) then values.bodyLinePalIndex = 1 end
+            redoBody()
+            --updateBodyGeneratedCanvas()
+         end
+
+
+         local v = h_slider("body-width", 480, 400, 50, values.bodyWidthMultiplier, .1, 3)
+         if v.value then
+            values.bodyWidthMultiplier = v.value
+            body.transforms.l[4] = v.value
+         end
+         local v = h_slider("body-height", 480, 450, 50, values.bodyHeightMultiplier, .1, 3)
+         if v.value then
+            values.bodyHeightMultiplier = v.value
+            body.transforms.l[5] = v.value
+         end
+         ------  end body buttons
+
+
+         love.graphics.setColor(0, 0, 0, .5)
+         b = newImageButton(blup2, 50, 500, .2, .2)
+         local img = mesh.getImage(legUrls[values.legImgIndex])
+         local sx, sy = createFittinScale(img, 40, 40)
+         love.graphics.setColor(0, 0, 0, 1)
+         love.graphics.draw(img, 50 + 25, 500 + 25, 0, math.min(sx, sy) * 2, math.min(sx, sy) * 2)
+
+         if b.clicked then
+
+            values.legImgIndex = values.legImgIndex + 1
+            if values.legImgIndex > #legUrls then values.legImgIndex = 1 end
+
+            for i = 1, #guy.children do
+               if (guy.children[i] == leg1) then
+                  leg1 = createLegRubberhose(1, leg1.points)
+
+                  guy.children[i] = leg1
+                  biped:give('biped',
+                     { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+                  myWorld:emit("bipedAttachFeet", biped)
+                  parentize.parentize(root)
+                  mesh.meshAll(root)
+               end
+               if (guy.children[i] == leg2) then
+                  leg2 = createLegRubberhose(2, leg2.points)
+
+                  guy.children[i] = leg2
+                  biped:give('biped',
+                     { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+                  myWorld:emit("bipedAttachFeet", biped)
+                  parentize.parentize(root)
+                  mesh.meshAll(root)
+               end
+
+            end
+         end
+
+
+
+         love.graphics.setColor(palettes[values.legBGPalIndex])
+         b = newImageButton(blup2, 150, 500, .2, .2)
+         if b.clicked then
+            values.legBGPalIndex = values.legBGPalIndex + 1
+            if (values.legBGPalIndex > #palettes) then values.legBGPalIndex = 1 end
+            --redoTheGraphicInPart(body, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
+            leg1 = createLegRubberhose(1, leg1.points)
             leg2 = createLegRubberhose(2, leg2.points)
 
-            guy.children[i] = leg2
+            guy.children = { body, leg1, leg2, feet1, feet2, head }
+            parentize.parentize(root)
+            biped:give('biped',
+               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+
+            mesh.meshAll(root)
+
+         end
+
+         love.graphics.setColor(palettes[values.legFGPalIndex])
+         b = newImageButton(blup2, 250, 500, .2, .2)
+         if b.clicked then
+            values.legFGPalIndex = values.legFGPalIndex + 1
+            if (values.legFGPalIndex > #palettes) then values.legFGPalIndex = 1 end
+            leg1 = createLegRubberhose(1, leg1.points)
+            leg2 = createLegRubberhose(2, leg2.points)
+
+            guy.children = { body, leg1, leg2, feet1, feet2, head }
+            parentize.parentize(root)
+            biped:give('biped',
+               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+
+            mesh.meshAll(root)
+
+         end
+
+         --drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
+         --drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
+
+         love.graphics.setColor(0, 0, 0, .5)
+         love.graphics.draw(blup2, 350, 500, 0, .2, .2)
+
+         local v = h_slider("leg-length", 380, 520, 50, values.legLength, 200, 2000)
+
+         if v.value then
+            values.legLength = v.value
+            leg1 = createLegRubberhose(1, leg1.points)
+            leg2 = createLegRubberhose(2, leg2.points)
+
+            guy.children = { body, leg1, leg2, feet1, feet2, head }
+            parentize.parentize(root)
             biped:give('biped',
                { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
             myWorld:emit("bipedAttachFeet", biped)
+            mesh.meshAll(root)
+         end
+         local v = h_slider("leg-width-multiplier", 380, 550, 50, values.legWidthMultiplier, 0.1, 2)
+         if v.value then
+            values.legWidthMultiplier = v.value
+            leg1 = createLegRubberhose(1, leg1.points)
+            leg2 = createLegRubberhose(2, leg2.points)
+
+            guy.children = { body, leg1, leg2, feet1, feet2, head }
             parentize.parentize(root)
+            biped:give('biped',
+               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+            myWorld:emit("bipedAttachFeet", biped)
             mesh.meshAll(root)
          end
 
+         -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
+         --print('img mem', stats.texturememory)
+         --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
+
+         love.graphics.setColor(0, 0, 0, .5)
+         local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
+         --   print(inspect(stats))
+         love.graphics.print(str, 10, 10)
+
+         love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 30)
+
       end
    end
-
-
-
-   love.graphics.setColor(palettes[values.legBGPalIndex])
-   b = newImageButton(blup2, 150, 500, .2, .2)
-   if b.clicked then
-      values.legBGPalIndex = values.legBGPalIndex + 1
-      if (values.legBGPalIndex > #palettes) then values.legBGPalIndex = 1 end
-      --redoTheGraphicInPart(body, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
-      leg1 = createLegRubberhose(1, leg1.points)
-      leg2 = createLegRubberhose(2, leg2.points)
-
-      guy.children = { body, leg1, leg2, feet1, feet2, head }
-      parentize.parentize(root)
-      biped:give('biped',
-         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-      mesh.meshAll(root)
-
-   end
-
-   love.graphics.setColor(palettes[values.legFGPalIndex])
-   b = newImageButton(blup2, 250, 500, .2, .2)
-   if b.clicked then
-      values.legFGPalIndex = values.legFGPalIndex + 1
-      if (values.legFGPalIndex > #palettes) then values.legFGPalIndex = 1 end
-      leg1 = createLegRubberhose(1, leg1.points)
-      leg2 = createLegRubberhose(2, leg2.points)
-
-      guy.children = { body, leg1, leg2, feet1, feet2, head }
-      parentize.parentize(root)
-      biped:give('biped',
-         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-      mesh.meshAll(root)
-
-   end
-
-   --drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
-   --drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
-
-   love.graphics.setColor(0, 0, 0, .5)
-   love.graphics.draw(blup2, 350, 500, 0, .2, .2)
-
-   local v = h_slider("leg-length", 380, 520, 50, values.legLength, 200, 2000)
-
-   if v.value then
-      values.legLength = v.value
-      leg1 = createLegRubberhose(1, leg1.points)
-      leg2 = createLegRubberhose(2, leg2.points)
-
-      guy.children = { body, leg1, leg2, feet1, feet2, head }
-      parentize.parentize(root)
-      biped:give('biped',
-         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-      myWorld:emit("bipedAttachFeet", biped)
-      mesh.meshAll(root)
-   end
-   local v = h_slider("leg-width-multiplier", 380, 550, 50, values.legWidthMultiplier, 0.1, 2)
-   if v.value then
-      values.legWidthMultiplier = v.value
-      leg1 = createLegRubberhose(1, leg1.points)
-      leg2 = createLegRubberhose(2, leg2.points)
-
-      guy.children = { body, leg1, leg2, feet1, feet2, head }
-      parentize.parentize(root)
-      biped:give('biped',
-         { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-      myWorld:emit("bipedAttachFeet", biped)
-      mesh.meshAll(root)
-   end
-
-   -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
-   --print('img mem', stats.texturememory)
-   --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
 end
 
 return scene
