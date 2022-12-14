@@ -900,12 +900,12 @@ function scene.draw()
          end
 
 
-         local v = h_slider("body-width", 480, 400, 50, values.bodyWidthMultiplier, .1, 3)
+         local v = h_slider("body-width", 550, 400, 50, values.bodyWidthMultiplier, .1, 3)
          if v.value then
             values.bodyWidthMultiplier = v.value
             body.transforms.l[4] = v.value
          end
-         local v = h_slider("body-height", 480, 450, 50, values.bodyHeightMultiplier, .1, 3)
+         local v = h_slider("body-height", 550, 450, 50, values.bodyHeightMultiplier, .1, 3)
          if v.value then
             values.bodyHeightMultiplier = v.value
             body.transforms.l[5] = v.value
@@ -993,7 +993,7 @@ function scene.draw()
          love.graphics.setColor(0, 0, 0, .5)
          love.graphics.draw(blup2, 350, 500, 0, .2, .2)
 
-         local v = h_slider("leg-length", 380, 520, 50, values.legLength, 200, 2000)
+         local v = h_slider("leg-length", 450, 520, 50, values.legLength, 200, 2000)
 
          if v.value then
             values.legLength = v.value
@@ -1007,7 +1007,7 @@ function scene.draw()
             myWorld:emit("bipedAttachFeet", biped)
             mesh.meshAll(root)
          end
-         local v = h_slider("leg-width-multiplier", 380, 550, 50, values.legWidthMultiplier, 0.1, 2)
+         local v = h_slider("leg-width-multiplier", 450, 550, 50, values.legWidthMultiplier, 0.1, 2)
          if v.value then
             values.legWidthMultiplier = v.value
             leg1 = createLegRubberhose(1, leg1.points)

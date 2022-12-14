@@ -1,7 +1,6 @@
 local numbers = require 'lib.numbers'
 local geom = {}
 
-
 geom.distance = function(x1, y1, x2, y2)
    local nx = x2 - x1
    local ny = y2 - y1

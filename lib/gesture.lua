@@ -56,7 +56,7 @@ end
 
 
 --- updates the gesture counter behind the scenes and
---- _adds_ tp yhe gesture points when required
+--- _adds_ to the gesture points when required
 ---@param dt number
 lib.update = function(dt)
    gestureState.updateResolutionCounter = gestureState.updateResolutionCounter + dt
