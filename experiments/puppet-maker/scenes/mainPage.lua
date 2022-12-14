@@ -846,7 +846,7 @@ function scene.draw()
             body.transforms.l[5] = values.bodyHeightMultiplier
             guy.children = { body, leg1, leg2, feet1, feet2, head }
             parentize.parentize(root)
-
+            redoBody()
             mesh.meshAll(root)
             --mesh.recursivelyMakeTextures(root)
             --render.renderThings(root)
@@ -857,7 +857,7 @@ function scene.draw()
 
 
 
-            redoBody()
+            --redoBody()
          end
 
 

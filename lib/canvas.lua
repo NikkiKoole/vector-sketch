@@ -60,7 +60,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    local canvas = love.graphics.newCanvas(lw, lh)
 
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   --love.graphics.clear(0, 0, 0, 0) ---<<<<
+   love.graphics.clear(0, 0, 0, 0) ---<<<<
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
@@ -82,12 +82,6 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
       local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
       local yMax = (gh / 2) * scaleY - (ry * scaleY)
       local yOffset = yMin
-
-
-
-      -- this works too, and like this i dont need to put in big images
-
-
 
       love.graphics.setColor(color1)
       love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
