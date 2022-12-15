@@ -824,8 +824,6 @@ function scene.draw()
          love.graphics.setColor(0, 0, 0, .75)
          love.graphics.draw(img, 50 + 25, 400 + 40, 0, sx, sy)
 
-
-         -- why does this give the boundary pixels?
          if b.clicked then
             values.bodyImgIndex = values.bodyImgIndex + 1
             if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
