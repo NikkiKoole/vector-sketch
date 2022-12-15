@@ -142,11 +142,8 @@ end
 
 function removeChild(elem)
    local index = node.getIndex(elem)
-   --print('remove index', index)
    if index >= 0 then table.remove(elem._parent.children, index) end
 end
-
--- todo how todo the combined canvas rubberhose thing (the filled in images?)
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMultiplier, optionalPoints)
    local img = mesh.getImage(url)
@@ -157,7 +154,7 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
    currentNode.type = 'rubberhose'
    currentNode.data = currentNode.data or {}
    currentNode.texture = {}
-   currentNode.texture.url = url -- 'assets/parts/leg2-mask.png' --url
+   currentNode.texture.url = url
    currentNode.texture.wrap = 'repeat'
    currentNode.texture.filter = 'linear'
    currentNode.data.length = height * magic
@@ -180,7 +177,6 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
 
       }
       local lineart = img
-      --print(url)
       local mask = mesh.getImage(maskUrls[url])
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
@@ -188,7 +184,6 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
          fgp, fg or palettes[values.bodyFGPalIndex])
 
       currentNode.texture.retexture = love.graphics.newImage(canvas)
-      --canvas:release()
    end
    return currentNode
 end
@@ -212,19 +207,18 @@ function makeDynamicCanvas(imageData, mymesh)
 end
 
 function makeMeshFromSibling(sib, imageData)
-
    local img = love.graphics.newImage(imageData)
    local editing = mesh.makeVertices(sib)
 
    mesh.addUVToVerts(editing, img, sib.points, sib.texture)
-   local made = mesh.makeMeshFromVertices(editing, sib.type, sib.texture)
+   local result = mesh.makeMeshFromVertices(editing, sib.type, sib.texture)
 
-   made:setTexture(img)
-   return made
+   result:setTexture(img)
+   return result
 end
 
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
-
+   
    local lineartToMask = {
       ['assets/parts/romp1.png'] = 'assets/parts/romp1-mask.png',
       ['assets/parts/romp2.png'] = 'assets/parts/romp2-mask.png',
@@ -241,17 +235,16 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
       p = part
    end
 
-
    local lineartUrl = p.texture.url
    local lineart = (mesh.getImage(lineartUrl, p.texture))
-
    local mask
+   
    if lineartToMask[lineartUrl] then
       mask = mesh.getImage(lineartToMask[lineartUrl])
    else
       print('no maks found', lineartUrl)
    end
-   --print(lineart, mask)
+
    if (lineart and mask) then
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
@@ -422,7 +415,7 @@ function scene.load()
    redoBody()
 
 
-   head = parse.parseFile('assets/head4.polygons.txt')[1]
+   head = parse.parseFile('assets/head1.polygons.txt')[1]
    --   print(inspect(head))
 
    eye1 = copy3(eyeParts[values.eyeTypeIndex])
