@@ -297,6 +297,8 @@ function scene.load()
       nil
    }
 
+ 
+
    palettes = {
       { 0, 0, 0, 1 },
       { 0.18, 0.176, 0.18, 1 },
@@ -309,7 +311,19 @@ function scene.load()
       { 0.475, 0.408, 0.439, 1 },
       { 0.561, 0.247, 0.443, 1 },
       { 0.89, 0.388, 0.294, 1 },
-      { 0.941, 0.518, 0.122, 1 }, --- llast one beore pico8
+      { 0.941, 0.518, 0.122, 1 }, 
+      -- start of volkskrant palette
+      {246 / 255,217/ 255,58/ 255},
+      {41/ 255,33/ 255,30/ 255},
+      {246/ 255,113/ 255,110/ 255},
+      {253/ 255,239/ 255,205/ 255},
+      {252/ 255,163/ 255,154/ 255},
+      {98/ 255,86/ 255,69/ 255},
+      {66/ 255,115/ 255,131/ 255},
+      {178/ 255,209/ 255,159/ 255},
+      {184/ 255,176/ 255,150/ 255}
+   
+      --- llast one beore pico8
 
       --[[
       { 29 / 255, 43 / 255, 83 / 255 },
@@ -800,21 +814,25 @@ function ColoredPatternUI(x, y)
    if b.clicked then
       values.bodyImgIndex = values.bodyImgIndex + 1
       if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
+      
       local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
       body = copy3(bodyParts[values.bodyImgIndex])
-
+      
       body.transforms.l[1] = temp_x
       body.transforms.l[2] = temp_y
       body.transforms.l[4] = values.bodyWidthMultiplier
       body.transforms.l[5] = values.bodyHeightMultiplier
       guy.children = { body, leg1, leg2, feet1, feet2, head }
+      
       parentize.parentize(root)
+       
       redoBody()
       mesh.meshAll(root)
-            
+       
       render.justDoTransforms(root)
 
       biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+      
          
    end
 

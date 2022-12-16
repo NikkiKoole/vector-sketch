@@ -60,7 +60,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    local canvas = love.graphics.newCanvas(lw, lh)
 
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   love.graphics.clear(0, 0, 0, 0) ---<<<<
+   --love.graphics.clear(0, 0, 0, 0) ---<<<<
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
@@ -136,7 +136,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
    love.graphics.setColor(lineartColor)
    love.graphics.draw(lineart)
-
+   love.graphics.setColor(0,0,0) --- huh?!
    love.graphics.setCanvas() --- <<<<<
 
    -- how to smooch the canvas ?
