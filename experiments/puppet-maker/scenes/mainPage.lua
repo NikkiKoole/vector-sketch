@@ -799,6 +799,7 @@ end
 
 
 function ColoredPatternUI(x, y)
+   
    local bigRadius = 60
    local radius = 50
    local diam = radius * 2
