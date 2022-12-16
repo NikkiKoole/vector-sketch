@@ -293,6 +293,7 @@ function scene.load()
       love.graphics.newImage('assets/layered/texture-type5.png'),
       love.graphics.newImage('assets/layered/texture-type6.png'),
       love.graphics.newImage('assets/layered/texture-type7.png'),
+
       nil
    }
 
@@ -693,7 +694,7 @@ function renderMaskedTexture(maskShape, texture, x, y, sx, sy)
 
 end
 
-function createFittinScale(img, desired_w, desired_h)
+function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
    --   print(sx, sy)
@@ -762,25 +763,85 @@ function drawBBoxDebug()
 
 end
 
+function getScaleAndOffsetsForImage(img, desiredW, desiredH)
+   local sx, sy = createFittingScale(img, desiredW, desiredH)
+   local scale = math.min(sx,sy)
+   local xOffset = 0
+   local yOffset = 0
+   if scale == sx then
+      xOffset = -desiredW/2 -- half the height
+      local something = sx * img:getHeight()
+      local something2 = sy * img:getHeight()
+      yOffset = -desiredH/2 + (something - something2)/2
+   elseif scale == sy then
+      yOffset = -desiredH/2 -- half the height
+      local something = sx * img:getWidth()
+      local something2 = sy * img:getWidth()
+      xOffset = -desiredW/2 + (something - something2)/2
+   end
+   return scale, xOffset, yOffset
+end
+
+
+
 function ColoredPatternUI(x, y)
+   local bigRadius = 60
+   local radius = 50
+   local diam = radius * 2
 
-   love.graphics.circle("line", x, y, 60)
-   local rad = { -math.pi / 4 + 0, -math.pi / 4 + .2 * math.pi, -math.pi / 4 + .4 * math.pi }
+   love.graphics.circle("line", x, y, bigRadius)
 
+   local img = mesh.getImage(bodyThumbUrls[values.bodyImgIndex])
+   local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
+   love.graphics.setColor(0, 0, 0, .75)
+   love.graphics.draw(img, x + xOffset ,y + yOffset, 0, scale, scale)
+   local b = ui.getUICircle(x,y,bigRadius)
 
-   for i = 1, 3 do
+   if b.clicked then
+      values.bodyImgIndex = values.bodyImgIndex + 1
+      if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
+      local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
+      body = copy3(bodyParts[values.bodyImgIndex])
 
-      local new_x = x + math.cos(rad[i]) * 110
-      local new_y = y + math.sin(rad[i]) * 110
+      body.transforms.l[1] = temp_x
+      body.transforms.l[2] = temp_y
+      body.transforms.l[4] = values.bodyWidthMultiplier
+      body.transforms.l[5] = values.bodyHeightMultiplier
+      guy.children = { body, leg1, leg2, feet1, feet2, head }
+      parentize.parentize(root)
+      redoBody()
+      mesh.meshAll(root)
+            
+      render.justDoTransforms(root)
+
+      biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+         
+   end
+
+   local rad =  -math.pi/2
+   local number = 4
+   local step = (math.pi/1.5)/ (number-1)
+
+   for i = 1, number do
+
+      local new_x = x + math.cos(rad) * 100
+      local new_y = y + math.sin(rad) * 100
       love.graphics.circle("line", new_x, new_y, 30)
       love.graphics.print(i, new_x, new_y)
+      rad = rad + step
    end
 
 end
 
 function redoBody()
-   redoTheGraphicInPart(body, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-      textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex], palettes[values.bodyLinePalIndex])
+   redoTheGraphicInPart(
+      body, 
+      palettes[values.bodyBGPalIndex], 
+      palettes[values.bodyFGPalIndex],
+      textures[values.bodyBGTexIndex], 
+      textures[values.bodyFGTexIndex], 
+      palettes[values.bodyLinePalIndex]
+   )
 end
 
 function scene.draw()
@@ -813,44 +874,11 @@ function scene.draw()
 
       if true then -- this block leaks memory
 
-         --ColoredPatternUI(50, 400)
+         ColoredPatternUI(50, 400)
 
 
          love.graphics.setColor(0, 0, 0, .5)
-
-         local img = mesh.getImage(bodyThumbUrls[values.bodyImgIndex])
-         local sx, sy = createFittinScale(img, 40, 40)
-         b = newImageButton(blup2, 50, 400, .2, .2)
-         love.graphics.setColor(0, 0, 0, .75)
-         love.graphics.draw(img, 50 + 25, 400 + 40, 0, sx, sy)
-
-         if b.clicked then
-            values.bodyImgIndex = values.bodyImgIndex + 1
-            if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
-
-            local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
-            body = copy3(bodyParts[values.bodyImgIndex])
-
-            body.transforms.l[1] = temp_x
-            body.transforms.l[2] = temp_y
-            body.transforms.l[4] = values.bodyWidthMultiplier
-            body.transforms.l[5] = values.bodyHeightMultiplier
-            guy.children = { body, leg1, leg2, feet1, feet2, head }
-            parentize.parentize(root)
-            redoBody()
-            mesh.meshAll(root)
-            --mesh.recursivelyMakeTextures(root)
-            --render.renderThings(root)
-            render.justDoTransforms(root)
-            --transforms.setRecursive(root)
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-
-
-            --redoBody()
-         end
-
+       
 
          love.graphics.setColor(palettes[values.bodyBGPalIndex])
          b = newImageButton(blup2, 150, 400, .2, .2)
@@ -907,7 +935,7 @@ function scene.draw()
          love.graphics.setColor(0, 0, 0, .5)
          b = newImageButton(blup2, 50, 500, .2, .2)
          local img = mesh.getImage(legUrls[values.legImgIndex])
-         local sx, sy = createFittinScale(img, 40, 40)
+         local sx, sy = createFittingScale(img, 40, 40)
          love.graphics.setColor(0, 0, 0, 1)
          love.graphics.draw(img, 50 + 25, 500 + 25, 0, math.min(sx, sy) * 2, math.min(sx, sy) * 2)
 
@@ -948,7 +976,7 @@ function scene.draw()
          if b.clicked then
             values.legBGPalIndex = values.legBGPalIndex + 1
             if (values.legBGPalIndex > #palettes) then values.legBGPalIndex = 1 end
-            --redoTheGraphicInPart(body, palettes[values.legBGPalIndex], palettes[values.legFGPalIndex])
+
             leg1 = createLegRubberhose(1, leg1.points)
             leg2 = createLegRubberhose(2, leg2.points)
 

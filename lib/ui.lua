@@ -65,7 +65,7 @@ ui.getUIRect = function(id, x, y, w, h)
    }
 end
 
-ui.getUICircle = function(id, x, y, r)
+ui.getUICircle = function(x, y, r)
    local clicked = false
    local hover = false
    local mx, my = love.mouse.getPosition()
