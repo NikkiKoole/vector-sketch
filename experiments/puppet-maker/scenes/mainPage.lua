@@ -218,7 +218,7 @@ function makeMeshFromSibling(sib, imageData)
 end
 
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
-   
+
    local lineartToMask = {
       ['assets/parts/romp1.png'] = 'assets/parts/romp1-mask.png',
       ['assets/parts/romp2.png'] = 'assets/parts/romp2-mask.png',
@@ -238,7 +238,7 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
    local lineartUrl = p.texture.url
    local lineart = (mesh.getImage(lineartUrl, p.texture))
    local mask
-   
+
    if lineartToMask[lineartUrl] then
       mask = mesh.getImage(lineartToMask[lineartUrl])
    else
@@ -297,7 +297,7 @@ function scene.load()
       nil
    }
 
- 
+
 
    palettes = {
       { 0, 0, 0, 1 },
@@ -311,18 +311,18 @@ function scene.load()
       { 0.475, 0.408, 0.439, 1 },
       { 0.561, 0.247, 0.443, 1 },
       { 0.89, 0.388, 0.294, 1 },
-      { 0.941, 0.518, 0.122, 1 }, 
+      { 0.941, 0.518, 0.122, 1 },
       -- start of volkskrant palette
-      {246 / 255,217/ 255,58/ 255},
-      {41/ 255,33/ 255,30/ 255},
-      {246/ 255,113/ 255,110/ 255},
-      {253/ 255,239/ 255,205/ 255},
-      {252/ 255,163/ 255,154/ 255},
-      {98/ 255,86/ 255,69/ 255},
-      {66/ 255,115/ 255,131/ 255},
-      {178/ 255,209/ 255,159/ 255},
-      {184/ 255,176/ 255,150/ 255}
-   
+      { 246 / 255, 217 / 255, 58 / 255 },
+      { 41 / 255, 33 / 255, 30 / 255 },
+      { 246 / 255, 113 / 255, 110 / 255 },
+      { 253 / 255, 239 / 255, 205 / 255 },
+      { 252 / 255, 163 / 255, 154 / 255 },
+      { 98 / 255, 86 / 255, 69 / 255 },
+      { 66 / 255, 115 / 255, 131 / 255 },
+      { 178 / 255, 209 / 255, 159 / 255 },
+      { 184 / 255, 176 / 255, 150 / 255 }
+
       --- llast one beore pico8
 
       --[[
@@ -779,27 +779,25 @@ end
 
 function getScaleAndOffsetsForImage(img, desiredW, desiredH)
    local sx, sy = createFittingScale(img, desiredW, desiredH)
-   local scale = math.min(sx,sy)
+   local scale = math.min(sx, sy)
    local xOffset = 0
    local yOffset = 0
    if scale == sx then
-      xOffset = -desiredW/2 -- half the height
+      xOffset = -desiredW / 2 -- half the height
       local something = sx * img:getHeight()
       local something2 = sy * img:getHeight()
-      yOffset = -desiredH/2 + (something - something2)/2
+      yOffset = -desiredH / 2 + (something - something2) / 2
    elseif scale == sy then
-      yOffset = -desiredH/2 -- half the height
+      yOffset = -desiredH / 2 -- half the height
       local something = sx * img:getWidth()
       local something2 = sy * img:getWidth()
-      xOffset = -desiredW/2 + (something - something2)/2
+      xOffset = -desiredW / 2 + (something - something2) / 2
    end
    return scale, xOffset, yOffset
 end
 
-
-
 function ColoredPatternUI(x, y)
-   
+
    local bigRadius = 60
    local radius = 50
    local diam = radius * 2
@@ -809,44 +807,72 @@ function ColoredPatternUI(x, y)
    local img = mesh.getImage(bodyThumbUrls[values.bodyImgIndex])
    local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
    love.graphics.setColor(0, 0, 0, .75)
-   love.graphics.draw(img, x + xOffset ,y + yOffset, 0, scale, scale)
-   local b = ui.getUICircle(x,y,bigRadius)
+   love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
+   local b = ui.getUICircle(x, y, bigRadius)
 
+   -- the big circle thing
    if b.clicked then
       values.bodyImgIndex = values.bodyImgIndex + 1
       if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
-      
+
       local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
       body = copy3(bodyParts[values.bodyImgIndex])
-      
+
       body.transforms.l[1] = temp_x
       body.transforms.l[2] = temp_y
       body.transforms.l[4] = values.bodyWidthMultiplier
       body.transforms.l[5] = values.bodyHeightMultiplier
       guy.children = { body, leg1, leg2, feet1, feet2, head }
-      
+
       parentize.parentize(root)
-       
+
       redoBody()
       mesh.meshAll(root)
-       
+
       render.justDoTransforms(root)
 
       biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-      
-         
    end
 
-   local rad =  -math.pi/2
+   local rad = -math.pi / 2
    local number = 4
-   local step = (math.pi/1.5)/ (number-1)
+   local step = (math.pi / 1.5) / (number - 1)
+
+   local colors = {
+      palettes[values.bodyBGPalIndex],
+      { 0, 0, 0 },
+      palettes[values.bodyFGPalIndex],
+      palettes[values.bodyLinePalIndex]
+   }
+   local keys = {
+      'bodyBGPalIndex', 'bodyFGTexIndex', 'bodyFGPalIndex', 'bodyLinePalIndex'
+   }
+   local maxValues = {
+      #palettes, #textures, #palettes, #palettes
+   }
+   local renderTextures = { nil, textures[values.bodyFGTexIndex], nil, nil }
+
 
    for i = 1, number do
 
       local new_x = x + math.cos(rad) * 100
       local new_y = y + math.sin(rad) * 100
+      love.graphics.setColor(0, 0, 0)
       love.graphics.circle("line", new_x, new_y, 30)
-      love.graphics.print(i, new_x, new_y)
+      love.graphics.setColor(colors[i])
+      scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
+      b = ui.getUICircle(new_x, new_y, 30)
+
+      if (renderTextures[i]) then
+         renderMaskedTexture(blup2, renderTextures[i], new_x + xOffset, new_y + yOffset, scale, scale)
+      else
+         love.graphics.circle("fill", new_x, new_y, 28)
+      end
+      if b.clicked then
+         values[keys[i]] = values[keys[i]] + 1
+         if (values[keys[i]] > maxValues[i]) then values[keys[i]] = 1 end
+         redoBody()
+      end
       rad = rad + step
    end
 
@@ -854,11 +880,11 @@ end
 
 function redoBody()
    redoTheGraphicInPart(
-      body, 
-      palettes[values.bodyBGPalIndex], 
+      body,
+      palettes[values.bodyBGPalIndex],
       palettes[values.bodyFGPalIndex],
-      textures[values.bodyBGTexIndex], 
-      textures[values.bodyFGTexIndex], 
+      textures[values.bodyBGTexIndex],
+      textures[values.bodyFGTexIndex],
       palettes[values.bodyLinePalIndex]
    )
 end
@@ -893,57 +919,14 @@ function scene.draw()
 
       if true then -- this block leaks memory
 
-         ColoredPatternUI(50, 400)
+         ColoredPatternUI(100, 400)
 
-
-         love.graphics.setColor(0, 0, 0, .5)
-       
-
-         love.graphics.setColor(palettes[values.bodyBGPalIndex])
-         b = newImageButton(blup2, 150, 400, .2, .2)
-         if b.clicked then
-            values.bodyBGPalIndex = values.bodyBGPalIndex + 1
-            if (values.bodyBGPalIndex > #palettes) then values.bodyBGPalIndex = 1 end
-            redoBody()
-         end
-
-
-         love.graphics.setColor(0, 0, 0, .25)
-         b = newImageButton(blup2, 250, 400, .2, .2)
-         renderMaskedTexture(blup2, textures[values.bodyFGTexIndex], 240, 410, .2, .2)
-
-         if b.clicked then
-            values.bodyFGTexIndex = values.bodyFGTexIndex + 1
-            if (values.bodyFGTexIndex > #textures) then values.bodyFGTexIndex = 1 end
-            redoBody()
-         end
-
-
-         love.graphics.setColor(palettes[values.bodyFGPalIndex])
-         b = newImageButton(blup2, 350, 400, .2, .2)
-         if b.clicked then
-            values.bodyFGPalIndex = values.bodyFGPalIndex + 1
-            if (values.bodyFGPalIndex > #palettes) then values.bodyFGPalIndex = 1 end
-            redoBody()
-            --updateBodyGeneratedCanvas()
-         end
-
-         love.graphics.setColor(palettes[values.bodyLinePalIndex])
-         b = newImageButton(blup2, 450, 400, .2, .2)
-         if b.clicked then
-            values.bodyLinePalIndex = values.bodyLinePalIndex + 1
-            if (values.bodyLinePalIndex > #palettes) then values.bodyLinePalIndex = 1 end
-            redoBody()
-            --updateBodyGeneratedCanvas()
-         end
-
-
-         local v = h_slider("body-width", 550, 400, 50, values.bodyWidthMultiplier, .1, 3)
+         local v = h_slider("body-width", 250, 400, 50, values.bodyWidthMultiplier, .1, 3)
          if v.value then
             values.bodyWidthMultiplier = v.value
             body.transforms.l[4] = v.value
          end
-         local v = h_slider("body-height", 550, 450, 50, values.bodyHeightMultiplier, .1, 3)
+         local v = h_slider("body-height", 250, 450, 50, values.bodyHeightMultiplier, .1, 3)
          if v.value then
             values.bodyHeightMultiplier = v.value
             body.transforms.l[5] = v.value
