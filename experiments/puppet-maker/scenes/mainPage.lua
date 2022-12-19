@@ -180,8 +180,8 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
       local mask = mesh.getImage(maskUrls[url])
       local canvas = canvas.makeTexturedCanvas(
          lineart, mask,
-         bgp, bg or palettes[values.bodyBGPalIndex],
-         fgp, fg or palettes[values.bodyFGPalIndex])
+         bgp, bg or palettes[values.body.bgPal],
+         fgp, fg or palettes[values.body.fgPal], palettes[values.legs.linePal])
 
       currentNode.texture.retexture = love.graphics.newImage(canvas)
    end
@@ -378,29 +378,6 @@ function scene.load()
    -------
 
 
-   values = {
-      legImgIndex = 1,
-      legLength = 700,
-      legWidthMultiplier = 1,
-      leg1flop = 1,
-      leg2flop = 1,
-      feetTypeIndex = 1,
-      legBGPalIndex = 4,
-      legFGPalIndex = 1,
-      legBGTexIndex = 1,
-      legFGTexIndex = 2,
-
-      bodyImgIndex = 3,
-      bodyLinePalIndex = 4,
-      bodyBGPalIndex = 4,
-      bodyFGPalIndex = 1,
-      bodyBGTexIndex = 1,
-      bodyFGTexIndex = 3,
-
-      bodyWidthMultiplier = 1,
-      bodyHeightMultiplier = 1,
-      eyeTypeIndex = 1,
-   }
 
    feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt' }
    feetParts = {}
@@ -426,7 +403,39 @@ function scene.load()
       bodyParts[i] = parse.parseFile(bodyUrls[i])[1]
       stripPath(bodyParts[i], '/experiments/puppet%-maker/')
    end
-   body = copy3(bodyParts[values.bodyImgIndex])
+
+
+
+   values = {
+      legs = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
+      body = {
+         shape   = 3,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
+
+      legLength = 700,
+      legWidthMultiplier = 1,
+      leg1flop = 1,
+      leg2flop = 1,
+      feetTypeIndex = 1,
+      bodyWidthMultiplier = 1,
+      bodyHeightMultiplier = 1,
+      eyeTypeIndex = 1,
+   }
+
+   body = copy3(bodyParts[values.body.shape])
+
    redoBody()
 
 
@@ -667,9 +676,9 @@ function createLegRubberhose(legNr, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
 
    return createRubberHoseFromImage(
-      legUrls[values.legImgIndex],
-      palettes[values.legBGPalIndex], palettes[values.legFGPalIndex],
-      textures[values.legBGTexIndex], textures[values.legFGTexIndex], flop
+      legUrls[values.legs.shape],
+      palettes[values.legs.bgPal], palettes[values.legs.fgPal],
+      textures[values.legs.bgTex], textures[values.legs.fgTex], flop
       , values.legLength,
       values.legWidthMultiplier,
       points)
@@ -796,102 +805,124 @@ function getScaleAndOffsetsForImage(img, desiredW, desiredH)
    return scale, xOffset, yOffset
 end
 
-function ColoredPatternUI(x, y)
-
+function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    local bigRadius = 60
    local radius = 50
    local diam = radius * 2
-
-   love.graphics.circle("line", x, y, bigRadius)
-
-   local img = mesh.getImage(bodyThumbUrls[values.bodyImgIndex])
-   local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
-   love.graphics.setColor(0, 0, 0, .75)
-   love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
-   local b = ui.getUICircle(x, y, bigRadius)
-
-   -- the big circle thing
-   if b.clicked then
-      values.bodyImgIndex = values.bodyImgIndex + 1
-      if (values.bodyImgIndex > #bodyParts) then values.bodyImgIndex = 1 end
-
-      local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
-      body = copy3(bodyParts[values.bodyImgIndex])
-
-      body.transforms.l[1] = temp_x
-      body.transforms.l[2] = temp_y
-      body.transforms.l[4] = values.bodyWidthMultiplier
-      body.transforms.l[5] = values.bodyHeightMultiplier
-      guy.children = { body, leg1, leg2, feet1, feet2, head }
-
-      parentize.parentize(root)
-
-      redoBody()
-      mesh.meshAll(root)
-
-      render.justDoTransforms(root)
-
-      biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-   end
-
    local rad = -math.pi / 2
    local number = 4
    local step = (math.pi / 1.5) / (number - 1)
 
-   local colors = {
-      palettes[values.bodyBGPalIndex],
-      { 0, 0, 0 },
-      palettes[values.bodyFGPalIndex],
-      palettes[values.bodyLinePalIndex]
-   }
-   local keys = {
-      'bodyBGPalIndex', 'bodyFGTexIndex', 'bodyFGPalIndex', 'bodyLinePalIndex'
-   }
-   local maxValues = {
-      #palettes, #textures, #palettes, #palettes
-   }
-   local renderTextures = { nil, textures[values.bodyFGTexIndex], nil, nil }
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.circle("line", x, y, bigRadius)
 
+   local first, second, third, fourth, fifth = nil, nil, nil, nil, nil
 
-   for i = 1, number do
+   if (type(textureOrColors[1]) == "table") then
+      love.graphics.setColor(textureOrColors[1])
+   else
+      local img = mesh.getImage(textureOrColors[1])
+      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
+      love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
+   end
+   first = ui.getUICircle(x, y, bigRadius)
 
+   for i = 2, #textureOrColors do
       local new_x = x + math.cos(rad) * 100
       local new_y = y + math.sin(rad) * 100
       love.graphics.setColor(0, 0, 0)
       love.graphics.circle("line", new_x, new_y, 30)
-      love.graphics.setColor(colors[i])
-      scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
-      b = ui.getUICircle(new_x, new_y, 30)
-
-      if (renderTextures[i]) then
-         renderMaskedTexture(blup2, renderTextures[i], new_x + xOffset, new_y + yOffset, scale, scale)
-      else
+      if (type(textureOrColors[i]) == "table") then
+         love.graphics.setColor(textureOrColors[i])
          love.graphics.circle("fill", new_x, new_y, 28)
+      else
+         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
+         renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
       end
-      if b.clicked then
-         values[keys[i]] = values[keys[i]] + 1
-         if (values[keys[i]] > maxValues[i]) then values[keys[i]] = 1 end
-         redoBody()
-      end
+
+      local b = ui.getUICircle(new_x, new_y, 30)
+      if (i == 2) then second = b end
+      if (i == 3) then third = b end
+      if (i == 4) then fourth = b end
+      if (i == 5) then fifth = b end
       rad = rad + step
    end
+   return first, second, third, fourth, fifth
 
+end
+
+function changeBody()
+   local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
+   body = copy3(bodyParts[values.body.shape])
+
+   body.transforms.l[1] = temp_x
+   body.transforms.l[2] = temp_y
+   body.transforms.l[4] = values.bodyWidthMultiplier
+   body.transforms.l[5] = values.bodyHeightMultiplier
+   guy.children = { body, leg1, leg2, feet1, feet2, head }
+
+   parentize.parentize(root)
+
+   redoBody()
+   mesh.meshAll(root)
+
+   render.justDoTransforms(root)
+
+   biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+end
+
+function changeLegs()
+   for i = 1, #guy.children do
+      if (guy.children[i] == leg1) then
+         leg1 = createLegRubberhose(1, leg1.points)
+
+         guy.children[i] = leg1
+         biped:give('biped',
+            { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+         myWorld:emit("bipedAttachFeet", biped)
+         parentize.parentize(root)
+         mesh.meshAll(root)
+      end
+      if (guy.children[i] == leg2) then
+         leg2 = createLegRubberhose(2, leg2.points)
+
+         guy.children[i] = leg2
+         biped:give('biped',
+            { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+         myWorld:emit("bipedAttachFeet", biped)
+         parentize.parentize(root)
+         mesh.meshAll(root)
+      end
+
+   end
+end
+
+function redoLegs()
+   leg1 = createLegRubberhose(1, leg1.points)
+   leg2 = createLegRubberhose(2, leg2.points)
+
+   guy.children = { body, leg1, leg2, feet1, feet2, head }
+   parentize.parentize(root)
+   biped:give('biped',
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   myWorld:emit("bipedAttachFeet", biped)
+   mesh.meshAll(root)
 end
 
 function redoBody()
    redoTheGraphicInPart(
       body,
-      palettes[values.bodyBGPalIndex],
-      palettes[values.bodyFGPalIndex],
-      textures[values.bodyBGTexIndex],
-      textures[values.bodyFGTexIndex],
-      palettes[values.bodyLinePalIndex]
+      palettes[values.body.bgPal],
+      palettes[values.body.fgPal],
+      textures[values.body.bgTex],
+      textures[values.body.fgTex],
+      palettes[values.body.linePal]
    )
 end
 
 function scene.draw()
    if true then
-      local stats = love.graphics.getStats()
+
       ui.handleMouseClickStart()
       love.graphics.clear(bgColor)
       love.graphics.setColor(0, 0, 0)
@@ -902,156 +933,124 @@ function scene.draw()
 
 
 
-      --print(blup4:getWidth() * .2)
-      if false then
-         -- we dont want to change th eBG pattern, it should just be 1
-         love.graphics.setColor(0, 0, 0, .25)
-         local b = newImageButton(blup4, 50, 400, .2, .2)
-         renderMaskedTexture(blup4, textures[values.bodyBGTexIndex], 40, 410, .2, .2)
-
-         if b.clicked then
-            values.bodyBGTexIndex = values.bodyBGTexIndex + 1
-            if (values.bodyBGTexIndex > #textures) then values.bodyBGTexIndex = 1 end
-            redoBody()
-         end
-      end
-
-
       if true then -- this block leaks memory
 
-         ColoredPatternUI(100, 400)
+         -- body
 
-         local v = h_slider("body-width", 250, 400, 50, values.bodyWidthMultiplier, .1, 3)
-         if v.value then
-            values.bodyWidthMultiplier = v.value
-            body.transforms.l[4] = v.value
+         local bodyShapeButton, bodyBGButton, bodyFGTexButton, bodyFGPalButton, bodyLinePalButton = bigButtonWithSmallAroundIt(
+            200, 200,
+            {
+               bodyThumbUrls[values.body.shape],
+               palettes[values.body.bgPal],
+               textures[values.body.fgTex],
+               palettes[values.body.fgPal],
+               palettes[values.body.linePal]
+            }
+         )
+         if bodyShapeButton.clicked then
+            values.body.shape = values.body.shape + 1
+            if (values.body.shape > #bodyParts) then values.body.shape = 1 end
+            changeBody()
          end
-         local v = h_slider("body-height", 250, 450, 50, values.bodyHeightMultiplier, .1, 3)
-         if v.value then
-            values.bodyHeightMultiplier = v.value
-            body.transforms.l[5] = v.value
+         if bodyBGButton.clicked then
+            values.body.bgPal = values.body.bgPal + 1
+            if (values.body.bgPal > #palettes) then values.body.bgPal = 1 end
+            redoBody()
          end
-         ------  end body buttons
+         if bodyFGTexButton.clicked then
+            values.body.fgTex = values.body.fgTex + 1
+            if (values.body.fgTex > #textures) then values.body.fgTex = 1 end
+            redoBody()
+         end
+         if bodyFGPalButton.clicked then
+            values.body.fgPal = values.body.fgPal + 1
+            if (values.body.fgPal > #palettes) then values.body.fgPal = 1 end
+            redoBody()
+         end
+         if bodyLinePalButton.clicked then
+            values.body.linePal = values.body.linePal + 1
+            if (values.body.linePal > #palettes) then values.body.linePal = 1 end
+            redoBody()
+         end
 
-
-         love.graphics.setColor(0, 0, 0, .5)
-         b = newImageButton(blup2, 50, 500, .2, .2)
-         local img = mesh.getImage(legUrls[values.legImgIndex])
-         local sx, sy = createFittingScale(img, 40, 40)
-         love.graphics.setColor(0, 0, 0, 1)
-         love.graphics.draw(img, 50 + 25, 500 + 25, 0, math.min(sx, sy) * 2, math.min(sx, sy) * 2)
-
-         if b.clicked then
-
-            values.legImgIndex = values.legImgIndex + 1
-            if values.legImgIndex > #legUrls then values.legImgIndex = 1 end
-
-            for i = 1, #guy.children do
-               if (guy.children[i] == leg1) then
-                  leg1 = createLegRubberhose(1, leg1.points)
-
-                  guy.children[i] = leg1
-                  biped:give('biped',
-                     { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-                  myWorld:emit("bipedAttachFeet", biped)
-                  parentize.parentize(root)
-                  mesh.meshAll(root)
-               end
-               if (guy.children[i] == leg2) then
-                  leg2 = createLegRubberhose(2, leg2.points)
-
-                  guy.children[i] = leg2
-                  biped:give('biped',
-                     { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-                  myWorld:emit("bipedAttachFeet", biped)
-                  parentize.parentize(root)
-                  mesh.meshAll(root)
-               end
-
+         if true then
+            local v = h_slider("body-width", 250, 150, 50, values.bodyWidthMultiplier, .1, 3)
+            if v.value then
+               values.bodyWidthMultiplier = v.value
+               body.transforms.l[4] = v.value
+            end
+            v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 3)
+            if v.value then
+               values.bodyHeightMultiplier = v.value
+               body.transforms.l[5] = v.value
             end
          end
 
 
-
-         love.graphics.setColor(palettes[values.legBGPalIndex])
-         b = newImageButton(blup2, 150, 500, .2, .2)
-         if b.clicked then
-            values.legBGPalIndex = values.legBGPalIndex + 1
-            if (values.legBGPalIndex > #palettes) then values.legBGPalIndex = 1 end
-
-            leg1 = createLegRubberhose(1, leg1.points)
-            leg2 = createLegRubberhose(2, leg2.points)
-
-            guy.children = { body, leg1, leg2, feet1, feet2, head }
-            parentize.parentize(root)
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-            mesh.meshAll(root)
-
+         local legShapeButton, legBGButton, legFGTexButton, legFGPalButton, legLinePalButton = bigButtonWithSmallAroundIt(
+            200, 450,
+            {
+               legUrls[values.legs.shape],
+               palettes[values.legs.bgPal],
+               textures[values.legs.fgTex],
+               palettes[values.legs.fgPal],
+               palettes[values.legs.linePal]
+            }
+         )
+         if legShapeButton.clicked then
+            values.legs.shape = values.legs.shape + 1
+            if (values.legs.shape > #bodyParts) then values.legs.shape = 1 end
+            changeLegs()
          end
-
-         love.graphics.setColor(palettes[values.legFGPalIndex])
-         b = newImageButton(blup2, 250, 500, .2, .2)
-         if b.clicked then
-            values.legFGPalIndex = values.legFGPalIndex + 1
-            if (values.legFGPalIndex > #palettes) then values.legFGPalIndex = 1 end
-            leg1 = createLegRubberhose(1, leg1.points)
-            leg2 = createLegRubberhose(2, leg2.points)
-
-            guy.children = { body, leg1, leg2, feet1, feet2, head }
-            parentize.parentize(root)
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-
-            mesh.meshAll(root)
-
+         if legBGButton.clicked then
+            values.legs.bgPal = values.legs.bgPal + 1
+            if (values.legs.bgPal > #palettes) then values.legs.bgPal = 1 end
+            redoLegs()
          end
-
-         --drawCirclesAroundCenterCircle(30, h / 3, 'head', h / 20, h / 6, h / 24)
-         --drawCirclesAroundCenterCircle(30, (h / 3) * 2, 'body', h / 20, h / 6, h / 24)
-
-         love.graphics.setColor(0, 0, 0, .5)
-         love.graphics.draw(blup2, 350, 500, 0, .2, .2)
-
-         local v = h_slider("leg-length", 450, 520, 50, values.legLength, 200, 2000)
-
-         if v.value then
-            values.legLength = v.value
-            leg1 = createLegRubberhose(1, leg1.points)
-            leg2 = createLegRubberhose(2, leg2.points)
-
-            guy.children = { body, leg1, leg2, feet1, feet2, head }
-            parentize.parentize(root)
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-            myWorld:emit("bipedAttachFeet", biped)
-            mesh.meshAll(root)
+         if legFGTexButton.clicked then
+            values.legs.fgTex = values.legs.fgTex + 1
+            if (values.legs.fgTex > #textures) then values.legs.fgTex = 1 end
+            redoLegs()
          end
-         local v = h_slider("leg-width-multiplier", 450, 550, 50, values.legWidthMultiplier, 0.1, 2)
-         if v.value then
-            values.legWidthMultiplier = v.value
-            leg1 = createLegRubberhose(1, leg1.points)
-            leg2 = createLegRubberhose(2, leg2.points)
-
-            guy.children = { body, leg1, leg2, feet1, feet2, head }
-            parentize.parentize(root)
-            biped:give('biped',
-               { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-            myWorld:emit("bipedAttachFeet", biped)
-            mesh.meshAll(root)
+         if legFGPalButton.clicked then
+            values.legs.fgPal = values.legs.fgPal + 1
+            if (values.legs.fgPal > #palettes) then values.legs.fgPal = 1 end
+            redoLegs()
          end
+         if legLinePalButton.clicked then
+            values.legs.linePal = values.legs.linePal + 1
+            if (values.legs.linePal > #palettes) then values.legs.linePal = 1 end
+            redoLegs()
+         end
+         -- legs
+         --  ColoredPatternLegs(100, 400)
+         if true then
+            v = h_slider("leg-length", 250, 400, 50, values.legLength, 200, 2000)
+
+            if v.value then
+               values.legLength = v.value
+               redoLegs()
+            end
+            v = h_slider("leg-width-multiplier", 250, 450, 50, values.legWidthMultiplier, 0.1, 2)
+            if v.value then
+               values.legWidthMultiplier = v.value
+               redoLegs()
+            end
+         end
+         -- feet
+
 
          -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
          --print('img mem', stats.texturememory)
          --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
 
          love.graphics.setColor(0, 0, 0, .5)
+         local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
          --   print(inspect(stats))
-         love.graphics.print(str, 10, 10)
+         love.graphics.print(inspect(stats), 10, 30)
 
-         love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 30)
+         love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 
       end
    end
