@@ -206,6 +206,26 @@ function makeDynamicCanvas(imageData, mymesh)
    return result
 end
 
+function createRectangle(x,y,w,h, r,g,b)
+   print(x,y,w,h)
+   local w2 = w / 2
+   local h2 = h / 2
+
+   local result = {}
+   result.folder = true
+   result.transforms = {
+      l = { x,y, 0, 1, 1, 0,0 }
+      }
+      result.children = {{
+
+   name = 'rectangle',
+   points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
+   color = { r or 1 , g or 0.91, b or 0.15, 1 }
+      }}
+      return result
+end
+
+
 function makeMeshFromSibling(sib, imageData)
    local img = love.graphics.newImage(imageData)
    local editing = mesh.makeVertices(sib)
@@ -474,11 +494,15 @@ function scene.load()
    guy = {
       folder = true,
       name = 'guy',
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+      transforms = { l = { 0, 0, 0, 1, 1, 0, 0,0,0  } },
       children = {}
    }
    guy.children = { body, leg1, leg2, feet1, feet2, head }
-   root.children = { guy }
+   local r1 = createRectangle(500,-500,100,500, 1,0,0)
+   local r2 = createRectangle(-1000,400,400,400)
+   root.children = { guy , r1, r2}
+
+
 
    stripPath(root, '/experiments/puppet%-maker/')
 
@@ -528,15 +552,11 @@ function attachCallbacks()
          values.leg2flop = 1
          myWorld:emit('bipedDirection', biped, 'down')
       end
-
-      if key == 'f' then
-         values.feetTypeIndex = values.feetTypeIndex + 1
-         if (values.feetTypeIndex > #feetParts) then values.feetTypeIndex = 1 end
-         changeFeet()
+      if key == '1' then
+         print('focus camera on first other shape')
       end
-      if key == 'l' then
-
-
+      if key == '2' then
+         print('focus camera on second other shape')
       end
    end
 
@@ -630,7 +650,9 @@ end
 function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
    for j = 1, #root.children do
+
       local guy = root.children[j]
+      if guy.children then
       for i = 1, #guy.children do
 
          local item = guy.children[i]
@@ -646,6 +668,7 @@ function pointerPressed(x, y, id)
             end
          end
       end
+   end
    end
 end
 
@@ -962,14 +985,14 @@ function scene.draw()
       love.graphics.setColor(0, 0, 0)
 
       love.graphics.setColor(0, 0, 0, 0.05)
-      love.graphics.draw(tiles, 400, 0, .1, .5, .5)
+      --love.graphics.draw(tiles, 400, 0, .1, .5, .5)
       cam:push()
       render.renderThings(root)
       cam:pop()
 
 
 
-      if true then -- this block leaks memory
+      if false then -- this block leaks memory
 
          -- body
 
