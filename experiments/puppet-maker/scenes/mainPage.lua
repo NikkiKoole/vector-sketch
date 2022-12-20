@@ -19,7 +19,6 @@ local numbers = require 'lib.numbers'
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local ui = require 'lib.ui'
-
 local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
 
@@ -498,8 +497,8 @@ function scene.load()
       children = {}
    }
    guy.children = { body, leg1, leg2, feet1, feet2, head }
-   local r1 = createRectangle(500,-500,100,500, 1,0,0)
-   local r2 = createRectangle(-1000,400,400,400)
+   r1 = createRectangle(500,-500,10,50, 1,0,0)
+   r2 = createRectangle(-1000,400,40,40)
    root.children = { guy , r1, r2}
 
 
@@ -553,14 +552,32 @@ function attachCallbacks()
          myWorld:emit('bipedDirection', biped, 'down')
       end
       if key == '1' then
-         print('focus camera on first other shape')
+         --local t = r1._parent.transforms._g
+
+         local x,y = r1.transforms._g:inverseTransformPoint(0,0)
+
+        --camera.setCameraViewport(cam, 200,200)
+        --cam:update(2000, 2000)
+         camera.centerCameraOnPosition(x,y,1000,1000)
+       --  cam:update(2000,2000)
+
+         print('focus camera on first other shape',x,y)
       end
       if key == '2' then
-         print('focus camera on second other shape')
+
+         local x,y = r2.transforms._g:inverseTransformPoint(0,0)  
+       --  local x2,y2 = cam:getScreenCoordinates(x,y)
+       -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
+       
+
+         camera.centerCameraOnPosition(x,y,2000,2000)
+       
+         print('focus camera on second other shape',x,y)
       end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
+      
       pointerPressed(x, y, id)
    end
 
