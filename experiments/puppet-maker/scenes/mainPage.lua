@@ -1054,10 +1054,6 @@ function scene.draw()
          buttonHelper(feetLinePalButton, 'feet', 'linePal', #palettes, redoFeet)
 
 
-         -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
-         --print('img mem', stats.texturememory)
-         --  print('Memory actually used (in kB): ' .. collectgarbage('count'))
-
          love.graphics.setColor(0, 0, 0, .5)
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
