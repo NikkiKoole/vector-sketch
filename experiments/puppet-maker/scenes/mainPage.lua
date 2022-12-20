@@ -225,7 +225,10 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
       ['assets/parts/romp3.png'] = 'assets/parts/romp3-mask.png',
       ['assets/parts/romp4.png'] = 'assets/parts/romp4-mask.png',
       ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png',
-      ['assets/parts/headshapebuff.png'] = 'assets/parts/headshapebuff-mask.png'
+      ['assets/parts/headshapebuff.png'] = 'assets/parts/headshapebuff-mask.png',
+      ['assets/parts/feet1.png'] = 'assets/parts/feet1-mask.png',
+      ['assets/parts/feet2.png'] = 'assets/parts/feet2-mask.png',
+      ['assets/parts/feet3.png'] = 'assets/parts/feet3-mask.png',
    }
 
    local p
@@ -282,7 +285,7 @@ function scene.load()
    blup2 = love.graphics.newImage('assets/blups/blup2.png')
    blup3 = love.graphics.newImage('assets/blups/blup3.png')
    blup4 = love.graphics.newImage('assets/blups/blup4.png')
-
+   tiles = love.graphics.newImage('assets/layered/tiles.145.png')
    textures = {
       1,
 
@@ -378,8 +381,8 @@ function scene.load()
    -------
 
 
-
-   feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet3.polygons.txt', 'assets/feet4.polygons.txt' }
+   feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
+   feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt' }
    feetParts = {}
    for i = 1, #feetUrls do
       feetParts[i] = parse.parseFile(feetUrls[i])[1]
@@ -396,7 +399,7 @@ function scene.load()
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
       'assets/parts/leg5.png' }
 
-   bodyThumbUrls = { 'assets/parts/romp1.png', 'assets/parts/romp2.png', 'assets/parts/romp3.png' }
+   bodyImgUrls = { 'assets/parts/romp1.png', 'assets/parts/romp2.png', 'assets/parts/romp3.png' }
    bodyUrls = { 'assets/body1.polygons.txt', 'assets/body2.polygons.txt', 'assets/body3.polygons.txt' }
    bodyParts = {}
    for i = 1, #bodyUrls do
@@ -423,12 +426,19 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
-
+      feet = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
       legLength = 700,
       legWidthMultiplier = 1,
       leg1flop = 1,
       leg2flop = 1,
-      feetTypeIndex = 1,
+
       bodyWidthMultiplier = 1,
       bodyHeightMultiplier = 1,
       eyeTypeIndex = 1,
@@ -457,8 +467,9 @@ function scene.load()
    leg1 = createLegRubberhose(1)
    leg2 = createLegRubberhose(2)
 
-   feet1 = copy3(feetParts[values.feetTypeIndex])
-   feet2 = copy3(feetParts[values.feetTypeIndex])
+   feet1 = copy3(feetParts[values.feet.shape])
+   feet2 = copy3(feetParts[values.feet.shape])
+   redoFeet()
 
    guy = {
       folder = true,
@@ -521,41 +532,7 @@ function attachCallbacks()
       if key == 'f' then
          values.feetTypeIndex = values.feetTypeIndex + 1
          if (values.feetTypeIndex > #feetParts) then values.feetTypeIndex = 1 end
-
-         for i = 1, #guy.children do
-            if (guy.children[i] == feet1) then
-               local r = feet1.transforms.l[3]
-               local sx = feet1.transforms.l[4]
-
-               feet1 = copy3(feetParts[values.feetTypeIndex])
-               feet1.transforms.l[3] = r
-               feet1.transforms.l[4] = sx
-
-               guy.children[i] = feet1
-               biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-               myWorld:emit("bipedAttachFeet", biped)
-               parentize.parentize(root)
-               mesh.meshAll(root)
-            end
-
-            if (guy.children[i] == feet2) then
-               local r = feet2.transforms.l[3]
-               local sx = feet2.transforms.l[4]
-
-               feet2 = copy3(feetParts[values.feetTypeIndex])
-               feet2.transforms.l[3] = r
-               feet2.transforms.l[4] = sx
-
-               guy.children[i] = feet2
-               biped:give('biped',
-                  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-               myWorld:emit("bipedAttachFeet", biped)
-               parentize.parentize(root)
-               mesh.meshAll(root)
-
-            end
-         end
+         changeFeet()
       end
       if key == 'l' then
 
@@ -795,8 +772,9 @@ function getScaleAndOffsetsForImage(img, desiredW, desiredH)
       xOffset = -desiredW / 2 -- half the height
       local something = sx * img:getHeight()
       local something2 = sy * img:getHeight()
-      yOffset = -desiredH / 2 + (something - something2) / 2
+      yOffset = -desiredH / 2 - (something - something2) / 2
    elseif scale == sy then
+      --print('y')
       yOffset = -desiredH / 2 -- half the height
       local something = sx * img:getWidth()
       local something2 = sy * img:getWidth()
@@ -863,7 +841,7 @@ function changeBody()
 
    parentize.parentize(root)
 
-   redoBody()
+   redoBody() --- this position is very iportant, if i move redoBody under the meshall we get these borders aorund images
    mesh.meshAll(root)
 
    render.justDoTransforms(root)
@@ -875,26 +853,22 @@ function changeLegs()
    for i = 1, #guy.children do
       if (guy.children[i] == leg1) then
          leg1 = createLegRubberhose(1, leg1.points)
-
          guy.children[i] = leg1
-         biped:give('biped',
-            { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-         myWorld:emit("bipedAttachFeet", biped)
-         parentize.parentize(root)
-         mesh.meshAll(root)
       end
       if (guy.children[i] == leg2) then
          leg2 = createLegRubberhose(2, leg2.points)
-
          guy.children[i] = leg2
-         biped:give('biped',
-            { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-         myWorld:emit("bipedAttachFeet", biped)
-         parentize.parentize(root)
-         mesh.meshAll(root)
+
       end
 
    end
+   parentize.parentize(root)
+
+   -- graphic.
+   mesh.meshAll(root)
+   biped:give('biped',
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   myWorld:emit("bipedAttachFeet", biped)
 end
 
 function redoLegs()
@@ -920,6 +894,66 @@ function redoBody()
    )
 end
 
+function redoFeet()
+   redoTheGraphicInPart(
+      feet1,
+      palettes[values.feet.bgPal],
+      palettes[values.feet.fgPal],
+      textures[values.feet.bgTex],
+      textures[values.feet.fgTex],
+      palettes[values.feet.linePal]
+   )
+   redoTheGraphicInPart(
+      feet2,
+      palettes[values.feet.bgPal],
+      palettes[values.feet.fgPal],
+      textures[values.feet.bgTex],
+      textures[values.feet.fgTex],
+      palettes[values.feet.linePal]
+   )
+end
+
+function changeFeet()
+
+   for i = 1, #guy.children do
+      if (guy.children[i] == feet1) then
+         local r = feet1.transforms.l[3]
+         local sx = feet1.transforms.l[4]
+         feet1 = copy3(feetParts[values.feet.shape])
+         feet1.transforms.l[3] = r
+         feet1.transforms.l[4] = sx
+         guy.children[i] = feet1
+      end
+
+      if (guy.children[i] == feet2) then
+         local r = feet2.transforms.l[3]
+         local sx = feet2.transforms.l[4]
+         feet2 = copy3(feetParts[values.feet.shape])
+         feet2.transforms.l[3] = r
+         feet2.transforms.l[4] = sx
+         guy.children[i] = feet2
+      end
+   end
+   parentize.parentize(root)
+   redoFeet()
+   biped:give('biped',
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   myWorld:emit("bipedAttachFeet", biped)
+
+   mesh.meshAll(root)
+   --redoFeet()
+end
+
+function buttonHelper(button, bodyPart, param, maxAmount, func)
+   if button.clicked then
+      values[bodyPart][param] = values[bodyPart][param] + 1
+      if values[bodyPart][param] > maxAmount then
+         values[bodyPart][param] = 1
+      end
+      func()
+   end
+end
+
 function scene.draw()
    if true then
 
@@ -927,6 +961,8 @@ function scene.draw()
       love.graphics.clear(bgColor)
       love.graphics.setColor(0, 0, 0)
 
+      love.graphics.setColor(0, 0, 0, 0.05)
+      love.graphics.draw(tiles, 400, 0, .1, .5, .5)
       cam:push()
       render.renderThings(root)
       cam:pop()
@@ -937,41 +973,21 @@ function scene.draw()
 
          -- body
 
-         local bodyShapeButton, bodyBGButton, bodyFGTexButton, bodyFGPalButton, bodyLinePalButton = bigButtonWithSmallAroundIt(
-            200, 200,
+         local bodyShapeButton, bodyBGButton, bodyFGTexButton, bodyFGButton, bodyLinePalButton = bigButtonWithSmallAroundIt(
+            100, 150,
             {
-               bodyThumbUrls[values.body.shape],
+               bodyImgUrls[values.body.shape],
                palettes[values.body.bgPal],
                textures[values.body.fgTex],
                palettes[values.body.fgPal],
                palettes[values.body.linePal]
             }
          )
-         if bodyShapeButton.clicked then
-            values.body.shape = values.body.shape + 1
-            if (values.body.shape > #bodyParts) then values.body.shape = 1 end
-            changeBody()
-         end
-         if bodyBGButton.clicked then
-            values.body.bgPal = values.body.bgPal + 1
-            if (values.body.bgPal > #palettes) then values.body.bgPal = 1 end
-            redoBody()
-         end
-         if bodyFGTexButton.clicked then
-            values.body.fgTex = values.body.fgTex + 1
-            if (values.body.fgTex > #textures) then values.body.fgTex = 1 end
-            redoBody()
-         end
-         if bodyFGPalButton.clicked then
-            values.body.fgPal = values.body.fgPal + 1
-            if (values.body.fgPal > #palettes) then values.body.fgPal = 1 end
-            redoBody()
-         end
-         if bodyLinePalButton.clicked then
-            values.body.linePal = values.body.linePal + 1
-            if (values.body.linePal > #palettes) then values.body.linePal = 1 end
-            redoBody()
-         end
+         buttonHelper(bodyShapeButton, 'body', 'shape', #bodyParts, changeBody)
+         buttonHelper(bodyBGButton, 'body', 'bgPal', #palettes, redoBody)
+         buttonHelper(bodyFGTexButton, 'body', 'fgTex', #textures, redoBody)
+         buttonHelper(bodyFGButton, 'body', 'fgPal', #palettes, redoBody)
+         buttonHelper(bodyLinePalButton, 'body', 'linePal', #palettes, redoBody)
 
          if true then
             local v = h_slider("body-width", 250, 150, 50, values.bodyWidthMultiplier, .1, 3)
@@ -987,8 +1003,8 @@ function scene.draw()
          end
 
 
-         local legShapeButton, legBGButton, legFGTexButton, legFGPalButton, legLinePalButton = bigButtonWithSmallAroundIt(
-            200, 450,
+         local legShapeButton, legBGButton, legFGTexButton, legFGButton, legLinePalButton = bigButtonWithSmallAroundIt(
+            100, 400,
             {
                legUrls[values.legs.shape],
                palettes[values.legs.bgPal],
@@ -997,31 +1013,13 @@ function scene.draw()
                palettes[values.legs.linePal]
             }
          )
-         if legShapeButton.clicked then
-            values.legs.shape = values.legs.shape + 1
-            if (values.legs.shape > #bodyParts) then values.legs.shape = 1 end
-            changeLegs()
-         end
-         if legBGButton.clicked then
-            values.legs.bgPal = values.legs.bgPal + 1
-            if (values.legs.bgPal > #palettes) then values.legs.bgPal = 1 end
-            redoLegs()
-         end
-         if legFGTexButton.clicked then
-            values.legs.fgTex = values.legs.fgTex + 1
-            if (values.legs.fgTex > #textures) then values.legs.fgTex = 1 end
-            redoLegs()
-         end
-         if legFGPalButton.clicked then
-            values.legs.fgPal = values.legs.fgPal + 1
-            if (values.legs.fgPal > #palettes) then values.legs.fgPal = 1 end
-            redoLegs()
-         end
-         if legLinePalButton.clicked then
-            values.legs.linePal = values.legs.linePal + 1
-            if (values.legs.linePal > #palettes) then values.legs.linePal = 1 end
-            redoLegs()
-         end
+         buttonHelper(legShapeButton, 'legs', 'shape', #legUrls, changeLegs)
+         buttonHelper(legBGButton, 'legs', 'bgPal', #palettes, redoLegs)
+         buttonHelper(legFGTexButton, 'legs', 'fgTex', #textures, redoLegs)
+         buttonHelper(legFGButton, 'legs', 'fgPal', #palettes, redoLegs)
+         buttonHelper(legLinePalButton, 'legs', 'linePal', #palettes, redoLegs)
+
+
          -- legs
          --  ColoredPatternLegs(100, 400)
          if true then
@@ -1038,6 +1036,22 @@ function scene.draw()
             end
          end
          -- feet
+
+         local feetShapeButton, feetBGButton, feetFGTexButton, feetFGButton, feetLinePalButton = bigButtonWithSmallAroundIt(
+            100, 650,
+            {
+               feetImgUrls[values.feet.shape],
+               palettes[values.feet.bgPal],
+               textures[values.feet.fgTex],
+               palettes[values.feet.fgPal],
+               palettes[values.feet.linePal]
+            }
+         )
+         buttonHelper(feetShapeButton, 'feet', 'shape', #feetUrls, changeFeet)
+         buttonHelper(feetBGButton, 'feet', 'bgPal', #palettes, redoFeet)
+         buttonHelper(feetFGTexButton, 'feet', 'fgTex', #textures, redoFeet)
+         buttonHelper(feetFGButton, 'feet', 'fgPal', #palettes, redoFeet)
+         buttonHelper(feetLinePalButton, 'feet', 'linePal', #palettes, redoFeet)
 
 
          -- love.graphics.print("TMEM: " .. tostring(stats.canvasswitches), 10, 30)
