@@ -497,9 +497,27 @@ function scene.load()
       children = {}
    }
    guy.children = { body, leg1, leg2, feet1, feet2, head }
-   r1 = createRectangle(500,-500,10,50, 1,0,0)
+   r1 = createRectangle(500,-700,10,50, 1,0,0)
    r2 = createRectangle(-1000,400,40,40)
-   root.children = { guy , r1, r2}
+   r3 = createRectangle(-400,500,40,40)
+   root.children = { guy , r1, r2, r3}
+
+   cameraPoints = {}
+   local W, H = love.graphics.getDimensions()
+   for i = 1, 10 do
+      table.insert(
+         cameraPoints,
+         {
+            x = love.math.random(-W*2, W*2 ),
+            y = love.math.random(-H*2, H*2),
+            width = love.math.random(200, 500),
+            height = love.math.random(200, 500),
+            color = { 1, 1, 1 },
+            selected = false
+         }
+      )
+   end
+   
 
 
 
@@ -570,9 +588,20 @@ function attachCallbacks()
        -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
        
 
-         camera.centerCameraOnPosition(x,y,2000,2000)
+         camera.centerCameraOnPosition(x,y,1000,1000)
        
          print('focus camera on second other shape',x,y)
+      end
+      if key == '3' then
+
+         local x,y = r3.transforms._g:inverseTransformPoint(0,0)  
+       --  local x2,y2 = cam:getScreenCoordinates(x,y)
+       -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
+       
+
+         camera.centerCameraOnPosition(x,y,1000,1000)
+       
+         print('focus camera on third other shape',x,y)
       end
    end
 
@@ -686,6 +715,18 @@ function pointerPressed(x, y, id)
          end
       end
    end
+   end
+   for _, v in pairs(cameraPoints) do
+      if hit.pointInRect(wx,wy, v.x, v.y, v.width, v.height)  then
+
+         local cw, ch = cam:getContainerDimensions()
+         local targetScale = math.min(cw/v.width, ch/v.height)
+         
+         cam:setScale(targetScale)
+         cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
+
+      end
+      
    end
 end
 
@@ -995,6 +1036,9 @@ function buttonHelper(button, bodyPart, param, maxAmount, func)
 end
 
 function scene.draw()
+
+
+
    if true then
 
       ui.handleMouseClickStart()
@@ -1005,9 +1049,23 @@ function scene.draw()
       --love.graphics.draw(tiles, 400, 0, .1, .5, .5)
       cam:push()
       render.renderThings(root)
+
+      for _, v in pairs(cameraPoints) do
+         love.graphics.setColor(v.color)
+         if v.selected then
+            love.graphics.setColor(1,0,0,1)
+   
+         end
+         
+         love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
+      end
       cam:pop()
 
 
+      love.graphics.setColor(0,0,0)
+      local x,y = r1.transforms._g:inverseTransformPoint(0,0)
+      local x2,y2 = cam:getScreenCoordinates(x,y)
+      love.graphics.rectangle("line",x2,y2,10,10)
 
       if false then -- this block leaks memory
 
