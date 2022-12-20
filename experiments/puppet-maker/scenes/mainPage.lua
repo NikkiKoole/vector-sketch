@@ -97,6 +97,45 @@ function pointerReleased(x, y, id)
    end
 end
 
+function pointerPressed(x, y, id)
+   local wx, wy = cam:getWorldCoordinates(x, y)
+   for j = 1, #root.children do
+
+      local guy = root.children[j]
+      if guy.children then
+      for i = 1, #guy.children do
+
+         local item = guy.children[i]
+         local b = bbox.getBBoxRecursive(item)
+         if b and item.folder then
+
+            local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
+            local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
+            local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
+
+            if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
+               table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+            end
+         end
+      end
+   end
+   end
+   for _, v in pairs(cameraPoints) do
+      if hit.pointInRect(wx,wy, v.x, v.y, v.width, v.height)  then
+
+         local cw, ch = cam:getContainerDimensions()
+         local targetScale = math.min(cw/v.width, ch/v.height)
+         
+         cam:setScale(targetScale)
+         cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
+
+      end
+      
+   end
+end
+
+
+
 function stripPath(root, path)
    if root and root.texture and #root.texture.url > 0 then
       local str = root.texture.url
@@ -513,7 +552,6 @@ function scene.load()
             width = love.math.random(200, 500),
             height = love.math.random(200, 500),
             color = { 1, 1, 1 },
-            selected = false
          }
       )
    end
@@ -693,42 +731,7 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
    end
 end
 
-function pointerPressed(x, y, id)
-   local wx, wy = cam:getWorldCoordinates(x, y)
-   for j = 1, #root.children do
 
-      local guy = root.children[j]
-      if guy.children then
-      for i = 1, #guy.children do
-
-         local item = guy.children[i]
-         local b = bbox.getBBoxRecursive(item)
-         if b and item.folder then
-
-            local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
-            local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
-            local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
-
-            if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
-               table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
-            end
-         end
-      end
-   end
-   end
-   for _, v in pairs(cameraPoints) do
-      if hit.pointInRect(wx,wy, v.x, v.y, v.width, v.height)  then
-
-         local cw, ch = cam:getContainerDimensions()
-         local targetScale = math.min(cw/v.width, ch/v.height)
-         
-         cam:setScale(targetScale)
-         cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
-
-      end
-      
-   end
-end
 
 function createLegRubberhose(legNr, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
@@ -1052,11 +1055,7 @@ function scene.draw()
 
       for _, v in pairs(cameraPoints) do
          love.graphics.setColor(v.color)
-         if v.selected then
-            love.graphics.setColor(1,0,0,1)
-   
-         end
-         
+
          love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
       end
       cam:pop()
