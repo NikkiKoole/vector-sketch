@@ -103,38 +103,36 @@ function pointerPressed(x, y, id)
 
       local guy = root.children[j]
       if guy.children then
-      for i = 1, #guy.children do
+         for i = 1, #guy.children do
 
-         local item = guy.children[i]
-         local b = bbox.getBBoxRecursive(item)
-         if b and item.folder then
+            local item = guy.children[i]
+            local b = bbox.getBBoxRecursive(item)
+            if b and item.folder then
 
-            local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
-            local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
-            local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
+               local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
+               local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
+               local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
-            if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
-               table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+               if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
+                  table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+               end
             end
          end
       end
    end
-   end
    for _, v in pairs(cameraPoints) do
-      if hit.pointInRect(wx,wy, v.x, v.y, v.width, v.height)  then
+      if hit.pointInRect(wx, wy, v.x, v.y, v.width, v.height) then
 
          local cw, ch = cam:getContainerDimensions()
-         local targetScale = math.min(cw/v.width, ch/v.height)
-         
+         local targetScale = math.min(cw / v.width, ch / v.height)
+
          cam:setScale(targetScale)
-         cam:setTranslation(v.x + v.width/2, v.y + v.height/2)
+         cam:setTranslation(v.x + v.width / 2, v.y + v.height / 2)
 
       end
-      
+
    end
 end
-
-
 
 function stripPath(root, path)
    if root and root.texture and #root.texture.url > 0 then
@@ -244,25 +242,24 @@ function makeDynamicCanvas(imageData, mymesh)
    return result
 end
 
-function createRectangle(x,y,w,h, r,g,b)
-   print(x,y,w,h)
+function createRectangle(x, y, w, h, r, g, b)
+   print(x, y, w, h)
    local w2 = w / 2
    local h2 = h / 2
 
    local result = {}
    result.folder = true
    result.transforms = {
-      l = { x,y, 0, 1, 1, 0,0 }
-      }
-      result.children = {{
+      l = { x, y, 0, 1, 1, 0, 0 }
+   }
+   result.children = { {
 
-   name = 'rectangle',
-   points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
-   color = { r or 1 , g or 0.91, b or 0.15, 1 }
-      }}
-      return result
+      name = 'rectangle',
+      points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
+      color = { r or 1, g or 0.91, b or 0.15, 1 }
+   } }
+   return result
 end
-
 
 function makeMeshFromSibling(sib, imageData)
    local img = love.graphics.newImage(imageData)
@@ -532,14 +529,14 @@ function scene.load()
    guy = {
       folder = true,
       name = 'guy',
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0,0,0  } },
+      transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
       children = {}
    }
    guy.children = { body, leg1, leg2, feet1, feet2, head }
-   r1 = createRectangle(500,-700,10,50, 1,0,0)
-   r2 = createRectangle(-1000,400,40,40)
-   r3 = createRectangle(-400,500,40,40)
-   root.children = { guy , r1, r2, r3}
+   r1 = createRectangle(500, -700, 10, 50, 1, 0, 0)
+   r2 = createRectangle(-1000, 400, 40, 40)
+   r3 = createRectangle(-400, 500, 40, 40)
+   root.children = { guy, r1, r2, r3 }
 
    cameraPoints = {}
    local W, H = love.graphics.getDimensions()
@@ -547,15 +544,15 @@ function scene.load()
       table.insert(
          cameraPoints,
          {
-            x = love.math.random(-W*2, W*2 ),
-            y = love.math.random(-H*2, H*2),
+            x = love.math.random(-W * 2, W * 2),
+            y = love.math.random(-H * 2, H * 2),
             width = love.math.random(200, 500),
             height = love.math.random(200, 500),
             color = { 1, 1, 1 },
          }
       )
    end
-   
+
 
 
 
@@ -610,41 +607,41 @@ function attachCallbacks()
       if key == '1' then
          --local t = r1._parent.transforms._g
 
-         local x,y = r1.transforms._g:inverseTransformPoint(0,0)
+         local x, y = r1.transforms._g:inverseTransformPoint(0, 0)
 
-        --camera.setCameraViewport(cam, 200,200)
-        --cam:update(2000, 2000)
-         camera.centerCameraOnPosition(x,y,1000,1000)
-       --  cam:update(2000,2000)
+         --camera.setCameraViewport(cam, 200,200)
+         --cam:update(2000, 2000)
+         camera.centerCameraOnPosition(x, y, 1000, 1000)
+         --  cam:update(2000,2000)
 
-         print('focus camera on first other shape',x,y)
+         print('focus camera on first other shape', x, y)
       end
       if key == '2' then
 
-         local x,y = r2.transforms._g:inverseTransformPoint(0,0)  
-       --  local x2,y2 = cam:getScreenCoordinates(x,y)
-       -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
-       
+         local x, y = r2.transforms._g:inverseTransformPoint(0, 0)
+         --  local x2,y2 = cam:getScreenCoordinates(x,y)
+         -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
 
-         camera.centerCameraOnPosition(x,y,1000,1000)
-       
-         print('focus camera on second other shape',x,y)
+
+         camera.centerCameraOnPosition(x, y, 1000, 1000)
+
+         print('focus camera on second other shape', x, y)
       end
       if key == '3' then
 
-         local x,y = r3.transforms._g:inverseTransformPoint(0,0)  
-       --  local x2,y2 = cam:getScreenCoordinates(x,y)
-       -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
-       
+         local x, y = r3.transforms._g:inverseTransformPoint(0, 0)
+         --  local x2,y2 = cam:getScreenCoordinates(x,y)
+         -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
 
-         camera.centerCameraOnPosition(x,y,1000,1000)
-       
-         print('focus camera on third other shape',x,y)
+
+         camera.centerCameraOnPosition(x, y, 1000, 1000)
+
+         print('focus camera on third other shape', x, y)
       end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
-      
+
       pointerPressed(x, y, id)
    end
 
@@ -730,8 +727,6 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
       love.graphics.circle('line', px, py, smallButtonRadius)
    end
 end
-
-
 
 function createLegRubberhose(legNr, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
@@ -1061,10 +1056,10 @@ function scene.draw()
       cam:pop()
 
 
-      love.graphics.setColor(0,0,0)
-      local x,y = r1.transforms._g:inverseTransformPoint(0,0)
-      local x2,y2 = cam:getScreenCoordinates(x,y)
-      love.graphics.rectangle("line",x2,y2,10,10)
+      love.graphics.setColor(0, 0, 0)
+      local x, y = r1.transforms._g:inverseTransformPoint(0, 0)
+      local x2, y2 = cam:getScreenCoordinates(x, y)
+      love.graphics.rectangle("line", x2, y2, 10, 10)
 
       if false then -- this block leaks memory
 
