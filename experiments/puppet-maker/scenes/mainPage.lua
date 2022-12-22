@@ -605,11 +605,14 @@ function attachCallbacks()
          --local t = r1._parent.transforms._g
 
          local x, y = r1.transforms._g:transformPoint(0, 0)
+         local pivx = head.transforms.l[6]
+         local pivy = head.transforms.l[7]
+         local x, y = head.transforms._g:transformPoint(pivx, pivy)
 
          --local x, y = r1._parent.transforms._g:inverseTransformPoint(x, y)
          --camera.setCameraViewport(cam, 200,200)
          --cam:update(2000, 2000)
-         camera.centerCameraOnPosition(x, y, 1000, 1000)
+         camera.centerCameraOnPosition(x, y, 1500, 1500)
          --  cam:update(2000,2000)
 
          print('focus camera on first other shape', x, y)
