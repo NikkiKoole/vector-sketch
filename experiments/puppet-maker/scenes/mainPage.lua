@@ -1044,7 +1044,7 @@ function scene.draw()
       love.graphics.setColor(0, 0, 0)
 
       love.graphics.setColor(0, 0, 0, 0.05)
-      --love.graphics.draw(tiles, 400, 0, .1, .5, .5)
+      love.graphics.draw(tiles, 400, 0, .1, .5, .5)
       cam:push()
       render.renderThings(root)
 
@@ -1061,7 +1061,7 @@ function scene.draw()
       local x2, y2 = cam:getScreenCoordinates(x, y)
       love.graphics.rectangle("line", x2, y2, 10, 10)
 
-      if false then -- this block leaks memory
+      if true then -- this block leaks memory
 
          -- body
 
