@@ -604,8 +604,9 @@ function attachCallbacks()
       if key == '1' then
          --local t = r1._parent.transforms._g
 
-         local x, y = r1.transforms._g:inverseTransformPoint(0, 0)
+         local x, y = r1.transforms._g:transformPoint(0, 0)
 
+         --local x, y = r1._parent.transforms._g:inverseTransformPoint(x, y)
          --camera.setCameraViewport(cam, 200,200)
          --cam:update(2000, 2000)
          camera.centerCameraOnPosition(x, y, 1000, 1000)
@@ -615,10 +616,10 @@ function attachCallbacks()
       end
       if key == '2' then
 
-         local x, y = r2.transforms._g:inverseTransformPoint(0, 0)
+         local x, y = r2.transforms._g:transformPoint(0, 0)
          --  local x2,y2 = cam:getScreenCoordinates(x,y)
          -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
-
+         --local x, y = r2._parent.transforms._g:inverseTransformPoint(x, y)
 
          camera.centerCameraOnPosition(x, y, 1000, 1000)
 
@@ -626,7 +627,7 @@ function attachCallbacks()
       end
       if key == '3' then
 
-         local x, y = r3.transforms._g:inverseTransformPoint(0, 0)
+         local x, y = r3.transforms._g:transformPoint(0, 0)
          --  local x2,y2 = cam:getScreenCoordinates(x,y)
          -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
 
@@ -1045,6 +1046,7 @@ function scene.draw()
       love.graphics.draw(tiles, 400, 0, .1, .5, .5)
       love.graphics.setColor(1, 0, 0, 0.05)  
       love.graphics.draw(tiles2, 1000, 300, math.pi/2, .5, .5)
+
       cam:push()
       render.renderThings(root)
 
@@ -1057,11 +1059,21 @@ function scene.draw()
 
 
       love.graphics.setColor(0, 0, 0)
-      local x, y = r1.transforms._g:inverseTransformPoint(0, 0)
+      local x, y = r1.transforms._g:transformPoint(0, 0)
+   
       local x2, y2 = cam:getScreenCoordinates(x, y)
       love.graphics.rectangle("line", x2, y2, 10, 10)
 
-      if true then -- this block leaks memory
+      local x, y = r2.transforms._g:transformPoint(0, 0)
+      local x2, y2 = cam:getScreenCoordinates(x, y)
+      love.graphics.rectangle("line", x2, y2, 10, 10)
+
+      local x, y = r3.transforms._g:transformPoint(0, 0)
+      local x2, y2 = cam:getScreenCoordinates(x, y)
+      love.graphics.rectangle("line", x2, y2, 10, 10)
+
+
+      if false then -- this block leaks memory
 
          -- body
 
