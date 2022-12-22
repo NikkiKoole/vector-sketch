@@ -443,7 +443,7 @@ local function addToImageCache(url, settings)
 end
 
 mesh.getImage = function(url, settings)
-   if not _imageCache[url] then
+   if not _imageCache[url] and love.filesystem.getInfo(url) then
       addToImageCache(url, settings)
    end
    return _imageCache[url]

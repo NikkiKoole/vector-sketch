@@ -36,6 +36,18 @@ myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
 
 local pointerInteractees = {}
 
+function getPNGMaskUrl(url)
+
+   -- we want to get the mask file, same url except it ends in -mask.png
+   local index = string.find(url, ".png")
+   local result = nil
+   if index ~= nil then
+    local newString = url:sub(1, index-1) .. "-mask.png"
+     result = newString
+   end
+   return result
+   
+end
 function hittestPixel()
    local mx, my = love.mouse.getPosition()
    local wx, wy = cam:getWorldCoordinates(mx, my)
@@ -204,22 +216,19 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 
    if (true) then
-      local maskUrls = {
-         ['assets/parts/leg1.png'] = 'assets/parts/leg1-mask.png',
-         ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png',
-         ['assets/parts/leg3.png'] = 'assets/parts/leg3-mask.png',
-         ['assets/parts/leg4.png'] = 'assets/parts/leg4-mask.png',
-         ['assets/parts/leg5.png'] = 'assets/parts/leg5-mask.png',
-
-      }
+     
       local lineart = img
-      local mask = mesh.getImage(maskUrls[url])
-      local canvas = canvas.makeTexturedCanvas(
+      local maskUrl = getPNGMaskUrl(url)
+      local mask = mesh.getImage(maskUrl)
+      if mask then
+      local cnv = canvas.makeTexturedCanvas(
          lineart, mask,
          bgp, bg or palettes[values.body.bgPal],
          fgp, fg or palettes[values.body.fgPal], palettes[values.legs.linePal])
 
-      currentNode.texture.retexture = love.graphics.newImage(canvas)
+
+      currentNode.texture.retexture = love.graphics.newImage(cnv)
+      end
    end
    return currentNode
 end
@@ -274,18 +283,6 @@ end
 
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
 
-   local lineartToMask = {
-      ['assets/parts/romp1.png'] = 'assets/parts/romp1-mask.png',
-      ['assets/parts/romp2.png'] = 'assets/parts/romp2-mask.png',
-      ['assets/parts/romp3.png'] = 'assets/parts/romp3-mask.png',
-      ['assets/parts/romp4.png'] = 'assets/parts/romp4-mask.png',
-      ['assets/parts/leg2.png'] = 'assets/parts/leg2-mask.png',
-      ['assets/parts/headshapebuff.png'] = 'assets/parts/headshapebuff-mask.png',
-      ['assets/parts/feet1.png'] = 'assets/parts/feet1-mask.png',
-      ['assets/parts/feet2.png'] = 'assets/parts/feet2-mask.png',
-      ['assets/parts/feet3.png'] = 'assets/parts/feet3-mask.png',
-   }
-
    local p
    if part.children then
       p = part.children[1]
@@ -296,12 +293,12 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
    local lineartUrl = p.texture.url
    local lineart = (mesh.getImage(lineartUrl, p.texture))
    local mask
+   
 
-   if lineartToMask[lineartUrl] then
-      mask = mesh.getImage(lineartToMask[lineartUrl])
-   else
-      print('no maks found', lineartUrl)
-   end
+         mask = mesh.getImage( getPNGMaskUrl(lineartUrl))
+         if mask == nil then
+            print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
+         end
 
    if (lineart and mask) then
       local canvas = canvas.makeTexturedCanvas(
@@ -312,7 +309,6 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
       local m = makeMeshFromSibling(p, canvas)
       p.texture.canvas = m
    end
-   --   part.children[1].texture.
 
 end
 
@@ -341,6 +337,7 @@ function scene.load()
    blup3 = love.graphics.newImage('assets/blups/blup3.png')
    blup4 = love.graphics.newImage('assets/blups/blup4.png')
    tiles = love.graphics.newImage('assets/layered/tiles.145.png')
+   tiles2 = love.graphics.newImage('assets/layered/tiles2.150.png')
    textures = {
       1,
 
@@ -1043,8 +1040,11 @@ function scene.draw()
       love.graphics.clear(bgColor)
       love.graphics.setColor(0, 0, 0)
 
+      -- do these via vector sketch snf the scene graph
       love.graphics.setColor(0, 0, 0, 0.05)
       love.graphics.draw(tiles, 400, 0, .1, .5, .5)
+      love.graphics.setColor(1, 0, 0, 0.05)  
+      love.graphics.draw(tiles2, 1000, 300, math.pi/2, .5, .5)
       cam:push()
       render.renderThings(root)
 
