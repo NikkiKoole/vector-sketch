@@ -43,12 +43,13 @@ function getPNGMaskUrl(url)
    local index = string.find(url, ".png")
    local result = nil
    if index ~= nil then
-    local newString = url:sub(1, index-1) .. "-mask.png"
-     result = newString
+      local newString = url:sub(1, index - 1) .. "-mask.png"
+      result = newString
    end
    return result
-   
+
 end
+
 function hittestPixel()
    local mx, my = love.mouse.getPosition()
    local wx, wy = cam:getWorldCoordinates(mx, my)
@@ -133,17 +134,19 @@ function pointerPressed(x, y, id)
          end
       end
    end
-   for _, v in pairs(cameraPoints) do
-      if hit.pointInRect(wx, wy, v.x, v.y, v.width, v.height) then
+   if false then
+      for _, v in pairs(cameraPoints) do
+         if hit.pointInRect(wx, wy, v.x, v.y, v.width, v.height) then
 
-         local cw, ch = cam:getContainerDimensions()
-         local targetScale = math.min(cw / v.width, ch / v.height)
+            local cw, ch = cam:getContainerDimensions()
+            local targetScale = math.min(cw / v.width, ch / v.height)
 
-         cam:setScale(targetScale)
-         cam:setTranslation(v.x + v.width / 2, v.y + v.height / 2)
+            cam:setScale(targetScale)
+            cam:setTranslation(v.x + v.width / 2, v.y + v.height / 2)
+
+         end
 
       end
-
    end
 end
 
@@ -217,18 +220,18 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMul
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 
    if (true) then
-     
+
       local lineart = img
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
       if mask then
-      local cnv = canvas.makeTexturedCanvas(
-         lineart, mask,
-         bgp, bg or palettes[values.body.bgPal],
-         fgp, fg or palettes[values.body.fgPal], palettes[values.legs.linePal])
+         local cnv = canvas.makeTexturedCanvas(
+            lineart, mask,
+            bgp, bg or palettes[values.body.bgPal],
+            fgp, fg or palettes[values.body.fgPal], palettes[values.legs.linePal])
 
 
-      currentNode.texture.retexture = love.graphics.newImage(cnv)
+         currentNode.texture.retexture = love.graphics.newImage(cnv)
       end
    end
    return currentNode
@@ -294,12 +297,12 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
    local lineartUrl = p.texture.url
    local lineart = (mesh.getImage(lineartUrl, p.texture))
    local mask
-   
 
-         mask = mesh.getImage( getPNGMaskUrl(lineartUrl))
-         if mask == nil then
-            print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
-         end
+
+   mask = mesh.getImage(getPNGMaskUrl(lineartUrl))
+   if mask == nil then
+      print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
+   end
 
    if (lineart and mask) then
       local canvas = canvas.makeTexturedCanvas(
@@ -422,6 +425,16 @@ function scene.load()
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
+   headz = {}
+   for i = 1, 8 do
+      headz[i] = {
+         img = love.graphics.newImage('assets/blups/headz' .. i .. '.png'),
+         x = love.math.random(),
+         y = love.math.random(),
+         r = love.math.random() * math.pi * 2
+      }
+   end
+
    delta = 0
 
    root = {
@@ -531,27 +544,26 @@ function scene.load()
       children = {}
    }
    guy.children = { body, leg1, leg2, feet1, feet2, head }
-   r1 = createRectangle(500, -700, 10, 50, 1, 0, 0)
-   r2 = createRectangle(-1000, 400, 40, 40)
-   r3 = createRectangle(-400, 500, 40, 40)
-   root.children = { guy, r1, r2, r3 }
 
-   cameraPoints = {}
-   local W, H = love.graphics.getDimensions()
-   for i = 1, 10 do
-      table.insert(
-         cameraPoints,
-         {
-            x = love.math.random(-W * 2, W * 2),
-            y = love.math.random(-H * 2, H * 2),
-            width = love.math.random(200, 500),
-            height = love.math.random(200, 500),
-            color = { 1, 1, 1 },
-         }
-      )
+   root.children = { guy }
+
+   if false then
+      cameraPoints = {}
+      local W, H = love.graphics.getDimensions()
+      for i = 1, 10 do
+         table.insert(
+            cameraPoints,
+            {
+               x = love.math.random(-W * 2, W * 2),
+               y = love.math.random(-H * 2, H * 2),
+               width = love.math.random(200, 500),
+               height = love.math.random(200, 500),
+               color = { 1, 1, 1 },
+            }
+         )
+      end
+
    end
-
-
 
 
    stripPath(root, '/experiments/puppet%-maker/')
@@ -615,7 +627,7 @@ function attachCallbacks()
          --camera.setCameraViewport(cam, 200,200)
          --cam:update(2000, 2000)
 
-         camera.centerCameraOnPosition(x2, y2, w*1.61, h*1.61)
+         camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
          --  cam:update(2000,2000)
 
          --print('focus camera on first other shape', x, y)
@@ -623,15 +635,15 @@ function attachCallbacks()
       if key == '2' then
 
          local bbBody = bbox.getBBoxRecursive(body)
-        --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
-        -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
+         --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
+         -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
          local bbFeet1 = bbox.getBBoxRecursive(feet1)
          local bbFeet2 = bbox.getBBoxRecursive(feet2)
 
          local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
-         camera.centerCameraOnPosition(x2, y2, w*1.61, h*1.61)
+         camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
          print('focus camera on second other shape', x, y)
       end
       if key == '3' then
@@ -641,17 +653,17 @@ function attachCallbacks()
          local bbBody = bbox.getBBoxRecursive(body)
          --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
          -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
-          local bbFeet1 = bbox.getBBoxRecursive(feet1)
-          local bbFeet2 = bbox.getBBoxRecursive(feet2)
- 
-          local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2)
-          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+         local bbFeet1 = bbox.getBBoxRecursive(feet1)
+         local bbFeet2 = bbox.getBBoxRecursive(feet2)
+
+         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2)
+         local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
          --local x, y = r3.transforms._g:transformPoint(0, 0)
          --  local x2,y2 = cam:getScreenCoordinates(x,y)
          -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
 
 
-         camera.centerCameraOnPosition(x2, y2, w*1.61, h*1.61)
+         camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
 
          print('focus camera on third other shape', x, y)
       end
@@ -1052,7 +1064,7 @@ end
 
 function scene.draw()
 
-
+   local w, h = love.graphics.getDimensions()
 
    if true then
 
@@ -1063,36 +1075,49 @@ function scene.draw()
       -- do these via vector sketch snf the scene graph
       love.graphics.setColor(0, 0, 0, 0.05)
       love.graphics.draw(tiles, 400, 0, .1, .5, .5)
-      love.graphics.setColor(1, 0, 0, 0.05)  
-      love.graphics.draw(tiles2, 1000, 300, math.pi/2, .5, .5)
+      love.graphics.setColor(1, 0, 0, 0.05)
+
+      love.graphics.draw(tiles2, 1000, 300, math.pi / 2, .5, .5)
+
+
+      for i = 1, #headz do
+         love.graphics.setColor(0, 0, 0, 0.05)
+         love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
+      end
 
       cam:push()
       render.renderThings(root)
 
-      for _, v in pairs(cameraPoints) do
-         love.graphics.setColor(v.color)
+      if false then
+         for _, v in pairs(cameraPoints) do
+            love.graphics.setColor(v.color)
 
-         love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
+            love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
+         end
       end
+
       cam:pop()
 
 
-      love.graphics.setColor(0, 0, 0)
-      local x, y = r1.transforms._g:transformPoint(0, 0)
-   
-      local x2, y2 = cam:getScreenCoordinates(x, y)
-      love.graphics.rectangle("line", x2, y2, 10, 10)
+      if false then
+         love.graphics.setColor(0, 0, 0)
+         local x, y = r1.transforms._g:transformPoint(0, 0)
 
-      local x, y = r2.transforms._g:transformPoint(0, 0)
-      local x2, y2 = cam:getScreenCoordinates(x, y)
-      love.graphics.rectangle("line", x2, y2, 10, 10)
+         local x2, y2 = cam:getScreenCoordinates(x, y)
+         love.graphics.rectangle("line", x2, y2, 10, 10)
 
-      local x, y = r3.transforms._g:transformPoint(0, 0)
-      local x2, y2 = cam:getScreenCoordinates(x, y)
-      love.graphics.rectangle("line", x2, y2, 10, 10)
+         local x, y = r2.transforms._g:transformPoint(0, 0)
+         local x2, y2 = cam:getScreenCoordinates(x, y)
+         love.graphics.rectangle("line", x2, y2, 10, 10)
+
+         local x, y = r3.transforms._g:transformPoint(0, 0)
+         local x2, y2 = cam:getScreenCoordinates(x, y)
+         love.graphics.rectangle("line", x2, y2, 10, 10)
+
+      end
 
 
-      if false then -- this block leaks memory
+      if true then -- this block leaks memory
 
          -- body
 

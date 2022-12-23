@@ -1,5 +1,5 @@
 local scene = {}
-local poppetjeMaker = love.graphics.newImage('assets/puppetmaker.png')
+local poppetjeMaker = love.graphics.newImage('assets/puppetmaker2.png')
 local doggie = love.graphics.newImage('assets/doggie.png')
 local time = 0
 
@@ -57,7 +57,7 @@ function scene.update(dt)
    --flux.update(dt)
    Timer.update(dt)
 
-   print(fluxObject.guyY)
+   -- print(fluxObject.guyY)
    if (math.floor(fluxObject.guyY) == 1) then
 
       guyX = guyX + (0.007 * guyFacing)
@@ -94,7 +94,7 @@ function scene.draw()
 
 
    love.graphics.setColor(1, 1, 1, 0.5 * (fluxObject.headerOffset))
-   love.graphics.draw(poppetjeMaker, 5 + (screenWidth / 2.5) - ((1 - fluxObject.headerOffset) * screenWidth / 1.5),
+   love.graphics.draw(poppetjeMaker, 5 + (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
       5 + screenHeight / 2, 0, scale, scale, blobWidth / 2, blobHeight / 2)
 
 
@@ -108,7 +108,7 @@ function scene.draw()
    b = numbers.mapInto(value, -1, 1, 43 / 255, 40 / 255)
 
    love.graphics.setColor(r, g, b, 1)
-   love.graphics.draw(poppetjeMaker, (screenWidth / 2.5) - ((1 - fluxObject.headerOffset) * screenWidth / 1.5),
+   love.graphics.draw(poppetjeMaker, (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
       screenHeight / 2, 0, scale, scale, blobWidth / 2, blobHeight / 2)
 
 
