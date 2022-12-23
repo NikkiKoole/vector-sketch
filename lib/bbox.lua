@@ -16,9 +16,42 @@ bbox.getPointsBBox = function(points)
    return tlx, tly, brx, bry
 end
 
-local function getMiddleOfPoints(points)
+bbox.getMiddleOfPoints = function(points)
    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
    return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2
+end
+bbox.getMiddleOfContainer = function(container)
+   local bb = bbox.getBBoxRecursive(container)
+   local tlx, tly, brx, bry  = bb[1], bb[2], bb[3], bb[4]
+   -- returns middle but also w and h 
+   return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2, brx-tlx, bry-tly
+end
+bbox.getMiddleAndDimsOfBBox = function(tlx, tly, brx, bry)
+   return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2, brx-tlx, bry-tly
+end
+
+bbox.combineBboxes = function(...)
+   local tlx = math.huge
+   local tly = math.huge
+   local brx = -math.huge
+   local bry = -math.huge
+
+   local args = {...}
+   --print(#args)
+   
+   for j = 1, #args do
+
+      local v = args[j]
+
+      for i = 1, #v do
+
+         if v[i] < tlx then tlx = v[i] end
+         if v[i] > brx then brx = v[i] end
+         if v[i] < tly then tly = v[i] end
+         if v[i] > bry then bry = v[i] end
+      end
+    end
+    return tlx, tly, brx, bry
 end
 
 bbox.getPointsBBoxFlat = function(points)

@@ -18,6 +18,7 @@ local transforms = require 'lib.transform'
 local numbers = require 'lib.numbers'
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
+
 local ui = require 'lib.ui'
 local camera = require 'lib.camera'
 local cam = require('lib.cameraBase').getInstance()
@@ -604,38 +605,53 @@ function attachCallbacks()
       if key == '1' then
          --local t = r1._parent.transforms._g
 
-         local x, y = r1.transforms._g:transformPoint(0, 0)
-         local pivx = head.transforms.l[6]
-         local pivy = head.transforms.l[7]
-         local x, y = head.transforms._g:transformPoint(pivx, pivy)
+         ---local x, y = r1.transforms._g:transformPoint(0, 0)
+         --local pivx = head.transforms.l[6]
+         --local pivy = head.transforms.l[7]
+         --local x, y = head.transforms._g:transformPoint(pivx, pivy)
+         local x2, y2, w, h = bbox.getMiddleOfContainer(head)
 
          --local x, y = r1._parent.transforms._g:inverseTransformPoint(x, y)
          --camera.setCameraViewport(cam, 200,200)
          --cam:update(2000, 2000)
-         camera.centerCameraOnPosition(x, y, 1500, 1500)
+
+         camera.centerCameraOnPosition(x2, y2, w*1.61, h*1.61)
          --  cam:update(2000,2000)
 
-         print('focus camera on first other shape', x, y)
+         --print('focus camera on first other shape', x, y)
       end
       if key == '2' then
 
-         local x, y = r2.transforms._g:transformPoint(0, 0)
-         --  local x2,y2 = cam:getScreenCoordinates(x,y)
-         -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
-         --local x, y = r2._parent.transforms._g:inverseTransformPoint(x, y)
+         local bbBody = bbox.getBBoxRecursive(body)
+        --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
+        -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
+         local bbFeet1 = bbox.getBBoxRecursive(feet1)
+         local bbFeet2 = bbox.getBBoxRecursive(feet2)
 
-         camera.centerCameraOnPosition(x, y, 1000, 1000)
+         local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
+         local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
+         camera.centerCameraOnPosition(x2, y2, w*1.61, h*1.61)
          print('focus camera on second other shape', x, y)
       end
       if key == '3' then
 
-         local x, y = r3.transforms._g:transformPoint(0, 0)
+         local bbHead = bbox.getBBoxRecursive(head)
+
+         local bbBody = bbox.getBBoxRecursive(body)
+         --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
+         -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
+          local bbFeet1 = bbox.getBBoxRecursive(feet1)
+          local bbFeet2 = bbox.getBBoxRecursive(feet2)
+ 
+          local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2)
+          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+         --local x, y = r3.transforms._g:transformPoint(0, 0)
          --  local x2,y2 = cam:getScreenCoordinates(x,y)
          -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
 
 
-         camera.centerCameraOnPosition(x, y, 1000, 1000)
+         camera.centerCameraOnPosition(x2, y2, w*1.61, h*1.61)
 
          print('focus camera on third other shape', x, y)
       end
