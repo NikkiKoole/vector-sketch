@@ -23,6 +23,9 @@ Concord = require 'vendor.concord.init'
 
 inspect = require 'vendor.inspect'
 
+PROF_CAPTURE = true
+prof = require("jprof")
+
 --local camera = require 'lib.camera'
 --local cam = require('lib.cameraBase').getInstance()
 
@@ -40,7 +43,8 @@ function love.load()
    introSound = love.audio.newSource("assets/introloop.mp3", "static")
 
    SM.setPath("scenes/")
-   SM.load("splash")
+   SM.load("mainPage")
+   print(love.filesystem.getIdentity())
 end
 
 function love.update(dt)
@@ -54,4 +58,8 @@ end
 function love.resize(w, h)
    --camera.setCameraViewport(cam, 1000, 1000)
    --cam:update(w, h)
+end
+
+function love.quit()
+   prof.write("prof.mpack")
 end

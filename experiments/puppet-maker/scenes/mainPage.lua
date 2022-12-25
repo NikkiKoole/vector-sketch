@@ -309,7 +309,10 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
          lineart, mask,
          bgp, bg,
          fgp, fg, lineColor)
-
+      if p.texture.canvas then
+         print('joohooo')
+         p.texture.canvas:release()
+      end
       local m = makeMeshFromSibling(p, canvas)
       p.texture.canvas = m
    end
@@ -725,6 +728,7 @@ end
 --
 
 function scene.update(dt)
+   prof.push("frame")
    --require("vendor.lurker").update()
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
@@ -738,7 +742,7 @@ function scene.update(dt)
    delta = delta + dt
    Timer.update(dt)
    myWorld:emit("update", dt)
-
+   prof.pop("frame")
 end
 
 function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
@@ -892,6 +896,7 @@ function getScaleAndOffsetsForImage(img, desiredW, desiredH)
 end
 
 function bigButtonWithSmallAroundIt(x, y, textureOrColors)
+   prof.push('big-bitton-small-around')
    local bigRadius = 60
    local radius = 50
    local diam = radius * 2
@@ -923,7 +928,9 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
          love.graphics.circle("fill", new_x, new_y, 28)
       else
          scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
+         prof.push('render-masked-texture')
          renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
+         prof.pop('render-masked-texture')
       end
 
       local b = ui.getUICircle(new_x, new_y, 30)
@@ -933,6 +940,7 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
       if (i == 5) then fifth = b end
       rad = rad + step
    end
+   prof.pop('big-bitton-small-around')
    return first, second, third, fourth, fifth
 
 end
@@ -1063,7 +1071,8 @@ function buttonHelper(button, bodyPart, param, maxAmount, func)
 end
 
 function scene.draw()
-
+   --   prof.enabled(false)
+   prof.push("frame")
    local w, h = love.graphics.getDimensions()
 
    if true then
@@ -1084,7 +1093,7 @@ function scene.draw()
          love.graphics.setColor(0, 0, 0, 0.05)
          love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
       end
-
+      prof.push("cam-render")
       cam:push()
       render.renderThings(root)
 
@@ -1097,6 +1106,7 @@ function scene.draw()
       end
 
       cam:pop()
+      prof.pop("cam-render")
 
 
       if false then
@@ -1116,7 +1126,7 @@ function scene.draw()
 
       end
 
-
+      prof.push("render-ui")
       if true then -- this block leaks memory
 
          -- body
@@ -1211,7 +1221,9 @@ function scene.draw()
          love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 
       end
+      prof.pop("render-ui")
    end
+   prof.pop("frame")
 end
 
 return scene
