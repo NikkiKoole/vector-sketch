@@ -295,7 +295,7 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
    end
 
    local lineartUrl = p.texture.url
-   local lineart = (mesh.getImage(lineartUrl, p.texture))
+   local lineart = mesh.getImage(lineartUrl, p.texture)
    local mask
 
 
@@ -310,10 +310,10 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
          bgp, bg,
          fgp, fg, lineColor)
       if p.texture.canvas then
-         print('joohooo')
          p.texture.canvas:release()
       end
       local m = makeMeshFromSibling(p, canvas)
+      canvas:release()
       p.texture.canvas = m
    end
 
@@ -968,10 +968,13 @@ end
 function changeLegs()
    for i = 1, #guy.children do
       if (guy.children[i] == leg1) then
+
+
          leg1 = createLegRubberhose(1, leg1.points)
          guy.children[i] = leg1
       end
       if (guy.children[i] == leg2) then
+
          leg2 = createLegRubberhose(2, leg2.points)
          guy.children[i] = leg2
 
