@@ -109,6 +109,7 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
+   collectgarbage()
 end
 
 function pointerPressed(x, y, id)
@@ -151,11 +152,12 @@ function pointerPressed(x, y, id)
 end
 
 function stripPath(root, path)
+
    if root and root.texture and #root.texture.url > 0 then
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
       root.texture.url = shortened
-      --print(shortened)
+      print(shortened)
    end
 
    if root.children then
@@ -462,7 +464,7 @@ function scene.load()
    eyeParts = {}
    for i = 1, #eyeUrls do
       eyeParts[i] = parse.parseFile(eyeUrls[i])[1]
-      stripPath(feetParts[i], '/experiments/puppet%-maker/')
+      stripPath(eyeParts[i], '/experiments/puppet%-maker/')
    end
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
@@ -476,7 +478,14 @@ function scene.load()
       stripPath(bodyParts[i], '/experiments/puppet%-maker/')
    end
 
+   headImgUrls = { 'assets/parts/head3.png', 'assets/parts/head4.png' }
+   headUrls = { 'assets/head3.polygons.txt', 'assets/head4.polygons.txt' }
+   headParts = {}
 
+   for i = 1, #headUrls do
+      headParts[i] = parse.parseFile(headUrls[i])[1]
+      stripPath(headParts[i], '/experiments/puppet%-maker/')
+   end
 
    values = {
       legs = {
@@ -489,6 +498,14 @@ function scene.load()
       },
       body = {
          shape   = 3,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
+      head = {
+         shape   = 1,
          bgPal   = 4,
          fgPal   = 1,
          bgTex   = 1,
@@ -513,25 +530,29 @@ function scene.load()
       eyeTypeIndex = 1,
    }
 
+
+
    body = copy3(bodyParts[values.body.shape])
 
    redoBody()
 
 
-   head = parse.parseFile('assets/head1.polygons.txt')[1]
-   --   print(inspect(head))
 
-   eye1 = copy3(eyeParts[values.eyeTypeIndex])
-   eye2 = copy3(eyeParts[values.eyeTypeIndex])
-
-   addChild(head, eye1)
-   addChild(head, eye2)
    -- DRAW SOME EYES!
 
+   head = copy3(headParts[values.head.shape])
+   redoHead()
 
-   stripPath(head, '/experiments/puppet%-maker/')
-   redoTheGraphicInPart(head, palettes[values.bodyBGPalIndex], palettes[values.bodyFGPalIndex],
-      textures[values.bodyBGTexIndex], textures[values.bodyFGTexIndex])
+   --stripPath(head, '/experiments/puppet%-maker/')
+   -- print(inspect(head))
+   -- print(inspect(body))
+
+
+   --eye1 = copy3(eyeParts[values.eyeTypeIndex])
+   --eye2 = copy3(eyeParts[values.eyeTypeIndex])
+
+   --addChild(head, eye1)
+   --addChild(head, eye2)
 
    leg1 = createLegRubberhose(1)
    leg2 = createLegRubberhose(2)
@@ -573,6 +594,7 @@ function scene.load()
 
    parentize.parentize(root)
    mesh.meshAll(root)
+   --render.justDoTransforms(root, true)
    --mesh.recursivelyMakeTextures(root)
    render.renderThings(root)
 
@@ -583,6 +605,7 @@ function scene.load()
 
    myWorld:addEntity(biped)
    myWorld:emit("bipedInit", biped)
+   render.renderThings(root, true)
    attachCallbacks()
 
    -- dont understand how imma gonna center on head, body and legs yet
@@ -741,7 +764,7 @@ function scene.update(dt)
 
    delta = delta + dt
    Timer.update(dt)
-   myWorld:emit("update", dt)
+   --myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
 end
 
@@ -912,9 +935,10 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    if (type(textureOrColors[1]) == "table") then
       love.graphics.setColor(textureOrColors[1])
    else
-      local img = mesh.getImage(textureOrColors[1])
-      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
-      love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
+      --local img = mesh.getImage(textureOrColors[1])
+      --local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
+      --love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
+
    end
    first = ui.getUICircle(x, y, bigRadius)
 
@@ -923,14 +947,15 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
       local new_y = y + math.sin(rad) * 100
       love.graphics.setColor(0, 0, 0)
       love.graphics.circle("line", new_x, new_y, 30)
+
       if (type(textureOrColors[i]) == "table") then
          love.graphics.setColor(textureOrColors[i])
          love.graphics.circle("fill", new_x, new_y, 28)
       else
-         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
-         prof.push('render-masked-texture')
-         renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
-         prof.pop('render-masked-texture')
+         --scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
+         --prof.push('render-masked-texture')
+         --renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
+         --prof.pop('render-masked-texture')
       end
 
       local b = ui.getUICircle(new_x, new_y, 30)
@@ -968,18 +993,13 @@ end
 function changeLegs()
    for i = 1, #guy.children do
       if (guy.children[i] == leg1) then
-
-
          leg1 = createLegRubberhose(1, leg1.points)
          guy.children[i] = leg1
       end
       if (guy.children[i] == leg2) then
-
          leg2 = createLegRubberhose(2, leg2.points)
          guy.children[i] = leg2
-
       end
-
    end
    parentize.parentize(root)
 
@@ -1063,6 +1083,26 @@ function changeFeet()
    --redoFeet()
 end
 
+function changeHead()
+   head = copy3(headParts[values.head.shape])
+
+   guy.children = { body, leg1, leg2, feet1, feet2, head }
+   parentize.parentize(root)
+   redoHead()
+
+   biped:give('biped',
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   myWorld:emit("bipedAttachFeet", biped)
+
+   mesh.meshAll(root)
+end
+
+function redoHead()
+   redoTheGraphicInPart(head, palettes[values.head.bgPal], palettes[values.head.fgPal],
+      textures[values.head.bgTex], textures[values.head.fgTex], palettes[values.head.linePal])
+
+end
+
 function buttonHelper(button, bodyPart, param, maxAmount, func)
    if button.clicked then
       values[bodyPart][param] = values[bodyPart][param] + 1
@@ -1076,29 +1116,31 @@ end
 function scene.draw()
    --   prof.enabled(false)
    prof.push("frame")
-   local w, h = love.graphics.getDimensions()
+
 
    if true then
+      local w, h = love.graphics.getDimensions()
+      if true then
+         ui.handleMouseClickStart()
+         love.graphics.clear(bgColor)
+         love.graphics.setColor(0, 0, 0)
 
-      ui.handleMouseClickStart()
-      love.graphics.clear(bgColor)
-      love.graphics.setColor(0, 0, 0)
-
-      -- do these via vector sketch snf the scene graph
-      love.graphics.setColor(0, 0, 0, 0.05)
-      love.graphics.draw(tiles, 400, 0, .1, .5, .5)
-      love.graphics.setColor(1, 0, 0, 0.05)
-
-      love.graphics.draw(tiles2, 1000, 300, math.pi / 2, .5, .5)
-
-
-      for i = 1, #headz do
+         -- do these via vector sketch snf the scene graph
          love.graphics.setColor(0, 0, 0, 0.05)
-         love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
+         love.graphics.draw(tiles, 400, 0, .1, .5, .5)
+         love.graphics.setColor(1, 0, 0, 0.05)
+
+         love.graphics.draw(tiles2, 1000, 300, math.pi / 2, .5, .5)
+
+
+         for i = 1, #headz do
+            love.graphics.setColor(0, 0, 0, 0.05)
+            love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
+         end
       end
       prof.push("cam-render")
       cam:push()
-      render.renderThings(root)
+      render.renderThings(root, false)
 
       if false then
          for _, v in pairs(cameraPoints) do
@@ -1130,7 +1172,7 @@ function scene.draw()
       end
 
       prof.push("render-ui")
-      if true then -- this block leaks memory
+      if false then -- this block leaks memory still...
 
          -- body
 
@@ -1213,6 +1255,26 @@ function scene.draw()
          buttonHelper(feetFGTexButton, 'feet', 'fgTex', #textures, redoFeet)
          buttonHelper(feetFGButton, 'feet', 'fgPal', #palettes, redoFeet)
          buttonHelper(feetLinePalButton, 'feet', 'linePal', #palettes, redoFeet)
+
+
+         local headShapeButton, headBGButton, headFGTexButton, headFGButton, headLinePalButton = bigButtonWithSmallAroundIt(
+            350, 150,
+            {
+               headImgUrls[values.head.shape],
+               palettes[values.head.bgPal],
+               textures[values.head.fgTex],
+               palettes[values.head.fgPal],
+               palettes[values.head.linePal]
+            }
+         )
+         buttonHelper(headShapeButton, 'head', 'shape', #headUrls, changeHead)
+         buttonHelper(headBGButton, 'head', 'bgPal', #palettes, redoHead)
+         buttonHelper(headFGTexButton, 'head', 'fgTex', #textures, redoHead)
+         buttonHelper(headFGButton, 'head', 'fgPal', #palettes, redoHead)
+         buttonHelper(headLinePalButton, 'head', 'linePal', #palettes, redoHead)
+
+
+
 
 
          love.graphics.setColor(0, 0, 0, .5)

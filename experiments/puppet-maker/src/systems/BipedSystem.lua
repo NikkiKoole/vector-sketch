@@ -112,7 +112,8 @@ function BipedSystem:bipedDirection(e, dir)
         e.biped.feet1.transforms.l[4] = 1
         e.biped.feet2.transforms.l[4] = -1
     end
-
+    e.biped.feet1.dirty = true
+    e.biped.feet2.dirty = true
 
     --- pff really
     local derivative = e.biped.leg1._curve:getDerivative()
@@ -127,6 +128,9 @@ function BipedSystem:bipedDirection(e, dir)
 
     mesh.remeshNode(e.biped.leg1)
     mesh.remeshNode(e.biped.leg2)
+
+    transforms.setTransforms(e.biped.feet2)
+    transforms.setTransforms(e.biped.feet1)
 end
 
 function setLegs(body, e)
@@ -157,10 +161,12 @@ function BipedSystem:itemRotate(elem, dx, dy, scale)
         end
         if e.biped.feet1 == elem.item then
             e.biped.feet1.transforms.l[3] = e.biped.feet1.transforms.l[3] + 0.1
+            e.biped.feet1.dirty = true
             transforms.setTransforms(e.biped.feet1)
         end
         if e.biped.feet2 == elem.item then
             e.biped.feet2.transforms.l[3] = e.biped.feet2.transforms.l[3] + 0.1
+            e.biped.feet2.dirty = true
             transforms.setTransforms(e.biped.feet2)
         end
     end
@@ -190,6 +196,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             local dx, dy = derivative:evaluate(1)
             local angle = math.atan2(dy, dx) - math.pi / 2
             e.biped.feet1.transforms.l[3] = angle
+            e.biped.feet1.dirty = true
         end
         if e.biped.feet2 == elem.item then
             e.biped.feet2.transforms.l[1] = e.biped.feet2.transforms.l[1] + dx / scale
@@ -201,6 +208,8 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             local dx, dy = derivative:evaluate(1)
             local angle = math.atan2(dy, dx) - math.pi / 2
             e.biped.feet2.transforms.l[3] = angle
+            e.biped.feet2.dirty = true
+
         end
         if e.biped.body == elem.item then
 
@@ -210,8 +219,8 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
 
             setLegs(body, e)
-
-
+            e.biped.body.dirty = true
+            transforms.setTransforms(e.biped.body)
             -- cpoy pasta
             local nc = node.findNodeByName(body, 'neck')
             local dx1, dy1 = body.transforms._g:transformPoint(nc.points[1][1], nc.points[1][2])
@@ -219,8 +228,10 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.head.transforms.l[1] = dx1
             e.biped.head.transforms.l[2] = dy1
             -- end
-            transforms.setTransforms(e.biped.body)
-            transforms.setTransforms(e.biped.head)
+            e.biped.head.dirty = true
+            --e.biped.leg1.dirty = true
+
+            setLegs(body, e)
 
         end
         if e.biped.head == elem.item then
@@ -245,6 +256,9 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
 
             mesh.remeshNode(e.biped.leg1)
             mesh.remeshNode(e.biped.leg2)
+
+            e.biped.feet1.dirty = true
+            e.biped.feet2.dirty = true
             transforms.setTransforms(e.biped.body)
             transforms.setTransforms(e.biped.head)
         end

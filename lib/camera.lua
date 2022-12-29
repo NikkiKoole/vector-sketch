@@ -9,7 +9,7 @@ local tween = require 'vendor.tween'
 local function getScreenBBoxForItem(c, camData)
 
    local bbox = c.bbox
-
+   --print(c.transforms._g)
    local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
    local strx, stry = c.transforms._g:transformPoint(bbox[3], bbox[2])
    local sblx, sbly = c.transforms._g:transformPoint(bbox[1], bbox[4])

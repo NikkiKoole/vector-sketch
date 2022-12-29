@@ -5,7 +5,7 @@ name = "",
 points = { { 252.02, 41.583 }, { 810.02, 41.583 }, { 810.02, 364.583 }, { 252.02, 364.583 } },
 texture = {
 filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/headshapewide.png",
+url = "/experiments/puppet-maker/assets/parts/head3.png",
 wrap = "repeat"
 }
 } },

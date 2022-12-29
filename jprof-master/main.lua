@@ -75,6 +75,11 @@ function love.keypressed(key)
         draw.graphMean = draw.nextGraphMean[draw.graphMean]
         draw.notice("graph mean: " .. draw.graphMean)
     end
+
+    if key == 'escape' then
+        love.event.quit()
+
+    end
 end
 
 local function pickFrameIndex(x)
@@ -103,7 +108,7 @@ end
 local function processMessage(msgBuffer, msgLen)
     prof.push("processMessage")
     local headerLen = 4
-    local msg = msgBuffer:sub(headerLen+1, headerLen+msgLen)
+    local msg = msgBuffer:sub(headerLen + 1, headerLen + msgLen)
     local data = msgpack.unpack(msg)
     frames.addFrames(data)
     prof.pop("processMessage")
@@ -146,7 +151,7 @@ function love.update()
 
         if netMsgBuffer:len() >= headerLen + msgLen then
             processMessage(netMsgBuffer, msgLen)
-            netMsgBuffer = netMsgBuffer:sub(headerLen+msgLen+1)
+            netMsgBuffer = netMsgBuffer:sub(headerLen + msgLen + 1)
             updateGraphs = true
         else
             break
