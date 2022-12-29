@@ -10,7 +10,10 @@ transform.setTransforms = function(root, isDirty) -- this thing is leaking
     -- if (isDirty == true) or (isDirty == nil) then -- isdirty == nil check so unset dirty flags are also treated as true
     --     isdirty = true
     -- end
+    --if (isDirty == true or isDirty == nil) then
+    --  print('settransforms', root.name, isDirty)
 
+    --end
     if root.transforms then
         local tl = root.transforms.l
         local pg = nil

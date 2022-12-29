@@ -1095,12 +1095,13 @@ function changeHead()
    myWorld:emit("bipedAttachFeet", biped)
 
    mesh.meshAll(root)
+
 end
 
 function redoHead()
    redoTheGraphicInPart(head, palettes[values.head.bgPal], palettes[values.head.fgPal],
       textures[values.head.bgTex], textures[values.head.fgTex], palettes[values.head.linePal])
-
+   head.dirty = true
 end
 
 function buttonHelper(button, bodyPart, param, maxAmount, func)
@@ -1154,25 +1155,8 @@ function scene.draw()
       prof.pop("cam-render")
 
 
-      if false then
-         love.graphics.setColor(0, 0, 0)
-         local x, y = r1.transforms._g:transformPoint(0, 0)
-
-         local x2, y2 = cam:getScreenCoordinates(x, y)
-         love.graphics.rectangle("line", x2, y2, 10, 10)
-
-         local x, y = r2.transforms._g:transformPoint(0, 0)
-         local x2, y2 = cam:getScreenCoordinates(x, y)
-         love.graphics.rectangle("line", x2, y2, 10, 10)
-
-         local x, y = r3.transforms._g:transformPoint(0, 0)
-         local x2, y2 = cam:getScreenCoordinates(x, y)
-         love.graphics.rectangle("line", x2, y2, 10, 10)
-
-      end
-
       prof.push("render-ui")
-      if false then -- this block leaks memory still...
+      if true then -- this block leaks memory still...
 
          -- body
 
@@ -1277,16 +1261,18 @@ function scene.draw()
 
 
 
-         love.graphics.setColor(0, 0, 0, .5)
-         local stats = love.graphics.getStats()
-         local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
-         --   print(inspect(stats))
-         love.graphics.print(inspect(stats), 10, 30)
 
-         love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 
       end
       prof.pop("render-ui")
+
+      love.graphics.setColor(0, 0, 0, .5)
+      local stats = love.graphics.getStats()
+      local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
+      --   print(inspect(stats))
+      love.graphics.print(inspect(stats), 10, 30)
+
+      love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
    end
    prof.pop("frame")
 end
