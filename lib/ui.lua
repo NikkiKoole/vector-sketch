@@ -77,10 +77,9 @@ ui.getUICircle = function(x, y, r)
       clicked = true
    end
 
-   return {
-      clicked = clicked,
-      hover = hover
-   }
+
+   return clicked, hover
+
 end
 
 function shadedText(str, x, y)

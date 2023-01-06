@@ -47,9 +47,9 @@ function doDopeSheetEditing()
 			love.graphics.circle("fill", lx, ly, 10)
 			love.graphics.setColor(0, 0, 0)
 			local id = k .. "thing"
-			local b = ui.getUICircle( lx, ly, 10)
+			local clicked, hovered = ui.getUICircle(lx, ly, 10)
 			love.graphics.setColor(1, 0, 1, 0.8)
-			if b.hover then
+			if hovered then
 				love.graphics.setColor(0.5, 0.5, 0.5)
 			end
 
@@ -68,7 +68,7 @@ function doDopeSheetEditing()
 			local thing = v._parent._parent
 			local gtangle = v._parent.transforms[3]
 
-			if b.clicked then
+			if clicked then
 				print(k, 'is clicked, look for parent to rotate', v._parent.name)
 				print("what is the angle between us?")
 				print('parent', v._parent.name, 'is at', vpx, vpy)

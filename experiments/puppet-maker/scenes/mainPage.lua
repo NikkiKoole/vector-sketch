@@ -101,6 +101,13 @@ function pointerMoved(x, y, dx, dy, id)
       end
    end
 
+
+
+   if scrollerIsDragging then
+      scrollPosition = scrollPosition + dy
+   end
+
+
 end
 
 function pointerReleased(x, y, id)
@@ -109,6 +116,7 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
+   scrollerIsDragging = false
    collectgarbage()
 end
 
@@ -149,6 +157,13 @@ function pointerPressed(x, y, id)
 
       end
    end
+
+   local w, h = love.graphics.getDimensions()
+   local x, y = love.mouse.getPosition()
+   if x < (h / 4) then
+      scrollerIsDragging = true
+   end
+
 end
 
 function stripPath(root, path)
@@ -425,7 +440,7 @@ function scene.load()
    }
 
 
-
+   scrollPosition = 0
 
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -740,9 +755,13 @@ function attachCallbacks()
    end
 
    function love.wheelmoved(dx, dy)
-      local newScale = cam.scale * (1 + dy / 10)
-      if (newScale > 0.01 and newScale < 50) then
-         cam:scaleToPoint(1 + dy / 10)
+
+
+      if false then
+         local newScale = cam.scale * (1 + dy / 10)
+         if (newScale > 0.01 and newScale < 50) then
+            cam:scaleToPoint(1 + dy / 10)
+         end
       end
    end
 
@@ -918,6 +937,8 @@ function getScaleAndOffsetsForImage(img, desiredW, desiredH)
    return scale, xOffset, yOffset
 end
 
+--local res = { clicked = false }
+
 function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    prof.push('big-bitton-small-around')
    local bigRadius = 60
@@ -935,9 +956,9 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    if (type(textureOrColors[1]) == "table") then
       love.graphics.setColor(textureOrColors[1])
    else
-      --local img = mesh.getImage(textureOrColors[1])
-      --local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
-      --love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
+      local img = mesh.getImage(textureOrColors[1])
+      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
+      love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
 
    end
    first = ui.getUICircle(x, y, bigRadius)
@@ -952,10 +973,10 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
          love.graphics.setColor(textureOrColors[i])
          love.graphics.circle("fill", new_x, new_y, 28)
       else
-         --scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
-         --prof.push('render-masked-texture')
-         --renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
-         --prof.pop('render-masked-texture')
+         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
+         prof.push('render-masked-texture')
+         renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
+         prof.pop('render-masked-texture')
       end
 
       local b = ui.getUICircle(new_x, new_y, 30)
@@ -1105,16 +1126,37 @@ function redoHead()
 end
 
 function buttonHelper(button, bodyPart, param, maxAmount, func)
-   if button.clicked then
+   if button then
       values[bodyPart][param] = values[bodyPart][param] + 1
       if values[bodyPart][param] > maxAmount then
          values[bodyPart][param] = 1
       end
       func()
    end
+
+end
+
+function scroller(poep)
+
+   local w, h = love.graphics.getDimensions()
+   local margin = 20
+   local size = (h / 4) - margin * 2
+
+   local elements = { 'poep', 'pies', 'kak', 'stront' }
+
+   for i = 1, 4 do
+      local yPosition = (h / 4) * (i - 1) + margin + scrollPosition
+      love.graphics.rectangle('line', 20, yPosition, size, size)
+      love.graphics.print(elements[i], 20, yPosition)
+   end
+
+
 end
 
 function scene.draw()
+
+
+
    --   prof.enabled(false)
    prof.push("frame")
 
@@ -1139,6 +1181,10 @@ function scene.draw()
             love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
          end
       end
+
+      love.graphics.setColor(0, 0, 0)
+      scroller()
+
       prof.push("cam-render")
       cam:push()
       render.renderThings(root, false)
@@ -1156,7 +1202,7 @@ function scene.draw()
 
 
       prof.push("render-ui")
-      if true then -- this block leaks memory still...
+      if false then -- this block leaks memory still...
 
          -- body
 
@@ -1176,16 +1222,18 @@ function scene.draw()
          buttonHelper(bodyFGButton, 'body', 'fgPal', #palettes, redoBody)
          buttonHelper(bodyLinePalButton, 'body', 'linePal', #palettes, redoBody)
 
-         if true then
+         if false then
             local v = h_slider("body-width", 250, 150, 50, values.bodyWidthMultiplier, .1, 3)
             if v.value then
                values.bodyWidthMultiplier = v.value
                body.transforms.l[4] = v.value
+               body.dirty = true
             end
             v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 3)
             if v.value then
                values.bodyHeightMultiplier = v.value
                body.transforms.l[5] = v.value
+               body.dirty = true
             end
          end
 
@@ -1209,7 +1257,7 @@ function scene.draw()
 
          -- legs
          --  ColoredPatternLegs(100, 400)
-         if true then
+         if false then
             v = h_slider("leg-length", 250, 400, 50, values.legLength, 200, 2000)
 
             if v.value then
@@ -1257,24 +1305,21 @@ function scene.draw()
          buttonHelper(headFGButton, 'head', 'fgPal', #palettes, redoHead)
          buttonHelper(headLinePalButton, 'head', 'linePal', #palettes, redoHead)
 
-
-
-
-
-
-
       end
       prof.pop("render-ui")
 
-      love.graphics.setColor(0, 0, 0, .5)
-      local stats = love.graphics.getStats()
-      local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
-      --   print(inspect(stats))
-      love.graphics.print(inspect(stats), 10, 30)
+      if false then -- this is leaking too
+         love.graphics.setColor(0, 0, 0, .5)
+         local stats = love.graphics.getStats()
+         local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
+         --   print(inspect(stats))
+         love.graphics.print(inspect(stats), 10, 30)
 
-      love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+         love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+      end
    end
    prof.pop("frame")
+   --collectgarbage()
 end
 
 return scene
