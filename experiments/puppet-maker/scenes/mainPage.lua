@@ -101,10 +101,11 @@ function pointerMoved(x, y, dx, dy, id)
       end
    end
 
-
-
    if scrollerIsDragging then
-      scrollPosition = scrollPosition + dy
+      local w, h = love.graphics.getDimensions()
+      --(h/4)
+      -- scrollposition needs in elemsnt instead of pixels
+      scrollPosition = scrollPosition + dy / (h / 4)
    end
 
 
@@ -757,7 +758,7 @@ function attachCallbacks()
    function love.wheelmoved(dx, dy)
 
 
-      if false then
+      if true then
          local newScale = cam.scale * (1 + dy / 10)
          if (newScale > 0.01 and newScale < 50) then
             cam:scaleToPoint(1 + dy / 10)
@@ -1142,21 +1143,24 @@ function scroller(poep)
    local margin = 20
    local size = (h / 4) - margin * 2
 
-   local elements = { 'poep', 'pies', 'kak', 'stront' }
+   local elements = { 'poep 1', 'pies 2', 'kak 3', 'stront 4', 'diaree 5', 'keutel 6', 'vies 7', 'spetterpoep 8' }
+   print(math.floor(scrollPosition), math.floor(scrollPosition) % #elements)
 
    for i = 1, 4 do
-      local yPosition = (h / 4) * (i - 1) + margin + scrollPosition
+      local index = (math.floor(scrollPosition) % #elements) + i
+      if (index > #elements) then
+         index = index - #elements
+      end
+      --print(index)
+      local yPosition = (h / 4) * (i - 1) + margin + (scrollPosition * (h / 4))
       love.graphics.rectangle('line', 20, yPosition, size, size)
-      love.graphics.print(elements[i], 20, yPosition)
+      love.graphics.print(elements[index], 20, yPosition)
    end
 
 
 end
 
 function scene.draw()
-
-
-
    --   prof.enabled(false)
    prof.push("frame")
 
