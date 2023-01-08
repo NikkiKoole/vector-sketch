@@ -381,7 +381,16 @@ function scene.load()
       nil
    }
 
+   whiterects = {
+      love.graphics.newImage('assets/whiterect1.png'),
+      love.graphics.newImage('assets/whiterect2.png'),
+      love.graphics.newImage('assets/whiterect3.png'),
+      love.graphics.newImage('assets/whiterect4.png'),
+      love.graphics.newImage('assets/whiterect5.png'),
+      love.graphics.newImage('assets/whiterect6.png'),
+      love.graphics.newImage('assets/whiterect7.png'),
 
+   }
 
    palettes = {
       { 0, 0, 0, 1 },
@@ -1146,7 +1155,9 @@ function scroller(poep)
 
    local w, h = love.graphics.getDimensions()
    local margin = 20
-   local size = (h / scrollItemsOnScreen) - margin * 2
+
+   local marginHeight = 2
+   local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
    local elements = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
       'hoofdhaar' }
@@ -1156,10 +1167,22 @@ function scroller(poep)
    for i = -1, (scrollItemsOnScreen - 1) do
 
       local newScroll = i + offset
-      local yPosition = margin + (newScroll * (h / scrollItemsOnScreen))
-      love.graphics.rectangle('line', 20, yPosition, size, size)
+      local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
+      love.graphics.setColor(0.2, 0.2, 0.2, .9)
+      love.graphics.rectangle('fill', 20, yPosition, size, size)
       local index = math.ceil(-scrollPosition) + i
       index = (index % #elements) + 1
+
+      local whiterectIndex = math.ceil(-scrollPosition) + i
+      whiterectIndex = (whiterectIndex % #whiterects) + 1
+      local wrw, wrh = whiterects[whiterectIndex]:getDimensions()
+      local scaleX = size / wrw
+      local scaleY = size / wrh
+
+      love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+      love.graphics.draw(whiterects[whiterectIndex], 20, yPosition, 0, scaleX, scaleY)
+
+      love.graphics.setColor(0, 0, 0)
       love.graphics.print(elements[index], 20, yPosition)
    end
 
