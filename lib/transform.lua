@@ -29,7 +29,7 @@ transform.setTransforms = function(root, isDirty) -- this thing is leaking
 
 
         if (isDirty == true or isDirty == nil) then
-            print('getting here!')
+
             --if (root.transforms._g) then
             --    root.transforms._g:release()
             --    root.transforms._g = nil

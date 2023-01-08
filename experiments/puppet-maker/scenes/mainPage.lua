@@ -105,7 +105,11 @@ function pointerMoved(x, y, dx, dy, id)
       local w, h = love.graphics.getDimensions()
       --(h/4)
       -- scrollposition needs in elemsnt instead of pixels
-      scrollPosition = scrollPosition + dy / (h / 4)
+      scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
+
+
+
+
    end
 
 
@@ -161,7 +165,7 @@ function pointerPressed(x, y, id)
 
    local w, h = love.graphics.getDimensions()
    local x, y = love.mouse.getPosition()
-   if x < (h / 4) then
+   if x < (h / scrollItemsOnScreen) then
       scrollerIsDragging = true
    end
 
@@ -442,6 +446,7 @@ function scene.load()
 
 
    scrollPosition = 0
+   scrollItemsOnScreen = 4
 
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -758,7 +763,7 @@ function attachCallbacks()
    function love.wheelmoved(dx, dy)
 
 
-      if true then
+      if false then
          local newScale = cam.scale * (1 + dy / 10)
          if (newScale > 0.01 and newScale < 50) then
             cam:scaleToPoint(1 + dy / 10)
@@ -1141,19 +1146,20 @@ function scroller(poep)
 
    local w, h = love.graphics.getDimensions()
    local margin = 20
-   local size = (h / 4) - margin * 2
+   local size = (h / scrollItemsOnScreen) - margin * 2
 
-   local elements = { 'poep 1', 'pies 2', 'kak 3', 'stront 4', 'diaree 5', 'keutel 6', 'vies 7', 'spetterpoep 8' }
-   print(math.floor(scrollPosition), math.floor(scrollPosition) % #elements)
+   local elements = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
+      'hoofdhaar' }
 
-   for i = 1, 4 do
-      local index = (math.floor(scrollPosition) % #elements) + i
-      if (index > #elements) then
-         index = index - #elements
-      end
-      --print(index)
-      local yPosition = (h / 4) * (i - 1) + margin + (scrollPosition * (h / 4))
+   local offset = scrollPosition % 1
+
+   for i = -1, (scrollItemsOnScreen - 1) do
+
+      local newScroll = i + offset
+      local yPosition = margin + (newScroll * (h / scrollItemsOnScreen))
       love.graphics.rectangle('line', 20, yPosition, size, size)
+      local index = math.ceil(-scrollPosition) + i
+      index = (index % #elements) + 1
       love.graphics.print(elements[index], 20, yPosition)
    end
 
