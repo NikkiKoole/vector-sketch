@@ -3,9 +3,10 @@
 -- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
 local scene = {}
 
-local render = require 'lib.render'
-local mesh = require 'lib.mesh'
+local render    = require 'lib.render'
+local mesh      = require 'lib.mesh'
 local parentize = require 'lib.parentize'
+local geom      = require 'lib.geom'
 
 local node = require 'lib.node'
 local parse = require 'lib.parse-file'
@@ -118,12 +119,14 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
-
-   if (scrollerIsPressed and not scrollerIsDragging) then
-      local now = love.timer.getTime( )
+   local clickDistance = geom.distance(x, y, scrollerIsPressed.pointerX, scrollerIsPressed.pointerY)
+   print(clickDistance)
+   if (scrollerIsPressed and (not scrollerIsDragging or clickDistance < 32)) then
+      local now = love.timer.getTime()
       --print('less that .5s click!', (now - scrollerIsPressed) < .5)
-      if ((now - scrollerIsPressed) < .5)  then
-      scroller(false, x, y) 
+
+      if ((now - scrollerIsPressed.time) < .5) then
+         scroller(false, x, y)
       end
    end
 
@@ -173,8 +176,8 @@ function pointerPressed(x, y, id)
    local w, h = love.graphics.getDimensions()
    local x, y = love.mouse.getPosition()
    if x < (h / scrollItemsOnScreen) then
-      
-      scrollerIsPressed = love.timer.getTime( )
+
+      scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
    end
 
 end
@@ -1198,10 +1201,10 @@ function scroller(render, clickX, clickY)
          love.graphics.setColor(0, 0, 0)
          love.graphics.print(elements[index], 20, yPosition)
       else
-      if (hit.pointInRect(clickX,clickY,20,yPosition,size, size)) then
-         print('click on the thingie', elements[index] )
+         if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
+            print('click on the thingie', elements[index])
+         end
       end
-   end
 
 
    end
