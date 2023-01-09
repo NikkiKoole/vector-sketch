@@ -103,15 +103,12 @@ function pointerMoved(x, y, dx, dy, id)
 
    if scrollerIsDragging then
       local w, h = love.graphics.getDimensions()
-      --(h/4)
-      -- scrollposition needs in elemsnt instead of pixels
       scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
-
-
-
-
    end
 
+   if scrollerIsPressed and not scrollerIsDragging then
+      scrollerIsDragging = true
+   end
 
 end
 
@@ -121,7 +118,13 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
+
+   if (scrollerIsPressed and not scrollerIsDragging) then
+      print('should click scrollerbutton, maybe check time too!')
+   end
+
    scrollerIsDragging = false
+   scrollerIsPressed = false
    collectgarbage()
 end
 
@@ -166,7 +169,8 @@ function pointerPressed(x, y, id)
    local w, h = love.graphics.getDimensions()
    local x, y = love.mouse.getPosition()
    if x < (h / scrollItemsOnScreen) then
-      scrollerIsDragging = true
+      
+      scrollerIsPressed = true
    end
 
 end
@@ -1189,6 +1193,8 @@ function scroller(poep)
 
       love.graphics.setColor(0, 0, 0)
       love.graphics.print(elements[index], 20, yPosition)
+
+      -- i want the clicks only to function when the timing is recent (<100ms, and there hasnt been much dragging <100px?)
    end
 
 
