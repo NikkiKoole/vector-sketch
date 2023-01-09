@@ -1168,8 +1168,8 @@ function scroller(poep)
 
       local newScroll = i + offset
       local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
-      love.graphics.setColor(0.2, 0.2, 0.2, .9)
-      love.graphics.rectangle('fill', 20, yPosition, size, size)
+      --love.graphics.setColor(0.2, 0.2, 0.2, .9)
+      --love.graphics.rectangle('fill', 20, yPosition, size, size)
       local index = math.ceil(-scrollPosition) + i
       index = (index % #elements) + 1
 
@@ -1180,6 +1180,11 @@ function scroller(poep)
       local scaleY = size / wrh
 
       love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+
+      love.graphics.setColor(.1, .1, .1, .2)
+      love.graphics.draw(whiterects[whiterectIndex], 20 + 4, yPosition + 4, 0, scaleX, scaleY)
+
+      love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
       love.graphics.draw(whiterects[whiterectIndex], 20, yPosition, 0, scaleX, scaleY)
 
       love.graphics.setColor(0, 0, 0)
