@@ -99,12 +99,14 @@ function pointerMoved(x, y, dx, dy, id)
       end
    end
 
+   -- only do this when the scroll ui is visible (always currently)
    if scrollerIsDragging then
       local w, h = love.graphics.getDimensions()
       scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
    end
 
    if scrollerIsPressed and not scrollerIsDragging then
+      print(dx, dy)
       scrollerIsDragging = true
    end
 
@@ -1201,7 +1203,7 @@ function scroller(render, clickX, clickY)
       end
    end
 
-      -- i want the clicks only to function when the timing is recent (<100ms, and there hasnt been much dragging <100px?)
+
    end
 
 
