@@ -119,7 +119,10 @@ function pointerReleased(x, y, id)
 
    if (scrollerIsPressed and not scrollerIsDragging) then
       local now = love.timer.getTime( )
-      print('less that .5s click!', (now - scrollerIsPressed) < .5)
+      --print('less that .5s click!', (now - scrollerIsPressed) < .5)
+      if ((now - scrollerIsPressed) < .5)  then
+      scroller(false, x, y) 
+      end
    end
 
    scrollerIsDragging = false
@@ -1153,7 +1156,7 @@ function buttonHelper(button, bodyPart, param, maxAmount, func)
 
 end
 
-function scroller(poep)
+function scroller(render, clickX, clickY)
 
    local w, h = love.graphics.getDimensions()
    local margin = 20
@@ -1181,16 +1184,22 @@ function scroller(poep)
       local scaleX = size / wrw
       local scaleY = size / wrh
 
-      love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+      if render then
+         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
 
-      love.graphics.setColor(.1, .1, .1, .2)
-      love.graphics.draw(whiterects[whiterectIndex], 20 + 4, yPosition + 4, 0, scaleX, scaleY)
+         love.graphics.setColor(.1, .1, .1, .2)
+         love.graphics.draw(whiterects[whiterectIndex], 20 + 4, yPosition + 4, 0, scaleX, scaleY)
 
-      love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-      love.graphics.draw(whiterects[whiterectIndex], 20, yPosition, 0, scaleX, scaleY)
+         love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
+         love.graphics.draw(whiterects[whiterectIndex], 20, yPosition, 0, scaleX, scaleY)
 
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.print(elements[index], 20, yPosition)
+         love.graphics.setColor(0, 0, 0)
+         love.graphics.print(elements[index], 20, yPosition)
+      else
+      if (hit.pointInRect(clickX,clickY,20,yPosition,size, size)) then
+         print('click on the thingie', elements[index] )
+      end
+   end
 
       -- i want the clicks only to function when the timing is recent (<100ms, and there hasnt been much dragging <100px?)
    end
@@ -1225,7 +1234,8 @@ function scene.draw()
       end
 
       love.graphics.setColor(0, 0, 0)
-      scroller()
+
+      scroller(true)
 
       prof.push("cam-render")
       cam:push()
