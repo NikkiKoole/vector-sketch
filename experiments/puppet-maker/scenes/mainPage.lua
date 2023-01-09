@@ -92,11 +92,9 @@ function pointerMoved(x, y, dx, dy, id)
 
          if love.mouse.isDown(1) then
             myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
-
          end
          if love.mouse.isDown(2) then
             myWorld:emit("itemRotate", pointerInteractees[i], dx, dy, scale)
-
          end
       end
    end
@@ -120,7 +118,8 @@ function pointerReleased(x, y, id)
    end
 
    if (scrollerIsPressed and not scrollerIsDragging) then
-      print('should click scrollerbutton, maybe check time too!')
+      local now = love.timer.getTime( )
+      print('less that .5s click!', (now - scrollerIsPressed) < .5)
    end
 
    scrollerIsDragging = false
@@ -170,7 +169,7 @@ function pointerPressed(x, y, id)
    local x, y = love.mouse.getPosition()
    if x < (h / scrollItemsOnScreen) then
       
-      scrollerIsPressed = true
+      scrollerIsPressed = love.timer.getTime( )
    end
 
 end
@@ -762,10 +761,9 @@ function attachCallbacks()
    end
 
    function love.resize(w, h)
-      -- local lw, lh = lineart:getDimensions()
 
       local bx, by = body.transforms._g:transformPoint(0, 0)
-      --      local w, h = love.graphics.getDimensions()
+
       camera.setCameraViewport(cam, w, h)
       camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
       cam:update(w, h)
