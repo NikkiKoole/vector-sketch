@@ -488,9 +488,10 @@ function scene.load()
       children = {}
    }
 
-   scrollTickSound = nil
-   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/HiHat Accent.wav'), 'static')
 
+   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Hat+Clave.wav'), 'static')
+
+   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
    --local s = glockSample:clone()
    --local pitch = getPitch(semitones[body.name], 0)
    --s:setPitch(pitch + love.math.random() * .02 - .01)
@@ -1226,6 +1227,10 @@ function scroller(render, clickX, clickY)
          love.graphics.print(elements[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
+            local s = scrollItemClickSample:clone()
+            s:setPitch(.5 + love.math.random())
+            s:setVolume(.25)
+            love.audio.play(s)
             print('click on the thingie', elements[index])
          end
       end
@@ -1246,7 +1251,7 @@ function scene.update(dt)
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
          local s = scrollTickSample:clone()
-         s:setPitch(.75 + .02 *love.math.random())
+         s:setPitch(.99 + .02 *love.math.random())
          s:setVolume(.25)
          love.audio.play(s)
       end
