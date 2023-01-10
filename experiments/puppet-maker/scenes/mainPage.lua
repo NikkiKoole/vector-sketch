@@ -15,6 +15,7 @@ local hit = require 'lib.hit'
 local vivid = require 'vendor.vivid'
 local Timer = require 'vendor.timer'
 local inspect = require 'vendor.inspect'
+local Signal = require 'vendor.signal'
 local transforms = require 'lib.transform'
 local numbers = require 'lib.numbers'
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
@@ -118,7 +119,7 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
-
+   if (scrollerIsPressed) then
    local clickDistance = geom.distance(x, y, scrollerIsPressed.pointerX, scrollerIsPressed.pointerY)
    print(clickDistance)
    if (scrollerIsPressed and (not scrollerIsDragging or clickDistance < 32)) then
@@ -127,7 +128,7 @@ function pointerReleased(x, y, id)
          scroller(false, x, y)
       end
    end
-
+end
    scrollerIsDragging = false
    scrollerIsPressed = false
 
@@ -665,8 +666,15 @@ function scene.load()
 end
 
 function attachCallbacks()
+   Signal.register('click-scroll-list-item', function(x,y)
+      scroller(false, x, y)
+      print('jo chikiti',x,y)
+  end)
    function love.keypressed(key, unicode)
-      if key == 'escape' then love.event.quit() end
+      if key == 'escape' then 
+         collectgarbage()
+         love.event.quit() 
+      end
       -- todo make some keys to change bodyparts
       local partToChange = 'feet'
       if key == 'left' then
@@ -1247,7 +1255,7 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      render.renderThings(root, false)
+      --render.renderThings(root, false)
 
       if false then
          for _, v in pairs(cameraPoints) do

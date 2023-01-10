@@ -12,6 +12,8 @@ local cam = require('lib.cameraBase').getInstance()
 local tween = require 'lib.cameraTween'
 local lib = {}
 
+local Signal = require 'vendor.signal'
+
 local function addGesturePoint(gest, time, x, y)
    --print('adding gesture posiiton point')
    assert(gest)
@@ -171,6 +173,10 @@ local function gestureRecognizer(gesture, throwfunc)
          else
             --print('failed at distance')
          end
+      elseif gesture.target == 'scroll-list' then
+         --print('jo shikeiekie')
+         --print()
+         Signal.emit('click-scroll-list-item', endP.x, endP.y)
       else -- this is gesture target something else, items basically!,
 
          if distance < 0.00001 then
