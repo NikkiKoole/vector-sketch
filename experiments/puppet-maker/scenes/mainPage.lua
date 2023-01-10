@@ -167,6 +167,7 @@ function pointerPressed(x, y, id)
    local x, y = love.mouse.getPosition()
    if x < (h / scrollItemsOnScreen) then
       scrollerIsDragging= true
+      scrollListIsThrown = nil
       --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
@@ -280,7 +281,7 @@ function makeDynamicCanvas(imageData, mymesh)
 end
 
 function createRectangle(x, y, w, h, r, g, b)
-   print(x, y, w, h)
+
    local w2 = w / 2
    local h2 = h / 2
 
@@ -576,8 +577,7 @@ function scene.load()
    redoHead()
 
    --stripPath(head, '/experiments/puppet%-maker/')
-   -- print(inspect(head))
-   -- print(inspect(body))
+
 
 
    --eye1 = copy3(eyeParts[values.eyeTypeIndex])
@@ -652,10 +652,20 @@ function scene.load()
 
 end
 
+local function sign(x)
+   return x>0 and 1 or x<0 and -1 or 0
+ end
 function attachCallbacks()
    Signal.register('click-scroll-list-item', function(x,y)
       scroller(false, x, y)
-      print('jo chikiti',x,y)
+  end)
+
+  Signal.register('throw-scroll-list', function(dxn, dyn, speed)
+   if (math.abs(dyn) > math.abs(dxn)) then
+      scrollListIsThrown = {velocity = speed/10, direction = sign(dyn)}
+
+   end
+
   end)
 
   --Signal.clearPattern('.*') -- clear all signals
@@ -1210,6 +1220,19 @@ function scroller(render, clickX, clickY)
 
    end
 
+
+end
+
+function scene.update(dt)
+--print('scene update')
+   if scrollListIsThrown then
+      scrollListIsThrown.velocity = scrollListIsThrown.velocity * .8
+      scrollPosition = scrollPosition + ((scrollListIsThrown.velocity * scrollListIsThrown.direction )*.1 * dt)
+      if (scrollListIsThrown.velocity < 0.01) then
+         scrollListIsThrown.velocity = 0
+         scrollListIsThrown = nil
+      end
+   end
 
 end
 

@@ -175,14 +175,17 @@ local function gestureRecognizer(gesture)
 
          end
       elseif gesture.target == 'scroll-list' then
-         --print('jo shikeiekie')
-         --print()
          local start = gesture.positions[1]
          local duration = endP.time - start.time
          local distance = geom.distance(start.x, start.y, endP.x, endP.y)
 
          if duration < .5 and distance < 32 then
             Signal.emit('click-scroll-list-item', endP.x, endP.y)
+         else
+
+            local dxn = dx / distance
+         local dyn = dy / distance
+            Signal.emit('throw-scroll-list', dxn, dyn, speed)
          end
       else -- this is gesture target something else, items basically!,
 
