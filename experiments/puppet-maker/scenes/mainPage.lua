@@ -489,9 +489,9 @@ function scene.load()
    }
 
 
-   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Hat+Clave.wav'), 'static')
+   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
 
-   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
+   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-SNARE-TOM.wav'), 'static')
    --local s = glockSample:clone()
    --local pitch = getPitch(semitones[body.name], 0)
    --s:setPitch(pitch + love.math.random() * .02 - .01)
@@ -1228,7 +1228,7 @@ function scroller(render, clickX, clickY)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
             local s = scrollItemClickSample:clone()
-            s:setPitch(.5 + love.math.random())
+            s:setPitch(.95 + .1 * love.math.random())
             s:setVolume(.25)
             love.audio.play(s)
             print('click on the thingie', elements[index])
