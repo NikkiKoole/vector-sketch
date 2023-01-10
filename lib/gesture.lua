@@ -1,9 +1,10 @@
 local pointer = require 'lib.pointer'
+local geom    = require 'lib.geom'
 
 local gestureState = {
    list = {},
    updateResolutionCounter = 0,
-   updateResolution = 0.0167
+   updateResolution = 1.0/60
 }
 local xAxisAllowed = true
 local yAxisAllowed = true
@@ -176,7 +177,13 @@ local function gestureRecognizer(gesture, throwfunc)
       elseif gesture.target == 'scroll-list' then
          --print('jo shikeiekie')
          --print()
-         Signal.emit('click-scroll-list-item', endP.x, endP.y)
+         local start = gesture.positions[1]
+         local duration = endP.time - start.time
+         local distance = geom.distance(start.x, start.y, endP.x, endP.y)
+
+         if duration < .5 and distance < 32 then
+            Signal.emit('click-scroll-list-item', endP.x, endP.y)
+         end
       else -- this is gesture target something else, items basically!,
 
          if distance < 0.00001 then

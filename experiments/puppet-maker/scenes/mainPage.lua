@@ -107,10 +107,6 @@ function pointerMoved(x, y, dx, dy, id)
       scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
    end
 
-   if scrollerIsPressed and not scrollerIsDragging then
-      scrollerIsDragging = true
-   end
-
 end
 
 function pointerReleased(x, y, id)
@@ -119,18 +115,10 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
-   if (scrollerIsPressed) then
-   local clickDistance = geom.distance(x, y, scrollerIsPressed.pointerX, scrollerIsPressed.pointerY)
-   print(clickDistance)
-   if (scrollerIsPressed and (not scrollerIsDragging or clickDistance < 32)) then
-      local now = love.timer.getTime()
-      if ((now - scrollerIsPressed.time) < .5) then
-         scroller(false, x, y)
-      end
-   end
-end
+  
+
    scrollerIsDragging = false
-   scrollerIsPressed = false
+   
 
    local function poep() print('poep') end
 
@@ -179,8 +167,8 @@ function pointerPressed(x, y, id)
    local w, h = love.graphics.getDimensions()
    local x, y = love.mouse.getPosition()
    if x < (h / scrollItemsOnScreen) then
-
-      scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
+      scrollerIsDragging= true
+      --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
 
@@ -670,7 +658,10 @@ function attachCallbacks()
       scroller(false, x, y)
       print('jo chikiti',x,y)
   end)
-   function love.keypressed(key, unicode)
+
+  --Signal.clearPattern('.*') -- clear all signals
+   
+  function love.keypressed(key, unicode)
       if key == 'escape' then 
          collectgarbage()
          love.event.quit() 
