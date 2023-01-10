@@ -14,6 +14,8 @@ local hasBeenLoaded = false
 -- look at some
 -- https://www.istockphoto.com/nl/portfolio/Sashatigar?mediatype=illustration
 
+   local Signal = require 'vendor.signal'
+
 local parentize = require 'lib.parentize'
 local parallax = require 'lib.parallax'
 local render = require 'lib.render'
@@ -28,6 +30,22 @@ function scene.modify(data)
 end
 
 function attachPointerCallbacks()
+   Signal.register('itemThrow', function(gesture, dxn, dyn, speed)
+      gesture.target.inMotion = makeMotionObject()
+      local mass = gesture.target.inMotion.mass
+
+      local throwStrength = 1
+      if mass < 0 then throwStrength = throwStrength / 100 end
+
+      local impulse = Vector(dxn * speed * throwStrength,
+         dyn * speed * throwStrength)
+
+      applyForce(gesture.target.inMotion, impulse)
+     -- myWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)   
+  
+  end)
+
+
    function love.keypressed(key, unicode)
       if key == 'escape' then
          camera.resetCameraTween()

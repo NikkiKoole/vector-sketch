@@ -180,26 +180,7 @@ function pointerMoved(x, y, dx, dy, id, layers, ecsWorld)
 
 end
 
-function pointerReleased(x, y, id, layers, ecsWorld)
-   moving = nil
 
-   for j = 1, #layers do
-      for i = 1, #layers[j].layer.children do
-         local c = layers[j].layer.children[i]
-         if c.pressed and c.pressed.id == id then
-            c.pressed = nil
-         end
-      end
-   end
-
-   local function throw(gesture, dxn, dyn, speed)
-      ecsWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)
-   end
-
-   gesture.maybeTrigger(id, x, y, throw)
-
-
-end
 
 function getItemsInLayerThatHaveMeta(layer)
    local result = {}

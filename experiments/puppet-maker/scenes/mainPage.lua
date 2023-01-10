@@ -116,9 +116,8 @@ function pointerReleased(x, y, id)
       end
    end
   
-
    scrollerIsDragging = false
-   
+
 
    local function poep() print('poep') end
 

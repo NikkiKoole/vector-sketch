@@ -7,6 +7,8 @@ local gradient = require 'lib.gradient'
 local ui = require 'lib.ui'
 local generator = require 'lib.generateWorld'
 local camera = require 'lib.camera'
+local gesture = require 'lib.gesture'
+local Signal = require 'vendor.signal'
 local scene = {}
 local hasBeenLoaded = false
 --local cam = getCamera()
@@ -56,7 +58,33 @@ myWorld:addSystems(
 function scene.modify(data)
 end
 
+
+function pointerReleased(x, y, id, layers)
+   moving = nil
+
+   for j = 1, #layers do
+      for i = 1, #layers[j].layer.children do
+         local c = layers[j].layer.children[i]
+         if c.pressed and c.pressed.id == id then
+            c.pressed = nil
+         end
+      end
+   end
+
+
+   gesture.maybeTrigger(id, x, y)
+
+
+end
+
+
 function attachPointerCallbacks()
+
+   Signal.register('itemThrow', function(gesture, dxn, dyn, speed)
+      myWorld:emit("itemThrow", gesture.target, dxn, dyn, speed)   
+  
+  end)
+
    function love.keypressed(key, unicode)
       if key == 'escape' then
          camera.resetCameraTween()

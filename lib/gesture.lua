@@ -80,7 +80,7 @@ lib.update = function(dt)
 end
 
 
-local function gestureRecognizer(gesture, throwfunc)
+local function gestureRecognizer(gesture)
    if #gesture.positions > 1 then
 
       local startP = gesture.positions[1]
@@ -161,7 +161,7 @@ local function gestureRecognizer(gesture, throwfunc)
                   end
                end
             end
-
+            -- todo , move this to a signal too
             if doTween then
                tween.setCameraTween({
                   goalX = xAxis,
@@ -172,7 +172,7 @@ local function gestureRecognizer(gesture, throwfunc)
 
             end
          else
-            --print('failed at distance')
+
          end
       elseif gesture.target == 'scroll-list' then
          --print('jo shikeiekie')
@@ -191,19 +191,19 @@ local function gestureRecognizer(gesture, throwfunc)
          end
          local dxn = dx / distance
          local dyn = dy / distance
-         print(gesture.target, dxn, dyn, speed)
-         throwfunc(gesture, dxn, dyn, speed)
+ 
+         Signal.emit('itemThrow', gesture, dxn, dyn, speed)
       end
    end
 end
 
-lib.maybeTrigger = function(id, x, y, throw)
+lib.maybeTrigger = function(id, x, y)
    for i = #gestureState.list, 1, -1 do
       local g = gestureState.list[i]
       if g then
          if g.trigger == id then
             addGesturePoint(g, love.timer.getTime(), x, y)
-            gestureRecognizer(g, throw)
+            gestureRecognizer(g)
             lib.remove(g)
          end
       end

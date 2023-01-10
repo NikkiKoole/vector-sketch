@@ -169,21 +169,8 @@ function pointerReleased(x, y, id, layers)
       end
    end
 
-   local function throw(gesture, dxn, dyn, speed)
-      gesture.target.inMotion = makeMotionObject()
-      local mass = gesture.target.inMotion.mass
 
-      local throwStrength = 1
-      if mass < 0 then throwStrength = throwStrength / 100 end
-
-      local impulse = Vector(dxn * speed * throwStrength,
-         dyn * speed * throwStrength)
-
-      applyForce(gesture.target.inMotion, impulse)
-
-   end
-
-   gesture.maybeTrigger(id, x, y, throw)
+   gesture.maybeTrigger(id, x, y)
 
 
 end
