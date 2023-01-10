@@ -13,6 +13,7 @@ local tween = require 'lib.cameraTween'
 local lib = {}
 
 local function addGesturePoint(gest, time, x, y)
+   --print('adding gesture posiiton point')
    assert(gest)
    table.insert(gest.positions, { time = time, x = x, y = y })
 end
@@ -22,6 +23,7 @@ lib.getAllowedAxis = function()
 end
 
 lib.add = function(target, trigger, time, x, y)
+   --print('gesture add')
    local g = { positions = {}, target = target, trigger = trigger }
    table.insert(gestureState.list, g)
    addGesturePoint(g, time, x, y)
@@ -48,7 +50,7 @@ end
 lib.remove = function(gesture)
    for i = #gestureState.list, 1, -1 do
       if gestureState.list[i] == gesture then
-         print('removing gesture')
+         -- print('removing gesture')
          table.remove(gestureState.list, i)
       end
    end
@@ -66,7 +68,7 @@ lib.update = function(dt)
       for i = 1, #gestureState.list do
          local g = gestureState.list[i]
          local x, y, success = pointer.getPosition(g.trigger)
-         --print(g.trigger)
+
          if success then
             addGesturePoint(g, love.timer.getTime(), x, y)
          end
@@ -77,7 +79,7 @@ end
 
 local function gestureRecognizer(gesture, throwfunc)
    if #gesture.positions > 1 then
-      local cx, cy = cam:getTranslation()
+
       local startP = gesture.positions[1]
       local endP = gesture.positions[#gesture.positions]
       local gestureLength = 5 --math.max(3,math.floor(#gesture.positions))
@@ -93,7 +95,10 @@ local function gestureRecognizer(gesture, throwfunc)
       local deltaTime = endP.time - startP.time
       local speed = distance / deltaTime
 
+      --todo add a scrolllist gesture, for lists thay can scroll
+
       if gesture.target == 'stage' then
+         local cx, cy = cam:getTranslation()
          local minSpeed = 200
          local maxSpeed = 15000
          local minDistance = 6
@@ -166,13 +171,14 @@ local function gestureRecognizer(gesture, throwfunc)
          else
             --print('failed at distance')
          end
-      else -- this is gesture target something else, items basically!
+      else -- this is gesture target something else, items basically!,
 
          if distance < 0.00001 then
             distance = 0.00001
          end
          local dxn = dx / distance
          local dyn = dy / distance
+         print(gesture.target, dxn, dyn, speed)
          throwfunc(gesture, dxn, dyn, speed)
       end
    end

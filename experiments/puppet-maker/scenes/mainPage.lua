@@ -107,7 +107,6 @@ function pointerMoved(x, y, dx, dy, id)
    end
 
    if scrollerIsPressed and not scrollerIsDragging then
-      print(dx, dy)
       scrollerIsDragging = true
    end
 
@@ -119,12 +118,11 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
+
    local clickDistance = geom.distance(x, y, scrollerIsPressed.pointerX, scrollerIsPressed.pointerY)
    print(clickDistance)
    if (scrollerIsPressed and (not scrollerIsDragging or clickDistance < 32)) then
       local now = love.timer.getTime()
-      --print('less that .5s click!', (now - scrollerIsPressed) < .5)
-
       if ((now - scrollerIsPressed.time) < .5) then
          scroller(false, x, y)
       end
@@ -132,6 +130,10 @@ function pointerReleased(x, y, id)
 
    scrollerIsDragging = false
    scrollerIsPressed = false
+
+   local function poep() print('poep') end
+
+   gesture.maybeTrigger(id, x, y, poep)
    collectgarbage()
 end
 
@@ -178,6 +180,7 @@ function pointerPressed(x, y, id)
    if x < (h / scrollItemsOnScreen) then
 
       scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
+      gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
 
 end

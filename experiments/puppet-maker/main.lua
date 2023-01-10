@@ -18,7 +18,7 @@ end
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
-
+gesture = require 'lib.gesture'
 Concord = require 'vendor.concord.init'
 
 inspect = require 'vendor.inspect'
@@ -45,10 +45,18 @@ function love.load()
    SM.setPath("scenes/")
    SM.load("mainPage")
    print(love.filesystem.getIdentity())
+   focussed = true
+end
+
+function love.focus(f)
+   focussed = f
 end
 
 function love.update(dt)
-   SM.update(dt)
+   if focussed then
+      gesture.update(dt)
+      SM.update(dt)
+   end
 end
 
 function love.draw()
