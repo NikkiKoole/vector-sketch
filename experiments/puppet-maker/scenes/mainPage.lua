@@ -1268,7 +1268,7 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      --render.renderThings(root, false)
+      render.renderThings(root, false)
 
       if false then
          for _, v in pairs(cameraPoints) do
