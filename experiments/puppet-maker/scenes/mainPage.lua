@@ -110,7 +110,7 @@ function pointerMoved(x, y, dx, dy, id)
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
          local s = scrollTickSample:clone()
-         s:setPitch(.99 + .02 *love.math.random())
+         s:setPitch(.99 + .02 * love.math.random())
          s:setVolume(.5)
          love.audio.play(s)
       end
@@ -124,7 +124,7 @@ function pointerReleased(x, y, id)
          table.remove(pointerInteractees, i)
       end
    end
-  
+
    scrollerIsDragging = false
 
    gesture.maybeTrigger(id, x, y)
@@ -172,7 +172,7 @@ function pointerPressed(x, y, id)
    local w, h = love.graphics.getDimensions()
    local x, y = love.mouse.getPosition()
    if x < (h / scrollItemsOnScreen) then
-      scrollerIsDragging= true
+      scrollerIsDragging = true
       scrollListIsThrown = nil
       --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
@@ -489,7 +489,7 @@ function scene.load()
    }
 
 
-   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Hat+Clave.wav'), 'static')
+   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
 
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
    --local s = glockSample:clone()
@@ -667,27 +667,28 @@ function scene.load()
 end
 
 local function sign(x)
-   return x>0 and 1 or x<0 and -1 or 0
- end
+   return x > 0 and 1 or x < 0 and -1 or 0
+end
+
 function attachCallbacks()
-   Signal.register('click-scroll-list-item', function(x,y)
+   Signal.register('click-scroll-list-item', function(x, y)
       scroller(false, x, y)
-  end)
+   end)
 
-  Signal.register('throw-scroll-list', function(dxn, dyn, speed)
-   if (math.abs(dyn) > math.abs(dxn)) then
-      scrollListIsThrown = {velocity = speed/10, direction = sign(dyn)}
+   Signal.register('throw-scroll-list', function(dxn, dyn, speed)
+      if (math.abs(dyn) > math.abs(dxn)) then
+         scrollListIsThrown = { velocity = speed / 10, direction = sign(dyn) }
 
-   end
+      end
 
-  end)
+   end)
 
-  --Signal.clearPattern('.*') -- clear all signals
-   
-  function love.keypressed(key, unicode)
-      if key == 'escape' then 
+   --Signal.clearPattern('.*') -- clear all signals
+
+   function love.keypressed(key, unicode)
+      if key == 'escape' then
          collectgarbage()
-         love.event.quit() 
+         love.event.quit()
       end
       -- todo make some keys to change bodyparts
       local partToChange = 'feet'
@@ -833,6 +834,25 @@ function scene.update(dt)
 
    delta = delta + dt
    Timer.update(dt)
+   if scrollListIsThrown then
+      scrollListIsThrown.velocity = scrollListIsThrown.velocity * .95
+
+
+      local oldScrollPos = scrollPosition
+      scrollPosition = scrollPosition + ((scrollListIsThrown.velocity * scrollListIsThrown.direction) * .1 * dt)
+      local newScrollPos = scrollPosition
+      if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
+         -- play sound
+         local s = scrollTickSample:clone()
+         s:setPitch(.99 + .02 * love.math.random())
+         s:setVolume(.25)
+         love.audio.play(s)
+      end
+      if (scrollListIsThrown.velocity < 0.01) then
+         scrollListIsThrown.velocity = 0
+         scrollListIsThrown = nil
+      end
+   end
    --myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
 end
@@ -1207,6 +1227,8 @@ function scroller(render, clickX, clickY)
       --love.graphics.rectangle('fill', 20, yPosition, size, size)
       local index = math.ceil(-scrollPosition) + i
       index = (index % #elements) + 1
+      if index < 1 then index = index + #elements end
+      if index > #elements then index = 1 end
 
       local whiterectIndex = math.ceil(-scrollPosition) + i
       whiterectIndex = (whiterectIndex % #whiterects) + 1
@@ -1224,11 +1246,12 @@ function scroller(render, clickX, clickY)
          love.graphics.draw(whiterects[whiterectIndex], 20, yPosition, 0, scaleX, scaleY)
 
          love.graphics.setColor(0, 0, 0)
+         print(index, #elements)
          love.graphics.print(elements[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
             local s = scrollItemClickSample:clone()
-            s:setPitch(.5 + love.math.random())
+            s:setPitch(.99 + .02 * love.math.random())
             s:setVolume(.25)
             love.audio.play(s)
             print('click on the thingie', elements[index])
@@ -1238,28 +1261,6 @@ function scroller(render, clickX, clickY)
 
    end
 
-
-end
-
-function scene.update(dt)
---print('scene update')
-   if scrollListIsThrown then
-      scrollListIsThrown.velocity = scrollListIsThrown.velocity * .8
-      local oldScrollPos = scrollPosition
-      scrollPosition = scrollPosition + ((scrollListIsThrown.velocity * scrollListIsThrown.direction )*.1 * dt)
-      local newScrollPos = scrollPosition
-      if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
-         -- play sound
-         local s = scrollTickSample:clone()
-         s:setPitch(.99 + .02 *love.math.random())
-         s:setVolume(.25)
-         love.audio.play(s)
-      end
-      if (scrollListIsThrown.velocity < 0.01) then
-         scrollListIsThrown.velocity = 0
-         scrollListIsThrown = nil
-      end
-   end
 
 end
 
