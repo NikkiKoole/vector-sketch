@@ -104,7 +104,16 @@ function pointerMoved(x, y, dx, dy, id)
    -- only do this when the scroll ui is visible (always currently)
    if scrollerIsDragging then
       local w, h = love.graphics.getDimensions()
+      local oldScrollPos = scrollPosition
       scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
+      local newScrollPos = scrollPosition
+      if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
+         -- play sound
+         local s = scrollTickSample:clone()
+         s:setPitch(.99 + .02 *love.math.random())
+         s:setVolume(.5)
+         love.audio.play(s)
+      end
    end
 
 end
@@ -118,10 +127,7 @@ function pointerReleased(x, y, id)
   
    scrollerIsDragging = false
 
-
-   local function poep() print('poep') end
-
-   gesture.maybeTrigger(id, x, y, poep)
+   gesture.maybeTrigger(id, x, y)
    collectgarbage()
 end
 
@@ -482,6 +488,13 @@ function scene.load()
       children = {}
    }
 
+   scrollTickSound = nil
+   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/HiHat Accent.wav'), 'static')
+
+   --local s = glockSample:clone()
+   --local pitch = getPitch(semitones[body.name], 0)
+   --s:setPitch(pitch + love.math.random() * .02 - .01)
+   --love.audio.play(s)
    -------
 
 
@@ -1227,7 +1240,16 @@ function scene.update(dt)
 --print('scene update')
    if scrollListIsThrown then
       scrollListIsThrown.velocity = scrollListIsThrown.velocity * .8
+      local oldScrollPos = scrollPosition
       scrollPosition = scrollPosition + ((scrollListIsThrown.velocity * scrollListIsThrown.direction )*.1 * dt)
+      local newScrollPos = scrollPosition
+      if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
+         -- play sound
+         local s = scrollTickSample:clone()
+         s:setPitch(.75 + .02 *love.math.random())
+         s:setVolume(.25)
+         love.audio.play(s)
+      end
       if (scrollListIsThrown.velocity < 0.01) then
          scrollListIsThrown.velocity = 0
          scrollListIsThrown = nil
