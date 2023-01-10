@@ -30,7 +30,7 @@
         "command": "/Applications/love114.app/Contents/MacOS/love"
       },
       "args": [
-        "experiments/scrolling-world-ecs"
+        "experiments/puppet-maker"
       ],
       "scriptRoots": [
         "."
