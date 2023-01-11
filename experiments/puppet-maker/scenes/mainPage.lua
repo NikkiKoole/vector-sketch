@@ -1166,7 +1166,7 @@ function partSettingsPanel()
          --local yPosition = currentY + (cellHeight + cellMargin) * (j - 1)
          local index = math.ceil(-settingsScrollPosition) + j
          --if (index <= rows) then
-         print(index, rows)
+         --print(index, rows)
          love.graphics.rectangle('line',
             currentX + (i - 1) * (cellWidth + cellMargin),
             yPosition,
