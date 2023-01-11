@@ -26,6 +26,7 @@ local camera = require 'lib.camera'
 local cam    = require('lib.cameraBase').getInstance()
 
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
+
 local Components = {}
 local Systems    = {}
 local myWorld    = Concord.world()
@@ -158,6 +159,13 @@ function pointerMoved(x, y, dx, dy, id)
       end
    end
 
+   if settingsScrollAreaIsDragging then
+      settingsScrollPosition = settingsScrollPosition + dy / settingsScrollArea[5]
+      --print(settingsScrollPosition)
+      --settingsScrollPosition = math.max(0, settingsScrollPosition)
+      --print(settingsScrollPosition)
+   end
+
 end
 
 function pointerReleased(x, y, id)
@@ -168,7 +176,7 @@ function pointerReleased(x, y, id)
    end
 
    scrollerIsDragging = false
-
+   settingsScrollAreaIsDragging = false
    gesture.maybeTrigger(id, x, y)
    collectgarbage()
 end
@@ -219,6 +227,12 @@ function pointerPressed(x, y, id)
       scrollListIsThrown = nil
       --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
+   end
+
+   if (hit.pointInRect(x, y,
+      settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+       ) then
+      settingsScrollAreaIsDragging = true
    end
 
 end
@@ -446,10 +460,13 @@ function scene.load()
 
    scrollPosition = 0
    scrollItemsOnScreen = 4
-   fluxObject = {
-      scrollX = 0
-   }
+   --fluxObject = {
+   --   scrollX = 0
+   --}
    scrollListXPosition = 20
+   settingsScrollAreaIsDragging = false
+   settingsScrollArea = nil
+   settingsScrollPosition = 0
 
 
    uiImg = love.graphics.newImage('assets/ui2.png')
@@ -1093,7 +1110,7 @@ function partSettingsPanel()
    love.graphics.rectangle('line', startX, startY, width, height)
 
    -- top tabs (part, bg, fg, line)
-   local tabs = { 'part', 'bg', 'fg', 'line' }
+   local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
    local tabWidth = (width / #tabs)
    local tabHeight = math.max((tabWidth / 1.5), 32)
    local marginBetweenTabs = tabWidth / 16
@@ -1112,26 +1129,58 @@ function partSettingsPanel()
    -- this has optional scrolling, optional round scrolling or bounds, parameter amount of columns
 
 
+   local columns = 2
+   local rows = 6
+
    local cellMargin = width / 48
-   local columns = 5
+
    local useWidth = width - (2 * cellMargin) - (columns - 1) * cellMargin
    local cellWidth = (useWidth / columns)
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
    currentY = currentY + minimumHeight + cellMargin
 
-   local rows = 14
+   -- todo weird use of a 'global'
+   -- the 5th is the cellsize/rowheight
+   settingsScrollArea = { startX, currentY - cellMargin, width, height - minimumHeight - tabHeight,
+      (cellHeight + cellMargin) }
+   love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+
+   local rowsInPanel = math.ceil((height - minimumHeight - tabHeight) / cellHeight)
+
+   --if true then
+   --   settingsScrollPosition = math.max(0, settingsScrollPosition)
+
+   --end
+
+   local offset = settingsScrollPosition % 1
 
 
-   love.graphics.setScissor(startX, currentY - 1, width, height - minimumHeight - tabHeight - cellMargin + 1)
 
-   for j = 1, rows do
+   -- print(rowsInPanel)
+   for j = -1, rowsInPanel - 1 do
       for i = 1, columns do
-         love.graphics.rectangle('line', currentX + (i - 1) * (cellWidth + cellMargin),
-            currentY + (cellHeight + cellMargin) * (j - 1),
+         local newScroll = j + offset
+         --settingsScrollPosition
+         local yPosition = currentY + (newScroll * (cellHeight + cellMargin)) --(cellHeight + cellMargin) * (j - 1)
+         --local yPosition = currentY + (cellHeight + cellMargin) * (j - 1)
+         local index = math.ceil(-settingsScrollPosition) + j
+         --if (index <= rows) then
+         print(index, rows)
+         love.graphics.rectangle('line',
+            currentX + (i - 1) * (cellWidth + cellMargin),
+            yPosition,
             cellWidth, cellHeight)
+
+         --end
       end
    end
+
+   --   love.graphics.setColor(1, 0, 0, .5)
+
+
+   -- love.graphics.rectangle('fill', settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3],
+   --   settingsScrollArea[4])
 
    love.graphics.setScissor()
 end
