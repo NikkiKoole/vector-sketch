@@ -3,34 +3,32 @@
 -- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
 local scene = {}
 
-local render    = require 'lib.render'
-local mesh      = require 'lib.mesh'
-local parentize = require 'lib.parentize'
-local geom      = require 'lib.geom'
-
-local node = require 'lib.node'
-local parse = require 'lib.parse-file'
-local bbox = require 'lib.bbox'
-local hit = require 'lib.hit'
-local vivid = require 'vendor.vivid'
-local Timer = require 'vendor.timer'
+local vivid   = require 'vendor.vivid'
+local Timer   = require 'vendor.timer'
 local inspect = require 'vendor.inspect'
-local Signal = require 'vendor.signal'
+local Signal  = require 'vendor.signal'
+
+local text       = require 'lib.text'
+local render     = require 'lib.render'
+local mesh       = require 'lib.mesh'
+local parentize  = require 'lib.parentize'
+local geom       = require 'lib.geom'
+local node       = require 'lib.node'
+local parse      = require 'lib.parse-file'
+local bbox       = require 'lib.bbox'
+local hit        = require 'lib.hit'
 local transforms = require 'lib.transform'
-local numbers = require 'lib.numbers'
-local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
+local numbers    = require 'lib.numbers'
+local ui         = require 'lib.ui'
+local canvas     = require 'lib.canvas'
 
-
-local ui = require 'lib.ui'
 local camera = require 'lib.camera'
-local cam = require('lib.cameraBase').getInstance()
+local cam    = require('lib.cameraBase').getInstance()
 
-
+local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 local Components = {}
-local Systems = {}
-local myWorld = Concord.world()
-
-local canvas = require('lib.canvas')
+local Systems    = {}
+local myWorld    = Concord.world()
 
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
@@ -39,17 +37,63 @@ myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
 
 local pointerInteractees = {}
 
-function getPNGMaskUrl(url)
+function stripPath(root, path)
 
-   -- we want to get the mask file, same url except it ends in -mask.png
-   local index = string.find(url, ".png")
-   local result = nil
-   if index ~= nil then
-      local newString = url:sub(1, index - 1) .. "-mask.png"
-      result = newString
+   if root and root.texture and #root.texture.url > 0 then
+      local str = root.texture.url
+      local shortened = string.gsub(str, path, '')
+      root.texture.url = shortened
+      print(shortened)
    end
-   return result
 
+   if root.children then
+      for i = 1, #root.children do
+         stripPath(root.children[i], path)
+      end
+   end
+
+   return root
+end
+
+function addChild(parent, elem)
+   node._parent = parent
+   table.insert(parent.children, elem)
+end
+
+function addChildAt(parent, elem, index)
+   node._parent = parent
+   table.insert(parent.children, index, elem)
+end
+
+function addChildBefore(beforeThis, elem)
+   local p = beforeThis._parent
+   local index = node.getIndex(beforeThis)
+   elem._parent = p
+   table.insert(p.children, index, elem)
+end
+
+function getSiblingBefore(before)
+   local index = node.getIndex(before)
+   if index > 0 then
+      return before._parent.children[index - 1]
+   end
+   return nil
+end
+
+function removeChild(elem)
+   local index = node.getIndex(elem)
+   if index >= 0 then table.remove(elem._parent.children, index) end
+end
+
+function getPNGMaskUrl(url)
+   return text.replace(url, '.png', '-mask.png')
+end
+
+function playSound(sound)
+   local s = sound:clone()
+   s:setPitch(.99 + .02 * love.math.random())
+   s:setVolume(.25)
+   love.audio.play(s)
 end
 
 function hittestPixel()
@@ -109,10 +153,8 @@ function pointerMoved(x, y, dx, dy, id)
       local newScrollPos = scrollPosition
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
-         local s = scrollTickSample:clone()
-         s:setPitch(.99 + .02 * love.math.random())
-         s:setVolume(.5)
-         love.audio.play(s)
+         playSound(scrollTickSample)
+
       end
    end
 
@@ -171,61 +213,14 @@ function pointerPressed(x, y, id)
 
    local w, h = love.graphics.getDimensions()
    local x, y = love.mouse.getPosition()
-   if x < (h / scrollItemsOnScreen) then
+
+   if x >= scrollListXPosition and x < scrollListXPosition + (h / scrollItemsOnScreen) then
       scrollerIsDragging = true
       scrollListIsThrown = nil
       --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
 
-end
-
-function stripPath(root, path)
-
-   if root and root.texture and #root.texture.url > 0 then
-      local str = root.texture.url
-      local shortened = string.gsub(str, path, '')
-      root.texture.url = shortened
-      print(shortened)
-   end
-
-   if root.children then
-      for i = 1, #root.children do
-         stripPath(root.children[i], path)
-      end
-   end
-
-   return root
-end
-
-function addChild(parent, elem)
-   node._parent = parent
-   table.insert(parent.children, elem)
-end
-
-function addChildAt(parent, elem, index)
-   node._parent = parent
-   table.insert(parent.children, index, elem)
-end
-
-function addChildBefore(beforeThis, elem)
-   local p = beforeThis._parent
-   local index = node.getIndex(beforeThis)
-   elem._parent = p
-   table.insert(p.children, index, elem)
-end
-
-function getSiblingBefore(before)
-   local index = node.getIndex(before)
-   if index > 0 then
-      return before._parent.children[index - 1]
-   end
-   return nil
-end
-
-function removeChild(elem)
-   local index = node.getIndex(elem)
-   if index >= 0 then table.remove(elem._parent.children, index) end
 end
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMultiplier, optionalPoints)
@@ -305,17 +300,6 @@ function createRectangle(x, y, w, h, r, g, b)
    return result
 end
 
-function makeMeshFromSibling(sib, imageData)
-   local img = love.graphics.newImage(imageData)
-   local editing = mesh.makeVertices(sib)
-
-   mesh.addUVToVerts(editing, img, sib.points, sib.texture)
-   local result = mesh.makeMeshFromVertices(editing, sib.type, sib.texture)
-
-   result:setTexture(img)
-   return result
-end
-
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
 
    local p
@@ -328,7 +312,6 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
    local lineartUrl = p.texture.url
    local lineart = mesh.getImage(lineartUrl, p.texture)
    local mask
-
 
    mask = mesh.getImage(getPNGMaskUrl(lineartUrl))
    if mask == nil then
@@ -343,7 +326,7 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
       if p.texture.canvas then
          p.texture.canvas:release()
       end
-      local m = makeMeshFromSibling(p, canvas)
+      local m = mesh.makeMeshFromSibling(p, canvas)
       canvas:release()
       p.texture.canvas = m
    end
@@ -376,9 +359,9 @@ function scene.load()
    blup4 = love.graphics.newImage('assets/blups/blup4.png')
    tiles = love.graphics.newImage('assets/layered/tiles.145.png')
    tiles2 = love.graphics.newImage('assets/layered/tiles2.150.png')
+
    textures = {
       1,
-
       love.graphics.newImage('assets/layered/texture-type2t.png'),
       love.graphics.newImage('assets/layered/texture-type1.png'),
       love.graphics.newImage('assets/layered/texture-type3.png'),
@@ -386,7 +369,6 @@ function scene.load()
       love.graphics.newImage('assets/layered/texture-type5.png'),
       love.graphics.newImage('assets/layered/texture-type6.png'),
       love.graphics.newImage('assets/layered/texture-type7.png'),
-
       nil
    }
 
@@ -398,7 +380,6 @@ function scene.load()
       love.graphics.newImage('assets/whiterect5.png'),
       love.graphics.newImage('assets/whiterect6.png'),
       love.graphics.newImage('assets/whiterect7.png'),
-
    }
 
    palettes = {
@@ -465,6 +446,11 @@ function scene.load()
 
    scrollPosition = 0
    scrollItemsOnScreen = 4
+   fluxObject = {
+      scrollX = 0
+   }
+   scrollListXPosition = 20
+
 
    uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -490,13 +476,7 @@ function scene.load()
 
 
    scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
-   --local s = glockSample:clone()
-   --local pitch = getPitch(semitones[body.name], 0)
-   --s:setPitch(pitch + love.math.random() * .02 - .01)
-   --love.audio.play(s)
-   -------
 
 
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
@@ -672,13 +652,12 @@ end
 
 function attachCallbacks()
    Signal.register('click-scroll-list-item', function(x, y)
-      scroller(false, x, y)
+      scrollList(false, x, y)
    end)
 
    Signal.register('throw-scroll-list', function(dxn, dyn, speed)
       if (math.abs(dyn) > math.abs(dxn)) then
          scrollListIsThrown = { velocity = speed / 10, direction = sign(dyn) }
-
       end
 
    end)
@@ -708,28 +687,13 @@ function attachCallbacks()
          myWorld:emit('bipedDirection', biped, 'down')
       end
       if key == '1' then
-         --local t = r1._parent.transforms._g
-
-         ---local x, y = r1.transforms._g:transformPoint(0, 0)
-         --local pivx = head.transforms.l[6]
-         --local pivy = head.transforms.l[7]
-         --local x, y = head.transforms._g:transformPoint(pivx, pivy)
          local x2, y2, w, h = bbox.getMiddleOfContainer(head)
 
-         --local x, y = r1._parent.transforms._g:inverseTransformPoint(x, y)
-         --camera.setCameraViewport(cam, 200,200)
-         --cam:update(2000, 2000)
-
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
-         --  cam:update(2000,2000)
-
-         --print('focus camera on first other shape', x, y)
       end
       if key == '2' then
 
          local bbBody = bbox.getBBoxRecursive(body)
-         --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
-         -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
          local bbFeet1 = bbox.getBBoxRecursive(feet1)
          local bbFeet2 = bbox.getBBoxRecursive(feet2)
 
@@ -742,18 +706,22 @@ function attachCallbacks()
       if key == '3' then
 
          local bbHead = bbox.getBBoxRecursive(head)
-
          local bbBody = bbox.getBBoxRecursive(body)
-         --local bbLeg1 = bbox.getBBoxRecursive(leg1) -- these are empty
-         -- local bbLeg2 = bbox.getBBoxRecursive(leg2) -- this is empty too
          local bbFeet1 = bbox.getBBoxRecursive(feet1)
          local bbFeet2 = bbox.getBBoxRecursive(feet2)
 
-         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2)
-         local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-         --local x, y = r3.transforms._g:transformPoint(0, 0)
-         --  local x2,y2 = cam:getScreenCoordinates(x,y)
-         -- local x1,y1 = cam:getWorldCoordinates(x2,y2)
+
+         local points = {
+            { head.transforms.l[1], head.transforms.l[2] },
+            { feet2.transforms.l[1], feet2.transforms.l[2] },
+            { feet1.transforms.l[1], feet1.transforms.l[2] },
+         }
+
+         local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+         --local bb                 = bbox.transformFromParent(guy, { tlx, tly, brx, bry })
+         --local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(bb[1], bb[2], bb[3], bb[4])
+         local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+
 
 
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
@@ -797,17 +765,12 @@ function attachCallbacks()
    function love.resize(w, h)
 
       local bx, by = body.transforms._g:transformPoint(0, 0)
-
       camera.setCameraViewport(cam, w, h)
       camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
       cam:update(w, h)
-
-
    end
 
    function love.wheelmoved(dx, dy)
-
-
       if false then
          local newScale = cam.scale * (1 + dy / 10)
          if (newScale > 0.01 and newScale < 50) then
@@ -834,19 +797,17 @@ function scene.update(dt)
 
    delta = delta + dt
    Timer.update(dt)
-   if scrollListIsThrown then
-      scrollListIsThrown.velocity = scrollListIsThrown.velocity * .95
 
+   if scrollListIsThrown then
+      scrollListIsThrown.velocity = scrollListIsThrown.velocity * .90
 
       local oldScrollPos = scrollPosition
       scrollPosition = scrollPosition + ((scrollListIsThrown.velocity * scrollListIsThrown.direction) * .1 * dt)
       local newScrollPos = scrollPosition
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
-         local s = scrollTickSample:clone()
-         s:setPitch(.99 + .02 * love.math.random())
-         s:setVolume(.25)
-         love.audio.play(s)
+         playSound(scrollTickSample)
+
       end
       if (scrollListIsThrown.velocity < 0.01) then
          scrollListIsThrown.velocity = 0
@@ -885,106 +846,11 @@ function createLegRubberhose(legNr, points)
       points)
 end
 
-local mask_shader = love.graphics.newShader [[
-      vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-         if (Texel(texture, texture_coords).rgba != vec4(1.0)) {
-            // a discarded pixel wont be applied as the stencil.
-            discard;
-         }
-         return vec4(1.0);
-      }
-   ]]
-
-
-
-function renderMaskedTexture(maskShape, texture, x, y, sx, sy)
-   if not texture or not maskShape then return end
-   if texture == 1 then return end
-
-   local bw, bh = maskShape:getDimensions()
-   local iw, ih = texture:getDimensions()
-   local s = math.max(bw / iw, bh / ih)
-
-   local function myStencilFunction()
-      love.graphics.setShader(mask_shader)
-      love.graphics.draw(maskShape, x, y, 0, sx, sy)
-      love.graphics.setShader()
-   end
-
-   love.graphics.stencil(myStencilFunction, "replace", 1)
-   love.graphics.setStencilTest("greater", 0)
-   love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
-   love.graphics.setStencilTest()
-
-end
-
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
    --   print(sx, sy)
    return sx, sy
-end
-
-function drawBBoxDebug()
-   if true then
-      love.graphics.push() -- stores the default coordinate system
-      local w, h = love.graphics.getDimensions()
-      love.graphics.translate(w / 2, h / 2)
-      love.graphics.scale(.25) -- zoom the camera
-      if love.mouse.isDown(1) then
-         local mx, my = love.mouse:getPosition()
-         local wx, wy = cam:getWorldCoordinates(mx, my)
-
-         for j = 1, #root.children do
-            local guy = root.children[j]
-
-            for i = 1, #guy.children do
-               local item = guy.children[i]
-               local b = bbox.getBBoxRecursive(item)
-
-
-               if b then
-
-
-                  local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
-                  local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
-                  local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])
-
-                  love.graphics.print(item.name, mx1, my1)
-                  love.graphics.circle('line', mx1, my1, 10)
-
-                  love.graphics.print(item.name, tlx2, tly2)
-                  love.graphics.rectangle('line', tlx2, tly2, brx2 - tlx2, bry2 - tly2)
-
-                  if item.children then
-                     if (item.children[1].name == 'generated') then
-                        -- todo this part is still not correct?
-                        local tlx, tly, brx, bry = bbox.getPointsBBox(item.children[1].points)
-
-                        love.graphics.setColor(1, 0, 0, 0.5)
-                        love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
-                        love.graphics.setColor(0, 0, 0)
-                        -- how to map that location ino the texture dimensions ?
-                        local imgW, imgH = item.children[1].texture.imageData:getDimensions()
-                        local xx = numbers.mapInto(mx1, tlx, brx, 0, imgW)
-                        local yy = numbers.mapInto(my1, tly, bry, 0, imgH)
-                        if (xx >= 0 and xx < imgW and yy >= 0 and yy < imgH) then
-                           local r, g, b, a = item.children[1].texture.imageData:getPixel(xx, yy)
-                           if (a > 0) then
-                              love.graphics.setColor(1, 0, 1, 1)
-                              love.graphics.rectangle('line', tlx, tly, brx - tlx, bry - tly)
-                              love.graphics.setColor(0, 0, 0)
-                           end
-                        end
-                     end
-                  end
-               end
-            end
-         end
-      end
-      love.graphics.pop() -- stores the default coordinate system
-   end
-
 end
 
 function getScaleAndOffsetsForImage(img, desiredW, desiredH)
@@ -1045,7 +911,7 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
       else
          scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
          prof.push('render-masked-texture')
-         renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
+         canvas.renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
          prof.pop('render-masked-texture')
       end
 
@@ -1203,10 +1069,75 @@ function buttonHelper(button, bodyPart, param, maxAmount, func)
       end
       func()
    end
-
 end
 
-function scroller(render, clickX, clickY)
+function tweenCategoriesAndSettings()
+   --function()
+   --Timer.tween(1, fluxObject, { scrollX = -1 }, 'out-elastic')
+   --end
+end
+
+-- this is the panel that contains all ui for changing a certain body part or general change
+-- for each category we have a optionally unique panel
+function partSettingsPanel()
+   local w, h = love.graphics.getDimensions()
+
+   local margin = (h / 16)
+   local width = (w / 3)
+   local height = (h - margin * 2)
+   local startX = w - width - margin
+   local startY = margin
+
+   -- main panel
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.rectangle('line', startX, startY, width, height)
+
+   -- top tabs (part, bg, fg, line)
+   local tabs = { 'part', 'bg', 'fg', 'line' }
+   local tabWidth = (width / #tabs)
+   local tabHeight = math.max((tabWidth / 1.5), 32)
+   local marginBetweenTabs = tabWidth / 16
+   for i = 1, #tabs do
+      love.graphics.rectangle('line', startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
+      love.graphics.print(tabs[i], startX + (i - 1) * tabWidth, startY)
+   end
+
+   -- top header for custom sliders etc.
+   local minimumHeight = 32
+   local currentY = startY + tabHeight
+   love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
+   love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
+
+   -- now the scrolling part.
+   -- this has optional scrolling, optional round scrolling or bounds, parameter amount of columns
+
+
+   local cellMargin = width / 48
+   local columns = 5
+   local useWidth = width - (2 * cellMargin) - (columns - 1) * cellMargin
+   local cellWidth = (useWidth / columns)
+   local cellHeight = cellWidth
+   local currentX = startX + cellMargin
+   currentY = currentY + minimumHeight + cellMargin
+
+   local rows = 14
+
+
+   love.graphics.setScissor(startX, currentY - 1, width, height - minimumHeight - tabHeight - cellMargin + 1)
+
+   for j = 1, rows do
+      for i = 1, columns do
+         love.graphics.rectangle('line', currentX + (i - 1) * (cellWidth + cellMargin),
+            currentY + (cellHeight + cellMargin) * (j - 1),
+            cellWidth, cellHeight)
+      end
+   end
+
+   love.graphics.setScissor()
+end
+
+-- scroll list is the main thing that has all categories
+function scrollList(draw, clickX, clickY)
 
    local w, h = love.graphics.getDimensions()
    local margin = 20
@@ -1223,8 +1154,7 @@ function scroller(render, clickX, clickY)
 
       local newScroll = i + offset
       local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
-      --love.graphics.setColor(0.2, 0.2, 0.2, .9)
-      --love.graphics.rectangle('fill', 20, yPosition, size, size)
+
       local index = math.ceil(-scrollPosition) + i
       index = (index % #elements) + 1
       if index < 1 then index = index + #elements end
@@ -1236,32 +1166,25 @@ function scroller(render, clickX, clickY)
       local scaleX = size / wrw
       local scaleY = size / wrh
 
-      if render then
+      if draw then
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
 
          love.graphics.setColor(.1, .1, .1, .2)
-         love.graphics.draw(whiterects[whiterectIndex], 20 + 4, yPosition + 4, 0, scaleX, scaleY)
+         love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition + 4, yPosition + 4, 0, scaleX, scaleY)
 
          love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-         love.graphics.draw(whiterects[whiterectIndex], 20, yPosition, 0, scaleX, scaleY)
+         love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
 
          love.graphics.setColor(0, 0, 0)
-         print(index, #elements)
-         love.graphics.print(elements[index], 20, yPosition)
-      else
-         if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
-            local s = scrollItemClickSample:clone()
-            s:setPitch(.99 + .02 * love.math.random())
-            s:setVolume(.25)
-            love.audio.play(s)
+         love.graphics.print(elements[index], scrollListXPosition, yPosition)
+      else -- interactive
+         if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
+            playSound(scrollItemClickSample)
+
             print('click on the thingie', elements[index])
          end
       end
-
-
    end
-
-
 end
 
 function scene.draw()
@@ -1292,7 +1215,8 @@ function scene.draw()
 
       love.graphics.setColor(0, 0, 0)
 
-      scroller(true)
+      scrollList(true)
+      partSettingsPanel()
 
       prof.push("cam-render")
       cam:push()
@@ -1366,7 +1290,7 @@ function scene.draw()
 
          -- legs
          --  ColoredPatternLegs(100, 400)
-         if false then
+         if true then
             v = h_slider("leg-length", 250, 400, 50, values.legLength, 200, 2000)
 
             if v.value then

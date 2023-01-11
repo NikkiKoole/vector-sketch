@@ -1,5 +1,15 @@
 local text = {}
 
+
+text.replace = function(str, find, replace)
+   local index = string.find(str, find)
+   local result = nil
+   if index ~= nil then
+      local newString = str:sub(1, index - 1) .. replace
+      result = newString
+   end
+   return result
+end
 text.starts_with = function(str, start)
    return str:sub(1, #start) == start
 end

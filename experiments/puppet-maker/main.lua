@@ -35,6 +35,8 @@ function love.keypressed(key)
 end
 
 function love.load()
+   --	1180 , 820
+   -- iphone 1334, 750
    love.window.setMode(1024, 768,
       { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
    love.window.setTitle('☺ Puppet Maker')

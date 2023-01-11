@@ -3,10 +3,10 @@ local bbox = {}
 local transform = require 'lib.transform'
 
 bbox.getPointsBBox = function(points)
-   local tlx = 9999999999
-   local tly = 9999999999
-   local brx = -9999999999
-   local bry = -9999999999
+   local tlx = math.huge
+   local tly = math.huge
+   local brx = -math.huge
+   local bry = -math.huge
    for ip = 1, #points do
       if points[ip][1] < tlx then tlx = points[ip][1] end
       if points[ip][1] > brx then brx = points[ip][1] end
@@ -21,13 +21,13 @@ bbox.getMiddleOfPoints = function(points)
    return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2
 end
 bbox.getMiddleOfContainer = function(container)
-   local bb = bbox.getBBoxRecursive(container)
-   local tlx, tly, brx, bry  = bb[1], bb[2], bb[3], bb[4]
-   -- returns middle but also w and h 
-   return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2, brx-tlx, bry-tly
+   local bb                 = bbox.getBBoxRecursive(container)
+   local tlx, tly, brx, bry = bb[1], bb[2], bb[3], bb[4]
+   -- returns middle but also w and h
+   return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2, brx - tlx, bry - tly
 end
 bbox.getMiddleAndDimsOfBBox = function(tlx, tly, brx, bry)
-   return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2, brx-tlx, bry-tly
+   return tlx + (brx - tlx) / 2, tly + (bry - tly) / 2, brx - tlx, bry - tly
 end
 
 bbox.combineBboxes = function(...)
@@ -36,9 +36,9 @@ bbox.combineBboxes = function(...)
    local brx = -math.huge
    local bry = -math.huge
 
-   local args = {...}
+   local args = { ... }
    --print(#args)
-   
+
    for j = 1, #args do
 
       local v = args[j]
@@ -50,8 +50,8 @@ bbox.combineBboxes = function(...)
          if v[i] < tly then tly = v[i] end
          if v[i] > bry then bry = v[i] end
       end
-    end
-    return tlx, tly, brx, bry
+   end
+   return tlx, tly, brx, bry
 end
 
 bbox.getPointsBBoxFlat = function(points)
@@ -110,6 +110,53 @@ bbox.getBBoxRecursive = function(node)
 
 end
 
+
+bbox.transformFromParent = function(node, bb)
+   local tlxg, tlyg = node._parent.transforms._g:inverseTransformPoint(bb[1], bb[2])
+   local brxg, bryg = node._parent.transforms._g:inverseTransformPoint(bb[3], bb[4])
+
+   return { tlxg, tlyg, brxg, bryg }
+end
+
+--[[
+bbox.getBBoxRecursiveTransformed = function(node)
+   if node.children then
+      --transform.setTransforms(node)
+      -- first try to get as deep as possible
+      local p1 = { math.huge, math.huge, -math.huge, -math.huge }
+      for i = 1, #node.children do
+         if node.children[i].folder then
+            local r = bbox.getBBoxRecursiveTransformed(node.children[i])
+            --print('r', inspect(r))
+            if r[1] < p1[1] then p1[1] = r[1] end
+            if r[2] < p1[2] then p1[2] = r[2] end
+            if r[3] > p1[3] then p1[3] = r[3] end
+            if r[4] > p1[4] then p1[4] = r[4] end
+         end
+      end
+
+      local p2 = { math.huge, math.huge, -math.huge, -math.huge }
+      for i = 1, #node.children do
+         if node.children[i].points then
+            --local r = getBBoxR2(node.children[i])
+            local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
+            if tlx < p2[1] then p2[1] = tlx end
+            if tly < p2[2] then p2[2] = tly end
+            if brx > p2[3] then p2[3] = brx end
+            if bry > p2[4] then p2[4] = bry end
+
+         end
+      end
+
+      local pp = { math.min(p2[1], p1[1]),
+         math.min(p2[2], p1[2]),
+         math.max(p2[3], p1[3]),
+         math.max(p2[4], p1[4]) }
+
+      return pp
+   end
+end
+--]]
 
 
 bbox.getDirectChildrenBBox = function(node)
