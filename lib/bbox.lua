@@ -2,6 +2,28 @@ local bbox = {}
 
 local transform = require 'lib.transform'
 
+
+local function getScreenBBoxForItem(c, bbox)
+
+   local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
+   local strx, stry = c.transforms._g:transformPoint(bbox[3], bbox[2])
+   local sblx, sbly = c.transforms._g:transformPoint(bbox[1], bbox[4])
+   local sbrx, sbry = c.transforms._g:transformPoint(bbox[3], bbox[4])
+
+   local tlx, tly = cam:getScreenCoordinates(stlx, stly)
+   local brx, bry = cam:getScreenCoordinates(sbrx, sbry)
+   local trx, try = cam:getScreenCoordinates(strx, stry)
+   local blx, bly = cam:getScreenCoordinates(sblx, sbly)
+
+   local smallestX = math.min(tlx, brx, trx, blx)
+   local smallestY = math.min(tly, bry, try, bly)
+   local biggestX = math.max(tlx, brx, trx, blx)
+   local biggestY = math.max(tly, bry, try, bly)
+
+   return smallestX, smallestY, biggestX, biggestY
+
+end
+
 bbox.getPointsBBox = function(points)
    local tlx = math.huge
    local tly = math.huge

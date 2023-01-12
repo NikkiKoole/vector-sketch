@@ -24,12 +24,13 @@ local canvas     = require 'lib.canvas'
 
 local camera = require 'lib.camera'
 local cam    = require('lib.cameraBase').getInstance()
-
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local Components = {}
 local Systems    = {}
 local myWorld    = Concord.world()
+
+require 'src.generatePuppet'
 
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
@@ -37,6 +38,11 @@ myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
 
 
 local pointerInteractees = {}
+
+
+local function sign(x)
+   return x > 0 and 1 or x < 0 and -1 or 0
+end
 
 function stripPath(root, path)
 
@@ -111,26 +117,7 @@ function hittestPixel()
    end
 end
 
-local function getScreenBBoxForItem(c, bbox)
 
-   local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
-   local strx, stry = c.transforms._g:transformPoint(bbox[3], bbox[2])
-   local sblx, sbly = c.transforms._g:transformPoint(bbox[1], bbox[4])
-   local sbrx, sbry = c.transforms._g:transformPoint(bbox[3], bbox[4])
-
-   local tlx, tly = cam:getScreenCoordinates(stlx, stly)
-   local brx, bry = cam:getScreenCoordinates(sbrx, sbry)
-   local trx, try = cam:getScreenCoordinates(strx, stry)
-   local blx, bly = cam:getScreenCoordinates(sblx, sbly)
-
-   local smallestX = math.min(tlx, brx, trx, blx)
-   local smallestY = math.min(tly, bry, try, bly)
-   local biggestX = math.max(tlx, brx, trx, blx)
-   local biggestY = math.max(tly, bry, try, bly)
-
-   return smallestX, smallestY, biggestX, biggestY
-
-end
 
 function pointerMoved(x, y, dx, dy, id)
    for i = 1, #pointerInteractees do
@@ -238,115 +225,9 @@ function pointerPressed(x, y, id)
 
 end
 
-function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMultiplier, optionalPoints)
-   local img = mesh.getImage(url)
-   local width, height = img:getDimensions()
-   local magic = 4.46
-
-   local currentNode = {}
-   currentNode.type = 'rubberhose'
-   currentNode.data = currentNode.data or {}
-   currentNode.texture = {}
-   currentNode.texture.url = url
-   currentNode.texture.wrap = 'repeat'
-   currentNode.texture.filter = 'linear'
-   currentNode.data.length = height * magic
-   currentNode.data.width = width * 2 * widthMultiplier
-   currentNode.data.flop = flop
-   currentNode.data.borderRadius = .5
-   currentNode.data.steps = 20
-   currentNode.color = { 1, 1, 1 }
-   currentNode.data.scaleX = 1
-   currentNode.data.scaleY = length / height
-   currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
-
-   if (true) then
-
-      local lineart = img
-      local maskUrl = getPNGMaskUrl(url)
-      local mask = mesh.getImage(maskUrl)
-      if mask then
-         local cnv = canvas.makeTexturedCanvas(
-            lineart, mask,
-            bgp, bg or palettes[values.body.bgPal],
-            fgp, fg or palettes[values.body.fgPal], palettes[values.legs.linePal])
 
 
-         currentNode.texture.retexture = love.graphics.newImage(cnv)
-      end
-   end
-   return currentNode
-end
 
-function makeDynamicCanvas(imageData, mymesh)
-   local w, h = imageData:getDimensions()
-   local w2 = w / 2
-   local h2 = h / 2
-
-   local result = {}
-   result.color = { 1, 1, 1 }
-   result.name = 'generated'
-   result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
-   result.texture = {
-      filter = "linear",
-      canvas = mymesh,
-      wrap = "repeat",
-   }
-
-   return result
-end
-
-function createRectangle(x, y, w, h, r, g, b)
-
-   local w2 = w / 2
-   local h2 = h / 2
-
-   local result = {}
-   result.folder = true
-   result.transforms = {
-      l = { x, y, 0, 1, 1, 0, 0 }
-   }
-   result.children = { {
-
-      name = 'rectangle',
-      points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
-      color = { r or 1, g or 0.91, b or 0.15, 1 }
-   } }
-   return result
-end
-
-function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
-
-   local p
-   if part.children then
-      p = part.children[1]
-   else
-      p = part
-   end
-
-   local lineartUrl = p.texture.url
-   local lineart = mesh.getImage(lineartUrl, p.texture)
-   local mask
-
-   mask = mesh.getImage(getPNGMaskUrl(lineartUrl))
-   if mask == nil then
-      print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
-   end
-
-   if (lineart and mask) then
-      local canvas = canvas.makeTexturedCanvas(
-         lineart, mask,
-         bgp, bg,
-         fgp, fg, lineColor)
-      if p.texture.canvas then
-         p.texture.canvas:release()
-      end
-      local m = mesh.makeMeshFromSibling(p, canvas)
-      canvas:release()
-      p.texture.canvas = m
-   end
-
-end
 
 function scene.load()
 
@@ -497,11 +378,6 @@ function scene.load()
    
 
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-SNARE-TOM.wav'), 'static')
-   --local s = glockSample:clone()
-   --local pitch = getPitch(semitones[body.name], 0)
-   --s:setPitch(pitch + love.math.random() * .02 - .01)
-   --love.audio.play(s)
-   -------
 
 
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
@@ -581,8 +457,6 @@ function scene.load()
       bodyHeightMultiplier = 1,
       eyeTypeIndex = 1,
    }
-
-
 
    body = copy3(bodyParts[values.body.shape])
 
@@ -671,9 +545,6 @@ function scene.load()
 
 end
 
-local function sign(x)
-   return x > 0 and 1 or x < 0 and -1 or 0
-end
 
 function attachCallbacks()
    Signal.register('click-scroll-list-item', function(x, y)
@@ -859,17 +730,6 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
    end
 end
 
-function createLegRubberhose(legNr, points)
-   local flop = legNr == 1 and values.leg1flop or values.leg2flop
-
-   return createRubberHoseFromImage(
-      legUrls[values.legs.shape],
-      palettes[values.legs.bgPal], palettes[values.legs.fgPal],
-      textures[values.legs.bgTex], textures[values.legs.fgTex], flop
-      , values.legLength,
-      values.legWidthMultiplier,
-      points)
-end
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -950,140 +810,6 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    prof.pop('big-bitton-small-around')
    return first, second, third, fourth, fifth
 
-end
-
-function changeBody()
-   local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
-   body = copy3(bodyParts[values.body.shape])
-
-   body.transforms.l[1] = temp_x
-   body.transforms.l[2] = temp_y
-   body.transforms.l[4] = values.bodyWidthMultiplier
-   body.transforms.l[5] = values.bodyHeightMultiplier
-   guy.children = { body, leg1, leg2, feet1, feet2, head }
-
-   parentize.parentize(root)
-
-   redoBody() --- this position is very iportant, if i move redoBody under the meshall we get these borders aorund images
-   mesh.meshAll(root)
-
-   render.justDoTransforms(root)
-
-   biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-end
-
-function changeLegs()
-   for i = 1, #guy.children do
-      if (guy.children[i] == leg1) then
-         leg1 = createLegRubberhose(1, leg1.points)
-         guy.children[i] = leg1
-      end
-      if (guy.children[i] == leg2) then
-         leg2 = createLegRubberhose(2, leg2.points)
-         guy.children[i] = leg2
-      end
-   end
-   parentize.parentize(root)
-
-   -- graphic.
-   mesh.meshAll(root)
-   biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-   myWorld:emit("bipedAttachFeet", biped)
-end
-
-function redoLegs()
-   leg1 = createLegRubberhose(1, leg1.points)
-   leg2 = createLegRubberhose(2, leg2.points)
-
-   guy.children = { body, leg1, leg2, feet1, feet2, head }
-   parentize.parentize(root)
-   biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-   myWorld:emit("bipedAttachFeet", biped)
-   mesh.meshAll(root)
-end
-
-function redoBody()
-   redoTheGraphicInPart(
-      body,
-      palettes[values.body.bgPal],
-      palettes[values.body.fgPal],
-      textures[values.body.bgTex],
-      textures[values.body.fgTex],
-      palettes[values.body.linePal]
-   )
-end
-
-function redoFeet()
-   redoTheGraphicInPart(
-      feet1,
-      palettes[values.feet.bgPal],
-      palettes[values.feet.fgPal],
-      textures[values.feet.bgTex],
-      textures[values.feet.fgTex],
-      palettes[values.feet.linePal]
-   )
-   redoTheGraphicInPart(
-      feet2,
-      palettes[values.feet.bgPal],
-      palettes[values.feet.fgPal],
-      textures[values.feet.bgTex],
-      textures[values.feet.fgTex],
-      palettes[values.feet.linePal]
-   )
-end
-
-function changeFeet()
-
-   for i = 1, #guy.children do
-      if (guy.children[i] == feet1) then
-         local r = feet1.transforms.l[3]
-         local sx = feet1.transforms.l[4]
-         feet1 = copy3(feetParts[values.feet.shape])
-         feet1.transforms.l[3] = r
-         feet1.transforms.l[4] = sx
-         guy.children[i] = feet1
-      end
-
-      if (guy.children[i] == feet2) then
-         local r = feet2.transforms.l[3]
-         local sx = feet2.transforms.l[4]
-         feet2 = copy3(feetParts[values.feet.shape])
-         feet2.transforms.l[3] = r
-         feet2.transforms.l[4] = sx
-         guy.children[i] = feet2
-      end
-   end
-   parentize.parentize(root)
-   redoFeet()
-   biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-   myWorld:emit("bipedAttachFeet", biped)
-
-   mesh.meshAll(root)
-   --redoFeet()
-end
-
-function changeHead()
-   head = copy3(headParts[values.head.shape])
-
-   guy.children = { body, leg1, leg2, feet1, feet2, head }
-   parentize.parentize(root)
-   redoHead()
-
-   biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
-   myWorld:emit("bipedAttachFeet", biped)
-
-   mesh.meshAll(root)
-
-end
-
-function redoHead()
-   redoTheGraphicInPart(head, palettes[values.head.bgPal], palettes[values.head.fgPal],
-      textures[values.head.bgTex], textures[values.head.fgTex], palettes[values.head.linePal])
-   head.dirty = true
 end
 
 function buttonHelper(button, bodyPart, param, maxAmount, func)
@@ -1236,11 +962,8 @@ function scrollList(draw, clickX, clickY)
          love.graphics.print(elements[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
-            local s = scrollItemClickSample:clone()
-            s:setPitch(.5 + love.math.random())
-            s:setVolume(.25)
-            love.audio.play(s)
-            print('click on the thingie', elements[index])
+            playSound(scrollItemClickSample)
+
          end
       end
    end
@@ -1249,8 +972,6 @@ end
 function scene.draw()
    --   prof.enabled(false)
    prof.push("frame")
-
-
    if true then
       local w, h = love.graphics.getDimensions()
       if true then
@@ -1284,7 +1005,6 @@ function scene.draw()
       if false then
          for _, v in pairs(cameraPoints) do
             love.graphics.setColor(v.color)
-
             love.graphics.rectangle('line', v.x, v.y, v.width, v.height)
          end
       end
@@ -1292,9 +1012,8 @@ function scene.draw()
       cam:pop()
       prof.pop("cam-render")
 
-
       prof.push("render-ui")
-      if false then -- this block leaks memory still...
+      if true then -- this block leaks memory still...
 
          -- body
 
