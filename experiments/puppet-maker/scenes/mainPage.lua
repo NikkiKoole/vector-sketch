@@ -494,7 +494,7 @@ function scene.load()
 
 
    scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-<<<<<<< HEAD
+   
 
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-SNARE-TOM.wav'), 'static')
    --local s = glockSample:clone()
@@ -502,9 +502,6 @@ function scene.load()
    --s:setPitch(pitch + love.math.random() * .02 - .01)
    --love.audio.play(s)
    -------
-=======
-   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
->>>>>>> afd8c0119d99376c0749c5a00e0ca8fb8786b321
 
 
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
@@ -1236,21 +1233,13 @@ function scrollList(draw, clickX, clickY)
          love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
 
          love.graphics.setColor(0, 0, 0)
-<<<<<<< HEAD
          love.graphics.print(elements[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
             local s = scrollItemClickSample:clone()
-            s:setPitch(.95 + .1 * love.math.random())
+            s:setPitch(.5 + love.math.random())
             s:setVolume(.25)
             love.audio.play(s)
-=======
-         love.graphics.print(elements[index], scrollListXPosition, yPosition)
-      else -- interactive
-         if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
-            playSound(scrollItemClickSample)
-
->>>>>>> afd8c0119d99376c0749c5a00e0ca8fb8786b321
             print('click on the thingie', elements[index])
          end
       end
