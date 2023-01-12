@@ -228,11 +228,12 @@ function pointerPressed(x, y, id)
       --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
-
-   if (hit.pointInRect(x, y,
-      settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
-       ) then
-      settingsScrollAreaIsDragging = true
+   if (settingsScrollArea) then
+      if (hit.pointInRect(x, y,
+         settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+          ) then
+         settingsScrollAreaIsDragging = true
+      end
    end
 
 end
@@ -1269,7 +1270,7 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      render.renderThings(root, false)
+      render.renderThings(root, true)
 
       if false then
          for _, v in pairs(cameraPoints) do
@@ -1390,7 +1391,7 @@ function scene.draw()
       end
       prof.pop("render-ui")
 
-      if false then -- this is leaking too
+      if true then -- this is leaking too
          love.graphics.setColor(0, 0, 0, .5)
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
