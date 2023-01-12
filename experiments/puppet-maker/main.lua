@@ -2,6 +2,12 @@ package.path = package.path .. ";../../?.lua"
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
    require("lldebugger").start()
 end
+-- wooooohoooo
+-- todo this takes out all the weird jumpiness of the GC !!!
+--https://love2d.org/forums/viewtopic.php?t=91198
+jit.off()
+--jit.opt.start(3, '-loop', 'maxtrace=5000', 'hotloop=100')
+
 
 -- cool webdeveloper doing lots of nice generative stuff
 --https://codepen.io/georgedoescode/pens/popular?cursor=ZD0xJm89MCZwPTQ=
@@ -35,6 +41,8 @@ function love.keypressed(key)
 end
 
 function love.load()
+   --	1180 , 820
+   -- iphone 1334, 750
    love.window.setMode(1024, 768,
       { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
    love.window.setTitle('☺ Puppet Maker')
@@ -57,6 +65,10 @@ function love.update(dt)
       gesture.update(dt)
       SM.update(dt)
    end
+
+   --print(love.timer.getDelta())
+   --collectgarbage()
+
 end
 
 function love.draw()

@@ -10,10 +10,32 @@ local mask_effect = love.graphics.newShader [[
       return vec4(1.0);
    }
 ]]
+
 local function myStencilFunction(mask)
    love.graphics.setShader(mask_effect)
    love.graphics.draw(mask, 0, 0)
    love.graphics.setShader()
+end
+
+lib.renderMaskedTexture = function(maskShape, texture, x, y, sx, sy)
+   if not texture or not maskShape then return end
+   if texture == 1 then return end
+
+   local bw, bh = maskShape:getDimensions()
+   local iw, ih = texture:getDimensions()
+   local s = math.max(bw / iw, bh / ih)
+
+   local function myStencilFunction()
+      love.graphics.setShader(mask_effect)
+      love.graphics.draw(maskShape, x, y, 0, sx, sy)
+      love.graphics.setShader()
+   end
+
+   love.graphics.stencil(myStencilFunction, "replace", 1)
+   love.graphics.setStencilTest("greater", 0)
+   love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
+   love.graphics.setStencilTest()
+
 end
 
 -- lifted from alpha padder
@@ -136,7 +158,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
    love.graphics.setColor(lineartColor)
    love.graphics.draw(lineart)
-   love.graphics.setColor(0,0,0) --- huh?!
+   love.graphics.setColor(0, 0, 0) --- huh?!
    love.graphics.setCanvas() --- <<<<<
 
    -- how to smooch the canvas ?

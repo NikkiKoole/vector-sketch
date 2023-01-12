@@ -744,6 +744,15 @@ mesh.createTexturedTriangleStrip = function(image)
 end
 
 
+mesh.makeMeshFromSibling = function(sib, imageData)
+   local img = love.graphics.newImage(imageData)
+   local editing = mesh.makeVertices(sib)
 
+   mesh.addUVToVerts(editing, img, sib.points, sib.texture)
+   local result = mesh.makeMeshFromVertices(editing, sib.type, sib.texture)
+
+   result:setTexture(img)
+   return result
+end
 
 return mesh

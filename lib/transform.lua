@@ -1,5 +1,11 @@
 local transform = {}
 
+
+local function doMultiplication(pg, tl)
+    --local cloned = tl:clone()
+    return pg and (pg * tl) or (tl)
+end
+
 transform.setTransforms = function(root, isDirty) -- this thing is leaking
 
     -- instead of always making new transforms I need to only do this onDirty (which will be passed alonb the graph)
@@ -15,30 +21,41 @@ transform.setTransforms = function(root, isDirty) -- this thing is leaking
 
     --end
     if root.transforms then
-        local tl = root.transforms.l
-        local pg = nil
-        if (root._parent) then
-            pg = root._parent.transforms._g
-        end
-
-        if (root.transforms._l == nil) then
-            root.transforms._l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
-        else -- this works but doesnt really improve anything measurable at this time
-            root.transforms._l:setTransformation(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
-        end
-
-
         if (isDirty == true or isDirty == nil) then
+
+            local tl = root.transforms.l
+            local pg = nil
+            if (root._parent) then
+                pg = root._parent.transforms._g --:clone()
+            end
+
+            if (root.transforms._l == nil) then
+                root.transforms._l = love.math.newTransform(
+                    tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9]
+                )
+            else -- this works but doesnt really improve anything measurable at this time
+                root.transforms._l:setTransformation(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9])
+            end
+
+
+
 
             --if (root.transforms._g) then
             --    root.transforms._g:release()
             --    root.transforms._g = nil
+            --print('celaned')
             --end
 
             -- clone:
             --print(isDirty)
-            root.transforms._g = pg and (pg * root.transforms._l) or (root.transforms._l)
+            --local result =
+            root.transforms._g = doMultiplication(pg, root.transforms._l)
+            -- root.transforms._g =  pg and (pg * root.transforms._l) or (root.transforms._l)
         end
+        if (pg) then
+            --pg:release()
+        end
+        --collectgarbage()
     end
     if root.dirty == true then
         --print('thing was dirty now set to clean')
