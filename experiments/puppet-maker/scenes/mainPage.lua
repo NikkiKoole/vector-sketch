@@ -22,8 +22,8 @@ local numbers    = require 'lib.numbers'
 local ui         = require 'lib.ui'
 local canvas     = require 'lib.canvas'
 
-local camera = require 'lib.camera'
-local cam    = require('lib.cameraBase').getInstance()
+local camera     = require 'lib.camera'
+local cam        = require('lib.cameraBase').getInstance()
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local Components = {}
@@ -116,8 +116,6 @@ function hittestPixel()
       end
    end
 end
-
-
 
 function pointerMoved(x, y, dx, dy, id)
    for i = 1, #pointerInteractees do
@@ -224,10 +222,6 @@ function pointerPressed(x, y, id)
    end
 
 end
-
-
-
-
 
 function scene.load()
 
@@ -375,9 +369,9 @@ function scene.load()
 
 
    scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-   
 
-   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-SNARE-TOM.wav'), 'static')
+
+   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
 
 
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
@@ -544,7 +538,6 @@ function scene.load()
    cam:update(w, h)
 
 end
-
 
 function attachCallbacks()
    Signal.register('click-scroll-list-item', function(x, y)
@@ -729,7 +722,6 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
       love.graphics.circle('line', px, py, smallButtonRadius)
    end
 end
-
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()

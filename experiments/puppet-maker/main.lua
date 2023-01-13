@@ -67,7 +67,7 @@ function love.update(dt)
    end
 
    --print(love.timer.getDelta())
-   --collectgarbage()
+   collectgarbage()
 
 end
 
