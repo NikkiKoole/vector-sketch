@@ -1,0 +1,22 @@
+{ {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { 252.02, 41.583 }, { 548.02, 41.583 }, { 548.02, 536.583 }, { 252.02, 536.583 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes1.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+mask = true,
+name = "shape8",
+points = { { 405.031, 46.329 }, { 296.121, 149.478 }, { 273.343, 311.075 }, { 277.459, 504.491 }, { 388.56, 527.748 }, { 527.116, 508.606 }, { 527.116, 306.96 }, { 523, 146.466 } }
+} },
+folder = true,
+name = "head",
+transforms = {
+l = { 0, 2.744, 0, 1, 1, 400.02, 536.583, 0, 0 }
+}
+} }

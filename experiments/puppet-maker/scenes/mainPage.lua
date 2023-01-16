@@ -50,7 +50,7 @@ function stripPath(root, path)
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
       root.texture.url = shortened
-      print(shortened)
+      --print(shortened)
    end
 
    if root.children then
@@ -272,6 +272,27 @@ function scene.load()
       love.graphics.newImage('assets/whiterect7.png'),
    }
 
+   dots = {
+      love.graphics.newImage('assets/blups/dot1.150.png'),
+      love.graphics.newImage('assets/blups/dot2.150.png'),
+      love.graphics.newImage('assets/blups/dot3.150.png'),
+      love.graphics.newImage('assets/blups/dot4.150.png'),
+      love.graphics.newImage('assets/blups/dot5.150.png'),
+      love.graphics.newImage('assets/blups/dot6.150.png'),
+      love.graphics.newImage('assets/blups/dot7.150.png'),
+      love.graphics.newImage('assets/blups/dot8.150.png'),
+      love.graphics.newImage('assets/blups/dot9.150.png'),
+      love.graphics.newImage('assets/blups/dot10.150.png'),
+      love.graphics.newImage('assets/blups/dot11.150.png'),
+      love.graphics.newImage('assets/blups/dot12.150.png'),
+   }
+
+   local function hex2rgb(hex)
+      hex = hex:gsub("#", "")
+      return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+          tonumber("0x" .. hex:sub(5, 6)) / 255
+   end
+
    palettes = {
       { 0, 0, 0, 1 },
       { 0.18, 0.176, 0.18, 1 },
@@ -333,6 +354,109 @@ function scene.load()
       --]]
    }
 
+   if false then
+      local childCraftColors = {
+
+         '4D391F',
+         '4B6868',
+         '9F7344',
+         '9D7630',
+         'D3C281',
+         'CB433A',
+         'EBE9D6',
+         'AE934D',
+         'B09764',
+         '8F4839',
+         '8A934E',
+         '69445D',
+         '4F4C91',
+         'BDA971',
+         'E2DAA5',
+         'BEA762',
+         'AAAC73',
+         'EEC488',
+         'BAB87F'
+      }
+
+      for i = 1, #childCraftColors do
+         local r, g, b = hex2rgb(childCraftColors[i])
+         print(r, g, b)
+         table.insert(palettes, { r, g, b })
+      end
+
+      local quentinBlakeColors = {
+         'D9ccc5',
+         'D1CCC0',
+         'CCC4C9',
+         'BDC0C9',
+         'C77D52',
+         'C7B6A9',
+         'C4AC7C',
+         'C2997A',
+         'C2B7A3',
+         '9E9691',
+         '9C3E44',
+         '9C9498',
+         '9C5F43',
+         '9C998E',
+         '9C8D81',
+         '997E45',
+         '965D64',
+         '96835A',
+         '96755D',
+         '8D8F94',
+         '948F81',
+         '8A918C',
+         '798091',
+         '768A7B',
+         '4C5575',
+         '4A7067',
+         '6E4431',
+         '6E6D5D',
+         '6E615A',
+         '6B5E42',
+         '6B6A64',
+         '6B6563',
+         '626964',
+         '56695B',
+         '694F41',
+         '545566',
+         '613D41',
+         '614E57',
+
+
+      }
+
+      for i = 1, #quentinBlakeColors do
+         local r, g, b = hex2rgb(quentinBlakeColors[i])
+         print(r, g, b)
+         table.insert(palettes, { r, g, b })
+      end
+
+
+      local jamesGulliverHancock = {
+         'd44553', 'e36f73', 'd2797b', 'cd8aa4', 'cc6b8f', 'df5a91', 'ec71a5', 'e595ab', 'dca9ac', 'ecbcc7', 'b5abac',
+         'a89ea1', '996164', '797073', '796870', '7f968c',
+         '39875e', '2388a2', '2599ab', '205667', '5b6b73', '539693', '5d9398', '76a3ae', 'a4c6cd', 'aaaeaa', '9fc84b',
+         '869048',
+         '676766', '757066', '937f64', '947a60',
+         '9f7956', 'a98343', 'c0ab4e', 'af9d50', 'af9f5e', '9e9c79', 'abaf85', 'a5a4a2', 'c1b6ac', 'cab39d', 'cdae9a',
+         'd9ad76',
+         'cfab60', 'cdbb6e', 'd9c054', 'dfc54b',
+         'e3ca57', 'ded869', 'd4d29d', 'c7c66f', 'bcc092', 'bdba94', 'bebcb2', 'b6af9b', 'baaf8d', 'b99b75', 'b99974',
+         'cb9370',
+         'bc7d5e', 'bd7151', 'c6735d', 'e17b55',
+         'e58f61', 'ed8b60', 'f0b364', 'f7d0b2', 'f2e3d9', 'dfdcd9', 'e6e5e2', 'ede8d5', 'e0dcbd', 'e9d22b', 'e1e1c0',
+         'd0cccc',
+         'c19490', '995555', 'a19e9c', 'e5e3df',
+         'cb5f63', 'dfcaa7', 'ca3135', '9a5e61', 'ad898a', '454546',
+      }
+      for i = 1, #jamesGulliverHancock do
+         local r, g, b = hex2rgb(jamesGulliverHancock[i])
+         print(r, g, b)
+         table.insert(palettes, { r, g, b })
+      end
+   end
 
    scrollPosition = 0
    scrollItemsOnScreen = 4
@@ -392,16 +516,38 @@ function scene.load()
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
       'assets/parts/leg5.png' }
 
-   bodyImgUrls = { 'assets/parts/romp1.png', 'assets/parts/romp2.png', 'assets/parts/romp3.png' }
-   bodyUrls = { 'assets/body1.polygons.txt', 'assets/body2.polygons.txt', 'assets/body3.polygons.txt' }
-   bodyParts = {}
-   for i = 1, #bodyUrls do
-      bodyParts[i] = parse.parseFile(bodyUrls[i])[1]
-      stripPath(bodyParts[i], '/experiments/puppet%-maker/')
-   end
 
-   headImgUrls = { 'assets/parts/head3.png', 'assets/parts/head4.png' }
-   headUrls = { 'assets/head3.polygons.txt', 'assets/head4.polygons.txt' }
+   bodyImgUrls = {}
+   bodyParts = {}
+   local bparts = parse.parseFile('assets/bodies.polygons.txt')
+
+   for i = 1, #bparts do
+      local p = bparts[i]
+      stripPath(p, '/experiments/puppet%-maker/')
+      --      print(inspect(p))
+      for j = 1, #p.children do
+         if p.children[j].texture then
+            --print(i, p.children[j].texture.url)
+            bodyImgUrls[i] = p.children[j].texture.url
+            bodyParts[i] = bparts[i]
+         end
+      end
+      -- i want to figure out the urls of the images
+   end
+   --print(inspect(parse.parseFile('assets/bodies.polygons.txt')))
+   -- first try and put these 3 bodyparts in 1 file, then get all data from that one file
+   --bodyImgUrls = { 'assets/parts/romp1.png', 'assets/parts/romp2.png', 'assets/parts/romp3.png' }
+   --bodyUrls = { 'assets/body1.polygons.txt', 'assets/body2.polygons.txt', 'assets/body3.polygons.txt' }
+   --bodyParts = {}
+   --for i = 1, #bodyUrls do
+   --  bodyParts[i] = parse.parseFile(bodyUrls[i])[1]
+   --   stripPath(bodyParts[i], '/experiments/puppet%-maker/')
+   --end
+
+
+
+   headImgUrls = { 'assets/parts/shapes1.png', 'assets/parts/head3.png', 'assets/parts/head4.png' }
+   headUrls = { 'assets/head5.polygons.txt', 'assets/head3.polygons.txt', 'assets/head4.polygons.txt' }
    headParts = {}
 
    for i = 1, #headUrls do
@@ -419,7 +565,7 @@ function scene.load()
          linePal = 1
       },
       body = {
-         shape   = 3,
+         shape   = 2,
          bgPal   = 4,
          fgPal   = 1,
          bgTex   = 1,
@@ -902,6 +1048,8 @@ function partSettingsPanel()
       end
    end
 
+
+
    --   love.graphics.setColor(1, 0, 0, .5)
 
 
@@ -909,6 +1057,8 @@ function partSettingsPanel()
    --   settingsScrollArea[4])
 
    love.graphics.setScissor()
+
+
 end
 
 -- scroll list is the main thing that has all categories
@@ -983,12 +1133,24 @@ function scene.draw()
             love.graphics.setColor(0, 0, 0, 0.05)
             love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
          end
+
+         love.graphics.setColor(1, 1, 1)
+
       end
 
       love.graphics.setColor(0, 0, 0)
 
-      scrollList(true)
-      partSettingsPanel()
+      --scrollList(true)
+      --partSettingsPanel()
+
+      for i = 1, #palettes do
+         love.graphics.setColor(palettes[i])
+         local index = (i % #dots) + 1
+         -- print(index, #dots)
+         local dot = dots[index]
+         love.graphics.draw(dot, (i % 16) * 60, (i / 16) * 60, 0, 0.75, 0.75)
+
+      end
 
       prof.push("cam-render")
       cam:push()
@@ -1025,14 +1187,14 @@ function scene.draw()
          buttonHelper(bodyFGButton, 'body', 'fgPal', #palettes, redoBody)
          buttonHelper(bodyLinePalButton, 'body', 'linePal', #palettes, redoBody)
 
-         if false then
-            local v = h_slider("body-width", 250, 150, 50, values.bodyWidthMultiplier, .1, 3)
+         if true then
+            local v = h_slider("body-width", 250, 150, 50, values.bodyWidthMultiplier, .1, 5)
             if v.value then
                values.bodyWidthMultiplier = v.value
                body.transforms.l[4] = v.value
                body.dirty = true
             end
-            v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 3)
+            v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 5)
             if v.value then
                values.bodyHeightMultiplier = v.value
                body.transforms.l[5] = v.value
@@ -1111,7 +1273,7 @@ function scene.draw()
       end
       prof.pop("render-ui")
 
-      if true then -- this is leaking too
+      if false then -- this is leaking too
          love.graphics.setColor(0, 0, 0, .5)
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
