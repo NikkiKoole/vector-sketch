@@ -223,6 +223,17 @@ function pointerPressed(x, y, id)
 
 end
 
+local function hex2rgb(hex)
+   hex = hex:gsub("#", "")
+   return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+       tonumber("0x" .. hex:sub(5, 6)) / 255
+end
+
+local function rgbToHex(r, g, b)
+   local rgb = (r * 0x10000) + (g * 0x100) + b
+   return string.format("%x", rgb)
+end
+
 function scene.load()
 
    bgColor = creamColor
@@ -287,189 +298,32 @@ function scene.load()
       love.graphics.newImage('assets/blups/dot12.150.png'),
    }
 
-   local function hex2rgb(hex)
-      hex = hex:gsub("#", "")
-      return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
-          tonumber("0x" .. hex:sub(5, 6)) / 255
-   end
-
-   palettes = {
-      { 0, 0, 0, 1 },
-      { 0.18, 0.176, 0.18, 1 },
-      { 0.447, 0.255, 0.043, 1 },
-      { 0.882, 0.753, 0.133, 1 },
-      { 0.929, 0.91, 0.835, 1 },
-      { 0.467, 0.498, 0.176, 1 },
-      { 0.137, 0.333, 0.502, 1 },
-      { 0.396, 0.604, 0.698, 1 },
-      { 0.475, 0.408, 0.439, 1 },
-      { 0.561, 0.247, 0.443, 1 },
-      { 0.89, 0.388, 0.294, 1 },
-      { 0.941, 0.518, 0.122, 1 },
-      -- start of volkskrant palette
-      { 246 / 255, 217 / 255, 58 / 255 },
-      { 41 / 255, 33 / 255, 30 / 255 },
-      { 246 / 255, 113 / 255, 110 / 255 },
-      { 253 / 255, 239 / 255, 205 / 255 },
-      { 252 / 255, 163 / 255, 154 / 255 },
-      { 98 / 255, 86 / 255, 69 / 255 },
-      { 66 / 255, 115 / 255, 131 / 255 },
-      { 178 / 255, 209 / 255, 159 / 255 },
-      { 184 / 255, 176 / 255, 150 / 255 }
-
-      --- llast one beore pico8
-
-      --[[
-      { 29 / 255, 43 / 255, 83 / 255 },
-      { 126 / 255, 37 / 255, 83 / 255 },
-      { 0 / 255, 135 / 255, 81 / 255 },
-      { 171 / 255, 82 / 255, 54 / 255 },
-      { 95 / 255, 87 / 255, 79 / 255 },
-      { 194 / 255, 195 / 255, 199 / 255 },
-      { 255 / 255, 241 / 255, 232 / 255 },
-      { 255 / 255, 0 / 255, 77 / 255 },
-      { 255 / 255, 163 / 255, 0 },
-      { 255 / 255, 236 / 255, 39 / 255 },
-      { 0 / 255, 228 / 255, 54 / 255 },
-      { 41 / 255, 173 / 255, 255 / 255 },
-      { 131 / 255, 118 / 255, 156 / 255 },
-      { 255 / 255, 119 / 255, 168 / 255 },
-      { 255 / 255, 204 / 255, 170 / 255 },
-      { 41 / 255, 24 / 255, 20 / 255 },
-      { 17 / 255, 29 / 255, 53 / 255 },
-      { 66 / 255, 33 / 255, 54 / 255 },
-      { 18 / 255, 3 / 255, 89 / 255 },
-      { 116 / 255, 47 / 255, 41 / 255 },
-      { 73 / 255, 51 / 255, 59 / 255 },
-      { 162 / 255, 136 / 255, 121 / 255 },
-      { 243 / 255, 239 / 255, 125 / 255 },
-      { 190 / 255, 18 / 255, 80 / 255 },
-      { 255 / 255, 108 / 255, 36 / 255 },
-      { 168 / 255, 231 / 255, 46 / 255 },
-      { 0 / 255, 181 / 255, 67 / 255 },
-      { 6 / 255, 90 / 255, 181 / 255 },
-      { 117 / 255, 70 / 255, 101 / 255 },
-      { 255 / 255, 110 / 255, 89 / 255 },
-      { 255 / 255, 157 / 255, 129 / 255 }
-      --]]
+   palettes = {}
+   local base = {
+      '020202', '333233', '814800', 'e6c800', 'efebd8',
+      '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+      'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+      'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+      '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+      'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+      'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+      '798091', '4C5575', '6E4431', '626964', '613D41',
    }
-
-   if false then
-      local childCraftColors = {
-
-         '4D391F',
-         '4B6868',
-         '9F7344',
-         '9D7630',
-         'D3C281',
-         'CB433A',
-         'EBE9D6',
-         'AE934D',
-         'B09764',
-         '8F4839',
-         '8A934E',
-         '69445D',
-         '4F4C91',
-         'BDA971',
-         'E2DAA5',
-         'BEA762',
-         'AAAC73',
-         'EEC488',
-         'BAB87F'
-      }
-
-      for i = 1, #childCraftColors do
-         local r, g, b = hex2rgb(childCraftColors[i])
-         print(r, g, b)
-         table.insert(palettes, { r, g, b })
-      end
-
-      local quentinBlakeColors = {
-         'D9ccc5',
-         'D1CCC0',
-         'CCC4C9',
-         'BDC0C9',
-         'C77D52',
-         'C7B6A9',
-         'C4AC7C',
-         'C2997A',
-         'C2B7A3',
-         '9E9691',
-         '9C3E44',
-         '9C9498',
-         '9C5F43',
-         '9C998E',
-         '9C8D81',
-         '997E45',
-         '965D64',
-         '96835A',
-         '96755D',
-         '8D8F94',
-         '948F81',
-         '8A918C',
-         '798091',
-         '768A7B',
-         '4C5575',
-         '4A7067',
-         '6E4431',
-         '6E6D5D',
-         '6E615A',
-         '6B5E42',
-         '6B6A64',
-         '6B6563',
-         '626964',
-         '56695B',
-         '694F41',
-         '545566',
-         '613D41',
-         '614E57',
-
-
-      }
-
-      for i = 1, #quentinBlakeColors do
-         local r, g, b = hex2rgb(quentinBlakeColors[i])
-         print(r, g, b)
-         table.insert(palettes, { r, g, b })
-      end
-
-
-      local jamesGulliverHancock = {
-         'd44553', 'e36f73', 'd2797b', 'cd8aa4', 'cc6b8f', 'df5a91', 'ec71a5', 'e595ab', 'dca9ac', 'ecbcc7', 'b5abac',
-         'a89ea1', '996164', '797073', '796870', '7f968c',
-         '39875e', '2388a2', '2599ab', '205667', '5b6b73', '539693', '5d9398', '76a3ae', 'a4c6cd', 'aaaeaa', '9fc84b',
-         '869048',
-         '676766', '757066', '937f64', '947a60',
-         '9f7956', 'a98343', 'c0ab4e', 'af9d50', 'af9f5e', '9e9c79', 'abaf85', 'a5a4a2', 'c1b6ac', 'cab39d', 'cdae9a',
-         'd9ad76',
-         'cfab60', 'cdbb6e', 'd9c054', 'dfc54b',
-         'e3ca57', 'ded869', 'd4d29d', 'c7c66f', 'bcc092', 'bdba94', 'bebcb2', 'b6af9b', 'baaf8d', 'b99b75', 'b99974',
-         'cb9370',
-         'bc7d5e', 'bd7151', 'c6735d', 'e17b55',
-         'e58f61', 'ed8b60', 'f0b364', 'f7d0b2', 'f2e3d9', 'dfdcd9', 'e6e5e2', 'ede8d5', 'e0dcbd', 'e9d22b', 'e1e1c0',
-         'd0cccc',
-         'c19490', '995555', 'a19e9c', 'e5e3df',
-         'cb5f63', 'dfcaa7', 'ca3135', '9a5e61', 'ad898a', '454546',
-      }
-      for i = 1, #jamesGulliverHancock do
-         local r, g, b = hex2rgb(jamesGulliverHancock[i])
-         print(r, g, b)
-         table.insert(palettes, { r, g, b })
-      end
+   for i = 1, #base do
+      local r, g, b = hex2rgb(base[i])
+      table.insert(palettes, { r, g, b })
    end
+
 
    scrollPosition = 0
    scrollItemsOnScreen = 4
-   --fluxObject = {
-   --   scrollX = 0
-   --}
    scrollListXPosition = 20
    settingsScrollAreaIsDragging = false
    settingsScrollArea = nil
    settingsScrollPosition = 0
 
 
-   uiImg = love.graphics.newImage('assets/ui2.png')
+   --uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
    headz = {}
@@ -493,10 +347,7 @@ function scene.load()
 
 
    scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-
-
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
-
 
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
    feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt' }
@@ -524,25 +375,13 @@ function scene.load()
    for i = 1, #bparts do
       local p = bparts[i]
       stripPath(p, '/experiments/puppet%-maker/')
-      --      print(inspect(p))
       for j = 1, #p.children do
          if p.children[j].texture then
-            --print(i, p.children[j].texture.url)
             bodyImgUrls[i] = p.children[j].texture.url
             bodyParts[i] = bparts[i]
          end
       end
-      -- i want to figure out the urls of the images
    end
-   --print(inspect(parse.parseFile('assets/bodies.polygons.txt')))
-   -- first try and put these 3 bodyparts in 1 file, then get all data from that one file
-   --bodyImgUrls = { 'assets/parts/romp1.png', 'assets/parts/romp2.png', 'assets/parts/romp3.png' }
-   --bodyUrls = { 'assets/body1.polygons.txt', 'assets/body2.polygons.txt', 'assets/body3.polygons.txt' }
-   --bodyParts = {}
-   --for i = 1, #bodyUrls do
-   --  bodyParts[i] = parse.parseFile(bodyUrls[i])[1]
-   --   stripPath(bodyParts[i], '/experiments/puppet%-maker/')
-   --end
 
 
 
@@ -1027,37 +866,40 @@ function partSettingsPanel()
 
    local offset = settingsScrollPosition % 1
 
-
-
-   -- print(rowsInPanel)
    for j = -1, rowsInPanel - 1 do
       for i = 1, columns do
          local newScroll = j + offset
-         --settingsScrollPosition
          local yPosition = currentY + (newScroll * (cellHeight + cellMargin)) --(cellHeight + cellMargin) * (j - 1)
-         --local yPosition = currentY + (cellHeight + cellMargin) * (j - 1)
          local index = math.ceil(-settingsScrollPosition) + j
-         --if (index <= rows) then
-         --print(index, rows)
          love.graphics.rectangle('line',
             currentX + (i - 1) * (cellWidth + cellMargin),
             yPosition,
             cellWidth, cellHeight)
-
-         --end
       end
    end
 
 
-
-   --   love.graphics.setColor(1, 0, 0, .5)
-
-
-   -- love.graphics.rectangle('fill', settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3],
-   --   settingsScrollArea[4])
-
    love.graphics.setScissor()
 
+   local dotWidth = useWidth / 5
+   local dotHeight = (height - minimumHeight - tabHeight) / 8
+   for i = 1, #palettes do
+
+      local index = (i % #dots) + 1
+      local dot = dots[index]
+      local j = i - 1
+      local w, h = dot:getDimensions()
+      local sx = dotWidth / w
+      local sy = dotWidth / h
+
+      love.graphics.setColor(0, 0, 0, .1)
+      love.graphics.draw(dot, -2 + currentX + (j % 5) * dotWidth, -2 + currentY + math.floor(j / 5) * dotWidth, 0,
+         sx * 1.1, sy * 1.1)
+
+
+      love.graphics.setColor(palettes[i])
+      love.graphics.draw(dot, currentX + (j % 5) * dotWidth, currentY + math.floor(j / 5) * dotWidth, 0, sx, sy)
+   end
 
 end
 
@@ -1140,17 +982,8 @@ function scene.draw()
 
       love.graphics.setColor(0, 0, 0)
 
-      --scrollList(true)
-      --partSettingsPanel()
-
-      for i = 1, #palettes do
-         love.graphics.setColor(palettes[i])
-         local index = (i % #dots) + 1
-         -- print(index, #dots)
-         local dot = dots[index]
-         love.graphics.draw(dot, (i % 16) * 60, (i / 16) * 60, 0, 0.75, 0.75)
-
-      end
+      scrollList(true)
+      partSettingsPanel()
 
       prof.push("cam-render")
       cam:push()
