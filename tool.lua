@@ -907,7 +907,7 @@ local function drawUIAroundGraphNodes(w, h)
 
    ---  polyline
 
-   if (editingMode == 'polyline' and currentNode ) then
+   if (editingMode == 'polyline' and currentNode) then
       table.insert(
          row2,
          {
@@ -976,8 +976,8 @@ local function drawUIAroundGraphNodes(w, h)
             {
                'vanilla', icon.object_group, 'now its normal click to make meta',
                function()
-       
-                  currentNode.type ='meta'
+
+                  currentNode.type = 'meta'
                end
             }
          )
@@ -992,7 +992,7 @@ local function drawUIAroundGraphNodes(w, h)
                   currentNode.hole = false
                   currentNode.closeStencil = false
                   currentNode.type = nil
-                 
+
                end
             }
          )
@@ -1037,7 +1037,7 @@ local function drawUIAroundGraphNodes(w, h)
                   currentNode.mask = false
                   currentNode.hole = false
                   currentNode.closeStencil = false
-               
+
                end
             }
          )
@@ -2674,12 +2674,18 @@ function mylib:draw()
 
                local dot_x = transformedPoints[i][1] - 5
                local dot_y = transformedPoints[i][2] - 5
+
                local dot_size = 10
                LG.setColor(0, 0, 0)
                LG.rectangle(kind, dot_x - 1, dot_y, dot_size, dot_size)
 
                LG.setColor(1, 1, 1)
                LG.rectangle(kind, dot_x, dot_y, dot_size, dot_size)
+
+               if currentNode.type == 'meta' then
+                  LG.setColor(1, 1, 1, 0.5)
+                  LG.print(i, dot_x, dot_y)
+               end
             end
 
 
