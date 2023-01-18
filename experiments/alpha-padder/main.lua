@@ -1,4 +1,6 @@
+package.path = package.path .. ";../../?.lua"
 
+local inspect = require 'vendor.inspect'
 
 function love.keypressed(key)
    if (key == 'escape') then love.event.quit() end
@@ -92,12 +94,6 @@ function getFiledata(filename)
   return filedata
 end
 
-
---function mountZip(filename, mountpoint)
---   local filedata = getFiledata(filename)
---   return love.filesystem.mount(filedata, mountpoint or 'zip')
---end
-
 function love.filedropped(file)
    local fullPath = file:getFilename()
    local d = getFiledata(fullPath)
@@ -106,6 +102,20 @@ function love.filedropped(file)
 
    doImageFromData(d, name)
    
+end
+
+function love.directorydropped(path)
+   love.filesystem.mount(path, "content")
+   files = love.filesystem.getDirectoryItems( "content" )
+
+   for i =1, #files do
+      local url =  path..'/'..files[i]
+      local d = getFiledata(url)
+      local splitted = mysplit(url, "/")
+      local name = splitted[#splitted]
+      --print(name, files[i])
+      doImageFromData(d, name)
+   end
 end
 
 
