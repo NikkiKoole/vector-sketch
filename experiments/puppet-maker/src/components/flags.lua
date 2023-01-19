@@ -20,7 +20,8 @@ Concord.component('biped',
         c.leg2 = parts.leg2
         c.feet1 = parts.feet1
         c.feet2 = parts.feet2
-        c.head = head
+        c.head = parts.head
+        c.neck = parts.neck
     end
 )
 Concord.component('head',

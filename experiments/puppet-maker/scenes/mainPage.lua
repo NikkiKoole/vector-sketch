@@ -28,6 +28,7 @@ local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local Components = {}
 local Systems    = {}
+
 myWorld          = Concord.world()
 
 require 'src.generatePuppet'
@@ -401,6 +402,11 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
+      legLength = 700,
+      legWidthMultiplier = 1,
+      leg1flop = 1,
+      leg2flop = 1,
+
       body = {
          shape   = 1,
          bgPal   = 4,
@@ -409,6 +415,8 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
+      bodyWidthMultiplier = 1,
+      bodyHeightMultiplier = 1,
       head = {
          shape   = 1,
          bgPal   = 4,
@@ -417,6 +425,19 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
+      headWidthMultiplier = 1,
+      headHeightMultiplier = 1,
+
+      neck = { -- todo
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
+      neckLength = 200,
+      neckWidthMultiplier = 1,
       feet = {
          shape   = 1,
          bgPal   = 4,
@@ -425,17 +446,8 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
-      legLength = 700,
-      legWidthMultiplier = 1,
-      leg1flop = 1,
-      leg2flop = 1,
+        eyeTypeIndex = 1,
 
-      bodyWidthMultiplier = 1,
-      bodyHeightMultiplier = 1,
-      eyeTypeIndex = 1,
-
-      headWidthMultiplier = 1,
-      headHeightMultiplier = 1
    }
 
    body = copy3(bodyParts[values.body.shape])
@@ -449,6 +461,8 @@ function scene.load()
    head = copy3(headParts[values.head.shape])
    redoHead()
 
+   neck = createNeckRubberhose()
+   
    --stripPath(head, '/experiments/puppet%-maker/')
 
 
@@ -472,7 +486,7 @@ function scene.load()
       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
       children = {}
    }
-   guy.children = { body, leg1, leg2, feet1, feet2, head }
+   guy.children = { body, leg1, leg2, feet1, feet2, neck, head }
 
    root.children = { guy }
 
@@ -505,7 +519,7 @@ function scene.load()
 
 
    biped = Concord.entity()
-   biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck, head = head })
 
 
    myWorld:addEntity(biped)
@@ -1112,7 +1126,7 @@ function scene.draw()
          buttonHelper(headLinePalButton, 'head', 'linePal', #palettes, redoHead)
 
          if true then
-            local v = h_slider("head-width", 550, 150, 50, values.headWidthMultiplier, .1, 5)
+            local v = h_slider("head-width", 500, 150, 50, values.headWidthMultiplier, .1, 5)
             if v.value then
                values.headWidthMultiplier = v.value
                head.transforms.l[4] = v.value
@@ -1120,7 +1134,7 @@ function scene.draw()
                transforms.setTransforms(head)
                myWorld:emit("bipedAttachHead", biped)
             end
-            v = h_slider("head-height", 550, 200, 50, values.headHeightMultiplier, .1, 5)
+            v = h_slider("head-height", 500, 200, 50, values.headHeightMultiplier, .1, 5)
             if v.value then
                values.headHeightMultiplier = v.value
                head.transforms.l[5] = v.value
@@ -1129,6 +1143,23 @@ function scene.draw()
                myWorld:emit("bipedAttachHead", biped)
             end
          end
+
+         local neckShapeButton, neckBGButton, neckFGTexButton, neckFGButton, neckLinePalButton = bigButtonWithSmallAroundIt(
+            350, 400,
+            {
+               legUrls[values.neck.shape],
+               palettes[values.neck.bgPal],
+               textures[values.neck.fgTex],
+               palettes[values.neck.fgPal],
+               palettes[values.neck.linePal]
+            }
+         )
+         buttonHelper(neckShapeButton, 'neck', 'shape', #legUrls, changeNeck)
+         buttonHelper(neckBGButton, 'neck', 'bgPal', #palettes, redoNeck)
+         buttonHelper(neckFGTexButton, 'neck', 'fgTex', #textures, redoNeck)
+         buttonHelper(neckFGButton, 'neck', 'fgPal', #palettes, redoNeck)
+         buttonHelper(neckLinePalButton, 'neck', 'linePal', #palettes, redoNeck)
+
 
 
       end
