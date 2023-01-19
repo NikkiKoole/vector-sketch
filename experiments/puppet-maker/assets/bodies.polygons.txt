@@ -9,19 +9,9 @@ url = "/experiments/puppet-maker/assets/parts/romp1.png",
 wrap = "repeat"
 }
 }, {
-color = { 1, 0, 0, 1 },
-name = "neck",
-points = { { -1.124, -320.019 } },
-type = "meta"
-}, {
-color = { 1, 0, 0, 1 },
-name = "leg1",
-points = { { -97.741, 289.615 } },
-type = "meta"
-}, {
-color = { 1, 0, 0, 1 },
-name = "leg2",
-points = { { 42.223, 276.629 } },
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -21.317, -347.163 }, { 116.191, -268.587 }, { 145.657, 6.428 }, { 96.547, 249.522 }, { -16.406, 342.831 }, { -141.636, 251.978 }, { -136.725, 13.795 }, { -131.814, -258.765 } },
 type = "meta"
 } },
 folder = true,

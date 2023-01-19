@@ -2,7 +2,7 @@ local parentize = require 'lib.parentize'
 local mesh      = require 'lib.mesh'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
-local myWorld   = Concord.world()
+--local myWorld   = Concord.world()
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, flop, length, widthMultiplier, optionalPoints)
    local img = mesh.getImage(url)
@@ -144,6 +144,8 @@ function changeBody()
    render.justDoTransforms(root)
 
    biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
+   myWorld:emit("bipedAttachHead", biped)
+   myWorld:emit("bipedAttachLegs", biped) -- todo
 end
 
 function changeLegs()
@@ -249,7 +251,8 @@ function changeHead()
    biped:give('biped',
       { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, head = head })
    myWorld:emit("bipedAttachFeet", biped)
-
+   print('changehead')
+   myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
 
 end

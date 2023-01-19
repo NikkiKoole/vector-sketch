@@ -28,7 +28,7 @@ local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
 local Components = {}
 local Systems    = {}
-local myWorld    = Concord.world()
+myWorld          = Concord.world()
 
 require 'src.generatePuppet'
 
@@ -383,8 +383,6 @@ function scene.load()
       end
    end
 
-
-
    headImgUrls = { 'assets/parts/shapes1.png', 'assets/parts/head3.png', 'assets/parts/head4.png' }
    headUrls = { 'assets/head5.polygons.txt', 'assets/head3.polygons.txt', 'assets/head4.polygons.txt' }
    headParts = {}
@@ -404,7 +402,7 @@ function scene.load()
          linePal = 1
       },
       body = {
-         shape   = 2,
+         shape   = 1,
          bgPal   = 4,
          fgPal   = 1,
          bgTex   = 1,
@@ -435,6 +433,9 @@ function scene.load()
       bodyWidthMultiplier = 1,
       bodyHeightMultiplier = 1,
       eyeTypeIndex = 1,
+
+      headWidthMultiplier = 1,
+      headHeightMultiplier = 1
    }
 
    body = copy3(bodyParts[values.body.shape])
@@ -688,7 +689,7 @@ function scene.update(dt)
          scrollListIsThrown = nil
       end
    end
-   --myWorld:emit("update", dt) -- this one is leaking the most actually
+   myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
 end
 
@@ -859,10 +860,9 @@ function partSettingsPanel()
 
    local rowsInPanel = math.ceil((height - minimumHeight - tabHeight) / cellHeight)
 
-   --if true then
-   --   settingsScrollPosition = math.max(0, settingsScrollPosition)
 
-   --end
+   local endlesssScroll = true -- false
+
 
    local offset = settingsScrollPosition % 1
 
@@ -881,24 +881,26 @@ function partSettingsPanel()
 
    love.graphics.setScissor()
 
-   local dotWidth = useWidth / 5
-   local dotHeight = (height - minimumHeight - tabHeight) / 8
-   for i = 1, #palettes do
+   if false then
+      local dotWidth = useWidth / 5
+      local dotHeight = (height - minimumHeight - tabHeight) / 8
+      for i = 1, #palettes do
 
-      local index = (i % #dots) + 1
-      local dot = dots[index]
-      local j = i - 1
-      local w, h = dot:getDimensions()
-      local sx = dotWidth / w
-      local sy = dotWidth / h
+         local index = (i % #dots) + 1
+         local dot = dots[index]
+         local j = i - 1
+         local w, h = dot:getDimensions()
+         local sx = dotWidth / w
+         local sy = dotWidth / h
 
-      love.graphics.setColor(0, 0, 0, .1)
-      love.graphics.draw(dot, -2 + currentX + (j % 5) * dotWidth, -2 + currentY + math.floor(j / 5) * dotWidth, 0,
-         sx * 1.1, sy * 1.1)
+         love.graphics.setColor(0, 0, 0, .1)
+         love.graphics.draw(dot, -2 + currentX + (j % 5) * dotWidth, -2 + currentY + math.floor(j / 5) * dotWidth, 0,
+            sx * 1.1, sy * 1.1)
 
 
-      love.graphics.setColor(palettes[i])
-      love.graphics.draw(dot, currentX + (j % 5) * dotWidth, currentY + math.floor(j / 5) * dotWidth, 0, sx, sy)
+         love.graphics.setColor(palettes[i])
+         love.graphics.draw(dot, currentX + (j % 5) * dotWidth, currentY + math.floor(j / 5) * dotWidth, 0, sx, sy)
+      end
    end
 
 end
@@ -982,8 +984,8 @@ function scene.draw()
 
       love.graphics.setColor(0, 0, 0)
 
-      scrollList(true)
-      partSettingsPanel()
+      --scrollList(true)
+      --partSettingsPanel()
 
       prof.push("cam-render")
       cam:push()
@@ -1026,12 +1028,18 @@ function scene.draw()
                values.bodyWidthMultiplier = v.value
                body.transforms.l[4] = v.value
                body.dirty = true
+               transforms.setTransforms(body)
+               myWorld:emit("bipedAttachHead", biped)
+               myWorld:emit("bipedAttachLegs", biped) -- todo
             end
             v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 5)
             if v.value then
                values.bodyHeightMultiplier = v.value
                body.transforms.l[5] = v.value
                body.dirty = true
+               transforms.setTransforms(body)
+               myWorld:emit("bipedAttachHead", biped)
+               myWorld:emit("bipedAttachLegs", biped) -- todo
             end
          end
 
@@ -1103,10 +1111,30 @@ function scene.draw()
          buttonHelper(headFGButton, 'head', 'fgPal', #palettes, redoHead)
          buttonHelper(headLinePalButton, 'head', 'linePal', #palettes, redoHead)
 
+         if true then
+            local v = h_slider("head-width", 550, 150, 50, values.headWidthMultiplier, .1, 5)
+            if v.value then
+               values.headWidthMultiplier = v.value
+               head.transforms.l[4] = v.value
+               head.dirty = true
+               transforms.setTransforms(head)
+               myWorld:emit("bipedAttachHead", biped)
+            end
+            v = h_slider("head-height", 550, 200, 50, values.headHeightMultiplier, .1, 5)
+            if v.value then
+               values.headHeightMultiplier = v.value
+               head.transforms.l[5] = v.value
+               head.dirty = true
+               transforms.setTransforms(head)
+               myWorld:emit("bipedAttachHead", biped)
+            end
+         end
+
+
       end
       prof.pop("render-ui")
 
-      if false then -- this is leaking too
+      if true then -- this is leaking too
          love.graphics.setColor(0, 0, 0, .5)
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))

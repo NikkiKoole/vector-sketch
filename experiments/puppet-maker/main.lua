@@ -1,4 +1,7 @@
 package.path = package.path .. ";../../?.lua"
+
+local manual_gc = require 'vendor.batteries.manual_gc'
+
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
    require("lldebugger").start()
 end
@@ -65,10 +68,8 @@ function love.update(dt)
       gesture.update(dt)
       SM.update(dt)
    end
-
-   --print(love.timer.getDelta())
-   collectgarbage()
-
+   --collectgarbage()
+   manual_gc(0.001, 2)
 end
 
 function love.draw()
