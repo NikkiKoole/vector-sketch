@@ -193,10 +193,11 @@ function setArms(body, e, optionalData)
         local dx1, dy1 = body.transforms._g:transformPoint(lc1[1], lc1[2])
         e.biped.arm1.points[1] = { dx1, dy1 }
         if keep then
+
+            -- instead of angle use  e.biped.body.transforms.l[3] - math.pi
+
             local newx, newy = setAngleAndDistance(dx1, dy1, angle, dist)
             e.biped.arm1.points[2] = { newx, newy }
-
-            
         end
         mesh.remeshNode(e.biped.arm1)
 
@@ -205,7 +206,8 @@ function setArms(body, e, optionalData)
         local dx1, dy1 = body.transforms._g:transformPoint(lc2[1], lc2[2])
         e.biped.arm2.points[1] = { dx1, dy1 }
         if keep then
-            local newx, newy = setAngleAndDistance(dx1, dy1, angle, dist)
+             -- instead of angle use  e.biped.body.transforms.l[3]
+            local newx, newy = setAngleAndDistance(dx1, dy1, angle , dist)
             e.biped.arm2.points[2] = { newx, newy }
         end
         mesh.remeshNode(e.biped.arm2)
@@ -228,6 +230,7 @@ function BipedSystem:itemRotate(elem, dx, dy, scale)
             --local angle2, dist2 = getAngleAndDistance(e.biped.arm2.points[2][1],e.biped.arm2.points[2][2], e.biped.arm2.points[1][1], e.biped.arm2.points[1][2])
             --local data = {a1=angle, d1=dist, a2=angle2, dist2=dist}
 
+            
             e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
             transforms.setTransforms(e.biped.body)
             setLegs(body, e)
