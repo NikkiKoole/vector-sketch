@@ -3,13 +3,6 @@ local node = require 'lib.node'
 local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
 
-local function getAngle(x1, y1, x2, y2)
-    local dx = x1 - x2
-    local dy = y1 - y2
-    local angle = math.atan2(dy, dx)
-    return angle
-end
-
 local function getAngleAndDistance(x1, y1, x2, y2)
 	local dx = x1 - x2
 	local dy = y1 - y2
@@ -20,13 +13,9 @@ local function getAngleAndDistance(x1, y1, x2, y2)
 end
 
 local function setAngleAndDistance(sx, sy, angle, distance)
-    local rad = angle
-    
-    local newx = sx + distance * math.cos(rad)
-    local newy = sy + distance * math.sin(rad)
-
+    local newx = sx + distance * math.cos(angle)
+    local newy = sy + distance * math.sin(angle)
     return newx, newy
-
 end
 
 
@@ -50,7 +39,6 @@ local function getPositionsForLegsAttaching(body)
         local lc2 = node.findNodeByName(body, 'leg2')
         if lc1 and lc2 then
             return lc1.points[1], lc2.points[1]
-
         end
     end
 end
@@ -203,15 +191,13 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
     local dx1, dy1 = body.transforms._g:transformPoint(nc[1], nc[2])
 
     if (e.biped.neck) then
-        -- first 
+
         if  keepAngleAndDistance then
-           
             local angle, dist = getAngleAndDistance(e.biped.neck.points[2][1],e.biped.neck.points[2][2], e.biped.neck.points[1][1], e.biped.neck.points[1][2])
             e.biped.neck.points[1] = { dx1, dy1 }
             local newx, newy = setAngleAndDistance(dx1, dy1, angle, dist)
             e.biped.neck.points[2] = {newx, newy}
         else
-
             e.biped.neck.points[1] = { dx1, dy1 }
             e.biped.neck.points[2] = { dx1, dy1 - (neck.data.length / 4.46) / 1 }
         end 
@@ -279,8 +265,6 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             if e.biped.neck then
                 e.biped.neck.points[2] = { e.biped.head.transforms.l[1], e.biped.head.transforms.l[2] }
                 -- todo figure out the angle between head and neck, and thus set the flop
-
-
                 mesh.remeshNode(e.biped.neck)
             end
 

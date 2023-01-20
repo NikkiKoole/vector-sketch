@@ -6,11 +6,11 @@ local render    = require 'lib.render'
 
 
 function guyChildren()
-   return { body, leg1, leg2, feet1, feet2, neck, head }
+   return { body, leg1, leg2, feet1, feet2, arm1, arm2, neck, head }
 end
 
 function bipedArguments()
-   return { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck, head = head }
+   return { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1=arm1, arm2 =arm2, neck = neck, head = head }
 end
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints)
@@ -115,6 +115,20 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
 
 end
 
+
+function createArmRubberhose(armNr, points)
+   local flop = armNr == 1 and values.arm1flop or values.arm2flop
+
+   return createRubberHoseFromImage(
+      legUrls[values.arms.shape],
+      palettes[values.arms.bgPal], palettes[values.arms.fgPal],
+      textures[values.arms.bgTex], textures[values.arms.fgTex], palettes[values.arms.linePal], flop
+      , values.armLength,
+      values.armWidthMultiplier,
+      points)
+end
+
+
 function createLegRubberhose(legNr, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
 
@@ -139,7 +153,7 @@ function createNeckRubberhose(points)
 end
 
 function changeNeck()
-   neck = createNeckRubberhose() -- copy3(headParts[values.neck.shape])
+   neck = createNeckRubberhose(neck.points) -- copy3(headParts[values.neck.shape])
    guy.children = guyChildren()
    parentize.parentize(root)
    redoNeck()
@@ -149,7 +163,7 @@ function changeNeck()
 end
 
 function redoNeck()
-   print('redonec')
+
    for i = 1, #guy.children do
       if (guy.children[i] == neck) then
          print(neck.points)

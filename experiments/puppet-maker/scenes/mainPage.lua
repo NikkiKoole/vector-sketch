@@ -407,6 +407,19 @@ function scene.load()
       leg1flop = 1,
       leg2flop = 1,
 
+      arms = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
+      armLength = 700,
+      armWidthMultiplier = 1,
+      arm1flop = 1,
+      arm2flop = 1,
+
       body = {
          shape   = 1,
          bgPal   = 4,
@@ -473,6 +486,9 @@ function scene.load()
    --addChild(head, eye1)
    --addChild(head, eye2)
 
+   arm1 = createArmRubberhose(1)
+   arm2 = createArmRubberhose(2)
+
    leg1 = createLegRubberhose(1)
    leg2 = createLegRubberhose(2)
 
@@ -486,7 +502,7 @@ function scene.load()
       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
       children = {}
    }
-   guy.children = { body, leg1, leg2, feet1, feet2, neck, head }
+   guy.children = { body, leg1, leg2, feet1, feet2, arm1, arm2, neck, head }
 
    root.children = { guy }
 
