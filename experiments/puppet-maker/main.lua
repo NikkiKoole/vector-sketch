@@ -50,6 +50,10 @@ function love.load()
       { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
    love.window.setTitle('☺ Puppet Maker')
 
+   local os = love.system.getOS( )
+   if  os == 'iOS' or os == 'Android' then
+      love.window.setFullscreen(true)
+   end
    splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
    introSound = love.audio.newSource("assets/introloop.mp3", "static")
 

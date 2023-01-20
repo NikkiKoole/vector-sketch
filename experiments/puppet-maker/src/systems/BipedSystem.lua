@@ -10,6 +10,26 @@ local function getAngle(x1, y1, x2, y2)
     return angle
 end
 
+local function getAngleAndDistance(x1, y1, x2, y2)
+	local dx = x1 - x2
+	local dy = y1 - y2
+	local angle = math.atan2(dy, dx)
+	local distance = math.sqrt((dx * dx) + (dy * dy))
+
+	return angle, distance
+end
+
+local function setAngleAndDistance(sx, sy, angle, distance)
+    local rad = angle
+    
+    local newx = sx + distance * math.cos(rad)
+    local newy = sy + distance * math.sin(rad)
+
+    return newx, newy
+
+end
+
+
 local function getPositionsForNeckAttaching(body)
     -- this should return
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then
@@ -60,7 +80,7 @@ function BipedSystem:bipedInit(e)
     end
 
 
-    attachHeadWithOrWithoutNeck(e)
+    attachHeadWithOrWithoutNeck(e, false)
 
 
 end
@@ -174,19 +194,29 @@ function BipedSystem:bipedAttachFeet(e)
 end
 
 function BipedSystem:bipedAttachHead(e)
-
-    attachHeadWithOrWithoutNeck(e)
+    attachHeadWithOrWithoutNeck(e, true)
 end
 
-function attachHeadWithOrWithoutNeck(e)
+function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
     local body     = e.biped.body
     local nc       = getPositionsForNeckAttaching(body)
     local dx1, dy1 = body.transforms._g:transformPoint(nc[1], nc[2])
 
     if (e.biped.neck) then
-        e.biped.neck.points[1] = { dx1, dy1 }
-        -- todo not always do this
-        e.biped.neck.points[2] = { dx1, dy1 - (neck.data.length / 4.46) / 1 }
+        -- first 
+        if  keepAngleAndDistance then
+           
+            local angle, dist = getAngleAndDistance(e.biped.neck.points[2][1],e.biped.neck.points[2][2], e.biped.neck.points[1][1], e.biped.neck.points[1][2])
+            e.biped.neck.points[1] = { dx1, dy1 }
+            local newx, newy = setAngleAndDistance(dx1, dy1, angle, dist)
+            e.biped.neck.points[2] = {newx, newy}
+        else
+
+            e.biped.neck.points[1] = { dx1, dy1 }
+            e.biped.neck.points[2] = { dx1, dy1 - (neck.data.length / 4.46) / 1 }
+        end 
+
+
         mesh.remeshNode(e.biped.neck)
 
         e.biped.head.transforms.l[1] = e.biped.neck.points[2][1]
@@ -196,6 +226,8 @@ function attachHeadWithOrWithoutNeck(e)
         e.biped.head.transforms.l[2] = dy1
     end
     e.biped.head.dirty = true
+    e.biped.neck.dirty = true
+    transforms.setTransforms(e.biped.neck)
 end
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)
@@ -234,7 +266,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.body.dirty = true
             transforms.setTransforms(e.biped.body)
 
-            attachHeadWithOrWithoutNeck(e)
+            attachHeadWithOrWithoutNeck(e, true)
 
             setLegs(body, e)
         end
