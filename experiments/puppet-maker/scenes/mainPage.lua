@@ -404,7 +404,7 @@ function scene.load()
       },
       legLength = 700,
       legWidthMultiplier = 1,
-      leg1flop = 1,
+      leg1flop = -1,
       leg2flop = 1,
 
       arms = {
@@ -418,7 +418,7 @@ function scene.load()
       armLength = 700,
       armWidthMultiplier = 1,
       arm1flop = 1,
-      arm2flop = 1,
+      arm2flop = -1,
 
       body = {
          shape   = 1,
@@ -536,7 +536,7 @@ function scene.load()
 
    biped = Concord.entity()
    biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck, head = head })
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1=arm1, arm2 = arm2, neck = neck, head = head })
 
 
    myWorld:addEntity(biped)
@@ -1062,6 +1062,7 @@ function scene.draw()
                transforms.setTransforms(body)
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
+               myWorld:emit("bipedAttachArms", biped) -- todo
             end
             v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 5)
             if v.value then
@@ -1071,6 +1072,7 @@ function scene.draw()
                transforms.setTransforms(body)
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
+               myWorld:emit("bipedAttachArms", biped) -- todo
             end
          end
 
@@ -1183,11 +1185,14 @@ function scene.draw()
       prof.pop("render-ui")
 
       if true then -- this is leaking too
-         love.graphics.setColor(0, 0, 0, .5)
+         
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
          --   print(inspect(stats))
+         love.graphics.setColor(1,1,1, 1)
          love.graphics.print(inspect(stats), 10, 30)
+         love.graphics.setColor(0,0,0, 1)
+         love.graphics.print(inspect(stats), 11, 31)
 
          love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
       end
