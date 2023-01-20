@@ -248,14 +248,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
                 e.biped.neck.points[2] = { e.biped.head.transforms.l[1], e.biped.head.transforms.l[2] }
                 -- todo figure out the angle between head and neck, and thus set the flop
 
-                local angle = getAngle(e.biped.neck.points[1][1], e.biped.neck.points[1][2], e.biped.neck.points[2][1],
-                    e.biped.neck.points[2][2])
-                print(angle)
-                if angle < math.pi / 2 then
-                    e.biped.neck.data.flop = -1
-                else
-                    e.biped.neck.data.flop = 1
-                end
+
                 mesh.remeshNode(e.biped.neck)
             end
 
