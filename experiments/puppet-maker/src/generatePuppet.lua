@@ -5,13 +5,13 @@ local render    = require 'lib.render'
 --local myWorld   = Concord.world()
 
 
-function guyChildren() 
-   return  { body, leg1, leg2, feet1, feet2, neck, head }
-end
-function bipedArguments()
-   return  { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck,head = head }
+function guyChildren()
+   return { body, leg1, leg2, feet1, feet2, neck, head }
 end
 
+function bipedArguments()
+   return { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck, head = head }
+end
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints)
    local img = mesh.getImage(url)
@@ -41,7 +41,7 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
       if mask then
-         local cnv = canvas.makeTexturedCanvas( lineart, mask, bgp, bg , fgp, fg , lp)
+         local cnv = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lp)
          currentNode.texture.retexture = love.graphics.newImage(cnv)
       end
    end
@@ -104,7 +104,7 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
    end
 
    if (lineart and mask) then
-      local canvas = canvas.makeTexturedCanvas(lineart, mask,bgp, bg, fgp, fg, lineColor)
+      local canvas = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lineColor)
       if p.texture.canvas then
          p.texture.canvas:release()
       end
@@ -128,7 +128,7 @@ function createLegRubberhose(legNr, points)
 end
 
 function createNeckRubberhose(points)
-   local flop = 0  -- this needs to be set accoridng to how th eneck is positioned
+   local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
    return createRubberHoseFromImage(
       legUrls[values.neck.shape],
       palettes[values.neck.bgPal], palettes[values.neck.fgPal],
@@ -139,23 +139,33 @@ function createNeckRubberhose(points)
 end
 
 function changeNeck()
-   neck = copy3(headParts[values.neck.shape])
-
-   guy.children = guyChildren() 
+   neck = createNeckRubberhose() -- copy3(headParts[values.neck.shape])
+   guy.children = guyChildren()
    parentize.parentize(root)
    redoNeck()
-
    biped:give('biped', bipedArguments())
-   --myWorld:emit("bipedAttachFeet", biped)
-   print('changeneck')
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
-   --print('change neck')
-end
-function redoNeck()
-   print('redoneck')
 end
 
+function redoNeck()
+   print('redonec')
+   for i = 1, #guy.children do
+      if (guy.children[i] == neck) then
+         print(neck.points)
+         neck = createNeckRubberhose(neck.points)
+         guy.children[i] = neck
+      end
+   end
+   mesh.meshAll(root)
+
+
+   parentize.parentize(root)
+   biped:give('biped', bipedArguments())
+   myWorld:emit("bipedAttachHead", biped)
+
+
+end
 
 function changeBody()
    local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
@@ -202,10 +212,10 @@ function redoLegs()
    leg1 = createLegRubberhose(1, leg1.points)
    leg2 = createLegRubberhose(2, leg2.points)
 
-   guy.children = guyChildren() 
+   guy.children = guyChildren()
    parentize.parentize(root)
    biped:give('biped',
-   bipedArguments())
+      bipedArguments())
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
 end
@@ -272,7 +282,7 @@ end
 function changeHead()
    head = copy3(headParts[values.head.shape])
 
-   guy.children = guyChildren() 
+   guy.children = guyChildren()
    parentize.parentize(root)
    redoHead()
 

@@ -3,6 +3,12 @@ local node = require 'lib.node'
 local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
 
+local function getAngle(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local angle = math.atan2(dy, dx)
+    return angle
+end
 
 local function getPositionsForNeckAttaching(body)
     -- this should return
@@ -54,15 +60,7 @@ function BipedSystem:bipedInit(e)
     end
 
 
-    local nc = getPositionsForNeckAttaching(body)
-    local dx1, dy1 = body.transforms._g:transformPoint(nc[1], nc[2])
-    e.biped.head.transforms.l[1] = dx1
-    e.biped.head.transforms.l[2] = dy1
-
-
-    local derivative = e.biped.leg1._curve:getDerivative()
-    local dx, dy = derivative:evaluate(0.9)
-    local angle = math.atan2(dy, dx) + math.pi / 2
+    attachHeadWithOrWithoutNeck(e)
 
 
 end
@@ -75,14 +73,16 @@ function BipedSystem:bipedDirection(e, dir)
 
     if dir == 'left' then
 
-        e.biped.guy.children = { e.biped.leg1, e.biped.feet1, e.biped.body, e.biped.leg2, e.biped.feet2,e.biped.neck, e.biped.head }
+        e.biped.guy.children = { e.biped.leg1, e.biped.feet1, e.biped.body, e.biped.leg2, e.biped.feet2, e.biped.neck,
+            e.biped.head }
         e.biped.leg1.data.flop = -1
         e.biped.leg2.data.flop = -1
         e.biped.feet1.transforms.l[4] = 1
         e.biped.feet2.transforms.l[4] = 1
     elseif dir == 'right' then
 
-        e.biped.guy.children = { e.biped.leg2, e.biped.feet2, e.biped.body, e.biped.leg1, e.biped.feet1, e.biped.neck,e.biped.head }
+        e.biped.guy.children = { e.biped.leg2, e.biped.feet2, e.biped.body, e.biped.leg1, e.biped.feet1, e.biped.neck,
+            e.biped.head }
         e.biped.leg1.data.flop = 1
         e.biped.leg2.data.flop = 1
 
@@ -90,7 +90,8 @@ function BipedSystem:bipedDirection(e, dir)
         e.biped.feet2.transforms.l[4] = -1
     elseif dir == 'down' then
 
-        e.biped.guy.children = { e.biped.body, e.biped.leg1, e.biped.leg2, e.biped.feet1, e.biped.feet2, e.biped.neck,e.biped.head }
+        e.biped.guy.children = { e.biped.body, e.biped.leg1, e.biped.leg2, e.biped.feet1, e.biped.feet2, e.biped.neck,
+            e.biped.head }
         e.biped.leg1.data.flop = -1
         e.biped.leg2.data.flop = 1
 
@@ -173,12 +174,27 @@ function BipedSystem:bipedAttachFeet(e)
 end
 
 function BipedSystem:bipedAttachHead(e)
-    local body = e.biped.body
-    local nc = getPositionsForNeckAttaching(body)
+
+    attachHeadWithOrWithoutNeck(e)
+end
+
+function attachHeadWithOrWithoutNeck(e)
+    local body     = e.biped.body
+    local nc       = getPositionsForNeckAttaching(body)
     local dx1, dy1 = body.transforms._g:transformPoint(nc[1], nc[2])
 
-    e.biped.head.transforms.l[1] = dx1
-    e.biped.head.transforms.l[2] = dy1
+    if (e.biped.neck) then
+        e.biped.neck.points[1] = { dx1, dy1 }
+        -- todo not always do this
+        e.biped.neck.points[2] = { dx1, dy1 - (neck.data.length / 4.46) / 1 }
+        mesh.remeshNode(e.biped.neck)
+
+        e.biped.head.transforms.l[1] = e.biped.neck.points[2][1]
+        e.biped.head.transforms.l[2] = e.biped.neck.points[2][2]
+    else
+        e.biped.head.transforms.l[1] = dx1
+        e.biped.head.transforms.l[2] = dy1
+    end
     e.biped.head.dirty = true
 end
 
@@ -218,41 +234,52 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.body.dirty = true
             transforms.setTransforms(e.biped.body)
 
-            local nc = getPositionsForNeckAttaching(body) --   node.findNodeByName(body, 'neck')
-            local dx1, dy1 = body.transforms._g:transformPoint(nc[1], nc[2])
-            e.biped.head.transforms.l[1] = dx1
-            e.biped.head.transforms.l[2] = dy1
-            e.biped.head.dirty = true
+            attachHeadWithOrWithoutNeck(e)
 
             setLegs(body, e)
         end
         if e.biped.head == elem.item then
-            e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
-            e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
+            -- e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
+            -- e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
 
             e.biped.head.transforms.l[1] = e.biped.head.transforms.l[1] + dx / scale
             e.biped.head.transforms.l[2] = e.biped.head.transforms.l[2] + dy / scale
+            if e.biped.neck then
+                e.biped.neck.points[2] = { e.biped.head.transforms.l[1], e.biped.head.transforms.l[2] }
+                -- todo figure out the angle between head and neck, and thus set the flop
 
-            e.biped.leg1.points[1] = { e.biped.leg1.points[1][1] + dx / scale, e.biped.leg1.points[1][2] + dy / scale }
-            e.biped.leg1.points[2] = { e.biped.leg1.points[2][1] + dx / scale, e.biped.leg1.points[2][2] + dy / scale }
+                local angle = getAngle(e.biped.neck.points[1][1], e.biped.neck.points[1][2], e.biped.neck.points[2][1],
+                    e.biped.neck.points[2][2])
+                print(angle)
+                if angle < math.pi / 2 then
+                    e.biped.neck.data.flop = -1
+                else
+                    e.biped.neck.data.flop = 1
+                end
+                mesh.remeshNode(e.biped.neck)
+            end
 
-            e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
-            e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
+            --e.biped.neck.transforms.l[1] =
+            -- e.biped.leg1.points[1] = { e.biped.leg1.points[1][1] + dx / scale, e.biped.leg1.points[1][2] + dy / scale }
+            -- e.biped.leg1.points[2] = { e.biped.leg1.points[2][1] + dx / scale, e.biped.leg1.points[2][2] + dy / scale }
+
+            -- e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
+            -- e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
 
 
-            e.biped.leg2.points[1] = { e.biped.leg2.points[1][1] + dx / scale, e.biped.leg2.points[1][2] + dy / scale }
-            e.biped.leg2.points[2] = { e.biped.leg2.points[2][1] + dx / scale, e.biped.leg2.points[2][2] + dy / scale }
+            -- e.biped.leg2.points[1] = { e.biped.leg2.points[1][1] + dx / scale, e.biped.leg2.points[1][2] + dy / scale }
+            -- e.biped.leg2.points[2] = { e.biped.leg2.points[2][1] + dx / scale, e.biped.leg2.points[2][2] + dy / scale }
 
-            e.biped.feet2.transforms.l[1] = e.biped.leg2.points[2][1]
-            e.biped.feet2.transforms.l[2] = e.biped.leg2.points[2][2]
+            -- e.biped.feet2.transforms.l[1] = e.biped.leg2.points[2][1]
+            -- e.biped.feet2.transforms.l[2] = e.biped.leg2.points[2][2]
 
-            mesh.remeshNode(e.biped.leg1)
-            mesh.remeshNode(e.biped.leg2)
+            -- mesh.remeshNode(e.biped.leg1)
+            -- mesh.remeshNode(e.biped.leg2)
 
-            e.biped.feet1.dirty = true
-            e.biped.feet2.dirty = true
-            transforms.setTransforms(e.biped.body)
-            transforms.setTransforms(e.biped.head)
+            -- e.biped.feet1.dirty = true
+            -- e.biped.feet2.dirty = true
+            -- transforms.setTransforms(e.biped.body)
+            -- transforms.setTransforms(e.biped.head)
         end
     end
 

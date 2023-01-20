@@ -29,7 +29,7 @@ local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 local Components = {}
 local Systems    = {}
 
-myWorld          = Concord.world()
+myWorld = Concord.world()
 
 require 'src.generatePuppet'
 
@@ -436,7 +436,7 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
-      neckLength = 200,
+      neckLength = 700,
       neckWidthMultiplier = 1,
       feet = {
          shape   = 1,
@@ -446,7 +446,7 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
-        eyeTypeIndex = 1,
+      eyeTypeIndex = 1,
 
    }
 
@@ -462,7 +462,7 @@ function scene.load()
    redoHead()
 
    neck = createNeckRubberhose()
-   
+
    --stripPath(head, '/experiments/puppet%-maker/')
 
 
@@ -519,7 +519,8 @@ function scene.load()
 
 
    biped = Concord.entity()
-   biped:give('biped', { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck, head = head })
+   biped:give('biped',
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, neck = neck, head = head })
 
 
    myWorld:addEntity(biped)
