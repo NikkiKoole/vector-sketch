@@ -10,9 +10,10 @@ function guyChildren()
 end
 
 function bipedArguments()
-   return { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1 = arm1, arm2 = arm2,
+   return { guy = guy, body = body, neck = neck, head = head, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
+      arm1 = arm1, arm2 = arm2,
       hand1 = hand1, hand2 = hand2,
-      neck = neck, head = head }
+   }
 end
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints)
@@ -173,12 +174,9 @@ function redoNeck()
    end
    mesh.meshAll(root)
 
-
    parentize.parentize(root)
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachHead", biped)
-
-
 end
 
 function changeBody()
@@ -202,6 +200,7 @@ function changeBody()
    myWorld:emit("bipedAttachHead", biped)
    myWorld:emit("bipedAttachLegs", biped) -- todo
    myWorld:emit("bipedAttachArms", biped) -- todo
+   myWorld:emit("bipedAttachHands", biped) -- todo
 end
 
 function changeLegs()
@@ -280,7 +279,6 @@ end
 function redoFeet()
    redoGraphicHelper(feet1, 'feet')
    redoGraphicHelper(feet2, 'feet')
-
 end
 
 function redoHands()
@@ -293,7 +291,7 @@ function changeHands()
       if (guy.children[i] == hand1) then
          local r = hand1.transforms.l[3]
          local sx = hand1.transforms.l[4]
-         hand1 = copy3(handParts[values.hand.shape])
+         hand1 = copy3(handParts[values.hands.shape])
          hand1.transforms.l[3] = r
          hand1.transforms.l[4] = sx
          guy.children[i] = hand1
@@ -302,18 +300,17 @@ function changeHands()
       if (guy.children[i] == hand2) then
          local r = hand2.transforms.l[3]
          local sx = hand2.transforms.l[4]
-         hand2 = copy3(handParts[values.feet.shape])
+         hand2 = copy3(handParts[values.hands.shape])
          hand2.transforms.l[3] = r
          hand2.transforms.l[4] = sx
          guy.children[i] = hand2
       end
    end
    parentize.parentize(root)
-   redoFeet()
+   redoHands()
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachHands", biped)
    mesh.meshAll(root)
-
 end
 
 function changeFeet()

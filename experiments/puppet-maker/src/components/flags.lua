@@ -15,7 +15,11 @@ Concord.component('texturedBody',
 Concord.component('biped',
     function(c, parts)
         c.guy = parts.guy
+
         c.body = parts.body
+        c.head = parts.head
+        c.neck = parts.neck
+
         c.leg1 = parts.leg1
         c.leg2 = parts.leg2
         c.feet1 = parts.feet1
@@ -24,8 +28,7 @@ Concord.component('biped',
         c.arm2 = parts.arm2
         c.hand1 = parts.hand1
         c.hand2 = parts.hand2
-        c.head = parts.head
-        c.neck = parts.neck
+
     end
 )
 Concord.component('head',

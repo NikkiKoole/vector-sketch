@@ -1073,6 +1073,7 @@ function scene.draw()
          bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck)
          bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody)
          bigButtonHelper(225, 400, 'arms', legUrls, changeArms, redoArms)
+         bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands)
          bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, redoLegs)
          bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet)
 
@@ -1106,6 +1107,8 @@ function scene.draw()
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
+               myWorld:emit("bipedAttachHands", biped) -- todo
+
             end
             v = h_slider("body-height", 150 - 25, 400 - 50, 50, values.bodyHeightMultiplier, .1, 5)
             if v.value then
@@ -1116,6 +1119,7 @@ function scene.draw()
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
+               myWorld:emit("bipedAttachHands", biped) -- todo
             end
          end
 
