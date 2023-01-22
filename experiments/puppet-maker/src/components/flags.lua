@@ -22,12 +22,14 @@ Concord.component('biped',
         c.feet2 = parts.feet2
         c.arm1 = parts.arm1
         c.arm2 = parts.arm2
+        c.hand1 = parts.hand1
+        c.hand2 = parts.hand2
         c.head = parts.head
         c.neck = parts.neck
     end
 )
 Concord.component('head',
-    function (c, parts)
+    function(c, parts)
         c.eye1 = parts.eye1
         c.eye2 = parts.eye2
     end

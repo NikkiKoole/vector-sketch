@@ -6,11 +6,13 @@ local render    = require 'lib.render'
 
 
 function guyChildren()
-   return { body, leg1, leg2, feet1, feet2, arm1, arm2, neck, head }
+   return { body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
 end
 
 function bipedArguments()
-   return { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1=arm1, arm2 =arm2, neck = neck, head = head }
+   return { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1 = arm1, arm2 = arm2,
+      hand1 = hand1, hand2 = hand2,
+      neck = neck, head = head }
 end
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints)
@@ -115,7 +117,6 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
 
 end
 
-
 function createArmRubberhose(armNr, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
 
@@ -127,7 +128,6 @@ function createArmRubberhose(armNr, points)
       values.armWidthMultiplier,
       points)
 end
-
 
 function createLegRubberhose(legNr, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
@@ -201,6 +201,7 @@ function changeBody()
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachHead", biped)
    myWorld:emit("bipedAttachLegs", biped) -- todo
+   myWorld:emit("bipedAttachArms", biped) -- todo
 end
 
 function changeLegs()
@@ -216,7 +217,24 @@ function changeLegs()
    end
    parentize.parentize(root)
 
-   -- graphic.
+   mesh.meshAll(root)
+   biped:give('biped', bipedArguments())
+   myWorld:emit("bipedAttachFeet", biped)
+end
+
+function changeArms()
+   for i = 1, #guy.children do
+      if (guy.children[i] == arm1) then
+         arm1 = createArmRubberhose(1, arm1.points)
+         guy.children[i] = arm1
+      end
+      if (guy.children[i] == arm2) then
+         arm2 = createArmRubberhose(2, arm2.points)
+         guy.children[i] = arm2
+      end
+   end
+   parentize.parentize(root)
+
    mesh.meshAll(root)
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachFeet", biped)
@@ -228,44 +246,77 @@ function redoLegs()
 
    guy.children = guyChildren()
    parentize.parentize(root)
-   biped:give('biped',
-      bipedArguments())
+   biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
 end
 
-function redoBody()
+function redoArms()
+   arm1 = createArmRubberhose(1, arm1.points)
+   arm2 = createArmRubberhose(2, arm2.points)
+
+   guy.children = guyChildren()
+   parentize.parentize(root)
+   biped:give('biped', bipedArguments())
+   myWorld:emit("bipedAttachFeet", biped)
+   mesh.meshAll(root)
+end
+
+function redoGraphicHelper(part, name)
    redoTheGraphicInPart(
-      body,
-      palettes[values.body.bgPal],
-      palettes[values.body.fgPal],
-      textures[values.body.bgTex],
-      textures[values.body.fgTex],
-      palettes[values.body.linePal]
+      part,
+      palettes[values[name].bgPal],
+      palettes[values[name].fgPal],
+      textures[values[name].bgTex],
+      textures[values[name].fgTex],
+      palettes[values[name].linePal]
    )
+end
+
+function redoBody()
+   redoGraphicHelper(body, 'body')
 end
 
 function redoFeet()
-   redoTheGraphicInPart(
-      feet1,
-      palettes[values.feet.bgPal],
-      palettes[values.feet.fgPal],
-      textures[values.feet.bgTex],
-      textures[values.feet.fgTex],
-      palettes[values.feet.linePal]
-   )
-   redoTheGraphicInPart(
-      feet2,
-      palettes[values.feet.bgPal],
-      palettes[values.feet.fgPal],
-      textures[values.feet.bgTex],
-      textures[values.feet.fgTex],
-      palettes[values.feet.linePal]
-   )
+   redoGraphicHelper(feet1, 'feet')
+   redoGraphicHelper(feet2, 'feet')
+
+end
+
+function redoHands()
+   redoGraphicHelper(hand1, 'hands')
+   redoGraphicHelper(hand2, 'hands')
+end
+
+function changeHands()
+   for i = 1, #guy.children do
+      if (guy.children[i] == hand1) then
+         local r = hand1.transforms.l[3]
+         local sx = hand1.transforms.l[4]
+         hand1 = copy3(handParts[values.hand.shape])
+         hand1.transforms.l[3] = r
+         hand1.transforms.l[4] = sx
+         guy.children[i] = hand1
+      end
+
+      if (guy.children[i] == hand2) then
+         local r = hand2.transforms.l[3]
+         local sx = hand2.transforms.l[4]
+         hand2 = copy3(handParts[values.feet.shape])
+         hand2.transforms.l[3] = r
+         hand2.transforms.l[4] = sx
+         guy.children[i] = hand2
+      end
+   end
+   parentize.parentize(root)
+   redoFeet()
+   biped:give('biped', bipedArguments())
+   myWorld:emit("bipedAttachHands", biped)
+   mesh.meshAll(root)
+
 end
 
 function changeFeet()
-
    for i = 1, #guy.children do
       if (guy.children[i] == feet1) then
          local r = feet1.transforms.l[3]

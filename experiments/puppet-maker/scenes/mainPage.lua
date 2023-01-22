@@ -1,6 +1,9 @@
 -- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
 -- http://bamanda.com/locos/locos_subsite/locos_gallery.html
 -- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
+
+
+
 local scene = {}
 
 local vivid   = require 'vendor.vivid'
@@ -358,6 +361,8 @@ function scene.load()
       stripPath(feetParts[i], '/experiments/puppet%-maker/')
    end
 
+   handParts = feetParts
+
    eyeUrls = { 'assets/eye1.polygons.txt' }
    eyeParts = {}
    for i = 1, #eyeUrls do
@@ -419,7 +424,14 @@ function scene.load()
       armWidthMultiplier = 1,
       arm1flop = 1,
       arm2flop = -1,
-
+      hands = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
       body = {
          shape   = 1,
          bgPal   = 4,
@@ -488,6 +500,9 @@ function scene.load()
 
    arm1 = createArmRubberhose(1)
    arm2 = createArmRubberhose(2)
+   hand1 = copy3(feetParts[values.hands.shape])
+   hand2 = copy3(feetParts[values.hands.shape])
+   redoHands()
 
    leg1 = createLegRubberhose(1)
    leg2 = createLegRubberhose(2)
@@ -502,7 +517,7 @@ function scene.load()
       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
       children = {}
    }
-   guy.children = { body, leg1, leg2, feet1, feet2, arm1, arm2, neck, head }
+   guy.children = guyChildren() --{ body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
 
    root.children = { guy }
 
@@ -536,7 +551,9 @@ function scene.load()
 
    biped = Concord.entity()
    biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1=arm1, arm2 = arm2, neck = neck, head = head })
+      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1 = arm1, hand1 = hand1,
+         arm2 = arm2, hand2 = hand2,
+         neck = neck, head = head })
 
 
    myWorld:addEntity(biped)
@@ -771,8 +788,9 @@ end
 
 function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    prof.push('big-bitton-small-around')
-   local bigRadius = 60
-   local radius = 50
+   local biggestRadius = 70
+   local bigRadius = 40
+   local radius = 20
    local diam = radius * 2
    local rad = -math.pi / 2
    local number = 4
@@ -787,23 +805,23 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
       love.graphics.setColor(textureOrColors[1])
    else
       local img = mesh.getImage(textureOrColors[1])
-      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam, diam)
+      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam * 2, diam * 2)
       love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
 
    end
    first = ui.getUICircle(x, y, bigRadius)
 
    for i = 2, #textureOrColors do
-      local new_x = x + math.cos(rad) * 100
-      local new_y = y + math.sin(rad) * 100
+      local new_x = x + math.cos(rad) * biggestRadius
+      local new_y = y + math.sin(rad) * biggestRadius
       love.graphics.setColor(0, 0, 0)
-      love.graphics.circle("line", new_x, new_y, 30)
+      love.graphics.circle("line", new_x, new_y, radius)
 
       if (type(textureOrColors[i]) == "table") then
          love.graphics.setColor(textureOrColors[i])
-         love.graphics.circle("fill", new_x, new_y, 28)
+         love.graphics.circle("fill", new_x, new_y, radius - 2)
       else
-         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 60, 60)
+         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 40, 40)
          prof.push('render-masked-texture')
          canvas.renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
          prof.pop('render-masked-texture')
@@ -986,6 +1004,25 @@ function scrollList(draw, clickX, clickY)
    end
 end
 
+function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc)
+   shapeButton, BGButton, FGTexButton, FGButton, LinePalButton = bigButtonWithSmallAroundIt(
+      x, y, {
+      imgArray[values[param].shape],
+      palettes[values[param].bgPal],
+      textures[values[param].fgTex],
+      palettes[values[param].fgPal],
+      palettes[values[param].linePal]
+   }
+   )
+
+   -- todo maybe parametrize palettes and textures?
+   buttonHelper(shapeButton, param, 'shape', #imgArray, changeFunc)
+   buttonHelper(BGButton, param, 'bgPal', #palettes, redoFunc)
+   buttonHelper(FGTexButton, param, 'fgTex', #textures, redoFunc)
+   buttonHelper(FGButton, param, 'fgPal', #palettes, redoFunc)
+   buttonHelper(LinePalButton, param, 'linePal', #palettes, redoFunc)
+end
+
 function scene.draw()
    --   prof.enabled(false)
    prof.push("frame")
@@ -1000,9 +1037,7 @@ function scene.draw()
          love.graphics.setColor(0, 0, 0, 0.05)
          love.graphics.draw(tiles, 400, 0, .1, .5, .5)
          love.graphics.setColor(1, 0, 0, 0.05)
-
          love.graphics.draw(tiles2, 1000, 300, math.pi / 2, .5, .5)
-
 
          for i = 1, #headz do
             love.graphics.setColor(0, 0, 0, 0.05)
@@ -1010,7 +1045,6 @@ function scene.draw()
          end
 
          love.graphics.setColor(1, 1, 1)
-
       end
 
       love.graphics.setColor(0, 0, 0)
@@ -1033,28 +1067,37 @@ function scene.draw()
       prof.pop("cam-render")
 
       prof.push("render-ui")
-      if true then -- this block leaks memory still...
+      if true then
 
-         -- body
+         bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead)
+         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck)
+         bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody)
+         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, redoArms)
+         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, redoLegs)
+         bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet)
 
-         local bodyShapeButton, bodyBGButton, bodyFGTexButton, bodyFGButton, bodyLinePalButton = bigButtonWithSmallAroundIt(
-            100, 150,
-            {
-               bodyImgUrls[values.body.shape],
-               palettes[values.body.bgPal],
-               textures[values.body.fgTex],
-               palettes[values.body.fgPal],
-               palettes[values.body.linePal]
-            }
-         )
-         buttonHelper(bodyShapeButton, 'body', 'shape', #bodyParts, changeBody)
-         buttonHelper(bodyBGButton, 'body', 'bgPal', #palettes, redoBody)
-         buttonHelper(bodyFGTexButton, 'body', 'fgTex', #textures, redoBody)
-         buttonHelper(bodyFGButton, 'body', 'fgPal', #palettes, redoBody)
-         buttonHelper(bodyLinePalButton, 'body', 'linePal', #palettes, redoBody)
 
          if true then
-            local v = h_slider("body-width", 250, 150, 50, values.bodyWidthMultiplier, .1, 5)
+            local v = h_slider("head-width", 150 - 25, 100 - 75, 50, values.headWidthMultiplier, .1, 5)
+            if v.value then
+               values.headWidthMultiplier = v.value
+               head.transforms.l[4] = v.value
+               head.dirty = true
+               transforms.setTransforms(head)
+               myWorld:emit("bipedAttachHead", biped)
+            end
+            v = h_slider("head-height", 150 - 25, 100 - 50, 50, values.headHeightMultiplier, .1, 5)
+            if v.value then
+               values.headHeightMultiplier = v.value
+               head.transforms.l[5] = v.value
+               head.dirty = true
+               transforms.setTransforms(head)
+               myWorld:emit("bipedAttachHead", biped)
+            end
+         end
+
+         if true then
+            local v = h_slider("body-width", 150 - 25, 400 - 75, 50, values.bodyWidthMultiplier, .1, 5)
             if v.value then
                values.bodyWidthMultiplier = v.value
                body.transforms.l[4] = v.value
@@ -1064,7 +1107,7 @@ function scene.draw()
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
             end
-            v = h_slider("body-height", 250, 200, 50, values.bodyHeightMultiplier, .1, 5)
+            v = h_slider("body-height", 150 - 25, 400 - 50, 50, values.bodyHeightMultiplier, .1, 5)
             if v.value then
                values.bodyHeightMultiplier = v.value
                body.transforms.l[5] = v.value
@@ -1076,122 +1119,29 @@ function scene.draw()
             end
          end
 
-
-         local legShapeButton, legBGButton, legFGTexButton, legFGButton, legLinePalButton = bigButtonWithSmallAroundIt(
-            100, 400,
-            {
-               legUrls[values.legs.shape],
-               palettes[values.legs.bgPal],
-               textures[values.legs.fgTex],
-               palettes[values.legs.fgPal],
-               palettes[values.legs.linePal]
-            }
-         )
-         buttonHelper(legShapeButton, 'legs', 'shape', #legUrls, changeLegs)
-         buttonHelper(legBGButton, 'legs', 'bgPal', #palettes, redoLegs)
-         buttonHelper(legFGTexButton, 'legs', 'fgTex', #textures, redoLegs)
-         buttonHelper(legFGButton, 'legs', 'fgPal', #palettes, redoLegs)
-         buttonHelper(legLinePalButton, 'legs', 'linePal', #palettes, redoLegs)
-
-
-         -- legs
-         --  ColoredPatternLegs(100, 400)
          if true then
-            v = h_slider("leg-length", 250, 400, 50, values.legLength, 200, 2000)
-
+            v = h_slider("leg-length", 150 - 25, 550 - 75, 50, values.legLength, 200, 2000)
             if v.value then
                values.legLength = v.value
                redoLegs()
             end
-            v = h_slider("leg-width-multiplier", 250, 450, 50, values.legWidthMultiplier, 0.1, 2)
+            v = h_slider("leg-width-multiplier", 150 - 25, 550 - 50, 50, values.legWidthMultiplier, 0.1, 2)
             if v.value then
                values.legWidthMultiplier = v.value
                redoLegs()
             end
          end
-         -- feet
-
-         local feetShapeButton, feetBGButton, feetFGTexButton, feetFGButton, feetLinePalButton = bigButtonWithSmallAroundIt(
-            100, 650,
-            {
-               feetImgUrls[values.feet.shape],
-               palettes[values.feet.bgPal],
-               textures[values.feet.fgTex],
-               palettes[values.feet.fgPal],
-               palettes[values.feet.linePal]
-            }
-         )
-         buttonHelper(feetShapeButton, 'feet', 'shape', #feetUrls, changeFeet)
-         buttonHelper(feetBGButton, 'feet', 'bgPal', #palettes, redoFeet)
-         buttonHelper(feetFGTexButton, 'feet', 'fgTex', #textures, redoFeet)
-         buttonHelper(feetFGButton, 'feet', 'fgPal', #palettes, redoFeet)
-         buttonHelper(feetLinePalButton, 'feet', 'linePal', #palettes, redoFeet)
-
-
-         local headShapeButton, headBGButton, headFGTexButton, headFGButton, headLinePalButton = bigButtonWithSmallAroundIt(
-            350, 150,
-            {
-               headImgUrls[values.head.shape],
-               palettes[values.head.bgPal],
-               textures[values.head.fgTex],
-               palettes[values.head.fgPal],
-               palettes[values.head.linePal]
-            }
-         )
-         buttonHelper(headShapeButton, 'head', 'shape', #headUrls, changeHead)
-         buttonHelper(headBGButton, 'head', 'bgPal', #palettes, redoHead)
-         buttonHelper(headFGTexButton, 'head', 'fgTex', #textures, redoHead)
-         buttonHelper(headFGButton, 'head', 'fgPal', #palettes, redoHead)
-         buttonHelper(headLinePalButton, 'head', 'linePal', #palettes, redoHead)
-
-         if true then
-            local v = h_slider("head-width", 500, 150, 50, values.headWidthMultiplier, .1, 5)
-            if v.value then
-               values.headWidthMultiplier = v.value
-               head.transforms.l[4] = v.value
-               head.dirty = true
-               transforms.setTransforms(head)
-               myWorld:emit("bipedAttachHead", biped)
-            end
-            v = h_slider("head-height", 500, 200, 50, values.headHeightMultiplier, .1, 5)
-            if v.value then
-               values.headHeightMultiplier = v.value
-               head.transforms.l[5] = v.value
-               head.dirty = true
-               transforms.setTransforms(head)
-               myWorld:emit("bipedAttachHead", biped)
-            end
-         end
-
-         local neckShapeButton, neckBGButton, neckFGTexButton, neckFGButton, neckLinePalButton = bigButtonWithSmallAroundIt(
-            350, 400,
-            {
-               legUrls[values.neck.shape],
-               palettes[values.neck.bgPal],
-               textures[values.neck.fgTex],
-               palettes[values.neck.fgPal],
-               palettes[values.neck.linePal]
-            }
-         )
-         buttonHelper(neckShapeButton, 'neck', 'shape', #legUrls, changeNeck)
-         buttonHelper(neckBGButton, 'neck', 'bgPal', #palettes, redoNeck)
-         buttonHelper(neckFGTexButton, 'neck', 'fgTex', #textures, redoNeck)
-         buttonHelper(neckFGButton, 'neck', 'fgPal', #palettes, redoNeck)
-         buttonHelper(neckLinePalButton, 'neck', 'linePal', #palettes, redoNeck)
-
-
-
       end
       prof.pop("render-ui")
 
-      if true then -- this is leaking too
-         
+      if false then -- this is leaking too
+
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
          --   print(inspect(stats))
-         love.graphics.setColor(1,1,1, 1)
+         love.graphics.setColor(1, 1, 1, 1)
          love.graphics.print(inspect(stats), 10, 30)
-         love.graphics.setColor(0,0,0, 1)
+         love.graphics.setColor(0, 0, 0, 1)
          love.graphics.print(inspect(stats), 11, 31)
 
          love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
