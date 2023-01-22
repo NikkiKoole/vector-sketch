@@ -6,7 +6,7 @@ local render    = require 'lib.render'
 
 
 function guyChildren()
-   return { body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
+   return { body, neck, head, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2 }
 end
 
 function bipedArguments()
@@ -360,7 +360,6 @@ function changeHead()
 end
 
 function redoHead()
-   redoTheGraphicInPart(head, palettes[values.head.bgPal], palettes[values.head.fgPal],
-      textures[values.head.bgTex], textures[values.head.fgTex], palettes[values.head.linePal])
-   head.dirty = true
+   redoGraphicHelper(head, 'head')
+
 end
