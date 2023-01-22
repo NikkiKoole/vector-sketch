@@ -50,8 +50,8 @@ function love.load()
       { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
    love.window.setTitle('☺ Puppet Maker')
 
-   local os = love.system.getOS( )
-   if  os == 'iOS' or os == 'Android' then
+   local os = love.system.getOS()
+   if os == 'iOS' or os == 'Android' then
       love.window.setFullscreen(true)
    end
    splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
@@ -68,6 +68,8 @@ function love.focus(f)
 end
 
 function love.update(dt)
+   require("vendor.lurker").update()
+
    if focussed then
       gesture.update(dt)
       SM.update(dt)

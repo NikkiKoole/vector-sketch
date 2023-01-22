@@ -422,8 +422,8 @@ function scene.load()
       },
       armLength = 700,
       armWidthMultiplier = 1,
-      arm1flop = 1,
-      arm2flop = -1,
+      arm1flop = -1,
+      arm2flop = 1,
       hands = {
          shape   = 1,
          bgPal   = 4,
@@ -611,15 +611,12 @@ function attachCallbacks()
       end
       if key == '1' then
          local x2, y2, w, h = bbox.getMiddleOfContainer(head)
-
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
       end
       if key == '2' then
-
          local bbBody = bbox.getBBoxRecursive(body)
          local bbFeet1 = bbox.getBBoxRecursive(feet1)
          local bbFeet2 = bbox.getBBoxRecursive(feet2)
-
          local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
@@ -627,12 +624,10 @@ function attachCallbacks()
          print('focus camera on second other shape', x, y)
       end
       if key == '3' then
-
          local bbHead = bbox.getBBoxRecursive(head)
          local bbBody = bbox.getBBoxRecursive(body)
          local bbFeet1 = bbox.getBBoxRecursive(feet1)
          local bbFeet2 = bbox.getBBoxRecursive(feet2)
-
 
          local points = {
             { head.transforms.l[1], head.transforms.l[2] },
@@ -641,20 +636,14 @@ function attachCallbacks()
          }
 
          local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-         --local bb                 = bbox.transformFromParent(guy, { tlx, tly, brx, bry })
-         --local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(bb[1], bb[2], bb[3], bb[4])
          local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
-
-
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
-
          print('focus camera on third other shape', x, y)
       end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
-
       pointerPressed(x, y, id)
    end
 
@@ -701,14 +690,11 @@ function attachCallbacks()
          end
       end
    end
-
 end
-
---
 
 function scene.update(dt)
    prof.push("frame")
-   --require("vendor.lurker").update()
+
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
       introSound:setVolume(volume * .90)
@@ -998,7 +984,6 @@ function scrollList(draw, clickX, clickY)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
             playSound(scrollItemClickSample)
-
          end
       end
    end

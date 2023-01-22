@@ -2,17 +2,20 @@ local parentize = require 'lib.parentize'
 local mesh      = require 'lib.mesh'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
---local myWorld   = Concord.world()
-
 
 function guyChildren()
-   return { body, neck, head, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2 }
+   return {
+      body, neck, head,
+      leg1, leg2, feet1, feet2,
+      arm1, arm2, hand1, hand2,
+   }
 end
 
 function bipedArguments()
-   return { guy = guy, body = body, neck = neck, head = head, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-      arm1 = arm1, arm2 = arm2,
-      hand1 = hand1, hand2 = hand2,
+   return {
+      guy = guy, body = body, neck = neck, head = head,
+      leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
+      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2,
    }
 end
 
@@ -20,8 +23,8 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
    local magic = 4.46
-
    local currentNode = {}
+
    currentNode.type = 'rubberhose'
    currentNode.data = currentNode.data or {}
    currentNode.texture = {}
@@ -37,7 +40,6 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
    currentNode.data.scaleX = 1
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
-   --currentNode.points = optionalPoints or { { 0, 0 }, { 0, 0 } }
 
    if (true) then
       local lineart = img
@@ -48,6 +50,7 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
          currentNode.texture.retexture = love.graphics.newImage(cnv)
       end
    end
+
    return currentNode
 end
 
@@ -89,13 +92,7 @@ local function createRectangle(x, y, w, h, r, g, b)
 end
 
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
-
-   local p
-   if part.children then
-      p = part.children[1]
-   else
-      p = part
-   end
+   local p = part.children and part.children[1] or part
 
    local lineartUrl = p.texture.url
    local lineart = mesh.getImage(lineartUrl, p.texture)
@@ -115,7 +112,6 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor)
       canvas:release()
       p.texture.canvas = m
    end
-
 end
 
 function createArmRubberhose(armNr, points)
@@ -164,10 +160,8 @@ function changeNeck()
 end
 
 function redoNeck()
-
    for i = 1, #guy.children do
       if (guy.children[i] == neck) then
-         print(neck.points)
          neck = createNeckRubberhose(neck.points)
          guy.children[i] = neck
       end
@@ -257,7 +251,7 @@ function redoArms()
    guy.children = guyChildren()
    parentize.parentize(root)
    biped:give('biped', bipedArguments())
-   myWorld:emit("bipedAttachFeet", biped)
+   myWorld:emit("bipedAttachHands", biped)
    mesh.meshAll(root)
 end
 
@@ -323,7 +317,6 @@ function changeFeet()
          feet1.transforms.l[4] = sx
          guy.children[i] = feet1
       end
-
       if (guy.children[i] == feet2) then
          local r = feet2.transforms.l[3]
          local sx = feet2.transforms.l[4]
@@ -333,12 +326,12 @@ function changeFeet()
          guy.children[i] = feet2
       end
    end
+
    parentize.parentize(root)
    redoFeet()
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
-
 end
 
 function changeHead()
@@ -347,16 +340,11 @@ function changeHead()
    guy.children = guyChildren()
    parentize.parentize(root)
    redoHead()
-
    biped:give('biped', bipedArguments())
-   myWorld:emit("bipedAttachFeet", biped)
-   print('changehead')
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
-
 end
 
 function redoHead()
    redoGraphicHelper(head, 'head')
-
 end
