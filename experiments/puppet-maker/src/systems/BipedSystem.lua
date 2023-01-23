@@ -2,7 +2,7 @@ local BipedSystem = Concord.system({ pool = { 'biped' } })
 local node = require 'lib.node'
 local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
-
+local parentize = require 'lib.parentize'
 
 
 local function getAngleAndDistance(x1, y1, x2, y2)
@@ -108,10 +108,12 @@ function BipedSystem:update(dt)
 end
 
 function BipedSystem:bipedUsePotatoHead(e, value)
-    print('should use potatoHead', value)
-    print (e.biped.potatoHead)
+
     e.biped.potatoHead = value
-   
+    print('bipedUsePotatoHead', e.biped.potatoHead)
+    guy.children = guyChildren(biped)
+    parentize.parentize(root)
+    mesh.meshAll(root)
 end
 
 

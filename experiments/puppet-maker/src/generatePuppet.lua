@@ -6,7 +6,7 @@ local render    = require 'lib.render'
 
 
 function guyChildren(e)
-   print('is this a potathead ofr a normal head? ', e.biped.potatoHead)
+   print('is this a potatohead ? ', e.biped.potatoHead)
    if (e.biped.potatoHead) then
       return {
          body,
@@ -20,7 +20,7 @@ function guyChildren(e)
          arm1, arm2, hand1, hand2,
       }
    end
-   
+
 end
 
 
