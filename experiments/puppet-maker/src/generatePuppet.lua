@@ -3,13 +3,26 @@ local mesh      = require 'lib.mesh'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
 
-function guyChildren()
-   return {
-      body, neck, head,
-      leg1, leg2, feet1, feet2,
-      arm1, arm2, hand1, hand2,
-   }
+
+
+function guyChildren(e)
+   print('is this a potathead ofr a normal head? ', e.biped.potatoHead)
+   if (e.biped.potatoHead) then
+      return {
+         body,
+         leg1, leg2, feet1, feet2,
+         arm1, arm2, hand1, hand2,
+      }
+   else
+      return {
+         body, neck, head,
+         leg1, leg2, feet1, feet2,
+         arm1, arm2, hand1, hand2,
+      }
+   end
+   
 end
+
 
 function bipedArguments()
    return {
@@ -18,6 +31,7 @@ function bipedArguments()
       arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2,
    }
 end
+
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints)
    local img = mesh.getImage(url)
@@ -149,17 +163,17 @@ function createNeckRubberhose(points)
       points)
 end
 
-function changeNeck()
+function changeNeck(biped)
    neck = createNeckRubberhose(neck.points) -- copy3(headParts[values.neck.shape])
-   guy.children = guyChildren()
+   guy.children = guyChildren(biped)
    parentize.parentize(root)
-   redoNeck()
+   redoNeck(biped)
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
 end
 
-function redoNeck()
+function redoNeck(biped)
    for i = 1, #guy.children do
       if (guy.children[i] == neck) then
          neck = createNeckRubberhose(neck.points)
@@ -173,7 +187,7 @@ function redoNeck()
    myWorld:emit("bipedAttachHead", biped)
 end
 
-function changeBody()
+function changeBody(biped)
    local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
    body = copy3(bodyParts[values.body.shape])
 
@@ -181,11 +195,11 @@ function changeBody()
    body.transforms.l[2] = temp_y
    body.transforms.l[4] = values.bodyWidthMultiplier
    body.transforms.l[5] = values.bodyHeightMultiplier
-   guy.children = guyChildren()
+   guy.children = guyChildren( biped)
 
    parentize.parentize(root)
 
-   redoBody() --- this position is very iportant, if i move redoBody under the meshall we get these borders aorund images
+   redoBody(biped) --- this position is very iportant, if i move redoBody under the meshall we get these borders aorund images
    mesh.meshAll(root)
 
    render.justDoTransforms(root)
@@ -197,7 +211,7 @@ function changeBody()
    myWorld:emit("bipedAttachHands", biped) -- todo
 end
 
-function changeLegs()
+function changeLegs(biped)
    for i = 1, #guy.children do
       if (guy.children[i] == leg1) then
          leg1 = createLegRubberhose(1, leg1.points)
@@ -215,7 +229,7 @@ function changeLegs()
    myWorld:emit("bipedAttachFeet", biped)
 end
 
-function changeArms()
+function changeArms(biped)
    for i = 1, #guy.children do
       if (guy.children[i] == arm1) then
          arm1 = createArmRubberhose(1, arm1.points)
@@ -233,22 +247,22 @@ function changeArms()
    myWorld:emit("bipedAttachFeet", biped)
 end
 
-function redoLegs()
+function redoLegs(biped)
    leg1 = createLegRubberhose(1, leg1.points)
    leg2 = createLegRubberhose(2, leg2.points)
 
-   guy.children = guyChildren()
+   guy.children = guyChildren(biped)
    parentize.parentize(root)
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
 end
 
-function redoArms()
+function redoArms(biped)
    arm1 = createArmRubberhose(1, arm1.points)
    arm2 = createArmRubberhose(2, arm2.points)
 
-   guy.children = guyChildren()
+   guy.children = guyChildren(biped)
    parentize.parentize(root)
    biped:give('biped', bipedArguments())
    myWorld:emit("bipedAttachHands", biped)
@@ -280,7 +294,7 @@ function redoHands()
    redoGraphicHelper(hand2, 'hands')
 end
 
-function changeHands()
+function changeHands(biped)
    for i = 1, #guy.children do
       if (guy.children[i] == hand1) then
          local r = hand1.transforms.l[3]
@@ -307,7 +321,7 @@ function changeHands()
    mesh.meshAll(root)
 end
 
-function changeFeet()
+function changeFeet(biped)
    for i = 1, #guy.children do
       if (guy.children[i] == feet1) then
          local r = feet1.transforms.l[3]
@@ -334,10 +348,10 @@ function changeFeet()
    mesh.meshAll(root)
 end
 
-function changeHead()
+function changeHead(biped)
    head = copy3(headParts[values.head.shape])
 
-   guy.children = guyChildren()
+   guy.children = guyChildren(biped)
    parentize.parentize(root)
    redoHead()
    biped:give('biped', bipedArguments())

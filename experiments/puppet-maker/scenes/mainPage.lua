@@ -399,6 +399,7 @@ function scene.load()
    end
 
    values = {
+      potatoHead = false,
       legs = {
          shape   = 1,
          bgPal   = 4,
@@ -517,7 +518,15 @@ function scene.load()
       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
       children = {}
    }
-   guy.children = guyChildren() --{ body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
+
+   biped = Concord.entity()
+   biped:give('biped',
+      { guy = guy, body = body,  neck = neck, head = head,
+      leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, 
+      arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2,
+         })
+
+   guy.children = guyChildren(biped) --{ body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
 
    root.children = { guy }
 
@@ -549,11 +558,7 @@ function scene.load()
    render.renderThings(root)
 
 
-   biped = Concord.entity()
-   biped:give('biped',
-      { guy = guy, body = body, leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, arm1 = arm1, hand1 = hand1,
-         arm2 = arm2, hand2 = hand2,
-         neck = neck, head = head })
+   
 
 
    myWorld:addEntity(biped)
@@ -640,6 +645,10 @@ function attachCallbacks()
 
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
          print('focus camera on third other shape', x, y)
+      end
+      if key == 'b' then
+         values.potatoHead  = not values.potatoHead
+         myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead )
       end
    end
 
@@ -831,7 +840,7 @@ function buttonHelper(button, bodyPart, param, maxAmount, func)
       if values[bodyPart][param] > maxAmount then
          values[bodyPart][param] = 1
       end
-      func()
+      func(biped)
    end
 end
 

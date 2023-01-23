@@ -3,6 +3,8 @@ local node = require 'lib.node'
 local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
 
+
+
 local function getAngleAndDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -26,7 +28,7 @@ end
 -- i want to lerp between 2 or more points to get a position, this way i can move attachements positions in the editor
 
 local function getPositionsForNeckAttaching(body)
-    -- this should return
+
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then
         return body.children[2].points[1]
     else
@@ -104,6 +106,14 @@ end
 function BipedSystem:update(dt)
 
 end
+
+function BipedSystem:bipedUsePotatoHead(e, value)
+    print('should use potatoHead', value)
+    print (e.biped.potatoHead)
+    e.biped.potatoHead = value
+   
+end
+
 
 function BipedSystem:bipedDirection(e, dir)
 

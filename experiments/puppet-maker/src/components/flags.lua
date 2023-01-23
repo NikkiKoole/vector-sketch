@@ -1,4 +1,6 @@
 Concord.component("basic")
+--[[
+
 Concord.component('texturedBody',
     function(c, lineart, mask, texture1, color1, texture2, color2)
         c.lineart = lineart
@@ -9,7 +11,7 @@ Concord.component('texturedBody',
         c.color2 = color2
     end
 )
-
+--]]
 -- 1 means the bipeds' right, 2 means the bipeds' left.
 -- when facing me, 1 == left and 2 == right (for me)
 Concord.component('biped',
@@ -29,8 +31,11 @@ Concord.component('biped',
         c.hand1 = parts.hand1
         c.hand2 = parts.hand2
 
+        c.potatoHead = false
+
     end
 )
+--[[
 Concord.component('head',
     function(c, parts)
         c.eye1 = parts.eye1
@@ -44,3 +49,4 @@ Concord.component('draggingRopeEnd',
         c.attachedTo = attachedTo
     end
 )
+--]]

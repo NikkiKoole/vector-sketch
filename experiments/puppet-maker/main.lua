@@ -68,7 +68,7 @@ function love.focus(f)
 end
 
 function love.update(dt)
-   require("vendor.lurker").update()
+   --require("vendor.lurker").update()
 
    if focussed then
       gesture.update(dt)
