@@ -39,9 +39,14 @@ local function getPositionsForNeckAttaching(body)
     end
 end
 
-local function getPositionsForArmsAttaching(body)
+local function getPositionsForArmsAttaching(e)
+    local body = e.biped.body
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then
+            if e.biped.potatoHead then
+                return body.children[2].points[7], body.children[2].points[3]
+            else
         return body.children[2].points[8], body.children[2].points[2]
+            end
     else
         local lc1 = node.findNodeByName(body, 'arm1')
         local lc2 = node.findNodeByName(body, 'arm2')
@@ -84,7 +89,7 @@ function BipedSystem:bipedInit(e)
     end
 
 
-    local ac1, ac2 = getPositionsForArmsAttaching(body)
+    local ac1, ac2 = getPositionsForArmsAttaching(e)
     if (ac1 and ac2) then
         local dx1, dy1 = body.transforms._g:transformPoint(ac1[1], ac1[2])
         e.biped.arm1.points[1] = { dx1, dy1 }
@@ -112,8 +117,11 @@ function BipedSystem:bipedUsePotatoHead(e, value)
     e.biped.potatoHead = value
     print('bipedUsePotatoHead', e.biped.potatoHead)
     guy.children = guyChildren(biped)
+    
     parentize.parentize(root)
     mesh.meshAll(root)
+    BipedSystem:bipedAttachArms(e)
+    BipedSystem:bipedAttachHands(e)
 end
 
 
@@ -193,7 +201,7 @@ function setArms(body, e, optionalData)
 
 
     local keep = true
-    local lc1, lc2 = getPositionsForArmsAttaching(body)
+    local lc1, lc2 = getPositionsForArmsAttaching(e)
     if lc1 and lc2 then
 
         local angle, dist = getAngleAndDistance(e.biped.arm1.points[2][1], e.biped.arm1.points[2][2],
