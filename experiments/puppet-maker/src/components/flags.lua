@@ -32,7 +32,7 @@ Concord.component('biped',
         c.hand2 = parts.hand2
 
         print('making the component again')
-        c.potatoHead = false
+        c.potatoHead = parts.potatoHead
 
     end
 )

@@ -24,11 +24,11 @@ function guyChildren(e)
 end
 
 
-function bipedArguments()
+function bipedArguments(e)
    return {
       guy = guy, body = body, neck = neck, head = head,
       leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2,
+      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2, potatoHead = e.biped.potatoHead
    }
 end
 
@@ -168,7 +168,7 @@ function changeNeck(biped)
    guy.children = guyChildren(biped)
    parentize.parentize(root)
    redoNeck(biped)
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
 end
@@ -183,7 +183,7 @@ function redoNeck(biped)
    mesh.meshAll(root)
 
    parentize.parentize(root)
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachHead", biped)
 end
 
@@ -204,7 +204,7 @@ function changeBody(biped)
 
    render.justDoTransforms(root)
 
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachHead", biped)
    myWorld:emit("bipedAttachLegs", biped) -- todo
    myWorld:emit("bipedAttachArms", biped) -- todo
@@ -225,7 +225,7 @@ function changeLegs(biped)
    parentize.parentize(root)
 
    mesh.meshAll(root)
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachFeet", biped)
 end
 
@@ -243,7 +243,7 @@ function changeArms(biped)
    parentize.parentize(root)
 
    mesh.meshAll(root)
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachFeet", biped)
 end
 
@@ -253,7 +253,7 @@ function redoLegs(biped)
 
    guy.children = guyChildren(biped)
    parentize.parentize(root)
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
 end
@@ -264,7 +264,7 @@ function redoArms(biped)
 
    guy.children = guyChildren(biped)
    parentize.parentize(root)
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachHands", biped)
    mesh.meshAll(root)
 end
@@ -316,7 +316,7 @@ function changeHands(biped)
    end
    parentize.parentize(root)
    redoHands()
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachHands", biped)
    mesh.meshAll(root)
 end
@@ -343,7 +343,7 @@ function changeFeet(biped)
 
    parentize.parentize(root)
    redoFeet()
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
 end
@@ -354,7 +354,7 @@ function changeHead(biped)
    guy.children = guyChildren(biped)
    parentize.parentize(root)
    redoHead()
-   biped:give('biped', bipedArguments())
+   biped:give('biped', bipedArguments(biped))
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
 end
