@@ -11,12 +11,9 @@ local mask_effect = love.graphics.newShader [[
    }
 ]]
 
-local function myStencilFunction(mask)
-   love.graphics.setShader(mask_effect)
-   love.graphics.draw(mask, 0, 0)
-   love.graphics.setShader()
-end
 
+
+-- only used for some ui thing
 lib.renderMaskedTexture = function(maskShape, texture, x, y, sx, sy)
    if not texture or not maskShape then return end
    if texture == 1 then return end
@@ -27,7 +24,7 @@ lib.renderMaskedTexture = function(maskShape, texture, x, y, sx, sy)
 
    local function myStencilFunction()
       love.graphics.setShader(mask_effect)
-      love.graphics.draw(maskShape, x, y, 0, sx, sy)
+      love.graphics.draw(maskShape, x, y, 0, sx , sy * -1)
       love.graphics.setShader()
    end
 
@@ -76,7 +73,28 @@ local function smoocheCanvas(canvas)
    return result
 end
 
+
+local function getDrawParams(flipx, flipy, imgw, imgh)
+   local sx = flipx
+   local sy = flipy
+
+   local ox = flipx == -1 and imgw or 0
+   local oy = flipy == -1 and imgh or 0
+   
+   return sx,sy,ox,oy
+end
+
+local function myStencilFunction(mask, flipx, flipy, imgw, imgh)
+   love.graphics.setShader(mask_effect)
+   local sx,sy,ox,oy = getDrawParams(flipx, flipy, imgw, imgh)
+love.graphics.draw(mask, 0, 0, 0, sx,sy,ox,oy)
+   love.graphics.setShader()
+end
+
 lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, color2, lineColor)
+
+   local flipx = 1 -- paramter this 
+   local flipy = 1 -- parameter this
    local lineartColor = lineColor or { 0, 0, 0, 1 }
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
@@ -86,7 +104,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
    love.graphics.setBlendMode("alpha") ---<<<<
    love.graphics.setStencilTest("greater", 0)
-   love.graphics.stencil(function() myStencilFunction(mask) end)
+   love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
    --local ow, oh = grunge:getDimensions()
    if texture1 and texture1 ~= 1 then
@@ -106,7 +124,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
       local yOffset = yMin
 
       love.graphics.setColor(color1)
-      love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+      love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX , scaleY , gw / 2, gh / 2)
    end
 
    if texture1 == 1 then
@@ -138,7 +156,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
       love.graphics.setColor(color2)
       -- love.graphics.setColor(0, 0, 0)
 
-      love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+      love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX , scaleY, gw / 2, gh / 2)
 
       --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
 
@@ -157,7 +175,12 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
    love.graphics.setColor(lineartColor)
-   love.graphics.draw(lineart)
+
+ 
+   local sx,sy,ox,oy = getDrawParams(flipx, flipy, lw, lh)
+   love.graphics.draw(lineart, 0, 0, 0, sx,sy,ox, oy)
+
+
    love.graphics.setColor(0, 0, 0) --- huh?!
    love.graphics.setCanvas() --- <<<<<
 

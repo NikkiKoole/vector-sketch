@@ -2721,7 +2721,7 @@ function mylib:draw()
                LG.print("scale x and y", labelPos(calcX(1), calcY(2)))
                if (currentNode.transforms.l[4] == currentNode.transforms.l[5]) then
                   local v = h_slider("folder-scale-xy", calcX(1), calcY(2), scrollerWidth, currentNode.transforms.l[5],
-                     0.00001, 10)
+                      0.00001, 10)
                   if (v.value ~= nil) then
                      n.setScale(currentNode, v.value)
                      editingModeSub = 'folder-scale'

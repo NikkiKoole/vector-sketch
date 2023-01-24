@@ -216,13 +216,13 @@ bbox.getDirectChildrenBBox = function(node)
    if (tlx == math.huge and tly == math.huge and brx == -math.huge and bry == -math.huge) then
       print('no direct children you pancake!')
       -- todo make a simpler drilling down algo
-      --if node.children then
-      --local tlx, tly, brx, bry = bbox.drillDownForFirstBBox(node)
-      --return tlx, tly, brx, bry
-      --else
-      --   return 0,0,0,0,0
-      --end
-       return 0, 0, 0, 0
+      if node.children then
+      local tlx, tly, brx, bry = bbox.drillDownForFirstBBox(node)
+      return tlx, tly, brx, bry
+      else
+         return 0,0,0,0,0
+      end
+      -- return 0, 0, 0, 0
    else
       return tlx, tly, brx, bry
    end
