@@ -182,10 +182,10 @@ end
 
 
 bbox.getDirectChildrenBBox = function(node)
-   local tlx = 9999999999
-   local tly = 9999999999
-   local brx = -9999999999
-   local bry = -9999999999
+   local tlx = math.huge
+   local tly = math.huge
+   local brx = -math.huge
+   local bry = -math.huge
 
    for i = 1, #node.children do
       local points = node.children[i].points
@@ -199,8 +199,9 @@ bbox.getDirectChildrenBBox = function(node)
       end
    end
 
-   if (tlx == 9999999999 and tly == 9999999999 and brx == -9999999999 and bry == -9999999999) then
+   if (tlx == math.huge and tly == math.huge and brx == -math.huge and bry == -math.huge) then
       print('no direct children you pancake!')
+      -- todo make a simpler drilling down algo
       return 0, 0, 0, 0
    else
       return tlx, tly, brx, bry

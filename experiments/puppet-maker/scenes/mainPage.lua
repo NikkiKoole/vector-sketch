@@ -521,10 +521,10 @@ function scene.load()
 
    biped = Concord.entity()
    biped:give('biped',
-      { guy = guy, body = body,  neck = neck, head = head,
-      leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2, 
-      arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2, potatoHead = false
-         })
+      { guy = guy, body = body, neck = neck, head = head,
+         leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
+         arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2, potatoHead = false
+      })
 
    guy.children = guyChildren(biped) --{ body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
 
@@ -558,7 +558,7 @@ function scene.load()
    render.renderThings(root)
 
 
-   
+
 
 
    myWorld:addEntity(biped)
@@ -647,8 +647,8 @@ function attachCallbacks()
          print('focus camera on third other shape', x, y)
       end
       if key == 'b' then
-         values.potatoHead  = not values.potatoHead
-         myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead )
+         values.potatoHead = not values.potatoHead
+         myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
       end
    end
 
@@ -1121,12 +1121,12 @@ function scene.draw()
             v = h_slider("leg-length", 150 - 25, 550 - 75, 50, values.legLength, 200, 2000)
             if v.value then
                values.legLength = v.value
-               redoLegs()
+               redoLegs(biped)
             end
             v = h_slider("leg-width-multiplier", 150 - 25, 550 - 50, 50, values.legWidthMultiplier, 0.1, 2)
             if v.value then
                values.legWidthMultiplier = v.value
-               redoLegs()
+               redoLegs(biped)
             end
          end
       end
