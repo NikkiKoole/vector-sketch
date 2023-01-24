@@ -88,7 +88,8 @@ function love.resize(w, h)
 end
 
 function love.quit()
-   time = love.timer.getTime( )
-   prof.write("prof.mpack")
-   print('writing took', love.timer.getTime( ) - time , 'seconds' )
+   -- this takes annoyingly long
+   --time = love.timer.getTime( )
+   --prof.write("prof.mpack")
+   --print('writing took', love.timer.getTime( ) - time , 'seconds' )
 end
