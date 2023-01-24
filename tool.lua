@@ -1660,6 +1660,7 @@ local function drawUIAroundGraphNodes(w, h)
                   if getUIRect('p8', runningX + 24, runningY, 20, 20).clicked then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, mx, bry)
+                     print(inspect(currentNode))
                   end
 
                   LG.rectangle("fill", runningX + 48, runningY, 20, 20)
