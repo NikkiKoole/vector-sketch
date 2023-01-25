@@ -27,8 +27,8 @@ end
 -- another thing that needs to happen, now i just deirectly get apoint on the 8way polygon
 -- i want to lerp between 2 or more points to get a position, this way i can move attachements positions in the editor
 
-local function getPositionsForNeckAttaching(body)
-
+local function getPositionsForNeckAttaching(e)
+    local body = e.biped.body
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then
         return body.children[2].points[1]
     else
@@ -40,13 +40,14 @@ local function getPositionsForNeckAttaching(body)
 end
 
 local function getPositionsForArmsAttaching(e)
+    print('body has flipped y =', e.biped.values.body.flipy)
     local body = e.biped.body
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then
-            if e.biped.potatoHead then
-                return body.children[2].points[7], body.children[2].points[3]
-            else
-        return body.children[2].points[8], body.children[2].points[2]
-            end
+        if e.biped.potatoHead then
+            return body.children[2].points[7], body.children[2].points[3]
+        else
+            return body.children[2].points[8], body.children[2].points[2]
+        end
     else
         local lc1 = node.findNodeByName(body, 'arm1')
         local lc2 = node.findNodeByName(body, 'arm2')
@@ -117,13 +118,12 @@ function BipedSystem:bipedUsePotatoHead(e, value)
     e.biped.potatoHead = value
     print('bipedUsePotatoHead', e.biped.potatoHead)
     guy.children = guyChildren(biped)
-    
+
     parentize.parentize(root)
     mesh.meshAll(root)
     BipedSystem:bipedAttachArms(e)
     BipedSystem:bipedAttachHands(e)
 end
-
 
 function BipedSystem:bipedDirection(e, dir)
 
@@ -294,7 +294,7 @@ end
 
 function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
     local body     = e.biped.body
-    local nc       = getPositionsForNeckAttaching(body)
+    local nc       = getPositionsForNeckAttaching(e)
     local dx1, dy1 = body.transforms._g:transformPoint(nc[1], nc[2])
 
     if (e.biped.neck) then

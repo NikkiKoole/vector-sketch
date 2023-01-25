@@ -434,12 +434,13 @@ function scene.load()
          linePal = 1
       },
       body = {
-         shape   = 1,
+         shape   = 9,
          bgPal   = 4,
          fgPal   = 1,
          bgTex   = 1,
          fgTex   = 2,
-         linePal = 1
+         linePal = 1,
+         flipy   = -1
       },
       bodyWidthMultiplier = 1,
       bodyHeightMultiplier = 1,
@@ -449,7 +450,9 @@ function scene.load()
          fgPal   = 1,
          bgTex   = 1,
          fgTex   = 2,
-         linePal = 1
+         linePal = 1,
+         flipx   = 1,
+         flipy   = -1
       },
       headWidthMultiplier = 1,
       headHeightMultiplier = 1,
@@ -476,41 +479,26 @@ function scene.load()
 
    }
 
-   body = copy3(bodyParts[values.body.shape])
-
-   redoBody()
-
-
-
-   -- DRAW SOME EYES!
-
-   head = copy3(headParts[values.head.shape])
-   redoHead()
-
-   neck = createNeckRubberhose()
 
    --stripPath(head, '/experiments/puppet%-maker/')
-
-
-
    --eye1 = copy3(eyeParts[values.eyeTypeIndex])
    --eye2 = copy3(eyeParts[values.eyeTypeIndex])
-
    --addChild(head, eye1)
    --addChild(head, eye2)
 
-   arm1 = createArmRubberhose(1)
-   arm2 = createArmRubberhose(2)
+   head = copy3(headParts[values.head.shape])
+   neck = createNeckRubberhose(values)
+   body = copy3(bodyParts[values.body.shape])
+
+   arm1 = createArmRubberhose(1, values)
+   arm2 = createArmRubberhose(2, values)
    hand1 = copy3(feetParts[values.hands.shape])
    hand2 = copy3(feetParts[values.hands.shape])
-   redoHands()
 
-   leg1 = createLegRubberhose(1)
-   leg2 = createLegRubberhose(2)
-
+   leg1 = createLegRubberhose(1, values)
+   leg2 = createLegRubberhose(2, values)
    feet1 = copy3(feetParts[values.feet.shape])
    feet2 = copy3(feetParts[values.feet.shape])
-   redoFeet()
 
    guy = {
       folder = true,
@@ -523,10 +511,16 @@ function scene.load()
    biped:give('biped',
       { guy = guy, body = body, neck = neck, head = head,
          leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-         arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2, potatoHead = false
+         arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2, potatoHead = false, values = values
       })
 
-   guy.children = guyChildren(biped) --{ body, leg1, leg2, feet1, feet2, arm1, arm2, hand1, hand2, neck, head }
+   --biped:give('biped', bipedArguments(biped, values))
+   guy.children = guyChildren(biped)
+
+   redoFeet(biped, values)
+   redoHands(biped, values)
+   redoBody(biped, values)
+   redoHead(biped, values)
 
    root.children = { guy }
 
@@ -626,7 +620,7 @@ function attachCallbacks()
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
-         print('focus camera on second other shape', x, y)
+         --print('focus camera on second other shape', x, y)
       end
       if key == '3' then
          local bbHead = bbox.getBBoxRecursive(head)
@@ -799,8 +793,10 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    if (type(textureOrColors[1]) == "table") then
       love.graphics.setColor(textureOrColors[1])
    else
+
       local img = mesh.getImage(textureOrColors[1])
       local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam * 2, diam * 2)
+
       love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
 
    end
@@ -840,7 +836,7 @@ function buttonHelper(button, bodyPart, param, maxAmount, func)
       if values[bodyPart][param] > maxAmount then
          values[bodyPart][param] = 1
       end
-      func(biped)
+      func(biped, values)
    end
 end
 
@@ -1089,6 +1085,13 @@ function scene.draw()
                transforms.setTransforms(head)
                myWorld:emit("bipedAttachHead", biped)
             end
+            love.graphics.circle('fill', 150, 100, 10)
+            local b = ui.getUICircle(150, 100, 10)
+            if b then
+               values.head.flipy = values.head.flipy == -1 and 1 or -1
+               redoHead(biped, values)
+
+            end
          end
 
          if true then
@@ -1115,18 +1118,28 @@ function scene.draw()
                myWorld:emit("bipedAttachArms", biped) -- todo
                myWorld:emit("bipedAttachHands", biped) -- todo
             end
+            love.graphics.circle('fill', 150, 400, 10)
+            local b = ui.getUICircle(150, 400, 10)
+            if b then
+               values.body.flipy = values.body.flipy == -1 and 1 or -1
+               redoBody(biped, values)
+               myWorld:emit("bipedAttachHead", biped)
+               myWorld:emit("bipedAttachLegs", biped) -- todo
+               myWorld:emit("bipedAttachArms", biped) -- todo
+               myWorld:emit("bipedAttachHands", biped) -- todo
+            end
          end
 
          if true then
             v = h_slider("leg-length", 150 - 25, 550 - 75, 50, values.legLength, 200, 2000)
             if v.value then
                values.legLength = v.value
-               redoLegs(biped)
+               redoLegs(biped, values)
             end
             v = h_slider("leg-width-multiplier", 150 - 25, 550 - 50, 50, values.legWidthMultiplier, 0.1, 2)
             if v.value then
                values.legWidthMultiplier = v.value
-               redoLegs(biped)
+               redoLegs(biped, values)
             end
          end
       end
