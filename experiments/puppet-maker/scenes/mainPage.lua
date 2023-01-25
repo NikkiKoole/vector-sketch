@@ -1128,6 +1128,16 @@ function scene.draw()
                myWorld:emit("bipedAttachArms", biped) -- todo
                myWorld:emit("bipedAttachHands", biped) -- todo
             end
+            love.graphics.circle('fill', 170, 400, 10)
+            local b = ui.getUICircle(170, 400, 10)
+            if b then
+               values.body.flipx = values.body.flipx == -1 and 1 or -1
+               redoBody(biped, values)
+               myWorld:emit("bipedAttachHead", biped)
+               myWorld:emit("bipedAttachLegs", biped) -- todo
+               myWorld:emit("bipedAttachArms", biped) -- todo
+               myWorld:emit("bipedAttachHands", biped) -- todo
+            end
          end
 
          if true then

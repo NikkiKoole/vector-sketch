@@ -101,75 +101,76 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
    --love.graphics.clear(0, 0, 0, 0) ---<<<<
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
-   love.graphics.setBlendMode("alpha") ---<<<<
-   love.graphics.setStencilTest("greater", 0)
-   love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
-   --local ow, oh = grunge:getDimensions()
-   if texture1 and texture1 ~= 1 then
-      local gw, gh = texture1:getDimensions()
-      local rotation = 0 --delta
-      local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+   if mask then
+      love.graphics.setBlendMode("alpha") ---<<<<
+      love.graphics.setStencilTest("greater", 0)
+      love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
-      local scaleX = 2
-      local scaleY = 2
+      --local ow, oh = grunge:getDimensions()
+      if texture1 and texture1 ~= 1 then
+         local gw, gh = texture1:getDimensions()
+         local rotation = 0 --delta
+         local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
 
-      local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-      local xMax = (gw / 2) * scaleX - (ry * scaleX)
-      local xOffset = xMin
+         local scaleX = 2
+         local scaleY = 2
 
-      local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-      local yMax = (gh / 2) * scaleY - (ry * scaleY)
-      local yOffset = yMin
+         local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+         local xMax = (gw / 2) * scaleX - (ry * scaleX)
+         local xOffset = xMin
 
-      love.graphics.setColor(color1)
-      love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+         local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+         local yMax = (gh / 2) * scaleY - (ry * scaleY)
+         local yOffset = yMin
+
+         love.graphics.setColor(color1)
+         love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+      end
+
+      if texture1 == 1 then
+         love.graphics.setColor(color1)
+         love.graphics.rectangle('fill', 0, 0, 1024, 1024)
+      end
+
+      -- second texture
+      if texture2 and texture2 ~= 1 then
+         local gw, gh = texture2:getDimensions()
+         local rotation = 0 --delta
+         local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+
+         local scaleX = 2
+         local scaleY = 2
+
+         local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
+         local xMax = (gw / 2) * scaleX - (ry * scaleX)
+         local xOffset = xMin
+
+         local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
+         local yMax = (gh / 2) * scaleY - (ry * scaleY)
+         local yOffset = yMin
+
+
+
+         -- height of these images is not big enough, redraw them bigger lazy bum
+         print(inspect(color2))
+         love.graphics.setColor(color2[1], color2[2], color2[3], 0.2)
+         -- love.graphics.setColor(0, 0, 0)
+
+         love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+
+         --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
+
+
+      end
+
+      if texture2 == 1 then
+         love.graphics.setColor(color2)
+         love.graphics.rectangle('fill', 0, 0, 1024, 1024)
+      end
+
+      love.graphics.setStencilTest()
    end
-
-   if texture1 == 1 then
-      love.graphics.setColor(color1)
-      love.graphics.rectangle('fill', 0, 0, 1024, 1024)
-   end
-
-   -- second texture
-   if texture2 and texture2 ~= 1 then
-      local gw, gh = texture2:getDimensions()
-      local rotation = 0 --delta
-      local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
-
-      local scaleX = 2
-      local scaleY = 2
-
-      local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-      local xMax = (gw / 2) * scaleX - (ry * scaleX)
-      local xOffset = xMin
-
-      local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-      local yMax = (gh / 2) * scaleY - (ry * scaleY)
-      local yOffset = yMin
-
-
-
-      -- height of these images is not big enough, redraw them bigger lazy bum
-      -- print(inspect(color2))
-      love.graphics.setColor(color2)
-      -- love.graphics.setColor(0, 0, 0)
-
-      love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
-
-      --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
-
-
-   end
-
-   if texture2 == 1 then
-      love.graphics.setColor(color2)
-      love.graphics.rectangle('fill', 0, 0, 1024, 1024)
-   end
-
-
-
-   love.graphics.setStencilTest()
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.

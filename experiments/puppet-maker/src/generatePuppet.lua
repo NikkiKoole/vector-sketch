@@ -118,7 +118,7 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor, flipx, flipy)
       print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
    end
 
-   if (lineart and mask) then
+   if (lineart) then
       local canvas = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lineColor, flipx, flipy)
       if p.texture.canvas then
          p.texture.canvas:release()
@@ -322,7 +322,7 @@ function changeHands(biped, values)
       end
    end
    parentize.parentize(root)
-   redoHands()
+   redoHands(biped, values)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachHands", biped)
    mesh.meshAll(root)
