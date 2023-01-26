@@ -3,6 +3,7 @@ local bbox = {}
 local transform = require 'lib.transform'
 
 
+--[[
 local function getScreenBBoxForItem(c, bbox)
 
    local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
@@ -23,6 +24,7 @@ local function getScreenBBoxForItem(c, bbox)
    return smallestX, smallestY, biggestX, biggestY
 
 end
+--]]
 
 bbox.getPointsBBox = function(points)
    local tlx = math.huge

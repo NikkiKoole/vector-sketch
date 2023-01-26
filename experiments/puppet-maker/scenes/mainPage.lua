@@ -376,6 +376,7 @@ function scene.load()
 
    bodyImgUrls = {}
    bodyParts = {}
+   -- bodies use the same shapes as the heads
    local bparts = parse.parseFile('assets/bodies.polygons.txt')
 
    for i = 1, #bparts do
@@ -389,14 +390,8 @@ function scene.load()
       end
    end
 
-   headImgUrls = { 'assets/parts/shapes1.png', 'assets/parts/head3.png', 'assets/parts/head4.png' }
-   headUrls = { 'assets/head5.polygons.txt', 'assets/head3.polygons.txt', 'assets/head4.polygons.txt' }
-   headParts = {}
-
-   for i = 1, #headUrls do
-      headParts[i] = parse.parseFile(headUrls[i])[1]
-      stripPath(headParts[i], '/experiments/puppet%-maker/')
-   end
+   headImgUrls = bodyImgUrls
+   headParts = bodyParts
 
    values = {
       potatoHead = false,
@@ -652,7 +647,7 @@ function attachCallbacks()
 
    function love.mousepressed(x, y, button, istouch, presses)
       if not istouch then
-         pointerPressed(x, y, 'mouse', button)
+         pointerPressed(x, y, 'mouse')
       end
    end
 
@@ -1067,6 +1062,16 @@ function scene.draw()
          bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, redoLegs)
          bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet)
 
+         if true then
+               love.graphics.setColor(1,1,1)
+         love.graphics.circle('fill', 150, 550, 10)
+         local b = ui.getUICircle(150, 550, 10)
+         if b then
+            values.legs.flipy = values.legs.flipy == -1 and 1 or -1
+            redoLegs(biped, values)
+
+         end
+      end
 
          if true then
             local v = h_slider("head-width", 150 - 25, 100 - 75, 50, values.headWidthMultiplier, .1, 5)

@@ -29,7 +29,7 @@ function bipedArguments(e, values)
    }
 end
 
-function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints)
+function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints, flipx, flipy)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
    local magic = 4.46
@@ -51,8 +51,8 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 
-   local flipx = 1
-   local flipy = 1
+   --local flipx = 1
+   --local flipy = 1
 
    if (true) then
       local lineart = img
@@ -148,7 +148,7 @@ function createLegRubberhose(legNr, values, points)
       textures[values.legs.bgTex], textures[values.legs.fgTex], palettes[values.legs.linePal], flop
       , values.legLength,
       values.legWidthMultiplier,
-      points)
+      points, values.legs.flipx or 1, values.legs.flipy or 1)
 end
 
 function createNeckRubberhose(values, points)
@@ -281,21 +281,21 @@ function redoGraphicHelper(part, name, values)
    )
 end
 
-function redoBody(biped, values)
+function redoBody(_, values)
    redoGraphicHelper(body, 'body', values)
 end
 
-function redoFeet(biped, values)
+function redoFeet(_, values)
    redoGraphicHelper(feet1, 'feet', values)
    redoGraphicHelper(feet2, 'feet', values)
 end
 
-function redoHands(biped, values)
+function redoHands(_, values)
    redoGraphicHelper(hand1, 'hands', values)
    redoGraphicHelper(hand2, 'hands', values)
 end
 
-function redoHead(biped, values)
+function redoHead(_, values)
    redoGraphicHelper(head, 'head', values)
 end
 

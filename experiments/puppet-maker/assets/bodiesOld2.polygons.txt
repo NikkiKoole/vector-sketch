@@ -254,27 +254,6 @@ l = { -3430.659, 1022.711, 0, 1, 1, 79, 497, 0, 0 }
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
 name = "romp",
-points = { { -181, -359 }, { 305, -359 }, { 305, 197 }, { -181, 197 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes13.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 62.826, -311.986 }, { 206.477, -220.969 }, { 245.843, -66.423 }, { 221.654, 139.103 }, { 53.754, 166.263 }, { -86.985, 146.51 }, { -74.914, -73.712 }, { -28.258, -223.885 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -1507.983, 2719.893, 0, 1, 1, 62, 197, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
 points = { { -181, -359 }, { 471, -359 }, { 471, 573 }, { -181, 573 } },
 texture = {
 filter = "linear",
@@ -291,26 +270,5 @@ folder = true,
 name = "body       ",
 transforms = {
 l = { -2763.5, 1671.591, 0, 1, 1, 79, 497, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 377, -359 }, { 377, -36 }, { -181, -36 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes12.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 108.798, -315.571 }, { 292.068, -266.699 }, { 333.609, -164.068 }, { 267.632, -90.76 }, { 108.798, -66.324 }, { -50.036, -85.873 }, { -138.006, -171.399 }, { -59.811, -266.699 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { 1592.757, 2447.363, 0, 1, 1, 98, -36, 0, 0 }
 }
 } }
