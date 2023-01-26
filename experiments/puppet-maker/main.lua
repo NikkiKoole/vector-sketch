@@ -90,6 +90,6 @@ end
 function love.quit()
    -- this takes annoyingly long
    --time = love.timer.getTime( )
-   --prof.write("prof.mpack")
+   prof.write("prof.mpack")
    --print('writing took', love.timer.getTime( ) - time , 'seconds' )
 end

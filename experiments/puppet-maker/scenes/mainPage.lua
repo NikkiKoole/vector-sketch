@@ -1155,7 +1155,7 @@ function scene.draw()
       end
       prof.pop("render-ui")
 
-      if false then -- this is leaking too
+      if true then -- this is leaking too
 
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
