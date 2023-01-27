@@ -397,7 +397,7 @@ function scene.load()
       for j = 1, #p.children do
          if p.children[j].texture then
             eyeImgUrls[i] = p.children[j].texture.url
-            eyeParts[i] = eyes[i]
+            eyeParts[i] = eyes.children[i]
          end
       end
    end
@@ -412,7 +412,7 @@ function scene.load()
       for j = 1, #p.children do
          if p.children[j].texture then
             noseImgUrls[i] = p.children[j].texture.url
-            noseParts[i] = noses[i]
+            noseParts[i] = noses.children[i]
          end
       end
    end
@@ -517,8 +517,6 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
-      eyeTypeIndex = 1,
-
    }
 
 
@@ -527,7 +525,10 @@ function scene.load()
    --eye2 = copy3(eyeParts[values.eyeTypeIndex])
    --addChild(head, eye1)
    --addChild(head, eye2)
-
+   eye1 = copy3(eyeParts[values.eyes.shape])
+   eye2 = copy3(eyeParts[values.eyes.shape])
+   nose = copy3(noseParts[values.nose.shape])
+   print(inspect(eye1))
    head = copy3(headParts[values.head.shape])
    neck = createNeckRubberhose(values)
    body = copy3(bodyParts[values.body.shape])
@@ -551,7 +552,8 @@ function scene.load()
 
    biped = Concord.entity()
    biped:give('biped',
-      { guy = guy, body = body, neck = neck, head = head,
+      { guy = guy, body = body, neck = neck, head = head, 
+      eye1 = eye1, eye2 = eye2, nose=nose,
          leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
          arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2, potatoHead = false, values = values
       })

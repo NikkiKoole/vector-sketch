@@ -32,11 +32,8 @@ local function getFlippedMetaObject(flipx, flipy, points)
     local tlx, tly, brx, bry = bbox.getPointsBBox(points)
     local mx = tlx + (brx - tlx) / 2
     local my = tly + (bry - tly) / 2
-    --print(tlx, tly, brx, bry, mx, my)
     local newPoints = {}
 
-
-    --print('do the vertical flip')
     for i = 1, #points do
         local newY = points[i][2]
         if flipy == -1 then

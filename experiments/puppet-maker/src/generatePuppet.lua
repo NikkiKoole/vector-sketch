@@ -8,13 +8,15 @@ local render    = require 'lib.render'
 function guyChildren(e)
    if (e.biped.potatoHead) then
       return {
-         body,
+         body, 
+         eye1, eye2, nose,
          leg1, leg2, feet1, feet2,
          arm1, arm2, hand1, hand2,
       }
    else
       return {
-         body, neck, head,
+         body, neck, head, 
+         eye1, eye2, nose,
          leg1, leg2, feet1, feet2,
          arm1, arm2, hand1, hand2,
       }
@@ -23,7 +25,7 @@ end
 
 function bipedArguments(e, values)
    return {
-      guy = guy, body = body, neck = neck, head = head,
+      guy = guy, body = body, neck = neck, head = head, eye1 = eye1, eye2 = eye2, nose=nose,
       leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
       arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2, potatoHead = e.biped.potatoHead, values = values
    }
