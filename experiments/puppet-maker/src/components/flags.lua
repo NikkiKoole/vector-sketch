@@ -36,10 +36,18 @@ Concord.component('biped',
         --     print(parts.values)
         c.values = parts.values
 
-        c.nose = parts.nose
+       
 
     end
 )
+
+Concord.component('potato', function(c, parts) 
+    c.body = parts.body
+    c.head = parts.head
+    c.potatoHead = parts.potatoHead
+    c.values = parts.values
+    c.nose = parts.nose
+end)
 --[[
 Concord.component('head',
     function(c, parts)
