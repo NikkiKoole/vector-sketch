@@ -36,6 +36,8 @@ Concord.component('biped',
         --     print(parts.values)
         c.values = parts.values
 
+        c.nose = parts.nose
+
     end
 )
 --[[
