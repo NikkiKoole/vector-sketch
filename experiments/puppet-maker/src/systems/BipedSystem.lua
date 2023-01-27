@@ -104,7 +104,7 @@ local function getPositionsForNeckAttaching(e)
 end
 
 local function getPositionsForArmsAttaching(e)
-    print('body has flipped y =', e.biped.values.body.flipy)
+    --print('body has flipped y =', e.biped.values.body.flipy)
 
     local body = e.biped.body
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then

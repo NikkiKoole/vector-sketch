@@ -33,7 +33,7 @@ Concord.component('biped',
 
         --print('making the component again')
         c.potatoHead = parts.potatoHead
-        print(parts.values)
+        --     print(parts.values)
         c.values = parts.values
 
     end

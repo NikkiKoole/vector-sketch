@@ -363,13 +363,6 @@ function scene.load()
 
    handParts = feetParts
 
-   eyeUrls = { 'assets/eye1.polygons.txt' }
-   eyeParts = {}
-   for i = 1, #eyeUrls do
-      eyeParts[i] = parse.parseFile(eyeUrls[i])[1]
-      stripPath(eyeParts[i], '/experiments/puppet%-maker/')
-   end
-
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
       'assets/parts/leg5.png' }
 
@@ -389,12 +382,66 @@ function scene.load()
          end
       end
    end
-
    headImgUrls = bodyImgUrls
    headParts = bodyParts
 
+   local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
+
+   eyeImgUrls = {}
+   eyeParts = {}
+   local eyes = node.findNodeByName(faceparts, 'eyes') or {}
+   --print(inspect(eyes))
+   for i = 1, #eyes.children do
+      local p = eyes.children[i]
+      stripPath(p, '/experiments/puppet%-maker/')
+      for j = 1, #p.children do
+         if p.children[j].texture then
+            eyeImgUrls[i] = p.children[j].texture.url
+            eyeParts[i] = eyes[i]
+         end
+      end
+   end
+
+   noseImgUrls = {}
+   noseParts = {}
+   local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
+   local noses = node.findNodeByName(faceparts, 'noses') or {}
+   for i = 1, #noses.children do
+      local p = noses.children[i]
+      stripPath(p, '/experiments/puppet%-maker/')
+      for j = 1, #p.children do
+         if p.children[j].texture then
+            noseImgUrls[i] = p.children[j].texture.url
+            noseParts[i] = noses[i]
+         end
+      end
+   end
+
+
    values = {
       potatoHead = false,
+
+      eyes = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+
+      },
+
+      nose = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+
+      },
+
+
       legs = {
          shape   = 1,
          bgPal   = 4,
@@ -1055,7 +1102,11 @@ function scene.draw()
       if true then
 
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead)
+         bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeHead, redoHead)
+
          bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck)
+         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeHead, redoHead)
+
          bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody)
          bigButtonHelper(225, 400, 'arms', legUrls, changeArms, redoArms)
          bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands)
@@ -1063,15 +1114,15 @@ function scene.draw()
          bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet)
 
          if true then
-               love.graphics.setColor(1,1,1)
-         love.graphics.circle('fill', 150, 550, 10)
-         local b = ui.getUICircle(150, 550, 10)
-         if b then
-            values.legs.flipy = values.legs.flipy == -1 and 1 or -1
-            redoLegs(biped, values)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.circle('fill', 150, 550, 10)
+            local b = ui.getUICircle(150, 550, 10)
+            if b then
+               values.legs.flipy = values.legs.flipy == -1 and 1 or -1
+               redoLegs(biped, values)
 
+            end
          end
-      end
 
          if true then
             local v = h_slider("head-width", 150 - 25, 100 - 75, 50, values.headWidthMultiplier, .1, 5)

@@ -153,7 +153,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
 
          -- height of these images is not big enough, redraw them bigger lazy bum
-         print(inspect(color2))
+         --print(inspect(color2))
          love.graphics.setColor(color2[1], color2[2], color2[3], 0.2)
          -- love.graphics.setColor(0, 0, 0)
 

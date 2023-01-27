@@ -19,6 +19,12 @@ node.findNodeByName = function(root, name)
          if result then return result end
       end
    end
+   if #root then
+      for i = 1, #root do
+         local result = node.findNodeByName(root[i], name)
+         if result then return result end
+      end
+   end
    return nil
 end
 
