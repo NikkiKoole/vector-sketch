@@ -3,86 +3,9 @@ local node = require 'lib.node'
 local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
 local parentize = require 'lib.parentize'
-local bbox = require 'lib.bbox'
 local numbers = require 'lib.numbers'
 
-local function getAngleAndDistance(x1, y1, x2, y2)
-    local dx = x1 - x2
-    local dy = y1 - y2
-    local angle = math.atan2(dy, dx)
-    local distance = math.sqrt((dx * dx) + (dy * dy))
 
-    return angle, distance
-end
-
-local function setAngleAndDistance(sx, sy, angle, distance)
-    local newx = sx + distance * math.cos(angle)
-    local newy = sy + distance * math.sin(angle)
-    return newx, newy
-end
-
--- getting positions for attachments via the 8way meta object
--- this should also work in the furture for parts that are flipped vertically
--- this way i can, for free, have double the amount of shapes, no extra sprites needed.
-
--- another thing that needs to happen, now i just deirectly get apoint on the 8way polygon
--- i want to lerp between 2 or more points to get a position, this way i can move attachements positions in the editor
-
-
-local function getFlippedMetaObject(flipx, flipy, points)
-    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-    local mx = tlx + (brx - tlx) / 2
-    local my = tly + (bry - tly) / 2
-    local newPoints = {}
-
-    for i = 1, #points do
-        local newY = points[i][2]
-        if flipy == -1 then
-            local dy = my - points[i][2]
-            newY = my + dy
-        end
-        local newX = points[i][1]
-        if flipx == -1 then
-            local dx = mx - points[i][1]
-            newX = mx + dx
-        end
-        newPoints[i] = { newX, newY }
-    end
-    local temp = copy3(newPoints)
-    if flipy == -1 and flipx == 1 then
-        newPoints[1] = temp[5]
-        newPoints[2] = temp[4]
-        newPoints[3] = temp[3]
-        newPoints[4] = temp[2]
-        newPoints[5] = temp[1]
-        newPoints[6] = temp[8]
-        newPoints[7] = temp[7]
-        newPoints[8] = temp[6]
-    end
-    if flipx == -1 and flipy == 1 then
-        newPoints[1] = temp[1]
-        newPoints[2] = temp[8]
-        newPoints[3] = temp[7]
-        newPoints[4] = temp[6]
-        newPoints[5] = temp[5]
-        newPoints[6] = temp[4]
-        newPoints[7] = temp[3]
-        newPoints[8] = temp[2]
-    end
-    if flipx == -1 and flipy == -1 then
-        newPoints[1] = temp[5]
-        newPoints[2] = temp[6]
-        newPoints[3] = temp[7]
-        newPoints[4] = temp[8]
-        newPoints[5] = temp[1]
-        newPoints[6] = temp[2]
-        newPoints[7] = temp[3]
-        newPoints[8] = temp[4]
-    end
-
-
-    return newPoints
-end
 
 local function getPositionsForNeckAttaching(e)
     local body = e.biped.body
@@ -92,17 +15,16 @@ local function getPositionsForNeckAttaching(e)
         local points = body.children[2].points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
 
-        local x,y = body.transforms._g:transformPoint(newPoints[1][1], newPoints[1][2])
-        return x,y
+        local x, y = body.transforms._g:transformPoint(newPoints[1][1], newPoints[1][2])
+        return x, y
     else
         local neck = node.findNodeByName(body, 'neck')
         if neck then
-            local x,y = body.transforms._g:transformPoint(neck.points[1][1], neck.points[1][2])
-            return x,y
+            local x, y = body.transforms._g:transformPoint(neck.points[1][1], neck.points[1][2])
+            return x, y
         end
     end
 end
-
 
 local function getPositionsForArmsAttaching(e)
 
@@ -121,7 +43,7 @@ local function getPositionsForArmsAttaching(e)
         else
             local a1x, a1y = body.transforms._g:transformPoint(newPoints[8][1], newPoints[8][2])
             local a2x, a2y = body.transforms._g:transformPoint(newPoints[2][1], newPoints[2][2])
- 
+
             return a1x, a1y, a2x, a2y
         end
     else
@@ -139,9 +61,9 @@ end
 local function getPositionsForLegsAttaching(e)
     local body = e.biped.body
     if body.children[2] and body.children[2].type == 'meta' and #body.children[2].points == 8 then
-        local flipx = e.biped.values.body.flipx or 1
-        local flipy = e.biped.values.body.flipy or 1
-        local points = body.children[2].points
+        local flipx     = e.biped.values.body.flipx or 1
+        local flipy     = e.biped.values.body.flipy or 1
+        local points    = body.children[2].points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
         local l1x, l1y  = body.transforms._g:transformPoint(newPoints[6][1], newPoints[6][2])
         local l2x, l2y  = body.transforms._g:transformPoint(newPoints[4][1], newPoints[4][2])
@@ -150,17 +72,17 @@ local function getPositionsForLegsAttaching(e)
         local lc1 = node.findNodeByName(body, 'leg1')
         local lc2 = node.findNodeByName(body, 'leg2')
         if lc1 and lc2 then
-            local l1x, l1y  = body.transforms._g:transformPoint( lc1.points[1])
-            local l2x, l2y  = body.transforms._g:transformPoint(lc2.points[1])
+            local l1x, l1y = body.transforms._g:transformPoint(lc1.points[1])
+            local l2x, l2y = body.transforms._g:transformPoint(lc2.points[1])
             return l1x, l1y, l2x, l2y
         end
     end
 end
 
 local function getPositionForNoseAttaching(e)
-    local parent =  e.biped.potatoHead and e.biped.body or e.biped.head
+    local parent = e.biped.potatoHead and e.biped.body or e.biped.head
     print(parent)
-    local parentName =  e.biped.potatoHead and 'body' or 'head'
+    local parentName = e.biped.potatoHead and 'body' or 'head'
     if parent.children[2] and parent.children[2].type == 'meta' and #parent.children[2].points == 8 then
         local flipx = e.biped.values[parentName].flipx or 1
         local flipy = e.biped.values[parentName].flipy or 1
@@ -168,17 +90,22 @@ local function getPositionForNoseAttaching(e)
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
         local x = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
         local y = numbers.lerp(newPoints[7][2], newPoints[3][2], 0.5)
-        local nx, ny = parent.transforms._g:transformPoint(x,y)
+        local nx, ny = parent.transforms._g:transformPoint(x, y)
         return nx, ny
     end
 end
 
+function BipedSystem:init(e)
+    print('auto caled init', e)
+end
+
 function BipedSystem:bipedInit(e)
-  --  local body     = e.biped.body
+    print('bipedinpnt', e)
+    --  local body     = e.biped.body
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
     e.biped.body.transforms.l[3] = 0
 
-   
+
     e.biped.leg1.points[1] = { l1x, l1y }
     e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) / 1 }
     e.biped.leg2.points[1] = { l2x, l2y }
@@ -205,11 +132,11 @@ function BipedSystem:bipedInit(e)
 
     attachHeadWithOrWithoutNeck(e, false)
 
-    local nx, ny = getPositionForNoseAttaching(e)
-    e.biped.nose.transforms.l[1] =  0 --400 + nx
-    e.biped.nose.transforms.l[2] = 0--ny
-    print(nx, ny)
-    mesh.remeshNode(e.biped.nose)
+    --local nx, ny = getPositionForNoseAttaching(e)
+    --e.biped.nose.transforms.l[1] =  0 --400 + nx
+    --e.biped.nose.transforms.l[2] = 0--ny
+    --print(nx, ny)
+    --mesh.remeshNode(e.biped.nose)
 end
 
 function BipedSystem:update(dt)
@@ -283,14 +210,14 @@ function setLegs(e)
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
     --if lc1 and lc2 then
-        --local dx1, dy1 = body.transforms._g:transformPoint(lc1[1], lc1[2])
-        e.biped.leg1.points[1] = { l1x, l1y }
-        mesh.remeshNode(e.biped.leg1)
+    --local dx1, dy1 = body.transforms._g:transformPoint(lc1[1], lc1[2])
+    e.biped.leg1.points[1] = { l1x, l1y }
+    mesh.remeshNode(e.biped.leg1)
 
 
-        --local dx1, dy1 = body.transforms._g:transformPoint(lc2[1], lc2[2])
-        e.biped.leg2.points[1] = { l2x, l2y }
-        mesh.remeshNode(e.biped.leg2)
+    --local dx1, dy1 = body.transforms._g:transformPoint(lc2[1], lc2[2])
+    e.biped.leg2.points[1] = { l2x, l2y }
+    mesh.remeshNode(e.biped.leg2)
 
     --end
 end
@@ -305,29 +232,29 @@ function setArms(e, optionalData)
     local keep = true
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
 
-        local body = e.biped.body
-        local angle, dist = getAngleAndDistance(e.biped.arm1.points[2][1], e.biped.arm1.points[2][2],
-            e.biped.arm1.points[1][1], e.biped.arm1.points[1][2])
+    local body = e.biped.body
+    local angle, dist = getAngleAndDistance(e.biped.arm1.points[2][1], e.biped.arm1.points[2][2],
+        e.biped.arm1.points[1][1], e.biped.arm1.points[1][2])
 
 
-        e.biped.arm1.points[1] = { a1x, a1y }
-        if keep then
-            local newx, newy = setAngleAndDistance(a1x, a1y, angle, dist)
-            e.biped.arm1.points[2] = { newx, newy }
-        end
-        mesh.remeshNode(e.biped.arm1)
+    e.biped.arm1.points[1] = { a1x, a1y }
+    if keep then
+        local newx, newy = setAngleAndDistance(a1x, a1y, angle, dist)
+        e.biped.arm1.points[2] = { newx, newy }
+    end
+    mesh.remeshNode(e.biped.arm1)
 
 
-        local angle, dist = getAngleAndDistance(e.biped.arm2.points[2][1], e.biped.arm2.points[2][2],
-            e.biped.arm2.points[1][1], e.biped.arm2.points[1][2])
+    local angle, dist = getAngleAndDistance(e.biped.arm2.points[2][1], e.biped.arm2.points[2][2],
+        e.biped.arm2.points[1][1], e.biped.arm2.points[1][2])
 
-        e.biped.arm2.points[1] = { a2x, a2y }
-        if keep then
-            -- instead of angle use  e.biped.body.transforms.l[3]
-            local newx, newy = setAngleAndDistance(a2x, a2y, angle, dist)
-            e.biped.arm2.points[2] = { newx, newy }
-        end
-        mesh.remeshNode(e.biped.arm2)
+    e.biped.arm2.points[1] = { a2x, a2y }
+    if keep then
+        -- instead of angle use  e.biped.body.transforms.l[3]
+        local newx, newy = setAngleAndDistance(a2x, a2y, angle, dist)
+        e.biped.arm2.points[2] = { newx, newy }
+    end
+    mesh.remeshNode(e.biped.arm2)
 
     --end
 end
@@ -387,7 +314,7 @@ end
 
 function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
 
-    local neckX, neckY       = getPositionsForNeckAttaching(e)
+    local neckX, neckY = getPositionsForNeckAttaching(e)
 
     if (e.biped.neck) then
 
@@ -485,7 +412,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
                 mesh.remeshNode(e.biped.neck)
             end
 
-         
+
         end
     end
 

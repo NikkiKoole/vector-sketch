@@ -31,22 +31,20 @@ Concord.component('biped',
         c.hand1 = parts.hand1
         c.hand2 = parts.hand2
 
-        --print('making the component again')
-        c.potatoHead = parts.potatoHead
-        --     print(parts.values)
-        c.values = parts.values
-
-       
+        c.potatoHead = parts.potatoHead --boolean
+        c.values = parts.values -- numbers
 
     end
 )
 
-Concord.component('potato', function(c, parts) 
+Concord.component('potato', function(c, parts)
     c.body = parts.body
     c.head = parts.head
     c.potatoHead = parts.potatoHead
     c.values = parts.values
     c.nose = parts.nose
+    c.eye1 = parts.eye1
+    c.eye2 = parts.eye2
 end)
 --[[
 Concord.component('head',

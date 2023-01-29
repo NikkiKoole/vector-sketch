@@ -1,22 +1,97 @@
 local parentize = require 'lib.parentize'
 local mesh      = require 'lib.mesh'
+local bbox      = require 'lib.bbox'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
 
+function getAngleAndDistance(x1, y1, x2, y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local angle = math.atan2(dy, dx)
+   local distance = math.sqrt((dx * dx) + (dy * dy))
 
+   return angle, distance
+end
+
+function setAngleAndDistance(sx, sy, angle, distance)
+   local newx = sx + distance * math.cos(angle)
+   local newy = sy + distance * math.sin(angle)
+   return newx, newy
+end
+
+-- getting positions for attachments via the 8way meta object
+-- this should also work in the furture for parts that are flipped vertically
+-- this way i can, for free, have double the amount of shapes, no extra sprites needed.
+
+-- another thing that needs to happen, now i just deirectly get apoint on the 8way polygon
+-- i want to lerp between 2 or more points to get a position, this way i can move attachements positions in the editor
+
+
+function getFlippedMetaObject(flipx, flipy, points)
+   local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+   local mx = tlx + (brx - tlx) / 2
+   local my = tly + (bry - tly) / 2
+   local newPoints = {}
+
+   for i = 1, #points do
+      local newY = points[i][2]
+      if flipy == -1 then
+         local dy = my - points[i][2]
+         newY = my + dy
+      end
+      local newX = points[i][1]
+      if flipx == -1 then
+         local dx = mx - points[i][1]
+         newX = mx + dx
+      end
+      newPoints[i] = { newX, newY }
+   end
+   local temp = copy3(newPoints)
+   if flipy == -1 and flipx == 1 then
+      newPoints[1] = temp[5]
+      newPoints[2] = temp[4]
+      newPoints[3] = temp[3]
+      newPoints[4] = temp[2]
+      newPoints[5] = temp[1]
+      newPoints[6] = temp[8]
+      newPoints[7] = temp[7]
+      newPoints[8] = temp[6]
+   end
+   if flipx == -1 and flipy == 1 then
+      newPoints[1] = temp[1]
+      newPoints[2] = temp[8]
+      newPoints[3] = temp[7]
+      newPoints[4] = temp[6]
+      newPoints[5] = temp[5]
+      newPoints[6] = temp[4]
+      newPoints[7] = temp[3]
+      newPoints[8] = temp[2]
+   end
+   if flipx == -1 and flipy == -1 then
+      newPoints[1] = temp[5]
+      newPoints[2] = temp[6]
+      newPoints[3] = temp[7]
+      newPoints[4] = temp[8]
+      newPoints[5] = temp[1]
+      newPoints[6] = temp[2]
+      newPoints[7] = temp[3]
+      newPoints[8] = temp[4]
+   end
+
+
+   return newPoints
+end
 
 function guyChildren(e)
    if (e.biped.potatoHead) then
       return {
-         body, 
-         eye1, eye2, nose,
+         body,
          leg1, leg2, feet1, feet2,
          arm1, arm2, hand1, hand2,
       }
    else
       return {
-         body, neck, head, 
-         eye1, eye2, nose,
+         body, neck, head,
          leg1, leg2, feet1, feet2,
          arm1, arm2, hand1, hand2,
       }
@@ -25,7 +100,7 @@ end
 
 function bipedArguments(e, values)
    return {
-      guy = guy, body = body, neck = neck, head = head, eye1 = eye1, eye2 = eye2, nose=nose,
+      guy = guy, body = body, neck = neck, head = head,
       leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
       arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2, potatoHead = e.biped.potatoHead, values = values
    }
@@ -349,7 +424,7 @@ function changeFeet(biped, values)
    end
 
    parentize.parentize(root)
-   redoFeet()
+   redoFeet(biped, values)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
@@ -358,9 +433,18 @@ end
 function changeHead(biped, values)
    head = copy3(headParts[values.head.shape])
 
+
+
+
    guy.children = guyChildren(biped)
-   parentize.parentize(root)
+
    redoHead(biped, values)
+
+   table.insert(head.children, nose)
+   table.insert(head.children, eye1)
+   table.insert(head.children, eye2)
+
+   parentize.parentize(root)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)

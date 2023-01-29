@@ -38,7 +38,7 @@ require 'src.generatePuppet'
 
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
-myWorld:addSystems(Systems.BasicSystem, Systems.BipedSystem)
+myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 
 
 local pointerInteractees = {}
@@ -525,10 +525,8 @@ function scene.load()
    --eye2 = copy3(eyeParts[values.eyeTypeIndex])
    --addChild(head, eye1)
    --addChild(head, eye2)
-   eye1 = copy3(eyeParts[values.eyes.shape])
-   eye2 = copy3(eyeParts[values.eyes.shape])
-   nose = copy3(noseParts[values.nose.shape])
-   print(inspect(eye1))
+
+   -- print(inspect(eye1))
    head = copy3(headParts[values.head.shape])
    neck = createNeckRubberhose(values)
    body = copy3(bodyParts[values.body.shape])
@@ -543,6 +541,11 @@ function scene.load()
    feet1 = copy3(feetParts[values.feet.shape])
    feet2 = copy3(feetParts[values.feet.shape])
 
+
+   eye1 = copy3(eyeParts[values.eyes.shape])
+   eye2 = copy3(eyeParts[values.eyes.shape])
+   nose = copy3(noseParts[values.nose.shape])
+
    guy = {
       folder = true,
       name = 'guy',
@@ -552,10 +555,10 @@ function scene.load()
 
    biped = Concord.entity()
    biped:give('biped',
-      { guy = guy, body = body, neck = neck, head = head, 
-      eye1 = eye1, eye2 = eye2, nose=nose,
+      { guy = guy, body = body, neck = neck, head = head,
          leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-         arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2, potatoHead = false, values = values
+         arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2,
+         potatoHead = false, values = values
       })
 
    --biped:give('biped', bipedArguments(biped, values))
@@ -565,6 +568,18 @@ function scene.load()
    redoHands(biped, values)
    redoBody(biped, values)
    redoHead(biped, values)
+
+
+   --print(#head.children)
+
+   potato = Concord.entity()
+   potato:give('potato', { body = body, head = head,
+      eye1 = eye1, eye2 = eye2, nose = nose,
+      potatoHead = false, values = values })
+
+   table.insert(head.children, nose)
+   table.insert(head.children, eye1)
+   table.insert(head.children, eye2)
 
    root.children = { guy }
 
@@ -583,32 +598,24 @@ function scene.load()
             }
          )
       end
-
    end
 
-
    stripPath(root, '/experiments/puppet%-maker/')
-
    parentize.parentize(root)
    mesh.meshAll(root)
-   --render.justDoTransforms(root, true)
-   --mesh.recursivelyMakeTextures(root)
    render.renderThings(root)
 
-
-
-
-
    myWorld:addEntity(biped)
+   myWorld:addEntity(potato)
+
    myWorld:emit("bipedInit", biped)
+   myWorld:emit("potatoInit", potato)
+
    render.renderThings(root, true)
    attachCallbacks()
 
-   -- dont understand how imma gonna center on head, body and legs yet
    local bx, by = head.transforms._g:transformPoint(0, 0)
-   --local gx, gy = guy.transforms._g:transformPoint(bx, by)
    local w, h = love.graphics.getDimensions()
-   --local lw, lh = lineart:getDimensions()
 
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
@@ -625,7 +632,6 @@ function attachCallbacks()
       if (math.abs(dyn) > math.abs(dxn)) then
          scrollListIsThrown = { velocity = speed / 10, direction = sign(dyn) }
       end
-
    end)
 
    --Signal.clearPattern('.*') -- clear all signals
