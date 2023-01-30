@@ -4,6 +4,18 @@ local bbox      = require 'lib.bbox'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
 
+
+-- REMEMBER IF YOU SEE BLACK SHADOWING AROUND THE COLORED PARTS
+-- ususally the fix is simply to call a redoX in the changeX too.
+-- for example in changeFeet
+--
+-- parentize.parentize(root)
+-- redoFeet(biped, values)
+-- biped:give('biped', bipedArguments(biped, values))
+-- myWorld:emit("bipedAttachFeet", biped)
+-- mesh.meshAll(root)
+
+
 function getAngleAndDistance(x1, y1, x2, y2)
    local dx = x1 - x2
    local dy = y1 - y2
@@ -83,7 +95,7 @@ function getFlippedMetaObject(flipx, flipy, points)
 end
 
 function guyChildren(e)
-   if (e.biped.potatoHead) then
+   if (e.biped.values.potatoHead) then
       return {
          body,
          leg1, leg2, feet1, feet2,
@@ -102,15 +114,15 @@ function bipedArguments(e, values)
    return {
       guy = guy, body = body, neck = neck, head = head,
       leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2, potatoHead = e.biped.potatoHead, values = values
+      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2,  values = values
    }
 end
 
 function potatoArguments(e, values)
    return {
-      body = body, head = head,
+      head = values.potatoHead and body or head,
       eye1 = eye1, eye2 = eye2, nose = nose,
-      potatoHead = e.potato.potatoHead, values = values
+       values = values  
    }
 end
 
@@ -438,11 +450,53 @@ function changeFeet(biped, values)
    mesh.meshAll(root)
 end
 
+function changeNose(potato, values)
+   local oldNose = nose
+   for i=1, #head.children do
+      if head.children[i] == oldNose then
+         head.children[i] = copy3(noseParts[values.nose.shape])
+         nose = head.children[i]
+      end
+   end
+   parentize.parentize(root)
+   redoNose(potato, values)
+   potato:give('potato', potatoArguments(potato, values))
+   myWorld:emit("potatoInit", potato)
+   mesh.meshAll(root)
+end
+
+function redoNose(potato, values)
+   redoGraphicHelper(nose, 'nose', values)
+end
+
+function redoEyes(potato, values)
+   redoGraphicHelper(eye1, 'eyes', values)
+   redoGraphicHelper(eye2, 'eyes', values)
+end
+
+function changeEyes(biped, values)
+   local oldEye1 = eye1
+   local oldEye2 = eye2
+   for i=1, #head.children do
+      if head.children[i] == oldEye1 then
+         head.children[i] = copy3(eyeParts[values.eyes.shape])
+         eye1 = head.children[i]
+      end
+      if head.children[i] == oldEye2 then
+         head.children[i] = copy3(eyeParts[values.eyes.shape])
+         eye2 = head.children[i]
+      end
+   end
+   parentize.parentize(root)
+   redoEyes(potato, values)
+   potato:give('potato', potatoArguments(potato, values))
+   myWorld:emit("potatoInit", potato)
+   mesh.meshAll(root)
+end
+
+
 function changeHead(biped, values)
    head = copy3(headParts[values.head.shape])
-
-
-
 
    guy.children = guyChildren(biped)
 

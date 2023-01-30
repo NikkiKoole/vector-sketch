@@ -568,20 +568,24 @@ function scene.load()
    redoHands(biped, values)
    redoBody(biped, values)
    redoHead(biped, values)
-
+  
 
    --print(#head.children)
 
    potato = Concord.entity()
-   potato:give('potato', { body = body, head = head,
+   potato:give('potato', { head = head,
       eye1 = eye1, eye2 = eye2, nose = nose,
-      potatoHead = false, values = values })
+       values = values })
 
-   table.insert(head.children, nose)
-   table.insert(head.children, eye1)
+       table.insert(head.children, eye1)
    table.insert(head.children, eye2)
+   table.insert(head.children, nose)
+   
 
    root.children = { guy }
+
+   redoEyes(potato, values)
+   redoNose(potato, values)
 
    if false then
       cameraPoints = {}
@@ -880,13 +884,13 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
 
 end
 
-function buttonHelper(button, bodyPart, param, maxAmount, func)
+function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
    if button then
       values[bodyPart][param] = values[bodyPart][param] + 1
       if values[bodyPart][param] > maxAmount then
          values[bodyPart][param] = 1
       end
-      func(biped, values)
+      func(firstParam, values)
    end
 end
 
@@ -1044,7 +1048,7 @@ function scrollList(draw, clickX, clickY)
    end
 end
 
-function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc)
+function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton = bigButtonWithSmallAroundIt(
       x, y, {
       imgArray[values[param].shape],
@@ -1056,11 +1060,11 @@ function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc)
    )
 
    -- todo maybe parametrize palettes and textures?
-   buttonHelper(shapeButton, param, 'shape', #imgArray, changeFunc)
-   buttonHelper(BGButton, param, 'bgPal', #palettes, redoFunc)
-   buttonHelper(FGTexButton, param, 'fgTex', #textures, redoFunc)
-   buttonHelper(FGButton, param, 'fgPal', #palettes, redoFunc)
-   buttonHelper(LinePalButton, param, 'linePal', #palettes, redoFunc)
+   buttonHelper(shapeButton, param, 'shape', #imgArray, changeFunc, firstParam)
+   buttonHelper(BGButton, param, 'bgPal', #palettes, redoFunc, firstParam)
+   buttonHelper(FGTexButton, param, 'fgTex', #textures, redoFunc, firstParam)
+   buttonHelper(FGButton, param, 'fgPal', #palettes, redoFunc, firstParam)
+   buttonHelper(LinePalButton, param, 'linePal', #palettes, redoFunc, firstParam)
 end
 
 function scene.draw()
@@ -1109,17 +1113,17 @@ function scene.draw()
       prof.push("render-ui")
       if true then
 
-         bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead)
-         bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeHead, redoHead)
+         bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
+         bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
 
-         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck)
-         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeHead, redoHead)
+         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped)
+         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, redoNose, potato)
 
-         bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody)
-         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, redoArms)
-         bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands)
-         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, redoLegs)
-         bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet)
+         bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody, biped)
+         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, redoArms, biped)
+         bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands, biped)
+         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, redoLegs, biped)
+         bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet, biped)
 
          if true then
             love.graphics.setColor(1, 1, 1)

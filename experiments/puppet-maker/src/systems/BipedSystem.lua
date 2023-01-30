@@ -36,7 +36,7 @@ local function getPositionsForArmsAttaching(e)
         local points = body.children[2].points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
 
-        if e.biped.potatoHead then
+        if e.biped.values.potatoHead then
             local a1x, a1y = body.transforms._g:transformPoint(newPoints[7][1], newPoints[7][2])
             local a2x, a2y = body.transforms._g:transformPoint(newPoints[3][1], newPoints[3][2])
             return a1x, a1y, a2x, a2y
@@ -144,11 +144,7 @@ function BipedSystem:update(dt)
 end
 
 function BipedSystem:bipedUsePotatoHead(e, value)
-
-    e.biped.potatoHead = value
-
     guy.children = guyChildren(biped)
-
     parentize.parentize(root)
     mesh.meshAll(root)
     BipedSystem:bipedAttachArms(e)
