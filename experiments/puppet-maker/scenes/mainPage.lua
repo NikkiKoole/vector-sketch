@@ -419,7 +419,7 @@ function scene.load()
 
 
    values = {
-      potatoHead = false,
+      potatoHead = true,
 
       eyes = {
          shape   = 1,
@@ -558,7 +558,7 @@ function scene.load()
       { guy = guy, body = body, neck = neck, head = head,
          leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
          arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2,
-         potatoHead = false, values = values
+         values = values
       })
 
    --biped:give('biped', bipedArguments(biped, values))
@@ -573,13 +573,15 @@ function scene.load()
    --print(#head.children)
 
    potato = Concord.entity()
-   potato:give('potato', { head = head,
+   potato:give('potato', { head = values.potatoHead and body or head,
       eye1 = eye1, eye2 = eye2, nose = nose,
        values = values })
 
-       table.insert(head.children, eye1)
-   table.insert(head.children, eye2)
-   table.insert(head.children, nose)
+   local faceContainer = values.potatoHead and body or head   
+   
+   table.insert(faceContainer.children, eye1)
+   table.insert(faceContainer.children, eye2)
+   table.insert(faceContainer.children, nose)
    
 
    root.children = { guy }
@@ -618,7 +620,7 @@ function scene.load()
    render.renderThings(root, true)
    attachCallbacks()
 
-   local bx, by = head.transforms._g:transformPoint(0, 0)
+   local bx, by = body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
 
    camera.setCameraViewport(cam, w, h)

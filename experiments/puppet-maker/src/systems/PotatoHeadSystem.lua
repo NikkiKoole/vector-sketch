@@ -42,6 +42,7 @@ function PotatoHeadSystem:init(e)
 end
 
 function PotatoHeadSystem:potatoInit(e)
+    print('potatoinit')
     local  nosex, nosey = getPositionForNoseAttaching(e)
     
     e.potato.nose.transforms.l[1] = nosex

@@ -452,10 +452,11 @@ end
 
 function changeNose(potato, values)
    local oldNose = nose
-   for i=1, #head.children do
-      if head.children[i] == oldNose then
-         head.children[i] = copy3(noseParts[values.nose.shape])
-         nose = head.children[i]
+   local container = values.potatoHead and body or head
+   for i=1, #container.children do
+      if container.children[i] == oldNose then
+         container.children[i] = copy3(noseParts[values.nose.shape])
+         nose = container.children[i]
       end
    end
    parentize.parentize(root)
@@ -477,14 +478,15 @@ end
 function changeEyes(biped, values)
    local oldEye1 = eye1
    local oldEye2 = eye2
-   for i=1, #head.children do
-      if head.children[i] == oldEye1 then
-         head.children[i] = copy3(eyeParts[values.eyes.shape])
-         eye1 = head.children[i]
+   local container = values.potatoHead and body or head
+   for i=1, #container.children do
+      if container.children[i] == oldEye1 then
+         container.children[i] = copy3(eyeParts[values.eyes.shape])
+         eye1 = container.children[i]
       end
-      if head.children[i] == oldEye2 then
-         head.children[i] = copy3(eyeParts[values.eyes.shape])
-         eye2 = head.children[i]
+      if container.children[i] == oldEye2 then
+         container.children[i] = copy3(eyeParts[values.eyes.shape])
+         eye2 = container.children[i]
       end
    end
    parentize.parentize(root)
