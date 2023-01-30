@@ -106,6 +106,14 @@ function bipedArguments(e, values)
    }
 end
 
+function potatoArguments(e, values)
+   return {
+      body = body, head = head,
+      eye1 = eye1, eye2 = eye2, nose = nose,
+      potatoHead = e.potato.potatoHead, values = values
+   }
+end
+
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints, flipx, flipy)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
@@ -447,5 +455,7 @@ function changeHead(biped, values)
    parentize.parentize(root)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachHead", biped)
+   potato:give('potato', potatoArguments(potato, values))
+   myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end
