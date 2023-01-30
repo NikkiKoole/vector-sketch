@@ -430,7 +430,9 @@ function scene.load()
          linePal = 1
 
       },
-
+      eyeWidthMultiplier = 1,
+      eyeHeightMultiplier = 1,
+      eyeRotation = 0,
       nose = {
          shape   = 1,
          bgPal   = 4,
@@ -1135,6 +1137,27 @@ function scene.draw()
                values.legs.flipy = values.legs.flipy == -1 and 1 or -1
                redoLegs(biped, values)
 
+            end
+         end
+
+         if true then
+            local v = h_slider("eye-width", 325 - 25, 100 - 75, 50, values.eyeWidthMultiplier, .1, 5)
+            if v.value then
+               values.eyeWidthMultiplier = v.value
+               eye1.transforms.l[4] = v.value
+               eye2.transforms.l[4] = v.value * -1
+            end
+            local v = h_slider("eye-height", 325 - 25, 100 - 50, 50, values.eyeHeightMultiplier, .1, 5)
+            if v.value then
+               values.eyeWidthMultiplier = v.value
+               eye1.transforms.l[5] = v.value
+               eye2.transforms.l[5] = v.value
+            end
+            local v = h_slider("eye-rotation", 325 - 25, 100 - 25, 50, values.eyeRotation, 0, 2 * math.pi)
+            if v.value then
+               values.eyeRotation = v.value
+               eye1.transforms.l[3] = v.value
+               eye2.transforms.l[3] = -v.value
             end
          end
 
