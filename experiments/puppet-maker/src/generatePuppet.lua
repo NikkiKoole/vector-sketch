@@ -114,7 +114,7 @@ function bipedArguments(e, values)
    return {
       guy = guy, body = body, neck = neck, head = head,
       leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2,  values = values
+      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2, values = values
    }
 end
 
@@ -122,7 +122,7 @@ function potatoArguments(e, values)
    return {
       head = values.potatoHead and body or head,
       eye1 = eye1, eye2 = eye2, nose = nose,
-       values = values  
+      values = values
    }
 end
 
@@ -295,7 +295,13 @@ function changeBody(biped, values)
 
    parentize.parentize(root)
 
-   redoBody(biped, values) --- this position is very iportant, if i move redoBody under the meshall we get these borders aorund images
+   redoBody(biped, values) --- this position is very iportant,
+   --  if i move redoBody under the meshall we get these borders aorund images
+
+   if (values.potatoHead) then
+      attachAllFaceParts()
+   end
+
    mesh.meshAll(root)
 
    render.justDoTransforms(root)
@@ -453,7 +459,7 @@ end
 function changeNose(potato, values)
    local oldNose = nose
    local container = values.potatoHead and body or head
-   for i=1, #container.children do
+   for i = 1, #container.children do
       if container.children[i] == oldNose then
          container.children[i] = copy3(noseParts[values.nose.shape])
          nose = container.children[i]
@@ -479,7 +485,7 @@ function changeEyes(biped, values)
    local oldEye1 = eye1
    local oldEye2 = eye2
    local container = values.potatoHead and body or head
-   for i=1, #container.children do
+   for i = 1, #container.children do
       if container.children[i] == oldEye1 then
          container.children[i] = copy3(eyeParts[values.eyes.shape])
          eye1 = container.children[i]
@@ -496,7 +502,6 @@ function changeEyes(biped, values)
    mesh.meshAll(root)
 end
 
-
 function changeHead(biped, values)
    head = copy3(headParts[values.head.shape])
 
@@ -504,14 +509,12 @@ function changeHead(biped, values)
 
    redoHead(biped, values)
 
-   table.insert(head.children, nose)
-   table.insert(head.children, eye1)
-   table.insert(head.children, eye2)
+   if (not values.potatoHead) then
+      attachAllFaceParts()
+   end
 
    parentize.parentize(root)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachHead", biped)
-   potato:give('potato', potatoArguments(potato, values))
-   myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end

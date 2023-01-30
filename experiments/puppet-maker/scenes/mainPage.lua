@@ -571,21 +571,21 @@ function scene.load()
    redoHands(biped, values)
    redoBody(biped, values)
    redoHead(biped, values)
-  
+
 
    --print(#head.children)
 
    potato = Concord.entity()
    potato:give('potato', { head = values.potatoHead and body or head,
       eye1 = eye1, eye2 = eye2, nose = nose,
-       values = values })
+      values = values })
 
-   local faceContainer = values.potatoHead and body or head   
-   
+   local faceContainer = values.potatoHead and body or head
+
    table.insert(faceContainer.children, eye1)
    table.insert(faceContainer.children, eye2)
    table.insert(faceContainer.children, nose)
-   
+
 
    root.children = { guy }
 
@@ -700,9 +700,32 @@ function attachCallbacks()
          print('focus camera on third other shape', x, y)
       end
       if key == 'b' then
+
+         -- local removeFrom = values.potatoHead and body or head
+
+
          values.potatoHead = not values.potatoHead
-         myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
+         attachAllFaceParts()
       end
+   end
+
+   function attachAllFaceParts()
+      removeChild(eye1)
+      removeChild(eye2)
+      removeChild(nose)
+      local addTo = values.potatoHead and body or head
+
+
+
+      table.insert(addTo.children, eye1)
+      table.insert(addTo.children, eye2)
+      table.insert(addTo.children, nose)
+
+
+      myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
+      myWorld:emit('potatoInit', potato)
+      changeNose(potato, values)
+      changeEyes(potato, values)
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -1174,7 +1197,7 @@ function scene.draw()
                nose.transforms.l[5] = v.value
 
             end
-         
+
          end
 
          if true then
@@ -1210,6 +1233,7 @@ function scene.draw()
                body.transforms.l[4] = v.value
                body.dirty = true
                transforms.setTransforms(body)
+               myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
@@ -1222,6 +1246,7 @@ function scene.draw()
                body.transforms.l[5] = v.value
                body.dirty = true
                transforms.setTransforms(body)
+               myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
@@ -1232,6 +1257,7 @@ function scene.draw()
             if b then
                values.body.flipy = values.body.flipy == -1 and 1 or -1
                redoBody(biped, values)
+               myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
@@ -1242,6 +1268,7 @@ function scene.draw()
             if b then
                values.body.flipx = values.body.flipx == -1 and 1 or -1
                redoBody(biped, values)
+               myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
                myWorld:emit("bipedAttachLegs", biped) -- todo
                myWorld:emit("bipedAttachArms", biped) -- todo
