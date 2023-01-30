@@ -442,7 +442,8 @@ function scene.load()
          linePal = 1
 
       },
-
+      noseWidthMultiplier = 1,
+      noseHeightMultiplier = 1,
 
       legs = {
          shape   = 1,
@@ -1159,6 +1160,21 @@ function scene.draw()
                eye1.transforms.l[3] = v.value
                eye2.transforms.l[3] = -v.value
             end
+         end
+
+         if true then
+            local v = h_slider("nose-width", 325 - 25, 250 - 75, 50, values.noseWidthMultiplier, .1, 5)
+            if v.value then
+               values.noseWidthMultiplier = v.value
+               nose.transforms.l[4] = v.value
+            end
+            local v = h_slider("nose-height", 325 - 25, 250 - 50, 50, values.noseHeightMultiplier, .1, 5)
+            if v.value then
+               values.noseWidthMultiplier = v.value
+               nose.transforms.l[5] = v.value
+
+            end
+         
          end
 
          if true then
