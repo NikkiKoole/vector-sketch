@@ -92,11 +92,37 @@ bbox.getPointsBBoxFlat = function(points)
    return tlx, tly, brx, bry
 end
 
+-- this works better fro hittesting the drawn figures,
+bbox.getBBoxRecursiveVersion2 = function(node)
+   if node.children then
+      transform.setTransforms(node)
+      local p2 = { math.huge, math.huge, -math.huge, -math.huge }
+
+      for i = 1, #node.children do
+         if node.children[i].points then
+            local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
+            if tlx < p2[1] then p2[1] = tlx end
+            if tly < p2[2] then p2[2] = tly end
+            if brx > p2[3] then p2[3] = brx end
+            if bry > p2[4] then p2[4] = bry end
+         end
+      end
+
+      local tlxg, tlyg = node.transforms._g:transformPoint(p2[1], p2[2])
+      local brxg, bryg = node.transforms._g:transformPoint(p2[3], p2[4])
+      return { tlxg, tlyg, brxg, bryg }
+
+
+   end
+end
+
+-- i havent looked deeply in all places where this is used to see if the version2 above would work better
 bbox.getBBoxRecursive = function(node)
    if node.children then
       transform.setTransforms(node)
       -- first try to get as deep as possible
       local p1 = { math.huge, math.huge, -math.huge, -math.huge }
+      -- -- [[]]
       for i = 1, #node.children do
          if node.children[i].folder then
             local r = bbox.getBBoxRecursive(node.children[i])
@@ -107,19 +133,19 @@ bbox.getBBoxRecursive = function(node)
             if r[4] > p1[4] then p1[4] = r[4] end
          end
       end
-
+      --  --]]
       local p2 = { math.huge, math.huge, -math.huge, -math.huge }
+
       for i = 1, #node.children do
          if node.children[i].points then
-            --local r = getBBoxR2(node.children[i])
             local tlx, tly, brx, bry = bbox.getPointsBBox(node.children[i].points)
             if tlx < p2[1] then p2[1] = tlx end
             if tly < p2[2] then p2[2] = tly end
             if brx > p2[3] then p2[3] = brx end
             if bry > p2[4] then p2[4] = bry end
-
          end
       end
+
       local tlxg, tlyg = node.transforms._g:transformPoint(p2[1], p2[2])
       local brxg, bryg = node.transforms._g:transformPoint(p2[3], p2[4])
 
@@ -129,6 +155,9 @@ bbox.getBBoxRecursive = function(node)
          math.max(bryg, p1[4]) }
 
 
+   else
+      print('what is this for a thing')
+      print(node.name, #node.points)
    end
 
 
@@ -184,17 +213,17 @@ end
 
 
 bbox.drillDownForFirstBBox = function(node)
-  -- local tlx, tly, brx, bry = bbox.getDirectChildrenBBox(node)
-  -- if (tlx == math.huge and tly == math.huge and brx == -math.huge and bry == -math.huge) then
-      for i = 1, #node.children do
-         local tlx, tly, brx, bry = bbox.getDirectChildrenBBox(node.children[i])
-         if (tlx ~= math.huge and tly ~= math.huge and brx ~= -math.huge and bry ~= -math.huge) then
-            return tlx, tly, brx, bry
-         end
+   -- local tlx, tly, brx, bry = bbox.getDirectChildrenBBox(node)
+   -- if (tlx == math.huge and tly == math.huge and brx == -math.huge and bry == -math.huge) then
+   for i = 1, #node.children do
+      local tlx, tly, brx, bry = bbox.getDirectChildrenBBox(node.children[i])
+      if (tlx ~= math.huge and tly ~= math.huge and brx ~= -math.huge and bry ~= -math.huge) then
+         return tlx, tly, brx, bry
       end
-  --- else
-  --    return tlx, tly, brx, bry
-  -- end
+   end
+   --- else
+   --    return tlx, tly, brx, bry
+   -- end
 end
 
 bbox.getDirectChildrenBBox = function(node)
@@ -219,10 +248,10 @@ bbox.getDirectChildrenBBox = function(node)
       print('no direct children you pancake!')
       -- todo make a simpler drilling down algo
       if node.children then
-      local tlx, tly, brx, bry = bbox.drillDownForFirstBBox(node)
-      return tlx, tly, brx, bry
+         local tlx, tly, brx, bry = bbox.drillDownForFirstBBox(node)
+         return tlx, tly, brx, bry
       else
-         return 0,0,0,0,0
+         return 0, 0, 0, 0, 0
       end
       -- return 0, 0, 0, 0
    else

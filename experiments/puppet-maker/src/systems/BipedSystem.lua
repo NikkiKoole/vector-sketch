@@ -102,8 +102,10 @@ end
 function BipedSystem:bipedInit(e)
     print('bipedinpnt', e)
     --  local body     = e.biped.body
+    e.biped.body.transforms.l[3] = math.pi / 2
+    transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
-    e.biped.body.transforms.l[3] = 0
+
 
 
     e.biped.leg1.points[1] = { l1x, l1y }
