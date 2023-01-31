@@ -348,8 +348,6 @@ function scene.load()
    settingsScrollArea = nil
    settingsScrollPosition = 0
 
-
-   --uiImg = love.graphics.newImage('assets/ui2.png')
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
    headz = {}

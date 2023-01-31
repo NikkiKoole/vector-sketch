@@ -57,11 +57,15 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.eye2.transforms.l[1] = eyex2
     e.potato.eye2.transforms.l[2] = eyey2
 
+
+    local newPoints = getPoints(e)
+    local browY = numbers.lerp( eyey1, newPoints[1][2],  0.5)
+
     e.potato.brow1.transforms.l[1] = eyex1
-    e.potato.brow1.transforms.l[2] = -200
+    e.potato.brow1.transforms.l[2] = browY
 
     e.potato.brow2.transforms.l[1] = eyex2
-    e.potato.brow2.transforms.l[2] = -200
+    e.potato.brow2.transforms.l[2] = browY
 end
 
 
