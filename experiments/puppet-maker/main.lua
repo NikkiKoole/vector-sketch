@@ -75,7 +75,7 @@ function love.update(dt)
       SM.update(dt)
    end
    --collectgarbage()
-   manual_gc(0.001, 2)
+   manual_gc(0.002, 2)
 end
 
 function love.draw()
@@ -90,6 +90,6 @@ end
 function love.quit()
    -- this takes annoyingly long
    --time = love.timer.getTime( )
-   --prof.write("prof.mpack")
+   prof.write("prof.mpack")
    --print('writing took', love.timer.getTime( ) - time , 'seconds' )
 end
