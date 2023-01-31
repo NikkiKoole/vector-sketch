@@ -121,10 +121,66 @@ end
 function potatoArguments(e, values)
    return {
       head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, nose = nose,
+      eye1 = eye1, eye2 = eye2, brow1 = brow1, brow2 = brow2, nose = nose,
       values = values
    }
 end
+
+
+function createBrowBezier(values, points)
+   
+
+   return createBezierFromImage(
+      browImgUrls[values.brows.shape],
+      palettes[values.brows.bgPal], palettes[values.brows.fgPal],
+      textures[values.brows.bgTex], textures[values.brows.fgTex], palettes[values.brows.linePal],
+    
+      points)
+end
+
+function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx, flipy)
+   local img = mesh.getImage(url)
+   local width, height = img:getDimensions()
+   local currentNode = {}
+   currentNode =   {
+      color = { 0, 0, 0, 1 },
+      data = {
+        length = height,
+        steps = 15,
+        width = width/2
+      },
+      name = "beziered",
+      points =  optionalPoints or { { height/2, 0 }, { 0, 0 }, { -height/2, 0 } },
+      texture = {
+        filter = "linear",
+        url = url,
+        wrap = "repeat"
+      },
+      type = "bezier"
+    } 
+
+    if (true) then
+      local lineart = img
+      local maskUrl = getPNGMaskUrl(url)
+      local mask = mesh.getImage(maskUrl)
+      if mask then
+         local cnv = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lp, flipx, flipy)
+         currentNode.chidlren[1].texture.retexture = love.graphics.newImage(cnv)
+      end
+   end
+
+
+   local result = {}
+   result.folder = true
+   result.transforms = {
+      l = { 0, 0, 0, 1, 1, 0, 0 }
+   }
+   result.children = { currentNode}
+   print('jo!')
+   return result
+
+end
+
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints, flipx, flipy)
    local img = mesh.getImage(url)
@@ -160,6 +216,8 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
          currentNode.texture.retexture = love.graphics.newImage(cnv)
       end
    end
+
+
 
    return currentNode
 end
@@ -218,6 +276,7 @@ function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor, flipx, flipy)
       if p.texture.canvas then
          p.texture.canvas:release()
       end
+      
       local m = mesh.makeMeshFromSibling(p, canvas)
       canvas:release()
       p.texture.canvas = m
@@ -481,6 +540,35 @@ function redoEyes(potato, values)
    redoGraphicHelper(eye2, 'eyes', values)
 end
 
+function redoBrows(potato, values)
+   
+   local oldBrow1 = brow1
+   local oldBrow2 = brow2
+  
+   local container = values.potatoHead and body or head
+   for i = 1, #container.children do
+      if container.children[i] == oldBrow1 then
+         container.children[i] =  createBrowBezier(values, brow1.points) 
+         brow1 = container.children[i]
+      end
+      if container.children[i] == oldBrow2 then
+         container.children[i] =  createBrowBezier(values, brow2.points) 
+         brow2 = container.children[i]
+      end
+   end
+
+   parentize.parentize(root)
+
+   potato:give('potato', potatoArguments(potato, values))
+   myWorld:emit("potatoInit", potato)
+
+  
+   mesh.meshAll(root)
+   --redoGraphicHelper(brow1, 'brows', values)
+   --redoGraphicHelper(brow2, 'brows', values)
+end
+
+
 function changeEyes(biped, values)
    local oldEye1 = eye1
    local oldEye2 = eye2
@@ -497,6 +585,7 @@ function changeEyes(biped, values)
    end
    parentize.parentize(root)
    redoEyes(potato, values)
+   redoBrows(potato,values)
    potato:give('potato', potatoArguments(potato, values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)

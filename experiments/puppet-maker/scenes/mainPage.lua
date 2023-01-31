@@ -240,6 +240,26 @@ local function rgbToHex(r, g, b)
    return string.format("%x", rgb)
 end
 
+local function loadGroupFromFile(url, groupName)
+   local imgs = {}
+   local parts = {}
+
+   local whole = parse.parseFile(url)
+   local group = node.findNodeByName(whole, groupName) or {}
+--print(inspect(eyes))
+for i = 1, #group.children do
+   local p = group.children[i]
+   stripPath(p, '/experiments/puppet%-maker/')
+   for j = 1, #p.children do
+      if p.children[j].texture then
+         imgs[i] = p.children[j].texture.url
+         parts[i] = group.children[i]
+      end
+   end
+end
+return imgs, parts
+end
+
 function scene.load()
 
    bgColor = creamColor
@@ -389,36 +409,12 @@ function scene.load()
 
    local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
 
-   eyeImgUrls = {}
-   eyeParts = {}
-   local eyes = node.findNodeByName(faceparts, 'eyes') or {}
-   --print(inspect(eyes))
-   for i = 1, #eyes.children do
-      local p = eyes.children[i]
-      stripPath(p, '/experiments/puppet%-maker/')
-      for j = 1, #p.children do
-         if p.children[j].texture then
-            eyeImgUrls[i] = p.children[j].texture.url
-            eyeParts[i] = eyes.children[i]
-         end
-      end
-   end
 
-   noseImgUrls = {}
-   noseParts = {}
-   local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
-   local noses = node.findNodeByName(faceparts, 'noses') or {}
-   for i = 1, #noses.children do
-      local p = noses.children[i]
-      stripPath(p, '/experiments/puppet%-maker/')
-      for j = 1, #p.children do
-         if p.children[j].texture then
-            noseImgUrls[i] = p.children[j].texture.url
-            noseParts[i] = noses.children[i]
-         end
-      end
-   end
 
+   eyeImgUrls, eyeParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyes')
+   noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
+   browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
+ 
 
    values = {
       potatoHead = true,
@@ -435,6 +431,15 @@ function scene.load()
       eyeWidthMultiplier = 1,
       eyeHeightMultiplier = 1,
       eyeRotation = 0,
+      brows = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+
+      },
       nose = {
          shape   = 1,
          bgPal   = 4,
@@ -524,14 +529,6 @@ function scene.load()
       },
    }
 
-
-   --stripPath(head, '/experiments/puppet%-maker/')
-   --eye1 = copy3(eyeParts[values.eyeTypeIndex])
-   --eye2 = copy3(eyeParts[values.eyeTypeIndex])
-   --addChild(head, eye1)
-   --addChild(head, eye2)
-
-   -- print(inspect(eye1))
    head = copy3(headParts[values.head.shape])
    neck = createNeckRubberhose(values)
    body = copy3(bodyParts[values.body.shape])
@@ -549,6 +546,10 @@ function scene.load()
 
    eye1 = copy3(eyeParts[values.eyes.shape])
    eye2 = copy3(eyeParts[values.eyes.shape])
+   brow1 = copy3(browParts[values.brows.shape])
+   brow2 = copy3(browParts[values.brows.shape])
+
+
    nose = copy3(noseParts[values.nose.shape])
 
    guy = {
@@ -579,19 +580,22 @@ function scene.load()
 
    potato = Concord.entity()
    potato:give('potato', { head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, nose = nose,
+      eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2, 
       values = values })
 
    local faceContainer = values.potatoHead and body or head
 
    table.insert(faceContainer.children, eye1)
    table.insert(faceContainer.children, eye2)
+   table.insert(faceContainer.children, brow1)
+   table.insert(faceContainer.children, brow2)
    table.insert(faceContainer.children, nose)
 
 
    root.children = { guy }
 
    redoEyes(potato, values)
+   redoBrows(potato, values)
    redoNose(potato, values)
 
    if false then
@@ -715,12 +719,16 @@ function attachCallbacks()
       removeChild(eye1)
       removeChild(eye2)
       removeChild(nose)
+      removeChild(brow1)
+      removeChild(brow2)
       local addTo = values.potatoHead and body or head
 
 
 
       table.insert(addTo.children, eye1)
       table.insert(addTo.children, eye2)
+      table.insert(addTo.children, brow1)
+      table.insert(addTo.children, brow2)
       table.insert(addTo.children, nose)
 
 

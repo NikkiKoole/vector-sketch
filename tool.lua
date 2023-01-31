@@ -1332,7 +1332,10 @@ local function drawUIAroundGraphNodes(w, h)
             )
          end
       end
-
+      if (currentNode and currentNode.texture) then
+         LG.setColor(1, 1, 1, 1)
+         LG.print(currentNode.texture.url, 10, h-40)
+      end
       if currentNode.type == 'rubberhose' then
          LG.setFont(smallest)
 

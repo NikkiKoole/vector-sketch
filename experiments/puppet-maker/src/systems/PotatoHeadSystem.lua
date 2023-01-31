@@ -56,6 +56,12 @@ function PotatoHeadSystem:potatoInit(e)
 
     e.potato.eye2.transforms.l[1] = eyex2
     e.potato.eye2.transforms.l[2] = eyey2
+
+    e.potato.brow1.transforms.l[1] = eyex1
+    e.potato.brow1.transforms.l[2] = -200
+
+    e.potato.brow2.transforms.l[1] = eyex2
+    e.potato.brow2.transforms.l[2] = -200
 end
 
 
