@@ -79,7 +79,9 @@ function love.update(dt)
 end
 
 function love.draw()
+
    SM.draw()
+
 end
 
 function love.resize(w, h)

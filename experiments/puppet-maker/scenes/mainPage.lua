@@ -246,18 +246,18 @@ local function loadGroupFromFile(url, groupName)
 
    local whole = parse.parseFile(url)
    local group = node.findNodeByName(whole, groupName) or {}
---print(inspect(eyes))
-for i = 1, #group.children do
-   local p = group.children[i]
-   stripPath(p, '/experiments/puppet%-maker/')
-   for j = 1, #p.children do
-      if p.children[j].texture then
-         imgs[i] = p.children[j].texture.url
-         parts[i] = group.children[i]
+   --print(inspect(eyes))
+   for i = 1, #group.children do
+      local p = group.children[i]
+      stripPath(p, '/experiments/puppet%-maker/')
+      for j = 1, #p.children do
+         if p.children[j].texture then
+            imgs[i] = p.children[j].texture.url
+            parts[i] = group.children[i]
+         end
       end
    end
-end
-return imgs, parts
+   return imgs, parts
 end
 
 function scene.load()
@@ -412,7 +412,7 @@ function scene.load()
    eyeImgUrls, eyeParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyes')
    noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
- 
+
 
    values = {
       potatoHead = true,
@@ -578,7 +578,7 @@ function scene.load()
 
    potato = Concord.entity()
    potato:give('potato', { head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2, 
+      eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2,
       values = values })
 
    local faceContainer = values.potatoHead and body or head
@@ -595,7 +595,7 @@ function scene.load()
    redoEyes(potato, values)
    redoBrows(potato, values)
    redoNose(potato, values)
-
+   changeNose(potato, values)
    if false then
       cameraPoints = {}
       local W, H = love.graphics.getDimensions()
@@ -1182,7 +1182,7 @@ function scene.draw()
             end
             local v = h_slider("eye-height", 325 - 25, 100 - 50, 50, values.eyeHeightMultiplier, .1, 5)
             if v.value then
-               values.eyeWidthMultiplier = v.value
+               values.eyeHeightMultiplier = v.value
                eye1.transforms.l[5] = v.value
                eye2.transforms.l[5] = v.value
             end
@@ -1251,9 +1251,9 @@ function scene.draw()
                transforms.setTransforms(body)
                myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped) -- todo
-               myWorld:emit("bipedAttachArms", biped) -- todo
-               myWorld:emit("bipedAttachHands", biped) -- todo
+               myWorld:emit("bipedAttachLegs", biped)
+               myWorld:emit("bipedAttachArms", biped)
+               myWorld:emit("bipedAttachHands", biped)
 
             end
             v = h_slider("body-height", 150 - 25, 400 - 50, 50, values.bodyHeightMultiplier, .1, 5)
@@ -1264,9 +1264,9 @@ function scene.draw()
                transforms.setTransforms(body)
                myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped) -- todo
-               myWorld:emit("bipedAttachArms", biped) -- todo
-               myWorld:emit("bipedAttachHands", biped) -- todo
+               myWorld:emit("bipedAttachLegs", biped)
+               myWorld:emit("bipedAttachArms", biped)
+               myWorld:emit("bipedAttachHands", biped)
             end
             love.graphics.circle('fill', 150, 400, 10)
             local b = ui.getUICircle(150, 400, 10)
@@ -1275,9 +1275,9 @@ function scene.draw()
                redoBody(biped, values)
                myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped) -- todo
-               myWorld:emit("bipedAttachArms", biped) -- todo
-               myWorld:emit("bipedAttachHands", biped) -- todo
+               myWorld:emit("bipedAttachLegs", biped)
+               myWorld:emit("bipedAttachArms", biped)
+               myWorld:emit("bipedAttachHands", biped)
             end
             love.graphics.circle('fill', 170, 400, 10)
             local b = ui.getUICircle(170, 400, 10)
@@ -1286,9 +1286,9 @@ function scene.draw()
                redoBody(biped, values)
                myWorld:emit('potatoInit', potato)
                myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped) -- todo
-               myWorld:emit("bipedAttachArms", biped) -- todo
-               myWorld:emit("bipedAttachHands", biped) -- todo
+               myWorld:emit("bipedAttachLegs", biped)
+               myWorld:emit("bipedAttachArms", biped)
+               myWorld:emit("bipedAttachHands", biped)
             end
          end
 
