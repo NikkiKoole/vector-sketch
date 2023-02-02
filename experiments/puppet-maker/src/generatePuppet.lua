@@ -176,7 +176,7 @@ function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx,
       l = { 0, 0, 0, 1, 1, 0, 0 }
    }
    result.children = { currentNode }
-   print('jo!')
+   --print('jo!')
    return result
 
 end
@@ -258,8 +258,34 @@ local function createRectangle(x, y, w, h, r, g, b)
    return result
 end
 
+
+local function getIndexOfGraphicPart(part)
+   if part.children then
+      local metaIndex = nil
+      for i =1, #part.children do
+            if part.children[i].type == 'meta' then
+               metaIndex = i
+            end
+      end
+      if metaIndex then return metaIndex-1 end
+      return 1
+
+   end
+end
+
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor, flipx, flipy)
-   local p = part.children and part.children[1] or part
+   -- todo this index needs to be dynamically found
+   -- find the index of the meta type thing, and its one before that,
+   -- or if no meta thing 
+   -- or maybe I should work with naming convention of the generated ones
+      
+   --for i =1, #part.children do
+   --   print(i, part.children[i].name or "", part.children[i].type)
+
+   --end
+   local index = getIndexOfGraphicPart(part)
+   --print('index', index)
+   local p = part.children and part.children[index] or part
 
    local lineartUrl = p.texture.url
    local lineart = mesh.getImage(lineartUrl, p.texture)

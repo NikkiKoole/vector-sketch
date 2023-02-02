@@ -594,10 +594,12 @@ function scene.load()
 
    local faceContainer = values.potatoHead and body or head
 
+
+   -- todo the index stuff is not correct yet, check redoTheGraphicInPart
    table.insert(faceContainer.children, eye1)
    table.insert(faceContainer.children, eye2)
-   table.insert(faceContainer.children, ear1)
-   table.insert(faceContainer.children, ear2)
+   table.insert(faceContainer.children, 1,ear1)
+   table.insert(faceContainer.children, 1,ear2)
    table.insert(faceContainer.children, brow1)
    table.insert(faceContainer.children, brow2)
    table.insert(faceContainer.children, nose)
@@ -739,7 +741,7 @@ function attachCallbacks()
       removeChild(ear2)
       local addTo = values.potatoHead and body or head
 
-
+      print('hello!')
 
       table.insert(addTo.children, eye1)
       table.insert(addTo.children, eye2)
@@ -1263,6 +1265,7 @@ function scene.draw()
             local b = ui.getUICircle(150, 100, 10)
             if b then
                values.head.flipy = values.head.flipy == -1 and 1 or -1
+               --print('hi hello')
                redoHead(biped, values)
                myWorld:emit('potatoInit', potato)
             end
