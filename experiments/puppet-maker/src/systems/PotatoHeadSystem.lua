@@ -7,10 +7,20 @@ local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 function getPoints(e)
     local parent = e.potato.head
     local parentName = e.potato.values.potatoHead and 'body' or 'head'
-    if parent.children[2] and parent.children[2].type == 'meta' and #parent.children[2].points == 8 then
+
+    local metaObject = nil
+    for i=1, #parent.children do
+       -- print(i, parent.children[i].type == 'meta' , #parent.children[i].points == 8)
+        if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
+            metaObject =  parent.children[i]
+          
+        end
+    end
+
+    if metaObject then
         local flipx = e.potato.values[parentName].flipx or 1
         local flipy = e.potato.values[parentName].flipy or 1
-        local points = parent.children[2].points
+        local points = metaObject.points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
         return newPoints
     end
