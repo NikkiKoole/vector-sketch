@@ -1203,6 +1203,14 @@ function scene.draw()
          bigButtonHelper(225, 700, 'brows', browImgUrls, redoBrows, redoBrows, potato)
 
          if true then
+            love.graphics.setColor(1, 0, 1)
+            love.graphics.circle('fill', 500, 100, 10)
+            local b = ui.getUICircle(500, 100   , 10)
+            if b then
+               values.earUnderHead = not values.earUnderHead
+               attachAllFaceParts()
+
+            end
             local v = h_slider("ear-rotation", 500 - 25, 100 - 75, 50, values.earRotation, 0, 2 * math.pi)
             if v.value then
                values.earRotation = v.value
