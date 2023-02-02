@@ -3,24 +3,24 @@ local numbers = require 'lib.numbers'
 
 local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 
+local function getMeta(parent)
+    for i=1, #parent.children do
+        if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
+            return parent.children[i]
+        end
+    end
+end
+
 
 function getPoints(e)
     local parent = e.potato.head
     local parentName = e.potato.values.potatoHead and 'body' or 'head'
+    local meta = getMeta(parent)
 
-    local metaObject = nil
-    for i=1, #parent.children do
-       -- print(i, parent.children[i].type == 'meta' , #parent.children[i].points == 8)
-        if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
-            metaObject =  parent.children[i]
-          
-        end
-    end
-
-    if metaObject then
+    if meta then
         local flipx = e.potato.values[parentName].flipx or 1
         local flipy = e.potato.values[parentName].flipy or 1
-        local points = metaObject.points
+        local points = meta.points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
         return newPoints
     end

@@ -437,6 +437,7 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
+      earRotation = 0,
       brows = {
          shape   = 1,
          bgPal   = 4,
@@ -1184,6 +1185,16 @@ function scene.draw()
          bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, changeLegs, biped)
          bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet, biped)
          bigButtonHelper(225, 700, 'brows', browImgUrls, redoBrows, redoBrows, potato)
+
+         if true then
+            local v = h_slider("ear-rotation", 500 - 25, 100 - 75, 50, values.earRotation, 0, 2 * math.pi)
+            if v.value then
+               values.earRotation = v.value
+               ear1.transforms.l[3] = v.value
+               ear2.transforms.l[3] = -v.value
+            end
+         end
+
          if true then
             love.graphics.setColor(1, 0, 1)
             love.graphics.circle('fill', 150, 550, 10)
