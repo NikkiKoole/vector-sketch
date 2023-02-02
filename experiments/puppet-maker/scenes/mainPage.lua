@@ -412,7 +412,7 @@ function scene.load()
    eyeImgUrls, eyeParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyes')
    noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
-
+   earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
 
    values = {
       potatoHead = true,
@@ -429,6 +429,14 @@ function scene.load()
       eyeWidthMultiplier = 1,
       eyeHeightMultiplier = 1,
       eyeRotation = 0,
+      ears = {
+         shape   = 1,
+         bgPal   = 4,
+         fgPal   = 1,
+         bgTex   = 1,
+         fgTex   = 2,
+         linePal = 1
+      },
       brows = {
          shape   = 1,
          bgPal   = 4,
@@ -436,7 +444,6 @@ function scene.load()
          bgTex   = 1,
          fgTex   = 2,
          linePal = 1
-
       },
       nose = {
          shape   = 1,
@@ -547,6 +554,9 @@ function scene.load()
    brow1 = copy3(browParts[values.brows.shape])
    brow2 = copy3(browParts[values.brows.shape])
 
+   ear1 = copy3(earParts[values.ears.shape])
+   ear2 = copy3(earParts[values.ears.shape])
+
 
    nose = copy3(noseParts[values.nose.shape])
 
@@ -578,13 +588,15 @@ function scene.load()
 
    potato = Concord.entity()
    potato:give('potato', { head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2,
+      eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2, ear1 = ear1, ear2 = ear2,
       values = values })
 
    local faceContainer = values.potatoHead and body or head
 
    table.insert(faceContainer.children, eye1)
    table.insert(faceContainer.children, eye2)
+   table.insert(faceContainer.children, ear1)
+   table.insert(faceContainer.children, ear2)
    table.insert(faceContainer.children, brow1)
    table.insert(faceContainer.children, brow2)
    table.insert(faceContainer.children, nose)
@@ -593,6 +605,9 @@ function scene.load()
    root.children = { guy }
 
    redoEyes(potato, values)
+   --
+   --changeEars(potato, values)
+   redoEars(potato, values)
    redoBrows(potato, values)
    redoNose(potato, values)
    changeNose(potato, values)
@@ -719,12 +734,16 @@ function attachCallbacks()
       removeChild(nose)
       removeChild(brow1)
       removeChild(brow2)
+      removeChild(ear1)
+      removeChild(ear2)
       local addTo = values.potatoHead and body or head
 
 
 
       table.insert(addTo.children, eye1)
       table.insert(addTo.children, eye2)
+      table.insert(addTo.children, ear1)
+      table.insert(addTo.children, ear2)
       table.insert(addTo.children, brow1)
       table.insert(addTo.children, brow2)
       table.insert(addTo.children, nose)
@@ -1151,24 +1170,27 @@ function scene.draw()
       if true then
 
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
+
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
 
-         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped)
-         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, redoNose, potato)
+         bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)
+
+         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped) --
+         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, changeNose, potato)
 
          bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody, biped)
-         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, redoArms, biped)
+         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, changeArms, biped)
          bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands, biped)
-         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, redoLegs, biped)
+         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, changeLegs, biped)
          bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet, biped)
-
+         bigButtonHelper(225, 700, 'brows', browImgUrls, redoBrows, redoBrows, potato)
          if true then
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(1, 0, 1)
             love.graphics.circle('fill', 150, 550, 10)
             local b = ui.getUICircle(150, 550, 10)
             if b then
                values.legs.flipy = values.legs.flipy == -1 and 1 or -1
-               redoLegs(biped, values)
+               changeLegs(biped, values)
 
             end
          end
@@ -1296,12 +1318,12 @@ function scene.draw()
             v = h_slider("leg-length", 150 - 25, 550 - 75, 50, values.legLength, 200, 2000)
             if v.value then
                values.legLength = v.value
-               redoLegs(biped, values)
+               changeLegs(biped, values)
             end
             v = h_slider("leg-width-multiplier", 150 - 25, 550 - 50, 50, values.legWidthMultiplier, 0.1, 2)
             if v.value then
                values.legWidthMultiplier = v.value
-               redoLegs(biped, values)
+               changeLegs(biped, values)
             end
          end
       end

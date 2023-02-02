@@ -5,7 +5,7 @@ local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 
 
 function getPoints(e)
-    local parent = e.potato.head 
+    local parent = e.potato.head
     local parentName = e.potato.values.potatoHead and 'body' or 'head'
     if parent.children[2] and parent.children[2].type == 'meta' and #parent.children[2].points == 8 then
         local flipx = e.potato.values[parentName].flipx or 1
@@ -15,15 +15,15 @@ function getPoints(e)
         return newPoints
     end
     return {}
-end  
+end
 
 local function getPositionForNoseAttaching(e)
     local newPoints = getPoints(e)
     local x = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
     local y = numbers.lerp(newPoints[7][2], newPoints[3][2], 0.5)
-      
+
     return x, y
-   
+
 end
 
 function getPositionsForEyesAttaching(e)
@@ -31,10 +31,10 @@ function getPositionsForEyesAttaching(e)
     local mx = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
     local x1 = numbers.lerp(newPoints[7][1], mx, 0.5)
     local x2 = numbers.lerp(newPoints[3][1], mx, 0.5)
-    local y1 =  numbers.lerp(newPoints[7][2], newPoints[8][2], 0.5)
-    local y2 =  numbers.lerp(newPoints[2][2], newPoints[3][2], 0.5)
+    local y1 = numbers.lerp(newPoints[7][2], newPoints[8][2], 0.5)
+    local y2 = numbers.lerp(newPoints[2][2], newPoints[3][2], 0.5)
 
-    return x1,y1, x2,y2
+    return x1, y1, x2, y2
 end
 
 function PotatoHeadSystem:init(e)
@@ -43,8 +43,8 @@ end
 
 function PotatoHeadSystem:potatoInit(e)
     print('potatoinit')
-    local  nosex, nosey = getPositionForNoseAttaching(e)
-    
+    local nosex, nosey = getPositionForNoseAttaching(e)
+
     e.potato.nose.transforms.l[1] = nosex
     e.potato.nose.transforms.l[2] = nosey
 
@@ -59,15 +59,22 @@ function PotatoHeadSystem:potatoInit(e)
 
 
     local newPoints = getPoints(e)
-    local browY = numbers.lerp( eyey1, newPoints[1][2],  0.5)
+    local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
 
     e.potato.brow1.transforms.l[1] = eyex1
     e.potato.brow1.transforms.l[2] = browY
 
     e.potato.brow2.transforms.l[1] = eyex2
     e.potato.brow2.transforms.l[2] = browY
+
+    --print(inspect(e.potato))
+    e.potato.ear1.transforms.l[1] = newPoints[8][1]
+    e.potato.ear1.transforms.l[2] = newPoints[8][2]
+    e.potato.ear1.transforms.l[4] = -1
+
+    e.potato.ear2.transforms.l[1] = newPoints[2][1]
+    e.potato.ear2.transforms.l[2] = newPoints[2][2]
+    e.potato.ear2.transforms.l[4] = 1
 end
-
-
 
 return PotatoHeadSystem

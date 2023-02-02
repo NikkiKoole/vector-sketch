@@ -121,7 +121,7 @@ end
 function potatoArguments(e, values)
    return {
       head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, brow1 = brow1, brow2 = brow2, nose = nose,
+      eye1 = eye1, eye2 = eye2, ear1 = ear1, ear2 = ear2, brow1 = brow1, brow2 = brow2, nose = nose,
       values = values
    }
 end
@@ -150,7 +150,7 @@ function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx,
       },
       name = "beziered",
       points = { { height / 2, 0 }, { 0, 300 + love.math.random() * -600 },
-         { -height / 2, 300 + love.math.random() * -600 } },
+         { -height / 2, 100 + love.math.random() * -200 } },
       texture = {
          filter = "linear",
          url = url,
@@ -317,6 +317,17 @@ function createNeckRubberhose(values, points)
       points)
 end
 
+--[[
+function changeNeck(biped, values)
+   neck = updateChild(guy, neck, createNeckRubberhose(values, neck.points))
+
+   parentize.parentize(root)
+   --redoNeck(biped, values)
+   biped:give('biped', bipedArguments(biped, values))
+   myWorld:emit("bipedAttachHead", biped)
+   mesh.meshAll(root)
+end
+--]]
 function changeNeck(biped, values)
    neck = createNeckRubberhose(values, neck.points) -- copy3(headParts[values.neck.shape])
    guy.children = guyChildren(biped)
@@ -342,17 +353,8 @@ function redoNeck(biped, values)
 end
 
 function changeBody(biped, values)
-   local temp_x, temp_y = body.transforms.l[1], body.transforms.l[2]
-   body = copy3(bodyParts[values.body.shape])
-
-   body.transforms.l[1] = temp_x
-   body.transforms.l[2] = temp_y
-   body.transforms.l[4] = values.bodyWidthMultiplier
-   body.transforms.l[5] = values.bodyHeightMultiplier
-   guy.children = guyChildren(biped)
-
+   body = updateChild(guy, body, copy3(bodyParts[values.body.shape]))
    parentize.parentize(root)
-
    redoBody(biped, values) --- this position is very iportant,
    --  if i move redoBody under the meshall we get these borders aorund images
 
@@ -361,7 +363,6 @@ function changeBody(biped, values)
    end
 
    mesh.meshAll(root)
-
    render.justDoTransforms(root)
 
    biped:give('biped', bipedArguments(biped, values))
@@ -372,61 +373,23 @@ function changeBody(biped, values)
 end
 
 function changeLegs(biped, values)
-   for i = 1, #guy.children do
-      if (guy.children[i] == leg1) then
-         leg1 = createLegRubberhose(1, values, leg1.points)
-         guy.children[i] = leg1
-      end
-      if (guy.children[i] == leg2) then
-         leg2 = createLegRubberhose(2, values, leg2.points)
-         guy.children[i] = leg2
-      end
-   end
-   parentize.parentize(root)
+   leg1 = updateChild(guy, leg1, createLegRubberhose(1, values, leg1.points))
+   leg2 = updateChild(guy, leg2, createLegRubberhose(2, values, leg2.points))
 
+   parentize.parentize(root)
    mesh.meshAll(root)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachFeet", biped)
 end
 
 function changeArms(biped, values)
-   for i = 1, #guy.children do
-      if (guy.children[i] == arm1) then
-         arm1 = createArmRubberhose(1, values, arm1.points)
-         guy.children[i] = arm1
-      end
-      if (guy.children[i] == arm2) then
-         arm2 = createArmRubberhose(2, values, arm2.points)
-         guy.children[i] = arm2
-      end
-   end
-   parentize.parentize(root)
+   arm1 = updateChild(guy, arm1, createArmRubberhose(1, values, arm1.points))
+   arm2 = updateChild(guy, arm2, createArmRubberhose(2, values, arm2.points))
 
+   parentize.parentize(root)
    mesh.meshAll(root)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachFeet", biped)
-end
-
-function redoLegs(biped, values)
-   leg1 = createLegRubberhose(1, values, leg1.points)
-   leg2 = createLegRubberhose(2, values, leg2.points)
-
-   guy.children = guyChildren(biped)
-   parentize.parentize(root)
-   biped:give('biped', bipedArguments(biped, values))
-   myWorld:emit("bipedAttachFeet", biped)
-   mesh.meshAll(root)
-end
-
-function redoArms(biped, values)
-   arm1 = createArmRubberhose(1, values, arm1.points)
-   arm2 = createArmRubberhose(2, values, arm2.points)
-
-   guy.children = guyChildren(biped)
-   parentize.parentize(root)
-   biped:give('biped', bipedArguments(biped, values))
-   myWorld:emit("bipedAttachHands", biped)
-   mesh.meshAll(root)
 end
 
 function redoGraphicHelper(part, name, values)
@@ -460,26 +423,15 @@ function redoHead(_, values)
    redoGraphicHelper(head, 'head', values)
 end
 
-function changeHands(biped, values)
-   for i = 1, #guy.children do
-      if (guy.children[i] == hand1) then
-         local r = hand1.transforms.l[3]
-         local sx = hand1.transforms.l[4]
-         hand1 = copy3(handParts[values.hands.shape])
-         hand1.transforms.l[3] = r
-         hand1.transforms.l[4] = sx
-         guy.children[i] = hand1
-      end
+function redoEars(_, values)
+   redoGraphicHelper(ear1, 'ears', values)
+   redoGraphicHelper(ear2, 'ears', values)
+end
 
-      if (guy.children[i] == hand2) then
-         local r = hand2.transforms.l[3]
-         local sx = hand2.transforms.l[4]
-         hand2 = copy3(handParts[values.hands.shape])
-         hand2.transforms.l[3] = r
-         hand2.transforms.l[4] = sx
-         guy.children[i] = hand2
-      end
-   end
+function changeHands(biped, values)
+   hand1 = updateChild(guy, hand1, copy3(handParts[values.hands.shape]))
+   hand2 = updateChild(guy, hand2, copy3(handParts[values.hands.shape]))
+
    parentize.parentize(root)
    redoHands(biped, values)
    biped:give('biped', bipedArguments(biped, values))
@@ -488,24 +440,8 @@ function changeHands(biped, values)
 end
 
 function changeFeet(biped, values)
-   for i = 1, #guy.children do
-      if (guy.children[i] == feet1) then
-         local r = feet1.transforms.l[3]
-         local sx = feet1.transforms.l[4]
-         feet1 = copy3(feetParts[values.feet.shape])
-         feet1.transforms.l[3] = r
-         feet1.transforms.l[4] = sx
-         guy.children[i] = feet1
-      end
-      if (guy.children[i] == feet2) then
-         local r = feet2.transforms.l[3]
-         local sx = feet2.transforms.l[4]
-         feet2 = copy3(feetParts[values.feet.shape])
-         feet2.transforms.l[3] = r
-         feet2.transforms.l[4] = sx
-         guy.children[i] = feet2
-      end
-   end
+   feet1 = updateChild(guy, feet1, copy3(feetParts[values.feet.shape]))
+   feet2 = updateChild(guy, feet2, copy3(feetParts[values.feet.shape]))
 
    parentize.parentize(root)
    redoFeet(biped, values)
@@ -514,15 +450,23 @@ function changeFeet(biped, values)
    mesh.meshAll(root)
 end
 
-function changeNose(potato, values)
-   local oldNose = nose
-   local container = values.potatoHead and body or head
+function updateChild(container, oldValue, newResult)
+   local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
    for i = 1, #container.children do
-      if container.children[i] == oldNose then
-         container.children[i] = copy3(noseParts[values.nose.shape])
-         nose = container.children[i]
+      if container.children[i] == oldValue then
+         container.children[i] = newResult
+         if (container.children[i].transforms) then
+            container.children[i].transforms.l = oldTransforms
+         end
+         return container.children[i]
       end
    end
+end
+
+function changeNose(potato, values)
+   local container = values.potatoHead and body or head
+   nose = updateChild(container, nose, copy3(noseParts[values.nose.shape]))
+
    parentize.parentize(root)
    redoNose(potato, values)
    potato:give('potato', potatoArguments(potato, values))
@@ -540,47 +484,22 @@ function redoEyes(potato, values)
 end
 
 function redoBrows(potato, values)
-
-   local oldBrow1 = brow1
-   local oldBrow2 = brow2
-
    local container = values.potatoHead and body or head
-   for i = 1, #container.children do
-      if container.children[i] == oldBrow1 then
-         container.children[i] = createBrowBezier(values, brow1.points)
-         brow1 = container.children[i]
-      end
-      if container.children[i] == oldBrow2 then
-         container.children[i] = createBrowBezier(values, brow2.points)
-         brow2 = container.children[i]
-      end
-   end
-
+   brow1 = updateChild(container, brow1, createBrowBezier(values, brow1.points))
+   brow2 = updateChild(container, brow2, createBrowBezier(values, brow2.points))
    parentize.parentize(root)
-
    potato:give('potato', potatoArguments(potato, values))
    myWorld:emit("potatoInit", potato)
 
-
    mesh.meshAll(root)
-   --redoGraphicHelper(brow1, 'brows', values)
-   --redoGraphicHelper(brow2, 'brows', values)
 end
 
 function changeEyes(biped, values)
-   local oldEye1 = eye1
-   local oldEye2 = eye2
    local container = values.potatoHead and body or head
-   for i = 1, #container.children do
-      if container.children[i] == oldEye1 then
-         container.children[i] = copy3(eyeParts[values.eyes.shape])
-         eye1 = container.children[i]
-      end
-      if container.children[i] == oldEye2 then
-         container.children[i] = copy3(eyeParts[values.eyes.shape])
-         eye2 = container.children[i]
-      end
-   end
+
+   eye1 = updateChild(container, eye1, copy3(eyeParts[values.eyes.shape]))
+   eye2 = updateChild(container, eye2, copy3(eyeParts[values.eyes.shape]))
+
    parentize.parentize(root)
    redoEyes(potato, values)
    redoBrows(potato, values)
@@ -589,17 +508,30 @@ function changeEyes(biped, values)
    mesh.meshAll(root)
 end
 
+function changeEars(biped, values)
+   local container = values.potatoHead and body or head
+
+   ear1 = updateChild(container, ear1, copy3(earParts[values.ears.shape]))
+   ear2 = updateChild(container, ear2, copy3(earParts[values.ears.shape]))
+
+   parentize.parentize(root)
+   redoEars(potato, values)
+   -- redoEyes(potato, values)
+   -- redoBrows(potato, values)
+   potato:give('potato', potatoArguments(potato, values))
+   myWorld:emit("potatoInit", potato)
+   mesh.meshAll(root)
+end
+
 function changeHead(biped, values)
    head = copy3(headParts[values.head.shape])
-
    guy.children = guyChildren(biped)
 
+   --head = updateChild(guy, head, copy3(headParts[values.head.shape]))
    redoHead(biped, values)
-
    if (not values.potatoHead) then
       attachAllFaceParts()
    end
-
    parentize.parentize(root)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachHead", biped)
