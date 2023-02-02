@@ -437,6 +437,7 @@ function scene.load()
          fgTex   = 2,
          linePal = 1
       },
+      earUnderHead = false,
       earRotation = 0,
       brows = {
          shape   = 1,
@@ -598,12 +599,19 @@ function scene.load()
    -- todo the index stuff is not correct yet, check redoTheGraphicInPart
    table.insert(faceContainer.children, eye1)
    table.insert(faceContainer.children, eye2)
-   table.insert(faceContainer.children, 1,ear1)
-   table.insert(faceContainer.children, 1,ear2)
+
+   if (values.earUnderHead == true) then
+      table.insert(faceContainer.children, 1,ear1)
+      table.insert(faceContainer.children, 1,ear2) 
+   else
+      table.insert(faceContainer.children, ear1)
+      table.insert(faceContainer.children, ear2) 
+   end
    table.insert(faceContainer.children, brow1)
    table.insert(faceContainer.children, brow2)
    table.insert(faceContainer.children, nose)
 
+  
 
    root.children = { guy }
 
@@ -745,8 +753,14 @@ function attachCallbacks()
 
       table.insert(addTo.children, eye1)
       table.insert(addTo.children, eye2)
-      table.insert(addTo.children, 1, ear1)
-      table.insert(addTo.children, 1, ear2)
+      if (values.earUnderHead == true) then
+         table.insert(addTo.children, 1,ear1)
+         table.insert(addTo.children, 1,ear2) 
+      else
+         table.insert(addTo.children, ear1)
+         table.insert(addTo.children, ear2) 
+      end
+      
       table.insert(addTo.children, brow1)
       table.insert(addTo.children, brow2)
       table.insert(addTo.children, nose)
