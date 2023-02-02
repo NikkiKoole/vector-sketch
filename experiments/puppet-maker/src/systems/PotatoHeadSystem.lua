@@ -42,7 +42,7 @@ function PotatoHeadSystem:init(e)
 end
 
 function PotatoHeadSystem:potatoInit(e)
-    print('potatoinit')
+
     local nosex, nosey = getPositionForNoseAttaching(e)
 
     e.potato.nose.transforms.l[1] = nosex
@@ -68,12 +68,12 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.brow2.transforms.l[2] = browY
 
     --print(inspect(e.potato))
-    e.potato.ear1.transforms.l[1] = newPoints[8][1]
-    e.potato.ear1.transforms.l[2] = newPoints[8][2]
+    e.potato.ear1.transforms.l[1] = newPoints[7][1]
+    e.potato.ear1.transforms.l[2] = numbers.lerp(newPoints[7][2], newPoints[8][2], .5)
     e.potato.ear1.transforms.l[4] = -1
 
-    e.potato.ear2.transforms.l[1] = newPoints[2][1]
-    e.potato.ear2.transforms.l[2] = newPoints[2][2]
+    e.potato.ear2.transforms.l[1] = newPoints[3][1]
+    e.potato.ear2.transforms.l[2] = numbers.lerp(newPoints[3][2], newPoints[2][2], .5)
     e.potato.ear2.transforms.l[4] = 1
 end
 

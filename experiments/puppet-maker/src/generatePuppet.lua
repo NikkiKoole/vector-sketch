@@ -142,7 +142,7 @@ function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx,
    local width, height = img:getDimensions()
    local currentNode = {}
    currentNode = {
-      color = { 0, 0, 0, 1 },
+      color = { 1, 1, 1, 1 },
       data = {
          length = height,
          steps = 15,
@@ -163,10 +163,10 @@ function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx,
       local lineart = img
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
-      if mask then
-         local cnv = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lp, flipx, flipy)
-         currentNode.chidlren[1].texture.retexture = love.graphics.newImage(cnv)
-      end
+      --if mask then
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lp, flipx, flipy)
+      currentNode.texture.retexture = love.graphics.newImage(cnv)
+      --end
    end
 
 
@@ -210,10 +210,10 @@ function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widt
       local lineart = img
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
-      if mask then
-         local cnv = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lp, flipx, flipy)
-         currentNode.texture.retexture = love.graphics.newImage(cnv)
-      end
+      --if mask then
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgp, bg, fgp, fg, lp, flipx, flipy)
+      currentNode.texture.retexture = love.graphics.newImage(cnv)
+      --end
    end
 
 
@@ -502,7 +502,7 @@ function changeEyes(biped, values)
 
    parentize.parentize(root)
    redoEyes(potato, values)
-   redoBrows(potato, values)
+   --redoBrows(potato, values)
    potato:give('potato', potatoArguments(potato, values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
