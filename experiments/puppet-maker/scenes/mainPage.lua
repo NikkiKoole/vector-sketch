@@ -438,6 +438,8 @@ function scene.load()
          linePal = 1
       },
       earUnderHead = false,
+      earWidthMultiplier = 1,
+      earHeightMultiplier = 1,
       earRotation = 0,
       brows = {
          shape   = 1,
@@ -601,17 +603,17 @@ function scene.load()
    table.insert(faceContainer.children, eye2)
 
    if (values.earUnderHead == true) then
-      table.insert(faceContainer.children, 1,ear1)
-      table.insert(faceContainer.children, 1,ear2) 
+      table.insert(faceContainer.children, 1, ear1)
+      table.insert(faceContainer.children, 1, ear2)
    else
       table.insert(faceContainer.children, ear1)
-      table.insert(faceContainer.children, ear2) 
+      table.insert(faceContainer.children, ear2)
    end
    table.insert(faceContainer.children, brow1)
    table.insert(faceContainer.children, brow2)
    table.insert(faceContainer.children, nose)
 
-  
+
 
    root.children = { guy }
 
@@ -754,13 +756,13 @@ function attachCallbacks()
       table.insert(addTo.children, eye1)
       table.insert(addTo.children, eye2)
       if (values.earUnderHead == true) then
-         table.insert(addTo.children, 1,ear1)
-         table.insert(addTo.children, 1,ear2) 
+         table.insert(addTo.children, 1, ear1)
+         table.insert(addTo.children, 1, ear2)
       else
          table.insert(addTo.children, ear1)
-         table.insert(addTo.children, ear2) 
+         table.insert(addTo.children, ear2)
       end
-      
+
       table.insert(addTo.children, brow1)
       table.insert(addTo.children, brow2)
       table.insert(addTo.children, nose)
@@ -1205,7 +1207,7 @@ function scene.draw()
          if true then
             love.graphics.setColor(1, 0, 1)
             love.graphics.circle('fill', 500, 100, 10)
-            local b = ui.getUICircle(500, 100   , 10)
+            local b = ui.getUICircle(500, 100, 10)
             if b then
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts()
@@ -1216,6 +1218,12 @@ function scene.draw()
                values.earRotation = v.value
                ear1.transforms.l[3] = v.value
                ear2.transforms.l[3] = -v.value
+            end
+            local v = h_slider("ear-width", 500 - 25, 100 - 50, 50, values.earWidthMultiplier, .1, 5)
+            if v.value then
+               values.earWidthMultiplier = v.value
+               ear1.transforms.l[4] = v.value * -1
+               ear2.transforms.l[4] = v.value
             end
          end
 

@@ -4,13 +4,12 @@ local numbers = require 'lib.numbers'
 local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 
 local function getMeta(parent)
-    for i=1, #parent.children do
+    for i = 1, #parent.children do
         if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
             return parent.children[i]
         end
     end
 end
-
 
 function getPoints(e)
     local parent = e.potato.head
@@ -78,11 +77,12 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.brow2.transforms.l[2] = browY
 
     --print(inspect(e.potato))
-    e.potato.ear1.transforms.l[1] = newPoints[7][1]
+    --print(inspect(e.potato.ear1.transforms.l))
+    e.potato.ear1.transforms.l[1] = numbers.lerp(newPoints[7][1], newPoints[8][1], .5)
     e.potato.ear1.transforms.l[2] = numbers.lerp(newPoints[7][2], newPoints[8][2], .5)
     e.potato.ear1.transforms.l[4] = -1
 
-    e.potato.ear2.transforms.l[1] = newPoints[3][1]
+    e.potato.ear2.transforms.l[1] = numbers.lerp(newPoints[3][1], newPoints[2][1], .5)
     e.potato.ear2.transforms.l[2] = numbers.lerp(newPoints[3][2], newPoints[2][2], .5)
     e.potato.ear2.transforms.l[4] = 1
 end

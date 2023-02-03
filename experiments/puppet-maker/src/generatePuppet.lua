@@ -258,16 +258,15 @@ local function createRectangle(x, y, w, h, r, g, b)
    return result
 end
 
-
 local function getIndexOfGraphicPart(part)
    if part.children then
       local metaIndex = nil
-      for i =1, #part.children do
-            if part.children[i].type == 'meta' then
-               metaIndex = i
-            end
+      for i = 1, #part.children do
+         if part.children[i].type == 'meta' then
+            metaIndex = i
+         end
       end
-      if metaIndex then return metaIndex-1 end
+      if metaIndex then return metaIndex - 1 end
       return 1
 
    end
@@ -276,9 +275,9 @@ end
 function redoTheGraphicInPart(part, bg, fg, bgp, fgp, lineColor, flipx, flipy)
    -- todo this index needs to be dynamically found
    -- find the index of the meta type thing, and its one before that,
-   -- or if no meta thing 
+   -- or if no meta thing
    -- or maybe I should work with naming convention of the generated ones
-      
+
    --for i =1, #part.children do
    --   print(i, part.children[i].name or "", part.children[i].type)
 
@@ -478,6 +477,11 @@ end
 
 function updateChild(container, oldValue, newResult)
    local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
+   -- I need to get t the pivot point from the new thing.
+   if newResult.transforms then
+      oldTransforms[6] = newResult.transforms.l[6]
+      oldTransforms[7] = newResult.transforms.l[7]
+   end
    for i = 1, #container.children do
       if container.children[i] == oldValue then
          container.children[i] = newResult
@@ -536,7 +540,7 @@ end
 
 function changeEars(biped, values)
    local container = values.potatoHead and body or head
-
+   print(inspect(earParts[values.ears.shape]))
    ear1 = updateChild(container, ear1, copy3(earParts[values.ears.shape]))
    ear2 = updateChild(container, ear2, copy3(earParts[values.ears.shape]))
 
