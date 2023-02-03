@@ -251,37 +251,36 @@ local function loadGroupFromFile(url, groupName)
    return imgs, parts
 end
 
+function attachAllFaceParts()
+   removeChild(eye1)
+   removeChild(eye2)
+   removeChild(nose)
+   removeChild(brow1)
+   removeChild(brow2)
+   removeChild(ear1)
+   removeChild(ear2)
+   local addTo = values.potatoHead and body or head
 
-   function attachAllFaceParts()
-      removeChild(eye1)
-      removeChild(eye2)
-      removeChild(nose)
-      removeChild(brow1)
-      removeChild(brow2)
-      removeChild(ear1)
-      removeChild(ear2)
-      local addTo = values.potatoHead and body or head
-
-      table.insert(addTo.children, eye1)
-      table.insert(addTo.children, eye2)
-      if (values.earUnderHead == true) then
-         table.insert(addTo.children, 1, ear1)
-         table.insert(addTo.children, 1, ear2)
-      else
-         table.insert(addTo.children, ear1)
-         table.insert(addTo.children, ear2)
-      end
-
-      table.insert(addTo.children, brow1)
-      table.insert(addTo.children, brow2)
-      table.insert(addTo.children, nose)
-
-
-      myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
-      myWorld:emit('potatoInit', potato)
-      changeNose(potato, values)
-      changeEyes(potato, values)
+   table.insert(addTo.children, eye1)
+   table.insert(addTo.children, eye2)
+   if (values.earUnderHead == true) then
+      table.insert(addTo.children, 1, ear1)
+      table.insert(addTo.children, 1, ear2)
+   else
+      table.insert(addTo.children, ear1)
+      table.insert(addTo.children, ear2)
    end
+
+   table.insert(addTo.children, brow1)
+   table.insert(addTo.children, brow2)
+   table.insert(addTo.children, nose)
+
+
+   myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
+   myWorld:emit('potatoInit', potato)
+   changeNose(potato, values)
+   changeEyes(potato, values)
+end
 
 function scene.load()
 
@@ -538,7 +537,7 @@ function scene.load()
       },
       headWidthMultiplier = 1,
       headHeightMultiplier = 1,
-      neck = { 
+      neck = {
          shape   = 1,
          bgPal   = 4,
          fgPal   = 1,
@@ -950,7 +949,6 @@ function tweenCategoriesAndSettings()
    --end
 end
 
-
 function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton = bigButtonWithSmallAroundIt(
       x, y, {
@@ -1015,13 +1013,13 @@ function scene.draw()
       prof.pop("cam-render")
 
       prof.push("render-ui")
-      
+
       if true then
 
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
          bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)
-         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped) 
+         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped)
          bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, changeNose, potato)
          bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody, biped)
          bigButtonHelper(225, 400, 'arms', legUrls, changeArms, changeArms, biped)
