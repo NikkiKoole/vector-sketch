@@ -35,6 +35,7 @@ local Systems    = {}
 myWorld = Concord.world()
 
 require 'src.generatePuppet'
+require 'src.puppet-maker-ui'
 
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
@@ -144,17 +145,12 @@ function pointerMoved(x, y, dx, dy, id)
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
          playSound(scrollTickSample)
-
       end
    end
 
    if settingsScrollAreaIsDragging then
       settingsScrollPosition = settingsScrollPosition + dy / settingsScrollArea[5]
-      --print(settingsScrollPosition)
-      --settingsScrollPosition = math.max(0, settingsScrollPosition)
-      --print(settingsScrollPosition)
    end
-
 end
 
 function pointerReleased(x, y, id)
@@ -189,8 +185,7 @@ function pointerPressed(x, y, id)
                if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
                   table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
                end
-               --else
-               --   print(inspect(item))
+
             end
          end
       end
@@ -204,9 +199,7 @@ function pointerPressed(x, y, id)
 
             cam:setScale(targetScale)
             cam:setTranslation(v.x + v.width / 2, v.y + v.height / 2)
-
          end
-
       end
    end
 
@@ -216,7 +209,6 @@ function pointerPressed(x, y, id)
    if x >= scrollListXPosition and x < scrollListXPosition + (h / scrollItemsOnScreen) then
       scrollerIsDragging = true
       scrollListIsThrown = nil
-      --scrollerIsPressed = { time = love.timer.getTime(), pointerX = x, pointerY = y }
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
    if (settingsScrollArea) then
@@ -246,7 +238,6 @@ local function loadGroupFromFile(url, groupName)
 
    local whole = parse.parseFile(url)
    local group = node.findNodeByName(whole, groupName) or {}
-   --print(inspect(eyes))
    for i = 1, #group.children do
       local p = group.children[i]
       stripPath(p, '/experiments/puppet%-maker/')
@@ -259,6 +250,38 @@ local function loadGroupFromFile(url, groupName)
    end
    return imgs, parts
 end
+
+
+   function attachAllFaceParts()
+      removeChild(eye1)
+      removeChild(eye2)
+      removeChild(nose)
+      removeChild(brow1)
+      removeChild(brow2)
+      removeChild(ear1)
+      removeChild(ear2)
+      local addTo = values.potatoHead and body or head
+
+      table.insert(addTo.children, eye1)
+      table.insert(addTo.children, eye2)
+      if (values.earUnderHead == true) then
+         table.insert(addTo.children, 1, ear1)
+         table.insert(addTo.children, 1, ear2)
+      else
+         table.insert(addTo.children, ear1)
+         table.insert(addTo.children, ear2)
+      end
+
+      table.insert(addTo.children, brow1)
+      table.insert(addTo.children, brow2)
+      table.insert(addTo.children, nose)
+
+
+      myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
+      myWorld:emit('potatoInit', potato)
+      changeNose(potato, values)
+      changeEyes(potato, values)
+   end
 
 function scene.load()
 
@@ -335,6 +358,7 @@ function scene.load()
       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
       '798091', '4C5575', '6E4431', '626964', '613D41',
    }
+
    for i = 1, #base do
       local r, g, b = hex2rgb(base[i])
       table.insert(palettes, { r, g, b })
@@ -407,8 +431,6 @@ function scene.load()
 
    local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
 
-
-
    eyeImgUrls, eyeParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyes')
    noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
@@ -424,7 +446,6 @@ function scene.load()
          bgTex   = 1,
          fgTex   = 2,
          linePal = 1
-
       },
       eyeWidthMultiplier = 1,
       eyeHeightMultiplier = 1,
@@ -517,8 +538,7 @@ function scene.load()
       },
       headWidthMultiplier = 1,
       headHeightMultiplier = 1,
-
-      neck = { -- todo
+      neck = { 
          shape   = 1,
          bgPal   = 4,
          fgPal   = 1,
@@ -552,7 +572,6 @@ function scene.load()
    feet1 = copy3(feetParts[values.feet.shape])
    feet2 = copy3(feetParts[values.feet.shape])
 
-
    eye1 = copy3(eyeParts[values.eyes.shape])
    eye2 = copy3(eyeParts[values.eyes.shape])
    brow1 = copy3(browParts[values.brows.shape])
@@ -560,7 +579,6 @@ function scene.load()
 
    ear1 = copy3(earParts[values.ears.shape])
    ear2 = copy3(earParts[values.ears.shape])
-
 
    nose = copy3(noseParts[values.nose.shape])
 
@@ -579,7 +597,6 @@ function scene.load()
          values = values
       })
 
-   --biped:give('biped', bipedArguments(biped, values))
    guy.children = guyChildren(biped)
 
    redoFeet(biped, values)
@@ -587,18 +604,15 @@ function scene.load()
    redoBody(biped, values)
    redoHead(biped, values)
 
-
-   --print(#head.children)
-
    potato = Concord.entity()
    potato:give('potato', { head = values.potatoHead and body or head,
       eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2, ear1 = ear1, ear2 = ear2,
       values = values })
 
+
+
    local faceContainer = values.potatoHead and body or head
 
-
-   -- todo the index stuff is not correct yet, check redoTheGraphicInPart
    table.insert(faceContainer.children, eye1)
    table.insert(faceContainer.children, eye2)
 
@@ -618,12 +632,11 @@ function scene.load()
    root.children = { guy }
 
    redoEyes(potato, values)
-   --
-   --changeEars(potato, values)
    redoEars(potato, values)
    redoBrows(potato, values)
    redoNose(potato, values)
    changeNose(potato, values)
+
    if false then
       cameraPoints = {}
       local W, H = love.graphics.getDimensions()
@@ -732,46 +745,9 @@ function attachCallbacks()
          print('focus camera on third other shape', x, y)
       end
       if key == 'b' then
-
-         -- local removeFrom = values.potatoHead and body or head
-
-
          values.potatoHead = not values.potatoHead
          attachAllFaceParts()
       end
-   end
-
-   function attachAllFaceParts()
-      removeChild(eye1)
-      removeChild(eye2)
-      removeChild(nose)
-      removeChild(brow1)
-      removeChild(brow2)
-      removeChild(ear1)
-      removeChild(ear2)
-      local addTo = values.potatoHead and body or head
-
-      print('hello!')
-
-      table.insert(addTo.children, eye1)
-      table.insert(addTo.children, eye2)
-      if (values.earUnderHead == true) then
-         table.insert(addTo.children, 1, ear1)
-         table.insert(addTo.children, 1, ear2)
-      else
-         table.insert(addTo.children, ear1)
-         table.insert(addTo.children, ear2)
-      end
-
-      table.insert(addTo.children, brow1)
-      table.insert(addTo.children, brow2)
-      table.insert(addTo.children, nose)
-
-
-      myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
-      myWorld:emit('potatoInit', potato)
-      changeNose(potato, values)
-      changeEyes(potato, values)
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -814,7 +790,7 @@ function attachCallbacks()
    end
 
    function love.wheelmoved(dx, dy)
-      if false then
+      if true then
          local newScale = cam.scale * (1 + dy / 10)
          if (newScale > 0.01 and newScale < 50) then
             cam:scaleToPoint(1 + dy / 10)
@@ -974,153 +950,6 @@ function tweenCategoriesAndSettings()
    --end
 end
 
--- this is the panel that contains all ui for changing a certain body part or general change
--- for each category we have a optionally unique panel
-function partSettingsPanel()
-   local w, h = love.graphics.getDimensions()
-
-   local margin = (h / 16)
-   local width = (w / 3)
-   local height = (h - margin * 2)
-   local startX = w - width - margin
-   local startY = margin
-
-   -- main panel
-   love.graphics.setColor(0, 0, 0)
-   love.graphics.rectangle('line', startX, startY, width, height)
-
-   -- top tabs (part, bg, fg, line)
-   local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
-   local tabWidth = (width / #tabs)
-   local tabHeight = math.max((tabWidth / 1.5), 32)
-   local marginBetweenTabs = tabWidth / 16
-   for i = 1, #tabs do
-      love.graphics.rectangle('line', startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
-      love.graphics.print(tabs[i], startX + (i - 1) * tabWidth, startY)
-   end
-
-   -- top header for custom sliders etc.
-   local minimumHeight = 32
-   local currentY = startY + tabHeight
-   love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
-   love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
-
-   -- now the scrolling part.
-   -- this has optional scrolling, optional round scrolling or bounds, parameter amount of columns
-
-
-   local columns = 2
-   local rows = 6
-
-   local cellMargin = width / 48
-
-   local useWidth = width - (2 * cellMargin) - (columns - 1) * cellMargin
-   local cellWidth = (useWidth / columns)
-   local cellHeight = cellWidth
-   local currentX = startX + cellMargin
-   currentY = currentY + minimumHeight + cellMargin
-
-   -- todo weird use of a 'global'
-   -- the 5th is the cellsize/rowheight
-   settingsScrollArea = { startX, currentY - cellMargin, width, height - minimumHeight - tabHeight,
-      (cellHeight + cellMargin) }
-   love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
-
-   local rowsInPanel = math.ceil((height - minimumHeight - tabHeight) / cellHeight)
-
-
-   local endlesssScroll = true -- false
-
-
-   local offset = settingsScrollPosition % 1
-
-   for j = -1, rowsInPanel - 1 do
-      for i = 1, columns do
-         local newScroll = j + offset
-         local yPosition = currentY + (newScroll * (cellHeight + cellMargin)) --(cellHeight + cellMargin) * (j - 1)
-         local index = math.ceil(-settingsScrollPosition) + j
-         love.graphics.rectangle('line',
-            currentX + (i - 1) * (cellWidth + cellMargin),
-            yPosition,
-            cellWidth, cellHeight)
-      end
-   end
-
-
-   love.graphics.setScissor()
-
-   if false then
-      local dotWidth = useWidth / 5
-      local dotHeight = (height - minimumHeight - tabHeight) / 8
-      for i = 1, #palettes do
-
-         local index = (i % #dots) + 1
-         local dot = dots[index]
-         local j = i - 1
-         local w, h = dot:getDimensions()
-         local sx = dotWidth / w
-         local sy = dotWidth / h
-
-         love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.draw(dot, -2 + currentX + (j % 5) * dotWidth, -2 + currentY + math.floor(j / 5) * dotWidth, 0,
-            sx * 1.1, sy * 1.1)
-
-
-         love.graphics.setColor(palettes[i])
-         love.graphics.draw(dot, currentX + (j % 5) * dotWidth, currentY + math.floor(j / 5) * dotWidth, 0, sx, sy)
-      end
-   end
-
-end
-
--- scroll list is the main thing that has all categories
-function scrollList(draw, clickX, clickY)
-
-   local w, h = love.graphics.getDimensions()
-   local margin = 20
-
-   local marginHeight = 2
-   local size = (h / scrollItemsOnScreen) - marginHeight * 2
-
-   local elements = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
-      'hoofdhaar' }
-
-   local offset = scrollPosition % 1
-
-   for i = -1, (scrollItemsOnScreen - 1) do
-
-      local newScroll = i + offset
-      local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
-
-      local index = math.ceil(-scrollPosition) + i
-      index = (index % #elements) + 1
-      if index < 1 then index = index + #elements end
-      if index > #elements then index = 1 end
-
-      local whiterectIndex = math.ceil(-scrollPosition) + i
-      whiterectIndex = (whiterectIndex % #whiterects) + 1
-      local wrw, wrh = whiterects[whiterectIndex]:getDimensions()
-      local scaleX = size / wrw
-      local scaleY = size / wrh
-
-      if draw then
-         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
-
-         love.graphics.setColor(.1, .1, .1, .2)
-         love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition + 4, yPosition + 4, 0, scaleX, scaleY)
-
-         love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-         love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
-
-         love.graphics.setColor(0, 0, 0)
-         love.graphics.print(elements[index], 20, yPosition)
-      else
-         if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
-            playSound(scrollItemClickSample)
-         end
-      end
-   end
-end
 
 function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton = bigButtonWithSmallAroundIt(
@@ -1186,17 +1015,14 @@ function scene.draw()
       prof.pop("cam-render")
 
       prof.push("render-ui")
+      
       if true then
 
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
-
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
-
          bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)
-
-         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped) --
+         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped) 
          bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, changeNose, potato)
-
          bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody, biped)
          bigButtonHelper(225, 400, 'arms', legUrls, changeArms, changeArms, biped)
          bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands, biped)
@@ -1373,7 +1199,7 @@ function scene.draw()
       end
       prof.pop("render-ui")
 
-      if true then -- this is leaking too
+      if false then -- this is leaking too
 
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
