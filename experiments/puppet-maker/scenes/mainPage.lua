@@ -15,7 +15,6 @@ local text       = require 'lib.text'
 local render     = require 'lib.render'
 local mesh       = require 'lib.mesh'
 local parentize  = require 'lib.parentize'
-local geom       = require 'lib.geom'
 local node       = require 'lib.node'
 local parse      = require 'lib.parse-file'
 local bbox       = require 'lib.bbox'
@@ -23,7 +22,6 @@ local hit        = require 'lib.hit'
 local transforms = require 'lib.transform'
 local numbers    = require 'lib.numbers'
 local ui         = require 'lib.ui'
-local canvas     = require 'lib.canvas'
 
 local camera     = require 'lib.camera'
 local cam        = require('lib.cameraBase').getInstance()
@@ -162,6 +160,7 @@ function pointerReleased(x, y, id)
 
    scrollerIsDragging = false
    settingsScrollAreaIsDragging = false
+
    gesture.maybeTrigger(id, x, y)
    collectgarbage()
 end
@@ -216,6 +215,8 @@ function pointerPressed(x, y, id)
          settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
           ) then
          settingsScrollAreaIsDragging = true
+         settingsScrollAreaIsThrown = nil
+         gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
       end
    end
 
@@ -274,7 +275,6 @@ function attachAllFaceParts()
    table.insert(addTo.children, brow1)
    table.insert(addTo.children, brow2)
    table.insert(addTo.children, nose)
-
 
    myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
    myWorld:emit('potatoInit', potato)
@@ -367,6 +367,7 @@ function scene.load()
    scrollPosition = 0
    scrollItemsOnScreen = 4
    scrollListXPosition = 20
+
    settingsScrollAreaIsDragging = false
    settingsScrollArea = nil
    settingsScrollPosition = 0
@@ -813,6 +814,18 @@ function scene.update(dt)
    delta = delta + dt
    Timer.update(dt)
 
+   if settingsScrollArea and settingsScrollArea[6] then
+      if settingsScrollPosition > settingsScrollArea[6] then
+         settingsScrollPosition = settingsScrollArea[6]
+      end
+      if settingsScrollPosition < settingsScrollArea[7] then
+         settingsScrollPosition = settingsScrollArea[7]
+      end
+   end
+   --if settingsScrollPosition > 0 then
+   --   settingsScrollPosition = 0
+   --end
+
    if scrollListIsThrown then
       scrollListIsThrown.velocity = scrollListIsThrown.velocity * .90
 
@@ -831,141 +844,6 @@ function scene.update(dt)
    end
    myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
-end
-
-function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
-   love.graphics.circle('line', cx, cy, buttonRadius)
-   love.graphics.print(label, cx, cy)
-
-   local other = { 'hair', 'headshape', 'eyes', 'ears', 'nose', 'mouth', 'chin' }
-   local angleStep = (180 / (#other - 1))
-   local angle = -90
-   for i = 1, #other do
-
-      local px = cx + r * math.cos(angle * math.pi / 180)
-      local py = cy + r * math.sin(angle * math.pi / 180)
-      angle = angle + angleStep
-      love.graphics.circle('line', px, py, smallButtonRadius)
-   end
-end
-
-function createFittingScale(img, desired_w, desired_h)
-   local w, h = img:getDimensions()
-   local sx, sy = desired_w / w, desired_h / h
-   --   print(sx, sy)
-   return sx, sy
-end
-
-function getScaleAndOffsetsForImage(img, desiredW, desiredH)
-   local sx, sy = createFittingScale(img, desiredW, desiredH)
-   local scale = math.min(sx, sy)
-   local xOffset = 0
-   local yOffset = 0
-   if scale == sx then
-      xOffset = -desiredW / 2 -- half the height
-      local something = sx * img:getHeight()
-      local something2 = sy * img:getHeight()
-      yOffset = -desiredH / 2 - (something - something2) / 2
-   elseif scale == sy then
-      --print('y')
-      yOffset = -desiredH / 2 -- half the height
-      local something = sx * img:getWidth()
-      local something2 = sy * img:getWidth()
-      xOffset = -desiredW / 2 + (something - something2) / 2
-   end
-   return scale, xOffset, yOffset
-end
-
---local res = { clicked = false }
-
-function bigButtonWithSmallAroundIt(x, y, textureOrColors)
-   prof.push('big-bitton-small-around')
-   local biggestRadius = 70
-   local bigRadius = 40
-   local radius = 20
-   local diam = radius * 2
-   local rad = -math.pi / 2
-   local number = 4
-   local step = (math.pi / 1.5) / (number - 1)
-
-   love.graphics.setColor(0, 0, 0)
-   love.graphics.circle("line", x, y, bigRadius)
-
-   local first, second, third, fourth, fifth = nil, nil, nil, nil, nil
-
-   if (type(textureOrColors[1]) == "table") then
-      love.graphics.setColor(textureOrColors[1])
-   else
-
-      local img = mesh.getImage(textureOrColors[1])
-      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam * 2, diam * 2)
-
-      love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
-
-   end
-   first = ui.getUICircle(x, y, bigRadius)
-
-   for i = 2, #textureOrColors do
-      local new_x = x + math.cos(rad) * biggestRadius
-      local new_y = y + math.sin(rad) * biggestRadius
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.circle("line", new_x, new_y, radius)
-
-      if (type(textureOrColors[i]) == "table") then
-         love.graphics.setColor(textureOrColors[i])
-         love.graphics.circle("fill", new_x, new_y, radius - 2)
-      else
-         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 40, 40)
-         prof.push('render-masked-texture')
-         canvas.renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
-         prof.pop('render-masked-texture')
-      end
-
-      local b = ui.getUICircle(new_x, new_y, 30)
-      if (i == 2) then second = b end
-      if (i == 3) then third = b end
-      if (i == 4) then fourth = b end
-      if (i == 5) then fifth = b end
-      rad = rad + step
-   end
-   prof.pop('big-bitton-small-around')
-   return first, second, third, fourth, fifth
-
-end
-
-function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
-   if button then
-      values[bodyPart][param] = values[bodyPart][param] + 1
-      if values[bodyPart][param] > maxAmount then
-         values[bodyPart][param] = 1
-      end
-      func(firstParam, values)
-   end
-end
-
-function tweenCategoriesAndSettings()
-   --function()
-   --Timer.tween(1, fluxObject, { scrollX = -1 }, 'out-elastic')
-   --end
-end
-
-function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
-   shapeButton, BGButton, FGTexButton, FGButton, LinePalButton = bigButtonWithSmallAroundIt(
-      x, y, {
-      imgArray[values[param].shape],
-      palettes[values[param].bgPal],
-      textures[values[param].fgTex],
-      palettes[values[param].fgPal],
-      palettes[values[param].linePal]
-   }
-   )
-
-   -- todo maybe parametrize palettes and textures?
-   buttonHelper(shapeButton, param, 'shape', #imgArray, changeFunc, firstParam)
-   buttonHelper(BGButton, param, 'bgPal', #palettes, redoFunc, firstParam)
-   buttonHelper(FGTexButton, param, 'fgTex', #textures, redoFunc, firstParam)
-   buttonHelper(FGButton, param, 'fgPal', #palettes, redoFunc, firstParam)
-   buttonHelper(LinePalButton, param, 'linePal', #palettes, redoFunc, firstParam)
 end
 
 function scene.draw()
@@ -994,8 +872,8 @@ function scene.draw()
 
       love.graphics.setColor(0, 0, 0)
 
-      --scrollList(true)
-      --partSettingsPanel()
+      scrollList(true)
+      partSettingsPanel(0, 0)
 
       prof.push("cam-render")
       cam:push()

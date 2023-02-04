@@ -4,7 +4,7 @@ local geom    = require 'lib.geom'
 local gestureState = {
    list = {},
    updateResolutionCounter = 0,
-   updateResolution = 1.0/60
+   updateResolution = 1.0 / 60
 }
 local xAxisAllowed = true
 local yAxisAllowed = true
@@ -174,18 +174,30 @@ local function gestureRecognizer(gesture)
          else
 
          end
-      elseif gesture.target == 'scroll-list' then
+      elseif gesture.target == 'scroll-list' or gesture.target == 'settings-scroll-area' then
          local start = gesture.positions[1]
          local duration = endP.time - start.time
          local distance = geom.distance(start.x, start.y, endP.x, endP.y)
 
          if duration < .5 and distance < 32 then
-            Signal.emit('click-scroll-list-item', endP.x, endP.y)
+            if gesture.target == 'scroll-list' then
+               Signal.emit('click-scroll-list-item', endP.x, endP.y)
+
+            else
+               print('click-settings-scroll-area-item')
+               Signal.emit('click-settings-scroll-area-item', endP.x, endP.y)
+            end
          else
 
             local dxn = dx / distance
-         local dyn = dy / distance
-            Signal.emit('throw-scroll-list', dxn, dyn, speed)
+            local dyn = dy / distance
+            if gesture.target == 'scroll-list' then
+               Signal.emit('throw-scroll-list', dxn, dyn, speed)
+            else
+               print('throw-settings-scroll-area')
+
+               Signal.emit('throw-settings-scroll-area', dxn, dyn, speed)
+            end
          end
       else -- this is gesture target something else, items basically!,
 
@@ -194,7 +206,7 @@ local function gestureRecognizer(gesture)
          end
          local dxn = dx / distance
          local dyn = dy / distance
- 
+
          Signal.emit('itemThrow', gesture, dxn, dyn, speed)
       end
    end
