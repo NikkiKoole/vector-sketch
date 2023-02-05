@@ -6,7 +6,7 @@ local parentize = require 'lib.parentize'
 local numbers = require 'lib.numbers'
 
 local function getMeta(parent)
-    for i=1, #parent.children do
+    for i = 1, #parent.children do
         if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
             return parent.children[i]
         end
@@ -16,7 +16,7 @@ end
 local function getPositionsForNeckAttaching(e)
     local body = e.biped.body
     local meta = getMeta(body)
-    if meta  then
+    if meta then
         local flipx = e.biped.values.body.flipx or 1
         local flipy = e.biped.values.body.flipy or 1
         local points = meta.points
@@ -88,8 +88,6 @@ local function getPositionsForLegsAttaching(e)
     end
 end
 
-
-
 function BipedSystem:init(e)
     print('auto caled init', e)
 end
@@ -97,7 +95,7 @@ end
 function BipedSystem:bipedInit(e)
     print('bipedinpnt', e)
     --  local body     = e.biped.body
-    e.biped.body.transforms.l[3] = 0-- math.pi / 2
+    e.biped.body.transforms.l[3] = 0 -- math.pi / 2
     transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
 
@@ -149,7 +147,7 @@ function BipedSystem:bipedUsePotatoHead(e, value)
 end
 
 function BipedSystem:bipedDirection(e, dir)
-
+    --[[
     if dir == 'left' then
 
         e.biped.guy.children = { e.biped.leg1, e.biped.feet1, e.biped.body, e.biped.leg2, e.biped.feet2, e.biped.neck,
@@ -196,6 +194,8 @@ function BipedSystem:bipedDirection(e, dir)
 
     transforms.setTransforms(e.biped.feet2)
     transforms.setTransforms(e.biped.feet1)
+    --]]
+
 end
 
 function setLegs(e)

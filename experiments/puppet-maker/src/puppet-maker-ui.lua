@@ -6,15 +6,26 @@ local canvas = require 'lib.canvas'
 local mesh = require 'lib.mesh'
 local ui = require 'lib.ui'
 
-function partSettingsPanel(beginX, beginY)
+
+
+function partSettingsPanel()
+   partSettingsSurroundings()
+   partSettingsScrollable()
+end
+
+function partSettingsSurroundings()
+   -- this thing will render the panel where the big scrollable area is in
+   -- also the tabs on top and the sliders/other settngs in the header.
+   --   basically everything except the scrollable thing itself..
    local w, h = love.graphics.getDimensions()
 
    local margin = (h / 16)
    local width = (w / 3)
    local height = (h - margin * 2)
+   local beginX = 0
+   local beginY = 0
    local startX = beginX + w - width - margin
    local startY = beginY + margin
-
    -- main panel
    love.graphics.setColor(0, 0, 0)
    love.graphics.rectangle('line', startX, startY, width, height)
@@ -30,15 +41,34 @@ function partSettingsPanel(beginX, beginY)
    end
 
    -- top header for custom sliders etc.
-   local minimumHeight = 32
+   local minimumHeight = 132
    local currentY = startY + tabHeight
    love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
    love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
 
+
+end
+
+function partSettingsScrollable(draw, clickX, clickY)
+   local w, h = love.graphics.getDimensions()
+   local margin = (h / 16)
+   local width = (w / 3)
+   local height = (h - margin * 2)
+   local margin = (h / 16)
+   local beginX = 0
+   local beginY = 0
+   local startX = beginX + w - width - margin
+   local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
+   local tabWidth = (width / #tabs)
+   local tabHeight = math.max((tabWidth / 1.5), 32)
+   local minimumHeight = 132
+   local startY = beginY + margin
+   local currentY = startY + tabHeight
+
    -- now the scrolling part.
    -- this has optional scrolling, optional round scrolling or bounds, parameter amount of columns
 
-   local amount = 6
+   local amount = 48
    local columns = 3
    local rows = math.ceil(amount / columns)
    local cellMargin = width / 48
@@ -56,7 +86,6 @@ function partSettingsPanel(beginX, beginY)
 
    local rowsInPanel = math.ceil((height - minimumHeight - tabHeight) / (cellHeight + cellMargin))
    local endlesssScroll = true
-
 
    if rowsInPanel >= rows then
       for j = -1, rows - 1 do
@@ -105,20 +134,12 @@ function partSettingsPanel(beginX, beginY)
          end
       else
 
-         -- also make a case for when you dont need to scroll at all (rowsInPanel >= rows)
-
-         -- if we need to scroll we do this.
-
-         --if (settingsScrollPosition > 0) then
-         --   settingsScrollPosition = 0
-         --end
 
          local mx = (
              ((rows * (cellHeight + (cellMargin))) - (height - minimumHeight - tabHeight - cellMargin)) /
                  (cellHeight + cellMargin))
-         --if (settingsScrollPosition < -mx) then
-         --    settingsScrollPosition = -mx
-         -- end
+
+         --h ere i'm saving the min and max for scrolling behaviour, so i can use those in love.update
          settingsScrollArea[6] = 0
          settingsScrollArea[7] = -mx
 
@@ -215,6 +236,7 @@ function scrollList(draw, clickX, clickY)
          love.graphics.print(elements[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
+            print('clicked', elements[index])
             playSound(scrollItemClickSample)
          end
       end

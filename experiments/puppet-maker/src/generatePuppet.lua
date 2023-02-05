@@ -540,7 +540,7 @@ end
 
 function changeEars(biped, values)
    local container = values.potatoHead and body or head
-   print(inspect(earParts[values.ears.shape]))
+   -- print(inspect(earParts[values.ears.shape]))
    ear1 = updateChild(container, ear1, copy3(earParts[values.ears.shape]))
    ear2 = updateChild(container, ear2, copy3(earParts[values.ears.shape]))
 

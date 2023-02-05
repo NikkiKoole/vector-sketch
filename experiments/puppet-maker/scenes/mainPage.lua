@@ -1,9 +1,6 @@
 -- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
 -- http://bamanda.com/locos/locos_subsite/locos_gallery.html
 -- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
-
-
-
 local scene = {}
 
 local vivid   = require 'vendor.vivid'
@@ -22,6 +19,7 @@ local hit        = require 'lib.hit'
 local transforms = require 'lib.transform'
 local numbers    = require 'lib.numbers'
 local ui         = require 'lib.ui'
+local gradient   = require 'lib.gradient'
 
 local camera     = require 'lib.camera'
 local cam        = require('lib.cameraBase').getInstance()
@@ -147,7 +145,11 @@ function pointerMoved(x, y, dx, dy, id)
    end
 
    if settingsScrollAreaIsDragging then
+      local old = settingsScrollPosition
       settingsScrollPosition = settingsScrollPosition + dy / settingsScrollArea[5]
+      if math.floor(old) ~= math.floor(settingsScrollPosition) then
+         playSound(scrollTickSample)
+      end
    end
 end
 
@@ -363,6 +365,8 @@ function scene.load()
       table.insert(palettes, { r, g, b })
    end
 
+   local timeIndex = math.floor(1 + love.math.random() * 24)
+   skygradient = gradient.makeSkyGradient(16)
 
    scrollPosition = 0
    scrollItemsOnScreen = 4
@@ -505,8 +509,8 @@ function scene.load()
       },
       armLength = 700,
       armWidthMultiplier = 1,
-      arm1flop = -1,
-      arm2flop = 1,
+      arm1flop = 1,
+      arm2flop = -1,
       hands = {
          shape   = 1,
          bgPal   = 4,
@@ -678,8 +682,18 @@ function scene.load()
 end
 
 function attachCallbacks()
+   Signal.register('click-settings-scroll-area-item', function(x, y)
+      print(x, y)
+   end)
+
    Signal.register('click-scroll-list-item', function(x, y)
       scrollList(false, x, y)
+   end)
+
+   Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
+      if (math.abs(dyn) > math.abs(dxn)) then
+         settingsScrollAreaIsThrown = { velocity = speed / 10, direction = sign(dyn) }
+      end
    end)
 
    Signal.register('throw-scroll-list', function(dxn, dyn, speed)
@@ -799,6 +813,24 @@ function attachCallbacks()
    end
 end
 
+local function updateTheScrolling(dt, thrown, pos)
+   local oldPos = pos
+   if (thrown) then
+      thrown.velocity = thrown.velocity * .9
+
+      pos = pos + ((thrown.velocity * thrown.direction) * .1 * dt)
+
+      if (math.floor(oldPos) ~= math.floor(pos)) then
+         playSound(scrollTickSample)
+      end
+      if (thrown.velocity < 0.01) then
+         thrown.velocity = 0
+         thrown = nil
+      end
+   end
+   return pos
+end
+
 function scene.update(dt)
    prof.push("frame")
 
@@ -814,6 +846,7 @@ function scene.update(dt)
    delta = delta + dt
    Timer.update(dt)
 
+
    if settingsScrollArea and settingsScrollArea[6] then
       if settingsScrollPosition > settingsScrollArea[6] then
          settingsScrollPosition = settingsScrollArea[6]
@@ -822,26 +855,12 @@ function scene.update(dt)
          settingsScrollPosition = settingsScrollArea[7]
       end
    end
-   --if settingsScrollPosition > 0 then
-   --   settingsScrollPosition = 0
-   --end
 
-   if scrollListIsThrown then
-      scrollListIsThrown.velocity = scrollListIsThrown.velocity * .90
 
-      local oldScrollPos = scrollPosition
-      scrollPosition = scrollPosition + ((scrollListIsThrown.velocity * scrollListIsThrown.direction) * .1 * dt)
-      local newScrollPos = scrollPosition
-      if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
-         -- play sound
-         playSound(scrollTickSample)
 
-      end
-      if (scrollListIsThrown.velocity < 0.01) then
-         scrollListIsThrown.velocity = 0
-         scrollListIsThrown = nil
-      end
-   end
+   scrollPosition = updateTheScrolling(dt, scrollListIsThrown, scrollPosition)
+   settingsScrollPosition = updateTheScrolling(dt, settingsScrollAreaIsThrown, settingsScrollPosition)
+
    myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
 end
@@ -849,11 +868,17 @@ end
 function scene.draw()
    --   prof.enabled(false)
    prof.push("frame")
+
+
    if true then
       local w, h = love.graphics.getDimensions()
+
       if true then
          ui.handleMouseClickStart()
          love.graphics.clear(bgColor)
+
+         love.graphics.setColor(1, 1, 1, 0.5)
+         love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
          love.graphics.setColor(0, 0, 0)
 
          -- do these via vector sketch snf the scene graph
