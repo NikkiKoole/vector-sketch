@@ -437,7 +437,7 @@ function scene.load()
    headImgUrls = bodyImgUrls
    headParts = bodyParts
 
-   local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
+   --local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
 
    eyeImgUrls, eyeParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyes')
    noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')

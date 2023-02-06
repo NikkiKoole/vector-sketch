@@ -13,6 +13,32 @@ local categories = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoof
 local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
 
 
+function createFittingScale(img, desired_w, desired_h)
+   local w, h = img:getDimensions()
+   local sx, sy = desired_w / w, desired_h / h
+   --   print(sx, sy)
+   return sx, sy
+end
+
+local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
+   local sx, sy = createFittingScale(img, desiredW, desiredH)
+   local scale = math.min(sx, sy)
+   local xOffset = 0
+   local yOffset = 0
+   if scale == sx then
+      xOffset = -desiredW / 2 -- half the height
+      local something = sx * img:getHeight()
+      local something2 = sy * img:getHeight()
+      yOffset = -desiredH / 2 - (something - something2) / 2
+   elseif scale == sy then
+      --print('y')
+      yOffset = -desiredH / 2 -- half the height
+      local something = sx * img:getWidth()
+      local something2 = sy * img:getWidth()
+      xOffset = -desiredW / 2 + (something - something2) / 2
+   end
+   return scale, xOffset, yOffset
+end
 -- this function will be a called from draw
 function partSettingsPanel()
    partSettingsSurroundings(true)
@@ -110,17 +136,33 @@ function renderElement(type, value, x,y, w,h)
 
          local sw, sh = dot:getDimensions()
          local sx = w / sw
-            local sy = h / sh
+         local sy = h / sh
          local scale = math.min(sx,sy) * 1.2
             love.graphics.setColor(0, 0, 0, .1)
             love.graphics.rectangle('line', x,y,w,h)
-            love.graphics.draw(dot, -2 + x, -2 + y, 0, sx, sy)
+            love.graphics.draw(dot, -2 + x  , -2 + y , 0, scale, scale)
 
             love.graphics.setColor(palettes[value])
-            love.graphics.draw(dot, x, y, 0, sx, sy)
+            love.graphics.draw(dot, x, y, 0, scale, scale)
       end
    end
+   if (type == 'img') then
+      if (value <= #earImgUrls) then
+         local dotindex = (value % #dots) + 1
+           local url = earImgUrls[dotindex]
+           local dot = love.graphics.newImage(url)
+          local scale, xoff, yoff =  getScaleAndOffsetsForImage(dot, w,h)
+            local sw, sh = dot:getDimensions()
 
+            love.graphics.setColor(0, 0, 0, .1)
+            love.graphics.rectangle('line', x,y,w,h)
+            love.graphics.draw(dot, -2 + x, -2 + y, 0, scale, scale)
+   
+
+            love.graphics.setColor(1,1,1,1   )
+            love.graphics.draw(dot, x , y , 0, scale, scale)
+         end
+   end
 end
 
 
@@ -135,8 +177,8 @@ function partSettingsScrollable(draw, clickX, clickY)
    local currentY = startY + tabHeight
 
 
-   local amount =  #palettes
-   local columns = 5
+   local amount =  #earImgUrls--#palettes
+   local columns = 2
    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
@@ -152,7 +194,7 @@ function partSettingsScrollable(draw, clickX, clickY)
    local rowsInPanel = math.ceil((scrollAreaHeight - cellMargin) / (cellSize))
    local endlesssScroll = true
 
-   local renderType = 'dot'
+   local renderType = 'img'
 
    if rowsInPanel > rows then
       for j = -1, rows - 1 do
@@ -277,32 +319,7 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
    end
 end
 
-function createFittingScale(img, desired_w, desired_h)
-   local w, h = img:getDimensions()
-   local sx, sy = desired_w / w, desired_h / h
-   --   print(sx, sy)
-   return sx, sy
-end
 
-local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
-   local sx, sy = createFittingScale(img, desiredW, desiredH)
-   local scale = math.min(sx, sy)
-   local xOffset = 0
-   local yOffset = 0
-   if scale == sx then
-      xOffset = -desiredW / 2 -- half the height
-      local something = sx * img:getHeight()
-      local something2 = sy * img:getHeight()
-      yOffset = -desiredH / 2 - (something - something2) / 2
-   elseif scale == sy then
-      --print('y')
-      yOffset = -desiredH / 2 -- half the height
-      local something = sx * img:getWidth()
-      local something2 = sy * img:getWidth()
-      xOffset = -desiredW / 2 + (something - something2) / 2
-   end
-   return scale, xOffset, yOffset
-end
 
 --local res = { clicked = false }
 
