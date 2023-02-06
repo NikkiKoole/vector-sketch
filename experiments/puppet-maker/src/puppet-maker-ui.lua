@@ -148,7 +148,7 @@ function renderElement(type, value, x,y, w,h)
    end
    if (type == 'img') then
       if (value <= #earImgUrls) then
-         local dotindex = (value % #dots) + 1
+         local dotindex = (value % #earImgUrls) + 1
            local url = earImgUrls[dotindex]
            local dot = love.graphics.newImage(url)
           local scale, xoff, yoff =  getScaleAndOffsetsForImage(dot, w,h)
@@ -156,11 +156,13 @@ function renderElement(type, value, x,y, w,h)
 
             love.graphics.setColor(0, 0, 0, .1)
             love.graphics.rectangle('line', x,y,w,h)
-            love.graphics.draw(dot, -2 + x, -2 + y, 0, scale, scale)
+            love.graphics.draw(dot, -2 + x +(xoff+w/2), -2 + y + (yoff + h/2), 0, scale, scale, 0,  0)
    
 
-            love.graphics.setColor(1,1,1,1   )
-            love.graphics.draw(dot, x , y , 0, scale, scale)
+            love.graphics.setColor(0,0,0,1   )
+            love.graphics.draw(dot,  x +(xoff+w/2),  y + (yoff + h/2), 0, scale, scale, 0,  0)
+           -- love.graphics.draw(dot, x , y , 0, scale, scale)
+           love.graphics.print(value,x,y)
          end
    end
 end
@@ -178,7 +180,7 @@ function partSettingsScrollable(draw, clickX, clickY)
 
 
    local amount =  #earImgUrls--#palettes
-   local columns = 2
+   local columns = 3
    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
