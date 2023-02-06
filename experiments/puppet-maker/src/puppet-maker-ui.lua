@@ -7,13 +7,13 @@ local mesh = require 'lib.mesh'
 local ui = require 'lib.ui'
 
 
-
+-- this function will be a called from draw
 function partSettingsPanel()
-   partSettingsSurroundings()
-   partSettingsScrollable()
+   partSettingsSurroundings(true)
+   partSettingsScrollable(true)
 end
 
-function partSettingsSurroundings()
+function partSettingsSurroundings(draw, clickX, clickY)
    -- this thing will render the panel where the big scrollable area is in
    -- also the tabs on top and the sliders/other settngs in the header.
    --   basically everything except the scrollable thing itself..
@@ -26,26 +26,43 @@ function partSettingsSurroundings()
    local beginY = 0
    local startX = beginX + w - width - margin
    local startY = beginY + margin
-   -- main panel
-   love.graphics.setColor(0, 0, 0)
-   love.graphics.rectangle('line', startX, startY, width, height)
-
    -- top tabs (part, bg, fg, line)
    local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
    local tabWidth = (width / #tabs)
    local tabHeight = math.max((tabWidth / 1.5), 32)
    local marginBetweenTabs = tabWidth / 16
-   for i = 1, #tabs do
-      love.graphics.rectangle('line', startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
-      love.graphics.print(tabs[i], startX + (i - 1) * tabWidth, startY)
-   end
-
    -- top header for custom sliders etc.
    local minimumHeight = 132
    local currentY = startY + tabHeight
-   love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
-   love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
 
+
+   if draw then
+      -- main panel
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.rectangle('line', startX, startY, width, height)
+   end
+   for i = 1, #tabs do
+      if draw then
+         love.graphics.rectangle('line', startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
+         love.graphics.print(tabs[i], startX + (i - 1) * tabWidth, startY)
+      else
+         if (
+             hit.pointInRect(clickX, clickY, startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
+             ) then
+            print('clicked', tabs[i])
+            playSound(scrollItemClickSample)
+         end
+
+      end
+   end
+
+   if draw then
+      love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
+      love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
+      -- maybe   can use another weird global like settingsScrollArea
+   else
+      print('hittest')
+   end
 
 end
 

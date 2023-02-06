@@ -164,6 +164,8 @@ function pointerReleased(x, y, id)
    settingsScrollAreaIsDragging = false
 
    gesture.maybeTrigger(id, x, y)
+   -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
+   partSettingsSurroundings(false, x, y)
    collectgarbage()
 end
 
@@ -902,7 +904,7 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      render.renderThings(root, true)
+      --render.renderThings(root, true)
 
       if false then
          for _, v in pairs(cameraPoints) do
@@ -917,7 +919,7 @@ function scene.draw()
 
       prof.push("render-ui")
 
-      if true then
+      if false then
 
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
