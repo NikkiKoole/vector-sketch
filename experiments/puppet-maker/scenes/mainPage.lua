@@ -377,6 +377,10 @@ function scene.load()
    settingsScrollAreaIsDragging = false
    settingsScrollArea = nil
    settingsScrollPosition = 0
+   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
+   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
+
+   selectedTab = 'part'
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
@@ -400,9 +404,7 @@ function scene.load()
    }
 
 
-   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
-
+   
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
    feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt' }
    feetParts = {}

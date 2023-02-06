@@ -7,34 +7,51 @@ local mesh = require 'lib.mesh'
 local ui = require 'lib.ui'
 
 
+local categories = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
+'hoofdhaar' }
+
+local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
+
+
 -- this function will be a called from draw
 function partSettingsPanel()
    partSettingsSurroundings(true)
    partSettingsScrollable(true)
 end
 
-function partSettingsSurroundings(draw, clickX, clickY)
-   -- this thing will render the panel where the big scrollable area is in
-   -- also the tabs on top and the sliders/other settngs in the header.
-   --   basically everything except the scrollable thing itself..
+function partSettingsPanelDimensions()
+   -- thise returns the basic dimensions valeus of the panel (x,y,w,h)
    local w, h = love.graphics.getDimensions()
-
-   local margin = (h / 16)
-   local width = (w / 3)
-   local height = (h - margin * 2)
+   local margin = (h / 16)         -- margin around panel
+   local width = (w / 3)           -- width of panel
+   local height = (h - margin * 2) -- height of panel
    local beginX = 0
    local beginY = 0
    local startX = beginX + w - width - margin
    local startY = beginY + margin
-   -- top tabs (part, bg, fg, line)
-   local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
+
+   return startX, startY, width, height
+end
+
+function partSettingsTabsDimensions(tabs, width)
    local tabWidth = (width / #tabs)
    local tabHeight = math.max((tabWidth / 1.5), 32)
    local marginBetweenTabs = tabWidth / 16
-   -- top header for custom sliders etc.
+   
+   return tabWidth, tabHeight, marginBetweenTabs
+end
+
+
+function partSettingsSurroundings(draw, clickX, clickY)
+   -- this thing will render the panel where the big scrollable area is in
+   -- also the tabs on top and the sliders/other settngs in the header.
+   --   basically everything except the scrollable thing itself..
+
+   local startX, startY, width, height = partSettingsPanelDimensions()
+
+   local tabWidth, tabHeight, marginBetweenTabs =  partSettingsTabsDimensions(tabs, width)
    local minimumHeight = 132
    local currentY = startY + tabHeight
-
 
    if draw then
       -- main panel
@@ -42,17 +59,25 @@ function partSettingsSurroundings(draw, clickX, clickY)
       love.graphics.rectangle('line', startX, startY, width, height)
    end
    for i = 1, #tabs do
+      local x = startX + (i - 1) * tabWidth
+      local y = startY
+      local w1 = tabWidth - marginBetweenTabs
+      local h1 = tabHeight
+
       if draw then
-         love.graphics.rectangle('line', startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
-         love.graphics.print(tabs[i], startX + (i - 1) * tabWidth, startY)
+         love.graphics.rectangle('line', x,y,w1,h1)
+         if (selectedTab == tabs[i]) then
+            love.graphics.setColor(1,1,1)
+            love.graphics.rectangle('fill', x,y,w1,h1)
+            love.graphics.setColor(0, 0, 0)
+         end
+         love.graphics.print(tabs[i], x,y)
       else
-         if (
-             hit.pointInRect(clickX, clickY, startX + (i - 1) * tabWidth, startY, tabWidth - marginBetweenTabs, tabHeight)
-             ) then
+         if (hit.pointInRect(clickX, clickY, x,y,w1,h1)) then
             print('clicked', tabs[i])
+            selectedTab = tabs[i]
             playSound(scrollItemClickSample)
          end
-
       end
    end
 
@@ -60,68 +85,85 @@ function partSettingsSurroundings(draw, clickX, clickY)
       love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
       love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
       -- maybe   can use another weird global like settingsScrollArea
-   else
-      print('hittest')
    end
-
 end
 
-function partSettingsScrollable(draw, clickX, clickY)
-   local w, h = love.graphics.getDimensions()
-   local margin = (h / 16)
-   local width = (w / 3)
-   local height = (h - margin * 2)
-   local margin = (h / 16)
-   local beginX = 0
-   local beginY = 0
-   local startX = beginX + w - width - margin
-   local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
-   local tabWidth = (width / #tabs)
-   local tabHeight = math.max((tabWidth / 1.5), 32)
-   local minimumHeight = 132
-   local startY = beginY + margin
-   local currentY = startY + tabHeight
-
-   -- now the scrolling part.
-   -- this has optional scrolling, optional round scrolling or bounds, parameter amount of columns
-
-   local amount = 48
-   local columns = 3
+function partSettingCellDimensions(amount, columns, width)
    local rows = math.ceil(amount / columns)
    local cellMargin = width / 48
    local useWidth = width - (2 * cellMargin) - (columns - 1) * cellMargin
    local cellWidth = (useWidth / columns)
+   local cellSize = cellWidth + cellMargin
+   return rows, cellWidth, cellMargin, cellSize
+end
+
+
+function renderElement(type, value, x,y, w,h)
+   if (type == 'test') then
+      love.graphics.rectangle('line', x,y,w,h)
+      love.graphics.print(value,x,y)
+   end
+   if (type == 'dot') then
+      if (value <= #palettes) then
+      local dotindex = (value % #dots) + 1
+        local dot = dots[dotindex]
+
+         local sw, sh = dot:getDimensions()
+         local sx = w / sw
+            local sy = h / sh
+         local scale = math.min(sx,sy) * 1.2
+            love.graphics.setColor(0, 0, 0, .1)
+            love.graphics.rectangle('line', x,y,w,h)
+            love.graphics.draw(dot, -2 + x, -2 + y, 0, sx, sy)
+
+            love.graphics.setColor(palettes[value])
+            love.graphics.draw(dot, x, y, 0, sx, sy)
+      end
+   end
+
+end
+
+
+function partSettingsScrollable(draw, clickX, clickY)
+
+
+   local startX, startY, width, height = partSettingsPanelDimensions()
+
+   --local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
+   local tabWidth, tabHeight, marginBetweenTabs =  partSettingsTabsDimensions(tabs, width)
+   local minimumHeight = 132
+   local currentY = startY + tabHeight
+
+
+   local amount =  #palettes
+   local columns = 5
+   local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
    currentY = currentY + minimumHeight + cellMargin
+   local scrollAreaHeight = (height - minimumHeight - tabHeight)
 
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
-   settingsScrollArea = { startX, currentY - cellMargin, width, height - minimumHeight - tabHeight,
-      (cellHeight + cellMargin) }
+   settingsScrollArea = { startX, currentY - cellMargin, width, scrollAreaHeight ,
+      (cellSize) }
    love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
 
-   local rowsInPanel = math.ceil((height - minimumHeight - tabHeight) / (cellHeight + cellMargin))
+   local rowsInPanel = math.ceil((scrollAreaHeight - cellMargin) / (cellSize))
    local endlesssScroll = true
 
-   if rowsInPanel >= rows then
+   local renderType = 'dot'
+
+   if rowsInPanel > rows then
       for j = -1, rows - 1 do
          for i = 1, columns do
             local newScroll = j --+ offset
-            local yPosition = currentY + (newScroll * (cellHeight + cellMargin))
+            local yPosition = currentY + (newScroll * (cellSize))
             local index = math.ceil(0) + j
 
             if (index >= 0 and index <= rows - 1) then
                local value = ((index % rows) * columns) + i
-               love.graphics.rectangle('line',
-                  currentX + (i - 1) * (cellWidth + cellMargin),
-                  yPosition,
-                  cellWidth, cellHeight
-               )
-               love.graphics.print(value,
-                  currentX + (i - 1) * (cellWidth + cellMargin),
-                  yPosition
-               )
+               renderElement(renderType, value, currentX + (i - 1) * (cellSize), yPosition, cellWidth, cellHeight )
             end
          end
       end
@@ -134,27 +176,18 @@ function partSettingsScrollable(draw, clickX, clickY)
          for j = -1, rowsInPanel - 1 do
             for i = 1, columns do
                local newScroll = j + offset
-               local yPosition = currentY + (newScroll * (cellHeight + cellMargin)) --(cellHeight + cellMargin) * (j - 1)
+               local yPosition = currentY + (newScroll * (cellSize)) 
                local index = math.ceil(-settingsScrollPosition) + j
-
                local value = ((index % rows) * columns) + i
-               love.graphics.rectangle('line',
-                  currentX + (i - 1) * (cellWidth + cellMargin),
-                  yPosition,
-                  cellWidth, cellHeight
-               )
-               love.graphics.print(value,
-                  currentX + (i - 1) * (cellWidth + cellMargin),
-                  yPosition
-               )
+               renderElement(renderType, value, currentX + (i - 1) * (cellSize), yPosition, cellWidth, cellHeight )
+              
             end
          end
       else
 
-
          local mx = (
-             ((rows * (cellHeight + (cellMargin))) - (height - minimumHeight - tabHeight - cellMargin)) /
-                 (cellHeight + cellMargin))
+             ((rows * (cellHeight + (cellMargin))) - (scrollAreaHeight - cellMargin)) /
+                 (cellSize))
 
          --h ere i'm saving the min and max for scrolling behaviour, so i can use those in love.update
          settingsScrollArea[6] = 0
@@ -163,20 +196,12 @@ function partSettingsScrollable(draw, clickX, clickY)
          for j = -1, rows - 1 do
             for i = 1, columns do
                local newScroll = j + offset
-               local yPosition = currentY + (newScroll * (cellHeight + cellMargin))
+               local yPosition = currentY + (newScroll * (cellSize))
                local index = math.ceil(-settingsScrollPosition) + j
 
                if (index >= 0 and index <= rows - 1) then
                   local value = ((index % rows) * columns) + i
-                  love.graphics.rectangle('line',
-                     currentX + (i - 1) * (cellWidth + cellMargin),
-                     yPosition,
-                     cellWidth, cellHeight
-                  )
-                  love.graphics.print(value,
-                     currentX + (i - 1) * (cellWidth + cellMargin),
-                     yPosition
-                  )
+                  renderElement(renderType, value, currentX + (i - 1) * (cellSize), yPosition, cellWidth, cellHeight )
                end
             end
          end
@@ -185,28 +210,6 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
 
    love.graphics.setScissor()
-
-   if false then
-      local dotWidth = useWidth / 5
-      local dotHeight = (height - minimumHeight - tabHeight) / 8
-      for i = 1, #palettes do
-
-         local index = (i % #dots) + 1
-         local dot = dots[index]
-         local j = i - 1
-         local w, h = dot:getDimensions()
-         local sx = dotWidth / w
-         local sy = dotWidth / h
-
-         love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.draw(dot, -2 + currentX + (j % 5) * dotWidth, -2 + currentY + math.floor(j / 5) * dotWidth, 0,
-            sx * 1.1, sy * 1.1)
-
-
-         love.graphics.setColor(palettes[i])
-         love.graphics.draw(dot, currentX + (j % 5) * dotWidth, currentY + math.floor(j / 5) * dotWidth, 0, sx, sy)
-      end
-   end
 
 end
 
@@ -219,9 +222,7 @@ function scrollList(draw, clickX, clickY)
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-   local elements = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
-      'hoofdhaar' }
-
+  
    local offset = scrollPosition % 1
 
    for i = -1, (scrollItemsOnScreen - 1) do
@@ -230,9 +231,9 @@ function scrollList(draw, clickX, clickY)
       local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
 
       local index = math.ceil(-scrollPosition) + i
-      index = (index % #elements) + 1
-      if index < 1 then index = index + #elements end
-      if index > #elements then index = 1 end
+      index = (index % #categories) + 1
+      if index < 1 then index = index + #categories end
+      if index > #categories then index = 1 end
 
       local whiterectIndex = math.ceil(-scrollPosition) + i
       whiterectIndex = (whiterectIndex % #whiterects) + 1
@@ -250,10 +251,10 @@ function scrollList(draw, clickX, clickY)
          love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
 
          love.graphics.setColor(0, 0, 0)
-         love.graphics.print(elements[index], 20, yPosition)
+         love.graphics.print(categories[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
-            print('clicked', elements[index])
+            print('clicked', categories[index])
             playSound(scrollItemClickSample)
          end
       end
