@@ -11,15 +11,12 @@ local ui = require 'lib.ui'
 imageCache = {} -- tjo save all the parts inages in
 
 local function findPart(name)
-
    for i = 1, #parts do
       if parts[i].name == name then
          return parts[i]
       end
    end
 end
-
-
 
 
 local tabs = { 'part', 'colors', 'pattern' }
@@ -202,7 +199,7 @@ function renderElement(type, value, container, x, y, w, h)
 end
 
 function partSettingsScrollable(draw, clickX, clickY)
-
+   
 
    local startX, startY, width, height = partSettingsPanelDimensions()
 
@@ -261,12 +258,19 @@ function partSettingsScrollable(draw, clickX, clickY)
          for i = 1, columns do
             local newScroll = j --+ offset
             local yPosition = currentY + (newScroll * (cellSize))
+            local xPosition =  currentX + (i - 1) * (cellSize)
             local index = math.ceil(0) + j
 
             if (index >= 0 and index <= rows - 1) then
                local value = ((index % rows) * columns) + i
-               renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth,
+               if draw then
+               renderElement(renderType, value, renderContainer, xPosition, yPosition, cellWidth,
                   cellHeight)
+               else
+                  if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellWidth)) then
+                     print('clicked', value)
+                  end
+               end
             end
          end
       end
@@ -280,10 +284,17 @@ function partSettingsScrollable(draw, clickX, clickY)
             for i = 1, columns do
                local newScroll = j + offset
                local yPosition = currentY + (newScroll * (cellSize))
+               local xPosition =  currentX + (i - 1) * (cellSize)
                local index = math.ceil(-settingsScrollPosition) + j
                local value = ((index % rows) * columns) + i
-               renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth,
+               if draw then
+               renderElement(renderType, value, renderContainer, xPosition, yPosition, cellWidth,
                   cellHeight)
+               else
+                  if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellWidth)) then
+                     print('clicked', value)
+                  end
+               end
 
             end
          end
@@ -301,12 +312,20 @@ function partSettingsScrollable(draw, clickX, clickY)
             for i = 1, columns do
                local newScroll = j + offset
                local yPosition = currentY + (newScroll * (cellSize))
+               local xPosition =  currentX + (i - 1) * (cellSize)
                local index = math.ceil(-settingsScrollPosition) + j
 
                if (index >= 0 and index <= rows - 1) then
                   local value = ((index % rows) * columns) + i
-                  renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth
+                  if draw then
+                  renderElement(renderType, value, renderContainer, xPosition, yPosition, cellWidth
                      , cellHeight)
+                  else
+                     if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellWidth)) then
+                        print('clicked', value)
+                     end
+                  end
+
                end
             end
          end
