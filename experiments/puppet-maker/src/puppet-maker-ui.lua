@@ -8,7 +8,7 @@ local ui = require 'lib.ui'
 
 
 
-imageCache = {}
+imageCache = {} -- tjo save all the parts inages in
 
 local function findPart(name)
 
