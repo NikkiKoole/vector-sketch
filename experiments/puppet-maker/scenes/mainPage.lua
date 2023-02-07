@@ -314,7 +314,8 @@ function scene.load()
    tiles2 = love.graphics.newImage('assets/layered/tiles2.150.png')
 
    textures = {
-      1,
+
+      love.graphics.newImage('assets/layered/texture-type0.png'),
       love.graphics.newImage('assets/layered/texture-type2t.png'),
       love.graphics.newImage('assets/layered/texture-type1.png'),
       love.graphics.newImage('assets/layered/texture-type3.png'),
@@ -322,7 +323,8 @@ function scene.load()
       love.graphics.newImage('assets/layered/texture-type5.png'),
       love.graphics.newImage('assets/layered/texture-type6.png'),
       love.graphics.newImage('assets/layered/texture-type7.png'),
-      nil
+
+
    }
 
    whiterects = {
@@ -404,7 +406,7 @@ function scene.load()
    }
 
 
-   
+
    feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
    feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt' }
    feetParts = {}
@@ -906,7 +908,7 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      --render.renderThings(root, true)
+      -- render.renderThings(root, true)
 
       if false then
          for _, v in pairs(cameraPoints) do

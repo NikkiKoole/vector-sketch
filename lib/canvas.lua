@@ -108,7 +108,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
       love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
       --local ow, oh = grunge:getDimensions()
-      if texture1 and texture1 ~= 1 then
+      if texture1 then
          local gw, gh = texture1:getDimensions()
          local rotation = 0 --delta
          local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
@@ -128,13 +128,9 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
          love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
       end
 
-      if texture1 == 1 then
-         love.graphics.setColor(color1)
-         love.graphics.rectangle('fill', 0, 0, 1024, 1024)
-      end
 
       -- second texture
-      if texture2 and texture2 ~= 1 then
+      if texture2 then
          local gw, gh = texture2:getDimensions()
          local rotation = 0 --delta
          local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
@@ -164,10 +160,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
       end
 
-      if texture2 == 1 then
-         love.graphics.setColor(color2)
-         love.graphics.rectangle('fill', 0, 0, 1024, 1024)
-      end
+
 
       love.graphics.setStencilTest()
    end

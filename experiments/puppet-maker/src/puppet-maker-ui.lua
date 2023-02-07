@@ -8,9 +8,9 @@ local ui = require 'lib.ui'
 
 
 local categories = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
-'hoofdhaar' }
+   'hoofdhaar' }
 
-local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
+local tabs = { 'part', 'colors', 'pattern' }
 
 
 function createFittingScale(img, desired_w, desired_h)
@@ -39,6 +39,7 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
    end
    return scale, xOffset, yOffset
 end
+
 -- this function will be a called from draw
 function partSettingsPanel()
    partSettingsSurroundings(true)
@@ -48,8 +49,8 @@ end
 function partSettingsPanelDimensions()
    -- thise returns the basic dimensions valeus of the panel (x,y,w,h)
    local w, h = love.graphics.getDimensions()
-   local margin = (h / 16)         -- margin around panel
-   local width = (w / 3)           -- width of panel
+   local margin = (h / 16) -- margin around panel
+   local width = (w / 3) -- width of panel
    local height = (h - margin * 2) -- height of panel
    local beginX = 0
    local beginY = 0
@@ -61,12 +62,11 @@ end
 
 function partSettingsTabsDimensions(tabs, width)
    local tabWidth = (width / #tabs)
-   local tabHeight = math.max((tabWidth / 1.5), 32)
+   local tabHeight = math.max((tabWidth / 2.5), 32)
    local marginBetweenTabs = tabWidth / 16
-   
+
    return tabWidth, tabHeight, marginBetweenTabs
 end
-
 
 function partSettingsSurroundings(draw, clickX, clickY)
    -- this thing will render the panel where the big scrollable area is in
@@ -75,7 +75,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
 
    local startX, startY, width, height = partSettingsPanelDimensions()
 
-   local tabWidth, tabHeight, marginBetweenTabs =  partSettingsTabsDimensions(tabs, width)
+   local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
    local minimumHeight = 132
    local currentY = startY + tabHeight
 
@@ -83,6 +83,16 @@ function partSettingsSurroundings(draw, clickX, clickY)
       -- main panel
       love.graphics.setColor(0, 0, 0)
       love.graphics.rectangle('line', startX, startY, width, height)
+
+      --local wr = whiterects[5]
+      --local wrw, wrh = wr:getDimensions()
+      --local scaleX = width / wrw
+      --local scaleY = height / wrh
+      --love.graphics.setColor(0, 0, 0)
+      love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
+      love.graphics.rectangle('fill', startX, startY, width, height)
+      love.graphics.setColor(0, 0, 0)
+
    end
    for i = 1, #tabs do
       local x = startX + (i - 1) * tabWidth
@@ -91,15 +101,15 @@ function partSettingsSurroundings(draw, clickX, clickY)
       local h1 = tabHeight
 
       if draw then
-         love.graphics.rectangle('line', x,y,w1,h1)
+         love.graphics.rectangle('line', x, y, w1, h1)
          if (selectedTab == tabs[i]) then
-            love.graphics.setColor(1,1,1)
-            love.graphics.rectangle('fill', x,y,w1,h1)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.rectangle('fill', x, y, w1, h1)
             love.graphics.setColor(0, 0, 0)
          end
-         love.graphics.print(tabs[i], x,y)
+         love.graphics.print(tabs[i], x, y)
       else
-         if (hit.pointInRect(clickX, clickY, x,y,w1,h1)) then
+         if (hit.pointInRect(clickX, clickY, x, y, w1, h1)) then
             print('clicked', tabs[i])
             selectedTab = tabs[i]
             playSound(scrollItemClickSample)
@@ -123,50 +133,60 @@ function partSettingCellDimensions(amount, columns, width)
    return rows, cellWidth, cellMargin, cellSize
 end
 
-
-function renderElement(type, value, x,y, w,h)
+function renderElement(type, value, container, x, y, w, h)
    if (type == 'test') then
-      love.graphics.rectangle('line', x,y,w,h)
-      love.graphics.print(value,x,y)
+      love.graphics.rectangle('line', x, y, w, h)
+      love.graphics.print(value, x, y)
    end
    if (type == 'dot') then
-      if (value <= #palettes) then
-      local dotindex = (value % #dots) + 1
-        local dot = dots[dotindex]
+      if (value <= #container) then
+         local dotindex = (value % #dots) + 1
+         local dot = dots[dotindex]
+         local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-         local sw, sh = dot:getDimensions()
-         local sx = w / sw
-         local sy = h / sh
-         local scale = math.min(sx,sy) * 1.2
-            love.graphics.setColor(0, 0, 0, .1)
-            love.graphics.rectangle('line', x,y,w,h)
-            love.graphics.draw(dot, -2 + x  , -2 + y , 0, scale, scale)
+         love.graphics.setColor(0, 0, 0, .1)
+         love.graphics.rectangle('line', x, y, w, h)
+         love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
 
-            love.graphics.setColor(palettes[value])
-            love.graphics.draw(dot, x, y, 0, scale, scale)
+         love.graphics.setColor(container[value])
+         love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
       end
    end
    if (type == 'img') then
-      if (value <= #earImgUrls) then
-         local dotindex = (value % #earImgUrls) + 1
-           local url = earImgUrls[dotindex]
-           local dot = love.graphics.newImage(url)
-          local scale, xoff, yoff =  getScaleAndOffsetsForImage(dot, w,h)
-            local sw, sh = dot:getDimensions()
+      if (value <= #container) then
+         local dotindex = (value % #container) + 1
+         local url = container[dotindex]
+         local dot = love.graphics.newImage(url)
+         local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-            love.graphics.setColor(0, 0, 0, .1)
-            love.graphics.rectangle('line', x,y,w,h)
-            love.graphics.draw(dot, -2 + x +(xoff+w/2), -2 + y + (yoff + h/2), 0, scale, scale, 0,  0)
-   
 
-            love.graphics.setColor(0,0,0,1   )
-            love.graphics.draw(dot,  x +(xoff+w/2),  y + (yoff + h/2), 0, scale, scale, 0,  0)
-           -- love.graphics.draw(dot, x , y , 0, scale, scale)
-           love.graphics.print(value,x,y)
-         end
+         love.graphics.setColor(0, 0, 0, .1)
+         love.graphics.rectangle('line', x, y, w, h)
+         love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
+
+
+         love.graphics.setColor(0, 0, 0, 1)
+         love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
+         love.graphics.print(value, x, y)
+      end
+   end
+   if (type == 'texture') then
+      if (value <= #container) then
+         local dotindex = (value % #container) + 1
+         local dot = container[dotindex]
+         local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
+
+         love.graphics.setColor(0, 0, 0, .1)
+         love.graphics.rectangle('line', x, y, w, h)
+         love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
+
+
+         love.graphics.setColor(0, 0, 0, 1)
+         love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
+         love.graphics.print(value, x, y)
+      end
    end
 end
-
 
 function partSettingsScrollable(draw, clickX, clickY)
 
@@ -174,13 +194,36 @@ function partSettingsScrollable(draw, clickX, clickY)
    local startX, startY, width, height = partSettingsPanelDimensions()
 
    --local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
-   local tabWidth, tabHeight, marginBetweenTabs =  partSettingsTabsDimensions(tabs, width)
+   local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
    local minimumHeight = 132
    local currentY = startY + tabHeight
 
 
-   local amount =  #earImgUrls--#palettes
+   local amount = #palettes
+   local renderType = 'dot'
+   local renderContainer = palettes
+
    local columns = 3
+
+   if selectedTab == 'fg' or selectedTab == 'bg' or selectedTab == 'line' or selectedTab == 'colors' then
+      amount = #palettes
+      renderType = 'dot'
+      columns = 5
+      renderContainer = palettes
+   end
+   if selectedTab == 'part' then
+      amount = #earImgUrls
+      renderType = 'img'
+      renderContainer = earImgUrls
+   end
+   if selectedTab == 'pattern' then
+      amount = #textures
+      renderType = 'texture'
+      renderContainer = textures
+   end
+
+
+
    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
@@ -189,14 +232,14 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
-   settingsScrollArea = { startX, currentY - cellMargin, width, scrollAreaHeight ,
+   settingsScrollArea = { startX, currentY - cellMargin, width, scrollAreaHeight,
       (cellSize) }
    love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
 
    local rowsInPanel = math.ceil((scrollAreaHeight - cellMargin) / (cellSize))
    local endlesssScroll = true
 
-   local renderType = 'img'
+
 
    if rowsInPanel > rows then
       for j = -1, rows - 1 do
@@ -207,7 +250,8 @@ function partSettingsScrollable(draw, clickX, clickY)
 
             if (index >= 0 and index <= rows - 1) then
                local value = ((index % rows) * columns) + i
-               renderElement(renderType, value, currentX + (i - 1) * (cellSize), yPosition, cellWidth, cellHeight )
+               renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth,
+                  cellHeight)
             end
          end
       end
@@ -220,11 +264,12 @@ function partSettingsScrollable(draw, clickX, clickY)
          for j = -1, rowsInPanel - 1 do
             for i = 1, columns do
                local newScroll = j + offset
-               local yPosition = currentY + (newScroll * (cellSize)) 
+               local yPosition = currentY + (newScroll * (cellSize))
                local index = math.ceil(-settingsScrollPosition) + j
                local value = ((index % rows) * columns) + i
-               renderElement(renderType, value, currentX + (i - 1) * (cellSize), yPosition, cellWidth, cellHeight )
-              
+               renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth,
+                  cellHeight)
+
             end
          end
       else
@@ -245,7 +290,8 @@ function partSettingsScrollable(draw, clickX, clickY)
 
                if (index >= 0 and index <= rows - 1) then
                   local value = ((index % rows) * columns) + i
-                  renderElement(renderType, value, currentX + (i - 1) * (cellSize), yPosition, cellWidth, cellHeight )
+                  renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth
+                     , cellHeight)
                end
             end
          end
@@ -266,7 +312,7 @@ function scrollList(draw, clickX, clickY)
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-  
+
    local offset = scrollPosition % 1
 
    for i = -1, (scrollItemsOnScreen - 1) do
@@ -320,8 +366,6 @@ function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButt
       love.graphics.circle('line', px, py, smallButtonRadius)
    end
 end
-
-
 
 --local res = { clicked = false }
 
