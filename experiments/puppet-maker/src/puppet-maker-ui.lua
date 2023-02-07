@@ -7,11 +7,22 @@ local mesh = require 'lib.mesh'
 local ui = require 'lib.ui'
 
 
-local categories = { 'voeten ', 'benen', 'romp', 'armen', 'handen', 'nek', 'hoofd', 'neus', 'ogen', 'oren',
-   'hoofdhaar' }
+
+imageCache = {}
+
+local function findPart(name)
+
+   for i = 1, #parts do
+      if parts[i].name == name then
+         return parts[i]
+      end
+   end
+end
+
+
+
 
 local tabs = { 'part', 'colors', 'pattern' }
-
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -156,7 +167,9 @@ function renderElement(type, value, container, x, y, w, h)
       if (value <= #container) then
          local dotindex = (value % #container) + 1
          local url = container[dotindex]
-         local dot = love.graphics.newImage(url)
+         
+         local dot = imageCache[url] or love.graphics.newImage(url)
+         imageCache[url] = dot
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
 
@@ -212,9 +225,11 @@ function partSettingsScrollable(draw, clickX, clickY)
       renderContainer = palettes
    end
    if selectedTab == 'part' then
-      amount = #earImgUrls
+      local p = findPart(selectedCategory)
+      --print(inspect(p))
+      amount = #p.imgs
       renderType = 'img'
-      renderContainer = earImgUrls
+      renderContainer = p.imgs
    end
    if selectedTab == 'pattern' then
       amount = #textures
@@ -345,6 +360,7 @@ function scrollList(draw, clickX, clickY)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
             print('clicked', categories[index])
+            selectedCategory = categories[index]
             playSound(scrollItemClickSample)
          end
       end

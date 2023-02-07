@@ -383,6 +383,11 @@ function scene.load()
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
 
    selectedTab = 'part'
+   selectedCategory = 'head'
+
+
+    
+   
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
@@ -445,6 +450,29 @@ function scene.load()
    noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
    earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
+
+
+   parts = {
+      {name='head', imgs=headImgUrls},
+      {name='brows', imgs=browImgUrls},
+      {name='eyes', imgs=eyeImgUrls},
+      {name='ears', imgs=earImgUrls},
+      {name='neck', imgs=legUrls},
+      {name= 'nose', imgs=noseImgUrls},
+      {name= 'body', imgs=bodyImgUrls},
+      {name= 'arms', imgs=legUrls}, 
+      {name='hands', imgs=feetImgUrls},
+      {name= 'legs', imgs=legUrls},
+      {name= 'feet', imgs=feetImgUrls}
+   
+   }
+
+   --print(inspect(parts))
+   categories = {}
+   for i = 1, #parts do
+      categories[i] = parts[i].name 
+   end
+   
 
    values = {
       potatoHead = true,
@@ -908,7 +936,7 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      -- render.renderThings(root, true)
+      render.renderThings(root, true)
 
       if false then
          for _, v in pairs(cameraPoints) do
@@ -923,7 +951,7 @@ function scene.draw()
 
       prof.push("render-ui")
 
-      if false then
+      if true then
 
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
@@ -1106,7 +1134,7 @@ function scene.draw()
       end
       prof.pop("render-ui")
 
-      if false then -- this is leaking too
+      if true then -- this is leaking too
 
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
