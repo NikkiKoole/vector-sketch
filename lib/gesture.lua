@@ -1,19 +1,19 @@
-local pointer = require 'lib.pointer'
-local geom    = require 'lib.geom'
+local pointer      = require 'lib.pointer'
+local geom         = require 'lib.geom'
 
 local gestureState = {
-   list = {},
-   updateResolutionCounter = 0,
-   updateResolution = 1.0 / 60
+    list = {},
+    updateResolutionCounter = 0,
+    updateResolution = 1.0 / 60
 }
 local xAxisAllowed = true
 local yAxisAllowed = true
 
-local cam = require('lib.cameraBase').getInstance()
-local tween = require 'lib.cameraTween'
-local lib = {}
+local cam          = require('lib.cameraBase').getInstance()
+local tween        = require 'lib.cameraTween'
+local lib          = {}
 
-local Signal = require 'vendor.signal'
+local Signal       = require 'vendor.signal'
 
 local function addGesturePoint(gest, time, x, y)
    --print('adding gesture posiiton point')
@@ -82,7 +82,6 @@ end
 
 local function gestureRecognizer(gesture)
    if #gesture.positions > 1 then
-
       local startP = gesture.positions[1]
       local endP = gesture.positions[#gesture.positions]
       local gestureLength = 5 --math.max(3,math.floor(#gesture.positions))
@@ -136,10 +135,8 @@ local function gestureRecognizer(gesture)
                         local my = dy < 0 and -1 or 1
                         yAxis = cy - ((dy) + (my * speed / 7.5))
                      end
-
                   end
                end
-
             else
                if xAxisAllowed then
                   if math.abs(dx) > minDistance then
@@ -164,12 +161,11 @@ local function gestureRecognizer(gesture)
             -- todo , move this to a signal too
             if doTween then
                tween.setCameraTween({
-                  goalX = xAxis,
-                  goalY = yAxis,
-                  smoothValue = 3.5,
-                  originalGesture = gesture
+                   goalX = xAxis,
+                   goalY = yAxis,
+                   smoothValue = 3.5,
+                   originalGesture = gesture
                })
-
             end
          else
 
@@ -182,25 +178,22 @@ local function gestureRecognizer(gesture)
          if duration < .5 and distance < 32 then
             if gesture.target == 'scroll-list' then
                Signal.emit('click-scroll-list-item', endP.x, endP.y)
-
             else
-               print('click-settings-scroll-area-item')
+               --print('click-settings-scroll-area-item')
                Signal.emit('click-settings-scroll-area-item', endP.x, endP.y)
             end
          else
-
             local dxn = dx / distance
             local dyn = dy / distance
             if gesture.target == 'scroll-list' then
                Signal.emit('throw-scroll-list', dxn, dyn, speed)
             else
-               print('throw-settings-scroll-area')
+               --print('throw-settings-scroll-area')
 
                Signal.emit('throw-settings-scroll-area', dxn, dyn, speed)
             end
          end
       else -- this is gesture target something else, items basically!,
-
          if distance < 0.00001 then
             distance = 0.00001
          end

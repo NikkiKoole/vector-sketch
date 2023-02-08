@@ -97,44 +97,58 @@ end
 function guyChildren(e)
    if (e.biped.values.potatoHead) then
       return {
-         body,
-         leg1, leg2, feet1, feet2,
-         arm1, arm2, hand1, hand2,
+          body,
+          leg1, leg2, feet1, feet2,
+          arm1, arm2, hand1, hand2,
       }
    else
       return {
-         body, neck, head,
-         leg1, leg2, feet1, feet2,
-         arm1, arm2, hand1, hand2,
+          body, neck, head,
+          leg1, leg2, feet1, feet2,
+          arm1, arm2, hand1, hand2,
       }
    end
 end
 
 function bipedArguments(e, values)
    return {
-      guy = guy, body = body, neck = neck, head = head,
-      leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-      arm1 = arm1, arm2 = arm2, hand1 = hand1, hand2 = hand2, values = values
+       guy = guy,
+       body = body,
+       neck = neck,
+       head = head,
+       leg1 = leg1,
+       leg2 = leg2,
+       feet1 = feet1,
+       feet2 = feet2,
+       arm1 = arm1,
+       arm2 = arm2,
+       hand1 = hand1,
+       hand2 = hand2,
+       values = values
    }
 end
 
 function potatoArguments(e, values)
    return {
-      head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, ear1 = ear1, ear2 = ear2, brow1 = brow1, brow2 = brow2, nose = nose,
-      values = values
+       head = values.potatoHead and body or head,
+       eye1 = eye1,
+       eye2 = eye2,
+       ear1 = ear1,
+       ear2 = ear2,
+       brow1 = brow1,
+       brow2 = brow2,
+       nose = nose,
+       values = values
    }
 end
 
 function createBrowBezier(values, points)
-
-
    return createBezierFromImage(
-      browImgUrls[values.brows.shape],
-      palettes[values.brows.bgPal], palettes[values.brows.fgPal],
-      textures[values.brows.bgTex], textures[values.brows.fgTex], palettes[values.brows.linePal],
+           browImgUrls[values.brows.shape],
+           palettes[values.brows.bgPal], palettes[values.brows.fgPal],
+           textures[values.brows.bgTex], textures[values.brows.fgTex], palettes[values.brows.linePal],
 
-      points)
+           points)
 end
 
 function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx, flipy)
@@ -142,21 +156,21 @@ function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx,
    local width, height = img:getDimensions()
    local currentNode = {}
    currentNode = {
-      color = { 1, 1, 1, 1 },
-      data = {
-         length = height,
-         steps = 15,
-         width = width / 2
-      },
-      name = "beziered",
-      points = { { height / 2, 0 }, { 0, 300 + love.math.random() * -600 },
-         { -height / 2, 100 + love.math.random() * -200 } },
-      texture = {
-         filter = "linear",
-         url = url,
-         wrap = "repeat"
-      },
-      type = "bezier"
+       color = { 1, 1, 1, 1 },
+       data = {
+           length = height,
+           steps = 15,
+           width = width / 2
+       },
+       name = "beziered",
+       points = { { height / 2, 0 }, { 0, 300 + love.math.random() * -600 },
+           { -height / 2, 100 + love.math.random() * -200 } },
+       texture = {
+           filter = "linear",
+           url = url,
+           wrap = "repeat"
+       },
+       type = "bezier"
    }
 
    if (true) then
@@ -173,12 +187,11 @@ function createBezierFromImage(url, bg, fg, bgp, fgp, lp, optionalPoints, flipx,
    local result = {}
    result.folder = true
    result.transforms = {
-      l = { 0, 0, 0, 1, 1, 0, 0 }
+       l = { 0, 0, 0, 1, 1, 0, 0 }
    }
    result.children = { currentNode }
    --print('jo!')
    return result
-
 end
 
 function createRubberHoseFromImage(url, bg, fg, bgp, fgp, lp, flop, length, widthMultiplier, optionalPoints, flipx, flipy)
@@ -231,29 +244,28 @@ local function makeDynamicCanvas(imageData, mymesh)
    result.name = 'generated'
    result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
    result.texture = {
-      filter = "linear",
-      canvas = mymesh,
-      wrap = "repeat",
+       filter = "linear",
+       canvas = mymesh,
+       wrap = "repeat",
    }
 
    return result
 end
 
 local function createRectangle(x, y, w, h, r, g, b)
-
    local w2 = w / 2
    local h2 = h / 2
 
    local result = {}
    result.folder = true
    result.transforms = {
-      l = { x, y, 0, 1, 1, 0, 0 }
+       l = { x, y, 0, 1, 1, 0, 0 }
    }
    result.children = { {
 
-      name = 'rectangle',
-      points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
-      color = { r or 1, g or 0.91, b or 0.15, 1 }
+       name = 'rectangle',
+       points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
+       color = { r or 1, g or 0.91, b or 0.15, 1 }
    } }
    return result
 end
@@ -268,7 +280,6 @@ local function getIndexOfGraphicPart(part)
       end
       if metaIndex then return metaIndex - 1 end
       return 1
-
    end
 end
 
@@ -311,35 +322,35 @@ function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
 
    return createRubberHoseFromImage(
-      legUrls[values.arms.shape],
-      palettes[values.arms.bgPal], palettes[values.arms.fgPal],
-      textures[values.arms.bgTex], textures[values.arms.fgTex], palettes[values.arms.linePal], flop
-      , values.armLength,
-      values.armWidthMultiplier,
-      points)
+           legUrls[values.arms.shape],
+           palettes[values.arms.bgPal], palettes[values.arms.fgPal],
+           textures[values.arms.bgTex], textures[values.arms.fgTex], palettes[values.arms.linePal], flop
+           , values.armLength,
+           values.armWidthMultiplier,
+           points)
 end
 
 function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
 
    return createRubberHoseFromImage(
-      legUrls[values.legs.shape],
-      palettes[values.legs.bgPal], palettes[values.legs.fgPal],
-      textures[values.legs.bgTex], textures[values.legs.fgTex], palettes[values.legs.linePal], flop
-      , values.legLength,
-      values.legWidthMultiplier,
-      points, values.legs.flipx or 1, values.legs.flipy or 1)
+           legUrls[values.legs.shape],
+           palettes[values.legs.bgPal], palettes[values.legs.fgPal],
+           textures[values.legs.bgTex], textures[values.legs.fgTex], palettes[values.legs.linePal], flop
+           , values.legLength,
+           values.legWidthMultiplier,
+           points, values.legs.flipx or 1, values.legs.flipy or 1)
 end
 
 function createNeckRubberhose(values, points)
    local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
    return createRubberHoseFromImage(
-      legUrls[values.neck.shape],
-      palettes[values.neck.bgPal], palettes[values.neck.fgPal],
-      textures[values.neck.bgTex], textures[values.neck.fgTex], palettes[values.neck.linePal], flop
-      , values.neckLength,
-      values.neckWidthMultiplier,
-      points)
+           legUrls[values.neck.shape],
+           palettes[values.neck.bgPal], palettes[values.neck.fgPal],
+           textures[values.neck.bgTex], textures[values.neck.fgTex], palettes[values.neck.linePal], flop
+           , values.neckLength,
+           values.neckWidthMultiplier,
+           points)
 end
 
 --[[
@@ -378,6 +389,7 @@ function redoNeck(biped, values)
 end
 
 function changeBody(biped, values)
+   -- print(inspect(values))
    body = updateChild(guy, body, copy3(bodyParts[values.body.shape]))
    parentize.parentize(root)
    redoBody(biped, values) --- this position is very iportant,
@@ -419,14 +431,14 @@ end
 
 function redoGraphicHelper(part, name, values)
    redoTheGraphicInPart(
-      part,
-      palettes[values[name].bgPal],
-      palettes[values[name].fgPal],
-      textures[values[name].bgTex],
-      textures[values[name].fgTex],
-      palettes[values[name].linePal],
-      values[name].flipx or 1,
-      values[name].flipy or 1
+       part,
+       palettes[values[name].bgPal],
+       palettes[values[name].fgPal],
+       textures[values[name].bgTex],
+       textures[values[name].fgTex],
+       palettes[values[name].linePal],
+       values[name].flipx or 1,
+       values[name].flipy or 1
    )
 end
 

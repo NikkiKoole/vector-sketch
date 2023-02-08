@@ -1,17 +1,14 @@
 -- this is the panel that contains all ui for changing a certain body part or general change
 -- for each category we have a optionally unique panel
 
-local hit = require 'lib.hit'
-local canvas = require 'lib.canvas'
-local mesh = require 'lib.mesh'
-local ui = require 'lib.ui'
-
-
+local hit = require "lib.hit"
+local canvas = require "lib.canvas"
+local mesh = require "lib.mesh"
+local ui = require "lib.ui"
 
 imageCache = {} -- tjo save all the parts inages in
 
 local function findPart(name)
-
    for i = 1, #parts do
       if parts[i].name == name then
          return parts[i]
@@ -19,10 +16,7 @@ local function findPart(name)
    end
 end
 
-
-
-
-local tabs = { 'part', 'colors', 'pattern' }
+local tabs = { "part", "colors", "pattern" }
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -93,17 +87,10 @@ function partSettingsSurroundings(draw, clickX, clickY)
    if draw then
       -- main panel
       love.graphics.setColor(0, 0, 0)
-      love.graphics.rectangle('line', startX, startY, width, height)
-
-      --local wr = whiterects[5]
-      --local wrw, wrh = wr:getDimensions()
-      --local scaleX = width / wrw
-      --local scaleY = height / wrh
-      --love.graphics.setColor(0, 0, 0)
+      love.graphics.rectangle("line", startX, startY, width, height)
       love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-      love.graphics.rectangle('fill', startX, startY, width, height)
+      love.graphics.rectangle("fill", startX, startY, width, height)
       love.graphics.setColor(0, 0, 0)
-
    end
    for i = 1, #tabs do
       local x = startX + (i - 1) * tabWidth
@@ -112,16 +99,16 @@ function partSettingsSurroundings(draw, clickX, clickY)
       local h1 = tabHeight
 
       if draw then
-         love.graphics.rectangle('line', x, y, w1, h1)
+         love.graphics.rectangle("line", x, y, w1, h1)
          if (selectedTab == tabs[i]) then
             love.graphics.setColor(1, 1, 1)
-            love.graphics.rectangle('fill', x, y, w1, h1)
+            love.graphics.rectangle("fill", x, y, w1, h1)
             love.graphics.setColor(0, 0, 0)
          end
          love.graphics.print(tabs[i], x, y)
       else
          if (hit.pointInRect(clickX, clickY, x, y, w1, h1)) then
-            print('clicked', tabs[i])
+            print("clicked", tabs[i])
             selectedTab = tabs[i]
             playSound(scrollItemClickSample)
          end
@@ -129,8 +116,8 @@ function partSettingsSurroundings(draw, clickX, clickY)
    end
 
    if draw then
-      love.graphics.rectangle('line', startX, currentY, width, minimumHeight)
-      love.graphics.print('ruimte voor sliders', startX + 6, currentY + 6)
+      love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
+      love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
       -- maybe   can use another weird global like settingsScrollArea
    end
 end
@@ -145,54 +132,61 @@ function partSettingCellDimensions(amount, columns, width)
 end
 
 function renderElement(type, value, container, x, y, w, h)
-   if (type == 'test') then
-      love.graphics.rectangle('line', x, y, w, h)
+   if (type == "test") then
+      love.graphics.rectangle("line", x, y, w, h)
       love.graphics.print(value, x, y)
    end
-   if (type == 'dot') then
+   if (type == "dot") then
       if (value <= #container) then
-         local dotindex = (value % #dots) + 1
+         local dotindex = (value % #dots)
+         if dotindex == 0 then
+            dotindex = #dots
+         end
+         --print(dotindex)
          local dot = dots[dotindex]
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
          love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.rectangle('line', x, y, w, h)
+         love.graphics.rectangle("line", x, y, w, h)
          love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
 
          love.graphics.setColor(container[value])
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
       end
    end
-   if (type == 'img') then
+   if (type == "img") then
       if (value <= #container) then
-         local dotindex = (value % #container) + 1
+         local dotindex = (value % #container)
+         if dotindex == 0 then
+            dotindex = #container
+         end
          local url = container[dotindex]
-         
+
          local dot = imageCache[url] or love.graphics.newImage(url)
          imageCache[url] = dot
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-
          love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.rectangle('line', x, y, w, h)
+         love.graphics.rectangle("line", x, y, w, h)
          love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
-
 
          love.graphics.setColor(0, 0, 0, 1)
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
          love.graphics.print(value, x, y)
       end
    end
-   if (type == 'texture') then
+   if (type == "texture") then
       if (value <= #container) then
-         local dotindex = (value % #container) + 1
+         local dotindex = (value % #container)
+         if dotindex == 0 then
+            dotindex = #container
+         end
          local dot = container[dotindex]
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
          love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.rectangle('line', x, y, w, h)
+         love.graphics.rectangle("line", x, y, w, h)
          love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
-
 
          love.graphics.setColor(0, 0, 0, 1)
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
@@ -201,9 +195,31 @@ function renderElement(type, value, container, x, y, w, h)
    end
 end
 
+function buttonClickHelper(value)
+   --print(value)
+   --print(selectedTab, selectedCategory)
+   local f = findPart(selectedCategory)
+   if selectedTab == 'part' then
+      values[selectedCategory]['shape'] = value
+      local func = f.funcs[1]
+      func(f.funcs[3], values)
+      playSound(scrollItemClickSample)
+   end
+   if selectedTab == 'colors' then
+      values[selectedCategory]['bgPal'] = value
+      local func = f.funcs[2]
+      func(f.funcs[3], values)
+      playSound(scrollItemClickSample)
+   end
+   if selectedTab == 'pattern' then
+      values[selectedCategory]['fgTex'] = value
+      local func = f.funcs[2]
+      func(f.funcs[3], values)
+      playSound(scrollItemClickSample)
+   end
+end
+
 function partSettingsScrollable(draw, clickX, clickY)
-
-
    local startX, startY, width, height = partSettingsPanelDimensions()
 
    --local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
@@ -211,33 +227,30 @@ function partSettingsScrollable(draw, clickX, clickY)
    local minimumHeight = 132
    local currentY = startY + tabHeight
 
-
    local amount = #palettes
-   local renderType = 'dot'
+   local renderType = "dot"
    local renderContainer = palettes
 
    local columns = 3
 
-   if selectedTab == 'fg' or selectedTab == 'bg' or selectedTab == 'line' or selectedTab == 'colors' then
+   if selectedTab == "fg" or selectedTab == "bg" or selectedTab == "line" or selectedTab == "colors" then
       amount = #palettes
-      renderType = 'dot'
+      renderType = "dot"
       columns = 5
       renderContainer = palettes
    end
-   if selectedTab == 'part' then
+   if selectedTab == "part" then
       local p = findPart(selectedCategory)
       --print(inspect(p))
       amount = #p.imgs
-      renderType = 'img'
+      renderType = "img"
       renderContainer = p.imgs
    end
-   if selectedTab == 'pattern' then
+   if selectedTab == "pattern" then
       amount = #textures
-      renderType = 'texture'
+      renderType = "texture"
       renderContainer = textures
    end
-
-
 
    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
    local cellHeight = cellWidth
@@ -247,51 +260,78 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
-   settingsScrollArea = { startX, currentY - cellMargin, width, scrollAreaHeight,
-      (cellSize) }
-   love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
-
+   settingsScrollArea = {
+       startX,
+       currentY - cellMargin,
+       width,
+       scrollAreaHeight,
+       (cellSize)
+   }
+   if draw then
+      love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea
+      [4])
+   end
    local rowsInPanel = math.ceil((scrollAreaHeight - cellMargin) / (cellSize))
    local endlesssScroll = true
 
-
-
    if rowsInPanel > rows then
+      settingsScrollArea[8] = true -- 8 = true means we dont want scrolling at all!
       for j = -1, rows - 1 do
          for i = 1, columns do
             local newScroll = j --+ offset
             local yPosition = currentY + (newScroll * (cellSize))
+            local xPosition = currentX + (i - 1) * (cellSize)
             local index = math.ceil(0) + j
 
             if (index >= 0 and index <= rows - 1) then
                local value = ((index % rows) * columns) + i
-               renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth,
-                  cellHeight)
+               if draw then
+                  renderElement(
+                      renderType,
+                      value,
+                      renderContainer,
+                      xPosition,
+                      yPosition,
+                      cellWidth,
+                      cellHeight
+                  )
+               else
+                  if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
+                     buttonClickHelper(value)
+                  end
+               end
             end
          end
       end
-
    else
-
-
       local offset = settingsScrollPosition % 1
       if endlesssScroll == true then
          for j = -1, rowsInPanel - 1 do
             for i = 1, columns do
                local newScroll = j + offset
                local yPosition = currentY + (newScroll * (cellSize))
-               local index = math.ceil(-settingsScrollPosition) + j
+               local xPosition = currentX + (i - 1) * (cellSize)
+               local index = math.ceil( -settingsScrollPosition) + j
                local value = ((index % rows) * columns) + i
-               renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth,
-                  cellHeight)
-
+               if draw then
+                  renderElement(
+                      renderType,
+                      value,
+                      renderContainer,
+                      xPosition,
+                      yPosition,
+                      cellWidth,
+                      cellHeight
+                  )
+               else
+                  if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
+                     buttonClickHelper(value)
+                  end
+               end
             end
          end
       else
-
-         local mx = (
-             ((rows * (cellHeight + (cellMargin))) - (scrollAreaHeight - cellMargin)) /
-                 (cellSize))
+         local mx = (((rows * (cellHeight + (cellMargin))) - (scrollAreaHeight - cellMargin)) / (cellSize))
 
          --h ere i'm saving the min and max for scrolling behaviour, so i can use those in love.update
          settingsScrollArea[6] = 0
@@ -301,46 +341,60 @@ function partSettingsScrollable(draw, clickX, clickY)
             for i = 1, columns do
                local newScroll = j + offset
                local yPosition = currentY + (newScroll * (cellSize))
-               local index = math.ceil(-settingsScrollPosition) + j
+               local xPosition = currentX + (i - 1) * (cellSize)
+               local index = math.ceil( -settingsScrollPosition) + j
 
                if (index >= 0 and index <= rows - 1) then
                   local value = ((index % rows) * columns) + i
-                  renderElement(renderType, value, renderContainer, currentX + (i - 1) * (cellSize), yPosition, cellWidth
-                     , cellHeight)
+                  if draw then
+                     renderElement(
+                         renderType,
+                         value,
+                         renderContainer,
+                         xPosition,
+                         yPosition,
+                         cellWidth,
+                         cellHeight
+                     )
+                  else
+                     if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
+                        buttonClickHelper(value)
+                     end
+                  end
                end
             end
          end
       end
-
    end
-
-   love.graphics.setScissor()
-
+   if draw then
+      love.graphics.setScissor()
+   end
 end
 
 -- scroll list is the main thing that has all categories
 function scrollList(draw, clickX, clickY)
-
    local w, h = love.graphics.getDimensions()
    local margin = 20
 
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-
    local offset = scrollPosition % 1
 
    for i = -1, (scrollItemsOnScreen - 1) do
-
       local newScroll = i + offset
       local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
 
-      local index = math.ceil(-scrollPosition) + i
+      local index = math.ceil( -scrollPosition) + i
       index = (index % #categories) + 1
-      if index < 1 then index = index + #categories end
-      if index > #categories then index = 1 end
+      if index < 1 then
+         index = index + #categories
+      end
+      if index > #categories then
+         index = 1
+      end
 
-      local whiterectIndex = math.ceil(-scrollPosition) + i
+      local whiterectIndex = math.ceil( -scrollPosition) + i
       whiterectIndex = (whiterectIndex % #whiterects) + 1
       local wrw, wrh = whiterects[whiterectIndex]:getDimensions()
       local scaleX = size / wrw
@@ -359,7 +413,7 @@ function scrollList(draw, clickX, clickY)
          love.graphics.print(categories[index], 20, yPosition)
       else
          if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
-            print('clicked', categories[index])
+            print("clicked", categories[index])
             selectedCategory = categories[index]
             playSound(scrollItemClickSample)
          end
@@ -368,25 +422,24 @@ function scrollList(draw, clickX, clickY)
 end
 
 function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
-   love.graphics.circle('line', cx, cy, buttonRadius)
+   love.graphics.circle("line", cx, cy, buttonRadius)
    love.graphics.print(label, cx, cy)
 
-   local other = { 'hair', 'headshape', 'eyes', 'ears', 'nose', 'mouth', 'chin' }
+   local other = { "hair", "headshape", "eyes", "ears", "nose", "mouth", "chin" }
    local angleStep = (180 / (#other - 1))
    local angle = -90
    for i = 1, #other do
-
       local px = cx + r * math.cos(angle * math.pi / 180)
       local py = cy + r * math.sin(angle * math.pi / 180)
       angle = angle + angleStep
-      love.graphics.circle('line', px, py, smallButtonRadius)
+      love.graphics.circle("line", px, py, smallButtonRadius)
    end
 end
 
 --local res = { clicked = false }
 
 function bigButtonWithSmallAroundIt(x, y, textureOrColors)
-   prof.push('big-bitton-small-around')
+   prof.push("big-bitton-small-around")
    local biggestRadius = 70
    local bigRadius = 40
    local radius = 20
@@ -403,12 +456,10 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    if (type(textureOrColors[1]) == "table") then
       love.graphics.setColor(textureOrColors[1])
    else
-
       local img = mesh.getImage(textureOrColors[1])
       local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam * 2, diam * 2)
 
       love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
-
    end
    first = ui.getUICircle(x, y, bigRadius)
 
@@ -423,21 +474,28 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
          love.graphics.circle("fill", new_x, new_y, radius - 2)
       else
          scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 40, 40)
-         prof.push('render-masked-texture')
+         prof.push("render-masked-texture")
          canvas.renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
-         prof.pop('render-masked-texture')
+         prof.pop("render-masked-texture")
       end
 
       local b = ui.getUICircle(new_x, new_y, 30)
-      if (i == 2) then second = b end
-      if (i == 3) then third = b end
-      if (i == 4) then fourth = b end
-      if (i == 5) then fifth = b end
+      if (i == 2) then
+         second = b
+      end
+      if (i == 3) then
+         third = b
+      end
+      if (i == 4) then
+         fourth = b
+      end
+      if (i == 5) then
+         fifth = b
+      end
       rad = rad + step
    end
-   prof.pop('big-bitton-small-around')
+   prof.pop("big-bitton-small-around")
    return first, second, third, fourth, fifth
-
 end
 
 function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
@@ -451,20 +509,23 @@ function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
 end
 
 function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
-   shapeButton, BGButton, FGTexButton, FGButton, LinePalButton = bigButtonWithSmallAroundIt(
-      x, y, {
-      imgArray[values[param].shape],
-      palettes[values[param].bgPal],
-      textures[values[param].fgTex],
-      palettes[values[param].fgPal],
-      palettes[values[param].linePal]
-   }
-   )
+   shapeButton, BGButton, FGTexButton, FGButton, LinePalButton =
+       bigButtonWithSmallAroundIt(
+           x,
+           y,
+           {
+               imgArray[values[param].shape],
+               palettes[values[param].bgPal],
+               textures[values[param].fgTex],
+               palettes[values[param].fgPal],
+               palettes[values[param].linePal]
+           }
+       )
 
    -- todo maybe parametrize palettes and textures?
-   buttonHelper(shapeButton, param, 'shape', #imgArray, changeFunc, firstParam)
-   buttonHelper(BGButton, param, 'bgPal', #palettes, redoFunc, firstParam)
-   buttonHelper(FGTexButton, param, 'fgTex', #textures, redoFunc, firstParam)
-   buttonHelper(FGButton, param, 'fgPal', #palettes, redoFunc, firstParam)
-   buttonHelper(LinePalButton, param, 'linePal', #palettes, redoFunc, firstParam)
+   buttonHelper(shapeButton, param, "shape", #imgArray, changeFunc, firstParam)
+   buttonHelper(BGButton, param, "bgPal", #palettes, redoFunc, firstParam)
+   buttonHelper(FGTexButton, param, "fgTex", #textures, redoFunc, firstParam)
+   buttonHelper(FGButton, param, "fgPal", #palettes, redoFunc, firstParam)
+   buttonHelper(LinePalButton, param, "linePal", #palettes, redoFunc, firstParam)
 end
