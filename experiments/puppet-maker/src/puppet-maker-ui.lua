@@ -90,6 +90,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
              palettes[values[selectedCategory].fgPal],
              palettes[values[selectedCategory].linePal],
          }
+         local sliderValues = {
+            values[selectedCategory].bgAlpha,
+            values[selectedCategory].fgAlpha,
+            values[selectedCategory].lineAlpha
+
+         }
          for i = 1, 3 do
             love.graphics.setColor(pickedColors[i])
             local x = startX + ((width / 3) * (i - 1))
@@ -97,10 +103,19 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if ui.getUIRect('p' .. i, x, currentY, buttonWidth, buttonWidth / 2) then
                selectedColoringLayer = i
             end
+            local v = h_slider("s"..i,x, currentY + buttonWidth/2 , buttonWidth, sliderValues[i], 0, 5)
+            if v.value then
+               local keys = {'bgAlpha', 'fgAlpha', 'lineAlpha'}
+               values[selectedCategory][keys[i]] = math.floor(v.value)
+               selectedColoringLayer = i
+               local f = findPart(selectedCategory)
+                local func = f.funcs[1]
+      func(f.funcs[3], values)
+            end
          end
          love.graphics.setColor(0, 0, 0)
       end
-      currentHeight = math.max(60, 20 + (buttonWidth / 2))
+      currentHeight = math.max(60, 50 + (buttonWidth / 2))
       -- thena slider for the tranaparency of the pattern
    end
    return currentHeight

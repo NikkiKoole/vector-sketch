@@ -556,7 +556,7 @@ function scene.load()
            fgTex   = 2,
            linePal = 1,
            flipy   = -1,
-           bgAlpha = 5,
+           bgAlpha = 1,
            fgAlpha = 1,
            lineAlpha = 5,
        },
