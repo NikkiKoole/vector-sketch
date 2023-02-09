@@ -101,12 +101,13 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
    --
    
-  -- love.graphics.clear(0, 0, 0, 1) 
+   -- the reason for outline ghost stuff is this color
+   -- its not a simple fix, you could make it so we use color A if some layer is lpha 0 etc
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
 
-   if mask then
+   if mask then   
       love.graphics.setBlendMode("alpha") ---<<<<
-      love.graphics.setStencilTest("greater", 0)
+     love.graphics.setStencilTest("greater", 0)
       love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
       --local ow, oh = grunge:getDimensions()
