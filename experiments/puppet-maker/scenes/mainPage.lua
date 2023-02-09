@@ -968,8 +968,8 @@ function scene.draw()
 
       love.graphics.setColor(0, 0, 0)
 
-      --scrollList(true)
-      --partSettingsPanel(0, 0)
+      scrollList(true)
+      partSettingsPanel(0, 0)
 
       prof.push("cam-render")
       cam:push()
@@ -1091,6 +1091,8 @@ function scene.draw()
                --print('hi hello')
                redoHead(biped, values)
                myWorld:emit('potatoInit', potato)
+
+               myWorld:emit("bipedAttachHead", biped)
             end
             love.graphics.circle('fill', 170, 100, 10)
             local b = ui.getUICircle(170, 100, 10)
@@ -1098,6 +1100,7 @@ function scene.draw()
                values.head.flipx = values.head.flipx == -1 and 1 or -1
                redoHead(biped, values)
                myWorld:emit('potatoInit', potato)
+               myWorld:emit("bipedAttachHead", biped)
             end
          end
 
