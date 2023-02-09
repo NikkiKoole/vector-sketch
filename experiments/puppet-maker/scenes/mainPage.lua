@@ -459,7 +459,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        eyeWidthMultiplier = 1,
        eyeHeightMultiplier = 1,
@@ -470,7 +473,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        earUnderHead = false,
        earWidthMultiplier = 1,
@@ -482,7 +488,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        nose = {
            shape   = 1,
@@ -490,7 +499,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
 
        },
        noseWidthMultiplier = 1,
@@ -501,7 +513,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        legLength = 700,
        legWidthMultiplier = 1,
@@ -513,7 +528,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        armLength = 700,
        armWidthMultiplier = 1,
@@ -525,7 +543,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        body = {
            shape   = 1,
@@ -534,7 +555,10 @@ function scene.load()
            bgTex   = 1,
            fgTex   = 2,
            linePal = 1,
-           flipy   = -1
+           flipy   = -1,
+           bgAlpha = 5,
+           fgAlpha = 1,
+           lineAlpha = 5,
        },
        bodyWidthMultiplier = 1,
        bodyHeightMultiplier = 1,
@@ -546,7 +570,10 @@ function scene.load()
            fgTex   = 2,
            linePal = 1,
            flipx   = 1,
-           flipy   = -1
+           flipy   = -1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        headWidthMultiplier = 1,
        headHeightMultiplier = 1,
@@ -556,7 +583,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
        neckLength = 700,
        neckWidthMultiplier = 1,
@@ -566,7 +596,10 @@ function scene.load()
            fgPal   = 1,
            bgTex   = 1,
            fgTex   = 2,
-           linePal = 1
+           linePal = 1,
+           bgAlpha = 5,
+           fgAlpha = 5,
+           lineAlpha = 5,
        },
    }
 
@@ -989,7 +1022,7 @@ function scene.draw()
 
       prof.push("render-ui")
 
-      if true then
+      if false then
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
          bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)

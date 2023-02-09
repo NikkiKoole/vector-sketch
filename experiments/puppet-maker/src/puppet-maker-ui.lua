@@ -18,9 +18,6 @@ end
 
 local tabs = { "part", "colors", "pattern" }
 
-local tabs = { 'part', 'colors', 'pattern' }
-
-
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h

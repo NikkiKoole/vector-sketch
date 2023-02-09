@@ -90,7 +90,7 @@ local function myStencilFunction(mask, flipx, flipy, imgw, imgh)
    love.graphics.setShader()
 end
 
-lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, color2, lineColor, flipx, flipy)
+lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, lineColor, lineAlpha,flipx, flipy)
 
    --local flipx = 1 -- paramter this
    --local flipy = -1 -- parameter this
@@ -99,7 +99,9 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
    local canvas = love.graphics.newCanvas(lw, lh)
 
    love.graphics.setCanvas({ canvas, stencil = true }) --<<<
-   --love.graphics.clear(0, 0, 0, 0) ---<<<<
+   --
+   
+  -- love.graphics.clear(0, 0, 0, 1) 
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
 
    if mask then
@@ -124,7 +126,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
          local yMax = (gh / 2) * scaleY - (ry * scaleY)
          local yOffset = yMin
 
-         love.graphics.setColor(color1)
+         love.graphics.setColor(color1[1], color1[2], color1[3], alpha1/5)
          love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
       end
 
@@ -150,7 +152,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
          -- height of these images is not big enough, redraw them bigger lazy bum
          --print(inspect(color2))
-         love.graphics.setColor(color2[1], color2[2], color2[3], 0.2)
+         love.graphics.setColor(color2[1], color2[2], color2[3], alpha2/5 )
          -- love.graphics.setColor(0, 0, 0)
 
          love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
@@ -167,7 +169,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, texture2, col
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-   love.graphics.setColor(lineartColor)
+   love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha/5)
 
 
    local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
