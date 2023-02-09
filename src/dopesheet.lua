@@ -33,7 +33,6 @@ function doDopeSheetEditing()
 		love.graphics.setLineWidth(2)
 
 		for k, v in pairs(dopesheet.refs) do
-
 			local t = v._parent.transforms._g
 
 			--transform.setTransforms(v)
@@ -56,7 +55,6 @@ function doDopeSheetEditing()
 			local vpx0, vpy0 = t:transformPoint(0, 0)
 			if v._parent and v._parent._parent then
 				--   vpx0, vpy0 =  v._parent._parent._globalTransform:transformPoint(0,0 )
-
 			end
 
 			local vpx, vpy = t:transformPoint(v._parent.transforms.l[6], v._parent.transforms.l[7])
@@ -85,7 +83,6 @@ function doDopeSheetEditing()
 			end
 			if love.mouse.isDown(1) then
 				if lastDraggedElement and lastDraggedElement.id == id then
-
 					v._parent.transforms.l[3] = v._parent.transforms.l[3] + (angle2 - angle3)
 					--v._parent.transforms.l[3] = angle2 - parentsAddedAngle -math.pi/2   -- gtangle
 				end
@@ -104,21 +101,20 @@ function doDopeSheetEditing()
 			love.graphics.setColor(0, 1, 0)
 			love.graphics.circle("line", vpx0, vpy0, 3)
 			love.graphics.setColor(1, 1, 1)
-
 		end
 
 
 
 		local drawUseToggle = imgbutton("drawOrUse", (dopesheet.drawMode == 'sheet') and icon.dopesheet or icon.pencil, 0,
-			h /
-			2)
+				h /
+				2)
 		if drawUseToggle.clicked then
 			dopesheet.drawMode = (dopesheet.drawMode == 'draw') and 'sheet' or 'draw'
 		end
 
 		if (((32 + 24) * #dopesheet.names) > h / 2) then
 			local ding = scrollbarV('dopesheetslider', 400, h / 2, (h / 2), 48 + ((32 + 24) * #dopesheet.names),
-				dopesheet.scrollOffset or 0)
+					dopesheet.scrollOffset or 0)
 			if ding.value ~= nil then
 				--if not tostring(ding.value) == "nan" then
 				dopesheet.scrollOffset = ding.value
@@ -144,8 +140,7 @@ function doDopeSheetEditing()
 				local node2 = dopesheet.refs[dopesheet.names[i]]
 
 				if y1 >= h / 2 then -- dont draw things that are scrolled away
-
-					if b.clicked then
+					if b then
 						setCurrentNode(node2)
 					end
 
@@ -162,12 +157,10 @@ function doDopeSheetEditing()
 					love.graphics.setLineWidth(2)
 					love.graphics.setColor(0.7, 0.7, 0.7)
 					for ci = 1, cellCount do
-
 						local myX = x1 + w1 + ((ci - 1) * cellWidth)
 						local myY = y1 + h1
 						love.graphics.rectangle("line", myX, myY, cellWidth, cellHeight)
 						if dopesheet.data[i][ci] then
-
 							love.graphics.setColor(0, 0, 0)
 							love.graphics.rectangle("line", myX + 1, myY + 1, cellWidth, cellHeight)
 
@@ -188,21 +181,18 @@ function doDopeSheetEditing()
 						end
 
 						b = ui.getUIRect(i .. ci .. 'cell', myX, myY, cellWidth, cellHeight)
-						if b.clicked then
-
+						if b then
 							if dopesheet.drawMode == 'draw' then
 								if dopesheet.data[i][ci].rotation then
 									if ci > 1 then -- you cannot delete the first one
 										dopesheet.data[i][ci] = {}
 									end
-
 								else
 									dopesheet.data[i][ci] = { rotation = dopesheet.data[i][1].rotation, ease = 'linear' }
 								end
 							end
 							if dopesheet.drawMode == 'sheet' then
 								if dopesheet.data[i][ci].rotation then
-
 									dopesheet.sliderValue = (ci - 1) / (cellCount - 1)
 
 									dopesheet.selectedCell = { i, ci }
@@ -215,10 +205,7 @@ function doDopeSheetEditing()
 									dopesheet.selectedCell = nil
 								end
 							end
-
 						end
-
-
 					end
 
 					love.graphics.setColor(1, 1, 1, 1)
@@ -242,16 +229,11 @@ function doDopeSheetEditing()
 					love.graphics.setColor(1, 1, 1, 1)
 					love.graphics.print(rotStr, w1 - str2W - 10, y1 + 32)
 				end
-
-
-
-
 			end
 
 			if dopesheet.selectedCell then
 				local indx = dopesheet.selectedCell
 				if iconlabelbutton('toggle_dopesheet_curve', icon.curve, nil, false, 'ease', w / 2, h / 4 - 50).clicked then
-
 					dopesheet.showEases = not dopesheet.showEases
 					print("showEases", dopesheet.showEases)
 				end
@@ -259,12 +241,12 @@ function doDopeSheetEditing()
 
 				rotStr = "rotation: " .. round2(node2.rotation, 3)
 
-				local rotSlider = h_slider("dopesheetrotsliderstuff", w / 2, h / 4, 600, node2.rotation, -math.pi, math.pi)
+				local rotSlider = h_slider("dopesheetrotsliderstuff", w / 2, h / 4, 600, node2.rotation, -math.pi,
+						math.pi)
 				if rotSlider.value then
 					local name = dopesheet.names[indx[1]]
 					dopesheet.refs[name].transforms.l[3] = rotSlider.value
 					node2.rotation = rotSlider.value
-
 				end
 
 				love.graphics.setColor(0, 0, 0, 0)
@@ -279,11 +261,9 @@ function doDopeSheetEditing()
 
 			local dsSlider = h_slider("dopesheetstuff", 200, h / 2, cellWidth * cellCount, dopesheet.sliderValue, 0, 1)
 			if dsSlider.value then
-
 				dopesheet.sliderValue = dsSlider.value
 
 				calculateDopesheetRotations(dsSlider.value)
-
 			end
 
 			if dopesheet.selectedCell and dopesheet.showEases then
@@ -363,25 +343,23 @@ function doDopeSheetEditing()
 						x = 150
 					end
 					local b = makeEaseLabelButton(eases[i], x, y, currentEase)
-					if b.clicked then
+					if b then
 						dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases[i]
 					end
-
 				end
 				for i = 1, #eases_1p do
 					local b = makeEaseLabelButton(eases_1p[i], 300, 20 * i, currentEase)
-					if b.clicked then
+					if b then
 						dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_1p[i]
 					end
 				end
 				for i = 1, #eases_2p do
 					local b = makeEaseLabelButton(eases_2p[i], 450, 20 * i, currentEase)
-					if b.clicked then
+					if b then
 						dopesheet.data[dopesheet.selectedCell[1]][dopesheet.selectedCell[2]].ease = eases_2p[i]
 					end
 				end
 			end
-
 		end
 
 
@@ -426,7 +404,6 @@ function initializeDopeSheet(root, currentNode)
 end
 
 function calculateDopesheetRotations(sliderValue)
-
 	local frameIndex = (math.floor(sliderValue * (cellCount - 1)) + 1)
 	if frameIndex > cellCount - 1 then frameIndex = cellCount - 1 end
 

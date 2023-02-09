@@ -199,8 +199,8 @@ local function rotateGroup(node, degrees)
 
    for i = 1, #node.points do
       local p = {
-         node.points[i][1] - cx,
-         node.points[i][2] - cy,
+          node.points[i][1] - cx,
+          node.points[i][2] - cy,
       }
       local xnew = p[1] * c - p[2] * s
       local ynew = p[1] * s + p[2] * c
@@ -241,8 +241,8 @@ local function resizeGroup(node, children, scale)
       for i = 1, #children do
          for j = 1, #children[i].points do
             children[i].points[j] = {
-               children[i].points[j][1] * scale,
-               children[i].points[j][2] * scale
+                children[i].points[j][1] * scale,
+                children[i].points[j][2] * scale
             }
          end
          remeshNode(children[i])
@@ -250,7 +250,6 @@ local function resizeGroup(node, children, scale)
       if node then
          remeshNode(node)
       end
-
    end
 end
 
@@ -263,7 +262,6 @@ local function flipGroup(node, children, xaxis, yaxis)
       remeshNode(node)
    else
       for i = 1, #children do
-
          if children[i].points then
             local scaledPoints = {}
             for p = 1, #children[i].points do
@@ -352,7 +350,7 @@ local function movePoints(node, dx, dy)
          local childIndex = getIndex(child)
          for j = 1, #node.children[childIndex].points do
             node.children[childIndex].points[j] = { node.children[childIndex].points[j][1] + dx,
-               node.children[childIndex].points[j][2] + dy }
+                node.children[childIndex].points[j][2] + dy }
          end
          remeshNode(node.children[childIndex])
       end
@@ -391,9 +389,9 @@ end
 
 local function makeNewFolder()
    local shape = {
-      folder = true,
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-      children = {}
+       folder = true,
+       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+       children = {}
    }
 
    if currentNode and not currentNode.folder then
@@ -464,99 +462,94 @@ local function drawUIAroundGraphNodes(w, h)
 
 
    local row0 = {
-      startX = w - 200,
-      startY = 10,
+       startX = w - 200,
+       startY = 10,
    }
    row0.runningX = row0.startX
    row0.runningY = row0.startY
 
    table.insert(
-      row0,
-      {
-         'add-something', icon.add, 'add a new thing',
-         function()
-            openedAddPanel = not openedAddPanel
+       row0,
+       {
+           'add-something', icon.add, 'add a new thing',
+           function()
+              openedAddPanel = not openedAddPanel
+           end
 
-         end
 
-
-      }
+       }
    )
    if openedAddPanel then
       table.insert(
-         row0,
-         {
-            'add-meta', icon.move, 'add a meta',
-            function()
-               --openedAddPanel = not openedAddPanel
+          row0,
+          {
+              'add-meta', icon.move, 'add a meta',
+              function()
+                 --openedAddPanel = not openedAddPanel
 
-               local shape = {
-                  color = { 1, 0, 0, 1 },
-                  points = { { 0, 0 } },
-                  type = 'meta'
-               }
-               if (currentNode) then
-                  shape._parent = currentNode and currentNode._parent
-                  addShapeAfter(shape, currentNode)
-               else
-                  local root = mylib.root
+                 local shape = {
+                     color = { 1, 0, 0, 1 },
+                     points = { { 0, 0 } },
+                     type = 'meta'
+                 }
+                 if (currentNode) then
+                    shape._parent = currentNode and currentNode._parent
+                    addShapeAfter(shape, currentNode)
+                 else
+                    local root = mylib.root
 
-                  shape._parent = root
-                  addShapeAtRoot(shape)
-               end
+                    shape._parent = root
+                    addShapeAtRoot(shape)
+                 end
+              end
 
-            end
 
-
-         }
+          }
       )
       table.insert(
-         row0,
-         {
-            'add-shape', icon.object_group, 'add a shape',
-            function()
-               local shape = {
-                  color = { 0, 0, 0, 1 },
-                  outline = true,
-                  points = {},
-               }
+          row0,
+          {
+              'add-shape', icon.object_group, 'add a shape',
+              function()
+                 local shape = {
+                     color = { 0, 0, 0, 1 },
+                     outline = true,
+                     points = {},
+                 }
 
-               if currentNode and not currentNode.folder then
-                  remeshNode(currentNode)
-               end
-               if (currentNode) then
-                  shape._parent = currentNode and currentNode._parent
-                  addShapeAfter(shape, currentNode)
-               else
-                  local root = mylib.root
+                 if currentNode and not currentNode.folder then
+                    remeshNode(currentNode)
+                 end
+                 if (currentNode) then
+                    shape._parent = currentNode and currentNode._parent
+                    addShapeAfter(shape, currentNode)
+                 else
+                    local root = mylib.root
 
-                  shape._parent = root
-                  addShapeAtRoot(shape)
-               end
+                    shape._parent = root
+                    addShapeAtRoot(shape)
+                 end
 
-               editingMode = 'polyline'
-               editingModeSub = 'polyline-insert'
+                 editingMode = 'polyline'
+                 editingModeSub = 'polyline-insert'
+              end
 
-            end
 
-
-         }
+          }
       )
       table.insert(
-         row0,
-         {
-            'add-folder', icon.folder, 'add a folder',
-            function()
-               local f = makeNewFolder()
-               editingMode = 'polyline'
-               editingModeSub = 'polyline-insert'
+          row0,
+          {
+              'add-folder', icon.folder, 'add a folder',
+              function()
+                 local f = makeNewFolder()
+                 editingMode = 'polyline'
+                 editingModeSub = 'polyline-insert'
+              end
 
-            end
 
-
-         }
+          }
       )
-
    end
 
 
@@ -565,95 +558,90 @@ local function drawUIAroundGraphNodes(w, h)
    table.insert(rows, row0)
 
    local row0b = {
-      startX = w - 40,
-      startY = 10
-
+       startX = w - 40,
+       startY = 10
    }
    row0b.runningX = row0b.startX
    row0b.runningY = row0b.startY
    table.insert(
-      row0b,
-      {
-         'show help', icon.help, 'show-shortcuts',
-         function()
-            showHelp = not showHelp
-            --local f = makeNewFolder()
-            --editingMode = 'polyline'
-            --editingModeSub = 'polyline-insert'
+       row0b,
+       {
+           'show help', icon.help, 'show-shortcuts',
+           function()
+              showHelp = not showHelp
+              --local f = makeNewFolder()
+              --editingMode = 'polyline'
+              --editingModeSub = 'polyline-insert'
+           end
 
-         end
 
-
-      }
+       }
    )
 
    table.insert(rows, row0b)
 
    local row1 = {
-      startX = w - 240,
-      startY = 50,
+       startX = w - 240,
+       startY = 50,
    }
    row1.runningX = row1.startX
    row1.runningY = row1.startY
    table.insert(row1, "whitespace")
    if (currentNode) then
+      table.insert(
+          row1,
+          {
+              'polyline-clone', icon.clone, 'clone',
+              function()
+                 if (editingMode == 'polyline') then
+                    local cloned = copyShape(currentNode)
+                    cloned._parent = currentNode._parent
+                    cloned.name = (cloned.name)
+                    addShapeAfter(cloned, currentNode)
+                    setCurrentNode(cloned)
+                 elseif (editingMode == 'folder') then
+                    local cloned = copyShape(currentNode)
+                    cloned._parent = currentNode._parent
+                    parentize.parentize(cloned)
+                    cloned.name = (cloned.name) .. ' copy'
+                    addShapeAfter(cloned, currentNode)
+                    mesh.meshAll(cloned)
+                    setCurrentNode(cloned)
+                 end
+              end
+          })
 
       table.insert(
-         row1,
-         {
-            'polyline-clone', icon.clone, 'clone',
-            function()
-               if (editingMode == 'polyline') then
-                  local cloned = copyShape(currentNode)
-                  cloned._parent = currentNode._parent
-                  cloned.name = (cloned.name)
-                  addShapeAfter(cloned, currentNode)
-                  setCurrentNode(cloned)
-               elseif (editingMode == 'folder') then
-                  local cloned = copyShape(currentNode)
-                  cloned._parent = currentNode._parent
-                  parentize.parentize(cloned)
-                  cloned.name = (cloned.name) .. ' copy'
-                  addShapeAfter(cloned, currentNode)
-                  mesh.meshAll(cloned)
-                  setCurrentNode(cloned)
-               end
-
-            end
-         })
-
-      table.insert(
-         row1,
-         {
-            'delete', icon.delete, 'delete',
-            function()
-               deleteNode(currentNode)
-            end
-         }
+          row1,
+          {
+              'delete', icon.delete, 'delete',
+              function()
+                 deleteNode(currentNode)
+              end
+          }
       )
 
       -- table.insert(row1, "newline")
 
       table.insert(
-         row1,
-         {
-            'badge', icon.badge, 'rename',
-            function()
-               changeName = not changeName
-               local name = currentNode and currentNode.name
-               changeNameCursor = name and utf8.len(name) or 1
-
-            end
-         }
+          row1,
+          {
+              'badge', icon.badge, 'rename',
+              function()
+                 changeName = not changeName
+                 local name = currentNode and currentNode.name
+                 changeNameCursor = name and utf8.len(name) or 1
+              end
+          }
       )
       table.insert(
-         row1,
-         {
-            'connector', icon.parent, 'parentize',
-            function()
-               lastDraggedElement = { id = 'connector', pos = { row1.runningX, row1.runningY } }
-            end
-         }
+          row1,
+          {
+              'connector', icon.parent, 'parentize',
+              function()
+                 lastDraggedElement = { id = 'connector', pos = { row1.runningX, row1.runningY } }
+              end
+          }
       )
    end
 
@@ -667,15 +655,14 @@ local function drawUIAroundGraphNodes(w, h)
       local index = getIndex(currentNode)
       if index > 1 then
          table.insert(
-            row1,
-            {
-               'polyline-move-up', icon.move_up, 'move up in tree',
-               function()
-                  local taken_out = removeCurrentNode()
-                  table.insert(taken_out._parent.children, index - 1, taken_out)
-
-               end
-            }
+             row1,
+             {
+                 'polyline-move-up', icon.move_up, 'move up in tree',
+                 function()
+                    local taken_out = removeCurrentNode()
+                    table.insert(taken_out._parent.children, index - 1, taken_out)
+                 end
+             }
          )
       end
    end
@@ -686,18 +673,17 @@ local function drawUIAroundGraphNodes(w, h)
       local index = getIndex(currentNode)
       if index < #currentNode._parent.children then
          table.insert(
-            row1,
-            {
-               'polyline-move-mown', icon.move_down, 'move down in tree',
-               function()
-                  local taken_out = removeCurrentNode()
-                  if (taken_out) then
-                     table.insert(taken_out._parent.children, index + 1, taken_out)
-                  end
-               end
-            }
+             row1,
+             {
+                 'polyline-move-mown', icon.move_down, 'move down in tree',
+                 function()
+                    local taken_out = removeCurrentNode()
+                    if (taken_out) then
+                       table.insert(taken_out._parent.children, index + 1, taken_out)
+                    end
+                 end
+             }
          )
-
       end
    end
 
@@ -705,8 +691,8 @@ local function drawUIAroundGraphNodes(w, h)
 
 
    local row2 = {
-      startX = w - 300 - 160,
-      startY = h - 150,
+       startX = w - 300 - 160,
+       startY = h - 150,
    }
    row2.runningX = row2.startX
    row2.runningY = row2.startY
@@ -716,71 +702,65 @@ local function drawUIAroundGraphNodes(w, h)
 
    if editingMode == 'folder' and currentNode and currentNode.folder then
       table.insert(
-         row2,
-         {
-            'transform-toggle', icon.transform, 'do the transformations',
-            function()
-               showTheParentTransforms = not showTheParentTransforms
-            end
-         }
+          row2,
+          {
+              'transform-toggle', icon.transform, 'do the transformations',
+              function()
+                 showTheParentTransforms = not showTheParentTransforms
+              end
+          }
       )
 
       table.insert(
-         row2,
-         {
-            'folder-pan-pivot', icon.pan, 'pivot pooint',
-            function()
-               if editingModeSub == 'folder-pan-pivot' then
-                  editingModeSub = nil
-               else
-                  editingModeSub = 'folder-pan-pivot'
-               end
-            end
-         }
+          row2,
+          {
+              'folder-pan-pivot', icon.pan, 'pivot pooint',
+              function()
+                 if editingModeSub == 'folder-pan-pivot' then
+                    editingModeSub = nil
+                 else
+                    editingModeSub = 'folder-pan-pivot'
+                 end
+              end
+          }
       )
       table.insert(
-         row2,
-         {
-            'folder-move', icon.move, 'move whole',
-            function()
-               editingModeSub = 'folder-move'
-
-
-            end
-         }
+          row2,
+          {
+              'folder-move', icon.move, 'move whole',
+              function()
+                 editingModeSub = 'folder-move'
+              end
+          }
       )
       table.insert(row2, 'whitespace')
       table.insert(
-         row2,
-         {
-            'optimizer', icon.layer_group, 'optimize check',
-            function()
-               if (currentNode.optimizedBatchMesh) then
-                  currentNode.optimizedBatchMesh = nil
-               else
-                  mesh.makeOptimizedBatchMesh(currentNode)
-               end
-
-            end
-         }
+          row2,
+          {
+              'optimizer', icon.layer_group, 'optimize check',
+              function()
+                 if (currentNode.optimizedBatchMesh) then
+                    currentNode.optimizedBatchMesh = nil
+                 else
+                    mesh.makeOptimizedBatchMesh(currentNode)
+                 end
+              end
+          }
       )
       table.insert(row2, "printOptimizedBatchMesh")
       table.insert(
-         row2,
-         {
-            'change-perspective', icon.change, 'debug perspective thing',
-            function()
-               editingModeSub = 'change-perspective'
-               local bbox = bbox.getBBoxOfChildren(currentNode.children)
-               local t = currentNode.transforms._g
-               local TLX, TLY = t:transformPoint(bbox.tl.x, bbox.tl.y)
-               local BRX, BRY = t:transformPoint(bbox.br.x, bbox.br.y)
-               perspective = { { TLX, TLY }, { BRX, TLY }, { BRX, BRY }, { TLX, BRY } }
-
-
-
-            end
-         }
+          row2,
+          {
+              'change-perspective', icon.change, 'debug perspective thing',
+              function()
+                 editingModeSub = 'change-perspective'
+                 local bbox = bbox.getBBoxOfChildren(currentNode.children)
+                 local t = currentNode.transforms._g
+                 local TLX, TLY = t:transformPoint(bbox.tl.x, bbox.tl.y)
+                 local BRX, BRY = t:transformPoint(bbox.br.x, bbox.br.y)
+                 perspective = { { TLX, TLY }, { BRX, TLY }, { BRX, BRY }, { TLX, BRY } }
+              end
+          }
       )
       table.insert(row2, 'newline')
       -- do the grid
@@ -788,23 +768,22 @@ local function drawUIAroundGraphNodes(w, h)
 
       if currentNode and currentNode.folder and #currentNode.children >= 2 and #currentNode.children < 5 and
           (not isPartOfKeyframePose(currentNode) or currentNode.keyframes) then
-
          table.insert(
-            row2,
-            {
-               'transition', icon.transition, 'pose animation',
-               function()
-                  if (currentNode.keyframes) then
-                     currentNode.keyframes = nil
-                     currentNode.lerpValue = nil
-                     currentNode.frame = nil
-                  else
-                     currentNode.keyframes = 2
-                     currentNode.lerpValue = 0.5
-                     currentNode.frame = 1
-                  end
-               end
-            }
+             row2,
+             {
+                 'transition', icon.transition, 'pose animation',
+                 function()
+                    if (currentNode.keyframes) then
+                       currentNode.keyframes = nil
+                       currentNode.lerpValue = nil
+                       currentNode.frame = nil
+                    else
+                       currentNode.keyframes = 2
+                       currentNode.lerpValue = 0.5
+                       currentNode.frame = 1
+                    end
+                 end
+             }
 
          )
       end
@@ -812,93 +791,84 @@ local function drawUIAroundGraphNodes(w, h)
       if currentNode and currentNode.folder and #currentNode.children >= 4 and
           (not isPartOfKeyframePose(currentNode) or currentNode.keyframes) then
          table.insert(
-            row2,
-            {
-               'joystick', icon.joystick, '4way pose animation',
-               function()
-                  if (currentNode.keyframes) then
-                     currentNode.keyframes = nil
-                     currentNode.lerpValue = nil
-                     currentNode.lerpX = nil
-                     currentNode.lerpY = nil
-                     currentNode.frame = nil
-                  else
-                     currentNode.keyframes = #currentNode.children
-                     currentNode.lerpX = 0.5
-                     currentNode.lerpY = 0.5
-                     currentNode.frame = 1
-                  end
-
-               end
-            }
+             row2,
+             {
+                 'joystick', icon.joystick, '4way pose animation',
+                 function()
+                    if (currentNode.keyframes) then
+                       currentNode.keyframes = nil
+                       currentNode.lerpValue = nil
+                       currentNode.lerpX = nil
+                       currentNode.lerpY = nil
+                       currentNode.frame = nil
+                    else
+                       currentNode.keyframes = #currentNode.children
+                       currentNode.lerpX = 0.5
+                       currentNode.lerpY = 0.5
+                       currentNode.frame = 1
+                    end
+                 end
+             }
 
          )
-
       end
 
       -- avoid the 9grid from above
       table.insert(row2, "newline")
       table.insert(row2, "whitespace")
       table.insert(row2, "whitespace")
-
-
    end
 
 
 
    -- this is adirect copy of code
    if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1]) == 'table' then
-
       if currentNode and currentNode.folder then
-
          table.insert(
-            row2,
-            {
-               'children-flip-vertical', icon.flip_vertical, 'flip vertically',
-               function()
-                  flipGroup(currentNode, childrenInRectangleSelect, 1, -1)
-               end
-            }
+             row2,
+             {
+                 'children-flip-vertical', icon.flip_vertical, 'flip vertically',
+                 function()
+                    flipGroup(currentNode, childrenInRectangleSelect, 1, -1)
+                 end
+             }
          )
          table.insert(
-            row2,
-            {
-               'children-flip-horizontal', icon.flip_horizontal, 'flip vertically',
-               function()
-                  flipGroup(currentNode, childrenInRectangleSelect, -1, 1)
-               end
-            }
+             row2,
+             {
+                 'children-flip-horizontal', icon.flip_horizontal, 'flip vertically',
+                 function()
+                    flipGroup(currentNode, childrenInRectangleSelect, -1, 1)
+                 end
+             }
          )
          table.insert(
-            row2,
-            {
-               'children-scale-up', icon.resize, 'scale up',
-               function()
-                  if LK.isDown('a') then
-                     resizeGroup(currentNode, childrenInRectangleSelect, .75)
-                  else
-                     resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
-                  end
-
-               end
-            }
+             row2,
+             {
+                 'children-scale-up', icon.resize, 'scale up',
+                 function()
+                    if LK.isDown('a') then
+                       resizeGroup(currentNode, childrenInRectangleSelect, .75)
+                    else
+                       resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+                    end
+                 end
+             }
          )
          table.insert(
-            row2,
-            {
-               'children-scale-down', icon.resize, 'scale down',
-               function()
-                  if LK.isDown('a') then
-                     resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
-                  else
-                     resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
-                  end
-
-               end
-            }
+             row2,
+             {
+                 'children-scale-down', icon.resize, 'scale down',
+                 function()
+                    if LK.isDown('a') then
+                       resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+                    else
+                       resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+                    end
+                 end
+             }
          )
       end
-
    end
 
 
@@ -909,62 +879,57 @@ local function drawUIAroundGraphNodes(w, h)
 
    if (editingMode == 'polyline' and currentNode) then
       table.insert(
-         row2,
-         {
-            'polyline-edit', icon.polyline_edit, 'move point in poly',
-            function()
-               editingModeSub = 'polyline-edit'
-            end
-         }
+          row2,
+          {
+              'polyline-edit', icon.polyline_edit, 'move point in poly',
+              function()
+                 editingModeSub = 'polyline-edit'
+              end
+          }
       )
       if (not isPartOfKeyframePose(currentNode)) then
-
          table.insert(
-            row2,
-            {
-               'polyline-insert', icon.polyline_add, 'add point to poly',
-               function()
-                  editingModeSub = 'polyline-insert'
-
-               end
-            }
+             row2,
+             {
+                 'polyline-insert', icon.polyline_add, 'add point to poly',
+                 function()
+                    editingModeSub = 'polyline-insert'
+                 end
+             }
          )
 
          table.insert(
-            row2,
-            {
-               'polyline-remove', icon.polyline_remove, 'remove point from poly',
-               function()
-                  editingModeSub = 'polyline-remove'
-
-               end
-            }
+             row2,
+             {
+                 'polyline-remove', icon.polyline_remove, 'remove point from poly',
+                 function()
+                    editingModeSub = 'polyline-remove'
+                 end
+             }
          )
       end
       table.insert(row2, "whitespace")
       table.insert(
-         row2,
-         {
-            'polyline-palette', icon.palette, 'pick color',
-            function()
-               if editingModeSub == 'polyline-palette' then
-                  editingModeSub = 'polyline-edit'
-               else
-                  editingModeSub = 'polyline-palette'
-               end
-
-            end
-         }
+          row2,
+          {
+              'polyline-palette', icon.palette, 'pick color',
+              function()
+                 if editingModeSub == 'polyline-palette' then
+                    editingModeSub = 'polyline-edit'
+                 else
+                    editingModeSub = 'polyline-palette'
+                 end
+              end
+          }
       )
       table.insert(
-         row2,
-         {
-            'polyline-move', icon.move, 'move thing',
-            function()
-               editingModeSub = 'polyline-move'
-
-            end
-         }
+          row2,
+          {
+              'polyline-move', icon.move, 'move thing',
+              function()
+                 editingModeSub = 'polyline-move'
+              end
+          }
       )
       table.insert(row2, "newline")
       -- instead i want 1 button that can toggle between these 3/ or 4 options, also polyline
@@ -972,369 +937,354 @@ local function drawUIAroundGraphNodes(w, h)
       --print((not currentNode.mask and not currentNode.hole and not currentNode.closeStencil and currentNode.type == nil))
       if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil and currentNode.type == nil) then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.object_group, 'now its normal click to make meta',
-               function()
-
-                  currentNode.type = 'meta'
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.object_group, 'now its normal click to make meta',
+                 function()
+                    currentNode.type = 'meta'
+                 end
+             }
          )
       end
       if (not currentNode.mask and not currentNode.hole and not currentNode.closeStencil and currentNode.type == 'meta') then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.move, 'now its meta click to make mask',
-               function()
-                  currentNode.mask = true
-                  currentNode.hole = false
-                  currentNode.closeStencil = false
-                  currentNode.type = nil
-
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.move, 'now its meta click to make mask',
+                 function()
+                    currentNode.mask = true
+                    currentNode.hole = false
+                    currentNode.closeStencil = false
+                    currentNode.type = nil
+                 end
+             }
          )
       end
       if (currentNode.mask and not currentNode.hole and not currentNode.closeStencil) then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.mask, 'now its mask click to make hole',
-               function()
-
-                  currentNode.mask = false
-                  currentNode.hole = true
-                  currentNode.closeStencil = false
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.mask, 'now its mask click to make hole',
+                 function()
+                    currentNode.mask = false
+                    currentNode.hole = true
+                    currentNode.closeStencil = false
+                 end
+             }
          )
       end
 
       if (not currentNode.mask and currentNode.hole and not currentNode.closeStencil) then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.hole, 'now its hole click to make close stencil',
-               function()
-
-                  currentNode.mask = false
-                  currentNode.hole = false
-                  currentNode.closeStencil = true
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.hole, 'now its hole click to make close stencil',
+                 function()
+                    currentNode.mask = false
+                    currentNode.hole = false
+                    currentNode.closeStencil = true
+                 end
+             }
          )
       end
 
       if (not currentNode.mask and not currentNode.hole and currentNode.closeStencil) then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.close_stencil, 'now its close stencil click to make normal',
-               function()
-
-                  currentNode.mask = false
-                  currentNode.hole = false
-                  currentNode.closeStencil = false
-
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.close_stencil, 'now its close stencil click to make normal',
+                 function()
+                    currentNode.mask = false
+                    currentNode.hole = false
+                    currentNode.closeStencil = false
+                 end
+             }
          )
       end
 
 
       if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type ~= 'bezier' then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.texture, 'now its normal texture click to make rope',
-               function()
+             row2,
+             {
+                 'vanilla', icon.texture, 'now its normal texture click to make rope',
+                 function()
+                    currentNode.type = 'rubberhose'
 
+                    local img = mesh.getImage(currentNode.texture.url)
+                    if not img then return end -- todo this exits early preventing a crash, but meh
+                    local width, height = img:getDimensions()
+                    local magic = 1 --4.46
+                    currentNode.data = currentNode.data or {}
+                    currentNode.data.length = height * magic
+                    currentNode.data.width = width
+                    currentNode.data.flop = 1
+                    currentNode.data.borderRadius = 1
+                    currentNode.data.steps = 10
 
-                  currentNode.type = 'rubberhose'
+                    currentNode.data.scale = 1
 
-                  local img = mesh.getImage(currentNode.texture.url)
-                  if not img then return end -- todo this exits early preventing a crash, but meh
-                  local width, height = img:getDimensions()
-                  local magic = 1 --4.46
-                  currentNode.data = currentNode.data or {}
-                  currentNode.data.length = height * magic
-                  currentNode.data.width = width
-                  currentNode.data.flop = 1
-                  currentNode.data.borderRadius = 1
-                  currentNode.data.steps = 10
-
-                  currentNode.data.scale = 1
-
-                  remeshNode(currentNode)
-               end
-            }
+                    remeshNode(currentNode)
+                 end
+             }
          )
       end
       if (currentNode.texture and currentNode.type == 'rubberhose') and currentNode.type ~= 'bezier' then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.rope, 'now its rubberhose click to make bezier',
-               function()
-
-                  currentNode.type = 'bezier'
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.rope, 'now its rubberhose click to make bezier',
+                 function()
+                    currentNode.type = 'bezier'
+                 end
+             }
          )
       end
       if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type == 'bezier' then
          table.insert(
-            row2,
-            {
-               'vanilla', icon.bezier, 'now its bezier click to make normla',
-               function()
-
-                  currentNode.type = nil
-               end
-            }
+             row2,
+             {
+                 'vanilla', icon.bezier, 'now its bezier click to make normla',
+                 function()
+                    currentNode.type = nil
+                 end
+             }
          )
       end
 
       table.insert(row2, "whitespace")
       table.insert(
-         row2,
-         {
-            'polyline-recenter', icon.pivot, 'recenter',
-            function()
-               editingModeSub = 'polyline-recenter'
-               local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
-               local w2 = (brx - tlx) / 2
-               local h2 = (bry - tly) / 2
-               for i = 1, #currentNode.points do
-                  currentNode.points[i][1] = currentNode.points[i][1] - (tlx + w2)
-                  currentNode.points[i][2] = currentNode.points[i][2] - (tly + h2)
-               end
-
-            end
-         }
+          row2,
+          {
+              'polyline-recenter', icon.pivot, 'recenter',
+              function()
+                 editingModeSub = 'polyline-recenter'
+                 local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
+                 local w2 = (brx - tlx) / 2
+                 local h2 = (bry - tly) / 2
+                 for i = 1, #currentNode.points do
+                    currentNode.points[i][1] = currentNode.points[i][1] - (tlx + w2)
+                    currentNode.points[i][2] = currentNode.points[i][2] - (tly + h2)
+                 end
+              end
+          }
       )
       table.insert(
-         row2,
-         {
-            'rectangle-point-select', icon.select, 'select points in child',
-            function()
-               if #childrenInRectangleSelect > 0 then
-                  editingModeSub = 0
-                  childrenInRectangleSelect = {}
-               else
-                  editingModeSub = 'rectangle-point-select'
-               end
-
-            end
-         }
+          row2,
+          {
+              'rectangle-point-select', icon.select, 'select points in child',
+              function()
+                 if #childrenInRectangleSelect > 0 then
+                    editingModeSub = 0
+                    childrenInRectangleSelect = {}
+                 else
+                    editingModeSub = 'rectangle-point-select'
+                 end
+              end
+          }
       )
 
       table.insert(row2, "printChildrenInRectangleSelect")
       table.insert(row2, "newline")
 
       table.insert(
-         row2,
-         {
-            'border', icon.polygon, 'border settings',
-            function()
-               currentNode.border = not currentNode.border
-               if currentNode.border then
-                  if currentNode.borderThickness == nil then
-                     currentNode.borderThickness = 1
-                  end
-                  if currentNode.borderSpacing == nil then
-                     currentNode.borderSpacing = 10
-                  end
-                  if currentNode.borderTension == nil then
-                     currentNode.borderTension = 0
-                  end
-                  if currentNode.borderRandomizerMultiplier == nil then
-                     currentNode.borderRandomizerMultiplier = 0
-                  end
-               end
-            end
-         }
+          row2,
+          {
+              'border', icon.polygon, 'border settings',
+              function()
+                 currentNode.border = not currentNode.border
+                 if currentNode.border then
+                    if currentNode.borderThickness == nil then
+                       currentNode.borderThickness = 1
+                    end
+                    if currentNode.borderSpacing == nil then
+                       currentNode.borderSpacing = 10
+                    end
+                    if currentNode.borderTension == nil then
+                       currentNode.borderTension = 0
+                    end
+                    if currentNode.borderRandomizerMultiplier == nil then
+                       currentNode.borderRandomizerMultiplier = 0
+                    end
+                 end
+              end
+          }
       )
       table.insert(
-         row2,
-         {
-            'rotate', icon.rotate, 'rotate with 22.5',
-            function()
-               rotateGroup(currentNode, 22.5)
-            end
-         }
+          row2,
+          {
+              'rotate', icon.rotate, 'rotate with 22.5',
+              function()
+                 rotateGroup(currentNode, 22.5)
+              end
+          }
       )
 
       if (currentNode) then
          table.insert(
-            row2,
-            {
-               'enabledisabletext', icon.backdrop, 'enable/disable texture functionality',
-               function()
-                  if currentNode.texture then
-                     -- remove the texture
-                     currentNode.texture = nil
-                  else
-                     -- add the texture
-                     currentNode.texture = {}
-                     currentNode.texture.url = ''
-                     currentNode.texture.wrap = 'repeat'
-                     currentNode.texture.filter = 'linear'
-                  end
-                  remeshNode(currentNode)
-
-               end
-            })
+             row2,
+             {
+                 'enabledisabletext', icon.backdrop, 'enable/disable texture functionality',
+                 function()
+                    if currentNode.texture then
+                       -- remove the texture
+                       currentNode.texture = nil
+                    else
+                       -- add the texture
+                       currentNode.texture = {}
+                       currentNode.texture.url = ''
+                       currentNode.texture.wrap = 'repeat'
+                       currentNode.texture.filter = 'linear'
+                    end
+                    remeshNode(currentNode)
+                 end
+             })
       end
       if (currentNode and currentNode.texture and (currentNode.type ~= 'rubberhose' and currentNode.type ~= 'bezier')) then
          table.insert(
-            row2,
-            {
-               'squish', icon.squish, 'enable/disable squishable',
-               function()
-                  currentNode.texture.squishable = not currentNode.texture.squishable
+             row2,
+             {
+                 'squish', icon.squish, 'enable/disable squishable',
+                 function()
+                    currentNode.texture.squishable = not currentNode.texture.squishable
 
-                  remeshNode(currentNode)
-
-               end
-            })
+                    remeshNode(currentNode)
+                 end
+             })
       end
 
       if (currentNode.texture and currentNode.type == 'rubberhose') then
          table.insert(
-            row2,
-            {
-               'fit rubberhose to image', icon.backdropscale, 'fit rubberhose to image',
-               function()
-                  local img = mesh.getImage(currentNode.texture.url)
-                  if not img then return end -- todo this exits early preventing a crash, but meh
-                  local width, height = img:getDimensions()
-                  local magic = 4.46
-                  currentNode.data.length = height * magic
-                  currentNode.data.width = width * 2
-                  remeshNode(currentNode)
-               end
-            }
+             row2,
+             {
+                 'fit rubberhose to image', icon.backdropscale, 'fit rubberhose to image',
+                 function()
+                    local img = mesh.getImage(currentNode.texture.url)
+                    if not img then return end -- todo this exits early preventing a crash, but meh
+                    local width, height = img:getDimensions()
+                    local magic = 4.46
+                    currentNode.data.length = height * magic
+                    currentNode.data.width = width * 2
+                    remeshNode(currentNode)
+                 end
+             }
          )
       end
 
       if (currentNode.texture and currentNode.type == 'bezier') then
          table.insert(
-            row2,
-            {
-               'fit bezier to image', icon.backdropscale, 'fit bezier to image',
-               function()
-                  local img = mesh.getImage(currentNode.texture.url)
+             row2,
+             {
+                 'fit bezier to image', icon.backdropscale, 'fit bezier to image',
+                 function()
+                    local img = mesh.getImage(currentNode.texture.url)
 
-                  if not img then return end -- todo this exits early preventing a crash, but meh
-                  local width, height = img:getDimensions()
-                  currentNode.points = {};
-                  currentNode.points[1] = { 0, 0 }
-                  currentNode.points[2] = { 0, height / 2 }
-                  currentNode.points[3] = { 0, height }
+                    if not img then return end -- todo this exits early preventing a crash, but meh
+                    local width, height = img:getDimensions()
+                    currentNode.points = {};
+                    currentNode.points[1] = { 0, 0 }
+                    currentNode.points[2] = { 0, height / 2 }
+                    currentNode.points[3] = { 0, height }
 
-                  -- todo, i dont like this here, its correct though and it will be fed into polyline as halfwidth
-                  currentNode.data.width = width / 2
-
-               end
-            }
+                    -- todo, i dont like this here, its correct though and it will be fed into polyline as halfwidth
+                    currentNode.data.width = width / 2
+                 end
+             }
          )
       end
 
 
       if (currentNode.texture and currentNode.type ~= 'bezier' and currentNode.type ~= 'rubberhose') then
          table.insert(
-            row2,
-            {
-               'fit polygon to image', icon.backdropscale4, 'make fitting  4 point polygon for image',
-               function()
-                  local img = mesh.getImage(currentNode.texture.url)
+             row2,
+             {
+                 'fit polygon to image', icon.backdropscale4, 'make fitting  4 point polygon for image',
+                 function()
+                    local img = mesh.getImage(currentNode.texture.url)
 
-                  if not img then return end -- todo this exits early preventing a crash, but meh
-                  local width, height = img:getDimensions()
-                  --local mx, my = getMiddleOfPoints(currentNode.points)
-                  local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
-                  currentNode.points = {};
-                  currentNode.points[1] = { 0, 0 }
-                  currentNode.points[2] = { width, 0 }
-                  currentNode.points[3] = { width, height }
-                  currentNode.points[4] = { 0, height }
+                    if not img then return end -- todo this exits early preventing a crash, but meh
+                    local width, height = img:getDimensions()
+                    --local mx, my = getMiddleOfPoints(currentNode.points)
+                    local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
+                    currentNode.points = {};
+                    currentNode.points[1] = { 0, 0 }
+                    currentNode.points[2] = { width, 0 }
+                    currentNode.points[3] = { width, height }
+                    currentNode.points[4] = { 0, height }
 
-                  for i = 1, #currentNode.points do
-                     currentNode.points[i][1] = currentNode.points[i][1] + tlx
-                     currentNode.points[i][2] = currentNode.points[i][2] + tly
-                  end
+                    for i = 1, #currentNode.points do
+                       currentNode.points[i][1] = currentNode.points[i][1] + tlx
+                       currentNode.points[i][2] = currentNode.points[i][2] + tly
+                    end
 
-                  remeshNode(currentNode)
-               end
-            })
+                    remeshNode(currentNode)
+                 end
+             })
          if currentNode.texture.squishable then
             table.insert(
-               row2,
-               {
-                  'fit polygon to image', icon.backdropscale5, 'make fitting  5 point polygon for image',
-                  function()
-                     local img = mesh.getImage(currentNode.texture.url)
+                row2,
+                {
+                    'fit polygon to image', icon.backdropscale5, 'make fitting  5 point polygon for image',
+                    function()
+                       local img = mesh.getImage(currentNode.texture.url)
 
-                     if not img then return end -- todo this exits early preventing a crash, but meh
-                     local width, height = img:getDimensions()
-                     local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
-                     currentNode.points = {};
-                     currentNode.points[1] = { width / 2, height / 2 }
+                       if not img then return end -- todo this exits early preventing a crash, but meh
+                       local width, height = img:getDimensions()
+                       local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
+                       currentNode.points = {};
+                       currentNode.points[1] = { width / 2, height / 2 }
 
-                     currentNode.points[2] = { 0, 0 }
-                     currentNode.points[3] = { width, 0 }
-                     currentNode.points[4] = { width, height }
-                     currentNode.points[5] = { 0, height }
+                       currentNode.points[2] = { 0, 0 }
+                       currentNode.points[3] = { width, 0 }
+                       currentNode.points[4] = { width, height }
+                       currentNode.points[5] = { 0, height }
 
-                     for i = 1, #currentNode.points do
-                        currentNode.points[i][1] = currentNode.points[i][1] + tlx
-                        currentNode.points[i][2] = currentNode.points[i][2] + tly
-                     end
-                     remeshNode(currentNode)
-                  end
-               }
+                       for i = 1, #currentNode.points do
+                          currentNode.points[i][1] = currentNode.points[i][1] + tlx
+                          currentNode.points[i][2] = currentNode.points[i][2] + tly
+                       end
+                       remeshNode(currentNode)
+                    end
+                }
             )
             table.insert(
-               row2,
-               {
-                  'fit polygon to image', icon.backdropscale9, 'make fitting  9 point polygon for image',
-                  function()
-                     local img = mesh.getImage(currentNode.texture.url)
+                row2,
+                {
+                    'fit polygon to image', icon.backdropscale9, 'make fitting  9 point polygon for image',
+                    function()
+                       local img = mesh.getImage(currentNode.texture.url)
 
-                     if not img then return end -- todo this exits early preventing a crash, but meh
-                     local width, height = img:getDimensions()
-                     local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
-                     currentNode.points = {};
+                       if not img then return end -- todo this exits early preventing a crash, but meh
+                       local width, height = img:getDimensions()
+                       local tlx, tly, brx, bry = bbox.getPointsBBox(currentNode.points)
+                       currentNode.points = {};
 
-                     currentNode.points[1] = { width / 2, height / 2 }
+                       currentNode.points[1] = { width / 2, height / 2 }
 
-                     currentNode.points[2] = { 0, 0 }
-                     currentNode.points[3] = { width / 2, 0 }
-                     currentNode.points[4] = { width, 0 }
-                     currentNode.points[5] = { width, height / 2 }
+                       currentNode.points[2] = { 0, 0 }
+                       currentNode.points[3] = { width / 2, 0 }
+                       currentNode.points[4] = { width, 0 }
+                       currentNode.points[5] = { width, height / 2 }
 
-                     currentNode.points[6] = { width, height }
-                     currentNode.points[7] = { width / 2, height }
+                       currentNode.points[6] = { width, height }
+                       currentNode.points[7] = { width / 2, height }
 
-                     currentNode.points[8] = { 0, height }
-                     currentNode.points[9] = { 0, height / 2 }
+                       currentNode.points[8] = { 0, height }
+                       currentNode.points[9] = { 0, height / 2 }
 
-                     for i = 1, #currentNode.points do
-                        currentNode.points[i][1] = currentNode.points[i][1] + tlx
-                        currentNode.points[i][2] = currentNode.points[i][2] + tly
-                     end
-                     remeshNode(currentNode)
-                  end
-               }
+                       for i = 1, #currentNode.points do
+                          currentNode.points[i][1] = currentNode.points[i][1] + tlx
+                          currentNode.points[i][2] = currentNode.points[i][2] + tly
+                       end
+                       remeshNode(currentNode)
+                    end
+                }
             )
          end
       end
       if (currentNode and currentNode.texture) then
          LG.setColor(1, 1, 1, 1)
-         LG.print(currentNode.texture.url, 10, h-40)
+         LG.print(currentNode.texture.url, 10, h - 40)
       end
       if currentNode.type == 'rubberhose' then
          LG.setFont(smallest)
@@ -1376,8 +1326,6 @@ local function drawUIAroundGraphNodes(w, h)
          if v.value ~= nil then
             currentNode.data.scaleY = v.value
          end
-
-
       end
       if currentNode.type == 'bezier' then
          LG.setFont(smallest)
@@ -1395,59 +1343,51 @@ local function drawUIAroundGraphNodes(w, h)
 
       table.insert(row2, "newline")
       if #childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1]) == 'number' then
-
          table.insert(
-            row2,
-            {
-               'children-flip-vertical', icon.flip_vertical, 'flip vertically',
-               function()
-                  flipGroup(currentNode, childrenInRectangleSelect, 1, -1)
-               end
-            }
+             row2,
+             {
+                 'children-flip-vertical', icon.flip_vertical, 'flip vertically',
+                 function()
+                    flipGroup(currentNode, childrenInRectangleSelect, 1, -1)
+                 end
+             }
          )
          table.insert(
-            row2,
-            {
-               'children-flip-horizontal', icon.flip_horizontal, 'flip vertically',
-               function()
-                  flipGroup(currentNode, childrenInRectangleSelect, -1, 1)
-               end
-            }
+             row2,
+             {
+                 'children-flip-horizontal', icon.flip_horizontal, 'flip vertically',
+                 function()
+                    flipGroup(currentNode, childrenInRectangleSelect, -1, 1)
+                 end
+             }
          )
          table.insert(
-            row2,
-            {
-               'children-scale-up', icon.resize, 'scale up',
-               function()
-                  if LK.isDown('a') then
-                     resizeGroup(currentNode, childrenInRectangleSelect, .75)
-                  else
-                     resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
-                  end
-
-               end
-            }
+             row2,
+             {
+                 'children-scale-up', icon.resize, 'scale up',
+                 function()
+                    if LK.isDown('a') then
+                       resizeGroup(currentNode, childrenInRectangleSelect, .75)
+                    else
+                       resizeGroup(currentNode, childrenInRectangleSelect, 0.95)
+                    end
+                 end
+             }
          )
          table.insert(
-            row2,
-            {
-               'children-scale-down', icon.resize, 'scale down',
-               function()
-                  if LK.isDown('a') then
-                     resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
-                  else
-                     resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
-                  end
-
-               end
-            }
+             row2,
+             {
+                 'children-scale-down', icon.resize, 'scale down',
+                 function()
+                    if LK.isDown('a') then
+                       resizeGroup(currentNode, childrenInRectangleSelect, 1.25)
+                    else
+                       resizeGroup(currentNode, childrenInRectangleSelect, 1.05)
+                    end
+                 end
+             }
          )
-
       end
-
-
-
-
    end
 
 
@@ -1455,107 +1395,101 @@ local function drawUIAroundGraphNodes(w, h)
 
 
    local row3 = {
-      startX = w - 400,
-      startY = 10,
+       startX = w - 400,
+       startY = 10,
    }
    row3.runningX = row3.startX
    row3.runningY = row3.startY
 
    if (#childrenInRectangleSelect > 0 and type(childrenInRectangleSelect[1]) ~= 'number') then
       table.insert(
-         row3,
-         {
-            'connector-group', icon.parent, 'parentize',
-            function()
-               lastDraggedElement = { id = 'connector-group', pos = { row3.runningX, row3.runningY } }
-            end
-         }
+          row3,
+          {
+              'connector-group', icon.parent, 'parentize',
+              function()
+                 lastDraggedElement = { id = 'connector-group', pos = { row3.runningX, row3.runningY } }
+              end
+          }
       )
 
 
       -- I think you can also get in here by selecting individua vertices
       table.insert(
-         row3,
-         {
-            'object_group', icon.object_group, 'turn group to object',
-            function()
-               for i = 1, #childrenInRectangleSelect do
-                  local n = childrenInRectangleSelect[i]
-                  table.remove(n._parent.children, getIndex(n))
-               end
+          row3,
+          {
+              'object_group', icon.object_group, 'turn group to object',
+              function()
+                 for i = 1, #childrenInRectangleSelect do
+                    local n = childrenInRectangleSelect[i]
+                    table.remove(n._parent.children, getIndex(n))
+                 end
 
-               local shape = {
-                  folder = true,
-                  transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-                  children = {}
-               }
+                 local shape = {
+                     folder = true,
+                     transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+                     children = {}
+                 }
 
-               if not currentNode then
-                  shape._parent = root
-                  addShapeAtRoot(shape)
-               else
-                  addThingAtEnd(shape, currentNode)
-               end
-               local f = shape
+                 if not currentNode then
+                    shape._parent = root
+                    addShapeAtRoot(shape)
+                 else
+                    addThingAtEnd(shape, currentNode)
+                 end
+                 local f = shape
 
-               local tlx, tly, brx, bry = bbox.getGroupBBox(childrenInRectangleSelect)
+                 local tlx, tly, brx, bry = bbox.getGroupBBox(childrenInRectangleSelect)
 
-               local w2 = (brx - tlx) / 2
-               local h2 = (bry - tly) / 2
-               local offX = -(tlx + w2)
-               local offY = -(tly + h2)
+                 local w2 = (brx - tlx) / 2
+                 local h2 = (bry - tly) / 2
+                 local offX = -(tlx + w2)
+                 local offY = -(tly + h2)
 
-               recenterGroup(childrenInRectangleSelect, offX, offY)
-               f.children = childrenInRectangleSelect
-               parentize.parentize(f._parent)
-               setPos(f, -offX, -offY)
-               mesh.meshAll(f._parent)
-               childrenInRectangleSelect = {}
-
-
-            end
-         }
+                 recenterGroup(childrenInRectangleSelect, offX, offY)
+                 f.children = childrenInRectangleSelect
+                 parentize.parentize(f._parent)
+                 setPos(f, -offX, -offY)
+                 mesh.meshAll(f._parent)
+                 childrenInRectangleSelect = {}
+              end
+          }
       )
-
    end
 
 
 
    table.insert(
-      row3,
-      {
-         'rectangle-select', icon.select, 'rectangle select',
-         function()
-            if (editingMode == 'rectangle-select') then
-               editingMode = nil
-               editingModeSub = nil
-               print('todo take me where i came from')
-            else
-               editingMode = 'rectangle-select'
-            end
-         end
-      }
+       row3,
+       {
+           'rectangle-select', icon.select, 'rectangle select',
+           function()
+              if (editingMode == 'rectangle-select') then
+                 editingMode = nil
+                 editingModeSub = nil
+                 print('todo take me where i came from')
+              else
+                 editingMode = 'rectangle-select'
+              end
+           end
+       }
    )
 
    if (#childrenInRectangleSelect > 0) then
       table.insert(row3, "printChildrenInRectangleSelect")
 
       table.insert(
-         row3,
-         {
-            'group-move', icon.move, 'move group',
-            function()
-               if (editingModeSub == 'group-move') then
-                  editingModeSub = nil
-               else
-                  editingModeSub = 'group-move'
-               end
-
-            end
-         }
+          row3,
+          {
+              'group-move', icon.move, 'move group',
+              function()
+                 if (editingModeSub == 'group-move') then
+                    editingModeSub = nil
+                 else
+                    editingModeSub = 'group-move'
+                 end
+              end
+          }
       )
-
-
    end
 
    table.insert(rows, row3)
@@ -1566,7 +1500,6 @@ local function drawUIAroundGraphNodes(w, h)
       for i = 1, #row do
          local v = row[i]
          if (type(v) == 'table') then
-
             if imgbutton(v[1], v[2], row.runningX, row.runningY, v[3]).clicked then
                v[4]()
             end
@@ -1613,19 +1546,19 @@ local function drawUIAroundGraphNodes(w, h)
                local getUIRect = ui.getUIRect
                if (currentNode and currentNode.children and #currentNode.children > 0) then
                   LG.rectangle("fill", runningX, runningY, 20, 20)
-                  if getUIRect('p1', runningX, runningY, 20, 20).clicked then
+                  if getUIRect('p1', runningX, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, tlx, tly)
                   end
 
                   LG.rectangle("fill", runningX + 24, runningY, 20, 20)
-                  if getUIRect('p2', runningX + 24, runningY, 20, 20).clicked then
+                  if getUIRect('p2', runningX + 24, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, mx, tly)
                   end
 
                   LG.rectangle("fill", runningX + 48, runningY, 20, 20)
-                  if getUIRect('p3', runningX + 48, runningY, 20, 20).clicked then
+                  if getUIRect('p3', runningX + 48, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, brx, tly)
                   end
@@ -1633,20 +1566,19 @@ local function drawUIAroundGraphNodes(w, h)
                   runningY = runningY + 24
 
                   LG.rectangle("fill", runningX, runningY, 20, 20)
-                  if getUIRect('p4', runningX, runningY, 20, 20).clicked then
+                  if getUIRect('p4', runningX, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, tlx, my)
-
                   end
 
                   LG.rectangle("fill", runningX + 24, runningY, 20, 20)
-                  if getUIRect('p5', runningX + 24, runningY, 20, 20).clicked then
+                  if getUIRect('p5', runningX + 24, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, mx, my)
                   end
 
                   LG.rectangle("fill", runningX + 48, runningY, 20, 20)
-                  if getUIRect('p6', runningX + 48, runningY, 20, 20).clicked then
+                  if getUIRect('p6', runningX + 48, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, brx, my)
                   end
@@ -1654,23 +1586,22 @@ local function drawUIAroundGraphNodes(w, h)
                   runningY = runningY + 24
 
                   LG.rectangle("fill", runningX, runningY, 20, 20)
-                  if getUIRect('p7', runningX, runningY, 20, 20).clicked then
+                  if getUIRect('p7', runningX, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, tlx, bry)
                   end
 
                   LG.rectangle("fill", runningX + 24, runningY, 20, 20)
-                  if getUIRect('p8', runningX + 24, runningY, 20, 20).clicked then
+                  if getUIRect('p8', runningX + 24, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, mx, bry)
                      print(inspect(currentNode))
                   end
 
                   LG.rectangle("fill", runningX + 48, runningY, 20, 20)
-                  if getUIRect('p9', runningX + 48, runningY, 20, 20).clicked then
+                  if getUIRect('p9', runningX + 48, runningY, 20, 20) then
                      local tlx, tly, brx, bry, mx, my = get6(currentNode)
                      setPivot(currentNode, brx, bry)
-
                   end
 
                   runningY = runningY + 40
@@ -1685,7 +1616,6 @@ local function drawUIAroundGraphNodes(w, h)
    if currentNode then
       if (editingMode == 'polyline') and currentNode and currentNode.type ~= 'meta' then
          if currentNode and currentNode.border then
-
             LG.setFont(smallest)
             LG.setColor(1, 1, 1, 1)
             LG.print("tension", 100, 100)
@@ -1773,9 +1703,9 @@ function mylib:mousepressed(x, y, button)
             local index = 0
             for i = 1, #points do
                if hit.pointInRect(px, py,
-                  points[i][1] - w / 2,
-                  points[i][2] - w / 2,
-                  w, w) then
+                       points[i][1] - w / 2,
+                       points[i][2] - w / 2,
+                       w, w) then
                   index = i
                end
             end
@@ -1910,7 +1840,6 @@ function mylib:mousereleased(x, y, button)
          childrenInRectangleSelect = {}
          scrollviewOffset = 0
       end
-
    end
    lastDraggedElement = nil
 end
@@ -1926,7 +1855,6 @@ function mylib:mousemoved(x, y, dx, dy)
 
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and editingModeSub ~= 'group-move' and
        love.mouse.isDown(1) or LK.isDown('space') then
-
       local ddx, ddy = dx, dy
       -- when ingame editing, sometimes you edit a root with a parent
       if root._parent ~= nil then
@@ -1962,7 +1890,7 @@ function mylib:mousemoved(x, y, dx, dy)
 
    if (
        editingMode == 'folder' and editingModeSub == 'folder-move' and not ui.mouseHovered() and
-           not isConnecting) then
+       not isConnecting) then
       if (currentNode and currentNode.transforms and love.mouse.isDown(1)) then
          local ddx, ddy = getLocalDelta(currentNode._parent.transforms._g, dx, dy)
          if snap then
@@ -1982,7 +1910,6 @@ function mylib:mousemoved(x, y, dx, dy)
          end
          -- todo make a movePivot ?
          setPivot(currentNode, currentNode.transforms.l[6] - ddx, currentNode.transforms.l[7] - ddy)
-
       end
    end
 
@@ -2075,8 +2002,6 @@ local function getBetterCursorPos(button, str)
    local sx = button.x + 24 + 12
    local sy = button.y + 2
    love.graphics.line(sx, sy - 10, sx, sy + 10)
-
-
 end
 
 local function renderGraphNodes(node, level, startY, beginX, totalHeight)
@@ -2088,7 +2013,6 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
    local rowHeight = 27 - 5
 
    for i = 1, #node.children do
-
       local yPos = -scrollviewOffset + startY + runningY
       local child = node.children[i]
 
@@ -2123,17 +2047,15 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
       local dblClicked = false
       if (yPos >= 0 and yPos <= h) then
          b = iconlabelbutton('object-group' .. i, myIcon, color, child == currentNode, child.name or "", rightX,
-            yPos
-            ,
-            128
-            , -4)
+                 yPos
+                 ,
+                 128
+                 , -4)
 
          if b.clicked then
-
             if lastClickedGraphButton then
                local duration = (love.timer.getTime() - lastClickedGraphButton.time)
                if duration < .5 then
-
                   dblClicked = true
                   -- print magic
                   changeName = true
@@ -2143,7 +2065,7 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
                   changeNameCursor = child.name and #child.name or 0
                   -- but i dont know how to capture events for just this elemnt if needed
 
-                  --[[   
+                  --[[
                   runningY = runningY - rowHeight
                   b = iconlabelbutton('object-group' .. i, myIcon, { 1, 0, 0 }, child == currentNode, child.name or "",
                      rightX, yPos,
@@ -2153,7 +2075,7 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
                   local str = currentNode and currentNode.name or ""
                   local sx = rightX + 24 + 12
                   local sy = yPos + 2
-                
+
                   local substr = (string.sub(str, 1, changeNameCursor))
                   local cursorX = (LG.getFont():getWidth(substr))
                   --print(dt % 10)
@@ -2164,7 +2086,8 @@ local function renderGraphNodes(node, level, startY, beginX, totalHeight)
                   print(d)
                   LG.rectangle('line', sx + cursorX, sy - 5, 1, 23 + 10)
                         love.graphics.setColor(1, 1, 1, 1)
-                  ]] --
+                  ]]
+                  --
                end
             end
          end
@@ -2242,7 +2165,6 @@ function mylib:wheelmoved(x, y)
 end
 
 function mylib:setRoot(root, folderPath)
-
    parentize.parentize(root)
    mesh.meshAll(root)
 
@@ -2256,18 +2178,16 @@ function mylib:setRoot(root, folderPath)
          print('texture prefix: ', prefix)
       end
    end
-
-
 end
 
 function mylib:resize(w, h)
    mylib.w = w
    mylib.h = h
    sceneGraph = {
-      maximized = false,
-      topY = 90,
-      height = h - 90,
-      x = w - 160,
+       maximized = false,
+       topY = 90,
+       height = h - 90,
+       x = w - 160,
    }
 end
 
@@ -2320,65 +2240,65 @@ function mylib:load(arg)
    print('CWD', cwd)
    local p = '/resources/ui/'
    icon = {
-      polyline = LG.newImage(p .. "polyline.png"),
-      polyline_add = LG.newImage(p .. "polyline-add.png"),
-      polyline_edit = LG.newImage(p .. "polyline-edit.png"),
-      polyline_remove = LG.newImage(p .. "polyline-remove.png"),
-      insert_link = LG.newImage(p .. "insert-link.png"),
-      backdrop = LG.newImage(p .. "backdrop.png"),
-      backdropscale = LG.newImage(p .. "backdropscale.png"),
-      backdropscale4 = LG.newImage(p .. "backdropscale4.png"),
-      backdropscale5 = LG.newImage(p .. "backdropscale5.png"),
-      backdropscale9 = LG.newImage(p .. "backdropscale9.png"),
-      squish = LG.newImage(p .. "squish.png"),
-      grid = LG.newImage(p .. "grid.png"),
-      palette = LG.newImage(p .. "palette.png"),
-      pen = LG.newImage(p .. "pen.png"),
-      pencil = LG.newImage(p .. "pencil.png"),
-      polygon = LG.newImage(p .. "polygon.png"),
-      add = LG.newImage(p .. "add.png"),
-      remove = LG.newImage(p .. "remove.png"),
-      delete = LG.newImage(p .. "delete.png"),
-      move = LG.newImage(p .. "move.png"),
-      visible = LG.newImage(p .. "visible.png"),
-      not_visible = LG.newImage(p .. "not-visible.png"),
-      resize = LG.newImage(p .. "resize.png"),
-      opacity = LG.newImage(p .. "opacity.png"),
-      settings = LG.newImage(p .. "settings.png"),
-      badge = LG.newImage(p .. "badge.png"),
-      layer_group = LG.newImage(p .. "layer-group.png"),
-      object_group = LG.newImage(p .. "object-group.png"),
-      rotate = LG.newImage(p .. "rotate.png"),
-      transform = LG.newImage(p .. "transform.png"),
-      next = LG.newImage(p .. "next.png"),
-      previous = LG.newImage(p .. "previous.png"),
-      lines = LG.newImage(p .. "lines.png"),
-      lines2 = LG.newImage(p .. "lines2.png"),
-      move_up = LG.newImage(p .. "move-up.png"),
-      move_down = LG.newImage(p .. "move-down.png"),
-      mesh = LG.newImage(p .. "mesh.png"),
-      parent = LG.newImage(p .. "parent.png"),
-      folder = LG.newImage(p .. "folder.png"),
-      folder_open = LG.newImage(p .. "folderopen.png"),
-      pivot = LG.newImage(p .. "pivot.png"),
-      pan = LG.newImage(p .. "pan.png"),
-      mask = LG.newImage(p .. "mask.png"),
-      clone = LG.newImage(p .. "clone.png"),
-      joystick = LG.newImage(p .. "joystick.png"),
-      transition = LG.newImage(p .. "transition.png"),
-      select = LG.newImage(p .. "select.png"),
-      hole = LG.newImage(p .. "keyhole.png"),
-      change = LG.newImage(p .. "change.png"),
-      add_to_list = LG.newImage(p .. "add-to-list.png"),
-      flip_vertical = LG.newImage(p .. "flip-vertical.png"),
-      flip_horizontal = LG.newImage(p .. "flip-horizontal.png"),
-      dopesheet = LG.newImage(p .. "spreadsheet.png"),
-      curve = LG.newImage(p .. "curve.png"),
-      close_stencil = LG.newImage(p .. "close-stencil.png"),
-      help = LG.newImage(p .. "help.png"),
-      bezier = LG.newImage(p .. "bezier.png"),
-      rope = LG.newImage(p .. "rope.png"),
-      texture = LG.newImage(p .. "texture.png"),
+       polyline = LG.newImage(p .. "polyline.png"),
+       polyline_add = LG.newImage(p .. "polyline-add.png"),
+       polyline_edit = LG.newImage(p .. "polyline-edit.png"),
+       polyline_remove = LG.newImage(p .. "polyline-remove.png"),
+       insert_link = LG.newImage(p .. "insert-link.png"),
+       backdrop = LG.newImage(p .. "backdrop.png"),
+       backdropscale = LG.newImage(p .. "backdropscale.png"),
+       backdropscale4 = LG.newImage(p .. "backdropscale4.png"),
+       backdropscale5 = LG.newImage(p .. "backdropscale5.png"),
+       backdropscale9 = LG.newImage(p .. "backdropscale9.png"),
+       squish = LG.newImage(p .. "squish.png"),
+       grid = LG.newImage(p .. "grid.png"),
+       palette = LG.newImage(p .. "palette.png"),
+       pen = LG.newImage(p .. "pen.png"),
+       pencil = LG.newImage(p .. "pencil.png"),
+       polygon = LG.newImage(p .. "polygon.png"),
+       add = LG.newImage(p .. "add.png"),
+       remove = LG.newImage(p .. "remove.png"),
+       delete = LG.newImage(p .. "delete.png"),
+       move = LG.newImage(p .. "move.png"),
+       visible = LG.newImage(p .. "visible.png"),
+       not_visible = LG.newImage(p .. "not-visible.png"),
+       resize = LG.newImage(p .. "resize.png"),
+       opacity = LG.newImage(p .. "opacity.png"),
+       settings = LG.newImage(p .. "settings.png"),
+       badge = LG.newImage(p .. "badge.png"),
+       layer_group = LG.newImage(p .. "layer-group.png"),
+       object_group = LG.newImage(p .. "object-group.png"),
+       rotate = LG.newImage(p .. "rotate.png"),
+       transform = LG.newImage(p .. "transform.png"),
+       next = LG.newImage(p .. "next.png"),
+       previous = LG.newImage(p .. "previous.png"),
+       lines = LG.newImage(p .. "lines.png"),
+       lines2 = LG.newImage(p .. "lines2.png"),
+       move_up = LG.newImage(p .. "move-up.png"),
+       move_down = LG.newImage(p .. "move-down.png"),
+       mesh = LG.newImage(p .. "mesh.png"),
+       parent = LG.newImage(p .. "parent.png"),
+       folder = LG.newImage(p .. "folder.png"),
+       folder_open = LG.newImage(p .. "folderopen.png"),
+       pivot = LG.newImage(p .. "pivot.png"),
+       pan = LG.newImage(p .. "pan.png"),
+       mask = LG.newImage(p .. "mask.png"),
+       clone = LG.newImage(p .. "clone.png"),
+       joystick = LG.newImage(p .. "joystick.png"),
+       transition = LG.newImage(p .. "transition.png"),
+       select = LG.newImage(p .. "select.png"),
+       hole = LG.newImage(p .. "keyhole.png"),
+       change = LG.newImage(p .. "change.png"),
+       add_to_list = LG.newImage(p .. "add-to-list.png"),
+       flip_vertical = LG.newImage(p .. "flip-vertical.png"),
+       flip_horizontal = LG.newImage(p .. "flip-horizontal.png"),
+       dopesheet = LG.newImage(p .. "spreadsheet.png"),
+       curve = LG.newImage(p .. "curve.png"),
+       close_stencil = LG.newImage(p .. "close-stencil.png"),
+       help = LG.newImage(p .. "help.png"),
+       bezier = LG.newImage(p .. "bezier.png"),
+       rope = LG.newImage(p .. "rope.png"),
+       texture = LG.newImage(p .. "texture.png"),
    }
 
 
@@ -2390,13 +2310,13 @@ function mylib:load(arg)
    currentlyHoveredUINode = nil
 
    backdrop = {
-      grid = { cellsize = 100 }, -- cellsize is in px
-      bg_color = { .53, .70, .76 },
-      visible = false,
-      alpha = 0.5,
-      x = 0,
-      y = 0,
-      scale = 1
+       grid = { cellsize = 100 }, -- cellsize is in px
+       bg_color = { .53, .70, .76 },
+       visible = false,
+       alpha = 0.5,
+       x = 0,
+       y = 0,
+       scale = 1
    }
 
    fileDropPopup = nil
@@ -2476,7 +2396,6 @@ local function getDataFromFile(file)
          _shapeName = filename:sub(charIndex + 1, -5) -- cutting off .svg
          shapeName = _shapeName
       end
-
    end
 
    if text.ends_with(filename, 'polygons.txt') then
@@ -2487,14 +2406,12 @@ local function getDataFromFile(file)
 end
 
 function mylib:draw()
-
    local root = mylib.root
    if openFileScreen then
       ui.handleMouseClickStart()
 
       renderOpenFileScreen(root)
    else
-
       if true then
          step = step + 1
          local mx, my = love.mouse.getPosition()
@@ -2523,7 +2440,8 @@ function mylib:draw()
          comparemode, comparevalue = LG.getStencilTest()
 
          if (comparemode ~= 'always' or comparevalue ~= 0) then
-            print('disabling stencil for ya, you still hvae to fix something in the tree though, probably a missing close stencil command')
+            print(
+                'disabling stencil for ya, you still hvae to fix something in the tree though, probably a missing close stencil command')
             LG.setStencilTest()
          end
 
@@ -2575,11 +2493,8 @@ function mylib:draw()
                   local source = { bbox.tl.x, bbox.tl.y, bbox.br.x, bbox.br.y }
                   local dest = { { ip1x, ip1y }, { ip2x, ip2y }, { ip3x, ip3y }, { ip4x, ip4y } }
                   for i = 1, #currentNode.children do
-
                      if currentNode.children[i].points then
-
                         if (currentNode.children[i].mesh) then
-
                            local count = currentNode.children[i].mesh:getVertexCount()
                            local result = {}
 
@@ -2592,21 +2507,20 @@ function mylib:draw()
                            if currentNode.children[i].perspectiveMesh then
                               if #result ~= currentNode.children[i].perspectiveMesh:getVertexCount() then
                                  currentNode.children[i].perspectiveMesh = LG.newMesh(formats.simple_format, result,
-                                    "triangles", "stream")
+                                         "triangles", "stream")
                               else
                                  currentNode.children[i].perspectiveMesh:setVertices(result, 1, #result)
                               end
                            else
                               currentNode.children[i].perspectiveMesh = LG.newMesh(formats.simple_format, result,
-                                 "triangles", "stream")
+                                      "triangles", "stream")
                            end
 
                            LG.setColor(currentNode.children[i].color[1],
-                              currentNode.children[i].color[2],
-                              currentNode.children[i].color[3], 0.3)
+                               currentNode.children[i].color[2],
+                               currentNode.children[i].color[3], 0.3)
                            LG.draw(currentNode.children[i].perspectiveMesh,
-                              currentNode.transforms._g)
-
+                               currentNode.transforms._g)
                         end
                      end
                   end
@@ -2630,8 +2544,8 @@ function mylib:draw()
                   if nxt < 1 then nxt = 4 end
 
                   LG.line(
-                     perspective[i][1], perspective[i][2],
-                     perspective[nxt][1], perspective[nxt][2]
+                      perspective[i][1], perspective[i][2],
+                      perspective[nxt][1], perspective[nxt][2]
                   )
                end
 
@@ -2663,7 +2577,6 @@ function mylib:draw()
                   if hit.pointInRect(globalX, globalY, points[i][1] - w / 2, points[i][2] - w / 2, w, w) then
                      kind = "fill"
                      LG.print(round2(points[i][1], 3) .. ", " .. round2(points[i][2], 3), 8, LG.getHeight() - 32)
-
                   end
                end
 
@@ -2691,8 +2604,6 @@ function mylib:draw()
                   LG.print(i, dot_x, dot_y)
                end
             end
-
-
          end
          LG.setLineWidth(1)
          LG.setColor(1, 1, 1, 1)
@@ -2703,7 +2614,6 @@ function mylib:draw()
             LG.line(rectangleSelect.startP.x, rectangleSelect.endP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
             LG.line(rectangleSelect.startP.x, rectangleSelect.startP.y, rectangleSelect.startP.x, rectangleSelect.endP.y)
             LG.line(rectangleSelect.endP.x, rectangleSelect.startP.y, rectangleSelect.endP.x, rectangleSelect.endP.y)
-
          end
 
          LG.setColor(1, 1, 1, 0.1)
@@ -2714,7 +2624,6 @@ function mylib:draw()
          local s = 1
 
          if (editingMode == 'folder' and currentNode and currentNode.transforms) then
-
             if (showTheParentTransforms) then
                LG.setFont(smallest)
 
@@ -2724,7 +2633,7 @@ function mylib:draw()
                LG.print("scale x and y", labelPos(calcX(1), calcY(2)))
                if (currentNode.transforms.l[4] == currentNode.transforms.l[5]) then
                   local v = h_slider("folder-scale-xy", calcX(1), calcY(2), scrollerWidth, currentNode.transforms.l[5],
-                      0.00001, 10)
+                          0.00001, 10)
                   if (v.value ~= nil) then
                      n.setScale(currentNode, v.value)
                      editingModeSub = 'folder-scale'
@@ -2742,7 +2651,7 @@ function mylib:draw()
                end
                LG.setColor(1, 1, 1, 1)
                LG.print(
-                  "scale y", labelPos(calcX(1), calcY(4)))
+                   "scale y", labelPos(calcX(1), calcY(4)))
 
                local v = h_slider("folder-scale-y", calcX(1), calcY(4), scrollerWidth, currentNode.transforms.l[5], -2, 2)
                if (v.value ~= nil) then
@@ -2753,7 +2662,7 @@ function mylib:draw()
                LG.setColor(1, 1, 1, 1)
                LG.print("skew x", labelPos(calcX(1), calcY(5)))
                local v = h_slider('folder_skew_x', calcX(1), calcY(5), scrollerWidth, currentNode.transforms.l[8] or 0,
-                  -math.pi, math.pi)
+                       -math.pi, math.pi)
                if (v.value ~= nil) then
                   n.setSkewX(currentNode, v.value)
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(5))
@@ -2761,7 +2670,7 @@ function mylib:draw()
                LG.setColor(1, 1, 1, 1)
                LG.print("skew y", labelPos(calcX(1), calcY(6)))
                local v = h_slider('folder_skew_y', calcX(1), calcY(6), scrollerWidth, currentNode.transforms.l[9] or 0,
-                  -math.pi, math.pi)
+                       -math.pi, math.pi)
                if (v.value ~= nil) then
                   n.setSkewY(currentNode, v.value)
                   LG.print(string.format("%0.2f", v.value), calcX(1), calcY(6))
@@ -2770,7 +2679,7 @@ function mylib:draw()
                LG.setColor(1, 1, 1, 1)
                LG.print("rotate", labelPos(calcX(1), calcY(7)))
                local v = h_slider("folder-rotate", calcX(1), calcY(7), scrollerWidth, currentNode.transforms.l[3],
-                  -1 * math.pi, 1 * math.pi)
+                       -1 * math.pi, 1 * math.pi)
 
                if (v.value ~= nil) then
                   n.setRotation(currentNode, v.value)
@@ -2782,7 +2691,6 @@ function mylib:draw()
          end
 
          if (editingModeSub == 'polyline-palette' and currentNode and currentNode.color) then
-
             local w, h = getDimensions()
 
             local thumbSize = 14
@@ -2806,8 +2714,6 @@ function mylib:draw()
                if rgbbutton('palette#' .. i, { rgb[1] / 255, rgb[2] / 255, rgb[3] / 255 }, x, y, thumbSize).clicked then
                   currentNode.color = { rgb[1] / 255, rgb[2] / 255, rgb[3] / 255, currentNode.color[4] or 1 }
                end
-
-
             end
             LG.setColor(1, 1, 1, 1)
             LG.print("alpha", labelPos(calcX(0), calcY(10)))
@@ -2827,8 +2733,8 @@ function mylib:draw()
                editingModeSub = 'backdrop-palette'
             end
             if imgbutton('backdrop_visibility', backdrop.visible and icon.visible or icon.not_visible, calcX(8), calcY(0)
-               ,
-               'backdrop visible').clicked then
+                    ,
+                    'backdrop visible').clicked then
                editingModeSub = nil
                backdrop.visible = not backdrop.visible
             end
@@ -2909,14 +2815,12 @@ function mylib:draw()
             local scrollBarH = sceneGraph.height - 20
 
             if totalHeightGraphNodes > scrollBarH then
-
                local ding = scrollbarV('hierarchyslider', sceneGraph.x - 40, sceneGraph.topY, scrollBarH,
-                  totalHeightGraphNodes, scrollviewOffset)
+                       totalHeightGraphNodes, scrollviewOffset)
                if ding.value ~= nil then
                   scrollviewOffset = ding.value
                end
             else
-
 
             end
 
@@ -2929,7 +2833,7 @@ function mylib:draw()
                end
                if (currentNode.keyframes == 4 or currentNode.keyframes == 5) then
                   local v = joystick('lerp-keyframes', rightX - 300, 100, 200, currentNode.lerpX or 0,
-                     currentNode.lerpY or 0, 0, 1)
+                          currentNode.lerpY or 0, 0, 1)
                   if v.value then
                      currentNode.lerpX = v.value.x
                      currentNode.lerpY = v.value.y
@@ -2955,8 +2859,6 @@ function mylib:draw()
                   LG.setColor(1, 1, 1)
 
                   if lastClickedGraphButton then
-
-
                      local sx = lastClickedGraphButton.x + 24 + 12
                      local sy = lastClickedGraphButton.y + 2
                      local substr = (string.sub(str, 1, changeNameCursor))
@@ -3037,10 +2939,7 @@ function mylib:draw()
                   mesh.recursivelyMakeTextures(root)
                   fileDropPopup = nil
                end
-
             else
-
-
                if currentNode and currentNode.texture then
                   local s, e = name:find("/experiments/", 1, true)
 
@@ -3062,7 +2961,6 @@ function mylib:draw()
                      currentNode.texture.url = url
                      mesh.recursivelyMakeTextures(currentNode)
                   end
-
                end
 
                if iconlabelbutton('ok-bye', icon.add, nil, false, 'ok bye', 120, 200).clicked then
@@ -3075,8 +2973,9 @@ function mylib:draw()
 
    if showHelp then
       LG.setColor(1, 1, 1, 1)
-      LG.print('KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nu: update lurker\nj: save json\narrows + optional shift: move selection around\nr: snap to pixel'
-         , 50, 50)
+      LG.print(
+          'KEYBOARD SHORTCUTS:\nesc: quit\np: profile\n-: zoom out\n=: zoom in\n0: reset to origin\no: open file screen\nh: save hotrelaoded\ns: save normally\na: render big image\nu: update lurker\nj: save json\narrows + optional shift: move selection around\nr: snap to pixel'
+          , 50, 50)
    end
 
    local work = nil
@@ -3166,12 +3065,10 @@ function mylib:keypressed(key, scancode, isrepeat)
                quitDialog = true
             end
          end
-
       else
          if (quitDialog) then
             quitDialog = false
          end
-
       end
 
       if (key == 'p' and not changeName) then
@@ -3235,7 +3132,6 @@ function mylib:keypressed(key, scancode, isrepeat)
          io.output(file)
          io.write(contents)
          io.close(file)
-
       end
 
       if (key == 's' and not changeName) then
@@ -3263,7 +3159,6 @@ function mylib:keypressed(key, scancode, isrepeat)
       if key == 'a' and not changeName then
          print("rendering a large file: " .. shapePath .. shapeName .. ".x4.polygons.png")
          render.renderNodeIntoCanvas(root, LG.newCanvas(1024 * 4, 1024 * 4), shapePath .. shapeName .. ".x4.polygons.png")
-
       end
 
 
@@ -3302,7 +3197,6 @@ function mylib:keypressed(key, scancode, isrepeat)
                childrenInRectangleSelect = {}
             end
          end
-
       end
 
 

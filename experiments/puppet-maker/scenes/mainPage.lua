@@ -1,12 +1,12 @@
 -- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
 -- http://bamanda.com/locos/locos_subsite/locos_gallery.html
 -- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
-local scene = {}
+local scene      = {}
 
-local vivid   = require 'vendor.vivid'
-local Timer   = require 'vendor.timer'
-local inspect = require 'vendor.inspect'
-local Signal  = require 'vendor.signal'
+local vivid      = require 'vendor.vivid'
+local Timer      = require 'vendor.timer'
+local inspect    = require 'vendor.inspect'
+local Signal     = require 'vendor.signal'
 
 local text       = require 'lib.text'
 local render     = require 'lib.render'
@@ -28,7 +28,7 @@ local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 local Components = {}
 local Systems    = {}
 
-myWorld = Concord.world()
+myWorld          = Concord.world()
 
 require 'src.generatePuppet'
 require 'src.puppet-maker-ui'
@@ -46,7 +46,6 @@ local function sign(x)
 end
 
 function stripPath(root, path)
-
    if root and root.texture and #root.texture.url > 0 then
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
@@ -147,8 +146,11 @@ function pointerMoved(x, y, dx, dy, id)
    if settingsScrollAreaIsDragging then
       local old = settingsScrollPosition
       settingsScrollPosition = settingsScrollPosition + dy / settingsScrollArea[5]
+
       if math.floor(old) ~= math.floor(settingsScrollPosition) then
-         playSound(scrollTickSample)
+         if not settingsScrollArea[8] then
+            playSound(scrollTickSample)
+         end
       end
    end
 end
@@ -172,15 +174,12 @@ end
 function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
    for j = 1, #root.children do
-
       local guy = root.children[j]
       if guy.children then
          for i = 1, #guy.children do
-
             local item = guy.children[i]
             local b = bbox.getBBoxRecursiveVersion2(item) --- this is breaking now because i have smaller children that end up becoming the bbox
             if b and item.folder then
-
                local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
                local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
                local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
@@ -188,7 +187,6 @@ function pointerPressed(x, y, id)
                if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
                   table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
                end
-
             end
          end
       end
@@ -196,7 +194,6 @@ function pointerPressed(x, y, id)
    if false then
       for _, v in pairs(cameraPoints) do
          if hit.pointInRect(wx, wy, v.x, v.y, v.width, v.height) then
-
             local cw, ch = cam:getContainerDimensions()
             local targetScale = math.min(cw / v.width, ch / v.height)
 
@@ -216,14 +213,13 @@ function pointerPressed(x, y, id)
    end
    if (settingsScrollArea) then
       if (hit.pointInRect(x, y,
-         settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+              settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
           ) then
          settingsScrollAreaIsDragging = true
          settingsScrollAreaIsThrown = nil
          gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
       end
    end
-
 end
 
 local function hex2rgb(hex)
@@ -287,22 +283,21 @@ function attachAllFaceParts()
 end
 
 function scene.load()
-
    bgColor = creamColor
 
    Timer.after(
-      1,
-      function()
-         Timer.during(
-            .3,
-            function(dt)
-               local h, s, l, a = vivid.RGBtoHSL(bgColor)
-               l = l * 0.99
-               local r, g, b, a = vivid.HSLtoRGB(h, s, l, a)
-               bgColor = { r, g, b, a }
-            end
-         )
-      end
+       1,
+       function()
+          Timer.during(
+              .3,
+              function(dt)
+                 local h, s, l, a = vivid.RGBtoHSL(bgColor)
+                 l = l * 0.99
+                 local r, g, b, a = vivid.HSLtoRGB(h, s, l, a)
+                 bgColor = { r, g, b, a }
+              end
+          )
+       end
    )
 
    blup0 = love.graphics.newImage('assets/blups/blup1.png')
@@ -315,53 +310,53 @@ function scene.load()
 
    textures = {
 
-      love.graphics.newImage('assets/layered/texture-type0.png'),
-      love.graphics.newImage('assets/layered/texture-type2t.png'),
-      love.graphics.newImage('assets/layered/texture-type1.png'),
-      love.graphics.newImage('assets/layered/texture-type3.png'),
-      love.graphics.newImage('assets/layered/texture-type4.png'),
-      love.graphics.newImage('assets/layered/texture-type5.png'),
-      love.graphics.newImage('assets/layered/texture-type6.png'),
-      love.graphics.newImage('assets/layered/texture-type7.png'),
+       love.graphics.newImage('assets/layered/texture-type0.png'),
+       love.graphics.newImage('assets/layered/texture-type2t.png'),
+       love.graphics.newImage('assets/layered/texture-type1.png'),
+       love.graphics.newImage('assets/layered/texture-type3.png'),
+       love.graphics.newImage('assets/layered/texture-type4.png'),
+       love.graphics.newImage('assets/layered/texture-type5.png'),
+       love.graphics.newImage('assets/layered/texture-type6.png'),
+       love.graphics.newImage('assets/layered/texture-type7.png'),
 
 
    }
 
    whiterects = {
-      love.graphics.newImage('assets/whiterect1.png'),
-      love.graphics.newImage('assets/whiterect2.png'),
-      love.graphics.newImage('assets/whiterect3.png'),
-      love.graphics.newImage('assets/whiterect4.png'),
-      love.graphics.newImage('assets/whiterect5.png'),
-      love.graphics.newImage('assets/whiterect6.png'),
-      love.graphics.newImage('assets/whiterect7.png'),
+       love.graphics.newImage('assets/whiterect1.png'),
+       love.graphics.newImage('assets/whiterect2.png'),
+       love.graphics.newImage('assets/whiterect3.png'),
+       love.graphics.newImage('assets/whiterect4.png'),
+       love.graphics.newImage('assets/whiterect5.png'),
+       love.graphics.newImage('assets/whiterect6.png'),
+       love.graphics.newImage('assets/whiterect7.png'),
    }
 
    dots = {
-      love.graphics.newImage('assets/blups/dot1.150.png'),
-      love.graphics.newImage('assets/blups/dot2.150.png'),
-      love.graphics.newImage('assets/blups/dot3.150.png'),
-      love.graphics.newImage('assets/blups/dot4.150.png'),
-      love.graphics.newImage('assets/blups/dot5.150.png'),
-      love.graphics.newImage('assets/blups/dot6.150.png'),
-      love.graphics.newImage('assets/blups/dot7.150.png'),
-      love.graphics.newImage('assets/blups/dot8.150.png'),
-      love.graphics.newImage('assets/blups/dot9.150.png'),
-      love.graphics.newImage('assets/blups/dot10.150.png'),
-      love.graphics.newImage('assets/blups/dot11.150.png'),
-      love.graphics.newImage('assets/blups/dot12.150.png'),
+       love.graphics.newImage('assets/blups/dot1.150.png'),
+       love.graphics.newImage('assets/blups/dot2.150.png'),
+       love.graphics.newImage('assets/blups/dot3.150.png'),
+       love.graphics.newImage('assets/blups/dot4.150.png'),
+       love.graphics.newImage('assets/blups/dot5.150.png'),
+       love.graphics.newImage('assets/blups/dot6.150.png'),
+       love.graphics.newImage('assets/blups/dot7.150.png'),
+       love.graphics.newImage('assets/blups/dot8.150.png'),
+       love.graphics.newImage('assets/blups/dot9.150.png'),
+       love.graphics.newImage('assets/blups/dot10.150.png'),
+       love.graphics.newImage('assets/blups/dot11.150.png'),
+       love.graphics.newImage('assets/blups/dot12.150.png'),
    }
 
    palettes = {}
    local base = {
-      '020202', '333233', '814800', 'e6c800', 'efebd8',
-      '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
-      'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
-      'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
-      '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
-      'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
-      'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
-      '798091', '4C5575', '6E4431', '626964', '613D41',
+       '020202', '333233', '814800', 'e6c800', 'efebd8',
+       '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+       'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+       'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+       '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+       'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+       '798091', '4C5575', '6E4431', '626964', '613D41',
    }
 
    for i = 1, #base do
@@ -373,7 +368,7 @@ function scene.load()
    skygradient = gradient.makeSkyGradient(16)
 
    scrollPosition = 0
-   scrollItemsOnScreen = 4
+   scrollItemsOnScreen = 5
    scrollListXPosition = 20
 
    settingsScrollAreaIsDragging = false
@@ -383,31 +378,32 @@ function scene.load()
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
 
    selectedTab = 'part'
-   selectedCategory = 'head'
+   selectedCategory = 'body'
+   selectedColoringLayer = 1 --- bg fg, line
 
 
-    
-   
+
+
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
    headz = {}
    for i = 1, 8 do
       headz[i] = {
-         img = love.graphics.newImage('assets/blups/headz' .. i .. '.png'),
-         x = love.math.random(),
-         y = love.math.random(),
-         r = love.math.random() * math.pi * 2
+          img = love.graphics.newImage('assets/blups/headz' .. i .. '.png'),
+          x = love.math.random(),
+          y = love.math.random(),
+          r = love.math.random() * math.pi * 2
       }
    end
 
    delta = 0
 
    root = {
-      folder = true,
-      name = 'root',
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
-      children = {}
+       folder = true,
+       name = 'root',
+       transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+       children = {}
    }
 
 
@@ -423,7 +419,7 @@ function scene.load()
    handParts = feetParts
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-      'assets/parts/leg5.png' }
+       'assets/parts/leg5.png' }
 
 
    bodyImgUrls = {}
@@ -452,148 +448,126 @@ function scene.load()
    earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
 
 
-   parts = {
-      {name='head', imgs=headImgUrls},
-      {name='brows', imgs=browImgUrls},
-      {name='eyes', imgs=eyeImgUrls},
-      {name='ears', imgs=earImgUrls},
-      {name='neck', imgs=legUrls},
-      {name= 'nose', imgs=noseImgUrls},
-      {name= 'body', imgs=bodyImgUrls},
-      {name= 'arms', imgs=legUrls}, 
-      {name='hands', imgs=feetImgUrls},
-      {name= 'legs', imgs=legUrls},
-      {name= 'feet', imgs=feetImgUrls}
-   
-   }
 
-   --print(inspect(parts))
-   categories = {}
-   for i = 1, #parts do
-      categories[i] = parts[i].name 
-   end
-   
+
 
    values = {
-      potatoHead = true,
+       potatoHead = false,
+       eyes = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       eyeWidthMultiplier = 1,
+       eyeHeightMultiplier = 1,
+       eyeRotation = 0,
+       ears = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       earUnderHead = false,
+       earWidthMultiplier = 1,
+       earHeightMultiplier = 1,
+       earRotation = 0,
+       brows = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       nose = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
 
-      eyes = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      eyeWidthMultiplier = 1,
-      eyeHeightMultiplier = 1,
-      eyeRotation = 0,
-      ears = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      earUnderHead = false,
-      earWidthMultiplier = 1,
-      earHeightMultiplier = 1,
-      earRotation = 0,
-      brows = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      nose = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-
-      },
-      noseWidthMultiplier = 1,
-      noseHeightMultiplier = 1,
-
-      legs = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      legLength = 700,
-      legWidthMultiplier = 1,
-      leg1flop = -1,
-      leg2flop = 1,
-
-      arms = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      armLength = 700,
-      armWidthMultiplier = 1,
-      arm1flop = 1,
-      arm2flop = -1,
-      hands = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      body = {
-         shape   = 9,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1,
-         flipy   = -1
-      },
-      bodyWidthMultiplier = 1,
-      bodyHeightMultiplier = 1,
-      head = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1,
-         flipx   = 1,
-         flipy   = -1
-      },
-      headWidthMultiplier = 1,
-      headHeightMultiplier = 1,
-      neck = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
-      neckLength = 700,
-      neckWidthMultiplier = 1,
-      feet = {
-         shape   = 1,
-         bgPal   = 4,
-         fgPal   = 1,
-         bgTex   = 1,
-         fgTex   = 2,
-         linePal = 1
-      },
+       },
+       noseWidthMultiplier = 1,
+       noseHeightMultiplier = 1,
+       legs = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       legLength = 700,
+       legWidthMultiplier = 1,
+       leg1flop = -1,
+       leg2flop = 1,
+       arms = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       armLength = 700,
+       armWidthMultiplier = 1,
+       arm1flop = 1,
+       arm2flop = -1,
+       hands = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       body = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1,
+           flipy   = -1
+       },
+       bodyWidthMultiplier = 1,
+       bodyHeightMultiplier = 1,
+       head = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1,
+           flipx   = 1,
+           flipy   = -1
+       },
+       headWidthMultiplier = 1,
+       headHeightMultiplier = 1,
+       neck = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
+       neckLength = 700,
+       neckWidthMultiplier = 1,
+       feet = {
+           shape   = 1,
+           bgPal   = 4,
+           fgPal   = 1,
+           bgTex   = 1,
+           fgTex   = 2,
+           linePal = 1
+       },
    }
 
    head = copy3(headParts[values.head.shape])
@@ -621,19 +595,29 @@ function scene.load()
    nose = copy3(noseParts[values.nose.shape])
 
    guy = {
-      folder = true,
-      name = 'guy',
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-      children = {}
+       folder = true,
+       name = 'guy',
+       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+       children = {}
    }
 
    biped = Concord.entity()
    biped:give('biped',
-      { guy = guy, body = body, neck = neck, head = head,
-         leg1 = leg1, leg2 = leg2, feet1 = feet1, feet2 = feet2,
-         arm1 = arm1, hand1 = hand1, arm2 = arm2, hand2 = hand2,
-         values = values
-      })
+       {
+           guy = guy,
+           body = body,
+           neck = neck,
+           head = head,
+           leg1 = leg1,
+           leg2 = leg2,
+           feet1 = feet1,
+           feet2 = feet2,
+           arm1 = arm1,
+           hand1 = hand1,
+           arm2 = arm2,
+           hand2 = hand2,
+           values = values
+       })
 
    guy.children = guyChildren(biped)
 
@@ -643,9 +627,17 @@ function scene.load()
    redoHead(biped, values)
 
    potato = Concord.entity()
-   potato:give('potato', { head = values.potatoHead and body or head,
-      eye1 = eye1, eye2 = eye2, nose = nose, brow1 = brow1, brow2 = brow2, ear1 = ear1, ear2 = ear2,
-      values = values })
+   potato:give('potato', {
+       head = values.potatoHead and body or head,
+       eye1 = eye1,
+       eye2 = eye2,
+       nose = nose,
+       brow1 = brow1,
+       brow2 = brow2,
+       ear1 = ear1,
+       ear2 = ear2,
+       values = values
+   })
 
 
 
@@ -680,14 +672,14 @@ function scene.load()
       local W, H = love.graphics.getDimensions()
       for i = 1, 10 do
          table.insert(
-            cameraPoints,
-            {
-               x = love.math.random(-W * 2, W * 2),
-               y = love.math.random(-H * 2, H * 2),
-               width = love.math.random(200, 500),
-               height = love.math.random(200, 500),
-               color = { 1, 1, 1 },
-            }
+             cameraPoints,
+             {
+                 x = love.math.random( -W * 2, W * 2),
+                 y = love.math.random( -H * 2, H * 2),
+                 width = love.math.random(200, 500),
+                 height = love.math.random(200, 500),
+                 color = { 1, 1, 1 },
+             }
          )
       end
    end
@@ -706,19 +698,61 @@ function scene.load()
    render.renderThings(root, true)
    attachCallbacks()
 
+
+
+
+
+   --[[
+   bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
+         bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
+         bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)
+         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped)
+         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, changeNose, potato)
+         bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody, biped)
+         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, changeArms, biped)
+         bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands, biped)
+         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, changeLegs, biped)
+         bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet, biped)
+         bigButtonHelper(225, 700, 'brows', browImgUrls, redoBrows, redoBrows, potato)
+
+--]]
+   parts = {
+       { name = 'head',  imgs = headImgUrls, funcs = { changeHead, redoHead, biped } },
+       { name = 'brows', imgs = browImgUrls, funcs = { redoBrows, redoBrows, potato } },
+       { name = 'eyes',  imgs = eyeImgUrls,  funcs = { changeEyes, redoEyes, potato } },
+       { name = 'ears',  imgs = earImgUrls,  funcs = { changeEars, redoEars, potato } },
+       { name = 'neck',  imgs = legUrls,     funcs = { changeNeck, redoNeck, biped } },
+       { name = 'nose',  imgs = noseImgUrls, funcs = { changeNose, changeNose, potato } },
+       { name = 'body',  imgs = bodyImgUrls, funcs = { changeBody, redoBody, biped } },
+       { name = 'arms',  imgs = legUrls,     funcs = { changeArms, changeArms, biped } },
+       { name = 'hands', imgs = feetImgUrls, funcs = { changeHands, redoHands, biped } },
+       { name = 'legs',  imgs = legUrls,     funcs = { changeLegs, changeLegs, biped } },
+       { name = 'feet',  imgs = feetImgUrls, funcs = { changeFeet, redoFeet, biped } }
+
+   }
+
+   --print(inspect(parts))
+   categories = {}
+   for i = 1, #parts do
+      categories[i] = parts[i].name
+   end
+
+
+
+
+
    local bx, by = body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
 
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
    cam:update(w, h)
-
 end
 
 function attachCallbacks()
    Signal.register('click-settings-scroll-area-item', function(x, y)
       print(x, y)
-      partSettingsScrollable(false, x,y)
+      partSettingsScrollable(false, x, y)
    end)
 
    Signal.register('click-scroll-list-item', function(x, y)
@@ -776,15 +810,15 @@ function attachCallbacks()
          --print('focus camera on second other shape', x, y)
       end
       if key == '3' then
-         local bbHead = bbox.getBBoxRecursive(head)
-         local bbBody = bbox.getBBoxRecursive(body)
-         local bbFeet1 = bbox.getBBoxRecursive(feet1)
-         local bbFeet2 = bbox.getBBoxRecursive(feet2)
+         local bbHead             = bbox.getBBoxRecursive(head)
+         local bbBody             = bbox.getBBoxRecursive(body)
+         local bbFeet1            = bbox.getBBoxRecursive(feet1)
+         local bbFeet2            = bbox.getBBoxRecursive(feet2)
 
-         local points = {
-            { head.transforms.l[1], head.transforms.l[2] },
-            { feet2.transforms.l[1], feet2.transforms.l[2] },
-            { feet1.transforms.l[1], feet1.transforms.l[2] },
+         local points             = {
+             { head.transforms.l[1],  head.transforms.l[2] },
+             { feet2.transforms.l[1], feet2.transforms.l[2] },
+             { feet1.transforms.l[1], feet1.transforms.l[2] },
          }
 
          local tlx, tly, brx, bry = bbox.getPointsBBox(points)
@@ -831,7 +865,6 @@ function attachCallbacks()
    end
 
    function love.resize(w, h)
-
       local bx, by = body.transforms._g:transformPoint(0, 0)
       camera.setCameraViewport(cam, w, h)
       camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
@@ -856,7 +889,9 @@ local function updateTheScrolling(dt, thrown, pos)
       pos = pos + ((thrown.velocity * thrown.direction) * .1 * dt)
 
       if (math.floor(oldPos) ~= math.floor(pos)) then
-         playSound(scrollTickSample)
+         if not settingsScrollArea[8] then
+            playSound(scrollTickSample)
+         end
       end
       if (thrown.velocity < 0.01) then
          thrown.velocity = 0
@@ -895,6 +930,8 @@ function scene.update(dt)
 
    scrollPosition = updateTheScrolling(dt, scrollListIsThrown, scrollPosition)
    settingsScrollPosition = updateTheScrolling(dt, settingsScrollAreaIsThrown, settingsScrollPosition)
+
+
 
    myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
@@ -953,7 +990,6 @@ function scene.draw()
       prof.push("render-ui")
 
       if true then
-
          bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
          bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
          bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)
@@ -973,7 +1009,6 @@ function scene.draw()
             if b then
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts()
-
             end
             local v = h_slider("ear-rotation", 500 - 25, 100 - 75, 50, values.earRotation, 0, 2 * math.pi)
             if v.value then
@@ -996,7 +1031,6 @@ function scene.draw()
             if b then
                values.legs.flipy = values.legs.flipy == -1 and 1 or -1
                changeLegs(biped, values)
-
             end
          end
 
@@ -1031,9 +1065,7 @@ function scene.draw()
             if v.value then
                values.noseWidthMultiplier = v.value
                nose.transforms.l[5] = v.value
-
             end
-
          end
 
          if true then
@@ -1060,6 +1092,8 @@ function scene.draw()
                --print('hi hello')
                redoHead(biped, values)
                myWorld:emit('potatoInit', potato)
+
+               myWorld:emit("bipedAttachHead", biped)
             end
             love.graphics.circle('fill', 170, 100, 10)
             local b = ui.getUICircle(170, 100, 10)
@@ -1067,6 +1101,7 @@ function scene.draw()
                values.head.flipx = values.head.flipx == -1 and 1 or -1
                redoHead(biped, values)
                myWorld:emit('potatoInit', potato)
+               myWorld:emit("bipedAttachHead", biped)
             end
          end
 
@@ -1082,7 +1117,6 @@ function scene.draw()
                myWorld:emit("bipedAttachLegs", biped)
                myWorld:emit("bipedAttachArms", biped)
                myWorld:emit("bipedAttachHands", biped)
-
             end
             v = h_slider("body-height", 150 - 25, 400 - 50, 50, values.bodyHeightMultiplier, .1, 5)
             if v.value then
@@ -1135,8 +1169,7 @@ function scene.draw()
       end
       prof.pop("render-ui")
 
-      if true then -- this is leaking too
-
+      if false then -- this is leaking too
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
          --   print(inspect(stats))
@@ -1171,8 +1204,6 @@ function drawBBoxDebug()
 
 
                if b then
-
-
                   local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
                   local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
                   local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])

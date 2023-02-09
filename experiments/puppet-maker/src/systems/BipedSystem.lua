@@ -13,6 +13,21 @@ local function getMeta(parent)
     end
 end
 
+local function getHeadDeltaAttachement(e)
+    local head = e.biped.head
+    local meta = getMeta(head)
+    if meta then
+        local flipx = e.biped.values.head.flipx or 1
+        local flipy = e.biped.values.head.flipy or 1
+        local points = meta.points
+        local newPoints = getFlippedMetaObject(flipx, flipy, points)
+
+        local hdx = newPoints[5][1] - e.biped.head.transforms.l[6]
+        local hdy = newPoints[5][2] - e.biped.head.transforms.l[7]
+        return hdx, hdy
+    end
+end
+
 local function getPositionsForNeckAttaching(e)
     local body = e.biped.body
     local meta = getMeta(body)
@@ -34,11 +49,9 @@ local function getPositionsForNeckAttaching(e)
 end
 
 local function getPositionsForArmsAttaching(e)
-
     local body = e.biped.body
     local meta = getMeta(body)
     if meta then
-
         local flipx = e.biped.values.body.flipx or 1
         local flipy = e.biped.values.body.flipy or 1
         local points = meta.points
@@ -195,7 +208,6 @@ function BipedSystem:bipedDirection(e, dir)
     transforms.setTransforms(e.biped.feet2)
     transforms.setTransforms(e.biped.feet1)
     --]]
-
 end
 
 function setLegs(e)
@@ -220,14 +232,12 @@ function BipedSystem:bipedAttachLegs(e)
 end
 
 function setArms(e, optionalData)
-
-
     local keep = true
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
 
     local body = e.biped.body
     local angle, dist = getAngleAndDistance(e.biped.arm1.points[2][1], e.biped.arm1.points[2][2],
-        e.biped.arm1.points[1][1], e.biped.arm1.points[1][2])
+            e.biped.arm1.points[1][1], e.biped.arm1.points[1][2])
 
 
     e.biped.arm1.points[1] = { a1x, a1y }
@@ -239,7 +249,7 @@ function setArms(e, optionalData)
 
 
     local angle, dist = getAngleAndDistance(e.biped.arm2.points[2][1], e.biped.arm2.points[2][2],
-        e.biped.arm2.points[1][1], e.biped.arm2.points[1][2])
+            e.biped.arm2.points[1][1], e.biped.arm2.points[1][2])
 
     e.biped.arm2.points[1] = { a2x, a2y }
     if keep then
@@ -253,15 +263,12 @@ function setArms(e, optionalData)
 end
 
 function BipedSystem:bipedAttachArms(e)
-
     setArms(e)
 end
 
 function BipedSystem:itemRotate(elem, dx, dy, scale)
     for _, e in ipairs(self.pool) do
-
         if e.biped.body == elem.item then
-
             e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
             transforms.setTransforms(e.biped.body)
             setLegs(e)
@@ -283,7 +290,6 @@ function BipedSystem:itemRotate(elem, dx, dy, scale)
 end
 
 function BipedSystem:bipedAttachFeet(e)
-
     e.biped.feet1.transforms.l[1] = e.biped.leg1.points[2][1]
     e.biped.feet1.transforms.l[2] = e.biped.leg1.points[2][2]
 
@@ -292,7 +298,6 @@ function BipedSystem:bipedAttachFeet(e)
 end
 
 function BipedSystem:bipedAttachHands(e)
-
     e.biped.hand1.transforms.l[1] = e.biped.arm1.points[2][1]
     e.biped.hand1.transforms.l[2] = e.biped.arm1.points[2][2]
 
@@ -305,14 +310,12 @@ function BipedSystem:bipedAttachHead(e)
 end
 
 function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
-
     local neckX, neckY = getPositionsForNeckAttaching(e)
 
     if (e.biped.neck) then
-
         if keepAngleAndDistance then
             local angle, dist = getAngleAndDistance(e.biped.neck.points[2][1], e.biped.neck.points[2][2],
-                e.biped.neck.points[1][1], e.biped.neck.points[1][2])
+                    e.biped.neck.points[1][1], e.biped.neck.points[1][2])
             e.biped.neck.points[1] = { neckX, neckY }
             local newx, newy = setAngleAndDistance(neckX, neckY, angle, dist)
             e.biped.neck.points[2] = { newx, newy }
@@ -324,11 +327,14 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
 
         mesh.remeshNode(e.biped.neck)
 
-        e.biped.head.transforms.l[1] = e.biped.neck.points[2][1]
-        e.biped.head.transforms.l[2] = e.biped.neck.points[2][2]
+        local hx, hy = getHeadDeltaAttachement(e)
+
+        e.biped.head.transforms.l[1] = e.biped.neck.points[2][1] - hx
+        e.biped.head.transforms.l[2] = e.biped.neck.points[2][2] - hy
     else
-        e.biped.head.transforms.l[1] = neckX
-        e.biped.head.transforms.l[2] = neckY
+        local hx, hy = getHeadDeltaAttachement(e)
+        e.biped.head.transforms.l[1] = neckX - hx
+        e.biped.head.transforms.l[2] = neckY - hy
     end
     e.biped.head.dirty = true
     e.biped.neck.dirty = true
@@ -361,7 +367,6 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             local angle = math.atan2(dy, dx) - math.pi / 2
             e.biped.feet2.transforms.l[3] = angle
             e.biped.feet2.dirty = true
-
         end
 
         if e.biped.hand1 == elem.item then
@@ -369,18 +374,15 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.hand1.transforms.l[2] = e.biped.hand1.transforms.l[2] + dy / scale
             e.biped.arm1.points[2] = { e.biped.hand1.transforms.l[1], e.biped.hand1.transforms.l[2] }
             mesh.remeshNode(e.biped.arm1)
-
         end
         if e.biped.hand2 == elem.item then
             e.biped.hand2.transforms.l[1] = e.biped.hand2.transforms.l[1] + dx / scale
             e.biped.hand2.transforms.l[2] = e.biped.hand2.transforms.l[2] + dy / scale
             e.biped.arm2.points[2] = { e.biped.hand2.transforms.l[1], e.biped.hand2.transforms.l[2] }
             mesh.remeshNode(e.biped.arm2)
-
         end
 
         if e.biped.body == elem.item then
-
             --local body = e.biped.body
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
@@ -394,20 +396,16 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             BipedSystem:bipedAttachHands(e)
         end
         if e.biped.head == elem.item then
-
-
+            local hx, hy = getHeadDeltaAttachement(e)
             e.biped.head.transforms.l[1] = e.biped.head.transforms.l[1] + dx / scale
             e.biped.head.transforms.l[2] = e.biped.head.transforms.l[2] + dy / scale
             if e.biped.neck then
-                e.biped.neck.points[2] = { e.biped.head.transforms.l[1], e.biped.head.transforms.l[2] }
+                e.biped.neck.points[2] = { e.biped.head.transforms.l[1] + hx, e.biped.head.transforms.l[2] + hy }
                 -- todo figure out the angle between head and neck, and thus set the flop
                 mesh.remeshNode(e.biped.neck)
             end
-
-
         end
     end
-
 end
 
 return BipedSystem
