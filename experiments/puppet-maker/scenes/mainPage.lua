@@ -379,6 +379,7 @@ function scene.load()
 
    selectedTab = 'part'
    selectedCategory = 'body'
+   selectedColoringLayer = 1 --- bg fg, line
 
 
 

@@ -18,7 +18,7 @@ end
 
 local tabs = { "part", "colors", "pattern" }
 
-function createFittingScale(img, desired_w, desired_h)
+local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
    --   print(sx, sy)
@@ -73,15 +73,47 @@ function partSettingsTabsDimensions(tabs, width)
    return tabWidth, tabHeight, marginBetweenTabs
 end
 
+function drawImmediateSlidersEtc(draw, startX, currentY, width)
+   local currentHeight = 20
+
+   if selectedTab == 'part' then
+      currentHeight = 130
+   end
+   if selectedTab == 'colors' then
+      -- i want 3 buttons, 1 for bg 1 for FG 1 for line, default = BG
+      local buttonWidth = (width / 3) * 0.8
+      currentY = currentY + 10
+      startX = startX + (width / 3) * 0.1
+      if draw then
+         local pickedColors = {
+             palettes[values[selectedCategory].bgPal],
+             palettes[values[selectedCategory].fgPal],
+             palettes[values[selectedCategory].linePal],
+         }
+         for i = 1, 3 do
+            love.graphics.setColor(pickedColors[i])
+            local x = startX + ((width / 3) * (i - 1))
+            love.graphics.rectangle('fill', x, currentY, buttonWidth, buttonWidth / 2)
+            if ui.getUIRect('p' .. i, x, currentY, buttonWidth, buttonWidth / 2) then
+               selectedColoringLayer = i
+            end
+         end
+         love.graphics.setColor(0, 0, 0)
+      end
+      currentHeight = math.max(60, 20 + (buttonWidth / 2))
+      -- thena slider for the tranaparency of the pattern
+   end
+   return currentHeight
+end
+
 function partSettingsSurroundings(draw, clickX, clickY)
    -- this thing will render the panel where the big scrollable area is in
    -- also the tabs on top and the sliders/other settngs in the header.
    --   basically everything except the scrollable thing itself..
 
    local startX, startY, width, height = partSettingsPanelDimensions()
-
    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
-   local minimumHeight = 132
+
    local currentY = startY + tabHeight
 
    if draw then
@@ -116,6 +148,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
    end
 
    if draw then
+      local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
       love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
       love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
       -- maybe   can use another weird global like settingsScrollArea
@@ -131,7 +164,7 @@ function partSettingCellDimensions(amount, columns, width)
    return rows, cellWidth, cellMargin, cellSize
 end
 
-function renderElement(type, value, container, x, y, w, h)
+local function renderElement(type, value, container, x, y, w, h)
    if (type == "test") then
       love.graphics.rectangle("line", x, y, w, h)
       love.graphics.print(value, x, y)
@@ -195,7 +228,7 @@ function renderElement(type, value, container, x, y, w, h)
    end
 end
 
-function buttonClickHelper(value)
+local function buttonClickHelper(value)
    --print(value)
    --print(selectedTab, selectedCategory)
    local f = findPart(selectedCategory)
@@ -206,7 +239,9 @@ function buttonClickHelper(value)
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
-      values[selectedCategory]['bgPal'] = value
+      local whichPart = { 'bgPal', 'fgPal', 'linePal' }
+
+      values[selectedCategory][whichPart[selectedColoringLayer]] = value
       local func = f.funcs[2]
       func(f.funcs[3], values)
       playSound(scrollItemClickSample)
@@ -224,7 +259,7 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    --local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
-   local minimumHeight = 132
+
    local currentY = startY + tabHeight
 
    local amount = #palettes
@@ -255,6 +290,7 @@ function partSettingsScrollable(draw, clickX, clickY)
    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
+   local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
    currentY = currentY + minimumHeight + cellMargin
    local scrollAreaHeight = (height - minimumHeight - tabHeight)
 
@@ -421,7 +457,7 @@ function scrollList(draw, clickX, clickY)
    end
 end
 
-function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
+local function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
    love.graphics.circle("line", cx, cy, buttonRadius)
    love.graphics.print(label, cx, cy)
 
@@ -438,7 +474,7 @@ end
 
 --local res = { clicked = false }
 
-function bigButtonWithSmallAroundIt(x, y, textureOrColors)
+local function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    prof.push("big-bitton-small-around")
    local biggestRadius = 70
    local bigRadius = 40
@@ -498,7 +534,7 @@ function bigButtonWithSmallAroundIt(x, y, textureOrColors)
    return first, second, third, fourth, fifth
 end
 
-function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
+local function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
    if button then
       values[bodyPart][param] = values[bodyPart][param] + 1
       if values[bodyPart][param] > maxAmount then

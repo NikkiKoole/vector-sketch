@@ -7,16 +7,15 @@ local hit = require 'lib.hit'
 local ui = {}
 
 local mouseState = {
-   hoveredSomething = false,
-   down = false,
-   lastDown = false,
-   click = false,
-   released = false,
-   offset = { x = 0, y = 0 }
+    hoveredSomething = false,
+    down = false,
+    lastDown = false,
+    click = false,
+    released = false,
+    offset = { x = 0, y = 0 }
 }
 ui.mouseHovered = function()
    return mouseState.hoveredSomething
-
 end
 ui.mouseReleased = function()
    return mouseState.released
@@ -24,8 +23,8 @@ end
 lastDraggedElement = {}
 if love.system.getOS() ~= 'iOS' then
    cursors = {
-      hand = love.mouse.getSystemCursor("hand"),
-      arrow = love.mouse.getSystemCursor("arrow")
+       hand = love.mouse.getSystemCursor("hand"),
+       arrow = love.mouse.getSystemCursor("arrow")
    }
 end
 
@@ -34,7 +33,7 @@ ui.handleMouseClickStart = function()
    mouseState.down = love.mouse.isDown(1)
    mouseState.click = false
    mouseState.released = false
-   --print('what!')
+
    if mouseState.down ~= mouseState.lastDown then
       if mouseState.down then
          mouseState.click = true
@@ -54,15 +53,12 @@ ui.getUIRect = function(id, x, y, w, h)
    end
 
    if mouseState.click then
-
       if hit.pointInRect(mx, my, x, y, w, h) then
          result = true
       end
    end
 
-   return {
-      clicked = result
-   }
+   return result
 end
 
 ui.getUICircle = function(x, y, r)
@@ -79,7 +75,6 @@ ui.getUICircle = function(x, y, r)
 
 
    return clicked, hover
-
 end
 
 function shadedText(str, x, y)
@@ -109,14 +104,13 @@ function labelbutton(id, str, x, y, w, h, margin)
       if (mouseState.click) then
          clicked = true
       end
-
    end
 
    love.graphics.setColor(0, 0, 0, alpha)
    love.graphics.rectangle("fill", x, y, w, h)
    shadedText(str, x + margin, y)
    return {
-      clicked = clicked
+       clicked = clicked
    }
 end
 
@@ -142,7 +136,7 @@ function rgbbutton(id, rgb, x, y, size)
    end
 
    return {
-      clicked = clicked
+       clicked = clicked
    }
 end
 
@@ -197,7 +191,6 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 
    if (active) then
       love.graphics.setLineWidth(3)
-
    else
       love.graphics.setLineWidth(1)
    end
@@ -216,7 +209,6 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
       --print('hovered', id)
       if (mouseState.click) then
          clicked = true
-
       end
    else
       love.graphics.setColor(1, 1, 1, .5)
@@ -224,7 +216,6 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
 
    if (active) then
       love.graphics.setColor(1, 1, 1, 1)
-
    end
 
 
@@ -233,8 +224,8 @@ function iconlabelbutton(id, img, color, active, label, x, y, buttonWidth, butto
    love.graphics.draw(img, x, y, 0, imgScale, imgScale)
 
    return {
-      clicked = clicked,
-      hover = hover
+       clicked = clicked,
+       hover = hover
    }
 end
 
@@ -255,7 +246,7 @@ function newImageButton(img, x, y, sx, sy)
    love.graphics.draw(img, x, y, sx, sy)
 
    return {
-      clicked = clicked
+       clicked = clicked
    }
 end
 
@@ -302,13 +293,11 @@ function imgbutton(id, img, x, y, hoverText)
    love.graphics.draw(img, x, y, 0, imgScale, imgScale)
 
    return {
-      clicked = clicked
+       clicked = clicked
    }
 end
 
 function scrollbarV(id, x, y, height, contentHeight, scrollOffset)
-
-
    -- the thumb
    local scrollBarThumbH = height
    if contentHeight > height then
@@ -350,8 +339,8 @@ function scrollbarV(id, x, y, height, contentHeight, scrollOffset)
 
          local mx, my = love.mouse.getPosition()
          result = numbers.mapInto(my + mouseState.offset.y,
-            y, y + height - scrollBarThumbH,
-            0, height - scrollBarThumbH)
+                 y, y + height - scrollBarThumbH,
+                 0, height - scrollBarThumbH)
          if result < 0 then
             result = 0
          end
@@ -361,19 +350,14 @@ function scrollbarV(id, x, y, height, contentHeight, scrollOffset)
 
          result = numbers.mapInto(result, 0, height - scrollBarThumbH, 0, contentHeight - height)
       end
-
-
    end
 
 
 
    return {
-      value = result,
-      scrollBarThumbH = scrollBarThumbH
+       value = result,
+       scrollBarThumbH = scrollBarThumbH
    }
-
-
-
 end
 
 function v_slider(id, x, y, height, v, min, max)
@@ -413,15 +397,13 @@ function v_slider(id, x, y, height, v, min, max)
          if result < min then
             result = min
          else
-
             result = math.max(result, min)
             result = math.min(result, max)
          end
-
       end
    end
    return {
-      value = result
+       value = result
    }
 end
 
@@ -472,7 +454,6 @@ function joystick(id, x, y, size, vx, vy, min, max)
          if resultX < min then
             resultX = min
          else
-
             resultX = math.max(resultX, min)
             resultX = math.min(resultX, max)
          end
@@ -480,21 +461,18 @@ function joystick(id, x, y, size, vx, vy, min, max)
          if resultY < min then
             resultY = min
          else
-
             resultY = math.max(resultY, min)
             resultY = math.min(resultY, max)
          end
          result = {
-            x = resultX, y = resultY
+             x = resultX, y = resultY
          }
-
       end
-
    end
 
 
    return {
-      value = result
+       value = result
    }
 end
 
@@ -524,7 +502,6 @@ function h_slider(id, x, y, width, v, min, max)
          mouseState.hoveredSomething = true
 
          mouseState.offset = { x = (xOffset + x) - mx, y = my - y }
-
       end
    end
 
@@ -537,11 +514,9 @@ function h_slider(id, x, y, width, v, min, max)
          if result < min then
             result = nil
          else
-
             result = math.max(result, min)
             result = math.min(result, max)
          end
-
       end
    end
 
@@ -551,7 +526,7 @@ function h_slider(id, x, y, width, v, min, max)
    love.graphics.setLineWidth(1)
 
    return {
-      value = result
+       value = result
    }
 end
 
