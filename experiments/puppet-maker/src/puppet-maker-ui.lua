@@ -5,7 +5,7 @@ local hit = require "lib.hit"
 local canvas = require "lib.canvas"
 local mesh = require "lib.mesh"
 local ui = require "lib.ui"
-
+local transforms = require "lib.transform"
 imageCache = {} -- tjo save all the parts inages in
 
 local function findPart(name)
@@ -78,6 +78,56 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
    if selectedTab == 'part' then
       currentHeight = 130
+      if selectedCategory == 'body' then
+         local update = function()
+            body.dirty = true
+            transforms.setTransforms(body)
+            redoBody(biped, values)
+            myWorld:emit('potatoInit', potato)
+            myWorld:emit("bipedAttachHead", biped)
+            myWorld:emit("bipedAttachLegs", biped)
+            myWorld:emit("bipedAttachArms", biped)
+            myWorld:emit("bipedAttachHands", biped)
+         end
+         if true then
+            local v = h_slider("body-width", startX, currentY, 50, values.bodyWidthMultiplier, .5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+
+               values.bodyWidthMultiplier = v.value
+               body.transforms.l[4] = v.value
+               update()
+            end
+            currentY = currentY + 25
+            v = h_slider("body-height", startX, currentY, 50, values.bodyHeightMultiplier, .5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.bodyHeightMultiplier = v.value
+               body.transforms.l[5] = v.value
+               update()
+            end
+            currentY = currentY + 50
+            startX = startX + 10
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.circle('fill', startX, currentY, 10)
+            if draw then
+               local b = ui.getUICircle(startX, currentY, 10)
+               if b then
+                  values.body.flipy = values.body.flipy == -1 and 1 or -1
+                  update()
+               end
+            end
+            if draw then
+               startX = startX + 25
+               love.graphics.circle('fill', startX, currentY, 10)
+               local b = ui.getUICircle(startX, currentY, 10)
+               if b then
+                  values.body.flipx = values.body.flipx == -1 and 1 or -1
+                  update()
+               end
+            end
+         end
+      end
    end
    if selectedTab == 'colors' then
       -- i want 3 buttons, 1 for bg 1 for FG 1 for line, default = BG
@@ -91,9 +141,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
              palettes[values[selectedCategory].linePal],
          }
          local sliderValues = {
-            values[selectedCategory].bgAlpha,
-            values[selectedCategory].fgAlpha,
-            values[selectedCategory].lineAlpha
+             values[selectedCategory].bgAlpha,
+             values[selectedCategory].fgAlpha,
+             values[selectedCategory].lineAlpha
 
          }
          for i = 1, 3 do
@@ -103,14 +153,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if ui.getUIRect('p' .. i, x, currentY, buttonWidth, buttonWidth / 2) then
                selectedColoringLayer = i
             end
-            local v = h_slider("s"..i,x, currentY + buttonWidth/2 , buttonWidth, sliderValues[i], 0, 5)
+            local v = h_slider("s" .. i, x, currentY + buttonWidth / 2, buttonWidth, sliderValues[i], 0, 5)
             if v.value then
-               local keys = {'bgAlpha', 'fgAlpha', 'lineAlpha'}
+               local keys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
                values[selectedCategory][keys[i]] = math.floor(v.value)
                selectedColoringLayer = i
                local f = findPart(selectedCategory)
-                local func = f.funcs[1]
-      func(f.funcs[3], values)
+               local func = f.funcs[1]
+               func(f.funcs[3], values)
             end
          end
          love.graphics.setColor(0, 0, 0)
@@ -163,7 +213,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
    end
 
    if draw then
-      local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
+      local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width)
       love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
       love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
       -- maybe   can use another weird global like settingsScrollArea

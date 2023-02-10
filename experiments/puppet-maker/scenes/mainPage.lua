@@ -377,6 +377,7 @@ function scene.load()
    scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
    scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
 
+
    selectedTab = 'part'
    selectedCategory = 'body'
    selectedColoringLayer = 1 --- bg fg, line
@@ -454,28 +455,28 @@ function scene.load()
    values = {
        potatoHead = false,
        eyes = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        eyeWidthMultiplier = 1,
        eyeHeightMultiplier = 1,
        eyeRotation = 0,
        ears = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        earUnderHead = false,
@@ -483,39 +484,39 @@ function scene.load()
        earHeightMultiplier = 1,
        earRotation = 0,
        brows = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        nose = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
 
        },
        noseWidthMultiplier = 1,
        noseHeightMultiplier = 1,
        legs = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        legLength = 700,
@@ -523,14 +524,14 @@ function scene.load()
        leg1flop = -1,
        leg2flop = 1,
        arms = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        armLength = 700,
@@ -538,67 +539,67 @@ function scene.load()
        arm1flop = 1,
        arm2flop = -1,
        hands = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        body = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           flipy   = -1,
-           bgAlpha = 1,
-           fgAlpha = 1,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           flipy     = -1,
+           bgAlpha   = 1,
+           fgAlpha   = 1,
            lineAlpha = 5,
        },
        bodyWidthMultiplier = 1,
        bodyHeightMultiplier = 1,
        head = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           flipx   = 1,
-           flipy   = -1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           flipx     = 1,
+           flipy     = -1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        headWidthMultiplier = 1,
        headHeightMultiplier = 1,
        neck = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
        neckLength = 700,
        neckWidthMultiplier = 1,
        feet = {
-           shape   = 1,
-           bgPal   = 4,
-           fgPal   = 1,
-           bgTex   = 1,
-           fgTex   = 2,
-           linePal = 1,
-           bgAlpha = 5,
-           fgAlpha = 5,
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
            lineAlpha = 5,
        },
    }
@@ -1138,54 +1139,6 @@ function scene.draw()
             end
          end
 
-         if true then
-            local v = h_slider("body-width", 150 - 25, 400 - 75, 50, values.bodyWidthMultiplier, .1, 5)
-            if v.value then
-               values.bodyWidthMultiplier = v.value
-               body.transforms.l[4] = v.value
-               body.dirty = true
-               transforms.setTransforms(body)
-               myWorld:emit('potatoInit', potato)
-               myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped)
-               myWorld:emit("bipedAttachArms", biped)
-               myWorld:emit("bipedAttachHands", biped)
-            end
-            v = h_slider("body-height", 150 - 25, 400 - 50, 50, values.bodyHeightMultiplier, .1, 5)
-            if v.value then
-               values.bodyHeightMultiplier = v.value
-               body.transforms.l[5] = v.value
-               body.dirty = true
-               transforms.setTransforms(body)
-               myWorld:emit('potatoInit', potato)
-               myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped)
-               myWorld:emit("bipedAttachArms", biped)
-               myWorld:emit("bipedAttachHands", biped)
-            end
-            love.graphics.circle('fill', 150, 400, 10)
-            local b = ui.getUICircle(150, 400, 10)
-            if b then
-               values.body.flipy = values.body.flipy == -1 and 1 or -1
-               redoBody(biped, values)
-               myWorld:emit('potatoInit', potato)
-               myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped)
-               myWorld:emit("bipedAttachArms", biped)
-               myWorld:emit("bipedAttachHands", biped)
-            end
-            love.graphics.circle('fill', 170, 400, 10)
-            local b = ui.getUICircle(170, 400, 10)
-            if b then
-               values.body.flipx = values.body.flipx == -1 and 1 or -1
-               redoBody(biped, values)
-               myWorld:emit('potatoInit', potato)
-               myWorld:emit("bipedAttachHead", biped)
-               myWorld:emit("bipedAttachLegs", biped)
-               myWorld:emit("bipedAttachArms", biped)
-               myWorld:emit("bipedAttachHands", biped)
-            end
-         end
 
          if true then
             v = h_slider("leg-length", 150 - 25, 550 - 75, 50, values.legLength, 200, 2000)
