@@ -578,6 +578,8 @@ function changeHead(biped, values)
    head = copy3(headParts[values.head.shape])
    guy.children = guyChildren(biped)
 
+   head.transforms.l[4] =  values.headWidthMultiplier
+   head.transforms.l[5] =  values.headHeightMultiplier
    --head = updateChild(guy, head, copy3(headParts[values.head.shape]))
    redoHead(biped, values)
    if (not values.potatoHead) then
