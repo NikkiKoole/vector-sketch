@@ -81,14 +81,16 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
       if selectedCategory == 'nose' then
          if draw then
-            local v = h_slider("nose-width",  startX, currentY, 50, values.noseWidthMultiplier, .1, 5)
+            local v = h_slider("nose-width",  startX, currentY, 50, values.noseWidthMultiplier, .5, 3)
             if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.noseWidthMultiplier = v.value
                nose.transforms.l[4] = v.value
             end
             currentY = currentY +25
-            local v = h_slider("nose-height",  startX, currentY, 50, values.noseHeightMultiplier, .1, 5)
+            local v = h_slider("nose-height",  startX, currentY, 50, values.noseHeightMultiplier, .5, 3)
             if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.noseWidthMultiplier = v.value
                nose.transforms.l[5] = v.value
             end
@@ -97,15 +99,17 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
       if selectedCategory == 'eyes' then
          if draw then
-            local v = h_slider("eye-width", startX, currentY, 50, values.eyeWidthMultiplier, .1, 5)
+            local v = h_slider("eye-width", startX, currentY, 50, values.eyeWidthMultiplier, .5, 3)
             if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.eyeWidthMultiplier = v.value
                eye1.transforms.l[4] = v.value
                eye2.transforms.l[4] = v.value * -1
             end
             currentY = currentY + 25
-            local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .1, 5)
+            local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .5, 3)
             if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.eyeHeightMultiplier = v.value
                eye1.transforms.l[5] = v.value
                eye2.transforms.l[5] = v.value
@@ -131,8 +135,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                ear2.transforms.l[3] = -v.value
             end
             currentY = currentY + 25
-            local v = h_slider("ear-width", startX, currentY, 50, values.earWidthMultiplier, .1, 5)
+            local v = h_slider("ear-width", startX, currentY, 50, values.earWidthMultiplier, .5, 3)
             if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.earWidthMultiplier = v.value
                ear1.transforms.l[4] = v.value * -1
                ear2.transforms.l[4] = v.value
@@ -145,6 +150,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if b then
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts()
+             
+               ear1.transforms.l[4] =values.earWidthMultiplier * -1
+               ear2.transforms.l[4] = values.earWidthMultiplier
             end
          end
 
@@ -159,8 +167,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                changeLegs(biped, values)
             end
             currentY = currentY + 25
-            v = h_slider("leg-width-multiplier", startX, currentY, 50, values.legWidthMultiplier, 0.1, 2)
+            v = h_slider("leg-width-multiplier", startX, currentY, 50, values.legWidthMultiplier, 0.5, 3)
             if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.legWidthMultiplier = v.value
                changeLegs(biped, values)
             end

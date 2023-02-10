@@ -567,8 +567,11 @@ function changeEars(biped, values)
    ear1 = updateChild(container, ear1, copy3(earParts[values.ears.shape]))
    ear2 = updateChild(container, ear2, copy3(earParts[values.ears.shape]))
 
+  
    parentize.parentize(root)
    redoEars(potato, values)
+   
+
    potato:give('potato', potatoArguments(potato, values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
