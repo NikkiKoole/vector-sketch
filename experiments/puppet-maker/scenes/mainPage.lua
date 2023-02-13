@@ -41,6 +41,14 @@ myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 local pointerInteractees = {}
 
 
+nullObject = {
+   folder = true,
+   name = 'nullObject',
+   transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+   children = {}
+}
+
+
 local function sign(x)
    return x > 0 and 1 or x < 0 and -1 or 0
 end
@@ -438,6 +446,13 @@ function scene.load()
          end
       end
    end
+
+   -- a working nullobject implentation!
+   local p = #bodyParts+1
+   bodyParts[p] = copy3(nullObject)
+   bodyImgUrls[p] = 'assets/parts/leg1.png'
+
+   
    headImgUrls = bodyImgUrls
    headParts = bodyParts
 

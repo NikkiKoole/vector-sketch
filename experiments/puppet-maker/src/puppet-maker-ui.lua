@@ -597,7 +597,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                     buttonClickHelper(value)
+                     if value <= #renderContainer then buttonClickHelper(value) end
                   end
                end
             end
@@ -625,7 +625,8 @@ function partSettingsScrollable(draw, clickX, clickY)
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                     buttonClickHelper(value)
+                    
+                     if value <= #renderContainer then buttonClickHelper(value) end
                   end
                end
             end
@@ -658,7 +659,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                      )
                   else
                      if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                        buttonClickHelper(value)
+                        if value <= #renderContainer then buttonClickHelper(value) end
                      end
                   end
                end
