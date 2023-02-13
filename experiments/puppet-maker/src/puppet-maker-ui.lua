@@ -80,21 +80,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       currentHeight = 130
 
 
-      function arrangeBrows()
-         local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
-             { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
-
-         local img = mesh.getImage(browImgUrls[values.brows.shape])
-         local width, height = img:getDimensions()
-         local multiplier = height / 2
-         local picked = bends[values.browsDefaultBend]
-
-         local b1p = { picked[1] * multiplier, picked[2] * multiplier, picked[3] * multiplier }
-
-         -- todo currently I am just mirroring the brows, not always what we want
-         brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
-         brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
-      end
 
       if selectedCategory == 'brows' then
          if draw then
@@ -353,14 +338,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       startX = startX + (width / 3) * 0.1
       if draw then
          local pickedColors = {
-             palettes[values[selectedCategory].bgPal],
-             palettes[values[selectedCategory].fgPal],
-             palettes[values[selectedCategory].linePal],
+            palettes[values[selectedCategory].bgPal],
+            palettes[values[selectedCategory].fgPal],
+            palettes[values[selectedCategory].linePal],
          }
          local sliderValues = {
-             values[selectedCategory].bgAlpha,
-             values[selectedCategory].fgAlpha,
-             values[selectedCategory].lineAlpha
+            values[selectedCategory].bgAlpha,
+            values[selectedCategory].fgAlpha,
+            values[selectedCategory].lineAlpha
 
          }
          for i = 1, 3 do
@@ -579,11 +564,11 @@ function partSettingsScrollable(draw, clickX, clickY)
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
    settingsScrollArea = {
-       startX,
-       currentY - cellMargin,
-       width,
-       scrollAreaHeight,
-       (cellSize)
+      startX,
+      currentY - cellMargin,
+      width,
+      scrollAreaHeight,
+      (cellSize)
    }
    if draw then
       love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea
@@ -605,13 +590,13 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                if draw then
                   renderElement(
-                      renderType,
-                      value,
-                      renderContainer,
-                      xPosition,
-                      yPosition,
-                      cellWidth,
-                      cellHeight
+                     renderType,
+                     value,
+                     renderContainer,
+                     xPosition,
+                     yPosition,
+                     cellWidth,
+                     cellHeight
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
@@ -633,13 +618,13 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                if draw then
                   renderElement(
-                      renderType,
-                      value,
-                      renderContainer,
-                      xPosition,
-                      yPosition,
-                      cellWidth,
-                      cellHeight
+                     renderType,
+                     value,
+                     renderContainer,
+                     xPosition,
+                     yPosition,
+                     cellWidth,
+                     cellHeight
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
@@ -666,13 +651,13 @@ function partSettingsScrollable(draw, clickX, clickY)
                   local value = ((index % rows) * columns) + i
                   if draw then
                      renderElement(
-                         renderType,
-                         value,
-                         renderContainer,
-                         xPosition,
-                         yPosition,
-                         cellWidth,
-                         cellHeight
+                        renderType,
+                        value,
+                        renderContainer,
+                        xPosition,
+                        yPosition,
+                        cellWidth,
+                        cellHeight
                      )
                   else
                      if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
@@ -829,15 +814,15 @@ end
 function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton =
        bigButtonWithSmallAroundIt(
-           x,
-           y,
-           {
-               imgArray[values[param].shape],
-               palettes[values[param].bgPal],
-               textures[values[param].fgTex],
-               palettes[values[param].fgPal],
-               palettes[values[param].linePal]
-           }
+          x,
+          y,
+          {
+             imgArray[values[param].shape],
+             palettes[values[param].bgPal],
+             textures[values[param].fgTex],
+             palettes[values[param].fgPal],
+             palettes[values[param].linePal]
+          }
        )
 
    -- todo maybe parametrize palettes and textures?
