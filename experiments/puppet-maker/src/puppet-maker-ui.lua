@@ -82,10 +82,31 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
       if selectedCategory == 'brows' then
          if draw then
+            local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
+                { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
+
             local v = h_slider("brow-width", startX, currentY, 50, values.browsWidthMultiplier, .5, 2)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.browsWidthMultiplier = v.value
+               --local p1 = brow1.points
+               --print(brow1.points)
+
+               local img = mesh.getImage(browImgUrls[values.brows.shape])
+               local width, height = img:getDimensions()
+               --               values.browsDefaultBend = math.floor(v.value)
+
+
+               local multiplier = height / 2
+               local picked = bends[values.browsDefaultBend]
+
+               local b1p = { picked[1] * multiplier, picked[2] * multiplier, picked[3] * multiplier }
+
+               -- todo currently I am just mirroring the brows, not always what we want
+               brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
+               brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
+
+
                myWorld:emit('potatoInit', potato)
                redoBrows(potato, values)
             end
@@ -96,8 +117,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                local img = mesh.getImage(browImgUrls[values.brows.shape])
                local width, height = img:getDimensions()
                values.browsDefaultBend = math.floor(v.value)
-               local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
-                   { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 } }
+
 
                local multiplier = height / 2
                local picked = bends[values.browsDefaultBend]
@@ -625,7 +645,6 @@ function partSettingsScrollable(draw, clickX, clickY)
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                    
                      if value <= #renderContainer then buttonClickHelper(value) end
                   end
                end
