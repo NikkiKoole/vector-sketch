@@ -79,20 +79,60 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    if selectedTab == 'part' then
       currentHeight = 130
 
+
+      if selectedCategory == 'brows' then
+         if draw then
+            local v = h_slider("brow-width", startX, currentY, 50, values.browsWidthMultiplier, .5, 2)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.browsWidthMultiplier = v.value
+               myWorld:emit('potatoInit', potato)
+               redoBrows(potato, values)
+            end
+
+            currentY = currentY + 25
+            local v = h_slider("brow-movement", startX, currentY, 50, values.browsDefaultBend, 1, 10)
+            if v.value then
+               local img = mesh.getImage(browImgUrls[values.brows.shape])
+               local width, height = img:getDimensions()
+               values.browsDefaultBend = math.floor(v.value)
+               local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
+                   { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 } }
+
+               local multiplier = height / 2
+               local picked = bends[values.browsDefaultBend]
+
+               local b1p = { picked[1] * multiplier, picked[2] * multiplier, picked[3] * multiplier }
+
+               -- todo currently I am just mirroring the brows, not always what we want
+               brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
+               brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
+               redoBrows(potato, values)
+            end
+         end
+      end
+
       if selectedCategory == 'nose' then
          if draw then
-            local v = h_slider("nose-width",  startX, currentY, 50, values.noseWidthMultiplier, .5, 3)
+            local v = h_slider("nose-width", startX, currentY, 50, values.noseWidthMultiplier, .5, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.noseWidthMultiplier = v.value
                nose.transforms.l[4] = v.value
             end
-            currentY = currentY +25
-            local v = h_slider("nose-height",  startX, currentY, 50, values.noseHeightMultiplier, .5, 3)
+            currentY = currentY + 25
+            local v = h_slider("nose-height", startX, currentY, 50, values.noseHeightMultiplier, .5, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.noseWidthMultiplier = v.value
+               values.noseHeightMultiplier = v.value
                nose.transforms.l[5] = v.value
+            end
+            currentY = currentY + 25
+            local v = h_slider("nose-yAxis", startX, currentY, 50, values.noseYAxis, -6, 6)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to 1
+               values.noseYAxis = v.value
+               myWorld:emit('potatoInit', potato)
             end
          end
       end
@@ -121,14 +161,19 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                eye1.transforms.l[3] = v.value
                eye2.transforms.l[3] = -v.value
             end
+            currentY = currentY + 25
+            local v = h_slider("eye-YAxis", startX, currentY, 50, values.eyeYAxis, -3, 3)
+            if v.value then
+               v.value = math.floor(v.value)
+               values.eyeYAxis = v.value
+               myWorld:emit('potatoInit', potato)
+            end
          end
       end
 
       if selectedCategory == 'ears' then
-
          if draw then
-           
-            local v = h_slider("ear-rotation", startX, currentY, 50, values.earRotation, 0, 2 * math.pi)
+            local v = h_slider("ear-rotation", startX, currentY, 50, values.earRotation, -math.pi / 2, math.pi / 2)
             if v.value then
                values.earRotation = v.value
                ear1.transforms.l[3] = v.value
@@ -142,6 +187,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                ear1.transforms.l[4] = v.value * -1
                ear2.transforms.l[4] = v.value
             end
+            currentY = currentY + 25
+            local v = h_slider("ear-yAxis", startX, currentY, 50, values.earYAxis, -3, 3)
+            if v.value then
+               v.value = math.floor(v.value)
+               values.earYAxis = v.value
+               myWorld:emit('potatoInit', potato)
+            end
             currentY = currentY + 50
             startX = startX + 20
             love.graphics.setColor(1, 0, 1)
@@ -150,13 +202,11 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if b then
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts()
-             
-               ear1.transforms.l[4] =values.earWidthMultiplier * -1
+
+               ear1.transforms.l[4] = values.earWidthMultiplier * -1
                ear2.transforms.l[4] = values.earWidthMultiplier
             end
          end
-
-       
       end
 
       if selectedCategory == 'legs' then
@@ -175,14 +225,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             currentY = currentY + 25
             startX = startX + 10
-               love.graphics.setColor(1, 0, 1)
-               love.graphics.circle('fill', startX, currentY, 10)
-               local b = ui.getUICircle(startX, currentY, 10)
-               if b then
-                  values.legs.flipy = values.legs.flipy == -1 and 1 or -1
-                  changeLegs(biped, values)
-               end
-            
+            love.graphics.setColor(1, 0, 1)
+            love.graphics.circle('fill', startX, currentY, 10)
+            local b = ui.getUICircle(startX, currentY, 10)
+            if b then
+               values.legs.flipy = values.legs.flipy == -1 and 1 or -1
+               changeLegs(biped, values)
+            end
          end
       end
 
@@ -211,8 +260,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.headHeightMultiplier = v.value
                head.transforms.l[5] = v.value
-              update()
-
+               update()
             end
             currentY = currentY + 50
             startX = startX + 10
@@ -224,13 +272,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             startX = startX + 25
             love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle( startX, currentY, 10)
+            local b = ui.getUICircle(startX, currentY, 10)
             if b then
                values.head.flipx = values.head.flipx == -1 and 1 or -1
                update()
             end
          end
-
       end
       if selectedCategory == 'body' then
          local update = function()
@@ -264,21 +311,20 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             startX = startX + 10
             love.graphics.setColor(0, 0, 0)
             love.graphics.circle('fill', startX, currentY, 10)
-           
-               local b = ui.getUICircle(startX, currentY, 10)
-               if b then
-                  values.body.flipy = values.body.flipy == -1 and 1 or -1
-                  update()
-               end
-           
-               startX = startX + 25
-               love.graphics.circle('fill', startX, currentY, 10)
-               local b = ui.getUICircle(startX, currentY, 10)
-               if b then
-                  values.body.flipx = values.body.flipx == -1 and 1 or -1
-                  update()
-               end
-            
+
+            local b = ui.getUICircle(startX, currentY, 10)
+            if b then
+               values.body.flipy = values.body.flipy == -1 and 1 or -1
+               update()
+            end
+
+            startX = startX + 25
+            love.graphics.circle('fill', startX, currentY, 10)
+            local b = ui.getUICircle(startX, currentY, 10)
+            if b then
+               values.body.flipx = values.body.flipx == -1 and 1 or -1
+               update()
+            end
          end
       end
    end

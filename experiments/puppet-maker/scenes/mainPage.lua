@@ -367,7 +367,7 @@ function scene.load()
    local timeIndex = math.floor(1 + love.math.random() * 24)
    skygradient = gradient.makeSkyGradient(16)
 
-   scrollPosition = 0
+   scrollPosition = .5
    scrollItemsOnScreen = 5
    scrollListXPosition = 20
 
@@ -453,8 +453,23 @@ function scene.load()
 
 
    values = {
-       potatoHead = false,
-       eyes = {
+       potatoHead           = false,
+       eyes                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 5,
+           bgTex     = 1,
+           fgTex     = 1,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       eyeWidthMultiplier   = 1,
+       eyeHeightMultiplier  = 1,
+       eyeRotation          = 0,
+       eyeYAxis             = 0,
+       ears                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -465,10 +480,12 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       eyeWidthMultiplier = 1,
-       eyeHeightMultiplier = 1,
-       eyeRotation = 0,
-       ears = {
+       earUnderHead         = false,
+       earWidthMultiplier   = 1,
+       earHeightMultiplier  = 1,
+       earRotation          = 0,
+       earYAxis             = 0, -- -2,-1,0,1,2
+       brows                = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -479,22 +496,9 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       earUnderHead = false,
-       earWidthMultiplier = 1,
-       earHeightMultiplier = 1,
-       earRotation = 0,
-       brows = {
-           shape     = 1,
-           bgPal     = 4,
-           fgPal     = 1,
-           bgTex     = 1,
-           fgTex     = 2,
-           linePal   = 1,
-           bgAlpha   = 5,
-           fgAlpha   = 5,
-           lineAlpha = 5,
-       },
-       nose = {
+       browsWidthMultiplier = .5,
+       browsDefaultBend     = 1,
+       nose                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -506,9 +510,11 @@ function scene.load()
            lineAlpha = 5,
 
        },
-       noseWidthMultiplier = 1,
+       noseXAxis            = 0, --  -2,-1,0,1,2
+       noseYAxis            = 2, --  -3, -2,-1,0,1,2, 3
+       noseWidthMultiplier  = 1,
        noseHeightMultiplier = 1,
-       legs = {
+       legs                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -519,11 +525,11 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       legLength = 700,
-       legWidthMultiplier = 1,
-       leg1flop = -1,
-       leg2flop = 1,
-       arms = {
+       legLength            = 700,
+       legWidthMultiplier   = 1,
+       leg1flop             = -1,
+       leg2flop             = 1,
+       arms                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -534,11 +540,11 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       armLength = 700,
-       armWidthMultiplier = 1,
-       arm1flop = 1,
-       arm2flop = -1,
-       hands = {
+       armLength            = 700,
+       armWidthMultiplier   = 1,
+       arm1flop             = 1,
+       arm2flop             = -1,
+       hands                = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -549,7 +555,7 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       body = {
+       body                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -557,13 +563,13 @@ function scene.load()
            fgTex     = 2,
            linePal   = 1,
            flipy     = -1,
-           bgAlpha   = 1,
+           bgAlpha   = 5,
            fgAlpha   = 1,
            lineAlpha = 5,
        },
-       bodyWidthMultiplier = 1,
+       bodyWidthMultiplier  = 1,
        bodyHeightMultiplier = 1,
-       head = {
+       head                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -573,12 +579,12 @@ function scene.load()
            flipx     = 1,
            flipy     = -1,
            bgAlpha   = 5,
-           fgAlpha   = 5,
+           fgAlpha   = 1,
            lineAlpha = 5,
        },
-       headWidthMultiplier = 1,
+       headWidthMultiplier  = 1,
        headHeightMultiplier = 1,
-       neck = {
+       neck                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -589,9 +595,9 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       neckLength = 700,
-       neckWidthMultiplier = 1,
-       feet = {
+       neckLength           = 700,
+       neckWidthMultiplier  = 1,
+       feet                 = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -785,7 +791,6 @@ end
 
 function attachCallbacks()
    Signal.register('click-settings-scroll-area-item', function(x, y)
-      print(x, y)
       partSettingsScrollable(false, x, y)
    end)
 
