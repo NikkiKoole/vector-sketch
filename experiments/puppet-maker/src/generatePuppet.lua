@@ -162,6 +162,7 @@ function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, widthMul
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
    local currentNode = {}
+   --print(inspect(optionalPoints), inspect(optionalPoints))
    currentNode = {
        color = { 1, 1, 1, 1 },
        data = {
@@ -200,6 +201,22 @@ function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, widthMul
    result.children = { currentNode }
    --print('jo!')
    return result
+end
+
+function arrangeBrows()
+   local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
+       { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
+
+   local img = mesh.getImage(browImgUrls[values.brows.shape])
+   local width, height = img:getDimensions()
+   local multiplier = height / 2
+   local picked = bends[values.browsDefaultBend]
+
+   local b1p = { picked[1] * multiplier, picked[2] * multiplier, picked[3] * multiplier }
+
+   -- todo currently I am just mirroring the brows, not always what we want
+   brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
+   brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
 end
 
 function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop, length, widthMultiplier, optionalPoints,
@@ -545,9 +562,11 @@ end
 
 function redoBrows(potato, values)
    local container = values.potatoHead and body or head
-
+   arrangeBrows()
+   --print(inspect(brow1.points), inspect(brow2.points))
    brow1 = updateChild(container, brow1, createBrowBezier(values, brow1.points))
    brow2 = updateChild(container, brow2, createBrowBezier(values, brow2.points))
+
    parentize.parentize(root)
    potato:give('potato', potatoArguments(potato, values))
    myWorld:emit("potatoInit", potato)
