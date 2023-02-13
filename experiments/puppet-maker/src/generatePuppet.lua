@@ -217,6 +217,7 @@ function arrangeBrows()
    -- todo currently I am just mirroring the brows, not always what we want
    brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
+   --brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
 end
 
 function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop, length, widthMultiplier, optionalPoints,

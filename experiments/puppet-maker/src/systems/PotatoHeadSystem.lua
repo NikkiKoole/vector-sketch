@@ -80,7 +80,7 @@ function PotatoHeadSystem:potatoInit(e)
 
     e.potato.brow2.transforms.l[1] = eyex2
     e.potato.brow2.transforms.l[2] = browY
-
+    --e.potato.brow2.transforms.l[4] = -1 --browY
     --print(inspect(e.potato))
     --print(inspect(e.potato.ear1.transforms.l))
 
