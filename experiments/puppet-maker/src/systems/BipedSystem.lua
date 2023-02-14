@@ -114,6 +114,7 @@ function BipedSystem:bipedInit(e)
 
     e.biped.leg1.points[1] = { l1x, l1y }
     e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) / 1 }
+    
     e.biped.leg2.points[1] = { l2x, l2y }
     e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) / 1 }
 

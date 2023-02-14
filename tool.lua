@@ -1003,11 +1003,11 @@ local function drawUIAroundGraphNodes(w, h)
       end
 
 
-      if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type ~= 'bezier' then
+      if (currentNode.texture and currentNode.type ~= 'rubberhose' and currentNode.type ~= 'bezier' and currentNode.type ~= 'vanillaline') then
          table.insert(
              row2,
              {
-                 'vanilla', icon.texture, 'now its normal texture click to make rope',
+                 'vanilla', icon.texture, 'now its normal texture click to make rubberhose',
                  function()
                     currentNode.type = 'rubberhose'
 
@@ -1029,7 +1029,7 @@ local function drawUIAroundGraphNodes(w, h)
              }
          )
       end
-      if (currentNode.texture and currentNode.type == 'rubberhose') and currentNode.type ~= 'bezier' then
+      if (currentNode.texture and currentNode.type == 'rubberhose')  then
          table.insert(
              row2,
              {
@@ -1040,11 +1040,22 @@ local function drawUIAroundGraphNodes(w, h)
              }
          )
       end
-      if (currentNode.texture and currentNode.type ~= 'rubberhose') and currentNode.type == 'bezier' then
+      if (currentNode.texture and currentNode.type == 'bezier')  then
          table.insert(
              row2,
              {
-                 'vanilla', icon.bezier, 'now its bezier click to make normla',
+                 'vanilla', icon.rope, 'now its bezier click to make vanilla',
+                 function()
+                    currentNode.type = 'vanillaline'
+                 end
+             }
+         )
+      end
+      if (currentNode.texture and currentNode.type == 'vanillaline') then
+         table.insert(
+             row2,
+             {
+                 'vanilla', icon.bezier, 'now its vanilla click to make normal',
                  function()
                     currentNode.type = nil
                  end

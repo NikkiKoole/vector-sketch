@@ -20,7 +20,6 @@ local function getLengthOfPath(path)
       local a = path[i]
       local b = path[i + 1]
       result = result + getDistance(a[1], a[2], b[1], b[2])
-
    end
    return result
 end
@@ -33,7 +32,6 @@ local function evenlySpreadPath(result, path, index, running, spacing)
    local there = path[nextIndex]
    local d = getDistance(here[1], here[2], there[1], there[2])
    if (d + running) < spacing then
-
       running = running + d
       return evenlySpreadPath(result, path, index + 1, running, spacing)
    else
@@ -48,7 +46,6 @@ local function evenlySpreadPath(result, path, index, running, spacing)
       end
 
       while running <= d do
-
          local x = lerp(here[1], there[1], running / d)
          local y = lerp(here[2], there[2], running / d)
          table.insert(result, { x, y, { 1, 0, 1 } })
@@ -61,8 +58,6 @@ local function evenlySpreadPath(result, path, index, running, spacing)
          return evenlySpreadPath(result, path, index + 1, running, spacing)
       end
    end
-
-
 end
 
 --https://love2d.org/forums/viewtopic.php?t=1401
@@ -108,6 +103,21 @@ local function GetSplinePos(tab, percent, tension) --returns the position at 'pe
 
       return px, py
    end
+end
+
+bordermesh.unloosenVanillaline = function(points, tension, spacing)
+   local work = unloop.unpackNodePoints(points, true)
+   local output = {}
+   for i = 0, 100 do
+      local t = (i / 100)
+      if t >= 1 then t = 0.99999999 end
+      local x, y = GetSplinePos(work, t, tension)
+      table.insert(output, { x, y })
+   end
+   local rrr = {}
+   local r2 = evenlySpreadPath(rrr, output, 1, 0, spacing)
+   output = unloop.unpackNodePoints(rrr)
+   return output
 end
 
 bordermesh.makeBorderMesh = function(node)

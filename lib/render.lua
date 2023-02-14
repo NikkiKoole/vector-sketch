@@ -513,7 +513,7 @@ function handleChild(shape, isDirty)
          --print('makemesh in handlechild custom, this doenst do textured polygons yet', currentNode.type)
 
 
-         if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier') then
+         if shape.texture and (shape.type ~= 'rubberhose' and shape.type ~= 'bezier' and shape.type ~= 'vanillaline') then
             --	    print('yo guys!')
             if (shape.texture.url and shape.texture.url:len() > 0) then
                if (shape.texture.squishable) then

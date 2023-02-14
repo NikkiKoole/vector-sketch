@@ -245,9 +245,6 @@ function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop
    currentNode.data.scaleY = length / height
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 
-   --local flipx = 1
-   --local flipy = 1
-
    if (true) then
       local lineart = img
       local maskUrl = getPNGMaskUrl(url)

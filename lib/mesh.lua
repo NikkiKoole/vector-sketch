@@ -58,8 +58,8 @@ local function get_line_intersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p
    local s2_y = p3_y - p2_y
 
    local s, t
-   s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y)
-   t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y)
+   s = ( -s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / ( -s2_x * s1_y + s1_x * s2_y)
+   t = (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / ( -s2_x * s1_y + s1_x * s2_y)
 
    if (s >= 0 and s <= 1 and t >= 0 and t <= 1) then
       return p0_x + (t * s1_x), p0_y + (t * s1_y)
@@ -172,7 +172,6 @@ mesh.makeVertices = function(shape)
 
    if shape.type == nil or shape.type == 'poly' then
       if (points and #points >= 2) then
-
          local scale = 1
          local coords = {}
          local ps = {}
@@ -204,9 +203,7 @@ mesh.makeVertices = function(shape)
          end
       end
    else
-
       if (shape.type == 'rubberhose') then
-
          local start = {
             x = shape.points[1][1],
             y = shape.points[1][2]
@@ -255,7 +252,6 @@ mesh.makeVertices = function(shape)
                -- todo this .1 is somethign i want to parametrize
                stretchyWidthDivider = (numbers.mapInto(d, 0, m, 1, stretchyWidthDivider))
                thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
-
             end
 
             coords = { shape.points[1], shape.points[2] }
@@ -287,16 +283,34 @@ mesh.makeVertices = function(shape)
       elseif (shape.type == 'bezier') then
          local curvedata = unloop.unpackNodePoints(points, false)
          local curve = love.math.newBezierCurve(curvedata)
-         local steps = shape.data.steps
+         local steps = shape.data and shape.data.steps or 10
          local coords = {}
          for i = 0, steps do
             local px, py = curve:evaluate(i / steps)
             table.insert(coords, { px, py })
          end
          coords = unloop.unpackNodePoints(coords, false)
+         local width = shape.data and shape.data.width or 10
+         local verts, indices, draw_mode = polyline.render('miter', coords, { width })
+         local h = 1 / (steps - 1 or 1)
+         local vertsWithUVs = {}
 
-         local verts, indices, draw_mode = polyline.render('miter', coords, { shape.data.width })
-         local h = 1 / (shape.data.steps - 1 or 1)
+         for i = 1, #verts do
+            local u = (i % 2 == 1) and 0 or 1
+            local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+            vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+         end
+         vertices = vertsWithUVs
+      elseif (shape.type == 'vanillaline') then
+         local coords
+         if true or shape.data and shape.data.tension then
+            coords = border.unloosenVanillaline(points, 0, 10)
+         else
+            coords = unloop.unpackNodePoints(points, false)
+         end
+         local width = shape.data and shape.data.width or 100
+         local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
          local vertsWithUVs = {}
 
          for i = 1, #verts do
@@ -306,7 +320,6 @@ mesh.makeVertices = function(shape)
          end
          vertices = vertsWithUVs
       else
-
          local coords = unloop.unpackNodePoints(points, false)
          local verts, indices, draw_mode = polyline.render('miter', coords, { 10, 40, 20, 100, 10 })
          vertices = verts
@@ -323,17 +336,16 @@ mesh.makeMeshFromVertices = function(vertices, nodetype, usesTexture)
    local m = nil
 
    if nodetype == 'rubberhose' then
-
       m = love.graphics.newMesh(vertices, "strip")
    elseif nodetype == 'bezier' then
       m = love.graphics.newMesh(vertices, "strip")
-
+   elseif nodetype == 'vanillaline' then
+      m = love.graphics.newMesh(vertices, "strip")
    else
       if (vertices and vertices[1] and vertices[1][1]) then
          --local mesh
 
          if (usesTexture) then
-
             m = love.graphics.newMesh(vertices, "fan")
          else
             m = love.graphics.newMesh(formats.simple_format, vertices, "triangles")
@@ -421,7 +433,6 @@ mesh.addUVToVerts = function(verts, img, points, settings)
    end
 
    -- todo should this return instead?
-
 end
 
 local _imageCache = {}
@@ -447,11 +458,9 @@ mesh.getImage = function(url, settings)
       addToImageCache(url, settings)
    end
    return _imageCache[url]
-
 end
 
 mesh.recursivelyMakeTextures = function(root)
-
    if root.texture and root.texture.url and #(root.texture.url) > 0 then
       --print(root.texture.url)
       addToImageCache(root.texture.url, root.texture)
@@ -475,9 +484,7 @@ mesh.remeshNode = function(node)
    end
 
    if node.texture and (node.texture.url and node.texture.url:len() > 0) and
-       (node.type ~= 'rubberhose' and node.type ~= 'bezier') then
-
-
+       (node.type ~= 'rubberhose' and node.type ~= 'bezier' and node.type ~= 'vanillaline') then
       local img = mesh.getImage(node.texture.url)
 
       if (node.texture.squishable) then
@@ -489,15 +496,15 @@ mesh.remeshNode = function(node)
             print('need to make this a fan instead of trinagles I think')
          end
          if verts then
+            print('hello!')
             node.mesh = love.graphics.newMesh(verts, 'triangles')
-
          end
       end
 
       node.mesh:setTexture(img)
    else
       node.mesh = mesh.makeMeshFromVertices(verts, node.type, node.texture)
-      if node.type == 'rubberhose' or node.type == 'bezier' and node.texture then
+      if node.type == 'rubberhose' or node.type == 'bezier' or node.type == 'vanillaline' and node.texture then
          local texture = mesh.getImage(node.texture and node.texture.url) --_imageCache[node.texture and node.texture.url]
          --print(inspect(_imageCache))
          --print(node.texture.url)
@@ -512,7 +519,6 @@ mesh.remeshNode = function(node)
             node.mesh:setTexture(node.texture.retexture)
             --print('remesh in rubberhose 2')
          end
-
       end
    end
 
@@ -624,7 +630,6 @@ mesh.makeOptimizedBatchMesh = function(folder)
          if (thisColor[1] ~= lastColor[1]) or
              (thisColor[2] ~= lastColor[2]) or
              (thisColor[3] ~= lastColor[3]) then
-
             if folder.optimizedBatchMesh == nil then
                folder.optimizedBatchMesh = {}
             end
@@ -658,11 +663,9 @@ mesh.makeOptimizedBatchMesh = function(folder)
    if #metaTags > 0 then
       folder.metaTags = metaTags
    end
-
 end
 
 mesh.createTexturedPolygon = function(image, polygon)
-
    local tlx, tly, brx, bry = bbox.getPointsBBoxFlat(polygon)
 
    local ufunc = function(x) return numbers.mapInto(x, tlx, brx, 0, 3) end
@@ -685,7 +688,6 @@ mesh.createTexturedPolygon = function(image, polygon)
    m:setTexture(image)
 
    return m
-
 end
 
 
@@ -728,7 +730,6 @@ mesh.createTexturedTriangleStrip = function(image)
    local runningHP = 0
    local index = 0
    for i = 1, segments do
-
       vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
       vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
 
