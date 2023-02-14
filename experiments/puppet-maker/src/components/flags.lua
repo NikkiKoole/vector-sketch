@@ -33,22 +33,21 @@ Concord.component('biped',
 
         c.potatoHead = parts.potatoHead --boolean
         c.values = parts.values -- numbers
-
     end
 )
 
 Concord.component('potato', function(c, parts)
-
     c.head = parts.head
     c.values = parts.values
     c.nose = parts.nose
     c.eye1 = parts.eye1
     c.eye2 = parts.eye2
+    c.pupil1 = parts.pupil1
+    c.pupil2 = parts.pupil2
     c.brow1 = parts.brow1
     c.brow2 = parts.brow2
     c.ear1 = parts.ear1
     c.ear2 = parts.ear2
-
 end)
 --[[
 Concord.component('head',

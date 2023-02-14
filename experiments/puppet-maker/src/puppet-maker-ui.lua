@@ -87,16 +87,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.browsWidthMultiplier = v.value
-               --local p1 = brow1.points
-               --print(brow1.points)
-
                arrangeBrows()
-
-               --               values.browsDefaultBend = math.floor(v.value)
-
-
-
-
                myWorld:emit('potatoInit', potato)
                redoBrows(potato, values)
             end
@@ -139,6 +130,23 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
          end
       end
+
+
+
+      if selectedCategory == 'pupils' then
+         if draw then
+            local v = h_slider("pupil-size", startX, currentY, 50, values.pupilSizeMultiplier, .125, 2)
+            if v.value then
+               v.value = math.floor(v.value * 8) / 8.0 -- round to .125
+               values.pupilSizeMultiplier = v.value
+               pupil1.transforms.l[4] = v.value
+               pupil1.transforms.l[5] = v.value
+               pupil2.transforms.l[4] = v.value
+               pupil2.transforms.l[5] = v.value
+            end
+         end
+      end
+
 
       if selectedCategory == 'eyes' then
          if draw then
