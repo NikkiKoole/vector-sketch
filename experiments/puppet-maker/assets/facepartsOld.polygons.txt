@@ -79,38 +79,6 @@ name = "eye",
 transforms = {
 l = { -20.905, -7.964, 0, 1, 1, 0, 0, 0, 0 }
 }
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -152.176, 156.029 }, { 136.824, 156.029 }, { 136.824, 429.029 }, { -152.176, 429.029 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/eye6.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "eye",
-transforms = {
-l = { 147.626, 95.104, 0, 1, 1, -7.676, 292.529, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -152.176, 156.029 }, { 141.824, 156.029 }, { 141.824, 444.029 }, { -152.176, 444.029 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/eye7.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "eye",
-transforms = {
-l = { -168.543, 248.313, 0, 1, 1, -5.176, 300.029, 0, 0 }
-}
 } },
 folder = true,
 name = "eyes",
