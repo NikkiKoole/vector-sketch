@@ -1,33 +1,9 @@
 local numbers = require 'lib.numbers'
-
-
 local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 
-local function getMeta(parent)
-    for i = 1, #parent.children do
-        if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
-            return parent.children[i]
-        end
-    end
-end
-
-function getPoints(e)
-    local parent = e.potato.head
-    local parentName = e.potato.values.potatoHead and 'body' or 'head'
-    local meta = getMeta(parent)
-
-    if meta then
-        local flipx = e.potato.values[parentName].flipx or 1
-        local flipy = e.potato.values[parentName].flipy or 1
-        local points = meta.points
-        local newPoints = getFlippedMetaObject(flipx, flipy, points)
-        return newPoints
-    end
-    return {}
-end
 
 local function getPositionForNoseAttaching(e)
-    local newPoints = getPoints(e)
+    local newPoints = getHeadPoints(e)
 
     local tX = numbers.mapInto(e.potato.values.noseXAxis, -2, 2, 0, 1)
     local tY = numbers.mapInto(e.potato.values.noseYAxis, -3, 3, 0, 1)
@@ -39,7 +15,7 @@ local function getPositionForNoseAttaching(e)
 end
 
 function getPositionsForEyesAttaching(e)
-    local newPoints = getPoints(e)
+    local newPoints = getHeadPoints(e)
 
     local mx = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
     local x1 = numbers.lerp(newPoints[7][1], mx, 0.5)
@@ -77,7 +53,7 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil2.transforms.l[1] = eyex2
     e.potato.pupil2.transforms.l[2] = eyey2
 
-    local newPoints = getPoints(e)
+    local newPoints = getHeadPoints(e)
     local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
 
     e.potato.brow1.transforms.l[1] = eyex1

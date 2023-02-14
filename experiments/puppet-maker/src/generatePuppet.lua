@@ -38,6 +38,27 @@ end
 -- another thing that needs to happen, now i just deirectly get apoint on the 8way polygon
 -- i want to lerp between 2 or more points to get a position, this way i can move attachements positions in the editor
 
+local function getMeta(parent)
+   for i = 1, #parent.children do
+      if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
+         return parent.children[i]
+      end
+   end
+end
+function getHeadPoints(e)
+   local parent = e.potato.head
+   local parentName = e.potato.values.potatoHead and 'body' or 'head'
+   local meta = getMeta(parent)
+
+   if meta then
+      local flipx = e.potato.values[parentName].flipx or 1
+      local flipy = e.potato.values[parentName].flipy or 1
+      local points = meta.points
+      local newPoints = getFlippedMetaObject(flipx, flipy, points)
+      return newPoints
+   end
+   return {}
+end
 
 function getFlippedMetaObject(flipx, flipy, points)
    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
@@ -97,117 +118,71 @@ end
 function guyChildren(e)
    if (e.biped.values.potatoHead) then
       return {
-         body,
-         leg1, leg2, feet1, feet2,
-         arm1, arm2, hand1, hand2,
+          body,
+          leg1, leg2, feet1, feet2,
+          arm1, arm2, hand1, hand2,
       }
    else
       return {
-         body, neck, head,
-         leg1, leg2, feet1, feet2,
-         arm1, arm2, hand1, hand2,
+          body, neck, head,
+          leg1, leg2, feet1, feet2,
+          arm1, arm2, hand1, hand2,
       }
    end
 end
 
 function bipedArguments(e, values)
    return {
-      guy = guy,
-      body = body,
-      neck = neck,
-      head = head,
-      leg1 = leg1,
-      leg2 = leg2,
-      feet1 = feet1,
-      feet2 = feet2,
-      arm1 = arm1,
-      arm2 = arm2,
-      hand1 = hand1,
-      hand2 = hand2,
-      values = values
+       guy = guy,
+       body = body,
+       neck = neck,
+       head = head,
+       leg1 = leg1,
+       leg2 = leg2,
+       feet1 = feet1,
+       feet2 = feet2,
+       arm1 = arm1,
+       arm2 = arm2,
+       hand1 = hand1,
+       hand2 = hand2,
+       values = values
    }
 end
 
 function potatoArguments(e, values)
    return {
-      head = values.potatoHead and body or head,
-      eye1 = eye1,
-      eye2 = eye2,
-      pupil1 = pupil1,
-      pupil2 = pupil2,
-      ear1 = ear1,
-      ear2 = ear2,
-      brow1 = brow1,
-      brow2 = brow2,
-      nose = nose,
-      values = values
+       head = values.potatoHead and body or head,
+       eye1 = eye1,
+       eye2 = eye2,
+       pupil1 = pupil1,
+       pupil2 = pupil2,
+       ear1 = ear1,
+       ear2 = ear2,
+       brow1 = brow1,
+       brow2 = brow2,
+       nose = nose,
+       values = values
    }
 end
 
 function createBrowBezier(values, points)
    return createBezierFromImage(
-      browImgUrls[values.brows.shape],
-      textures[values.brows.bgTex],
-      palettes[values.brows.bgPal],
-      values.brows.bgAlpha,
-      textures[values.brows.fgTex],
-      palettes[values.brows.fgPal],
-      values.brows.fgAlpha,
-      palettes[values.brows.linePal],
-      values.brows.lineAlpha,
-      values.browsWidthMultiplier,
-      points)
-end
-
-function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, widthMultiplier, optionalPoints, flipx, flipy)
-   -- print(inspect(optionalPoints))
-   local img = mesh.getImage(url)
-   local width, height = img:getDimensions()
-   local currentNode = {}
-   --print(inspect(optionalPoints), inspect(optionalPoints))
-   currentNode = {
-      color = { 1, 1, 1, 1 },
-      data = {
-         length = height,
-         steps = 15,
-         width = (widthMultiplier and widthMultiplier or 1) * (width / 2)
-      },
-      name = "beziered",
-      points = optionalPoints or { { height / 2, 0 }, { 0, 0 }, { -height / 2, 0 } },
-      texture = {
-         filter = "linear",
-         url = url,
-         wrap = "repeat"
-      },
-      type = "bezier"
-   }
-
-   if (true) then
-      local lineart = img
-      local maskUrl = getPNGMaskUrl(url)
-      local mask = mesh.getImage(maskUrl)
-      --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lp, la, flipx, flipy)
-      currentNode.texture.retexture = love.graphics.newImage(cnv)
-      --end
-   end
-
-   --return currentNode
-
-
-   local result = {}
-   result.folder = true
-   result.transforms = {
-      l = { 0, 0, 0, 1, 1, 0, 0 }
-   }
-   result.children = { currentNode }
-   --print('jo!')
-   return result
+           browImgUrls[values.brows.shape],
+           textures[values.brows.bgTex],
+           palettes[values.brows.bgPal],
+           values.brows.bgAlpha,
+           textures[values.brows.fgTex],
+           palettes[values.brows.fgPal],
+           values.brows.fgAlpha,
+           palettes[values.brows.linePal],
+           values.brows.lineAlpha,
+           values.browsWidthMultiplier,
+           points)
 end
 
 function arrangeBrows()
    local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
-      { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
+       { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
 
    local img = mesh.getImage(browImgUrls[values.brows.shape])
    local width, height = img:getDimensions()
@@ -220,6 +195,51 @@ function arrangeBrows()
    brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
    --brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
+end
+
+local function getDistance(x1, y1, x2, y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local distance = math.sqrt((dx * dx) + (dy * dy))
+
+   return distance
+end
+
+local function getLengthOfPath(path)
+   local result = 0
+   for i = 1, #path - 1 do
+      local a = path[i]
+      local b = path[i + 1]
+      result = result + getDistance(a[1], a[2], b[1], b[2])
+   end
+   return result
+end
+
+
+
+function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
+                                    optionalPoints,
+                                    flipx, flipy)
+   local img = mesh.getImage(url)
+   local width, height = img:getDimensions()
+   print(width, height)
+   local currentNode = {}
+   currentNode.texture = {}
+   currentNode.texture.url = url
+   currentNode.texture.wrap = 'repeat'
+   currentNode.texture.filter = 'linear'
+   currentNode.type = 'vanillaline'
+   currentNode.color = { 1, 1, 1 }
+
+   currentNode.points = optionalPoints or { { 0, 0 }, { 0, 100 }, { 100, 100 } }
+   local length = getLengthOfPath(currentNode.points)
+   print('lengh = ', length)
+   local factor = (height / length)
+   currentNode.data = {}
+   currentNode.data.width = (width * factor) / 10
+   currentNode.data.tension = .001
+   currentNode.data.spacing = 50
+   return currentNode
 end
 
 function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop, length, widthMultiplier, optionalPoints,
@@ -260,6 +280,52 @@ function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop
    return currentNode
 end
 
+function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, widthMultiplier, optionalPoints, flipx, flipy)
+   -- print(inspect(optionalPoints))
+   local img = mesh.getImage(url)
+   local width, height = img:getDimensions()
+   local currentNode = {}
+   --print(inspect(optionalPoints), inspect(optionalPoints))
+   currentNode = {
+       color = { 1, 1, 1, 1 },
+       data = {
+           length = height,
+           steps = 15,
+           width = (widthMultiplier and widthMultiplier or 1) * (width / 2)
+       },
+       name = "beziered",
+       points = optionalPoints or { { height / 2, 0 }, { 0, 0 }, { -height / 2, 0 } },
+       texture = {
+           filter = "linear",
+           url = url,
+           wrap = "repeat"
+       },
+       type = "bezier"
+   }
+
+   if (true) then
+      local lineart = img
+      local maskUrl = getPNGMaskUrl(url)
+      local mask = mesh.getImage(maskUrl)
+      --if mask then
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lp, la, flipx, flipy)
+      currentNode.texture.retexture = love.graphics.newImage(cnv)
+      --end
+   end
+
+   --return currentNode
+
+
+   local result = {}
+   result.folder = true
+   result.transforms = {
+       l = { 0, 0, 0, 1, 1, 0, 0 }
+   }
+   result.children = { currentNode }
+   --print('jo!')
+   return result
+end
+
 local function makeDynamicCanvas(imageData, mymesh)
    local w, h = imageData:getDimensions()
    local w2 = w / 2
@@ -270,9 +336,9 @@ local function makeDynamicCanvas(imageData, mymesh)
    result.name = 'generated'
    result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
    result.texture = {
-      filter = "linear",
-      canvas = mymesh,
-      wrap = "repeat",
+       filter = "linear",
+       canvas = mymesh,
+       wrap = "repeat",
    }
 
    return result
@@ -285,13 +351,13 @@ local function createRectangle(x, y, w, h, r, g, b)
    local result = {}
    result.folder = true
    result.transforms = {
-      l = { x, y, 0, 1, 1, 0, 0 }
+       l = { x, y, 0, 1, 1, 0, 0 }
    }
    result.children = { {
 
-      name = 'rectangle',
-      points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
-      color = { r or 1, g or 0.91, b or 0.15, 1 }
+       name = 'rectangle',
+       points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
+       color = { r or 1, g or 0.91, b or 0.15, 1 }
    } }
    return result
 end
@@ -324,7 +390,7 @@ function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga, lineColor, lineA
 
       if (lineart) then
          local canvas = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lineColor, lineAlpha, flipx,
-            flipy)
+                 flipy)
          if p.texture.canvas then
             p.texture.canvas:release()
          end
@@ -340,57 +406,69 @@ function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
 
    return createRubberHoseFromImage(
-      legUrls[values.arms.shape],
-      textures[values.arms.bgTex],
-      palettes[values.arms.bgPal],
-      values.arms.bgAlpha,
-      textures[values.arms.fgTex],
-      palettes[values.arms.fgPal],
-      values.arms.fgAlpha,
-      palettes[values.arms.linePal],
-      values.arms.lineAlpha,
-      flop
-      , values.armLength,
-      values.armWidthMultiplier,
-      points)
+           legUrls[values.arms.shape],
+           textures[values.arms.bgTex],
+           palettes[values.arms.bgPal],
+           values.arms.bgAlpha,
+           textures[values.arms.fgTex],
+           palettes[values.arms.fgPal],
+           values.arms.fgAlpha,
+           palettes[values.arms.linePal],
+           values.arms.lineAlpha,
+           flop
+           , values.armLength,
+           values.armWidthMultiplier,
+           points)
 end
 
 function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
 
    return createRubberHoseFromImage(
-      legUrls[values.legs.shape],
-      textures[values.legs.bgTex],
-      palettes[values.legs.bgPal],
-      values.legs.bgAlpha,
-      textures[values.legs.fgTex],
-      palettes[values.legs.fgPal],
-      values.legs.fgAlpha,
+           legUrls[values.legs.shape],
+           textures[values.legs.bgTex],
+           palettes[values.legs.bgPal],
+           values.legs.bgAlpha,
+           textures[values.legs.fgTex],
+           palettes[values.legs.fgPal],
+           values.legs.fgAlpha,
+           palettes[values.legs.linePal],
+           values.legs.lineAlpha,
+           flop
+           , values.legLength,
+           values.legWidthMultiplier,
+           points, values.legs.flipx or 1, values.legs.flipy or 1)
+end
 
-      palettes[values.legs.linePal],
-      values.legs.lineAlpha,
-      flop
-      , values.legLength,
-      values.legWidthMultiplier,
-      points, values.legs.flipx or 1, values.legs.flipy or 1)
+function createHairVanillaLine(values, hairLine)
+   return createVanillaLineFromImage(
+           hairUrls[values.hair.shape],
+           textures[values.hair.bgTex],
+           palettes[values.hair.bgPal],
+           values.hair.bgAlpha,
+           textures[values.hair.fgTex],
+           palettes[values.hair.fgPal],
+           values.hair.fgAlpha,
+           palettes[values.hair.linePal],
+           values.hair.lineAlpha, hairLine)
 end
 
 function createNeckRubberhose(values, points)
    local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
    return createRubberHoseFromImage(
-      legUrls[values.neck.shape],
-      textures[values.neck.bgTex],
-      palettes[values.neck.bgPal],
-      values.neck.bgAlpha,
-      textures[values.neck.fgTex],
-      palettes[values.neck.fgPal],
-      values.neck.fgAlpha,
-      palettes[values.neck.linePal],
-      values.neck.lineAlpha,
-      flop
-      , values.neckLength,
-      values.neckWidthMultiplier,
-      points)
+           legUrls[values.neck.shape],
+           textures[values.neck.bgTex],
+           palettes[values.neck.bgPal],
+           values.neck.bgAlpha,
+           textures[values.neck.fgTex],
+           palettes[values.neck.fgPal],
+           values.neck.fgAlpha,
+           palettes[values.neck.linePal],
+           values.neck.lineAlpha,
+           flop
+           , values.neckLength,
+           values.neckWidthMultiplier,
+           points)
 end
 
 function changeNeck(biped, values)
@@ -463,17 +541,17 @@ end
 
 function redoGraphicHelper(part, name, values)
    redoTheGraphicInPart(
-      part,
-      textures[values[name].bgTex],
-      palettes[values[name].bgPal],
-      values[name].bgAlpha,
-      textures[values[name].fgTex],
-      palettes[values[name].fgPal],
-      values[name].fgAlpha,
-      palettes[values[name].linePal],
-      values[name].lineAlpha,
-      values[name].flipx or 1,
-      values[name].flipy or 1
+       part,
+       textures[values[name].bgTex],
+       palettes[values[name].bgPal],
+       values[name].bgAlpha,
+       textures[values[name].fgTex],
+       palettes[values[name].fgPal],
+       values[name].fgAlpha,
+       palettes[values[name].linePal],
+       values[name].lineAlpha,
+       values[name].flipx or 1,
+       values[name].flipy or 1
    )
 end
 
@@ -538,6 +616,20 @@ function updateChild(container, oldValue, newResult)
          return container.children[i]
       end
    end
+end
+
+function changeHair(potato, values)
+   local container = values.potatoHead and body or head
+
+   local hp = getHeadPoints(potato)
+   local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
+
+   hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
+
+   parentize.parentize(root)
+   potato:give('potato', potatoArguments(potato, values))
+   myWorld:emit("potatoInit", potato)
+   mesh.meshAll(root)
 end
 
 function changeNose(potato, values)
@@ -636,4 +728,6 @@ function changeHead(biped, values)
    biped:give('biped', bipedArguments(biped, values))
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
+
+   changeHair(potato, values)
 end

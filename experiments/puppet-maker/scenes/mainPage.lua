@@ -42,10 +42,10 @@ local pointerInteractees = {}
 
 
 nullObject = {
-   folder = true,
-   name = 'nullObject',
-   transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
-   children = {}
+    folder = true,
+    name = 'nullObject',
+    transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+    children = {}
 }
 
 
@@ -221,7 +221,7 @@ function pointerPressed(x, y, id)
    end
    if (settingsScrollArea) then
       if (hit.pointInRect(x, y,
-             settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+              settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
           ) then
          settingsScrollAreaIsDragging = true
          settingsScrollAreaIsThrown = nil
@@ -270,6 +270,7 @@ function attachAllFaceParts()
    removeChild(brow2)
    removeChild(ear1)
    removeChild(ear2)
+   removeChild(hair)
    local addTo = values.potatoHead and body or head
 
    table.insert(addTo.children, eye1)
@@ -287,6 +288,7 @@ function attachAllFaceParts()
    table.insert(addTo.children, brow1)
    table.insert(addTo.children, brow2)
    table.insert(addTo.children, nose)
+   table.insert(addTo.children, hair)
 
    myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
    myWorld:emit('potatoInit', potato)
@@ -298,18 +300,18 @@ function scene.load()
    bgColor = creamColor
 
    Timer.after(
-      1,
-      function()
-         Timer.during(
-            .3,
-            function(dt)
-               local h, s, l, a = vivid.RGBtoHSL(bgColor)
-               l = l * 0.99
-               local r, g, b, a = vivid.HSLtoRGB(h, s, l, a)
-               bgColor = { r, g, b, a }
-            end
-         )
-      end
+       1,
+       function()
+          Timer.during(
+              .3,
+              function(dt)
+                 local h, s, l, a = vivid.RGBtoHSL(bgColor)
+                 l = l * 0.99
+                 local r, g, b, a = vivid.HSLtoRGB(h, s, l, a)
+                 bgColor = { r, g, b, a }
+              end
+          )
+       end
    )
 
    blup0 = love.graphics.newImage('assets/blups/blup1.png')
@@ -322,53 +324,53 @@ function scene.load()
 
    textures = {
 
-      love.graphics.newImage('assets/layered/texture-type0.png'),
-      love.graphics.newImage('assets/layered/texture-type2t.png'),
-      love.graphics.newImage('assets/layered/texture-type1.png'),
-      love.graphics.newImage('assets/layered/texture-type3.png'),
-      love.graphics.newImage('assets/layered/texture-type4.png'),
-      love.graphics.newImage('assets/layered/texture-type5.png'),
-      love.graphics.newImage('assets/layered/texture-type6.png'),
-      love.graphics.newImage('assets/layered/texture-type7.png'),
+       love.graphics.newImage('assets/layered/texture-type0.png'),
+       love.graphics.newImage('assets/layered/texture-type2t.png'),
+       love.graphics.newImage('assets/layered/texture-type1.png'),
+       love.graphics.newImage('assets/layered/texture-type3.png'),
+       love.graphics.newImage('assets/layered/texture-type4.png'),
+       love.graphics.newImage('assets/layered/texture-type5.png'),
+       love.graphics.newImage('assets/layered/texture-type6.png'),
+       love.graphics.newImage('assets/layered/texture-type7.png'),
 
 
    }
 
    whiterects = {
-      love.graphics.newImage('assets/whiterect1.png'),
-      love.graphics.newImage('assets/whiterect2.png'),
-      love.graphics.newImage('assets/whiterect3.png'),
-      love.graphics.newImage('assets/whiterect4.png'),
-      love.graphics.newImage('assets/whiterect5.png'),
-      love.graphics.newImage('assets/whiterect6.png'),
-      love.graphics.newImage('assets/whiterect7.png'),
+       love.graphics.newImage('assets/whiterect1.png'),
+       love.graphics.newImage('assets/whiterect2.png'),
+       love.graphics.newImage('assets/whiterect3.png'),
+       love.graphics.newImage('assets/whiterect4.png'),
+       love.graphics.newImage('assets/whiterect5.png'),
+       love.graphics.newImage('assets/whiterect6.png'),
+       love.graphics.newImage('assets/whiterect7.png'),
    }
 
    dots = {
-      love.graphics.newImage('assets/blups/dot1.150.png'),
-      love.graphics.newImage('assets/blups/dot2.150.png'),
-      love.graphics.newImage('assets/blups/dot3.150.png'),
-      love.graphics.newImage('assets/blups/dot4.150.png'),
-      love.graphics.newImage('assets/blups/dot5.150.png'),
-      love.graphics.newImage('assets/blups/dot6.150.png'),
-      love.graphics.newImage('assets/blups/dot7.150.png'),
-      love.graphics.newImage('assets/blups/dot8.150.png'),
-      love.graphics.newImage('assets/blups/dot9.150.png'),
-      love.graphics.newImage('assets/blups/dot10.150.png'),
-      love.graphics.newImage('assets/blups/dot11.150.png'),
-      love.graphics.newImage('assets/blups/dot12.150.png'),
+       love.graphics.newImage('assets/blups/dot1.150.png'),
+       love.graphics.newImage('assets/blups/dot2.150.png'),
+       love.graphics.newImage('assets/blups/dot3.150.png'),
+       love.graphics.newImage('assets/blups/dot4.150.png'),
+       love.graphics.newImage('assets/blups/dot5.150.png'),
+       love.graphics.newImage('assets/blups/dot6.150.png'),
+       love.graphics.newImage('assets/blups/dot7.150.png'),
+       love.graphics.newImage('assets/blups/dot8.150.png'),
+       love.graphics.newImage('assets/blups/dot9.150.png'),
+       love.graphics.newImage('assets/blups/dot10.150.png'),
+       love.graphics.newImage('assets/blups/dot11.150.png'),
+       love.graphics.newImage('assets/blups/dot12.150.png'),
    }
 
    palettes = {}
    local base = {
-      '020202', '333233', '814800', 'e6c800', 'efebd8',
-      '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
-      'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
-      'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
-      '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
-      'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
-      'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
-      '798091', '4C5575', '6E4431', '626964', '613D41',
+       '020202', '333233', '814800', 'e6c800', 'efebd8',
+       '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+       'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+       'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+       '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+       'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+       '798091', '4C5575', '6E4431', '626964', '613D41',
    }
 
    for i = 1, #base do
@@ -403,20 +405,20 @@ function scene.load()
    headz = {}
    for i = 1, 8 do
       headz[i] = {
-         img = love.graphics.newImage('assets/blups/headz' .. i .. '.png'),
-         x = love.math.random(),
-         y = love.math.random(),
-         r = love.math.random() * math.pi * 2
+          img = love.graphics.newImage('assets/blups/headz' .. i .. '.png'),
+          x = love.math.random(),
+          y = love.math.random(),
+          r = love.math.random() * math.pi * 2
       }
    end
 
    delta = 0
 
    root = {
-      folder = true,
-      name = 'root',
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
-      children = {}
+       folder = true,
+       name = 'root',
+       transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+       children = {}
    }
 
 
@@ -432,8 +434,10 @@ function scene.load()
    handParts = feetParts
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-      'assets/parts/leg5.png' }
+       'assets/parts/leg5.png' }
 
+   hairUrls = { 'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
+       'assets/parts/hair5.png' }
 
    bodyImgUrls = {}
    bodyParts = {}
@@ -473,178 +477,191 @@ function scene.load()
 
 
    values = {
-      potatoHead           = false,
-      eyes                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 5,
-         bgTex     = 1,
-         fgTex     = 1,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      eyeWidthMultiplier   = 1,
-      eyeHeightMultiplier  = 1,
-      eyeRotation          = 0,
-      eyeYAxis             = 0,
-      pupils               = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 5,
-         bgTex     = 1,
-         fgTex     = 1,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      pupilSizeMultiplier = 1,
-      ears                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      earUnderHead         = false,
-      earWidthMultiplier   = 1,
-      earHeightMultiplier  = 1,
-      earRotation          = 0,
-      earYAxis             = 0, -- -2,-1,0,1,2
-      brows                = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      browsWidthMultiplier = .5,
-      browsDefaultBend     = 1,
-      nose                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
+       potatoHead           = false,
+       eyes                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 5,
+           bgTex     = 1,
+           fgTex     = 1,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       eyeWidthMultiplier   = 1,
+       eyeHeightMultiplier  = 1,
+       eyeRotation          = 0,
+       eyeYAxis             = 0,
+       pupils               = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 5,
+           bgTex     = 1,
+           fgTex     = 1,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       pupilSizeMultiplier  = 1,
+       ears                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       earUnderHead         = false,
+       earWidthMultiplier   = 1,
+       earHeightMultiplier  = 1,
+       earRotation          = 0,
+       earYAxis             = 0, -- -2,-1,0,1,2
+       brows                = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       browsWidthMultiplier = .5,
+       browsDefaultBend     = 1,
+       nose                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
 
-      },
-      noseXAxis            = 0, --  -2,-1,0,1,2
-      noseYAxis            = 2, --  -3, -2,-1,0,1,2, 3
-      noseWidthMultiplier  = 1,
-      noseHeightMultiplier = 1,
-      legs                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      legLength            = 700,
-      legWidthMultiplier   = 1,
-      leg1flop             = -1,
-      leg2flop             = 1,
-      arms                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      armLength            = 700,
-      armWidthMultiplier   = 1,
-      arm1flop             = 1,
-      arm2flop             = -1,
-      hands                = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      body                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         flipy     = -1,
-         bgAlpha   = 5,
-         fgAlpha   = 1,
-         lineAlpha = 5,
-      },
-      bodyWidthMultiplier  = 1,
-      bodyHeightMultiplier = 1,
-      head                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         flipx     = 1,
-         flipy     = -1,
-         bgAlpha   = 5,
-         fgAlpha   = 1,
-         lineAlpha = 5,
-      },
-      headWidthMultiplier  = 1,
-      headHeightMultiplier = 1,
-      neck                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
-      neckLength           = 700,
-      neckWidthMultiplier  = 1,
-      feet                 = {
-         shape     = 1,
-         bgPal     = 4,
-         fgPal     = 1,
-         bgTex     = 1,
-         fgTex     = 2,
-         linePal   = 1,
-         bgAlpha   = 5,
-         fgAlpha   = 5,
-         lineAlpha = 5,
-      },
+       },
+       noseXAxis            = 0, --  -2,-1,0,1,2
+       noseYAxis            = 2, --  -3, -2,-1,0,1,2, 3
+       noseWidthMultiplier  = 1,
+       noseHeightMultiplier = 1,
+       legs                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       legLength            = 700,
+       legWidthMultiplier   = 1,
+       leg1flop             = -1,
+       leg2flop             = 1,
+       arms                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       armLength            = 700,
+       armWidthMultiplier   = 1,
+       arm1flop             = 1,
+       arm2flop             = -1,
+       hands                = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       body                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           flipy     = -1,
+           bgAlpha   = 5,
+           fgAlpha   = 1,
+           lineAlpha = 5,
+       },
+       bodyWidthMultiplier  = 1,
+       bodyHeightMultiplier = 1,
+       head                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           flipx     = 1,
+           flipy     = -1,
+           bgAlpha   = 5,
+           fgAlpha   = 1,
+           lineAlpha = 5,
+       },
+       hair                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 5,
+           bgTex     = 1,
+           fgTex     = 1,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       headWidthMultiplier  = 1,
+       headHeightMultiplier = 1,
+       neck                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
+       neckLength           = 700,
+       neckWidthMultiplier  = 1,
+       feet                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+       },
    }
 
    head = copy3(headParts[values.head.shape])
+
    neck = createNeckRubberhose(values)
    body = copy3(bodyParts[values.body.shape])
+   hair = createHairVanillaLine(values)
 
    arm1 = createArmRubberhose(1, values)
    arm2 = createArmRubberhose(2, values)
@@ -669,29 +686,29 @@ function scene.load()
    nose = copy3(noseParts[values.nose.shape])
 
    guy = {
-      folder = true,
-      name = 'guy',
-      transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-      children = {}
+       folder = true,
+       name = 'guy',
+       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+       children = {}
    }
 
    biped = Concord.entity()
    biped:give('biped',
-      {
-         guy = guy,
-         body = body,
-         neck = neck,
-         head = head,
-         leg1 = leg1,
-         leg2 = leg2,
-         feet1 = feet1,
-         feet2 = feet2,
-         arm1 = arm1,
-         hand1 = hand1,
-         arm2 = arm2,
-         hand2 = hand2,
-         values = values
-      })
+       {
+           guy = guy,
+           body = body,
+           neck = neck,
+           head = head,
+           leg1 = leg1,
+           leg2 = leg2,
+           feet1 = feet1,
+           feet2 = feet2,
+           arm1 = arm1,
+           hand1 = hand1,
+           arm2 = arm2,
+           hand2 = hand2,
+           values = values
+       })
 
    guy.children = guyChildren(biped)
 
@@ -702,17 +719,18 @@ function scene.load()
 
    potato = Concord.entity()
    potato:give('potato', {
-      head = values.potatoHead and body or head,
-      eye1 = eye1,
-      eye2 = eye2,
-      pupi11 = pupil1,
-      pupil2 = pupil2,
-      nose = nose,
-      brow1 = brow1,
-      brow2 = brow2,
-      ear1 = ear1,
-      ear2 = ear2,
-      values = values
+       head = values.potatoHead and body or head,
+       eye1 = eye1,
+       eye2 = eye2,
+       pupi11 = pupil1,
+       pupil2 = pupil2,
+       nose = nose,
+       brow1 = brow1,
+       brow2 = brow2,
+       ear1 = ear1,
+       ear2 = ear2,
+       hair = hair,
+       values = values
    })
 
 
@@ -734,7 +752,7 @@ function scene.load()
    table.insert(faceContainer.children, brow1)
    table.insert(faceContainer.children, brow2)
    table.insert(faceContainer.children, nose)
-
+   table.insert(faceContainer.children, hair)
 
 
    root.children = { guy }
@@ -745,20 +763,21 @@ function scene.load()
    redoBrows(potato, values)
    redoNose(potato, values)
    changeNose(potato, values)
+   changeHair(potato, values)
 
    if false then
       cameraPoints = {}
       local W, H = love.graphics.getDimensions()
       for i = 1, 10 do
          table.insert(
-            cameraPoints,
-            {
-               x = love.math.random( -W * 2, W * 2),
-               y = love.math.random( -H * 2, H * 2),
-               width = love.math.random(200, 500),
-               height = love.math.random(200, 500),
-               color = { 1, 1, 1 },
-            }
+             cameraPoints,
+             {
+                 x = love.math.random( -W * 2, W * 2),
+                 y = love.math.random( -H * 2, H * 2),
+                 width = love.math.random(200, 500),
+                 height = love.math.random(200, 500),
+                 color = { 1, 1, 1 },
+             }
          )
       end
    end
@@ -778,36 +797,20 @@ function scene.load()
    attachCallbacks()
 
 
-
-
-
-   --[[
-   bigButtonHelper(50, 100, 'head', headImgUrls, changeHead, redoHead, biped)
-         bigButtonHelper(225, 100, 'eyes', eyeImgUrls, changeEyes, redoEyes, potato)
-         bigButtonHelper(400, 100, 'ears', earImgUrls, changeEars, redoEars, potato)
-         bigButtonHelper(50, 250, 'neck', legUrls, changeNeck, redoNeck, biped)
-         bigButtonHelper(225, 250, 'nose', noseImgUrls, changeNose, changeNose, potato)
-         bigButtonHelper(50, 400, 'body', bodyImgUrls, changeBody, redoBody, biped)
-         bigButtonHelper(225, 400, 'arms', legUrls, changeArms, changeArms, biped)
-         bigButtonHelper(225, 550, 'hands', feetImgUrls, changeHands, redoHands, biped)
-         bigButtonHelper(50, 550, 'legs', legUrls, changeLegs, changeLegs, biped)
-         bigButtonHelper(50, 700, 'feet', feetImgUrls, changeFeet, redoFeet, biped)
-         bigButtonHelper(225, 700, 'brows', browImgUrls, redoBrows, redoBrows, potato)
-
---]]
    parts = {
-      { name = 'head',   imgs = headImgUrls,  funcs = { changeHead, redoHead, biped } },
-      { name = 'brows',  imgs = browImgUrls,  funcs = { redoBrows, redoBrows, potato } },
-      { name = 'pupils', imgs = pupilImgUrls, funcs = { changePupils, redoPupils, potato } },
-      { name = 'eyes',   imgs = eyeImgUrls,   funcs = { changeEyes, redoEyes, potato } },
-      { name = 'ears',   imgs = earImgUrls,   funcs = { changeEars, redoEars, potato } },
-      { name = 'neck',   imgs = legUrls,      funcs = { changeNeck, redoNeck, biped } },
-      { name = 'nose',   imgs = noseImgUrls,  funcs = { changeNose, changeNose, potato } },
-      { name = 'body',   imgs = bodyImgUrls,  funcs = { changeBody, redoBody, biped } },
-      { name = 'arms',   imgs = legUrls,      funcs = { changeArms, changeArms, biped } },
-      { name = 'hands',  imgs = feetImgUrls,  funcs = { changeHands, redoHands, biped } },
-      { name = 'legs',   imgs = legUrls,      funcs = { changeLegs, changeLegs, biped } },
-      { name = 'feet',   imgs = feetImgUrls,  funcs = { changeFeet, redoFeet, biped } }
+       { name = 'head',   imgs = headImgUrls,  funcs = { changeHead, redoHead, biped } },
+       { name = 'hair',   imgs = hairUrls,     funcs = { changeHair, changeHair, potato } },
+       { name = 'brows',  imgs = browImgUrls,  funcs = { redoBrows, redoBrows, potato } },
+       { name = 'pupils', imgs = pupilImgUrls, funcs = { changePupils, redoPupils, potato } },
+       { name = 'eyes',   imgs = eyeImgUrls,   funcs = { changeEyes, redoEyes, potato } },
+       { name = 'ears',   imgs = earImgUrls,   funcs = { changeEars, redoEars, potato } },
+       { name = 'neck',   imgs = legUrls,      funcs = { changeNeck, redoNeck, biped } },
+       { name = 'nose',   imgs = noseImgUrls,  funcs = { changeNose, changeNose, potato } },
+       { name = 'body',   imgs = bodyImgUrls,  funcs = { changeBody, redoBody, biped } },
+       { name = 'arms',   imgs = legUrls,      funcs = { changeArms, changeArms, biped } },
+       { name = 'hands',  imgs = feetImgUrls,  funcs = { changeHands, redoHands, biped } },
+       { name = 'legs',   imgs = legUrls,      funcs = { changeLegs, changeLegs, biped } },
+       { name = 'feet',   imgs = feetImgUrls,  funcs = { changeFeet, redoFeet, biped } }
 
    }
 
@@ -895,9 +898,9 @@ function attachCallbacks()
          local bbFeet2            = bbox.getBBoxRecursive(feet2)
 
          local points             = {
-            { head.transforms.l[1],  head.transforms.l[2] },
-            { feet2.transforms.l[1], feet2.transforms.l[2] },
-            { feet1.transforms.l[1], feet1.transforms.l[2] },
+             { head.transforms.l[1],  head.transforms.l[2] },
+             { feet2.transforms.l[1], feet2.transforms.l[2] },
+             { feet1.transforms.l[1], feet1.transforms.l[2] },
          }
 
          local tlx, tly, brx, bry = bbox.getPointsBBox(points)

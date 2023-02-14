@@ -205,12 +205,12 @@ mesh.makeVertices = function(shape)
    else
       if (shape.type == 'rubberhose') then
          local start = {
-            x = shape.points[1][1],
-            y = shape.points[1][2]
+             x = shape.points[1][1],
+             y = shape.points[1][2]
          }
          local eind = {
-            x = shape.points[2][1],
-            y = shape.points[2][2]
+             x = shape.points[2][1],
+             y = shape.points[2][2]
          }
          -- 4.46 is a number i need to
 
@@ -220,7 +220,7 @@ mesh.makeVertices = function(shape)
 
          local magic = 1 -- 4.46
          local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY, shape.data.flop,
-            shape.data.borderRadius)
+                 shape.data.borderRadius)
          local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
          -- i re-use this in puppetmaker to get the angle for the feet
          --print(cp1.x, cp1.y, cp2.x, cp2.y)
@@ -230,7 +230,7 @@ mesh.makeVertices = function(shape)
          if tostring(cp1.x) == 'nan' then
             -- hacky way to keep the right oreinted curve even when the rope thing has failed
             local curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
-               numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
+                    numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
             shape._curve = curve
          end
          local coords = {}
@@ -303,12 +303,13 @@ mesh.makeVertices = function(shape)
          vertices = vertsWithUVs
       elseif (shape.type == 'vanillaline') then
          local coords
-         if true or shape.data and shape.data.tension then
-            coords = border.unloosenVanillaline(points, 0, 10)
+         print('vanillaline stuff', shape.data)
+         if shape.data and shape.data.tension then
+            coords = border.unloosenVanillaline(points, shape.data.tension, shape.data.spacing)
          else
             coords = unloop.unpackNodePoints(points, false)
          end
-         local width = shape.data and shape.data.width or 100
+         local width = shape.data and shape.data.width or 60
          local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
          local vertsWithUVs = {}
@@ -496,7 +497,6 @@ mesh.remeshNode = function(node)
             print('need to make this a fan instead of trinagles I think')
          end
          if verts then
-            print('hello!')
             node.mesh = love.graphics.newMesh(verts, 'triangles')
          end
       end
