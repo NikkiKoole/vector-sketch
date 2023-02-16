@@ -6,9 +6,10 @@ local render    = require 'lib.render'
 
 
 -- REMEMBER IF YOU SEE BLACK SHADOWING AROUND THE COLORED PARTS
--- ususally the fix is simply to call a redoX in the changeX too.
+-- ususally the fix is simply to call a redo..X in the changeX too.
 -- for example in changeFeet
---
+-- the location where you do this is quite im;ortant.
+
 -- parentize.parentize(root)
 -- redoFeet(biped, values)
 -- biped:give('biped', bipedArguments(biped, values))

@@ -335,6 +335,9 @@ function scene.load()
 
 
    }
+   for i =1, #textures do 
+      textures[i]:setWrap('mirroredrepeat', 'mirroredrepeat')
+   end
 
    whiterects = {
        love.graphics.newImage('assets/whiterect1.png'),
