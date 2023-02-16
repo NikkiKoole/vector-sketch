@@ -11,6 +11,42 @@ local mask_effect = love.graphics.newShader [[
    }
 ]]
 
+local ShapeShader = love.graphics.newShader [[
+	
+	// Effect that renders the shape of a image
+	vec4 effect(vec4 Color, Image Texture, vec2 textureCoord, vec2 pixelCoord) {
+		
+		// Get the pixel color at the given texture
+		vec4 pixel = Texel(Texture, textureCoord);
+		
+		// If it's alpha is higher than zero
+		if ( pixel.a > 0.0 ) {
+			
+			// If it's not black
+			if ( pixel.r > 0.0 || pixel.g > 0.0 || pixel.b > 0.0 ) {
+				
+				// Return the setColor value
+				return Color;
+				
+			}
+			
+		}
+		
+		// Return invisible color
+		return vec4(0.0, 0.0, 0.0, 0.0);
+		
+	}
+	
+]]
+
+--https://love2d.org/forums/viewtopic.php?t=88854
+local maskShader = love.graphics.newShader([[
+	uniform Image imageA, imageB;
+
+	vec4 effect(vec4 color, Image mask, vec2 uv, vec2 fc) {
+		return color * mix(Texel(imageB, uv), Texel(imageA, uv), Texel(mask, uv));
+	}
+]])
 
 
 -- only used for some ui thing
@@ -105,12 +141,27 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    -- its not a simple fix, you could make it so we use color A if some layer is lpha 0 etc
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
 
-   if mask then   
+   if mask then
+   love.graphics.setBlendMode('alpha', 'premultiplied')
+   
+	love.graphics.setShader(maskShader)
+   love.graphics.setColor(color1[1], color1[2], color1[3], alpha1/5)
+	maskShader:send('imageA', texture1)
+   love.graphics.setColor(color2[1], color2[2], color2[3], alpha2/5 )
+	maskShader:send('imageB', texture2)
+	love.graphics.draw(mask)
+   love.graphics.setShader()
+   love.graphics.setBlendMode("alpha") ---<<<<
+end
+
+   if false and mask then   
       love.graphics.setBlendMode("alpha") ---<<<<
-     love.graphics.setStencilTest("greater", 0)
+      love.graphics.setStencilTest("greater", 0)
       love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
       --local ow, oh = grunge:getDimensions()
+      
+      --love.graphics.setShader(ShapeShader)
       if texture1 then
          local gw, gh = texture1:getDimensions()
          local rotation = 0 --delta
@@ -130,10 +181,9 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
          love.graphics.setColor(color1[1], color1[2], color1[3], alpha1/5)
          love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
       end
-
-
+      
       -- second texture
-      if texture2 then
+      if  texture2 then
          local gw, gh = texture2:getDimensions()
          local rotation = 0 --delta
          local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
@@ -162,6 +212,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
 
       end
+    --  love.graphics.setShader()
 
 
 
