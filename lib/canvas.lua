@@ -130,8 +130,9 @@ local maskShader = love.graphics.newShader([[
         vec2 transformedUV = uv * uvTransform;
 
         vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
-
-        return vec4(patternMix, Texel(mask, uv).r   );
+      // multiplying here with backgroundCOlor makes everything transparent....
+      // not exactly what I'm after, but better then nothing. (I suppose) 
+        return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a  );
 	}
 ]])
 
@@ -154,7 +155,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
    love.graphics.setShader(maskShader)
    local transform = love.math.newTransform( )
-   local s = (love.math.random()*5) / 10
+   local s = (love.math.random()*25) / 10
    transform:rotate(love.math.random()* math.pi*2)
    transform:scale(s,s)
 
