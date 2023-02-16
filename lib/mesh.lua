@@ -303,7 +303,7 @@ mesh.makeVertices = function(shape)
          vertices = vertsWithUVs
       elseif (shape.type == 'vanillaline') then
          local coords
-         print('vanillaline stuff', shape.data)
+         --print('vanillaline stuff', shape.data)
          if shape.data and shape.data.tension then
             coords = border.unloosenVanillaline(points, shape.data.tension, shape.data.spacing)
          else

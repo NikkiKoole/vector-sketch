@@ -39,14 +39,7 @@ local ShapeShader = love.graphics.newShader [[
 	
 ]]
 
---https://love2d.org/forums/viewtopic.php?t=88854
-local maskShader = love.graphics.newShader([[
-	uniform Image imageA, imageB;
 
-	vec4 effect(vec4 color, Image mask, vec2 uv, vec2 fc) {
-		return color * mix(Texel(imageB, uv), Texel(imageA, uv), Texel(mask, uv));
-	}
-]])
 
 
 -- only used for some ui thing
@@ -126,6 +119,23 @@ local function myStencilFunction(mask, flipx, flipy, imgw, imgh)
    love.graphics.setShader()
 end
 
+
+-- only thing thats no longer possible == using an alpha for the background color 
+local maskShader = love.graphics.newShader([[
+	uniform Image fill;
+    uniform vec4 backgroundColor;
+    uniform mat2 uvTransform;
+
+	vec4 effect(vec4 color, Image mask, vec2 uv, vec2 fc) {
+        vec2 transformedUV = uv * uvTransform;
+
+        vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
+
+        return vec4(patternMix, Texel(mask, uv).r   );
+	}
+]])
+
+
 lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, lineColor, lineAlpha,flipx, flipy)
 
    --local flipx = 1 -- paramter this
@@ -134,27 +144,35 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
 
-   love.graphics.setCanvas({ canvas, stencil = true }) --<<<
+   love.graphics.setCanvas({ canvas, stencil = false }) --<<<
    --
    
    -- the reason for outline ghost stuff is this color
    -- its not a simple fix, you could make it so we use color A if some layer is lpha 0 etc
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
 
-   if mask then
-   love.graphics.setBlendMode('alpha', 'premultiplied')
-   
-	love.graphics.setShader(maskShader)
-   love.graphics.setColor(color1[1], color1[2], color1[3], alpha1/5)
-	maskShader:send('imageA', texture1)
-   love.graphics.setColor(color2[1], color2[2], color2[3], alpha2/5 )
-	maskShader:send('imageB', texture2)
-	love.graphics.draw(mask)
-   love.graphics.setShader()
-   love.graphics.setBlendMode("alpha") ---<<<<
-end
 
-   if false and mask then   
+   love.graphics.setShader(maskShader)
+   local transform = love.math.newTransform( )
+   local s = (love.math.random()*5) / 10
+   transform:rotate(love.math.random()* math.pi*2)
+   transform:scale(s,s)
+
+   local m1,m2,_,_,m5,m6 = transform:getMatrix()
+
+   maskShader:send('fill', texture2)
+--   print(alpha1/5)
+   maskShader:send('backgroundColor', {color1[1], color1[2], color1[3], alpha1/5})
+   maskShader:send('uvTransform', {{m1,m2}, {m5,m6}})
+   if mask then
+      local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
+      love.graphics.setColor(color2[1], color2[2], color2[3], alpha2/5 )
+    love.graphics.draw(mask,  0, 0, 0, sx, sy, ox, oy)
+   end
+   love.graphics.setShader()
+
+   --[[
+   if  false and mask then   
       love.graphics.setBlendMode("alpha") ---<<<<
       love.graphics.setStencilTest("greater", 0)
       love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
@@ -218,6 +236,7 @@ end
 
       love.graphics.setStencilTest()
    end
+   --]]
 
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.

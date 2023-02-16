@@ -8,8 +8,6 @@ local maskShader = love.graphics.newShader([[
 	vec4 effect(vec4 color, Image mask, vec2 uv, vec2 fc) {
         vec2 transformedUV = uv * uvTransform;
 
-        
-
         vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
 
         return vec4(patternMix, Texel(mask, uv).r);
@@ -23,6 +21,7 @@ end
 function love.load()
     line = love.graphics.newImage('outlineW.png')
     texture = love.graphics.newImage('textureW.png')
+    texture:setFilter("linear", 'linear')
     texture:setWrap('mirroredrepeat', 'mirroredrepeat')
     texture7 = love.graphics.newImage('texture7.png')
     mask = love.graphics.newImage('mask.png')
@@ -48,7 +47,7 @@ function love.draw()
          local transform = love.math.newTransform( )
          local s = love.math.random()*12
          transform:rotate((delta / 10) % (math.pi*2))
-         transform:scale(1,1)
+         transform:scale(.5,.5)
          
        --  transform:translate(w/2, h/2)
            
