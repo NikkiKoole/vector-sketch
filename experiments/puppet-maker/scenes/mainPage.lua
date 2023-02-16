@@ -437,7 +437,7 @@ function scene.load()
        'assets/parts/leg5.png' }
 
    hairUrls = { 'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
-       'assets/parts/hair5.png' }
+       'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png' }
 
    bodyImgUrls = {}
    bodyParts = {}

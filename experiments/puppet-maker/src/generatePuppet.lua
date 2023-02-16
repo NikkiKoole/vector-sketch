@@ -238,7 +238,7 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
    currentNode.data = {}
    currentNode.data.width = (width * factor) / 10
    currentNode.data.tension = .001
-   currentNode.data.spacing = 50
+   currentNode.data.spacing = 5
    return currentNode
 end
 
