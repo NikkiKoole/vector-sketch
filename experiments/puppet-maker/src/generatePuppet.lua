@@ -247,8 +247,11 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp,
 
    if (true) then
       local lineart = img
+      
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
+
+      if not mask then print('NO MASK FOUND', maskUrl) end
       --if mask then
       local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
       currentNode.texture.retexture = love.graphics.newImage(cnv)
@@ -398,7 +401,7 @@ function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga,tr, ts, lineColor
       local lineartUrl = p.texture.url
       local lineart = mesh.getImage(lineartUrl, p.texture)
       local mask
-
+      print(lineartUrl)
       mask = mesh.getImage(getPNGMaskUrl(lineartUrl))
       if mask == nil then
          print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
