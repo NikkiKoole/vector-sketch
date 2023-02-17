@@ -79,6 +79,29 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    if selectedTab == 'part' then
       currentHeight = 130
 
+      if selectedCategory == 'hair' then
+         if draw then
+            local v = h_slider("hair-width", startX, currentY, 150, values.hairWidthMultiplier, .00005, 2)
+            if v.value then
+               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
+               values.hairWidthMultiplier = v.value
+
+               myWorld:emit('potatoInit', potato)
+               changeHair(potato, values)
+               --redoBrows(potato, values)
+            end
+            currentY = currentY + 25
+            local v = h_slider("hair-tension", startX, currentY, 150, values.hairTension, .00005, 1)
+            if v.value then
+               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
+               values.hairTension = v.value
+
+               myWorld:emit('potatoInit', potato)
+               changeHair(potato, values)
+               --redoBrows(potato, values)
+            end
+         end
+      end
 
 
       if selectedCategory == 'brows' then
@@ -93,6 +116,19 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
 
             currentY = currentY + 25
+            local v = h_slider("brow-wide", startX, currentY, 50, values.browsWideMultiplier, .5, 2)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.browsWideMultiplier = v.value
+               print(values.browsWideMultiplier)
+               arrangeBrows()
+               myWorld:emit('potatoInit', potato)
+               redoBrows(potato, values)
+            end
+
+            currentY = currentY + 25
+
+
             local v = h_slider("brow-movement", startX, currentY, 50, values.browsDefaultBend, 1, 10)
             if v.value then
                local img = mesh.getImage(browImgUrls[values.brows.shape])
@@ -222,6 +258,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
       if selectedCategory == 'legs' then
          if draw then
+            v = h_slider("leg-axis", startX, currentY, 50, values.legXAxis, 0, 1)
+            if v.value then
+               values.legXAxis = math.floor(v.value * 2) / 2.0
+               changeLegs(biped, values)
+               myWorld:emit("bipedAttachLegs", biped)
+            end
+            currentY = currentY + 25
             v = h_slider("leg-length", startX, currentY, 50, values.legLength, 200, 2000)
             if v.value then
                values.legLength = v.value
@@ -251,7 +294,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             head.dirty = true
             transforms.setTransforms(head)
             redoHead(biped, values)
-
+            changeHair(potato, values)
             myWorld:emit('potatoInit', potato)
             myWorld:emit("bipedAttachHead", biped)
          end
@@ -346,14 +389,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       startX = startX + (width / 3) * 0.1
       if draw then
          local pickedColors = {
-            palettes[values[selectedCategory].bgPal],
-            palettes[values[selectedCategory].fgPal],
-            palettes[values[selectedCategory].linePal],
+             palettes[values[selectedCategory].bgPal],
+             palettes[values[selectedCategory].fgPal],
+             palettes[values[selectedCategory].linePal],
          }
          local sliderValues = {
-            values[selectedCategory].bgAlpha,
-            values[selectedCategory].fgAlpha,
-            values[selectedCategory].lineAlpha
+             values[selectedCategory].bgAlpha,
+             values[selectedCategory].fgAlpha,
+             values[selectedCategory].lineAlpha
 
          }
          for i = 1, 3 do
@@ -572,11 +615,11 @@ function partSettingsScrollable(draw, clickX, clickY)
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
    settingsScrollArea = {
-      startX,
-      currentY - cellMargin,
-      width,
-      scrollAreaHeight,
-      (cellSize)
+       startX,
+       currentY - cellMargin,
+       width,
+       scrollAreaHeight,
+       (cellSize)
    }
    if draw then
       love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea
@@ -598,13 +641,13 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                if draw then
                   renderElement(
-                     renderType,
-                     value,
-                     renderContainer,
-                     xPosition,
-                     yPosition,
-                     cellWidth,
-                     cellHeight
+                      renderType,
+                      value,
+                      renderContainer,
+                      xPosition,
+                      yPosition,
+                      cellWidth,
+                      cellHeight
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
@@ -626,13 +669,13 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                if draw then
                   renderElement(
-                     renderType,
-                     value,
-                     renderContainer,
-                     xPosition,
-                     yPosition,
-                     cellWidth,
-                     cellHeight
+                      renderType,
+                      value,
+                      renderContainer,
+                      xPosition,
+                      yPosition,
+                      cellWidth,
+                      cellHeight
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
@@ -659,13 +702,13 @@ function partSettingsScrollable(draw, clickX, clickY)
                   local value = ((index % rows) * columns) + i
                   if draw then
                      renderElement(
-                        renderType,
-                        value,
-                        renderContainer,
-                        xPosition,
-                        yPosition,
-                        cellWidth,
-                        cellHeight
+                         renderType,
+                         value,
+                         renderContainer,
+                         xPosition,
+                         yPosition,
+                         cellWidth,
+                         cellHeight
                      )
                   else
                      if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
@@ -822,15 +865,15 @@ end
 function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton =
        bigButtonWithSmallAroundIt(
-          x,
-          y,
-          {
-             imgArray[values[param].shape],
-             palettes[values[param].bgPal],
-             textures[values[param].fgTex],
-             palettes[values[param].fgPal],
-             palettes[values[param].linePal]
-          }
+           x,
+           y,
+           {
+               imgArray[values[param].shape],
+               palettes[values[param].bgPal],
+               textures[values[param].fgTex],
+               palettes[values[param].fgPal],
+               palettes[values[param].linePal]
+           }
        )
 
    -- todo maybe parametrize palettes and textures?

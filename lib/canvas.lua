@@ -61,12 +61,10 @@ lib.renderMaskedTexture = function(maskShape, texture, x, y, sx, sy)
    love.graphics.setStencilTest("greater", 0)
    love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
    love.graphics.setStencilTest()
-
 end
 
 -- lifted from alpha padder
 local function smoocheCanvas(canvas)
-
    local imageData = canvas:newImageData()
    local width, height = imageData:getDimensions()
    local format = imageData:getFormat()
@@ -93,10 +91,8 @@ local function smoocheCanvas(canvas)
                end
             end
          else
-
             result:setPixel(x, y, r, g, b, a * 1)
          end
-
       end
    end
    return result
@@ -120,7 +116,7 @@ local function myStencilFunction(mask, flipx, flipy, imgw, imgh)
 end
 
 
--- only thing thats no longer possible == using an alpha for the background color 
+-- only thing thats no longer possible == using an alpha for the background color
 local maskShader = love.graphics.newShader([[
 	uniform Image fill;
     uniform vec4 backgroundColor;
@@ -131,14 +127,14 @@ local maskShader = love.graphics.newShader([[
 
         vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
       // multiplying here with backgroundCOlor makes everything transparent....
-      // not exactly what I'm after, but better then nothing. (I suppose) 
+      // not exactly what I'm after, but better then nothing. (I suppose)
         return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a  );
 	}
 ]])
 
 
-lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, lineColor, lineAlpha,flipx, flipy)
-
+lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, lineColor, lineAlpha,
+                                  flipx, flipy)
    --local flipx = 1 -- paramter this
    --local flipy = -1 -- parameter this
    local lineartColor = lineColor or { 0, 0, 0, 1 }
@@ -147,39 +143,39 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
    love.graphics.setCanvas({ canvas, stencil = false }) --<<<
    --
-   
+
    -- the reason for outline ghost stuff is this color
    -- its not a simple fix, you could make it so we use color A if some layer is lpha 0 etc
    love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
 
 
    love.graphics.setShader(maskShader)
-   local transform = love.math.newTransform( )
-   local s = (love.math.random()*25) / 10
-   transform:rotate(love.math.random()* math.pi*2)
-   transform:scale(s,s)
+   local transform = love.math.newTransform()
+   local s = (love.math.random() * 25) / 10
+   transform:rotate(love.math.random() * math.pi * 2)
+   transform:scale(s, s)
 
-   local m1,m2,_,_,m5,m6 = transform:getMatrix()
+   local m1, m2, _, _, m5, m6 = transform:getMatrix()
 
    maskShader:send('fill', texture2)
---   print(alpha1/5)
-   maskShader:send('backgroundColor', {color1[1], color1[2], color1[3], alpha1/5})
-   maskShader:send('uvTransform', {{m1,m2}, {m5,m6}})
+   --   print(alpha1/5)
+   maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
+   maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
    if mask then
       local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
-      love.graphics.setColor(color2[1], color2[2], color2[3], alpha2/5 )
-    love.graphics.draw(mask,  0, 0, 0, sx, sy, ox, oy)
+      love.graphics.setColor(color2[1], color2[2], color2[3], alpha2 / 5)
+      love.graphics.draw(mask, 0, 0, 0, sx, sy, ox, oy)
    end
    love.graphics.setShader()
 
    --[[
-   if  false and mask then   
+   if  false and mask then
       love.graphics.setBlendMode("alpha") ---<<<<
       love.graphics.setStencilTest("greater", 0)
       love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
       --local ow, oh = grunge:getDimensions()
-      
+
       --love.graphics.setShader(ShapeShader)
       if texture1 then
          local gw, gh = texture1:getDimensions()
@@ -200,7 +196,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
          love.graphics.setColor(color1[1], color1[2], color1[3], alpha1/5)
          love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
       end
-      
+
       -- second texture
       if  texture2 then
          local gw, gh = texture2:getDimensions()
@@ -238,16 +234,24 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       love.graphics.setStencilTest()
    end
    --]]
-
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-   love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha/5)
+   love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
 
 
    local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
    love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
+   if false then
+      local img = love.graphics.newImage('assets/parts/eye3.png')
+      love.graphics.setBlendMode('subtract')
+      love.graphics.setColor(0, 1, 0)
+      for i = 1, 100 do
+         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random())
+      end
 
+      love.graphics.setBlendMode("alpha")
+   end
    love.graphics.setColor(0, 0, 0) --- huh?!
    love.graphics.setCanvas() --- <<<<<
 

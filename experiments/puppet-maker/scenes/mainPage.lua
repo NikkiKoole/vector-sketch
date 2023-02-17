@@ -335,7 +335,7 @@ function scene.load()
 
 
    }
-   for i =1, #textures do 
+   for i = 1, #textures do
       textures[i]:setWrap('mirroredrepeat', 'mirroredrepeat')
    end
 
@@ -426,15 +426,7 @@ function scene.load()
 
 
 
-   feetImgUrls = { 'assets/parts/feet1.png', 'assets/parts/feet2.png', 'assets/parts/feet3.png' }
-   feetUrls = { 'assets/feet1.polygons.txt', 'assets/feet2.polygons.txt', 'assets/feet3.polygons.txt' }
-   feetParts = {}
-   for i = 1, #feetUrls do
-      feetParts[i] = parse.parseFile(feetUrls[i])[1]
-      stripPath(feetParts[i], '/experiments/puppet%-maker/')
-   end
 
-   handParts = feetParts
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
        'assets/parts/leg5.png' }
@@ -442,9 +434,10 @@ function scene.load()
    hairUrls = { 'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
        'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png' }
 
-   bodyImgUrls = {}
-   bodyParts = {}
+   --bodyImgUrls = {}
+   --bodyParts = {}
    -- bodies use the same shapes as the heads
+   --[[
    local bparts = parse.parseFile('assets/bodies.polygons.txt')
 
    for i = 1, #bparts do
@@ -457,15 +450,19 @@ function scene.load()
          end
       end
    end
-
+   --]]
+   bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
+   feetImgUrls, feetParts = loadGroupFromFile('assets/bodies.polygons.txt', 'feet')
+   handParts = feetParts
+   headImgUrls = bodyImgUrls
+   headParts = bodyParts
    -- a working nullobject implentation!
    local p = #bodyParts + 1
    bodyParts[p] = copy3(nullObject)
    bodyImgUrls[p] = 'assets/parts/leg1.png'
 
 
-   headImgUrls = bodyImgUrls
-   headParts = bodyParts
+
 
    --local faceparts = parse.parseFile('assets/faceparts.polygons.txt')
 
@@ -536,6 +533,7 @@ function scene.load()
            lineAlpha = 5,
        },
        browsWidthMultiplier = .5,
+       browsWideMultiplier  = 1,
        browsDefaultBend     = 1,
        nose                 = {
            shape     = 1,
@@ -568,6 +566,7 @@ function scene.load()
        legWidthMultiplier   = 1,
        leg1flop             = -1,
        leg2flop             = 1,
+       legXAxis             = 1,
        arms                 = {
            shape     = 1,
            bgPal     = 4,
@@ -621,6 +620,8 @@ function scene.load()
            fgAlpha   = 1,
            lineAlpha = 5,
        },
+       headWidthMultiplier  = 1,
+       headHeightMultiplier = 1,
        hair                 = {
            shape     = 1,
            bgPal     = 4,
@@ -632,8 +633,8 @@ function scene.load()
            fgAlpha   = 5,
            lineAlpha = 5,
        },
-       headWidthMultiplier  = 1,
-       headHeightMultiplier = 1,
+       hairWidthMultiplier  = 1,
+       hairTension          = 0.001,
        neck                 = {
            shape     = 1,
            bgPal     = 4,

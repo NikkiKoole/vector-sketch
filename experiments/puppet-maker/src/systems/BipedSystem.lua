@@ -87,16 +87,19 @@ local function getPositionsForLegsAttaching(e)
         local flipy     = e.biped.values.body.flipy or 1
         local points    = meta.points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
-        local l1x, l1y  = body.transforms._g:transformPoint(newPoints[6][1], newPoints[6][2])
-        local l2x, l2y  = body.transforms._g:transformPoint(newPoints[4][1], newPoints[4][2])
-        return l1x  , l1y , l2x , l2y
+        local t         = e.biped.values.legXAxis
+        local mx        = numbers.lerp(newPoints[6][1], newPoints[5][1], t)
+        local l1x, l1y  = body.transforms._g:transformPoint(mx, newPoints[6][2])
+        local mx2       = numbers.lerp(newPoints[4][1], newPoints[5][1], t)
+        local l2x, l2y  = body.transforms._g:transformPoint(mx2, newPoints[4][2])
+        return l1x, l1y, l2x, l2y
     else
         local lc1 = node.findNodeByName(body, 'leg1')
         local lc2 = node.findNodeByName(body, 'leg2')
         if lc1 and lc2 then
             local l1x, l1y = body.transforms._g:transformPoint(lc1.points[1])
             local l2x, l2y = body.transforms._g:transformPoint(lc2.points[1])
-            return l1x , l1y  , l2x , l2y 
+            return l1x, l1y, l2x, l2y
         end
     end
 end
@@ -114,7 +117,7 @@ function BipedSystem:bipedInit(e)
 
     e.biped.leg1.points[1] = { l1x, l1y }
     e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) / 1 }
-    
+
     e.biped.leg2.points[1] = { l2x, l2y }
     e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) / 1 }
 
@@ -213,7 +216,7 @@ function setLegs(e)
     local body = e.biped.body
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
-    
+
     l1x = l1x or 0
     l1y = l1y or 0
     l2x = l2x or 0
@@ -324,10 +327,10 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
         if keepAngleAndDistance then
             local angle, dist = getAngleAndDistance(e.biped.neck.points[2][1], e.biped.neck.points[2][2],
                     e.biped.neck.points[1][1], e.biped.neck.points[1][2])
-                   
-                    local newx, newy = setAngleAndDistance(neckX, neckY, angle, dist)
+
+            local newx, newy = setAngleAndDistance(neckX, neckY, angle, dist)
             e.biped.neck.points[1] = { neckX, neckY }
-            
+
             e.biped.neck.points[2] = { newx, newy }
         else
             e.biped.neck.points[1] = { neckX, neckY }

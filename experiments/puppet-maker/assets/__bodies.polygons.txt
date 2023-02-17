@@ -399,39 +399,7 @@ wrap = "repeat"
 folder = true,
 name = "feet1",
 transforms = {
-l = { 1515.18, 595.218, 0, 1, 1, 148.736, -36.837, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -306, -146.5 }, { 306, -146.5 }, { 306, 146.5 }, { -306, 146.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet6.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 786.639, 1014.681, 0, 1, 1, 244.186, -44.946, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -273, -150 }, { 273, -150 }, { 273, 150 }, { -273, 150 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet7.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1497.518, 1019.096, 0, 1, 1, 180.278, -13.122, 0, 0 }
+l = { 1382.718, 149.263, 0, 1, 1, 148.736, -36.837, 0, 0 }
 }
 } },
 folder = true,

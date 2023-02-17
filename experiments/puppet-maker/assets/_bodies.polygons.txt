@@ -325,22 +325,6 @@ children = { {
 children = { {
 color = { 0, 0, 0, 1 },
 name = "",
-points = { { 427, 271 }, { 721, 271 }, { 721, 439 }, { 427, 439 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet1.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1634.052, 300.131, 0, 1, 1, 676.021, 343.964, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
 points = { { 427, 271 }, { 694, 271 }, { 694, 416 }, { 427, 416 } },
 texture = {
 filter = "linear",
@@ -373,65 +357,17 @@ l = { 0, 0, 0, 1, 1, 647.392, 354.867, 0, 0 }
 children = { {
 color = { 0, 0, 0, 1 },
 name = "",
-points = { { -219.5, -122.5 }, { 219.5, -122.5 }, { 219.5, 122.5 }, { -219.5, 122.5 } },
+points = { { 427, 271 }, { 721, 271 }, { 721, 439 }, { 427, 439 } },
 texture = {
 filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet4.png",
+url = "/experiments/puppet-maker/assets/parts/feet1.png",
 wrap = "repeat"
 }
 } },
 folder = true,
 name = "feet1",
 transforms = {
-l = { 1662.051, -152.416, 0, 1, 1, 148.736, -36.837, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -241.5, -106 }, { 241.5, -106 }, { 241.5, 106 }, { -241.5, 106 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet5.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1515.18, 595.218, 0, 1, 1, 148.736, -36.837, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -306, -146.5 }, { 306, -146.5 }, { 306, 146.5 }, { -306, 146.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet6.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 786.639, 1014.681, 0, 1, 1, 244.186, -44.946, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -273, -150 }, { 273, -150 }, { 273, 150 }, { -273, 150 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet7.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1497.518, 1019.096, 0, 1, 1, 180.278, -13.122, 0, 0 }
+l = { 1634.052, 300.131, 0, 1, 1, 676.021, 343.964, 0, 0 }
 }
 } },
 folder = true,

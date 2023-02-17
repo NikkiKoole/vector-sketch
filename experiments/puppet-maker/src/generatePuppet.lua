@@ -187,11 +187,12 @@ function arrangeBrows()
 
    local img = mesh.getImage(browImgUrls[values.brows.shape])
    local width, height = img:getDimensions()
-   local multiplier = height / 2
+   local multiplier = (height / 2)
    local picked = bends[values.browsDefaultBend]
 
    local b1p = { picked[1] * multiplier, picked[2] * multiplier, picked[3] * multiplier }
 
+   height = height * values.browsWideMultiplier
    -- todo currently I am just mirroring the brows, not always what we want
    brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.points = { { height / 2, b1p[1] }, { 0, b1p[2] }, { -height / 2, b1p[3] } }
@@ -219,11 +220,11 @@ end
 
 
 function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
-                                    optionalPoints,
+                                    hairWidthMultiplier, hairTension, optionalPoints,
                                     flipx, flipy)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
-   print(width, height)
+
    local currentNode = {}
    currentNode.texture = {}
    currentNode.texture.url = url
@@ -234,12 +235,24 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
 
    currentNode.points = optionalPoints or { { 0, 0 }, { 0, 100 }, { 100, 100 } }
    local length = getLengthOfPath(currentNode.points)
-   print('lengh = ', length)
-   local factor = (height / length)
+
+   local factor = (length / height)
    currentNode.data = {}
-   currentNode.data.width = (width * factor) / 10
-   currentNode.data.tension = .001
+   currentNode.data.width = (width * factor) * hairWidthMultiplier
+   currentNode.data.tension = hairTension
    currentNode.data.spacing = 5
+
+
+   if (true) then
+      local lineart = img
+      local maskUrl = getPNGMaskUrl(url)
+      local mask = mesh.getImage(maskUrl)
+      --if mask then
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lp, la, flipx, flipy)
+      currentNode.texture.retexture = love.graphics.newImage(cnv)
+      --end
+   end
+
    return currentNode
 end
 
@@ -451,7 +464,7 @@ function createHairVanillaLine(values, hairLine)
            palettes[values.hair.fgPal],
            values.hair.fgAlpha,
            palettes[values.hair.linePal],
-           values.hair.lineAlpha, hairLine)
+           values.hair.lineAlpha, values.hairWidthMultiplier, values.hairTension, hairLine)
 end
 
 function createNeckRubberhose(values, points)
