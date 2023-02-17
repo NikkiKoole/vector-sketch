@@ -382,6 +382,36 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
    end
+
+   if selectedTab == 'pattern' then
+      currentHeight = 70
+      if draw then
+         local v = h_slider("pattern-scale", startX, currentY, 50, values[selectedCategory].texScale, 1, 9)
+         if v.value then
+           
+            v.value = math.floor(v.value)
+            values[selectedCategory].texScale = v.value
+            --print(values[selectedCategory].texScale)
+            local f = findPart(selectedCategory)
+            local func = f.funcs[1] 
+            func(f.funcs[3], values)
+         end
+         currentY = currentY + 25
+         local v = h_slider("pattern-rotation", startX, currentY, 50, values[selectedCategory].texRot, 1, 8)
+         if v.value then
+           
+            v.value = math.floor(v.value)
+            values[selectedCategory].texRot = v.value
+
+            --print(values[selectedCategory].texScale)
+            local f = findPart(selectedCategory)
+            local func = f.funcs[1] 
+            func(f.funcs[3], values)
+         end
+      end
+   end
+
+
    if selectedTab == 'colors' then
       -- i want 3 buttons, 1 for bg 1 for FG 1 for line, default = BG
       local buttonWidth = (width / 3) * 0.8

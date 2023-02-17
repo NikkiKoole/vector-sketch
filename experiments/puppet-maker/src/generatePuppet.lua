@@ -176,7 +176,7 @@ function createBrowBezier(values, points)
            palettes[values.brows.fgPal],
            values.brows.fgAlpha,
            values.brows.texRot,
-           values.brows.texScale,
+           texscales[values.brows.texScale],
            palettes[values.brows.linePal],
            values.brows.lineAlpha,
            values.browsWidthMultiplier,
@@ -430,7 +430,7 @@ function createArmRubberhose(armNr, values, points)
            palettes[values.arms.fgPal],
            values.arms.fgAlpha,
            values.arms.texRot,
-           values.arms.texScale,
+           texscales[values.arms.texScale],
            palettes[values.arms.linePal],
            values.arms.lineAlpha,
            flop
@@ -451,7 +451,7 @@ function createLegRubberhose(legNr, values, points)
            palettes[values.legs.fgPal],
            values.legs.fgAlpha,
            values.legs.texRot,
-           values.legs.texScale,
+           texscales[values.legs.texScale],
            palettes[values.legs.linePal],
            values.legs.lineAlpha,
            flop
@@ -470,7 +470,7 @@ function createHairVanillaLine(values, hairLine)
            palettes[values.hair.fgPal],
            values.hair.fgAlpha,
            values.hair.texRot,
-           values.hair.texScale,
+           texscales[values.hair.texScale],
            palettes[values.hair.linePal],
            values.hair.lineAlpha, values.hairWidthMultiplier, values.hairTension, hairLine)
 end
@@ -486,7 +486,7 @@ function createNeckRubberhose(values, points)
            palettes[values.neck.fgPal],
            values.neck.fgAlpha,
            values.neck.texRot,
-           values.neck.texScale,
+           texscales[values.neck.texScale],
            palettes[values.neck.linePal],
            values.neck.lineAlpha,
            flop
@@ -573,7 +573,7 @@ function redoGraphicHelper(part, name, values)
        palettes[values[name].fgPal],
        values[name].fgAlpha,
        values[name].texRot,
-           values[name].texScale,
+      texscales[  values[name].texScale],
        palettes[values[name].linePal],
        values[name].lineAlpha,
        values[name].flipx or 1,

@@ -472,6 +472,9 @@ function scene.load()
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
    earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
 
+
+   texscales = {  0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64,  2.56}
+
    values = {
        potatoHead           = false,
        eyes                 = {

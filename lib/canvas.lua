@@ -152,7 +152,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
    love.graphics.setShader(maskShader)
    local transform = love.math.newTransform()
-   transform:rotate(texRot)
+   transform:rotate((texRot * math.pi*2)/8)
    transform:scale(texScale, texScale)
    local m1, m2, _, _, m5, m6 = transform:getMatrix()
 
@@ -240,10 +240,10 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
    love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
-   if true then
+   if false then
       local img = love.graphics.newImage('assets/parts/eye3.png')
       love.graphics.setBlendMode('subtract')
-      love.graphics.setColor(0, 1, 0)
+      love.graphics.setColor(.5, .5, 0)
       for i = 1, 100 do
          love.graphics.draw(img, lw * love.math.random(), lh * love.math.random())
       end
