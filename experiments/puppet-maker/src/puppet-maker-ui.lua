@@ -260,7 +260,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          if draw then
             v = h_slider("leg-axis", startX, currentY, 50, values.legXAxis, 0, 1)
             if v.value then
-               values.legXAxis = math.floor(v.value * 2) / 2.0
+               values.legXAxis = math.floor(v.value * 4) / 4.0
                changeLegs(biped, values)
                myWorld:emit("bipedAttachLegs", biped)
             end

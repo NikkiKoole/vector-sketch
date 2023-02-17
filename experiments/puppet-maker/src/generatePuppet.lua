@@ -175,6 +175,8 @@ function createBrowBezier(values, points)
            textures[values.brows.fgTex],
            palettes[values.brows.fgPal],
            values.brows.fgAlpha,
+           values.brows.texRot,
+           values.brows.texScale,
            palettes[values.brows.linePal],
            values.brows.lineAlpha,
            values.browsWidthMultiplier,
@@ -219,7 +221,7 @@ end
 
 
 
-function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
+function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la,
                                     hairWidthMultiplier, hairTension, optionalPoints,
                                     flipx, flipy)
    local img = mesh.getImage(url)
@@ -248,7 +250,7 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
       --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lp, la, flipx, flipy)
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
       currentNode.texture.retexture = love.graphics.newImage(cnv)
       --end
    end
@@ -256,7 +258,7 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la,
    return currentNode
 end
 
-function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop, length, widthMultiplier, optionalPoints,
+function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flop, length, widthMultiplier, optionalPoints,
                                    flipx, flipy)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
@@ -284,7 +286,7 @@ function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
       --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lp, la, flipx, flipy)
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
       currentNode.texture.retexture = love.graphics.newImage(cnv)
       --end
    end
@@ -294,7 +296,7 @@ function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, flop
    return currentNode
 end
 
-function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, widthMultiplier, optionalPoints, flipx, flipy)
+function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, widthMultiplier, optionalPoints, flipx, flipy)
    -- print(inspect(optionalPoints))
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
@@ -322,7 +324,7 @@ function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, lp, la, widthMul
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
       --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lp, la, flipx, flipy)
+      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
       currentNode.texture.retexture = love.graphics.newImage(cnv)
       --end
    end
@@ -389,7 +391,7 @@ local function getIndexOfGraphicPart(part)
    end
 end
 
-function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga, lineColor, lineAlpha, flipx, flipy)
+function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga,tr, ts, lineColor, lineAlpha, flipx, flipy)
    local index = getIndexOfGraphicPart(part)
    local p = part.children and part.children[index] or part
    if p.texture then
@@ -403,7 +405,7 @@ function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga, lineColor, lineA
       end
 
       if (lineart) then
-         local canvas = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, lineColor, lineAlpha, flipx,
+         local canvas = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColor, lineAlpha, flipx,
                  flipy)
          if p.texture.canvas then
             p.texture.canvas:release()
@@ -427,6 +429,8 @@ function createArmRubberhose(armNr, values, points)
            textures[values.arms.fgTex],
            palettes[values.arms.fgPal],
            values.arms.fgAlpha,
+           values.arms.texRot,
+           values.arms.texScale,
            palettes[values.arms.linePal],
            values.arms.lineAlpha,
            flop
@@ -446,6 +450,8 @@ function createLegRubberhose(legNr, values, points)
            textures[values.legs.fgTex],
            palettes[values.legs.fgPal],
            values.legs.fgAlpha,
+           values.legs.texRot,
+           values.legs.texScale,
            palettes[values.legs.linePal],
            values.legs.lineAlpha,
            flop
@@ -463,6 +469,8 @@ function createHairVanillaLine(values, hairLine)
            textures[values.hair.fgTex],
            palettes[values.hair.fgPal],
            values.hair.fgAlpha,
+           values.hair.texRot,
+           values.hair.texScale,
            palettes[values.hair.linePal],
            values.hair.lineAlpha, values.hairWidthMultiplier, values.hairTension, hairLine)
 end
@@ -477,6 +485,8 @@ function createNeckRubberhose(values, points)
            textures[values.neck.fgTex],
            palettes[values.neck.fgPal],
            values.neck.fgAlpha,
+           values.neck.texRot,
+           values.neck.texScale,
            palettes[values.neck.linePal],
            values.neck.lineAlpha,
            flop
@@ -562,6 +572,8 @@ function redoGraphicHelper(part, name, values)
        textures[values[name].fgTex],
        palettes[values[name].fgPal],
        values[name].fgAlpha,
+       values[name].texRot,
+           values[name].texScale,
        palettes[values[name].linePal],
        values[name].lineAlpha,
        values[name].flipx or 1,

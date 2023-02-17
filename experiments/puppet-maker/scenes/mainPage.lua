@@ -472,10 +472,6 @@ function scene.load()
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
    earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
 
-
-
-
-
    values = {
        potatoHead           = false,
        eyes                 = {
@@ -488,6 +484,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        eyeWidthMultiplier   = 1,
        eyeHeightMultiplier  = 1,
@@ -503,6 +501,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        pupilSizeMultiplier  = 1,
        ears                 = {
@@ -515,6 +515,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        earUnderHead         = false,
        earWidthMultiplier   = 1,
@@ -531,6 +533,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        browsWidthMultiplier = .5,
        browsWideMultiplier  = 1,
@@ -545,6 +549,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
 
        },
        noseXAxis            = 0, --  -2,-1,0,1,2
@@ -561,12 +567,14 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        legLength            = 700,
        legWidthMultiplier   = 1,
        leg1flop             = -1,
        leg2flop             = 1,
-       legXAxis             = 1,
+       legXAxis             = 0,
        arms                 = {
            shape     = 1,
            bgPal     = 4,
@@ -577,6 +585,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        armLength            = 700,
        armWidthMultiplier   = 1,
@@ -592,6 +602,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        body                 = {
            shape     = 1,
@@ -604,6 +616,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 1,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        bodyWidthMultiplier  = 1,
        bodyHeightMultiplier = 1,
@@ -619,6 +633,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 1,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        headWidthMultiplier  = 1,
        headHeightMultiplier = 1,
@@ -632,6 +648,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        hairWidthMultiplier  = 1,
        hairTension          = 0.001,
@@ -645,6 +663,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
        neckLength           = 700,
        neckWidthMultiplier  = 1,
@@ -658,6 +678,8 @@ function scene.load()
            bgAlpha   = 5,
            fgAlpha   = 5,
            lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
        },
    }
 

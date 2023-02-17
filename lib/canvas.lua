@@ -133,10 +133,11 @@ local maskShader = love.graphics.newShader([[
 ]])
 
 
-lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, lineColor, lineAlpha,
+lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale, lineColor, lineAlpha,
                                   flipx, flipy)
    --local flipx = 1 -- paramter this
    --local flipy = -1 -- parameter this
+  -- print(texRot, texScale)
    local lineartColor = lineColor or { 0, 0, 0, 1 }
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
@@ -151,14 +152,11 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
    love.graphics.setShader(maskShader)
    local transform = love.math.newTransform()
-   local s = (love.math.random() * 25) / 10
-   transform:rotate(love.math.random() * math.pi * 2)
-   transform:scale(s, s)
-
+   transform:rotate(texRot)
+   transform:scale(texScale, texScale)
    local m1, m2, _, _, m5, m6 = transform:getMatrix()
 
    maskShader:send('fill', texture2)
-   --   print(alpha1/5)
    maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
    maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
    if mask then
@@ -242,7 +240,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
    love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
-   if false then
+   if true then
       local img = love.graphics.newImage('assets/parts/eye3.png')
       love.graphics.setBlendMode('subtract')
       love.graphics.setColor(0, 1, 0)
