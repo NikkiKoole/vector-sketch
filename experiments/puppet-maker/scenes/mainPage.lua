@@ -944,10 +944,7 @@ function attachCallbacks()
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
          print('focus camera on third other shape', x, y)
       end
-      if key == 'b' then
-         values.potatoHead = not values.potatoHead
-         attachAllFaceParts()
-      end
+    
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)

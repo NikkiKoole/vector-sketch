@@ -379,6 +379,17 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.body.flipx = values.body.flipx == -1 and 1 or -1
                update()
             end
+
+            currentY = currentY + 25
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.circle('fill', startX, currentY, 10)
+
+            local b = ui.getUICircle(startX, currentY, 10)
+            if b then
+               values.potatoHead = not values.potatoHead
+               attachAllFaceParts()
+
+            end
          end
       end
    end
