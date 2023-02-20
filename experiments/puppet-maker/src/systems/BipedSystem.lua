@@ -26,6 +26,7 @@ local function getHeadDeltaAttachement(e)
         local hdy = newPoints[5][2] - e.biped.head.transforms.l[7]
         return hdx, hdy
     end
+    return 0, 0
 end
 
 local function getPositionsForNeckAttaching(e)

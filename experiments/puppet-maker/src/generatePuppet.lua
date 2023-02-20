@@ -56,9 +56,11 @@ function getHeadPoints(e)
       local flipy = e.potato.values[parentName].flipy or 1
       local points = meta.points
       local newPoints = getFlippedMetaObject(flipx, flipy, points)
+
       return newPoints
    end
-   return {}
+
+   return { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } }
 end
 
 function getFlippedMetaObject(flipx, flipy, points)
@@ -247,7 +249,7 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp,
 
    if (true) then
       local lineart = img
-      
+
       local maskUrl = getPNGMaskUrl(url)
       local mask = mesh.getImage(maskUrl)
 
@@ -261,7 +263,8 @@ function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp,
    return currentNode
 end
 
-function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flop, length, widthMultiplier, optionalPoints,
+function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flop, length, widthMultiplier,
+                                   optionalPoints,
                                    flipx, flipy)
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
@@ -299,7 +302,8 @@ function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, 
    return currentNode
 end
 
-function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, widthMultiplier, optionalPoints, flipx, flipy)
+function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, widthMultiplier, optionalPoints, flipx,
+                               flipy)
    -- print(inspect(optionalPoints))
    local img = mesh.getImage(url)
    local width, height = img:getDimensions()
@@ -394,7 +398,7 @@ local function getIndexOfGraphicPart(part)
    end
 end
 
-function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga,tr, ts, lineColor, lineAlpha, flipx, flipy)
+function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColor, lineAlpha, flipx, flipy)
    local index = getIndexOfGraphicPart(part)
    local p = part.children and part.children[index] or part
    if p.texture then
@@ -408,7 +412,8 @@ function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga,tr, ts, lineColor
       end
 
       if (lineart) then
-         local canvas = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColor, lineAlpha, flipx,
+         local canvas = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColor, lineAlpha,
+                 flipx,
                  flipy)
          if p.texture.canvas then
             p.texture.canvas:release()
@@ -534,6 +539,7 @@ function changeBody(biped, values)
 
    if (values.potatoHead) then
       attachAllFaceParts()
+      changeHair(potato, values)
    end
 
    mesh.meshAll(root)
@@ -576,7 +582,7 @@ function redoGraphicHelper(part, name, values)
        palettes[values[name].fgPal],
        values[name].fgAlpha,
        values[name].texRot,
-      texscales[  values[name].texScale],
+       texscales[values[name].texScale],
        palettes[values[name].linePal],
        values[name].lineAlpha,
        values[name].flipx or 1,
@@ -652,6 +658,7 @@ function changeHair(potato, values)
 
    local hp = getHeadPoints(potato)
    local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
+   -- print(inspect(hairLine))
 
    hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
 

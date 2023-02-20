@@ -322,6 +322,10 @@ function scene.load()
    tiles = love.graphics.newImage('assets/layered/tiles.145.png')
    tiles2 = love.graphics.newImage('assets/layered/tiles2.150.png')
 
+
+   tab1 = love.graphics.newImage('assets/tab1.png')
+   tab2 = love.graphics.newImage('assets/tab2.png')
+   tab3 = love.graphics.newImage('assets/tab3.png')
    textures = {
 
        love.graphics.newImage('assets/layered/texture-type0.png'),
@@ -456,11 +460,13 @@ function scene.load()
    handParts = feetParts
    headImgUrls = bodyImgUrls
    headParts = bodyParts
-   -- a working nullobject implentation!
-   local p = #bodyParts + 1
-   bodyParts[p] = copy3(nullObject)
-   bodyImgUrls[p] = 'assets/parts/leg1.png'
 
+   -- a working nullobject implentation!
+   if false then
+      local p = #bodyParts + 1
+      bodyParts[p] = copy3(nullObject)
+      bodyImgUrls[p] = 'assets/null.png'
+   end
 
 
 
@@ -473,7 +479,7 @@ function scene.load()
    earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
 
 
-   texscales = {  0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64,  2.56}
+   texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 
    values = {
        potatoHead           = false,
@@ -1081,6 +1087,10 @@ function scene.draw()
       love.graphics.setColor(0, 0, 0)
 
       scrollList(true)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.draw(tab1)
+      love.graphics.draw(tab2, 100, 100)
+      love.graphics.draw(tab3, 100, 500)
       partSettingsPanel(0, 0)
 
       prof.push("cam-render")

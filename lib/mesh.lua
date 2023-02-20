@@ -310,6 +310,7 @@ mesh.makeVertices = function(shape)
             coords = unloop.unpackNodePoints(points, false)
          end
          local width = shape.data and shape.data.width or 60
+         -- print(inspect(coords), inspect(points))
          local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
          local vertsWithUVs = {}

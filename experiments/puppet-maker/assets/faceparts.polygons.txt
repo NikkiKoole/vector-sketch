@@ -380,6 +380,31 @@ name = "brow7",
 transforms = {
 l = { -181.243, 9.244, 0, 1, 1, 0, 72.5, 0, 0 }
 }
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 94.5
+},
+name = "",
+points = { { -240, 0 }, { 0, 0 }, { 240, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/brow8.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "brow8",
+transforms = {
+l = { -181.243, 9.244, 0, 1, 1, 0, 72.5, 0, 0 }
+}
 } },
 folder = true,
 name = "eyebrows",
