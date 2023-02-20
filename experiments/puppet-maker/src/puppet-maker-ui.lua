@@ -397,7 +397,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    if selectedTab == 'pattern' then
       currentHeight = 70
       if draw then
-         local v = h_slider("pattern-scale", startX, currentY, 50, values[selectedCategory].texScale, 1, 9)
+         local v = h_slider("pattern-scale", startX, currentY, 200, values[selectedCategory].texScale, 1, 9)
          if v.value then
            
             v.value = math.floor(v.value)
@@ -408,7 +408,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             func(f.funcs[3], values)
          end
          currentY = currentY + 25
-         local v = h_slider("pattern-rotation", startX, currentY, 50, values[selectedCategory].texRot, 1, 8)
+         local v = h_slider("pattern-rotation", startX, currentY, 200, values[selectedCategory].texRot, 0, 15)
          if v.value then
            
             v.value = math.floor(v.value)

@@ -152,7 +152,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
    love.graphics.setShader(maskShader)
    local transform = love.math.newTransform()
-   transform:rotate((texRot * math.pi*2)/8)
+   transform:rotate((texRot * math.pi)/8)
    transform:scale(texScale, texScale)
    local m1, m2, _, _, m5, m6 = transform:getMatrix()
 
