@@ -79,6 +79,47 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    if selectedTab == 'part' then
       currentHeight = 130
 
+
+      if selectedCategory == 'upperlip' then
+         if draw then
+            local v = h_slider("upperlip-width", startX, currentY, 150, values.upperlipWidthMultiplier, .00005, 2)
+            if v.value then
+               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
+               values.upperlipWidthMultiplier = v.value
+               upperlip.transforms.l[4] = v.value
+               myWorld:emit('potatoInit', potato)
+               changeUpperLip(potato, values)
+            end
+            currentY = currentY + 25
+            local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to 1
+               values.mouthYAxis = v.value
+               myWorld:emit('potatoInit', potato)
+            end
+         end
+      end
+      if selectedCategory == 'lowerlip' then
+         if draw then
+            local v = h_slider("lowerlip-width", startX, currentY, 150, values.lowerlipWidthMultiplier, .00005, 2)
+            if v.value then
+               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
+               values.lowerlipWidthMultiplier = v.value
+               lowerlip.transforms.l[4] = v.value
+               myWorld:emit('potatoInit', potato)
+               changeLowerLip(potato, values)
+            end
+            currentY = currentY + 25
+            local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to 1
+               values.mouthYAxis = v.value
+               myWorld:emit('potatoInit', potato)
+            end
+         end
+      end
+
+
       if selectedCategory == 'hair' then
          if draw then
             local v = h_slider("hair-width", startX, currentY, 150, values.hairWidthMultiplier, .00005, 2)
@@ -387,8 +428,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             local b = ui.getUICircle(startX, currentY, 10)
             if b then
                values.potatoHead = not values.potatoHead
+               myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
                attachAllFaceParts()
-
+               setCategories()
             end
          end
       end
@@ -399,24 +441,22 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       if draw then
          local v = h_slider("pattern-scale", startX, currentY, 200, values[selectedCategory].texScale, 1, 9)
          if v.value then
-           
             v.value = math.floor(v.value)
             values[selectedCategory].texScale = v.value
             --print(values[selectedCategory].texScale)
             local f = findPart(selectedCategory)
-            local func = f.funcs[1] 
+            local func = f.funcs[1]
             func(f.funcs[3], values)
          end
          currentY = currentY + 25
          local v = h_slider("pattern-rotation", startX, currentY, 200, values[selectedCategory].texRot, 0, 15)
          if v.value then
-           
             v.value = math.floor(v.value)
             values[selectedCategory].texRot = v.value
 
             --print(values[selectedCategory].texScale)
             local f = findPart(selectedCategory)
-            local func = f.funcs[1] 
+            local func = f.funcs[1]
             func(f.funcs[3], values)
          end
       end

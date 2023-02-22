@@ -40,6 +40,8 @@ Concord.component('potato', function(c, parts)
     c.head = parts.head
     c.values = parts.values
     c.nose = parts.nose
+    c.upperlip = parts.upperlip
+    c.lowerlip = parts.lowerlip
     c.eye1 = parts.eye1
     c.eye2 = parts.eye2
     c.pupil1 = parts.pupil1

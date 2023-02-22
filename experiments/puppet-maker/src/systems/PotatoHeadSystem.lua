@@ -14,6 +14,18 @@ local function getPositionForNoseAttaching(e)
     return x, y
 end
 
+local function getPositionForMouthAttaching(e)
+    local newPoints = getHeadPoints(e)
+
+    local tX = numbers.mapInto(e.potato.values.mouthXAxis, -2, 2, 0, 1)
+    local tY = numbers.mapInto(e.potato.values.mouthYAxis, -3, 3, 0, 1)
+
+    local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
+    local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
+
+    return x, y
+end
+
 function getPositionsForEyesAttaching(e)
     local newPoints = getHeadPoints(e)
 
@@ -38,6 +50,13 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.nose.transforms.l[1] = nosex
     e.potato.nose.transforms.l[2] = nosey
 
+
+    local mouthx, mouthy = getPositionForMouthAttaching(e)
+    e.potato.upperlip.transforms.l[1] = mouthx
+    e.potato.upperlip.transforms.l[2] = mouthy -- - love.math.random() * 50
+    e.potato.lowerlip.transforms.l[1] = mouthx
+    e.potato.lowerlip.transforms.l[2] = mouthy -- + love.math.random() * 50
+
     local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
 
     e.potato.eye1.transforms.l[1] = eyex1
@@ -52,6 +71,10 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil1.transforms.l[2] = eyey1
     e.potato.pupil2.transforms.l[1] = eyex2
     e.potato.pupil2.transforms.l[2] = eyey2
+
+
+
+
 
     local newPoints = getHeadPoints(e)
     local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)

@@ -134,7 +134,7 @@ function guyChildren(e)
    end
 end
 
-function bipedArguments(e, values)
+function bipedArguments(values)
    return {
        guy = guy,
        body = body,
@@ -152,7 +152,7 @@ function bipedArguments(e, values)
    }
 end
 
-function potatoArguments(e, values)
+function potatoArguments(values)
    return {
        head = values.potatoHead and body or head,
        eye1 = eye1,
@@ -161,6 +161,8 @@ function potatoArguments(e, values)
        pupil2 = pupil2,
        ear1 = ear1,
        ear2 = ear2,
+       upperlip = upperlip,
+       lowerlip = lowerlip,
        brow1 = brow1,
        brow2 = brow2,
        nose = nose,
@@ -185,6 +187,40 @@ function createBrowBezier(values, points)
            points)
 end
 
+function createUpperlipBezier(values, points)
+   return createBezierFromImage(
+           upperlipImgUrls[values.upperlip.shape],
+           textures[values.upperlip.bgTex],
+           palettes[values.upperlip.bgPal],
+           values.upperlip.bgAlpha,
+           textures[values.upperlip.fgTex],
+           palettes[values.upperlip.fgPal],
+           values.upperlip.fgAlpha,
+           values.upperlip.texRot,
+           texscales[values.upperlip.texScale],
+           palettes[values.upperlip.linePal],
+           values.upperlip.lineAlpha,
+           values.upperlipWidthMultiplier,
+           points)
+end
+
+function createLowerlipBezier(values, points)
+   return createBezierFromImage(
+           lowerlipImgUrls[values.lowerlip.shape],
+           textures[values.lowerlip.bgTex],
+           palettes[values.lowerlip.bgPal],
+           values.lowerlip.bgAlpha,
+           textures[values.lowerlip.fgTex],
+           palettes[values.lowerlip.fgPal],
+           values.lowerlip.fgAlpha,
+           values.lowerlip.texRot,
+           texscales[values.lowerlip.texScale],
+           palettes[values.lowerlip.linePal],
+           values.lowerlip.lineAlpha,
+           values.lowerlipWidthMultiplier,
+           points)
+end
+
 function arrangeBrows()
    local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
        { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
@@ -201,6 +237,7 @@ function arrangeBrows()
    brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.transforms.l[4] = -1
+   brow2.transforms.l[5] = 3
    --brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
 end
 
@@ -406,7 +443,7 @@ function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColo
       local lineartUrl = p.texture.url
       local lineart = mesh.getImage(lineartUrl, p.texture)
       local mask
-      print(lineartUrl)
+      -- print(lineartUrl)
       mask = mesh.getImage(getPNGMaskUrl(lineartUrl))
       if mask == nil then
          print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
@@ -509,7 +546,7 @@ function changeNeck(biped, values)
    guy.children = guyChildren(biped)
    parentize.parentize(root)
    redoNeck(biped, values)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
 end
@@ -524,7 +561,7 @@ function redoNeck(biped, values)
    mesh.meshAll(root)
 
    parentize.parentize(root)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachHead", biped)
 end
 
@@ -546,7 +583,7 @@ function changeBody(biped, values)
    mesh.meshAll(root)
    render.justDoTransforms(root)
 
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachHead", biped)
    myWorld:emit("bipedAttachLegs", biped) -- todo
    myWorld:emit("bipedAttachArms", biped) -- todo
@@ -559,7 +596,7 @@ function changeLegs(biped, values)
 
    parentize.parentize(root)
    mesh.meshAll(root)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachFeet", biped)
 end
 
@@ -569,7 +606,7 @@ function changeArms(biped, values)
 
    parentize.parentize(root)
    mesh.meshAll(root)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachFeet", biped)
 end
 
@@ -620,7 +657,7 @@ function changeHands(biped, values)
 
    parentize.parentize(root)
    redoHands(biped, values)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachHands", biped)
    mesh.meshAll(root)
 end
@@ -631,7 +668,7 @@ function changeFeet(biped, values)
 
    parentize.parentize(root)
    redoFeet(biped, values)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
 end
@@ -664,7 +701,27 @@ function changeHair(potato, values)
    hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
 
    parentize.parentize(root)
-   potato:give('potato', potatoArguments(potato, values))
+   potato:give('potato', potatoArguments(values))
+   myWorld:emit("potatoInit", potato)
+   mesh.meshAll(root)
+end
+
+function changeUpperLip(potato, values)
+   local container = values.potatoHead and body or head
+
+   upperlip = updateChild(container, upperlip, createUpperlipBezier(values, upperlip.points))
+   parentize.parentize(root)
+   potato:give('potato', potatoArguments(values))
+   myWorld:emit("potatoInit", potato)
+   mesh.meshAll(root)
+end
+
+function changeLowerLip(potato, values)
+   local container = values.potatoHead and body or head
+
+   lowerlip = updateChild(container, lowerlip, createLowerlipBezier(values, lowerlip.points))
+   parentize.parentize(root)
+   potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end
@@ -675,7 +732,7 @@ function changeNose(potato, values)
 
    parentize.parentize(root)
    redoNose(potato, values)
-   potato:give('potato', potatoArguments(potato, values))
+   potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end
@@ -702,7 +759,7 @@ function redoBrows(potato, values)
    brow2 = updateChild(container, brow2, createBrowBezier(values, brow2.points))
 
    parentize.parentize(root)
-   potato:give('potato', potatoArguments(potato, values))
+   potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
 
    mesh.meshAll(root)
@@ -716,7 +773,7 @@ function changePupils(biped, values)
 
    parentize.parentize(root)
    redoEyes(potato, values)
-   potato:give('potato', potatoArguments(potato, values))
+   potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end
@@ -729,7 +786,7 @@ function changeEyes(biped, values)
 
    parentize.parentize(root)
    redoEyes(potato, values)
-   potato:give('potato', potatoArguments(potato, values))
+   potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end
@@ -745,7 +802,7 @@ function changeEars(biped, values)
    redoEars(potato, values)
 
 
-   potato:give('potato', potatoArguments(potato, values))
+   potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
 end
@@ -762,7 +819,7 @@ function changeHead(biped, values)
       attachAllFaceParts()
    end
    parentize.parentize(root)
-   biped:give('biped', bipedArguments(biped, values))
+   biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachHead", biped)
    mesh.meshAll(root)
 

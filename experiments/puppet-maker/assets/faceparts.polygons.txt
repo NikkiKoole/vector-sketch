@@ -115,7 +115,7 @@ l = { -168.543, 248.313, 0, 1, 1, -5.176, 300.029, 0, 0 }
 folder = true,
 name = "eyes",
 transforms = {
-l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+l = { 0, 1.652, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -377,31 +377,6 @@ type = "bezier"
 } },
 folder = true,
 name = "brow7",
-transforms = {
-l = { -181.243, 9.244, 0, 1, 1, 0, 72.5, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-data = {
-borderRadius = 1,
-flop = 1,
-length = 145,
-scale = 1,
-steps = 5.3277777777778,
-width = 94.5
-},
-name = "",
-points = { { -240, 0 }, { 0, 0 }, { 240, 0 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/brow8.png",
-wrap = "repeat"
-},
-type = "bezier"
-} },
-folder = true,
-name = "brow8",
 transforms = {
 l = { -181.243, 9.244, 0, 1, 1, 0, 72.5, 0, 0 }
 }
@@ -856,5 +831,169 @@ folder = true,
 name = "pupils",
 transforms = {
 l = { -1251.422, -321.427, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 205
+},
+name = "",
+points = { { 262.5, 0 }, { 0, 0 }, { -262.5, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/upperlip1.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "upperlip",
+transforms = {
+l = { -123.842, -634.033, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 127
+},
+name = "",
+points = { { 291, 0 }, { 0, 0 }, { -291, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/upperlip2.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "upperlip",
+transforms = {
+l = { -109.372, -641.28, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 219
+},
+name = "",
+points = { { 448.5, 0 }, { 0, 0 }, { -448.5, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/upperlip3.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "upperlip",
+transforms = {
+l = { -109.987, -620.178, 0, 1, 1, 0, 0, 0, 0 }
+}
+} },
+folder = true,
+name = "upperlips",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 165.5
+},
+name = "",
+points = { { 246, -0 }, { 0, 0 }, { -246, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/lowerlip1.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "lowerlip",
+transforms = {
+l = { -123.842, -634.033, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 142
+},
+name = "",
+points = { { 264, -0 }, { 0, 0 }, { -264, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/lowerlip2.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "lowerlip",
+transforms = {
+l = { -109.372, -641.28, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 219
+},
+name = "",
+points = { { 448.5, -0 }, { 0, 0 }, { -448.5, 0 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/lowerlip3.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "lowerlip",
+transforms = {
+l = { -109.987, -620.178, 0, 1, 1, 0, 0, 0, 0 }
+}
+} },
+folder = true,
+name = "lowerlips",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
 }
 } }

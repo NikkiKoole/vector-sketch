@@ -96,8 +96,10 @@ function getSiblingBefore(before)
 end
 
 function removeChild(elem)
-   local index = node.getIndex(elem)
-   if index >= 0 then table.remove(elem._parent.children, index) end
+   if elem._parent then
+      local index = node.getIndex(elem)
+      if index >= 0 then table.remove(elem._parent.children, index) end
+   end
 end
 
 function getPNGMaskUrl(url)
@@ -271,12 +273,16 @@ function attachAllFaceParts()
    removeChild(ear1)
    removeChild(ear2)
    removeChild(hair)
+   removeChild(upperlip)
+   removeChild(lowerlip)
+
    local addTo = values.potatoHead and body or head
 
    table.insert(addTo.children, eye1)
    table.insert(addTo.children, eye2)
    table.insert(addTo.children, pupil1)
    table.insert(addTo.children, pupil2)
+
    if (values.earUnderHead == true) then
       table.insert(addTo.children, 1, ear1)
       table.insert(addTo.children, 1, ear2)
@@ -285,15 +291,25 @@ function attachAllFaceParts()
       table.insert(addTo.children, ear2)
    end
 
+   table.insert(addTo.children, lowerlip)
+   table.insert(addTo.children, upperlip)
+
    table.insert(addTo.children, brow1)
    table.insert(addTo.children, brow2)
    table.insert(addTo.children, nose)
    table.insert(addTo.children, hair)
 
-   myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
-   myWorld:emit('potatoInit', potato)
+
+   redoEyes(potato, values)
+   redoPupils(potato, values)
+   redoEars(potato, values)
+   redoBrows(potato, values)
+   redoNose(potato, values)
    changeNose(potato, values)
    changeEyes(potato, values)
+   changeHair(potato, values)
+   changeUpperLip(potato, values)
+   changeLowerLip(potato, values)
 end
 
 function scene.load()
@@ -477,13 +493,13 @@ function scene.load()
    noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
    browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
    earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
-
-
+   upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
+   lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
    texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 
    values = {
-       potatoHead           = false,
-       eyes                 = {
+       potatoHead              = false,
+       upperlip                = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 5,
@@ -496,11 +512,8 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       eyeWidthMultiplier   = 1,
-       eyeHeightMultiplier  = 1,
-       eyeRotation          = 0,
-       eyeYAxis             = 0,
-       pupils               = {
+       upperlipWidthMultiplier = 1,
+       lowerlip                = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 5,
@@ -513,8 +526,41 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       pupilSizeMultiplier  = 1,
-       ears                 = {
+       lowerlipWidthMultiplier = 1,
+       mouthXAxis              = 0,
+       mouthYAxis              = 1,
+       eyes                    = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 5,
+           bgTex     = 1,
+           fgTex     = 1,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
+       },
+       eyeWidthMultiplier      = 1,
+       eyeHeightMultiplier     = 1,
+       eyeRotation             = 0,
+       eyeYAxis                = 0,
+       pupils                  = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 5,
+           bgTex     = 1,
+           fgTex     = 1,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
+       },
+       pupilSizeMultiplier     = 1,
+       ears                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -527,12 +573,12 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       earUnderHead         = false,
-       earWidthMultiplier   = 1,
-       earHeightMultiplier  = 1,
-       earRotation          = 0,
-       earYAxis             = 0, -- -2,-1,0,1,2
-       brows                = {
+       earUnderHead            = false,
+       earWidthMultiplier      = 1,
+       earHeightMultiplier     = 1,
+       earRotation             = 0,
+       earYAxis                = 0, -- -2,-1,0,1,2
+       brows                   = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -545,10 +591,10 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       browsWidthMultiplier = .5,
-       browsWideMultiplier  = 1,
-       browsDefaultBend     = 1,
-       nose                 = {
+       browsWidthMultiplier    = .5,
+       browsWideMultiplier     = 1,
+       browsDefaultBend        = 1,
+       nose                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -562,11 +608,11 @@ function scene.load()
            texScale  = 1,
 
        },
-       noseXAxis            = 0, --  -2,-1,0,1,2
-       noseYAxis            = 2, --  -3, -2,-1,0,1,2, 3
-       noseWidthMultiplier  = 1,
-       noseHeightMultiplier = 1,
-       legs                 = {
+       noseXAxis               = 0, --  -2,-1,0,1,2
+       noseYAxis               = 0, --  -3, -2,-1,0,1,2, 3
+       noseWidthMultiplier     = 1,
+       noseHeightMultiplier    = 1,
+       legs                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -579,12 +625,12 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       legLength            = 700,
-       legWidthMultiplier   = 1,
-       leg1flop             = -1,
-       leg2flop             = 1,
-       legXAxis             = 0,
-       arms                 = {
+       legLength               = 700,
+       legWidthMultiplier      = 1,
+       leg1flop                = -1,
+       leg2flop                = 1,
+       legXAxis                = 0,
+       arms                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -597,11 +643,11 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       armLength            = 700,
-       armWidthMultiplier   = 1,
-       arm1flop             = 1,
-       arm2flop             = -1,
-       hands                = {
+       armLength               = 700,
+       armWidthMultiplier      = 1,
+       arm1flop                = 1,
+       arm2flop                = -1,
+       hands                   = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -614,7 +660,7 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       body                 = {
+       body                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -628,9 +674,9 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       bodyWidthMultiplier  = 1,
-       bodyHeightMultiplier = 1,
-       head                 = {
+       bodyWidthMultiplier     = 1,
+       bodyHeightMultiplier    = 1,
+       head                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -645,9 +691,9 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       headWidthMultiplier  = 1,
-       headHeightMultiplier = 1,
-       hair                 = {
+       headWidthMultiplier     = 1,
+       headHeightMultiplier    = 1,
+       hair                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 5,
@@ -660,9 +706,9 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       hairWidthMultiplier  = 1,
-       hairTension          = 0.001,
-       neck                 = {
+       hairWidthMultiplier     = 1,
+       hairTension             = 0.001,
+       neck                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -675,9 +721,9 @@ function scene.load()
            texRot    = 0,
            texScale  = 1,
        },
-       neckLength           = 700,
-       neckWidthMultiplier  = 1,
-       feet                 = {
+       neckLength              = 700,
+       neckWidthMultiplier     = 1,
+       feet                    = {
            shape     = 1,
            bgPal     = 4,
            fgPal     = 1,
@@ -715,6 +761,9 @@ function scene.load()
    brow1 = copy3(browParts[values.brows.shape])
    brow2 = copy3(browParts[values.brows.shape])
 
+   upperlip = copy3(upperlipParts[values.upperlip.shape])
+   lowerlip = copy3(lowerlipParts[values.lowerlip.shape])
+
    ear1 = copy3(earParts[values.ears.shape])
    ear2 = copy3(earParts[values.ears.shape])
 
@@ -728,22 +777,7 @@ function scene.load()
    }
 
    biped = Concord.entity()
-   biped:give('biped',
-       {
-           guy = guy,
-           body = body,
-           neck = neck,
-           head = head,
-           leg1 = leg1,
-           leg2 = leg2,
-           feet1 = feet1,
-           feet2 = feet2,
-           arm1 = arm1,
-           hand1 = hand1,
-           arm2 = arm2,
-           hand2 = hand2,
-           values = values
-       })
+   biped:give('biped', bipedArguments(values))
 
    guy.children = guyChildren(biped)
 
@@ -753,53 +787,10 @@ function scene.load()
    redoHead(biped, values)
 
    potato = Concord.entity()
-   potato:give('potato', {
-       head = values.potatoHead and body or head,
-       eye1 = eye1,
-       eye2 = eye2,
-       pupi11 = pupil1,
-       pupil2 = pupil2,
-       nose = nose,
-       brow1 = brow1,
-       brow2 = brow2,
-       ear1 = ear1,
-       ear2 = ear2,
-       hair = hair,
-       values = values
-   })
+   potato:give('potato', potatoArguments(values))
 
-
-
-   local faceContainer = values.potatoHead and body or head
-
-   table.insert(faceContainer.children, eye1)
-   table.insert(faceContainer.children, eye2)
-   table.insert(faceContainer.children, pupil1)
-   table.insert(faceContainer.children, pupil2)
-
-   if (values.earUnderHead == true) then
-      table.insert(faceContainer.children, 1, ear1)
-      table.insert(faceContainer.children, 1, ear2)
-   else
-      table.insert(faceContainer.children, ear1)
-      table.insert(faceContainer.children, ear2)
-   end
-   table.insert(faceContainer.children, brow1)
-   table.insert(faceContainer.children, brow2)
-   table.insert(faceContainer.children, nose)
-   table.insert(faceContainer.children, hair)
-
-
+   attachAllFaceParts()
    root.children = { guy }
-
-   redoEyes(potato, values)
-   redoPupils(potato, values)
-   redoEars(potato, values)
-   redoBrows(potato, values)
-   redoNose(potato, values)
-   changeNose(potato, values)
-   changeHair(potato, values)
-
    if false then
       cameraPoints = {}
       local W, H = love.graphics.getDimensions()
@@ -833,30 +824,27 @@ function scene.load()
 
 
    parts = {
-       { name = 'head',   imgs = headImgUrls,  funcs = { changeHead, redoHead, biped } },
-       { name = 'hair',   imgs = hairUrls,     funcs = { changeHair, changeHair, potato } },
-       { name = 'brows',  imgs = browImgUrls,  funcs = { redoBrows, redoBrows, potato } },
-       { name = 'pupils', imgs = pupilImgUrls, funcs = { changePupils, redoPupils, potato } },
-       { name = 'eyes',   imgs = eyeImgUrls,   funcs = { changeEyes, redoEyes, potato } },
-       { name = 'ears',   imgs = earImgUrls,   funcs = { changeEars, redoEars, potato } },
-       { name = 'neck',   imgs = legUrls,      funcs = { changeNeck, redoNeck, biped } },
-       { name = 'nose',   imgs = noseImgUrls,  funcs = { changeNose, changeNose, potato } },
-       { name = 'body',   imgs = bodyImgUrls,  funcs = { changeBody, redoBody, biped } },
-       { name = 'arms',   imgs = legUrls,      funcs = { changeArms, changeArms, biped } },
-       { name = 'hands',  imgs = feetImgUrls,  funcs = { changeHands, redoHands, biped } },
-       { name = 'legs',   imgs = legUrls,      funcs = { changeLegs, changeLegs, biped } },
-       { name = 'feet',   imgs = feetImgUrls,  funcs = { changeFeet, redoFeet, biped } }
+       { name = 'head',     imgs = headImgUrls,     funcs = { changeHead, redoHead, biped } },
+       { name = 'hair',     imgs = hairUrls,        funcs = { changeHair, changeHair, potato } },
+       { name = 'brows',    imgs = browImgUrls,     funcs = { redoBrows, redoBrows, potato } },
+       { name = 'pupils',   imgs = pupilImgUrls,    funcs = { changePupils, redoPupils, potato } },
+       { name = 'eyes',     imgs = eyeImgUrls,      funcs = { changeEyes, redoEyes, potato } },
+       { name = 'ears',     imgs = earImgUrls,      funcs = { changeEars, redoEars, potato } },
+       { name = 'neck',     imgs = legUrls,         funcs = { changeNeck, redoNeck, biped } },
+       { name = 'nose',     imgs = noseImgUrls,     funcs = { changeNose, changeNose, potato } },
+       { name = 'upperlip', imgs = upperlipImgUrls, funcs = { changeUpperLip, changeUpperLip, potato } },
+       { name = 'lowerlip', imgs = lowerlipImgUrls, funcs = { changeLowerLip, changeLowerLip, potato } },
+       { name = 'body',     imgs = bodyImgUrls,     funcs = { changeBody, redoBody, biped } },
+       { name = 'arms',     imgs = legUrls,         funcs = { changeArms, changeArms, biped } },
+       { name = 'hands',    imgs = feetImgUrls,     funcs = { changeHands, redoHands, biped } },
+       { name = 'legs',     imgs = legUrls,         funcs = { changeLegs, changeLegs, biped } },
+       { name = 'feet',     imgs = feetImgUrls,     funcs = { changeFeet, redoFeet, biped } }
 
    }
 
    --print(inspect(parts))
    categories = {}
-   for i = 1, #parts do
-      categories[i] = parts[i].name
-   end
-
-
-
+   setCategories()
 
 
    local bx, by = body.transforms._g:transformPoint(0, 0)
@@ -865,6 +853,17 @@ function scene.load()
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
    cam:update(w, h)
+end
+
+function setCategories()
+   categories = {}
+   for i = 1, #parts do
+      if values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
+         -- we dont want these categories when we are a potatohead!
+      else
+         table.insert(categories, parts[i].name)
+      end
+   end
 end
 
 function attachCallbacks()
@@ -944,7 +943,6 @@ function attachCallbacks()
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
          print('focus camera on third other shape', x, y)
       end
-    
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -1084,10 +1082,10 @@ function scene.draw()
       love.graphics.setColor(0, 0, 0)
 
       scrollList(true)
-      love.graphics.setColor(1, 1, 1)
-      love.graphics.draw(tab1)
-      love.graphics.draw(tab2, 100, 100)
-      love.graphics.draw(tab3, 100, 500)
+      -- love.graphics.setColor(1, 1, 1)
+      -- love.graphics.draw(tab1)
+      --love.graphics.draw(tab2, 100, 100)
+      --love.graphics.draw(tab3, 100, 500)
       partSettingsPanel(0, 0)
 
       prof.push("cam-render")
