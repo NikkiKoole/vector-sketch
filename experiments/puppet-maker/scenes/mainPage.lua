@@ -54,7 +54,7 @@ local function sign(x)
 end
 
 function stripPath(root, path)
-   if root and root.texture and #root.texture.url > 0 then
+   if root and root.texture and root.texture.url and #root.texture.url > 0 then
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
       root.texture.url = shortened
@@ -497,6 +497,30 @@ function scene.load()
    lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
    texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 
+   biped = Concord.entity()
+   potato = Concord.entity()
+
+
+   parts = {
+       { name = 'head',     imgs = headImgUrls,     funcs = { changeHead, redoHead, biped } },
+       { name = 'hair',     imgs = hairUrls,        funcs = { changeHair, changeHair, potato } },
+       { name = 'brows',    imgs = browImgUrls,     funcs = { redoBrows, redoBrows, potato } },
+       { name = 'pupils',   imgs = pupilImgUrls,    funcs = { changePupils, redoPupils, potato } },
+       { name = 'eyes',     imgs = eyeImgUrls,      funcs = { changeEyes, redoEyes, potato } },
+       { name = 'ears',     imgs = earImgUrls,      funcs = { changeEars, redoEars, potato } },
+       { name = 'neck',     imgs = legUrls,         funcs = { changeNeck, redoNeck, biped } },
+       { name = 'nose',     imgs = noseImgUrls,     funcs = { changeNose, changeNose, potato } },
+       { name = 'upperlip', imgs = upperlipImgUrls, funcs = { changeUpperLip, changeUpperLip, potato } },
+       { name = 'lowerlip', imgs = lowerlipImgUrls, funcs = { changeLowerLip, changeLowerLip, potato } },
+       { name = 'body',     imgs = bodyImgUrls,     funcs = { changeBody, redoBody, biped } },
+       { name = 'arms',     imgs = legUrls,         funcs = { changeArms, changeArms, biped } },
+       { name = 'hands',    imgs = feetImgUrls,     funcs = { changeHands, redoHands, biped } },
+       { name = 'legs',     imgs = legUrls,         funcs = { changeLegs, changeLegs, biped } },
+       { name = 'feet',     imgs = feetImgUrls,     funcs = { changeFeet, redoFeet, biped } }
+
+   }
+
+
    values = {
        potatoHead              = false,
        upperlip                = {
@@ -667,7 +691,7 @@ function scene.load()
            bgTex     = 1,
            fgTex     = 2,
            linePal   = 1,
-           flipy     = -1,
+           flipy     = 1,
            bgAlpha   = 5,
            fgAlpha   = 1,
            lineAlpha = 5,
@@ -684,7 +708,7 @@ function scene.load()
            fgTex     = 2,
            linePal   = 1,
            flipx     = 1,
-           flipy     = -1,
+           flipy     = 1,
            bgAlpha   = 5,
            fgAlpha   = 1,
            lineAlpha = 5,
@@ -705,6 +729,8 @@ function scene.load()
            lineAlpha = 5,
            texRot    = 0,
            texScale  = 1,
+           flipx     = 1,
+           flipy     = -1
        },
        hairWidthMultiplier     = 1,
        hairTension             = 0.001,
@@ -738,6 +764,8 @@ function scene.load()
        },
    }
 
+
+
    head = copy3(headParts[values.head.shape])
 
    neck = createNeckRubberhose(values)
@@ -769,6 +797,9 @@ function scene.load()
 
    nose = copy3(noseParts[values.nose.shape])
 
+   biped:give('biped', bipedArguments(values))
+   potato:give('potato', potatoArguments(values))
+
    guy = {
        folder = true,
        name = 'guy',
@@ -776,21 +807,19 @@ function scene.load()
        children = {}
    }
 
-   biped = Concord.entity()
-   biped:give('biped', bipedArguments(values))
+
+
+
 
    guy.children = guyChildren(biped)
+   root.children = { guy }
 
    redoFeet(biped, values)
    redoHands(biped, values)
    redoBody(biped, values)
    redoHead(biped, values)
-
-   potato = Concord.entity()
-   potato:give('potato', potatoArguments(values))
-
    attachAllFaceParts()
-   root.children = { guy }
+
    if false then
       cameraPoints = {}
       local W, H = love.graphics.getDimensions()
@@ -822,30 +851,8 @@ function scene.load()
    render.renderThings(root, true)
    attachCallbacks()
 
-
-   parts = {
-       { name = 'head',     imgs = headImgUrls,     funcs = { changeHead, redoHead, biped } },
-       { name = 'hair',     imgs = hairUrls,        funcs = { changeHair, changeHair, potato } },
-       { name = 'brows',    imgs = browImgUrls,     funcs = { redoBrows, redoBrows, potato } },
-       { name = 'pupils',   imgs = pupilImgUrls,    funcs = { changePupils, redoPupils, potato } },
-       { name = 'eyes',     imgs = eyeImgUrls,      funcs = { changeEyes, redoEyes, potato } },
-       { name = 'ears',     imgs = earImgUrls,      funcs = { changeEars, redoEars, potato } },
-       { name = 'neck',     imgs = legUrls,         funcs = { changeNeck, redoNeck, biped } },
-       { name = 'nose',     imgs = noseImgUrls,     funcs = { changeNose, changeNose, potato } },
-       { name = 'upperlip', imgs = upperlipImgUrls, funcs = { changeUpperLip, changeUpperLip, potato } },
-       { name = 'lowerlip', imgs = lowerlipImgUrls, funcs = { changeLowerLip, changeLowerLip, potato } },
-       { name = 'body',     imgs = bodyImgUrls,     funcs = { changeBody, redoBody, biped } },
-       { name = 'arms',     imgs = legUrls,         funcs = { changeArms, changeArms, biped } },
-       { name = 'hands',    imgs = feetImgUrls,     funcs = { changeHands, redoHands, biped } },
-       { name = 'legs',     imgs = legUrls,         funcs = { changeLegs, changeLegs, biped } },
-       { name = 'feet',     imgs = feetImgUrls,     funcs = { changeFeet, redoFeet, biped } }
-
-   }
-
-   --print(inspect(parts))
    categories = {}
    setCategories()
-
 
    local bx, by = body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
@@ -853,6 +860,14 @@ function scene.load()
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
    cam:update(w, h)
+end
+
+function findPart(name)
+   for i = 1, #parts do
+      if parts[i].name == name then
+         return parts[i]
+      end
+   end
 end
 
 function setCategories()

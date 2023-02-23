@@ -506,19 +506,20 @@ mesh.remeshNode = function(node)
    else
       node.mesh = mesh.makeMeshFromVertices(verts, node.type, node.texture)
       if node.type == 'rubberhose' or node.type == 'bezier' or node.type == 'vanillaline' and node.texture then
-         local texture = mesh.getImage(node.texture and node.texture.url) --_imageCache[node.texture and node.texture.url]
-         --print(inspect(_imageCache))
-         --print(node.texture.url)
-
-         --print(texture)
-         if texture then
-            --print(texture)
-            node.mesh:setTexture(texture)
-            --print('remesh in rubberhose')
-         end
          if (node.texture.retexture) then
             node.mesh:setTexture(node.texture.retexture)
             --print('remesh in rubberhose 2')
+         else
+            local texture = mesh.getImage(node.texture and node.texture.url) --_imageCache[node.texture and node.texture.url]
+            --print(inspect(_imageCache))
+            --print(node.texture.url)
+
+            --print(texture)
+            if texture then
+               --print(texture)
+               node.mesh:setTexture(texture)
+               --print('remesh in rubberhose')
+            end
          end
       end
    end

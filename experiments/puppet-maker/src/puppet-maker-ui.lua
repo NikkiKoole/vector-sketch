@@ -8,13 +8,6 @@ local ui = require "lib.ui"
 local transforms = require "lib.transform"
 imageCache = {} -- tjo save all the parts inages in
 
-local function findPart(name)
-   for i = 1, #parts do
-      if parts[i].name == name then
-         return parts[i]
-      end
-   end
-end
 
 local tabs = { "part", "colors", "pattern" }
 

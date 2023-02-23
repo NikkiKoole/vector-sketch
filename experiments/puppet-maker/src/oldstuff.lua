@@ -1,3 +1,39 @@
+local function makeDynamicCanvas(imageData, mymesh)
+    local w, h = imageData:getDimensions()
+    local w2 = w / 2
+    local h2 = h / 2
+
+    local result = {}
+    result.color = { 1, 1, 1 }
+    result.name = 'generated'
+    result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
+    result.texture = {
+        filter = "linear",
+        canvas = mymesh,
+        wrap = "repeat",
+    }
+
+    return result
+end
+
+local function createRectangle(x, y, w, h, r, g, b)
+    local w2 = w / 2
+    local h2 = h / 2
+
+    local result = {}
+    result.folder = true
+    result.transforms = {
+        l = { x, y, 0, 1, 1, 0, 0 }
+    }
+    result.children = { {
+
+        name = 'rectangle',
+        points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
+        color = { r or 1, g or 0.91, b or 0.15, 1 }
+    } }
+    return result
+end
+
 function drawBBoxDebug()
     if true then
         love.graphics.push() -- stores the default coordinate system
@@ -17,8 +53,6 @@ function drawBBoxDebug()
 
 
                     if b then
-
-
                         local mx1, my1 = item.transforms._g:inverseTransformPoint(wx, wy)
                         local tlx2, tly2 = item.transforms._g:inverseTransformPoint(b[1], b[2])
                         local brx2, bry2 = item.transforms._g:inverseTransformPoint(b[3], b[4])

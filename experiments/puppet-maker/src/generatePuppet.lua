@@ -4,6 +4,7 @@ local bbox      = require 'lib.bbox'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
 
+require 'src.refactoring'
 
 -- REMEMBER IF YOU SEE BLACK SHADOWING AROUND THE COLORED PARTS
 -- ususally the fix is simply to call a redo..X in the changeX too.
@@ -170,57 +171,6 @@ function potatoArguments(values)
    }
 end
 
-function createBrowBezier(values, points)
-   return createBezierFromImage(
-           browImgUrls[values.brows.shape],
-           textures[values.brows.bgTex],
-           palettes[values.brows.bgPal],
-           values.brows.bgAlpha,
-           textures[values.brows.fgTex],
-           palettes[values.brows.fgPal],
-           values.brows.fgAlpha,
-           values.brows.texRot,
-           texscales[values.brows.texScale],
-           palettes[values.brows.linePal],
-           values.brows.lineAlpha,
-           values.browsWidthMultiplier,
-           points)
-end
-
-function createUpperlipBezier(values, points)
-   return createBezierFromImage(
-           upperlipImgUrls[values.upperlip.shape],
-           textures[values.upperlip.bgTex],
-           palettes[values.upperlip.bgPal],
-           values.upperlip.bgAlpha,
-           textures[values.upperlip.fgTex],
-           palettes[values.upperlip.fgPal],
-           values.upperlip.fgAlpha,
-           values.upperlip.texRot,
-           texscales[values.upperlip.texScale],
-           palettes[values.upperlip.linePal],
-           values.upperlip.lineAlpha,
-           values.upperlipWidthMultiplier,
-           points)
-end
-
-function createLowerlipBezier(values, points)
-   return createBezierFromImage(
-           lowerlipImgUrls[values.lowerlip.shape],
-           textures[values.lowerlip.bgTex],
-           palettes[values.lowerlip.bgPal],
-           values.lowerlip.bgAlpha,
-           textures[values.lowerlip.fgTex],
-           palettes[values.lowerlip.fgPal],
-           values.lowerlip.fgAlpha,
-           values.lowerlip.texRot,
-           texscales[values.lowerlip.texScale],
-           palettes[values.lowerlip.linePal],
-           values.lowerlip.lineAlpha,
-           values.lowerlipWidthMultiplier,
-           points)
-end
-
 function arrangeBrows()
    local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
        { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
@@ -241,188 +191,6 @@ function arrangeBrows()
    --brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
 end
 
-local function getDistance(x1, y1, x2, y2)
-   local dx = x1 - x2
-   local dy = y1 - y2
-   local distance = math.sqrt((dx * dx) + (dy * dy))
-
-   return distance
-end
-
-local function getLengthOfPath(path)
-   local result = 0
-   for i = 1, #path - 1 do
-      local a = path[i]
-      local b = path[i + 1]
-      result = result + getDistance(a[1], a[2], b[1], b[2])
-   end
-   return result
-end
-
-
-
-function createVanillaLineFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la,
-                                    hairWidthMultiplier, hairTension, optionalPoints,
-                                    flipx, flipy)
-   local img = mesh.getImage(url)
-   local width, height = img:getDimensions()
-
-   local currentNode = {}
-   currentNode.texture = {}
-   currentNode.texture.url = url
-   currentNode.texture.wrap = 'repeat'
-   currentNode.texture.filter = 'linear'
-   currentNode.type = 'vanillaline'
-   currentNode.color = { 1, 1, 1 }
-
-   currentNode.points = optionalPoints or { { 0, 0 }, { 0, 100 }, { 100, 100 } }
-   local length = getLengthOfPath(currentNode.points)
-
-   local factor = (length / height)
-   currentNode.data = {}
-   currentNode.data.width = (width * factor) * hairWidthMultiplier
-   currentNode.data.tension = hairTension
-   currentNode.data.spacing = 5
-
-
-   if (true) then
-      local lineart = img
-
-      local maskUrl = getPNGMaskUrl(url)
-      local mask = mesh.getImage(maskUrl)
-
-      if not mask then print('NO MASK FOUND', maskUrl) end
-      --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
-      currentNode.texture.retexture = love.graphics.newImage(cnv)
-      --end
-   end
-
-   return currentNode
-end
-
-function createRubberHoseFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flop, length, widthMultiplier,
-                                   optionalPoints,
-                                   flipx, flipy)
-   local img = mesh.getImage(url)
-   local width, height = img:getDimensions()
-   local magic = 4.46
-   local currentNode = {}
-
-   currentNode.type = 'rubberhose'
-   currentNode.data = currentNode.data or {}
-   currentNode.texture = {}
-   currentNode.texture.url = url
-   currentNode.texture.wrap = 'repeat'
-   currentNode.texture.filter = 'linear'
-   currentNode.data.length = height * magic
-   currentNode.data.width = width * 2 * widthMultiplier
-   currentNode.data.flop = flop
-   currentNode.data.borderRadius = .5
-   currentNode.data.steps = 20
-   currentNode.color = { 1, 1, 1 }
-   currentNode.data.scaleX = 1
-   currentNode.data.scaleY = length / height
-   currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
-
-   if (true) then
-      local lineart = img
-      local maskUrl = getPNGMaskUrl(url)
-      local mask = mesh.getImage(maskUrl)
-      --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
-      currentNode.texture.retexture = love.graphics.newImage(cnv)
-      --end
-   end
-
-
-
-   return currentNode
-end
-
-function createBezierFromImage(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, widthMultiplier, optionalPoints, flipx,
-                               flipy)
-   -- print(inspect(optionalPoints))
-   local img = mesh.getImage(url)
-   local width, height = img:getDimensions()
-   local currentNode = {}
-   --print(inspect(optionalPoints), inspect(optionalPoints))
-   currentNode = {
-       color = { 1, 1, 1, 1 },
-       data = {
-           length = height,
-           steps = 15,
-           width = (widthMultiplier and widthMultiplier or 1) * (width / 2)
-       },
-       name = "beziered",
-       points = optionalPoints or { { height / 2, 0 }, { 0, 0 }, { -height / 2, 0 } },
-       texture = {
-           filter = "linear",
-           url = url,
-           wrap = "repeat"
-       },
-       type = "bezier"
-   }
-
-   if (true) then
-      local lineart = img
-      local maskUrl = getPNGMaskUrl(url)
-      local mask = mesh.getImage(maskUrl)
-      --if mask then
-      local cnv = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
-      currentNode.texture.retexture = love.graphics.newImage(cnv)
-      --end
-   end
-
-   --return currentNode
-
-
-   local result = {}
-   result.folder = true
-   result.transforms = {
-       l = { 0, 0, 0, 1, 1, 0, 0 }
-   }
-   result.children = { currentNode }
-   --print('jo!')
-   return result
-end
-
-local function makeDynamicCanvas(imageData, mymesh)
-   local w, h = imageData:getDimensions()
-   local w2 = w / 2
-   local h2 = h / 2
-
-   local result = {}
-   result.color = { 1, 1, 1 }
-   result.name = 'generated'
-   result.points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } }
-   result.texture = {
-       filter = "linear",
-       canvas = mymesh,
-       wrap = "repeat",
-   }
-
-   return result
-end
-
-local function createRectangle(x, y, w, h, r, g, b)
-   local w2 = w / 2
-   local h2 = h / 2
-
-   local result = {}
-   result.folder = true
-   result.transforms = {
-       l = { x, y, 0, 1, 1, 0, 0 }
-   }
-   result.children = { {
-
-       name = 'rectangle',
-       points = { { -w2, -h2 }, { w2, -h2 }, { w2, h2 }, { -w2, h2 } },
-       color = { r or 1, g or 0.91, b or 0.15, 1 }
-   } }
-   return result
-end
-
 local function getIndexOfGraphicPart(part)
    if part.children then
       local metaIndex = nil
@@ -436,109 +204,171 @@ local function getIndexOfGraphicPart(part)
    end
 end
 
-function redoTheGraphicInPart(part, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColor, lineAlpha, flipx, flipy)
+function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings)
+   local img = mesh.getImage(url, optionalSettings)
+   local maskUrl = getPNGMaskUrl(url)
+   local mask = mesh.getImage(maskUrl)
+   local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
+   return cnv
+end
+
+function redoGraphicHelper(part, name, values)
    local index = getIndexOfGraphicPart(part)
    local p = part.children and part.children[index] or part
-   if p.texture then
-      local lineartUrl = p.texture.url
-      local lineart = mesh.getImage(lineartUrl, p.texture)
-      local mask
-      -- print(lineartUrl)
-      mask = mesh.getImage(getPNGMaskUrl(lineartUrl))
-      if mask == nil then
-         print('no mask found', lineartUrl, getPNGMaskUrl(lineartUrl))
-      end
+   if p.texture and p.texture.url then
+      local textured, url = partToTexturedCanvas(name, values, p.texture)
 
-      if (lineart) then
-         local canvas = canvas.makeTexturedCanvas(lineart, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lineColor, lineAlpha,
-                 flipx,
-                 flipy)
-         if p.texture.canvas then
-            p.texture.canvas:release()
-         end
-
-         local m = mesh.makeMeshFromSibling(p, canvas)
-         canvas:release()
-         p.texture.canvas = m
+      if p.texture.canvas then
+         p.texture.canvas:release()
       end
+      local m = mesh.makeMeshFromSibling(p, textured)
+      textured:release()
+      p.texture.canvas = m
    end
+end
+
+function partToTexturedCanvas(partName, values, optionalImageSettings)
+   local p = findPart(partName)
+   local url = p.imgs[values[partName].shape]
+   local texturedcanvas = helperTexturedCanvas(
+           url,
+           textures[values[partName].bgTex],
+           palettes[values[partName].bgPal],
+           values[partName].bgAlpha,
+           textures[values[partName].fgTex],
+           palettes[values[partName].fgPal],
+           values[partName].fgAlpha,
+           values[partName].texRot,
+           texscales[values[partName].texScale],
+           palettes[values[partName].linePal],
+           values[partName].lineAlpha,
+           values[partName].flipx or 1,
+           values[partName].flipy or 1,
+           optionalImageSettings
+       )
+   return texturedcanvas, url
+end
+
+function createHairVanillaLine(values, hairLine)
+   local textured, url = partToTexturedCanvas('hair', values)
+
+   return createVanillaLineFromImage(
+           url, textured,
+           values.hairWidthMultiplier, values.hairTension, hairLine)
+end
+
+function createBrowBezier(values, points)
+   local textured, url = partToTexturedCanvas('brows', values)
+
+   return createBezierFromImage(
+           url, textured,
+           values.browsWidthMultiplier, points)
+end
+
+function createUpperlipBezier(values, points)
+   local textured, url = partToTexturedCanvas('upperlip', values)
+
+   return createBezierFromImage(
+           url, textured,
+           values.upperlipWidthMultiplier, points)
+end
+
+function createLowerlipBezier(values, points)
+   local textured, url = partToTexturedCanvas('lowerlip', values)
+
+   return createBezierFromImage(
+           url, textured,
+           values.lowerlipWidthMultiplier, points)
 end
 
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
+   local textured, url = partToTexturedCanvas('arms', values)
 
    return createRubberHoseFromImage(
-           legUrls[values.arms.shape],
-           textures[values.arms.bgTex],
-           palettes[values.arms.bgPal],
-           values.arms.bgAlpha,
-           textures[values.arms.fgTex],
-           palettes[values.arms.fgPal],
-           values.arms.fgAlpha,
-           values.arms.texRot,
-           texscales[values.arms.texScale],
-           palettes[values.arms.linePal],
-           values.arms.lineAlpha,
-           flop
-           , values.armLength,
+           url, textured,
+           flop,
+           values.armLength,
            values.armWidthMultiplier,
            points)
 end
 
 function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
+   local textured, url = partToTexturedCanvas('legs', values)
 
    return createRubberHoseFromImage(
-           legUrls[values.legs.shape],
-           textures[values.legs.bgTex],
-           palettes[values.legs.bgPal],
-           values.legs.bgAlpha,
-           textures[values.legs.fgTex],
-           palettes[values.legs.fgPal],
-           values.legs.fgAlpha,
-           values.legs.texRot,
-           texscales[values.legs.texScale],
-           palettes[values.legs.linePal],
-           values.legs.lineAlpha,
+           url, textured,
            flop
            , values.legLength,
            values.legWidthMultiplier,
-           points, values.legs.flipx or 1, values.legs.flipy or 1)
-end
-
-function createHairVanillaLine(values, hairLine)
-   return createVanillaLineFromImage(
-           hairUrls[values.hair.shape],
-           textures[values.hair.bgTex],
-           palettes[values.hair.bgPal],
-           values.hair.bgAlpha,
-           textures[values.hair.fgTex],
-           palettes[values.hair.fgPal],
-           values.hair.fgAlpha,
-           values.hair.texRot,
-           texscales[values.hair.texScale],
-           palettes[values.hair.linePal],
-           values.hair.lineAlpha, values.hairWidthMultiplier, values.hairTension, hairLine)
+           points)
 end
 
 function createNeckRubberhose(values, points)
    local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
+   local textured, url = partToTexturedCanvas('legs', values)
    return createRubberHoseFromImage(
-           legUrls[values.neck.shape],
-           textures[values.neck.bgTex],
-           palettes[values.neck.bgPal],
-           values.neck.bgAlpha,
-           textures[values.neck.fgTex],
-           palettes[values.neck.fgPal],
-           values.neck.fgAlpha,
-           values.neck.texRot,
-           texscales[values.neck.texScale],
-           palettes[values.neck.linePal],
-           values.neck.lineAlpha,
-           flop
-           , values.neckLength,
+           url, textured,
+           flop,
+           values.neckLength,
            values.neckWidthMultiplier,
            points)
+end
+
+function updateChild(container, oldValue, newResult)
+   local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
+   -- I need to get t the pivot point from the new thing.
+   if newResult.transforms then
+      oldTransforms[6] = newResult.transforms.l[6]
+      oldTransforms[7] = newResult.transforms.l[7]
+   end
+   for i = 1, #container.children do
+      if container.children[i] == oldValue then
+         container.children[i] = newResult
+         if (container.children[i].transforms) then
+            container.children[i].transforms.l = oldTransforms
+         end
+         return container.children[i]
+      end
+   end
+end
+
+function redoBody(_, values)
+   redoGraphicHelper(body, 'body', values)
+end
+
+function redoFeet(_, values)
+   redoGraphicHelper(feet1, 'feet', values)
+   redoGraphicHelper(feet2, 'feet', values)
+end
+
+function redoHands(_, values)
+   redoGraphicHelper(hand1, 'hands', values)
+   redoGraphicHelper(hand2, 'hands', values)
+end
+
+function redoHead(_, values)
+   redoGraphicHelper(head, 'head', values)
+end
+
+function redoEars(_, values)
+   redoGraphicHelper(ear1, 'ears', values)
+   redoGraphicHelper(ear2, 'ears', values)
+end
+
+function redoNose(_, values)
+   redoGraphicHelper(nose, 'nose', values)
+end
+
+function redoEyes(_, values)
+   redoGraphicHelper(eye1, 'eyes', values)
+   redoGraphicHelper(eye2, 'eyes', values)
+end
+
+function redoPupils(_, values)
+   redoGraphicHelper(pupil1, 'pupils', values)
+   redoGraphicHelper(pupil2, 'pupils', values)
 end
 
 function changeNeck(biped, values)
@@ -610,47 +440,6 @@ function changeArms(biped, values)
    myWorld:emit("bipedAttachFeet", biped)
 end
 
-function redoGraphicHelper(part, name, values)
-   redoTheGraphicInPart(
-       part,
-       textures[values[name].bgTex],
-       palettes[values[name].bgPal],
-       values[name].bgAlpha,
-       textures[values[name].fgTex],
-       palettes[values[name].fgPal],
-       values[name].fgAlpha,
-       values[name].texRot,
-       texscales[values[name].texScale],
-       palettes[values[name].linePal],
-       values[name].lineAlpha,
-       values[name].flipx or 1,
-       values[name].flipy or 1
-   )
-end
-
-function redoBody(_, values)
-   redoGraphicHelper(body, 'body', values)
-end
-
-function redoFeet(_, values)
-   redoGraphicHelper(feet1, 'feet', values)
-   redoGraphicHelper(feet2, 'feet', values)
-end
-
-function redoHands(_, values)
-   redoGraphicHelper(hand1, 'hands', values)
-   redoGraphicHelper(hand2, 'hands', values)
-end
-
-function redoHead(_, values)
-   redoGraphicHelper(head, 'head', values)
-end
-
-function redoEars(_, values)
-   redoGraphicHelper(ear1, 'ears', values)
-   redoGraphicHelper(ear2, 'ears', values)
-end
-
 function changeHands(biped, values)
    hand1 = updateChild(guy, hand1, copy3(handParts[values.hands.shape]))
    hand2 = updateChild(guy, hand2, copy3(handParts[values.hands.shape]))
@@ -671,24 +460,6 @@ function changeFeet(biped, values)
    biped:give('biped', bipedArguments(values))
    myWorld:emit("bipedAttachFeet", biped)
    mesh.meshAll(root)
-end
-
-function updateChild(container, oldValue, newResult)
-   local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
-   -- I need to get t the pivot point from the new thing.
-   if newResult.transforms then
-      oldTransforms[6] = newResult.transforms.l[6]
-      oldTransforms[7] = newResult.transforms.l[7]
-   end
-   for i = 1, #container.children do
-      if container.children[i] == oldValue then
-         container.children[i] = newResult
-         if (container.children[i].transforms) then
-            container.children[i].transforms.l = oldTransforms
-         end
-         return container.children[i]
-      end
-   end
 end
 
 function changeHair(potato, values)
@@ -735,20 +506,6 @@ function changeNose(potato, values)
    potato:give('potato', potatoArguments(values))
    myWorld:emit("potatoInit", potato)
    mesh.meshAll(root)
-end
-
-function redoNose(potato, values)
-   redoGraphicHelper(nose, 'nose', values)
-end
-
-function redoEyes(potato, values)
-   redoGraphicHelper(eye1, 'eyes', values)
-   redoGraphicHelper(eye2, 'eyes', values)
-end
-
-function redoPupils(potato, values)
-   redoGraphicHelper(pupil1, 'pupils', values)
-   redoGraphicHelper(pupil2, 'pupils', values)
 end
 
 function redoBrows(potato, values)

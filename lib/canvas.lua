@@ -133,11 +133,9 @@ local maskShader = love.graphics.newShader([[
 ]])
 
 
-lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale, lineColor, lineAlpha,
+lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
+                                  lineColor, lineAlpha,
                                   flipx, flipy)
-   --local flipx = 1 -- paramter this
-   --local flipy = -1 -- parameter this
-  -- print(texRot, texScale)
    local lineartColor = lineColor or { 0, 0, 0, 1 }
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
@@ -152,7 +150,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
    love.graphics.setShader(maskShader)
    local transform = love.math.newTransform()
-   transform:rotate((texRot * math.pi)/8)
+   transform:rotate((texRot * math.pi) / 8)
    transform:scale(texScale, texScale)
    local m1, m2, _, _, m5, m6 = transform:getMatrix()
 
