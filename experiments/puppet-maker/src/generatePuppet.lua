@@ -124,13 +124,13 @@ function guyChildren(e)
       return {
           body,
           leg1, leg2, feet1, feet2,
-          arm1, arm2, hand1, hand2,
+          arm1, arm2, armhair1, armhair2, hand1, hand2,
       }
    else
       return {
           body, neck, head,
           leg1, leg2, feet1, feet2,
-          arm1, arm2, hand1, hand2,
+          arm1, arm2, armhair1, armhair2, hand1, hand2,
       }
    end
 end
@@ -145,6 +145,8 @@ function bipedArguments(values)
        leg2 = leg2,
        feet1 = feet1,
        feet2 = feet2,
+       armhair1 = armhair1,
+       armhair2 = armhair2,
        arm1 = arm1,
        arm2 = arm2,
        hand1 = hand1,
@@ -187,7 +189,7 @@ function arrangeBrows()
    brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
    brow2.transforms.l[4] = -1
-   brow2.transforms.l[5] = 3
+   -- brow2.transforms.l[5] = 3
    --brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
 end
 
@@ -231,6 +233,11 @@ end
 function partToTexturedCanvas(partName, values, optionalImageSettings)
    local p = findPart(partName)
    local url = p.imgs[values[partName].shape]
+
+   local flipX = values[partName].flipx or 1
+   local flipY = values[partName].flipy or 1
+
+   --print(partName, flipX, flipY)
    local texturedcanvas = helperTexturedCanvas(
            url,
            textures[values[partName].bgTex],
@@ -243,8 +250,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
            texscales[values[partName].texScale],
            palettes[values[partName].linePal],
            values[partName].lineAlpha,
-           values[partName].flipx or 1,
-           values[partName].flipy or 1,
+           flipX, flipY,
            optionalImageSettings
        )
    return texturedcanvas, url
@@ -284,6 +290,7 @@ end
 
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
+   print(armNr, flop)
    local textured, url = partToTexturedCanvas('arms', values)
 
    return createRubberHoseFromImage(
@@ -291,7 +298,19 @@ function createArmRubberhose(armNr, values, points)
            flop,
            values.armLength,
            values.armWidthMultiplier,
-           points)
+           points, flop * -1)
+end
+
+function createArmHairRubberhose(armNr, values, points)
+   local flop = armNr == 1 and values.arm1flop or values.arm2flop
+   local textured, url = partToTexturedCanvas('armhair', values)
+
+   return createRubberHoseFromImage(
+           url, textured,
+           flop,
+           values.armLength,
+           values.armWidthMultiplier,
+           points, flop)
 end
 
 function createLegRubberhose(legNr, values, points)
@@ -303,7 +322,7 @@ function createLegRubberhose(legNr, values, points)
            flop
            , values.legLength,
            values.legWidthMultiplier,
-           points)
+           points, flop * -1)
 end
 
 function createNeckRubberhose(values, points)
@@ -407,6 +426,9 @@ function changePart(name, values)
       hand1 = updateChild(guy, hand1, copyAndRedoGraphic('hands', values))
       hand2 = updateChild(guy, hand2, copyAndRedoGraphic('hands', values))
       myWorld:emit("bipedAttachHands", biped)
+   elseif name == 'armhair' then
+      armhair1 = updateChild(guy, armhair1, createArmHairRubberhose(1, values, armhair1.points))
+      armhair2 = updateChild(guy, armhair2, createArmHairRubberhose(2, values, armhair2.points))
    elseif name == 'arms' then
       arm1 = updateChild(guy, arm1, createArmRubberhose(1, values, arm1.points))
       arm2 = updateChild(guy, arm2, createArmRubberhose(2, values, arm2.points))

@@ -32,7 +32,7 @@ Concord = require 'vendor.concord.init'
 
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = false
+PROF_CAPTURE = true
 prof = require("jprof")
 
 --local camera = require 'lib.camera'
@@ -47,7 +47,7 @@ function love.load()
    --	1180 , 820
    -- iphone 1334, 750
    love.window.setMode(1024, 768,
-      { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
+       { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
    love.window.setTitle('☺ Puppet Maker')
 
    local os = love.system.getOS()
@@ -79,9 +79,7 @@ function love.update(dt)
 end
 
 function love.draw()
-
    SM.draw()
-
 end
 
 function love.resize(w, h)
@@ -91,7 +89,7 @@ end
 
 function love.quit()
    -- this takes annoyingly long
-   --time = love.timer.getTime( )
+   time = love.timer.getTime()
    prof.write("prof.mpack")
-   --print('writing took', love.timer.getTime( ) - time , 'seconds' )
+   print('writing took', love.timer.getTime() - time, 'seconds')
 end

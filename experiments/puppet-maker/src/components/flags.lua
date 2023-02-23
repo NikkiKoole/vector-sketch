@@ -28,6 +28,9 @@ Concord.component('biped',
         c.feet2 = parts.feet2
         c.arm1 = parts.arm1
         c.arm2 = parts.arm2
+        c.armhair1 = parts.armhair1
+        c.armhair2 = parts.armhair2
+
         c.hand1 = parts.hand1
         c.hand2 = parts.hand2
 

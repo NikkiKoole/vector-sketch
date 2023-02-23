@@ -439,10 +439,11 @@ function scene.load()
 
 
    legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-       'assets/parts/leg5.png' }
+       'assets/parts/leg5.png', 'assets/parts/leg6.png', 'assets/parts/leg7.png', 'assets/parts/leg8.png' }
 
    hairUrls = { 'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
-       'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png' }
+       'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
+       'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png' }
 
    --bodyImgUrls = {}
    --bodyParts = {}
@@ -503,10 +504,12 @@ function scene.load()
        { name = 'upperlip', imgs = upperlipImgUrls, p = upperlipParts },
        { name = 'lowerlip', imgs = lowerlipImgUrls, p = lowerlipParts },
        { name = 'body',     imgs = bodyImgUrls,     p = bodyParts },
+       { name = 'armhair',  imgs = hairUrls },
        { name = 'arms',     imgs = legUrls },
        { name = 'hands',    imgs = feetImgUrls,     p = feetParts },
        { name = 'legs',     imgs = legUrls },
-       { name = 'feet',     imgs = feetImgUrls,     p = feetParts }
+       { name = 'feet',     imgs = feetImgUrls,     p = feetParts },
+
 
    }
 
@@ -627,7 +630,7 @@ function scene.load()
        noseWidthMultiplier     = 1,
        noseHeightMultiplier    = 1,
        legs                    = {
-           shape     = 1,
+           shape     = 7,
            bgPal     = 4,
            fgPal     = 1,
            bgTex     = 1,
@@ -644,8 +647,21 @@ function scene.load()
        leg1flop                = -1,
        leg2flop                = 1,
        legXAxis                = 0,
-       arms                    = {
+       armhair                 = {
            shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
+       },
+       arms                    = {
+           shape     = 7,
            bgPal     = 4,
            fgPal     = 1,
            bgTex     = 1,
@@ -764,6 +780,9 @@ function scene.load()
 
    arm1 = createArmRubberhose(1, values)
    arm2 = createArmRubberhose(2, values)
+   armhair1 = createArmHairRubberhose(1, values)
+   armhair2 = createArmHairRubberhose(2, values)
+
    hand1 = copyAndRedoGraphic('hands', values)
    hand2 = copyAndRedoGraphic('hands', values)
 
@@ -803,6 +822,7 @@ function scene.load()
 
    attachAllFaceParts()
    changePart('hair', values)
+
 
    if false then
       cameraPoints = {}

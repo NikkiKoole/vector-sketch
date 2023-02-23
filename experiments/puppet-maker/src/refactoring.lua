@@ -49,7 +49,7 @@ function createVanillaLineFromImage(url, textured, hairWidthMultiplier, hairTens
     return currentNode
 end
 
-function createRubberHoseFromImage(url, textured, flop, length, widthMultiplier, optionalPoints)
+function createRubberHoseFromImage(url, textured, flop, length, widthMultiplier, optionalPoints, optionalScaleX)
     local img = mesh.getImage(url)
     local width, height = img:getDimensions()
     local magic = 4.46
@@ -67,7 +67,7 @@ function createRubberHoseFromImage(url, textured, flop, length, widthMultiplier,
     currentNode.data.borderRadius = .5
     currentNode.data.steps = 20
     currentNode.color = { 1, 1, 1 }
-    currentNode.data.scaleX = 1
+    currentNode.data.scaleX = optionalScaleX or 1
     currentNode.data.scaleY = length / height
     currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
 

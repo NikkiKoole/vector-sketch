@@ -132,15 +132,24 @@ function BipedSystem:bipedInit(e)
     e.biped.arm1.points[1] = { a1x, a1y }
     e.biped.arm1.points[2] = { a1x - (arm1.data.length / 4.46) / 1, a1y }
 
+    e.biped.armhair1.points[1] = e.biped.arm1.points[1]
+    e.biped.armhair1.points[2] = e.biped.arm1.points[2]
+    -- e.biped.armhair1.transforms.l[5] = -1
+
     e.biped.arm2.points[1] = { a2x, a2y }
     e.biped.arm2.points[2] = { a2x + (arm2.data.length / 4.46) / 1, a2y }
+
+    e.biped.armhair2.points[1] = e.biped.arm2.points[1]
+    e.biped.armhair2.points[2] = e.biped.arm2.points[2]
+
 
     e.biped.hand2.transforms.l[4] = -1
     BipedSystem:bipedAttachHands(e)
     mesh.remeshNode(e.biped.arm1)
     mesh.remeshNode(e.biped.arm2)
 
-
+    mesh.remeshNode(e.biped.armhair1)
+    mesh.remeshNode(e.biped.armhair2)
     attachHeadWithOrWithoutNeck(e, false)
 
     --local nx, ny = getPositionForNoseAttaching(e)
@@ -217,19 +226,35 @@ function setLegs(e)
     local body = e.biped.body
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
+    local keep = false
 
     l1x = l1x or 0
     l1y = l1y or 0
     l2x = l2x or 0
     l2y = l2y or 0
-    --if lc1 and lc2 then
-    --local dx1, dy1 = body.transforms._g:transformPoint(lc1[1], lc1[2])
+
+
+    local angle, dist = getAngleAndDistance(e.biped.leg1.points[2][1], e.biped.leg1.points[2][2],
+            e.biped.leg1.points[1][1], e.biped.leg1.points[1][2])
+
+
     e.biped.leg1.points[1] = { l1x, l1y }
+    if keep then
+        local newx, newy = setAngleAndDistance(l1x, l1y, angle, dist)
+        e.biped.leg1.points[2] = { newx, newy }
+    end
     mesh.remeshNode(e.biped.leg1)
 
 
+    local angle, dist = getAngleAndDistance(e.biped.leg2.points[2][1], e.biped.leg2.points[2][2],
+            e.biped.leg2.points[1][1], e.biped.leg2.points[1][2])
+
     --local dx1, dy1 = body.transforms._g:transformPoint(lc2[1], lc2[2])
     e.biped.leg2.points[1] = { l2x, l2y }
+    if keep then
+        local newx, newy = setAngleAndDistance(l2x, l2y, angle, dist)
+        e.biped.leg2.points[2] = { newx, newy }
+    end
     mesh.remeshNode(e.biped.leg2)
 
     --end
@@ -240,7 +265,7 @@ function BipedSystem:bipedAttachLegs(e)
 end
 
 function setArms(e, optionalData)
-    local keep = true
+    local keep = false
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
     a1x = a1x or 0
     a1y = a1y or 0
@@ -258,6 +283,10 @@ function setArms(e, optionalData)
     end
     mesh.remeshNode(e.biped.arm1)
 
+    e.biped.armhair1.points[1] = e.biped.arm1.points[1]
+    e.biped.armhair1.points[2] = e.biped.arm1.points[2]
+    mesh.remeshNode(e.biped.armhair1)
+
 
     local angle, dist = getAngleAndDistance(e.biped.arm2.points[2][1], e.biped.arm2.points[2][2],
             e.biped.arm2.points[1][1], e.biped.arm2.points[1][2])
@@ -269,6 +298,10 @@ function setArms(e, optionalData)
         e.biped.arm2.points[2] = { newx, newy }
     end
     mesh.remeshNode(e.biped.arm2)
+
+    e.biped.armhair2.points[1] = e.biped.arm2.points[1]
+    e.biped.armhair2.points[2] = e.biped.arm2.points[2]
+    mesh.remeshNode(e.biped.armhair2)
 
     --end
 end
@@ -286,6 +319,16 @@ function BipedSystem:itemRotate(elem, dx, dy, scale)
             setArms(e)
             BipedSystem:bipedAttachHead(e)
             BipedSystem:bipedAttachHands(e)
+        end
+        if e.biped.hand1 == elem.item then
+            e.biped.hand1.transforms.l[3] = e.biped.hand1.transforms.l[3] + 0.1
+            e.biped.hand1.dirty = true
+            transforms.setTransforms(e.biped.hand1)
+        end
+        if e.biped.hand2 == elem.item then
+            e.biped.hand2.transforms.l[3] = e.biped.hand2.transforms.l[3] + 0.1
+            e.biped.hand2.dirty = true
+            transforms.setTransforms(e.biped.hand2)
         end
         if e.biped.feet1 == elem.item then
             e.biped.feet1.transforms.l[3] = e.biped.feet1.transforms.l[3] + 0.1
@@ -388,12 +431,18 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.hand1.transforms.l[2] = e.biped.hand1.transforms.l[2] + dy / scale
             e.biped.arm1.points[2] = { e.biped.hand1.transforms.l[1], e.biped.hand1.transforms.l[2] }
             mesh.remeshNode(e.biped.arm1)
+
+            e.biped.armhair1.points[2] = e.biped.arm1.points[2]
+            mesh.remeshNode(e.biped.armhair1)
         end
         if e.biped.hand2 == elem.item then
             e.biped.hand2.transforms.l[1] = e.biped.hand2.transforms.l[1] + dx / scale
             e.biped.hand2.transforms.l[2] = e.biped.hand2.transforms.l[2] + dy / scale
             e.biped.arm2.points[2] = { e.biped.hand2.transforms.l[1], e.biped.hand2.transforms.l[2] }
             mesh.remeshNode(e.biped.arm2)
+
+            e.biped.armhair2.points[2] = e.biped.arm2.points[2]
+            mesh.remeshNode(e.biped.armhair2)
         end
 
         if e.biped.body == elem.item then
@@ -408,6 +457,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             setLegs(e)
             setArms(e)
             BipedSystem:bipedAttachHands(e)
+            BipedSystem:bipedAttachFeet(e)
         end
         if e.biped.head == elem.item then
             local hx, hy = getHeadDeltaAttachement(e)
