@@ -225,6 +225,7 @@ function redoGraphicHelper(part, name, values)
       textured:release()
       p.texture.canvas = m
    end
+   return part
 end
 
 function partToTexturedCanvas(partName, values, optionalImageSettings)
@@ -335,61 +336,20 @@ function updateChild(container, oldValue, newResult)
    end
 end
 
---[[
-function redoBody(_, values)
-   redoGraphicHelper(body, 'body', values)
+function copyAndRedoGraphic(name, values)
+   local part = findPart(name)
+   local partArray = part.p
+   --earParts[values.ears.shape]
+   local original = partArray[values[name].shape]
+   return redoGraphicHelper(copy3(original), name, values)
 end
-
-function redoFeet(_, values)
-   redoGraphicHelper(feet1, 'feet', values)
-   redoGraphicHelper(feet2, 'feet', values)
-end
-
-function redoHands(_, values)
-   redoGraphicHelper(hand1, 'hands', values)
-   redoGraphicHelper(hand2, 'hands', values)
-end
-
-function redoHead(_, values)
-   redoGraphicHelper(head, 'head', values)
-end
-
-function redoEars(_, values)
-   redoGraphicHelper(ear1, 'ears', values)
-   redoGraphicHelper(ear2, 'ears', values)
-end
-
-function redoNose(_, values)
-   redoGraphicHelper(nose, 'nose', values)
-end
-
-function redoEyes(_, values)
-   redoGraphicHelper(eye1, 'eyes', values)
-   redoGraphicHelper(eye2, 'eyes', values)
-end
-
-function redoPupils(_, values)
-   redoGraphicHelper(pupil1, 'pupils', values)
-   redoGraphicHelper(pupil2, 'pupils', values)
-end
---]]
------
-
-------
-
-
--- next uup , make something like 'pickShapeAndFillIt' to replace the  copy3 and redoGraphicHelper pair
-
 
 function changePart(name, values)
-   --local justGraphic = (type == 'colors' or type == 'pattern')
-   if name == 'body' then
-      body = updateChild(guy, body, copy3(bodyParts[values.body.shape]))
-      parentize.parentize(root)
+   local container = values.potatoHead and body or head
 
-      redoGraphicHelper(body, 'body', values)
-      --redoBody(biped, values) --- this position is very iportant,
-      --  if i move redoBody under the meshall we get these borders aorund images  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   if name == 'body' then
+      body = updateChild(guy, body, copyAndRedoGraphic('body', values))
+      parentize.parentize(root)
 
       if (values.potatoHead) then
          attachAllFaceParts()
@@ -407,72 +367,45 @@ function changePart(name, values)
    elseif name == 'neck' then
       neck = updateChild(guy, neck, createNeckRubberhose(values, neck.points))
    elseif name == 'head' then
-      head = copy3(headParts[values.head.shape])
+      head = copyAndRedoGraphic('head', values)
       guy.children = guyChildren(biped)
       head.transforms.l[4] = values.headWidthMultiplier
       head.transforms.l[5] = values.headHeightMultiplier
-      --  redoHead(biped, values)
-      redoGraphicHelper(head, 'head', values)
       if (not values.potatoHead) then
          attachAllFaceParts()
       end
       myWorld:emit("bipedAttachHead", biped)
       changePart('hair', values) ----
    elseif name == 'hair' then
-      local container = values.potatoHead and body or head
       local hp = getHeadPoints(potato)
       local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
       hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
    elseif name == 'ears' then
-      local container = values.potatoHead and body or head
-      ear1 = updateChild(container, ear1, copy3(earParts[values.ears.shape]))
-      ear2 = updateChild(container, ear2, copy3(earParts[values.ears.shape]))
-      redoGraphicHelper(ear1, 'ears', values)
-      redoGraphicHelper(ear2, 'ears', values)
-      --redoEars(potato, values)
+      ear1 = updateChild(container, ear1, copyAndRedoGraphic('ears', values))
+      ear2 = updateChild(container, ear2, copyAndRedoGraphic('ears', values))
    elseif name == 'eyes' then
-      local container = values.potatoHead and body or head
-      eye1 = updateChild(container, eye1, copy3(eyeParts[values.eyes.shape]))
-      eye2 = updateChild(container, eye2, copy3(eyeParts[values.eyes.shape]))
-      redoGraphicHelper(eye1, 'eyes', values)
-      redoGraphicHelper(eye2, 'eyes', values)
-      --redoEyes(potato, values)
+      eye1 = updateChild(container, eye1, copyAndRedoGraphic('eyes', values))
+      eye2 = updateChild(container, eye2, copyAndRedoGraphic('eyes', values))
    elseif name == 'pupils' then
-      local container = values.potatoHead and body or head
-      pupil1 = updateChild(container, pupil1, copy3(pupilParts[values.pupils.shape]))
-      pupil2 = updateChild(container, pupil2, copy3(pupilParts[values.pupils.shape]))
-      redoGraphicHelper(pupil1, 'pupils', values)
-      redoGraphicHelper(pupil2, 'pupils', values)
-      --redoPupils(container, values)
+      pupil1 = updateChild(container, pupil1, copyAndRedoGraphic('pupils', values))
+      pupil2 = updateChild(container, pupil2, copyAndRedoGraphic('pupils', values))
    elseif name == 'brows' then
-      local container = values.potatoHead and body or head
       arrangeBrows()
       brow1 = updateChild(container, brow1, createBrowBezier(values, brow1.points))
       brow2 = updateChild(container, brow2, createBrowBezier(values, brow2.points))
    elseif name == 'nose' then
-      local container = values.potatoHead and body or head
-      nose = updateChild(container, nose, copy3(noseParts[values.nose.shape]))
-      redoGraphicHelper(nose, 'nose', values)
-      -- redoNose(potato, values)
+      nose = updateChild(container, nose, copyAndRedoGraphic('nose', values))
    elseif name == 'lowerlip' then
-      local container = values.potatoHead and body or head
       lowerlip = updateChild(container, lowerlip, createLowerlipBezier(values, lowerlip.points))
    elseif name == 'upperlip' then
-      local container = values.potatoHead and body or head
       upperlip = updateChild(container, upperlip, createUpperlipBezier(values, upperlip.points))
    elseif name == 'feet' then
-      feet1 = updateChild(guy, feet1, copy3(feetParts[values.feet.shape]))
-      feet2 = updateChild(guy, feet2, copy3(feetParts[values.feet.shape]))
-      redoGraphicHelper(feet1, 'feet', values)
-      redoGraphicHelper(feet2, 'feet', values)
-      --redoFeet(biped, values)
+      feet1 = updateChild(guy, feet1, copyAndRedoGraphic('feet', values))
+      feet2 = updateChild(guy, feet2, copyAndRedoGraphic('feet', values))
       myWorld:emit("bipedAttachFeet", biped)
    elseif name == 'hands' then
-      hand1 = updateChild(guy, hand1, copy3(handParts[values.hands.shape]))
-      hand2 = updateChild(guy, hand2, copy3(handParts[values.hands.shape]))
-      redoGraphicHelper(hand1, 'hands', values)
-      redoGraphicHelper(hand2, 'hands', values)
-      -- redoHands(biped, values)
+      hand1 = updateChild(guy, hand1, copyAndRedoGraphic('hands', values))
+      hand2 = updateChild(guy, hand2, copyAndRedoGraphic('hands', values))
       myWorld:emit("bipedAttachHands", biped)
    elseif name == 'arms' then
       arm1 = updateChild(guy, arm1, createArmRubberhose(1, values, arm1.points))

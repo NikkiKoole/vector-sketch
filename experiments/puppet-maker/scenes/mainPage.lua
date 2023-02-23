@@ -299,20 +299,7 @@ function attachAllFaceParts()
    table.insert(addTo.children, nose)
    table.insert(addTo.children, hair)
 
-
-   --redoEyes(potato, values)
-   --redoPupils(potato, values)
-   --redoEars(potato, values)
-   --redoBrows(potato, values)
-   --redoNose(potato, values)
-
-   --changeNose(potato, values)
-   --changeEyes(potato, values)
    changePart('hair', values)
-   --changeHair(potato, values)
-   --changePartAndOrGraphic('upperlip', '', values)
-   --changePartAndOrGraphic('lowerlip', '', values)
-   --hangeLowerLip(potato, values)
 end
 
 function scene.load()
@@ -505,21 +492,21 @@ function scene.load()
 
 
    parts = {
-       { name = 'head',     imgs = headImgUrls,     funcs = { changeHead, redoHead, biped } },
-       { name = 'hair',     imgs = hairUrls,        funcs = { changeHair, changeHair, potato } },
-       { name = 'brows',    imgs = browImgUrls,     funcs = { redoBrows, redoBrows, potato } },
-       { name = 'pupils',   imgs = pupilImgUrls,    funcs = { changePupils, redoPupils, potato } },
-       { name = 'eyes',     imgs = eyeImgUrls,      funcs = { changeEyes, redoEyes, potato } },
-       { name = 'ears',     imgs = earImgUrls,      funcs = { changeEars, redoEars, potato } },
-       { name = 'neck',     imgs = legUrls,         funcs = { changeNeck, redoNeck, biped } },
-       { name = 'nose',     imgs = noseImgUrls,     funcs = { changeNose, changeNose, potato } },
-       { name = 'upperlip', imgs = upperlipImgUrls, funcs = { changeUpperLip, changeUpperLip, potato } },
-       { name = 'lowerlip', imgs = lowerlipImgUrls, funcs = { changeLowerLip, changeLowerLip, potato } },
-       { name = 'body',     imgs = bodyImgUrls,     funcs = { changeBody, redoBody, biped } },
-       { name = 'arms',     imgs = legUrls,         funcs = { changeArms, changeArms, biped } },
-       { name = 'hands',    imgs = feetImgUrls,     funcs = { changeHands, redoHands, biped } },
-       { name = 'legs',     imgs = legUrls,         funcs = { changeLegs, changeLegs, biped } },
-       { name = 'feet',     imgs = feetImgUrls,     funcs = { changeFeet, redoFeet, biped } }
+       { name = 'head',     imgs = headImgUrls,     p = headParts },
+       { name = 'hair',     imgs = hairUrls },
+       { name = 'brows',    imgs = browImgUrls,     p = browParts },
+       { name = 'pupils',   imgs = pupilImgUrls,    p = pupilParts },
+       { name = 'eyes',     imgs = eyeImgUrls,      p = eyeParts },
+       { name = 'ears',     imgs = earImgUrls,      p = earParts },
+       { name = 'neck',     imgs = legUrls },
+       { name = 'nose',     imgs = noseImgUrls,     p = noseParts },
+       { name = 'upperlip', imgs = upperlipImgUrls, p = upperlipParts },
+       { name = 'lowerlip', imgs = lowerlipImgUrls, p = lowerlipParts },
+       { name = 'body',     imgs = bodyImgUrls,     p = bodyParts },
+       { name = 'arms',     imgs = legUrls },
+       { name = 'hands',    imgs = feetImgUrls,     p = feetParts },
+       { name = 'legs',     imgs = legUrls },
+       { name = 'feet',     imgs = feetImgUrls,     p = feetParts }
 
    }
 
@@ -769,34 +756,34 @@ function scene.load()
 
 
 
-   head = copy3(headParts[values.head.shape])
+   head = copyAndRedoGraphic('head', values) --copy3(headParts[values.head.shape])
 
    neck = createNeckRubberhose(values)
-   body = copy3(bodyParts[values.body.shape])
+   body = copyAndRedoGraphic('body', values) --copy3(bodyParts[values.body.shape])
    hair = createHairVanillaLine(values)
 
    arm1 = createArmRubberhose(1, values)
    arm2 = createArmRubberhose(2, values)
-   hand1 = copy3(feetParts[values.hands.shape])
-   hand2 = copy3(feetParts[values.hands.shape])
+   hand1 = copyAndRedoGraphic('hands', values)
+   hand2 = copyAndRedoGraphic('hands', values)
 
    leg1 = createLegRubberhose(1, values)
    leg2 = createLegRubberhose(2, values)
-   feet1 = copy3(feetParts[values.feet.shape])
-   feet2 = copy3(feetParts[values.feet.shape])
+   feet1 = copyAndRedoGraphic('feet', values)
+   feet2 = copyAndRedoGraphic('feet', values)
 
-   eye1 = copy3(eyeParts[values.eyes.shape])
-   eye2 = copy3(eyeParts[values.eyes.shape])
-   pupil1 = copy3(pupilParts[values.pupils.shape])
-   pupil2 = copy3(pupilParts[values.pupils.shape])
-   brow1 = copy3(browParts[values.brows.shape])
-   brow2 = copy3(browParts[values.brows.shape])
+   eye1 = copyAndRedoGraphic('eyes', values)
+   eye2 = copyAndRedoGraphic('eyes', values)
+   pupil1 = copyAndRedoGraphic('pupils', values)
+   pupil2 = copyAndRedoGraphic('pupils', values)
+   brow1 = createBrowBezier(values)
+   brow2 = createBrowBezier(values)
 
-   upperlip = createUpperlipBezier(values) --copy3(upperlipParts[values.upperlip.shape])
-   lowerlip = createLowerlipBezier(values) --copy3(lowerlipParts[values.lowerlip.shape])
+   upperlip = createUpperlipBezier(values)
+   lowerlip = createLowerlipBezier(values)
 
-   ear1 = copy3(earParts[values.ears.shape])
-   ear2 = copy3(earParts[values.ears.shape])
+   ear1 = copyAndRedoGraphic('ears', values)
+   ear2 = copyAndRedoGraphic('ears', values)
 
    nose = copy3(noseParts[values.nose.shape])
 
@@ -810,19 +797,12 @@ function scene.load()
        children = {}
    }
 
-
-
-
-
    guy.children = guyChildren(biped)
    root.children = { guy }
 
-   --redoFeet(biped, values)
-   --redoHands(biped, values)
-   --redoBody(biped, values)
-   -- redoHead(biped, values)
 
    attachAllFaceParts()
+
 
    if false then
       cameraPoints = {}
