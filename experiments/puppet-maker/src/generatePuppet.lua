@@ -373,6 +373,14 @@ function redoPupils(_, values)
    redoGraphicHelper(pupil2, 'pupils', values)
 end
 --]]
+-----
+
+------
+
+
+-- next uup , make something like 'pickShapeAndFillIt' to replace the  copy3 and redoGraphicHelper pair
+
+
 function changePart(name, values)
    --local justGraphic = (type == 'colors' or type == 'pattern')
    if name == 'body' then
