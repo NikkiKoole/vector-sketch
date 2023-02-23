@@ -785,7 +785,7 @@ function scene.load()
    ear1 = copyAndRedoGraphic('ears', values)
    ear2 = copyAndRedoGraphic('ears', values)
 
-   nose = copy3(noseParts[values.nose.shape])
+   nose = copyAndRedoGraphic('nose', values)
 
    biped:give('biped', bipedArguments(values))
    potato:give('potato', potatoArguments(values))
@@ -802,7 +802,7 @@ function scene.load()
 
 
    attachAllFaceParts()
-
+   changePart('hair', values)
 
    if false then
       cameraPoints = {}

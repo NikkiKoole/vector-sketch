@@ -412,6 +412,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.potatoHead = not values.potatoHead
                myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
                attachAllFaceParts()
+               changePart('head', values)
+               changePart('body', values)
                setCategories()
             end
          end
