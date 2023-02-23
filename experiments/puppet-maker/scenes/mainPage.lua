@@ -300,16 +300,19 @@ function attachAllFaceParts()
    table.insert(addTo.children, hair)
 
 
-   redoEyes(potato, values)
-   redoPupils(potato, values)
-   redoEars(potato, values)
-   redoBrows(potato, values)
-   redoNose(potato, values)
-   changeNose(potato, values)
-   changeEyes(potato, values)
-   changeHair(potato, values)
-   changeUpperLip(potato, values)
-   changeLowerLip(potato, values)
+   --redoEyes(potato, values)
+   --redoPupils(potato, values)
+   --redoEars(potato, values)
+   --redoBrows(potato, values)
+   --redoNose(potato, values)
+
+   --changeNose(potato, values)
+   --changeEyes(potato, values)
+   changePart('hair', values)
+   --changeHair(potato, values)
+   --changePartAndOrGraphic('upperlip', '', values)
+   --changePartAndOrGraphic('lowerlip', '', values)
+   --hangeLowerLip(potato, values)
 end
 
 function scene.load()
@@ -789,8 +792,8 @@ function scene.load()
    brow1 = copy3(browParts[values.brows.shape])
    brow2 = copy3(browParts[values.brows.shape])
 
-   upperlip = copy3(upperlipParts[values.upperlip.shape])
-   lowerlip = copy3(lowerlipParts[values.lowerlip.shape])
+   upperlip = createUpperlipBezier(values) --copy3(upperlipParts[values.upperlip.shape])
+   lowerlip = createLowerlipBezier(values) --copy3(lowerlipParts[values.lowerlip.shape])
 
    ear1 = copy3(earParts[values.ears.shape])
    ear2 = copy3(earParts[values.ears.shape])
@@ -814,10 +817,11 @@ function scene.load()
    guy.children = guyChildren(biped)
    root.children = { guy }
 
-   redoFeet(biped, values)
-   redoHands(biped, values)
-   redoBody(biped, values)
-   redoHead(biped, values)
+   --redoFeet(biped, values)
+   --redoHands(biped, values)
+   --redoBody(biped, values)
+   -- redoHead(biped, values)
+
    attachAllFaceParts()
 
    if false then

@@ -80,8 +80,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.upperlipWidthMultiplier = v.value
                upperlip.transforms.l[4] = v.value
-               myWorld:emit('potatoInit', potato)
-               changeUpperLip(potato, values)
+               changePart('upperlip', values)
             end
             currentY = currentY + 25
             local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
@@ -99,8 +98,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.lowerlipWidthMultiplier = v.value
                lowerlip.transforms.l[4] = v.value
-               myWorld:emit('potatoInit', potato)
-               changeLowerLip(potato, values)
+               changePart('lowerlip', values)
             end
             currentY = currentY + 25
             local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
@@ -120,9 +118,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.hairWidthMultiplier = v.value
 
-               myWorld:emit('potatoInit', potato)
-               changeHair(potato, values)
-               --redoBrows(potato, values)
+               changePart('hair', values)
             end
             currentY = currentY + 25
             local v = h_slider("hair-tension", startX, currentY, 150, values.hairTension, .00005, 1)
@@ -130,9 +126,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.hairTension = v.value
 
-               myWorld:emit('potatoInit', potato)
-               changeHair(potato, values)
-               --redoBrows(potato, values)
+               changePart('hair', values)
             end
          end
       end
@@ -145,8 +139,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.browsWidthMultiplier = v.value
                arrangeBrows()
-               myWorld:emit('potatoInit', potato)
-               redoBrows(potato, values)
+               changePart('brows', values)
             end
 
             currentY = currentY + 25
@@ -156,22 +149,18 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.browsWideMultiplier = v.value
                print(values.browsWideMultiplier)
                arrangeBrows()
-               myWorld:emit('potatoInit', potato)
-               redoBrows(potato, values)
+               changePart('brows', values)
             end
 
             currentY = currentY + 25
-
 
             local v = h_slider("brow-movement", startX, currentY, 50, values.browsDefaultBend, 1, 10)
             if v.value then
                local img = mesh.getImage(browImgUrls[values.brows.shape])
                local width, height = img:getDimensions()
                values.browsDefaultBend = math.floor(v.value)
-
-
                arrangeBrows()
-               redoBrows(potato, values)
+               changePart('brows', values)
             end
          end
       end
@@ -295,21 +284,21 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             v = h_slider("leg-axis", startX, currentY, 50, values.legXAxis, 0, 1)
             if v.value then
                values.legXAxis = math.floor(v.value * 4) / 4.0
-               changeLegs(biped, values)
+               changePart('legs', values)
                myWorld:emit("bipedAttachLegs", biped)
             end
             currentY = currentY + 25
             v = h_slider("leg-length", startX, currentY, 50, values.legLength, 200, 2000)
             if v.value then
                values.legLength = v.value
-               changeLegs(biped, values)
+               changePart('legs', values)
             end
             currentY = currentY + 25
             v = h_slider("leg-width-multiplier", startX, currentY, 50, values.legWidthMultiplier, 0.5, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.legWidthMultiplier = v.value
-               changeLegs(biped, values)
+               changePart('legs', values)
             end
             currentY = currentY + 25
             startX = startX + 10
@@ -318,7 +307,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             local b = ui.getUICircle(startX, currentY, 10)
             if b then
                values.legs.flipy = values.legs.flipy == -1 and 1 or -1
-               changeLegs(biped, values)
+               changePart('legs', values)
             end
          end
       end
@@ -327,9 +316,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          local update = function()
             head.dirty = true
             transforms.setTransforms(head)
-            redoHead(biped, values)
-            changeHair(potato, values)
-            myWorld:emit('potatoInit', potato)
+            changePart('head', values)
+
             myWorld:emit("bipedAttachHead", biped)
          end
 
@@ -371,7 +359,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          local update = function()
             body.dirty = true
             transforms.setTransforms(body)
-            redoBody(biped, values)
+            changePart('body', values)
+
             myWorld:emit('potatoInit', potato)
             myWorld:emit("bipedAttachHead", biped)
             myWorld:emit("bipedAttachLegs", biped)
@@ -436,21 +425,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          if v.value then
             v.value = math.floor(v.value)
             values[selectedCategory].texScale = v.value
-            --print(values[selectedCategory].texScale)
-            local f = findPart(selectedCategory)
-            local func = f.funcs[1]
-            func(f.funcs[3], values)
+            changePart(selectedCategory, values)
          end
          currentY = currentY + 25
          local v = h_slider("pattern-rotation", startX, currentY, 200, values[selectedCategory].texRot, 0, 15)
          if v.value then
             v.value = math.floor(v.value)
             values[selectedCategory].texRot = v.value
-
-            --print(values[selectedCategory].texScale)
-            local f = findPart(selectedCategory)
-            local func = f.funcs[1]
-            func(f.funcs[3], values)
+            changePart(selectedCategory, values)
          end
       end
    end
@@ -485,9 +467,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                local keys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
                values[selectedCategory][keys[i]] = math.floor(v.value)
                selectedColoringLayer = i
-               local f = findPart(selectedCategory)
-               local func = f.funcs[1]
-               func(f.funcs[3], values)
+               changePart(selectedCategory, values)
             end
          end
          love.graphics.setColor(0, 0, 0)
@@ -626,22 +606,26 @@ local function buttonClickHelper(value)
    local f = findPart(selectedCategory)
    if selectedTab == 'part' then
       values[selectedCategory]['shape'] = value
-      local func = f.funcs[1]
-      func(f.funcs[3], values)
+      changePart(selectedCategory, values)
+      --local func = f.funcs[1]
+      --print(selectedCategory)
+      --func(f.funcs[3], values)
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
       local whichPart = { 'bgPal', 'fgPal', 'linePal' }
 
       values[selectedCategory][whichPart[selectedColoringLayer]] = value
-      local func = f.funcs[2]
-      func(f.funcs[3], values)
+      changePart(selectedCategory, values)
+      --local func = f.funcs[2]
+      --func(f.funcs[3], values)
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'pattern' then
       values[selectedCategory]['fgTex'] = value
-      local func = f.funcs[2]
-      func(f.funcs[3], values)
+      changePart(selectedCategory, values)
+      --local func = f.funcs[2]
+      --func(f.funcs[3], values)
       playSound(scrollItemClickSample)
    end
 end
