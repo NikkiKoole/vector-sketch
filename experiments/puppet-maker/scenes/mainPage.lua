@@ -41,12 +41,19 @@ myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 local pointerInteractees = {}
 
 
-nullObject = {
+-- sometimes the nullobject has to behave as a folder (? does it?)
+nullFolder = {
     folder = true,
-    name = 'nullObject',
+    name = 'nullFolder',
     transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
     children = {}
 }
+-- im sure it sometimes needs to just be the simplest ofunrenderables
+nullChild = {
+    name = 'nullChild',
+    points = { { 0, 0 }, { 0, 0 }, { 0, 0 } }
+}
+
 
 
 local function sign(x)
@@ -462,6 +469,8 @@ function scene.load()
       end
    end
    --]]
+   table.insert(hairUrls, 'assets/null.png') -- i dont have a part array for these things, the url should suffice
+
    bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
    feetImgUrls, feetParts = loadGroupFromFile('assets/bodies.polygons.txt', 'feet')
    handParts = feetParts

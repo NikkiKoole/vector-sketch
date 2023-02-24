@@ -256,6 +256,12 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
    return texturedcanvas, url
 end
 
+function isNullObject(partName, values)
+   local p = findPart(partName)
+   local url = p.imgs[values[partName].shape]
+   return url == 'assets/null.png'
+end
+
 function createHairVanillaLine(values, hairLine)
    local textured, url = partToTexturedCanvas('hair', values)
 
@@ -337,17 +343,21 @@ function createNeckRubberhose(values, points)
 end
 
 function updateChild(container, oldValue, newResult)
-   local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
-   -- I need to get t the pivot point from the new thing.
-   if newResult.transforms then
-      oldTransforms[6] = newResult.transforms.l[6]
-      oldTransforms[7] = newResult.transforms.l[7]
-   end
+   --print(container.name, inspect(oldValue))
+
    for i = 1, #container.children do
       if container.children[i] == oldValue then
-         --print('changed something')
+         --print('changed something', inspect(oldValue))
+
          container.children[i] = newResult
          if (container.children[i].transforms) then
+            local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
+            -- I need to get t the pivot point from the new thing.
+            if newResult.transforms then
+               oldTransforms[6] = newResult.transforms.l[6]
+               oldTransforms[7] = newResult.transforms.l[7]
+            end
+
             container.children[i].transforms.l = oldTransforms
          end
          return container.children[i]
@@ -396,9 +406,14 @@ function changePart(name, values)
       myWorld:emit("bipedAttachHead", biped)
       changePart('hair', values) ----
    elseif name == 'hair' then
-      local hp = getHeadPoints(potato)
-      local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
-      hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
+      if isNullObject(name, values) then
+         hair = updateChild(container, hair, copy3(nullChild))
+         print('hair', hair)
+      else
+         local hp = getHeadPoints(potato)
+         local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
+         hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
+      end
    elseif name == 'ears' then
       ear1 = updateChild(container, ear1, copyAndRedoGraphic('ears', values))
       ear2 = updateChild(container, ear2, copyAndRedoGraphic('ears', values))
@@ -427,8 +442,15 @@ function changePart(name, values)
       hand2 = updateChild(guy, hand2, copyAndRedoGraphic('hands', values))
       myWorld:emit("bipedAttachHands", biped)
    elseif name == 'armhair' then
-      armhair1 = updateChild(guy, armhair1, createArmHairRubberhose(1, values, armhair1.points))
-      armhair2 = updateChild(guy, armhair2, createArmHairRubberhose(2, values, armhair2.points))
+      if isNullObject(name, values) then
+         --print(armhair1.transforms)
+         armhair1 = updateChild(guy, armhair1, copy3(nullChild))
+         armhair2 = updateChild(guy, armhair2, copy3(nullChild))
+      else
+         armhair1 = updateChild(guy, armhair1, createArmHairRubberhose(1, values, armhair1.points))
+         armhair2 = updateChild(guy, armhair2, createArmHairRubberhose(2, values, armhair2.points))
+         myWorld:emit('setArmHairToArms', biped)
+      end
    elseif name == 'arms' then
       arm1 = updateChild(guy, arm1, createArmRubberhose(1, values, arm1.points))
       arm2 = updateChild(guy, arm2, createArmRubberhose(2, values, arm2.points))
