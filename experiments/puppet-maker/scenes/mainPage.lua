@@ -517,6 +517,7 @@ function scene.load()
        { name = 'arms',     imgs = legUrls },
        { name = 'hands',    imgs = feetImgUrls,     p = feetParts },
        { name = 'legs',     imgs = legUrls },
+       { name = 'leghair',  imgs = hairUrls },
        { name = 'feet',     imgs = feetImgUrls,     p = feetParts },
 
 
@@ -638,6 +639,19 @@ function scene.load()
        noseYAxis               = 0, --  -3, -2,-1,0,1,2, 3
        noseWidthMultiplier     = 1,
        noseHeightMultiplier    = 1,
+       leghair                 = {
+           shape     = 1,
+           bgPal     = 4,
+           fgPal     = 1,
+           bgTex     = 1,
+           fgTex     = 2,
+           linePal   = 1,
+           bgAlpha   = 5,
+           fgAlpha   = 5,
+           lineAlpha = 5,
+           texRot    = 0,
+           texScale  = 1,
+       },
        legs                    = {
            shape     = 7,
            bgPal     = 4,
@@ -797,6 +811,8 @@ function scene.load()
 
    leg1 = createLegRubberhose(1, values)
    leg2 = createLegRubberhose(2, values)
+   leghair1 = createLegHairRubberhose(1, values)
+   leghair2 = createLegHairRubberhose(2, values)
    feet1 = copyAndRedoGraphic('feet', values)
    feet2 = copyAndRedoGraphic('feet', values)
 

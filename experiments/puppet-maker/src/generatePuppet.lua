@@ -123,13 +123,13 @@ function guyChildren(e)
    if (e.biped.values.potatoHead) then
       return {
           body,
-          leg1, leg2, feet1, feet2,
+          leg1, leg2, leghair1, leghair2, feet1, feet2,
           arm1, arm2, armhair1, armhair2, hand1, hand2,
       }
    else
       return {
           body, neck, head,
-          leg1, leg2, feet1, feet2,
+          leg1, leg2, leghair1, leghair2, feet1, feet2,
           arm1, arm2, armhair1, armhair2, hand1, hand2,
       }
    end
@@ -143,6 +143,8 @@ function bipedArguments(values)
        head = head,
        leg1 = leg1,
        leg2 = leg2,
+       leghair1 = leghair1,
+       leghair2 = leghair2,
        feet1 = feet1,
        feet2 = feet2,
        armhair1 = armhair1,
@@ -319,6 +321,18 @@ function createArmHairRubberhose(armNr, values, points)
            points, flop)
 end
 
+function createLegHairRubberhose(armNr, values, points)
+   local flop = armNr == 1 and values.leg1flop or values.leg2flop
+   local textured, url = partToTexturedCanvas('leghair', values)
+
+   return createRubberHoseFromImage(
+           url, textured,
+           flop,
+           values.legLength,
+           values.legWidthMultiplier,
+           points, flop)
+end
+
 function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
    local textured, url = partToTexturedCanvas('legs', values)
@@ -459,6 +473,16 @@ function changePart(name, values)
       leg1 = updateChild(guy, leg1, createLegRubberhose(1, values, leg1.points))
       leg2 = updateChild(guy, leg2, createLegRubberhose(2, values, leg2.points))
       myWorld:emit("bipedAttachFeet", biped)
+   elseif name == 'leghair' then
+      if isNullObject(name, values) then
+         --print(armhair1.transforms)
+         leghair1 = updateChild(guy, leghair1, copy3(nullChild))
+         leghair2 = updateChild(guy, leghair2, copy3(nullChild))
+      else
+         leghair1 = updateChild(guy, leghair1, createLegHairRubberhose(1, values, leghair1.points))
+         leghair2 = updateChild(guy, leghair2, createLegHairRubberhose(2, values, leghair2.points))
+         myWorld:emit('setLegHairToLegs', biped)
+      end
    end
    parentize.parentize(root)
    mesh.meshAll(root)

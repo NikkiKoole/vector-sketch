@@ -120,14 +120,22 @@ function BipedSystem:bipedInit(e)
     e.biped.leg1.points[1] = { l1x, l1y }
     e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) / 1 }
 
+    e.biped.leghair1.points[1] = e.biped.leg1.points[1]
+    e.biped.leghair1.points[2] = e.biped.leg1.points[2]
+
+
     e.biped.leg2.points[1] = { l2x, l2y }
     e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) / 1 }
+
+    e.biped.leghair2.points[1] = e.biped.leg2.points[1]
+    e.biped.leghair2.points[2] = e.biped.leg2.points[2]
 
     e.biped.feet2.transforms.l[4] = -1
     BipedSystem:bipedAttachFeet(e)
     mesh.remeshNode(e.biped.leg1)
     mesh.remeshNode(e.biped.leg2)
-
+    mesh.remeshNode(e.biped.leghair1)
+    mesh.remeshNode(e.biped.leghair2)
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
 
     e.biped.arm1.points[1] = { a1x, a1y }
@@ -246,6 +254,12 @@ function setLegs(e)
     end
     mesh.remeshNode(e.biped.leg1)
 
+    e.biped.leghair1.points[1] = e.biped.leg1.points[1]
+    e.biped.leghair1.points[2] = e.biped.leg1.points[2]
+    mesh.remeshNode(e.biped.leghair1)
+
+
+
 
     local angle, dist = getAngleAndDistance(e.biped.leg2.points[2][1], e.biped.leg2.points[2][2],
             e.biped.leg2.points[1][1], e.biped.leg2.points[1][2])
@@ -257,6 +271,10 @@ function setLegs(e)
         e.biped.leg2.points[2] = { newx, newy }
     end
     mesh.remeshNode(e.biped.leg2)
+
+    e.biped.leghair2.points[1] = e.biped.leg2.points[1]
+    e.biped.leghair2.points[2] = e.biped.leg2.points[2]
+    mesh.remeshNode(e.biped.leghair2)
 
     --end
 end
@@ -287,9 +305,8 @@ function setArms(e, optionalData)
 
     e.biped.armhair1.points[1] = e.biped.arm1.points[1]
     e.biped.armhair1.points[2] = e.biped.arm1.points[2]
-    --if e.biped.armhair1.name ~= 'nullObject' then
     mesh.remeshNode(e.biped.armhair1)
-    --end
+
 
 
     local angle, dist = getAngleAndDistance(e.biped.arm2.points[2][1], e.biped.arm2.points[2][2],
@@ -413,6 +430,15 @@ function BipedSystem:setArmHairToArms(e)
     mesh.remeshNode(e.biped.armhair2)
 end
 
+function BipedSystem:setLegHairToLegs(e)
+    e.biped.leghair1.points[1] = e.biped.leg1.points[1]
+    e.biped.leghair1.points[2] = e.biped.leg1.points[2]
+    mesh.remeshNode(e.biped.leghair1)
+    e.biped.leghair2.points[1] = e.biped.leg2.points[1]
+    e.biped.leghair2.points[2] = e.biped.leg2.points[2]
+    mesh.remeshNode(e.biped.leghair2)
+end
+
 function BipedSystem:itemDrag(elem, dx, dy, scale)
     --print(elem.item.name)
     for _, e in ipairs(self.pool) do
@@ -421,6 +447,10 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.feet1.transforms.l[2] = e.biped.feet1.transforms.l[2] + dy / scale
             e.biped.leg1.points[2] = { e.biped.feet1.transforms.l[1], e.biped.feet1.transforms.l[2] }
             mesh.remeshNode(e.biped.leg1)
+
+            e.biped.leghair1.points[2] = e.biped.leg1.points[2]
+            mesh.remeshNode(e.biped.leghair1)
+
 
             local derivative = e.biped.leg1._curve:getDerivative()
             local dx, dy = derivative:evaluate(1)
@@ -433,6 +463,10 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             e.biped.feet2.transforms.l[2] = e.biped.feet2.transforms.l[2] + dy / scale
             e.biped.leg2.points[2] = { e.biped.feet2.transforms.l[1], e.biped.feet2.transforms.l[2] }
             mesh.remeshNode(e.biped.leg2)
+
+            e.biped.leghair2.points[2] = e.biped.leg2.points[2]
+            mesh.remeshNode(e.biped.leghair2)
+
 
             local derivative = e.biped.leg2._curve:getDerivative()
             local dx, dy = derivative:evaluate(1)
