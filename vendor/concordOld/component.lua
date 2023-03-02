@@ -16,19 +16,15 @@ Component.__mt = {
 -- @treturn Component A new ComponentClass
 function Component.new(name, populate)
    if (type(name) ~= "string") then
-      Utils.error(2, "bad argument #1 to 'Component.new' (string expected, got %s)", type(name))
-   end
-
-   if (string.match(name, Components.__REJECT_MATCH) ~= "") then
-      Utils.error(2, "bad argument #1 to 'Component.new' (Component names can't start with '%s', got %s)", Components.__REJECT_PREFIX, name)
+      error("bad argument #1 to 'Component.new' (string expected, got "..type(name)..")", 2)
    end
 
    if (rawget(Components, name)) then
-      Utils.error(2, "bad argument #1 to 'Component.new' (ComponentClass with name '%s' was already registerd)", name) -- luacheck: ignore
+      error("bad argument #1 to 'Component.new' (ComponentClass with name '"..name.."' was already registerd)", 2) -- luacheck: ignore
    end
 
    if (type(populate) ~= "function" and type(populate) ~= "nil") then
-      Utils.error(2, "bad argument #1 to 'Component.new' (function/nil expected, got %s)", type(populate))
+      error("bad argument #1 to 'Component.new' (function/nil expected, got "..type(populate)..")", 2)
    end
 
    local componentClass = setmetatable({
@@ -47,40 +43,31 @@ function Component.new(name, populate)
    return componentClass
 end
 
--- Internal: Populates a Component with values.
+-- Internal: Populates a Component with values
 function Component:__populate() -- luacheck: ignore
 end
 
--- Callback: When the Component gets removed or replaced in an Entity.
-function Component:removed() -- luacheck: ignore
-end
-
--- Callback: When the Component gets serialized as part of an Entity.
 function Component:serialize()
    local data = Utils.shallowCopy(self, {})
 
    --This values shouldn't be copied over
-   data.__componentClass   = nil
-   data.__entity           = nil
-   data.__isComponent      = nil
+   data.__componentClass = nil
+   data.__isComponent = nil
    data.__isComponentClass = nil
 
    return data
 end
 
--- Callback: When the Component gets deserialized from serialized data.
 function Component:deserialize(data)
    Utils.shallowCopy(data, self)
 end
 
 -- Internal: Creates a new Component.
--- @param entity The Entity that will receive this Component.
 -- @return A new Component
-function Component:__new(entity)
+function Component:__new()
    local component = setmetatable({
       __componentClass = self,
 
-      __entity           = entity,
       __isComponent      = true,
       __isComponentClass = false,
    }, self.__mt)
@@ -89,13 +76,11 @@ function Component:__new(entity)
 end
 
 -- Internal: Creates and populates a new Component.
--- @param entity The Entity that will receive this Component.
 -- @param ... Varargs passed to the populate function
 -- @return A new populated Component
-function Component:__initialize(entity, ...)
-   local component = self:__new(entity)
+function Component:__initialize(...)
+   local component = self:__new()
 
-   ---@diagnostic disable-next-line: redundant-parameter
    self.__populate(component, ...)
 
    return component

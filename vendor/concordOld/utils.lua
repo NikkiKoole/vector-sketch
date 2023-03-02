@@ -3,10 +3,6 @@
 
 local Utils = {}
 
-function Utils.error(level, str, ...)
-    error(string.format(str, ...), level + 1)
-end
-
 --- Does a shallow copy of a table and appends it to a target table.
 -- @param orig Table to copy
 -- @param target Table to append to
@@ -25,43 +21,39 @@ end
 -- @param namespace A table that will hold the required files
 -- @treturn table The namespace table
 function Utils.loadNamespace(pathOrFiles, namespace)
-   if type(pathOrFiles) ~= "string" and type(pathOrFiles) ~= "table" then
-       Utils.error(2, "bad argument #1 to 'loadNamespace' (string/table of strings expected, got %s)", type(pathOrFiles))
+   if (type(pathOrFiles) ~= "string" and type(pathOrFiles) ~= "table") then
+       error("bad argument #1 to 'loadNamespace' (string/table of strings expected, got "..type(pathOrFiles)..")", 2)
    end
 
-   if type(pathOrFiles) == "string" then
+   if (type(pathOrFiles) == "string") then
        local info = love.filesystem.getInfo(pathOrFiles) -- luacheck: ignore
-       if info == nil or info.type ~= "directory" then
-            Utils.error(2, "bad argument #1 to 'loadNamespace' (path '%s' not found)", pathOrFiles)
+       if (info == nil or info.type ~= "directory") then
+            error("bad argument #1 to 'loadNamespace' (path '"..pathOrFiles.."' not found)", 2)
        end
 
        local files = love.filesystem.getDirectoryItems(pathOrFiles)
 
        for _, file in ipairs(files) do
-            local isFile = love.filesystem.getInfo(pathOrFiles .. "/" .. file).type == "file"
+            local name = file:sub(1, #file - 4)
+            local path = pathOrFiles.."."..name
 
-            if isFile and string.match(file, '%.lua$') ~= nil then
-                 local name = file:sub(1, #file - 4)
-                 local path = pathOrFiles.."."..name
-
-                 local value = require(path:gsub("%/", "."))
-                 if namespace then namespace[name] = value end
-            end
+            local value = require(path)
+            if namespace then namespace[name] = value end
        end
-   elseif type(pathOrFiles) == "table" then
+   elseif (type(pathOrFiles == "table")) then
        for _, path in ipairs(pathOrFiles) do
-            if type(path) ~= "string" then
-                Utils.error(2, "bad argument #2 to 'loadNamespace' (string/table of strings expected, got table containing %s)", type(path)) -- luacheck: ignore
+            if (type(path) ~= "string") then
+                error("bad argument #2 to 'loadNamespace' (string/table of strings expected, got table containing "..type(path)..")", 2) -- luacheck: ignore
             end
 
             local name = path
 
             local dotIndex, slashIndex = path:match("^.*()%."), path:match("^.*()%/")
-            if dotIndex or slashIndex then
+            if (dotIndex or slashIndex) then
                 name = path:sub((dotIndex or slashIndex) + 1)
             end
 
-            local value = require(path:gsub("%/", "."))
+            local value = require(path)
             if namespace then namespace[name] = value end
        end
    end

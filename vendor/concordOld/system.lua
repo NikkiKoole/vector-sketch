@@ -5,8 +5,9 @@
 
 local PATH = (...):gsub('%.[^%.]+$', '')
 
-local Filter     = require(PATH..".filter")
+local Pool       = require(PATH..".pool")
 local Utils      = require(PATH..".utils")
+local Components = require(PATH..".components")
 
 local System = {
    ENABLE_OPTIMIZATION = true,
@@ -18,7 +19,7 @@ System.mt = {
       local system = setmetatable({
          __enabled = true,
 
-         __filters = {},
+         __pools = {},
          __world = world,
 
          __isSystem = true,
@@ -32,11 +33,11 @@ System.mt = {
          Utils.shallowCopy(systemClass, system)
       end
 
-      for name, def in pairs(systemClass.__definition) do
-         local filter, pool = Filter(name, Utils.shallowCopy(def, {}))
+      for name, filter in pairs(systemClass.__filter) do
+         local pool = Pool(name, filter)
 
          system[name] = pool
-         table.insert(system.__filters, filter)
+         system.__pools[#system.__pools + 1] = pool
       end
 
       system:init(world)
@@ -44,23 +45,44 @@ System.mt = {
       return system
    end,
 }
+
+local validateFilters = function (baseFilters)
+   local filters = {}
+
+   for name, componentsList in pairs(baseFilters) do
+      if type(name) ~= 'string' then
+         error("invalid name for filter (string key expected, got "..type(name)..")", 3)
+      end
+
+      if type(componentsList) ~= 'table' then
+         error("invalid component list for filter '"..name.."' (table expected, got "..type(componentsList)..")", 3)
+      end
+
+      local filter = {}
+      for n, component in ipairs(componentsList) do
+         local ok, componentClass = Components.try(component)
+
+         if not ok then
+            error("invalid component for filter '"..name.."' at position #"..n.." ("..componentClass..")", 3)
+         end
+
+         filter[#filter + 1] = componentClass
+      end
+
+      filters[name] = filter
+   end
+
+   return filters
+end
+
 --- Creates a new SystemClass.
 -- @param table filters A table containing filters (name = {components...})
 -- @treturn System A new SystemClass
-function System.new(definition)
-   definition = definition or {}
-
-   for name, def in pairs(definition) do
-      if type(name) ~= 'string' then
-         Utils.error(2, "invalid name for filter (string key expected, got %s)", type(name))
-      end
-
-      Filter.validate(0, name, def)
-   end
-
+function System.new(filters)
    local systemClass = setmetatable({
-      __definition = definition,
+      __filter = validateFilters(filters),
 
+      __name          = nil,
       __isSystemClass = true,
    }, System.mt)
    systemClass.__index = systemClass
@@ -79,8 +101,8 @@ end
 -- @param e The Entity to check
 -- @treturn System self
 function System:__evaluate(e)
-   for _, filter in ipairs(self.__filters) do
-      filter:evaluate(e)
+   for _, pool in ipairs(self.__pools) do
+      pool:evaluate(e)
    end
 
    return self
@@ -90,9 +112,9 @@ end
 -- @param e The Entity to remove
 -- @treturn System self
 function System:__remove(e)
-   for _, filter in ipairs(self.__filters) do
-      if filter:has(e) then
-         filter:remove(e)
+   for _, pool in ipairs(self.__pools) do
+      if pool:has(e) then
+         pool:remove(e)
       end
    end
 
@@ -102,8 +124,8 @@ end
 -- Internal: Clears all Entities from the System.
 -- @treturn System self
 function System:__clear()
-   for _, filter in ipairs(self.__filters) do
-      filter:clear()
+   for i = 1, #self.__pools do
+      self.__pools[i]:clear()
    end
 
    return self
@@ -134,6 +156,18 @@ end
 -- @treturn World
 function System:getWorld()
    return self.__world
+end
+
+--- Returns true if the System has a name.
+-- @treturn boolean
+function System:hasName()
+   return self.__name and true or false
+end
+
+--- Returns the name of the System.
+-- @treturn string
+function System:getName()
+   return self.__name
 end
 
 --- Callbacks

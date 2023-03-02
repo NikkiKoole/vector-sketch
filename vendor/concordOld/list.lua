@@ -16,7 +16,7 @@ end
 
 --- Adds an object to the List.
 -- Object must be of reference type
--- Object may not be the string 'size', 'onAdded' or 'onRemoved'
+-- Object may not be the string 'size'
 -- @param obj Object to add
 -- @treturn List self
 function List:add(obj)
@@ -26,7 +26,6 @@ function List:add(obj)
    self[obj]  = size
    self.size  = size
 
-   if self.onAdded then self:onAdded(obj) end
    return self
 end
 
@@ -52,7 +51,6 @@ function List:remove(obj)
    self[obj] = nil
    self.size = size - 1
 
-   if self.onRemoved then self:onRemoved(obj) end
    return self
 end
 
@@ -94,30 +92,6 @@ function List:indexOf(obj)
    end
 
    return self[obj]
-end
-
---- Sorts the List in place, using the order function.
--- The order function is passed to table.sort internally so documentation on table.sort can be used as reference.
--- @param order Function that takes two Entities (a and b) and returns true if a should go before than b.
--- @treturn List self
-function List:sort(order)
-   table.sort(self, order)
-
-   for key, obj in ipairs(self) do
-      self[obj] = key
-   end
-
-   return self
-end
-
---- Callback for when an item is added to the List.
--- @param obj Object that was added
-function List:onAdded (obj) --luacheck: ignore
-end
-
---- Callback for when an item is removed to the List.
--- @param obj Object that was removed
-function List:onRemoved (obj) --luacheck: ignore
 end
 
 return setmetatable(List, {
