@@ -11,7 +11,8 @@ imageCache = {} -- tjo save all the parts inages in
 
 local tabs = { "part", "colors", "pattern" }
 
-local function createFittingScale(img, desired_w, desired_h)
+
+function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
    --   print(sx, sy)
