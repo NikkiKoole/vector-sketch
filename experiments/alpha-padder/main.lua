@@ -9,6 +9,7 @@ end
 function doImageFromData(data, name)
    return doImage(nil, name, data)
 end
+
 function mysplit (inputstr, sep)
    if sep == nil then
       sep = "%s"
@@ -18,6 +19,28 @@ function mysplit (inputstr, sep)
       table.insert(t, str)
    end
    return t
+end
+
+
+function putAlphaChannelInRGB(url,name, data )
+   local imageData     = love.image.newImageData(data or url)
+   local width, height = imageData:getDimensions()
+   local format = imageData:getFormat( )
+   local result = love.image.newImageData( width, height,format)
+   for y = 0, height -1 do
+      for x = 0, width-1 do
+         local r, g, b, a = imageData:getPixel(x, y)
+         result:setPixel(x,y,a,a,a,1)
+      end
+   end
+   image = love.graphics.newImage(result, {mipmaps=true})
+   local t = mysplit(name, '.')
+   local newname = (t[1]..'.rgb.'..t[2])
+  
+   name= newname
+   result:encode("png",name)
+   love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+
 end
 
 function doImage(url, name, data)
@@ -73,9 +96,9 @@ end
 
 
 function love.load()
---  local filename = 'moreleaves3.png'--'Naamloos.png' --'ding.png'-
-   --  doImage(filename, filename)
+
    alphaMultiplier = 1
+   doTheRGBDance = false
    love.keyboard.setKeyRepeat( true)
 end
 
@@ -84,6 +107,7 @@ function love.keypressed(key)
    
    if (key == '1') then alphaMultiplier = alphaMultiplier-0.05 end
    if (key == '2') then alphaMultiplier = alphaMultiplier+0.05 end
+   if (key == '3') then doTheRGBDance = true end
    
 end
 
@@ -100,8 +124,11 @@ function love.filedropped(file)
    local splitted = mysplit(fullPath, "/")
    local name = splitted[#splitted]
 
+   if doTheRGBDance then
+      putAlphaChannelInRGB(d, name)
+   else
    doImageFromData(d, name)
-   
+   end
 end
 
 function love.directorydropped(path)
@@ -114,7 +141,11 @@ function love.directorydropped(path)
       local splitted = mysplit(url, "/")
       local name = splitted[#splitted]
       --print(name, files[i])
+      if doTheRGBDance then
+         putAlphaChannelInRGB(d, name)
+      else
       doImageFromData(d, name)
+      end
    end
 end
 
@@ -130,5 +161,6 @@ function love.draw()
 
    love.graphics.print('use 1 and 2 to change alpha multiplier', 300, 500)
    love.graphics.print('alpha multiplier: '..alphaMultiplier, 300, 530 )
+   love.graphics.print('use 3 for the rgbDance', 300, 560)
    love.graphics.print('Memory actually used (in kB): ' .. collectgarbage('count'), 10,10)
 end

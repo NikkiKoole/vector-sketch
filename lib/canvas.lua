@@ -232,22 +232,29 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    --]]
    -- experimenting with drawing the outline in the canvas itself.
    -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
+
+   
+   love.graphics.setColorMask( true, true, true, false)
+   if true then
+      local img = love.graphics.newImage('assets/parts/eye4.png')
+      --love.graphics.setBlendMode('subtract')
+     
+      for i = 1, 100 do
+         love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), love.math.random())
+         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(), love.math.random() * math.pi * 2)
+      end
+
+      --love.graphics.setBlendMode("alpha")
+   end
+
+   love.graphics.setColorMask( true,true,true,true)
+
    love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
 
 
    local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
    love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
-   if false then
-      local img = love.graphics.newImage('assets/parts/eye3.png')
-      love.graphics.setBlendMode('subtract')
-      love.graphics.setColor(.5, .5, 0)
-      for i = 1, 100 do
-         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random())
-      end
-
-      love.graphics.setBlendMode("alpha")
-   end
    love.graphics.setColor(0, 0, 0) --- huh?!
    love.graphics.setCanvas() --- <<<<<
 
@@ -257,6 +264,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    -- smooche is slow!!!!
    --local imageData = smoocheCanvas(canvas) --
    local imageData = canvas:newImageData()
+
+
    return imageData
 end
 
