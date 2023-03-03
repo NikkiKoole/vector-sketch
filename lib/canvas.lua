@@ -236,12 +236,14 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    
    love.graphics.setColorMask( true, true, true, false)
    if true then
-      local img = love.graphics.newImage('assets/parts/eye4.png')
+      --local img = love.graphics.newImage('assets/parts/eye4.png')
+      local img = love.graphics.newImage('assets/test2.png')
       --love.graphics.setBlendMode('subtract')
      
       for i = 1, 100 do
-         love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), love.math.random())
-         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(), love.math.random() * math.pi * 2)
+         love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.1)
+         local s = love.math.random()
+         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(), love.math.random() * math.pi * 2, s)
       end
 
       --love.graphics.setBlendMode("alpha")

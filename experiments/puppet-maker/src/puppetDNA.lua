@@ -2,6 +2,7 @@ local parse      = require 'lib.parse-file'
 local node       = require 'lib.node'
  
 texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
+leglengths = {100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000}
 
 local function loadGroupFromFile(url, groupName)
     local imgs = {}
@@ -66,7 +67,7 @@ function generate()
        { name = 'body',     imgs = bodyImgUrls,     p = bodyParts },
        { name = 'armhair',  imgs = hairUrls },
        { name = 'arms',     imgs = legUrls },
-       { name = 'hands',    imgs = feetImgUrls,     p = feetParts },
+       { name = 'hands',    imgs = feetImgUrls,     p = handParts },
        { name = 'legs',     imgs = legUrls },
        { name = 'leghair',  imgs = hairUrls },
        { name = 'feet',     imgs = feetImgUrls,     p = feetParts },
@@ -216,7 +217,7 @@ function generate()
            texRot    = 0,
            texScale  = 1,
        },
-       legLength               = 700,
+       legLength               = 5,
        legWidthMultiplier      = 1,
        leg1flop                = -1,
        leg2flop                = 1,

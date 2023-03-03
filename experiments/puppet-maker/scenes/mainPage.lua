@@ -21,7 +21,7 @@ local numbers    = require 'lib.numbers'
 local ui         = require 'lib.ui'
 local gradient   = require 'lib.gradient'
 
-local bodypartsGenerate = require 'src.bodypartRandomizer'
+local bodypartsGenerate = require 'src.puppetDNA'
 local camera     = require 'lib.camera'
 local cam        = require('lib.cameraBase').getInstance()
 local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
@@ -695,6 +695,7 @@ local function updateTheScrolling(dt, thrown, pos)
    return pos
 end
 
+
 function scene.update(dt)
    prof.push("frame")
 
@@ -764,10 +765,12 @@ function scene.draw()
       love.graphics.setColor(0, 0, 0)
 
       scrollList(true)
+      if false then
       love.graphics.setColor(1, 1, 1)
        love.graphics.draw(tab1)
       love.graphics.draw(tab2, 100, 100)
       love.graphics.draw(tab3, 100, 500)
+      end
       partSettingsPanel(0, 0)
 
       prof.push("cam-render")

@@ -179,7 +179,8 @@ function arrangeBrows()
    local bends = { { 0, 0, 0 }, { 1, 0, -1 }, { -1, 0, 1 }, { 1, 0, 1 }, { -1, 0, -1 }, { 1, 0, 0 },
        { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
 
-   local img = mesh.getImage(browImgUrls[values.brows.shape])
+   local p = findPart('brows').imgs
+   local img = mesh.getImage(p[values.brows.shape])
    local width, height = img:getDimensions()
    local multiplier = (height / 2)
    local picked = bends[values.browsDefaultBend]
@@ -328,10 +329,11 @@ function createLegHairRubberhose(armNr, values, points)
    return createRubberHoseFromImage(
            url, textured,
            flop,
-           values.legLength,
+           leglengths[values.legLength],
            values.legWidthMultiplier,
            points, flop)
 end
+
 
 function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
@@ -340,10 +342,11 @@ function createLegRubberhose(legNr, values, points)
    return createRubberHoseFromImage(
            url, textured,
            flop
-           , values.legLength,
+           , leglengths[values.legLength],
            values.legWidthMultiplier,
            points, flop * -1)
 end
+
 
 function createNeckRubberhose(values, points)
    local flop = 0 -- this needs to be set accoridng to how th eneck is positioned

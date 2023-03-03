@@ -289,10 +289,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                myWorld:emit("bipedAttachLegs", biped)
             end
             currentY = currentY + 25
-            v = h_slider("leg-length", startX, currentY, 50, values.legLength, 200, 2000)
+            v = h_slider("leg-length", startX, currentY, 50, values.legLength, 1, #leglengths)
             if v.value then
-               values.legLength = v.value
+               values.legLength = math.floor(v.value)
+               print(values.legLength)
                changePart('legs', values)
+               changePart('leghair', values)
             end
             currentY = currentY + 25
             v = h_slider("leg-width-multiplier", startX, currentY, 50, values.legWidthMultiplier, 0.5, 3)
