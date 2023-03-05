@@ -157,7 +157,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
             local v = h_slider("brow-movement", startX, currentY, 50, values.browsDefaultBend, 1, 10)
             if v.value then
-               local img = mesh.getImage(browImgUrls[values.brows.shape])
+               local p = findPart('brows').imgs
+               local img = mesh.getImage(p[values.brows.shape])
                local width, height = img:getDimensions()
                values.browsDefaultBend = math.floor(v.value)
                arrangeBrows()

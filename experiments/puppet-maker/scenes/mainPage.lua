@@ -1,36 +1,36 @@
 -- https://medium.com/@chrisgaul/https-medium-com-chrisgaul-is-this-language-without-letters-the-future-of-global-communication-15fc54909c12
 -- http://bamanda.com/locos/locos_subsite/locos_gallery.html
 -- https://ai.facebook.com/blog/using-ai-to-bring-childrens-drawings-to-life/
-local scene      = {}
+local scene             = {}
 
-local vivid      = require 'vendor.vivid'
-local Timer      = require 'vendor.timer'
-local inspect    = require 'vendor.inspect'
-local Signal     = require 'vendor.signal'
+local vivid             = require 'vendor.vivid'
+local Timer             = require 'vendor.timer'
+local inspect           = require 'vendor.inspect'
+local Signal            = require 'vendor.signal'
 
-local text       = require 'lib.text'
-local render     = require 'lib.render'
-local mesh       = require 'lib.mesh'
-local parentize  = require 'lib.parentize'
-local node       = require 'lib.node'
-local parse      = require 'lib.parse-file'
-local bbox       = require 'lib.bbox'
-local hit        = require 'lib.hit'
-local transforms = require 'lib.transform'
-local numbers    = require 'lib.numbers'
-local ui         = require 'lib.ui'
-local gradient   = require 'lib.gradient'
+local text              = require 'lib.text'
+local render            = require 'lib.render'
+local mesh              = require 'lib.mesh'
+local parentize         = require 'lib.parentize'
+local node              = require 'lib.node'
+local parse             = require 'lib.parse-file'
+local bbox              = require 'lib.bbox'
+local hit               = require 'lib.hit'
+local transforms        = require 'lib.transform'
+local numbers           = require 'lib.numbers'
+local ui                = require 'lib.ui'
+local gradient          = require 'lib.gradient'
 
 local bodypartsGenerate = require 'src.puppetDNA'
-local camera     = require 'lib.camera'
-local cam        = require('lib.cameraBase').getInstance()
-local creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
+local camera            = require 'lib.camera'
+local cam               = require('lib.cameraBase').getInstance()
+local creamColor        = { 238 / 255, 226 / 255, 188 / 255, 1 }
 
-local Components = {}
-local Systems    = {}
+local Components        = {}
+local Systems           = {}
 
 
-myWorld          = Concord.world()
+myWorld = Concord.world()
 
 require 'src.generatePuppet'
 require 'src.puppet-maker-ui'
@@ -573,7 +573,6 @@ function attachCallbacks()
 
    function love.keypressed(key, unicode)
       if key == 'escape' then
-         collectgarbage()
          love.event.quit()
       end
       -- todo make some keys to change bodyparts
@@ -766,10 +765,10 @@ function scene.draw()
 
       scrollList(true)
       if false then
-      love.graphics.setColor(1, 1, 1)
-       love.graphics.draw(tab1)
-      love.graphics.draw(tab2, 100, 100)
-      love.graphics.draw(tab3, 100, 500)
+         love.graphics.setColor(1, 1, 1)
+         love.graphics.draw(tab1)
+         love.graphics.draw(tab2, 100, 100)
+         love.graphics.draw(tab3, 100, 500)
       end
       partSettingsPanel(0, 0)
 
