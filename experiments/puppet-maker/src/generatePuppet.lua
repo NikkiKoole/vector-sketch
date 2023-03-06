@@ -209,11 +209,12 @@ local function getIndexOfGraphicPart(part)
    end
 end
 
-function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings)
+function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
+                              renderPatch)
    local img = mesh.getImage(url, optionalSettings)
    local maskUrl = getPNGMaskUrl(url)
    local mask = mesh.getImage(maskUrl)
-   local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy)
+   local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
    return cnv
 end
 
@@ -241,6 +242,20 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
    local flipY = values[partName].flipy or 1
 
    --print(partName, flipX, flipY)
+   local renderPatch = nil
+
+   if partName == 'head' then
+      if not isNullObject('skinPatchSnout', values) then
+         renderPatch = {}
+         renderPatch.imageData = partToTexturedCanvas('skinPatchSnout', values)
+         renderPatch.sx = values.skinPatchSnoutScaleX
+         renderPatch.sy = values.skinPatchSnoutScaleY
+         renderPatch.r = values.skinPatchSnoutAngle
+         renderPatch.tx = values.skinPatchSnoutX
+         renderPatch.ty = values.skinPatchSnoutY
+      end
+   end
+
    local texturedcanvas = helperTexturedCanvas(
            url,
            textures[values[partName].bgTex],
@@ -254,7 +269,8 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
            palettes[values[partName].linePal],
            values[partName].lineAlpha,
            flipX, flipY,
-           optionalImageSettings
+           optionalImageSettings,
+           renderPatch
        )
    return texturedcanvas, url
 end
@@ -334,7 +350,6 @@ function createLegHairRubberhose(armNr, values, points)
            points, flop)
 end
 
-
 function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
    local textured, url = partToTexturedCanvas('legs', values)
@@ -346,7 +361,6 @@ function createLegRubberhose(legNr, values, points)
            values.legWidthMultiplier,
            points, flop * -1)
 end
-
 
 function createNeckRubberhose(values, points)
    local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
@@ -410,6 +424,12 @@ function changePart(name, values)
       myWorld:emit("bipedAttachLegs", biped) -- todo
       myWorld:emit("bipedAttachArms", biped) -- todo
       myWorld:emit("bipedAttachHands", biped) -- todo
+   elseif name == 'skinPatchSnout' then
+      if values.potatoHead then
+         changePart('body', values)
+      else
+         changePart('head', values)
+      end
    elseif name == 'neck' then
       neck = updateChild(guy, neck, createNeckRubberhose(values, neck.points))
    elseif name == 'head' then

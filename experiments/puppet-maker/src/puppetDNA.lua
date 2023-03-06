@@ -39,6 +39,7 @@ function generate()
         'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
         'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png' }
 
+    table.insert(patchUrls, 'assets/null.png')
     table.insert(hairUrls, 'assets/null.png') -- i dont have a part array for these things, the url should suffice
 
     local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
@@ -131,7 +132,8 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        skinPatchSnoutScale     = 1,
+        skinPatchSnoutScaleX    = 1,
+        skinPatchSnoutScaleY    = 1,
         skinPatchSnoutAngle     = 1,
         skinPatchSnoutX         = 0,
         skinPatchSnoutY         = 0,

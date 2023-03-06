@@ -135,7 +135,7 @@ local maskShader = love.graphics.newShader([[
 
 lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
                                   lineColor, lineAlpha,
-                                  flipx, flipy)
+                                  flipx, flipy, renderPatch)
    local lineartColor = lineColor or { 0, 0, 0, 1 }
    local lw, lh = lineart:getDimensions()
    local canvas = love.graphics.newCanvas(lw, lh)
@@ -164,96 +164,38 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    end
    love.graphics.setShader()
 
-   --[[
-   if  false and mask then
-      love.graphics.setBlendMode("alpha") ---<<<<
-      love.graphics.setStencilTest("greater", 0)
-      love.graphics.stencil(function() myStencilFunction(mask, flipx, flipy, lw, lh) end)
 
-      --local ow, oh = grunge:getDimensions()
 
-      --love.graphics.setShader(ShapeShader)
-      if texture1 then
-         local gw, gh = texture1:getDimensions()
-         local rotation = 0 --delta
-         local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
+   -- I want to know If we do this or not..
+   if (renderPatch) then
+      love.graphics.setColorMask(true, true, true, false)
+      love.graphics.setColor(1, 1, 1, 1)
+      local image = love.graphics.newImage(renderPatch.imageData)
+      local imgw, imgh = image:getDimensions();
+      local xOffset = renderPatch.tx * (imgw / 6)
+      local yOffset = renderPatch.ty * (imgh / 6)
+      love.graphics.draw(image, lw / 2 + xOffset, lh / 2 + yOffset, renderPatch.r * ((math.pi * 2) / 16), renderPatch.sx,
+          renderPatch.sy,
+          imgw / 2, imgh / 2)
+      --print(lw, lh)
+      if false then
+         --local img = love.graphics.newImage('assets/parts/eye4.png')
+         local img = love.graphics.newImage('assets/test1.png')
+         --love.graphics.setBlendMode('subtract')
 
-         local scaleX = 2
-         local scaleY = 2
+         for i = 1, 100 do
+            love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
+            local s = love.math.random() * 3
+            love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(), love.math.random() * math.pi * 2, s)
+         end
 
-         local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-         local xMax = (gw / 2) * scaleX - (ry * scaleX)
-         local xOffset = xMin
-
-         local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-         local yMax = (gh / 2) * scaleY - (ry * scaleY)
-         local yOffset = yMin
-
-         love.graphics.setColor(color1[1], color1[2], color1[3], alpha1/5)
-         love.graphics.draw(texture1, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
+         --love.graphics.setBlendMode("alpha")
       end
-
-      -- second texture
-      if  texture2 then
-         local gw, gh = texture2:getDimensions()
-         local rotation = 0 --delta
-         local rx, ry, rw, rh = geom.calculateLargestRect(rotation, gw, gh)
-
-         local scaleX = 2
-         local scaleY = 2
-
-         local xMin = lw + -((gw / 2) * scaleX) + (rx * scaleX)
-         local xMax = (gw / 2) * scaleX - (ry * scaleX)
-         local xOffset = xMin
-
-         local yMin = lh + -((gh / 2) * scaleY) + (rx * scaleY)
-         local yMax = (gh / 2) * scaleY - (ry * scaleY)
-         local yOffset = yMin
-
-
-
-         -- height of these images is not big enough, redraw them bigger lazy bum
-         --print(inspect(color2))
-         love.graphics.setColor(color2[1], color2[2], color2[3], alpha2/5 )
-         -- love.graphics.setColor(0, 0, 0)
-
-         love.graphics.draw(texture2, xOffset, yOffset, rotation, scaleX, scaleY, gw / 2, gh / 2)
-
-         --love.graphics.draw(texture1, m*-maxT1Width,0,0,1.5,1.5)
-
-
-      end
-    --  love.graphics.setShader()
-
-
-
-      love.graphics.setStencilTest()
-   end
-   --]]
-   -- experimenting with drawing the outline in the canvas itself.
-   -- this works perfectly, maybe we can even do the smoothing from alphapadder on the thing before.
-
-
-   love.graphics.setColorMask(true, true, true, false)
-   if true then
-      --local img = love.graphics.newImage('assets/parts/eye4.png')
-      local img = love.graphics.newImage('assets/test1.png')
-      --love.graphics.setBlendMode('subtract')
-
-      for i = 1, 100 do
-         love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
-         local s = love.math.random()
-         love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(), love.math.random() * math.pi * 2, s)
-      end
-
-      --love.graphics.setBlendMode("alpha")
+      love.graphics.setColorMask(true, true, true, true)
    end
 
-   love.graphics.setColorMask(true, true, true, true)
 
    love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
-
-
    local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
    love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 

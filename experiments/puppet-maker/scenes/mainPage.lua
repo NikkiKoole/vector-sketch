@@ -290,6 +290,7 @@ function attachAllFaceParts()
    table.insert(addTo.children, nose)
    table.insert(addTo.children, hair)
 
+
    changePart('hair', values)
 end
 
@@ -430,8 +431,9 @@ function scene.load()
    biped = Concord.entity()
    potato = Concord.entity()
 
-
+   --print(inspect(potato))
    parts, values = generate()
+
 
    head = copyAndRedoGraphic('head', values) --copy3(headParts[values.head.shape])
 
@@ -471,6 +473,10 @@ function scene.load()
 
    biped:give('biped', bipedArguments(values))
    potato:give('potato', potatoArguments(values))
+
+   -- dubbel voor de skin patch (want afhankelijk van potato)
+   -- want doet getHeadPoints(potato)
+   --head = copyAndRedoGraphic('head', values)
 
    guy = {
        folder = true,
@@ -788,7 +794,7 @@ function scene.draw()
       prof.pop("cam-render")
 
 
-      if false then -- this is leaking too
+      if true then -- this is leaking too
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
          --   print(inspect(stats))
