@@ -535,6 +535,23 @@ function scene.load()
    cam:update(w, h)
 end
 
+function skinColorize(bgPal, values)
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs' }
+   for i = 1, #parts do
+      values[parts[i]].bgPal = bgPal
+      changePart(parts[i], values)
+   end
+end
+
+function hairColorize(fgPal, values)
+   local parts = { 'hair', 'leghair', 'armhair', 'brows' }
+   for i = 1, #parts do
+      values[parts[i]].fgPal = fgPal
+      values[parts[i]].linePal = fgPal
+      changePart(parts[i], values)
+   end
+end
+
 function findPart(name)
    for i = 1, #parts do
       if parts[i].name == name then
@@ -629,6 +646,15 @@ function attachCallbacks()
 
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
          print('focus camera on third other shape', x, y)
+      end
+      if key == 's' then
+         local bgPal = math.ceil(love.math.random() * #palettes)
+         print(bgPal)
+         skinColorize(bgPal, values)
+      end
+      if key == 'h' then
+         local fgPal = math.ceil(love.math.random() * #palettes)
+         hairColorize(fgPal, values)
       end
    end
 

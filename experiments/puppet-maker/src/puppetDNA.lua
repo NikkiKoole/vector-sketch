@@ -24,13 +24,17 @@ local function loadGroupFromFile(url, groupName)
 end
 
 
+
+
+
 function generate()
     --print('generatre!')
     local legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
         'assets/parts/leg5.png', 'assets/parts/leg6.png', 'assets/parts/leg7.png', 'assets/parts/leg8.png' }
 
 
-    local patchUrls = { 'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png' }
+    local patchUrls = { 'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png',
+        'assets/parts/patch4.png' }
 
 
     local hairUrls = { 'assets/parts/hair1.png', 'assets/parts/hair2.png',
@@ -56,6 +60,7 @@ function generate()
     local upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
     local lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
 
+    table.insert(noseImgUrls, 'assets/null.png')
 
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts },
@@ -79,6 +84,7 @@ function generate()
         { name = 'leghair',        imgs = hairUrls },
         { name = 'feet',           imgs = feetImgUrls,     p = feetParts },
     }
+
 
 
     local values = {
@@ -140,7 +146,7 @@ function generate()
         upperlip                = {
             shape     = 1,
             bgPal     = 4,
-            fgPal     = 5,
+            fgPal     = 11,
             bgTex     = 1,
             fgTex     = 1,
             linePal   = 1,
@@ -154,7 +160,7 @@ function generate()
         lowerlip                = {
             shape     = 1,
             bgPal     = 4,
-            fgPal     = 5,
+            fgPal     = 11,
             bgTex     = 1,
             fgTex     = 1,
             linePal   = 1,
@@ -166,7 +172,7 @@ function generate()
         },
         lowerlipWidthMultiplier = 1,
         mouthXAxis              = 0,
-        mouthYAxis              = 1,
+        mouthYAxis              = 2,
         eyes                    = {
             shape     = 1,
             bgPal     = 4,

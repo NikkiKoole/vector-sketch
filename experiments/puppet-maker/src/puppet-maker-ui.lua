@@ -81,6 +81,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.upperlipWidthMultiplier = v.value
                upperlip.transforms.l[4] = v.value
+               -- upperlip.transforms.l[5] = v.value
                changePart('upperlip', values)
             end
             currentY = currentY + 25
@@ -98,7 +99,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.lowerlipWidthMultiplier = v.value
+               --lowerlip.transforms.l[4] = v.value
                lowerlip.transforms.l[4] = v.value
+               -- lowerlip.transforms.l[5] = v.value
                changePart('lowerlip', values)
             end
             currentY = currentY + 25
@@ -317,16 +320,16 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
       if selectedCategory == 'skinPatchSnout' then
          if draw then
-            local v = h_slider("scaleX", startX, currentY, 50, values.skinPatchSnoutScaleX, .5, 3)
+            local v = h_slider("scaleX", startX, currentY, 50, values.skinPatchSnoutScaleX, .25, 3)
             if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               v.value = math.floor(v.value * 4) / 4.0 -- round to .5
                values.skinPatchSnoutScaleX = v.value
                changePart('head', values)
             end
             currentY = currentY + 25
-            v = h_slider("scaleY", startX, currentY, 50, values.skinPatchSnoutScaleY, .5, 3)
+            v = h_slider("scaleY", startX, currentY, 50, values.skinPatchSnoutScaleY, .25, 3)
             if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               v.value = math.floor(v.value * 4) / 4.0 -- round to .5
                values.skinPatchSnoutScaleY = v.value
                changePart('head', values)
             end
@@ -338,14 +341,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                changePart('head', values)
             end
             currentY = currentY + 25
-            v = h_slider("tx", startX, currentY, 50, values.skinPatchSnoutX, -3, 3)
+            v = h_slider("tx", startX, currentY, 50, values.skinPatchSnoutX, -6, 6)
             if v.value then
                v.value = math.floor(v.value) -- round to .5
                values.skinPatchSnoutX = v.value
                changePart('head', values)
             end
             currentY = currentY + 25
-            v = h_slider("ty", startX, currentY, 50, values.skinPatchSnoutY, -3, 3)
+            v = h_slider("ty", startX, currentY, 50, values.skinPatchSnoutY, -6, 6)
             if v.value then
                v.value = math.floor(v.value) -- round to .5
                values.skinPatchSnoutY = v.value
@@ -414,6 +417,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
 
                values.bodyWidthMultiplier = v.value
+               --  values.bodyHeightMultiplier = v.value
+               --body.transforms.l[5] = v.value
                body.transforms.l[4] = v.value
                update()
             end

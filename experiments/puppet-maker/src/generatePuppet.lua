@@ -465,7 +465,11 @@ function changePart(name, values)
       brow1 = updateChild(container, brow1, createBrowBezier(values, brow1.points))
       brow2 = updateChild(container, brow2, createBrowBezier(values, brow2.points))
    elseif name == 'nose' then
-      nose = updateChild(container, nose, copyAndRedoGraphic('nose', values))
+      if isNullObject(name, values) then
+         nose = updateChild(container, nose, copy3(nullFolder))
+      else
+         nose = updateChild(container, nose, copyAndRedoGraphic('nose', values))
+      end
    elseif name == 'lowerlip' then
       lowerlip = updateChild(container, lowerlip, createLowerlipBezier(values, lowerlip.points))
    elseif name == 'upperlip' then
