@@ -431,14 +431,14 @@ function scene.load()
    biped = Concord.entity()
    potato = Concord.entity()
 
-   --print(inspect(potato))
+
    parts, values = generate()
 
 
-   head = copyAndRedoGraphic('head', values) --copy3(headParts[values.head.shape])
+   head = copyAndRedoGraphic('head', values) 
 
    neck = createNeckRubberhose(values)
-   body = copyAndRedoGraphic('body', values) --copy3(bodyParts[values.body.shape])
+   body = copyAndRedoGraphic('body', values) 
    hair = createHairVanillaLine(values)
 
    arm1 = createArmRubberhose(1, values)
@@ -473,10 +473,6 @@ function scene.load()
 
    biped:give('biped', bipedArguments(values))
    potato:give('potato', potatoArguments(values))
-
-   -- dubbel voor de skin patch (want afhankelijk van potato)
-   -- want doet getHeadPoints(potato)
-   --head = copyAndRedoGraphic('head', values)
 
    guy = {
        folder = true,
@@ -538,8 +534,12 @@ end
 function skinColorize(bgPal, values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs' }
    for i = 1, #parts do
+      if values.potatoHead and parts[i] == 'neck' then
+         
+      else
       values[parts[i]].bgPal = bgPal
       changePart(parts[i], values)
+      end
    end
 end
 
@@ -551,6 +551,21 @@ function hairColorize(fgPal, values)
       changePart(parts[i], values)
    end
 end
+function  partRandomize(values) 
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs',   'hair', 'leghair', 'armhair', 'brows', 'upperlip', 'lowerlip' }
+   for i = 1, #parts do
+      if values.potatoHead and parts[i] == 'neck' then
+         
+      else
+      local p = findPart(parts[i])
+      values[parts[i]].shape =  math.ceil(love.math.random() * #(p.imgs))
+      values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
+      values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+      changePart(parts[i], values)
+      end
+   end
+end
+
 
 function findPart(name)
    for i = 1, #parts do
@@ -655,6 +670,9 @@ function attachCallbacks()
       if key == 'h' then
          local fgPal = math.ceil(love.math.random() * #palettes)
          hairColorize(fgPal, values)
+      end
+      if key == 'p' then
+         partRandomize(values)
       end
    end
 

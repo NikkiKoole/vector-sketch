@@ -214,17 +214,17 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
       if selectedCategory == 'eyes' then
          if draw then
-            local v = h_slider("eye-width", startX, currentY, 50, values.eyeWidthMultiplier, .5, 3)
+            local v = h_slider("eye-width", startX, currentY, 50, values.eyeWidthMultiplier, .125, 3)
             if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               v.value = math.floor(v.value * 8) / 8.0 -- round to .5
                values.eyeWidthMultiplier = v.value
                eye1.transforms.l[4] = v.value
                eye2.transforms.l[4] = v.value * -1
             end
             currentY = currentY + 25
-            local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .5, 3)
+            local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .125, 3)
             if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               v.value = math.floor(v.value * 8) / 8.0 -- round to .5
                values.eyeHeightMultiplier = v.value
                eye1.transforms.l[5] = v.value
                eye2.transforms.l[5] = v.value

@@ -315,7 +315,7 @@ end
 
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
-   print(armNr, flop)
+ 
    local textured, url = partToTexturedCanvas('arms', values)
 
    return createRubberHoseFromImage(

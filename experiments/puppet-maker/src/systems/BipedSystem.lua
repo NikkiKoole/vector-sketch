@@ -411,14 +411,15 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
 
         e.biped.head.transforms.l[1] = e.biped.neck.points[2][1] - hx
         e.biped.head.transforms.l[2] = e.biped.neck.points[2][2] - hy
+        e.biped.head.dirty = true
+        e.biped.neck.dirty = true
+        transforms.setTransforms(e.biped.neck)
     else
         local hx, hy = getHeadDeltaAttachement(e)
         e.biped.head.transforms.l[1] = neckX - hx
         e.biped.head.transforms.l[2] = neckY - hy
     end
-    e.biped.head.dirty = true
-    e.biped.neck.dirty = true
-    transforms.setTransforms(e.biped.neck)
+  
 end
 
 function BipedSystem:setArmHairToArms(e)

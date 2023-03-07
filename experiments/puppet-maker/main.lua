@@ -32,8 +32,8 @@ Concord = require 'vendor.concord.init'
 
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = false
-prof = require("jprof")
+PROF_CAPTURE = true
+prof = require 'vendor.jprof'
 
 --local camera = require 'lib.camera'
 --local cam = require('lib.cameraBase').getInstance()
