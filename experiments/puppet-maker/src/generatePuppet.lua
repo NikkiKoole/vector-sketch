@@ -445,7 +445,7 @@ function changePart(name, values)
    elseif name == 'hair' then
       if isNullObject(name, values) then
          hair = updateChild(container, hair, copy3(nullChild))
-         print('hair', hair)
+       --  print('hair', hair)
       else
          local hp = getHeadPoints(potato)
          local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }

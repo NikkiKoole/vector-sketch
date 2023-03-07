@@ -217,7 +217,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        earUnderHead            = false,
+        earUnderHead            = true,
         earWidthMultiplier      = 1,
         earHeightMultiplier     = 1,
         earRotation             = 0,

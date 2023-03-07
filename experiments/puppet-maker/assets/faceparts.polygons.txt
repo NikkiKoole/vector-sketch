@@ -13,7 +13,7 @@ wrap = "repeat"
 folder = true,
 name = "eye",
 transforms = {
-l = { 190.397, 224.571, 0, 1, 1, 0, 0, 0, 0 }
+l = { -905.627, 564.602, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -116,6 +116,189 @@ folder = true,
 name = "eyes",
 transforms = {
 l = { 0, 1.652, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -35.5, -35.5 }, { 35.5, -35.5 }, { 35.5, 35.5 }, { -35.5, 35.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil1.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -168.543, 248.313, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -35.5, -35.5 }, { 35.5, -35.5 }, { 35.5, 35.5 }, { -35.5, 35.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil2.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -177.114, 381.169, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -41, -42 }, { 41, -42 }, { 41, 42 }, { -41, 42 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil3.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -78.542, 372.597, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -41, -42 }, { 41, -42 }, { 41, 42 }, { -41, 42 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil4.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -74.209, 259.929, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -98.5, -93 }, { 98.5, -93 }, { 98.5, 93 }, { -98.5, 93 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil5.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { 68.793, 262.096, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -56.5, -52.5 }, { 56.5, -52.5 }, { 56.5, 52.5 }, { -56.5, 52.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil6.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { 224.813, 258.776, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -71, -75 }, { 71, -75 }, { 71, 75 }, { -71, 75 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil7.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { 221.493, 132.632, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -73, -72.5 }, { 73, -72.5 }, { 73, 72.5 }, { -73, 72.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil8.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { 78.751, 112.715, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -116.5, -109.5 }, { 116.5, -109.5 }, { 116.5, 109.5 }, { -116.5, 109.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil9.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -117.104, 92.798, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -92, -92 }, { 92, -92 }, { 92, 92 }, { -92, 92 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil10.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -326.238, 116.035, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -125.5, -111 }, { 125.5, -111 }, { 125.5, 111 }, { -125.5, 111 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil11.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil",
+transforms = {
+l = { -326.238, -106.377, 0, 1, 1, 0, 0, 0, 0 }
+}
+} },
+folder = true,
+name = "pupils",
+transforms = {
+l = { -1251.422, -321.427, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -653,189 +836,6 @@ l = { 10.793, -5.397, 0, 1, 1, 0, 0, 0, 0 }
 children = { {
 children = { {
 color = { 0, 0, 0, 1 },
-name = "",
-points = { { -35.5, -35.5 }, { 35.5, -35.5 }, { 35.5, 35.5 }, { -35.5, 35.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil1.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -168.543, 248.313, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -35.5, -35.5 }, { 35.5, -35.5 }, { 35.5, 35.5 }, { -35.5, 35.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil2.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -177.114, 381.169, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -41, -42 }, { 41, -42 }, { 41, 42 }, { -41, 42 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil3.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -78.542, 372.597, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -41, -42 }, { 41, -42 }, { 41, 42 }, { -41, 42 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil4.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -74.209, 259.929, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -98.5, -93 }, { 98.5, -93 }, { 98.5, 93 }, { -98.5, 93 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil5.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { 68.793, 262.096, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -56.5, -52.5 }, { 56.5, -52.5 }, { 56.5, 52.5 }, { -56.5, 52.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil6.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { 224.813, 258.776, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -71, -75 }, { 71, -75 }, { 71, 75 }, { -71, 75 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil7.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { 221.493, 132.632, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -73, -72.5 }, { 73, -72.5 }, { 73, 72.5 }, { -73, 72.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil8.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { 78.751, 112.715, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -116.5, -109.5 }, { 116.5, -109.5 }, { 116.5, 109.5 }, { -116.5, 109.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil9.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -117.104, 92.798, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -92, -92 }, { 92, -92 }, { 92, 92 }, { -92, 92 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil10.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -326.238, 116.035, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -125.5, -111 }, { 125.5, -111 }, { 125.5, 111 }, { -125.5, 111 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/pupil11.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "pupil",
-transforms = {
-l = { -326.238, -106.377, 0, 1, 1, 0, 0, 0, 0 }
-}
-} },
-folder = true,
-name = "pupils",
-transforms = {
-l = { -1251.422, -321.427, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-children = { {
-color = { 0, 0, 0, 1 },
 data = {
 borderRadius = 1,
 flop = 1,
@@ -892,10 +892,10 @@ flop = 1,
 length = 145,
 scale = 1,
 steps = 5.3277777777778,
-width = 219
+width = 109.5
 },
 name = "",
-points = { { 448.5, 0 }, { 0, 0 }, { -448.5, 0 } },
+points = { { 224.5, 224.5 }, { 0, 224.5 }, { -224.5, 224.5 } },
 texture = {
 filter = "linear",
 url = "/experiments/puppet-maker/assets/parts/upperlip3.png",
@@ -906,7 +906,7 @@ type = "bezier"
 folder = true,
 name = "upperlip",
 transforms = {
-l = { -109.987, -620.178, 0, 1, 1, 0, 0, 0, 0 }
+l = { 496.297, 412.505, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -937,7 +937,7 @@ l = { -109.987, -620.178, 0, 1, 1, 0, 0, 0, 0 }
 folder = true,
 name = "upperlips",
 transforms = {
-l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+l = { 2238.588, -39.975, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -999,10 +999,10 @@ flop = 1,
 length = 145,
 scale = 1,
 steps = 5.3277777777778,
-width = 219
+width = 109.5
 },
 name = "",
-points = { { 448.5, 0 }, { 0, 0 }, { -448.5, 0 } },
+points = { { 224.5, 224.5 }, { 0, 224.5 }, { -224.5, 224.5 } },
 texture = {
 filter = "linear",
 url = "/experiments/puppet-maker/assets/parts/lowerlip3.png",
@@ -1013,7 +1013,7 @@ type = "bezier"
 folder = true,
 name = "lowerlip",
 transforms = {
-l = { -109.987, -620.178, 0, 1, 1, 0, 0, 0, 0 }
+l = { -583.591, -1567.388, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -1045,5 +1045,54 @@ folder = true,
 name = "lowerlips",
 transforms = {
 l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -73, -66.5 }, { 73, -66.5 }, { 73, 66.5 }, { -73, 66.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/eye1.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+mask = true,
+name = "",
+points = { { -57.879, -2.344 }, { -41.841, 32.647 }, { -18.513, 48.685 }, { 32.517, 38.479 }, { 54.386, 4.946 }, { 37.675, -35.885 }, { 4.532, -51.833 }, { -31.162, -45.309 } }
+} },
+folder = true,
+name = "eye copy",
+transforms = {
+l = { -525.383, 248.515, 0, 1.362, 1.368, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -125.5, -111 }, { 125.5, -111 }, { 125.5, 111 }, { -125.5, 111 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/pupil11.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "pupil copy",
+transforms = {
+l = { -523.423, 252.915, 0, 0.375, 0.375, 0, 0, 0, 0 }
+}
+}, {
+closeStencil = true,
+color = { 1, 0, 0, 1 },
+name = "",
+points = { { 0, 0 } }
+} },
+folder = true,
+name = "oogtest",
+transforms = {
+l = { -2653.156, 271.819, 0, 1, 1, 0, 0, 0, 0 }
 }
 } }

@@ -93,7 +93,9 @@ local function getPositionsForLegsAttaching(e)
         local l1x, l1y  = body.transforms._g:transformPoint(mx, newPoints[6][2])
         local mx2       = numbers.lerp(newPoints[4][1], newPoints[5][1], t)
         local l2x, l2y  = body.transforms._g:transformPoint(mx2, newPoints[4][2])
-        return l1x, l1y, l2x, l2y
+        -- this -50 on the y axis is to make the legs always more or less touch the body 
+        -- usually the lines have some margin in the drawings.
+        return l1x, l1y - 25, l2x, l2y - 25
     else
         local lc1 = node.findNodeByName(body, 'leg1')
         local lc2 = node.findNodeByName(body, 'leg2')
