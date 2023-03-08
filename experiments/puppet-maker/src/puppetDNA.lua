@@ -88,6 +88,8 @@ function generate()
 
 
     local values = {
+        faceScaleX = 1,
+        faceScaleY = 1,
         potatoHead = false,
         --[[
         skinPatchEye1           = {

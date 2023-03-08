@@ -435,10 +435,10 @@ function scene.load()
    parts, values = generate()
 
 
-   head = copyAndRedoGraphic('head', values) 
+   head = copyAndRedoGraphic('head', values)
 
    neck = createNeckRubberhose(values)
-   body = copyAndRedoGraphic('body', values) 
+   body = copyAndRedoGraphic('body', values)
    hair = createHairVanillaLine(values)
 
    arm1 = createArmRubberhose(1, values)
@@ -535,10 +535,10 @@ function skinColorize(bgPal, values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs' }
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
-         
+
       else
-      values[parts[i]].bgPal = bgPal
-      changePart(parts[i], values)
+         values[parts[i]].bgPal = bgPal
+         changePart(parts[i], values)
       end
    end
 end
@@ -551,21 +551,22 @@ function hairColorize(fgPal, values)
       changePart(parts[i], values)
    end
 end
-function  partRandomize(values) 
-   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs',   'hair', 'leghair', 'armhair', 'brows', 'upperlip', 'lowerlip' }
+
+function partRandomize(values)
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
+       'brows', 'upperlip', 'lowerlip' }
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
-         
+
       else
-      local p = findPart(parts[i])
-      values[parts[i]].shape =  math.ceil(love.math.random() * #(p.imgs))
-      values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
-      values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
-      changePart(parts[i], values)
+         local p = findPart(parts[i])
+         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
+         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         changePart(parts[i], values)
       end
    end
 end
-
 
 function findPart(name)
    for i = 1, #parts do
@@ -673,6 +674,18 @@ function attachCallbacks()
       end
       if key == 'p' then
          partRandomize(values)
+      end
+      if key == '5' then
+         --print('needs to lower the scale of all faceparts')
+         values.faceScaleX = values.faceScaleX * 0.75
+         values.faceScaleY = values.faceScaleY * 0.75
+         myWorld:emit('rescaleFaceparts', potato)
+      end
+      if key == '6' then
+         --print('needs to raise the scale of all faceparts')
+         values.faceScaleX = values.faceScaleX * 1.25
+         values.faceScaleY = values.faceScaleY * 1.25
+         myWorld:emit('rescaleFaceparts', potato)
       end
    end
 

@@ -299,23 +299,17 @@ end
 
 function createUpperlipBezier(values, points)
    local textured, url = partToTexturedCanvas('upperlip', values)
-
-   return createBezierFromImage(
-           url, textured,
-           values.upperlipWidthMultiplier, points)
+   return createBezierFromImage(url, textured, 1, points)
 end
 
 function createLowerlipBezier(values, points)
    local textured, url = partToTexturedCanvas('lowerlip', values)
-
-   return createBezierFromImage(
-           url, textured,
-           values.lowerlipWidthMultiplier, points)
+   return createBezierFromImage(url, textured, 1, points)
 end
 
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
- 
+
    local textured, url = partToTexturedCanvas('arms', values)
 
    return createRubberHoseFromImage(
@@ -445,7 +439,7 @@ function changePart(name, values)
    elseif name == 'hair' then
       if isNullObject(name, values) then
          hair = updateChild(container, hair, copy3(nullChild))
-       --  print('hair', hair)
+         --  print('hair', hair)
       else
          local hp = getHeadPoints(potato)
          local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }

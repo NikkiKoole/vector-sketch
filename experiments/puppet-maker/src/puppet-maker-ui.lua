@@ -80,9 +80,10 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.upperlipWidthMultiplier = v.value
-               upperlip.transforms.l[4] = v.value
-               -- upperlip.transforms.l[5] = v.value
-               changePart('upperlip', values)
+               myWorld:emit('rescaleFaceparts', potato)
+               --upperlip.transforms.l[4] = v.value
+               --upperlip.transforms.l[5] = v.value
+               --changePart('upperlip', values)
             end
             currentY = currentY + 25
             local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
@@ -100,9 +101,10 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
                values.lowerlipWidthMultiplier = v.value
                --lowerlip.transforms.l[4] = v.value
-               lowerlip.transforms.l[4] = v.value
-               -- lowerlip.transforms.l[5] = v.value
-               changePart('lowerlip', values)
+               --lowerlip.transforms.l[4] = v.value
+               --lowerlip.transforms.l[5] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
+               --changePart('lowerlip', values)
             end
             currentY = currentY + 25
             local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
@@ -176,14 +178,16 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.noseWidthMultiplier = v.value
-               nose.transforms.l[4] = v.value
+               --nose.transforms.l[4] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
             end
             currentY = currentY + 25
             local v = h_slider("nose-height", startX, currentY, 50, values.noseHeightMultiplier, .5, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.noseHeightMultiplier = v.value
-               nose.transforms.l[5] = v.value
+               -- nose.transforms.l[5] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
             end
             currentY = currentY + 25
             local v = h_slider("nose-yAxis", startX, currentY, 50, values.noseYAxis, -6, 6)
@@ -203,10 +207,11 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 8) / 8.0 -- round to .125
                values.pupilSizeMultiplier = v.value
-               pupil1.transforms.l[4] = v.value
-               pupil1.transforms.l[5] = v.value
-               pupil2.transforms.l[4] = v.value
-               pupil2.transforms.l[5] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
+               --pupil1.transforms.l[4] = v.value
+               -- pupil1.transforms.l[5] = v.value
+               -- pupil2.transforms.l[4] = v.value
+               -- pupil2.transforms.l[5] = v.value
             end
          end
       end
@@ -218,16 +223,18 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 8) / 8.0 -- round to .5
                values.eyeWidthMultiplier = v.value
-               eye1.transforms.l[4] = v.value
-               eye2.transforms.l[4] = v.value * -1
+               myWorld:emit('rescaleFaceparts', potato)
+               --eye1.transforms.l[4] = v.value
+               --eye2.transforms.l[4] = v.value * -1
             end
             currentY = currentY + 25
             local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .125, 3)
             if v.value then
                v.value = math.floor(v.value * 8) / 8.0 -- round to .5
                values.eyeHeightMultiplier = v.value
-               eye1.transforms.l[5] = v.value
-               eye2.transforms.l[5] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
+               --eye1.transforms.l[5] = v.value
+               -- eye2.transforms.l[5] = v.value
             end
             currentY = currentY + 25
             local v = h_slider("eye-rotation", startX, currentY, 50, values.eyeRotation, 0, 2 * math.pi)
@@ -259,8 +266,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.earWidthMultiplier = v.value
-               ear1.transforms.l[4] = v.value * -1
-               ear2.transforms.l[4] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
+               --ear1.transforms.l[4] = v.value * -1
+               --ear2.transforms.l[4] = v.value
             end
             currentY = currentY + 25
             local v = h_slider("ear-yAxis", startX, currentY, 50, values.earYAxis, -3, 3)
@@ -277,9 +285,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if b then
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts()
-
-               ear1.transforms.l[4] = values.earWidthMultiplier * -1
-               ear2.transforms.l[4] = values.earWidthMultiplier
+               myWorld:emit('rescaleFaceparts', potato)
+               --ear1.transforms.l[4] = values.earWidthMultiplier * -1
+               --ear2.transforms.l[4] = values.earWidthMultiplier
             end
          end
       end
@@ -370,7 +378,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.headWidthMultiplier = v.value
-               head.transforms.l[4] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
+               --head.transforms.l[4] = v.value
                update()
             end
             currentY = currentY + 25
@@ -379,7 +388,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.headHeightMultiplier = v.value
-               head.transforms.l[5] = v.value
+               myWorld:emit('rescaleFaceparts', potato)
+               --head.transforms.l[5] = v.value
                update()
             end
             currentY = currentY + 50
@@ -403,6 +413,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          local update = function()
             body.dirty = true
             transforms.setTransforms(body)
+            if values.potatoHead then
+               myWorld:emit('rescaleFaceparts', potato)
+            end
             changePart('body', values)
 
             myWorld:emit('potatoInit', potato)
@@ -457,9 +470,15 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if b then
                values.potatoHead = not values.potatoHead
                myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
+               --if values.potatoHead then
+               body.transforms.l[4] = values.bodyWidthMultiplier
+               body.transforms.l[5] = values.bodyHeightMultiplier
+               --end
+
                attachAllFaceParts()
                changePart('head', values)
                changePart('body', values)
+               myWorld:emit('rescaleFaceparts', potato)
                setCategories()
             end
          end

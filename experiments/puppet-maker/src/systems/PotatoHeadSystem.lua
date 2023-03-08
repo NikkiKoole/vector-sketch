@@ -44,6 +44,52 @@ function PotatoHeadSystem:init(e)
     print('awdfwfewq')
 end
 
+function PotatoHeadSystem:rescaleFaceparts(e)
+    local values = e.potato.values
+
+    -- print(e.potato.values.potatoHead)
+    local sx, sy
+    if (e.potato.values.potatoHead) then
+        e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
+        e.potato.head.transforms.l[5] = values.bodyHeightMultiplier
+        sx = values.faceScaleX / values.bodyWidthMultiplier
+        sy = values.faceScaleY / values.bodyHeightMultiplier
+    else
+        e.potato.head.transforms.l[4] = values.headWidthMultiplier
+        e.potato.head.transforms.l[5] = values.headHeightMultiplier
+        sx = values.faceScaleX / values.headWidthMultiplier
+        sy = values.faceScaleY / values.headHeightMultiplier
+    end
+    --local sx = values.faceScaleX / values.headWidthMultiplier
+    --local sy = values.faceScaleY / values.headHeightMultiplier
+
+
+    e.potato.eye1.transforms.l[4] = values.eyeWidthMultiplier * sx
+    e.potato.eye1.transforms.l[5] = values.eyeHeightMultiplier * sy
+    e.potato.pupil1.transforms.l[4] = values.pupilSizeMultiplier * sx
+    e.potato.pupil1.transforms.l[5] = values.pupilSizeMultiplier * sy
+
+    e.potato.eye2.transforms.l[4] = -1 * values.eyeWidthMultiplier * sx
+    e.potato.eye2.transforms.l[5] = values.eyeHeightMultiplier * sy
+    e.potato.pupil2.transforms.l[4] = values.pupilSizeMultiplier * sx
+    e.potato.pupil2.transforms.l[5] = values.pupilSizeMultiplier * sy
+
+    e.potato.upperlip.transforms.l[4] = values.upperlipWidthMultiplier * sx
+    e.potato.upperlip.transforms.l[5] = values.upperlipWidthMultiplier * sy
+
+    e.potato.lowerlip.transforms.l[4] = values.lowerlipWidthMultiplier * sx
+    e.potato.lowerlip.transforms.l[5] = values.lowerlipWidthMultiplier * sy
+
+    e.potato.nose.transforms.l[4] = values.noseWidthMultiplier * sx
+    e.potato.nose.transforms.l[5] = values.noseHeightMultiplier * sy
+
+    e.potato.ear1.transforms.l[4] = -1 * values.earWidthMultiplier * sx
+    e.potato.ear1.transforms.l[5] = values.earWidthMultiplier * sy
+
+    e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
+    e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
+end
+
 function PotatoHeadSystem:potatoInit(e)
     local nosex, nosey = getPositionForNoseAttaching(e)
 
