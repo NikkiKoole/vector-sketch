@@ -237,8 +237,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                -- eye2.transforms.l[5] = v.value
             end
             currentY = currentY + 25
-            local v = h_slider("eye-rotation", startX, currentY, 50, values.eyeRotation, 0, 2 * math.pi)
+            local v = h_slider("eye-rotation", startX, currentY, 50, values.eyeRotation, -math.pi / 6, math.pi / 6)
             if v.value then
+               v.value = math.floor(v.value * 4) / 4.0 -- round to .5
                values.eyeRotation = v.value
                eye1.transforms.l[3] = v.value
                eye2.transforms.l[3] = -v.value
