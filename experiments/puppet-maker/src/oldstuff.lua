@@ -34,6 +34,10 @@ local function createRectangle(x, y, w, h, r, g, b)
     return result
 end
 
+local numbers = require 'lib.numbers'
+local cam = require 'lib.camera'
+local bbox = require 'lib.bbox'
+
 function drawBBoxDebug()
     if true then
         love.graphics.push() -- stores the default coordinate system
