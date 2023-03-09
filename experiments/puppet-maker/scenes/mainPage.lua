@@ -393,10 +393,11 @@ function scene.load()
    settingsScrollAreaIsDragging = false
    settingsScrollArea = nil
    settingsScrollPosition = 0
-   scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-   scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
+   --scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
+   --scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
 
-
+   scrollTickSample = love.audio.newSource('assets/sounds/BD-perc.wav', 'static')
+   scrollItemClickSample = love.audio.newSource('assets/sounds/CasioMT70-Bassdrum.wav', 'static')
    selectedTab = 'part'
    selectedCategory = 'body'
    selectedColoringLayer = 1 --- bg fg, line
@@ -833,7 +834,7 @@ function scene.draw()
          love.graphics.draw(tab2, 100, 100)
          love.graphics.draw(tab3, 100, 500)
       end
-      partSettingsPanel(0, 0)
+      partSettingsPanel()
 
       prof.push("cam-render")
       cam:push()

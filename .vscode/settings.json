@@ -1,10 +1,13 @@
 {
-    "Lua.runtime.version": "Lua 5.4",
+    "Lua.runtime.version": "LuaJIT",
     "Lua.workspace.library": [
         "${3rd}/love2d/library"
     ],
     "Lua.workspace.checkThirdParty": false,
     "Lua.diagnostics.disable": [
         "lowercase-global"
+    ],
+    "Lua.diagnostics.globals": [
+        "jit"
     ]
 }
