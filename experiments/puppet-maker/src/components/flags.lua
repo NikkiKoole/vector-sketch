@@ -56,6 +56,7 @@ Concord.component('potato', function(c, parts)
     c.ear1 = parts.ear1
     c.ear2 = parts.ear2
     c.eyeBlink = 1
+    c.eyeTimer = nil
 end)
 --[[
 Concord.component('head',

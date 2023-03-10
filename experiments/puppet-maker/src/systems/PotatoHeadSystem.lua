@@ -149,10 +149,24 @@ end
 -- blink eyes
 -- loos at position
 
-function PotatoHeadSystem:update()      
-    for _, e in ipairs(self.pool) do
-        if e.potato.eyeBlink ~= 0 and e.potato.eyeBlink ~= 1 then
-    --print('update potatohead system')
+function PotatoHeadSystem:eyeLookAtPoint(e, x,y)
+    print(e,x,y)
+end
+
+
+function PotatoHeadSystem:blinkEyes(e)
+   if e.potato.eyeTimer then 
+        Timer.cancel(e.potato.eyeTimer)
+   end
+    e.potato.eyeTimer = Timer.tween(.1, e.potato, { eyeBlink = 0 }, 'out-quad')
+    Timer.after(
+      .2,
+      function()
+        e.potato.eyeTimer =  Timer.tween(.2, e.potato, { eyeBlink = 1 }, 'out-quad')
+      end
+   )
+
+   Timer.during(.6, function(dt) 
     local sx, sy
     if (e.potato.values.potatoHead) then
         e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
@@ -167,20 +181,8 @@ function PotatoHeadSystem:update()
     end
     e.potato.eye1.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
     e.potato.eye2.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
-end
-end
-end
 
-
-function PotatoHeadSystem:blinkEyes(e)
-
-    Timer.tween(.1, e.potato, { eyeBlink = 0 }, 'out-quad')
-    Timer.after(
-      .2,
-      function()
-         Timer.tween(.2, e.potato, { eyeBlink = 1 }, 'out-quad')
-      end
-   )
+    end)
 end
 
 

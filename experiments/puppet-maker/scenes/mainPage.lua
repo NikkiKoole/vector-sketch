@@ -239,6 +239,7 @@ function pointerPressed(x, y, id)
          gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
       end
    end
+   myWorld:emit("eyeLookAtPoint", potato, x,y)
 end
 
 local function hex2rgb(hex)
