@@ -696,6 +696,7 @@ function attachCallbacks()
       end
       if key == 'd' then
          print('DOINK needs to tween guy elastically like its been moved around violently')
+         myWorld:emit('doinkBody',biped)
       end
    end
 

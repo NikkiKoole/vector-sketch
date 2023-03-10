@@ -431,6 +431,7 @@ function changePart(name, values)
       guy.children = guyChildren(biped)
       head.transforms.l[4] = values.headWidthMultiplier
       head.transforms.l[5] = values.headHeightMultiplier
+    
       if (not values.potatoHead) then
          attachAllFaceParts()
       end

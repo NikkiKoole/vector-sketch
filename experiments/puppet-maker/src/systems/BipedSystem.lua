@@ -4,6 +4,7 @@ local mesh = require 'lib.mesh'
 local transforms = require 'lib.transform'
 local parentize = require 'lib.parentize'
 local numbers = require 'lib.numbers'
+local Timer = require 'vendor.timer'
 
 local function getMeta(parent)
     for i = 1, #parent.children do
@@ -286,7 +287,7 @@ function BipedSystem:bipedAttachLegs(e)
 end
 
 function setArms(e, optionalData)
-    local keep = false
+    local keep = true
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
     a1x = a1x or 0
     a1y = a1y or 0
@@ -441,6 +442,35 @@ function BipedSystem:setLegHairToLegs(e)
     e.biped.leghair2.points[2] = e.biped.leg2.points[2]
     mesh.remeshNode(e.biped.leghair2)
 end
+
+function BipedSystem:doinkBody(e)
+    
+    local dir = 1
+    local str = 1
+    local oldX =  e.biped.body.transforms.l[1] 
+    local oldY =  e.biped.body.transforms.l[2] 
+    e.biped.body.transforms.l[3] = str * dir
+    e.biped.body.transforms.l[1] = oldX + (dir * str * 100)
+
+    Timer.tween(2, e.biped.body.transforms.l, {[3]=0, [1]=oldX}, 'out-elastic')
+
+    e.biped.head.transforms.l[3] = str * dir
+    Timer.tween(2, e.biped.head.transforms.l, {[3]=0}, 'out-elastic')
+
+   Timer.during(2, function()
+       
+        e.biped.body.dirty = true
+        transforms.setTransforms(e.biped.body)
+
+        attachHeadWithOrWithoutNeck(e, true)
+        setLegs(e)
+        setArms(e)
+        BipedSystem:bipedAttachHead(e)
+        BipedSystem:bipedAttachHands(e)
+   end)
+   -- Timer
+end
+
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)
     --print(elem.item.name)

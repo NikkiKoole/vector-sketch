@@ -38,6 +38,8 @@ Concord.component('biped',
 
         c.potatoHead = parts.potatoHead --boolean
         c.values = parts.values -- numbers
+
+        --c.bodyTimer = nil
     end
 )
 
@@ -57,7 +59,8 @@ Concord.component('potato', function(c, parts)
     c.ear2 = parts.ear2
     c.eyeBlink = 1
     c.eyeTimer = nil
-    
+    c.lookAtTimerEye1 = nil 
+    c.lookAtTimerEye2 = nil 
 end)
 --[[
 Concord.component('head',
