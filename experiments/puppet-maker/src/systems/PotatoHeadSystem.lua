@@ -1,6 +1,6 @@
 local numbers = require 'lib.numbers'
 local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
-
+local Timer = require 'vendor.timer'
 
 local function getPositionForNoseAttaching(e)
     local newPoints = getHeadPoints(e)
@@ -65,12 +65,12 @@ function PotatoHeadSystem:rescaleFaceparts(e)
 
 
     e.potato.eye1.transforms.l[4] = values.eyeWidthMultiplier * sx
-    e.potato.eye1.transforms.l[5] = values.eyeHeightMultiplier * sy
+    e.potato.eye1.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
     e.potato.pupil1.transforms.l[4] = values.pupilSizeMultiplier * sx
     e.potato.pupil1.transforms.l[5] = values.pupilSizeMultiplier * sy
 
     e.potato.eye2.transforms.l[4] = -1 * values.eyeWidthMultiplier * sx
-    e.potato.eye2.transforms.l[5] = values.eyeHeightMultiplier * sy
+    e.potato.eye2.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
     e.potato.pupil2.transforms.l[4] = values.pupilSizeMultiplier * sx
     e.potato.pupil2.transforms.l[5] = values.pupilSizeMultiplier * sy
 
@@ -143,5 +143,45 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.ear2.transforms.l[2] = numbers.lerp(newPoints[8][2], newPoints[6][2], tY)
     e.potato.ear2.transforms.l[4] = 1
 end
+
+
+
+-- blink eyes
+-- loos at position
+
+function PotatoHeadSystem:update()      
+    for _, e in ipairs(self.pool) do
+        if e.potato.eyeBlink ~= 0 and e.potato.eyeBlink ~= 1 then
+    --print('update potatohead system')
+    local sx, sy
+    if (e.potato.values.potatoHead) then
+        e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
+        e.potato.head.transforms.l[5] = values.bodyHeightMultiplier
+        sx = values.faceScaleX / values.bodyWidthMultiplier
+        sy = values.faceScaleY / values.bodyHeightMultiplier
+    else
+        e.potato.head.transforms.l[4] = values.headWidthMultiplier
+        e.potato.head.transforms.l[5] = values.headHeightMultiplier
+        sx = values.faceScaleX / values.headWidthMultiplier
+        sy = values.faceScaleY / values.headHeightMultiplier
+    end
+    e.potato.eye1.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
+    e.potato.eye2.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
+end
+end
+end
+
+
+function PotatoHeadSystem:blinkEyes(e)
+
+    Timer.tween(.1, e.potato, { eyeBlink = 0 }, 'out-quad')
+    Timer.after(
+      .2,
+      function()
+         Timer.tween(.2, e.potato, { eyeBlink = 1 }, 'out-quad')
+      end
+   )
+end
+
 
 return PotatoHeadSystem

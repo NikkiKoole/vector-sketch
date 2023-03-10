@@ -55,6 +55,7 @@ Concord.component('potato', function(c, parts)
     c.brow2 = parts.brow2
     c.ear1 = parts.ear1
     c.ear2 = parts.ear2
+    c.eyeBlink = 1
 end)
 --[[
 Concord.component('head',

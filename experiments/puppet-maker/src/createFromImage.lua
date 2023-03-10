@@ -1,6 +1,8 @@
 local mesh   = require 'lib.mesh'
 local canvas = require 'lib.canvas'
 
+local lib = {}
+
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -20,7 +22,7 @@ local function getLengthOfPath(path)
 end
 
 
-function createVanillaLineFromImage(url, textured, hairWidthMultiplier, hairTension, optionalPoints
+lib.vanillaline = function(url, textured, hairWidthMultiplier, hairTension, optionalPoints
 )
     local img = mesh.getImage(url)
     local width, height = img:getDimensions()
@@ -49,7 +51,7 @@ function createVanillaLineFromImage(url, textured, hairWidthMultiplier, hairTens
     return currentNode
 end
 
-function createRubberHoseFromImage(url, textured, flop, length, widthMultiplier, optionalPoints, optionalScaleX)
+lib.rubberhose = function(url, textured, flop, length, widthMultiplier, optionalPoints, optionalScaleX)
     local img = mesh.getImage(url)
     local width, height = img:getDimensions()
     local magic = 4.46
@@ -78,7 +80,7 @@ function createRubberHoseFromImage(url, textured, flop, length, widthMultiplier,
     return currentNode
 end
 
-function createBezierFromImage(url, textured, widthMultiplier, optionalPoints)
+lib.bezier = function(url, textured, widthMultiplier, optionalPoints)
     local img = mesh.getImage(url)
     local width, height = img:getDimensions()
     local currentNode = {}
@@ -113,3 +115,5 @@ function createBezierFromImage(url, textured, widthMultiplier, optionalPoints)
     --print('jo!')
     return result
 end
+
+return lib

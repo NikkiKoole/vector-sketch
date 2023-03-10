@@ -688,6 +688,9 @@ function attachCallbacks()
          values.faceScaleY = values.faceScaleY * 1.25
          myWorld:emit('rescaleFaceparts', potato)
       end
+      if key == 'b' then
+         myWorld:emit('blinkEyes',potato)
+      end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)

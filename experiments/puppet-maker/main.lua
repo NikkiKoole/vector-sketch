@@ -24,6 +24,7 @@ jit.off()
 -- async image loading
 --https://github.com/MikuAuahDark/lily
 
+
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
@@ -34,6 +35,7 @@ inspect = require 'vendor.inspect'
 
 PROF_CAPTURE = true
 prof = require 'vendor.jprof'
+
 
 --local camera = require 'lib.camera'
 --local cam = require('lib.cameraBase').getInstance()

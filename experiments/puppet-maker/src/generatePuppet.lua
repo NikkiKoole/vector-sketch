@@ -4,7 +4,7 @@ local bbox      = require 'lib.bbox'
 local canvas    = require 'lib.canvas'
 local render    = require 'lib.render'
 
-require 'src.refactoring'
+local createFromImage = require 'src.createFromImage'
 
 -- REMEMBER IF YOU SEE BLACK SHADOWING AROUND THE COLORED PARTS
 -- ususally the fix is simply to call a redo..X in the changeX too.
@@ -284,7 +284,7 @@ end
 function createHairVanillaLine(values, hairLine)
    local textured, url = partToTexturedCanvas('hair', values)
 
-   return createVanillaLineFromImage(
+   return createFromImage.vanillaline(
            url, textured,
            values.hairWidthMultiplier, values.hairTension, hairLine)
 end
@@ -292,19 +292,19 @@ end
 function createBrowBezier(values, points)
    local textured, url = partToTexturedCanvas('brows', values)
 
-   return createBezierFromImage(
+   return createFromImage.bezier(
            url, textured,
            values.browsWidthMultiplier, points)
 end
 
 function createUpperlipBezier(values, points)
    local textured, url = partToTexturedCanvas('upperlip', values)
-   return createBezierFromImage(url, textured, 1, points)
+   return createFromImage.bezier(url, textured, 1, points)
 end
 
 function createLowerlipBezier(values, points)
    local textured, url = partToTexturedCanvas('lowerlip', values)
-   return createBezierFromImage(url, textured, 1, points)
+   return createFromImage.bezier(url, textured, 1, points)
 end
 
 function createArmRubberhose(armNr, values, points)
@@ -312,7 +312,7 @@ function createArmRubberhose(armNr, values, points)
 
    local textured, url = partToTexturedCanvas('arms', values)
 
-   return createRubberHoseFromImage(
+   return createFromImage.rubberhose(
            url, textured,
            flop,
            values.armLength,
@@ -324,7 +324,7 @@ function createArmHairRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
    local textured, url = partToTexturedCanvas('armhair', values)
 
-   return createRubberHoseFromImage(
+   return createFromImage.rubberhose(
            url, textured,
            flop,
            values.armLength,
@@ -336,7 +336,7 @@ function createLegHairRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.leg1flop or values.leg2flop
    local textured, url = partToTexturedCanvas('leghair', values)
 
-   return createRubberHoseFromImage(
+   return createFromImage.rubberhose(
            url, textured,
            flop,
            leglengths[values.legLength],
@@ -348,7 +348,7 @@ function createLegRubberhose(legNr, values, points)
    local flop = legNr == 1 and values.leg1flop or values.leg2flop
    local textured, url = partToTexturedCanvas('legs', values)
 
-   return createRubberHoseFromImage(
+   return createFromImage.rubberhose(
            url, textured,
            flop
            , leglengths[values.legLength],
@@ -359,7 +359,7 @@ end
 function createNeckRubberhose(values, points)
    local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
    local textured, url = partToTexturedCanvas('neck', values)
-   return createRubberHoseFromImage(
+   return createFromImage.rubberhose(
            url, textured,
            flop,
            values.neckLength,
