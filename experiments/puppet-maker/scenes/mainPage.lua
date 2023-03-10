@@ -694,6 +694,9 @@ function attachCallbacks()
       if key == 'b' then
          myWorld:emit('blinkEyes',potato)
       end
+      if key == 'd' then
+         print('DOINK needs to tween guy elastically like its been moved around violently')
+      end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
