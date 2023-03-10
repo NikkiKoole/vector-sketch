@@ -1,6 +1,7 @@
 local numbers = require 'lib.numbers'
 local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 local Timer = require 'vendor.timer'
+local cam               = require('lib.cameraBase').getInstance()
 
 local function getPositionForNoseAttaching(e)
     local newPoints = getHeadPoints(e)
@@ -149,8 +150,54 @@ end
 -- blink eyes
 -- loos at position
 
+local function getAngleAndDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local angle = math.atan2(dy, dx)
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+ 
+    return angle, distance
+ end
+ local function setAngleAndDistance(sx, sy, angle, distance)
+    local newx = sx + distance * math.cos(angle)
+    local newy = sy + distance * math.sin(angle)
+    return newx, newy
+ end
+ 
+
 function PotatoHeadSystem:eyeLookAtPoint(e, x,y)
-    print(e,x,y)
+    local wx, wy = cam:getWorldCoordinates(x, y)
+
+    local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
+
+
+    ------  
+    e.potato.pupil1.transforms.l[1] = eyex1
+    e.potato.pupil1.transforms.l[2] = eyey1
+
+   
+    local mx, my = e.potato.pupil1.transforms._g:transformPoint(0, 0)
+    local angle, distance = getAngleAndDistance(wx, wy, mx, my)
+    local t = e.potato.pupil1.transforms
+    local nx, ny = setAngleAndDistance(t.l[1],t.l[2],angle, 20)
+
+    Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = nx, [2] = ny }, 'out-quad')
+    Timer.after(1, function() 
+        Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = eyex1, [2] = eyey1 }, 'out-quad')
+    end)
+    -------
+    e.potato.pupil2.transforms.l[1] = eyex2
+    e.potato.pupil2.transforms.l[2] = eyey2
+
+     mx, my = e.potato.pupil2.transforms._g:transformPoint(0, 0)
+     angle, distance = getAngleAndDistance(wx, wy, mx, my)
+     t = e.potato.pupil2.transforms
+     nx, ny = setAngleAndDistance(t.l[1],t.l[2],angle, 20)
+
+    Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = nx, [2] = ny }, 'out-quad')
+    Timer.after(1, function() 
+        Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = eyex2, [2] = eyey2 }, 'out-quad')
+    end)
 end
 
 
@@ -160,13 +207,14 @@ function PotatoHeadSystem:blinkEyes(e)
    end
     e.potato.eyeTimer = Timer.tween(.1, e.potato, { eyeBlink = 0 }, 'out-quad')
     Timer.after(
-      .2,
+      .15,
       function()
         e.potato.eyeTimer =  Timer.tween(.2, e.potato, { eyeBlink = 1 }, 'out-quad')
       end
    )
 
    Timer.during(.6, function(dt) 
+    
     local sx, sy
     if (e.potato.values.potatoHead) then
         e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
