@@ -531,6 +531,8 @@ function scene.load()
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
    cam:update(w, h)
+
+   Timer.every(5, function()  myWorld:emit('blinkEyes',potato) end)
 end
 
 function skinColorize(bgPal, values)

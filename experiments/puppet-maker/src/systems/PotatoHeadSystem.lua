@@ -207,9 +207,9 @@ function PotatoHeadSystem:blinkEyes(e)
    end
     e.potato.eyeTimer = Timer.tween(.1, e.potato, { eyeBlink = 0 }, 'out-quad')
     Timer.after(
-      .15,
+      .1,
       function()
-        e.potato.eyeTimer =  Timer.tween(.2, e.potato, { eyeBlink = 1 }, 'out-quad')
+        e.potato.eyeTimer =  Timer.tween(.15, e.potato, { eyeBlink = 1 }, 'out-quad')
       end
    )
 
