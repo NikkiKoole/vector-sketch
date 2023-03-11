@@ -81,6 +81,18 @@ local function getPositionsForArmsAttaching(e)
     end
 end
 
+local function getBodyNewPoints(e)
+    local body = e.biped.body
+    local meta = getMeta(body)
+    if meta then
+        local flipx     = e.biped.values.body.flipx or 1
+        local flipy     = e.biped.values.body.flipy or 1
+        local points    = meta.points
+        local newPoints = getFlippedMetaObject(flipx, flipy, points)
+        return newPoints
+    end
+end
+
 local function getPositionsForLegsAttaching(e)
     local body = e.biped.body
     local meta = getMeta(body)
@@ -94,7 +106,7 @@ local function getPositionsForLegsAttaching(e)
         local l1x, l1y  = body.transforms._g:transformPoint(mx, newPoints[6][2])
         local mx2       = numbers.lerp(newPoints[4][1], newPoints[5][1], t)
         local l2x, l2y  = body.transforms._g:transformPoint(mx2, newPoints[4][2])
-        -- this -50 on the y axis is to make the legs always more or less touch the body 
+        -- this -50 on the y axis is to make the legs always more or less touch the body
         -- usually the lines have some margin in the drawings.
         return l1x, l1y - 25, l2x, l2y - 25
     else
@@ -118,17 +130,19 @@ function BipedSystem:bipedInit(e)
     transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
 
-
+    --print(inspect(leg1.data))
 
     e.biped.leg1.points[1] = { l1x, l1y }
-    e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) / 1 }
+    -- e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) * leg1.data.scaleY }
+    e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) * 1 }
 
     e.biped.leghair1.points[1] = e.biped.leg1.points[1]
     e.biped.leghair1.points[2] = e.biped.leg1.points[2]
 
 
     e.biped.leg2.points[1] = { l2x, l2y }
-    e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) / 1 }
+    --e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) * leg2.data.scaleY }
+    e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) * 1 }
 
     e.biped.leghair2.points[1] = e.biped.leg2.points[1]
     e.biped.leghair2.points[2] = e.biped.leg2.points[2]
@@ -169,6 +183,22 @@ function BipedSystem:bipedInit(e)
     --e.biped.nose.transforms.l[2] = 0--ny
     --print(nx, ny)
     --mesh.remeshNode(e.biped.nose)
+end
+
+function BipedSystem:positionFromLeftFoot(e)
+    -- the idea is I can grow/scale a leg and the puppet will raise
+    local fx, fy = e.biped.feet1.transforms._g:transformPoint(0, 0)
+    --local fx, fy = root.transforms._g:inverseTransformPoint(e.biped.leg1.points[2][1], e.biped.leg1.points[2][2])
+    print('before', fx, fy)
+
+    --e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] - fx
+    --e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] - fy
+    --transforms.setTransforms(e.biped.body)
+    --BipedSystem:bipedInit(e)
+    local fx, fy = e.biped.feet1.transforms._g:transformPoint(0, 0)
+    --local fx, fy = root.transforms._g:inverseTransformPoint(e.biped.leg1.points[2][1], e.biped.leg1.points[2][2])
+
+    print('after', fx, fy)
 end
 
 function BipedSystem:update(dt)
@@ -422,7 +452,6 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
         e.biped.head.transforms.l[1] = neckX - hx
         e.biped.head.transforms.l[2] = neckY - hy
     end
-  
 end
 
 function BipedSystem:setArmHairToArms(e)
@@ -444,21 +473,19 @@ function BipedSystem:setLegHairToLegs(e)
 end
 
 function BipedSystem:doinkBody(e)
-    
     local dir = 1
     local str = 1
-    local oldX =  e.biped.body.transforms.l[1] 
-    local oldY =  e.biped.body.transforms.l[2] 
+    local oldX = e.biped.body.transforms.l[1]
+    local oldY = e.biped.body.transforms.l[2]
     e.biped.body.transforms.l[3] = str * dir
     e.biped.body.transforms.l[1] = oldX + (dir * str * 100)
 
-    Timer.tween(2, e.biped.body.transforms.l, {[3]=0, [1]=oldX}, 'out-elastic')
+    Timer.tween(2, e.biped.body.transforms.l, { [3] = 0,[1] = oldX }, 'out-elastic')
 
     e.biped.head.transforms.l[3] = str * dir
-    Timer.tween(2, e.biped.head.transforms.l, {[3]=0}, 'out-elastic')
+    Timer.tween(2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
-   Timer.during(2, function()
-       
+    Timer.during(2, function()
         e.biped.body.dirty = true
         transforms.setTransforms(e.biped.body)
 
@@ -467,10 +494,9 @@ function BipedSystem:doinkBody(e)
         setArms(e)
         BipedSystem:bipedAttachHead(e)
         BipedSystem:bipedAttachHands(e)
-   end)
-   -- Timer
+    end)
+    -- Timer
 end
-
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)
     --print(elem.item.name)

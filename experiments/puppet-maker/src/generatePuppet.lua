@@ -1,8 +1,8 @@
-local parentize = require 'lib.parentize'
-local mesh      = require 'lib.mesh'
-local bbox      = require 'lib.bbox'
-local canvas    = require 'lib.canvas'
-local render    = require 'lib.render'
+local parentize       = require 'lib.parentize'
+local mesh            = require 'lib.mesh'
+local bbox            = require 'lib.bbox'
+local canvas          = require 'lib.canvas'
+local render          = require 'lib.render'
 
 local createFromImage = require 'src.createFromImage'
 
@@ -414,6 +414,8 @@ function changePart(name, values)
       render.justDoTransforms(root) -- why is this needed for body?? (because we need the correct points to attach other things too)
 
       biped:give('biped', bipedArguments(values))
+      myWorld:emit("bipedInit", biped)
+
       myWorld:emit("bipedAttachHead", biped)
       myWorld:emit("bipedAttachLegs", biped) -- todo
       myWorld:emit("bipedAttachArms", biped) -- todo
@@ -431,7 +433,7 @@ function changePart(name, values)
       guy.children = guyChildren(biped)
       head.transforms.l[4] = values.headWidthMultiplier
       head.transforms.l[5] = values.headHeightMultiplier
-    
+
       if (not values.potatoHead) then
          attachAllFaceParts()
       end
