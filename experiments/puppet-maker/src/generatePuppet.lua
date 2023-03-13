@@ -382,7 +382,7 @@ function updateChild(container, oldValue, newResult)
                oldTransforms[6] = newResult.transforms.l[6]
                oldTransforms[7] = newResult.transforms.l[7]
             end
-
+            --print(oldTransforms[1], oldTransforms[2])
             container.children[i].transforms.l = oldTransforms
          end
          return container.children[i]

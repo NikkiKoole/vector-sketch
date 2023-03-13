@@ -9,8 +9,8 @@ local transforms = require "lib.transform"
 imageCache = {} -- tjo save all the parts inages in
 
 
-local tabs = { "part", "colors", "pattern" }
 
+local tabs = { "part", "colors", "pattern" }
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -508,33 +508,64 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
    if selectedTab == 'colors' then
       -- i want 3 buttons, 1 for bg 1 for FG 1 for line, default = BG
-      local buttonWidth = (width / 3) * 0.8
-      currentY = currentY + 10
-      startX = startX + (width / 3) * 0.1
-      if draw then
-         local pickedColors = {
-             palettes[values[selectedCategory].bgPal],
-             palettes[values[selectedCategory].fgPal],
-             palettes[values[selectedCategory].linePal],
-         }
-         local sliderValues = {
-             values[selectedCategory].bgAlpha,
-             values[selectedCategory].fgAlpha,
-             values[selectedCategory].lineAlpha
+      
+         --print(values[selectedCategory].fgTex)
 
-         }
-         for i = 1, 3 do
+      
+         local pickedColors = {
+            palettes[values[selectedCategory].bgPal],
+            palettes[values[selectedCategory].fgPal],
+            palettes[values[selectedCategory].linePal],
+        }
+        local sliderValues = {
+            values[selectedCategory].bgAlpha,
+            values[selectedCategory].fgAlpha,
+            values[selectedCategory].lineAlpha
+
+        }
+        local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
+        local alphakeys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
+
+        --[[
+        if values[selectedCategory].fgTex == 1 then
+         pickedColors = {
+            palettes[values[selectedCategory].bgPal],
+
+            palettes[values[selectedCategory].linePal],
+        }
+        sliderValues = {
+            values[selectedCategory].bgAlpha,
+            values[selectedCategory].lineAlpha
+
+        }
+         colorkeys = { 'bgPal', 'linePal' }
+         alphakeys = { 'bgAlpha',  'lineAlpha' }
+
+        end
+        --]]
+
+        local amount = #pickedColors
+
+      local buttonWidth = (width / amount) * 0.8
+      currentY = currentY + 10
+      startX = startX + (width / amount) * 0.1
+
+      
+
+      if draw then
+        
+         for i = 1, amount do
             love.graphics.setColor(pickedColors[i])
-            local x = startX + ((width / 3) * (i - 1))
+            local x = startX + ((width / amount) * (i - 1))
             love.graphics.rectangle('fill', x, currentY, buttonWidth, buttonWidth / 2)
             if ui.getUIRect('p' .. i, x, currentY, buttonWidth, buttonWidth / 2) then
-               selectedColoringLayer = i
+               selectedColoringLayer = colorkeys[i]
             end
             local v = h_slider("s" .. i, x, currentY + buttonWidth / 2, buttonWidth, sliderValues[i], 0, 5)
             if v.value then
-               local keys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
-               values[selectedCategory][keys[i]] = math.floor(v.value)
-               selectedColoringLayer = i
+
+               values[selectedCategory][alphakeys[i]] = math.floor(v.value)
+               selectedColoringLayer = colorkeys[i]
                changePart(selectedCategory, values)
             end
          end
@@ -675,18 +706,15 @@ local function buttonClickHelper(value)
    if selectedTab == 'part' then
       values[selectedCategory]['shape'] = value
       changePart(selectedCategory, values)
-      --local func = f.funcs[1]
-      --print(selectedCategory)
-      --func(f.funcs[3], values)
+     
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
-      local whichPart = { 'bgPal', 'fgPal', 'linePal' }
-
-      values[selectedCategory][whichPart[selectedColoringLayer]] = value
+      --local whichPart = { 'bgPal', 'fgPal', 'linePal' }
+      print(selectedColoringLayer)
+      values[selectedCategory][selectedColoringLayer] = value
       changePart(selectedCategory, values)
-      --local func = f.funcs[2]
-      --func(f.funcs[3], values)
+
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'pattern' then
@@ -988,7 +1016,7 @@ local function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam
    end
 end
 
-function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
+local function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton =
        bigButtonWithSmallAroundIt(
            x,

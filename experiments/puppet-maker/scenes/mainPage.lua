@@ -529,8 +529,8 @@ function scene.load()
    local w, h = love.graphics.getDimensions()
 
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
-   cam:update(w, h)
+   camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
+      cam:update(w, h)
 
    Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
 end
@@ -697,6 +697,22 @@ function attachCallbacks()
       if key == 'd' then
          print('DOINK needs to tween guy elastically like its been moved around violently')
          myWorld:emit('doinkBody', biped)
+      end
+      if key == 't' then
+         print('show me the transformation data')
+         local ix, iy = guy.transforms._g:transformPoint(0,0)
+
+         print('guy',ix, iy)
+         ix, iy = body.transforms._g:transformPoint(0,0)
+         print('body', ix, iy)
+         print('body l:', inspect(body.transforms.l))
+         -- 
+         ix, iy = feet1.transforms._g:transformPoint(0,0)
+         print('feet1', ix, iy)
+
+         ix, iy = feet2.transforms._g:transformPoint(0,0)
+         print('feet1', ix, iy)
+         print('------')
       end
    end
 
