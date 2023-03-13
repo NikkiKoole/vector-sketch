@@ -239,7 +239,7 @@ function pointerPressed(x, y, id)
          gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
       end
    end
-   myWorld:emit("eyeLookAtPoint", potato, x,y)
+   myWorld:emit("eyeLookAtPoint", potato, x, y)
 end
 
 local function hex2rgb(hex)
@@ -532,7 +532,7 @@ function scene.load()
    camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
    cam:update(w, h)
 
-   Timer.every(5, function()  myWorld:emit('blinkEyes',potato) end)
+   Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
 end
 
 function skinColorize(bgPal, values)
@@ -692,11 +692,11 @@ function attachCallbacks()
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == 'b' then
-         myWorld:emit('blinkEyes',potato)
+         myWorld:emit('blinkEyes', potato)
       end
       if key == 'd' then
          print('DOINK needs to tween guy elastically like its been moved around violently')
-         myWorld:emit('doinkBody',biped)
+         myWorld:emit('doinkBody', biped)
       end
    end
 
@@ -862,7 +862,7 @@ function scene.draw()
       prof.pop("cam-render")
 
 
-      if true then -- this is leaking too
+      if false then -- this is leaking too
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
          --   print(inspect(stats))
