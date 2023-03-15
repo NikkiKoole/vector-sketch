@@ -4,6 +4,24 @@ local node  = require 'lib.node'
 texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 leglengths  = { 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000 }
 
+
+local function stripPath(root, path)
+    if root and root.texture and root.texture.url and #root.texture.url > 0 then
+        local str = root.texture.url
+        local shortened = string.gsub(str, path, '')
+        root.texture.url = shortened
+        --print(shortened)
+    end
+
+    if root.children then
+        for i = 1, #root.children do
+            stripPath(root.children[i], path)
+        end
+    end
+
+    return root
+end
+
 local function loadGroupFromFile(url, groupName)
     local imgs = {}
     local parts = {}

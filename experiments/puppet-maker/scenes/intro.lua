@@ -8,21 +8,20 @@ local fluxObject = { headerOffset = 0, guyY = 0 }
 local numbers = require 'lib.numbers'
 
 function scene.load()
-
    introSound:setLooping(true)
    introSound:play()
 
    Timer.after(
-      .1,
-      function()
-         Timer.tween(3, fluxObject, { headerOffset = 1 }, 'out-elastic')
-      end
+       .1,
+       function()
+          Timer.tween(3, fluxObject, { headerOffset = 1 }, 'out-elastic')
+       end
    )
    Timer.after(
-      1,
-      function()
-         Timer.tween(2, fluxObject, { guyY = 1 }, 'out-elastic')
-      end
+       1,
+       function()
+          Timer.tween(2, fluxObject, { guyY = 1 }, 'out-elastic')
+       end
    )
 
    guyFacing = -1
@@ -32,7 +31,7 @@ end
 
 function gotoNext()
    Timer.clear()
-   SM.load("mainPage")
+   SM.load("editGuy")
 end
 
 function scene.update(dt)
@@ -59,18 +58,14 @@ function scene.update(dt)
 
    -- print(fluxObject.guyY)
    if (math.floor(fluxObject.guyY) == 1) then
-
       guyX = guyX + (0.007 * guyFacing)
       if (guyX < -0.1 or guyX > 1.1) then
          guyFacing = guyFacing * -1
       end
-
    end
-
 end
 
 function scene.draw()
-
    love.graphics.clear(238 / 255, 226 / 255, 188 / 255)
    screenWidth, screenHeight = love.graphics.getDimensions()
    blobWidth, blobHeight = doggie:getDimensions()
@@ -82,7 +77,7 @@ function scene.draw()
 
    love.graphics.setColor(1, 1, 1, 1)
    love.graphics.draw(doggie, screenWidth * guyX, (screenHeight * 1.15) + (1 - fluxObject.guyY) * blobHeight, 0,
-      scale * (guyFacing * -1), scale, blobWidth / 2, blobHeight)
+       scale * (guyFacing * -1), scale, blobWidth / 2, blobHeight)
 
 
    blobWidth, blobHeight = poppetjeMaker:getDimensions()
@@ -95,7 +90,7 @@ function scene.draw()
 
    love.graphics.setColor(1, 1, 1, 0.5 * (fluxObject.headerOffset))
    love.graphics.draw(poppetjeMaker, 5 + (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
-      5 + screenHeight / 2, 0, scale, scale, blobWidth / 2, blobHeight / 2)
+       5 + screenHeight / 2, 0, scale, scale, blobWidth / 2, blobHeight / 2)
 
 
    local r = 0
@@ -109,10 +104,7 @@ function scene.draw()
 
    love.graphics.setColor(r, g, b, 1)
    love.graphics.draw(poppetjeMaker, (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
-      screenHeight / 2, 0, scale, scale, blobWidth / 2, blobHeight / 2)
-
-
-
+       screenHeight / 2, 0, scale, scale, blobWidth / 2, blobHeight / 2)
 end
 
 return scene

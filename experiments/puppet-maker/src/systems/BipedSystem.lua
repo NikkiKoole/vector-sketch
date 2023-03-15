@@ -121,14 +121,14 @@ function BipedSystem:bipedInit(e)
 
 
     e.biped.leg1.points[1] = { l1x, l1y }
-    e.biped.leg1.points[2] = { l1x, l1y + (leg1.data.length / 4.46) / 1 }
+    e.biped.leg1.points[2] = { l1x, l1y + (e.biped.leg1.data.length / 4.46) / 1 }
 
     e.biped.leghair1.points[1] = e.biped.leg1.points[1]
     e.biped.leghair1.points[2] = e.biped.leg1.points[2]
 
 
     e.biped.leg2.points[1] = { l2x, l2y }
-    e.biped.leg2.points[2] = { l2x, l2y + (leg2.data.length / 4.46) / 1 }
+    e.biped.leg2.points[2] = { l2x, l2y + (e.biped.leg2.data.length / 4.46) / 1 }
 
     e.biped.leghair2.points[1] = e.biped.leg2.points[1]
     e.biped.leghair2.points[2] = e.biped.leg2.points[2]
@@ -142,14 +142,14 @@ function BipedSystem:bipedInit(e)
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
 
     e.biped.arm1.points[1] = { a1x, a1y }
-    e.biped.arm1.points[2] = { a1x - (arm1.data.length / 4.46) / 1, a1y }
+    e.biped.arm1.points[2] = { a1x - (e.biped.arm1.data.length / 4.46) / 1, a1y }
 
     e.biped.armhair1.points[1] = e.biped.arm1.points[1]
     e.biped.armhair1.points[2] = e.biped.arm1.points[2]
     -- e.biped.armhair1.transforms.l[5] = -1
 
     e.biped.arm2.points[1] = { a2x, a2y }
-    e.biped.arm2.points[2] = { a2x + (arm2.data.length / 4.46) / 1, a2y }
+    e.biped.arm2.points[2] = { a2x + (e.biped.arm2.data.length / 4.46) / 1, a2y }
 
     e.biped.armhair2.points[1] = e.biped.arm2.points[1]
     e.biped.armhair2.points[2] = e.biped.arm2.points[2]
@@ -176,7 +176,7 @@ function BipedSystem:update(dt)
 end
 
 function BipedSystem:bipedUsePotatoHead(e, value)
-    guy.children = guyChildren(biped)
+    editingGuy.guy.children = guyChildren(editingGuy)
     parentize.parentize(root)
     mesh.meshAll(root)
     BipedSystem:bipedAttachArms(e)
@@ -405,7 +405,7 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
             e.biped.neck.points[2] = { newx, newy }
         else
             e.biped.neck.points[1] = { neckX, neckY }
-            e.biped.neck.points[2] = { neckX, neckY - (neck.data.length / 4.46) / 1 }
+            e.biped.neck.points[2] = { neckX, neckY - (e.biped.neck.data.length / 4.46) / 1 }
         end
 
 
@@ -467,6 +467,19 @@ function BipedSystem:doinkBody(e)
         BipedSystem:bipedAttachHands(e)
     end)
     -- Timer
+end
+
+function BipedSystem:itemReleased(elem)
+    for _, e in ipairs(self.pool) do
+        if e.biped.head == elem.item then
+            print('head released')
+        end
+        if e.biped.body == elem.item then
+            print('body released')
+            local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
+            -- Timer.tween(2, e.biped.body.transforms.l, { [1] = ix,[2] = iy }, 'out-elastic')
+        end
+    end
 end
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)

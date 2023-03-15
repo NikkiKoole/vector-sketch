@@ -1,8 +1,9 @@
-local parentize = require 'lib.parentize'
-local mesh      = require 'lib.mesh'
-local bbox      = require 'lib.bbox'
-local canvas    = require 'lib.canvas'
-local render    = require 'lib.render'
+local parentize       = require 'lib.parentize'
+local mesh            = require 'lib.mesh'
+local bbox            = require 'lib.bbox'
+local canvas          = require 'lib.canvas'
+local render          = require 'lib.render'
+local text            = require 'lib.text'
 
 local createFromImage = require 'src.createFromImage'
 
@@ -17,6 +18,10 @@ local createFromImage = require 'src.createFromImage'
 -- myWorld:emit("bipedAttachFeet", biped)
 -- mesh.meshAll(root)
 
+
+local function getPNGMaskUrl(url)
+   return text.replace(url, '.png', '-mask.png')
+end
 
 function getAngleAndDistance(x1, y1, x2, y2)
    local dx = x1 - x2
@@ -119,59 +124,60 @@ function getFlippedMetaObject(flipx, flipy, points)
    return newPoints
 end
 
-function guyChildren(e)
-   if (e.biped.values.potatoHead) then
+function guyChildren(editingGuy)
+   local eg = editingGuy
+   if (eg.values.potatoHead) then
       return {
-          body,
-          leg1, leg2, leghair1, leghair2, feet1, feet2,
-          arm1, arm2, armhair1, armhair2, hand1, hand2,
+          eg.body,
+          eg.leg1, eg.leg2, eg.leghair1, eg.leghair2, eg.feet1, eg.feet2,
+          eg.arm1, eg.arm2, eg.armhair1, eg.armhair2, eg.hand1, eg.hand2,
       }
    else
       return {
-          body, neck, head,
-          leg1, leg2, leghair1, leghair2, feet1, feet2,
-          arm1, arm2, armhair1, armhair2, hand1, hand2,
+          eg.body, eg.neck, eg.head,
+          eg.leg1, eg.leg2, eg.leghair1, eg.leghair2, eg.feet1, eg.feet2,
+          eg.arm1, eg.arm2, eg.armhair1, eg.armhair2, eg.hand1, eg.hand2,
       }
    end
 end
 
-function bipedArguments(values)
+function bipedArguments(editingGuy)
    return {
-       guy = guy,
-       body = body,
-       neck = neck,
-       head = head,
-       leg1 = leg1,
-       leg2 = leg2,
-       leghair1 = leghair1,
-       leghair2 = leghair2,
-       feet1 = feet1,
-       feet2 = feet2,
-       armhair1 = armhair1,
-       armhair2 = armhair2,
-       arm1 = arm1,
-       arm2 = arm2,
-       hand1 = hand1,
-       hand2 = hand2,
-       values = values
+       guy = editingGuy.guy,
+       body = editingGuy.body,
+       neck = editingGuy.neck,
+       head = editingGuy.head,
+       leg1 = editingGuy.leg1,
+       leg2 = editingGuy.leg2,
+       leghair1 = editingGuy.leghair1,
+       leghair2 = editingGuy.leghair2,
+       feet1 = editingGuy.feet1,
+       feet2 = editingGuy.feet2,
+       armhair1 = editingGuy.armhair1,
+       armhair2 = editingGuy.armhair2,
+       arm1 = editingGuy.arm1,
+       arm2 = editingGuy.arm2,
+       hand1 = editingGuy.hand1,
+       hand2 = editingGuy.hand2,
+       values = editingGuy.values
    }
 end
 
-function potatoArguments(values)
+function potatoArguments(editingGuy)
    return {
-       head = values.potatoHead and body or head,
-       eye1 = eye1,
-       eye2 = eye2,
-       pupil1 = pupil1,
-       pupil2 = pupil2,
-       ear1 = ear1,
-       ear2 = ear2,
-       upperlip = upperlip,
-       lowerlip = lowerlip,
-       brow1 = brow1,
-       brow2 = brow2,
-       nose = nose,
-       values = values
+       head = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head,
+       eye1 = editingGuy.eye1,
+       eye2 = editingGuy.eye2,
+       pupil1 = editingGuy.pupil1,
+       pupil2 = editingGuy.pupil2,
+       ear1 = editingGuy.ear1,
+       ear2 = editingGuy.ear2,
+       upperlip = editingGuy.upperlip,
+       lowerlip = editingGuy.lowerlip,
+       brow1 = editingGuy.brow1,
+       brow2 = editingGuy.brow2,
+       nose = editingGuy.nose,
+       values = editingGuy.values
    }
 end
 
@@ -180,18 +186,18 @@ function arrangeBrows()
        { -1, 0, 0 }, { 0, -1, 1 }, { 0, 1, 1 }, { -1, 1, 1 }, }
 
    local p = findPart('brows').imgs
-   local img = mesh.getImage(p[values.brows.shape])
+   local img = mesh.getImage(p[editingGuy.values.brows.shape])
    local width, height = img:getDimensions()
    local multiplier = (height / 2)
-   local picked = bends[values.browsDefaultBend]
+   local picked = bends[editingGuy.values.browsDefaultBend]
 
    local b1p = { picked[1] * multiplier, picked[2] * multiplier, picked[3] * multiplier }
 
-   height = height * values.browsWideMultiplier
+   height = height * editingGuy.values.browsWideMultiplier
    -- todo currently I am just mirroring the brows, not always what we want
-   brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
-   brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
-   brow2.transforms.l[4] = -1
+   editingGuy.brow1.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
+   editingGuy.brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
+   editingGuy.brow2.transforms.l[4] = -1
    -- brow2.transforms.l[5] = 3
    --brow2.points = { { -height / 2, b1p[1] }, { 0, b1p[2] }, { height / 2, b1p[3] } }
 end
@@ -399,21 +405,23 @@ function copyAndRedoGraphic(name, values)
 end
 
 function changePart(name, values)
-   local container = values.potatoHead and body or head
+   local values = editingGuy.values
+   local guy = editingGuy.guy
+   local container = values.potatoHead and editingGuy.body or editingGuy.head
 
    if name == 'body' then
-      body = updateChild(guy, body, copyAndRedoGraphic('body', values))
+      editingGuy.body = updateChild(guy, editingGuy.body, copyAndRedoGraphic('body', values))
       parentize.parentize(root)
 
       if (values.potatoHead) then
-         attachAllFaceParts()
+         attachAllFaceParts(editingGuy)
          changePart('hair', values)
       end
 
       mesh.meshAll(root)
       render.justDoTransforms(root) -- why is this needed for body?? (because we need the correct points to attach other things too)
 
-      biped:give('biped', bipedArguments(values))
+      biped:give('biped', bipedArguments(editingGuy))
       myWorld:emit("bipedAttachHead", biped)
       myWorld:emit("bipedAttachLegs", biped) -- todo
       myWorld:emit("bipedAttachArms", biped) -- todo
@@ -425,15 +433,15 @@ function changePart(name, values)
          changePart('head', values)
       end
    elseif name == 'neck' then
-      neck = updateChild(guy, neck, createNeckRubberhose(values, neck.points))
+      editingGuy.neck = updateChild(guy, editingGuy.neck, createNeckRubberhose(values, editingGuy.neck.points))
    elseif name == 'head' then
-      head = copyAndRedoGraphic('head', values)
-      guy.children = guyChildren(biped)
-      head.transforms.l[4] = values.headWidthMultiplier
-      head.transforms.l[5] = values.headHeightMultiplier
-    
+      editingGuy.head = copyAndRedoGraphic('head', values)
+      guy.children = guyChildren(editingGuy)
+      editingGuy.head.transforms.l[4] = values.headWidthMultiplier
+      editingGuy.head.transforms.l[5] = values.headHeightMultiplier
+
       if (not values.potatoHead) then
-         attachAllFaceParts()
+         attachAllFaceParts(editingGuy)
       end
       myWorld:emit("bipedAttachHead", biped)
       changePart('hair', values) ----
@@ -441,74 +449,82 @@ function changePart(name, values)
       if isNullObject(name, values) then
          hair = updateChild(container, hair, copy3(nullChild))
          --  print('hair', hair)
+         print('hair was null ')
       else
          local hp = getHeadPoints(potato)
+
          local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
-         hair = updateChild(container, hair, createHairVanillaLine(values, hairLine))
+         editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
       end
    elseif name == 'ears' then
-      ear1 = updateChild(container, ear1, copyAndRedoGraphic('ears', values))
-      ear2 = updateChild(container, ear2, copyAndRedoGraphic('ears', values))
+      editingGuy.ear1 = updateChild(container, editingGuy.ear1, copyAndRedoGraphic('ears', values))
+      editingGuy.ear2 = updateChild(container, editingGuy.ear2, copyAndRedoGraphic('ears', values))
    elseif name == 'eyes' then
-      eye1 = updateChild(container, eye1, copyAndRedoGraphic('eyes', values))
-      eye2 = updateChild(container, eye2, copyAndRedoGraphic('eyes', values))
+      editingGuy.eye1 = updateChild(container, editingGuy.eye1, copyAndRedoGraphic('eyes', values))
+      editingGuy.eye2 = updateChild(container, editingGuy.eye2, copyAndRedoGraphic('eyes', values))
    elseif name == 'pupils' then
-      pupil1 = updateChild(container, pupil1, copyAndRedoGraphic('pupils', values))
-      pupil2 = updateChild(container, pupil2, copyAndRedoGraphic('pupils', values))
+      editingGuy.pupil1 = updateChild(container, editingGuy.pupil1, copyAndRedoGraphic('pupils', values))
+      editingGuy.pupil2 = updateChild(container, editingGuy.pupil2, copyAndRedoGraphic('pupils', values))
    elseif name == 'brows' then
       arrangeBrows()
-      brow1 = updateChild(container, brow1, createBrowBezier(values, brow1.points))
-      brow2 = updateChild(container, brow2, createBrowBezier(values, brow2.points))
+      editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
+      editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
       if isNullObject(name, values) then
-         nose = updateChild(container, nose, copy3(nullFolder))
+         editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
       else
-         nose = updateChild(container, nose, copyAndRedoGraphic('nose', values))
+         editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then
-      lowerlip = updateChild(container, lowerlip, createLowerlipBezier(values, lowerlip.points))
+      editingGuy.lowerlip = updateChild(container, editingGuy.lowerlip,
+              createLowerlipBezier(values, editingGuy.lowerlip.points))
    elseif name == 'upperlip' then
-      upperlip = updateChild(container, upperlip, createUpperlipBezier(values, upperlip.points))
+      editingGuy.upperlip = updateChild(container, editingGuy.upperlip,
+              createUpperlipBezier(values, editingGuy.upperlip.points))
    elseif name == 'feet' then
-      feet1 = updateChild(guy, feet1, copyAndRedoGraphic('feet', values))
-      feet2 = updateChild(guy, feet2, copyAndRedoGraphic('feet', values))
+      editingGuy.feet1 = updateChild(guy, editingGuy.feet1, copyAndRedoGraphic('feet', values))
+      editingGuy.feet2 = updateChild(guy, editingGuy.feet2, copyAndRedoGraphic('feet', values))
       myWorld:emit("bipedAttachFeet", biped)
    elseif name == 'hands' then
-      hand1 = updateChild(guy, hand1, copyAndRedoGraphic('hands', values))
-      hand2 = updateChild(guy, hand2, copyAndRedoGraphic('hands', values))
+      editingGuy.hand1 = updateChild(guy, editingGuy.hand1, copyAndRedoGraphic('hands', values))
+      editingGuy.hand2 = updateChild(guy, editingGuy.hand2, copyAndRedoGraphic('hands', values))
       myWorld:emit("bipedAttachHands", biped)
    elseif name == 'armhair' then
       if isNullObject(name, values) then
          --print(armhair1.transforms)
-         armhair1 = updateChild(guy, armhair1, copy3(nullChild))
-         armhair2 = updateChild(guy, armhair2, copy3(nullChild))
+         editingGuy.armhair1 = updateChild(guy, editingGuy.armhair1, copy3(nullChild))
+         editingGuy.armhair2 = updateChild(guy, editingGuy.armhair2, copy3(nullChild))
       else
-         armhair1 = updateChild(guy, armhair1, createArmHairRubberhose(1, values, armhair1.points))
-         armhair2 = updateChild(guy, armhair2, createArmHairRubberhose(2, values, armhair2.points))
+         editingGuy.armhair1 = updateChild(guy, editingGuy.armhair1,
+                 createArmHairRubberhose(1, values, editingGuy.armhair1.points))
+         editingGuy.armhair2 = updateChild(guy, editingGuy.armhair2,
+                 createArmHairRubberhose(2, values, editingGuy.armhair2.points))
          myWorld:emit('setArmHairToArms', biped)
       end
    elseif name == 'arms' then
-      arm1 = updateChild(guy, arm1, createArmRubberhose(1, values, arm1.points))
-      arm2 = updateChild(guy, arm2, createArmRubberhose(2, values, arm2.points))
+      editingGuy.arm1 = updateChild(guy, editingGuy.arm1, createArmRubberhose(1, values, editingGuy.arm1.points))
+      editingGuy.arm2 = updateChild(guy, editingGuy.arm2, createArmRubberhose(2, values, editingGuy.arm2.points))
       myWorld:emit("bipedAttachFeet", biped)
    elseif name == 'legs' then
-      leg1 = updateChild(guy, leg1, createLegRubberhose(1, values, leg1.points))
-      leg2 = updateChild(guy, leg2, createLegRubberhose(2, values, leg2.points))
+      editingGuy.leg1 = updateChild(guy, editingGuy.leg1, createLegRubberhose(1, values, editingGuy.leg1.points))
+      editingGuy.leg2 = updateChild(guy, editingGuy.leg2, createLegRubberhose(2, values, editingGuy.leg2.points))
       myWorld:emit("bipedAttachFeet", biped)
    elseif name == 'leghair' then
       if isNullObject(name, values) then
          --print(armhair1.transforms)
-         leghair1 = updateChild(guy, leghair1, copy3(nullChild))
-         leghair2 = updateChild(guy, leghair2, copy3(nullChild))
+         editingGuy.leghair1 = updateChild(guy, editingGuy.leghair1, copy3(nullChild))
+         editingGuy.leghair2 = updateChild(guy, editingGuy.leghair2, copy3(nullChild))
       else
-         leghair1 = updateChild(guy, leghair1, createLegHairRubberhose(1, values, leghair1.points))
-         leghair2 = updateChild(guy, leghair2, createLegHairRubberhose(2, values, leghair2.points))
+         editingGuy.leghair1 = updateChild(guy, editingGuy.leghair1,
+                 createLegHairRubberhose(1, values, editingGuy.leghair1.points))
+         editingGuy.leghair2 = updateChild(guy, editingGuy.leghair2,
+                 createLegHairRubberhose(2, values, editingGuy.leghair2.points))
          myWorld:emit('setLegHairToLegs', biped)
       end
    end
    parentize.parentize(root)
    mesh.meshAll(root)
-   biped:give('biped', bipedArguments(values))
-   potato:give('potato', potatoArguments(values))
+   biped:give('biped', bipedArguments(editingGuy))
+   potato:give('potato', potatoArguments(editingGuy))
    myWorld:emit("potatoInit", potato)
 end

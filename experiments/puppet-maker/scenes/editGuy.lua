@@ -39,8 +39,18 @@ Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 
+biped = Concord.entity()
+potato = Concord.entity()
+myWorld:addEntity(biped)
+myWorld:addEntity(potato)
 
 local pointerInteractees = {}
+
+
+
+--local timeIndex = math.floor(1 + love.math.random() * 24)
+local skygradient = gradient.makeSkyGradient(16)
+
 
 
 -- sometimes the nullobject has to behave as a folder (? does it?)
@@ -62,7 +72,7 @@ local function sign(x)
    return x > 0 and 1 or x < 0 and -1 or 0
 end
 
-function stripPath(root, path)
+local function stripPath(root, path)
    if root and root.texture and root.texture.url and #root.texture.url > 0 then
       local str = root.texture.url
       local shortened = string.gsub(str, path, '')
@@ -111,11 +121,12 @@ function removeChild(elem)
    end
 end
 
-function getPNGMaskUrl(url)
+local function getPNGMaskUrl(url)
    return text.replace(url, '.png', '-mask.png')
 end
 
 function playSound(sound)
+   print('playing sound')
    local s = sound:clone()
    s:setPitch(.99 + .02 * love.math.random())
    s:setVolume(.25)
@@ -136,7 +147,8 @@ function hittestPixel()
    end
 end
 
-function pointerMoved(x, y, dx, dy, id)
+local function pointerMoved(x, y, dx, dy, id)
+   --print('pointermoved', x, y)
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
          local scale = cam:getScale()
@@ -177,6 +189,9 @@ end
 function pointerReleased(x, y, id)
    for i = #pointerInteractees, 1, -1 do
       if pointerInteractees[i].id == id then
+         print('emitting release')
+         myWorld:emit('itemReleased', pointerInteractees[i])
+         --print(inspect(pointerInteractees[i]))
          table.remove(pointerInteractees, i)
       end
    end
@@ -187,10 +202,10 @@ function pointerReleased(x, y, id)
    gesture.maybeTrigger(id, x, y)
    -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
    partSettingsSurroundings(false, x, y)
-   collectgarbage()
+   --collectgarbage()
 end
 
-function pointerPressed(x, y, id)
+local function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
    for j = 1, #root.children do
       local guy = root.children[j]
@@ -239,6 +254,11 @@ function pointerPressed(x, y, id)
          gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
       end
    end
+
+   if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
+      Timer.clear()
+      SM.load("fiveGuys")
+   end
    myWorld:emit("eyeLookAtPoint", potato, x, y)
 end
 
@@ -254,45 +274,45 @@ local function rgbToHex(r, g, b)
 end
 
 
-function attachAllFaceParts()
-   removeChild(eye1)
-   removeChild(eye2)
-   removeChild(pupil1)
-   removeChild(pupil2)
-   removeChild(nose)
-   removeChild(brow1)
-   removeChild(brow2)
-   removeChild(ear1)
-   removeChild(ear2)
-   removeChild(hair)
-   removeChild(upperlip)
-   removeChild(lowerlip)
+function attachAllFaceParts(guy)
+   removeChild(guy.eye1)
+   removeChild(guy.eye2)
+   removeChild(guy.pupil1)
+   removeChild(guy.pupil2)
+   removeChild(guy.nose)
+   removeChild(guy.brow1)
+   removeChild(guy.brow2)
+   removeChild(guy.ear1)
+   removeChild(guy.ear2)
+   removeChild(guy.hair)
+   removeChild(guy.upperlip)
+   removeChild(guy.lowerlip)
 
-   local addTo = values.potatoHead and body or head
+   local addTo = guy.values.potatoHead and guy.body or guy.head
 
-   table.insert(addTo.children, eye1)
-   table.insert(addTo.children, eye2)
-   table.insert(addTo.children, pupil1)
-   table.insert(addTo.children, pupil2)
+   table.insert(addTo.children, guy.eye1)
+   table.insert(addTo.children, guy.eye2)
+   table.insert(addTo.children, guy.pupil1)
+   table.insert(addTo.children, guy.pupil2)
 
-   if (values.earUnderHead == true) then
-      table.insert(addTo.children, 1, ear1)
-      table.insert(addTo.children, 1, ear2)
+   if (guy.values.earUnderHead == true) then
+      table.insert(addTo.children, 1, guy.ear1)
+      table.insert(addTo.children, 1, guy.ear2)
    else
-      table.insert(addTo.children, ear1)
-      table.insert(addTo.children, ear2)
+      table.insert(addTo.children, guy.ear1)
+      table.insert(addTo.children, guy.ear2)
    end
 
-   table.insert(addTo.children, lowerlip)
-   table.insert(addTo.children, upperlip)
+   table.insert(addTo.children, guy.lowerlip)
+   table.insert(addTo.children, guy.upperlip)
 
-   table.insert(addTo.children, brow1)
-   table.insert(addTo.children, brow2)
-   table.insert(addTo.children, nose)
-   table.insert(addTo.children, hair)
+   table.insert(addTo.children, guy.brow1)
+   table.insert(addTo.children, guy.brow2)
+   table.insert(addTo.children, guy.nose)
+   table.insert(addTo.children, guy.hair)
 
 
-   changePart('hair', values)
+   changePart('hair', guy.values)
 end
 
 function scene.load()
@@ -325,22 +345,7 @@ function scene.load()
    tab1 = love.graphics.newImage('assets/tab1.png')
    tab2 = love.graphics.newImage('assets/tab2.png')
    tab3 = love.graphics.newImage('assets/tab3.png')
-   textures = {
 
-       love.graphics.newImage('assets/layered/texture-type0.png'),
-       love.graphics.newImage('assets/layered/texture-type2t.png'),
-       love.graphics.newImage('assets/layered/texture-type1.png'),
-       love.graphics.newImage('assets/layered/texture-type3.png'),
-       love.graphics.newImage('assets/layered/texture-type4.png'),
-       love.graphics.newImage('assets/layered/texture-type5.png'),
-       love.graphics.newImage('assets/layered/texture-type6.png'),
-       love.graphics.newImage('assets/layered/texture-type7.png'),
-
-
-   }
-   for i = 1, #textures do
-      textures[i]:setWrap('mirroredrepeat', 'mirroredrepeat')
-   end
 
    whiterects = {
        love.graphics.newImage('assets/whiterect1.png'),
@@ -367,25 +372,7 @@ function scene.load()
        love.graphics.newImage('assets/blups/dot12.150.png'),
    }
 
-   palettes = {}
-   local base = {
-       '020202', '333233', '814800', 'e6c800', 'efebd8',
-       '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
-       'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
-       'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
-       '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
-       'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
-       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
-       '798091', '4C5575', '6E4431', '626964', '613D41',
-   }
 
-   for i = 1, #base do
-      local r, g, b = hex2rgb(base[i])
-      table.insert(palettes, { r, g, b })
-   end
-
-   local timeIndex = math.floor(1 + love.math.random() * 24)
-   skygradient = gradient.makeSkyGradient(16)
 
    scrollPosition = .5
    scrollItemsOnScreen = 5
@@ -402,9 +389,6 @@ function scene.load()
    selectedTab = 'part'
    selectedCategory = 'body'
    selectedColoringLayer = 1 --- bg fg, line
-
-
-
 
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -430,65 +414,22 @@ function scene.load()
 
 
 
-   biped = Concord.entity()
-   potato = Concord.entity()
 
 
-   parts, values = generate()
+   parts, _ = generate()
 
 
-   head = copyAndRedoGraphic('head', values)
-
-   neck = createNeckRubberhose(values)
-   body = copyAndRedoGraphic('body', values)
-   hair = createHairVanillaLine(values)
-
-   arm1 = createArmRubberhose(1, values)
-   arm2 = createArmRubberhose(2, values)
-   armhair1 = createArmHairRubberhose(1, values)
-   armhair2 = createArmHairRubberhose(2, values)
-
-   hand1 = copyAndRedoGraphic('hands', values)
-   hand2 = copyAndRedoGraphic('hands', values)
-
-   leg1 = createLegRubberhose(1, values)
-   leg2 = createLegRubberhose(2, values)
-   leghair1 = createLegHairRubberhose(1, values)
-   leghair2 = createLegHairRubberhose(2, values)
-   feet1 = copyAndRedoGraphic('feet', values)
-   feet2 = copyAndRedoGraphic('feet', values)
-
-   eye1 = copyAndRedoGraphic('eyes', values)
-   eye2 = copyAndRedoGraphic('eyes', values)
-   pupil1 = copyAndRedoGraphic('pupils', values)
-   pupil2 = copyAndRedoGraphic('pupils', values)
-   brow1 = createBrowBezier(values)
-   brow2 = createBrowBezier(values)
-
-   upperlip = createUpperlipBezier(values)
-   lowerlip = createLowerlipBezier(values)
-
-   ear1 = copyAndRedoGraphic('ears', values)
-   ear2 = copyAndRedoGraphic('ears', values)
-
-   nose = copyAndRedoGraphic('nose', values)
-
-   biped:give('biped', bipedArguments(values))
-   potato:give('potato', potatoArguments(values))
-
-   guy = {
-       folder = true,
-       name = 'guy',
-       transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-       children = {}
-   }
-
-   guy.children = guyChildren(biped)
-   root.children = { guy }
 
 
-   attachAllFaceParts()
-   changePart('hair', values)
+   biped:give('biped', bipedArguments(editingGuy))
+   potato:give('potato', potatoArguments(editingGuy))
+
+
+   root.children = { editingGuy.guy }
+
+   --print(inspect(editingGuy))
+   attachAllFaceParts(editingGuy)
+   changePart('hair', editingGuy.values)
 
 
    if false then
@@ -513,24 +454,24 @@ function scene.load()
    mesh.meshAll(root)
    render.renderThings(root)
 
-   myWorld:addEntity(biped)
-   myWorld:addEntity(potato)
+   --print(inspect(root))
+
 
    myWorld:emit("bipedInit", biped)
    myWorld:emit("potatoInit", potato)
 
    render.renderThings(root, true)
-   attachCallbacks()
 
+   attachCallbacks()
    categories = {}
    setCategories()
 
-   local bx, by = body.transforms._g:transformPoint(0, 0)
+   local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
 
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
-      cam:update(w, h)
+   cam:update(w, h)
 
    Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
 end
@@ -558,7 +499,8 @@ end
 
 function partRandomize(values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip' }
+       'brows', 'upperlip', 'lowerlip', }
+   -- local parts = { 'head' }
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
 
@@ -568,11 +510,12 @@ function partRandomize(values)
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          changePart(parts[i], values)
+         print('changed part ', parts[i])
       end
    end
 end
 
-function findPart(name)
+local function findPart(name)
    for i = 1, #parts do
       if parts[i].name == name then
          return parts[i]
@@ -583,7 +526,7 @@ end
 function setCategories()
    categories = {}
    for i = 1, #parts do
-      if values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
+      if editingGuy.values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
          -- we dont want these categories when we are a potatohead!
       else
          table.insert(categories, parts[i].name)
@@ -592,11 +535,19 @@ function setCategories()
 end
 
 function attachCallbacks()
+   print('attached callbacks')
+   Signal.clear('click-settings-scroll-area-item')
+   Signal.clear('click-scroll-list-item')
+   Signal.clear('throw-settings-scroll-area')
+   Signal.clear('throw-scroll-list')
+   Signal.clearPattern('.*') -- clear all signals
+
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
    end)
 
    Signal.register('click-scroll-list-item', function(x, y)
+      print('clicking scroll list item')
       scrollList(false, x, y)
    end)
 
@@ -611,10 +562,11 @@ function attachCallbacks()
          scrollListIsThrown = { velocity = speed / 10, direction = sign(dyn) }
       end
    end)
-
    --Signal.clearPattern('.*') -- clear all signals
 
    function love.keypressed(key, unicode)
+      print('keypressed', key)
+      local values = editingGuy.values
       if key == 'escape' then
          love.event.quit()
       end
@@ -700,17 +652,17 @@ function attachCallbacks()
       end
       if key == 't' then
          print('show me the transformation data')
-         local ix, iy = guy.transforms._g:transformPoint(0,0)
+         local ix, iy = guy.transforms._g:transformPoint(0, 0)
 
-         print('guy',ix, iy)
-         ix, iy = body.transforms._g:transformPoint(0,0)
+         print('guy', ix, iy)
+         ix, iy = body.transforms._g:transformPoint(0, 0)
          print('body', ix, iy)
          print('body l:', inspect(body.transforms.l))
-         -- 
-         ix, iy = feet1.transforms._g:transformPoint(0,0)
+         --
+         ix, iy = feet1.transforms._g:transformPoint(0, 0)
          print('feet1', ix, iy)
 
-         ix, iy = feet2.transforms._g:transformPoint(0,0)
+         ix, iy = feet2.transforms._g:transformPoint(0, 0)
          print('feet1', ix, iy)
          print('------')
       end
@@ -784,6 +736,9 @@ local function updateTheScrolling(dt, thrown, pos)
    return pos
 end
 
+function scene.unload()
+   print('scene unload')
+end
 
 function scene.update(dt)
    prof.push("frame")
@@ -817,7 +772,7 @@ function scene.update(dt)
 
 
 
-   myWorld:emit("update", dt) -- this one is leaking the most actually
+   --myWorld:emit("update", dt) -- this one is leaking the most actually
    prof.pop("frame")
 end
 
@@ -890,6 +845,10 @@ function scene.draw()
          love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
       end
    end
+
+   love.graphics.setColor(1, 0, 1)
+   local w, h = love.graphics.getDimensions()
+   love.graphics.rectangle('fill', w - 25, 0, 25, 25)
    prof.pop("frame")
    --collectgarbage()
 end

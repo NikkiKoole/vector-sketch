@@ -37,6 +37,17 @@ PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 
 
+function findPart(name)
+   for i = 1, #parts do
+      if parts[i].name == name then
+         return parts[i]
+      end
+   end
+end
+
+require 'src.generatePuppet'
+local bodypartsGenerate = require 'src.puppetDNA'
+
 --local camera = require 'lib.camera'
 --local cam = require('lib.cameraBase').getInstance()
 
@@ -57,10 +68,97 @@ function love.load()
       love.window.setFullscreen(true)
    end
    splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
+
    introSound = love.audio.newSource("assets/introloop.mp3", "static")
 
+
+   textures = {
+
+       love.graphics.newImage('assets/layered/texture-type0.png'),
+       love.graphics.newImage('assets/layered/texture-type2t.png'),
+       love.graphics.newImage('assets/layered/texture-type1.png'),
+       love.graphics.newImage('assets/layered/texture-type3.png'),
+       love.graphics.newImage('assets/layered/texture-type4.png'),
+       love.graphics.newImage('assets/layered/texture-type5.png'),
+       love.graphics.newImage('assets/layered/texture-type6.png'),
+       love.graphics.newImage('assets/layered/texture-type7.png'),
+
+
+   }
+   for i = 1, #textures do
+      textures[i]:setWrap('mirroredrepeat', 'mirroredrepeat')
+   end
+
+   palettes = {}
+   local base = {
+       '020202', '333233', '814800', 'e6c800', 'efebd8',
+       '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+       'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+       'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+       '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+       'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+       '798091', '4C5575', '6E4431', '626964', '613D41',
+   }
+
+   for i = 1, #base do
+      local r, g, b = hex2rgb(base[i])
+      table.insert(palettes, { r, g, b })
+   end
+
+
+
+
+   fiveGuys = {} -- here we keep the 5 differnt guys around, I might as well just generate them here to begin with
+
+   parts, values = generate()
+
+   for i = 1, 5 do
+      fiveGuys[i] = {
+          values = copy3(values),
+          head = copyAndRedoGraphic('head', values),
+          neck = createNeckRubberhose(values),
+          body = copyAndRedoGraphic('body', values),
+          hair = createHairVanillaLine(values),
+          arm1 = createArmRubberhose(1, values),
+          arm2 = createArmRubberhose(2, values),
+          armhair1 = createArmHairRubberhose(1, values),
+          armhair2 = createArmHairRubberhose(2, values),
+          hand1 = copyAndRedoGraphic('hands', values),
+          hand2 = copyAndRedoGraphic('hands', values),
+          leg1 = createLegRubberhose(1, values),
+          leg2 = createLegRubberhose(2, values),
+          leghair1 = createLegHairRubberhose(1, values),
+          leghair2 = createLegHairRubberhose(2, values),
+          feet1 = copyAndRedoGraphic('feet', values),
+          feet2 = copyAndRedoGraphic('feet', values),
+          eye1 = copyAndRedoGraphic('eyes', values),
+          eye2 = copyAndRedoGraphic('eyes', values),
+          pupil1 = copyAndRedoGraphic('pupils', values),
+          pupil2 = copyAndRedoGraphic('pupils', values),
+          brow1 = createBrowBezier(values),
+          brow2 = createBrowBezier(values),
+          upperlip = createUpperlipBezier(values),
+          lowerlip = createLowerlipBezier(values),
+          ear1 = copyAndRedoGraphic('ears', values),
+          ear2 = copyAndRedoGraphic('ears', values),
+          nose = copyAndRedoGraphic('nose', values),
+      }
+      local guy = {
+          folder = true,
+          name = 'guy',
+          transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+          children = {}
+      }
+      fiveGuys[i].guy = guy
+      guy.children = guyChildren(fiveGuys[i])
+   end
+
+   values = nil -- It is not allowed to leak
+   editingGuy = fiveGuys[1]
+
    SM.setPath("scenes/")
-   SM.load("mainPage")
+   SM.load("editGuy")
    print(love.filesystem.getIdentity())
    focussed = true
 end

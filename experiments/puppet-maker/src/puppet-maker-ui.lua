@@ -68,6 +68,7 @@ function partSettingsTabsDimensions(tabs, width)
 end
 
 function drawImmediateSlidersEtc(draw, startX, currentY, width)
+   local values = editingGuy.values
    local currentHeight = 20
 
    if selectedTab == 'part' then
@@ -285,7 +286,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             local b = ui.getUICircle(startX, currentY, 10)
             if b then
                values.earUnderHead = not values.earUnderHead
-               attachAllFaceParts()
+               attachAllFaceParts(editingGuy)
                myWorld:emit('rescaleFaceparts', potato)
                --ear1.transforms.l[4] = values.earWidthMultiplier * -1
                --ear2.transforms.l[4] = values.earWidthMultiplier
@@ -412,8 +413,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
       if selectedCategory == 'body' then
          local update = function()
-            body.dirty = true
-            transforms.setTransforms(body)
+            editingGuy.body.dirty = true
+            transforms.setTransforms(editingGuy.body)
             if values.potatoHead then
                myWorld:emit('rescaleFaceparts', potato)
             end
@@ -472,11 +473,11 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.potatoHead = not values.potatoHead
                myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
                --if values.potatoHead then
-               body.transforms.l[4] = values.bodyWidthMultiplier
-               body.transforms.l[5] = values.bodyHeightMultiplier
+               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
+               editingGuy.body.transforms.l[5] = values.bodyHeightMultiplier
                --end
 
-               attachAllFaceParts()
+               attachAllFaceParts(editingGuy)
                changePart('head', values)
                changePart('body', values)
                myWorld:emit('rescaleFaceparts', potato)
@@ -508,25 +509,25 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
    if selectedTab == 'colors' then
       -- i want 3 buttons, 1 for bg 1 for FG 1 for line, default = BG
-      
-         --print(values[selectedCategory].fgTex)
 
-      
-         local pickedColors = {
-            palettes[values[selectedCategory].bgPal],
-            palettes[values[selectedCategory].fgPal],
-            palettes[values[selectedCategory].linePal],
-        }
-        local sliderValues = {
-            values[selectedCategory].bgAlpha,
-            values[selectedCategory].fgAlpha,
-            values[selectedCategory].lineAlpha
+      --print(values[selectedCategory].fgTex)
 
-        }
-        local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
-        local alphakeys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
 
-        --[[
+      local pickedColors = {
+          palettes[values[selectedCategory].bgPal],
+          palettes[values[selectedCategory].fgPal],
+          palettes[values[selectedCategory].linePal],
+      }
+      local sliderValues = {
+          values[selectedCategory].bgAlpha,
+          values[selectedCategory].fgAlpha,
+          values[selectedCategory].lineAlpha
+
+      }
+      local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
+      local alphakeys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
+
+      --[[
         if values[selectedCategory].fgTex == 1 then
          pickedColors = {
             palettes[values[selectedCategory].bgPal],
@@ -543,17 +544,15 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
         end
         --]]
-
-        local amount = #pickedColors
+      local amount = #pickedColors
 
       local buttonWidth = (width / amount) * 0.8
       currentY = currentY + 10
       startX = startX + (width / amount) * 0.1
 
-      
+
 
       if draw then
-        
          for i = 1, amount do
             love.graphics.setColor(pickedColors[i])
             local x = startX + ((width / amount) * (i - 1))
@@ -563,7 +562,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             local v = h_slider("s" .. i, x, currentY + buttonWidth / 2, buttonWidth, sliderValues[i], 0, 5)
             if v.value then
-
                values[selectedCategory][alphakeys[i]] = math.floor(v.value)
                selectedColoringLayer = colorkeys[i]
                changePart(selectedCategory, values)
@@ -700,13 +698,15 @@ local function renderElement(type, value, container, x, y, w, h)
 end
 
 local function buttonClickHelper(value)
+   print('buttonClickHelper', value)
    --print(value)
    --print(selectedTab, selectedCategory)
+   local values = editingGuy.values
    local f = findPart(selectedCategory)
    if selectedTab == 'part' then
       values[selectedCategory]['shape'] = value
       changePart(selectedCategory, values)
-     
+
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
