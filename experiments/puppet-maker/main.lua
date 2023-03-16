@@ -158,7 +158,7 @@ function love.load()
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("editGuy")
+   SM.load("fiveGuys")
    print(love.filesystem.getIdentity())
    focussed = true
 end
