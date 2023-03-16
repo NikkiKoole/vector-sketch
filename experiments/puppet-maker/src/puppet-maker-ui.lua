@@ -242,8 +242,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 4) / 4.0 -- round to .5
                values.eyeRotation = v.value
-               eye1.transforms.l[3] = v.value
-               eye2.transforms.l[3] = -v.value
+               editingGuy.eye1.transforms.l[3] = v.value
+               editingGuy.eye2.transforms.l[3] = -v.value
             end
             currentY = currentY + 25
             local v = h_slider("eye-YAxis", startX, currentY, 50, values.eyeYAxis, -3, 3)
@@ -260,8 +260,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             local v = h_slider("ear-rotation", startX, currentY, 50, values.earRotation, -math.pi / 2, math.pi / 2)
             if v.value then
                values.earRotation = v.value
-               ear1.transforms.l[3] = v.value
-               ear2.transforms.l[3] = -v.value
+               editingGuy.ear1.transforms.l[3] = v.value
+               editingGuy.ear2.transforms.l[3] = -v.value
             end
             currentY = currentY + 25
             local v = h_slider("ear-width", startX, currentY, 50, values.earWidthMultiplier, .5, 3)
@@ -368,8 +368,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
       if selectedCategory == 'head' then
          local update = function()
-            head.dirty = true
-            transforms.setTransforms(head)
+            editingGuy.head.dirty = true
+            transforms.setTransforms(editingGuy.head)
             changePart('head', values)
 
             myWorld:emit("bipedAttachHead", biped)
@@ -434,7 +434,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.bodyWidthMultiplier = v.value
                --  values.bodyHeightMultiplier = v.value
                --body.transforms.l[5] = v.value
-               body.transforms.l[4] = v.value
+               editingGuy.body.transforms.l[4] = v.value
                update()
             end
             currentY = currentY + 25
@@ -442,7 +442,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.bodyHeightMultiplier = v.value
-               body.transforms.l[5] = v.value
+               editingGuy.body.transforms.l[5] = v.value
                update()
             end
             currentY = currentY + 50
