@@ -700,7 +700,7 @@ function attachCallbacks()
    end
 
    function love.resize(w, h)
-      local bx, by = body.transforms._g:transformPoint(0, 0)
+      local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
       camera.setCameraViewport(cam, w, h)
       camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
       cam:update(w, h)
