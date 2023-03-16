@@ -42,6 +42,15 @@ local function loadGroupFromFile(url, groupName)
 end
 
 
+local function zeroTransform(arr)
+    for i= 1, #arr do
+        if arr[i].transforms then
+        arr[i].transforms.l[1] = 0
+        arr[i].transforms.l[2] = 0
+        end
+    end
+    --print(arr[1].transforms)
+end
 
 
 
@@ -65,6 +74,8 @@ function generate()
     table.insert(hairUrls, 'assets/null.png') -- i dont have a part array for these things, the url should suffice
 
     local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
+    zeroTransform(bodyParts)
+    
     local feetImgUrls, feetParts = loadGroupFromFile('assets/bodies.polygons.txt', 'feet')
     local handParts = feetParts
     local headImgUrls = bodyImgUrls

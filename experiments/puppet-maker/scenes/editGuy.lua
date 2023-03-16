@@ -588,13 +588,13 @@ function attachCallbacks()
          myWorld:emit('bipedDirection', biped, 'down')
       end
       if key == '1' then
-         local x2, y2, w, h = bbox.getMiddleOfContainer(head)
+         local x2, y2, w, h = bbox.getMiddleOfContainer(editingGuy.head)
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
       end
       if key == '2' then
-         local bbBody = bbox.getBBoxRecursive(body)
-         local bbFeet1 = bbox.getBBoxRecursive(feet1)
-         local bbFeet2 = bbox.getBBoxRecursive(feet2)
+         local bbBody = bbox.getBBoxRecursive(editingGuy.body)
+         local bbFeet1 = bbox.getBBoxRecursive(editingGuy.feet1)
+         local bbFeet2 = bbox.getBBoxRecursive(editingGuy.feet2)
          local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
@@ -602,15 +602,15 @@ function attachCallbacks()
          --print('focus camera on second other shape', x, y)
       end
       if key == '3' then
-         local bbHead             = bbox.getBBoxRecursive(head)
-         local bbBody             = bbox.getBBoxRecursive(body)
-         local bbFeet1            = bbox.getBBoxRecursive(feet1)
-         local bbFeet2            = bbox.getBBoxRecursive(feet2)
+         local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
+         local bbBody             = bbox.getBBoxRecursive(editingGuy.body)
+         local bbFeet1            = bbox.getBBoxRecursive(editingGuy.feet1)
+         local bbFeet2            = bbox.getBBoxRecursive(editingGuy.feet2)
 
          local points             = {
-             { head.transforms.l[1],  head.transforms.l[2] },
-             { feet2.transforms.l[1], feet2.transforms.l[2] },
-             { feet1.transforms.l[1], feet1.transforms.l[2] },
+             { editingGuy.head.transforms.l[1],  editingGuy.head.transforms.l[2] },
+             { editingGuy.feet2.transforms.l[1], editingGuy.feet2.transforms.l[2] },
+             { editingGuy.feet1.transforms.l[1], editingGuy.feet1.transforms.l[2] },
          }
 
          local tlx, tly, brx, bry = bbox.getPointsBBox(points)
@@ -655,9 +655,9 @@ function attachCallbacks()
          local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
 
          print('guy', ix, iy)
-         ix, iy = body.transforms._g:transformPoint(0, 0)
+         ix, iy = editingGuy.body.transforms._g:transformPoint(0, 0)
          print('body', ix, iy)
-         print('body l:', inspect(body.transforms.l))
+         print('body l:', inspect(editingGuy.body.transforms.l))
          --
          ix, iy = editingGuy.feet1.transforms._g:transformPoint(0, 0)
          print('feet1', ix, iy)
