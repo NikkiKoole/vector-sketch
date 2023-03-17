@@ -332,6 +332,7 @@ end
 function scene.load()
    bgColor = creamColor
 
+   --[[
    Timer.after(
        1,
        function()
@@ -346,6 +347,7 @@ function scene.load()
           )
        end
    )
+   --]]
 
    blup0 = love.graphics.newImage('assets/blups/blup1.png')
    blup1 = love.graphics.newImage('assets/blups/blup5.png')
@@ -355,11 +357,9 @@ function scene.load()
    tiles = love.graphics.newImage('assets/layered/tiles.145.png')
    tiles2 = love.graphics.newImage('assets/layered/tiles2.150.png')
 
-
    tab1 = love.graphics.newImage('assets/tab1.png')
    tab2 = love.graphics.newImage('assets/tab2.png')
    tab3 = love.graphics.newImage('assets/tab3.png')
-
 
    whiterects = {
        love.graphics.newImage('assets/whiterect1.png'),
@@ -385,7 +385,6 @@ function scene.load()
        love.graphics.newImage('assets/blups/dot11.150.png'),
        love.graphics.newImage('assets/blups/dot12.150.png'),
    }
-
 
 
    scrollPosition = .5
@@ -437,8 +436,6 @@ function scene.load()
    potato = Concord.entity()
    myWorld:addEntity(biped)
    myWorld:addEntity(potato)
-
-
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
 
