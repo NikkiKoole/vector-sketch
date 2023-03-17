@@ -1,7 +1,7 @@
 local scene       = {}
 local gradient    = require 'lib.gradient'
 local hit         = require 'lib.hit'
-local skygradient = gradient.makeSkyGradient(4)
+local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
 local transition  = nil

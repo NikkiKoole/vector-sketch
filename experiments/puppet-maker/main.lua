@@ -25,6 +25,10 @@ jit.off()
 --https://github.com/MikuAuahDark/lily
 
 
+-- working ios payment stufff !!!!
+-- https://love2d.org/forums/viewtopic.php?f=5&t=83107
+
+
 SM = require 'vendor.SceneMgr'
 
 require 'lib.basic-tools'
@@ -158,7 +162,7 @@ function love.load()
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("fiveGuys")
+   SM.load("splash")
    print(love.filesystem.getIdentity())
    focussed = true
 end

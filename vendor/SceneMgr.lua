@@ -45,12 +45,15 @@ end
 --                       --
 function scene.unload(fileName)
   assert(type(fileName) == "string", "Function 'unload': parameter must be a string.")
-
+  print('when is this unload called?')
   local path = scene.dir..fileName
 
   if pathDefined(path..".lua") then
     if package.loaded[path] then
       package.loaded[path] = nil
+    end
+    if funcDefined("unload") then
+      scene.current.unload()
     end
   end
 end
@@ -58,6 +61,7 @@ end
 function scene.load(fileName)
   assert(type(fileName) == "string", "Function 'load': parameter must be a string.")
 
+  print('load whatis my current scene, ')
   local path = scene.dir..fileName
 
   scene.pName = scene.cName

@@ -38,6 +38,9 @@ function scene.update(dt)
    if splashSound:isPlaying() then
       local volume = splashSound:getVolume()
       splashSound:setVolume(volume * .90)
+      if volume < 0.01 then
+         splashSound:stop()
+      end
    end
    function love.keypressed(key, unicode)
       if key == 'escape' then love.event.quit() end

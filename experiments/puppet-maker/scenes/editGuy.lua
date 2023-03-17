@@ -39,10 +39,8 @@ Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 
-biped = Concord.entity()
-potato = Concord.entity()
-myWorld:addEntity(biped)
-myWorld:addEntity(potato)
+
+-- instead of having these here for alays, i want to precisely add and remove them at the right times 
 
 local pointerInteractees = {}
 
@@ -257,6 +255,7 @@ local function pointerPressed(x, y, id)
 
    if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
       Timer.clear()
+      SM.unload('editGuy')
       SM.load("fiveGuys")
    end
    myWorld:emit("eyeLookAtPoint", potato, x, y)
@@ -313,6 +312,21 @@ function attachAllFaceParts(guy)
 
 
    changePart('hair', guy.values)
+end
+
+
+function scene.unload()
+   Signal.clear('click-settings-scroll-area-item')
+   Signal.clear('click-scroll-list-item')
+   Signal.clear('throw-settings-scroll-area')
+   Signal.clear('throw-scroll-list')
+   Signal.clearPattern('.*') -- clear all signals
+   --print('scene unload')
+   --print(inspect(myWorld:getEntities()))
+   --myWorld:removeEntity(biped)
+   --myWorld:removeEntity(potato)
+   myWorld:clear()
+   print(inspect(myWorld:getEntities()))
 end
 
 function scene.load()
@@ -419,6 +433,10 @@ function scene.load()
    parts, _ = generate()
 
 
+   biped = Concord.entity()
+   potato = Concord.entity()
+   myWorld:addEntity(biped)
+   myWorld:addEntity(potato)
 
 
    biped:give('biped', bipedArguments(editingGuy))
@@ -536,11 +554,7 @@ end
 
 function attachCallbacks()
    print('attached callbacks')
-   Signal.clear('click-settings-scroll-area-item')
-   Signal.clear('click-scroll-list-item')
-   Signal.clear('throw-settings-scroll-area')
-   Signal.clear('throw-scroll-list')
-   Signal.clearPattern('.*') -- clear all signals
+  
 
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
@@ -736,9 +750,7 @@ local function updateTheScrolling(dt, thrown, pos)
    return pos
 end
 
-function scene.unload()
-   print('scene unload')
-end
+
 
 function scene.update(dt)
    prof.push("frame")
@@ -746,7 +758,7 @@ function scene.update(dt)
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
       introSound:setVolume(volume * .90)
-      if (volume < 0) then
+      if (volume < 0.01) then
          introSound:stop()
       end
    end
