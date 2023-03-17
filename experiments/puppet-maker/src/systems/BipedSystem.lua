@@ -113,9 +113,9 @@ function BipedSystem:init(e)
 end
 
 function BipedSystem:bipedInit(e)
-    print('bipedInit')
+    print('bipedInit', e, e.biped)
     e.biped.body.transforms.l[3] = 0 -- math.pi / 2
-    transforms.setTransforms(e.biped.body)
+    -- transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
 
 

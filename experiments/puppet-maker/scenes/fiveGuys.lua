@@ -5,8 +5,13 @@ local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
 local transition  = nil
+local parentize   = require 'lib.parentize'
+local render      = require 'lib.render'
+local mesh        = require 'lib.mesh'
 
-
+local camera      = require 'lib.camera'
+local cam         = require('lib.cameraBase').getInstance()
+local transforms  = require 'lib.transform'
 local function myCircleStencilFunction(x, y, r, s)
     love.graphics.circle("fill", x, y, r, s)
 end
@@ -89,11 +94,88 @@ local function pointerPressed(x, y, id)
         doCircleInTransition(love.math.random() * w, love.math.random() * h, function() SM.load("editGuy") end)
     end
 end
+local function stripPath(root, path)
+    if root and root.texture and root.texture.url and #root.texture.url > 0 then
+        local str = root.texture.url
+        local shortened = string.gsub(str, path, '')
+        root.texture.url = shortened
+        --print(shortened)
+    end
 
+    if root.children then
+        for i = 1, #root.children do
+            stripPath(root.children[i], path)
+        end
+    end
 
+    return root
+end
+
+function scene.unload()
+    myWorld:clear()
+end
 
 function scene.load()
     print(myWorld)
+
+    root = {
+        folder = true,
+        name = 'root',
+        transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+        children = {}
+    }
+
+    local fg = {}
+    for i = 1, #fiveGuys do
+        table.insert(root.children, fiveGuys[i].guy)
+
+
+
+        local biped = Concord.entity()
+        local potato = Concord.entity()
+        myWorld:addEntity(biped)
+        myWorld:addEntity(potato)
+
+
+        biped:give('biped', bipedArguments(fiveGuys[i]))
+        potato:give('potato', potatoArguments(fiveGuys[i]))
+
+        attachAllFaceParts(fiveGuys[i])
+        changePart('hair', fiveGuys[i].values)
+        table.insert(fg, { biped = biped, potato = potato })
+        --fiveGuys[i].body.transforms.l[1] = 0
+
+
+        --transforms.setTransforms(fiveGuys[i].body)
+        --fiveGuys[i].body.dirty = true
+
+
+        -- myWorld:emit("bipedInit", biped)
+        -- myWorld:emit("potatoInit", potato)
+    end
+
+
+
+    stripPath(root, '/experiments/puppet%-maker/')
+    parentize.parentize(root)
+    mesh.meshAll(root)
+    render.renderThings(root)
+
+    for i = 1, #fg do
+        fiveGuys[i].guy.transforms.l[1] = (i - 3) * 200
+        myWorld:emit("bipedInit", fg[i].biped)
+        myWorld:emit("potatoInit", fg[i].potato)
+        --
+        -- myWorld:emit("potatoInit", potato)
+    end
+
+
+    local bx, by = fiveGuys[3].body.transforms._g:transformPoint(0, 0)
+    local w, h = love.graphics.getDimensions()
+
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
+    cam:update(w, h)
 end
 
 function scene.draw()
@@ -108,6 +190,11 @@ function scene.draw()
     love.graphics.rectangle('fill', w - 25, 0, 25, 25)
 
     -- local x,y = love.mouse.getPosition()
+
+    cam:push()
+    render.renderThings(root, true)
+    cam:pop()
+
     if transition then
         if transition.type == 'circle' then
             drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)

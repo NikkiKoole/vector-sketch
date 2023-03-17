@@ -40,7 +40,7 @@ Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 
 
--- instead of having these here for alays, i want to precisely add and remove them at the right times 
+-- instead of having these here for alays, i want to precisely add and remove them at the right times
 
 local pointerInteractees = {}
 
@@ -314,7 +314,6 @@ function attachAllFaceParts(guy)
    changePart('hair', guy.values)
 end
 
-
 function scene.unload()
    Signal.clear('click-settings-scroll-area-item')
    Signal.clear('click-scroll-list-item')
@@ -330,6 +329,9 @@ function scene.unload()
 end
 
 function scene.load()
+   for i = 1, #fiveGuys do
+      fiveGuys[i].guy.transforms.l[1] = 0
+   end
    bgColor = creamColor
 
    Timer.after(
@@ -554,7 +556,7 @@ end
 
 function attachCallbacks()
    print('attached callbacks')
-  
+
 
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
@@ -760,6 +762,13 @@ function scene.update(dt)
       introSound:setVolume(volume * .90)
       if (volume < 0.01) then
          introSound:stop()
+      end
+   end
+   if splashSound:isPlaying() then
+      local volume = splashSound:getVolume()
+      splashSound:setVolume(volume * .90)
+      if volume < 0.01 then
+         splashSound:stop()
       end
    end
 
