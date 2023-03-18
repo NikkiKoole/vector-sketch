@@ -34,7 +34,7 @@ SM = require 'vendor.SceneMgr'
 require 'lib.basic-tools'
 gesture = require 'lib.gesture'
 Concord = require 'vendor.concord.init'
-
+myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
 PROF_CAPTURE = true
@@ -158,13 +158,36 @@ function love.load()
       guy.children = guyChildren(fiveGuys[i])
    end
 
+   for i = 1, #fiveGuys do
+      editingGuy = fiveGuys[i]
+      --partRandomize(fiveGuys[i].values)
+   end
+
    values = nil -- It is not allowed to leak
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("splash")
+   SM.load("editGuy")
    print(love.filesystem.getIdentity())
    focussed = true
+end
+
+function partRandomize(values)
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
+       'brows', 'upperlip', 'lowerlip', }
+   -- local parts = { 'head' }
+   for i = 1, #parts do
+      if values.potatoHead and parts[i] == 'neck' then
+
+      else
+         local p = findPart(parts[i])
+         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
+         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         changePart(parts[i], values)
+         print('changed part ', parts[i])
+      end
+   end
 end
 
 function love.focus(f)

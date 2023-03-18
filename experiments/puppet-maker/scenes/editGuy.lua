@@ -320,10 +320,7 @@ function scene.unload()
    Signal.clear('throw-settings-scroll-area')
    Signal.clear('throw-scroll-list')
    Signal.clearPattern('.*') -- clear all signals
-   --print('scene unload')
-   --print(inspect(myWorld:getEntities()))
-   --myWorld:removeEntity(biped)
-   --myWorld:removeEntity(potato)
+
    myWorld:clear()
    print(inspect(myWorld:getEntities()))
 end

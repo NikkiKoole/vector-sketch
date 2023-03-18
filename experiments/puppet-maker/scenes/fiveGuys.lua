@@ -129,8 +129,6 @@ function scene.load()
     for i = 1, #fiveGuys do
         table.insert(root.children, fiveGuys[i].guy)
 
-
-
         local biped = Concord.entity()
         local potato = Concord.entity()
         myWorld:addEntity(biped)
@@ -141,18 +139,11 @@ function scene.load()
         potato:give('potato', potatoArguments(fiveGuys[i]))
 
         attachAllFaceParts(fiveGuys[i])
+        editingGuy = fiveGuys[i]
         changePart('hair', fiveGuys[i].values)
         table.insert(fg, { biped = biped, potato = potato })
-        --fiveGuys[i].body.transforms.l[1] = 0
-
-
-        --transforms.setTransforms(fiveGuys[i].body)
-        --fiveGuys[i].body.dirty = true
-
-
-        -- myWorld:emit("bipedInit", biped)
-        -- myWorld:emit("potatoInit", potato)
     end
+    editingGuy = fiveGuys[1]
 
 
 
@@ -162,7 +153,14 @@ function scene.load()
     render.renderThings(root)
 
     for i = 1, #fg do
-        fiveGuys[i].guy.transforms.l[1] = (i - 3) * 200
+        --- this will reset the position you made
+        local resetPos = false
+        if resetPos then
+            fiveGuys[i].body.transforms.l[1] = 0
+            fiveGuys[i].body.transforms.l[2] = 0
+            myWorld:emit('movedBody', fg[i].biped)
+        end
+        fiveGuys[i].guy.transforms.l[1] = (i - 3) * 400
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         --

@@ -115,7 +115,7 @@ end
 function BipedSystem:bipedInit(e)
     print('bipedInit', e, e.biped)
     e.biped.body.transforms.l[3] = 0 -- math.pi / 2
-    -- transforms.setTransforms(e.biped.body)
+    transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
 
 
@@ -467,6 +467,18 @@ function BipedSystem:doinkBody(e)
         BipedSystem:bipedAttachHands(e)
     end)
     -- Timer
+end
+
+function BipedSystem:movedBody(e)
+    e.biped.body.dirty = true
+    transforms.setTransforms(e.biped.body)
+
+    attachHeadWithOrWithoutNeck(e, true)
+
+    setLegs(e)
+    setArms(e)
+    BipedSystem:bipedAttachHands(e)
+    BipedSystem:bipedAttachFeet(e)
 end
 
 function BipedSystem:itemReleased(elem)
