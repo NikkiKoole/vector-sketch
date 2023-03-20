@@ -395,11 +395,12 @@ function createNeckRubberhose(values, points)
 end
 
 function updateChild(container, oldValue, newResult)
-   --print(container.name, inspect(oldValue))
-
+   print('updateChild', container.name, 'looking for')
+   print(oldValue and oldValue.name)
+   print(newResult and newResult.name)
    for i = 1, #container.children do
       if container.children[i] == oldValue then
-         --print('changed something', inspect(oldValue))
+         print('changed something', container.name)
 
          container.children[i] = newResult
          if (container.children[i].transforms) then
@@ -520,7 +521,7 @@ function changePart(name, values)
       changePart('hair', values) ----
    elseif name == 'hair' then
       if isNullObject(name, values) then
-         editingGuy.hair = updateChild(container, hair, copy3(nullChild))
+         editingGuy.hair = updateChild(container, editingGuy.hair, copy3(nullChild))
          --  print('hair', hair)
          --print('hair was null ')
       else
@@ -546,12 +547,12 @@ function changePart(name, values)
       editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
       editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
-      --print('changeart nose')
+      print('changeart nose')
       if isNullObject(name, values) then
-         --print('nullobject nose')
+         print('nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
       else
-         --print('not nullobject nose')
+         print('not nullobject nose', editingGuy.nose)
          editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then

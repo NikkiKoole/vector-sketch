@@ -118,8 +118,8 @@ function love.load()
    parts, _ = generate()
 
 
-
-   for i = 1, 5 do
+   amountOfGuys = 7
+   for i = 1, amountOfGuys do
       local parts, values = generate()
       values = partRandomizeNoChange(values)
       --print(inspect(values))
@@ -151,7 +151,7 @@ function love.load()
           lowerlip = createLowerlipBezier(values),
           ear1 = copyAndRedoGraphic('ears', values),
           ear2 = copyAndRedoGraphic('ears', values),
-          nose = copyAndRedoGraphic('nose', values),
+          nose = copy3(nullFolder) -- copyAndRedoGraphic('nose', values),
       }
       local guy = {
           folder = true,
@@ -185,6 +185,9 @@ function partRandomizeNoChange(values)
          if (parts[i] == 'head' or parts[i] == 'body') then
             values[parts[i]].flipx = love.math.random() < .5 and -1 or 1
             values[parts[i]].flipy = love.math.random() < .5 and -1 or 1
+         end
+         if (parts[i] == 'nose') then
+            values[parts[i]].shape = #(p.imgs)
          end
          -- changePart(parts[i], values)
          --print('changed part ', parts[i])

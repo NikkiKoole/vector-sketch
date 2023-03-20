@@ -163,7 +163,7 @@ function scene.load()
             fiveGuys[i].body.transforms.l[2] = 0
             myWorld:emit('movedBody', fg[i].biped)
         end
-        fiveGuys[i].guy.transforms.l[1] = (i - 3) * 700
+        fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 700
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         --
