@@ -138,6 +138,7 @@ function scene.load()
 
     local fg = {}
     prof.push('initguys')
+    
     for i = 1, #fiveGuys do
         table.insert(root.children, fiveGuys[i].guy)
 
@@ -156,7 +157,7 @@ function scene.load()
         table.insert(fg, { biped = biped, potato = potato })
     end
     prof.pop('initguys')
-    editingGuy = fiveGuys[1]
+   -- editingGuy = fiveGuys[1]
 
 
 
@@ -241,7 +242,7 @@ function drawGroundPlaneLinesSimple(far, near)
     for i = s, e, tileSize do
        local groundIndex = (i / tileSize)
        local tileIndex = (groundIndex % (#imgarr)) + 1
-             print(tileIndex)
+             --print(tileIndex)
        local index = (i - s) / tileSize
  
        if groundIndex >= minpos and groundIndex <= maxpos - 1 then
@@ -282,7 +283,7 @@ function drawGroundPlaneLinesSimple(far, near)
  
  
           -- love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .9)
-          love.graphics.setColor(.4, .8, .2, 1)
+          love.graphics.setColor(.4, .8, .2, .8)
           love.graphics.draw(m)
           --love.graphics.draw(m, 0, 400 * s)
        end
