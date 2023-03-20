@@ -40,7 +40,7 @@ Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem)
 
 
--- instead of having these here for alays, i want to precisely add and remove them at the right times 
+-- instead of having these here for alays, i want to precisely add and remove them at the right times
 
 local pointerInteractees = {}
 
@@ -113,7 +113,7 @@ function getSiblingBefore(before)
 end
 
 function removeChild(elem)
-   if elem._parent then
+   if elem and elem._parent then
       local index = node.getIndex(elem)
       if index >= 0 then table.remove(elem._parent.children, index) end
    end
@@ -258,7 +258,7 @@ local function pointerPressed(x, y, id)
       SM.unload('editGuy')
       SM.load("fiveGuys")
    end
-   myWorld:emit("eyeLookAtPoint", potato, x, y)
+   myWorld:emit("eyeLookAtPoint", x, y)
 end
 
 local function hex2rgb(hex)
@@ -314,22 +314,22 @@ function attachAllFaceParts(guy)
    changePart('hair', guy.values)
 end
 
-
 function scene.unload()
    Signal.clear('click-settings-scroll-area-item')
    Signal.clear('click-scroll-list-item')
    Signal.clear('throw-settings-scroll-area')
    Signal.clear('throw-scroll-list')
    Signal.clearPattern('.*') -- clear all signals
-   --print('scene unload')
-   --print(inspect(myWorld:getEntities()))
-   --myWorld:removeEntity(biped)
-   --myWorld:removeEntity(potato)
+
    myWorld:clear()
-   print(inspect(myWorld:getEntities()))
+   --print(inspect(myWorld:getEntities()))
 end
 
 function scene.load()
+   -- prof.push('frame')
+   for i = 1, #fiveGuys do
+      fiveGuys[i].guy.transforms.l[1] = 0
+   end
    bgColor = creamColor
 
    --[[
@@ -489,6 +489,7 @@ function scene.load()
    cam:update(w, h)
 
    Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
+   --prof.pop('frame')
 end
 
 function skinColorize(bgPal, values)
@@ -550,8 +551,8 @@ function setCategories()
 end
 
 function attachCallbacks()
-   print('attached callbacks')
-  
+   --print('attached callbacks')
+
 
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
@@ -576,7 +577,7 @@ function attachCallbacks()
    --Signal.clearPattern('.*') -- clear all signals
 
    function love.keypressed(key, unicode)
-      print('keypressed', key)
+      --print('keypressed', key)
       local values = editingGuy.values
       if key == 'escape' then
          love.event.quit()
@@ -750,13 +751,20 @@ end
 
 
 function scene.update(dt)
-   prof.push("frame")
+   --prof.push("frame")
 
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
       introSound:setVolume(volume * .90)
       if (volume < 0.01) then
          introSound:stop()
+      end
+   end
+   if splashSound:isPlaying() then
+      local volume = splashSound:getVolume()
+      splashSound:setVolume(volume * .90)
+      if volume < 0.01 then
+         splashSound:stop()
       end
    end
 
@@ -782,12 +790,12 @@ function scene.update(dt)
 
 
    --myWorld:emit("update", dt) -- this one is leaking the most actually
-   prof.pop("frame")
+   --prof.pop("frame")
 end
 
 function scene.draw()
    --   prof.enabled(false)
-   prof.push("frame")
+   --prof.push("frame")
 
 
    if true then
@@ -858,7 +866,7 @@ function scene.draw()
    love.graphics.setColor(1, 0, 1)
    local w, h = love.graphics.getDimensions()
    love.graphics.rectangle('fill', w - 25, 0, 25, 25)
-   prof.pop("frame")
+   -- prof.pop("frame")
    --collectgarbage()
 end
 

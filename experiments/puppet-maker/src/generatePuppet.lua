@@ -4,7 +4,7 @@ local bbox            = require 'lib.bbox'
 local canvas          = require 'lib.canvas'
 local render          = require 'lib.render'
 local text            = require 'lib.text'
-
+local node            = require 'lib.node'
 local createFromImage = require 'src.createFromImage'
 
 -- REMEMBER IF YOU SEE BLACK SHADOWING AROUND THE COLORED PARTS
@@ -52,6 +52,25 @@ local function getMeta(parent)
       end
    end
 end
+
+-- this one is fro the case where i dont have a potato component around
+function getHeadPointsFromValues(values, headPart, headPartName)
+   local parent = headPart --e.potato.head
+   local parentName = headPartName -- e.potato.values.potatoHead and 'body' or 'head'
+   local meta = getMeta(parent)
+
+   if meta then
+      local flipx = values[parentName].flipx or 1
+      local flipy = values[parentName].flipy or 1
+      local points = meta.points
+      local newPoints = getFlippedMetaObject(flipx, flipy, points)
+
+      return newPoints
+   end
+
+   return { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } }
+end
+
 function getHeadPoints(e)
    local parent = e.potato.head
    local parentName = e.potato.values.potatoHead and 'body' or 'head'
@@ -220,11 +239,15 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
    local img = mesh.getImage(url, optionalSettings)
    local maskUrl = getPNGMaskUrl(url)
    local mask = mesh.getImage(maskUrl)
+   --local cnv = love.image.newImageData(url) -- canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
+
    return cnv
 end
 
 function redoGraphicHelper(part, name, values)
+   -- print(name, part.children, #part.children)
+
    local index = getIndexOfGraphicPart(part)
    local p = part.children and part.children[index] or part
    if p.texture and p.texture.url then
@@ -374,11 +397,13 @@ function createNeckRubberhose(values, points)
 end
 
 function updateChild(container, oldValue, newResult)
-   --print(container.name, inspect(oldValue))
-
+   --print('updateChild', container.name, 'looking for')
+   --print(oldValue and oldValue.name)
+   --print(newResult and newResult.name)
+   --prof.push('update-child')
    for i = 1, #container.children do
       if container.children[i] == oldValue then
-         --print('changed something', inspect(oldValue))
+         print('changed something', container.name)
 
          container.children[i] = newResult
          if (container.children[i].transforms) then
@@ -394,14 +419,67 @@ function updateChild(container, oldValue, newResult)
          return container.children[i]
       end
    end
+   --prof.pop('update-child')
 end
 
 function copyAndRedoGraphic(name, values)
+   -- if isNullObject(name, values) then
+   --    print(name, ' is anullobject')
+   --    return copy3(nullFolder)
+   -- end
    local part = findPart(name)
    local partArray = part.p
    --earParts[values.ears.shape]
    local original = partArray[values[name].shape]
    return redoGraphicHelper(copy3(original), name, values)
+end
+
+function removeChild(elem)
+   if elem._parent then
+      local index = node.getIndex(elem)
+      if index >= 0 then table.remove(elem._parent.children, index) end
+   end
+end
+
+function attachAllFaceParts(guy)
+   removeChild(guy.eye1)
+   removeChild(guy.eye2)
+   removeChild(guy.pupil1)
+   removeChild(guy.pupil2)
+   removeChild(guy.nose)
+   removeChild(guy.brow1)
+   removeChild(guy.brow2)
+   removeChild(guy.ear1)
+   removeChild(guy.ear2)
+   removeChild(guy.hair)
+   removeChild(guy.upperlip)
+   removeChild(guy.lowerlip)
+
+   local addTo = guy.values.potatoHead and guy.body or guy.head
+
+   table.insert(addTo.children, guy.eye1)
+   table.insert(addTo.children, guy.eye2)
+   table.insert(addTo.children, guy.pupil1)
+   table.insert(addTo.children, guy.pupil2)
+
+   if (guy.values.earUnderHead == true) then
+      table.insert(addTo.children, 1, guy.ear1)
+      table.insert(addTo.children, 1, guy.ear2)
+   else
+      table.insert(addTo.children, guy.ear1)
+      table.insert(addTo.children, guy.ear2)
+   end
+
+   table.insert(addTo.children, guy.lowerlip)
+   table.insert(addTo.children, guy.upperlip)
+
+   table.insert(addTo.children, guy.brow1)
+   table.insert(addTo.children, guy.brow2)
+   table.insert(addTo.children, guy.nose)
+   table.insert(addTo.children, guy.hair)
+
+
+   -- changePart('hair', guy.values)
 end
 
 function changePart(name, values)
@@ -447,11 +525,14 @@ function changePart(name, values)
       changePart('hair', values) ----
    elseif name == 'hair' then
       if isNullObject(name, values) then
-         hair = updateChild(container, hair, copy3(nullChild))
+         editingGuy.hair = updateChild(container, editingGuy.hair, copy3(nullChild))
          --  print('hair', hair)
-         print('hair was null ')
+         --print('hair was null ')
       else
-         local hp = getHeadPoints(potato)
+         -- this was a change but isnt needed anymore I  think
+         local headPart = values.potatoHead and editingGuy.body or editingGuy.head
+         local headPartName = values.potatoHead and 'body' or 'head'
+         local hp = getHeadPointsFromValues(values, headPart, headPartName)
 
          local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
          editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
@@ -470,9 +551,12 @@ function changePart(name, values)
       editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
       editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
+      print('changeart nose')
       if isNullObject(name, values) then
+         print('nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
       else
+         print('not nullobject nose', editingGuy.nose)
          editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then
@@ -522,8 +606,9 @@ function changePart(name, values)
          myWorld:emit('setLegHairToLegs', biped)
       end
    end
-   parentize.parentize(root)
-   mesh.meshAll(root)
+   parentize.parentize(editingGuy.guy)
+   -- this is very costly, mayeb do this on a need basis
+   mesh.meshAll(editingGuy.guy)
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
    myWorld:emit("potatoInit", potato)

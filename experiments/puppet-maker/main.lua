@@ -34,13 +34,14 @@ SM = require 'vendor.SceneMgr'
 require 'lib.basic-tools'
 gesture = require 'lib.gesture'
 Concord = require 'vendor.concord.init'
-
+myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
 PROF_CAPTURE = true
 prof = require 'vendor.jprof'
+ProFi = require 'vendor.ProFi'
 
-
+focussed = true
 function findPart(name)
    for i = 1, #parts do
       if parts[i].name == name then
@@ -115,9 +116,17 @@ function love.load()
 
    fiveGuys = {} -- here we keep the 5 differnt guys around, I might as well just generate them here to begin with
 
-   parts, values = generate()
+   parts, _ = generate()
 
-   for i = 1, 5 do
+
+   amountOfGuys = 50
+   prof.push('frame')
+   prof.push('creating-guys')
+   ProFi:start()
+   for i = 1, amountOfGuys do
+      local parts, values = generate()
+      values = partRandomizeNoChange(values)
+      --print(inspect(values))
       fiveGuys[i] = {
           values = copy3(values),
           head = copyAndRedoGraphic('head', values),
@@ -146,7 +155,7 @@ function love.load()
           lowerlip = createLowerlipBezier(values),
           ear1 = copyAndRedoGraphic('ears', values),
           ear2 = copyAndRedoGraphic('ears', values),
-          nose = copyAndRedoGraphic('nose', values),
+          nose = copy3(nullFolder) -- copyAndRedoGraphic('nose', values),
       }
       local guy = {
           folder = true,
@@ -157,14 +166,59 @@ function love.load()
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
    end
-
-   values = nil -- It is not allowed to leak
+   ProFi:stop()
+   ProFi:writeReport('profilingReportInit.txt')
+   prof.pop('creating-guys')
+   prof.pop('frame')
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("splash")
+   SM.load("editGuy")
    print(love.filesystem.getIdentity())
-   focussed = true
+end
+
+function partRandomizeNoChange(values)
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
+       'brows', 'upperlip', 'lowerlip', }
+   -- local parts = { 'head' }
+   for i = 1, #parts do
+      if values.potatoHead and parts[i] == 'neck' then
+
+      else
+         local p = findPart(parts[i])
+         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
+         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         if (parts[i] == 'head' or parts[i] == 'body') then
+            values[parts[i]].flipx = love.math.random() < .5 and -1 or 1
+            values[parts[i]].flipy = love.math.random() < .5 and -1 or 1
+         end
+         if (parts[i] == 'nose') then
+            values[parts[i]].shape = #(p.imgs)
+         end
+         -- changePart(parts[i], values)
+         --print('changed part ', parts[i])
+      end
+   end
+   return values
+end
+
+function partRandomize(values)
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
+       'brows', 'upperlip', 'lowerlip', }
+   -- local parts = { 'head' }
+   for i = 1, #parts do
+      if values.potatoHead and parts[i] == 'neck' then
+
+      else
+         local p = findPart(parts[i])
+         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
+         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         changePart(parts[i], values)
+         print('changed part ', parts[i])
+      end
+   end
 end
 
 function love.focus(f)
@@ -172,18 +226,24 @@ function love.focus(f)
 end
 
 function love.update(dt)
+   prof.push('frame')
    --require("vendor.lurker").update()
-
+   if not focussed then
+      -- print('this app is unfocessed!')
+   end
    if focussed then
       gesture.update(dt)
       SM.update(dt)
    end
    --collectgarbage()
    manual_gc(0.002, 2)
+   prof.pop('frame')
 end
 
 function love.draw()
+   prof.push('frame')
    SM.draw()
+   prof.pop('frame')
 end
 
 function love.resize(w, h)

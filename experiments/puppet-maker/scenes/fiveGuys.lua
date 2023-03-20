@@ -5,8 +5,13 @@ local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
 local transition  = nil
+local parentize   = require 'lib.parentize'
+local render      = require 'lib.render'
+local mesh        = require 'lib.mesh'
 
-
+local camera      = require 'lib.camera'
+local cam         = require('lib.cameraBase').getInstance()
+local transforms  = require 'lib.transform'
 local function myCircleStencilFunction(x, y, r, s)
     love.graphics.circle("fill", x, y, r, s)
 end
@@ -86,14 +91,99 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
         local w, h = love.graphics.getDimensions()
-        doCircleInTransition(love.math.random() * w, love.math.random() * h, function() SM.load("editGuy") end)
+        local bx, by = editingGuy.head.transforms._g:transformPoint(0, 0)
+        local sx, sy = cam:getScreenCoordinates(bx, by)
+        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
     end
+    myWorld:emit("eyeLookAtPoint", x, y)
+end
+local function stripPath(root, path)
+    if root and root.texture and root.texture.url and #root.texture.url > 0 then
+        local str = root.texture.url
+        local shortened = string.gsub(str, path, '')
+        root.texture.url = shortened
+        --print(shortened)
+    end
+
+    if root.children then
+        for i = 1, #root.children do
+            stripPath(root.children[i], path)
+        end
+    end
+
+    return root
 end
 
-
+function scene.unload()
+    myWorld:clear()
+end
 
 function scene.load()
-    print(myWorld)
+    ProFi:start()
+    prof.push('frame')
+    -- print(myWorld)
+
+    root = {
+        folder = true,
+        name = 'root',
+        transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+        children = {}
+    }
+
+    local fg = {}
+    prof.push('initguys')
+    for i = 1, #fiveGuys do
+        table.insert(root.children, fiveGuys[i].guy)
+
+        local biped = Concord.entity()
+        local potato = Concord.entity()
+        myWorld:addEntity(biped)
+        myWorld:addEntity(potato)
+
+
+        biped:give('biped', bipedArguments(fiveGuys[i]))
+        potato:give('potato', potatoArguments(fiveGuys[i]))
+
+        attachAllFaceParts(fiveGuys[i])
+        editingGuy = fiveGuys[i]
+        changePart('hair', fiveGuys[i].values)
+        table.insert(fg, { biped = biped, potato = potato })
+    end
+    prof.pop('initguys')
+    editingGuy = fiveGuys[1]
+
+
+
+    stripPath(root, '/experiments/puppet%-maker/')
+    parentize.parentize(root)
+    mesh.meshAll(root)
+    render.renderThings(root)
+    prof.push('moveguys')
+    for i = 1, #fg do
+        --- this will reset the position you made
+        local resetPos = false
+        if resetPos then
+            fiveGuys[i].body.transforms.l[1] = 0
+            fiveGuys[i].body.transforms.l[2] = 0
+            myWorld:emit('movedBody', fg[i].biped)
+        end
+        fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 700
+        myWorld:emit("bipedInit", fg[i].biped)
+        myWorld:emit("potatoInit", fg[i].potato)
+        --
+        -- myWorld:emit("potatoInit", potato)
+    end
+    prof.pop('moveguys')
+
+    local bx, by = fiveGuys[3].body.transforms._g:transformPoint(0, 0)
+    local w, h = love.graphics.getDimensions()
+
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
+    cam:update(w, h)
+    prof.pop('frame')
+    ProFi:stop()
+    ProFi:writeReport('profilingReportFiveGuys.txt')
 end
 
 function scene.draw()
@@ -108,6 +198,11 @@ function scene.draw()
     love.graphics.rectangle('fill', w - 25, 0, 25, 25)
 
     -- local x,y = love.mouse.getPosition()
+
+    cam:push()
+    render.renderThings(root, true)
+    cam:pop()
+
     if transition then
         if transition.type == 'circle' then
             drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)
@@ -130,6 +225,25 @@ function scene.update(dt)
     end
 
     function love.keypressed(k)
+        if k == '1' then
+            editingGuy = fiveGuys[1]
+        end
+        if k == '2' then
+            editingGuy = fiveGuys[2]
+        end
+        if k == '3' then
+            editingGuy = fiveGuys[3]
+        end
+        if k == '4' then
+            editingGuy = fiveGuys[4]
+        end
+        if k == '5' then
+            editingGuy = fiveGuys[5]
+        end
+        if k == 'escape' then
+            love.event.quit()
+        end
+
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
             doCircleInTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)

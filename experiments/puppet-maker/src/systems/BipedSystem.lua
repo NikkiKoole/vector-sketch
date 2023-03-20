@@ -109,11 +109,11 @@ local function getPositionsForLegsAttaching(e)
 end
 
 function BipedSystem:init(e)
-    print('auto caled init', e)
+    -- print('auto caled init', e)
 end
 
 function BipedSystem:bipedInit(e)
-    print('bipedInit')
+    --  print('bipedInit', e, e.biped)
     e.biped.body.transforms.l[3] = 0 -- math.pi / 2
     transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
@@ -235,7 +235,7 @@ function BipedSystem:bipedDirection(e, dir)
 end
 
 function setLegs(e)
-    print('setting legs')
+    --print('setting legs')
     local body = e.biped.body
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
@@ -469,13 +469,25 @@ function BipedSystem:doinkBody(e)
     -- Timer
 end
 
+function BipedSystem:movedBody(e)
+    e.biped.body.dirty = true
+    transforms.setTransforms(e.biped.body)
+
+    attachHeadWithOrWithoutNeck(e, true)
+
+    setLegs(e)
+    setArms(e)
+    BipedSystem:bipedAttachHands(e)
+    BipedSystem:bipedAttachFeet(e)
+end
+
 function BipedSystem:itemReleased(elem)
     for _, e in ipairs(self.pool) do
         if e.biped.head == elem.item then
-            print('head released')
+            --print('head released')
         end
         if e.biped.body == elem.item then
-            print('body released')
+            -- print('body released')
             local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
             -- Timer.tween(2, e.biped.body.transforms.l, { [1] = ix,[2] = iy }, 'out-elastic')
         end
