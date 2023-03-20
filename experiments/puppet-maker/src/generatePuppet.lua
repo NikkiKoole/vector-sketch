@@ -239,7 +239,9 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
    local img = mesh.getImage(url, optionalSettings)
    local maskUrl = getPNGMaskUrl(url)
    local mask = mesh.getImage(maskUrl)
+   --local cnv = love.image.newImageData(url) -- canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
+
    return cnv
 end
 
@@ -604,8 +606,9 @@ function changePart(name, values)
          myWorld:emit('setLegHairToLegs', biped)
       end
    end
-   parentize.parentize(root)
-   mesh.meshAll(root)
+   parentize.parentize(editingGuy.guy)
+   -- this is very costly, mayeb do this on a need basis
+   mesh.meshAll(editingGuy.guy)
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
    myWorld:emit("potatoInit", potato)

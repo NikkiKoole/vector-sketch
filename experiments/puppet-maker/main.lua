@@ -39,6 +39,7 @@ inspect = require 'vendor.inspect'
 
 PROF_CAPTURE = true
 prof = require 'vendor.jprof'
+ProFi = require 'vendor.ProFi'
 
 focussed = true
 function findPart(name)
@@ -118,9 +119,10 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 8
+   amountOfGuys = 50
    prof.push('frame')
    prof.push('creating-guys')
+   ProFi:start()
    for i = 1, amountOfGuys do
       local parts, values = generate()
       values = partRandomizeNoChange(values)
@@ -164,6 +166,8 @@ function love.load()
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
    end
+   ProFi:stop()
+   ProFi:writeReport('profilingReportInit.txt')
    prof.pop('creating-guys')
    prof.pop('frame')
    editingGuy = fiveGuys[1]

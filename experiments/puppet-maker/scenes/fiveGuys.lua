@@ -119,6 +119,7 @@ function scene.unload()
 end
 
 function scene.load()
+    ProFi:start()
     prof.push('frame')
     -- print(myWorld)
 
@@ -181,6 +182,8 @@ function scene.load()
     camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
     cam:update(w, h)
     prof.pop('frame')
+    ProFi:stop()
+    ProFi:writeReport('profilingReportFiveGuys.txt')
 end
 
 function scene.draw()

@@ -1,0 +1,122 @@
+###############################################################################################################
+#####  ProFi, a lua profiler. This profile was generated on: Mon Mar 20 10:17:36 2023
+#####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
+#####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
+#####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
+###############################################################################################################
+
+
+| TOTAL TIME = 3.513539
+| FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
+| src/generatePuppet.lua                            : partToTexturedCanvas                    :  266                : 1.956       : 55.67%      :    1350     |
+| src/generatePuppet.lua                            : helperTexturedCanvas                    :  237                : 1.916       : 54.53%      :    1350     |
+| ../../lib/canvas.lua                              : makeTexturedCanvas                      :  136                : 1.622       : 46.16%      :    1350     |
+| src/generatePuppet.lua                            : copyAndRedoGraphic                      :  248                : 1.056       : 30.05%      :     600     |
+| ../../lib/mesh.lua                                : makeMeshFromSibling                     :  750                : 0.361       : 10.28%      :     600     |
+| src/puppetDNA.lua                                 : generate                                :   57                : 0.282       : 8.02%       :      50     |
+| src/puppetDNA.lua                                 : loadGroupFromFile                       :   25                : 0.280       : 7.98%       :     450     |
+| ../../lib/mesh.lua                                : getImage                                :  458                : 0.271       : 7.70%       :    3400     |
+| ../../lib/mesh.lua                                : addToImageCache                         :  442                : 0.253       : 7.20%       :     121     |
+| ../../lib/parse-file.lua                          : parseFile                               :    4                : 0.193       : 5.49%       :     450     |
+| ../../lib/basics.lua                              : copy3                                   :   23                : 0.176       : 5.00%       :   79500     |
+| src/createFromImage.lua                           : createArmHairRubberhose                 :   54                : 0.161       : 4.58%       :     100     |
+| src/createFromImage.lua                           : createLegHairRubberhose                 :   54                : 0.160       : 4.55%       :     100     |
+| src/createFromImage.lua                           : createHairVanillaLine                   :   25                : 0.079       : 2.25%       :      50     |
+| ../../lib/mesh.lua                                : makeVertices                            :  165                : 0.060       : 1.72%       :     600     |
+| ../../lib/mesh.lua                                : addUVToVerts                            :  403                : 0.045       : 1.29%       :     600     |
+| ../../lib/node.lua                                : findNodeByName                          :   12                : 0.043       : 1.22%       :   21650     |
+| src/createFromImage.lua                           : createLegRubberhose                     :   54                : 0.040       : 1.14%       :     100     |
+| src/createFromImage.lua                           : createArmRubberhose                     :   54                : 0.039       : 1.11%       :     100     |
+| src/puppetDNA.lua                                 : stripPath                               :    8                : 0.031       : 0.88%       :    8750     |
+| src/createFromImage.lua                           : createUpperlipBezier                    :   83                : 0.030       : 0.86%       :      50     |
+| src/createFromImage.lua                           : createLowerlipBezier                    :   83                : 0.030       : 0.85%       :      50     |
+| ../../lib/mesh.lua                                : decompose_complex_poly                  :  136                : 0.029       : 0.84%       :     600     |
+| [string "return { {..."]                          : anonymous                               :    0                : 0.027       : 0.78%       :     450     |
+| main.lua                                          : partRandomizeNoChange                   :  180                : 0.027       : 0.76%       :      50     |
+| ../../lib/mesh.lua                                : get_collisions                          :   71                : 0.025       : 0.71%       :     600     |
+| src/createFromImage.lua                           : createNeckRubberhose                    :   54                : 0.019       : 0.53%       :      50     |
+| ../../lib/mesh.lua                                : reTriangulatePolygon                    :  124                : 0.013       : 0.37%       :     600     |
+| ../../lib/mesh.lua                                : get_line_intersection                   :   53                : 0.012       : 0.34%       :    7200     |
+| ../../lib/text.lua                                : getPNGMaskUrl                           :    4                : 0.008       : 0.23%       :    1350     |
+| ../../lib/mesh.lua                                : makeMeshFromVertices                    :  335                : 0.008       : 0.23%       :     600     |
+| ../../lib/numbers.lua                             : vfunc                                   :    3                : 0.007       : 0.19%       :    3600     |
+| ../../lib/numbers.lua                             : ufunc                                   :    3                : 0.007       : 0.19%       :    3600     |
+| src/createFromImage.lua                           : createBrowBezier                        :   83                : 0.006       : 0.17%       :     100     |
+| main.lua                                          : findPart                                :   45                : 0.005       : 0.15%       :    2750     |
+| ../../lib/canvas.lua                              : getDrawParams                           :  101                : 0.004       : 0.10%       :    2043     |
+| [love "RandomGenerator.lua"]                      : random                                  :   33                : 0.003       : 0.08%       :    2450     |
+| ../../lib/hit.lua                                 : pointInPath                             :   29                : 0.002       : 0.07%       :    1200     |
+| ../../lib/mesh.lua                                : getTriangleCentroid                     :  118                : 0.002       : 0.05%       :    1200     |
+| ../../lib/bbox.lua                                : getPointsBBox                           :   29                : 0.001       : 0.03%       :     600     |
+| ../../lib/basics.lua                              : TableConcat                             :   36                : 0.001       : 0.03%       :     600     |
+| src/generatePuppet.lua                            : getIndexOfGraphicPart                   :  224                : 0.001       : 0.02%       :     600     |
+| src/createFromImage.lua                           : getLengthOfPath                         :   14                : 0.001       : 0.02%       :      50     |
+| src/createFromImage.lua                           : getDistance                             :    6                : 0.000       : 0.01%       :     100     |
+| src/generatePuppet.lua                            : isNullObject                            :  307                : 0.000       : 0.01%       :      50     |
+| src/puppetDNA.lua                                 : zeroTransform                           :   45                : 0.000       : 0.00%       :      50     |
+| src/generatePuppet.lua                            : guyChildren                             :  146                : 0.000       : 0.00%       :      50     |
+| ../../vendor/ProFi.lua                            : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
+| [C]                                               : assert                                  :   -1                : 0.000       : 0.00%       :     600     |
+| [C]                                               : getHeight                               :   -1                : 0.000       : 0.00%       :     600     |
+| [C]                                               : getWidth                                :   -1                : 0.000       : 0.00%       :     600     |
+| src/generatePuppet.lua                            : createUpperlipBezier                    :  329                : 0.000       : 0.00%       :      50     |
+| src/generatePuppet.lua                            : createLowerlipBezier                    :  334                : 0.000       : 0.00%       :      50     |
+| src/generatePuppet.lua                            : createBrowBezier                        :  321                : 0.000       : 0.00%       :     100     |
+| ../../vendor/ProFi.lua                            : stop                                    :   88                : 0.000       : 0.00%       :       1     |
+| [C]                                               : min                                     :   -1                : 0.000       : 0.00%       :     600     |
+| [C]                                               : max                                     :   -1                : 0.000       : 0.00%       :     600     |
+| [C]                                               : sqrt                                    :   -1                : 0.000       : 0.00%       :     200     |
+| src/generatePuppet.lua                            : createNeckRubberhose                    :  388                : 0.000       : 0.00%       :      50     |
+| src/generatePuppet.lua                            : createArmHairRubberhose                 :  352                : 0.000       : 0.00%       :     100     |
+| src/generatePuppet.lua                            : createArmRubberhose                     :  339                : 0.000       : 0.00%       :     100     |
+| src/generatePuppet.lua                            : createHairVanillaLine                   :  313                : 0.000       : 0.00%       :      50     |
+| ../../lib/mesh.lua                                : ufunc                                   :  428                : 0.000       : 0.00%       :    3600     |
+| [C]                                               : release                                 :   -1                : 0.000       : 0.00%       :     600     |
+| [C]                                               : setTexture                              :   -1                : 0.000       : 0.00%       :     600     |
+| ../../lib/mesh.lua                                : vfunc                                   :  429                : 0.000       : 0.00%       :    3600     |
+| [love "ImageData.lua"]                            : release                                 :  476                : 0.000       : 0.00%       :     600     |
+| src/generatePuppet.lua                            : createLegRubberhose                     :  376                : 0.000       : 0.00%       :     100     |
+| [C]                                               : newMesh                                 :   -1                : 0.000       : 0.00%       :     600     |
+| src/generatePuppet.lua                            : createLegHairRubberhose                 :  364                : 0.000       : 0.00%       :     100     |
+| ../../vendor/ProFi.lua                            : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
+| [C]                                               : setColorMask                            :   -1                : 0.000       : 0.00%       :     100     |
+| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :   79500     |
+| [C]                                               : ceil                                    :   -1                : 0.000       : 0.00%       :    2250     |
+| [C]                                               : tonumber                                :   -1                : 0.000       : 0.00%       :    2450     |
+| [C]                                               : random                                  :   -1                : 0.000       : 0.00%       :    2450     |
+| [C]                                               : pairs                                   :   -1                : 0.000       : 0.00%       :    9250     |
+| [C]                                               : copy3                                   :   -1                : 0.000       : 0.00%       :    9250     |
+| [C]                                               : getmetatable                            :   -1                : 0.000       : 0.00%       :    9250     |
+| src/generatePuppet.lua                            : copyAndRedoGraphic                      :  425                : 0.000       : 0.00%       :     600     |
+| [C]                                               : getInfo                                 :   -1                : 0.000       : 0.00%       :     778     |
+| [C]                                               : __index                                 :   -1                : 0.000       : 0.00%       :    2450     |
+| [love "wrap_Math.lua"]                            : random                                  :   37                : 0.000       : 0.00%       :    2450     |
+| ../../vendor/ProFi.lua                            : start                                   :   70                : 0.000       : 0.00%       :       0     |
+| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :       2     |
+| [love "RandomGenerator.lua"]                      : random                                  :   75                : 0.000       : 0.00%       :    2450     |
+| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :    9750     |
+| [C]                                               : loadstring                              :   -1                : 0.000       : 0.00%       :     450     |
+| [C]                                               : read                                    :   -1                : 0.000       : 0.00%       :     450     |
+| [C]                                               : gsub                                    :   -1                : 0.000       : 0.00%       :    4000     |
+| [C]                                               : triangulate                             :   -1                : 0.000       : 0.00%       :     600     |
+| [C]                                               : newImage                                :   -1                : 0.000       : 0.00%       :    1471     |
+| [C]                                               : setFilter                               :   -1                : 0.000       : 0.00%       :     121     |
+| [C]                                               : send                                    :   -1                : 0.000       : 0.00%       :    4050     |
+| [C]                                               : getMatrix                               :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :    1350     |
+| ../../vendor/ProFi.lua                            : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
+| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :    2093     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :    3443     |
+| [C]                                               : newImageData                            :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : setWrap                                 :   -1                : 0.000       : 0.00%       :     121     |
+| [C]                                               : newTransform                            :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : find                                    :   -1                : 0.000       : 0.00%       :    1350     |
+| src/generatePuppet.lua                            : getPNGMaskUrl                           :   22                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : setShader                               :   -1                : 0.000       : 0.00%       :    2700     |
+| [C]                                               : sub                                     :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : newCanvas                               :   -1                : 0.000       : 0.00%       :    1350     |
+| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :    2100     |
+| [C]                                               : setCanvas                               :   -1                : 0.000       : 0.00%       :    2700     |
+| [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |
