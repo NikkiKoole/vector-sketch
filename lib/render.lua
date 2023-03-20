@@ -19,9 +19,9 @@ local lerp = numbers.lerp
 
 local function lerpColor(c1, c2, t)
    return { lerp(c1[1], c2[1], t),
-      lerp(c1[2], c2[2], t),
-      lerp(c1[3], c2[3], t),
-      lerp(c1[4], c2[4], t) }
+       lerp(c1[2], c2[2], t),
+       lerp(c1[3], c2[3], t),
+       lerp(c1[4], c2[4], t) }
 end
 
 local function lerpArray(a1, a2, t)
@@ -37,8 +37,8 @@ local function lerpPoints(p1, p2, t)
       local result = {}
       for i = 1, #p1 do
          table.insert(result, {
-            lerp(p1[i][1], p2[i][1], t),
-            lerp(p1[i][2], p2[i][2], t)
+             lerp(p1[i][1], p2[i][1], t),
+             lerp(p1[i][2], p2[i][2], t)
          })
       end
       return result
@@ -51,8 +51,8 @@ local function lerpNodes(left, right, root, t)
    if (left.folder and right.folder) then
       root.folder = true
       root.transforms = {
-         l = lerpArray(left.transforms.l, right.transforms.l, t),
-         --g = lerpArray(left.transforms.g, right.transforms.g, t)
+          l = lerpArray(left.transforms.l, right.transforms.l, t),
+          --g = lerpArray(left.transforms.g, right.transforms.g, t)
       }
       root.children = {}
       --      print(#left.children, #right.children)
@@ -88,17 +88,14 @@ local function lerpNodes(left, right, root, t)
 end
 
 local function createLerpedChild(ex1, ex2, t)
-
    local result = {}
    lerpNodes(ex1, ex2, result, t)
    result._parent = ex1._parent
    parentize.parentize(result)
    return result
-
 end
 
 render.renderThingsWithKeyFrames = function(root)
-
    -- if (root.keyframes) then
    if (root.keyframes == 2) then
       if currentNode == root then
@@ -109,9 +106,7 @@ render.renderThingsWithKeyFrames = function(root)
          local lerped = createLerpedChild(root.children[1], root.children[2], root.lerpValue)
          if lerped then handleChild(lerped) end
          root.lastLerp = lerped
-
       else
-
          handleChild(root.children[root.frame])
       end
    end
@@ -145,7 +140,8 @@ render.renderThingsWithKeyFrames = function(root)
       return cUV;
       }
 
-   ]] --
+   ]]
+   --
 
    if (root.keyframes == 4) then
       if currentNode == root then
@@ -178,7 +174,6 @@ render.renderThingsWithKeyFrames = function(root)
                br = root.children[1]
                newLerpX = lerpX * 2
                newLerpY = lerpY * 2
-
             end
             if (lerpX >= 0.5 and lerpY < 0.5) then
                tl = createLerpedChild(root.children[2], root.children[3], 0.5)
@@ -187,7 +182,6 @@ render.renderThingsWithKeyFrames = function(root)
                br = createLerpedChild(root.children[3], root.children[5], 0.5)
                newLerpX = (lerpX - 0.5) * 2
                newLerpY = lerpY * 2
-
             end
             if (lerpX < 0.5 and lerpY >= 0.5) then
                tl = createLerpedChild(root.children[2], root.children[4], 0.5)
@@ -197,7 +191,6 @@ render.renderThingsWithKeyFrames = function(root)
 
                newLerpX = (lerpX) * 2
                newLerpY = (lerpY - 0.5) * 2
-
             end
             if (lerpX >= 0.5 and lerpY >= 0.5) then
                tl = root.children[1]
@@ -207,7 +200,6 @@ render.renderThingsWithKeyFrames = function(root)
 
                newLerpX = (lerpX - 0.5) * 2
                newLerpY = (lerpY - 0.5) * 2
-
             end
             local cTop = createLerpedChild(tl, tr, newLerpX)
             local cBot = createLerpedChild(bl, br, newLerpX)
@@ -239,16 +231,13 @@ render.justDoTransforms = function(root, dirty)
       if root.children then
          for i = 1, #root.children do
             render.justDoTransforms(root.children[i], isDirty)
-
          end
       end
       --love.graphics.setStencilTest()
    end
-
 end
 
 render.renderThings = function(root, dirty)
-
    local isDirty = dirty or root.dirty
    --print(isDirty)
    if dirty == nil or root.dirty == nil then
@@ -260,7 +249,9 @@ render.renderThings = function(root, dirty)
    --transform.setTransforms(root, isDirty)
    --end
    --print(isDirty)
+   --if isDirty then
    transform.setTransforms(root, isDirty)
+   --end
    --print(inspect(transform))
 
 
@@ -287,7 +278,6 @@ render.renderThings = function(root, dirty)
    if root._parent == nil then
       love.graphics.setStencilTest()
    end
-
 end
 
 
@@ -312,7 +302,6 @@ local function renderNormallyOrOptimized(shape, isDirty)
          render.renderThings(shape, isDirty)
       end
    end
-
 end
 
 local maskIndex = 0
@@ -340,17 +329,16 @@ function handleChild(shape, isDirty)
 
       if shape.hole and m then
          love.graphics.stencil(
-            function()
-               love.graphics.draw(m, shape._parent.transforms._g)
-            end, "replace", parentIndex, true)
-
+             function()
+                love.graphics.draw(m, shape._parent.transforms._g)
+             end, "replace", parentIndex, true)
       end
 
       if shape.mask and m then
          love.graphics.stencil(
-            function()
-               love.graphics.draw(m, shape._parent.transforms._g)
-            end, "replace", thisIndex, true)
+             function()
+                love.graphics.draw(m, shape._parent.transforms._g)
+             end, "replace", thisIndex, true)
       end
 
       if shape.hole then
@@ -369,21 +357,18 @@ function handleChild(shape, isDirty)
 
 
    if shape.folder then
-
       if (shape.depth ~= nil) and parallax.getDynamicThing() then
-
          local p = parallax.getDynamicThing()
          local c = parallax.getDynamicCam()
 
          c.scale = numbers.mapInto(
-            shape.depth,
-            p.minmax.min, p.minmax.max,
-            p.factors.far, p.factors.near
-         )
+                 shape.depth,
+                 p.minmax.min, p.minmax.max,
+                 p.factors.far, p.factors.near
+             )
 
          c.relativeScale = 1
          c.push()
-
       end
 
       -- if (shape.depth ~= nil and (shape.depthLayer == 'hack')) then
@@ -422,17 +407,14 @@ function handleChild(shape, isDirty)
             --print('yes')
             renderNormallyOrOptimized(shape, isDirty)
          else
-
             --print('not')
             --print(tlx,tly, brx, bry, inspect(shape.bbox))
          end
 
          --print(tlx, tly, brx, bry)
          --print(shape.transforms.l[2] + shape.transforms.l[7])
-
       else
          renderNormallyOrOptimized(shape, isDirty)
-
       end
 
 
@@ -446,7 +428,6 @@ function handleChild(shape, isDirty)
          else
             print('not rendering someting cause of the aabb', inspect(shape.aabb), minX, maxX)
          end
-
       else
          renderNormallyOrOptimized(shape, isDirty)
       end
@@ -469,11 +450,7 @@ function handleChild(shape, isDirty)
    end
 
    if currentNode ~= shape then
-
-
-
       if (shape.mesh and not shape.mask) then
-
          love.graphics.setColor(shape.color)
          love.graphics.draw(shape.mesh, shape._parent.transforms._g)
 
@@ -492,22 +469,15 @@ function handleChild(shape, isDirty)
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(m, shape._parent.transforms._g)
          end
-
-
       end
 
       -- these are generated by puppet maker, or well the code isnt but the value here (the canvas)
       if shape.texture and shape.texture.canvas then
-
          love.graphics.setColor(1, 1, 1)
          love.graphics.draw(shape.texture.canvas, shape._parent.transforms._g)
-
-
-
       end
    end
    if currentNode == shape then
-
       local editing = mesh.makeVertices(shape)
       if (editing and #editing > 0) then
          --print('makemesh in handlechild custom, this doenst do textured polygons yet', currentNode.type)
@@ -519,7 +489,6 @@ function handleChild(shape, isDirty)
                if (shape.texture.squishable) then
                   editing = mesh.makeSquishableUVsFromPoints(shape.points)
                else
-
                   mesh.addUVToVerts(editing, mesh.getImage(shape.texture.url), shape.points, shape.texture)
                end
             end
@@ -538,7 +507,6 @@ function handleChild(shape, isDirty)
          if shape.texture and shape.texture.url and #(shape.texture.url) > 0 then
             --	    print('using texture')
             if editingMesh then
-
                editingMesh:setTexture(mesh.getImage(shape.texture.url))
             end
          end
@@ -554,17 +522,14 @@ function handleChild(shape, isDirty)
          love.graphics.draw(borderMesh, shape._parent.transforms._g)
          --print('need to mesh the direct one too')
       end
-
    end
 
    if (shape.depth ~= nil and parallax.getDynamicThing()) then
       parallax.getDynamicCam():pop()
    end
-
 end
 
 render.renderNodeIntoCanvas = function(n, canvas, filename)
-
    love.graphics.setCanvas({ canvas, stencil = true })
    love.graphics.clear()
    -- this is the default already
@@ -615,7 +580,7 @@ function drawNodeIntoRect(node, x, y, w, h)
    local offsetY = (h1 - h2) / 2
 
    love.graphics.push()
-   love.graphics.translate(-bboxafter2[1] + x + offsetX, -bboxafter2[2] + y + offsetY)
+   love.graphics.translate( -bboxafter2[1] + x + offsetX, -bboxafter2[2] + y + offsetY)
    render.renderThings(node)
    love.graphics.pop()
 
@@ -624,8 +589,6 @@ function drawNodeIntoRect(node, x, y, w, h)
    -- here i am restoring the original
    node.transforms.l[4] = oldScaleW
    node.transforms.l[5] = oldScaleH
-
-
 end
 
 return render

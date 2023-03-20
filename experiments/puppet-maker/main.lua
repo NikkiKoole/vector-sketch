@@ -37,7 +37,7 @@ Concord = require 'vendor.concord.init'
 myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = false
+PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 
@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 5
+   amountOfGuys = 20
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end

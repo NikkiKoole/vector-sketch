@@ -39,9 +39,9 @@ local function getPositionsForNeckAttaching(e)
         local points = meta.points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
 
-        
+
         local x, y = body.transforms._g:transformPoint(newPoints[1][1], newPoints[1][2])
-        --local x, y = e.biped.guy.transforms._g:transformPoint(newPoints[1][1], newPoints[1][2])
+        x, y = e.biped.guy.transforms._g:inverseTransformPoint(x, y)
         return x, y
     else
         local neck = node.findNodeByName(body, 'neck')
@@ -64,11 +64,14 @@ local function getPositionsForArmsAttaching(e)
         if e.biped.values.potatoHead then
             local a1x, a1y = body.transforms._g:transformPoint(newPoints[7][1], newPoints[7][2])
             local a2x, a2y = body.transforms._g:transformPoint(newPoints[3][1], newPoints[3][2])
+            a1x, a1y = e.biped.guy.transforms._g:inverseTransformPoint(a1x, a1y)
+            a2x, a2y = e.biped.guy.transforms._g:inverseTransformPoint(a2x, a2y)
             return a1x, a1y, a2x, a2y
         else
             local a1x, a1y = body.transforms._g:transformPoint(newPoints[8][1], newPoints[8][2])
             local a2x, a2y = body.transforms._g:transformPoint(newPoints[2][1], newPoints[2][2])
-
+            a1x, a1y = e.biped.guy.transforms._g:inverseTransformPoint(a1x, a1y)
+            a2x, a2y = e.biped.guy.transforms._g:inverseTransformPoint(a2x, a2y)
             return a1x, a1y, a2x, a2y
         end
     else
@@ -98,6 +101,10 @@ local function getPositionsForLegsAttaching(e)
         local l2x, l2y  = body.transforms._g:transformPoint(mx2, newPoints[4][2])
         -- this -50 on the y axis is to make the legs always more or less touch the body
         -- usually the lines have some margin in the drawings.
+
+        l1x, l1y        = e.biped.guy.transforms._g:inverseTransformPoint(l1x, l1y)
+        l2x, l2y        = e.biped.guy.transforms._g:inverseTransformPoint(l2x, l2y)
+
         return l1x, l1y - 25, l2x, l2y - 25
     else
         local lc1 = node.findNodeByName(body, 'leg1')
@@ -556,7 +563,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
         end
 
         if e.biped.body == elem.item then
-            --local body = e.biped.body
+            -- this is still correct, to make the body move, but not the total location.
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
             e.biped.body.dirty = true

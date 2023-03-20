@@ -51,6 +51,7 @@ end
 
 
 local function doCircleInTransition(x, y, onAfter)
+    print(x, y)
     local w, h = love.graphics.getDimensions()
     transition = { type = 'circle', segments = 7, alpha = 0, x = x, y = y, radius = math.max(w, h) }
     Timer.tween(.3, transition, { alpha = 1 })
@@ -62,6 +63,7 @@ local function doCircleInTransition(x, y, onAfter)
 end
 
 local function doCircleOutTransition(x, y, onAfter)
+    print(x, y)
     local w, h = love.graphics.getDimensions()
     transition = { type = 'circle', segments = 7, alpha = 1, x = x, y = y, radius = 0 }
     Timer.tween(1.3, transition, { alpha = 0 })
@@ -183,7 +185,16 @@ local function pointerPressed(x, y, id)
     if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
         local w, h = love.graphics.getDimensions()
         local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
-        local bx, by = focusOn.transforms._g:transformPoint(0, 0)
+        --getHeadPoints(editingGuy.potato)
+        local newPoints = getHeadPointsFromValues(editingGuy.values, focusOn,
+                editingGuy.values.potatoHead and 'body' or 'head')
+
+        local tX = numbers.mapInto(editingGuy.values.noseXAxis, -2, 2, 0, 1)
+        local tY = numbers.mapInto(editingGuy.values.noseYAxis, -3, 3, 0, 1)
+
+        local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
+        local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
+        local bx, by = focusOn.transforms._g:transformPoint(x, y)
         local sx, sy = cam:getScreenCoordinates(bx, by)
         doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
     end
@@ -237,6 +248,7 @@ function scene.load()
 
         attachAllFaceParts(fiveGuys[i])
         editingGuy = fiveGuys[i]
+
         changePart('hair', fiveGuys[i].values)
         table.insert(fg, { biped = biped, potato = potato })
     end
@@ -259,6 +271,7 @@ function scene.load()
             myWorld:emit('movedBody', fg[i].biped)
         end
         fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 700
+        --fiveGuys[i].body.transforms.l[2] = -love.math.random() * 1000
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         --
@@ -277,7 +290,7 @@ function scene.load()
     depthMinMax = { min = -1.0, max = 1.0 }
     -- foregroundFactors = { far=.5, near=1}
     --backgroundFactors = { far=.4, near=.7}
-    tileSize = 600
+    tileSize = 800
     foregroundFar = camera.generateCameraLayer('foregroundFar', 1)
     foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
     groundimg8 = love.graphics.newImage('assets/ground3.png', { mipmaps = true })
@@ -295,6 +308,8 @@ function scene.load()
         ProFi:stop()
         ProFi:writeReport('profilingReportInit.txt')
     end
+
+    local w, h = love.graphics.getDimensions()
 end
 
 function drawGroundPlaneLinesSimple(far, near)
@@ -483,6 +498,15 @@ function scene.update(dt)
             else
                 doRectInTransition(w + offset, -h, function() print('done!') end)
             end
+        end
+        if (k == 'p') then
+            if not profiling then
+                ProFi:start()
+            else
+                ProFi:stop()
+                ProFi:writeReport('profilingRunninggReportFiveGuys.txt')
+            end
+            profiling = not profiling
         end
     end
 

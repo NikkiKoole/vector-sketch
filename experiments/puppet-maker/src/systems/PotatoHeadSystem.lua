@@ -44,10 +44,10 @@ end
 function PotatoHeadSystem:update(dt)
     --print('potato headupdate')
     for _, e in ipairs(self.pool) do
-        e.potato.blinkCounter=  e.potato.blinkCounter - dt
+        e.potato.blinkCounter = e.potato.blinkCounter - dt
         if e.potato.blinkCounter < 0 then
             PotatoHeadSystem:blinkEyes(e)
-            e.potato.blinkCounter = 5.0
+            e.potato.blinkCounter = 5.0 - love.math.random()
         end
     end
 end
@@ -212,8 +212,8 @@ function PotatoHeadSystem:eyeLookAtPoint(x, y)
             local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
             Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = eyex2,[2] = eyey2 }, 'out-quad')
         end)
-        if  e.potato.blinkCounter > 1 then
-        e.potato.blinkCounter=  e.potato.blinkCounter - 1
+        if e.potato.blinkCounter > 1 then
+            e.potato.blinkCounter = e.potato.blinkCounter - 1
         end
     end
 end
