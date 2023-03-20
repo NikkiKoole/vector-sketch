@@ -113,7 +113,7 @@ function getSiblingBefore(before)
 end
 
 function removeChild(elem)
-   if elem._parent then
+   if elem and elem._parent then
       local index = node.getIndex(elem)
       if index >= 0 then table.remove(elem._parent.children, index) end
    end
@@ -258,7 +258,7 @@ local function pointerPressed(x, y, id)
       SM.unload('editGuy')
       SM.load("fiveGuys")
    end
-   myWorld:emit("eyeLookAtPoint", potato, x, y)
+   myWorld:emit("eyeLookAtPoint", x, y)
 end
 
 local function hex2rgb(hex)
@@ -322,7 +322,7 @@ function scene.unload()
    Signal.clearPattern('.*') -- clear all signals
 
    myWorld:clear()
-   print(inspect(myWorld:getEntities()))
+   --print(inspect(myWorld:getEntities()))
 end
 
 function scene.load()
@@ -552,7 +552,7 @@ function setCategories()
 end
 
 function attachCallbacks()
-   print('attached callbacks')
+   --print('attached callbacks')
 
 
    Signal.register('click-settings-scroll-area-item', function(x, y)
@@ -578,7 +578,7 @@ function attachCallbacks()
    --Signal.clearPattern('.*') -- clear all signals
 
    function love.keypressed(key, unicode)
-      print('keypressed', key)
+      --print('keypressed', key)
       local values = editingGuy.values
       if key == 'escape' then
          love.event.quit()

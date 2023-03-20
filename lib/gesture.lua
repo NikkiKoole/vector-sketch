@@ -206,12 +206,12 @@ local function gestureRecognizer(gesture)
 end
 
 lib.maybeTrigger = function(id, x, y)
-   print('lib maybeTrigger')
+   --print('lib maybeTrigger')
    for i = #gestureState.list, 1, -1 do
       local g = gestureState.list[i]
       if g then
          if g.trigger == id then
-            print('ids are identical', id)
+            --print('ids are identical', id)
             addGesturePoint(g, love.timer.getTime(), x, y)
             gestureRecognizer(g)
             lib.remove(g)

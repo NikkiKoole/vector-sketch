@@ -91,8 +91,11 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
         local w, h = love.graphics.getDimensions()
-        doCircleInTransition(love.math.random() * w, love.math.random() * h, function() SM.load("editGuy") end)
+        local bx, by = editingGuy.head.transforms._g:transformPoint(0, 0)
+        local sx, sy = cam:getScreenCoordinates(bx, by)
+        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
     end
+    myWorld:emit("eyeLookAtPoint", x, y)
 end
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
@@ -116,7 +119,7 @@ function scene.unload()
 end
 
 function scene.load()
-    print(myWorld)
+    -- print(myWorld)
 
     root = {
         folder = true,
@@ -160,7 +163,7 @@ function scene.load()
             fiveGuys[i].body.transforms.l[2] = 0
             myWorld:emit('movedBody', fg[i].biped)
         end
-        fiveGuys[i].guy.transforms.l[1] = (i - 3) * 400
+        fiveGuys[i].guy.transforms.l[1] = (i - 3) * 700
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         --
@@ -172,7 +175,7 @@ function scene.load()
     local w, h = love.graphics.getDimensions()
 
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
+    camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
     cam:update(w, h)
 end
 
@@ -215,6 +218,25 @@ function scene.update(dt)
     end
 
     function love.keypressed(k)
+        if k == '1' then
+            editingGuy = fiveGuys[1]
+        end
+        if k == '2' then
+            editingGuy = fiveGuys[2]
+        end
+        if k == '3' then
+            editingGuy = fiveGuys[3]
+        end
+        if k == '4' then
+            editingGuy = fiveGuys[4]
+        end
+        if k == '5' then
+            editingGuy = fiveGuys[5]
+        end
+        if k == 'escape' then
+            love.event.quit()
+        end
+
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
             doCircleInTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)

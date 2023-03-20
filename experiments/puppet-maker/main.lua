@@ -40,7 +40,7 @@ inspect = require 'vendor.inspect'
 PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 
-
+focussed = true
 function findPart(name)
    for i = 1, #parts do
       if parts[i].name == name then
@@ -115,9 +115,14 @@ function love.load()
 
    fiveGuys = {} -- here we keep the 5 differnt guys around, I might as well just generate them here to begin with
 
-   parts, values = generate()
+   parts, _ = generate()
+
+
 
    for i = 1, 5 do
+      local parts, values = generate()
+      values = partRandomizeNoChange(values)
+      --print(inspect(values))
       fiveGuys[i] = {
           values = copy3(values),
           head = copyAndRedoGraphic('head', values),
@@ -158,18 +163,34 @@ function love.load()
       guy.children = guyChildren(fiveGuys[i])
    end
 
-   for i = 1, #fiveGuys do
-      editingGuy = fiveGuys[i]
-      --partRandomize(fiveGuys[i].values)
-   end
-
-   values = nil -- It is not allowed to leak
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
    SM.load("editGuy")
    print(love.filesystem.getIdentity())
-   focussed = true
+end
+
+function partRandomizeNoChange(values)
+   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
+       'brows', 'upperlip', 'lowerlip', }
+   -- local parts = { 'head' }
+   for i = 1, #parts do
+      if values.potatoHead and parts[i] == 'neck' then
+
+      else
+         local p = findPart(parts[i])
+         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
+         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         if (parts[i] == 'head' or parts[i] == 'body') then
+            values[parts[i]].flipx = love.math.random() < .5 and -1 or 1
+            values[parts[i]].flipy = love.math.random() < .5 and -1 or 1
+         end
+         -- changePart(parts[i], values)
+         --print('changed part ', parts[i])
+      end
+   end
+   return values
 end
 
 function partRandomize(values)
@@ -196,7 +217,9 @@ end
 
 function love.update(dt)
    --require("vendor.lurker").update()
-
+   if not focussed then
+      -- print('this app is unfocessed!')
+   end
    if focussed then
       gesture.update(dt)
       SM.update(dt)

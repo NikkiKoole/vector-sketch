@@ -46,13 +46,13 @@ local cam = require('lib.cameraBase').getInstance()
 function makeNode(graphic, tl)
    local tl = tl or { 0, 0, 0, 1, 1, graphic.w / 2, graphic.h, 0, 0 }
    return {
-      _parent = nil,
-      children = {},
-      graphic = graphic,
-      dirty = true,
-      -- x, y, angle, sx, sy, ox, oy, kx, ky
-      transforms = { tl = tl,
-         l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9]) }
+       _parent = nil,
+       children = {},
+       graphic = graphic,
+       dirty = true,
+       -- x, y, angle, sx, sy, ox, oy, kx, ky
+       transforms = { tl = tl,
+           l = love.math.newTransform(tl[1], tl[2], tl[3], tl[4], tl[5], tl[6], tl[7], tl[8], tl[9]) }
    }
 end
 
@@ -77,9 +77,8 @@ end
 function love.mousemoved(x, y, dx, dy)
    if love.mouse.isDown(1) then
       local s = cam:getScale()
-      cam:translate(-dx / s, -dy / s)
+      cam:translate( -dx / s, -dy / s)
    end
-
 end
 
 function love.keypressed(key)
@@ -92,13 +91,12 @@ function love.keypressed(key)
       cam:translate(0, 5)
    end
    if key == 'left' then
-      cam:translate(-5, 0)
+      cam:translate( -5, 0)
    end
    if key == 'right' then
       cam:translate(5, 0)
    end
    love.keyboard.setKeyRepeat(true)
-
 end
 
 function love.load()
@@ -152,27 +150,27 @@ function love.load()
 
 
    local ani = {
-      children = { {
-         color = { 1, 1, 1, 1 },
-         data = {
-            steps = 15,
-            width = 178.5
-         },
-         name = "plant1",
-         points = { { 0, 0 }, { 0, 311.5 }, { 0, 623 } },
-         texture = {
-            filter = "linear",
-            squishable = true,
-            url = "assets/plant.png",
-            wrap = "clamp"
-         },
-         type = "bezier"
-      } },
-      folder = true,
-      name = "plant container",
-      transforms = {
-         l = { 0, 0, 0, 1, 1, 100, 0, 0, 0 }
-      }
+       children = { {
+           color = { 1, 1, 1, 1 },
+           data = {
+               steps = 15,
+               width = 178.5
+           },
+           name = "plant1",
+           points = { { 0, 0 }, { 0, 311.5 }, { 0, 623 } },
+           texture = {
+               filter = "linear",
+               squishable = true,
+               url = "assets/plant.png",
+               wrap = "clamp"
+           },
+           type = "bezier"
+       } },
+       folder = true,
+       name = "plant container",
+       transforms = {
+           l = { 0, 0, 0, 1, 1, 100, 0, 0, 0 }
+       }
    }
 
    addChild(root, ani)
@@ -221,7 +219,6 @@ function love.update(dt)
 
    updateBlobShape()
    totaldt = totaldt + dt
-
 end
 
 function love.wheelmoved(dx, dy)
@@ -272,7 +269,6 @@ function renderRecursive(node, dirty)
    -- todo this logic needs to be moved into the general code, but what is a graphics really ?
    -- something with a texture urll ?
    if node.graphic then
-
       local mx, my = love.mouse.getPosition()
       local wx, wy = cam:getWorldCoordinates(mx, my)
       local xx, yy = node.transforms.g:inverseTransformPoint(wx, wy)
@@ -292,12 +288,9 @@ function renderRecursive(node, dirty)
    for i = 1, #node.children do
       renderRecursive(node.children[i], isDirty)
    end
-
-
 end
 
 function drawGroundPlaneLinesSimple(far, near)
-
    love.graphics.setColor(1, 1, 1)
    love.graphics.setLineWidth(2)
    local W, H = love.graphics.getDimensions()
@@ -313,8 +306,10 @@ function drawGroundPlaneLinesSimple(far, near)
                    groundimg6, groundimg7, groundimg8, groundimg9, groundimg10,
                    groundimg10, groundimg11, groundimg12,groundimg12,groundimg12,
                    groundimg12,groundimg13,groundimg13,groundimg13}
-   ]] --
-   local imgarr = { groundimg6b, groundimg3, groundimg8, groundimg9, groundimg10 }
+   ]]
+   --
+   -- local imgarr = { groundimg6b, groundimg3, groundimg8, groundimg9, groundimg10 }
+   local imgarr = { groundimg8 }
 
    local woohoo = 1
 
@@ -345,11 +340,11 @@ function drawGroundPlaneLinesSimple(far, near)
          love.graphics.setColor(.9, .9, .9, .9)
          love.graphics.draw(m)
          --love.graphics.setColor(.1, .9, .3, .9)
-         love.graphics.draw(m, 0, 400 * s)
+         --love.graphics.draw(m, 0, 400 * s)
 
 
          local newuvs = { .05, .08, -- tl x and y}
-            .92, .95 - .09 } --width and height
+             .92, .95 - .09 } --width and height
 
          local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
          local outward = geom.coloredOutsideTheLines(rect1, newuvs)
@@ -364,8 +359,7 @@ function drawGroundPlaneLinesSimple(far, near)
          -- love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .9)
          love.graphics.setColor(.4, .8, .2, 1)
          love.graphics.draw(m)
-         love.graphics.draw(m, 0, 400 * s)
-
+         --love.graphics.draw(m, 0, 400 * s)
       end
    end
 end

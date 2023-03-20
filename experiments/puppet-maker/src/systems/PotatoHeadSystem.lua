@@ -92,12 +92,12 @@ function PotatoHeadSystem:rescaleFaceparts(e)
 end
 
 function PotatoHeadSystem:potatoInit(e)
-    print('potatoint')
+    --print('potatoint')
     local nosex, nosey = getPositionForNoseAttaching(e)
-
-    e.potato.nose.transforms.l[1] = nosex
-    e.potato.nose.transforms.l[2] = nosey
-
+    if e.potato.nose then
+        e.potato.nose.transforms.l[1] = nosex
+        e.potato.nose.transforms.l[2] = nosey
+    end
 
     local mouthx, mouthy = getPositionForMouthAttaching(e)
     e.potato.upperlip.transforms.l[1] = mouthx
@@ -165,41 +165,43 @@ local function setAngleAndDistance(sx, sy, angle, distance)
 end
 
 
-function PotatoHeadSystem:eyeLookAtPoint(e, x, y)
-    local wx, wy = cam:getWorldCoordinates(x, y)
+function PotatoHeadSystem:eyeLookAtPoint(x, y)
+    for _, e in ipairs(self.pool) do
+        local wx, wy = cam:getWorldCoordinates(x, y)
 
-    local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
-
-
-    ------
-    e.potato.pupil1.transforms.l[1] = eyex1
-    e.potato.pupil1.transforms.l[2] = eyey1
-
-
-    local mx, my = e.potato.pupil1.transforms._g:transformPoint(0, 0)
-    local angle, distance = getAngleAndDistance(wx, wy, mx, my)
-    local t = e.potato.pupil1.transforms
-    local nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20)
-
-    Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
-    Timer.after(1, function()
         local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
-        Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = eyex1,[2] = eyey1 }, 'out-quad')
-    end)
-    -------
-    e.potato.pupil2.transforms.l[1] = eyex2
-    e.potato.pupil2.transforms.l[2] = eyey2
 
-    mx, my = e.potato.pupil2.transforms._g:transformPoint(0, 0)
-    angle, distance = getAngleAndDistance(wx, wy, mx, my)
-    t = e.potato.pupil2.transforms
-    nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20)
 
-    Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
-    Timer.after(1, function()
-        local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
-        Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = eyex2,[2] = eyey2 }, 'out-quad')
-    end)
+        ------
+        e.potato.pupil1.transforms.l[1] = eyex1
+        e.potato.pupil1.transforms.l[2] = eyey1
+
+
+        local mx, my = e.potato.pupil1.transforms._g:transformPoint(0, 0)
+        local angle, distance = getAngleAndDistance(wx, wy, mx, my)
+        local t = e.potato.pupil1.transforms
+        local nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20)
+
+        Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
+        Timer.after(1, function()
+            local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
+            Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = eyex1,[2] = eyey1 }, 'out-quad')
+        end)
+        -------
+        e.potato.pupil2.transforms.l[1] = eyex2
+        e.potato.pupil2.transforms.l[2] = eyey2
+
+        mx, my = e.potato.pupil2.transforms._g:transformPoint(0, 0)
+        angle, distance = getAngleAndDistance(wx, wy, mx, my)
+        t = e.potato.pupil2.transforms
+        nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20)
+
+        Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
+        Timer.after(1, function()
+            local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
+            Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = eyex2,[2] = eyey2 }, 'out-quad')
+        end)
+    end
 end
 
 function PotatoHeadSystem:blinkEyes(e)

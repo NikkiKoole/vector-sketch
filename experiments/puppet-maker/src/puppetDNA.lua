@@ -89,7 +89,9 @@ function generate()
     local upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
     local lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
 
-    table.insert(noseImgUrls, 'assets/null.png')
+    -- ok haha this cause a bug, because the randomizer doenst know how to handle it properly
+    --table.insert(noseImgUrls, 'assets/null.png')
+    -- but why is this an issue for the nose and not for the patch for example
 
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts },
@@ -423,7 +425,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        neckLength              = 700,
+        neckLength              = 20,
         neckWidthMultiplier     = 1,
         feet                    = {
             shape     = 1,

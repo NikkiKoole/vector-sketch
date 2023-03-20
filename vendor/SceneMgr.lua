@@ -4,10 +4,10 @@ local pathDefined = nil -- does the scene file or folder exist
 
 -- Scene and properties
 local scene = {}
-scene.dir = nil         -- The directory for your scenes
-scene.cName = nil       -- current scene file name
-scene.pName = nil       -- previous scene file name
-scene.current = nil     -- The required scene, so it can be later unloaded
+scene.dir = nil -- The directory for your scenes
+scene.cName = nil -- current scene file name
+scene.pName = nil -- previous scene file name
+scene.current = nil -- The required scene, so it can be later unloaded
 
 
 --                     --
@@ -20,7 +20,7 @@ function scene.setPath(path)
 
   -- Add trailing "/" if none is found (47 = /)
   if string.byte(path, #path) ~= 47 then
-    path = path.."/"
+    path = path .. "/"
   end
 
   if pathDefined(path) then
@@ -45,10 +45,10 @@ end
 --                       --
 function scene.unload(fileName)
   assert(type(fileName) == "string", "Function 'unload': parameter must be a string.")
-  print('when is this unload called?')
-  local path = scene.dir..fileName
+  --print('when is this unload called?')
+  local path = scene.dir .. fileName
 
-  if pathDefined(path..".lua") then
+  if pathDefined(path .. ".lua") then
     if package.loaded[path] then
       package.loaded[path] = nil
     end
@@ -61,13 +61,13 @@ end
 function scene.load(fileName)
   assert(type(fileName) == "string", "Function 'load': parameter must be a string.")
 
-  print('load whatis my current scene, ')
-  local path = scene.dir..fileName
+  --print('load whatis my current scene, ')
+  local path = scene.dir .. fileName
 
   scene.pName = scene.cName
   scene.cName = fileName
 
-  if pathDefined(path..".lua") then
+  if pathDefined(path .. ".lua") then
     scene.current = require(path)
 
     if funcDefined("load") then
@@ -93,7 +93,6 @@ function scene.draw()
   end
 end
 
-
 --                --
 --------------------
 -- ERROR CHECKERS --
@@ -104,10 +103,10 @@ funcDefined = function(func)
     if type(scene.current[func]) == 'function' then
       return true
     else
-      error("\'"..scene.dir..scene.cName..".lua\': "..func.." should be a function.")
+      error("\'" .. scene.dir .. scene.cName .. ".lua\': " .. func .. " should be a function.")
     end
   else
-    error("\'"..scene.dir..scene.cName..".lua\': "..func.." function is not defined.")
+    error("\'" .. scene.dir .. scene.cName .. ".lua\': " .. func .. " function is not defined.")
   end
 end
 
@@ -116,24 +115,23 @@ pathDefined = function(path)
 
   if major == 0 and minor == 9 and revision >= 1 then
     -- File system calls for love 0.9.1 and up to 0.11.0
----@diagnostic disable-next-line: undefined-field
+    ---@diagnostic disable-next-line: undefined-field
     if love.filesystem.exists(path) then
       return true
     else
-      error("Can't "..debug.getinfo(2).name.." \'"..path.."\': No such file or directory.")
+      error("Can't " .. debug.getinfo(2).name .. " \'" .. path .. "\': No such file or directory.")
     end
   elseif major == 11 and minor >= 0 and revision >= 0 then
     -- File system calls for love 0.11.0 and up to most recent
----@diagnostic disable-next-line: undefined-global
+    ---@diagnostic disable-next-line: undefined-global
     if love.filesystem.getInfo(path, filtertype) then
       return true
     else
-      error("Can't "..debug.getinfo(2).name.." \'"..path.."\': No such file or directory.")
+      error("Can't " .. debug.getinfo(2).name .. " \'" .. path .. "\': No such file or directory.")
     end
   else
     error("Love versions prior to 0.9.1 are not supported by this module..")
   end
-
 end
 
 --

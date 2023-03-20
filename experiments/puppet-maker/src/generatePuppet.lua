@@ -52,6 +52,25 @@ local function getMeta(parent)
       end
    end
 end
+
+-- this one is fro the case where i dont have a potato component around
+function getHeadPointsFromValues(values, headPart, headPartName)
+   local parent = headPart --e.potato.head
+   local parentName = headPartName -- e.potato.values.potatoHead and 'body' or 'head'
+   local meta = getMeta(parent)
+
+   if meta then
+      local flipx = values[parentName].flipx or 1
+      local flipy = values[parentName].flipy or 1
+      local points = meta.points
+      local newPoints = getFlippedMetaObject(flipx, flipy, points)
+
+      return newPoints
+   end
+
+   return { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } }
+end
+
 function getHeadPoints(e)
    local parent = e.potato.head
    local parentName = e.potato.values.potatoHead and 'body' or 'head'
@@ -225,6 +244,8 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
 end
 
 function redoGraphicHelper(part, name, values)
+   -- print(name, part.children, #part.children)
+
    local index = getIndexOfGraphicPart(part)
    local p = part.children and part.children[index] or part
    if p.texture and p.texture.url then
@@ -397,6 +418,10 @@ function updateChild(container, oldValue, newResult)
 end
 
 function copyAndRedoGraphic(name, values)
+   -- if isNullObject(name, values) then
+   --    print(name, ' is anullobject')
+   --    return copy3(nullFolder)
+   -- end
    local part = findPart(name)
    local partArray = part.p
    --earParts[values.ears.shape]
@@ -495,11 +520,14 @@ function changePart(name, values)
       changePart('hair', values) ----
    elseif name == 'hair' then
       if isNullObject(name, values) then
-         hair = updateChild(container, hair, copy3(nullChild))
+         editingGuy.hair = updateChild(container, hair, copy3(nullChild))
          --  print('hair', hair)
-         print('hair was null ')
+         --print('hair was null ')
       else
-         local hp = getHeadPoints(potato)
+         -- this was a change but isnt needed anymore I  think
+         local headPart = values.potatoHead and editingGuy.body or editingGuy.head
+         local headPartName = values.potatoHead and 'body' or 'head'
+         local hp = getHeadPointsFromValues(values, headPart, headPartName)
 
          local hairLine = { hp[7], hp[8], hp[1], hp[2], hp[3] }
          editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
@@ -518,9 +546,12 @@ function changePart(name, values)
       editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
       editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
+      --print('changeart nose')
       if isNullObject(name, values) then
+         --print('nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
       else
+         --print('not nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then
