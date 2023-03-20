@@ -37,7 +37,7 @@ Concord = require 'vendor.concord.init'
 myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = true
+PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 
@@ -122,7 +122,7 @@ function love.load()
    amountOfGuys = 5
    prof.push('frame')
    prof.push('creating-guys')
-   ProFi:start()
+   if (PROF_CAPTURE) then ProFi:start() end
    for i = 1, amountOfGuys do
       local parts, values = generate()
       values = partRandomizeNoChange(values)
@@ -170,8 +170,12 @@ function love.load()
       print(love.graphics.getStats().texturememory/(1024 * 1024))
       print(i)
    end
-   ProFi:stop()
-   ProFi:writeReport('profilingReportInit.txt')
+   if (PROF_CAPTURE) then 
+      ProFi:stop()
+      ProFi:writeReport('profilingReportInit.txt') 
+   end
+  
+   
    prof.pop('creating-guys')
    prof.pop('frame')
    editingGuy = fiveGuys[1]

@@ -12,6 +12,7 @@ local mesh        = require 'lib.mesh'
 local camera      = require 'lib.camera'
 local cam         = require('lib.cameraBase').getInstance()
 local transforms  = require 'lib.transform'
+local geom = require 'lib.geom'
 local function myCircleStencilFunction(x, y, r, s)
     love.graphics.circle("fill", x, y, r, s)
 end
@@ -119,7 +120,12 @@ function scene.unload()
 end
 
 function scene.load()
-    ProFi:start()
+   
+    if (PROF_CAPTURE) then 
+        ProFi:start()
+     
+     end
+    
     prof.push('frame')
     -- print(myWorld)
 
@@ -182,9 +188,107 @@ function scene.load()
     camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
     cam:update(w, h)
     prof.pop('frame')
-    ProFi:stop()
-    ProFi:writeReport('profilingReportFiveGuys.txt')
+
+    depthMinMax = { min = -1.0, max = 1.0 }
+    -- foregroundFactors = { far=.5, near=1}
+    --backgroundFactors = { far=.4, near=.7}
+    tileSize = 600
+    foregroundFar = camera.generateCameraLayer('foregroundFar', 1)
+    foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
+    groundimg8 = love.graphics.newImage('assets/ground3.png', { mipmaps = true })
+    ding = love.graphics.newImage('assets/ground52.png', { mipmaps = true })
+    print(groundimg8)
+    heights = {}
+    minpos = -1000
+    maxpos = 1000
+    for i = minpos, maxpos do
+       heights[i] = love.math.random() * 100
+    end
+ 
+
+    if (PROF_CAPTURE) then 
+        ProFi:stop()
+        ProFi:writeReport('profilingReportInit.txt') 
+     end
+    
+    
 end
+
+
+function drawGroundPlaneLinesSimple(far, near)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setLineWidth(2)
+    local W, H = love.graphics.getDimensions()
+ 
+    local x1, y1 = cam:getWorldCoordinates(0, 0, far)
+    local x2, y2 = cam:getWorldCoordinates(W, 0, far)
+ 
+    local s = math.floor(x1 / tileSize) * tileSize
+    local e = math.ceil(x2 / tileSize) * tileSize
+ 
+    --[[
+    local imgarr = {groundimg1, groundimg2, groundimg3, groundimg4, groundimg5,
+                    groundimg6, groundimg7, groundimg8, groundimg9, groundimg10,
+                    groundimg10, groundimg11, groundimg12,groundimg12,groundimg12,
+                    groundimg12,groundimg13,groundimg13,groundimg13}
+    ]]
+    --
+    -- local imgarr = { groundimg6b, groundimg3, groundimg8, groundimg9, groundimg10 }
+    local imgarr = { groundimg8 }
+ 
+    local woohoo = 1
+ 
+    for i = s, e, tileSize do
+       local groundIndex = (i / tileSize)
+       local tileIndex = (groundIndex % (#imgarr)) + 1
+             print(tileIndex)
+       local index = (i - s) / tileSize
+ 
+       if groundIndex >= minpos and groundIndex <= maxpos - 1 then
+          local height1 = heights[groundIndex]
+          local height2 = heights[groundIndex + 1]
+          local s = cam:getScale() -- 50 -> 0.01
+ 
+ 
+          local x4, y4 = cam:getScreenCoordinates(i + 0.0001, height1 * woohoo, near)
+          local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2 * woohoo, near)
+          local x1, y1 = x4, y4 - s * tileSize
+          local x2, y2 = x3, y3 - s * tileSize
+ 
+          local m = mesh.createTexturedRectangle(imgarr[tileIndex])
+ 
+          m:setVertex(1, { x1, y1, 0, 0, 1, 1, 1, .5 })
+          m:setVertex(2, { x2, y2, 1, 0, 1, 1, 1, .5 })
+          m:setVertex(3, { x3, y3, 1, 1 })
+          m:setVertex(4, { x4, y4, 0, 1 })
+ 
+          love.graphics.setColor(.9, .9, .9, .9)
+          love.graphics.draw(m)
+          --love.graphics.setColor(.1, .9, .3, .9)
+          --love.graphics.draw(m, 0, 400 * s)
+ 
+ 
+          local newuvs = { .05, .08, -- tl x and y}
+              .92, .95 - .09 } --width and height
+ 
+          local rect1 = { x1, y1, x2, y2, x3, y3, x4, y4 }
+          local outward = geom.coloredOutsideTheLines(rect1, newuvs)
+ 
+          local m = mesh.createTexturedRectangle(ding)
+          m:setVertex(1, { outward[1], outward[2], 0, 0 })
+          m:setVertex(2, { outward[3], outward[4], 1, 0 })
+          m:setVertex(3, { outward[5], outward[6], 1, 1 })
+          m:setVertex(4, { outward[7], outward[8], 0, 1 })
+ 
+ 
+          -- love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .9)
+          love.graphics.setColor(.4, .8, .2, 1)
+          love.graphics.draw(m)
+          --love.graphics.draw(m, 0, 400 * s)
+       end
+    end
+ end
+
 
 function scene.draw()
     love.graphics.clear(1, 1, 1)
@@ -198,7 +302,7 @@ function scene.draw()
     love.graphics.rectangle('fill', w - 25, 0, 25, 25)
 
     -- local x,y = love.mouse.getPosition()
-
+    drawGroundPlaneLinesSimple('foregroundFar', 'foregroundNear')
     cam:push()
     render.renderThings(root, true)
     cam:pop()
