@@ -203,6 +203,41 @@ function pointerReleased(x, y, id)
    --collectgarbage()
 end
 
+local function hasChildNamedRomp(item)
+   --print(item.texture)
+   for k= 1, #item.children do
+      --print( item.children[k].name)
+      if item.children[k].name == 'romp' then
+         return item.children[k]
+      end
+   end
+
+   return nil;
+end
+
+--[[
+if node.graphic then
+   local mx, my = love.mouse.getPosition()
+   local wx, wy = cam:getWorldCoordinates(mx, my)
+   local xx, yy = node.transforms.g:inverseTransformPoint(wx, wy)
+   love.graphics.setColor(0, 0, 0)
+   if (xx > 0 and xx < node.graphic.w and yy > 0 and yy < node.graphic.h) then
+      love.graphics.setColor(.5, .5, .5)
+      local r, g, b, a = node.graphic.imageData:getPixel(xx, yy)
+      if (a > 0) then
+         love.graphics.setColor(1, 1, 1, 1)
+      end
+   end
+
+
+   love.graphics.draw(node.graphic.mesh, node.transforms.g)
+end
+--]]
+
+
+--getPNGMaskUrl
+
+
 local function pointerPressed(x, y, id)
    local wx, wy = cam:getWorldCoordinates(x, y)
    for j = 1, #root.children do
@@ -217,7 +252,36 @@ local function pointerPressed(x, y, id)
                local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
                if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
+                  --print(#item.children)
+                  --for k= 1, #item.children do
+                  --   print(k,item.children[k].name)
+                  --end
+                  local romp =  hasChildNamedRomp(item)
+                  if romp then
+                     --local mx, my = romp.transforms._g:inverseTransformPoint(wx, wy)
+                     --print(inspect(romp.texture.url))
+                     local maskUrl = (getPNGMaskUrl(romp.texture.url))
+                     local mask = mesh.getImage(maskUrl)
+                     local imageData = love.image.newImageData(maskUrl)
+
+                     local imgW, imgH = imageData:getDimensions()
+                        local xx = numbers.mapInto(mx, tlx, brx, 0, imgW)
+                        local yy = numbers.mapInto(my, tly, bry, 0, imgH)
+                     --print(xx,yy)
+                     --print(mx, my, imageData:getWidth(), imageData:getHeight())
+                     if xx > 0 and xx < imgW then
+                        if yy > 0 and my < imgH then
+                           local r, g, b, a = imageData:getPixel(xx, yy)
+                           if (r + g + b   > 1.5) then
+                           table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+                           end
+                        end
+                     end
+
+                     --print(imageData)
+                  else
                   table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+                  end
                end
             end
          end

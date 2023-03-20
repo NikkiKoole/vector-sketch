@@ -252,13 +252,15 @@ function redoGraphicHelper(part, name, values)
    local p = part.children and part.children[index] or part
    if p.texture and p.texture.url then
       local textured, url = partToTexturedCanvas(name, values, p.texture)
-
+      --print(textured)
       if p.texture.canvas then
+      --   print(p.texture.canvas)
          p.texture.canvas:release()
       end
       local m = mesh.makeMeshFromSibling(p, textured)
       textured:release()
       p.texture.canvas = m
+      --p.texture.texture = textured
    end
    return part
 end
