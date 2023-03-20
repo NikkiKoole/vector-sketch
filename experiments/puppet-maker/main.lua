@@ -155,7 +155,7 @@ function love.load()
           lowerlip = createLowerlipBezier(values),
           ear1 = copyAndRedoGraphic('ears', values),
           ear2 = copyAndRedoGraphic('ears', values),
-          nose = copy3(nullFolder) -- copyAndRedoGraphic('nose', values),
+          nose = copyAndRedoGraphic('nose', values),
       }
       local guy = {
           folder = true,
@@ -167,15 +167,15 @@ function love.load()
       guy.children = guyChildren(fiveGuys[i])
       --manual_gc(0.002, 2)
       print(collectgarbage("count"))
-      print(love.graphics.getStats().texturememory/(1024 * 1024))
+      print(love.graphics.getStats().texturememory / (1024 * 1024))
       print(i)
    end
-   if (PROF_CAPTURE) then 
+   if (PROF_CAPTURE) then
       ProFi:stop()
-      ProFi:writeReport('profilingReportInit.txt') 
+      ProFi:writeReport('profilingReportInit.txt')
    end
-  
-   
+
+
    prof.pop('creating-guys')
    prof.pop('frame')
    editingGuy = fiveGuys[1]
