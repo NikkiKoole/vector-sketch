@@ -395,9 +395,10 @@ function createNeckRubberhose(values, points)
 end
 
 function updateChild(container, oldValue, newResult)
-   print('updateChild', container.name, 'looking for')
-   print(oldValue and oldValue.name)
-   print(newResult and newResult.name)
+   --print('updateChild', container.name, 'looking for')
+   --print(oldValue and oldValue.name)
+   --print(newResult and newResult.name)
+   --prof.push('update-child')
    for i = 1, #container.children do
       if container.children[i] == oldValue then
          print('changed something', container.name)
@@ -416,6 +417,7 @@ function updateChild(container, oldValue, newResult)
          return container.children[i]
       end
    end
+   --prof.pop('update-child')
 end
 
 function copyAndRedoGraphic(name, values)

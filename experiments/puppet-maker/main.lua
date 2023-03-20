@@ -118,7 +118,9 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 7
+   amountOfGuys = 8
+   prof.push('frame')
+   prof.push('creating-guys')
    for i = 1, amountOfGuys do
       local parts, values = generate()
       values = partRandomizeNoChange(values)
@@ -162,7 +164,8 @@ function love.load()
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
    end
-
+   prof.pop('creating-guys')
+   prof.pop('frame')
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
@@ -219,6 +222,7 @@ function love.focus(f)
 end
 
 function love.update(dt)
+   prof.push('frame')
    --require("vendor.lurker").update()
    if not focussed then
       -- print('this app is unfocessed!')
@@ -229,10 +233,13 @@ function love.update(dt)
    end
    --collectgarbage()
    manual_gc(0.002, 2)
+   prof.pop('frame')
 end
 
 function love.draw()
+   prof.push('frame')
    SM.draw()
+   prof.pop('frame')
 end
 
 function love.resize(w, h)

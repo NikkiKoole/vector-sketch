@@ -326,6 +326,7 @@ function scene.unload()
 end
 
 function scene.load()
+   -- prof.push('frame')
    for i = 1, #fiveGuys do
       fiveGuys[i].guy.transforms.l[1] = 0
    end
@@ -491,6 +492,7 @@ function scene.load()
    cam:update(w, h)
 
    Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
+   --prof.pop('frame')
 end
 
 function skinColorize(bgPal, values)
@@ -752,7 +754,7 @@ end
 
 
 function scene.update(dt)
-   prof.push("frame")
+   --prof.push("frame")
 
    if introSound:isPlaying() then
       local volume = introSound:getVolume()
@@ -791,12 +793,12 @@ function scene.update(dt)
 
 
    --myWorld:emit("update", dt) -- this one is leaking the most actually
-   prof.pop("frame")
+   --prof.pop("frame")
 end
 
 function scene.draw()
    --   prof.enabled(false)
-   prof.push("frame")
+   --prof.push("frame")
 
 
    if true then
@@ -867,7 +869,7 @@ function scene.draw()
    love.graphics.setColor(1, 0, 1)
    local w, h = love.graphics.getDimensions()
    love.graphics.rectangle('fill', w - 25, 0, 25, 25)
-   prof.pop("frame")
+   -- prof.pop("frame")
    --collectgarbage()
 end
 

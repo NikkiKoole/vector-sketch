@@ -119,6 +119,7 @@ function scene.unload()
 end
 
 function scene.load()
+    prof.push('frame')
     -- print(myWorld)
 
     root = {
@@ -129,6 +130,7 @@ function scene.load()
     }
 
     local fg = {}
+    prof.push('initguys')
     for i = 1, #fiveGuys do
         table.insert(root.children, fiveGuys[i].guy)
 
@@ -146,6 +148,7 @@ function scene.load()
         changePart('hair', fiveGuys[i].values)
         table.insert(fg, { biped = biped, potato = potato })
     end
+    prof.pop('initguys')
     editingGuy = fiveGuys[1]
 
 
@@ -154,7 +157,7 @@ function scene.load()
     parentize.parentize(root)
     mesh.meshAll(root)
     render.renderThings(root)
-
+    prof.push('moveguys')
     for i = 1, #fg do
         --- this will reset the position you made
         local resetPos = false
@@ -169,7 +172,7 @@ function scene.load()
         --
         -- myWorld:emit("potatoInit", potato)
     end
-
+    prof.pop('moveguys')
 
     local bx, by = fiveGuys[3].body.transforms._g:transformPoint(0, 0)
     local w, h = love.graphics.getDimensions()
@@ -177,6 +180,7 @@ function scene.load()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
     cam:update(w, h)
+    prof.pop('frame')
 end
 
 function scene.draw()
