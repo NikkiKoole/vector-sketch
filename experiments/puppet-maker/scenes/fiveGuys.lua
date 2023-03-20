@@ -13,6 +13,14 @@ local camera      = require 'lib.camera'
 local cam         = require('lib.cameraBase').getInstance()
 local transforms  = require 'lib.transform'
 local geom = require 'lib.geom'
+local bbox = require 'lib.bbox'
+local numbers = require 'lib.numbers'
+local text = require 'lib.text'
+
+require 'src.reuse'
+
+local pointerInteractees = {}
+
 local function myCircleStencilFunction(x, y, r, s)
     love.graphics.circle("fill", x, y, r, s)
 end
@@ -88,7 +96,103 @@ local function doRectInTransition(x, y, onAfter)
         transition = nil;
     end)
 end
+
+local function pointerReleased(x, y, id)
+    for i = #pointerInteractees, 1, -1 do
+       if pointerInteractees[i].id == id then
+          print('emitting release')
+          myWorld:emit('itemReleased', pointerInteractees[i])
+          --print(inspect(pointerInteractees[i]))
+          table.remove(pointerInteractees, i)
+       end
+    end
+ 
+    --scrollerIsDragging = false
+    --settingsScrollAreaIsDragging = false
+ 
+    gesture.maybeTrigger(id, x, y)
+    -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
+    --partSettingsSurroundings(false, x, y)
+    --collectgarbage()
+ end
+
+local function pointerMoved(x, y, dx, dy, id)
+    --print('pointermoved', x, y)
+    for i = 1, #pointerInteractees do
+       if pointerInteractees[i].id == id then
+          local scale = cam:getScale()
+ 
+          if love.mouse.isDown(1) then
+             myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
+          end
+          if love.mouse.isDown(2) then
+             myWorld:emit("itemRotate", pointerInteractees[i], dx, dy, scale)
+          end
+       end
+    end
+end
+
+
+ 
 local function pointerPressed(x, y, id)
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    for j = 1, #root.children do
+       local guy = root.children[j]
+       if guy.children then
+          for i = 1, #guy.children do
+             local item = guy.children[i]
+             local b = bbox.getBBoxRecursiveVersion2(item) --- this is breaking now because i have smaller children that end up becoming the bbox
+             if b and item.folder then
+                local mx, my = item.transforms._g:inverseTransformPoint(wx, wy)
+                local tlx, tly = item.transforms._g:inverseTransformPoint(b[1], b[2])
+                local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
+ 
+                if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
+
+                   local romp =  hasChildNamedRomp(item)
+                   if romp then
+
+                      local maskUrl = (getPNGMaskUrl(romp.texture.url))
+                      local mask = mesh.getImage(maskUrl)
+                      local imageData = love.image.newImageData(maskUrl)
+ 
+                      local imgW, imgH = imageData:getDimensions()
+                         local xx = numbers.mapInto(mx, tlx, brx, 0, imgW)
+                         local yy = numbers.mapInto(my, tly, bry, 0, imgH)
+
+                      if xx > 0 and xx < imgW then
+                         if yy > 0 and my < imgH then
+                            local r, g, b, a = imageData:getPixel(xx, yy)
+                            if (r + g + b   > 1.5) then
+                            table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+                            editingGuy = fiveGuys[j]
+                            end
+                         end
+                      end
+ 
+
+                   else
+                   table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+                   editingGuy = fiveGuys[j]
+                   end
+                end
+             end
+          end
+       end
+      
+    end
+    myWorld:emit("eyeLookAtPoint", x, y)
+
+    local w, h = love.graphics.getDimensions()
+    if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
+        local w, h = love.graphics.getDimensions()
+        local bx, by = editingGuy.head.transforms._g:transformPoint(0, 0)
+        local sx, sy = cam:getScreenCoordinates(bx, by)
+        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
+    end
+end
+
+local function pointerPressed2(x, y, id)
     local w, h = love.graphics.getDimensions()
     if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
         local w, h = love.graphics.getDimensions()
@@ -98,22 +202,7 @@ local function pointerPressed(x, y, id)
     end
     myWorld:emit("eyeLookAtPoint", x, y)
 end
-local function stripPath(root, path)
-    if root and root.texture and root.texture.url and #root.texture.url > 0 then
-        local str = root.texture.url
-        local shortened = string.gsub(str, path, '')
-        root.texture.url = shortened
-        --print(shortened)
-    end
 
-    if root.children then
-        for i = 1, #root.children do
-            stripPath(root.children[i], path)
-        end
-    end
-
-    return root
-end
 
 function scene.unload()
     myWorld:clear()
@@ -174,7 +263,7 @@ function scene.load()
             fiveGuys[i].body.transforms.l[2] = 0
             myWorld:emit('movedBody', fg[i].biped)
         end
-        fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 700
+        fiveGuys[i].body.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 700
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         --
@@ -329,6 +418,27 @@ function scene.update(dt)
         end
     end
 
+    function love.mousemoved(x, y, dx, dy, istouch)
+        if not istouch then
+           pointerMoved(x, y, dx, dy, 'mouse')
+        end
+     end
+  
+     function love.touchmoved(id, x, y, dx, dy, pressure)
+        pointerMoved(x, y, dx, dy, id)
+     end
+
+     function love.mousereleased(x, y, button, istouch)
+        lastDraggedElement = nil
+        if not istouch then
+           pointerReleased(x, y, 'mouse')
+        end
+     end
+  
+     function love.touchreleased(id, x, y, dx, dy, pressure)
+        pointerReleased(x, y, id)
+     end
+
     function love.keypressed(k)
         if k == '1' then
             editingGuy = fiveGuys[1]
@@ -386,6 +496,7 @@ function scene.update(dt)
     end
 
     Timer.update(dt)
+    myWorld:emit("update", dt) -- this one is leaking the most actually
 end
 
 return scene

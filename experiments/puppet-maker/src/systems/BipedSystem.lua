@@ -39,7 +39,9 @@ local function getPositionsForNeckAttaching(e)
         local points = meta.points
         local newPoints = getFlippedMetaObject(flipx, flipy, points)
 
+        
         local x, y = body.transforms._g:transformPoint(newPoints[1][1], newPoints[1][2])
+        --local x, y = e.biped.guy.transforms._g:transformPoint(newPoints[1][1], newPoints[1][2])
         return x, y
     else
         local neck = node.findNodeByName(body, 'neck')

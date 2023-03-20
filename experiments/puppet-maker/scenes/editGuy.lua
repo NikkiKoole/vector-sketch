@@ -34,6 +34,7 @@ myWorld = Concord.world()
 
 require 'src.generatePuppet'
 require 'src.puppet-maker-ui'
+require 'src.reuse'
 
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
@@ -70,22 +71,7 @@ local function sign(x)
    return x > 0 and 1 or x < 0 and -1 or 0
 end
 
-local function stripPath(root, path)
-   if root and root.texture and root.texture.url and #root.texture.url > 0 then
-      local str = root.texture.url
-      local shortened = string.gsub(str, path, '')
-      root.texture.url = shortened
-      --print(shortened)
-   end
 
-   if root.children then
-      for i = 1, #root.children do
-         stripPath(root.children[i], path)
-      end
-   end
-
-   return root
-end
 
 function addChild(parent, elem)
    node._parent = parent
@@ -117,10 +103,6 @@ function removeChild(elem)
       local index = node.getIndex(elem)
       if index >= 0 then table.remove(elem._parent.children, index) end
    end
-end
-
-local function getPNGMaskUrl(url)
-   return text.replace(url, '.png', '-mask.png')
 end
 
 function playSound(sound)
@@ -203,17 +185,7 @@ function pointerReleased(x, y, id)
    --collectgarbage()
 end
 
-local function hasChildNamedRomp(item)
-   --print(item.texture)
-   for k= 1, #item.children do
-      --print( item.children[k].name)
-      if item.children[k].name == 'romp' then
-         return item.children[k]
-      end
-   end
 
-   return nil;
-end
 
 --[[
 if node.graphic then
@@ -552,7 +524,7 @@ function scene.load()
    camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
    cam:update(w, h)
 
-   Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
+   --Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
    --prof.pop('frame')
 end
 
@@ -853,7 +825,7 @@ function scene.update(dt)
 
 
 
-   --myWorld:emit("update", dt) -- this one is leaking the most actually
+   myWorld:emit("update", dt) -- this one is leaking the most actually
    --prof.pop("frame")
 end
 

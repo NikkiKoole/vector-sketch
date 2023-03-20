@@ -61,6 +61,8 @@ Concord.component('potato', function(c, parts)
     c.eyeTimer = nil
     c.lookAtTimerEye1 = nil 
     c.lookAtTimerEye2 = nil 
+
+    c.blinkCounter = love.math.random()*5.0
 end)
 --[[
 Concord.component('head',
