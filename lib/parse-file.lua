@@ -1,8 +1,14 @@
 local parse = {}
 
 local text = require 'lib.text'
+
+local fileCache = {}
 parse.parseFile = function(url)
-   local contents, size = love.filesystem.read(url)
+   --print(url)
+  
+   if fileCache[url] then  return  fileCache[url] end
+    local contents, size = love.filesystem.read(url)
+   
    if contents == nil then
       print(printC({ fg = 'red' }, "file not found: ", url))
    end
@@ -32,6 +38,7 @@ parse.parseFile = function(url)
    if (not figuredItOut) then
       print('I dont know what type of origin url to put in here', url)
    end
+   fileCache[url] = parsed
    return parsed
 end
 

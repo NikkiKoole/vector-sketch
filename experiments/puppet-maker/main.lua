@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 50
+   amountOfGuys = 5
    prof.push('frame')
    prof.push('creating-guys')
    ProFi:start()
@@ -165,6 +165,10 @@ function love.load()
       }
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
+      --manual_gc(0.002, 2)
+      print(collectgarbage("count"))
+      print(love.graphics.getStats().texturememory/(1024 * 1024))
+      print(i)
    end
    ProFi:stop()
    ProFi:writeReport('profilingReportInit.txt')
@@ -256,4 +260,8 @@ function love.quit()
    time = love.timer.getTime()
    prof.write("prof.mpack")
    print('writing took', love.timer.getTime() - time, 'seconds')
+end
+
+function love.lowmemory()
+   print('LOW MEMORY!!!')
 end
