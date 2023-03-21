@@ -426,7 +426,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        neckLength              = 20,
+        neckLength              = 120,
         neckWidthMultiplier     = 1,
         feet                    = {
             shape     = 1,

@@ -128,7 +128,6 @@ function hittestPixel()
 end
 
 local function pointerMoved(x, y, dx, dy, id)
-   print('pointermoved', x, y)
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
          local scale = cam:getScale()
@@ -207,6 +206,7 @@ end
 
 
 local function pointerPressed(x, y, id)
+   print('pointerpressed')
    local wx, wy = cam:getWorldCoordinates(x, y)
    for j = 1, #root.children do
       local guy = root.children[j]
@@ -716,6 +716,7 @@ function attachCallbacks()
    end
 
    function love.mousepressed(x, y, button, istouch, presses)
+      print('mousepressed')
       if not istouch then
          pointerPressed(x, y, 'mouse')
       end

@@ -413,8 +413,9 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
 
             e.biped.neck.points[2] = { newx, newy }
         else
+            print(inspect(e.biped.neck.data))
             e.biped.neck.points[1] = { neckX, neckY }
-            e.biped.neck.points[2] = { neckX, neckY - (e.biped.neck.data.length / 4.46) / 1 }
+            e.biped.neck.points[2] = { neckX, neckY - ((e.biped.neck.data.length * e.biped.neck.data.scaleY) / 4.46) / 1 }
         end
 
 
@@ -463,9 +464,9 @@ function BipedSystem:doinkBody(e)
     Timer.tween(2, e.biped.body.transforms.l, { [3] = 0,[1] = oldX }, 'out-elastic')
 
     e.biped.head.transforms.l[3] = str * dir
-    Timer.tween(2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
+    Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
-    Timer.during(2, function()
+    Timer.during(1.2, function()
         e.biped.body.dirty = true
         transforms.setTransforms(e.biped.body)
 
@@ -497,8 +498,22 @@ function BipedSystem:itemReleased(elem)
         end
         if e.biped.body == elem.item then
             -- print('body released')
-            local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
-            -- Timer.tween(2, e.biped.body.transforms.l, { [1] = ix,[2] = iy }, 'out-elastic')
+            --local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
+            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = -700 }, 'out-elastic')
+            Timer.during(2, function()
+                e.biped.guy.dirty = true
+                transforms.setTransforms(e.biped.guy)
+
+                e.biped.body.dirty = true
+                transforms.setTransforms(e.biped.body)
+
+                attachHeadWithOrWithoutNeck(e, true)
+
+                setLegs(e)
+                setArms(e)
+                BipedSystem:bipedAttachHands(e)
+                BipedSystem:bipedAttachFeet(e)
+            end)
         end
     end
 end

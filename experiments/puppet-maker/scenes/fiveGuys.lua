@@ -271,7 +271,7 @@ function scene.load()
             myWorld:emit('movedBody', fg[i].biped)
         end
         fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 700
-        --fiveGuys[i].body.transforms.l[2] = -love.math.random() * 1000
+        fiveGuys[i].body.transforms.l[2] = -700
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         --

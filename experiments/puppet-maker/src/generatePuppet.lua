@@ -254,7 +254,7 @@ function redoGraphicHelper(part, name, values)
       local textured, url = partToTexturedCanvas(name, values, p.texture)
       --print(textured)
       if p.texture.canvas then
-      --   print(p.texture.canvas)
+         --   print(p.texture.canvas)
          p.texture.canvas:release()
       end
       local m = mesh.makeMeshFromSibling(p, textured)
@@ -388,7 +388,7 @@ function createLegRubberhose(legNr, values, points)
 end
 
 function createNeckRubberhose(values, points)
-   local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
+   local flop = 1 -- this needs to be set accoridng to how th eneck is positioned
    local textured, url = partToTexturedCanvas('neck', values)
    return createFromImage.rubberhose(
            url, textured,
