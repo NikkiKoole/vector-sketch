@@ -37,7 +37,7 @@ Concord = require 'vendor.concord.init'
 myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = true
+PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 

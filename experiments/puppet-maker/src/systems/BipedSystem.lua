@@ -313,6 +313,7 @@ function setArms(e, optionalData)
         local newx, newy = setAngleAndDistance(a1x, a1y, angle, dist)
         e.biped.arm1.points[2] = { newx, newy }
     end
+
     mesh.remeshNode(e.biped.arm1)
 
 
@@ -455,9 +456,9 @@ end
 
 function BipedSystem:doinkBody(e)
     local dir = 1
-    local str = 1
-    local oldX = e.biped.body.transforms.l[1]
-    local oldY = e.biped.body.transforms.l[2]
+    local str = 2
+    local oldX = 0
+    local oldY = 0
     e.biped.body.transforms.l[3] = str * dir
     e.biped.body.transforms.l[1] = oldX + (dir * str * 100)
 
@@ -466,17 +467,32 @@ function BipedSystem:doinkBody(e)
     e.biped.head.transforms.l[3] = str * dir
     Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
-    Timer.during(1.2, function()
-        e.biped.body.dirty = true
-        transforms.setTransforms(e.biped.body)
-
-        attachHeadWithOrWithoutNeck(e, true)
-        setLegs(e)
-        setArms(e)
-        BipedSystem:bipedAttachHead(e)
-        BipedSystem:bipedAttachHands(e)
+    Timer.during(2, function()
+        BipedSystem:movedBody(e)
     end)
     -- Timer
+end
+
+function BipedSystem:itemReleased(elem)
+    for _, e in ipairs(self.pool) do
+        if e.biped.head == elem.item then
+            --print('head released')
+        end
+        if e.biped.body == elem.item then
+            --e.biped.body.transforms.l[3] = -1
+
+
+            e.biped.head.transforms.l[3] = -.3
+            Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
+
+
+            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = -700,[3] = 0 }, 'out-elastic')
+            BipedSystem:movedBody(e)
+            Timer.during(2.2, function()
+                BipedSystem:movedBody(e)
+            end)
+        end
+    end
 end
 
 function BipedSystem:movedBody(e)
@@ -489,33 +505,6 @@ function BipedSystem:movedBody(e)
     setArms(e)
     BipedSystem:bipedAttachHands(e)
     BipedSystem:bipedAttachFeet(e)
-end
-
-function BipedSystem:itemReleased(elem)
-    for _, e in ipairs(self.pool) do
-        if e.biped.head == elem.item then
-            --print('head released')
-        end
-        if e.biped.body == elem.item then
-            -- print('body released')
-            --local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
-            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = -700 }, 'out-elastic')
-            Timer.during(2, function()
-                e.biped.guy.dirty = true
-                transforms.setTransforms(e.biped.guy)
-
-                e.biped.body.dirty = true
-                transforms.setTransforms(e.biped.body)
-
-                attachHeadWithOrWithoutNeck(e, true)
-
-                setLegs(e)
-                setArms(e)
-                BipedSystem:bipedAttachHands(e)
-                BipedSystem:bipedAttachFeet(e)
-            end)
-        end
-    end
 end
 
 function BipedSystem:itemDrag(elem, dx, dy, scale)
