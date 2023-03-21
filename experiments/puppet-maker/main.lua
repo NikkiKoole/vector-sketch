@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 20
+   amountOfGuys = 10
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
