@@ -128,7 +128,7 @@ function hittestPixel()
 end
 
 local function pointerMoved(x, y, dx, dy, id)
-   --print('pointermoved', x, y)
+   print('pointermoved', x, y)
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
          local scale = cam:getScale()
@@ -185,8 +185,6 @@ function pointerReleased(x, y, id)
    --collectgarbage()
 end
 
-
-
 --[[
 if node.graphic then
    local mx, my = love.mouse.getPosition()
@@ -205,8 +203,6 @@ if node.graphic then
    love.graphics.draw(node.graphic.mesh, node.transforms.g)
 end
 --]]
-
-
 --getPNGMaskUrl
 
 
@@ -228,7 +224,7 @@ local function pointerPressed(x, y, id)
                   --for k= 1, #item.children do
                   --   print(k,item.children[k].name)
                   --end
-                  local romp =  hasChildNamedRomp(item)
+                  local romp = hasChildNamedRomp(item)
                   if romp then
                      --local mx, my = romp.transforms._g:inverseTransformPoint(wx, wy)
                      --print(inspect(romp.texture.url))
@@ -237,22 +233,22 @@ local function pointerPressed(x, y, id)
                      local imageData = love.image.newImageData(maskUrl)
 
                      local imgW, imgH = imageData:getDimensions()
-                        local xx = numbers.mapInto(mx, tlx, brx, 0, imgW)
-                        local yy = numbers.mapInto(my, tly, bry, 0, imgH)
+                     local xx = numbers.mapInto(mx, tlx, brx, 0, imgW)
+                     local yy = numbers.mapInto(my, tly, bry, 0, imgH)
                      --print(xx,yy)
                      --print(mx, my, imageData:getWidth(), imageData:getHeight())
                      if xx > 0 and xx < imgW then
                         if yy > 0 and my < imgH then
                            local r, g, b, a = imageData:getPixel(xx, yy)
-                           if (r + g + b   > 1.5) then
-                           table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+                           if (r + g + b > 1.5) then
+                              table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
                            end
                         end
                      end
 
                      --print(imageData)
                   else
-                  table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
+                     table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
                   end
                end
             end
@@ -384,7 +380,6 @@ function scene.load()
        end
    )
    --]]
-
    blup0 = love.graphics.newImage('assets/blups/blup1.png')
    blup1 = love.graphics.newImage('assets/blups/blup5.png')
    blup2 = love.graphics.newImage('assets/blups/blup2.png')
