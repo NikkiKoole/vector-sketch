@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 100
+   amountOfGuys = 4
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -167,8 +167,8 @@ function love.load()
       guy.children = guyChildren(fiveGuys[i])
       --manual_gc(0.002, 2)
      -- print(collectgarbage("count"))
-      print(love.graphics.getStats().texturememory / (1024 * 1024))
-      print(i)
+     -- print(love.graphics.getStats().texturememory / (1024 * 1024))
+     -- print(i)
    end
    if (PROF_CAPTURE) then
       ProFi:stop()
@@ -182,6 +182,7 @@ function love.load()
 
    SM.setPath("scenes/")
    SM.load("editGuy")
+   print(love.graphics.getStats().texturememory / (1024 * 1024).. ' MB of texture memory, for '..#fiveGuys..' guys.')
    print(love.filesystem.getIdentity())
 end
 
