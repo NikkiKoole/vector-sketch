@@ -166,6 +166,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       love.graphics.setShader()
 
 
+      local shrinkFactor = 2
 
       -- I want to know If we do this or not..
       if (renderPatch) then
@@ -176,11 +177,11 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
             love.graphics.setColor(1, 1, 1, 1)
             local image = love.graphics.newImage(p.imageData)
             local imgw, imgh = image:getDimensions();
-            local xOffset = p.tx * (imgw / 6)
-            local yOffset = p.ty * (imgh / 6)
-            love.graphics.draw(image, lw / 2 + xOffset, lh / 2 + yOffset, p.r * ((math.pi * 2) / 16),
-                p.sx,
-                p.sy,
+            local xOffset = p.tx * (imgw / 6) * shrinkFactor
+            local yOffset = p.ty * (imgh / 6) * shrinkFactor
+            love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
+                p.sx  * shrinkFactor,
+                p.sy * shrinkFactor,
                 imgw / 2, imgh / 2)
             --print(lw, lh)
             if false then
@@ -216,9 +217,24 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       -- smooche is slow!!!!
       --local imageData = smoocheCanvas(canvas) --
 
-      local imageData = canvas:newImageData()
+      
+      
+
+     
+      local otherCanvas =  love.graphics.newCanvas(lw / shrinkFactor , lh / shrinkFactor)
+      love.graphics.setCanvas({ otherCanvas, stencil = false }) --<<<
+      love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
+      love.graphics.setColor(1,1,1) --- huh?!
+      love.graphics.draw(canvas, 0,0,0, 1/shrinkFactor, 1/shrinkFactor)
+      love.graphics.setCanvas() --- <<<<<
+      local imageData = otherCanvas:newImageData()
+      love.graphics.setColor(0, 0, 0) --- huh?!
+      --local imageData = canvas:newImageData()
 
 
+
+      canvas:release()
+      otherCanvas:release()
       return imageData
    end
    -- return lineart:getData()

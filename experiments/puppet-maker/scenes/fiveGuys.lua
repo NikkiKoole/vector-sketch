@@ -403,6 +403,19 @@ function scene.draw()
     render.renderThings(root, true)
     cam:pop()
 
+    if true then -- this is leaking too
+        local stats = love.graphics.getStats()
+        local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
+        --   print(inspect(stats))
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(inspect(stats), 10, 30)
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.print(inspect(stats), 11, 31)
+
+        love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+     end
+
+
     if transition then
         if transition.type == 'circle' then
             drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)

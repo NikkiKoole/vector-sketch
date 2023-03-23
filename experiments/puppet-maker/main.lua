@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 10
+   amountOfGuys = 5
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -166,7 +166,7 @@ function love.load()
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
       --manual_gc(0.002, 2)
-      print(collectgarbage("count"))
+     -- print(collectgarbage("count"))
       print(love.graphics.getStats().texturememory / (1024 * 1024))
       print(i)
    end

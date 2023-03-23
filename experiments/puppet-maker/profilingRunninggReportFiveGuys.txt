@@ -1,137 +1,166 @@
 ###############################################################################################################
-#####  ProFi, a lua profiler. This profile was generated on: Wed Mar 22 16:52:38 2023
+#####  ProFi, a lua profiler. This profile was generated on: Thu Mar 23 12:41:45 2023
 #####  ProFi is created by Luke Perkin 2012 under the MIT Licence, www.locofilm.co.uk
 #####  Version 1.3 Original gist can be found at https://gist.github.com/perky/2838755
 #####  Version 1.4 Cleaned up code to work with luacheck https://gist.github.com/rm-code/383c98a6af04652ed9f39b7ae536bcc5
 ###############################################################################################################
 
 
-| TOTAL TIME = 0.181607
+| TOTAL TIME = 2.477269
 | FILE                                              : FUNCTION                                : LINE                : TIME        : RELATIVE    : CALLED      |
-| [love "callbacks.lua"]                            : anonymous                               :  144                : 0.253       : 139.41%     :       6     |
-| main.lua                                          : draw                                    :  253                : 0.163       : 89.63%      :       6     |
-| ../../vendor/SceneMgr.lua                         : draw                                    :   90                : 0.163       : 89.61%      :       6     |
-| scenes/fiveGuys.lua                               : draw                                    :  389                : 0.163       : 89.58%      :       6     |
-| ../../lib/render.lua                              : renderNormallyOrOptimized               :  284                : 0.128       : 70.23%      :    6840     |
-| ../../lib/render.lua                              : renderThings                            :  240                : 0.110       : 60.73%      :    6846     |
-| ../../lib/render.lua                              : handleChild                             :  309                : 0.077       : 42.21%      :   11940     |
-| scenes/fiveGuys.lua                               : anonymous                               :  448                : 0.072       : 39.45%      :       1     |
-| ../../lib/transform.lua                           : setTransforms                           :    9                : 0.043       : 23.76%      :    6846     |
-| ../../lib/transform.lua                           : doMultiplication                        :    4                : 0.018       : 9.79%       :    6846     |
-| main.lua                                          : update                                  :  238                : 0.016       : 8.73%       :       6     |
-| ../../vendor/batteries/manual_gc.lua              : manual_gc                               :   41                : 0.015       : 8.39%       :       6     |
-| scenes/fiveGuys.lua                               : drawGroundPlaneLinesSimple              :  315                : 0.011       : 5.93%       :       6     |
-| ../../lib/geom.lua                                : coloredOutsideTheLines                  :  152                : 0.005       : 2.57%       :      72     |
-| ../../lib/mesh.lua                                : createTexturedRectangle                 :  696                : 0.002       : 0.94%       :     144     |
-| ../../vendor/brady.lua                            : getScreenCoordinates                    :  117                : 0.002       : 0.93%       :     144     |
-| ../../lib/geom.lua                                : connectAtIntersection                   :  137                : 0.001       : 0.77%       :     288     |
-| ../../vendor/brady.lua                            : rotateAboutPoint                        :   27                : 0.001       : 0.49%       :     156     |
-| ../../lib/geom.lua                                : makeParallelLine                        :   93                : 0.001       : 0.40%       :     288     |
-| ../../lib/geom.lua                                : isectLineLine                           :  108                : 0.001       : 0.38%       :     288     |
-| ../../lib/numbers.lua                             : lerp                                    :   15                : 0.001       : 0.37%       :     576     |
-| ../../vendor/SceneMgr.lua                         : update                                  :   82                : 0.001       : 0.29%       :       6     |
-| scenes/fiveGuys.lua                               : update                                  :  416                : 0.000       : 0.26%       :       6     |
-| ../../vendor/brady.lua                            : getLayer                                :  103                : 0.000       : 0.21%       :     168     |
-| ../../vendor/concord/world.lua                    : emit                                    :  316                : 0.000       : 0.17%       :       6     |
-| src/systems/PotatoHeadSystem.lua                  : callback                                :   44                : 0.000       : 0.09%       :       6     |
-| ../../vendor/brady.lua                            : getWorldCoordinates                     :  109                : 0.000       : 0.08%       :      12     |
-| ../../vendor/timer.lua                            : update                                  :   53                : 0.000       : 0.07%       :       6     |
-| ../../vendor/brady.lua                            : getScale                                :  162                : 0.000       : 0.05%       :      72     |
-| ../../vendor/brady.lua                            : push                                    :  106                : 0.000       : 0.05%       :       6     |
-| ../../vendor/timer.lua                            : updateTimerHandle                       :   32                : 0.000       : 0.05%       :       9     |
-| src/systems/PotatoHeadSystem.lua                  : blinkEyes                               :  221                : 0.000       : 0.03%       :       1     |
-| ../../vendor/brady.lua                            : push                                    :   34                : 0.000       : 0.03%       :       6     |
-| ../../vendor/timer.lua                            : during                                  :  161                : 0.000       : 0.02%       :       3     |
-| ../../vendor/concord/type.lua                     : isCallable                              :    6                : 0.000       : 0.02%       :      12     |
-| ../../vendor/brady.lua                            : pop                                     :  108                : 0.000       : 0.02%       :       6     |
-| ../../vendor/SceneMgr.lua                         : funcDefined                             :  101                : 0.000       : 0.01%       :      12     |
-| ../../vendor/timer.lua                            : __index                                 :  174                : 0.000       : 0.01%       :       1     |
-| ../../vendor/jprof.lua                            : push                                    :  189                : 0.000       : 0.01%       :      12     |
-| ../../vendor/jprof.lua                            : pop                                     :  189                : 0.000       : 0.01%       :      12     |
-| ../../vendor/timer.lua                            : tween_collect_payload                   :  142                : 0.000       : 0.01%       :       1     |
-| ../../vendor/concord/world.lua                    : __flush                                 :  146                : 0.000       : 0.01%       :      12     |
-| ../../vendor/timer.lua                            : method                                  :  107                : 0.000       : 0.01%       :       3     |
-| src/systems/BipedSystem.lua                       : callback                                :  183                : 0.000       : 0.01%       :       6     |
-| [love "wrap_Event.lua"]                           : poll                                    :   25                : 0.000       : 0.00%       :       6     |
-| ../../lib/gesture.lua                             : update                                  :   66                : 0.000       : 0.00%       :       6     |
-| src/systems/PotatoHeadSystem.lua                  : during                                  :  233                : 0.000       : 0.00%       :       3     |
-| ../../vendor/timer.lua                            : construct                               :  180                : 0.000       : 0.00%       :       2     |
-| ../../vendor/timer.lua                            : during                                  :   30                : 0.000       : 0.00%       :       3     |
-| ../../vendor/timer.lua                            : f                                       :  115                : 0.000       : 0.00%       :       3     |
-| [love "callbacks.lua"]                            : anonymous                               :   34                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : tween                                   :   71                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : during                                  :   71                : 0.000       : 0.00%       :       1     |
-| [love "RandomGenerator.lua"]                      : random                                  :   33                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : anonymous                               :  149                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : cancel                                  :   88                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : after                                   :   71                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : construct                               :  106                : 0.000       : 0.00%       :       1     |
+| main.lua                                          : draw                                    :  253                : 2.412       : 97.36%      :      10     |
+| ../../vendor/SceneMgr.lua                         : draw                                    :   90                : 2.412       : 97.35%      :      10     |
+| scenes/fiveGuys.lua                               : draw                                    :  389                : 2.411       : 97.34%      :      10     |
+| [string "boot.lua"]                               : anonymous                               :  594                : 2.222       : 89.69%      :      10     |
+| ../../lib/render.lua                              : renderNormallyOrOptimized               :  284                : 1.986       : 80.15%      :   57000     |
+| ../../lib/render.lua                              : renderThings                            :  240                : 1.718       : 69.36%      :   57010     |
+| ../../lib/render.lua                              : handleChild                             :  309                : 1.137       : 45.90%      :   99500     |
+| ../../lib/transform.lua                           : setTransforms                           :    9                : 0.709       : 28.62%      :   57010     |
+| ../../lib/transform.lua                           : doMultiplication                        :    4                : 0.296       : 11.97%      :   57010     |
+| main.lua                                          : update                                  :  238                : 0.059       : 2.39%       :      10     |
+| ../../vendor/batteries/manual_gc.lua              : manual_gc                               :   41                : 0.051       : 2.04%       :      10     |
+| scenes/fiveGuys.lua                               : drawGroundPlaneLinesSimple              :  315                : 0.033       : 1.34%       :      10     |
+| ../../lib/geom.lua                                : coloredOutsideTheLines                  :  152                : 0.015       : 0.60%       :     130     |
+| ../../vendor/inspect.lua                          : putTable                                :  238                : 0.013       : 0.54%       :      20     |
+| ../../vendor/SceneMgr.lua                         : update                                  :   82                : 0.008       : 0.33%       :      10     |
+| scenes/fiveGuys.lua                               : update                                  :  429                : 0.008       : 0.32%       :      10     |
+| ../../vendor/inspect.lua                          : down                                    :  206                : 0.008       : 0.31%       :      20     |
+| ../../vendor/inspect.lua                          : f                                       :  253                : 0.008       : 0.31%       :      20     |
+| ../../lib/mesh.lua                                : createTexturedRectangle                 :  696                : 0.006       : 0.24%       :     260     |
+| ../../vendor/inspect.lua                          : getNonSequentialKeys                    :  110                : 0.005       : 0.19%       :      20     |
+| ../../lib/geom.lua                                : connectAtIntersection                   :  137                : 0.005       : 0.19%       :     520     |
+| ../../vendor/brady.lua                            : getScreenCoordinates                    :  117                : 0.005       : 0.18%       :     260     |
+| ../../vendor/timer.lua                            : update                                  :   53                : 0.004       : 0.17%       :      10     |
+| ../../vendor/timer.lua                            : updateTimerHandle                       :   32                : 0.004       : 0.15%       :     108     |
+| ../../vendor/concord/world.lua                    : emit                                    :  316                : 0.004       : 0.15%       :      10     |
+| src/systems/PotatoHeadSystem.lua                  : callback                                :   44                : 0.003       : 0.13%       :      10     |
+| ../../vendor/inspect.lua                          : putValue                                :  294                : 0.002       : 0.10%       :     180     |
+| ../../vendor/inspect.lua                          : anonymous                               :   81                : 0.002       : 0.09%       :     400     |
+| ../../lib/geom.lua                                : makeParallelLine                        :   93                : 0.002       : 0.09%       :     520     |
+| ../../lib/geom.lua                                : isectLineLine                           :  108                : 0.002       : 0.09%       :     520     |
+| ../../lib/numbers.lua                             : lerp                                    :   15                : 0.002       : 0.09%       :    1040     |
+| ../../vendor/brady.lua                            : rotateAboutPoint                        :   27                : 0.002       : 0.08%       :     280     |
+| src/systems/PotatoHeadSystem.lua                  : blinkEyes                               :  221                : 0.002       : 0.06%       :      17     |
+| ../../vendor/inspect.lua                          : countTableAppearances                   :  130                : 0.001       : 0.06%       :     360     |
+| ../../vendor/inspect.lua                          : tabify                                  :  212                : 0.001       : 0.06%       :     180     |
+| ../../vendor/inspect.lua                          : puts                                    :  196                : 0.001       : 0.06%       :     680     |
+| src/systems/PotatoHeadSystem.lua                  : after                                   :  228                : 0.001       : 0.06%       :      15     |
+| ../../vendor/brady.lua                            : getLayer                                :  103                : 0.001       : 0.05%       :     300     |
+| ../../vendor/timer.lua                            : __index                                 :  174                : 0.001       : 0.05%       :      32     |
+| ../../vendor/inspect.lua                          : isIdentifier                            :   65                : 0.001       : 0.04%       :     160     |
+| ../../vendor/timer.lua                            : during                                  :  161                : 0.001       : 0.04%       :      34     |
+| ../../vendor/timer.lua                            : tween_collect_payload                   :  142                : 0.001       : 0.03%       :      32     |
+| ../../vendor/inspect.lua                          : isSequenceKey                           :   69                : 0.001       : 0.03%       :     160     |
+| ../../vendor/brady.lua                            : getWorldCoordinates                     :  109                : 0.000       : 0.02%       :      20     |
+| ../../vendor/brady.lua                            : getScale                                :  162                : 0.000       : 0.01%       :     130     |
+| ../../vendor/inspect.lua                          : putKey                                  :  196                : 0.000       : 0.01%       :     160     |
+| ../../vendor/brady.lua                            : push                                    :  106                : 0.000       : 0.01%       :      10     |
+| ../../vendor/timer.lua                            : method                                  :  107                : 0.000       : 0.01%       :      34     |
+| ../../vendor/timer.lua                            : construct                               :  180                : 0.000       : 0.01%       :      64     |
+| src/systems/PotatoHeadSystem.lua                  : during                                  :  233                : 0.000       : 0.01%       :      59     |
+| ../../vendor/brady.lua                            : push                                    :   34                : 0.000       : 0.01%       :      10     |
+| ../../vendor/inspect.lua                          : getToStringResultSafely                 :  120                : 0.000       : 0.01%       :      20     |
+| ../../vendor/timer.lua                            : after                                   :   30                : 0.000       : 0.01%       :      52     |
+| ../../lib/gesture.lua                             : update                                  :   66                : 0.000       : 0.01%       :      10     |
+| ../../vendor/concord/type.lua                     : isCallable                              :    6                : 0.000       : 0.01%       :      20     |
+| ../../vendor/brady.lua                            : pop                                     :  108                : 0.000       : 0.01%       :      10     |
+| ../../vendor/SceneMgr.lua                         : funcDefined                             :  101                : 0.000       : 0.00%       :      20     |
+| ../../vendor/inspect.lua                          : getSequenceLength                       :  100                : 0.000       : 0.00%       :      20     |
+| ../../vendor/timer.lua                            : tween                                   :   71                : 0.000       : 0.00%       :      32     |
+| ../../vendor/timer.lua                            : construct                               :  106                : 0.000       : 0.00%       :      32     |
+| ../../vendor/timer.lua                            : f                                       :  115                : 0.000       : 0.00%       :      34     |
+| ../../vendor/timer.lua                            : anonymous                               :  149                : 0.000       : 0.00%       :      32     |
+| ../../vendor/concord/world.lua                    : __flush                                 :  146                : 0.000       : 0.00%       :      20     |
+| ../../vendor/jprof.lua                            : pop                                     :  189                : 0.000       : 0.00%       :      20     |
+| ../../vendor/inspect.lua                          : alreadyVisited                          :  216                : 0.000       : 0.00%       :      20     |
+| ../../vendor/jprof.lua                            : push                                    :  189                : 0.000       : 0.00%       :      20     |
+| [string "wrap_Event.lua"]                         : poll                                    :   25                : 0.000       : 0.00%       :      10     |
+| ../../vendor/timer.lua                            : during                                  :   30                : 0.000       : 0.00%       :      15     |
+| ../../vendor/timer.lua                            : after                                   :   71                : 0.000       : 0.00%       :      17     |
+| ../../vendor/timer.lua                            : during                                  :   71                : 0.000       : 0.00%       :      17     |
+| [string "RandomGenerator.lua"]                    : random                                  :   33                : 0.000       : 0.00%       :      17     |
+| src/systems/BipedSystem.lua                       : callback                                :  183                : 0.000       : 0.00%       :      10     |
+| [string "boot.lua"]                               : anonymous                               :  189                : 0.000       : 0.00%       :       1     |
+| ../../vendor/timer.lua                            : cancel                                  :   88                : 0.000       : 0.00%       :       3     |
+| [string "boot.lua"]                               : anonymous                               :  192                : 0.000       : 0.00%       :       1     |
 | ../../vendor/ProFi.lua                            : shouldReturn                            :  203                : 0.000       : 0.00%       :       1     |
-| [love "callbacks.lua"]                            : anonymous                               :   37                : 0.000       : 0.00%       :       1     |
-| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :      12     |
-| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :    8166     |
-| [C]                                               : rawget                                  :   -1                : 0.000       : 0.00%       :       5     |
-| [C]                                               : abs                                     :   -1                : 0.000       : 0.00%       :     288     |
-| [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : tween                                   :  140                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : tween                                   :  212                : 0.000       : 0.00%       :       1     |
-| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : match                                   :   -1                : 0.000       : 0.00%       :       2     |
-| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :       6     |
-| ../../vendor/timer.lua                            : cancel                                  :  206                : 0.000       : 0.00%       :       1     |
-| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : pcall                                   :   -1                : 0.000       : 0.00%       :       1     |
-| [C]                                               : tonumber                                :   -1                : 0.000       : 0.00%       :       1     |
-| [C]                                               : random                                  :   -1                : 0.000       : 0.00%       :       1     |
-| [C]                                               : max                                     :   -1                : 0.000       : 0.00%       :       9     |
-| [C]                                               : unpack                                  :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : min                                     :   -1                : 0.000       : 0.00%       :       3     |
-| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : __index                                 :   -1                : 0.000       : 0.00%       :       1     |
-| [love "wrap_Math.lua"]                            : random                                  :   37                : 0.000       : 0.00%       :       1     |
-| [C]                                               : sin                                     :   -1                : 0.000       : 0.00%       :     312     |
-| [love "RandomGenerator.lua"]                      : random                                  :   75                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : after                                   :  206                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : during                                  :  206                : 0.000       : 0.00%       :       1     |
-| ../../vendor/timer.lua                            : after                                   :   77                : 0.000       : 0.00%       :       1     |
-| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :     162     |
-| ../../vendor/ProFi.lua                            : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
-| ../../lib/geom.lua                                : distance                                :    4                : 0.000       : 0.00%       :     144     |
-| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :       6     |
-| ../../vendor/ProFi.lua                            : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
-| [C]                                               : getmetatable                            :   -1                : 0.000       : 0.00%       :      12     |
-| ../../vendor/timer.lua                            : update                                  :  206                : 0.000       : 0.00%       :       6     |
-| [C]                                               : setTransformation                       :   -1                : 0.000       : 0.00%       :    6846     |
-| [C]                                               : ipairs                                  :   -1                : 0.000       : 0.00%       :       9     |
-| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :       6     |
+| ../../vendor/inspect.lua                          : inspect                                 :  310                : 0.000       : 0.00%       :      20     |
+| [C]                                               : sort                                    :   -1                : 0.000       : 0.00%       :      20     |
+| [C]                                               : setmetatable                            :   -1                : 0.000       : 0.00%       :      20     |
+| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :      10     |
+| ../../vendor/inspect.lua                          : putKey                                  :  231                : 0.000       : 0.00%       :     160     |
+| [C]                                               : __index                                 :   -1                : 0.000       : 0.00%       :      17     |
+| [string "RandomGenerator.lua"]                    : random                                  :   75                : 0.000       : 0.00%       :      17     |
+| [string "wrap_Math.lua"]                          : random                                  :   37                : 0.000       : 0.00%       :      17     |
+| ../../vendor/timer.lua                            : during                                  :  206                : 0.000       : 0.00%       :      17     |
+| [C]                                               : random                                  :   -1                : 0.000       : 0.00%       :      17     |
+| ../../vendor/timer.lua                            : cancel                                  :  206                : 0.000       : 0.00%       :       3     |
+| [C]                                               : tonumber                                :   -1                : 0.000       : 0.00%       :      17     |
 | ../../vendor/ProFi.lua                            : stop                                    :   88                : 0.000       : 0.00%       :       1     |
-| [love "callbacks.lua"]                            : anonymous                               :   31                : 0.000       : 0.00%       :       1     |
-| [C]                                               : sqrt                                    :   -1                : 0.000       : 0.00%       :     288     |
-| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : yield                                   :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : __mul                                   :   -1                : 0.000       : 0.00%       :    6840     |
-| [C]                                               : cos                                     :   -1                : 0.000       : 0.00%       :     312     |
-| [C]                                               : collectgarbage                          :   -1                : 0.000       : 0.00%       :    3575     |
-| [C]                                               : assert                                  :   -1                : 0.000       : 0.00%       :       9     |
-| [C]                                               : ceil                                    :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :     576     |
-| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :    8178     |
-| [C]                                               : newMesh                                 :   -1                : 0.000       : 0.00%       :     144     |
-| [C]                                               : setTexture                              :   -1                : 0.000       : 0.00%       :     144     |
-| [C]                                               : setVertex                               :   -1                : 0.000       : 0.00%       :     576     |
-| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :      12     |
-| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :      12     |
-| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : setStencilTest                          :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :    3577     |
-| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :       6     |
-| [C]                                               : distance                                :   -1                : 0.000       : 0.00%       :     144     |
-| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :     209     |
-| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :      81     |
+| [string "boot.lua"]                               : anonymous                               :  186                : 0.000       : 0.00%       :       1     |
+| [C]                                               : rep                                     :   -1                : 0.000       : 0.00%       :     180     |
+| ../../vendor/timer.lua                            : after                                   :   77                : 0.000       : 0.00%       :      17     |
+| [C]                                               : pump                                    :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : print                                   :   -1                : 0.000       : 0.00%       :      30     |
+| [C]                                               : inspect                                 :   -1                : 0.000       : 0.00%       :      20     |
+| [C]                                               : tostring                                :   -1                : 0.000       : 0.00%       :     170     |
+| ../../vendor/timer.lua                            : after                                   :  206                : 0.000       : 0.00%       :      17     |
+| [C]                                               : getFPS                                  :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : sleep                                   :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : present                                 :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : xpcall                                  :   -1                : 0.000       : 0.00%       :      10     |
+| ../../vendor/inspect.lua                          : inspect                                 :  338                : 0.000       : 0.00%       :      20     |
+| [C]                                               : format                                  :   -1                : 0.000       : 0.00%       :      10     |
+| ../../vendor/ProFi.lua                            : startHooks                              :  235                : 0.000       : 0.00%       :       0     |
+| [C]                                               : pop                                     :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : min                                     :   -1                : 0.000       : 0.00%       :      34     |
+| [C]                                               : unpack                                  :   -1                : 0.000       : 0.00%       :      68     |
+| [C]                                               : pcall                                   :   -1                : 0.000       : 0.00%       :      32     |
+| [C]                                               : match                                   :   -1                : 0.000       : 0.00%       :     224     |
+| [C]                                               : rawget                                  :   -1                : 0.000       : 0.00%       :     180     |
+| [C]                                               : ipairs                                  :   -1                : 0.000       : 0.00%       :      64     |
+| [C]                                               : collectgarbage                          :   -1                : 0.000       : 0.00%       :    3283     |
+| [C]                                               : getBackgroundColor                      :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : getmetatable                            :   -1                : 0.000       : 0.00%       :      60     |
+| [C]                                               : origin                                  :   -1                : 0.000       : 0.00%       :      20     |
+| [C]                                               : isActive                                :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : clear                                   :   -1                : 0.000       : 0.00%       :      20     |
+| ../../vendor/timer.lua                            : tween                                   :  140                : 0.000       : 0.00%       :      32     |
+| [C]                                               : max                                     :   -1                : 0.000       : 0.00%       :     108     |
+| scenes/fiveGuys.lua                               : anonymous                               :  461                : 0.000       : 0.00%       :       1     |
+| [C]                                               : (for generator)                         :   -1                : 0.000       : 0.00%       :     771     |
 | ../../vendor/ProFi.lua                            : start                                   :   70                : 0.000       : 0.00%       :       0     |
-| [C]                                               : pairs                                   :   -1                : 0.000       : 0.00%       :      13     |
+| [C]                                               : getTime                                 :   -1                : 0.000       : 0.00%       :    3285     |
+| ../../vendor/timer.lua                            : tween                                   :  212                : 0.000       : 0.00%       :      32     |
+| [C]                                               : step                                    :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : assert                                  :   -1                : 0.000       : 0.00%       :     106     |
+| [C]                                               : type                                    :   -1                : 0.000       : 0.00%       :    2240     |
+| [C]                                               : pairs                                   :   -1                : 0.000       : 0.00%       :      92     |
+| ../../vendor/timer.lua                            : update                                  :  206                : 0.000       : 0.00%       :      10     |
+| [C]                                               : getStats                                :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : setColor                                :   -1                : 0.000       : 0.00%       :   67110     |
+| [C]                                               : draw                                    :   -1                : 0.000       : 0.00%       :   67070     |
+| [C]                                               : push                                    :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : translate                               :   -1                : 0.000       : 0.00%       :      20     |
+| [C]                                               : abs                                     :   -1                : 0.000       : 0.00%       :     520     |
+| [C]                                               : sqrt                                    :   -1                : 0.000       : 0.00%       :     520     |
+| [C]                                               : distance                                :   -1                : 0.000       : 0.00%       :     260     |
+| [C]                                               : rotate                                  :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : setTransformation                       :   -1                : 0.000       : 0.00%       :   57010     |
+| [C]                                               : scale                                   :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : setStencilTest                          :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : __mul                                   :   -1                : 0.000       : 0.00%       :   57000     |
+| [C]                                               : getDimensions                           :   -1                : 0.000       : 0.00%       :     290     |
+| ../../lib/geom.lua                                : distance                                :    4                : 0.000       : 0.00%       :     260     |
+| [C]                                               : setVertex                               :   -1                : 0.000       : 0.00%       :    1040     |
+| [C]                                               : cos                                     :   -1                : 0.000       : 0.00%       :     280     |
+| [C]                                               : sin                                     :   -1                : 0.000       : 0.00%       :     280     |
+| [C]                                               : setLineWidth                            :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : rectangle                               :   -1                : 0.000       : 0.00%       :      10     |
+| ../../vendor/ProFi.lua                            : stopHooks                               :  239                : 0.000       : 0.00%       :       1     |
+| [C]                                               : floor                                   :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : insert                                  :   -1                : 0.000       : 0.00%       :    1200     |
+| [C]                                               : ceil                                    :   -1                : 0.000       : 0.00%       :      10     |
+| [C]                                               : setTexture                              :   -1                : 0.000       : 0.00%       :     260     |
+| [C]                                               : newMesh                                 :   -1                : 0.000       : 0.00%       :     260     |
+| [C]                                               : sethook                                 :   -1                : 0.000       : 0.00%       :       1     |
