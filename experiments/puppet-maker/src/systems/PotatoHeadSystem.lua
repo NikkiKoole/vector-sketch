@@ -31,8 +31,9 @@ function getPositionsForEyesAttaching(e)
     local newPoints = getHeadPoints(e)
 
     local mx = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
-    local x1 = numbers.lerp(newPoints[7][1], mx, 0.5)
-    local x2 = numbers.lerp(newPoints[3][1], mx, 0.5)
+    local tX = numbers.mapInto(e.potato.values.eyeXAxisBetween, -3, 3, 0, 1)
+    local x1 = numbers.lerp(newPoints[7][1], mx, tX)
+    local x2 = numbers.lerp(newPoints[3][1], mx, tX)
 
     local tY = numbers.mapInto(e.potato.values.eyeYAxis, -3, 3, 0, 1)
     local y1 = numbers.lerp(newPoints[7][2], newPoints[8][2], tY)

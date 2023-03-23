@@ -166,7 +166,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       love.graphics.setShader()
 
 
-      local shrinkFactor = 2
+      local shrinkFactor = 4
 
       -- I want to know If we do this or not..
       if (renderPatch) then

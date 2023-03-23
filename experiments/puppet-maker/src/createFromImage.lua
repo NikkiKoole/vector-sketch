@@ -103,6 +103,9 @@ lib.bezier = function(url, textured, widthMultiplier, optionalPoints)
     }
 
     if (textured) then
+        if (currentNode.texture.retexture) then
+            currentNode.texture.retexture:release()
+        end
         currentNode.texture.retexture = love.graphics.newImage(textured)
     end
 

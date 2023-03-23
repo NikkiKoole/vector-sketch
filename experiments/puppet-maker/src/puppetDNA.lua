@@ -262,6 +262,7 @@ function generate()
         eyeHeightMultiplier     = 1,
         eyeRotation             = 0,
         eyeYAxis                = 0,
+        eyeXAxisBetween = 0,
         pupils                  = {
             shape     = 1,
             bgPal     = 4,

@@ -279,7 +279,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
    --print(partName, flipX, flipY)
    local renderPatch = {}
 
-   if partName == 'head' then
+   if (partName == 'head' and not values.potatoHead) or (partName == 'body' and values.potatoHead) then
       if not isNullObject('skinPatchSnout', values) then
          local p = {}
 
@@ -356,7 +356,12 @@ end
 
 function createUpperlipBezier(values, points)
    local textured, url = partToTexturedCanvas('upperlip', values)
-   return createFromImage.bezier(url, textured, 1, points)
+   
+   local w,h = mesh.getImage(url):getDimensions()
+   local r = 0.5 + love.math.random() * 0.5
+   local p = { { (h / 2) * r, 0 }, { 0, -w * love.math.random() }, { (-h / 2) * r, 0 } }
+
+   return createFromImage.bezier(url, textured, 1, p)
 end
 
 function createLowerlipBezier(values, points)
@@ -648,7 +653,9 @@ function changePart(name, values)
    end
    parentize.parentize(editingGuy.guy)
    -- this is very costly, mayeb do this on a need basis
+   if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows' then
    mesh.meshAll(editingGuy.guy)
+   end
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
    myWorld:emit("potatoInit", potato)

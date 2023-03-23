@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 5
+   amountOfGuys = 100
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -226,7 +226,7 @@ function partRandomize(values)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].texScale = math.ceil(love.math.random() * 9)
          changePart(parts[i], values)
-         print('changed part ', parts[i])
+       --  print('changed part ', parts[i])
       end
    end
 end

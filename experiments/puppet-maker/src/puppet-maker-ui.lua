@@ -252,6 +252,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.eyeYAxis = v.value
                myWorld:emit('potatoInit', potato)
             end
+            currentY = currentY + 25
+            local v = h_slider("eye-XAxisBetween", startX, currentY, 50, values.eyeXAxisBetween, -3, 3)
+            if v.value then
+               v.value = math.floor(v.value)
+               values.eyeXAxisBetween = v.value
+               myWorld:emit('potatoInit', potato)
+            end
          end
       end
 
