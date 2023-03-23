@@ -187,7 +187,7 @@ end
 
 function partRandomizeNoChange(values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip', }
+       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout' }
    -- local parts = { 'head' }
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
@@ -197,6 +197,7 @@ function partRandomizeNoChange(values)
          values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].texScale = math.ceil(love.math.random() * 9)
          if (parts[i] == 'head' or parts[i] == 'body') then
             values[parts[i]].flipx = love.math.random() < .5 and -1 or 1
             values[parts[i]].flipy = love.math.random() < .5 and -1 or 1
@@ -213,8 +214,8 @@ end
 
 function partRandomize(values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip', }
-   -- local parts = { 'head' }
+       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' }
+   -- local parts = { 'head'
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
 
@@ -223,6 +224,7 @@ function partRandomize(values)
          values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         values[parts[i]].texScale = math.ceil(love.math.random() * 9)
          changePart(parts[i], values)
          print('changed part ', parts[i])
       end

@@ -170,30 +170,34 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       -- I want to know If we do this or not..
       if (renderPatch) then
          love.graphics.setColorMask(true, true, true, false)
-         love.graphics.setColor(1, 1, 1, 1)
-         local image = love.graphics.newImage(renderPatch.imageData)
-         local imgw, imgh = image:getDimensions();
-         local xOffset = renderPatch.tx * (imgw / 6)
-         local yOffset = renderPatch.ty * (imgh / 6)
-         love.graphics.draw(image, lw / 2 + xOffset, lh / 2 + yOffset, renderPatch.r * ((math.pi * 2) / 16),
-             renderPatch.sx,
-             renderPatch.sy,
-             imgw / 2, imgh / 2)
-         --print(lw, lh)
-         if false then
-            --local img = love.graphics.newImage('assets/parts/eye4.png')
-            local img = love.graphics.newImage('assets/test1.png')
-            --love.graphics.setBlendMode('subtract')
+         for i = 1, #renderPatch do
+            local p = renderPatch[i]
 
-            for i = 1, 100 do
-               love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
-               local s = love.math.random() * 3
-               love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(),
-                   love.math.random() * math.pi * 2,
-                   s)
+            love.graphics.setColor(1, 1, 1, 1)
+            local image = love.graphics.newImage(p.imageData)
+            local imgw, imgh = image:getDimensions();
+            local xOffset = p.tx * (imgw / 6)
+            local yOffset = p.ty * (imgh / 6)
+            love.graphics.draw(image, lw / 2 + xOffset, lh / 2 + yOffset, p.r * ((math.pi * 2) / 16),
+                p.sx,
+                p.sy,
+                imgw / 2, imgh / 2)
+            --print(lw, lh)
+            if false then
+               --local img = love.graphics.newImage('assets/parts/eye4.png')
+               local img = love.graphics.newImage('assets/test1.png')
+               --love.graphics.setBlendMode('subtract')
+
+               for i = 1, 100 do
+                  love.graphics.setColor(love.math.random(), love.math.random(), love.math.random(), 0.4)
+                  local s = love.math.random() * 3
+                  love.graphics.draw(img, lw * love.math.random(), lh * love.math.random(),
+                      love.math.random() * math.pi * 2,
+                      s)
+               end
+
+               --love.graphics.setBlendMode("alpha")
             end
-
-            --love.graphics.setBlendMode("alpha")
          end
          love.graphics.setColorMask(true, true, true, true)
       end

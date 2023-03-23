@@ -300,7 +300,7 @@ function scene.load()
     minpos = -1000
     maxpos = 1000
     for i = minpos, maxpos do
-        heights[i] = love.math.random() * 100
+        heights[i] = love.math.random() * (tileSize / 3)
     end
 
 

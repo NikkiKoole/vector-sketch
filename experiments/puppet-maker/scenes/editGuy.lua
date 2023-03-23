@@ -544,24 +544,6 @@ function hairColorize(fgPal, values)
    end
 end
 
-function partRandomize(values)
-   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip', }
-   -- local parts = { 'head' }
-   for i = 1, #parts do
-      if values.potatoHead and parts[i] == 'neck' then
-
-      else
-         local p = findPart(parts[i])
-         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
-         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
-         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
-         changePart(parts[i], values)
-         print('changed part ', parts[i])
-      end
-   end
-end
-
 local function findPart(name)
    for i = 1, #parts do
       if parts[i].name == name then

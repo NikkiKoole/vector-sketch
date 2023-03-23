@@ -351,11 +351,13 @@ function BipedSystem:itemRotate(elem, dx, dy, scale)
     for _, e in ipairs(self.pool) do
         if e.biped.body == elem.item then
             e.biped.body.transforms.l[3] = e.biped.body.transforms.l[3] + 0.1
-            transforms.setTransforms(e.biped.body)
-            setLegs(e)
-            setArms(e)
-            BipedSystem:bipedAttachHead(e)
-            BipedSystem:bipedAttachHands(e)
+            BipedSystem:movedBody(e)
+
+            --transforms.setTransforms(e.biped.body)
+            --setLegs(e)
+            --setArms(e)
+            --BipedSystem:bipedAttachHead(e)
+            --BipedSystem:bipedAttachHands(e)
         end
         if e.biped.hand1 == elem.item then
             e.biped.hand1.transforms.l[3] = e.biped.hand1.transforms.l[3] + 0.1

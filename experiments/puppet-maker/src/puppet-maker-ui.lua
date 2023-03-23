@@ -328,44 +328,67 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
          end
       end
-      if selectedCategory == 'skinPatchSnout' then
+
+      if selectedCategory == 'skinPatchSnout' or selectedCategory == 'skinPatchEye1' or selectedCategory == 'skinPatchEye2' then
+         local posts = { 'ScaleX', 'ScaleY', 'Angle', 'X', 'Y' }
+         local mins = { .25, .25, 0, -6, -6 }
+         local maxs = { 3, 3, 15, 6, 6 }
+         local fs = { 4.0, 4.0, 1, 1, 1 }
          if draw then
-            local v = h_slider("scaleX", startX, currentY, 50, values.skinPatchSnoutScaleX, .25, 3)
-            if v.value then
-               v.value = math.floor(v.value * 4) / 4.0 -- round to .5
-               values.skinPatchSnoutScaleX = v.value
-               changePart('head', values)
-            end
-            currentY = currentY + 25
-            v = h_slider("scaleY", startX, currentY, 50, values.skinPatchSnoutScaleY, .25, 3)
-            if v.value then
-               v.value = math.floor(v.value * 4) / 4.0 -- round to .5
-               values.skinPatchSnoutScaleY = v.value
-               changePart('head', values)
-            end
-            currentY = currentY + 25
-            v = h_slider("rot", startX, currentY, 50, values.skinPatchSnoutAngle, 0, 15)
-            if v.value then
-               v.value = math.floor(v.value) -- round to .5
-               values.skinPatchSnoutAngle = v.value
-               changePart('head', values)
-            end
-            currentY = currentY + 25
-            v = h_slider("tx", startX, currentY, 50, values.skinPatchSnoutX, -6, 6)
-            if v.value then
-               v.value = math.floor(v.value) -- round to .5
-               values.skinPatchSnoutX = v.value
-               changePart('head', values)
-            end
-            currentY = currentY + 25
-            v = h_slider("ty", startX, currentY, 50, values.skinPatchSnoutY, -6, 6)
-            if v.value then
-               v.value = math.floor(v.value) -- round to .5
-               values.skinPatchSnoutY = v.value
-               changePart('head', values)
+            for i = 1, #posts do
+               local p = posts[i]
+               local vv = selectedCategory .. p
+               local v = h_slider(vv, startX, currentY, 50, values[vv], mins[i], maxs[i])
+               if v.value then
+                  v.value = math.floor(v.value * fs[i]) / fs[i] -- round to .5
+                  print(vv, v.value)
+                  values[vv] = v.value
+                  changePart('head', values)
+               end
+               currentY = currentY + 25
             end
          end
       end
+
+
+      -- if selectedCategory == 'skinPatchSnout' then
+      --    if draw then
+      --       local v = h_slider("scaleX", startX, currentY, 50, values.skinPatchSnoutScaleX, .25, 3)
+      --       if v.value then
+      --          v.value = math.floor(v.value * 4) / 4.0 -- round to .5
+      --          values.skinPatchSnoutScaleX = v.value
+      --          changePart('head', values)
+      --       end
+      --       currentY = currentY + 25
+      --       v = h_slider("scaleY", startX, currentY, 50, values.skinPatchSnoutScaleY, .25, 3)
+      --       if v.value then
+      --          v.value = math.floor(v.value * 4) / 4.0 -- round to .5
+      --          values.skinPatchSnoutScaleY = v.value
+      --          changePart('head', values)
+      --       end
+      --       currentY = currentY + 25
+      --       v = h_slider("rot", startX, currentY, 50, values.skinPatchSnoutAngle, 0, 15)
+      --       if v.value then
+      --          v.value = math.floor(v.value) -- round to .5
+      --          values.skinPatchSnoutAngle = v.value
+      --          changePart('head', values)
+      --       end
+      --       currentY = currentY + 25
+      --       v = h_slider("tx", startX, currentY, 50, values.skinPatchSnoutX, -6, 6)
+      --       if v.value then
+      --          v.value = math.floor(v.value) -- round to .5
+      --          values.skinPatchSnoutX = v.value
+      --          changePart('head', values)
+      --       end
+      --       currentY = currentY + 25
+      --       v = h_slider("ty", startX, currentY, 50, values.skinPatchSnoutY, -6, 6)
+      --       if v.value then
+      --          v.value = math.floor(v.value) -- round to .5
+      --          values.skinPatchSnoutY = v.value
+      --          changePart('head', values)
+      --       end
+      --    end
+      -- end
       if selectedCategory == 'head' then
          local update = function()
             editingGuy.head.dirty = true
@@ -698,7 +721,7 @@ local function renderElement(type, value, container, x, y, w, h)
 end
 
 local function buttonClickHelper(value)
-   print('buttonClickHelper', value)
+   print('buttonClickHelper', value, selectedCategory)
    --print(value)
    --print(selectedTab, selectedCategory)
    local values = editingGuy.values

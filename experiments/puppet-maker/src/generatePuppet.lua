@@ -261,11 +261,15 @@ function redoGraphicHelper(part, name, values)
       textured:release()
       p.texture.canvas = m
       --p.texture.texture = textured
+      -- print(' texture updat for', name)
+   else
+      print('not foing texture updat for', name)
    end
    return part
 end
 
 function partToTexturedCanvas(partName, values, optionalImageSettings)
+   --print('partToTexturedCanvas', partName)
    local p = findPart(partName)
    local url = p.imgs[values[partName].shape]
 
@@ -273,17 +277,39 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
    local flipY = values[partName].flipy or 1
 
    --print(partName, flipX, flipY)
-   local renderPatch = nil
+   local renderPatch = {}
 
    if partName == 'head' then
       if not isNullObject('skinPatchSnout', values) then
-         renderPatch = {}
-         renderPatch.imageData = partToTexturedCanvas('skinPatchSnout', values)
-         renderPatch.sx = values.skinPatchSnoutScaleX
-         renderPatch.sy = values.skinPatchSnoutScaleY
-         renderPatch.r = values.skinPatchSnoutAngle
-         renderPatch.tx = values.skinPatchSnoutX
-         renderPatch.ty = values.skinPatchSnoutY
+         local p = {}
+
+         p.imageData = partToTexturedCanvas('skinPatchSnout', values)
+         p.sx = values.skinPatchSnoutScaleX
+         p.sy = values.skinPatchSnoutScaleY
+         p.r = values.skinPatchSnoutAngle
+         p.tx = values.skinPatchSnoutX
+         p.ty = values.skinPatchSnoutY
+         table.insert(renderPatch, p)
+      end
+      if not isNullObject('skinPatchEye1', values) then
+         local p     = {}
+         p.imageData = partToTexturedCanvas('skinPatchEye1', values)
+         p.sx        = values.skinPatchEye1ScaleX
+         p.sy        = values.skinPatchEye1ScaleY
+         p.r         = values.skinPatchEye1Angle
+         p.tx        = values.skinPatchEye1X
+         p.ty        = values.skinPatchEye1Y
+         table.insert(renderPatch, p)
+      end
+      if not isNullObject('skinPatchEye2', values) then
+         local p     = {}
+         p.imageData = partToTexturedCanvas('skinPatchEye2', values)
+         p.sx        = values.skinPatchEye2ScaleX
+         p.sy        = values.skinPatchEye2ScaleY
+         p.r         = values.skinPatchEye2Angle
+         p.tx        = values.skinPatchEye2X
+         p.ty        = values.skinPatchEye2Y
+         table.insert(renderPatch, p)
       end
    end
 
@@ -405,7 +431,7 @@ function updateChild(container, oldValue, newResult)
    --prof.push('update-child')
    for i = 1, #container.children do
       if container.children[i] == oldValue then
-         print('changed something', container.name)
+         --print('changed something', container.name)
 
          container.children[i] = newResult
          if (container.children[i].transforms) then
@@ -507,6 +533,18 @@ function changePart(name, values)
       myWorld:emit("bipedAttachArms", biped) -- todo
       myWorld:emit("bipedAttachHands", biped) -- todo
    elseif name == 'skinPatchSnout' then
+      if values.potatoHead then
+         changePart('body', values)
+      else
+         changePart('head', values)
+      end
+   elseif name == 'skinPatchEye1' then
+      if values.potatoHead then
+         changePart('body', values)
+      else
+         changePart('head', values)
+      end
+   elseif name == 'skinPatchEye2' then
       if values.potatoHead then
          changePart('body', values)
       else
