@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 MyProfilingReport.txt
 *.*~
+profilingReportFiveGuys.txt
+profilingReportInit.txt
+profilingRunninggReportFiveGuys.txt
