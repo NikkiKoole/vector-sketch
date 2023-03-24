@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 32
+   amountOfGuys = 5
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -166,9 +166,9 @@ function love.load()
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
       --manual_gc(0.002, 2)
-     -- print(collectgarbage("count"))
-     -- print(love.graphics.getStats().texturememory / (1024 * 1024))
-     -- print(i)
+      -- print(collectgarbage("count"))
+      -- print(love.graphics.getStats().texturememory / (1024 * 1024))
+      -- print(i)
    end
    if (PROF_CAPTURE) then
       ProFi:stop()
@@ -182,7 +182,7 @@ function love.load()
 
    SM.setPath("scenes/")
    SM.load("editGuy")
-   print(love.graphics.getStats().texturememory / (1024 * 1024).. ' MB of texture memory, for '..#fiveGuys..' guys.')
+   print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
 end
 
@@ -227,7 +227,7 @@ function partRandomize(values)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].texScale = math.ceil(love.math.random() * 9)
          changePart(parts[i], values)
-       --  print('changed part ', parts[i])
+         --  print('changed part ', parts[i])
       end
    end
 end
