@@ -852,6 +852,11 @@ function scene.draw()
       cam:push()
       render.renderThings(root, true)
 
+      for i =1, #root.children do
+         local px, py = root.children[i].transforms._g:transformPoint(0, 0)
+         love.graphics.rectangle('fill', px-25, py-25, 50,50)
+     end
+     
       if false then
          for _, v in pairs(cameraPoints) do
             love.graphics.setColor(v.color)

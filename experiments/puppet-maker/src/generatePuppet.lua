@@ -109,6 +109,7 @@ function getFlippedMetaObject(flipx, flipy, points)
    end
    local temp = copy3(newPoints)
    if flipy == -1 and flipx == 1 then
+ 
       newPoints[1] = temp[5]
       newPoints[2] = temp[4]
       newPoints[3] = temp[3]

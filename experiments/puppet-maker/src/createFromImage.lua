@@ -22,16 +22,28 @@ local function getLengthOfPath(path)
 end
 
 
+local function makeTexture(url, textured)
+    local t = {}
+    t.url = url
+    t.wrap = 'repeat'
+    t.filter = 'linear'
+    if (textured) then
+        if (t.retexture) then
+            t.retexture:release()
+        end
+        t.retexture = love.graphics.newImage(textured)
+    end
+    return t
+end
+
+
 lib.vanillaline = function(url, textured, hairWidthMultiplier, hairTension, optionalPoints
 )
     local img = mesh.getImage(url)
     local width, height = img:getDimensions()
 
     local currentNode = {}
-    currentNode.texture = {}
-    currentNode.texture.url = url
-    currentNode.texture.wrap = 'repeat'
-    currentNode.texture.filter = 'linear'
+    currentNode.texture = makeTexture(url, textured)
     currentNode.type = 'vanillaline'
     currentNode.color = { 1, 1, 1 }
 
@@ -44,10 +56,7 @@ lib.vanillaline = function(url, textured, hairWidthMultiplier, hairTension, opti
     currentNode.data.tension = hairTension
     currentNode.data.spacing = 5
 
-    if (textured) then
-        currentNode.texture.retexture = love.graphics.newImage(textured)
-    end
-
+   
     return currentNode
 end
 
@@ -58,25 +67,20 @@ lib.rubberhose = function(url, textured, flop, length, widthMultiplier, optional
     local currentNode = {}
 
     currentNode.type = 'rubberhose'
+    currentNode.texture = makeTexture(url, textured)
+
     currentNode.data = currentNode.data or {}
-    currentNode.texture = {}
-    currentNode.texture.url = url
-    currentNode.texture.wrap = 'repeat'
-    currentNode.texture.filter = 'linear'
     currentNode.data.length = height * magic
     currentNode.data.width = width * 2 * widthMultiplier
     currentNode.data.flop = flop
     currentNode.data.borderRadius = .5
     currentNode.data.steps = 20
-    currentNode.color = { 1, 1, 1 }
     currentNode.data.scaleX = optionalScaleX or 1
     currentNode.data.scaleY = length / height
+
+    currentNode.color = { 1, 1, 1 }
     currentNode.points = optionalPoints or { { 0, 0 }, { 0, height / 2 } }
-
-    if (textured) then
-        currentNode.texture.retexture = love.graphics.newImage(textured)
-    end
-
+    
     return currentNode
 end
 
@@ -94,20 +98,9 @@ lib.bezier = function(url, textured, widthMultiplier, optionalPoints)
         },
         name = "beziered",
         points = optionalPoints or { { height / 2, 0 }, { 0, 0 }, { -height / 2, 0 } },
-        texture = {
-            filter = "linear",
-            url = url,
-            wrap = "repeat"
-        },
+        texture = makeTexture(url, textured),
         type = "bezier"
     }
-
-    if (textured) then
-        if (currentNode.texture.retexture) then
-            currentNode.texture.retexture:release()
-        end
-        currentNode.texture.retexture = love.graphics.newImage(textured)
-    end
 
     local result = {}
     result.folder = true
@@ -115,8 +108,9 @@ lib.bezier = function(url, textured, widthMultiplier, optionalPoints)
         l = { 0, 0, 0, 1, 1, 0, 0 }
     }
     result.children = { currentNode }
-    --print('jo!')
+
     return result
 end
+
 
 return lib
