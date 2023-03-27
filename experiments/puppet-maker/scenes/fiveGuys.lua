@@ -295,7 +295,7 @@ function scene.load()
     foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
     groundimg8 = love.graphics.newImage('assets/ground3.png', { mipmaps = true })
     ding = love.graphics.newImage('assets/ground52.png', { mipmaps = true })
-    print(groundimg8)
+    --print(groundimg8)
     heights = {}
     minpos = -1000
     maxpos = 1000
@@ -401,6 +401,10 @@ function scene.draw()
     drawGroundPlaneLinesSimple('foregroundFar', 'foregroundNear')
     cam:push()
     render.renderThings(root, true)
+    for i =1, #root.children do
+        local px, py = root.children[i].transforms._g:transformPoint(0, 0)
+        love.graphics.rectangle('fill', px-25, py-25, 50,50)
+    end
     cam:pop()
 
     if true then -- this is leaking too

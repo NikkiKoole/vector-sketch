@@ -59,6 +59,8 @@ function PotatoHeadSystem:init(e)
 
 end
 
+
+
 function PotatoHeadSystem:rescaleFaceparts(e)
     local values = e.potato.values
 
@@ -202,9 +204,9 @@ local function getAngleAndDistance(x1, y1, x2, y2)
 
     return angle, distance
 end
-local function setAngleAndDistance(sx, sy, angle, distance)
-    local newx = sx + distance * math.cos(angle)
-    local newy = sy + distance * math.sin(angle)
+local function setAngleAndDistance(sx, sy, angle, distance, scaleX, scaleY)
+    local newx = sx + (distance*scaleX) * math.cos(angle)
+    local newy = sy + (distance*scaleY) * math.sin(angle)
     return newx, newy
 end
 
@@ -224,8 +226,12 @@ function PotatoHeadSystem:eyeLookAtPoint(x, y)
         local mx, my = e.potato.pupil1.transforms._g:transformPoint(0, 0)
         local angle, distance = getAngleAndDistance(wx, wy, mx, my)
         local t = e.potato.pupil1.transforms
-        local nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20)
+        local sx, sy = 1/e.potato.head.transforms.l[4],  1/e.potato.head.transforms.l[5]
+        sx = sx * e.potato.eye1.transforms.l[4]
+        sy = sy * e.potato.eye1.transforms.l[5]
 
+        local nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20, sx, sy)
+        
         Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
         Timer.after(1, function()
             local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
@@ -238,7 +244,7 @@ function PotatoHeadSystem:eyeLookAtPoint(x, y)
         mx, my = e.potato.pupil2.transforms._g:transformPoint(0, 0)
         angle, distance = getAngleAndDistance(wx, wy, mx, my)
         t = e.potato.pupil2.transforms
-        nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20)
+        nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20, sx, sy)
 
         Timer.tween(.1, e.potato.pupil2.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
         Timer.after(1, function()
