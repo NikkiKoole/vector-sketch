@@ -356,12 +356,12 @@ end
 
 function createUpperlipBezier(values, points)
    local textured, url = partToTexturedCanvas('upperlip', values)
-   
-   local w,h = mesh.getImage(url):getDimensions()
-   local r = 0.5 + love.math.random() * 0.5
-   local p = { { (h / 2) * r, 0 }, { 0, -w * love.math.random() }, { (-h / 2) * r, 0 } }
 
-   return createFromImage.bezier(url, textured, 1, p)
+   --local w,h = mesh.getImage(url):getDimensions()
+   --local r = 0.5 + love.math.random() * 0.5
+   --local p = { { (h / 2) * r, 0 }, { 0, -w * love.math.random() }, { (-h / 2) * r, 0 } }
+
+   return createFromImage.bezier(url, textured, 1, points)
 end
 
 function createLowerlipBezier(values, points)
@@ -654,7 +654,7 @@ function changePart(name, values)
    parentize.parentize(editingGuy.guy)
    -- this is very costly, mayeb do this on a need basis
    if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows' then
-   mesh.meshAll(editingGuy.guy)
+      mesh.meshAll(editingGuy.guy)
    end
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))

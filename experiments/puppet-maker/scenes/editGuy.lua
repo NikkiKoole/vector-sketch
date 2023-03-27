@@ -675,6 +675,9 @@ function attachCallbacks()
          print('DOINK needs to tween guy elastically like its been moved around violently')
          myWorld:emit('doinkBody', biped)
       end
+      if key == 'm' then
+         myWorld:emit('mouthOpener', potato, love.math.random())
+      end
       if key == 't' then
          print('show me the transformation data')
          local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)

@@ -2,6 +2,8 @@ local numbers          = require 'lib.numbers'
 local PotatoHeadSystem = Concord.system({ pool = { 'potato' } })
 local Timer            = require 'vendor.timer'
 local cam              = require('lib.cameraBase').getInstance()
+local mesh             = require 'lib.mesh'
+local parentize        = require 'lib.parentize'
 
 local function getPositionForNoseAttaching(e)
     local newPoints = getHeadPoints(e)
@@ -101,6 +103,36 @@ function PotatoHeadSystem:rescaleFaceparts(e)
 
     e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
+end
+
+function PotatoHeadSystem:mouthOpener(e, openNess)
+    -- print('should raomize some mouth stuff')
+
+    local url = e.potato.upperlip.children[1].texture.url
+    local w, h = mesh.getImage(url):getDimensions()
+    local wideness = 0.5 --0.5 + love.math.random() * 0.5
+
+    local open = openNess --love.math.random() * 1
+    local p1 = { { (h / 2) * wideness, 0 }, { 0, -w * open }, { ( -h / 2) * wideness, 0 } }
+
+    url = e.potato.lowerlip.children[1].texture.url
+    w, h = mesh.getImage(url):getDimensions()
+    p2 = { p1[1], { 0, w * open }, p1[3] }
+
+    -- would be much nicer/lighter if it could just work with this
+    --editingGuy.upperlip.children[1].data.points = p1
+    -- editingGuy.lowerlip.children[1].data.points = p2
+    -- mesh.meshAll(editingGuy.upperlip.children[1])
+
+    editingGuy.upperlip = updateChild(e.potato.head, editingGuy.upperlip,
+            createUpperlipBezier(e.potato.values, p1))
+    editingGuy.lowerlip = updateChild(e.potato.head, editingGuy.lowerlip,
+            createLowerlipBezier(e.potato.values, p2))
+
+
+    parentize.parentize(editingGuy.guy)
+    mesh.meshAll(editingGuy.guy)
+    potato:give('potato', potatoArguments(editingGuy))
 end
 
 function PotatoHeadSystem:potatoInit(e)
