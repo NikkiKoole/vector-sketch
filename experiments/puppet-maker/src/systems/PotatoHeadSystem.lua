@@ -107,12 +107,12 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
 end
 
-function PotatoHeadSystem:mouthOpener(e, openNess)
-    -- print('should raomize some mouth stuff')
-
+function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
+   
+    --editingGuy.mouthOpenNess = openNess
     local url = e.potato.upperlip.children[1].texture.url
     local w, h = mesh.getImage(url):getDimensions()
-    local wideness = 0.5 --0.5 + love.math.random() * 0.5
+    --local wideness = 0.5 --0.5 + love.math.random() * 0.5
 
     local open = openNess --love.math.random() * 1
     local p1 = { { (h / 2) * wideness, 0 }, { 0, -w * open }, { ( -h / 2) * wideness, 0 } }
@@ -136,6 +136,25 @@ function PotatoHeadSystem:mouthOpener(e, openNess)
     mesh.meshAll(editingGuy.guy)
     potato:give('potato', potatoArguments(editingGuy))
 end
+
+function PotatoHeadSystem:mouthSaySomething(e)
+
+    local maxOpen = .25 + love.math.random()*0.5 
+    local minWide = .5 + love.math.random()*0.5
+
+    local value = {mouthOpen=0, mouthWide = 1}
+    local wideness = 0.5 + love.math.random() 
+    Timer.tween(.3, value, { mouthOpen= maxOpen , mouthWide= minWide}, 'out-quad')
+    Timer.after(.4, function()
+        Timer.tween(.2, value, { mouthOpen= 0, mouthWide=1 }, 'out-quad')
+    end)
+
+    Timer.during(1.1, function(dt) 
+        PotatoHeadSystem:mouthOpener(e, value.mouthOpen, value.mouthWide) 
+    end)
+end
+
+
 
 function PotatoHeadSystem:potatoInit(e)
     --print('potatoint')

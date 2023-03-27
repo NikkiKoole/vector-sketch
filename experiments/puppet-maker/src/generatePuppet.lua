@@ -197,7 +197,8 @@ function potatoArguments(editingGuy)
        brow1 = editingGuy.brow1,
        brow2 = editingGuy.brow2,
        nose = editingGuy.nose,
-       values = editingGuy.values
+       values = editingGuy.values,
+      -- mouthOpenNess = editingGuy.mouthOpenNess
    }
 end
 

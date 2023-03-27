@@ -676,7 +676,8 @@ function attachCallbacks()
          myWorld:emit('doinkBody', biped)
       end
       if key == 'm' then
-         myWorld:emit('mouthOpener', potato, love.math.random())
+         myWorld:emit('mouthSaySomething' ,potato)
+         --myWorld:emit('mouthOpener', potato, love.math.random())
       end
       if key == 't' then
          print('show me the transformation data')
