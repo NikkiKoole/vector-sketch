@@ -187,7 +187,7 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil2.transforms.l[2] = eyey2
 
 
-
+    --e.potato.teeth.transforms.l[1] = 5000
 
 
     local newPoints = getHeadPoints(e)

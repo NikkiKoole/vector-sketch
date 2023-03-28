@@ -86,6 +86,7 @@ function generate()
     local noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
     local browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
     local earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
+    local teethImgUrls, teethParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'teeths')
     local upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
     local lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
 
@@ -100,8 +101,6 @@ function generate()
         { name = 'brows',          imgs = browImgUrls,     p = browParts },
         { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts },
         { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts },
-        -- { name = 'eye1skin', imgs = eyeImgUrls },
-        -- { name = 'eye2skin', imgs = eyeImgUrls },
         { name = 'ears',           imgs = earImgUrls,      p = earParts },
         { name = 'neck',           imgs = legUrls },
         { name = 'nose',           imgs = noseImgUrls,     p = noseParts },
@@ -110,6 +109,7 @@ function generate()
         { name = 'skinPatchEye2',  imgs = patchUrls },
         { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts },
         { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts },
+        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts },
         { name = 'body',           imgs = bodyImgUrls,     p = bodyParts },
         { name = 'armhair',        imgs = hairUrls },
         { name = 'arms',           imgs = legUrls },
@@ -391,6 +391,19 @@ function generate()
         arm1flop                = 1,
         arm2flop                = -1,
         hands                   = {
+            shape     = 1,
+            bgPal     = 4,
+            fgPal     = 1,
+            bgTex     = 1,
+            fgTex     = 2,
+            linePal   = 1,
+            bgAlpha   = 5,
+            fgAlpha   = 5,
+            lineAlpha = 5,
+            texRot    = 0,
+            texScale  = 1,
+        },
+        teeth                   = {
             shape     = 1,
             bgPal     = 4,
             fgPal     = 1,

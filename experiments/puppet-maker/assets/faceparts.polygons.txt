@@ -1095,4 +1095,59 @@ name = "oogtest",
 transforms = {
 l = { -2653.156, 271.819, 0, 1, 1, 0, 0, 0, 0 }
 }
+}, {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -728.16, 57.964 }, { -24.16, 57.964 }, { -24.16, 381.964 }, { -728.16, 381.964 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/teeth1.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "teeth",
+transforms = {
+l = { 0, 0, 0, 1, 1, -376.16, 57.964, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -728.16, 57.964 }, { -24.16, 57.964 }, { -24.16, 257.964 }, { -728.16, 257.964 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/teeth2.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "teeth",
+transforms = {
+l = { -16.346, -256.867, 0, 1, 1, -376.16, 57.964, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -728.16, 57.964 }, { -24.16, 57.964 }, { -24.16, 397.964 }, { -728.16, 397.964 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/teeth3.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "teeth",
+transforms = {
+l = { 795.314, -320.763, 0, 1, 1, -376.16, 57.964, 0, 0 }
+}
+} },
+folder = true,
+name = "teeths",
+transforms = {
+l = { 1793.642, 1248.671, 0, 1, 1, 0, 0, 0, 0 }
+}
 } }

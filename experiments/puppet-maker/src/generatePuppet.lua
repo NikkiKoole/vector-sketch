@@ -192,13 +192,14 @@ function potatoArguments(editingGuy)
        pupil2 = editingGuy.pupil2,
        ear1 = editingGuy.ear1,
        ear2 = editingGuy.ear2,
+       teeth = editingGuy.teeth,
        upperlip = editingGuy.upperlip,
        lowerlip = editingGuy.lowerlip,
        brow1 = editingGuy.brow1,
        brow2 = editingGuy.brow2,
        nose = editingGuy.nose,
        values = editingGuy.values,
-      -- mouthOpenNess = editingGuy.mouthOpenNess
+
    }
 end
 
@@ -487,6 +488,7 @@ function attachAllFaceParts(guy)
    removeChild(guy.ear1)
    removeChild(guy.ear2)
    removeChild(guy.hair)
+   removeChild(guy.teeth)
    removeChild(guy.upperlip)
    removeChild(guy.lowerlip)
 
@@ -506,6 +508,7 @@ function attachAllFaceParts(guy)
    end
 
    table.insert(addTo.children, guy.lowerlip)
+   table.insert(addTo.children, guy.teeth)
    table.insert(addTo.children, guy.upperlip)
 
    table.insert(addTo.children, guy.brow1)
@@ -587,6 +590,9 @@ function changePart(name, values)
    elseif name == 'ears' then
       editingGuy.ear1 = updateChild(container, editingGuy.ear1, copyAndRedoGraphic('ears', values))
       editingGuy.ear2 = updateChild(container, editingGuy.ear2, copyAndRedoGraphic('ears', values))
+   elseif name == 'teeth' then
+      editingGuy.teeth = updateChild(container, editingGuy.teeth, copyAndRedoGraphic('teeth', values))
+
    elseif name == 'eyes' then
       editingGuy.eye1 = updateChild(container, editingGuy.eye1, copyAndRedoGraphic('eyes', values))
       editingGuy.eye2 = updateChild(container, editingGuy.eye2, copyAndRedoGraphic('eyes', values))

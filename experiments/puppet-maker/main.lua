@@ -151,6 +151,7 @@ function love.load()
           pupil2 = copyAndRedoGraphic('pupils', values),
           brow1 = createBrowBezier(values),
           brow2 = createBrowBezier(values),
+          teeth = copyAndRedoGraphic('teeth', values),
           upperlip = createUpperlipBezier(values),
           lowerlip = createLowerlipBezier(values),
           ear1 = copyAndRedoGraphic('ears', values),
@@ -188,7 +189,7 @@ end
 
 function partRandomizeNoChange(values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout' }
+       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'teeth' }
    -- local parts = { 'head' }
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
@@ -215,7 +216,7 @@ end
 
 function partRandomize(values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' }
+       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2', 'teeth' }
    -- local parts = { 'head'
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
