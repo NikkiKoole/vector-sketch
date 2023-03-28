@@ -305,46 +305,6 @@ local function rgbToHex(r, g, b)
 end
 
 
-function attachAllFaceParts(guy)
-   removeChild(guy.eye1)
-   removeChild(guy.eye2)
-   removeChild(guy.pupil1)
-   removeChild(guy.pupil2)
-   removeChild(guy.nose)
-   removeChild(guy.brow1)
-   removeChild(guy.brow2)
-   removeChild(guy.ear1)
-   removeChild(guy.ear2)
-   removeChild(guy.hair)
-   removeChild(guy.upperlip)
-   removeChild(guy.lowerlip)
-
-   local addTo = guy.values.potatoHead and guy.body or guy.head
-
-   table.insert(addTo.children, guy.eye1)
-   table.insert(addTo.children, guy.eye2)
-   table.insert(addTo.children, guy.pupil1)
-   table.insert(addTo.children, guy.pupil2)
-
-   if (guy.values.earUnderHead == true) then
-      table.insert(addTo.children, 1, guy.ear1)
-      table.insert(addTo.children, 1, guy.ear2)
-   else
-      table.insert(addTo.children, guy.ear1)
-      table.insert(addTo.children, guy.ear2)
-   end
-
-   table.insert(addTo.children, guy.lowerlip)
-   table.insert(addTo.children, guy.upperlip)
-
-   table.insert(addTo.children, guy.brow1)
-   table.insert(addTo.children, guy.brow2)
-   table.insert(addTo.children, guy.nose)
-   table.insert(addTo.children, guy.hair)
-
-
-   changePart('hair', guy.values)
-end
 
 function scene.unload()
    Signal.clear('click-settings-scroll-area-item')
@@ -475,7 +435,7 @@ function scene.load()
 
    --print(inspect(editingGuy))
    attachAllFaceParts(editingGuy)
-   changePart('hair', editingGuy.values)
+   changePart('hair')
 
 
    if false then

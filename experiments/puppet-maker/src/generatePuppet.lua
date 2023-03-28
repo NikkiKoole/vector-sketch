@@ -184,6 +184,8 @@ function bipedArguments(editingGuy)
 end
 
 function potatoArguments(editingGuy)
+   --print(editingGuy)
+   print('potato argumnets', editingGuy.teeth)
    return {
        head = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head,
        eye1 = editingGuy.eye1,
@@ -459,13 +461,8 @@ function updateChild(container, oldValue, newResult)
 end
 
 function copyAndRedoGraphic(name, values)
-   -- if isNullObject(name, values) then
-   --    print(name, ' is anullobject')
-   --    return copy3(nullFolder)
-   -- end
    local part = findPart(name)
    local partArray = part.p
-   --earParts[values.ears.shape]
    local original = partArray[values[name].shape]
    return redoGraphicHelper(copy3(original), name, values)
 end
@@ -508,19 +505,21 @@ function attachAllFaceParts(guy)
    end
 
    table.insert(addTo.children, guy.lowerlip)
-   table.insert(addTo.children, guy.teeth)
+   
    table.insert(addTo.children, guy.upperlip)
+
+
+   table.insert(addTo.children, guy.teeth)
 
    table.insert(addTo.children, guy.brow1)
    table.insert(addTo.children, guy.brow2)
    table.insert(addTo.children, guy.nose)
    table.insert(addTo.children, guy.hair)
 
-
    -- changePart('hair', guy.values)
 end
 
-function changePart(name, values)
+function changePart(name)
    local values = editingGuy.values
    local guy = editingGuy.guy
    local container = values.potatoHead and editingGuy.body or editingGuy.head
@@ -531,7 +530,7 @@ function changePart(name, values)
 
       if (values.potatoHead) then
          attachAllFaceParts(editingGuy)
-         changePart('hair', values)
+         changePart('hair')
       end
 
       mesh.meshAll(root)
@@ -544,21 +543,21 @@ function changePart(name, values)
       myWorld:emit("bipedAttachHands", biped) -- todo
    elseif name == 'skinPatchSnout' then
       if values.potatoHead then
-         changePart('body', values)
+         changePart('body')
       else
-         changePart('head', values)
+         changePart('head')
       end
    elseif name == 'skinPatchEye1' then
       if values.potatoHead then
-         changePart('body', values)
+         changePart('body')
       else
-         changePart('head', values)
+         changePart('head')
       end
    elseif name == 'skinPatchEye2' then
       if values.potatoHead then
-         changePart('body', values)
+         changePart('body')
       else
-         changePart('head', values)
+         changePart('head')
       end
    elseif name == 'neck' then
       editingGuy.neck = updateChild(guy, editingGuy.neck, createNeckRubberhose(values, editingGuy.neck.points))
@@ -572,7 +571,7 @@ function changePart(name, values)
          attachAllFaceParts(editingGuy)
       end
       myWorld:emit("bipedAttachHead", biped)
-      changePart('hair', values) ----
+      changePart('hair') ----
    elseif name == 'hair' then
       if isNullObject(name, values) then
          editingGuy.hair = updateChild(container, editingGuy.hair, copy3(nullChild))
@@ -591,8 +590,10 @@ function changePart(name, values)
       editingGuy.ear1 = updateChild(container, editingGuy.ear1, copyAndRedoGraphic('ears', values))
       editingGuy.ear2 = updateChild(container, editingGuy.ear2, copyAndRedoGraphic('ears', values))
    elseif name == 'teeth' then
-      editingGuy.teeth = updateChild(container, editingGuy.teeth, copyAndRedoGraphic('teeth', values))
-
+      local r = copyAndRedoGraphic('teeth', values)
+      --print(inspect(editingGuy.teeth))
+      editingGuy.teeth = updateChild(container, editingGuy.teeth, r)
+      print(editingGuy.teeth)
    elseif name == 'eyes' then
       editingGuy.eye1 = updateChild(container, editingGuy.eye1, copyAndRedoGraphic('eyes', values))
       editingGuy.eye2 = updateChild(container, editingGuy.eye2, copyAndRedoGraphic('eyes', values))
@@ -604,7 +605,7 @@ function changePart(name, values)
       editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
       editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
-      print('changeart nose')
+     -- print('changeart nose')
       if isNullObject(name, values) then
          print('nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
@@ -664,7 +665,9 @@ function changePart(name, values)
    if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows' then
       mesh.meshAll(editingGuy.guy)
    end
+
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
+   print(potato.potato.teeth, name)
    myWorld:emit("potatoInit", potato)
 end

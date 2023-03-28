@@ -125,7 +125,7 @@ function love.load()
    if (PROF_CAPTURE) then ProFi:start() end
    for i = 1, amountOfGuys do
       local parts, values = generate()
-      values = partRandomizeNoChange(values)
+      --values = partRandomizeNoChange(values)
       --print(inspect(values))
       fiveGuys[i] = {
           values = copy3(values),
@@ -228,7 +228,7 @@ function partRandomize(values)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].texScale = math.ceil(love.math.random() * 9)
          changePart(parts[i], values)
-         --  print('changed part ', parts[i])
+         --print('changed part ',p,  parts[i])
       end
    end
 end

@@ -101,6 +101,7 @@ function generate()
         { name = 'brows',          imgs = browImgUrls,     p = browParts },
         { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts },
         { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts },
+
         { name = 'ears',           imgs = earImgUrls,      p = earParts },
         { name = 'neck',           imgs = legUrls },
         { name = 'nose',           imgs = noseImgUrls,     p = noseParts },
@@ -405,7 +406,7 @@ function generate()
         },
         teeth                   = {
             shape     = 1,
-            bgPal     = 4,
+            bgPal     = 5,
             fgPal     = 1,
             bgTex     = 1,
             fgTex     = 2,
