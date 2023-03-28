@@ -125,7 +125,7 @@ function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
     --editingGuy.upperlip.children[1].data.points = p1
     -- editingGuy.lowerlip.children[1].data.points = p2
     -- mesh.meshAll(editingGuy.upperlip.children[1])
-
+    e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] -50 - (openNess * 100)
     editingGuy.upperlip = updateChild(e.potato.head, editingGuy.upperlip,
             createUpperlipBezier(e.potato.values, p1))
     editingGuy.lowerlip = updateChild(e.potato.head, editingGuy.lowerlip,
@@ -187,10 +187,13 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil2.transforms.l[2] = eyey2
 
 
-    e.potato.teeth.transforms.l[1] = 100
+    e.potato.teeth.transforms.l[1] = e.potato.upperlip.transforms.l[1] 
 
-    e.potato.teeth.transforms.l[2] = 100
 
+    e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] - 50
+
+    e.potato.teeth.transforms.l[4] = 0.5 
+    e.potato.teeth.transforms.l[5] = 0.5 
 
     local newPoints = getHeadPoints(e)
     local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
