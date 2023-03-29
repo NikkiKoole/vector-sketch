@@ -109,7 +109,6 @@ function getFlippedMetaObject(flipx, flipy, points)
    end
    local temp = copy3(newPoints)
    if flipy == -1 and flipx == 1 then
- 
       newPoints[1] = temp[5]
       newPoints[2] = temp[4]
       newPoints[3] = temp[3]
@@ -185,7 +184,7 @@ end
 
 function potatoArguments(editingGuy)
    --print(editingGuy)
-   print('potato argumnets', editingGuy.teeth)
+   -- print('potato argumnets', editingGuy.teeth)
    return {
        head = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head,
        eye1 = editingGuy.eye1,
@@ -201,7 +200,6 @@ function potatoArguments(editingGuy)
        brow2 = editingGuy.brow2,
        nose = editingGuy.nose,
        values = editingGuy.values,
-
    }
 end
 
@@ -506,7 +504,7 @@ function attachAllFaceParts(guy)
 
    table.insert(addTo.children, guy.teeth)
    table.insert(addTo.children, guy.lowerlip)
-   
+
    table.insert(addTo.children, guy.upperlip)
 
 
@@ -606,7 +604,7 @@ function changePart(name)
       editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
       editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
-     -- print('changeart nose')
+      -- print('changeart nose')
       if isNullObject(name, values) then
          print('nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
@@ -669,6 +667,6 @@ function changePart(name)
 
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
-   print(potato.potato.teeth, name)
+   -- print(potato.potato.teeth, name)
    myWorld:emit("potatoInit", potato)
 end

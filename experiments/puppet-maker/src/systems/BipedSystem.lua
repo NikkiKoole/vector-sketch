@@ -416,7 +416,7 @@ function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
 
             e.biped.neck.points[2] = { newx, newy }
         else
-        --    print(inspect(e.biped.neck.data))
+            --    print(inspect(e.biped.neck.data))
             e.biped.neck.points[1] = { neckX, neckY }
             e.biped.neck.points[2] = { neckX, neckY - ((e.biped.neck.data.length * e.biped.neck.data.scaleY) / 4.46) / 1 }
         end
