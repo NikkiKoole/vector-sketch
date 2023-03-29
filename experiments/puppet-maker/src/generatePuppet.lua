@@ -502,20 +502,17 @@ function attachAllFaceParts(guy)
       table.insert(addTo.children, guy.ear2)
    end
 
-   table.insert(addTo.children, guy.teeth)
    table.insert(addTo.children, guy.lowerlip)
-
+   table.insert(addTo.children, guy.teeth)
    table.insert(addTo.children, guy.upperlip)
-
-
-
 
    table.insert(addTo.children, guy.brow1)
    table.insert(addTo.children, guy.brow2)
    table.insert(addTo.children, guy.nose)
    table.insert(addTo.children, guy.hair)
 
-   -- changePart('hair', guy.values)
+
+   changePart('hair', guy.values)
 end
 
 function changePart(name)

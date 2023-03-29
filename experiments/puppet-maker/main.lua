@@ -207,6 +207,10 @@ function partRandomizeNoChange(values)
          if (parts[i] == 'nose') then
             values[parts[i]].shape = #(p.imgs)
          end
+         if (parts[i] == 'teeth') then
+            values[parts[i]].fgPal = 5
+            values[parts[i]].bgPal = 5
+         end
          -- changePart(parts[i], values)
          --print('changed part ', parts[i])
       end
@@ -227,6 +231,10 @@ function partRandomize(values)
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].texScale = math.ceil(love.math.random() * 9)
+         if (parts[i] == 'teeth') then
+            values[parts[i]].fgPal = 5
+            values[parts[i]].bgPal = 5
+         end
          changePart(parts[i])
          --print('changed part ',p,  parts[i])
       end
