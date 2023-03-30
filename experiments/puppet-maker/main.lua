@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 1
+   amountOfGuys = 5
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -180,7 +180,7 @@ function love.load()
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("editGuy")
+   SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
 end

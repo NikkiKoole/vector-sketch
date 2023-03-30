@@ -475,8 +475,9 @@ function scene.load()
    local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
 
+   print('editguy load cam setup')
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
+   camera.centerCameraOnPosition(bx, by, w*4 , h*4 )
    cam:update(w, h)
 
    --Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
@@ -577,33 +578,38 @@ function attachCallbacks()
          camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
       end
       if key == '2' then
+         local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
          local bbBody = bbox.getBBoxRecursive(editingGuy.body)
          local bbFeet1 = bbox.getBBoxRecursive(editingGuy.feet1)
          local bbFeet2 = bbox.getBBoxRecursive(editingGuy.feet2)
-         local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
+         local bbHand1 = bbox.getBBoxRecursive(editingGuy.hand1)
+         local bbHand2 = bbox.getBBoxRecursive(editingGuy.hand2)
+       -- local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
+         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
-         camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
+         camera.centerCameraOnPosition(x2, y2, w * 1.2, h * 1.2)
          --print('focus camera on second other shape', x, y)
       end
-      if key == '3' then
-         local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
-         local bbBody             = bbox.getBBoxRecursive(editingGuy.body)
-         local bbFeet1            = bbox.getBBoxRecursive(editingGuy.feet1)
-         local bbFeet2            = bbox.getBBoxRecursive(editingGuy.feet2)
+      -- if key == '3' then
+      --    local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
+      --    local bbBody             = bbox.getBBoxRecursive(editingGuy.body)
+      --    local bbFeet1            = bbox.getBBoxRecursive(editingGuy.feet1)
+      --    local bbFeet2            = bbox.getBBoxRecursive(editingGuy.feet2)
 
-         local points             = {
-             { editingGuy.head.transforms.l[1],  editingGuy.head.transforms.l[2] },
-             { editingGuy.feet2.transforms.l[1], editingGuy.feet2.transforms.l[2] },
-             { editingGuy.feet1.transforms.l[1], editingGuy.feet1.transforms.l[2] },
-         }
+      --    local points             = {
+      --        { editingGuy.head.transforms.l[1],  editingGuy.head.transforms.l[2] },
+      --        { editingGuy.body.transforms.l[1], editingGuy.body.transforms.l[2] },
+      --        { editingGuy.feet2.transforms.l[1], editingGuy.feet2.transforms.l[2] },
+      --        { editingGuy.feet1.transforms.l[1], editingGuy.feet1.transforms.l[2] },
+      --    }
 
-         local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-         local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+      --    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+      --    local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
-         camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
-         print('focus camera on third other shape', x, y)
-      end
+      --    camera.centerCameraOnPosition(x2, y2, w, h)
+      --    print('focus camera on third other shape', x, y)
+      -- end
       if key == 's' then
          local bgPal = math.ceil(love.math.random() * #palettes)
          print(bgPal)
@@ -691,8 +697,9 @@ function attachCallbacks()
 
    function love.resize(w, h)
       local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
+      print('editGuy resize')
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(bx, by, w * 1, h * 4)
+      camera.centerCameraOnPosition(bx, by, w , h )
       cam:update(w, h)
    end
 

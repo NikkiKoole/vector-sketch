@@ -676,7 +676,7 @@ function changePart(name)
    end
    parentize.parentize(editingGuy.guy)
    -- this is very costly, mayeb do this on a need basis
-   if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows' then
+   if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows'  or name == 'neck'  then
       mesh.meshAll(editingGuy.guy)
    end
 

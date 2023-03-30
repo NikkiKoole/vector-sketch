@@ -279,7 +279,8 @@ function scene.load()
     end
     prof.pop('moveguys')
 
-    local bx, by = fiveGuys[3].body.transforms._g:transformPoint(0, 0)
+    local centerGuyIndex = math.ceil(#fiveGuys / 2)
+    local bx, by = fiveGuys[centerGuyIndex].body.transforms._g:transformPoint(0, 0)
     local w, h = love.graphics.getDimensions()
 
     camera.setCameraViewport(cam, w, h)
