@@ -205,9 +205,7 @@ end
 
 function mouthArguments(editingGuy)
    return {
-       teeth = editingGuy.teeth,
-       upperlip = editingGuy.upperlip,
-       lowerlip = editingGuy.lowerlip,
+
    }
 end
 
