@@ -193,13 +193,21 @@ function potatoArguments(editingGuy)
        pupil2 = editingGuy.pupil2,
        ear1 = editingGuy.ear1,
        ear2 = editingGuy.ear2,
-       teeth = editingGuy.teeth,
-       upperlip = editingGuy.upperlip,
-       lowerlip = editingGuy.lowerlip,
        brow1 = editingGuy.brow1,
        brow2 = editingGuy.brow2,
        nose = editingGuy.nose,
        values = editingGuy.values,
+       teeth = editingGuy.teeth,
+       upperlip = editingGuy.upperlip,
+       lowerlip = editingGuy.lowerlip,
+   }
+end
+
+function mouthArguments(editingGuy)
+   return {
+       teeth = editingGuy.teeth,
+       upperlip = editingGuy.upperlip,
+       lowerlip = editingGuy.lowerlip,
    }
 end
 
@@ -472,6 +480,10 @@ function removeChild(elem)
    end
 end
 
+function attachAllMouthParts(guy)
+
+end
+
 function attachAllFaceParts(guy)
    removeChild(guy.eye1)
    removeChild(guy.eye2)
@@ -502,9 +514,17 @@ function attachAllFaceParts(guy)
       table.insert(addTo.children, guy.ear2)
    end
 
-   table.insert(addTo.children, guy.lowerlip)
-   table.insert(addTo.children, guy.teeth)
-   table.insert(addTo.children, guy.upperlip)
+
+   if (guy.values.overBite == true) then
+      table.insert(addTo.children, guy.lowerlip)
+      table.insert(addTo.children, guy.teeth)
+      table.insert(addTo.children, guy.upperlip)
+   else
+      table.insert(addTo.children, guy.teeth)
+      table.insert(addTo.children, guy.lowerlip)
+      table.insert(addTo.children, guy.upperlip)
+   end
+
 
    table.insert(addTo.children, guy.brow1)
    table.insert(addTo.children, guy.brow2)

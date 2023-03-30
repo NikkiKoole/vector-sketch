@@ -101,7 +101,6 @@ function generate()
         { name = 'brows',          imgs = browImgUrls,     p = browParts },
         { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts },
         { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts },
-
         { name = 'ears',           imgs = earImgUrls,      p = earParts },
         { name = 'neck',           imgs = legUrls },
         { name = 'nose',           imgs = noseImgUrls,     p = noseParts },
@@ -263,7 +262,7 @@ function generate()
         eyeHeightMultiplier     = 1,
         eyeRotation             = 0,
         eyeYAxis                = 0,
-        eyeXAxisBetween = 0,
+        eyeXAxisBetween         = 0,
         pupils                  = {
             shape     = 1,
             bgPal     = 4,
@@ -404,6 +403,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
+        overBite                = true,
         teeth                   = {
             shape     = 1,
             bgPal     = 5,

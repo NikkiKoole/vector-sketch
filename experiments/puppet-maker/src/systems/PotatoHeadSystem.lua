@@ -59,8 +59,6 @@ function PotatoHeadSystem:init(e)
 
 end
 
-
-
 function PotatoHeadSystem:rescaleFaceparts(e)
     local values = e.potato.values
 
@@ -108,7 +106,6 @@ function PotatoHeadSystem:rescaleFaceparts(e)
 end
 
 function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
-   
     --editingGuy.mouthOpenNess = openNess
     local url = e.potato.upperlip.children[1].texture.url
     local w, h = mesh.getImage(url):getDimensions()
@@ -125,7 +122,7 @@ function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
     --editingGuy.upperlip.children[1].data.points = p1
     -- editingGuy.lowerlip.children[1].data.points = p2
     -- mesh.meshAll(editingGuy.upperlip.children[1])
-    e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] -50 - (openNess * 100)
+    e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] - 50 - (openNess * 100)
     editingGuy.upperlip = updateChild(e.potato.head, editingGuy.upperlip,
             createUpperlipBezier(e.potato.values, p1))
     editingGuy.lowerlip = updateChild(e.potato.head, editingGuy.lowerlip,
@@ -138,23 +135,20 @@ function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
 end
 
 function PotatoHeadSystem:mouthSaySomething(e)
+    local maxOpen = .25 + love.math.random() * 0.5
+    local minWide = .5 + love.math.random() * 0.5
 
-    local maxOpen = .25 + love.math.random()*0.5 
-    local minWide = .5 + love.math.random()*0.5
-
-    local value = {mouthOpen=0, mouthWide = 1}
-    local wideness = 0.5 + love.math.random() 
-    Timer.tween(.3, value, { mouthOpen= maxOpen , mouthWide= minWide}, 'out-quad')
+    local value = { mouthOpen = 0, mouthWide = 1 }
+    local wideness = 0.5 + love.math.random()
+    Timer.tween(.3, value, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
     Timer.after(.4, function()
-        Timer.tween(.2, value, { mouthOpen= 0, mouthWide=1 }, 'out-quad')
+        Timer.tween(.2, value, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
     end)
 
-    Timer.during(1.1, function(dt) 
-        PotatoHeadSystem:mouthOpener(e, value.mouthOpen, value.mouthWide) 
+    Timer.during(1.1, function(dt)
+        PotatoHeadSystem:mouthOpener(e, value.mouthOpen, value.mouthWide)
     end)
 end
-
-
 
 function PotatoHeadSystem:potatoInit(e)
     --print('potatoint')
@@ -187,13 +181,13 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil2.transforms.l[2] = eyey2
 
 
-    e.potato.teeth.transforms.l[1] = e.potato.upperlip.transforms.l[1] 
+    e.potato.teeth.transforms.l[1] = e.potato.upperlip.transforms.l[1]
 
 
     e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] - 50
 
-    e.potato.teeth.transforms.l[4] = 0.5 
-    e.potato.teeth.transforms.l[5] = 0.5 
+    e.potato.teeth.transforms.l[4] = 0.5
+    e.potato.teeth.transforms.l[5] = 0.5
 
     local newPoints = getHeadPoints(e)
     local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
@@ -229,8 +223,8 @@ local function getAngleAndDistance(x1, y1, x2, y2)
     return angle, distance
 end
 local function setAngleAndDistance(sx, sy, angle, distance, scaleX, scaleY)
-    local newx = sx + (distance*scaleX) * math.cos(angle)
-    local newy = sy + (distance*scaleY) * math.sin(angle)
+    local newx = sx + (distance * scaleX) * math.cos(angle)
+    local newy = sy + (distance * scaleY) * math.sin(angle)
     return newx, newy
 end
 
@@ -240,8 +234,6 @@ function PotatoHeadSystem:eyeLookAtPoint(x, y)
         local wx, wy = cam:getWorldCoordinates(x, y)
 
         local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
-
-
         ------
         e.potato.pupil1.transforms.l[1] = eyex1
         e.potato.pupil1.transforms.l[2] = eyey1
@@ -250,12 +242,12 @@ function PotatoHeadSystem:eyeLookAtPoint(x, y)
         local mx, my = e.potato.pupil1.transforms._g:transformPoint(0, 0)
         local angle, distance = getAngleAndDistance(wx, wy, mx, my)
         local t = e.potato.pupil1.transforms
-        local sx, sy = 1/e.potato.head.transforms.l[4],  1/e.potato.head.transforms.l[5]
+        local sx, sy = 1 / e.potato.head.transforms.l[4], 1 / e.potato.head.transforms.l[5]
         sx = sx * e.potato.eye1.transforms.l[4]
         sy = sy * e.potato.eye1.transforms.l[5]
 
         local nx, ny = setAngleAndDistance(t.l[1], t.l[2], angle, 20, sx, sy)
-        
+
         Timer.tween(.1, e.potato.pupil1.transforms.l, { [1] = nx,[2] = ny }, 'out-quad')
         Timer.after(1, function()
             local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)

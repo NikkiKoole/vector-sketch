@@ -119,14 +119,16 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 50
+   amountOfGuys = 1
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
    for i = 1, amountOfGuys do
       local parts, values = generate()
-      values = partRandomizeNoChange(values)
+
+      values = partRandomize(values, false)
       --print(inspect(values))
+
       fiveGuys[i] = {
           values = copy3(values),
           head = copyAndRedoGraphic('head', values),
@@ -166,10 +168,6 @@ function love.load()
       }
       fiveGuys[i].guy = guy
       guy.children = guyChildren(fiveGuys[i])
-      --manual_gc(0.002, 2)
-      -- print(collectgarbage("count"))
-      -- print(love.graphics.getStats().texturememory / (1024 * 1024))
-      -- print(i)
    end
    if (PROF_CAPTURE) then
       ProFi:stop()
@@ -187,10 +185,14 @@ function love.load()
    print(love.filesystem.getIdentity())
 end
 
-function partRandomizeNoChange(values)
+function partRandomize(values, applyChangeDirectly)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
        'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'teeth' }
-   -- local parts = { 'head' }
+
+
+   values.overBite = love.math.random() < .5 and true or false
+
+
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
 
@@ -211,34 +213,12 @@ function partRandomizeNoChange(values)
             values[parts[i]].fgPal = 5
             values[parts[i]].bgPal = 5
          end
-         -- changePart(parts[i], values)
-         --print('changed part ', parts[i])
+         if applyChangeDirectly then
+            changePart(parts[i])
+         end
       end
    end
    return values
-end
-
-function partRandomize(values)
-   local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
-       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2', 'teeth' }
-   -- local parts = { 'head'
-   for i = 1, #parts do
-      if values.potatoHead and parts[i] == 'neck' then
-
-      else
-         local p = findPart(parts[i])
-         values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
-         values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
-         values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
-         values[parts[i]].texScale = math.ceil(love.math.random() * 9)
-         if (parts[i] == 'teeth') then
-            values[parts[i]].fgPal = 5
-            values[parts[i]].bgPal = 5
-         end
-         changePart(parts[i])
-         --print('changed part ',p,  parts[i])
-      end
-   end
 end
 
 function love.focus(f)

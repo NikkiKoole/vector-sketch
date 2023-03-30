@@ -614,7 +614,7 @@ function attachCallbacks()
          hairColorize(fgPal, values)
       end
       if key == 'p' then
-         partRandomize(values)
+         partRandomize(values, true)
       end
       if key == '5' then
          --print('needs to lower the scale of all faceparts')
@@ -636,7 +636,7 @@ function attachCallbacks()
          myWorld:emit('doinkBody', biped)
       end
       if key == 'm' then
-         myWorld:emit('mouthSaySomething' ,potato)
+         myWorld:emit('mouthSaySomething', potato)
          --myWorld:emit('mouthOpener', potato, love.math.random())
       end
       if key == 't' then
@@ -816,11 +816,11 @@ function scene.draw()
       cam:push()
       render.renderThings(root, true)
 
-      for i =1, #root.children do
+      for i = 1, #root.children do
          local px, py = root.children[i].transforms._g:transformPoint(0, 0)
-         love.graphics.rectangle('fill', px-25, py-25, 50,50)
-     end
-     
+         love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+      end
+
       if false then
          for _, v in pairs(cameraPoints) do
             love.graphics.setColor(v.color)
