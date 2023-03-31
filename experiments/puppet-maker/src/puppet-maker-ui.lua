@@ -403,6 +403,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             changePart('head', values)
 
             myWorld:emit("bipedAttachHead", biped)
+           -- tweenCameraToHead()
          end
 
          if draw then
@@ -736,6 +737,12 @@ local function buttonClickHelper(value)
    if selectedTab == 'part' then
       values[selectedCategory]['shape'] = value
       changePart(selectedCategory, values)
+      print(f.kind)
+      if (f.kind == 'body') then
+      tweenCameraToHeadAndBody()
+      else
+         tweenCameraToHead()
+      end
 
       playSound(scrollItemClickSample)
    end
@@ -909,6 +916,68 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
 end
 
+
+function headOrBody(draw, clickX, clickY)
+   local w, h = love.graphics.getDimensions()
+   local margin = 20
+
+   local marginHeight = 2
+   local size = (h / scrollItemsOnScreen) - marginHeight * 2
+   local buttonHeight = (h / 2) - margin*4 
+
+   
+   if draw then
+      if selectedRootButton == 'head' then
+         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
+      else
+      love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+      end
+      love.graphics.rectangle('fill', margin, margin*2, size-40, buttonHeight)
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.print('head', margin, margin*2)
+
+
+      if selectedRootButton == 'body' then
+         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
+      else
+       love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+      end
+      
+      love.graphics.rectangle('fill', margin, (h/2), size-40, buttonHeight)
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.print('body', margin, (h/2))
+      
+
+   else
+      if (hit.pointInRect(clickX, clickY, margin, margin*2, size-40, buttonHeight)) then
+         print('clicked in head button')
+         playSound(scrollItemClickSample)
+         if selectedRootButton == 'head' then
+            selectedRootButton = nil
+            tweenCameraToHeadAndBody()
+         else
+         selectedRootButton = 'head'
+         tweenCameraToHead()
+         end
+         setCategories(selectedRootButton)
+      end
+      if (hit.pointInRect(clickX, clickY, margin, h/2, size-40, buttonHeight)) then
+         print('clicked in button button')
+         if selectedRootButton == 'body' then
+            selectedRootButton = nil
+            tweenCameraToHeadAndBody()
+         else
+         selectedRootButton = 'body'
+         tweenCameraToHeadAndBody()
+         end
+         playSound(scrollItemClickSample)
+         setCategories(selectedRootButton)
+      end
+   end
+end
+
+
+
 -- scroll list is the main thing that has all categories
 function scrollList(draw, clickX, clickY)
    local w, h = love.graphics.getDimensions()
@@ -917,8 +986,9 @@ function scrollList(draw, clickX, clickY)
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
+   scrollListXPosition = size  -- this is updating a global!!!
    local offset = scrollPosition % 1
-
+   if #categories > 0 then
    for i = -1, (scrollItemsOnScreen - 1) do
       local newScroll = i + offset
       local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
@@ -948,15 +1018,16 @@ function scrollList(draw, clickX, clickY)
          love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
 
          love.graphics.setColor(0, 0, 0)
-         love.graphics.print(categories[index], 20, yPosition)
+         love.graphics.print(categories[index], scrollListXPosition, yPosition)
       else
-         if (hit.pointInRect(clickX, clickY, 20, yPosition, size, size)) then
+         if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
             print("clicked", categories[index])
             selectedCategory = categories[index]
             playSound(scrollItemClickSample)
          end
       end
    end
+end
 end
 
 local function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)

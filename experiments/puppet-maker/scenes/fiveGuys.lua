@@ -53,7 +53,7 @@ end
 local function doCircleInTransition(x, y, onAfter)
     print(x, y)
     local w, h = love.graphics.getDimensions()
-    transition = { type = 'circle', segments = 7, alpha = 0, x = x, y = y, radius = math.max(w, h) }
+    transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
     Timer.tween(.3, transition, { alpha = 1 })
     Timer.tween(1, transition, { radius = 0 }, 'out-back')
     Timer.after(1, function()
@@ -65,7 +65,7 @@ end
 local function doCircleOutTransition(x, y, onAfter)
     print(x, y)
     local w, h = love.graphics.getDimensions()
-    transition = { type = 'circle', segments = 7, alpha = 1, x = x, y = y, radius = 0 }
+    transition = { type = 'circle', segments = 17, alpha = 1, x = x, y = y, radius = 0 }
     Timer.tween(1.3, transition, { alpha = 0 })
     Timer.tween(1, transition, { radius = math.max(w, h), segments = 7 }, 'in-back')
     Timer.after(1, function()
@@ -464,21 +464,7 @@ function scene.update(dt)
     end
 
     function love.keypressed(k)
-        if k == '1' then
-            editingGuy = fiveGuys[1]
-        end
-        if k == '2' then
-            editingGuy = fiveGuys[2]
-        end
-        if k == '3' then
-            editingGuy = fiveGuys[3]
-        end
-        if k == '4' then
-            editingGuy = fiveGuys[4]
-        end
-        if k == '5' then
-            editingGuy = fiveGuys[5]
-        end
+        
         if k == 'escape' then
             love.event.quit()
         end

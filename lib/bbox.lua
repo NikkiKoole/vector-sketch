@@ -55,27 +55,24 @@ bbox.getMiddleAndDimsOfBBox = function(tlx, tly, brx, bry)
 end
 
 bbox.combineBboxes = function(...)
-   local tlx = math.huge
-   local tly = math.huge
-   local brx = -math.huge
-   local bry = -math.huge
+   local topLeftX = math.huge
+   local topLeftY = math.huge
+   local bottomRightX = -math.huge
+   local bottomRightY = -math.huge
 
    local args = { ... }
-   --print(#args)
 
-   for j = 1, #args do
-
-      local v = args[j]
-
-      for i = 1, #v do
-
-         if v[i] < tlx then tlx = v[i] end
-         if v[i] > brx then brx = v[i] end
-         if v[i] < tly then tly = v[i] end
-         if v[i] > bry then bry = v[i] end
+   for _, bb in ipairs(args) do
+      if type(bbox) ~= "table" or #bb ~= 4 then
+         error("Invalid bbox input")
       end
+      topLeftX = math.min(topLeftX, bb[1])
+      topLeftY = math.min(topLeftY, bb[2])
+      bottomRightX = math.max(bottomRightX, bb[3])
+      bottomRightY = math.max(bottomRightY, bb[4])
    end
-   return tlx, tly, brx, bry
+
+   return topLeftX, topLeftY, bottomRightX, bottomRightY
 end
 
 bbox.getPointsBBoxFlat = function(points)

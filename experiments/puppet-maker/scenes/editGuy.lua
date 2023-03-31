@@ -268,7 +268,12 @@ local function pointerPressed(x, y, id)
    end
 
    local w, h = love.graphics.getDimensions()
-   local x, y = love.mouse.getPosition()
+  -- local x, y = love.mouse.getPosition()
+
+   if x >=0 and x<= scrollListXPosition then
+      -- this could be clicking in the head or body buttons
+      headOrBody(false, x, y)
+   end
 
    if x >= scrollListXPosition and x < scrollListXPosition + (h / scrollItemsOnScreen) then
       scrollerIsDragging = true
@@ -380,16 +385,16 @@ function scene.load()
 
    scrollPosition = .5
    scrollItemsOnScreen = 5
-   scrollListXPosition = 20
+   scrollListXPosition = 0
+
 
    settingsScrollAreaIsDragging = false
    settingsScrollArea = nil
    settingsScrollPosition = 0
-   --scrollTickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/BD-perc.wav'), 'static')
-   --scrollItemClickSample = love.audio.newSource(love.sound.newSoundData('assets/sounds/CasioMT70-Bassdrum.wav'), 'static')
 
    scrollTickSample = love.audio.newSource('assets/sounds/BD-perc.wav', 'static')
    scrollItemClickSample = love.audio.newSource('assets/sounds/CasioMT70-Bassdrum.wav', 'static')
+   selectedRootButton = nil  -- could be head or body or nil
    selectedTab = 'part'
    selectedCategory = 'body'
    selectedColoringLayer = 1 --- bg fg, line
@@ -470,14 +475,17 @@ function scene.load()
 
    attachCallbacks()
    categories = {}
-   setCategories()
+   setCategories(selectedRootButton)
 
-   local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
+   --local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
 
-   print('editguy load cam setup')
+   local x1,y1,w1,h1 = getCameraDataZoomOnHeadAndBody()
+   tweenCameraData = {x=x1, y=y1, w=w1, h=h1}
+
+   --print('editguy load cam setup')
    camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(bx, by, w*4 , h*4 )
+   camera.centerCameraOnPosition(x1,y1,w1,h1)
    cam:update(w, h)
 
    --Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
@@ -513,16 +521,61 @@ local function findPart(name)
    end
 end
 
-function setCategories()
+function setCategories(rootButton)
    categories = {}
+   if rootButton ~= nil then
    for i = 1, #parts do
       if editingGuy.values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
          -- we dont want these categories when we are a potatohead!
       else
+         if rootButton == parts[i].kind then
          table.insert(categories, parts[i].name)
+         end
       end
    end
+   end
 end
+
+function getCameraDataZoomOnJustHead()
+    local bb             = bbox.getBBoxRecursive(editingGuy.head)
+         local tlx, tly, brx, bry = bbox.combineBboxes(bb)
+         local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+         return x2, y2, w * 2, h * 2
+end
+function getCameraDataZoomOnHeadAndBody()
+         local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
+         local bbBody = bbox.getBBoxRecursive(editingGuy.body)
+         local bbFeet1 = bbox.getBBoxRecursive(editingGuy.feet1)
+         local bbFeet2 = bbox.getBBoxRecursive(editingGuy.feet2)
+         --local bbHand1 = bbox.getBBoxRecursive(editingGuy.hand1)
+         --local bbHand2 = bbox.getBBoxRecursive(editingGuy.hand2)
+      
+         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2)
+         local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+         return x2, y2, w*1.2 , h*1.2 
+end
+
+function tweenCameraTo(x,y,w,h)
+
+   --tweenCameraData = {x=x, y=y, w=w, h=h}
+   --Timer.tween()
+   Timer.tween(0.2, tweenCameraData, { x=x, y=y,w=w, h=h }, 'in-circ')
+  
+   Timer.during(0.3, function()
+       
+       camera.centerCameraOnPosition(tweenCameraData.x,tweenCameraData.y,tweenCameraData.w,tweenCameraData.h)
+   end)
+end
+
+function tweenCameraToHead()
+   local x,y,w,h = getCameraDataZoomOnJustHead()
+         tweenCameraTo(x,y,w,h)
+end
+function tweenCameraToHeadAndBody()
+   local x,y,w,h = getCameraDataZoomOnHeadAndBody()
+   tweenCameraTo(x,y,w,h)
+end
+
 
 function attachCallbacks()
    --print('attached callbacks')
@@ -574,42 +627,22 @@ function attachCallbacks()
          myWorld:emit('bipedDirection', biped, 'down')
       end
       if key == '1' then
-         local x2, y2, w, h = bbox.getMiddleOfContainer(editingGuy.head)
-         camera.centerCameraOnPosition(x2, y2, w * 1.61, h * 1.61)
+     --    local w, h = love.graphics.getDimensions()
+   --camera.setCameraViewport(cam, w, h)
+   tweenCameraToHead()
+         
+        -- camera.centerCameraOnPosition(x,y,w,h)
+     --    cam:update(w, h)
       end
       if key == '2' then
-         local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
-         local bbBody = bbox.getBBoxRecursive(editingGuy.body)
-         local bbFeet1 = bbox.getBBoxRecursive(editingGuy.feet1)
-         local bbFeet2 = bbox.getBBoxRecursive(editingGuy.feet2)
-         local bbHand1 = bbox.getBBoxRecursive(editingGuy.hand1)
-         local bbHand2 = bbox.getBBoxRecursive(editingGuy.hand2)
-       -- local tlx, tly, brx, bry = bbox.combineBboxes(bbBody, bbFeet1, bbFeet2)
-         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
-         local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-
-         camera.centerCameraOnPosition(x2, y2, w * 1.2, h * 1.2)
+       --   local w, h = love.graphics.getDimensions()
+       --   camera.setCameraViewport(cam, w, h)
+       tweenCameraToHeadAndBody()
+        -- camera.centerCameraOnPosition(x,y,w,h)
+      --   cam:update(w, h)
          --print('focus camera on second other shape', x, y)
       end
-      -- if key == '3' then
-      --    local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
-      --    local bbBody             = bbox.getBBoxRecursive(editingGuy.body)
-      --    local bbFeet1            = bbox.getBBoxRecursive(editingGuy.feet1)
-      --    local bbFeet2            = bbox.getBBoxRecursive(editingGuy.feet2)
-
-      --    local points             = {
-      --        { editingGuy.head.transforms.l[1],  editingGuy.head.transforms.l[2] },
-      --        { editingGuy.body.transforms.l[1], editingGuy.body.transforms.l[2] },
-      --        { editingGuy.feet2.transforms.l[1], editingGuy.feet2.transforms.l[2] },
-      --        { editingGuy.feet1.transforms.l[1], editingGuy.feet1.transforms.l[2] },
-      --    }
-
-      --    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-      --    local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-
-      --    camera.centerCameraOnPosition(x2, y2, w, h)
-      --    print('focus camera on third other shape', x, y)
-      -- end
+     
       if key == 's' then
          local bgPal = math.ceil(love.math.random() * #palettes)
          print(bgPal)
@@ -699,7 +732,7 @@ function attachCallbacks()
       local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
       print('editGuy resize')
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(bx, by, w , h )
+      camera.centerCameraOnPosition(bx, by, w*4 , h*4 )
       cam:update(w, h)
    end
 
@@ -809,7 +842,7 @@ function scene.draw()
       end
 
       love.graphics.setColor(0, 0, 0)
-
+      headOrBody(true)
       scrollList(true)
       if false then
          love.graphics.setColor(1, 1, 1)
