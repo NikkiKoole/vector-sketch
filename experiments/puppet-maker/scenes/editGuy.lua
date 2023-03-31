@@ -547,12 +547,12 @@ function getCameraDataZoomOnHeadAndBody()
          local bbBody = bbox.getBBoxRecursive(editingGuy.body)
          local bbFeet1 = bbox.getBBoxRecursive(editingGuy.feet1)
          local bbFeet2 = bbox.getBBoxRecursive(editingGuy.feet2)
-         --local bbHand1 = bbox.getBBoxRecursive(editingGuy.hand1)
-         --local bbHand2 = bbox.getBBoxRecursive(editingGuy.hand2)
+         local bbHand1 = bbox.getBBoxRecursive(editingGuy.hand1)
+         local bbHand2 = bbox.getBBoxRecursive(editingGuy.hand2)
       
-         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2)
+         local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-         return x2, y2, w*1.2 , h*1.2 
+         return 0, y2, 500 , h*1.2 
 end
 
 function tweenCameraTo(x,y,w,h)
@@ -654,6 +654,7 @@ function attachCallbacks()
       end
       if key == 'p' then
          partRandomize(values, true)
+         tweenCameraToHeadAndBody()
       end
       if key == '5' then
          --print('needs to lower the scale of all faceparts')
