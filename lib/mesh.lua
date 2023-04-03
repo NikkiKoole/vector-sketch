@@ -229,48 +229,48 @@ mesh.makeVertices = function(shape)
          
          local rubberhoseSuccess = true
          if (tostring(cp1.x) == 'nan' or tostring(cp2.x) == 'nan' or tostring(cp1.y) == 'nan' or tostring(cp2.y) == 'nan') then
-         rubberhoseSuccess = false
+            rubberhoseSuccess = false
          end
 
          local curve = nil
-
-         if rubberhoseSuccess then
-          curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
-         shape._curve = curve
-         else
-            curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
-                    numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
-            shape._curve = curve
-         end
+         local thickness = nil
+         local magicRubberhose =  4.46  -- this value is coming from the way rubberhoses are constructed
+         local magicDivider = 3  -- some things need to be divide by 3, don't understand why
          local coords = {}
-         local stretchyWidthDivider = 1
-         local thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
 
-      --   thickness = { thickness[1] }
-
-         if (not rubberhoseSuccess) then
-            -- 4.46 is a number thats needed in the calc below
-            local d = (geom.distance(start.x, start.y, eind.x, eind.y))
-            local m = ((shape.data.length * math.abs(scaleX)) / 4.46)
-            if (d > m) then
-               local mult = numbers.mapInto(d, m, m*10, 1, 3)
-               thickness = { scaleX * (shape.data.width / 3) / (stretchyWidthDivider*mult) } -- this could be an array of thicknesss tooo instead of just 1
-            end
-
-            coords = { shape.points[1], shape.points[2] }
-          
-         else
+         -- setting up the data according to if we have succeeded in the rubberhose setup
+         if rubberhoseSuccess then
+            curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
+            shape._curve = curve
+            local stretchyWidthDivider = 1
+            thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } 
             local steps = shape.data.steps
 
             for i = 0, steps do
                local px, py = curve:evaluate(i / steps)
                table.insert(coords, { px, py })
             end
+
+         else
+            curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
+                    numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
+            shape._curve = curve
+
+            local stretchyWidthDivider = 1
+            local d = (geom.distance(start.x, start.y, eind.x, eind.y))
+            local m = ((shape.data.length * math.abs(scaleX)) / magicRubberhose)
+            
+            -- this does the actual stretchy stuff!!
+            local mult = numbers.mapInto(d, m, m*10, 1, 10/magicDivider)
+               thickness = { scaleX * (shape.data.width / magicDivider) / (stretchyWidthDivider*mult) } 
+               coords = { shape.points[1], shape.points[2] }
          end
 
+        
+         
+         -- ok we have our coordinates, now we create UV's and vertices
          coords = unloop.unpackNodePoints(coords, false)
-         -- todo why the /3 ????
-         -- it looks correct but what the hell
+
          local verts, indices, draw_mode = polyline.render('miter', coords, thickness)
          local h = 1 / (shape.data.steps - 1 or 1)
          local vertsWithUVs = {}

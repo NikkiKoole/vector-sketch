@@ -458,7 +458,7 @@ end
 
 function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
     local magic = 4.46
-    print('doing it', leglengths[e.biped.values.legLength])
+   -- print('doing it', leglengths[e.biped.values.legLength])
     --print(leglengths[e.biped.values.legLength])
     --print(inspect(e.biped.leg1.data))
     
@@ -586,7 +586,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             -- this is still correct, to make the body move, but not the total location.
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
-            print(e.biped.body.transforms.l[2])
+          --  print(e.biped.body.transforms.l[2])
             e.biped.body.dirty = true
             transforms.setTransforms(e.biped.body)
 

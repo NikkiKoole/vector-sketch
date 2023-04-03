@@ -119,10 +119,13 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 5
+   amountOfGuys = 25
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
+
+
+   -- todp move this to the DNA code I thinkk
    for i = 1, amountOfGuys do
       local parts, values = generate()
 
