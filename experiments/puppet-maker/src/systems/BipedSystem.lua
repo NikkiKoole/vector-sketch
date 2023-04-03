@@ -151,15 +151,20 @@ function BipedSystem:bipedInit(e)
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
 
     e.biped.arm1.points[1] = { a1x, a1y }
-    e.biped.arm1.points[2] = { a1x - (e.biped.arm1.data.length / 4.46) / 1, a1y }
+    -- /
+    local armlength = getMaxArmLength(e)*0.7
+    local x2,y2 = setAngleAndDistance(a1x, a1y, (math.pi/8)*5, armlength)
+    --e.biped.arm1.points[2] = { a1x - (e.biped.arm1.data.length / 4.46) / 1, a1y }
+    e.biped.arm1.points[2] = { x2, y2 }
 
     e.biped.armhair1.points[1] = e.biped.arm1.points[1]
     e.biped.armhair1.points[2] = e.biped.arm1.points[2]
     -- e.biped.armhair1.transforms.l[5] = -1
 
     e.biped.arm2.points[1] = { a2x, a2y }
-    e.biped.arm2.points[2] = { a2x + (e.biped.arm2.data.length / 4.46) / 1, a2y }
-
+    local x3,y3 = setAngleAndDistance(a2x, a2y, (math.pi/8)*3, armlength)
+    --e.biped.arm2.points[2] = { a2x + (e.biped.arm2.data.length / 4.46) / 1, a2y }
+    e.biped.arm2.points[2] = { x3, y3 }
     e.biped.armhair2.points[1] = e.biped.arm2.points[1]
     e.biped.armhair2.points[2] = e.biped.arm2.points[2]
 
@@ -457,11 +462,16 @@ function BipedSystem:setLegHairToLegs(e)
     mesh.remeshNode(e.biped.leghair2)
 end
 
-
+-- this is about legs, need a similar one for arms 
 function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
     return -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance
+end
+function getMaxArmLength(e)
+    local magic = 4.46
+    local d = e.biped.arm1.data
+    return ( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  
 end
 
 

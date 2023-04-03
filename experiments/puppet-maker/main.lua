@@ -197,6 +197,7 @@ function partRandomize(values, applyChangeDirectly)
    values.overBite = love.math.random() < .5 and true or false
 
    values.legLength = math.ceil(love.math.random()* 7)
+   values.armLength = leglengths[math.ceil(love.math.random()* 7)]/1.2
    values.legDefaultStance = 0.75 + (love.math.random()/4.0)
 
    for i = 1, #parts do

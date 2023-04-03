@@ -540,7 +540,7 @@ function getCameraDataZoomOnJustHead()
     local bb             = bbox.getBBoxRecursive(editingGuy.head)
          local tlx, tly, brx, bry = bbox.combineBboxes(bb)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-         return x2, y2, w * 2, h * 2
+         return x2, y2, w * 3, h * 3
 end
 function getCameraDataZoomOnHeadAndBody()
          local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
