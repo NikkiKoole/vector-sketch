@@ -173,6 +173,7 @@ function BipedSystem:bipedInit(e)
     mesh.remeshNode(e.biped.armhair2)
     attachHeadWithOrWithoutNeck(e, false)
 
+    BipedSystem:keepFeetPlantedAndStraightenLegs(e)
     --local nx, ny = getPositionForNoseAttaching(e)
     --e.biped.nose.transforms.l[1] =  0 --400 + nx
     --e.biped.nose.transforms.l[2] = 0--ny
@@ -456,8 +457,16 @@ function BipedSystem:setLegHairToLegs(e)
     mesh.remeshNode(e.biped.leghair2)
 end
 
-function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
+
+function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
+    local d = e.biped.leg1.data
+    return -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance
+end
+
+
+function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
+    
    -- print('doing it', leglengths[e.biped.values.legLength])
     --print(leglengths[e.biped.values.legLength])
     --print(inspect(e.biped.leg1.data))
@@ -465,7 +474,7 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
     local d = e.biped.leg1.data
     --print(d.length / d.scaleY)
     -- todo ouch I odnt understand the .66 magic numebr, it sort of works though...
-    e.biped.body.transforms.l[2] =  -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  -- leglengths[e.biped.values.legLength] / d.scaleY
+    e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e)  -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
     BipedSystem:movedBody(e)
 end
 
@@ -489,6 +498,9 @@ function BipedSystem:doinkBody(e)
 end
 
 function BipedSystem:itemReleased(elem)
+
+
+
     for _, e in ipairs(self.pool) do
         if e.biped.head == elem.item then
             --print('head released')
@@ -497,11 +509,12 @@ function BipedSystem:itemReleased(elem)
             --e.biped.body.transforms.l[3] = -1
 
 
+            local offset = getBodyYOffsetForDefaultStance(e)
             e.biped.head.transforms.l[3] = -.3
             Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
 
-            --Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = -700,[3] = 0 }, 'out-elastic')
+            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset,[3] = 0 }, 'out-elastic')
             BipedSystem:movedBody(e)
             Timer.during(2.2, function()
                 BipedSystem:movedBody(e)

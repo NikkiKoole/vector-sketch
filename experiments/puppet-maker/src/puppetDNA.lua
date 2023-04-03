@@ -355,6 +355,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
+        legDefaultStance = .5,
         legLength               = 5,
         legWidthMultiplier      = 1,
         leg1flop                = -1,
