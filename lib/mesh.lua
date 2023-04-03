@@ -203,7 +203,14 @@ mesh.makeVertices = function(shape)
          end
       end
    else
+               -- i re-use this in puppetmaker to get the angle for the feet
+         --print(cp1.x, cp1.y, cp2.x, cp2.y)
+         -- todo whne the curve is null we make a perfect one for it using lerp
+
+
+
       if (shape.type == 'rubberhose') then
+         -- pull the point data from the shape
          local start = {
              x = shape.points[1][1],
              y = shape.points[1][2]
@@ -212,51 +219,46 @@ mesh.makeVertices = function(shape)
              x = shape.points[2][1],
              y = shape.points[2][2]
          }
-         -- 4.46 is a number i need to
 
+         -- pull more data from the shape
          local scale = shape.data.scale or 1
          local scaleX = (shape.data.scaleX or 1) * scale
          local scaleY = (shape.data.scaleY or 1) * scale
-
-         local magic = 1 -- 4.46
          local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY, shape.data.flop,
                  shape.data.borderRadius)
-         local curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
-         -- i re-use this in puppetmaker to get the angle for the feet
-         --print(cp1.x, cp1.y, cp2.x, cp2.y)
-         -- todo whne the curve is null we make a perfect one for it using lerp
+         
+         local rubberhoseSuccess = true
+         if (tostring(cp1.x) == 'nan' or tostring(cp2.x) == 'nan' or tostring(cp1.y) == 'nan' or tostring(cp2.y) == 'nan') then
+         rubberhoseSuccess = false
+         end
 
+         local curve = nil
+
+         if rubberhoseSuccess then
+          curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
          shape._curve = curve
-         if tostring(cp1.x) == 'nan' then
-            -- hacky way to keep the right oreinted curve even when the rope thing has failed
-            local curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
+         else
+            curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
                     numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
             shape._curve = curve
          end
          local coords = {}
          local stretchyWidthDivider = 1
          local thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
-         -- print(shape.data.steps, thickness[1])
 
-         for i = 1, shape.data.steps do
-            local t = numbers.mapInto(i / shape.data.steps, 0, 1, thickness[1], 1)
-            table.insert(thickness, t)
-         end
-         thickness = { thickness[1] }
+      --   thickness = { thickness[1] }
 
-         if (tostring(cp1.x) == 'nan') then
+         if (not rubberhoseSuccess) then
             -- 4.46 is a number thats needed in the calc below
             local d = (geom.distance(start.x, start.y, eind.x, eind.y))
-            local m = ((shape.data.length * scaleX) / 4.46)
+            local m = ((shape.data.length * math.abs(scaleX)) / 4.46)
             if (d > m) then
-               -- todo this .1 is somethign i want to parametrize
-               stretchyWidthDivider = (numbers.mapInto(d, 0, m, 1, stretchyWidthDivider))
-               thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } -- this could be an array of thicknesss tooo instead of just 1
+               local mult = numbers.mapInto(d, m, m*10, 1, 3)
+               thickness = { scaleX * (shape.data.width / 3) / (stretchyWidthDivider*mult) } -- this could be an array of thicknesss tooo instead of just 1
             end
 
             coords = { shape.points[1], shape.points[2] }
-            thickness = { thickness[1], thickness[1] / 3, 1 }
-            thickness = { thickness[1] }
+          
          else
             local steps = shape.data.steps
 

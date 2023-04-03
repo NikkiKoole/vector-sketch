@@ -456,6 +456,19 @@ function BipedSystem:setLegHairToLegs(e)
     mesh.remeshNode(e.biped.leghair2)
 end
 
+function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
+    local magic = 4.46
+    print('doing it', leglengths[e.biped.values.legLength])
+    --print(leglengths[e.biped.values.legLength])
+    --print(inspect(e.biped.leg1.data))
+    
+    local d = e.biped.leg1.data
+    --print(d.length / d.scaleY)
+    -- todo ouch I odnt understand the .66 magic numebr, it sort of works though...
+    e.biped.body.transforms.l[2] =  -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  -- leglengths[e.biped.values.legLength] / d.scaleY
+    BipedSystem:movedBody(e)
+end
+
 function BipedSystem:doinkBody(e)
     local dir = 1
     local str = 2
@@ -488,7 +501,7 @@ function BipedSystem:itemReleased(elem)
             Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
 
-            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = -700,[3] = 0 }, 'out-elastic')
+            --Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = -700,[3] = 0 }, 'out-elastic')
             BipedSystem:movedBody(e)
             Timer.during(2.2, function()
                 BipedSystem:movedBody(e)
@@ -499,6 +512,7 @@ end
 
 function BipedSystem:movedBody(e)
     e.biped.body.dirty = true
+
     transforms.setTransforms(e.biped.body)
 
     attachHeadWithOrWithoutNeck(e, true)
@@ -572,6 +586,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             -- this is still correct, to make the body move, but not the total location.
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
+            print(e.biped.body.transforms.l[2])
             e.biped.body.dirty = true
             transforms.setTransforms(e.biped.body)
 

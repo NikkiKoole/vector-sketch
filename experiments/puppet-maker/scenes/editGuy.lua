@@ -552,6 +552,7 @@ function getCameraDataZoomOnHeadAndBody()
       
          local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
          local x2, y2, w, h = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+         
          return 0, y2, 500 , h*1.2 
 end
 
@@ -655,6 +656,10 @@ function attachCallbacks()
       if key == 'p' then
          partRandomize(values, true)
          tweenCameraToHeadAndBody()
+      end
+      if key == 'f' then
+         print('keep feet p[lanetd starighten legs]')
+         myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
       end
       if key == '5' then
          --print('needs to lower the scale of all faceparts')

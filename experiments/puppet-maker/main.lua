@@ -167,6 +167,7 @@ function love.load()
           children = {}
       }
       fiveGuys[i].guy = guy
+      fiveGuys[i].body.transforms.l[2] = -700
       guy.children = guyChildren(fiveGuys[i])
    end
    if (PROF_CAPTURE) then
@@ -192,7 +193,7 @@ function partRandomize(values, applyChangeDirectly)
 
    values.overBite = love.math.random() < .5 and true or false
 
-
+   values.legLength = math.ceil(love.math.random()* 7)
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
 

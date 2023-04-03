@@ -2,7 +2,7 @@ local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
 
 texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-leglengths  = { 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000 }
+leglengths  = { 400, 500, 600, 700, 800, 900, 1000}
 
 
 local function stripPath(root, path)
@@ -388,8 +388,8 @@ function generate()
         },
         armLength               = 700,
         armWidthMultiplier      = 1,
-        arm1flop                = 1,
-        arm2flop                = -1,
+        arm1flop                = -1,
+        arm2flop                = 1,
         hands                   = {
             shape     = 1,
             bgPal     = 4,
