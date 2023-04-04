@@ -9,7 +9,7 @@ local function getPositionForNoseAttaching(e)
     local newPoints = getHeadPoints(e)
 
     local tX = numbers.mapInto(e.potato.values.noseXAxis, -2, 2, 0, 1)
-    local tY = numbers.mapInto(e.potato.values.noseYAxis, -3, 3, 0, 1)
+    local tY = numbers.mapInto(e.potato.values.noseYAxis, -2, 2, 0, 1)
 
     local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
     local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
@@ -103,6 +103,12 @@ function PotatoHeadSystem:rescaleFaceparts(e)
 
     e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
+
+    e.potato.teeth.transforms.l[2] = e.potato.lowerlip.transforms.l[2]
+    e.potato.upperlip.transforms.l[2] = 0
+    --values.headHeightMultiplier
+    e.potato.teeth.transforms.l[4] = 1 * sx
+    e.potato.teeth.transforms.l[5] = 1 * sy
 end
 
 function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
@@ -186,8 +192,8 @@ function PotatoHeadSystem:potatoInit(e)
 
     e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] - 50
 
-    e.potato.teeth.transforms.l[4] = 0.5
-    e.potato.teeth.transforms.l[5] = 0.5
+    --e.potato.teeth.transforms.l[4] = 0.5
+    --e.potato.teeth.transforms.l[5] = 0.5
 
     local newPoints = getHeadPoints(e)
     local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)

@@ -7,7 +7,6 @@ local ctween = require 'lib.cameraTween'
 local tween = require 'vendor.tween'
 
 local function getScreenBBoxForItem(c, camData)
-
    local bbox = c.bbox
    --print(c.transforms._g)
    local stlx, stly = c.transforms._g:transformPoint(bbox[1], bbox[2])
@@ -26,7 +25,6 @@ local function getScreenBBoxForItem(c, camData)
    local biggestY = math.max(tly, bry, try, bly)
 
    return smallestX, smallestY, biggestX, biggestY
-
 end
 
 local c = {}
@@ -34,13 +32,12 @@ c.createCamData = function(item, parallaxData)
    local camData = nil -- its important to be nil at start
    -- that way i can feed the nil to brady and get default behaviours
    if parallaxData and parallaxData.factors then
-
       camData = {}
       camData.scale = numbers.mapInto(item.depth,
-         parallaxData.minmax.min,
-         parallaxData.minmax.max,
-         parallaxData.factors.far,
-         parallaxData.factors.near)
+              parallaxData.minmax.min,
+              parallaxData.minmax.max,
+              parallaxData.factors.far,
+              parallaxData.factors.near)
       camData.relativeScale = 1 --(1.0/ hack.scale) * hack.scale
    end
    if camData == nil then
@@ -68,8 +65,6 @@ c.camDataToScreen = function(cd, parallaxData, px, py)
    return x, y
 end
 
-
-
 local function mouseIsOverItemChildBBox(mx, my, item, child, parallaxData)
    local camData = c.createCamData(child, parallaxData)
    local tlx, tly, brx, bry = getScreenBBoxForItem(child, camData)
@@ -96,11 +91,11 @@ c.mouseIsOverObjectInCamLayer = function(mx, my, item, parallaxData)
 end
 
 local translateScheduler = {
-   x = 0,
-   y = 0,
-   justItem = { x = 0, y = 0 },
-   happenedByPressedItems = false,
-   cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
+    x = 0,
+    y = 0,
+    justItem = { x = 0, y = 0 },
+    happenedByPressedItems = false,
+    cache = { value = 0, cacheValue = 0, stopped = true, stoppedAt = 0, tweenValue = 0 }
 }
 
 c.getTranslateSchedulerValues = function()
@@ -109,7 +104,6 @@ c.getTranslateSchedulerValues = function()
    else
       return translateScheduler.cache.tweenValue
    end
-
 end
 
 c.centerCameraOnPosition = function(x, y, vw, vh)
@@ -123,13 +117,10 @@ end
 
 c.setCameraViewport = function(c2, w, h)
    local cx, cy = c2:getTranslation()
-
    local cw, ch = c2:getContainerDimensions()
    local targetScale = math.min(cw / w, ch / h)
    c2:setScale(targetScale)
    c2:setTranslation(cx, -1 * h / 2)
-
-   --print(_c)
 end
 
 local function drawCameraBounds(c2, mode)
@@ -144,7 +135,6 @@ local function cameraTranslateScheduleJustItem(dx, dy)
    -- this comes from just the cameraTween
    translateScheduler.justItem.x = dx
    translateScheduler.justItem.y = dy
-
 end
 
 c.cameraTranslateScheduler = function(dx, dy)
@@ -183,13 +173,11 @@ local function checkForBounceBack(dt)
 end
 
 function cameraApplyTranslate(dt, layer)
-
    cam:translate(translateScheduler.x, translateScheduler.y)
    local translateByPressed = false
 
 
    if true then
-
       for i = 1, #layer.children do
          local c = layer.children[i]
          if c.pressed then
@@ -214,7 +202,6 @@ function cameraApplyTranslate(dt, layer)
          --cameraTween =
       end
       ------ end that part
-
    end
    checkForBounceBack(dt)
 
@@ -222,7 +209,6 @@ function cameraApplyTranslate(dt, layer)
    translateScheduler.y = 0
    translateScheduler.justItem.x = 0
    translateScheduler.justItem.y = 0
-
 end
 
 -- todo @global cameratween
@@ -246,18 +232,18 @@ c.manageCameraTween = function(dt)
           10
        )
     end
-    ]] --
+    ]]
+   --
    local _cameraTween = ctween.getTween()
    if _cameraTween then
       local delta = cam:setTranslationSmooth(
-         _cameraTween.goalX,
-         _cameraTween.goalY,
-         dt,
-         _cameraTween.smoothValue
-      )
+              _cameraTween.goalX,
+              _cameraTween.goalY,
+              dt,
+              _cameraTween.smoothValue
+          )
 
       if delta.x ~= 0 then
-
          cameraTranslateScheduleJustItem(delta.x * _cameraTween.smoothValue * dt, 0)
       end
       -- todo @ get rid of this gesturestate here
@@ -266,18 +252,14 @@ c.manageCameraTween = function(dt)
       -- but there inst a safe plaace where i have acces to both th etween and the gesturestatelist
 
       if (delta.x + delta.y) == 0 then
-
          if (_cameraTween.originalGesture ~= nil) then
             print('remvoing the cameratween original, test on touch!')
             gesture.remove(_cameraTween.originalGesture)
          end
          ctween.setCameraTween(nil)
-
       end
       ctween.setDelta((delta.x + delta.y))
-
    end
-
 end
 
 return c

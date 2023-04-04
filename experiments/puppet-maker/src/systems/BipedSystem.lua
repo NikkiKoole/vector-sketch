@@ -121,6 +121,15 @@ function BipedSystem:init(e)
     -- print('auto caled init', e)
 end
 
+function getDefaultHandPositions(e)
+    local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
+    local rot = e.biped.body.transforms.l[3]
+    local armlength = getMaxArmLength(e) * 0.7
+    local x2, y2 = setAngleAndDistance(a1x, a1y, rot + (math.pi / 8) * 5, armlength)
+    local x3, y3 = setAngleAndDistance(a2x, a2y, rot + (math.pi / 8) * 3, armlength)
+    return x2, y2, x3, y3
+end
+
 function BipedSystem:bipedInit(e)
     --  print('bipedInit', e, e.biped)
     e.biped.body.transforms.l[3] = 0 -- math.pi / 2
@@ -148,26 +157,34 @@ function BipedSystem:bipedInit(e)
     mesh.remeshNode(e.biped.leg2)
     mesh.remeshNode(e.biped.leghair1)
     mesh.remeshNode(e.biped.leghair2)
+
+
+
+
+
+
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
+    local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
 
     e.biped.arm1.points[1] = { a1x, a1y }
-    -- /
-    local armlength = getMaxArmLength(e)*0.7
-    local x2,y2 = setAngleAndDistance(a1x, a1y, (math.pi/8)*5, armlength)
+
+    --local armlength = getMaxArmLength(e)*0.7
+    --local x2,y2 = setAngleAndDistance(a1x, a1y, (math.pi/8)*5, armlength)
     --e.biped.arm1.points[2] = { a1x - (e.biped.arm1.data.length / 4.46) / 1, a1y }
-    e.biped.arm1.points[2] = { x2, y2 }
+    e.biped.arm1.points[2] = { h1x, h1y }
 
     e.biped.armhair1.points[1] = e.biped.arm1.points[1]
     e.biped.armhair1.points[2] = e.biped.arm1.points[2]
     -- e.biped.armhair1.transforms.l[5] = -1
 
     e.biped.arm2.points[1] = { a2x, a2y }
-    local x3,y3 = setAngleAndDistance(a2x, a2y, (math.pi/8)*3, armlength)
+    --local x3, y3 = setAngleAndDistance(a2x, a2y, (math.pi / 8) * 3, armlength)
     --e.biped.arm2.points[2] = { a2x + (e.biped.arm2.data.length / 4.46) / 1, a2y }
-    e.biped.arm2.points[2] = { x3, y3 }
+    --e.biped.arm2.points[2] = { x3, y3 }
+
     e.biped.armhair2.points[1] = e.biped.arm2.points[1]
     e.biped.armhair2.points[2] = e.biped.arm2.points[2]
-
+    e.biped.arm2.points[2] = { h2x, h2y }
 
     e.biped.hand2.transforms.l[4] = -1
     BipedSystem:bipedAttachHands(e)
@@ -462,29 +479,28 @@ function BipedSystem:setLegHairToLegs(e)
     mesh.remeshNode(e.biped.leghair2)
 end
 
--- this is about legs, need a similar one for arms 
+-- this is about legs, need a similar one for arms
 function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
-    return -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance
+    return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
+
 function getMaxArmLength(e)
     local magic = 4.46
     local d = e.biped.arm1.data
-    return ( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  
+    return ((d.length / magic) * d.scaleY) * (d.borderRadius + .66)
 end
 
-
 function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
-    
-   -- print('doing it', leglengths[e.biped.values.legLength])
+    -- print('doing it', leglengths[e.biped.values.legLength])
     --print(leglengths[e.biped.values.legLength])
     --print(inspect(e.biped.leg1.data))
-    
+
     local d = e.biped.leg1.data
     --print(d.length / d.scaleY)
     -- todo ouch I odnt understand the .66 magic numebr, it sort of works though...
-    e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e)  -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
+    e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e) -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
     BipedSystem:movedBody(e)
 end
 
@@ -508,12 +524,31 @@ function BipedSystem:doinkBody(e)
 end
 
 function BipedSystem:itemReleased(elem)
-
-
-
     for _, e in ipairs(self.pool) do
         if e.biped.head == elem.item then
             --print('head released')
+        end
+        if e.biped.hand1 == elem.item then
+            local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
+            Timer.tween(1.2, e.biped.arm1.points[2], { [1] = h1x,[2] = h1y }, 'out-elastic')
+            Timer.during(1.3, function()
+                e.biped.hand1.transforms.l[1] = e.biped.arm1.points[2][1]
+                e.biped.hand1.transforms.l[2] = e.biped.arm1.points[2][2]
+                e.biped.armhair1.points[2] = e.biped.arm1.points[2]
+                mesh.remeshNode(e.biped.armhair1)
+                mesh.remeshNode(e.biped.arm1)
+            end)
+        end
+        if e.biped.hand2 == elem.item then
+            local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
+            Timer.tween(1.2, e.biped.arm2.points[2], { [1] = h2x,[2] = h2y }, 'out-elastic')
+            Timer.during(1.3, function()
+                e.biped.hand2.transforms.l[1] = e.biped.arm2.points[2][1]
+                e.biped.hand2.transforms.l[2] = e.biped.arm2.points[2][2]
+                e.biped.armhair2.points[2] = e.biped.arm2.points[2]
+                mesh.remeshNode(e.biped.armhair2)
+                mesh.remeshNode(e.biped.arm2)
+            end)
         end
         if e.biped.body == elem.item then
             --e.biped.body.transforms.l[3] = -1
@@ -524,7 +559,7 @@ function BipedSystem:itemReleased(elem)
             Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
 
-            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset,[3] = 0 }, 'out-elastic')
+            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
             BipedSystem:movedBody(e)
             Timer.during(2.2, function()
                 BipedSystem:movedBody(e)
@@ -609,7 +644,7 @@ function BipedSystem:itemDrag(elem, dx, dy, scale)
             -- this is still correct, to make the body move, but not the total location.
             e.biped.body.transforms.l[1] = e.biped.body.transforms.l[1] + dx / scale
             e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + dy / scale
-          --  print(e.biped.body.transforms.l[2])
+            --  print(e.biped.body.transforms.l[2])
             e.biped.body.dirty = true
             transforms.setTransforms(e.biped.body)
 

@@ -321,7 +321,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
          table.insert(renderPatch, p)
       end
    end
-
+   --print(url)
    local texturedcanvas = helperTexturedCanvas(
            url,
            textures[values[partName].bgTex],
@@ -661,6 +661,7 @@ function changePart(name)
       editingGuy.leg1 = updateChild(guy, editingGuy.leg1, createLegRubberhose(1, values, editingGuy.leg1.points))
       editingGuy.leg2 = updateChild(guy, editingGuy.leg2, createLegRubberhose(2, values, editingGuy.leg2.points))
       myWorld:emit("bipedAttachFeet", biped)
+      changePart('leghair')
    elseif name == 'leghair' then
       if isNullObject(name, values) then
          --print(armhair1.transforms)
@@ -676,7 +677,7 @@ function changePart(name)
    end
    parentize.parentize(editingGuy.guy)
    -- this is very costly, mayeb do this on a need basis
-   if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows'  or name == 'neck'  then
+   if name == 'armhair' or name == 'leghair' or name == 'arms' or name == 'legs' or name == 'upperlip' or name == 'lowerlip' or name == 'hair' or name == 'brows' or name == 'neck' then
       mesh.meshAll(editingGuy.guy)
    end
 

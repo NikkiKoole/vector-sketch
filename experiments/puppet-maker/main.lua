@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 25
+   amountOfGuys = 5
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -196,9 +196,9 @@ function partRandomize(values, applyChangeDirectly)
 
    values.overBite = love.math.random() < .5 and true or false
 
-   values.legLength = math.ceil(love.math.random()* 7)
-   values.armLength = leglengths[math.ceil(love.math.random()* 7)]/1.2
-   values.legDefaultStance = 0.75 + (love.math.random()/4.0)
+   values.legLength = math.ceil(love.math.random() * 7)
+   values.armLength = leglengths[math.ceil(love.math.random() * 7)] / 1.2
+   values.legDefaultStance = 0.75 + (love.math.random() / 4.0)
 
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
