@@ -14,6 +14,17 @@ Concord.component('texturedBody',
 --]]
 -- 1 means the bipeds' right, 2 means the bipeds' left.
 -- when facing me, 1 == left and 2 == right (for me)
+
+Concord.component('mouth',
+    function(c, parts)
+        c.head = parts.head
+        c.upperlip = parts.upperlip
+        c.lowerlip = parts.lowerlip
+        c.teeth = parts.teeth
+        c.values = parts.values
+    end
+)
+
 Concord.component('biped',
     function(c, parts)
         c.guy = parts.guy
@@ -47,9 +58,7 @@ Concord.component('potato', function(c, parts)
     c.head = parts.head
     c.values = parts.values
     c.nose = parts.nose
-    c.upperlip = parts.upperlip
-    c.lowerlip = parts.lowerlip
-    c.teeth = parts.teeth
+
     c.eye1 = parts.eye1
     c.eye2 = parts.eye2
     c.pupil1 = parts.pupil1
@@ -58,17 +67,15 @@ Concord.component('potato', function(c, parts)
     c.brow2 = parts.brow2
     c.ear1 = parts.ear1
     c.ear2 = parts.ear2
-    
+
     c.eyeBlink = 1
     c.eyeTimer = nil
-    c.lookAtTimerEye1 = nil 
-    c.lookAtTimerEye2 = nil 
+    c.lookAtTimerEye1 = nil
+    c.lookAtTimerEye2 = nil
 
-    c.blinkCounter = love.math.random()*5.0
-   
-   -- c.mouthOpenNess = parts.mouthOpenNess or 0
+    c.blinkCounter = love.math.random() * 5.0
 
-
+    -- c.mouthOpenNess = parts.mouthOpenNess or 0
 end)
 --[[
 Concord.component('head',

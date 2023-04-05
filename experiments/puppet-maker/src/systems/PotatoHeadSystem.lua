@@ -17,19 +17,10 @@ local function getPositionForNoseAttaching(e)
     return x, y
 end
 
-local function getPositionForMouthAttaching(e)
-    local newPoints = getHeadPoints(e)
 
-    local tX = numbers.mapInto(e.potato.values.mouthXAxis, -2, 2, 0, 1)
-    local tY = numbers.mapInto(e.potato.values.mouthYAxis, -3, 3, 0, 1)
-
-    local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
-    local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
-
-    return x, y
-end
 
 function getPositionsForEyesAttaching(e)
+    --print(inspect(e.potato))
     local newPoints = getHeadPoints(e)
 
     local mx = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
@@ -89,11 +80,7 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.pupil2.transforms.l[4] = values.pupilSizeMultiplier * sx
     e.potato.pupil2.transforms.l[5] = values.pupilSizeMultiplier * sy
 
-    e.potato.upperlip.transforms.l[4] = values.upperlipWidthMultiplier * sx
-    e.potato.upperlip.transforms.l[5] = values.upperlipWidthMultiplier * sy
 
-    e.potato.lowerlip.transforms.l[4] = values.lowerlipWidthMultiplier * sx
-    e.potato.lowerlip.transforms.l[5] = values.lowerlipWidthMultiplier * sy
 
     e.potato.nose.transforms.l[4] = values.noseWidthMultiplier * sx
     e.potato.nose.transforms.l[5] = values.noseHeightMultiplier * sy
@@ -104,56 +91,17 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
 
-    e.potato.teeth.transforms.l[2] = e.potato.lowerlip.transforms.l[2]
-    e.potato.upperlip.transforms.l[2] = 0
+
+    --e.potato.upperlip.transforms.l[4] = values.upperlipWidthMultiplier * sx
+    --e.potato.upperlip.transforms.l[5] = values.upperlipWidthMultiplier * sy
+
+    --e.potato.lowerlip.transforms.l[4] = values.lowerlipWidthMultiplier * sx
+    --e.potato.lowerlip.transforms.l[5] = values.lowerlipWidthMultiplier * sy
+    --e.potato.teeth.transforms.l[2] = e.potato.lowerlip.transforms.l[2]
+    --e.potato.upperlip.transforms.l[2] = 0
     --values.headHeightMultiplier
-    e.potato.teeth.transforms.l[4] = 1 * sx
-    e.potato.teeth.transforms.l[5] = 1 * sy
-end
-
-function PotatoHeadSystem:mouthOpener(e, openNess, wideness)
-    --editingGuy.mouthOpenNess = openNess
-    local url = e.potato.upperlip.children[1].texture.url
-    local w, h = mesh.getImage(url):getDimensions()
-    --local wideness = 0.5 --0.5 + love.math.random() * 0.5
-
-    local open = openNess --love.math.random() * 1
-    local p1 = { { (h / 2) * wideness, 0 }, { 0, -w * open }, { ( -h / 2) * wideness, 0 } }
-
-    url = e.potato.lowerlip.children[1].texture.url
-    w, h = mesh.getImage(url):getDimensions()
-    p2 = { p1[1], { 0, w * open }, p1[3] }
-
-    -- would be much nicer/lighter if it could just work with this
-    --editingGuy.upperlip.children[1].data.points = p1
-    -- editingGuy.lowerlip.children[1].data.points = p2
-    -- mesh.meshAll(editingGuy.upperlip.children[1])
-    e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] - 50 - (openNess * 100)
-    editingGuy.upperlip = updateChild(e.potato.head, editingGuy.upperlip,
-            createUpperlipBezier(e.potato.values, p1))
-    editingGuy.lowerlip = updateChild(e.potato.head, editingGuy.lowerlip,
-            createLowerlipBezier(e.potato.values, p2))
-
-
-    parentize.parentize(editingGuy.guy)
-    mesh.meshAll(editingGuy.guy)
-    potato:give('potato', potatoArguments(editingGuy))
-end
-
-function PotatoHeadSystem:mouthSaySomething(e)
-    local maxOpen = .25 + love.math.random() * 0.5
-    local minWide = .5 + love.math.random() * 0.5
-
-    local value = { mouthOpen = 0, mouthWide = 1 }
-    local wideness = 0.5 + love.math.random()
-    Timer.tween(.3, value, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
-    Timer.after(.4, function()
-        Timer.tween(.2, value, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
-    end)
-
-    Timer.during(1.1, function(dt)
-        PotatoHeadSystem:mouthOpener(e, value.mouthOpen, value.mouthWide)
-    end)
+    --e.potato.teeth.transforms.l[4] = 1 * sx
+    --e.potato.teeth.transforms.l[5] = 1 * sy
 end
 
 function PotatoHeadSystem:potatoInit(e)
@@ -164,11 +112,7 @@ function PotatoHeadSystem:potatoInit(e)
         e.potato.nose.transforms.l[2] = nosey
     end
 
-    local mouthx, mouthy = getPositionForMouthAttaching(e)
-    e.potato.upperlip.transforms.l[1] = mouthx
-    e.potato.upperlip.transforms.l[2] = mouthy -- - love.math.random() * 50
-    e.potato.lowerlip.transforms.l[1] = mouthx
-    e.potato.lowerlip.transforms.l[2] = mouthy -- + love.math.random() * 50
+
 
     local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
 
@@ -187,10 +131,7 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil2.transforms.l[2] = eyey2
 
 
-    e.potato.teeth.transforms.l[1] = e.potato.upperlip.transforms.l[1]
 
-
-    e.potato.teeth.transforms.l[2] = e.potato.upperlip.transforms.l[2] - 50
 
     --e.potato.teeth.transforms.l[4] = 0.5
     --e.potato.teeth.transforms.l[5] = 0.5
@@ -241,6 +182,7 @@ function PotatoHeadSystem:eyeLookAtPoint(x, y)
 
         local eyex1, eyey1, eyex2, eyey2 = getPositionsForEyesAttaching(e)
         ------
+        -- print(inspect(e.potato.potato))
         e.potato.pupil1.transforms.l[1] = eyex1
         e.potato.pupil1.transforms.l[2] = eyey1
 

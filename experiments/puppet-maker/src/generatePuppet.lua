@@ -73,6 +73,7 @@ end
 
 function getHeadPoints(e)
    local parent = e.potato.head
+   -- print(e.potato)
    local parentName = e.potato.values.potatoHead and 'body' or 'head'
    local meta = getMeta(parent)
 
@@ -197,15 +198,16 @@ function potatoArguments(editingGuy)
        brow2 = editingGuy.brow2,
        nose = editingGuy.nose,
        values = editingGuy.values,
-       teeth = editingGuy.teeth,
-       upperlip = editingGuy.upperlip,
-       lowerlip = editingGuy.lowerlip,
    }
 end
 
 function mouthArguments(editingGuy)
    return {
-
+       values = editingGuy.values,
+       teeth = editingGuy.teeth,
+       upperlip = editingGuy.upperlip,
+       lowerlip = editingGuy.lowerlip,
+       head = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head,
    }
 end
 
@@ -479,7 +481,20 @@ function removeChild(elem)
 end
 
 function attachAllMouthParts(guy)
+   removeChild(guy.teeth)
+   removeChild(guy.upperlip)
+   removeChild(guy.lowerlip)
 
+   local addTo = guy.head --guy.values.potatoHead and guy.body or guy.head
+   if (guy.values.overBite == true) then
+      table.insert(addTo.children, guy.lowerlip)
+      table.insert(addTo.children, guy.teeth)
+      table.insert(addTo.children, guy.upperlip)
+   else
+      table.insert(addTo.children, guy.teeth)
+      table.insert(addTo.children, guy.lowerlip)
+      table.insert(addTo.children, guy.upperlip)
+   end
 end
 
 function attachAllFaceParts(guy)
@@ -493,9 +508,7 @@ function attachAllFaceParts(guy)
    removeChild(guy.ear1)
    removeChild(guy.ear2)
    removeChild(guy.hair)
-   removeChild(guy.teeth)
-   removeChild(guy.upperlip)
-   removeChild(guy.lowerlip)
+
 
    local addTo = guy.values.potatoHead and guy.body or guy.head
 
@@ -513,15 +526,6 @@ function attachAllFaceParts(guy)
    end
 
 
-   if (guy.values.overBite == true) then
-      table.insert(addTo.children, guy.lowerlip)
-      table.insert(addTo.children, guy.teeth)
-      table.insert(addTo.children, guy.upperlip)
-   else
-      table.insert(addTo.children, guy.teeth)
-      table.insert(addTo.children, guy.lowerlip)
-      table.insert(addTo.children, guy.upperlip)
-   end
 
 
    table.insert(addTo.children, guy.brow1)
@@ -530,6 +534,7 @@ function attachAllFaceParts(guy)
    table.insert(addTo.children, guy.hair)
 
 
+   attachAllMouthParts(guy)
    changePart('hair', guy.values)
 end
 
@@ -683,6 +688,8 @@ function changePart(name)
 
    biped:give('biped', bipedArguments(editingGuy))
    potato:give('potato', potatoArguments(editingGuy))
+   mouth:give('mouth', mouthArguments(editingGuy))
    -- print(potato.potato.teeth, name)
    myWorld:emit("potatoInit", potato)
+   myWorld:emit("mouthInit", mouth)
 end
