@@ -25,7 +25,6 @@ local function getScreenBBoxForItem(c, bbox)
 
 end
 --]]
-
 bbox.getPointsBBox = function(points)
    local tlx = math.huge
    local tly = math.huge
@@ -108,8 +107,6 @@ bbox.getBBoxRecursiveVersion2 = function(node)
       local tlxg, tlyg = node.transforms._g:transformPoint(p2[1], p2[2])
       local brxg, bryg = node.transforms._g:transformPoint(p2[3], p2[4])
       return { tlxg, tlyg, brxg, bryg }
-
-
    end
 end
 
@@ -147,17 +144,13 @@ bbox.getBBoxRecursive = function(node)
       local brxg, bryg = node.transforms._g:transformPoint(p2[3], p2[4])
 
       return { math.min(tlxg, p1[1]),
-         math.min(tlyg, p1[2]),
-         math.max(brxg, p1[3]),
-         math.max(bryg, p1[4]) }
-
-
+          math.min(tlyg, p1[2]),
+          math.max(brxg, p1[3]),
+          math.max(bryg, p1[4]) }
    else
       print('what is this for a thing')
       print(node.name, #node.points)
    end
-
-
 end
 
 
@@ -207,8 +200,6 @@ bbox.getBBoxRecursiveTransformed = function(node)
    end
 end
 --]]
-
-
 bbox.drillDownForFirstBBox = function(node)
    -- local tlx, tly, brx, bry = bbox.getDirectChildrenBBox(node)
    -- if (tlx == math.huge and tly == math.huge and brx == -math.huge and bry == -math.huge) then
@@ -246,15 +237,16 @@ bbox.getDirectChildrenBBox = function(node)
       -- todo make a simpler drilling down algo
       if node.children then
          local tlx, tly, brx, bry = bbox.drillDownForFirstBBox(node)
+         --print(tlx, tly, brx, bry)
          return tlx, tly, brx, bry
       else
+         --print('even weirder')
          return 0, 0, 0, 0, 0
       end
       -- return 0, 0, 0, 0
    else
       return tlx, tly, brx, bry
    end
-
 end
 
 bbox.getGroupBBox = function(group)
@@ -263,7 +255,6 @@ bbox.getGroupBBox = function(group)
    local brx = -math.huge
    local bry = -math.huge
    for i = 1, #group do
-
       if group[i].points then
          local tlx2, tly2, brx2, bry2 = bbox.getPointsBBox(group[i].points)
          if tlx2 < tlx then

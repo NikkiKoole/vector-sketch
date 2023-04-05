@@ -17,6 +17,7 @@ Concord.component('texturedBody',
 
 Concord.component('mouth',
     function(c, parts)
+        c.mouth = parts.mouth
         c.head = parts.head
         c.upperlip = parts.upperlip
         c.lowerlip = parts.lowerlip
@@ -67,6 +68,7 @@ Concord.component('potato', function(c, parts)
     c.brow2 = parts.brow2
     c.ear1 = parts.ear1
     c.ear2 = parts.ear2
+    c.mouth = parts.mouth
 
     c.eyeBlink = 1
     c.eyeTimer = nil

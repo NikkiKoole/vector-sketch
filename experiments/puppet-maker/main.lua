@@ -156,6 +156,7 @@ function love.load()
           pupil2 = copyAndRedoGraphic('pupils', values),
           brow1 = createBrowBezier(values),
           brow2 = createBrowBezier(values),
+          mouth = makeMouthParentThing(),
           teeth = copyAndRedoGraphic('teeth', values),
           upperlip = createUpperlipBezier(values),
           lowerlip = createLowerlipBezier(values),
@@ -214,7 +215,7 @@ function partRandomize(values, applyChangeDirectly)
             values[parts[i]].flipy = love.math.random() < .5 and -1 or 1
          end
          if (parts[i] == 'nose') then
-            values[parts[i]].shape = #(p.imgs)
+            --values[parts[i]].shape = #(p.imgs)
          end
          if (parts[i] == 'teeth') then
             values[parts[i]].fgPal = 5

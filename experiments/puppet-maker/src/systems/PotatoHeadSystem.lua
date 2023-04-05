@@ -17,7 +17,21 @@ local function getPositionForNoseAttaching(e)
     return x, y
 end
 
+local function getPositionForMouthAttaching(e)
+    --local headPart = e.mouth.values.potatoHead and editingGuy.body or editingGuy.head
+    --local headPartName = e.mouth.values.potatoHead and 'body' or 'head'
+    --local newPoints = getHeadPointsFromValues(e.mouth.values, headPart, headPartName)
 
+    local newPoints = getHeadPoints(e)
+
+    local tX = numbers.mapInto(e.potato.values.mouthXAxis, -2, 2, 0, 1)
+    local tY = numbers.mapInto(e.potato.values.mouthYAxis, -3, 3, 0, 1)
+
+    local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
+    local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
+
+    return x, y
+end
 
 function getPositionsForEyesAttaching(e)
     --print(inspect(e.potato))
@@ -92,6 +106,9 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
 
 
+    e.potato.mouth.transforms.l[4] = 1 * sx
+    e.potato.mouth.transforms.l[5] = 1 * sy
+
     --e.potato.upperlip.transforms.l[4] = values.upperlipWidthMultiplier * sx
     --e.potato.upperlip.transforms.l[5] = values.upperlipWidthMultiplier * sy
 
@@ -156,6 +173,10 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.ear2.transforms.l[1] = numbers.lerp(newPoints[3][1], newPoints[2][1], .5)
     e.potato.ear2.transforms.l[2] = numbers.lerp(newPoints[8][2], newPoints[6][2], tY)
     e.potato.ear2.transforms.l[4] = 1
+
+    local mx, my = getPositionForMouthAttaching(e)
+    e.potato.mouth.transforms.l[1] = mx
+    e.potato.mouth.transforms.l[2] = my
 end
 
 -- blink eyes

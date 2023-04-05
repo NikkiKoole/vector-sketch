@@ -38,6 +38,16 @@ function setAngleAndDistance(sx, sy, angle, distance)
    return newx, newy
 end
 
+function makeMouthParentThing()
+   return
+   {
+       folder = true,
+       name = 'mouth-parent',
+       transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+       children = {}
+   }
+end
+
 -- getting positions for attachments via the 8way meta object
 -- this should also work in the furture for parts that are flipped vertically
 -- this way i can, for free, have double the amount of shapes, no extra sprites needed.
@@ -198,6 +208,7 @@ function potatoArguments(editingGuy)
        brow2 = editingGuy.brow2,
        nose = editingGuy.nose,
        values = editingGuy.values,
+       mouth = editingGuy.mouth,
    }
 end
 
@@ -207,8 +218,66 @@ function mouthArguments(editingGuy)
        teeth = editingGuy.teeth,
        upperlip = editingGuy.upperlip,
        lowerlip = editingGuy.lowerlip,
-       head = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head,
+       mouth = editingGuy.mouth,
    }
+end
+
+function attachAllMouthParts(guy)
+   removeChild(guy.teeth)
+   removeChild(guy.upperlip)
+   removeChild(guy.lowerlip)
+
+   local addTo = guy.mouth -- guy.values.potatoHead and guy.body or guy.head
+   if (guy.values.overBite == true) then
+      table.insert(addTo.children, guy.lowerlip)
+      table.insert(addTo.children, guy.teeth)
+      table.insert(addTo.children, guy.upperlip)
+   else
+      table.insert(addTo.children, guy.teeth)
+      table.insert(addTo.children, guy.lowerlip)
+      table.insert(addTo.children, guy.upperlip)
+   end
+end
+
+function attachAllFaceParts(guy)
+   removeChild(guy.eye1)
+   removeChild(guy.eye2)
+   removeChild(guy.pupil1)
+   removeChild(guy.pupil2)
+   removeChild(guy.nose)
+   removeChild(guy.brow1)
+   removeChild(guy.brow2)
+   removeChild(guy.ear1)
+   removeChild(guy.ear2)
+   removeChild(guy.hair)
+   removeChild(guy.mouth)
+
+   local addTo = guy.values.potatoHead and guy.body or guy.head
+
+   table.insert(addTo.children, guy.eye1)
+   table.insert(addTo.children, guy.eye2)
+   table.insert(addTo.children, guy.pupil1)
+   table.insert(addTo.children, guy.pupil2)
+
+   if (guy.values.earUnderHead == true) then
+      table.insert(addTo.children, 1, guy.ear1)
+      table.insert(addTo.children, 1, guy.ear2)
+   else
+      table.insert(addTo.children, guy.ear1)
+      table.insert(addTo.children, guy.ear2)
+   end
+
+
+   table.insert(addTo.children, guy.mouth)
+
+   table.insert(addTo.children, guy.brow1)
+   table.insert(addTo.children, guy.brow2)
+   table.insert(addTo.children, guy.nose)
+   table.insert(addTo.children, guy.hair)
+
+
+   attachAllMouthParts(guy)
+   changePart('hair', guy.values)
 end
 
 function arrangeBrows()
@@ -250,7 +319,6 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
    local img = mesh.getImage(url, optionalSettings)
    local maskUrl = getPNGMaskUrl(url)
    local mask = mesh.getImage(maskUrl)
-   --local cnv = love.image.newImageData(url) -- canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
 
    return cnv
@@ -263,16 +331,13 @@ function redoGraphicHelper(part, name, values)
    local p = part.children and part.children[index] or part
    if p.texture and p.texture.url then
       local textured, url = partToTexturedCanvas(name, values, p.texture)
-      --print(textured)
+
       if p.texture.canvas then
-         --   print(p.texture.canvas)
          p.texture.canvas:release()
       end
       local m = mesh.makeMeshFromSibling(p, textured)
       textured:release()
       p.texture.canvas = m
-      --p.texture.texture = textured
-      -- print(' texture updat for', name)
    else
       print('not foing texture updat for', name)
    end
@@ -280,14 +345,11 @@ function redoGraphicHelper(part, name, values)
 end
 
 function partToTexturedCanvas(partName, values, optionalImageSettings)
-   --print('partToTexturedCanvas', partName)
    local p = findPart(partName)
    local url = p.imgs[values[partName].shape]
-
    local flipX = values[partName].flipx or 1
    local flipY = values[partName].flipy or 1
 
-   --print(partName, flipX, flipY)
    local renderPatch = {}
 
    if (partName == 'head' and not values.potatoHead) or (partName == 'body' and values.potatoHead) then
@@ -323,7 +385,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
          table.insert(renderPatch, p)
       end
    end
-   --print(url)
+
    local texturedcanvas = helperTexturedCanvas(
            url,
            textures[values[partName].bgTex],
@@ -382,7 +444,6 @@ end
 
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
-
    local textured, url = partToTexturedCanvas('arms', values)
 
    return createFromImage.rubberhose(
@@ -441,14 +502,8 @@ function createNeckRubberhose(values, points)
 end
 
 function updateChild(container, oldValue, newResult)
-   --print('updateChild', container.name, 'looking for')
-   --print(oldValue and oldValue.name)
-   --print(newResult and newResult.name)
-   --prof.push('update-child')
    for i = 1, #container.children do
       if container.children[i] == oldValue then
-         --print('changed something', container.name)
-
          container.children[i] = newResult
          if (container.children[i].transforms) then
             local oldTransforms = oldValue.transforms and copy3(oldValue.transforms.l)
@@ -457,13 +512,11 @@ function updateChild(container, oldValue, newResult)
                oldTransforms[6] = newResult.transforms.l[6]
                oldTransforms[7] = newResult.transforms.l[7]
             end
-            --print(oldTransforms[1], oldTransforms[2])
             container.children[i].transforms.l = oldTransforms
          end
          return container.children[i]
       end
    end
-   --prof.pop('update-child')
 end
 
 function copyAndRedoGraphic(name, values)
@@ -477,71 +530,16 @@ function removeChild(elem)
    if elem._parent then
       local index = node.getIndex(elem)
       if index >= 0 then table.remove(elem._parent.children, index) end
-   end
-end
-
-function attachAllMouthParts(guy)
-   removeChild(guy.teeth)
-   removeChild(guy.upperlip)
-   removeChild(guy.lowerlip)
-
-   local addTo = guy.head --guy.values.potatoHead and guy.body or guy.head
-   if (guy.values.overBite == true) then
-      table.insert(addTo.children, guy.lowerlip)
-      table.insert(addTo.children, guy.teeth)
-      table.insert(addTo.children, guy.upperlip)
    else
-      table.insert(addTo.children, guy.teeth)
-      table.insert(addTo.children, guy.lowerlip)
-      table.insert(addTo.children, guy.upperlip)
+      --print('trying to remove a child with no parent', elem)
    end
-end
-
-function attachAllFaceParts(guy)
-   removeChild(guy.eye1)
-   removeChild(guy.eye2)
-   removeChild(guy.pupil1)
-   removeChild(guy.pupil2)
-   removeChild(guy.nose)
-   removeChild(guy.brow1)
-   removeChild(guy.brow2)
-   removeChild(guy.ear1)
-   removeChild(guy.ear2)
-   removeChild(guy.hair)
-
-
-   local addTo = guy.values.potatoHead and guy.body or guy.head
-
-   table.insert(addTo.children, guy.eye1)
-   table.insert(addTo.children, guy.eye2)
-   table.insert(addTo.children, guy.pupil1)
-   table.insert(addTo.children, guy.pupil2)
-
-   if (guy.values.earUnderHead == true) then
-      table.insert(addTo.children, 1, guy.ear1)
-      table.insert(addTo.children, 1, guy.ear2)
-   else
-      table.insert(addTo.children, guy.ear1)
-      table.insert(addTo.children, guy.ear2)
-   end
-
-
-
-
-   table.insert(addTo.children, guy.brow1)
-   table.insert(addTo.children, guy.brow2)
-   table.insert(addTo.children, guy.nose)
-   table.insert(addTo.children, guy.hair)
-
-
-   attachAllMouthParts(guy)
-   changePart('hair', guy.values)
 end
 
 function changePart(name)
    local values = editingGuy.values
    local guy = editingGuy.guy
    local container = values.potatoHead and editingGuy.body or editingGuy.head
+   local mouthPart = editingGuy.mouth
 
    if name == 'body' then
       editingGuy.body = updateChild(guy, editingGuy.body, copyAndRedoGraphic('body', values))
@@ -608,11 +606,6 @@ function changePart(name)
    elseif name == 'ears' then
       editingGuy.ear1 = updateChild(container, editingGuy.ear1, copyAndRedoGraphic('ears', values))
       editingGuy.ear2 = updateChild(container, editingGuy.ear2, copyAndRedoGraphic('ears', values))
-   elseif name == 'teeth' then
-      local r = copyAndRedoGraphic('teeth', values)
-      --print(inspect(editingGuy.teeth))
-      editingGuy.teeth = updateChild(container, editingGuy.teeth, r)
-      print(editingGuy.teeth)
    elseif name == 'eyes' then
       editingGuy.eye1 = updateChild(container, editingGuy.eye1, copyAndRedoGraphic('eyes', values))
       editingGuy.eye2 = updateChild(container, editingGuy.eye2, copyAndRedoGraphic('eyes', values))
@@ -633,11 +626,15 @@ function changePart(name)
          editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then
-      editingGuy.lowerlip = updateChild(container, editingGuy.lowerlip,
+      editingGuy.lowerlip = updateChild(mouthPart, editingGuy.lowerlip,
               createLowerlipBezier(values, editingGuy.lowerlip.points))
    elseif name == 'upperlip' then
-      editingGuy.upperlip = updateChild(container, editingGuy.upperlip,
+      editingGuy.upperlip = updateChild(mouthPart, editingGuy.upperlip,
               createUpperlipBezier(values, editingGuy.upperlip.points))
+   elseif name == 'teeth' then
+      local r = copyAndRedoGraphic('teeth', values)
+
+      editingGuy.teeth = updateChild(mouthPart, editingGuy.teeth, r)
    elseif name == 'feet' then
       editingGuy.feet1 = updateChild(guy, editingGuy.feet1, copyAndRedoGraphic('feet', values))
       editingGuy.feet2 = updateChild(guy, editingGuy.feet2, copyAndRedoGraphic('feet', values))

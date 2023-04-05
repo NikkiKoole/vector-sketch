@@ -98,13 +98,6 @@ function getSiblingBefore(before)
    return nil
 end
 
-function removeChild(elem)
-   if elem and elem._parent then
-      local index = node.getIndex(elem)
-      if index >= 0 then table.remove(elem._parent.children, index) end
-   end
-end
-
 function playSound(sound)
    print('playing sound')
    local s = sound:clone()
@@ -420,7 +413,6 @@ function scene.load()
        transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
        children = {}
    }
-
 
 
 
