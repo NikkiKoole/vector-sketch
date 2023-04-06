@@ -2,8 +2,8 @@ local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
 
 texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-leglengths  = { 400, 500, 600, 700, 800, 900, 1000}
-
+leglengths  = { 400, 500, 600, 700, 800, 900, 1000 }
+necklengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 }
 
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
@@ -96,27 +96,27 @@ function generate()
     -- but why is this an issue for the nose and not for the patch for example
 
     local parts = {
-        { name = 'head',           imgs = headImgUrls,     p = headParts , kind='head'},
-        { name = 'hair',           imgs = hairUrls , kind='head'},
-        { name = 'brows',          imgs = browImgUrls,     p = browParts , kind='head'},
-        { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts, kind='head' },
-        { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts , kind='head'},
-        { name = 'ears',           imgs = earImgUrls,      p = earParts , kind='head'},
-        { name = 'nose',           imgs = noseImgUrls,     p = noseParts , kind='head'},
-        { name = 'skinPatchSnout', imgs = patchUrls , kind='head' },
-        { name = 'skinPatchEye1',  imgs = patchUrls , kind='head'},
-        { name = 'skinPatchEye2',  imgs = patchUrls , kind='head'},
-        { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts, kind='head' },
-        { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts , kind='head'},
-        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts , kind='head'},
-        { name = 'neck',           imgs = legUrls , kind='body'},
-        { name = 'body',           imgs = bodyImgUrls,     p = bodyParts, kind='body' },
-        { name = 'armhair',        imgs = hairUrls , kind='body'},
-        { name = 'arms',           imgs = legUrls, kind='body' },
-        { name = 'hands',          imgs = feetImgUrls,     p = handParts , kind='body'},
-        { name = 'legs',           imgs = legUrls , kind='body'},
-        { name = 'leghair',        imgs = hairUrls , kind='body'},
-        { name = 'feet',           imgs = feetImgUrls,     p = feetParts, kind='body' },
+        { name = 'head',           imgs = headImgUrls,     p = headParts,     kind = 'head' },
+        { name = 'hair',           imgs = hairUrls,        kind = 'head' },
+        { name = 'brows',          imgs = browImgUrls,     p = browParts,     kind = 'head' },
+        { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,    kind = 'head' },
+        { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts,      kind = 'head' },
+        { name = 'ears',           imgs = earImgUrls,      p = earParts,      kind = 'head' },
+        { name = 'nose',           imgs = noseImgUrls,     p = noseParts,     kind = 'head' },
+        { name = 'skinPatchSnout', imgs = patchUrls,       kind = 'head' },
+        { name = 'skinPatchEye1',  imgs = patchUrls,       kind = 'head' },
+        { name = 'skinPatchEye2',  imgs = patchUrls,       kind = 'head' },
+        { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts, kind = 'head' },
+        { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts, kind = 'head' },
+        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,    kind = 'head' },
+        { name = 'neck',           imgs = legUrls,         kind = 'body' },
+        { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,     kind = 'body' },
+        { name = 'armhair',        imgs = hairUrls,        kind = 'body' },
+        { name = 'arms',           imgs = legUrls,         kind = 'body' },
+        { name = 'hands',          imgs = feetImgUrls,     p = handParts,     kind = 'body' },
+        { name = 'legs',           imgs = legUrls,         kind = 'body' },
+        { name = 'leghair',        imgs = hairUrls,        kind = 'body' },
+        { name = 'feet',           imgs = feetImgUrls,     p = feetParts,     kind = 'body' },
     }
 
 
@@ -355,7 +355,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        legDefaultStance = .5   ,
+        legDefaultStance        = .5,
         legLength               = 5,
         legWidthMultiplier      = 1,
         leg1flop                = -1,
@@ -387,7 +387,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        armLength               = 400,
+        armLength               = 2,
         armWidthMultiplier      = 1,
         arm1flop                = -1,
         arm2flop                = 1,
@@ -404,6 +404,8 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
+        handLengthMultiplier    = 1,
+        handWidthMultiplier     = 1,
         overBite                = true,
         teeth                   = {
             shape     = 1,
@@ -480,7 +482,7 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
-        neckLength              = 120,
+        neckLength              = 1,
         neckWidthMultiplier     = 1,
         feet                    = {
             shape     = 1,
@@ -495,6 +497,8 @@ function generate()
             texRot    = 0,
             texScale  = 1,
         },
+        feetLengthMultiplier    = 1,
+        feetWidthMultiplier     = 1,
     }
 
     return parts, values

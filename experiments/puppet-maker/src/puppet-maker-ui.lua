@@ -77,16 +77,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
       if selectedCategory == 'upperlip' then
          if draw then
-            local v = h_slider("upperlip-width", startX, currentY, 150, values.upperlipWidthMultiplier, .00005, 2)
-            if v.value then
-               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
-               values.upperlipWidthMultiplier = v.value
-               myWorld:emit('rescaleFaceparts', potato)
-               --upperlip.transforms.l[4] = v.value
-               --upperlip.transforms.l[5] = v.value
-               --changePart('upperlip', values)
-            end
-            currentY = currentY + 25
             local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to 1
@@ -97,17 +87,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
       if selectedCategory == 'lowerlip' then
          if draw then
-            local v = h_slider("lowerlip-width", startX, currentY, 150, values.lowerlipWidthMultiplier, .00005, 2)
-            if v.value then
-               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
-               values.lowerlipWidthMultiplier = v.value
-               --lowerlip.transforms.l[4] = v.value
-               --lowerlip.transforms.l[4] = v.value
-               --lowerlip.transforms.l[5] = v.value
-               myWorld:emit('rescaleFaceparts', potato)
-               --changePart('lowerlip', values)
-            end
-            currentY = currentY + 25
             local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to 1
@@ -191,7 +170,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                myWorld:emit('rescaleFaceparts', potato)
             end
             currentY = currentY + 25
-            local v = h_slider("nose-yAxis", startX, currentY, 50, values.noseYAxis, -6, 6)
+            local v = h_slider("nose-yAxis", startX, currentY, 50, values.noseYAxis, -1, 1)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to 1
                values.noseYAxis = v.value
@@ -336,6 +315,102 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
+      if selectedCategory == 'arms' then
+         if draw then
+            v = h_slider("arm-length", startX, currentY, 50, values.armLength, 1, #leglengths)
+            if v.value then
+               values.armLength = math.floor(v.value)
+               print(values.armLength)
+               changePart('arms', values)
+               changePart('armhair', values)
+            end
+            currentY = currentY + 25
+            v = h_slider("leg-width-multiplier", startX, currentY, 50, values.armWidthMultiplier, 0.5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.armWidthMultiplier = v.value
+               changePart('arms', values)
+            end
+            currentY = currentY + 25
+
+            startX = startX + 10
+            love.graphics.setColor(1, 0, 1)
+            love.graphics.circle('fill', startX, currentY, 10)
+            local b = ui.getUICircle(startX, currentY, 10)
+            if b then
+               values.arms.flipy = values.arms.flipy == -1 and 1 or -1
+               changePart('arms', values)
+            end
+         end
+      end
+
+      if selectedCategory == 'neck' then
+         if draw then
+            v = h_slider("neck-length", startX, currentY, 50, values.neckLength, 1, #necklengths)
+            if v.value then
+               values.neckLength = math.floor(v.value)
+               print(values.armLength)
+               changePart('neck', values)
+               --changePart('armhair', values)
+            end
+            currentY = currentY + 25
+            v = h_slider("neck-width-multiplier", startX, currentY, 50, values.neckWidthMultiplier, 0.5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.neckWidthMultiplier = v.value
+               changePart('neck', values)
+            end
+            currentY = currentY + 25
+         end
+      end
+
+      if selectedCategory == 'hands' then
+         if draw then
+            v = h_slider("hand-length", startX, currentY, 50, values.handLengthMultiplier, .5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.handLengthMultiplier = v.value
+               changePart('hands', values)
+               editingGuy.hand1.transforms.l[4] = v.value
+               editingGuy.hand2.transforms.l[4] = -v.value
+            end
+            currentY = currentY + 25
+            v = h_slider("hand-width", startX, currentY, 50, values.handWidthMultiplier, .5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.handWidthMultiplier = v.value
+               changePart('hands', values)
+               editingGuy.hand1.transforms.l[5] = v.value
+               editingGuy.hand2.transforms.l[5] = v.value
+            end
+            currentY = currentY + 25
+         end
+      end
+
+      if selectedCategory == 'feet' then
+         if draw then
+            v = h_slider("feet-length", startX, currentY, 50, values.feetLengthMultiplier, .5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.feetLengthMultiplier = v.value
+               changePart('feet', values)
+               editingGuy.feet1.transforms.l[4] = v.value
+               editingGuy.feet2.transforms.l[4] = -v.value
+            end
+            currentY = currentY + 25
+            v = h_slider("feet-width", startX, currentY, 50, values.feetWidthMultiplier, .5, 3)
+            if v.value then
+               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
+               values.feetWidthMultiplier = v.value
+               changePart('feet', values)
+               editingGuy.feet1.transforms.l[5] = v.value
+               editingGuy.feet2.transforms.l[5] = v.value
+            end
+            currentY = currentY + 25
+         end
+      end
+
+
       if selectedCategory == 'skinPatchSnout' or selectedCategory == 'skinPatchEye1' or selectedCategory == 'skinPatchEye2' then
          local posts = { 'ScaleX', 'ScaleY', 'Angle', 'X', 'Y' }
          local mins = { .25, .25, 0, -6, -6 }
@@ -403,7 +478,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             changePart('head', values)
 
             myWorld:emit("bipedAttachHead", biped)
-           -- tweenCameraToHead()
+            -- tweenCameraToHead()
          end
 
          if draw then
@@ -739,7 +814,7 @@ local function buttonClickHelper(value)
       changePart(selectedCategory, values)
       print(f.kind)
       if (f.kind == 'body') then
-      tweenCameraToHeadAndBody()
+         tweenCameraToHeadAndBody()
       else
          tweenCameraToHead()
       end
@@ -916,67 +991,62 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
 end
 
-
 function headOrBody(draw, clickX, clickY)
    local w, h = love.graphics.getDimensions()
    local margin = 20
 
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
-   local buttonHeight = (h / 2) - margin*4 
+   local buttonHeight = (h / 2) - margin * 4
 
-   
+
    if draw then
       if selectedRootButton == 'head' then
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
       else
-      love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
       end
-      love.graphics.rectangle('fill', margin, margin*2, size-40, buttonHeight)
+      love.graphics.rectangle('fill', margin, margin * 2, size - 40, buttonHeight)
       love.graphics.setColor(0, 0, 0)
-      love.graphics.print('head', margin, margin*2)
+      love.graphics.print('head', margin, margin * 2)
 
 
       if selectedRootButton == 'body' then
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
       else
-       love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
       end
-      
-      love.graphics.rectangle('fill', margin, (h/2), size-40, buttonHeight)
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.print('body', margin, (h/2))
-      
 
+      love.graphics.rectangle('fill', margin, (h / 2), size - 40, buttonHeight)
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.print('body', margin, (h / 2))
    else
-      if (hit.pointInRect(clickX, clickY, margin, margin*2, size-40, buttonHeight)) then
+      if (hit.pointInRect(clickX, clickY, margin, margin * 2, size - 40, buttonHeight)) then
          print('clicked in head button')
          playSound(scrollItemClickSample)
          if selectedRootButton == 'head' then
             selectedRootButton = nil
             tweenCameraToHeadAndBody()
          else
-         selectedRootButton = 'head'
-         tweenCameraToHead()
+            selectedRootButton = 'head'
+            tweenCameraToHead()
          end
          setCategories(selectedRootButton)
       end
-      if (hit.pointInRect(clickX, clickY, margin, h/2, size-40, buttonHeight)) then
+      if (hit.pointInRect(clickX, clickY, margin, h / 2, size - 40, buttonHeight)) then
          print('clicked in button button')
          if selectedRootButton == 'body' then
             selectedRootButton = nil
             tweenCameraToHeadAndBody()
          else
-         selectedRootButton = 'body'
-         tweenCameraToHeadAndBody()
+            selectedRootButton = 'body'
+            tweenCameraToHeadAndBody()
          end
          playSound(scrollItemClickSample)
          setCategories(selectedRootButton)
       end
    end
 end
-
-
 
 -- scroll list is the main thing that has all categories
 function scrollList(draw, clickX, clickY)
@@ -986,48 +1056,48 @@ function scrollList(draw, clickX, clickY)
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-   scrollListXPosition = size  -- this is updating a global!!!
+   scrollListXPosition = size -- this is updating a global!!!
    local offset = scrollPosition % 1
    if #categories > 0 then
-   for i = -1, (scrollItemsOnScreen - 1) do
-      local newScroll = i + offset
-      local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
+      for i = -1, (scrollItemsOnScreen - 1) do
+         local newScroll = i + offset
+         local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
 
-      local index = math.ceil( -scrollPosition) + i
-      index = (index % #categories) + 1
-      if index < 1 then
-         index = index + #categories
-      end
-      if index > #categories then
-         index = 1
-      end
+         local index = math.ceil( -scrollPosition) + i
+         index = (index % #categories) + 1
+         if index < 1 then
+            index = index + #categories
+         end
+         if index > #categories then
+            index = 1
+         end
 
-      local whiterectIndex = math.ceil( -scrollPosition) + i
-      whiterectIndex = (whiterectIndex % #whiterects) + 1
-      local wrw, wrh = whiterects[whiterectIndex]:getDimensions()
-      local scaleX = size / wrw
-      local scaleY = size / wrh
+         local whiterectIndex = math.ceil( -scrollPosition) + i
+         whiterectIndex = (whiterectIndex % #whiterects) + 1
+         local wrw, wrh = whiterects[whiterectIndex]:getDimensions()
+         local scaleX = size / wrw
+         local scaleY = size / wrh
 
-      if draw then
-         love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+         if draw then
+            love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
 
-         love.graphics.setColor(.1, .1, .1, .2)
-         love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition + 4, yPosition + 4, 0, scaleX, scaleY)
+            love.graphics.setColor(.1, .1, .1, .2)
+            love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition + 4, yPosition + 4, 0, scaleX, scaleY)
 
-         love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-         love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
+            love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
+            love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
 
-         love.graphics.setColor(0, 0, 0)
-         love.graphics.print(categories[index], scrollListXPosition, yPosition)
-      else
-         if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
-            print("clicked", categories[index])
-            selectedCategory = categories[index]
-            playSound(scrollItemClickSample)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.print(categories[index], scrollListXPosition, yPosition)
+         else
+            if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
+               print("clicked", categories[index])
+               selectedCategory = categories[index]
+               playSound(scrollItemClickSample)
+            end
          end
       end
    end
-end
 end
 
 local function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)

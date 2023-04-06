@@ -576,7 +576,7 @@ function tweenCameraToHeadAndBody()
 end
 
 function attachCallbacks()
-   --print('attached callbacks')
+   print('attached callbacks')
 
 
    Signal.register('click-settings-scroll-area-item', function(x, y)

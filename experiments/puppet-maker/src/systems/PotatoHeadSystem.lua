@@ -64,10 +64,8 @@ function PotatoHeadSystem:init(e)
 
 end
 
-function PotatoHeadSystem:rescaleFaceparts(e)
+function getFaceScale(e)
     local values = e.potato.values
-
-    -- print(e.potato.values.potatoHead)
     local sx, sy
     if (e.potato.values.potatoHead) then
         e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
@@ -80,8 +78,13 @@ function PotatoHeadSystem:rescaleFaceparts(e)
         sx = values.faceScaleX / values.headWidthMultiplier
         sy = values.faceScaleY / values.headHeightMultiplier
     end
-    --local sx = values.faceScaleX / values.headWidthMultiplier
-    --local sy = values.faceScaleY / values.headHeightMultiplier
+    return sx, sy
+end
+
+function PotatoHeadSystem:rescaleFaceparts(e)
+    local values = e.potato.values
+
+    local sx, sy = getFaceScale(e)
 
 
     e.potato.eye1.transforms.l[4] = values.eyeWidthMultiplier * sx
@@ -105,20 +108,8 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
 
-
     e.potato.mouth.transforms.l[4] = 1 * sx
     e.potato.mouth.transforms.l[5] = 1 * sy
-
-    --e.potato.upperlip.transforms.l[4] = values.upperlipWidthMultiplier * sx
-    --e.potato.upperlip.transforms.l[5] = values.upperlipWidthMultiplier * sy
-
-    --e.potato.lowerlip.transforms.l[4] = values.lowerlipWidthMultiplier * sx
-    --e.potato.lowerlip.transforms.l[5] = values.lowerlipWidthMultiplier * sy
-    --e.potato.teeth.transforms.l[2] = e.potato.lowerlip.transforms.l[2]
-    --e.potato.upperlip.transforms.l[2] = 0
-    --values.headHeightMultiplier
-    --e.potato.teeth.transforms.l[4] = 1 * sx
-    --e.potato.teeth.transforms.l[5] = 1 * sy
 end
 
 function PotatoHeadSystem:potatoInit(e)
@@ -148,11 +139,6 @@ function PotatoHeadSystem:potatoInit(e)
     e.potato.pupil2.transforms.l[2] = eyey2
 
 
-
-
-    --e.potato.teeth.transforms.l[4] = 0.5
-    --e.potato.teeth.transforms.l[5] = 0.5
-
     local newPoints = getHeadPoints(e)
     local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
 
@@ -161,18 +147,17 @@ function PotatoHeadSystem:potatoInit(e)
 
     e.potato.brow2.transforms.l[1] = eyex2
     e.potato.brow2.transforms.l[2] = browY
-    --e.potato.brow2.transforms.l[4] = -1 --browY
-    --print(inspect(e.potato))
-    --print(inspect(e.potato.ear1.transforms.l))
 
     local tY = numbers.mapInto(e.potato.values.earYAxis, -3, 3, 0, 1)
     e.potato.ear1.transforms.l[1] = numbers.lerp(newPoints[7][1], newPoints[8][1], .5)
     e.potato.ear1.transforms.l[2] = numbers.lerp(newPoints[2][2], newPoints[4][2], tY)
-    e.potato.ear1.transforms.l[4] = -1
+
+    local sx, sy = getFaceScale(e)
+    e.potato.ear1.transforms.l[4] = -1 * sx * e.potato.values.earWidthMultiplier
 
     e.potato.ear2.transforms.l[1] = numbers.lerp(newPoints[3][1], newPoints[2][1], .5)
     e.potato.ear2.transforms.l[2] = numbers.lerp(newPoints[8][2], newPoints[6][2], tY)
-    e.potato.ear2.transforms.l[4] = 1
+    e.potato.ear2.transforms.l[4] = 1 * sx * e.potato.values.earWidthMultiplier
 
     local mx, my = getPositionForMouthAttaching(e)
     e.potato.mouth.transforms.l[1] = mx
@@ -256,18 +241,8 @@ function PotatoHeadSystem:blinkEyes(e)
 
     Timer.during(.6, function(dt)
         local values = e.potato.values
-        local sx, sy
-        if (e.potato.values.potatoHead) then
-            e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
-            e.potato.head.transforms.l[5] = values.bodyHeightMultiplier
-            sx = e.potato.values.faceScaleX / values.bodyWidthMultiplier
-            sy = e.potato.values.faceScaleY / values.bodyHeightMultiplier
-        else
-            e.potato.head.transforms.l[4] = values.headWidthMultiplier
-            e.potato.head.transforms.l[5] = values.headHeightMultiplier
-            sx = e.potato.values.faceScaleX / values.headWidthMultiplier
-            sy = e.potato.values.faceScaleY / values.headHeightMultiplier
-        end
+        local sx, sy = getFaceScale(e)
+
         e.potato.eye1.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
         e.potato.eye2.transforms.l[5] = values.eyeHeightMultiplier * sy * e.potato.eyeBlink
     end)

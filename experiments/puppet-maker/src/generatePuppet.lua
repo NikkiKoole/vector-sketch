@@ -445,11 +445,11 @@ end
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
    local textured, url = partToTexturedCanvas('arms', values)
-
+   print('creating arm rubberhose', leglengths, values.armLength)
    return createFromImage.rubberhose(
            url, textured,
            flop,
-           values.armLength,
+           leglengths[values.armLength],
            values.armWidthMultiplier,
            points, flop * -1)
 end
@@ -461,7 +461,7 @@ function createArmHairRubberhose(armNr, values, points)
    return createFromImage.rubberhose(
            url, textured,
            flop,
-           values.armLength,
+           leglengths[values.armLength],
            values.armWidthMultiplier,
            points, flop)
 end
@@ -491,12 +491,12 @@ function createLegRubberhose(legNr, values, points)
 end
 
 function createNeckRubberhose(values, points)
-   local flop = 1 -- this needs to be set accoridng to how th eneck is positioned
+   local flop = 0 -- this needs to be set accoridng to how th eneck is positioned
    local textured, url = partToTexturedCanvas('neck', values)
    return createFromImage.rubberhose(
            url, textured,
            flop,
-           values.neckLength,
+           necklengths[values.neckLength],
            values.neckWidthMultiplier,
            points)
 end
@@ -658,7 +658,8 @@ function changePart(name)
    elseif name == 'arms' then
       editingGuy.arm1 = updateChild(guy, editingGuy.arm1, createArmRubberhose(1, values, editingGuy.arm1.points))
       editingGuy.arm2 = updateChild(guy, editingGuy.arm2, createArmRubberhose(2, values, editingGuy.arm2.points))
-      myWorld:emit("bipedAttachFeet", biped)
+      changePart('armhair')
+      myWorld:emit("bipedAttachHands", biped)
    elseif name == 'legs' then
       editingGuy.leg1 = updateChild(guy, editingGuy.leg1, createLegRubberhose(1, values, editingGuy.leg1.points))
       editingGuy.leg2 = updateChild(guy, editingGuy.leg2, createLegRubberhose(2, values, editingGuy.leg2.points))
