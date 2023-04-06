@@ -267,6 +267,10 @@ function love.quit()
    print('writing took', love.timer.getTime() - time, 'seconds')
 end
 
+function love.mousepressed(x, y, button, istouch, presses)
+   print('mousepressed in the manin', button)
+end
+
 function love.lowmemory()
    print('LOW MEMORY!!!')
 end

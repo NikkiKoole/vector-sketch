@@ -401,7 +401,7 @@ function scene.load()
    selectedRootButton = nil -- could be head or body or nil
    selectedTab = 'part'
    selectedCategory = 'body'
-   selectedColoringLayer = 1 --- bg fg, line
+   selectedColoringLayer = 'bgPal' --- bg fg, line
 
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')
@@ -780,8 +780,6 @@ local function updateTheScrolling(dt, thrown, pos)
    end
    return pos
 end
-
-
 
 function scene.update(dt)
    --prof.push("frame")

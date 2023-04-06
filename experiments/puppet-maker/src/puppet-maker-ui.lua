@@ -759,9 +759,9 @@ function partSettingsSurroundings(draw, clickX, clickY)
       if draw then
          --love.graphics.rectangle("line", x, y, w1, h1)
          if (selectedTab == tabs[i]) then
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.rectangle("fill", x, y, w1, h1)
-            love.graphics.setColor(0, 0, 0)
+            -- love.graphics.setColor(1, 1, 1)
+            -- love.graphics.rectangle("fill", x, y, w1, h1)
+            -- love.graphics.setColor(0, 0, 0)
          end
          --love.graphics.print(tabs[i], x, y)
       else
