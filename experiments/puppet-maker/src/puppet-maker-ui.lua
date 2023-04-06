@@ -6,11 +6,17 @@ local canvas = require "lib.canvas"
 local mesh = require "lib.mesh"
 local ui = require "lib.ui"
 local transforms = require "lib.transform"
+local text = require 'lib.text'
+
 imageCache = {} -- tjo save all the parts inages in
 
 
 
 local tabs = { "part", "colors", "pattern" }
+
+local function getPNGMaskUrl(url)
+   return text.replace(url, '.png', '-mask.png')
+end
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -691,28 +697,73 @@ function partSettingsSurroundings(draw, clickX, clickY)
 
    local currentY = startY + tabHeight
 
+
    if draw then
       -- main panel
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.rectangle("line", startX, startY, width, height)
-      love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-      love.graphics.rectangle("fill", startX, startY, width, height)
-      love.graphics.setColor(0, 0, 0)
+
+      --love.graphics.setColor(0, 0, 0)
+      --love.graphics.rectangle("line", startX, startY, width, height)
+      --love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
+      --love.graphics.rectangle("fill", startX, startY, width, height)
+      --love.graphics.setColor(0, 0, 0)
+
+      -- instead of getting the imae data I need to use some transaprencey too, ive measured it out the imag
+      local iw = 650
+      local ih = 1240
+      --local iw, ih = tabui[1]:getDimensions()
+      --print(iw, ih, width, height)
+      local scaleX = width / iw
+      local scaleY = height / ih
+
+      local uiOffX = 18 * scaleX
+      local uiOffY = 40 * scaleY
+
+      local pink = { 201 / 255, 135 / 255, 155 / 255 }
+      local yellow = { 239 / 255, 219 / 255, 145 / 255 }
+      local green = { 192 / 255, 212 / 255, 171 / 255 }
+
+      local colors = { pink, yellow, green }
+      local drawunder = { { 2, 3, 1 }, { 1, 3, 2 }, { 1, 2, 3 } }
+
+      local selectedTabIndex = -1
+      for i = 1, #tabs do
+         if selectedTab == tabs[i] then
+            selectedTabIndex = i
+         end
+      end
+
+      for i = 1, #drawunder[selectedTabIndex] do
+         local index = drawunder[selectedTabIndex][i]
+         love.graphics.setColor(colors[index][1], colors[index][2], colors[index][3], 1)
+         love.graphics.draw(tabuimask[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
+         love.graphics.setColor(0, 0, 0)
+         love.graphics.draw(tabui[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
+      end
    end
+   local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
+
    for i = 1, #tabs do
-      local x = startX + (i - 1) * tabWidth
+      local x = nil
+      if (i == 1) then
+         x = startX
+      elseif (i == 2) then
+         x = startX + tabWidthMultipliers[1] * tabWidth
+      elseif (i == 3) then
+         x = startX + (tabWidthMultipliers[1] + tabWidthMultipliers[2]) * tabWidth
+      end
+      --local x = startX + (i - 1) * tabWidth
       local y = startY
-      local w1 = tabWidth - marginBetweenTabs
+      local w1 = (tabWidth * tabWidthMultipliers[i]) - marginBetweenTabs
       local h1 = tabHeight
 
       if draw then
-         love.graphics.rectangle("line", x, y, w1, h1)
+         --love.graphics.rectangle("line", x, y, w1, h1)
          if (selectedTab == tabs[i]) then
             love.graphics.setColor(1, 1, 1)
             love.graphics.rectangle("fill", x, y, w1, h1)
             love.graphics.setColor(0, 0, 0)
          end
-         love.graphics.print(tabs[i], x, y)
+         --love.graphics.print(tabs[i], x, y)
       else
          if (hit.pointInRect(clickX, clickY, x, y, w1, h1)) then
             print("clicked", tabs[i])
@@ -747,16 +798,32 @@ local function renderElement(type, value, container, x, y, w, h)
    if (type == "dot") then
       if (value <= #container) then
          local dotindex = (value % #dots)
+         local pickedBG = editingGuy.values[selectedCategory].bgPal == value
+         local pickedFG = editingGuy.values[selectedCategory].fgPal == value
          if dotindex == 0 then
             dotindex = #dots
          end
-         --print(dotindex)
+
          local dot = dots[dotindex]
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-         love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.rectangle("line", x, y, w, h)
-         love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+
+
+         --  if pickedBG then
+         --     love.graphics.setColor(0, 0, 0, .8)
+         --     local r = (math.sin(love.timer.getTime() * 5)) * math.pi * 2
+         --     love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), r, scale, scale )
+         --  end
+         if pickedBG or pickedFG then
+            love.graphics.setColor(1, 1, 1, 1)
+            scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w * 1.5, h * 1.5)
+            love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+         else
+            love.graphics.setColor(0, 0, 0, .8)
+            love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+         end
+         --love.graphics.rectangle("line", x, y, w, h)
+
 
          love.graphics.setColor(container[value])
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
@@ -774,13 +841,39 @@ local function renderElement(type, value, container, x, y, w, h)
          imageCache[url] = dot
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-         love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.rectangle("line", x, y, w, h)
-         love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
+         local maskUrl = getPNGMaskUrl(url)
+
+         local info = love.filesystem.getInfo(maskUrl)
+
+         local picked = editingGuy.values[selectedCategory].shape == dotindex
+         if picked then
+            scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
+         end
+
+
+         if info then
+            local mask = imageCache[maskUrl] or love.graphics.newImage(maskUrl)
+            imageCache[maskUrl] = mask
+
+            love.graphics.setBlendMode('subtract')
+            local pal = (palettes[editingGuy.values[selectedCategory].bgPal])
+            --print(inspect(pal))
+            --love.graphics.setColor(.5, .5, .5)
+            if picked then
+               love.graphics.setColor(1 - pal[1], 1 - pal[2], 1 - pal[3], 1)
+            else
+               love.graphics.setColor(1 - pal[1], 1 - pal[2], 1 - pal[3], 0.5)
+            end
+            love.graphics.draw(mask, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
+            love.graphics.setBlendMode('alpha')
+         end
+         --love.graphics.setColor(0, 0, 0, .1)
+         --love.graphics.rectangle("line", x, y, w, h)
+         --love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
 
          love.graphics.setColor(0, 0, 0, 1)
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
-         love.graphics.print(value, x, y)
+         --love.graphics.print(value, x, y)
       end
    end
    if (type == "texture") then
@@ -851,6 +944,8 @@ function partSettingsScrollable(draw, clickX, clickY)
    local renderContainer = palettes
 
    local columns = 3
+
+
 
    if selectedTab == "fg" or selectedTab == "bg" or selectedTab == "line" or selectedTab == "colors" then
       amount = #palettes

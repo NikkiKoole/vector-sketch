@@ -375,6 +375,17 @@ function scene.load()
        love.graphics.newImage('assets/blups/dot12.150.png'),
    }
 
+   tabui = {
+       love.graphics.newImage('assets/ui/tab1.png'),
+       love.graphics.newImage('assets/ui/tab2.png'),
+       love.graphics.newImage('assets/ui/tab3.png'),
+   }
+   tabuimask = {
+       love.graphics.newImage('assets/ui/tab1-mask.png'),
+       love.graphics.newImage('assets/ui/tab2-mask.png'),
+       love.graphics.newImage('assets/ui/tab3-mask.png'),
+   }
+
 
    scrollPosition = .5
    scrollItemsOnScreen = 5

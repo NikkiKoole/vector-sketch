@@ -64,7 +64,7 @@ end
 function love.load()
    --	1180 , 820
    -- iphone 1334, 750
-   love.window.setMode(1024, 768,
+   love.window.setMode(1024 / 2, 768 / 2,
        { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
    love.window.setTitle('☺ Puppet Maker')
 
@@ -119,7 +119,7 @@ function love.load()
    parts, _ = generate()
 
 
-   amountOfGuys = 5
+   amountOfGuys = 15
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
