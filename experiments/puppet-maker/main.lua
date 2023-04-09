@@ -41,7 +41,7 @@ PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 
-focussed = true
+focussed = false
 function findPart(name)
    for i = 1, #parts do
       if parts[i].name == name then
@@ -69,16 +69,16 @@ function love.load()
    love.window.setTitle('☺ Puppet Maker')
 
    local os = love.system.getOS()
+   print(os)
    if os == 'iOS' or os == 'Android' then
       love.window.setFullscreen(true)
    end
-   splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
 
+   splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
    introSound = love.audio.newSource("assets/introloop.mp3", "static")
 
 
    textures = {
-
        love.graphics.newImage('assets/layered/texture-type0.png'),
        love.graphics.newImage('assets/layered/texture-type2t.png'),
        love.graphics.newImage('assets/layered/texture-type1.png'),
@@ -87,9 +87,8 @@ function love.load()
        love.graphics.newImage('assets/layered/texture-type5.png'),
        love.graphics.newImage('assets/layered/texture-type6.png'),
        love.graphics.newImage('assets/layered/texture-type7.png'),
-
-
    }
+
    for i = 1, #textures do
       textures[i]:setWrap('mirroredrepeat', 'mirroredrepeat')
    end
@@ -111,15 +110,11 @@ function love.load()
       table.insert(palettes, { r, g, b })
    end
 
-
-
-
    fiveGuys = {} -- here we keep the 5 differnt guys around, I might as well just generate them here to begin with
 
    parts, _ = generate()
+   amountOfGuys = 5
 
-
-   amountOfGuys = 15
    prof.push('frame')
    prof.push('creating-guys')
    if (PROF_CAPTURE) then ProFi:start() end
@@ -130,9 +125,6 @@ function love.load()
       local parts, values = generate()
 
       values = partRandomize(values, false)
-      --print(inspect(values))
-
-
       fiveGuys[i] = {
           values = copy3(values),
           head = copyAndRedoGraphic('head', values),
@@ -231,6 +223,7 @@ function partRandomize(values, applyChangeDirectly)
 end
 
 function love.focus(f)
+   print('love.focus')
    focussed = f
 end
 
@@ -269,6 +262,10 @@ end
 
 function love.mousepressed(x, y, button, istouch, presses)
    print('mousepressed in the manin', button)
+   --print('mousepressed', button)
+   --if not istouch then
+   --   pointerPressed(x, y, 'mouse')
+   --end
 end
 
 function love.lowmemory()

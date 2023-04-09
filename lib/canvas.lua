@@ -63,6 +63,9 @@ lib.renderMaskedTexture = function(maskShape, texture, x, y, sx, sy)
    love.graphics.setStencilTest()
 end
 
+
+
+
 -- lifted from alpha padder
 local function smoocheCanvas(canvas)
    local imageData = canvas:newImageData()
@@ -180,7 +183,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
             local xOffset = p.tx * (imgw / 6) * shrinkFactor
             local yOffset = p.ty * (imgh / 6) * shrinkFactor
             love.graphics.draw(image, (lw) / 2 + xOffset, (lh) / 2 + yOffset, p.r * ((math.pi * 2) / 16),
-                p.sx  * shrinkFactor,
+                p.sx * shrinkFactor,
                 p.sy * shrinkFactor,
                 imgw / 2, imgh / 2)
             --print(lw, lh)
@@ -217,15 +220,15 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       -- smooche is slow!!!!
       --local imageData = smoocheCanvas(canvas) --
 
-      
-      
 
-     
-      local otherCanvas =  love.graphics.newCanvas(lw / shrinkFactor , lh / shrinkFactor)
+
+
+
+      local otherCanvas = love.graphics.newCanvas(lw / shrinkFactor, lh / shrinkFactor)
       love.graphics.setCanvas({ otherCanvas, stencil = false }) --<<<
       love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
-      love.graphics.setColor(1,1,1) --- huh?!
-      love.graphics.draw(canvas, 0,0,0, 1/shrinkFactor, 1/shrinkFactor)
+      love.graphics.setColor(1, 1, 1) --- huh?!
+      love.graphics.draw(canvas, 0, 0, 0, 1 / shrinkFactor, 1 / shrinkFactor)
       love.graphics.setCanvas() --- <<<<<
       local imageData = otherCanvas:newImageData()
       love.graphics.setColor(0, 0, 0) --- huh?!

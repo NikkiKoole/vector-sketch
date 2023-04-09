@@ -615,74 +615,62 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             values[selectedCategory].texRot = v.value
             changePart(selectedCategory, values)
          end
+         currentY = currentY + 25
+         local v = h_slider("pattern-opacity", startX, currentY, 200, values[selectedCategory].fgAlpha, 0, 5)
+         if v.value then
+            values[selectedCategory].fgAlpha = math.floor(v.value)
+            --selectedColoringLayer = colorkeys[i]
+            changePart(selectedCategory, values)
+         end
       end
    end
 
 
    if selectedTab == 'colors' then
-      -- i want 3 buttons, 1 for bg 1 for FG 1 for line, default = BG
-
-      --print(values[selectedCategory].fgTex)
-
-
       local pickedColors = {
           palettes[values[selectedCategory].bgPal],
           palettes[values[selectedCategory].fgPal],
           palettes[values[selectedCategory].linePal],
       }
-      local sliderValues = {
-          values[selectedCategory].bgAlpha,
-          values[selectedCategory].fgAlpha,
-          values[selectedCategory].lineAlpha
 
-      }
       local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
-      local alphakeys = { 'bgAlpha', 'fgAlpha', 'lineAlpha' }
 
-      --[[
-        if values[selectedCategory].fgTex == 1 then
-         pickedColors = {
-            palettes[values[selectedCategory].bgPal],
-
-            palettes[values[selectedCategory].linePal],
-        }
-        sliderValues = {
-            values[selectedCategory].bgAlpha,
-            values[selectedCategory].lineAlpha
-
-        }
-         colorkeys = { 'bgPal', 'linePal' }
-         alphakeys = { 'bgAlpha',  'lineAlpha' }
-
-        end
-        --]]
       local amount = #pickedColors
 
       local buttonWidth = (width / amount) * 0.8
+      local originY = currentY
+      local originX = startX
       currentY = currentY + 10
-      startX = startX + (width / amount) * 0.1
+
+      startX = startX + (width / amount) * 0.3
+      local rowStartX = startX
+      currentHeight = buttonWidth + 10 -- width / 3 --math.max(60, 50 + (buttonWidth / 2))
 
 
+      local sx, sy = createFittingScale(uiheader, width, currentHeight)
+      love.graphics.setColor(1, 1, 1, 0.3)
+      love.graphics.draw(uiheader, originX, originY, 0, sx, sy)
 
-      if draw then
-         for i = 1, amount do
-            love.graphics.setColor(pickedColors[i])
-            local x = startX + ((width / amount) * (i - 1))
-            love.graphics.rectangle('fill', x, currentY, buttonWidth, buttonWidth / 2)
-            if ui.getUIRect('p' .. i, x, currentY, buttonWidth, buttonWidth / 2) then
-               selectedColoringLayer = colorkeys[i]
-            end
-            local v = h_slider("s" .. i, x, currentY + buttonWidth / 2, buttonWidth, sliderValues[i], 0, 5)
-            if v.value then
-               values[selectedCategory][alphakeys[i]] = math.floor(v.value)
-               selectedColoringLayer = colorkeys[i]
-               changePart(selectedCategory, values)
-            end
+      for i = 1, 3 do
+         --love.graphics.setColor(0, 0, 0)
+         --love.graphics.rectangle('line', startX, currentY, buttonWidth, buttonWidth)
+
+         local sx, sy = createFittingScale(colorpickerui[i], buttonWidth, buttonWidth)
+         if selectedColoringLayer == colorkeys[i] then
+            local offset = math.sin(love.timer.getTime() * 5) * 0.02
+            sx = sx * (1.0 + offset)
+            sy = sy * (1.0 + offset)
          end
          love.graphics.setColor(0, 0, 0)
+         love.graphics.draw(colorpickerui[i], startX, currentY, 0, sx, sy)
+         love.graphics.setColor(pickedColors[i])
+         love.graphics.draw(colorpickeruimask[i], startX, currentY, 0, sx, sx)
+
+         if ui.getUIRect('r' .. i, startX, currentY, buttonWidth, buttonWidth) then
+            selectedColoringLayer = colorkeys[i]
+         end
+         startX = startX + buttonWidth
       end
-      currentHeight = math.max(60, 50 + (buttonWidth / 2))
-      -- thena slider for the tranaparency of the pattern
    end
    return currentHeight
 end
@@ -775,8 +763,8 @@ function partSettingsSurroundings(draw, clickX, clickY)
 
    if draw then
       local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width)
-      love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
-      love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
+      --love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
+      --love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
       -- maybe   can use another weird global like settingsScrollArea
    end
 end
@@ -800,12 +788,13 @@ local function renderElement(type, value, container, x, y, w, h)
          local dotindex = (value % #dots)
          local pickedBG = editingGuy.values[selectedCategory].bgPal == value
          local pickedFG = editingGuy.values[selectedCategory].fgPal == value
+         local pickedLP = editingGuy.values[selectedCategory].linePal == value
          if dotindex == 0 then
             dotindex = #dots
          end
 
          local dot = dots[dotindex]
-         local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
+         -- local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
 
 
@@ -814,19 +803,21 @@ local function renderElement(type, value, container, x, y, w, h)
          --     local r = (math.sin(love.timer.getTime() * 5)) * math.pi * 2
          --     love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), r, scale, scale )
          --  end
-         if pickedBG or pickedFG then
+         if pickedBG or pickedFG or pickedLP then
             love.graphics.setColor(1, 1, 1, 1)
-            scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w * 1.5, h * 1.5)
+            local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w * 1.5, h * 1.5)
+            scale = scale + math.sin(love.timer.getTime() * 5) * 0.01
             love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+            love.graphics.setColor(container[value])
+            love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
          else
             love.graphics.setColor(0, 0, 0, .8)
+            local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
             love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+            love.graphics.setColor(container[value])
+            love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
          end
          --love.graphics.rectangle("line", x, y, w, h)
-
-
-         love.graphics.setColor(container[value])
-         love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
       end
    end
    if (type == "img") then
@@ -882,16 +873,44 @@ local function renderElement(type, value, container, x, y, w, h)
          if dotindex == 0 then
             dotindex = #container
          end
+         local circleindex = (value % #circles) + 1
+         local picked = editingGuy.values[selectedCategory].fgTex == dotindex
+         local bpal = (palettes[editingGuy.values[selectedCategory].bgPal])
+         local pal = (palettes[editingGuy.values[selectedCategory].fgPal])
+         local lpal = (palettes[editingGuy.values[selectedCategory].linePal])
          local dot = container[dotindex]
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-         love.graphics.setColor(0, 0, 0, .1)
-         love.graphics.rectangle("line", x, y, w, h)
-         love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
+         if picked then
+            scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
+         end
 
-         love.graphics.setColor(0, 0, 0, 1)
-         love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
-         love.graphics.print(value, x, y)
+         local function myStencilFunction()
+            local r = w / 2
+            if picked then
+               r = r + (math.sin(love.timer.getTime() * 5) * (r / 20))
+            end
+            love.graphics.circle('fill', x + r, y + r, r)
+         end
+
+         love.graphics.stencil(myStencilFunction, "replace", 1)
+         love.graphics.setStencilTest("greater", 0)
+
+         love.graphics.setColor(bpal[1], bpal[2], bpal[3], 1)
+         love.graphics.rectangle('fill', x, y, w, h)
+         love.graphics.setColor(pal[1], pal[2], pal[3], 1)
+         love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
+
+
+         love.graphics.setStencilTest()
+
+         local scale, xoff, yoff = getScaleAndOffsetsForImage(circles[circleindex], w * 1.2, h * 1.2)
+         love.graphics.setColor(lpal[1], lpal[2], lpal[3], 1)
+         if picked then
+            scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
+         end
+         love.graphics.draw(circles[circleindex], x + (xoff + w / 2), y + (yoff + h / 2), 0, scale,
+             scale)
       end
    end
 end
@@ -916,7 +935,7 @@ local function buttonClickHelper(value)
    end
    if selectedTab == 'colors' then
       --local whichPart = { 'bgPal', 'fgPal', 'linePal' }
-      print(selectedColoringLayer)
+      --print(selectedColoringLayer)
       values[selectedCategory][selectedColoringLayer] = value
       changePart(selectedCategory, values)
 
@@ -933,7 +952,10 @@ end
 
 function partSettingsScrollable(draw, clickX, clickY)
    local startX, startY, width, height = partSettingsPanelDimensions()
-
+   if selectedTab == 'pattern' then
+      startX = startX + (width / 20)
+      width = width - (width / 10)
+   end
    --local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
 
@@ -967,6 +989,7 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
 
    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
+
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
    local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
@@ -1088,12 +1111,13 @@ end
 
 function headOrBody(draw, clickX, clickY)
    local w, h = love.graphics.getDimensions()
-   local margin = 20
+   local margin = w / 80
 
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
-   local buttonHeight = (h / 2) - margin * 4
+   local buttonHeight = size * 2 --(h / 2)
 
+   local topY = (h / 2) - buttonHeight - margin
 
    if draw then
       if selectedRootButton == 'head' then
@@ -1101,9 +1125,9 @@ function headOrBody(draw, clickX, clickY)
       else
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
       end
-      love.graphics.rectangle('fill', margin, margin * 2, size - 40, buttonHeight)
+      love.graphics.rectangle('fill', margin, topY, size, buttonHeight)
       love.graphics.setColor(0, 0, 0)
-      love.graphics.print('head', margin, margin * 2)
+      love.graphics.print('head', margin, topY)
 
 
       if selectedRootButton == 'body' then
@@ -1112,11 +1136,11 @@ function headOrBody(draw, clickX, clickY)
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
       end
 
-      love.graphics.rectangle('fill', margin, (h / 2), size - 40, buttonHeight)
+      love.graphics.rectangle('fill', margin, (h / 2), size, buttonHeight)
       love.graphics.setColor(0, 0, 0)
       love.graphics.print('body', margin, (h / 2))
    else
-      if (hit.pointInRect(clickX, clickY, margin, margin * 2, size - 40, buttonHeight)) then
+      if (hit.pointInRect(clickX, clickY, margin, topY, size, buttonHeight)) then
          print('clicked in head button')
          playSound(scrollItemClickSample)
          if selectedRootButton == 'head' then
@@ -1128,7 +1152,7 @@ function headOrBody(draw, clickX, clickY)
          end
          setCategories(selectedRootButton)
       end
-      if (hit.pointInRect(clickX, clickY, margin, h / 2, size - 40, buttonHeight)) then
+      if (hit.pointInRect(clickX, clickY, margin, h / 2, size, buttonHeight)) then
          print('clicked in button button')
          if selectedRootButton == 'body' then
             selectedRootButton = nil
@@ -1146,12 +1170,12 @@ end
 -- scroll list is the main thing that has all categories
 function scrollList(draw, clickX, clickY)
    local w, h = love.graphics.getDimensions()
-   local margin = 20
+   local margin = w / 80
 
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-   scrollListXPosition = size -- this is updating a global!!!
+   scrollListXPosition = size + margin * 2 -- this is updating a global!!!
    local offset = scrollPosition % 1
    if #categories > 0 then
       for i = -1, (scrollItemsOnScreen - 1) do

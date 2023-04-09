@@ -304,6 +304,8 @@ end
 
 
 
+
+
 function scene.unload()
    Signal.clear('click-settings-scroll-area-item')
    Signal.clear('click-scroll-list-item')
@@ -360,6 +362,7 @@ function scene.load()
        love.graphics.newImage('assets/whiterect7.png'),
    }
 
+
    dots = {
        love.graphics.newImage('assets/blups/dot1.150.png'),
        love.graphics.newImage('assets/blups/dot2.150.png'),
@@ -385,7 +388,25 @@ function scene.load()
        love.graphics.newImage('assets/ui/tab2-mask.png'),
        love.graphics.newImage('assets/ui/tab3-mask.png'),
    }
+   colorpickerui = {
+       love.graphics.newImage('assets/ui/uifill.png', { linear = true }),
+       love.graphics.newImage('assets/ui/uipattern.png', { linear = true }),
+       love.graphics.newImage('assets/ui/uiline.png', { linear = true }),
+   }
+   colorpickeruimask = {
+       love.graphics.newImage('assets/ui/uifill-mask.png', { linear = true }),
+       love.graphics.newImage('assets/ui/uipattern-mask.png', { linear = true }),
+       love.graphics.newImage('assets/ui/uiline-mask.png', { linear = true }),
+   }
+   circles = {
+       love.graphics.newImage('assets/ui/circle1.png'),
+       love.graphics.newImage('assets/ui/circle2.png'),
+       love.graphics.newImage('assets/ui/circle3.png'),
+       love.graphics.newImage('assets/ui/circle4.png'),
 
+   }
+
+   uiheader = love.graphics.newImage('assets/ui/ui-header2.png', { linear = true })
 
    scrollPosition = .5
    scrollItemsOnScreen = 5
