@@ -406,7 +406,11 @@ function scene.load()
 
    }
 
-   uiheader = love.graphics.newImage('assets/ui/ui-header2.png', { linear = true })
+   uiheaders = { love.graphics.newImage('assets/ui/ui-header2.png', { linear = true }),
+       love.graphics.newImage('assets/ui/ui-header3.png', { linear = true }),
+       love.graphics.newImage('assets/ui/ui-header4.png', { linear = true })
+
+   }
 
    scrollPosition = .5
    scrollItemsOnScreen = 5

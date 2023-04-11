@@ -73,6 +73,17 @@ function partSettingsTabsDimensions(tabs, width)
    return tabWidth, tabHeight, marginBetweenTabs
 end
 
+function drawTapesForBackground(x, y, w, h)
+   local index = 2
+
+   -- if h > 100 then index = 2 end
+   local imgw, imgh = uiheaders[index]:getDimensions()
+   local sx, sy = createFittingScale(uiheaders[index], w, h)
+   love.graphics.setColor(1, 1, 1, .4)
+   --love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy * -1, 0, imgh / 2)
+   love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy, 0, imgh / 2)
+end
+
 function drawImmediateSlidersEtc(draw, startX, currentY, width)
    local values = editingGuy.values
    local currentHeight = 20
@@ -80,6 +91,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    if selectedTab == 'part' then
       currentHeight = 130
 
+      if draw then
+         drawTapesForBackground(startX, currentY, width, currentHeight)
+      end
 
       if selectedCategory == 'upperlip' then
          if draw then
@@ -194,10 +208,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 8) / 8.0 -- round to .125
                values.pupilSizeMultiplier = v.value
                myWorld:emit('rescaleFaceparts', potato)
-               --pupil1.transforms.l[4] = v.value
-               -- pupil1.transforms.l[5] = v.value
-               -- pupil2.transforms.l[4] = v.value
-               -- pupil2.transforms.l[5] = v.value
             end
          end
       end
@@ -210,8 +220,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 8) / 8.0 -- round to .5
                values.eyeWidthMultiplier = v.value
                myWorld:emit('rescaleFaceparts', potato)
-               --eye1.transforms.l[4] = v.value
-               --eye2.transforms.l[4] = v.value * -1
             end
             currentY = currentY + 25
             local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .125, 3)
@@ -219,8 +227,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 8) / 8.0 -- round to .5
                values.eyeHeightMultiplier = v.value
                myWorld:emit('rescaleFaceparts', potato)
-               --eye1.transforms.l[5] = v.value
-               -- eye2.transforms.l[5] = v.value
             end
             currentY = currentY + 25
             local v = h_slider("eye-rotation", startX, currentY, 50, values.eyeRotation, -math.pi / 6, math.pi / 6)
@@ -261,8 +267,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.earWidthMultiplier = v.value
                myWorld:emit('rescaleFaceparts', potato)
-               --ear1.transforms.l[4] = v.value * -1
-               --ear2.transforms.l[4] = v.value
             end
             currentY = currentY + 25
             local v = h_slider("ear-yAxis", startX, currentY, 50, values.earYAxis, -3, 3)
@@ -280,8 +284,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts(editingGuy)
                myWorld:emit('rescaleFaceparts', potato)
-               --ear1.transforms.l[4] = values.earWidthMultiplier * -1
-               --ear2.transforms.l[4] = values.earWidthMultiplier
             end
          end
       end
@@ -439,44 +441,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
 
-      -- if selectedCategory == 'skinPatchSnout' then
-      --    if draw then
-      --       local v = h_slider("scaleX", startX, currentY, 50, values.skinPatchSnoutScaleX, .25, 3)
-      --       if v.value then
-      --          v.value = math.floor(v.value * 4) / 4.0 -- round to .5
-      --          values.skinPatchSnoutScaleX = v.value
-      --          changePart('head', values)
-      --       end
-      --       currentY = currentY + 25
-      --       v = h_slider("scaleY", startX, currentY, 50, values.skinPatchSnoutScaleY, .25, 3)
-      --       if v.value then
-      --          v.value = math.floor(v.value * 4) / 4.0 -- round to .5
-      --          values.skinPatchSnoutScaleY = v.value
-      --          changePart('head', values)
-      --       end
-      --       currentY = currentY + 25
-      --       v = h_slider("rot", startX, currentY, 50, values.skinPatchSnoutAngle, 0, 15)
-      --       if v.value then
-      --          v.value = math.floor(v.value) -- round to .5
-      --          values.skinPatchSnoutAngle = v.value
-      --          changePart('head', values)
-      --       end
-      --       currentY = currentY + 25
-      --       v = h_slider("tx", startX, currentY, 50, values.skinPatchSnoutX, -6, 6)
-      --       if v.value then
-      --          v.value = math.floor(v.value) -- round to .5
-      --          values.skinPatchSnoutX = v.value
-      --          changePart('head', values)
-      --       end
-      --       currentY = currentY + 25
-      --       v = h_slider("ty", startX, currentY, 50, values.skinPatchSnoutY, -6, 6)
-      --       if v.value then
-      --          v.value = math.floor(v.value) -- round to .5
-      --          values.skinPatchSnoutY = v.value
-      --          changePart('head', values)
-      --       end
-      --    end
-      -- end
       if selectedCategory == 'head' then
          local update = function()
             editingGuy.head.dirty = true
@@ -484,7 +448,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             changePart('head', values)
 
             myWorld:emit("bipedAttachHead", biped)
-            -- tweenCameraToHead()
          end
 
          if draw then
@@ -599,23 +562,32 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
    end
 
+
+
+
    if selectedTab == 'pattern' then
-      currentHeight = 70
+      currentHeight = 150
+      currentY = currentY + 10
+      local originY = currentY
+      local originX = startX
+
       if draw then
+         drawTapesForBackground(originX, originY, width, currentHeight)
+
          local v = h_slider("pattern-scale", startX, currentY, 200, values[selectedCategory].texScale, 1, 9)
          if v.value then
             v.value = math.floor(v.value)
             values[selectedCategory].texScale = v.value
             changePart(selectedCategory, values)
          end
-         currentY = currentY + 25
+         currentY = currentY + 50
          local v = h_slider("pattern-rotation", startX, currentY, 200, values[selectedCategory].texRot, 0, 15)
          if v.value then
             v.value = math.floor(v.value)
             values[selectedCategory].texRot = v.value
             changePart(selectedCategory, values)
          end
-         currentY = currentY + 25
+         currentY = currentY + 50
          local v = h_slider("pattern-opacity", startX, currentY, 200, values[selectedCategory].fgAlpha, 0, 5)
          if v.value then
             values[selectedCategory].fgAlpha = math.floor(v.value)
@@ -645,27 +617,24 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       startX = startX + (width / amount) * 0.3
       local rowStartX = startX
       currentHeight = buttonWidth + 10 -- width / 3 --math.max(60, 50 + (buttonWidth / 2))
-
-
-      local sx, sy = createFittingScale(uiheader, width, currentHeight)
-      love.graphics.setColor(1, 1, 1, 0.3)
-      love.graphics.draw(uiheader, originX, originY, 0, sx, sy)
-
+      if draw then
+         drawTapesForBackground(originX, originY, width, currentHeight)
+      end
       for i = 1, 3 do
          --love.graphics.setColor(0, 0, 0)
          --love.graphics.rectangle('line', startX, currentY, buttonWidth, buttonWidth)
-
-         local sx, sy = createFittingScale(colorpickerui[i], buttonWidth, buttonWidth)
-         if selectedColoringLayer == colorkeys[i] then
-            local offset = math.sin(love.timer.getTime() * 5) * 0.02
-            sx = sx * (1.0 + offset)
-            sy = sy * (1.0 + offset)
+         if draw then
+            local sx, sy = createFittingScale(colorpickerui[i], buttonWidth, buttonWidth)
+            if selectedColoringLayer == colorkeys[i] then
+               local offset = math.sin(love.timer.getTime() * 5) * 0.02
+               sx = sx * (1.0 + offset)
+               sy = sy * (1.0 + offset)
+            end
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(colorpickerui[i], startX, currentY, 0, sx, sy)
+            love.graphics.setColor(pickedColors[i])
+            love.graphics.draw(colorpickeruimask[i], startX, currentY, 0, sx, sx)
          end
-         love.graphics.setColor(0, 0, 0)
-         love.graphics.draw(colorpickerui[i], startX, currentY, 0, sx, sy)
-         love.graphics.setColor(pickedColors[i])
-         love.graphics.draw(colorpickeruimask[i], startX, currentY, 0, sx, sx)
-
          if ui.getUIRect('r' .. i, startX, currentY, buttonWidth, buttonWidth) then
             selectedColoringLayer = colorkeys[i]
          end
