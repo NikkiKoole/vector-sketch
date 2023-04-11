@@ -20,6 +20,6 @@
     "poly-decomp": "^0.3.0",
     "simplify-path": "^1.1.0",
     "svg-path-contours": "^2.0.0",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.5.0"
   }
 }
