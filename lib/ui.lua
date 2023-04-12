@@ -360,53 +360,6 @@ function scrollbarV(id, x, y, height, contentHeight, scrollOffset)
    }
 end
 
-function v_slider(id, x, y, height, v, min, max)
-   love.graphics.setColor(0.3, 0.3, 0.3)
-   love.graphics.rectangle('fill', x + 8, y, 3, height)
-   love.graphics.setColor(0, 0, 0)
-   local yOffset = numbers.mapInto(v, min, max, 0, height - 20)
-   love.graphics.rectangle('fill', x, yOffset + y, 20, 20)
-
-
-   love.graphics.rectangle("line", x, yOffset + y, 20, 20)
-
-   local result = nil
-   local mx, my = love.mouse.getPosition()
-   local hover = false
-   if hit.pointInRect(mx, my, x, (yOffset + y), 20, 20) then
-      hover = true
-   end
-
-   if hover then
-      mouseState.hoveredSomething = true
-      love.mouse.setCursor(cursors.hand)
-      if mouseState.click then
-         lastDraggedElement = { id = id }
-         mouseState.hoveredSomething = true
-         mouseState.offset = { x = x - mx, y = (yOffset + y) - my }
-      end
-   end
-
-   if love.mouse.isDown(1) then
-      if lastDraggedElement and lastDraggedElement.id == id then
-         mouseState.hoveredSomething = true
-         love.mouse.setCursor(cursors.hand)
-
-         local mx, my = love.mouse.getPosition()
-         result = numbers.mapInto(my + mouseState.offset.y, y, y + height - 20, min, max)
-         if result < min then
-            result = min
-         else
-            result = math.max(result, min)
-            result = math.min(result, max)
-         end
-      end
-   end
-   return {
-       value = result
-   }
-end
-
 function joystick(id, x, y, size, vx, vy, min, max)
    love.graphics.setColor(0.3, 0.3, 0.3)
    love.graphics.rectangle('fill', x, y, size, size)
@@ -471,6 +424,123 @@ function joystick(id, x, y, size, vx, vy, min, max)
    end
 
 
+   return {
+       value = result
+   }
+end
+
+function v_slider(id, x, y, height, v, min, max)
+   love.graphics.setColor(0.3, 0.3, 0.3)
+   love.graphics.rectangle('fill', x + 8, y, 3, height)
+   love.graphics.setColor(0, 0, 0)
+   local yOffset = numbers.mapInto(v, min, max, 0, height - 20)
+   love.graphics.rectangle('fill', x, yOffset + y, 20, 20)
+
+
+   love.graphics.rectangle("line", x, yOffset + y, 20, 20)
+
+   local result = nil
+   local mx, my = love.mouse.getPosition()
+   local hover = false
+   if hit.pointInRect(mx, my, x, (yOffset + y), 20, 20) then
+      hover = true
+   end
+
+   if hover then
+      mouseState.hoveredSomething = true
+      love.mouse.setCursor(cursors.hand)
+      if mouseState.click then
+         lastDraggedElement = { id = id }
+         mouseState.hoveredSomething = true
+         mouseState.offset = { x = x - mx, y = (yOffset + y) - my }
+      end
+   end
+
+   if love.mouse.isDown(1) then
+      if lastDraggedElement and lastDraggedElement.id == id then
+         mouseState.hoveredSomething = true
+         love.mouse.setCursor(cursors.hand)
+
+         local mx, my = love.mouse.getPosition()
+         result = numbers.mapInto(my + mouseState.offset.y, y, y + height - 20, min, max)
+         if result < min then
+            result = min
+         else
+            result = math.max(result, min)
+            result = math.min(result, max)
+         end
+      end
+   end
+   return {
+       value = result
+   }
+end
+
+function createFittingScale(img, desired_w, desired_h)
+   local w, h = img:getDimensions()
+   local sx, sy = desired_w / w, desired_h / h
+   --   print(sx, sy)
+   return sx, sy
+end
+
+function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value, min, max)
+   local trw, trh = trackimg:getDimensions()
+   local scale = width / trw
+
+   local tbw, tbh = thumbimg:getDimensions()
+
+   love.graphics.setColor(0, 0, 0)
+   love.graphics.draw(trackimg, x, y, 0, scale, scale)
+
+
+   local xOffset = numbers.mapInto(value, min, max, 0, width - (tbw * scale))
+
+   -- the thumb needs to be centered vertically,
+
+   local a = 0
+   local yOffset = ((trh - tbh) / 2) * scale
+   if thumbmask then
+      love.graphics.setColor(1, 1, 1, 0.8)
+
+      love.graphics.draw(thumbmask, x + xOffset + (tbw / 2) * scale, y + yOffset + (tbh / 2) * scale, a, scale, scale,
+          tbw / 2, tbh / 2)
+   end
+   love.graphics.setColor(0, 0, 0, 1)
+   love.graphics.draw(thumbimg, x + xOffset + (tbw / 2) * scale, y + yOffset + (tbh / 2) * scale, a, scale, scale,
+       tbw / 2, tbh / 2)
+
+
+   local result = nil
+   local draggedResult = false
+   local mx, my = love.mouse.getPosition()
+   local hover = false
+   if hit.pointInRect(mx, my, xOffset + x, y, (tbw * scale), (tbh * scale)) then
+      hover = true
+   end
+   if hover then
+      mouseState.hoveredSomething = true
+      love.mouse.setCursor(cursors.hand)
+      if mouseState.click then
+         lastDraggedElement = { id = id }
+         mouseState.hoveredSomething = true
+
+         mouseState.offset = { x = (xOffset + x) - mx, y = my - y }
+      end
+   end
+   if love.mouse.isDown(1) then
+      if lastDraggedElement and lastDraggedElement.id == id then
+         mouseState.hoveredSomething = true
+         love.mouse.setCursor(cursors.hand)
+         local mx, my = love.mouse.getPosition()
+         result = numbers.mapInto(mx + mouseState.offset.x, x, x + width - (tbw * scale), min, max)
+         if result < min then
+            result = nil
+         else
+            result = math.max(result, min)
+            result = math.min(result, max)
+         end
+      end
+   end
    return {
        value = result
    }

@@ -416,7 +416,16 @@ function scene.load()
        love.graphics.newImage('assets/ui/ui-header4.png', { linear = true })
 
    }
-
+   sliderimg = {
+       track1 = love.graphics.newImage('assets/ui/slider-track1.png'),
+       thumb1 = love.graphics.newImage('assets/ui/slider-thumb1.png'),
+       thumb1Mask = love.graphics.newImage('assets/ui/slider-thumb1-mask.png'),
+       track2 = love.graphics.newImage('assets/ui/slider-track2.png'),
+       thumb2 = love.graphics.newImage('assets/ui/slider-thumb2.png'),
+       thumb2Mask = love.graphics.newImage('assets/ui/slider-thumb2-mask.png'),
+       thumb3 = love.graphics.newImage('assets/ui/slider-thumb3.png'),
+       thumb4 = love.graphics.newImage('assets/ui/slider-thumb4.png'),
+   }
    scrollPosition = .5
    scrollItemsOnScreen = 5
    scrollListXPosition = 0

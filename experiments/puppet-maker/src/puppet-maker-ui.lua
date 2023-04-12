@@ -502,7 +502,11 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             myWorld:emit("bipedAttachHands", biped)
          end
          if draw then
-            local v = h_slider("body-width", startX, currentY, 50, values.bodyWidthMultiplier, .5, 3)
+            local v = h_slider_textured("body-width2", startX, currentY, width / 5, sliderimg.track1,
+                    sliderimg.thumb4,
+                    nil, values.bodyWidthMultiplier, .5, 3)
+
+
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
 
@@ -512,8 +516,10 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                editingGuy.body.transforms.l[4] = v.value
                update()
             end
-            currentY = currentY + 25
-            v = h_slider("body-height", startX, currentY, 50, values.bodyHeightMultiplier, .5, 3)
+            currentY = currentY + 50
+            v = h_slider_textured("body-height", startX, currentY, width / 3, sliderimg.track2,
+                    sliderimg.thumb2,
+                    sliderimg.thumb2Mask, values.bodyHeightMultiplier, .5, 3)
             if v.value then
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
                values.bodyHeightMultiplier = v.value
