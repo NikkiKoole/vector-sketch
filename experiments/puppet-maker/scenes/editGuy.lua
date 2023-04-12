@@ -388,6 +388,11 @@ function scene.load()
        love.graphics.newImage('assets/ui/tab2-mask.png'),
        love.graphics.newImage('assets/ui/tab3-mask.png'),
    }
+   tabuilogo = {
+       love.graphics.newImage('assets/ui/tab1-logo.png'),
+       love.graphics.newImage('assets/ui/tab2-logoC.png'),
+       love.graphics.newImage('assets/ui/tab3-logo.png'),
+   }
    colorpickerui = {
        love.graphics.newImage('assets/ui/uifill.png', { linear = true }),
        love.graphics.newImage('assets/ui/uipattern.png', { linear = true }),

@@ -151,7 +151,7 @@ function BipedSystem:bipedInit(e)
     e.biped.leghair2.points[1] = e.biped.leg2.points[1]
     e.biped.leghair2.points[2] = e.biped.leg2.points[2]
 
-    e.biped.feet2.transforms.l[4] = -1
+    e.biped.feet2.transforms.l[4] = -1 * e.biped.values.feetLengthMultiplier
     BipedSystem:bipedAttachFeet(e)
     mesh.remeshNode(e.biped.leg1)
     mesh.remeshNode(e.biped.leg2)

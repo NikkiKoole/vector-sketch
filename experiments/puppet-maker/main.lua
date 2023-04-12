@@ -181,6 +181,9 @@ function love.load()
    SM.load("editGuy")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
+   print('keybd focus', love.window.hasFocus())
+   local success = love.window.updateMode(1024 / 2, 768 / 2,
+           { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
 end
 
 function partRandomize(values, applyChangeDirectly)

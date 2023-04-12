@@ -653,7 +653,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
 
    local currentY = startY + tabHeight
-
+   local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
 
    if draw then
       -- main panel
@@ -695,9 +695,41 @@ function partSettingsSurroundings(draw, clickX, clickY)
          love.graphics.draw(tabuimask[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
          love.graphics.setColor(0, 0, 0)
          love.graphics.draw(tabui[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
+
+
+         if true then
+            local w1 = (tabWidth) - marginBetweenTabs
+            local h1 = tabHeight
+
+            local x = nil
+            if (index == 1) then
+               x = startX
+            elseif (index == 2) then
+               x = startX + tabWidthMultipliers[1] * tabWidth
+            elseif (index == 3) then
+               x = startX + (tabWidthMultipliers[1] + tabWidthMultipliers[2]) * tabWidth
+            end
+
+
+            local sx, sy = createFittingScale(tabuilogo[index], w1 * 0.9, h1 * 0.9)
+            if index == 2 then
+               if selectedTabIndex == index then
+                  love.graphics.setColor(1, 1, 1, 0.9)
+               else
+                  love.graphics.setColor(1, 1, 1, 0.3)
+               end
+            else
+               if selectedTabIndex == index then
+                  love.graphics.setColor(0, 0, 0, 0.9)
+               else
+                  love.graphics.setColor(0, 0, 0, 0.3)
+               end
+            end
+            love.graphics.draw(tabuilogo[index], x + w1 * 0.05, startY + h1 * 0.05, 0, sx, sy)
+         end
       end
    end
-   local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
+
 
    for i = 1, #tabs do
       local x = nil
