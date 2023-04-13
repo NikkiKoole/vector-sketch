@@ -527,7 +527,47 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                update()
             end
             currentY = currentY + 50
-            startX = startX + 10
+            startX = startX + 20
+
+
+            function newtoggle(id, img, x, y, w, toggled)
+               local togw, togh = img:getDimensions()
+               local s = (w) / togw 
+               local h =  toggled and s or -s
+
+               love.graphics.draw(img, x + (togw/2)*s, y, 0, h, s, togw/2, 0)
+               -- i retun a differnt hitarea depending on the toggled state
+               local h = nil
+               h = ui.getUIRect(id, x , y, (togw)*s, togh*s)
+            if false then
+               if not toggled then
+                  h = ui.getUIRect(id, x , y, (togw/2)*s, togh*s)
+               else
+                  h = ui.getUIRect(id, x + (togw/2)*s , y, (togw/2)*s, togh*s)
+               end
+            end   
+               --print(toggled)
+               return h
+            end
+
+
+            local a = newtoggle('bodyflipy', uitoggle[1], startX+ 100, currentY, width/5,  (values.body.flipy == 1))
+            if a then
+               values.body.flipy = values.body.flipy == -1 and 1 or -1
+               update()
+            end
+
+            local togw, togh = rects[1]:getDimensions()
+            local s = (width/10) / togw 
+
+            love.graphics.draw(rects[1], 100 - ((togw)*s) + startX + (togw/2)*s, currentY, 0, s, s, togw/2, 0)
+            love.graphics.draw(rects[1],100+ (width/10) +startX + (togw/2)*s, currentY, 0, s, s, togw/2, 0)
+            --local togw, togh = uitoggle[1]:getDimensions()
+            --local s = (width/10) / togw 
+            --local h =  values.body.flipy == 1 and s or -s
+
+            --love.graphics.draw(uitoggle[1], startX + (togw/2)*s, currentY, 0, h, s, togw/2, 0)
+           
             love.graphics.setColor(0, 0, 0)
             love.graphics.circle('fill', startX, currentY, 10)
 
