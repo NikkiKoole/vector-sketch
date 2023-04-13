@@ -53,6 +53,13 @@ end
 require 'src.generatePuppet'
 local bodypartsGenerate = require 'src.puppetDNA'
 
+
+--local a, b, c, d, e
+--repeat
+--   a, b, c, d, e = love.event.wait()
+--   print(a, b, c, d, e)
+--until a == "keypressed"
+
 --local camera = require 'lib.camera'
 --local cam = require('lib.cameraBase').getInstance()
 
@@ -182,6 +189,13 @@ function love.load()
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
    print('keybd focus', love.window.hasFocus())
+
+   love.event.wait()
+   love.event.wait()
+
+   --local a, b, c, d, e = love.event.wait()
+   --print(a, b, c, d, e)
+
    local success = love.window.updateMode(1024 / 2, 768 / 2,
            { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
 end

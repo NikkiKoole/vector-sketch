@@ -390,7 +390,7 @@ function scene.load()
    }
    tabuilogo = {
        love.graphics.newImage('assets/ui/tab1-logo.png'),
-       love.graphics.newImage('assets/ui/tab2-logoC.png'),
+       love.graphics.newImage('assets/ui/tab2-logoC2.png'),
        love.graphics.newImage('assets/ui/tab3-logo.png'),
    }
    colorpickerui = {
