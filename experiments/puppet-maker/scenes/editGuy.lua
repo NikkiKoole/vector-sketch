@@ -410,7 +410,15 @@ function scene.load()
        love.graphics.newImage('assets/ui/circle4.png'),
 
    }
+   rects = {
+      love.graphics.newImage('assets/ui/rect1.png'),
+      love.graphics.newImage('assets/ui/rect2.png'),
 
+  }
+   uitoggle = {
+      love.graphics.newImage('assets/ui/toggle1.png', { linear = true }),
+
+   }
    uiheaders = { love.graphics.newImage('assets/ui/ui-header2.png', { linear = true }),
        love.graphics.newImage('assets/ui/ui-header3.png', { linear = true }),
        love.graphics.newImage('assets/ui/ui-header4.png', { linear = true })
