@@ -503,22 +503,43 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
          if draw then
 
+            local buttonSize = 48
             function uiColumns(width)
-               return  math.floor(width/(32*4))
+               return  math.ceil(width/(buttonSize*6))
             end
           
+            function changeValue(name, step, min, max)
+               values[name] = values[name] + step
+               local m = math.ceil(1/math.abs(step))
+               values[name] = math.floor( values[name] * m) / m
+               values[name] = math.max(values[name] , min)
+               values[name] = math.min(values[name] , max)
+            end
+
             local columns = uiColumns(width)
+           -- print(columns)
+         
+            local sliderWidth = (width / columns)-(buttonSize*2)
 
-
-            local sx, sy =  createFittingScale(rects[1], 32, 32)
+            local sx, sy =  createFittingScale(rects[1], buttonSize, buttonSize)
             love.graphics.setColor(0,0,0,1)
             love.graphics.draw(rects[1], startX, currentY,0, sx, sy)
-            
-            local sx, sy =  createFittingScale(rects[1], 32, 32)
+            local less = ui.getUIRect('less-width', startX, currentY, buttonSize,buttonSize)
+            if less then
+               changeValue('bodyWidthMultiplier', -.5, .5, 3)
+               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
+               update()
+            end
+            local sx, sy =  createFittingScale(rects[1], buttonSize, buttonSize)
             love.graphics.setColor(0,0,0,1)
-            love.graphics.draw(rects[1], startX + (width / columns)-32, currentY,0, sx, sy)
-
-            local v = h_slider_textured("body-width2", startX+32, currentY, (width / columns)-64, sliderimg.track1,
+            love.graphics.draw(rects[1], startX + buttonSize + sliderWidth, currentY,0, sx, sy)
+            local more = ui.getUIRect('less-width', startX+ buttonSize + sliderWidth, currentY, buttonSize,buttonSize)
+            if more then
+               changeValue('bodyWidthMultiplier', .5, .5, 3)
+               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
+               update()
+            end
+            local v = h_slider_textured("body-width2", startX+buttonSize, currentY+(buttonSize/4), sliderWidth, sliderimg.track1,
                     sliderimg.thumb4,
                     nil, values.bodyWidthMultiplier, .5, 3)
 
@@ -527,13 +548,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                v.value = math.floor(v.value * 2) / 2.0 -- round to .5
 
                values.bodyWidthMultiplier = v.value
-               --  values.bodyHeightMultiplier = v.value
-               --body.transforms.l[5] = v.value
+             
                editingGuy.body.transforms.l[4] = v.value
                update()
             end
             currentY = currentY + 50
-            v = h_slider_textured("body-height", startX, currentY, width / columns, sliderimg.track2,
+            v = h_slider_textured("body-height", startX, currentY, sliderWidth, sliderimg.track2,
                     sliderimg.thumb2,
                     sliderimg.thumb2Mask, values.bodyHeightMultiplier, .5, 3)
             if v.value then
