@@ -508,7 +508,17 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
           
             local columns = uiColumns(width)
-            local v = h_slider_textured("body-width2", startX, currentY, width / columns, sliderimg.track1,
+
+
+            local sx, sy =  createFittingScale(rects[1], 32, 32)
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.draw(rects[1], startX, currentY,0, sx, sy)
+            
+            local sx, sy =  createFittingScale(rects[1], 32, 32)
+            love.graphics.setColor(0,0,0,1)
+            love.graphics.draw(rects[1], startX + (width / columns)-32, currentY,0, sx, sy)
+
+            local v = h_slider_textured("body-width2", startX+32, currentY, (width / columns)-64, sliderimg.track1,
                     sliderimg.thumb4,
                     nil, values.bodyWidthMultiplier, .5, 3)
 
