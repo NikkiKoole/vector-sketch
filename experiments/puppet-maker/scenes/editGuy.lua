@@ -417,6 +417,8 @@ function scene.load()
   }
    uitoggle = {
       love.graphics.newImage('assets/ui/toggle1.png', { linear = true }),
+      love.graphics.newImage('assets/ui/toggle2.png', { linear = true }),
+      love.graphics.newImage('assets/ui/toggle3.png', { linear = true }),
 
    }
    uiheaders = { love.graphics.newImage('assets/ui/ui-header2.png', { linear = true }),
@@ -433,6 +435,13 @@ function scene.load()
        thumb2Mask = love.graphics.newImage('assets/ui/slider-thumb2-mask.png'),
        thumb3 = love.graphics.newImage('assets/ui/slider-thumb3.png'),
        thumb4 = love.graphics.newImage('assets/ui/slider-thumb4.png'),
+   }
+   icons  = {
+      fliph1 = love.graphics.newImage('assets/ui/icon-fliph1.png'),
+      fliph2 = love.graphics.newImage('assets/ui/icon-fliph2.png'),
+      flipv1 = love.graphics.newImage('assets/ui/icon-flipv1.png'),
+      flipv2 = love.graphics.newImage('assets/ui/icon-flipv2.png'),
+
    }
    scrollPosition = .5
    scrollItemsOnScreen = 5
