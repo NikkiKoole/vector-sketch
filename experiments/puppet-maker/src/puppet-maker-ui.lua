@@ -502,7 +502,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             myWorld:emit("bipedAttachHands", biped)
          end
          if draw then
-            local v = h_slider_textured("body-width2", startX, currentY, width / 5, sliderimg.track1,
+
+            function uiColumns(width)
+               return  math.floor(width/(32*4))
+            end
+          
+            local columns = uiColumns(width)
+            local v = h_slider_textured("body-width2", startX, currentY, width / columns, sliderimg.track1,
                     sliderimg.thumb4,
                     nil, values.bodyWidthMultiplier, .5, 3)
 
@@ -517,7 +523,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                update()
             end
             currentY = currentY + 50
-            v = h_slider_textured("body-height", startX, currentY, width / 3, sliderimg.track2,
+            v = h_slider_textured("body-height", startX, currentY, width / columns, sliderimg.track2,
                     sliderimg.thumb2,
                     sliderimg.thumb2Mask, values.bodyHeightMultiplier, .5, 3)
             if v.value then
@@ -553,7 +559,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                --print(toggled)
                return h
             end
-
+         
+            love.graphics.rectangle('fill', startX, currentY,32, 32)
 
             local a = newtoggle('bodyflipy', uitoggle[3], startX+ 100, currentY, width/5,  (values.body.flipy == 1), icons.fliph1, icons.fliph2)
             if a then
