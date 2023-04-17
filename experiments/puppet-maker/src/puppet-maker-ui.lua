@@ -231,15 +231,15 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          drawTapesForBackground(startX, currentY, width, currentHeight)
       end
 
-      width = width - 24
+      width = width - buttonSize
       local columnsCells = (math.ceil(width / buttonSize))
       local sliderWidth = (width / math.ceil((columnsCells / 6))) - (buttonSize * 2)
 
       local elementWidth = (sliderWidth + (buttonSize * 2))
       local elementsInRow = width / elementWidth
       local runningElem = 0
-      width = width + 24
-
+      width = width + buttonSize
+      startX = startX + buttonSize / 2
 
       function updateRowStuff()
          runningElem = runningElem + 1

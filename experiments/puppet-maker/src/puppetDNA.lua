@@ -2,7 +2,7 @@ local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
 
 texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-leglengths  = { 400, 500, 600, 700, 800, 900, 1000 }
+leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
 necklengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 }
 
 local function stripPath(root, path)
