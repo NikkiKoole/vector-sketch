@@ -81,18 +81,252 @@ function drawTapesForBackground(x, y, w, h)
    local sx, sy = createFittingScale(uiheaders[index], w, h)
    love.graphics.setColor(1, 1, 1, .4)
    --love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy * -1, 0, imgh / 2)
-   love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy, 0, imgh / 2)
+   love.graphics.draw(uiheaders[index], x, y, 0, sx, sy, 0, 0)
+end
+
+function newtoggle(id, img, x, y, w, toggled)
+   local togw, togh = img:getDimensions()
+   local s = (w) / togw
+   local h = toggled and s or -s
+
+   love.graphics.draw(img, x + (togw / 2) * s, y, 0, h, s, togw / 2, 0)
+   -- i retun a differnt hitarea depending on the toggled state
+   local h = nil
+   h = ui.getUIRect(id, x, y, (togw) * s, togh * s)
+
+   if false then
+      if not toggled then
+         h = ui.getUIRect(id, x, y, (togw / 2) * s, togh * s)
+      else
+         h = ui.getUIRect(id, x + (togw / 2) * s, y, (togw / 2) * s, togh * s)
+      end
+   end
+   --print(toggled)
+   return h
+end
+
+function toggle2(id, trackimg, thumbimg, x, y, w, toggled)
+
+end
+
+function changeValue(name, step, min, max)
+   local values = editingGuy.values
+   values[name] = values[name] + step
+   local m = math.ceil(1 / math.abs(step))
+   values[name] = math.floor(values[name] * m) / m
+   values[name] = math.max(values[name], min)
+   values[name] = math.min(values[name], max)
+end
+
+function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, propupdate, update,
+                                    valmin, valmax, valstep)
+   local values = editingGuy.values
+   local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
+   love.graphics.setColor(0, 0, 0, 1)
+   love.graphics.draw(rects[1], startX, currentY, 0, sx, sy)
+   local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
+   if less then
+      changeValue(prop, -valstep, valmin, valmax)
+      propupdate(values[prop])
+      update()
+      print('shrinkng')
+   end
+
+   local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
+   love.graphics.setColor(0, 0, 0, 1)
+   love.graphics.draw(rects[1], startX + buttonSize + sliderWidth, currentY, 0, sx, sy)
+   local more = ui.getUIRect('more-' .. prop, startX + buttonSize + sliderWidth, currentY, buttonSize,
+           buttonSize)
+   if more then
+      changeValue(prop, valstep, valmin, valmax)
+      propupdate(values[prop])
+      update()
+      print('growing')
+   end
+
+   local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
+           sliderimg.track2,
+           sliderimg.thumb3,
+           nil, values[prop], valmin, valmax)
+   if v.value then
+      local m = math.ceil(1 / math.abs(valstep))
+      v.value = math.floor(v.value * m) / m -- round to .5
+      if (v.value > values[prop]) then
+         print('growing')
+      else
+         print('shrinkng')
+      end
+      values[prop] = v.value
+      propupdate(values[prop])
+      update()
+   end
+end
+
+function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc)
+   local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
+   love.graphics.setColor(0, 0, 0, 1)
+   love.graphics.draw(rects[1], startX, currentY, 0, sx, sy)
+   local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
+   if less then
+      toggleFunc(false)
+   end
+   local offset = buttonSize
+
+   local sx, sy = createFittingScale(toggle.body3, sliderWidth, buttonSize)
+   local scale = math.min(sx, sy)
+
+   local tbw, tbh = toggle.body3:getDimensions()
+
+   local extraOffset = 0
+   if tbw * scale < sliderWidth then
+      extraOffset = (sliderWidth - (tbw * scale)) / 2
+      offset = offset
+   end
+   local yOff = (buttonSize - (tbh * scale)) / 2
+   local yOffThumb = (scale * toggle.thumb3:getHeight() / 2)
+   love.graphics.draw(toggle.body3, offset + extraOffset + startX, yOff + currentY, 0, scale, scale)
+   if toggleValue then
+      love.graphics.draw(toggle.thumb3, offset + extraOffset + startX + (15 * scale),
+          yOff + currentY + yOffThumb,
+          0,
+          scale,
+          scale)
+   else
+      love.graphics.draw(toggle.thumb3,
+          offset + extraOffset + startX + -(15 * scale) +
+          (((tbw * scale)) - (toggle.thumb3:getWidth() * scale)),
+          yOff + currentY + yOffThumb,
+          0,
+          scale,
+          scale)
+   end
+   local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
+   love.graphics.draw(rects[1], offset + startX + sliderWidth, currentY, 0, sx, sy)
+   local more = ui.getUIRect('less-' .. prop, offset + startX + sliderWidth, currentY,
+           buttonSize, buttonSize)
+   if more then
+      toggleFunc(true)
+   end
+   local w, h = toggle.body3:getDimensions()
+   local t = ui.getUIRect('t-' .. prop, offset + startX, yOff + currentY, w * scale, h * scale)
+   if t then
+      toggleFunc(toggleValue)
+   end
 end
 
 function drawImmediateSlidersEtc(draw, startX, currentY, width)
    local values = editingGuy.values
    local currentHeight = 20
 
+   -- if small then buttonSize == 24
+   -- if big then double (48)
+   --   print(width)
+   local buttonSize = width < 320 and 24 or 48
+
    if selectedTab == 'part' then
       currentHeight = 130
 
+
       if draw then
          drawTapesForBackground(startX, currentY, width, currentHeight)
+      end
+
+      width = width - 24
+      local columnsCells = (math.ceil(width / buttonSize))
+      local sliderWidth = (width / math.ceil((columnsCells / 6))) - (buttonSize * 2)
+
+      local elementWidth = (sliderWidth + (buttonSize * 2))
+      local elementsInRow = width / elementWidth
+      local runningElem = 0
+      width = width + 24
+
+
+      function updateRowStuff()
+         runningElem = runningElem + 1
+         if runningElem >= elementsInRow then
+            runningElem = 0
+            currentY = currentY + buttonSize
+         end
+         return runningElem, currentY
+      end
+
+      if selectedCategory == 'body' then
+         -- we have 5 ui elements, how many will fit on 1 row ?
+         local update = function()
+            editingGuy.body.dirty = true
+            transforms.setTransforms(editingGuy.body)
+            if values.potatoHead then
+               myWorld:emit('rescaleFaceparts', potato)
+            end
+            changePart('body', values)
+
+            myWorld:emit('potatoInit', potato)
+            myWorld:emit("bipedAttachHead", biped)
+            myWorld:emit("bipedAttachLegs", biped)
+            myWorld:emit("bipedAttachArms", biped)
+            myWorld:emit("bipedAttachHands", biped)
+         end
+         if draw then
+            local propupdate = function(v)
+               editingGuy.body.transforms.l[4] = v
+            end
+            runningElem = 0
+
+            draw_slider_with_2_buttons('bodyWidthMultiplier', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth, propupdate,
+                update, .5, 3, .5)
+
+            runningElem, currentY = updateRowStuff()
+
+
+            local propupdate = function(v)
+               editingGuy.body.transforms.l[5] = v
+            end
+
+            draw_slider_with_2_buttons('bodyHeightMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                update, .5, 3, .5)
+
+            runningElem, currentY = updateRowStuff()
+
+
+            local f = function(v)
+               values.body.flipy = v and -1 or 1
+               update()
+            end
+            draw_toggle_with_2_buttons('bodyflipy', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth, (values.body.flipy == 1),
+                f)
+            runningElem, currentY = updateRowStuff()
+
+            local f = function(v)
+               values.body.flipx = v and -1 or 1
+               update()
+            end
+            draw_toggle_with_2_buttons('bodyflipx', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth, (values.body.flipx == 1),
+                f)
+            runningElem, currentY = updateRowStuff()
+
+            local f = function(v)
+               values.potatoHead = v
+               myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
+               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
+               editingGuy.body.transforms.l[5] = values.bodyHeightMultiplier
+
+               attachAllFaceParts(editingGuy)
+               changePart('head', values)
+               changePart('body', values)
+               myWorld:emit('rescaleFaceparts', potato)
+               setCategories()
+               update()
+            end
+            draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                not (values.potatoHead),
+                f)
+         end
       end
 
       if selectedCategory == 'upperlip' then
@@ -486,171 +720,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
          end
       end
-      if selectedCategory == 'body' then
-         local update = function()
-            editingGuy.body.dirty = true
-            transforms.setTransforms(editingGuy.body)
-            if values.potatoHead then
-               myWorld:emit('rescaleFaceparts', potato)
-            end
-            changePart('body', values)
-
-            myWorld:emit('potatoInit', potato)
-            myWorld:emit("bipedAttachHead", biped)
-            myWorld:emit("bipedAttachLegs", biped)
-            myWorld:emit("bipedAttachArms", biped)
-            myWorld:emit("bipedAttachHands", biped)
-         end
-         if draw then
-
-            local buttonSize = 48
-            function uiColumns(width)
-               return  math.ceil(width/(buttonSize*6))
-            end
-          
-            function changeValue(name, step, min, max)
-               values[name] = values[name] + step
-               local m = math.ceil(1/math.abs(step))
-               values[name] = math.floor( values[name] * m) / m
-               values[name] = math.max(values[name] , min)
-               values[name] = math.min(values[name] , max)
-            end
-
-            local columns = uiColumns(width)
-           -- print(columns)
-         
-            local sliderWidth = (width / columns)-(buttonSize*2)
-
-            local sx, sy =  createFittingScale(rects[1], buttonSize, buttonSize)
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.draw(rects[1], startX, currentY,0, sx, sy)
-            local less = ui.getUIRect('less-width', startX, currentY, buttonSize,buttonSize)
-            if less then
-               changeValue('bodyWidthMultiplier', -.5, .5, 3)
-               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
-               update()
-            end
-            local sx, sy =  createFittingScale(rects[1], buttonSize, buttonSize)
-            love.graphics.setColor(0,0,0,1)
-            love.graphics.draw(rects[1], startX + buttonSize + sliderWidth, currentY,0, sx, sy)
-            local more = ui.getUIRect('less-width', startX+ buttonSize + sliderWidth, currentY, buttonSize,buttonSize)
-            if more then
-               changeValue('bodyWidthMultiplier', .5, .5, 3)
-               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
-               update()
-            end
-            local v = h_slider_textured("body-width2", startX+buttonSize, currentY+(buttonSize/4), sliderWidth, sliderimg.track1,
-                    sliderimg.thumb4,
-                    nil, values.bodyWidthMultiplier, .5, 3)
-
-
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-
-               values.bodyWidthMultiplier = v.value
-             
-               editingGuy.body.transforms.l[4] = v.value
-               update()
-            end
-            currentY = currentY + 50
-            v = h_slider_textured("body-height", startX, currentY, sliderWidth, sliderimg.track2,
-                    sliderimg.thumb2,
-                    sliderimg.thumb2Mask, values.bodyHeightMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.bodyHeightMultiplier = v.value
-               editingGuy.body.transforms.l[5] = v.value
-               update()
-            end
-            currentY = currentY + 50
-            startX = startX + 20
-
-
-            function newtoggle(id, img, x, y, w, toggled)
-               local togw, togh = img:getDimensions()
-               local s = (w) / togw 
-               local h =  toggled and s or -s
-
-               love.graphics.draw(img, x + (togw/2)*s, y, 0, h, s, togw/2, 0)
-
-              
-
-               -- i retun a differnt hitarea depending on the toggled state
-               local h = nil
-               h = ui.getUIRect(id, x , y, (togw)*s, togh*s)
-
-            if false then
-               if not toggled then
-                  h = ui.getUIRect(id, x , y, (togw/2)*s, togh*s)
-               else
-                  h = ui.getUIRect(id, x + (togw/2)*s , y, (togw/2)*s, togh*s)
-               end
-            end   
-               --print(toggled)
-               return h
-            end
-         
-            love.graphics.rectangle('fill', startX, currentY,32, 32)
-
-            local a = newtoggle('bodyflipy', uitoggle[3], startX+ 100, currentY, width/5,  (values.body.flipy == 1), icons.fliph1, icons.fliph2)
-            if a then
-               values.body.flipy = values.body.flipy == -1 and 1 or -1
-               update()
-            end
-
-            local togw, togh = rects[1]:getDimensions()
-            local s = (width/10) / togw 
-
-            love.graphics.draw(rects[1], 100 - ((togw)*s) + startX + (togw/2)*s, currentY, 0, s, s, togw/2, 0)
-            love.graphics.draw(rects[1],100+ (width/5) +startX + (togw/2)*s, currentY, 0, s, s, togw/2, 0)
-            --local togw, togh = uitoggle[1]:getDimensions()
-            --local s = (width/10) / togw 
-            --local h =  values.body.flipy == 1 and s or -s
-
-            --love.graphics.draw(uitoggle[1], startX + (togw/2)*s, currentY, 0, h, s, togw/2, 0)
-           
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.circle('fill', startX, currentY, 10)
-
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.body.flipy = values.body.flipy == -1 and 1 or -1
-               update()
-            end
-
-            startX = startX + 25
-            love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.body.flipx = values.body.flipx == -1 and 1 or -1
-               update()
-            end
-
-            currentY = currentY + 25
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.circle('fill', startX, currentY, 10)
-
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.potatoHead = not values.potatoHead
-               myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
-               --if values.potatoHead then
-               editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
-               editingGuy.body.transforms.l[5] = values.bodyHeightMultiplier
-               --end
-
-               attachAllFaceParts(editingGuy)
-               changePart('head', values)
-               changePart('body', values)
-               myWorld:emit('rescaleFaceparts', potato)
-               setCategories()
-            end
-         end
-      end
    end
-
-
-
 
    if selectedTab == 'pattern' then
       currentHeight = 150

@@ -363,7 +363,7 @@ function scene.load()
    }
 
 
-   dots = {
+   dots                = {
        love.graphics.newImage('assets/blups/dot1.150.png'),
        love.graphics.newImage('assets/blups/dot2.150.png'),
        love.graphics.newImage('assets/blups/dot3.150.png'),
@@ -378,55 +378,55 @@ function scene.load()
        love.graphics.newImage('assets/blups/dot12.150.png'),
    }
 
-   tabui = {
+   tabui               = {
        love.graphics.newImage('assets/ui/tab1.png'),
        love.graphics.newImage('assets/ui/tab2.png'),
        love.graphics.newImage('assets/ui/tab3.png'),
    }
-   tabuimask = {
+   tabuimask           = {
        love.graphics.newImage('assets/ui/tab1-mask.png'),
        love.graphics.newImage('assets/ui/tab2-mask.png'),
        love.graphics.newImage('assets/ui/tab3-mask.png'),
    }
-   tabuilogo = {
+   tabuilogo           = {
        love.graphics.newImage('assets/ui/tab1-logo.png'),
        love.graphics.newImage('assets/ui/tab2-logoC2.png'),
        love.graphics.newImage('assets/ui/tab3-logo.png'),
    }
-   colorpickerui = {
+   colorpickerui       = {
        love.graphics.newImage('assets/ui/uifill.png', { linear = true }),
        love.graphics.newImage('assets/ui/uipattern.png', { linear = true }),
        love.graphics.newImage('assets/ui/uiline.png', { linear = true }),
    }
-   colorpickeruimask = {
+   colorpickeruimask   = {
        love.graphics.newImage('assets/ui/uifill-mask.png', { linear = true }),
        love.graphics.newImage('assets/ui/uipattern-mask.png', { linear = true }),
        love.graphics.newImage('assets/ui/uiline-mask.png', { linear = true }),
    }
-   circles = {
+   circles             = {
        love.graphics.newImage('assets/ui/circle1.png'),
        love.graphics.newImage('assets/ui/circle2.png'),
        love.graphics.newImage('assets/ui/circle3.png'),
        love.graphics.newImage('assets/ui/circle4.png'),
 
    }
-   rects = {
-      love.graphics.newImage('assets/ui/rect1.png'),
-      love.graphics.newImage('assets/ui/rect2.png'),
-
-  }
-   uitoggle = {
-      love.graphics.newImage('assets/ui/toggle1.png', { linear = true }),
-      love.graphics.newImage('assets/ui/toggle2.png', { linear = true }),
-      love.graphics.newImage('assets/ui/toggle3.png', { linear = true }),
+   rects               = {
+       love.graphics.newImage('assets/ui/rect1.png'),
+       love.graphics.newImage('assets/ui/rect2.png'),
 
    }
-   uiheaders = { love.graphics.newImage('assets/ui/ui-header2.png', { linear = true }),
+   uitoggle            = {
+       love.graphics.newImage('assets/ui/toggle1.png', { linear = true }),
+       love.graphics.newImage('assets/ui/toggle2.png', { linear = true }),
+       love.graphics.newImage('assets/ui/toggle3.png', { linear = true }),
+
+   }
+   uiheaders           = { love.graphics.newImage('assets/ui/ui-header2.png', { linear = true }),
        love.graphics.newImage('assets/ui/ui-header3.png', { linear = true }),
        love.graphics.newImage('assets/ui/ui-header4.png', { linear = true })
 
    }
-   sliderimg = {
+   sliderimg           = {
        track1 = love.graphics.newImage('assets/ui/slider-track1.png'),
        thumb1 = love.graphics.newImage('assets/ui/slider-thumb1.png'),
        thumb1Mask = love.graphics.newImage('assets/ui/slider-thumb1-mask.png'),
@@ -436,14 +436,21 @@ function scene.load()
        thumb3 = love.graphics.newImage('assets/ui/slider-thumb3.png'),
        thumb4 = love.graphics.newImage('assets/ui/slider-thumb4.png'),
    }
-   icons  = {
-      fliph1 = love.graphics.newImage('assets/ui/icon-fliph1.png'),
-      fliph2 = love.graphics.newImage('assets/ui/icon-fliph2.png'),
-      flipv1 = love.graphics.newImage('assets/ui/icon-flipv1.png'),
-      flipv2 = love.graphics.newImage('assets/ui/icon-flipv2.png'),
-
+   icons               = {
+       fliph1 = love.graphics.newImage('assets/ui/icon-fliph1.png'),
+       fliph2 = love.graphics.newImage('assets/ui/icon-fliph2.png'),
+       flipv1 = love.graphics.newImage('assets/ui/icon-flipv1.png'),
+       flipv2 = love.graphics.newImage('assets/ui/icon-flipv2.png'),
    }
-   scrollPosition = .5
+   toggle              = {
+       body1 = love.graphics.newImage('assets/ui/togglebody1.png'),
+       body2 = love.graphics.newImage('assets/ui/togglebody2.png'),
+       body3 = love.graphics.newImage('assets/ui/togglebody3.png'),
+       thumb1 = love.graphics.newImage('assets/ui/togglethumb1.png'),
+       thumb2 = love.graphics.newImage('assets/ui/togglethumb2.png'),
+       thumb3 = love.graphics.newImage('assets/ui/togglethumb3.png'),
+   }
+   scrollPosition      = .5
    scrollItemsOnScreen = 5
    scrollListXPosition = 0
 
@@ -619,6 +626,7 @@ function getCameraDataZoomOnHeadAndBody()
    local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
    local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
+   --return x2, y2, w, h * 1.2
    return 0, y2, 500, h * 1.2
 end
 

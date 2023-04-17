@@ -541,6 +541,14 @@ function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value
          end
       end
    end
+   if mouseState.click and (not lastDraggedElement or lastDraggedElement.id ~= id) then
+      local mx, my = love.mouse.getPosition()
+      if hit.pointInRect(mx, my, x, y, trw * scale, trh * scale) then
+         result = numbers.mapInto(mx + mouseState.offset.x, x, x + width - (tbw * scale), min, max)
+         result = math.max(result, min)
+         result = math.min(result, max)
+      end
+   end
    return {
        value = result
    }
