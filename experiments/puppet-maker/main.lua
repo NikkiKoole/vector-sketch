@@ -53,7 +53,13 @@ end
 require 'src.generatePuppet'
 local bodypartsGenerate = require 'src.puppetDNA'
 
-
+if true then
+   local a, b, c, d, e
+   repeat
+      a, b, c, d, e = love.event.wait()
+      print(a, b, c, d, e)
+   until a == "focus"
+end
 --local a, b, c, d, e
 --repeat
 --   a, b, c, d, e = love.event.wait()

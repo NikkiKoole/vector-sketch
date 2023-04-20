@@ -16,7 +16,7 @@ end
 
 
 text.ends_with = function(str, ending)
-   return ending == "" or str:sub(- #ending) == ending
+   return ending == "" or str:sub( -#ending) == ending
 end
 
 text.split = function(str, pos)
@@ -34,7 +34,7 @@ text.stringFindLastSlash = function(str)
    --index = string.find(your_string, "/[^/]*$")
 end
 
-local function stringSplit(str, sep)
+text.stringSplit = function(str, sep)
    local result = {}
    local regex = ("([^%s]+)"):format(sep)
    for each in str:gmatch(regex) do

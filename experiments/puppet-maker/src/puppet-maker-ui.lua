@@ -111,61 +111,116 @@ end
 
 function changeValue(name, step, min, max)
    local values = editingGuy.values
-   values[name] = values[name] + step
-   local m = math.ceil(1 / math.abs(step))
-   values[name] = math.floor(values[name] * m) / m
-   values[name] = math.max(values[name], min)
-   values[name] = math.min(values[name], max)
+   local splitted = text.stringSplit(name, '.')
+   if #splitted == 1 then
+      values[name] = values[name] + step
+      local m = math.ceil(1 / math.abs(step))
+      values[name] = math.floor(values[name] * m) / m
+      values[name] = math.max(values[name], min)
+      values[name] = math.min(values[name], max)
+   end
+   if #splitted == 2 then
+      local cat = splitted[1]
+      local prop = splitted[2]
+      values[cat][prop] = values[cat][prop] + step
+      local m = math.ceil(1 / math.abs(step))
+      values[cat][prop] = math.floor(values[cat][prop] * m) / m
+      values[cat][prop] = math.max(values[cat][prop], min)
+      values[cat][prop] = math.min(values[cat][prop], max)
+   end
+end
+
+function getValueMaybeNested(prop)
+   local values = editingGuy.values
+   local splitted = text.stringSplit(prop, '.')
+   if #splitted == 1 then
+      return values[prop]
+   end
+   if #splitted == 2 then
+      return values[splitted[1]][splitted[2]]
+   end
+end
+
+function setValueMaybeNested(prop, v)
+   local values = editingGuy.values
+   local splitted = text.stringSplit(prop, '.')
+   if #splitted == 1 then
+      values[prop] = v
+   end
+   if #splitted == 2 then
+      values[splitted[1]][splitted[2]] = v
+   end
 end
 
 function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, propupdate, update,
-                                    valmin, valmax, valstep)
+                                    valmin, valmax, valstep, img1, img2)
    local values = editingGuy.values
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
-   love.graphics.setColor(0, 0, 0, 1)
+   love.graphics.setColor(0, 0, 0, .1)
    love.graphics.draw(rects[1], startX, currentY, 0, sx, sy)
+   if img1 then
+      love.graphics.setColor(0, 0, 0, 1)
+      local imgsx, imgsy = createFittingScale(img1, buttonSize, buttonSize)
+      love.graphics.draw(img1, startX, currentY, 0, imgsx, imgsy)
+   end
    local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
    if less then
       changeValue(prop, -valstep, valmin, valmax)
-      propupdate(values[prop])
-      update()
+      propupdate(getValueMaybeNested(prop))
+      if update then update() end
       print('shrinkng')
    end
 
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
-   love.graphics.setColor(0, 0, 0, 1)
+   love.graphics.setColor(0, 0, 0, .1)
    love.graphics.draw(rects[1], startX + buttonSize + sliderWidth, currentY, 0, sx, sy)
+   if img2 then
+      love.graphics.setColor(0, 0, 0, 1)
+      local imgsx, imgsy = createFittingScale(img2, buttonSize, buttonSize)
+      love.graphics.draw(img2, startX + buttonSize + sliderWidth, currentY, 0, imgsx, imgsy)
+   end
    local more = ui.getUIRect('more-' .. prop, startX + buttonSize + sliderWidth, currentY, buttonSize,
            buttonSize)
    if more then
       changeValue(prop, valstep, valmin, valmax)
-      propupdate(values[prop])
-      update()
+      propupdate(getValueMaybeNested(prop))
+      if update then update() end
       print('growing')
    end
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
            sliderimg.track2,
            sliderimg.thumb3,
-           nil, values[prop], valmin, valmax)
+           nil, getValueMaybeNested(prop), valmin, valmax)
    if v.value then
       local m = math.ceil(1 / math.abs(valstep))
       v.value = math.floor(v.value * m) / m -- round to .5
-      if (v.value > values[prop]) then
+      if (v.value > getValueMaybeNested(prop)) then
          print('growing')
       else
          print('shrinkng')
       end
-      values[prop] = v.value
-      propupdate(values[prop])
-      update()
+      --values[prop] = v.value
+      setValueMaybeNested(prop, v.value)
+      propupdate(getValueMaybeNested(prop))
+      if update then update() end
    end
 end
 
-function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc)
+function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc, img1, img2)
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
-   love.graphics.setColor(0, 0, 0, 1)
+
+   love.graphics.setColor(0, 0, 0, .1)
    love.graphics.draw(rects[1], startX, currentY, 0, sx, sy)
+   if img1 then
+      love.graphics.setColor(0, 0, 0, 1)
+      -- if toggleValue then
+      --    love.graphics.setColor(1, 1, 1, 1)
+      -- end
+      local imgsx, imgsy = createFittingScale(img1, buttonSize, buttonSize)
+      love.graphics.draw(img1, startX, currentY, 0, imgsx, imgsy)
+   end
+   love.graphics.setColor(0, 0, 0, 1)
    local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
    if less then
       toggleFunc(false)
@@ -201,8 +256,17 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
           scale)
    end
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
+   love.graphics.setColor(0, 0, 0, .1)
    love.graphics.draw(rects[1], offset + startX + sliderWidth, currentY, 0, sx, sy)
-   local more = ui.getUIRect('less-' .. prop, offset + startX + sliderWidth, currentY,
+   if img2 then
+      love.graphics.setColor(0, 0, 0, 1)
+      -- if not toggleValue then
+      --    love.graphics.setColor(1, 1, 1, 1)
+      -- end
+      local imgsx, imgsy = createFittingScale(img2, buttonSize, buttonSize)
+      love.graphics.draw(img2, offset + startX + sliderWidth, currentY, 0, imgsx, imgsy)
+   end
+   local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
            buttonSize, buttonSize)
    if more then
       toggleFunc(true)
@@ -223,33 +287,31 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    --   print(width)
    local buttonSize = width < 320 and 24 or 48
 
+   width = width - buttonSize
+   local columnsCells = (math.ceil(width / buttonSize))
+   local sliderWidth = (width / math.ceil((columnsCells / 6))) - (buttonSize * 2)
+
+   local elementWidth = (sliderWidth + (buttonSize * 2))
+   local elementsInRow = width / elementWidth
+   local runningElem = 0
+   width = width + buttonSize
+   startX = startX + buttonSize / 2
+
+   function updateRowStuff()
+      runningElem = runningElem + 1
+      if runningElem >= elementsInRow then
+         runningElem = 0
+         currentY = currentY + buttonSize
+      end
+      return runningElem, currentY
+   end
+
+   function calcCurrentHeight(itemsHere)
+      local rowsInUse = math.ceil(itemsHere / elementsInRow)
+      return rowsInUse * (buttonSize)
+   end
+
    if selectedTab == 'part' then
-      currentHeight = 130
-
-
-      if draw then
-         drawTapesForBackground(startX, currentY, width, currentHeight)
-      end
-
-      width = width - buttonSize
-      local columnsCells = (math.ceil(width / buttonSize))
-      local sliderWidth = (width / math.ceil((columnsCells / 6))) - (buttonSize * 2)
-
-      local elementWidth = (sliderWidth + (buttonSize * 2))
-      local elementsInRow = width / elementWidth
-      local runningElem = 0
-      width = width + buttonSize
-      startX = startX + buttonSize / 2
-
-      function updateRowStuff()
-         runningElem = runningElem + 1
-         if runningElem >= elementsInRow then
-            runningElem = 0
-            currentY = currentY + buttonSize
-         end
-         return runningElem, currentY
-      end
-
       if selectedCategory == 'body' then
          -- we have 5 ui elements, how many will fit on 1 row ?
          local update = function()
@@ -266,7 +328,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             myWorld:emit("bipedAttachArms", biped)
             myWorld:emit("bipedAttachHands", biped)
          end
+
+         currentHeight = calcCurrentHeight(5)
+
          if draw then
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
             local propupdate = function(v)
                editingGuy.body.transforms.l[4] = v
             end
@@ -274,7 +341,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
             draw_slider_with_2_buttons('bodyWidthMultiplier', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth, propupdate,
-                update, .5, 3, .5)
+                update, .5, 3, .5, icons.bodynarrow, icons.bodywide)
 
             runningElem, currentY = updateRowStuff()
 
@@ -286,7 +353,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             draw_slider_with_2_buttons('bodyHeightMultiplier', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
                 sliderWidth, propupdate,
-                update, .5, 3, .5)
+                update, .5, 3, .5, icons.bodysmall, icons.bodytall)
 
             runningElem, currentY = updateRowStuff()
 
@@ -297,7 +364,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             draw_toggle_with_2_buttons('bodyflipy', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth, (values.body.flipy == 1),
-                f)
+                f, icons.flipv1, icons.flipv2)
             runningElem, currentY = updateRowStuff()
 
             local f = function(v)
@@ -306,7 +373,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             draw_toggle_with_2_buttons('bodyflipx', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth, (values.body.flipx == 1),
-                f)
+                f, icons.fliph1, icons.fliph2)
             runningElem, currentY = updateRowStuff()
 
             local f = function(v)
@@ -325,330 +392,422 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth,
                 not (values.potatoHead),
-                f)
+                f, icons.bodynonpotato, icons.bodypotato)
          end
       end
 
-      if selectedCategory == 'upperlip' then
+      if selectedCategory == 'upperlip' or selectedCategory == 'lowerlip' then
+         currentHeight = calcCurrentHeight(1)
+
          if draw then
-            local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to 1
-               values.mouthYAxis = v.value
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
+               values.mouthYAxis = v
                myWorld:emit('potatoInit', potato)
             end
-         end
-      end
-      if selectedCategory == 'lowerlip' then
-         if draw then
-            local v = h_slider("mouth-yAxis", startX, currentY, 50, values.mouthYAxis, -1, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to 1
-               values.mouthYAxis = v.value
-               myWorld:emit('potatoInit', potato)
-            end
+            draw_slider_with_2_buttons('mouthYAxis', startX, currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, -1, 3, .5, icons.mouthup, icons.mouthdown)
          end
       end
 
 
       if selectedCategory == 'hair' then
+         currentHeight = calcCurrentHeight(2)
          if draw then
-            local v = h_slider("hair-width", startX, currentY, 150, values.hairWidthMultiplier, .00005, 2)
-            if v.value then
-               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
-               values.hairWidthMultiplier = v.value
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
+            local propupdate = function(v)
                changePart('hair', values)
             end
-            currentY = currentY + 25
-            local v = h_slider("hair-tension", startX, currentY, 150, values.hairTension, .00005, 1)
-            if v.value then
-               v.value = v.value --math.floor(v.value * 100) / 200.0 -- round to .5
-               values.hairTension = v.value
+            runningElem = 0
 
-               changePart('hair', values)
-            end
+            draw_slider_with_2_buttons('hairWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .00001, 2, .25, icons.hairthin, icons.hairthick)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('hairTension', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .00001, 1, .25, icons.hairtloose, icons.hairthight)
+
+            runningElem, currentY = updateRowStuff()
          end
       end
 
 
       if selectedCategory == 'brows' then
+         currentHeight = calcCurrentHeight(3)
          if draw then
-            local v = h_slider("brow-width", startX, currentY, 50, values.browsWidthMultiplier, .5, 2)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.browsWidthMultiplier = v.value
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
                arrangeBrows()
                changePart('brows', values)
             end
 
-            currentY = currentY + 25
-            local v = h_slider("brow-wide", startX, currentY, 50, values.browsWideMultiplier, .5, 2)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.browsWideMultiplier = v.value
-               print(values.browsWideMultiplier)
-               arrangeBrows()
-               changePart('brows', values)
-            end
+            runningElem = 0
 
-            currentY = currentY + 25
+            draw_slider_with_2_buttons('browsWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 2, .5, icons.browthin, icons.browthick)
 
-            local v = h_slider("brow-movement", startX, currentY, 50, values.browsDefaultBend, 1, 10)
-            if v.value then
-               local p = findPart('brows').imgs
-               local img = mesh.getImage(p[values.brows.shape])
-               local width, height = img:getDimensions()
-               values.browsDefaultBend = math.floor(v.value)
-               arrangeBrows()
-               changePart('brows', values)
-            end
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('browsWideMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 2, .5, icons.brownarrow, icons.browwide)
+
+            runningElem, currentY = updateRowStuff()
+
+
+            draw_slider_with_2_buttons('browsDefaultBend', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 1, 10, 1, icons.brow1, icons.brow10)
+
+            runningElem, currentY = updateRowStuff()
          end
       end
 
       if selectedCategory == 'nose' then
+         currentHeight = calcCurrentHeight(3)
          if draw then
-            local v = h_slider("nose-width", startX, currentY, 50, values.noseWidthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.noseWidthMultiplier = v.value
-               --nose.transforms.l[4] = v.value
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+            runningElem = 0
+
+            local propupdate = function(v)
                myWorld:emit('rescaleFaceparts', potato)
-            end
-            currentY = currentY + 25
-            local v = h_slider("nose-height", startX, currentY, 50, values.noseHeightMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.noseHeightMultiplier = v.value
-               -- nose.transforms.l[5] = v.value
-               myWorld:emit('rescaleFaceparts', potato)
-            end
-            currentY = currentY + 25
-            local v = h_slider("nose-yAxis", startX, currentY, 50, values.noseYAxis, -1, 1)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to 1
-               values.noseYAxis = v.value
                myWorld:emit('potatoInit', potato)
             end
+
+            draw_slider_with_2_buttons('noseWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 3, .5, icons.nosenarrow, icons.nosewide)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('noseHeightMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 3, .5, icons.nosesmall, icons.nosetall)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('noseYAxis', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, -1, 1, .25, icons.noseup, icons.nosedown)
          end
       end
 
 
 
       if selectedCategory == 'pupils' then
+         currentHeight = calcCurrentHeight(1)
          if draw then
-            local v = h_slider("pupil-size", startX, currentY, 50, values.pupilSizeMultiplier, .125, 2)
-            if v.value then
-               v.value = math.floor(v.value * 8) / 8.0 -- round to .125
-               values.pupilSizeMultiplier = v.value
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+            runningElem = 0
+
+            local propupdate = function(v)
                myWorld:emit('rescaleFaceparts', potato)
             end
+
+            draw_slider_with_2_buttons('pupilSizeMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .125, 2, .125, icons.pupilsmall, icons.pupilbig)
          end
       end
 
 
       if selectedCategory == 'eyes' then
+         currentHeight = calcCurrentHeight(5)
          if draw then
-            local v = h_slider("eye-width", startX, currentY, 50, values.eyeWidthMultiplier, .125, 3)
-            if v.value then
-               v.value = math.floor(v.value * 8) / 8.0 -- round to .5
-               values.eyeWidthMultiplier = v.value
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+            local propupdate = function(v)
                myWorld:emit('rescaleFaceparts', potato)
-            end
-            currentY = currentY + 25
-            local v = h_slider("eye-height", startX, currentY, 50, values.eyeHeightMultiplier, .125, 3)
-            if v.value then
-               v.value = math.floor(v.value * 8) / 8.0 -- round to .5
-               values.eyeHeightMultiplier = v.value
-               myWorld:emit('rescaleFaceparts', potato)
-            end
-            currentY = currentY + 25
-            local v = h_slider("eye-rotation", startX, currentY, 50, values.eyeRotation, -math.pi / 6, math.pi / 6)
-            if v.value then
-               v.value = math.floor(v.value * 4) / 4.0 -- round to .5
-               values.eyeRotation = v.value
-               editingGuy.eye1.transforms.l[3] = v.value
-               editingGuy.eye2.transforms.l[3] = -v.value
-            end
-            currentY = currentY + 25
-            local v = h_slider("eye-YAxis", startX, currentY, 50, values.eyeYAxis, -3, 3)
-            if v.value then
-               v.value = math.floor(v.value)
-               values.eyeYAxis = v.value
                myWorld:emit('potatoInit', potato)
             end
-            currentY = currentY + 25
-            local v = h_slider("eye-XAxisBetween", startX, currentY, 50, values.eyeXAxisBetween, -3, 3)
-            if v.value then
-               v.value = math.floor(v.value)
-               values.eyeXAxisBetween = v.value
-               myWorld:emit('potatoInit', potato)
+
+            draw_slider_with_2_buttons('eyeWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .125, 3, .125, icons.eyesmall1, icons.eyewide)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('eyeHeightMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .125, 3, .125, icons.eyesmall2, icons.eyetall)
+
+            runningElem, currentY = updateRowStuff()
+
+
+            local rotUpdate = function(v)
+               editingGuy.eye1.transforms.l[3] = v
+               editingGuy.eye2.transforms.l[3] = -v
             end
+            draw_slider_with_2_buttons('eyeRotation', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, rotUpdate,
+                nil, -.5, .5, .25, icons.eyeccw, icons.eyecw)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('eyeYAxis', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, -3, 3, 1, icons.eyedown, icons.eyeup)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('eyeXAxisBetween', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, -3, 3, 1, icons.eyefar, icons.eyeclose)
+
+            runningElem, currentY = updateRowStuff()
          end
       end
 
       if selectedCategory == 'ears' then
+         currentHeight = calcCurrentHeight(5)
          if draw then
-            local v = h_slider("ear-rotation", startX, currentY, 50, values.earRotation, -math.pi / 2, math.pi / 2)
-            if v.value then
-               values.earRotation = v.value
-               editingGuy.ear1.transforms.l[3] = v.value
-               editingGuy.ear2.transforms.l[3] = -v.value
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local rotupdate = function(v)
+               editingGuy.ear1.transforms.l[3] = v
+               editingGuy.ear2.transforms.l[3] = -v
             end
-            currentY = currentY + 25
-            local v = h_slider("ear-width", startX, currentY, 50, values.earWidthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.earWidthMultiplier = v.value
+            local propupdate = function(v)
                myWorld:emit('rescaleFaceparts', potato)
-            end
-            currentY = currentY + 25
-            local v = h_slider("ear-yAxis", startX, currentY, 50, values.earYAxis, -3, 3)
-            if v.value then
-               v.value = math.floor(v.value)
-               values.earYAxis = v.value
                myWorld:emit('potatoInit', potato)
             end
-            currentY = currentY + 50
-            startX = startX + 20
-            love.graphics.setColor(1, 0, 1)
-            love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
+
+            draw_slider_with_2_buttons('earRotation', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, rotupdate,
+                nil, -1.5, 1.5, .25, icons.earccw, icons.earcw)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('earWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 3, .5, icons.earsmall, icons.earbig)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('earYAxis', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, -3, 3, 1, icons.earup, icons.eardown)
+
+            runningElem, currentY = updateRowStuff()
+
+            local f = function()
                values.earUnderHead = not values.earUnderHead
                attachAllFaceParts(editingGuy)
                myWorld:emit('rescaleFaceparts', potato)
             end
+
+            draw_toggle_with_2_buttons('earUnderHead', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                not (values.earUnderHead),
+                f, icons.earback, icons.earfront)
          end
       end
 
       if selectedCategory == 'legs' then
+         currentHeight = calcCurrentHeight(5)
          if draw then
-            v = h_slider("leg-axis", startX, currentY, 50, values.legXAxis, 0, 1)
-            if v.value then
-               values.legXAxis = math.floor(v.value * 4) / 4.0
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
                changePart('legs', values)
                myWorld:emit("bipedAttachLegs", biped)
             end
-            currentY = currentY + 25
-            v = h_slider("leg-length", startX, currentY, 50, values.legLength, 1, #leglengths)
-            if v.value then
-               values.legLength = math.floor(v.value)
-               print(values.legLength)
+
+            draw_slider_with_2_buttons('legXAxis', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0, 1, .25, icons.legwide, icons.legnarrow)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('legLength', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 1, #leglengths, 1, icons.legshort, icons.leglong)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('legWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.5, 3, .5, icons.legthin, icons.legthick)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('legDefaultStance', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.25, 1, .25, icons.legstance2, icons.legstance1)
+
+            runningElem, currentY = updateRowStuff()
+
+            local f = function(v)
+               print(values.legs.flipy)
+               values.legs.flipy = v == false and -1 or 1
                changePart('legs', values)
-               changePart('leghair', values)
+               --myWorld:emit("bipedAttachLegs", biped)
             end
-            currentY = currentY + 25
-            v = h_slider("leg-width-multiplier", startX, currentY, 50, values.legWidthMultiplier, 0.5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.legWidthMultiplier = v.value
-               changePart('legs', values)
-            end
-            currentY = currentY + 25
-            startX = startX + 10
-            love.graphics.setColor(1, 0, 1)
-            love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.legs.flipy = values.legs.flipy == -1 and 1 or -1
-               changePart('legs', values)
-            end
+
+            draw_toggle_with_2_buttons('legsflipy', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                (values.legs.flipy == -1),
+                f, icons.legflip2, icons.legflip1)
          end
       end
 
       if selectedCategory == 'arms' then
+         currentHeight = calcCurrentHeight(3)
          if draw then
-            v = h_slider("arm-length", startX, currentY, 50, values.armLength, 1, #leglengths)
-            if v.value then
-               values.armLength = math.floor(v.value)
-               print(values.armLength)
-               changePart('arms', values)
-               changePart('armhair', values)
-            end
-            currentY = currentY + 25
-            v = h_slider("leg-width-multiplier", startX, currentY, 50, values.armWidthMultiplier, 0.5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.armWidthMultiplier = v.value
-               changePart('arms', values)
-            end
-            currentY = currentY + 25
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
-            startX = startX + 10
-            love.graphics.setColor(1, 0, 1)
-            love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.arms.flipy = values.arms.flipy == -1 and 1 or -1
+            local propupdate = function(v)
                changePart('arms', values)
             end
+
+            draw_slider_with_2_buttons('armLength', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 1, #leglengths, 1, icons.armsshort, icons.armslong)
+
+            runningElem, currentY = updateRowStuff()
+
+
+            draw_slider_with_2_buttons('armWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.5, 3, .5, icons.armsthin, icons.armsthick)
+
+            runningElem, currentY = updateRowStuff()
+
+            local f = function(v)
+               values.arms.flipy = v == false and -1 or 1
+               changePart('arms', values)
+            end
+
+            draw_toggle_with_2_buttons('arms.flipy', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                (values.arms.flipy == -1),
+                f, icons.armsflip1, icons.armsflip2)
          end
       end
 
       if selectedCategory == 'neck' then
+         currentHeight = calcCurrentHeight(2)
          if draw then
-            v = h_slider("neck-length", startX, currentY, 50, values.neckLength, 1, #necklengths)
-            if v.value then
-               values.neckLength = math.floor(v.value)
-               print(values.armLength)
-               changePart('neck', values)
-               --changePart('armhair', values)
-            end
-            currentY = currentY + 25
-            v = h_slider("neck-width-multiplier", startX, currentY, 50, values.neckWidthMultiplier, 0.5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.neckWidthMultiplier = v.value
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
                changePart('neck', values)
             end
-            currentY = currentY + 25
+
+            -- todo neck neds to show its change somehow, move the head further if need grows for example....
+            draw_slider_with_2_buttons('neckLength', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 1, #necklengths, 1, icons.neckshort, icons.necklong)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('neckWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.5, 3, .5, icons.neckthin, icons.neckthick)
          end
       end
 
       if selectedCategory == 'hands' then
+         currentHeight = calcCurrentHeight(2)
          if draw then
-            v = h_slider("hand-length", startX, currentY, 50, values.handLengthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.handLengthMultiplier = v.value
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdateLength = function(v)
                changePart('hands', values)
-               editingGuy.hand1.transforms.l[4] = v.value
-               editingGuy.hand2.transforms.l[4] = -v.value
+               editingGuy.hand1.transforms.l[4] = v
+               editingGuy.hand2.transforms.l[4] = -v
             end
-            currentY = currentY + 25
-            v = h_slider("hand-width", startX, currentY, 50, values.handWidthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.handWidthMultiplier = v.value
+            local propupdateWidth = function(v)
                changePart('hands', values)
-               editingGuy.hand1.transforms.l[5] = v.value
-               editingGuy.hand2.transforms.l[5] = v.value
+               editingGuy.hand1.transforms.l[5] = v
+               editingGuy.hand2.transforms.l[5] = v
             end
-            currentY = currentY + 25
+
+            draw_slider_with_2_buttons('handLengthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdateLength,
+                nil, 0.5, 3, .5, icons.handshort, icons.handtall)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('handWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdateWidth,
+                nil, 0.5, 3, .5, icons.handnarrow, icons.handwide)
+
+            runningElem, currentY = updateRowStuff()
          end
       end
 
       if selectedCategory == 'feet' then
+         currentHeight = calcCurrentHeight(2)
          if draw then
-            v = h_slider("feet-length", startX, currentY, 50, values.feetLengthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.feetLengthMultiplier = v.value
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdateLength = function(v)
                changePart('feet', values)
-               editingGuy.feet1.transforms.l[4] = v.value
-               editingGuy.feet2.transforms.l[4] = -v.value
+               editingGuy.feet1.transforms.l[4] = v
+               editingGuy.feet2.transforms.l[4] = -v
             end
-            currentY = currentY + 25
-            v = h_slider("feet-width", startX, currentY, 50, values.feetWidthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.feetWidthMultiplier = v.value
+            local propupdateWidth = function(v)
                changePart('feet', values)
-               editingGuy.feet1.transforms.l[5] = v.value
-               editingGuy.feet2.transforms.l[5] = v.value
+               editingGuy.feet1.transforms.l[5] = v
+               editingGuy.feet2.transforms.l[5] = v
             end
-            currentY = currentY + 25
+
+
+            draw_slider_with_2_buttons('feetLengthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdateLength,
+                nil, 0.5, 3, .5, icons.footshort, icons.foottall)
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('feetWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdateWidth,
+                nil, 0.5, 3, .5, icons.footnarrow, icons.footwide)
+
+            runningElem, currentY = updateRowStuff()
          end
       end
 
@@ -658,18 +817,37 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          local mins = { .25, .25, 0, -6, -6 }
          local maxs = { 3, 3, 15, 6, 6 }
          local fs = { 4.0, 4.0, 1, 1, 1 }
+
+         currentHeight = calcCurrentHeight(#posts)
          if draw then
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
+               changePart('head', values)
+            end
+
+
             for i = 1, #posts do
                local p = posts[i]
                local vv = selectedCategory .. p
-               local v = h_slider(vv, startX, currentY, 50, values[vv], mins[i], maxs[i])
-               if v.value then
-                  v.value = math.floor(v.value * fs[i]) / fs[i] -- round to .5
-                  print(vv, v.value)
-                  values[vv] = v.value
-                  changePart('head', values)
-               end
-               currentY = currentY + 25
+
+               draw_slider_with_2_buttons(vv, startX + (runningElem * elementWidth), currentY,
+                   buttonSize,
+                   sliderWidth, propupdate,
+                   nil, mins[i], maxs[i], 1.0 / fs[i], icons['patch' .. p .. 'less'], icons['patch' .. p .. 'more'])
+
+               runningElem, currentY = updateRowStuff()
+
+
+               -- local v = h_slider(vv, startX, currentY, 50, values[vv], mins[i], maxs[i])
+               -- if v.value then
+               --    v.value = math.floor(v.value * fs[i]) / fs[i] -- round to .5
+               --    print(vv, v.value)
+               --    values[vv] = v.value
+               --    changePart('head', values)
+               -- end
+               -- currentY = currentY + 25
             end
          end
       end
@@ -723,34 +901,36 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    end
 
    if selectedTab == 'pattern' then
-      currentHeight = 150
-      currentY = currentY + 10
-      local originY = currentY
-      local originX = startX
+      currentHeight = calcCurrentHeight(3)
 
       if draw then
-         drawTapesForBackground(originX, originY, width, currentHeight)
+         drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
-         local v = h_slider("pattern-scale", startX, currentY, 200, values[selectedCategory].texScale, 1, 9)
-         if v.value then
-            v.value = math.floor(v.value)
-            values[selectedCategory].texScale = v.value
-            changePart(selectedCategory, values)
+         local propupdate = function(v)
+            changePart(selectedCategory)
          end
-         currentY = currentY + 50
-         local v = h_slider("pattern-rotation", startX, currentY, 200, values[selectedCategory].texRot, 0, 15)
-         if v.value then
-            v.value = math.floor(v.value)
-            values[selectedCategory].texRot = v.value
-            changePart(selectedCategory, values)
-         end
-         currentY = currentY + 50
-         local v = h_slider("pattern-opacity", startX, currentY, 200, values[selectedCategory].fgAlpha, 0, 5)
-         if v.value then
-            values[selectedCategory].fgAlpha = math.floor(v.value)
-            --selectedColoringLayer = colorkeys[i]
-            changePart(selectedCategory, values)
-         end
+         runningElem = 0
+
+         draw_slider_with_2_buttons(selectedCategory .. '.texScale', startX + (runningElem * elementWidth), currentY,
+             buttonSize,
+             sliderWidth, propupdate,
+             nil, 1, 9, 1, icons.patterncoarse, icons.patternfine)
+
+         runningElem, currentY = updateRowStuff()
+
+         draw_slider_with_2_buttons(selectedCategory .. '.texRot', startX + (runningElem * elementWidth), currentY,
+             buttonSize,
+             sliderWidth, propupdate,
+             nil, 0, 15, 1, icons.patternccw, icons.patterncw)
+
+         runningElem, currentY = updateRowStuff()
+
+         draw_slider_with_2_buttons(selectedCategory .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
+             buttonSize,
+             sliderWidth, propupdate,
+             nil, 0, 15, 1, icons.patterntransparent, icons.patternopaque)
+
+         runningElem, currentY = updateRowStuff()
       end
    end
 
@@ -775,7 +955,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       local rowStartX = startX
       currentHeight = buttonWidth + 10 -- width / 3 --math.max(60, 50 + (buttonWidth / 2))
       if draw then
-         drawTapesForBackground(originX, originY, width, currentHeight)
+         --         buttonSize / 2
+         drawTapesForBackground(originX, originY, width - (buttonSize / 2), currentHeight)
       end
       for i = 1, 3 do
          --love.graphics.setColor(0, 0, 0)
@@ -920,6 +1101,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
    end
 
    if draw then
+      --local extraOffsetToTapes = tabHeight / 5
       local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width)
       --love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
       --love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
@@ -1150,6 +1332,8 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    local cellHeight = cellWidth
    local currentX = startX + cellMargin
+
+   local extraOffsetToTapes = tabHeight / 5
    local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
    currentY = currentY + minimumHeight + cellMargin
    local scrollAreaHeight = (height - minimumHeight - tabHeight)
