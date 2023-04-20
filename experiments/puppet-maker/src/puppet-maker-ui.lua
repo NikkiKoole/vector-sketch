@@ -827,7 +827,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                changePart('head', values)
             end
 
-
             for i = 1, #posts do
                local p = posts[i]
                local vv = selectedCategory .. p
@@ -838,16 +837,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                    nil, mins[i], maxs[i], 1.0 / fs[i], icons['patch' .. p .. 'less'], icons['patch' .. p .. 'more'])
 
                runningElem, currentY = updateRowStuff()
-
-
-               -- local v = h_slider(vv, startX, currentY, 50, values[vv], mins[i], maxs[i])
-               -- if v.value then
-               --    v.value = math.floor(v.value * fs[i]) / fs[i] -- round to .5
-               --    print(vv, v.value)
-               --    values[vv] = v.value
-               --    changePart('head', values)
-               -- end
-               -- currentY = currentY + 25
             end
          end
       end
@@ -928,7 +917,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          draw_slider_with_2_buttons(selectedCategory .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
              buttonSize,
              sliderWidth, propupdate,
-             nil, 0, 15, 1, icons.patterntransparent, icons.patternopaque)
+             nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
 
          runningElem, currentY = updateRowStuff()
       end
