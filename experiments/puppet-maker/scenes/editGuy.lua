@@ -98,11 +98,13 @@ function getSiblingBefore(before)
    return nil
 end
 
-function playSound(sound)
+function playSound(sound, optionalPitchOffset, volumeMultiplier)
    print('playing sound')
    local s = sound:clone()
-   s:setPitch(.99 + .02 * love.math.random())
-   s:setVolume(.25)
+
+   local p = (optionalPitchOffset == nil and 0 or optionalPitchOffset) + .99 + .02 * love.math.random()
+   s:setPitch(p)
+   s:setVolume(.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
    love.audio.play(s)
 end
 
@@ -432,10 +434,18 @@ function scene.load()
        thumb4 = love.graphics.newImage('assets/ui/slider-thumb4.png'),
    }
    icons               = {
-       fliph1 = love.graphics.newImage('assets/ui/icon-fliph1.png'),
-       fliph2 = love.graphics.newImage('assets/ui/icon-fliph2.png'),
-       flipv1 = love.graphics.newImage('assets/ui/icon-flipv1.png'),
-       flipv2 = love.graphics.newImage('assets/ui/icon-flipv2.png'),
+       bodyfliph1 = love.graphics.newImage('assets/ui/icon-body-fliph1.png'),
+       bodyfliph2 = love.graphics.newImage('assets/ui/icon-body-fliph2.png'),
+       bodyflipv1 = love.graphics.newImage('assets/ui/icon-body-flipv1.png'),
+       bodyflipv2 = love.graphics.newImage('assets/ui/icon-body-flipv2.png'),
+       headfliph1 = love.graphics.newImage('assets/ui/icon-head-fliph1.png'),
+       headfliph2 = love.graphics.newImage('assets/ui/icon-head-fliph2.png'),
+       headflipv1 = love.graphics.newImage('assets/ui/icon-head-flipv1.png'),
+       headflipv2 = love.graphics.newImage('assets/ui/icon-head-flipv2.png'),
+       headsmall = love.graphics.newImage('assets/ui/icon-head-small.png'),
+       headtall = love.graphics.newImage('assets/ui/icon-head-tall.png'),
+       headnarrow = love.graphics.newImage('assets/ui/icon-head-narrow.png'),
+       headwide = love.graphics.newImage('assets/ui/icon-head-wide.png'),
        bodysmall = love.graphics.newImage('assets/ui/icon-body-small.png'),
        bodytall = love.graphics.newImage('assets/ui/icon-body-tall.png'),
        bodynarrow = love.graphics.newImage('assets/ui/icon-body-narrow.png'),
@@ -548,6 +558,32 @@ function scene.load()
    selectedTab = 'part'
    selectedCategory = 'body'
    selectedColoringLayer = 'bgPal' --- bg fg, line
+
+
+   humup = {
+       love.audio.newSource('assets/sounds/humup1.wav', 'static'),
+       love.audio.newSource('assets/sounds/humup2.wav', 'static'),
+       love.audio.newSource('assets/sounds/humup3.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah1.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah2.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah3.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah4.wav', 'static'),
+       love.audio.newSource('assets/sounds/huh.wav', 'static'),
+       love.audio.newSource('assets/sounds/huh2.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah1.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah2.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah3.wav', 'static'),
+       love.audio.newSource('assets/sounds/blah4.wav', 'static'),
+   }
+   humdown = {
+       --love.audio.newSource('assets/sounds/humdown1.wav', 'static'),
+       --love.audio.newSource('assets/sounds/humdown2.wav', 'static'),
+       -- love.audio.newSource('assets/sounds/humdown3.wav', 'static'),
+       love.audio.newSource('assets/sounds/tsk.wav', 'static'),
+       love.audio.newSource('assets/sounds/tsk2.wav', 'static'),
+       love.audio.newSource('assets/sounds/huh.wav', 'static'),
+       love.audio.newSource('assets/sounds/huh2.wav', 'static')
+   }
 
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')

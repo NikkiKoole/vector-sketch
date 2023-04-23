@@ -7,6 +7,7 @@ local mesh = require "lib.mesh"
 local ui = require "lib.ui"
 local transforms = require "lib.transform"
 local text = require 'lib.text'
+local numbers = require 'lib.numbers'
 
 imageCache = {} -- tjo save all the parts inages in
 
@@ -169,6 +170,11 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       propupdate(getValueMaybeNested(prop))
       if update then update() end
       print('shrinkng')
+      local value = getValueMaybeNested(prop)
+      local index = numbers.mapInto(value, valmin, valmax, 1, #humdown)
+
+      playSound(humdown[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
+          (0.6 + love.math.random() * 0.4))
    end
 
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
@@ -186,6 +192,11 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       propupdate(getValueMaybeNested(prop))
       if update then update() end
       print('growing')
+
+      local value = getValueMaybeNested(prop)
+      local index = numbers.mapInto(value, valmin, valmax, 1, #humup)
+      playSound(humup[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
+          (0.6 + love.math.random() * 0.4))
    end
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
@@ -364,7 +375,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             draw_toggle_with_2_buttons('bodyflipy', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth, (values.body.flipy == 1),
-                f, icons.flipv1, icons.flipv2)
+                f, icons.bodyflipv1, icons.bodyflipv2)
             runningElem, currentY = updateRowStuff()
 
             local f = function(v)
@@ -373,7 +384,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             end
             draw_toggle_with_2_buttons('bodyflipx', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth, (values.body.flipx == 1),
-                f, icons.fliph1, icons.fliph2)
+                f, icons.bodyfliph1, icons.bodyfliph2)
             runningElem, currentY = updateRowStuff()
 
             local f = function(v)
@@ -847,44 +858,59 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             editingGuy.head.dirty = true
             transforms.setTransforms(editingGuy.head)
             changePart('head', values)
-
             myWorld:emit("bipedAttachHead", biped)
          end
 
-         if draw then
-            local v = h_slider("head-width", startX, currentY, 50, values.headWidthMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.headWidthMultiplier = v.value
-               myWorld:emit('rescaleFaceparts', potato)
-               --head.transforms.l[4] = v.value
-               update()
-            end
-            currentY = currentY + 25
+         currentHeight = calcCurrentHeight(4)
 
-            v = h_slider("head-height", startX, currentY, 50, values.headHeightMultiplier, .5, 3)
-            if v.value then
-               v.value = math.floor(v.value * 2) / 2.0 -- round to .5
-               values.headHeightMultiplier = v.value
+         if draw then
+            runningElem = 0
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
+               changePart('head', values)
                myWorld:emit('rescaleFaceparts', potato)
-               --head.transforms.l[5] = v.value
                update()
             end
-            currentY = currentY + 50
-            startX = startX + 10
-            love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.head.flipy = values.head.flipy == -1 and 1 or -1
+
+
+            draw_slider_with_2_buttons('headWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.5, 3, .5, icons.headnarrow, icons.headwide)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('headHeightMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.5, 3, .5, icons.headsmall, icons.headtall)
+
+            runningElem, currentY = updateRowStuff()
+
+
+            local f = function(v)
+               values.head.flipy = v == false and -1 or 1
                update()
             end
-            startX = startX + 25
-            love.graphics.circle('fill', startX, currentY, 10)
-            local b = ui.getUICircle(startX, currentY, 10)
-            if b then
-               values.head.flipx = values.head.flipx == -1 and 1 or -1
+
+            draw_toggle_with_2_buttons('head.flipy', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                (values.head.flipy == -1),
+                f, icons.headflipv1, icons.headflipv2)
+
+            runningElem, currentY = updateRowStuff()
+
+            local f = function(v)
+               values.head.flipx = v == false and -1 or 1
                update()
             end
+
+            draw_toggle_with_2_buttons('head.flipx', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                (values.head.flipx == -1),
+                f, icons.headfliph1, icons.headfliph2)
+            runningElem, currentY = updateRowStuff()
          end
       end
    end
