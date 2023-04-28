@@ -365,6 +365,12 @@ function scene.load()
    }
 
 
+   bigbuttons          = {
+       head = love.graphics.newImage('assets/ui/big-button-head.png'),
+       headmask = love.graphics.newImage('assets/ui/big-button-head-mask.png'),
+       body = love.graphics.newImage('assets/ui/big-button-body.png'),
+       bodymask = love.graphics.newImage('assets/ui/big-button-body-mask.png'),
+   }
    dots                = {
        love.graphics.newImage('assets/blups/dot1.150.png'),
        love.graphics.newImage('assets/blups/dot2.150.png'),
@@ -573,7 +579,7 @@ function scene.load()
        love.audio.newSource('assets/sounds/blah1.wav', 'static'),
        love.audio.newSource('assets/sounds/blah2.wav', 'static'),
        love.audio.newSource('assets/sounds/blah3.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah4.wav', 'static'),
+       -- love.audio.newSource('assets/sounds/blah4.wav', 'static'),
    }
    humdown = {
        --love.audio.newSource('assets/sounds/humdown1.wav', 'static'),

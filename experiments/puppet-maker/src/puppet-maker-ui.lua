@@ -12,7 +12,10 @@ local numbers = require 'lib.numbers'
 imageCache = {} -- tjo save all the parts inages in
 
 
-
+local pink = { 201 / 255, 135 / 255, 155 / 255 }
+local yellow = { 239 / 255, 219 / 255, 145 / 255 }
+local green = { 192 / 255, 212 / 255, 171 / 255 }
+local colors = { pink, yellow, green }
 local tabs = { "part", "colors", "pattern" }
 
 local function getPNGMaskUrl(url)
@@ -175,6 +178,8 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
 
       playSound(humdown[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
           (0.6 + love.math.random() * 0.4))
+
+      myWorld:emit('mouthSaySomething', mouth)
    end
 
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
@@ -195,8 +200,10 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
 
       local value = getValueMaybeNested(prop)
       local index = numbers.mapInto(value, valmin, valmax, 1, #humup)
+      print(index)
       playSound(humup[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
           (0.6 + love.math.random() * 0.4))
+      myWorld:emit('mouthSaySomething', mouth)
    end
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
@@ -1028,11 +1035,8 @@ function partSettingsSurroundings(draw, clickX, clickY)
       local uiOffX = 18 * scaleX
       local uiOffY = 40 * scaleY
 
-      local pink = { 201 / 255, 135 / 255, 155 / 255 }
-      local yellow = { 239 / 255, 219 / 255, 145 / 255 }
-      local green = { 192 / 255, 212 / 255, 171 / 255 }
 
-      local colors = { pink, yellow, green }
+
       local drawunder = { { 2, 3, 1 }, { 1, 3, 2 }, { 1, 2, 3 } }
 
       local selectedTabIndex = -1
@@ -1476,26 +1480,61 @@ function headOrBody(draw, clickX, clickY)
 
    local topY = (h / 2) - buttonHeight - margin
 
+
+   local tabIndex = nil
+   for i = 1, #tabs do
+      if selectedTab == tabs[i] then
+         tabIndex = i
+      end
+   end
+
+
    if draw then
+      local maskAlpha = 0
       if selectedRootButton == 'head' then
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
+         maskAlpha = 1
       else
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+         maskAlpha = .25
       end
       love.graphics.rectangle('fill', margin, topY, size, buttonHeight)
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.print('head', margin, topY)
+
+      local sx, sy = createFittingScale(bigbuttons.head, size, buttonHeight)
+      love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+
+      love.graphics.draw(bigbuttons.headmask, margin, topY, 0, sx, sy)
+      love.graphics.setColor(0, 0, 0, maskAlpha)
+
+
+
+      love.graphics.draw(bigbuttons.head, margin, topY, 0, sx, sy)
+
+      --love.graphics.print('head', margin, topY)
 
 
       if selectedRootButton == 'body' then
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
+         maskAlpha = 1
       else
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
+         maskAlpha = .25
       end
 
       love.graphics.rectangle('fill', margin, (h / 2), size, buttonHeight)
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.print('body', margin, (h / 2))
+
+      local sx, sy = createFittingScale(bigbuttons.body, size, buttonHeight)
+
+      love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+      love.graphics.draw(bigbuttons.bodymask, margin, (h / 2), 0, sx, sy)
+
+      love.graphics.setColor(0, 0, 0, maskAlpha)
+
+
+      love.graphics.draw(bigbuttons.body, margin, (h / 2), 0, sx, sy)
+
+
+      --love.graphics.print('body', margin, (h / 2))
    else
       if (hit.pointInRect(clickX, clickY, margin, topY, size, buttonHeight)) then
          print('clicked in head button')

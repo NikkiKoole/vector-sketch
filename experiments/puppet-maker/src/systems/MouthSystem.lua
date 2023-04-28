@@ -24,18 +24,18 @@ function MouthSystem:mouthInit(e)
 end
 
 function MouthSystem:mouthSaySomething(e)
-    print('jo biggity!')
-    local maxOpen = .25 + love.math.random() * 0.5
-    local minWide = .5 + love.math.random() * 0.5
+    local maxOpen = .25 + love.math.random() * 0.15
+    local minWide = .5 + love.math.random() * 0.15
 
     local value = { mouthOpen = 0, mouthWide = 1 }
     local wideness = 0.5 + love.math.random()
-    Timer.tween(.3, value, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
-    Timer.after(.4, function()
-        Timer.tween(.2, value, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
+    local totalDur = 0.2 + 0.2 * love.math.random()
+    Timer.tween(totalDur / 3, value, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
+    Timer.after(totalDur / 3 + 0.001, function()
+        Timer.tween(totalDur / 3, value, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
     end)
 
-    Timer.during(1, function(dt)
+    Timer.during((totalDur / 3) * 2 + 0.001, function(dt)
         MouthSystem:mouthOpener(e, value.mouthOpen, value.mouthWide)
     end)
 end
