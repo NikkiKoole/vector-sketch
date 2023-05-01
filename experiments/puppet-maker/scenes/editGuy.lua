@@ -30,6 +30,8 @@ local Components        = {}
 local Systems           = {}
 
 
+assets = require('vendor.cargo').init('assets')
+
 myWorld = Concord.world()
 
 require 'src.generatePuppet'
@@ -98,11 +100,11 @@ function getSiblingBefore(before)
    return nil
 end
 
-function playSound(sound, optionalPitchOffset, volumeMultiplier)
+function playSound(sound, optionalPitch, volumeMultiplier)
    print('playing sound')
    local s = sound:clone()
 
-   local p = (optionalPitchOffset == nil and 0 or optionalPitchOffset) + .99 + .02 * love.math.random()
+   local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
    s:setPitch(p)
    s:setVolume(.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
    love.audio.play(s)
@@ -429,6 +431,7 @@ function scene.load()
        love.graphics.newImage('assets/ui/ui-header4.png', { linear = true })
 
    }
+
    sliderimg           = {
        track1 = love.graphics.newImage('assets/ui/slider-track1.png'),
        thumb1 = love.graphics.newImage('assets/ui/slider-thumb1.png'),
@@ -439,6 +442,9 @@ function scene.load()
        thumb3 = love.graphics.newImage('assets/ui/slider-thumb3.png'),
        thumb4 = love.graphics.newImage('assets/ui/slider-thumb4.png'),
    }
+
+
+   
    icons               = {
        bodyfliph1 = love.graphics.newImage('assets/ui/icon-body-fliph1.png'),
        bodyfliph2 = love.graphics.newImage('assets/ui/icon-body-fliph2.png'),
@@ -566,30 +572,21 @@ function scene.load()
    selectedColoringLayer = 'bgPal' --- bg fg, line
 
 
-   humup = {
+   hum = {
        love.audio.newSource('assets/sounds/humup1.wav', 'static'),
        love.audio.newSource('assets/sounds/humup2.wav', 'static'),
        love.audio.newSource('assets/sounds/humup3.wav', 'static'),
        love.audio.newSource('assets/sounds/blah1.wav', 'static'),
        love.audio.newSource('assets/sounds/blah2.wav', 'static'),
        love.audio.newSource('assets/sounds/blah3.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah4.wav', 'static'),
+      -- love.audio.newSource('assets/sounds/blah4.wav', 'static'),
        love.audio.newSource('assets/sounds/huh.wav', 'static'),
        love.audio.newSource('assets/sounds/huh2.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah1.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah2.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah3.wav', 'static'),
-       -- love.audio.newSource('assets/sounds/blah4.wav', 'static'),
-   }
-   humdown = {
-       --love.audio.newSource('assets/sounds/humdown1.wav', 'static'),
-       --love.audio.newSource('assets/sounds/humdown2.wav', 'static'),
-       -- love.audio.newSource('assets/sounds/humdown3.wav', 'static'),
        love.audio.newSource('assets/sounds/tsk.wav', 'static'),
        love.audio.newSource('assets/sounds/tsk2.wav', 'static'),
-       love.audio.newSource('assets/sounds/huh.wav', 'static'),
-       love.audio.newSource('assets/sounds/huh2.wav', 'static')
+
    }
+  
 
 
    uiBlup = love.graphics.newImage('assets/blups/blup8.png')

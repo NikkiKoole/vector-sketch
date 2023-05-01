@@ -173,13 +173,19 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       propupdate(getValueMaybeNested(prop))
       if update then update() end
       print('shrinkng')
+
       local value = getValueMaybeNested(prop)
-      local index = numbers.mapInto(value, valmin, valmax, 1, #humdown)
+      local pitch = numbers.mapInto(value, valmin, valmax, 1, 3)
+      local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
+      local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+      playSound(hum[math.ceil(index)], pitch)
+     -- local value = getValueMaybeNested(prop)
+   --   local index = numbers.mapInto(value, valmin, valmax, 1, #hum)
 
-      playSound(humdown[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
-          (0.6 + love.math.random() * 0.4))
+    --  playSound(hum[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
+     --     (0.6 + love.math.random() * 0.4))
 
-      myWorld:emit('mouthSaySomething', mouth)
+      myWorld:emit('mouthSaySomething', mouth, sndLength)
    end
 
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
@@ -199,11 +205,15 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       print('growing')
 
       local value = getValueMaybeNested(prop)
-      local index = numbers.mapInto(value, valmin, valmax, 1, #humup)
-      print(index)
-      playSound(humup[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
-          (0.6 + love.math.random() * 0.4))
-      myWorld:emit('mouthSaySomething', mouth)
+      local pitch = numbers.mapInto(value, valmin, valmax, 1, 3)
+      local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
+      
+      
+      playSound(hum[math.ceil(index)], pitch)
+      
+         local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+
+      myWorld:emit('mouthSaySomething', mouth, sndLength)
    end
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,

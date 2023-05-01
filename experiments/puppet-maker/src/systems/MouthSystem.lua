@@ -23,13 +23,13 @@ function MouthSystem:mouthInit(e)
     e.mouth.teeth.transforms.l[2] = -50 --e.mouth.upperlip.transforms.l[2] - 50
 end
 
-function MouthSystem:mouthSaySomething(e)
+function MouthSystem:mouthSaySomething(e, length)
     local maxOpen = .25 + love.math.random() * 0.15
     local minWide = .5 + love.math.random() * 0.15
 
     local value = { mouthOpen = 0, mouthWide = 1 }
     local wideness = 0.5 + love.math.random()
-    local totalDur = 0.2 + 0.2 * love.math.random()
+    local totalDur = length + 0.1-- 0.2 + 0.2 * love.math.random()
     Timer.tween(totalDur / 3, value, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
     Timer.after(totalDur / 3 + 0.001, function()
         Timer.tween(totalDur / 3, value, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
