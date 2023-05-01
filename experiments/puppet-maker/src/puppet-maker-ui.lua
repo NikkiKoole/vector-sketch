@@ -18,9 +18,20 @@ local green = { 192 / 255, 212 / 255, 171 / 255 }
 local colors = { pink, yellow, green }
 local tabs = { "part", "colors", "pattern" }
 
+local playingSound = nil
+
 local function getPNGMaskUrl(url)
    return text.replace(url, '.png', '-mask.png')
 end
+
+function growl(pitch)
+   local index = math.ceil(love.math.random()*#hum) 
+      local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+      playingSound = playSound(hum[math.ceil(index)], pitch)
+    
+      myWorld:emit('mouthSaySomething', mouth, sndLength)
+end
+
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -176,16 +187,8 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
 
       local value = getValueMaybeNested(prop)
       local pitch = numbers.mapInto(value, valmin, valmax, 1, 3)
-      local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
-      local sndLength = hum[math.ceil(index)]:getDuration() / pitch
-      playSound(hum[math.ceil(index)], pitch)
-     -- local value = getValueMaybeNested(prop)
-   --   local index = numbers.mapInto(value, valmin, valmax, 1, #hum)
-
-    --  playSound(hum[math.ceil(index)], index * (0.2 + (love.math.random() / 5)),
-     --     (0.6 + love.math.random() * 0.4))
-
-      myWorld:emit('mouthSaySomething', mouth, sndLength)
+      growl(pitch)
+      
    end
 
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
@@ -206,14 +209,8 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
 
       local value = getValueMaybeNested(prop)
       local pitch = numbers.mapInto(value, valmin, valmax, 1, 3)
-      local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
-      
-      
-      playSound(hum[math.ceil(index)], pitch)
-      
-         local sndLength = hum[math.ceil(index)]:getDuration() / pitch
-
-      myWorld:emit('mouthSaySomething', mouth, sndLength)
+        growl(pitch)
+    
    end
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
@@ -228,9 +225,17 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       else
          print('shrinkng')
       end
+      local changed = (v.value ~= getValueMaybeNested(prop))
+      print(v.value, getValueMaybeNested(prop))
       --values[prop] = v.value
       setValueMaybeNested(prop, v.value)
       propupdate(getValueMaybeNested(prop))
+      if (changed) then
+
+      if playingSound then playingSound:stop() end
+      growl(1+love.math.random()*2)
+      
+      end
       if update then update() end
    end
 end
@@ -251,6 +256,8 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
    love.graphics.setColor(0, 0, 0, 1)
    local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
    if less then
+      growl(1+love.math.random()*2)
+     
       toggleFunc(false)
    end
    local offset = buttonSize
@@ -297,11 +304,15 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
    local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
            buttonSize, buttonSize)
    if more then
+      growl(1+love.math.random()*2)
+ 
       toggleFunc(true)
    end
    local w, h = toggle.body3:getDimensions()
    local t = ui.getUIRect('t-' .. prop, offset + startX, yOff + currentY, w * scale, h * scale)
    if t then
+      growl(1+love.math.random()*2)
+   
       toggleFunc(toggleValue)
    end
 end
@@ -1300,7 +1311,16 @@ local function buttonClickHelper(value)
          tweenCameraToHead()
       end
 
-      playSound(scrollItemClickSample)
+      growl(1+love.math.random()*2)
+     -- local pitch = 1+love.math.random()*2
+     -- local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
+
+     -- playingSound = playSound(hum[math.ceil(index)], 1+love.math.random()*2)
+     -- local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+
+     -- myWorld:emit('mouthSaySomething', mouth, sndLength)
+
+      --playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
       --local whichPart = { 'bgPal', 'fgPal', 'linePal' }

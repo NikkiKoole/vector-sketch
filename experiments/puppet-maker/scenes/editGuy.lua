@@ -108,6 +108,7 @@ function playSound(sound, optionalPitch, volumeMultiplier)
    s:setPitch(p)
    s:setVolume(.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
    love.audio.play(s)
+   return s
 end
 
 function hittestPixel()
