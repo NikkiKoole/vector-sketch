@@ -89,14 +89,21 @@ function partSettingsTabsDimensions(tabs, width)
 end
 
 function drawTapesForBackground(x, y, w, h)
-   local index = 2
-
+   local index = 1
+   local ratio = h/w
+   if ratio < 0.3 then
+      index = 1   
+   else
+      index = 2
+   end
+   print('ratio', ratio)
    -- if h > 100 then index = 2 end
    local imgw, imgh = uiheaders[index]:getDimensions()
    local sx, sy = createFittingScale(uiheaders[index], w, h)
    love.graphics.setColor(1, 1, 1, .4)
    --love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy * -1, 0, imgh / 2)
    love.graphics.draw(uiheaders[index], x, y, 0, sx, sy, 0, 0)
+ 
 end
 
 function newtoggle(id, img, x, y, w, toggled)
@@ -336,18 +343,21 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    width = width + buttonSize
    startX = startX + buttonSize / 2
 
+   local rowMultiplier = 1.3
+
    function updateRowStuff()
       runningElem = runningElem + 1
       if runningElem >= elementsInRow then
          runningElem = 0
-         currentY = currentY + buttonSize
+         currentY = currentY + buttonSize * rowMultiplier
       end
       return runningElem, currentY
    end
 
+  
    function calcCurrentHeight(itemsHere)
       local rowsInUse = math.ceil(itemsHere / elementsInRow)
-      return rowsInUse * (buttonSize)
+      return rowsInUse * (buttonSize) * rowMultiplier
    end
 
    if selectedTab == 'part' then
@@ -1574,7 +1584,9 @@ function headOrBody(draw, clickX, clickY)
             tweenCameraToHeadAndBody()
          else
             selectedRootButton = 'head'
+          
             tweenCameraToHead()
+            
          end
          setCategories(selectedRootButton)
       end
@@ -1603,6 +1615,14 @@ function scrollList(draw, clickX, clickY)
 
    scrollListXPosition = size + margin * 2 -- this is updating a global!!!
    local offset = scrollPosition % 1
+
+   local tabIndex = nil
+   for i = 1, #tabs do
+      if selectedTab == tabs[i] then
+         tabIndex = i
+      end
+   end
+
    if #categories > 0 then
       for i = -1, (scrollItemsOnScreen - 1) do
          local newScroll = i + offset
@@ -1633,7 +1653,30 @@ function scrollList(draw, clickX, clickY)
             love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
 
             love.graphics.setColor(0, 0, 0)
-            love.graphics.print(categories[index], scrollListXPosition, yPosition)
+           
+            local sm = 1
+            if selectedCategory == categories[index] then
+               local offset = math.sin(love.timer.getTime() * 5) * 0.02
+               sm = sm + offset
+            end
+        
+            if (scrollIcons[categories[index]]) then
+              
+               local sx, sy = createFittingScale(scrollIcons[categories[index]], size, size)
+               love.graphics.draw(scrollIcons[categories[index]], scrollListXPosition, yPosition, 0, sx*sm, sy*sm)
+
+               local m = scrollIcons[categories[index]..'Mask']
+
+               if (m) then
+                  love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], 1)
+                  local sx, sy = createFittingScale(m, size, size)
+                  love.graphics.draw(m, scrollListXPosition, yPosition, 0, sx*sm, sy*sm)
+   
+               end
+
+            else
+               love.graphics.print(categories[index], scrollListXPosition, yPosition)
+            end
          else
             if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
                print("clicked", categories[index])

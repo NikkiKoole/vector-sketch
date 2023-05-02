@@ -126,21 +126,24 @@ function hittestPixel()
 end
 
 local function pointerMoved(x, y, dx, dy, id)
+   local somethingWasDragged = false
    for i = 1, #pointerInteractees do
       if pointerInteractees[i].id == id then
          local scale = cam:getScale()
 
          if love.mouse.isDown(1) then
             myWorld:emit("itemDrag", pointerInteractees[i], dx, dy, scale)
+            somethingWasDragged = true
          end
          if love.mouse.isDown(2) then
             myWorld:emit("itemRotate", pointerInteractees[i], dx, dy, scale)
+            somethingWasDragged = true
          end
       end
    end
 
    -- only do this when the scroll ui is visible (always currently)
-   if scrollerIsDragging then
+   if scrollerIsDragging and not somethingWasDragged then
       local w, h = love.graphics.getDimensions()
       local oldScrollPos = scrollPosition
       scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
@@ -151,7 +154,7 @@ local function pointerMoved(x, y, dx, dy, id)
       end
    end
 
-   if settingsScrollAreaIsDragging then
+   if settingsScrollAreaIsDragging and not somethingWasDragged then
       local old = settingsScrollPosition
       settingsScrollPosition = settingsScrollPosition + dy / settingsScrollArea[5]
 
@@ -548,6 +551,28 @@ function scene.load()
        patchScaleYless = love.graphics.newImage('assets/ui/icon-patch-ScaleYless.png'),
        patchScaleYmore = love.graphics.newImage('assets/ui/icon-patch-ScaleYmore.png'),
    }
+
+   scrollIcons = {
+      armhair = love.graphics.newImage('assets/ui/icon-armhair.png'), 
+      armhairMask = love.graphics.newImage('assets/ui/icon-armhair-mask.png'), 
+      leghair = love.graphics.newImage('assets/ui/icon-leghair.png'), 
+      leghairMask = love.graphics.newImage('assets/ui/icon-leghair-mask.png'), 
+      hands = love.graphics.newImage('assets/ui/icon-hands.png'), 
+      handsMask = love.graphics.newImage('assets/ui/icon-hands-mask.png'), 
+      feet = love.graphics.newImage('assets/ui/icon-feet.png'), 
+      feetMask = love.graphics.newImage('assets/ui/icon-feet-mask.png'), 
+      eyes = love.graphics.newImage('assets/ui/icon-eyes.png'), 
+      eyesMask = love.graphics.newImage('assets/ui/icon-eyes-mask.png'), 
+      nose = love.graphics.newImage('assets/ui/icon-nose.png'), 
+      noseMask = love.graphics.newImage('assets/ui/icon-nose-mask.png'), 
+      ears = love.graphics.newImage('assets/ui/icon-ears.png'), 
+      earsMask = love.graphics.newImage('assets/ui/icon-ears-mask.png'), 
+      brows = love.graphics.newImage('assets/ui/icon-brows.png'), 
+      browsMask = love.graphics.newImage('assets/ui/icon-brows-mask.png'), 
+      mouth = love.graphics.newImage('assets/ui/icon-mouth.png'), 
+      mouthMask = love.graphics.newImage('assets/ui/icon-mouth-mask.png'), 
+   }
+
    toggle              = {
        body1 = love.graphics.newImage('assets/ui/togglebody1.png'),
        body2 = love.graphics.newImage('assets/ui/togglebody2.png'),
@@ -732,7 +757,13 @@ function setCategories(rootButton)
 end
 
 function getCameraDataZoomOnJustHead()
-   local bb                 = bbox.getBBoxRecursive(editingGuy.head)
+   local bb = nil
+   if editingGuy.values.potatoHead then 
+       bb                 = bbox.getBBoxRecursive(editingGuy.body)
+   else 
+       bb                 = bbox.getBBoxRecursive(editingGuy.head)
+   end
+   
    local tlx, tly, brx, bry = bbox.combineBboxes(bb)
    local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
    return x2, y2, w * 3, h * 3
