@@ -1,6 +1,6 @@
 local scene = {}
-local poppetjeMaker = love.graphics.newImage('assets/puppetmaker2.png')
-local doggie = love.graphics.newImage('assets/doggie.png')
+local poppetjeMaker = love.graphics.newImage('assets/intro/puppetmaker2.png')
+local doggie = love.graphics.newImage('assets/intro/doggie.png')
 local time = 0
 
 local Timer = require 'vendor.timer'

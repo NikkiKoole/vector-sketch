@@ -25,18 +25,16 @@ local function getPNGMaskUrl(url)
 end
 
 function growl(pitch)
-   local index = math.ceil(love.math.random()*#hum) 
-      local sndLength = hum[math.ceil(index)]:getDuration() / pitch
-      playingSound = playSound(hum[math.ceil(index)], pitch)
-    
-      myWorld:emit('mouthSaySomething', mouth, sndLength)
-end
+   local index = math.ceil(love.math.random() * #hum)
+   local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+   playingSound = playSound(hum[math.ceil(index)], pitch)
 
+   myWorld:emit('mouthSaySomething', mouth, sndLength)
+end
 
 function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
-   --   print(sx, sy)
    return sx, sy
 end
 
@@ -51,7 +49,6 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
       local something2 = sy * img:getHeight()
       yOffset = -desiredH / 2 - (something - something2) / 2
    elseif scale == sy then
-      --print('y')
       yOffset = -desiredH / 2 -- half the height
       local something = sx * img:getWidth()
       local something2 = sy * img:getWidth()
@@ -90,20 +87,19 @@ end
 
 function drawTapesForBackground(x, y, w, h)
    local index = 1
-   local ratio = h/w
+   local ratio = h / w
    if ratio < 0.3 then
-      index = 1   
+      index = 1
    else
       index = 2
    end
-   print('ratio', ratio)
+
    -- if h > 100 then index = 2 end
    local imgw, imgh = uiheaders[index]:getDimensions()
    local sx, sy = createFittingScale(uiheaders[index], w, h)
    love.graphics.setColor(1, 1, 1, .4)
    --love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy * -1, 0, imgh / 2)
    love.graphics.draw(uiheaders[index], x, y, 0, sx, sy, 0, 0)
- 
 end
 
 function newtoggle(id, img, x, y, w, toggled)
@@ -123,7 +119,7 @@ function newtoggle(id, img, x, y, w, toggled)
          h = ui.getUIRect(id, x + (togw / 2) * s, y, (togw / 2) * s, togh * s)
       end
    end
-   --print(toggled)
+
    return h
 end
 
@@ -190,12 +186,10 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       changeValue(prop, -valstep, valmin, valmax)
       propupdate(getValueMaybeNested(prop))
       if update then update() end
-      print('shrinkng')
 
       local value = getValueMaybeNested(prop)
       local pitch = numbers.mapInto(value, valmin, valmax, 1, 3)
       growl(pitch)
-      
    end
 
    local sx, sy = createFittingScale(rects[1], buttonSize, buttonSize)
@@ -212,12 +206,10 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
       changeValue(prop, valstep, valmin, valmax)
       propupdate(getValueMaybeNested(prop))
       if update then update() end
-      print('growing')
 
       local value = getValueMaybeNested(prop)
       local pitch = numbers.mapInto(value, valmin, valmax, 1, 3)
-        growl(pitch)
-    
+      growl(pitch)
    end
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
@@ -227,21 +219,15 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
    if v.value then
       local m = math.ceil(1 / math.abs(valstep))
       v.value = math.floor(v.value * m) / m -- round to .5
-      if (v.value > getValueMaybeNested(prop)) then
-         print('growing')
-      else
-         print('shrinkng')
-      end
+
       local changed = (v.value ~= getValueMaybeNested(prop))
-      print(v.value, getValueMaybeNested(prop))
+
       --values[prop] = v.value
       setValueMaybeNested(prop, v.value)
       propupdate(getValueMaybeNested(prop))
       if (changed) then
-
-      if playingSound then playingSound:stop() end
-      growl(1+love.math.random()*2)
-      
+         if playingSound then playingSound:stop() end
+         growl(1 + love.math.random() * 2)
       end
       if update then update() end
    end
@@ -263,8 +249,8 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
    love.graphics.setColor(0, 0, 0, 1)
    local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
    if less then
-      growl(1+love.math.random()*2)
-     
+      growl(1 + love.math.random() * 2)
+
       toggleFunc(false)
    end
    local offset = buttonSize
@@ -311,15 +297,15 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
    local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
            buttonSize, buttonSize)
    if more then
-      growl(1+love.math.random()*2)
- 
+      growl(1 + love.math.random() * 2)
+
       toggleFunc(true)
    end
    local w, h = toggle.body3:getDimensions()
    local t = ui.getUIRect('t-' .. prop, offset + startX, yOff + currentY, w * scale, h * scale)
    if t then
-      growl(1+love.math.random()*2)
-   
+      growl(1 + love.math.random() * 2)
+
       toggleFunc(toggleValue)
    end
 end
@@ -330,7 +316,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
    -- if small then buttonSize == 24
    -- if big then double (48)
-   --   print(width)
    local buttonSize = width < 320 and 24 or 48
 
    width = width - buttonSize
@@ -354,7 +339,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       return runningElem, currentY
    end
 
-  
    function calcCurrentHeight(itemsHere)
       local rowsInUse = math.ceil(itemsHere / elementsInRow)
       return rowsInUse * (buttonSize) * rowMultiplier
@@ -719,7 +703,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             runningElem, currentY = updateRowStuff()
 
             local f = function(v)
-               print(values.legs.flipy)
                values.legs.flipy = v == false and -1 or 1
                changePart('legs', values)
                --myWorld:emit("bipedAttachLegs", biped)
@@ -1059,7 +1042,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
       local iw = 650
       local ih = 1240
       --local iw, ih = tabui[1]:getDimensions()
-      --print(iw, ih, width, height)
+
       local scaleX = width / iw
       local scaleY = height / ih
 
@@ -1134,16 +1117,9 @@ function partSettingsSurroundings(draw, clickX, clickY)
       local h1 = tabHeight
 
       if draw then
-         --love.graphics.rectangle("line", x, y, w1, h1)
-         if (selectedTab == tabs[i]) then
-            -- love.graphics.setColor(1, 1, 1)
-            -- love.graphics.rectangle("fill", x, y, w1, h1)
-            -- love.graphics.setColor(0, 0, 0)
-         end
-         --love.graphics.print(tabs[i], x, y)
+
       else
          if (hit.pointInRect(clickX, clickY, x, y, w1, h1)) then
-            print("clicked", tabs[i])
             selectedTab = tabs[i]
             playSound(scrollItemClickSample)
          end
@@ -1238,8 +1214,7 @@ local function renderElement(type, value, container, x, y, w, h)
 
             love.graphics.setBlendMode('subtract')
             local pal = (palettes[editingGuy.values[selectedCategory].bgPal])
-            --print(inspect(pal))
-            --love.graphics.setColor(.5, .5, .5)
+
             if picked then
                love.graphics.setColor(1 - pal[1], 1 - pal[2], 1 - pal[3], 1)
             else
@@ -1254,7 +1229,6 @@ local function renderElement(type, value, container, x, y, w, h)
 
          love.graphics.setColor(0, 0, 0, 1)
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
-         --love.graphics.print(value, x, y)
       end
    end
    if (type == "texture") then
@@ -1306,35 +1280,32 @@ local function renderElement(type, value, container, x, y, w, h)
 end
 
 local function buttonClickHelper(value)
-   print('buttonClickHelper', value, selectedCategory)
-   --print(value)
-   --print(selectedTab, selectedCategory)
    local values = editingGuy.values
    local f = findPart(selectedCategory)
    if selectedTab == 'part' then
       values[selectedCategory]['shape'] = value
       changePart(selectedCategory, values)
-      print(f.kind)
+
       if (f.kind == 'body') then
          tweenCameraToHeadAndBody()
       else
          tweenCameraToHead()
       end
 
-      growl(1+love.math.random()*2)
-     -- local pitch = 1+love.math.random()*2
-     -- local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
+      growl(1 + love.math.random() * 2)
+      -- local pitch = 1+love.math.random()*2
+      -- local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
 
-     -- playingSound = playSound(hum[math.ceil(index)], 1+love.math.random()*2)
-     -- local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+      -- playingSound = playSound(hum[math.ceil(index)], 1+love.math.random()*2)
+      -- local sndLength = hum[math.ceil(index)]:getDuration() / pitch
 
-     -- myWorld:emit('mouthSaySomething', mouth, sndLength)
+      -- myWorld:emit('mouthSaySomething', mouth, sndLength)
 
       --playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
       --local whichPart = { 'bgPal', 'fgPal', 'linePal' }
-      --print(selectedColoringLayer)
+
       values[selectedCategory][selectedColoringLayer] = value
       changePart(selectedCategory, values)
 
@@ -1376,7 +1347,6 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
    if selectedTab == "part" then
       local p = findPart(selectedCategory)
-      --print(inspect(p))
       amount = #p.imgs
       renderType = "img"
       renderContainer = p.imgs
@@ -1538,10 +1508,21 @@ function headOrBody(draw, clickX, clickY)
          love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
          maskAlpha = .25
       end
-      love.graphics.rectangle('fill', margin, topY, size, buttonHeight)
+
+      local sx1, sy1 = createFittingScale(whiterects[1], size, buttonHeight)
+      love.graphics.draw(whiterects[1], margin, topY, 0, sx1, sy1)
+
+
+
+      --love.graphics.rectangle('fill', margin, topY, size, buttonHeight)
+      love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+      if (selectedRootButton == 'head') then
+         local sx2, sy2 = createFittingScale(rects[1], size, buttonHeight)
+         love.graphics.draw(rects[1], margin, topY, 0, sx2, sy2)
+      end
 
       local sx, sy = createFittingScale(bigbuttons.head, size, buttonHeight)
-      love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+
 
       love.graphics.draw(bigbuttons.headmask, margin, topY, 0, sx, sy)
       love.graphics.setColor(0, 0, 0, maskAlpha)
@@ -1549,8 +1530,6 @@ function headOrBody(draw, clickX, clickY)
 
 
       love.graphics.draw(bigbuttons.head, margin, topY, 0, sx, sy)
-
-      --love.graphics.print('head', margin, topY)
 
 
       if selectedRootButton == 'body' then
@@ -1561,37 +1540,40 @@ function headOrBody(draw, clickX, clickY)
          maskAlpha = .25
       end
 
-      love.graphics.rectangle('fill', margin, (h / 2), size, buttonHeight)
+      local sx2, sy2 = createFittingScale(whiterects[1], size, buttonHeight)
+      love.graphics.draw(whiterects[1], margin, (h / 2), 0, sx2, sy2)
+
+
+      --love.graphics.rectangle('fill', margin, (h / 2), size, buttonHeight)
 
       local sx, sy = createFittingScale(bigbuttons.body, size, buttonHeight)
 
       love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+      if (selectedRootButton == 'body') then
+         local sx2, sy2 = createFittingScale(rects[1], size, buttonHeight)
+         love.graphics.draw(rects[1], margin, (h / 2), 0, sx2, sy2)
+      end
+
       love.graphics.draw(bigbuttons.bodymask, margin, (h / 2), 0, sx, sy)
 
       love.graphics.setColor(0, 0, 0, maskAlpha)
 
 
       love.graphics.draw(bigbuttons.body, margin, (h / 2), 0, sx, sy)
-
-
-      --love.graphics.print('body', margin, (h / 2))
    else
       if (hit.pointInRect(clickX, clickY, margin, topY, size, buttonHeight)) then
-         print('clicked in head button')
          playSound(scrollItemClickSample)
          if selectedRootButton == 'head' then
             selectedRootButton = nil
             tweenCameraToHeadAndBody()
          else
             selectedRootButton = 'head'
-          
+
             tweenCameraToHead()
-            
          end
          setCategories(selectedRootButton)
       end
       if (hit.pointInRect(clickX, clickY, margin, h / 2, size, buttonHeight)) then
-         print('clicked in button button')
          if selectedRootButton == 'body' then
             selectedRootButton = nil
             tweenCameraToHeadAndBody()
@@ -1636,50 +1618,59 @@ function scrollList(draw, clickX, clickY)
          if index > #categories then
             index = 1
          end
+         local alpha = 0.8
 
          local whiterectIndex = math.ceil( -scrollPosition) + i
          whiterectIndex = (whiterectIndex % #whiterects) + 1
-         local wrw, wrh = whiterects[whiterectIndex]:getDimensions()
-         local scaleX = size / wrw
-         local scaleY = size / wrh
+         local marginb = size / 10
+         local scaleX, scaleY = createFittingScale(whiterects[whiterectIndex], size, size)
+
 
          if draw then
-            love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], .8)
-
-            love.graphics.setColor(.1, .1, .1, .2)
-            love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition + 4, yPosition + 4, 0, scaleX, scaleY)
-
-            love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-            love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
-
-            love.graphics.setColor(0, 0, 0)
-           
             local sm = 1
             if selectedCategory == categories[index] then
                local offset = math.sin(love.timer.getTime() * 5) * 0.02
                sm = sm + offset
+               alpha = 1
             end
-        
-            if (scrollIcons[categories[index]]) then
-              
-               local sx, sy = createFittingScale(scrollIcons[categories[index]], size, size)
-               love.graphics.draw(scrollIcons[categories[index]], scrollListXPosition, yPosition, 0, sx*sm, sy*sm)
 
-               local m = scrollIcons[categories[index]..'Mask']
+
+            love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], alpha)
+
+            if selectedCategory == categories[index] then
+               love.graphics.setColor(.1, .1, .1, 0.2)
+               love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition + 4, yPosition + 4, 0,
+                   scaleX, scaleY)
+            end
+            love.graphics.setColor(255 / 255, 240 / 255, 200 / 255, alpha)
+            love.graphics.draw(whiterects[whiterectIndex], scrollListXPosition, yPosition, 0, scaleX, scaleY)
+
+            love.graphics.setColor(0.5, 0.5, 0.5, alpha)
+            if selectedCategory == categories[index] then
+               love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], alpha)
+               local sx, sy = createFittingScale(rects[1], size, size)
+               love.graphics.draw(rects[1], scrollListXPosition, yPosition, 0, sx * sm, sy * sm)
+               love.graphics.setColor(0, 0, 0, alpha)
+            end
+
+
+            if (scrollIcons[categories[index]]) then
+               local sx, sy = createFittingScale(scrollIcons[categories[index]], size, size)
+               love.graphics.draw(scrollIcons[categories[index]], scrollListXPosition, yPosition, 0, sx * sm, sy * sm,
+                   alpha)
+
+               local m = scrollIcons[categories[index] .. 'Mask']
 
                if (m) then
-                  love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], 1)
+                  love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], alpha)
                   local sx, sy = createFittingScale(m, size, size)
-                  love.graphics.draw(m, scrollListXPosition, yPosition, 0, sx*sm, sy*sm)
-   
+                  love.graphics.draw(m, scrollListXPosition, yPosition, 0, sx * sm, sy * sm)
                end
-
             else
                love.graphics.print(categories[index], scrollListXPosition, yPosition)
             end
          else
             if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
-               print("clicked", categories[index])
                selectedCategory = categories[index]
                playSound(scrollItemClickSample)
             end

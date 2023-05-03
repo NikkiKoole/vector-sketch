@@ -101,7 +101,6 @@ function getSiblingBefore(before)
 end
 
 function playSound(sound, optionalPitch, volumeMultiplier)
-   print('playing sound')
    local s = sound:clone()
 
    local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
@@ -169,9 +168,7 @@ end
 function pointerReleased(x, y, id)
    for i = #pointerInteractees, 1, -1 do
       if pointerInteractees[i].id == id then
-         print('emitting release')
          myWorld:emit('itemReleased', pointerInteractees[i])
-         --print(inspect(pointerInteractees[i]))
          table.remove(pointerInteractees, i)
       end
    end
@@ -207,7 +204,6 @@ end
 
 
 local function pointerPressed(x, y, id)
-   print('pointerpressed')
    local wx, wy = cam:getWorldCoordinates(x, y)
    for j = 1, #root.children do
       local guy = root.children[j]
@@ -221,14 +217,8 @@ local function pointerPressed(x, y, id)
                local brx, bry = item.transforms._g:inverseTransformPoint(b[3], b[4])
 
                if (hit.pointInRect(mx, my, tlx, tly, brx - tlx, bry - tly)) then
-                  --print(#item.children)
-                  --for k= 1, #item.children do
-                  --   print(k,item.children[k].name)
-                  --end
                   local romp = hasChildNamedRomp(item)
                   if romp then
-                     --local mx, my = romp.transforms._g:inverseTransformPoint(wx, wy)
-                     --print(inspect(romp.texture.url))
                      local maskUrl = (getPNGMaskUrl(romp.texture.url))
                      local mask = mesh.getImage(maskUrl)
                      local imageData = love.image.newImageData(maskUrl)
@@ -236,8 +226,7 @@ local function pointerPressed(x, y, id)
                      local imgW, imgH = imageData:getDimensions()
                      local xx = numbers.mapInto(mx, tlx, brx, 0, imgW)
                      local yy = numbers.mapInto(my, tly, bry, 0, imgH)
-                     --print(xx,yy)
-                     --print(mx, my, imageData:getWidth(), imageData:getHeight())
+
                      if xx > 0 and xx < imgW then
                         if yy > 0 and my < imgH then
                            local r, g, b, a = imageData:getPixel(xx, yy)
@@ -246,8 +235,6 @@ local function pointerPressed(x, y, id)
                            end
                         end
                      end
-
-                     --print(imageData)
                   else
                      table.insert(pointerInteractees, { state = 'pressed', item = item, x = x, y = y, id = id })
                   end
@@ -322,7 +309,6 @@ function scene.unload()
    Signal.clearPattern('.*') -- clear all signals
 
    myWorld:clear()
-   --print(inspect(myWorld:getEntities()))
 end
 
 function scene.load()
@@ -348,239 +334,258 @@ function scene.load()
        end
    )
    --]]
-   blup0 = love.graphics.newImage('assets/blups/blup1.png')
-   blup1 = love.graphics.newImage('assets/blups/blup5.png')
-   blup2 = love.graphics.newImage('assets/blups/blup2.png')
-   blup3 = love.graphics.newImage('assets/blups/blup3.png')
-   blup4 = love.graphics.newImage('assets/blups/blup4.png')
-   tiles = love.graphics.newImage('assets/layered/tiles.145.png')
-   tiles2 = love.graphics.newImage('assets/layered/tiles2.150.png')
+   tiles = love.graphics.newImage('assets/img/tiles/tiles.png')
+   tiles2 = love.graphics.newImage('assets/img/tiles/tiles2.png')
 
-   tab1 = love.graphics.newImage('assets/tab1.png')
-   tab2 = love.graphics.newImage('assets/tab2.png')
-   tab3 = love.graphics.newImage('assets/tab3.png')
 
    whiterects = {
-       love.graphics.newImage('assets/whiterect1.png'),
-       love.graphics.newImage('assets/whiterect2.png'),
-       love.graphics.newImage('assets/whiterect3.png'),
-       love.graphics.newImage('assets/whiterect4.png'),
-       love.graphics.newImage('assets/whiterect5.png'),
-       love.graphics.newImage('assets/whiterect6.png'),
-       love.graphics.newImage('assets/whiterect7.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect1.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect2.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect3.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect4.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect5.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect6.png'),
+       love.graphics.newImage('assets/ui/panels/whiterect7.png'),
    }
 
 
-   bigbuttons          = {
+   bigbuttons        = {
        head = love.graphics.newImage('assets/ui/big-button-head.png'),
        headmask = love.graphics.newImage('assets/ui/big-button-head-mask.png'),
        body = love.graphics.newImage('assets/ui/big-button-body.png'),
        bodymask = love.graphics.newImage('assets/ui/big-button-body-mask.png'),
    }
-   dots                = {
-       love.graphics.newImage('assets/blups/dot1.150.png'),
-       love.graphics.newImage('assets/blups/dot2.150.png'),
-       love.graphics.newImage('assets/blups/dot3.150.png'),
-       love.graphics.newImage('assets/blups/dot4.150.png'),
-       love.graphics.newImage('assets/blups/dot5.150.png'),
-       love.graphics.newImage('assets/blups/dot6.150.png'),
-       love.graphics.newImage('assets/blups/dot7.150.png'),
-       love.graphics.newImage('assets/blups/dot8.150.png'),
-       love.graphics.newImage('assets/blups/dot9.150.png'),
-       love.graphics.newImage('assets/blups/dot10.150.png'),
-       love.graphics.newImage('assets/blups/dot11.150.png'),
-       love.graphics.newImage('assets/blups/dot12.150.png'),
+   dots              = {
+       love.graphics.newImage('assets/ui/colorpick/dot1.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot2.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot3.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot4.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot5.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot6.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot7.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot8.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot9.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot10.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot11.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/dot12.150.png'),
    }
 
-   tabui               = {
-       love.graphics.newImage('assets/ui/tab1.png'),
-       love.graphics.newImage('assets/ui/tab2.png'),
-       love.graphics.newImage('assets/ui/tab3.png'),
+   uiheaders         = {
+       love.graphics.newImage('assets/ui/panels/ui-header2.png', { linear = true }),
+       love.graphics.newImage('assets/ui/panels/ui-header3.png', { linear = true }),
+       love.graphics.newImage('assets/ui/panels/ui-header4.png', { linear = true })
    }
-   tabuimask           = {
-       love.graphics.newImage('assets/ui/tab1-mask.png'),
-       love.graphics.newImage('assets/ui/tab2-mask.png'),
-       love.graphics.newImage('assets/ui/tab3-mask.png'),
+   tabui             = {
+       love.graphics.newImage('assets/ui/panels/tab1.png'),
+       love.graphics.newImage('assets/ui/panels/tab2.png'),
+       love.graphics.newImage('assets/ui/panels/tab3.png'),
    }
-   tabuilogo           = {
-       love.graphics.newImage('assets/ui/tab1-logo.png'),
-       love.graphics.newImage('assets/ui/tab2-logoC2.png'),
-       love.graphics.newImage('assets/ui/tab3-logo.png'),
+   tabuimask         = {
+       love.graphics.newImage('assets/ui/panels/tab1-mask.png'),
+       love.graphics.newImage('assets/ui/panels/tab2-mask.png'),
+       love.graphics.newImage('assets/ui/panels/tab3-mask.png'),
    }
-   colorpickerui       = {
-       love.graphics.newImage('assets/ui/uifill.png', { linear = true }),
-       love.graphics.newImage('assets/ui/uipattern.png', { linear = true }),
-       love.graphics.newImage('assets/ui/uiline.png', { linear = true }),
+   tabuilogo         = {
+       love.graphics.newImage('assets/ui/panels/tab1-logo.png'),
+       love.graphics.newImage('assets/ui/panels/tab2-logoC2.png'),
+       love.graphics.newImage('assets/ui/panels/tab3-logo.png'),
    }
-   colorpickeruimask   = {
-       love.graphics.newImage('assets/ui/uifill-mask.png', { linear = true }),
-       love.graphics.newImage('assets/ui/uipattern-mask.png', { linear = true }),
-       love.graphics.newImage('assets/ui/uiline-mask.png', { linear = true }),
+   colorpickerui     = {
+       love.graphics.newImage('assets/ui/colorpick/uifill.png', { linear = true }),
+       love.graphics.newImage('assets/ui/colorpick/uipattern.png', { linear = true }),
+       love.graphics.newImage('assets/ui/colorpick/uiline.png', { linear = true }),
    }
-   circles             = {
+   colorpickeruimask = {
+       love.graphics.newImage('assets/ui/colorpick/uifill-mask.png', { linear = true }),
+       love.graphics.newImage('assets/ui/colorpick/uipattern-mask.png', { linear = true }),
+       love.graphics.newImage('assets/ui/colorpick/uiline-mask.png', { linear = true }),
+   }
+   circles           = {
        love.graphics.newImage('assets/ui/circle1.png'),
        love.graphics.newImage('assets/ui/circle2.png'),
        love.graphics.newImage('assets/ui/circle3.png'),
        love.graphics.newImage('assets/ui/circle4.png'),
 
    }
-   rects               = {
+   rects             = {
        love.graphics.newImage('assets/ui/rect1.png'),
        love.graphics.newImage('assets/ui/rect2.png'),
 
    }
 
-   uiheaders           = { love.graphics.newImage('assets/ui/ui-header2.png', { linear = true }),
-       love.graphics.newImage('assets/ui/ui-header3.png', { linear = true }),
-       love.graphics.newImage('assets/ui/ui-header4.png', { linear = true })
 
+
+   sliderimg = {
+       track1 = love.graphics.newImage('assets/ui/interfaceparts/slider-track1.png'),
+       thumb1 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb1.png'),
+       thumb1Mask = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb1-mask.png'),
+       track2 = love.graphics.newImage('assets/ui/interfaceparts/slider-track2.png'),
+       thumb2 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb2.png'),
+       thumb2Mask = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb2-mask.png'),
+       thumb3 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb3.png'),
+       thumb4 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb4.png'),
+   }
+   toggle    = {
+       body1 = love.graphics.newImage('assets/ui/interfaceparts/togglebody1.png'),
+       body2 = love.graphics.newImage('assets/ui/interfaceparts/togglebody2.png'),
+       body3 = love.graphics.newImage('assets/ui/interfaceparts/togglebody3.png'),
+       thumb1 = love.graphics.newImage('assets/ui/interfaceparts/togglethumb1.png'),
+       thumb2 = love.graphics.newImage('assets/ui/interfaceparts/togglethumb2.png'),
+       thumb3 = love.graphics.newImage('assets/ui/interfaceparts/togglethumb3.png'),
    }
 
-   sliderimg           = {
-       track1 = love.graphics.newImage('assets/ui/slider-track1.png'),
-       thumb1 = love.graphics.newImage('assets/ui/slider-thumb1.png'),
-       thumb1Mask = love.graphics.newImage('assets/ui/slider-thumb1-mask.png'),
-       track2 = love.graphics.newImage('assets/ui/slider-track2.png'),
-       thumb2 = love.graphics.newImage('assets/ui/slider-thumb2.png'),
-       thumb2Mask = love.graphics.newImage('assets/ui/slider-thumb2-mask.png'),
-       thumb3 = love.graphics.newImage('assets/ui/slider-thumb3.png'),
-       thumb4 = love.graphics.newImage('assets/ui/slider-thumb4.png'),
-   }
 
-
-   
-   icons               = {
-       bodyfliph1 = love.graphics.newImage('assets/ui/icon-body-fliph1.png'),
-       bodyfliph2 = love.graphics.newImage('assets/ui/icon-body-fliph2.png'),
-       bodyflipv1 = love.graphics.newImage('assets/ui/icon-body-flipv1.png'),
-       bodyflipv2 = love.graphics.newImage('assets/ui/icon-body-flipv2.png'),
-       headfliph1 = love.graphics.newImage('assets/ui/icon-head-fliph1.png'),
-       headfliph2 = love.graphics.newImage('assets/ui/icon-head-fliph2.png'),
-       headflipv1 = love.graphics.newImage('assets/ui/icon-head-flipv1.png'),
-       headflipv2 = love.graphics.newImage('assets/ui/icon-head-flipv2.png'),
-       headsmall = love.graphics.newImage('assets/ui/icon-head-small.png'),
-       headtall = love.graphics.newImage('assets/ui/icon-head-tall.png'),
-       headnarrow = love.graphics.newImage('assets/ui/icon-head-narrow.png'),
-       headwide = love.graphics.newImage('assets/ui/icon-head-wide.png'),
-       bodysmall = love.graphics.newImage('assets/ui/icon-body-small.png'),
-       bodytall = love.graphics.newImage('assets/ui/icon-body-tall.png'),
-       bodynarrow = love.graphics.newImage('assets/ui/icon-body-narrow.png'),
-       bodywide = love.graphics.newImage('assets/ui/icon-body-wide.png'),
-       bodypotato = love.graphics.newImage('assets/ui/icon-body-potato.png'),
-       bodynonpotato = love.graphics.newImage('assets/ui/icon-body-nonpotato.png'),
-       brow1 = love.graphics.newImage('assets/ui/icon-brow-1.png'),
-       brow10 = love.graphics.newImage('assets/ui/icon-brow-10.png'),
-       brownarrow = love.graphics.newImage('assets/ui/icon-brow-narrow.png'),
-       browwide = love.graphics.newImage('assets/ui/icon-brow-wide.png'),
-       browthick = love.graphics.newImage('assets/ui/icon-brow-thick.png'),
-       browthin = love.graphics.newImage('assets/ui/icon-brow-thin.png'),
-       hairthin = love.graphics.newImage('assets/ui/icon-hair-thin.png'),
-       hairthick = love.graphics.newImage('assets/ui/icon-hair-thick.png'),
-       hairtloose = love.graphics.newImage('assets/ui/icon-hair-loose.png'),
-       hairthight = love.graphics.newImage('assets/ui/icon-hair-thight.png'),
-       nosedown = love.graphics.newImage('assets/ui/icon-nose-down.png'),
-       noseup = love.graphics.newImage('assets/ui/icon-nose-up.png'),
-       nosenarrow = love.graphics.newImage('assets/ui/icon-nose-narrow.png'),
-       nosewide = love.graphics.newImage('assets/ui/icon-nose-wide.png'),
-       nosesmall = love.graphics.newImage('assets/ui/icon-nose-small.png'),
-       nosetall = love.graphics.newImage('assets/ui/icon-nose-tall.png'),
-       mouthup = love.graphics.newImage('assets/ui/icon-mouth-up.png'),
-       mouthdown = love.graphics.newImage('assets/ui/icon-mouth-down.png'),
-       pupilsmall = love.graphics.newImage('assets/ui/icon-pupil-small.png'),
-       pupilbig = love.graphics.newImage('assets/ui/icon-pupil-big.png'),
-       eyesmall1 = love.graphics.newImage('assets/ui/icon-eye-small.png'),
-       eyesmall2 = love.graphics.newImage('assets/ui/icon-eye-small2.png'),
-       eyewide = love.graphics.newImage('assets/ui/icon-eye-wide.png'),
-       eyetall = love.graphics.newImage('assets/ui/icon-eye-tall.png'),
-       eyeccw = love.graphics.newImage('assets/ui/icon-eye-ccw.png'),
-       eyecw = love.graphics.newImage('assets/ui/icon-eye-cw.png'),
-       eyedown = love.graphics.newImage('assets/ui/icon-eye-down.png'),
-       eyeup = love.graphics.newImage('assets/ui/icon-eye-up.png'),
-       eyefar = love.graphics.newImage('assets/ui/icon-eye-far.png'),
-       eyeclose = love.graphics.newImage('assets/ui/icon-eye-close.png'),
-       earccw = love.graphics.newImage('assets/ui/icon-ear-ccw.png'),
-       earcw = love.graphics.newImage('assets/ui/icon-ear-cw.png'),
-       earback = love.graphics.newImage('assets/ui/icon-ear-back.png'),
-       earfront = love.graphics.newImage('assets/ui/icon-ear-front.png'),
-       earup = love.graphics.newImage('assets/ui/icon-ear-up.png'),
-       eardown = love.graphics.newImage('assets/ui/icon-ear-down.png'),
-       earsmall = love.graphics.newImage('assets/ui/icon-ear-small.png'),
-       earbig = love.graphics.newImage('assets/ui/icon-ear-big.png'),
-       patternccw = love.graphics.newImage('assets/ui/icon-pattern-ccw.png'),
-       patterncw = love.graphics.newImage('assets/ui/icon-pattern-cw.png'),
-       patternfine = love.graphics.newImage('assets/ui/icon-pattern-fine.png'),
-       patterncoarse = love.graphics.newImage('assets/ui/icon-pattern-coarse.png'),
-       patterntransparent = love.graphics.newImage('assets/ui/icon-pattern-transparent.png'),
-       patternopaque = love.graphics.newImage('assets/ui/icon-pattern-opaque.png'),
-       legthin = love.graphics.newImage('assets/ui/icon-legs-thin.png'),
-       legthick = love.graphics.newImage('assets/ui/icon-legs-thick.png'),
-       legflip1 = love.graphics.newImage('assets/ui/icon-legs-flipy1.png'),
-       legflip2 = love.graphics.newImage('assets/ui/icon-legs-flipy2.png'),
-       legshort = love.graphics.newImage('assets/ui/icon-legs-short.png'),
-       leglong = love.graphics.newImage('assets/ui/icon-legs-long.png'),
-       legnarrow = love.graphics.newImage('assets/ui/icon-legs-narrow.png'),
-       legwide = love.graphics.newImage('assets/ui/icon-legs-wide.png'),
-       legstance1 = love.graphics.newImage('assets/ui/icon-legs-stance1.png'),
-       legstance2 = love.graphics.newImage('assets/ui/icon-legs-stance2.png'),
-       armsshort = love.graphics.newImage('assets/ui/icon-arms-short.png'),
-       armslong = love.graphics.newImage('assets/ui/icon-arms-long.png'),
-       armsthin = love.graphics.newImage('assets/ui/icon-arms-thin.png'),
-       armsthick = love.graphics.newImage('assets/ui/icon-arms-thick.png'),
-       armsflip1 = love.graphics.newImage('assets/ui/icon-arms-flip1.png'),
-       armsflip2 = love.graphics.newImage('assets/ui/icon-arms-flip2.png'),
-       neckshort = love.graphics.newImage('assets/ui/icon-neck-short.png'),
-       necklong = love.graphics.newImage('assets/ui/icon-neck-long.png'),
-       neckthin = love.graphics.newImage('assets/ui/icon-neck-thin.png'),
-       neckthick = love.graphics.newImage('assets/ui/icon-neck-thick.png'),
-       footwide = love.graphics.newImage('assets/ui/icon-foot-wide.png'),
-       footnarrow = love.graphics.newImage('assets/ui/icon-foot-narrow.png'),
-       footshort = love.graphics.newImage('assets/ui/icon-foot-short.png'),
-       foottall = love.graphics.newImage('assets/ui/icon-foot-tall.png'),
-       handwide = love.graphics.newImage('assets/ui/icon-hand-wide.png'),
-       handnarrow = love.graphics.newImage('assets/ui/icon-hand-narrow.png'),
-       handshort = love.graphics.newImage('assets/ui/icon-hand-short.png'),
-       handtall = love.graphics.newImage('assets/ui/icon-hand-tall.png'),
-       patchXless = love.graphics.newImage('assets/ui/icon-patch-Xless.png'),
-       patchXmore = love.graphics.newImage('assets/ui/icon-patch-Xmore.png'),
-       patchYless = love.graphics.newImage('assets/ui/icon-patch-Yless.png'),
-       patchYmore = love.graphics.newImage('assets/ui/icon-patch-Ymore.png'),
-       patchAngleless = love.graphics.newImage('assets/ui/icon-patch-Angleless.png'),
-       patchAnglemore = love.graphics.newImage('assets/ui/icon-patch-Anglemore.png'),
-       patchScaleXless = love.graphics.newImage('assets/ui/icon-patch-ScaleXless.png'),
-       patchScaleXmore = love.graphics.newImage('assets/ui/icon-patch-ScaleXmore.png'),
-       patchScaleYless = love.graphics.newImage('assets/ui/icon-patch-ScaleYless.png'),
-       patchScaleYmore = love.graphics.newImage('assets/ui/icon-patch-ScaleYmore.png'),
+   icons       = {
+       bodyfliph1 = love.graphics.newImage('assets/ui/icons/body-fliph1.png'),
+       bodyfliph2 = love.graphics.newImage('assets/ui/icons/body-fliph2.png'),
+       bodyflipv1 = love.graphics.newImage('assets/ui/icons/body-flipv1.png'),
+       bodyflipv2 = love.graphics.newImage('assets/ui/icons/body-flipv2.png'),
+       headfliph1 = love.graphics.newImage('assets/ui/icons/head-fliph1.png'),
+       headfliph2 = love.graphics.newImage('assets/ui/icons/head-fliph2.png'),
+       headflipv1 = love.graphics.newImage('assets/ui/icons/head-flipv1.png'),
+       headflipv2 = love.graphics.newImage('assets/ui/icons/head-flipv2.png'),
+       headsmall = love.graphics.newImage('assets/ui/icons/head-small.png'),
+       headtall = love.graphics.newImage('assets/ui/icons/head-tall.png'),
+       headnarrow = love.graphics.newImage('assets/ui/icons/head-narrow.png'),
+       headwide = love.graphics.newImage('assets/ui/icons/head-wide.png'),
+       bodysmall = love.graphics.newImage('assets/ui/icons/body-small.png'),
+       bodytall = love.graphics.newImage('assets/ui/icons/body-tall.png'),
+       bodynarrow = love.graphics.newImage('assets/ui/icons/body-narrow.png'),
+       bodywide = love.graphics.newImage('assets/ui/icons/body-wide.png'),
+       bodypotato = love.graphics.newImage('assets/ui/icons/body-potato.png'),
+       bodynonpotato = love.graphics.newImage('assets/ui/icons/body-nonpotato.png'),
+       brow1 = love.graphics.newImage('assets/ui/icons/brow-1.png'),
+       brow10 = love.graphics.newImage('assets/ui/icons/brow-10.png'),
+       brownarrow = love.graphics.newImage('assets/ui/icons/brow-narrow.png'),
+       browwide = love.graphics.newImage('assets/ui/icons/brow-wide.png'),
+       browthick = love.graphics.newImage('assets/ui/icons/brow-thick.png'),
+       browthin = love.graphics.newImage('assets/ui/icons/brow-thin.png'),
+       hairthin = love.graphics.newImage('assets/ui/icons/hair-thin.png'),
+       hairthick = love.graphics.newImage('assets/ui/icons/hair-thick.png'),
+       hairtloose = love.graphics.newImage('assets/ui/icons/hair-loose.png'),
+       hairthight = love.graphics.newImage('assets/ui/icons/hair-thight.png'),
+       nosedown = love.graphics.newImage('assets/ui/icons/nose-down.png'),
+       noseup = love.graphics.newImage('assets/ui/icons/nose-up.png'),
+       nosenarrow = love.graphics.newImage('assets/ui/icons/nose-narrow.png'),
+       nosewide = love.graphics.newImage('assets/ui/icons/nose-wide.png'),
+       nosesmall = love.graphics.newImage('assets/ui/icons/nose-small.png'),
+       nosetall = love.graphics.newImage('assets/ui/icons/nose-tall.png'),
+       mouthup = love.graphics.newImage('assets/ui/icons/mouth-up.png'),
+       mouthdown = love.graphics.newImage('assets/ui/icons/mouth-down.png'),
+       pupilsmall = love.graphics.newImage('assets/ui/icons/pupil-small.png'),
+       pupilbig = love.graphics.newImage('assets/ui/icons/pupil-big.png'),
+       eyesmall1 = love.graphics.newImage('assets/ui/icons/eye-small.png'),
+       eyesmall2 = love.graphics.newImage('assets/ui/icons/eye-small2.png'),
+       eyewide = love.graphics.newImage('assets/ui/icons/eye-wide.png'),
+       eyetall = love.graphics.newImage('assets/ui/icons/eye-tall.png'),
+       eyeccw = love.graphics.newImage('assets/ui/icons/eye-ccw.png'),
+       eyecw = love.graphics.newImage('assets/ui/icons/eye-cw.png'),
+       eyedown = love.graphics.newImage('assets/ui/icons/eye-down.png'),
+       eyeup = love.graphics.newImage('assets/ui/icons/eye-up.png'),
+       eyefar = love.graphics.newImage('assets/ui/icons/eye-far.png'),
+       eyeclose = love.graphics.newImage('assets/ui/icons/eye-close.png'),
+       earccw = love.graphics.newImage('assets/ui/icons/ear-ccw.png'),
+       earcw = love.graphics.newImage('assets/ui/icons/ear-cw.png'),
+       earback = love.graphics.newImage('assets/ui/icons/ear-back.png'),
+       earfront = love.graphics.newImage('assets/ui/icons/ear-front.png'),
+       earup = love.graphics.newImage('assets/ui/icons/ear-up.png'),
+       eardown = love.graphics.newImage('assets/ui/icons/ear-down.png'),
+       earsmall = love.graphics.newImage('assets/ui/icons/ear-small.png'),
+       earbig = love.graphics.newImage('assets/ui/icons/ear-big.png'),
+       patternccw = love.graphics.newImage('assets/ui/icons/pattern-ccw.png'),
+       patterncw = love.graphics.newImage('assets/ui/icons/pattern-cw.png'),
+       patternfine = love.graphics.newImage('assets/ui/icons/pattern-fine.png'),
+       patterncoarse = love.graphics.newImage('assets/ui/icons/pattern-coarse.png'),
+       patterntransparent = love.graphics.newImage('assets/ui/icons/pattern-transparent.png'),
+       patternopaque = love.graphics.newImage('assets/ui/icons/pattern-opaque.png'),
+       legthin = love.graphics.newImage('assets/ui/icons/legs-thin.png'),
+       legthick = love.graphics.newImage('assets/ui/icons/legs-thick.png'),
+       legflip1 = love.graphics.newImage('assets/ui/icons/legs-flipy1.png'),
+       legflip2 = love.graphics.newImage('assets/ui/icons/legs-flipy2.png'),
+       legshort = love.graphics.newImage('assets/ui/icons/legs-short.png'),
+       leglong = love.graphics.newImage('assets/ui/icons/legs-long.png'),
+       legnarrow = love.graphics.newImage('assets/ui/icons/legs-narrow.png'),
+       legwide = love.graphics.newImage('assets/ui/icons/legs-wide.png'),
+       legstance1 = love.graphics.newImage('assets/ui/icons/legs-stance1.png'),
+       legstance2 = love.graphics.newImage('assets/ui/icons/legs-stance2.png'),
+       armsshort = love.graphics.newImage('assets/ui/icons/arms-short.png'),
+       armslong = love.graphics.newImage('assets/ui/icons/arms-long.png'),
+       armsthin = love.graphics.newImage('assets/ui/icons/arms-thin.png'),
+       armsthick = love.graphics.newImage('assets/ui/icons/arms-thick.png'),
+       armsflip1 = love.graphics.newImage('assets/ui/icons/arms-flip1.png'),
+       armsflip2 = love.graphics.newImage('assets/ui/icons/arms-flip2.png'),
+       neckshort = love.graphics.newImage('assets/ui/icons/neck-short.png'),
+       necklong = love.graphics.newImage('assets/ui/icons/neck-long.png'),
+       neckthin = love.graphics.newImage('assets/ui/icons/neck-thin.png'),
+       neckthick = love.graphics.newImage('assets/ui/icons/neck-thick.png'),
+       footwide = love.graphics.newImage('assets/ui/icons/foot-wide.png'),
+       footnarrow = love.graphics.newImage('assets/ui/icons/foot-narrow.png'),
+       footshort = love.graphics.newImage('assets/ui/icons/foot-short.png'),
+       foottall = love.graphics.newImage('assets/ui/icons/foot-tall.png'),
+       handwide = love.graphics.newImage('assets/ui/icons/hand-wide.png'),
+       handnarrow = love.graphics.newImage('assets/ui/icons/hand-narrow.png'),
+       handshort = love.graphics.newImage('assets/ui/icons/hand-short.png'),
+       handtall = love.graphics.newImage('assets/ui/icons/hand-tall.png'),
+       patchXless = love.graphics.newImage('assets/ui/icons/patch-Xless.png'),
+       patchXmore = love.graphics.newImage('assets/ui/icons/patch-Xmore.png'),
+       patchYless = love.graphics.newImage('assets/ui/icons/patch-Yless.png'),
+       patchYmore = love.graphics.newImage('assets/ui/icons/patch-Ymore.png'),
+       patchAngleless = love.graphics.newImage('assets/ui/icons/patch-Angleless.png'),
+       patchAnglemore = love.graphics.newImage('assets/ui/icons/patch-Anglemore.png'),
+       patchScaleXless = love.graphics.newImage('assets/ui/icons/patch-ScaleXless.png'),
+       patchScaleXmore = love.graphics.newImage('assets/ui/icons/patch-ScaleXmore.png'),
+       patchScaleYless = love.graphics.newImage('assets/ui/icons/patch-ScaleYless.png'),
+       patchScaleYmore = love.graphics.newImage('assets/ui/icons/patch-ScaleYmore.png'),
    }
 
    scrollIcons = {
-      armhair = love.graphics.newImage('assets/ui/icon-armhair.png'), 
-      armhairMask = love.graphics.newImage('assets/ui/icon-armhair-mask.png'), 
-      leghair = love.graphics.newImage('assets/ui/icon-leghair.png'), 
-      leghairMask = love.graphics.newImage('assets/ui/icon-leghair-mask.png'), 
-      hands = love.graphics.newImage('assets/ui/icon-hands.png'), 
-      handsMask = love.graphics.newImage('assets/ui/icon-hands-mask.png'), 
-      feet = love.graphics.newImage('assets/ui/icon-feet.png'), 
-      feetMask = love.graphics.newImage('assets/ui/icon-feet-mask.png'), 
-      eyes = love.graphics.newImage('assets/ui/icon-eyes.png'), 
-      eyesMask = love.graphics.newImage('assets/ui/icon-eyes-mask.png'), 
-      nose = love.graphics.newImage('assets/ui/icon-nose.png'), 
-      noseMask = love.graphics.newImage('assets/ui/icon-nose-mask.png'), 
-      ears = love.graphics.newImage('assets/ui/icon-ears.png'), 
-      earsMask = love.graphics.newImage('assets/ui/icon-ears-mask.png'), 
-      brows = love.graphics.newImage('assets/ui/icon-brows.png'), 
-      browsMask = love.graphics.newImage('assets/ui/icon-brows-mask.png'), 
-      mouth = love.graphics.newImage('assets/ui/icon-mouth.png'), 
-      mouthMask = love.graphics.newImage('assets/ui/icon-mouth-mask.png'), 
+       body = love.graphics.newImage('assets/ui/icons/body.png'),
+       bodyMask = love.graphics.newImage('assets/ui/icons/body-mask.png'),
+       neck = love.graphics.newImage('assets/ui/icons/neck.png'),
+       neckMask = love.graphics.newImage('assets/ui/icons/neck-mask.png'),
+       arms = love.graphics.newImage('assets/ui/icons/arm.png'),
+       armsMask = love.graphics.newImage('assets/ui/icons/arm-mask.png'),
+       armhair = love.graphics.newImage('assets/ui/icons/armhair.png'),
+       armhairMask = love.graphics.newImage('assets/ui/icons/armhair-mask.png'),
+       legs = love.graphics.newImage('assets/ui/icons/leg.png'),
+       legsMask = love.graphics.newImage('assets/ui/icons/leg-mask.png'),
+       leghair = love.graphics.newImage('assets/ui/icons/leghair.png'),
+       leghairMask = love.graphics.newImage('assets/ui/icons/leghair-mask.png'),
+       hands = love.graphics.newImage('assets/ui/icons/hands.png'),
+       handsMask = love.graphics.newImage('assets/ui/icons/hands-mask.png'),
+       feet = love.graphics.newImage('assets/ui/icons/feet.png'),
+       feetMask = love.graphics.newImage('assets/ui/icons/feet-mask.png'),
+       eyes = love.graphics.newImage('assets/ui/icons/eyes.png'),
+       eyesMask = love.graphics.newImage('assets/ui/icons/eyes-mask.png'),
+       nose = love.graphics.newImage('assets/ui/icons/nose.png'),
+       noseMask = love.graphics.newImage('assets/ui/icons/nose-mask.png'),
+       ears = love.graphics.newImage('assets/ui/icons/ears.png'),
+       earsMask = love.graphics.newImage('assets/ui/icons/ears-mask.png'),
+       brows = love.graphics.newImage('assets/ui/icons/brows.png'),
+       browsMask = love.graphics.newImage('assets/ui/icons/brows-mask.png'),
+       mouth = love.graphics.newImage('assets/ui/icons/mouth.png'),
+       mouthMask = love.graphics.newImage('assets/ui/icons/mouth-mask.png'),
+       hair = love.graphics.newImage('assets/ui/icons/hair.png'),
+       hairMask = love.graphics.newImage('assets/ui/icons/hair-mask.png'),
+       skinPatchEye1 = love.graphics.newImage('assets/ui/icons/skinpatchEye1.png'),
+       skinPatchEye1Mask = love.graphics.newImage('assets/ui/icons/skinpatchEye1-mask.png'),
+       skinPatchEye2 = love.graphics.newImage('assets/ui/icons/skinpatchEye2.png'),
+       skinPatchEye2Mask = love.graphics.newImage('assets/ui/icons/skinpatchEye2-mask.png'),
+       skinPatchSnout = love.graphics.newImage('assets/ui/icons/skinpatchSnout.png'),
+       skinPatchSnoutMask = love.graphics.newImage('assets/ui/icons/skinpatchSnout-mask.png'),
+       teeth = love.graphics.newImage('assets/ui/icons/teeth.png'),
+       teethMask = love.graphics.newImage('assets/ui/icons/teeth-mask.png'),
+       lowerlip = love.graphics.newImage('assets/ui/icons/lowerlip.png'),
+       lowerlipMask = love.graphics.newImage('assets/ui/icons/lowerlip-mask.png'),
+       upperlip = love.graphics.newImage('assets/ui/icons/upperlip.png'),
+       upperlipMask = love.graphics.newImage('assets/ui/icons/upperlip-mask.png'),
+       head = love.graphics.newImage('assets/ui/icons/head.png'),
+       headMask = love.graphics.newImage('assets/ui/icons/head-mask.png'),
+       pupils = love.graphics.newImage('assets/ui/icons/pupil.png'),
+       pupilsMask = love.graphics.newImage('assets/ui/icons/pupil-mask.png'),
    }
 
-   toggle              = {
-       body1 = love.graphics.newImage('assets/ui/togglebody1.png'),
-       body2 = love.graphics.newImage('assets/ui/togglebody2.png'),
-       body3 = love.graphics.newImage('assets/ui/togglebody3.png'),
-       thumb1 = love.graphics.newImage('assets/ui/togglethumb1.png'),
-       thumb2 = love.graphics.newImage('assets/ui/togglethumb2.png'),
-       thumb3 = love.graphics.newImage('assets/ui/togglethumb3.png'),
-   }
+
    scrollPosition      = .5
    scrollItemsOnScreen = 5
    scrollListXPosition = 0
@@ -590,8 +595,8 @@ function scene.load()
    settingsScrollArea = nil
    settingsScrollPosition = 0
 
-   scrollTickSample = love.audio.newSource('assets/sounds/BD-perc.wav', 'static')
-   scrollItemClickSample = love.audio.newSource('assets/sounds/CasioMT70-Bassdrum.wav', 'static')
+   scrollTickSample = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
+   scrollItemClickSample = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
    selectedRootButton = nil -- could be head or body or nil
    selectedTab = 'part'
    selectedCategory = 'body'
@@ -599,23 +604,19 @@ function scene.load()
 
 
    hum = {
-       love.audio.newSource('assets/sounds/humup1.wav', 'static'),
-       love.audio.newSource('assets/sounds/humup2.wav', 'static'),
-       love.audio.newSource('assets/sounds/humup3.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah1.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah2.wav', 'static'),
-       love.audio.newSource('assets/sounds/blah3.wav', 'static'),
-      -- love.audio.newSource('assets/sounds/blah4.wav', 'static'),
-       love.audio.newSource('assets/sounds/huh.wav', 'static'),
-       love.audio.newSource('assets/sounds/huh2.wav', 'static'),
-       love.audio.newSource('assets/sounds/tsk.wav', 'static'),
-       love.audio.newSource('assets/sounds/tsk2.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/humup1.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/humup2.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/humup3.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/blah1.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/blah2.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/blah3.wav', 'static'),
+       -- love.audio.newSource('assets/sounds/blah4.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/huh.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/huh2.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/tsk.wav', 'static'),
+       love.audio.newSource('assets/sounds/fx/tsk2.wav', 'static'),
 
    }
-  
-
-
-   uiBlup = love.graphics.newImage('assets/blups/blup8.png')
 
    headz = {}
    for i = 1, 8 do
@@ -657,7 +658,6 @@ function scene.load()
 
    root.children = { editingGuy.guy }
 
-   --print(inspect(editingGuy))
    attachAllFaceParts(editingGuy)
    changePart('hair')
 
@@ -684,9 +684,6 @@ function scene.load()
    mesh.meshAll(root)
    render.renderThings(root)
 
-   --print(inspect(root))
-
-
    myWorld:emit("bipedInit", biped)
    myWorld:emit("potatoInit", potato)
    myWorld:emit("mouthInit", mouth)
@@ -703,7 +700,6 @@ function scene.load()
    local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
    tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
 
-   --print('editguy load cam setup')
    camera.setCameraViewport(cam, w, h)
    camera.centerCameraOnPosition(x1, y1, w1, h1)
    cam:update(w, h)
@@ -758,12 +754,12 @@ end
 
 function getCameraDataZoomOnJustHead()
    local bb = nil
-   if editingGuy.values.potatoHead then 
-       bb                 = bbox.getBBoxRecursive(editingGuy.body)
-   else 
-       bb                 = bbox.getBBoxRecursive(editingGuy.head)
+   if editingGuy.values.potatoHead then
+      bb = bbox.getBBoxRecursive(editingGuy.body)
+   else
+      bb = bbox.getBBoxRecursive(editingGuy.head)
    end
-   
+
    local tlx, tly, brx, bry = bbox.combineBboxes(bb)
    local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
    return x2, y2, w * 3, h * 3
@@ -805,15 +801,11 @@ function tweenCameraToHeadAndBody()
 end
 
 function attachCallbacks()
-   print('attached callbacks')
-
-
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
    end)
 
    Signal.register('click-scroll-list-item', function(x, y)
-      print('clicking scroll list item')
       scrollList(false, x, y)
    end)
 
@@ -831,7 +823,6 @@ function attachCallbacks()
    --Signal.clearPattern('.*') -- clear all signals
 
    function love.keypressed(key, unicode)
-      --print('keypressed', key)
       local values = editingGuy.values
       if key == 'escape' then
          love.event.quit()
@@ -867,12 +858,10 @@ function attachCallbacks()
          tweenCameraToHeadAndBody()
          -- camera.centerCameraOnPosition(x,y,w,h)
          --   cam:update(w, h)
-         --print('focus camera on second other shape', x, y)
       end
 
       if key == 's' then
          local bgPal = math.ceil(love.math.random() * #palettes)
-         print(bgPal)
          skinColorize(bgPal, values)
       end
       if key == 'h' then
@@ -884,17 +873,14 @@ function attachCallbacks()
          tweenCameraToHeadAndBody()
       end
       if key == 'f' then
-         print('keep feet p[lanetd starighten legs]')
          myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
       end
       if key == '5' then
-         --print('needs to lower the scale of all faceparts')
          values.faceScaleX = values.faceScaleX * 0.75
          values.faceScaleY = values.faceScaleY * 0.75
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == '6' then
-         --print('needs to raise the scale of all faceparts')
          values.faceScaleX = values.faceScaleX * 1.25
          values.faceScaleY = values.faceScaleY * 1.25
          myWorld:emit('rescaleFaceparts', potato)
@@ -903,29 +889,11 @@ function attachCallbacks()
          myWorld:emit('blinkEyes', potato)
       end
       if key == 'd' then
-         print('DOINK needs to tween guy elastically like its been moved around violently')
          myWorld:emit('doinkBody', biped)
       end
       if key == 'm' then
-         print('pressed m')
-         myWorld:emit('mouthSaySomething', mouth)
+         myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
-      end
-      if key == 't' then
-         print('show me the transformation data')
-         local ix, iy = editingGuy.guy.transforms._g:transformPoint(0, 0)
-
-         print('guy', ix, iy)
-         ix, iy = editingGuy.body.transforms._g:transformPoint(0, 0)
-         print('body', ix, iy)
-         print('body l:', inspect(editingGuy.body.transforms.l))
-         --
-         ix, iy = editingGuy.feet1.transforms._g:transformPoint(0, 0)
-         print('feet1', ix, iy)
-
-         ix, iy = editingGuy.feet2.transforms._g:transformPoint(0, 0)
-         print('feet1', ix, iy)
-         print('------')
       end
    end
 
@@ -934,7 +902,6 @@ function attachCallbacks()
    end
 
    function love.mousepressed(x, y, button, istouch, presses)
-      print('mousepressed', button)
       if not istouch then
          pointerPressed(x, y, 'mouse')
       end
@@ -963,7 +930,6 @@ function attachCallbacks()
 
    function love.resize(w, h)
       local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
-      print('editGuy resize')
       camera.setCameraViewport(cam, w, h)
       camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
       cam:update(w, h)
@@ -1060,9 +1026,9 @@ function scene.draw()
 
          -- do these via vector sketch snf the scene graph
          love.graphics.setColor(0, 0, 0, 0.05)
-         love.graphics.draw(tiles, 400, 0, .1, .5, .5)
+         love.graphics.draw(tiles, 400, 0, .1)
          love.graphics.setColor(1, 0, 0, 0.05)
-         love.graphics.draw(tiles2, 1000, 300, math.pi / 2, .5, .5)
+         love.graphics.draw(tiles2, 1000, 300, math.pi / 2, 2, 2)
 
          for i = 1, #headz do
             love.graphics.setColor(0, 0, 0, 0.05)
@@ -1075,12 +1041,7 @@ function scene.draw()
       love.graphics.setColor(0, 0, 0)
       headOrBody(true)
       scrollList(true)
-      if false then
-         love.graphics.setColor(1, 1, 1)
-         love.graphics.draw(tab1)
-         love.graphics.draw(tab2, 100, 100)
-         love.graphics.draw(tab3, 100, 500)
-      end
+
       partSettingsPanel()
 
       prof.push("cam-render")
@@ -1107,7 +1068,6 @@ function scene.draw()
       if false then -- this is leaking too
          local stats = love.graphics.getStats()
          local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
-         --   print(inspect(stats))
          love.graphics.setColor(1, 1, 1, 1)
          love.graphics.print(inspect(stats), 10, 30)
          love.graphics.setColor(0, 0, 0, 1)

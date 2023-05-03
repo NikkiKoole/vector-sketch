@@ -189,7 +189,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
             --print(lw, lh)
             if false then
                --local img = love.graphics.newImage('assets/parts/eye4.png')
-               local img = love.graphics.newImage('assets/test1.png')
+               -- local img = love.graphics.newImage('assets/test1.png')
                --love.graphics.setBlendMode('subtract')
 
                for i = 1, 100 do

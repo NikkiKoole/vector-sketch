@@ -102,7 +102,6 @@ end
 local function pointerReleased(x, y, id)
     for i = #pointerInteractees, 1, -1 do
         if pointerInteractees[i].id == id then
-            print('emitting release')
             myWorld:emit('itemReleased', pointerInteractees[i])
             --print(inspect(pointerInteractees[i]))
             table.remove(pointerInteractees, i)
@@ -294,8 +293,8 @@ function scene.load()
     tileSize = 800
     foregroundFar = camera.generateCameraLayer('foregroundFar', 1)
     foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
-    groundimg8 = love.graphics.newImage('assets/ground3.png', { mipmaps = true })
-    ding = love.graphics.newImage('assets/ground52.png', { mipmaps = true })
+    groundimg8 = love.graphics.newImage('assets/img/worldparts/ground3.png', { mipmaps = true })
+    ding = love.graphics.newImage('assets/img/worldparts/ground52.png', { mipmaps = true })
     --print(groundimg8)
     heights = {}
     minpos = -1000
@@ -402,9 +401,9 @@ function scene.draw()
     drawGroundPlaneLinesSimple('foregroundFar', 'foregroundNear')
     cam:push()
     render.renderThings(root, true)
-    for i =1, #root.children do
+    for i = 1, #root.children do
         local px, py = root.children[i].transforms._g:transformPoint(0, 0)
-        love.graphics.rectangle('fill', px-25, py-25, 50,50)
+        love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
     end
     cam:pop()
 
@@ -464,7 +463,6 @@ function scene.update(dt)
     end
 
     function love.keypressed(k)
-        
         if k == 'escape' then
             love.event.quit()
         end

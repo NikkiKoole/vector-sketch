@@ -408,7 +408,8 @@ end
 function isNullObject(partName, values)
    local p = findPart(partName)
    local url = p.imgs[values[partName].shape]
-   return url == 'assets/null.png'
+
+   return url == 'assets/parts/null.png'
 end
 
 function createHairVanillaLine(values, hairLine)

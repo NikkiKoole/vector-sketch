@@ -87,19 +87,22 @@ function love.load()
       love.window.setFullscreen(true)
    end
 
-   splashSound = love.audio.newSource("assets/mipolailoop.mp3", "static")
-   introSound = love.audio.newSource("assets/introloop.mp3", "static")
+   splashSound = love.audio.newSource("assets/sounds/music/mipolailoop.mp3", "static")
+   introSound = love.audio.newSource("assets/sounds/music/introloop.mp3", "static")
 
 
    textures = {
-       love.graphics.newImage('assets/layered/texture-type0.png'),
-       love.graphics.newImage('assets/layered/texture-type2t.png'),
-       love.graphics.newImage('assets/layered/texture-type1.png'),
-       love.graphics.newImage('assets/layered/texture-type3.png'),
-       love.graphics.newImage('assets/layered/texture-type4.png'),
-       love.graphics.newImage('assets/layered/texture-type5.png'),
-       love.graphics.newImage('assets/layered/texture-type6.png'),
-       love.graphics.newImage('assets/layered/texture-type7.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type4.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type5.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type6.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
+       love.graphics.newImage('assets/img/tiles/tiles2.png'),
+       love.graphics.newImage('assets/img/tiles/tiles.png'),
+
    }
 
    for i = 1, #textures do
