@@ -414,7 +414,6 @@ end
 
 function createHairVanillaLine(values, hairLine)
    local textured, url = partToTexturedCanvas('hair', values)
-
    return createFromImage.vanillaline(
            url, textured,
            values.hairWidthMultiplier, values.hairTension, hairLine)
@@ -669,6 +668,7 @@ function changePart(name)
    elseif name == 'leghair' then
       if isNullObject(name, values) then
          --print(armhair1.transforms)
+         print('leghair null')
          editingGuy.leghair1 = updateChild(guy, editingGuy.leghair1, copy3(nullChild))
          editingGuy.leghair2 = updateChild(guy, editingGuy.leghair2, copy3(nullChild))
       else

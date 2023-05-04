@@ -362,7 +362,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             myWorld:emit("bipedAttachHands", biped)
          end
 
-         currentHeight = calcCurrentHeight(5)
+         currentHeight = calcCurrentHeight(values.potatoHead and 6 or 5)
 
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -389,6 +389,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                 update, .5, 3, .5, icons.bodysmall, icons.bodytall)
 
             runningElem, currentY = updateRowStuff()
+
+
 
 
             local f = function(v)
@@ -426,6 +428,20 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                 sliderWidth,
                 not (values.potatoHead),
                 f, icons.bodynonpotato, icons.bodypotato)
+            runningElem, currentY = updateRowStuff()
+
+
+            if values.potatoHead then
+               local propupdate = function(v)
+                  --editingGuy.body.transforms.l[5] = v
+               end
+               draw_slider_with_2_buttons('faceScale', startX + (runningElem * elementWidth), currentY,
+                   buttonSize,
+                   sliderWidth, propupdate,
+                   update, 0.25, 2, .25, icons.facesmall, icons.facebig)
+
+               runningElem, currentY = updateRowStuff()
+            end
          end
       end
 
@@ -475,7 +491,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
 
       if selectedCategory == 'brows' then
-         currentHeight = calcCurrentHeight(3)
+         currentHeight = calcCurrentHeight(4)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
@@ -505,6 +521,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                 buttonSize,
                 sliderWidth, propupdate,
                 nil, 1, 10, 1, icons.brow1, icons.brow10)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('browYAxis', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, -3, 3, 1, icons.browsdown, icons.browsup)
 
             runningElem, currentY = updateRowStuff()
          end
@@ -672,6 +695,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             local propupdate = function(v)
                changePart('legs', values)
                myWorld:emit("bipedAttachLegs", biped)
+               myWorld:emit("tweenIntoDefaultStance", biped)
             end
 
             draw_slider_with_2_buttons('legXAxis', startX + (runningElem * elementWidth), currentY,
@@ -778,7 +802,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
       if selectedCategory == 'hands' then
-         currentHeight = calcCurrentHeight(2)
+         currentHeight = calcCurrentHeight(3)
          if draw then
             runningElem = 0
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -805,6 +829,16 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                 buttonSize,
                 sliderWidth, propupdateWidth,
                 nil, 0.5, 3, .5, icons.handnarrow, icons.handwide)
+            runningElem, currentY = updateRowStuff()
+
+            local f = function(v)
+               values.handsPinned = not v
+            end
+
+            draw_toggle_with_2_buttons('handsPinned', startX + (runningElem * elementWidth), currentY, buttonSize,
+                sliderWidth,
+                (values.handsPinned),
+                f, icons.handspinned, icons.handsfree)
 
             runningElem, currentY = updateRowStuff()
          end
@@ -834,12 +868,26 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                 nil, 0.5, 3, .5, icons.footshort, icons.foottall)
             runningElem, currentY = updateRowStuff()
 
+
             draw_slider_with_2_buttons('feetWidthMultiplier', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
                 sliderWidth, propupdateWidth,
                 nil, 0.5, 3, .5, icons.footnarrow, icons.footwide)
 
             runningElem, currentY = updateRowStuff()
+
+            if false then
+               local f = function(v)
+                  values.feetPinned = not v
+               end
+
+               draw_toggle_with_2_buttons('feetPinned', startX + (runningElem * elementWidth), currentY, buttonSize,
+                   sliderWidth,
+                   (values.feetPinned),
+                   f, icons.feetpinned, icons.feetfree)
+
+               runningElem, currentY = updateRowStuff()
+            end
          end
       end
 
@@ -882,7 +930,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
             myWorld:emit("bipedAttachHead", biped)
          end
 
-         currentHeight = calcCurrentHeight(4)
+         currentHeight = calcCurrentHeight(5)
 
          if draw then
             runningElem = 0
@@ -906,6 +954,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
                 buttonSize,
                 sliderWidth, propupdate,
                 nil, 0.5, 3, .5, icons.headsmall, icons.headtall)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('faceScale', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0.25, 2, .25, icons.facesmall, icons.facebig)
 
             runningElem, currentY = updateRowStuff()
 
@@ -1160,26 +1215,21 @@ local function renderElement(type, value, container, x, y, w, h)
          end
 
          local dot = dots[dotindex]
-         -- local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
-
-
-         --  if pickedBG then
-         --     love.graphics.setColor(0, 0, 0, .8)
-         --     local r = (math.sin(love.timer.getTime() * 5)) * math.pi * 2
-         --     love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), r, scale, scale )
-         --  end
          if pickedBG or pickedFG or pickedLP then
-            love.graphics.setColor(1, 1, 1, 1)
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w * 1.5, h * 1.5)
+            local offset = (0.1 * scale * w) / 2
+            love.graphics.setColor(0, 0, 0, 1)
+
             scale = scale + math.sin(love.timer.getTime() * 5) * 0.01
-            love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+            love.graphics.draw(dot, -offset + x + (xoff + w / 2), -offset + y + (yoff + h / 2), 0, scale * 1.1,
+                scale * 1.1)
             love.graphics.setColor(container[value])
             love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
          else
-            love.graphics.setColor(0, 0, 0, .8)
+            --love.graphics.setColor(0, 0, 0, .8)
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
-            love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
+            --love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
             love.graphics.setColor(container[value])
             love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
          end

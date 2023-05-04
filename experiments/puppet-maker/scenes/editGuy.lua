@@ -278,7 +278,8 @@ local function pointerPressed(x, y, id)
       end
    end
 
-   if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
+   local size = (h / 12) -- margin around panel
+   if (hit.pointInRect(x, y, 0, 0, size, size)) then
       Timer.clear()
       SM.unload('editGuy')
       SM.load("fiveGuys")
@@ -354,20 +355,21 @@ function scene.load()
        headmask = love.graphics.newImage('assets/ui/big-button-head-mask.png'),
        body = love.graphics.newImage('assets/ui/big-button-body.png'),
        bodymask = love.graphics.newImage('assets/ui/big-button-body-mask.png'),
+       fiveguys = love.graphics.newImage('assets/ui/big-button-fiveguys.png'),
+       fiveguysmask = love.graphics.newImage('assets/ui/big-button-fiveguys-mask.png'),
+       editguys = love.graphics.newImage('assets/ui/big-button-editguys.png'),
+       editguysmask = love.graphics.newImage('assets/ui/big-button-editguys-mask.png'),
+       dice = love.graphics.newImage('assets/ui/big-button-dice.png'),
+       dicemask = love.graphics.newImage('assets/ui/big-button-dice-mask.png'),
    }
    dots              = {
-       love.graphics.newImage('assets/ui/colorpick/dot1.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot2.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot3.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot4.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot5.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot6.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot7.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot8.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot9.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot10.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot11.150.png'),
-       love.graphics.newImage('assets/ui/colorpick/dot12.150.png'),
+       love.graphics.newImage('assets/ui/colorpick/c1.png'),
+       love.graphics.newImage('assets/ui/colorpick/c2.png'),
+       love.graphics.newImage('assets/ui/colorpick/c3.png'),
+       love.graphics.newImage('assets/ui/colorpick/c4.png'),
+       love.graphics.newImage('assets/ui/colorpick/c5.png'),
+       love.graphics.newImage('assets/ui/colorpick/c6.png'),
+       love.graphics.newImage('assets/ui/colorpick/c7.png'),
    }
 
    uiheaders         = {
@@ -436,6 +438,18 @@ function scene.load()
 
 
    icons       = {
+       handspinned = love.graphics.newImage('assets/ui/icons/hands-pinned.png'),
+       handsfree = love.graphics.newImage('assets/ui/icons/hands-free.png'),
+       feetpinned = love.graphics.newImage('assets/ui/icons/feet-pinned.png'),
+       feetfree = love.graphics.newImage('assets/ui/icons/feet-free.png'),
+       mouthsmall = love.graphics.newImage('assets/ui/icons/mouth-small.png'),
+       mouthtall = love.graphics.newImage('assets/ui/icons/mouth-tall.png'),
+       mouthnarrow = love.graphics.newImage('assets/ui/icons/mouth-narrow.png'),
+       mouthwide = love.graphics.newImage('assets/ui/icons/mouth-wide.png'),
+       browsup = love.graphics.newImage('assets/ui/icons/brows-up.png'),
+       browsdown = love.graphics.newImage('assets/ui/icons/brows-down.png'),
+       facesmall = love.graphics.newImage('assets/ui/icons/face-small.png'),
+       facebig = love.graphics.newImage('assets/ui/icons/face-big.png'),
        bodyfliph1 = love.graphics.newImage('assets/ui/icons/body-fliph1.png'),
        bodyfliph2 = love.graphics.newImage('assets/ui/icons/body-fliph2.png'),
        bodyflipv1 = love.graphics.newImage('assets/ui/icons/body-flipv1.png'),
@@ -659,8 +673,18 @@ function scene.load()
    root.children = { editingGuy.guy }
 
    attachAllFaceParts(editingGuy)
-   changePart('hair')
+   --  changePart('hair')
 
+   -- a bit of a cheap fix to fic teh null objects hair stuff
+   if isNullObject('leghair', editingGuy.values) then
+      changePart('leghair')
+   end
+   if isNullObject('armhair', editingGuy.values) then
+      changePart('armhair')
+   end
+   if isNullObject('hair', editingGuy.values) then
+      changePart('hair')
+   end
 
    if false then
       cameraPoints = {}
@@ -845,19 +869,10 @@ function attachCallbacks()
          myWorld:emit('bipedDirection', biped, 'down')
       end
       if key == '1' then
-         --    local w, h = love.graphics.getDimensions()
-         --camera.setCameraViewport(cam, w, h)
          tweenCameraToHead()
-
-         -- camera.centerCameraOnPosition(x,y,w,h)
-         --    cam:update(w, h)
       end
       if key == '2' then
-         --   local w, h = love.graphics.getDimensions()
-         --   camera.setCameraViewport(cam, w, h)
          tweenCameraToHeadAndBody()
-         -- camera.centerCameraOnPosition(x,y,w,h)
-         --   cam:update(w, h)
       end
 
       if key == 's' then
@@ -876,13 +891,25 @@ function attachCallbacks()
          myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
       end
       if key == '5' then
-         values.faceScaleX = values.faceScaleX * 0.75
-         values.faceScaleY = values.faceScaleY * 0.75
+         values.faceScale = values.faceScale * 0.75
+         values.faceScale = values.faceScale * 0.75
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == '6' then
-         values.faceScaleX = values.faceScaleX * 1.25
-         values.faceScaleY = values.faceScaleY * 1.25
+         values.faceScale = values.faceScale * 1.25
+         values.faceScale = values.faceScale * 1.25
+         myWorld:emit('rescaleFaceparts', potato)
+      end
+      if key == '3' then
+         print('moyth<')
+         values.mouthScaleX = values.mouthScaleX * 0.75
+         --values.mouthScaleY = values.mouthScaleY * 0.75
+         myWorld:emit('rescaleFaceparts', potato)
+      end
+      if key == '4' then
+         print('moutgh >')
+         values.mouthScaleX = values.mouthScaleX * 1.25
+         --values.mouthScaleY = values.mouthScaleY * 1.25
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == 'b' then
@@ -1048,9 +1075,11 @@ function scene.draw()
       cam:push()
       render.renderThings(root, true)
 
-      for i = 1, #root.children do
-         local px, py = root.children[i].transforms._g:transformPoint(0, 0)
-         love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+      if false then
+         for i = 1, #root.children do
+            local px, py = root.children[i].transforms._g:transformPoint(0, 0)
+            love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+         end
       end
 
       if false then
@@ -1077,9 +1106,29 @@ function scene.draw()
       end
    end
 
-   love.graphics.setColor(1, 0, 1)
+
    local w, h = love.graphics.getDimensions()
-   love.graphics.rectangle('fill', w - 25, 0, 25, 25)
+
+
+   if true then
+      local size = (h / 12) -- margin around panel
+      love.graphics.setColor(0, 0, 0, 0.5)
+      local sx, sy = createFittingScale(circles[1], size, size)
+      love.graphics.draw(circles[1], 0, 0, 0, sx, sy)
+
+      --love.graphics.rectangle('fill', w - size, 0, size, size)
+      --love.graphics.setColor(1, 0, 1)
+      local sx, sy = createFittingScale(bigbuttons.fiveguys, size, size)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.draw(bigbuttons.fiveguysmask, 0, 0, 0, sx, sy)
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.draw(bigbuttons.fiveguys, 0, 0, 0, sx, sy)
+   end
+
+
+
+   --local w, h = love.graphics.getDimensions()
+   --love.graphics.rectangle('fill', w - 25, 0, 25, 25)
    -- prof.pop("frame")
    --collectgarbage()
 end

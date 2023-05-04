@@ -6,6 +6,10 @@ local parentize = require 'lib.parentize'
 local numbers = require 'lib.numbers'
 local Timer = require 'vendor.timer'
 
+
+--local pinnedFeet = true
+--local pinnedHands = true
+
 local function getMeta(parent)
     for i = 1, #parent.children do
         if (parent.children[i].type == 'meta' and #parent.children[i].points == 8) then
@@ -267,11 +271,11 @@ function BipedSystem:bipedDirection(e, dir)
 end
 
 function setLegs(e)
+    local keep = not e.biped.values.feetPinned --  pinnedFeet
     --print('setting legs')
     local body = e.biped.body
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
-    local keep = false
 
     l1x = l1x or 0
     l1y = l1y or 0
@@ -320,7 +324,9 @@ function BipedSystem:bipedAttachLegs(e)
 end
 
 function setArms(e, optionalData)
-    local keep = true
+    local keep = not e.biped.values.handsPinned --not pinnedHands
+
+
     local a1x, a1y, a2x, a2y = getPositionsForArmsAttaching(e)
     a1x = a1x or 0
     a1y = a1y or 0
@@ -528,44 +534,49 @@ function BipedSystem:itemReleased(elem)
         if e.biped.head == elem.item then
             --print('head released')
         end
-        if e.biped.hand1 == elem.item then
-            local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
-            Timer.tween(1.2, e.biped.arm1.points[2], { [1] = h1x,[2] = h1y }, 'out-elastic')
-            Timer.during(1.3, function()
-                e.biped.hand1.transforms.l[1] = e.biped.arm1.points[2][1]
-                e.biped.hand1.transforms.l[2] = e.biped.arm1.points[2][2]
-                e.biped.armhair1.points[2] = e.biped.arm1.points[2]
-                mesh.remeshNode(e.biped.armhair1)
-                mesh.remeshNode(e.biped.arm1)
-            end)
-        end
-        if e.biped.hand2 == elem.item then
-            local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
-            Timer.tween(1.2, e.biped.arm2.points[2], { [1] = h2x,[2] = h2y }, 'out-elastic')
-            Timer.during(1.3, function()
-                e.biped.hand2.transforms.l[1] = e.biped.arm2.points[2][1]
-                e.biped.hand2.transforms.l[2] = e.biped.arm2.points[2][2]
-                e.biped.armhair2.points[2] = e.biped.arm2.points[2]
-                mesh.remeshNode(e.biped.armhair2)
-                mesh.remeshNode(e.biped.arm2)
-            end)
+        if not e.biped.values.handsPinned then
+            if e.biped.hand1 == elem.item then
+                local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
+                Timer.tween(1.2, e.biped.arm1.points[2], { [1] = h1x,[2] = h1y }, 'out-elastic')
+                Timer.during(1.3, function()
+                    e.biped.hand1.transforms.l[1] = e.biped.arm1.points[2][1]
+                    e.biped.hand1.transforms.l[2] = e.biped.arm1.points[2][2]
+                    e.biped.armhair1.points[2] = e.biped.arm1.points[2]
+                    mesh.remeshNode(e.biped.armhair1)
+                    mesh.remeshNode(e.biped.arm1)
+                end)
+            end
+            if e.biped.hand2 == elem.item then
+                local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
+                Timer.tween(1.2, e.biped.arm2.points[2], { [1] = h2x,[2] = h2y }, 'out-elastic')
+                Timer.during(1.3, function()
+                    e.biped.hand2.transforms.l[1] = e.biped.arm2.points[2][1]
+                    e.biped.hand2.transforms.l[2] = e.biped.arm2.points[2][2]
+                    e.biped.armhair2.points[2] = e.biped.arm2.points[2]
+                    mesh.remeshNode(e.biped.armhair2)
+                    mesh.remeshNode(e.biped.arm2)
+                end)
+            end
         end
         if e.biped.body == elem.item then
             --e.biped.body.transforms.l[3] = -1
 
-
-            local offset = getBodyYOffsetForDefaultStance(e)
-            e.biped.head.transforms.l[3] = -.3
-            Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
-
-
-            Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
-            BipedSystem:movedBody(e)
-            Timer.during(2.2, function()
-                BipedSystem:movedBody(e)
-            end)
+            BipedSystem:tweenIntoDefaultStance(e)
         end
     end
+end
+
+function BipedSystem:tweenIntoDefaultStance(e)
+    local offset = getBodyYOffsetForDefaultStance(e)
+    e.biped.head.transforms.l[3] = -.3
+    Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
+
+
+    Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
+    BipedSystem:movedBody(e)
+    Timer.during(2.2, function()
+        BipedSystem:movedBody(e)
+    end)
 end
 
 function BipedSystem:movedBody(e)

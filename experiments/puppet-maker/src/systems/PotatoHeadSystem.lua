@@ -49,6 +49,21 @@ function getPositionsForEyesAttaching(e)
     return x1, y1, x2, y2
 end
 
+function getPositionsForBrowsAttaching(e)
+    local newPoints = getHeadPoints(e)
+
+    local mx = numbers.lerp(newPoints[7][1], newPoints[3][1], 0.5)
+    local tX = numbers.mapInto(e.potato.values.eyeXAxisBetween, -3, 3, 0, 1)
+    local x1 = numbers.lerp(newPoints[7][1], mx, tX)
+    local x2 = numbers.lerp(newPoints[3][1], mx, tX)
+
+    local tY = numbers.mapInto(e.potato.values.browYAxis, -3, 3, 0, 1.5)
+    local y1 = numbers.lerp(newPoints[7][2], newPoints[8][2], tY)
+    local y2 = numbers.lerp(newPoints[3][2], newPoints[2][2], tY)
+
+    return x1, y1, x2, y2
+end
+
 function PotatoHeadSystem:update(dt)
     --print('potato headupdate')
     for _, e in ipairs(self.pool) do
@@ -70,13 +85,17 @@ function getFaceScale(e)
     if (e.potato.values.potatoHead) then
         e.potato.head.transforms.l[4] = values.bodyWidthMultiplier
         e.potato.head.transforms.l[5] = values.bodyHeightMultiplier
-        sx = values.faceScaleX / values.bodyWidthMultiplier
-        sy = values.faceScaleY / values.bodyHeightMultiplier
+        -- sx = values.faceScaleX / values.bodyWidthMultiplier
+        -- sy = values.faceScaleY / values.bodyHeightMultiplier
+        sx = values.faceScale / values.bodyWidthMultiplier
+        sy = values.faceScale / values.bodyHeightMultiplier
     else
         e.potato.head.transforms.l[4] = values.headWidthMultiplier
         e.potato.head.transforms.l[5] = values.headHeightMultiplier
-        sx = values.faceScaleX / values.headWidthMultiplier
-        sy = values.faceScaleY / values.headHeightMultiplier
+        --sx = values.faceScaleX / values.headWidthMultiplier
+        --sy = values.faceScaleY / values.headHeightMultiplier
+        sx = values.faceScale / values.headWidthMultiplier
+        sy = values.faceScale / values.headHeightMultiplier
     end
     return sx, sy
 end
@@ -108,8 +127,8 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
     e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
 
-    e.potato.mouth.transforms.l[4] = 1 * sx
-    e.potato.mouth.transforms.l[5] = 1 * sy
+    e.potato.mouth.transforms.l[4] = 1 * sx * values.mouthScaleX
+    e.potato.mouth.transforms.l[5] = 1 * sy * values.mouthScaleY
 end
 
 function PotatoHeadSystem:potatoInit(e)
@@ -140,13 +159,15 @@ function PotatoHeadSystem:potatoInit(e)
 
 
     local newPoints = getHeadPoints(e)
-    local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
+    --local browY = numbers.lerp(eyey1, newPoints[1][2], 0.5)
 
-    e.potato.brow1.transforms.l[1] = eyex1
-    e.potato.brow1.transforms.l[2] = browY
+    local browx1, browy1, browx2, browy2 = getPositionsForBrowsAttaching(e)
 
-    e.potato.brow2.transforms.l[1] = eyex2
-    e.potato.brow2.transforms.l[2] = browY
+    e.potato.brow1.transforms.l[1] = browx1
+    e.potato.brow1.transforms.l[2] = browy1
+
+    e.potato.brow2.transforms.l[1] = browx2
+    e.potato.brow2.transforms.l[2] = browy2
 
     local tY = numbers.mapInto(e.potato.values.earYAxis, -3, 3, 0, 1)
     e.potato.ear1.transforms.l[1] = numbers.lerp(newPoints[7][1], newPoints[8][1], .5)

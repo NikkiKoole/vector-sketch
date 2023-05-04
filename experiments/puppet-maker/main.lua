@@ -40,10 +40,11 @@ inspect = require 'vendor.inspect'
 PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
-
+local mesh = require "lib.mesh"
 focussed = false
 function findPart(name)
    for i = 1, #parts do
+      --print(parts[i].name)
       if parts[i].name == name then
          return parts[i]
       end
@@ -57,7 +58,7 @@ if true then
    local a, b, c, d, e
    repeat
       a, b, c, d, e = love.event.wait()
-      print(a, b, c, d, e)
+      --print(a, b, c, d, e)
    until a == "focus"
 end
 --local a, b, c, d, e
@@ -173,13 +174,22 @@ function love.load()
           ear2 = copyAndRedoGraphic('ears', values),
           nose = copyAndRedoGraphic('nose', values),
       }
+
+      -- maybe we can do a cleanuop phase for the leg and arm hair here.
+
+
       local guy = {
           folder = true,
           name = 'guy',
           transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
           children = {}
       }
+
+
       fiveGuys[i].guy = guy
+
+
+
       fiveGuys[i].body.transforms.l[2] = -700
       guy.children = guyChildren(fiveGuys[i])
    end
@@ -191,6 +201,9 @@ function love.load()
 
    prof.pop('creating-guys')
    prof.pop('frame')
+
+
+
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
@@ -201,9 +214,6 @@ function love.load()
 
    love.event.wait()
    love.event.wait()
-
-   --local a, b, c, d, e = love.event.wait()
-   --print(a, b, c, d, e)
 
    local success = love.window.updateMode(1024 / 2, 768 / 2,
            { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
@@ -226,6 +236,9 @@ function partRandomize(values, applyChangeDirectly)
       else
          local p = findPart(parts[i])
          values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
+         --if (parts[i] == 'leghair' or parts[i] == 'armhair' or parts[i] == 'hair') then
+         --   values[parts[i]].shape = #p.imgs
+         --end
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].texScale = math.ceil(love.math.random() * 9)

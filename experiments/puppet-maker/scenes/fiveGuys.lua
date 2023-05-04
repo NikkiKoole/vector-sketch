@@ -181,7 +181,8 @@ local function pointerPressed(x, y, id)
     myWorld:emit("eyeLookAtPoint", x, y)
 
     local w, h = love.graphics.getDimensions()
-    if (hit.pointInRect(x, y, w - 22, 0, 25, 25)) then
+    local size = (h / 12) -- margin around panel
+    if (hit.pointInRect(x, y, 0, 0, size, size)) then
         local w, h = love.graphics.getDimensions()
         local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
         --getHeadPoints(editingGuy.potato)
@@ -393,21 +394,41 @@ function scene.draw()
     love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
 
-    love.graphics.setColor(1, 0, 1)
+    -- love.graphics.setColor(1, 0, 1)
     local w, h = love.graphics.getDimensions()
-    love.graphics.rectangle('fill', w - 25, 0, 25, 25)
+    -- love.graphics.rectangle('fill', w - 25, 0, 25, 25)
+
+    if true then
+        local size = (h / 12) -- margin around panel
+        love.graphics.setColor(0, 0, 0, 0.5)
+        local sx, sy = createFittingScale(circles[1], size, size)
+        love.graphics.draw(circles[1], 0, 0, 0, sx, sy)
+
+        --love.graphics.rectangle('fill', w - size, 0, size, size)
+        --love.graphics.setColor(1, 0, 1)
+        local sx, sy = createFittingScale(bigbuttons.editguys, size, size)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(bigbuttons.editguysmask, 0, 0, 0, sx, sy)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.draw(bigbuttons.editguys, 0, 0, 0, sx, sy)
+    end
+
+
+
 
     -- local x,y = love.mouse.getPosition()
     drawGroundPlaneLinesSimple('foregroundFar', 'foregroundNear')
     cam:push()
     render.renderThings(root, true)
-    for i = 1, #root.children do
-        local px, py = root.children[i].transforms._g:transformPoint(0, 0)
-        love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+    if false then
+        for i = 1, #root.children do
+            local px, py = root.children[i].transforms._g:transformPoint(0, 0)
+            love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+        end
     end
     cam:pop()
 
-    if true then -- this is leaking too
+    if false then -- this is leaking toop
         local stats = love.graphics.getStats()
         local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
         --   print(inspect(stats))
