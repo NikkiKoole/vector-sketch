@@ -431,7 +431,30 @@ function BipedSystem:bipedAttachHead(e)
     attachHeadWithOrWithoutNeck(e, true)
 end
 
+function BipedSystem:bipedAttachHeadKeepAngleChangeDistance(e)
+    local neckX, neckY = getPositionsForNeckAttaching(e)
+    neckX = neckX or 0
+    neckY = neckY or 0
+    local angle, dist = getAngleAndDistance(e.biped.neck.points[2][1], e.biped.neck.points[2][2],
+            e.biped.neck.points[1][1], e.biped.neck.points[1][2])
+    local newx, newy = setAngleAndDistance(neckX, neckY, angle, necklengths[e.biped.values.neckLength])
+    e.biped.neck.points[1] = { neckX, neckY }
+
+    e.biped.neck.points[2] = { newx, newy }
+
+    mesh.remeshNode(e.biped.neck)
+
+    local hx, hy = getHeadDeltaAttachement(e)
+
+    e.biped.head.transforms.l[1] = e.biped.neck.points[2][1] - hx
+    e.biped.head.transforms.l[2] = e.biped.neck.points[2][2] - hy
+    e.biped.head.dirty = true
+    e.biped.neck.dirty = true
+    transforms.setTransforms(e.biped.neck)
+end
+
 function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
+    print('neck')
     local neckX, neckY = getPositionsForNeckAttaching(e)
     neckX = neckX or 0
     neckY = neckY or 0

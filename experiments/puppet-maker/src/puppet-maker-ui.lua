@@ -784,6 +784,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
             local propupdate = function(v)
                changePart('neck', values)
+               myWorld:emit('bipedAttachHeadKeepAngleChangeDistance', biped)
             end
 
             -- todo neck neds to show its change somehow, move the head further if need grows for example....
