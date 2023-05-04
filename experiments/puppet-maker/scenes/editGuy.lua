@@ -284,6 +284,10 @@ local function pointerPressed(x, y, id)
       SM.unload('editGuy')
       SM.load("fiveGuys")
    end
+   if (hit.pointInRect(x, y, 0, h - size, size, size)) then
+      partRandomize(editingGuy.values, true)
+      tweenCameraToHeadAndBody()
+   end
    myWorld:emit("eyeLookAtPoint", x, y)
 end
 
@@ -1123,6 +1127,22 @@ function scene.draw()
       love.graphics.draw(bigbuttons.fiveguysmask, 0, 0, 0, sx, sy)
       love.graphics.setColor(0, 0, 0)
       love.graphics.draw(bigbuttons.fiveguys, 0, 0, 0, sx, sy)
+   end
+
+
+   if true then
+      local size = (h / 12) -- margin around panel
+      love.graphics.setColor(0, 0, 0, 0.5)
+      local sx, sy = createFittingScale(circles[1], size, size)
+      love.graphics.draw(circles[1], 0, h - size, 0, sx, sy)
+
+      --love.graphics.rectangle('fill', w - size, 0, size, size)
+      --love.graphics.setColor(1, 0, 1)
+      local sx, sy = createFittingScale(bigbuttons.dice, size, size)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.draw(bigbuttons.dicemask, 0, h - size, 0, sx, sy)
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.draw(bigbuttons.dice, 0, h - size, 0, sx, sy)
    end
 
 
