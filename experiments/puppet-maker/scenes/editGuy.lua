@@ -835,10 +835,12 @@ end
 
 function attachCallbacks()
    Signal.register('click-settings-scroll-area-item', function(x, y)
+      print('this is just here to trigger on item in scrolarea clicks')
       partSettingsScrollable(false, x, y)
    end)
 
    Signal.register('click-scroll-list-item', function(x, y)
+      print('this is just here to trigger on item in scrollist clicks')
       scrollList(false, x, y)
    end)
 

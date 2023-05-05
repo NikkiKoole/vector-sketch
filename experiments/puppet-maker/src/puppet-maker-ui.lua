@@ -282,7 +282,7 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
    end
 end
 
-function drawImmediateSlidersEtc(draw, startX, currentY, width)
+function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
    local values = editingGuy.values
    local currentHeight = 0
 
@@ -317,7 +317,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    end
 
    if selectedTab == 'part' then
-      if selectedCategory == 'body' then
+      if category == 'body' then
          -- we have 5 ui elements, how many will fit on 1 row ?
          local update = function()
             editingGuy.body.dirty = true
@@ -417,7 +417,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'upperlip' or selectedCategory == 'lowerlip' then
+      if category == 'upperlip' or category == 'lowerlip' then
          currentHeight = calcCurrentHeight(1)
 
          if draw then
@@ -435,7 +435,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
 
-      if selectedCategory == 'hair' then
+      if category == 'hair' then
          currentHeight = calcCurrentHeight(2)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -462,7 +462,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
 
-      if selectedCategory == 'brows' then
+      if category == 'brows' then
          currentHeight = calcCurrentHeight(4)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -505,7 +505,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'nose' then
+      if category == 'nose' then
          currentHeight = calcCurrentHeight(3)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -539,7 +539,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
 
 
-      if selectedCategory == 'pupils' then
+      if category == 'pupils' then
          currentHeight = calcCurrentHeight(1)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -557,7 +557,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
 
-      if selectedCategory == 'eyes' then
+      if category == 'eyes' then
          currentHeight = calcCurrentHeight(5)
          if draw then
             runningElem = 0
@@ -609,7 +609,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'ears' then
+      if category == 'ears' then
          currentHeight = calcCurrentHeight(5)
          if draw then
             runningElem = 0
@@ -658,7 +658,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'legs' then
+      if category == 'legs' then
          currentHeight = calcCurrentHeight(5)
          if draw then
             runningElem = 0
@@ -711,7 +711,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'arms' then
+      if category == 'arms' then
          currentHeight = calcCurrentHeight(3)
          if draw then
             runningElem = 0
@@ -748,7 +748,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'neck' then
+      if category == 'neck' then
          currentHeight = calcCurrentHeight(2)
          if draw then
             runningElem = 0
@@ -774,7 +774,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'hands' then
+      if category == 'hands' then
          currentHeight = calcCurrentHeight(3)
          if draw then
             runningElem = 0
@@ -817,7 +817,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
       end
 
-      if selectedCategory == 'feet' then
+      if category == 'feet' then
          currentHeight = calcCurrentHeight(2)
          if draw then
             runningElem = 0
@@ -865,7 +865,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
 
-      if selectedCategory == 'skinPatchSnout' or selectedCategory == 'skinPatchEye1' or selectedCategory == 'skinPatchEye2' then
+      if category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2' then
          local posts = { 'ScaleX', 'ScaleY', 'Angle', 'X', 'Y' }
          local mins = { .25, .25, 0, -6, -6 }
          local maxs = { 3, 3, 15, 6, 6 }
@@ -895,7 +895,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       end
 
 
-      if selectedCategory == 'head' then
+      if category == 'head' then
          local update = function()
             editingGuy.head.dirty = true
             transforms.setTransforms(editingGuy.head)
@@ -965,15 +965,21 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    end
 
    if selectedTab == 'pattern' then
+
+      if category == 'patches' or category == 'mouth' or category == 'eyes2' then 
+         currentHeight = 0
+      else
+
       currentHeight = calcCurrentHeight(3)
 
       if draw then
          drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
-         local category = selectedCategory
-         if not values[category] then
-            category = 'skinPatchSnout'
-         end
+         --print(category)
+         --local category = selectedCategory
+         --if not values[category] then
+         --   category = 'skinPatchSnout'
+         --end
 
 
          local propupdate = function(v)
@@ -1003,16 +1009,22 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          runningElem, currentY = updateRowStuff()
       end
    end
+   end
 
 
    if selectedTab == 'colors' then
      
+      if category == 'patches' or category == 'mouth' or category == 'eyes2' then 
+         currentHeight = 0
+      else
+   
+
       local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
 
-      local category = selectedCategory
-      if not values[category] then
-         category = 'skinPatchSnout'
-      end
+      --local category = selectedCategory
+      --if not values[category] then
+      --   category = 'skinPatchSnout'
+      --end
 
       local pickedColors = {
          palettes[values[category].bgPal],
@@ -1051,9 +1063,11 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
          end
          if ui.getUIRect('r' .. i, startX, currentY, buttonWidth, buttonWidth) then
             selectedColoringLayer = colorkeys[i]
+
          end
          startX = startX + buttonWidth
       end
+   end
    end
    return currentHeight
 end
@@ -1156,11 +1170,16 @@ function partSettingsSurroundings(draw, clickX, clickY)
       end
    end
 
-   if draw then
+   --if draw then
 
-      drawImmediateSlidersEtc(false, startX, currentY, width)
+      local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedCategory)
+      currentY = currentY +  minimumHeight  
+      drawChildPicker(draw, startX, currentY , width, clickX, clickY) 
+   --end
 
-   end
+   --if clickX ~= nil then
+   --print('part settings surroundings', clickX, clickY)
+   --end
 end
 
 function partSettingCellDimensions(amount, columns, width)
@@ -1344,23 +1363,50 @@ local function buttonClickHelper(value)
    end
 end
 
-
-function drawChildPicker(draw, startX,  currentY, width, cellMargin) 
+function childPickerDimensions(width)
+   local p = findPart(selectedCategory)
    local childrenTabHeight = 0
+   if p.children then 
+      childrenTabHeight = width/ 5 
+   end
+   return childrenTabHeight*1.2
+end
+
+function drawChildPicker(draw, startX,  currentY, width, clickX, clickY) 
+   local childrenTabHeight = 0
+   
    local p = findPart(selectedCategory)
    if p.children then
-      childrenTabHeight = ((width-cellMargin*2)/(#p.children))
+      childrenTabHeight = width/ 5 --((width-cellMargin*2)/(#p.children * 1.5))
       if draw then
+         drawTapesForBackground(startX, currentY, width, childrenTabHeight*1.2)
+      end
+
+         local offset = childrenTabHeight*0.1
          for i =1, #p.children do
+            local xPosition =  offset+ startX+ ((i-1) *childrenTabHeight )
+            local yPosition = currentY+offset
+            if draw then
              local sx, sy = createFittingScale(whiterects[1], childrenTabHeight, childrenTabHeight)
-             love.graphics.draw(whiterects[1], startX+ ((i-1) *childrenTabHeight ), currentY, 0, sx, sy)
-         end
-         --love.graphics.rectangle('fill', startX, currentY, childrenTabHeight, childrenTabHeight)
-         --love.graphics.rectangle('fill', startX+childrenTabHeight, currentY, childrenTabHeight, childrenTabHeight)
-         --love.graphics.rectangle('fill', startX+childrenTabHeight+childrenTabHeight, currentY, childrenTabHeight, childrenTabHeight)
+             love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , .5)
+             love.graphics.draw(whiterects[1], xPosition, yPosition, 0, sx, sy)
+             sx, sy = createFittingScale(scrollIcons[p.children[i]] , childrenTabHeight, childrenTabHeight)
+             love.graphics.setColor(1,0,0, .8)
+             love.graphics.draw(scrollIcons[p.children[i].. 'Mask'],xPosition, yPosition, 0, sx, sy)
+             love.graphics.setColor(0,0,0, .8)
+             love.graphics.draw(scrollIcons[p.children[i]], xPosition, yPosition, 0, sx, sy)
+            else
+               -- todo this isnt working because the scrollarea is not correct so this will only be called whne i click in the scrollarea
+
+              -- print(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)
+               if (hit.pointInRect(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)) then
+                       print(p.children[i])   
+                   end
+            end
+
          end
    end
-   return childrenTabHeight
+   return childrenTabHeight*1.2
 end
 
 function partSettingsScrollable(draw, clickX, clickY)
@@ -1406,15 +1452,18 @@ function partSettingsScrollable(draw, clickX, clickY)
    local currentX = startX + cellMargin
 
    local extraOffsetToTapes = tabHeight / 5
-   local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
+   local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedCategory)
 
 
    --------- 
 
    -- todo drawChildSpecificSLidersEtc
    --
-   local childrenTabHeight = drawChildPicker(draw, startX,  currentY+minimumHeight, width, cellMargin) 
-   currentY = currentY + minimumHeight + childrenTabHeight + cellMargin
+
+   
+
+   local childrenTabHeight =  childPickerDimensions(width)  --drawChildPicker(draw, startX, currentY , width, clickX, clickY) 
+   currentY = currentY +  minimumHeight + childrenTabHeight + cellMargin
 
 
   
@@ -1570,6 +1619,7 @@ function headOrBody(draw, clickX, clickY)
 
       --love.graphics.rectangle('fill', margin, topY, size, buttonHeight)
       love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+      love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , maskAlpha)
       if (selectedRootButton == 'head') then
          local sx2, sy2 = createFittingScale(rects[1], size, buttonHeight)
          love.graphics.draw(rects[1], margin, topY, 0, sx2, sy2)
@@ -1603,6 +1653,7 @@ function headOrBody(draw, clickX, clickY)
       local sx, sy = createFittingScale(bigbuttons.body, size, buttonHeight)
 
       love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
+      love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , maskAlpha)
       if (selectedRootButton == 'body') then
          local sx2, sy2 = createFittingScale(rects[1], size, buttonHeight)
          love.graphics.draw(rects[1], margin, (h / 2), 0, sx2, sy2)
@@ -1702,6 +1753,7 @@ function scrollList(draw, clickX, clickY)
             love.graphics.setColor(0.5, 0.5, 0.5, alpha)
             if selectedCategory == categories[index] then
                love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], alpha)
+               love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , alpha)
                local sx, sy = createFittingScale(rects[1], size, size)
                love.graphics.draw(rects[1], scrollListXPosition, yPosition, 0, sx * sm, sy * sm)
                love.graphics.setColor(0, 0, 0, alpha)
@@ -1717,6 +1769,7 @@ function scrollList(draw, clickX, clickY)
 
                if (m) then
                   love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], alpha)
+                  love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , alpha)
                   local sx, sy = createFittingScale(m, size, size)
                   love.graphics.draw(m, scrollListXPosition, yPosition, 0, sx * sm, sy * sm)
                end

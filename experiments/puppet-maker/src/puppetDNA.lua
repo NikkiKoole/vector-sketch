@@ -97,10 +97,11 @@ function generate()
 
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts,     kind = 'head' },
-        { name = 'hair',           imgs = hairUrls,        kind = 'head' },
+        { name = 'hair',           imgs = hairUrls,        kind = 'head' }, 
         { name = 'brows',          imgs = browImgUrls,     p = browParts,     kind = 'head' },
+       
+        {name='eyes2', kind='head', children={'eyes', 'pupils'}},
         { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,    kind = 'head' },
-        {name='eyes2', kind='head'},
         { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts,      kind = 'head' },
         { name = 'ears',           imgs = earImgUrls,      p = earParts,      kind = 'head' },
         { name = 'nose',           imgs = noseImgUrls,     p = noseParts,     kind = 'head' },
@@ -108,7 +109,7 @@ function generate()
         { name = 'skinPatchSnout', imgs = patchUrls,       kind = 'head' },
         { name = 'skinPatchEye1',  imgs = patchUrls,       kind = 'head' },
         { name = 'skinPatchEye2',  imgs = patchUrls,       kind = 'head' },
-        {name = 'mouth', kind = 'head'},
+        {name = 'mouth', kind = 'head', children = {'upperlip', 'lowerlip', 'teeth'}},
         { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts, kind = 'head' },
         { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts, kind = 'head' },
         { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,    kind = 'head' },
