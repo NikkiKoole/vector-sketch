@@ -581,8 +581,7 @@ function scene.load()
        earsMask = love.graphics.newImage('assets/ui/icons/ears-mask.png'),
        brows = love.graphics.newImage('assets/ui/icons/brows.png'),
        browsMask = love.graphics.newImage('assets/ui/icons/brows-mask.png'),
-       mouth = love.graphics.newImage('assets/ui/icons/mouth.png'),
-       mouthMask = love.graphics.newImage('assets/ui/icons/mouth-mask.png'),
+
        hair = love.graphics.newImage('assets/ui/icons/hair.png'),
        hairMask = love.graphics.newImage('assets/ui/icons/hair-mask.png'),
        skinPatchEye1 = love.graphics.newImage('assets/ui/icons/skinpatchEye1.png'),
@@ -601,6 +600,12 @@ function scene.load()
        headMask = love.graphics.newImage('assets/ui/icons/head-mask.png'),
        pupils = love.graphics.newImage('assets/ui/icons/pupil.png'),
        pupilsMask = love.graphics.newImage('assets/ui/icons/pupil-mask.png'),
+       patches = love.graphics.newImage('assets/ui/icons/patches.png'),
+       patchesMask = love.graphics.newImage('assets/ui/icons/patches-mask.png'),
+       mouth = love.graphics.newImage('assets/ui/icons/mouth.png'),
+       mouthMask = love.graphics.newImage('assets/ui/icons/mouth-mask.png'),
+       eyes2 = love.graphics.newImage('assets/ui/icons/eyes2.png'),
+       eyes2Mask = love.graphics.newImage('assets/ui/icons/eyes2-mask.png'),
    }
 
 

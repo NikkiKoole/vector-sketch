@@ -60,6 +60,7 @@ end
 -- this function will be a called from draw
 function partSettingsPanel()
    partSettingsSurroundings(true)
+
    partSettingsScrollable(true)
 end
 
@@ -73,7 +74,7 @@ function partSettingsPanelDimensions()
    local beginY = 0
    local startX = beginX + w - width - margin
    local startY = beginY + margin
-
+  
    return startX, startY, width, height
 end
 
@@ -86,46 +87,17 @@ function partSettingsTabsDimensions(tabs, width)
 end
 
 function drawTapesForBackground(x, y, w, h)
-   local index = 1
    local ratio = h / w
-   if ratio < 0.3 then
-      index = 1
-   else
-      index = 2
-   end
+   local index = ratio < 0.3 and 1 or 2
 
-   -- if h > 100 then index = 2 end
-   local imgw, imgh = uiheaders[index]:getDimensions()
    local sx, sy = createFittingScale(uiheaders[index], w, h)
    love.graphics.setColor(1, 1, 1, .4)
-   --love.graphics.draw(uiheaders[index], x, y + h / 2, 0, sx, sy * -1, 0, imgh / 2)
+
    love.graphics.draw(uiheaders[index], x, y, 0, sx, sy, 0, 0)
 end
 
-function newtoggle(id, img, x, y, w, toggled)
-   local togw, togh = img:getDimensions()
-   local s = (w) / togw
-   local h = toggled and s or -s
 
-   love.graphics.draw(img, x + (togw / 2) * s, y, 0, h, s, togw / 2, 0)
-   -- i retun a differnt hitarea depending on the toggled state
-   local h = nil
-   h = ui.getUIRect(id, x, y, (togw) * s, togh * s)
 
-   if false then
-      if not toggled then
-         h = ui.getUIRect(id, x, y, (togw / 2) * s, togh * s)
-      else
-         h = ui.getUIRect(id, x + (togw / 2) * s, y, (togw / 2) * s, togh * s)
-      end
-   end
-
-   return h
-end
-
-function toggle2(id, trackimg, thumbimg, x, y, w, toggled)
-
-end
 
 function changeValue(name, step, min, max)
    local values = editingGuy.values
@@ -312,7 +284,7 @@ end
 
 function drawImmediateSlidersEtc(draw, startX, currentY, width)
    local values = editingGuy.values
-   local currentHeight = 20
+   local currentHeight = 0
 
    -- if small then buttonSize == 24
    -- if big then double (48)
@@ -329,7 +301,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
    startX = startX + buttonSize / 2
 
    local rowMultiplier = 1.3
-
+  -- print('startX', startX)
    function updateRowStuff()
       runningElem = runningElem + 1
       if runningElem >= elementsInRow then
@@ -998,26 +970,32 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
       if draw then
          drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
+         local category = selectedCategory
+         if not values[category] then
+            category = 'skinPatchSnout'
+         end
+
+
          local propupdate = function(v)
-            changePart(selectedCategory)
+            changePart(category)
          end
          runningElem = 0
 
-         draw_slider_with_2_buttons(selectedCategory .. '.texScale', startX + (runningElem * elementWidth), currentY,
+         draw_slider_with_2_buttons(category .. '.texScale', startX + (runningElem * elementWidth), currentY,
              buttonSize,
              sliderWidth, propupdate,
              nil, 1, 9, 1, icons.patterncoarse, icons.patternfine)
 
          runningElem, currentY = updateRowStuff()
 
-         draw_slider_with_2_buttons(selectedCategory .. '.texRot', startX + (runningElem * elementWidth), currentY,
+         draw_slider_with_2_buttons(category .. '.texRot', startX + (runningElem * elementWidth), currentY,
              buttonSize,
              sliderWidth, propupdate,
              nil, 0, 15, 1, icons.patternccw, icons.patterncw)
 
          runningElem, currentY = updateRowStuff()
 
-         draw_slider_with_2_buttons(selectedCategory .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
+         draw_slider_with_2_buttons(category .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
              buttonSize,
              sliderWidth, propupdate,
              nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
@@ -1028,16 +1006,22 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width)
 
 
    if selectedTab == 'colors' then
-      local pickedColors = {
-          palettes[values[selectedCategory].bgPal],
-          palettes[values[selectedCategory].fgPal],
-          palettes[values[selectedCategory].linePal],
-      }
-
+     
       local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
 
-      local amount = #pickedColors
+      local category = selectedCategory
+      if not values[category] then
+         category = 'skinPatchSnout'
+      end
 
+      local pickedColors = {
+         palettes[values[category].bgPal],
+         palettes[values[category].fgPal],
+         palettes[values[category].linePal],
+     }
+
+      local amount = #pickedColors
+   
       local buttonWidth = (width / amount) * 0.8
       local originY = currentY
       local originX = startX
@@ -1086,15 +1070,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
    local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
 
    if draw then
-      -- main panel
 
-      --love.graphics.setColor(0, 0, 0)
-      --love.graphics.rectangle("line", startX, startY, width, height)
-      --love.graphics.setColor(255 / 255, 240 / 255, 200 / 255)
-      --love.graphics.rectangle("fill", startX, startY, width, height)
-      --love.graphics.setColor(0, 0, 0)
-
-      -- instead of getting the imae data I need to use some transaprencey too, ive measured it out the imag
       local iw = 650
       local ih = 1240
       --local iw, ih = tabui[1]:getDimensions()
@@ -1104,8 +1080,6 @@ function partSettingsSurroundings(draw, clickX, clickY)
 
       local uiOffX = 18 * scaleX
       local uiOffY = 40 * scaleY
-
-
 
       local drawunder = { { 2, 3, 1 }, { 1, 3, 2 }, { 1, 2, 3 } }
 
@@ -1183,11 +1157,9 @@ function partSettingsSurroundings(draw, clickX, clickY)
    end
 
    if draw then
-      --local extraOffsetToTapes = tabHeight / 5
-      local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width)
-      --love.graphics.rectangle("line", startX, currentY, width, minimumHeight)
-      --love.graphics.print("ruimte voor sliders", startX + 6, currentY + 6)
-      -- maybe   can use another weird global like settingsScrollArea
+
+      drawImmediateSlidersEtc(false, startX, currentY, width)
+
    end
 end
 
@@ -1207,10 +1179,16 @@ local function renderElement(type, value, container, x, y, w, h)
    end
    if (type == "dot") then
       if (value <= #container) then
+
+         local category = selectedCategory
+         if not editingGuy.values[category] then
+            category = 'skinPatchSnout'
+         end
+
          local dotindex = (value % #dots)
-         local pickedBG = editingGuy.values[selectedCategory].bgPal == value
-         local pickedFG = editingGuy.values[selectedCategory].fgPal == value
-         local pickedLP = editingGuy.values[selectedCategory].linePal == value
+         local pickedBG = editingGuy.values[category].bgPal == value
+         local pickedFG = editingGuy.values[category].fgPal == value
+         local pickedLP = editingGuy.values[category].linePal == value
          if dotindex == 0 then
             dotindex = #dots
          end
@@ -1272,9 +1250,6 @@ local function renderElement(type, value, container, x, y, w, h)
             love.graphics.draw(mask, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
             love.graphics.setBlendMode('alpha')
          end
-         --love.graphics.setColor(0, 0, 0, .1)
-         --love.graphics.rectangle("line", x, y, w, h)
-         --love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale, 0, 0)
 
          love.graphics.setColor(0, 0, 0, 1)
          love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale, 0, 0)
@@ -1286,11 +1261,15 @@ local function renderElement(type, value, container, x, y, w, h)
          if dotindex == 0 then
             dotindex = #container
          end
+         local category = selectedCategory
+         if not editingGuy.values[category] then
+            category = 'skinPatchSnout'
+         end
          local circleindex = (value % #circles) + 1
-         local picked = editingGuy.values[selectedCategory].fgTex == dotindex
-         local bpal = (palettes[editingGuy.values[selectedCategory].bgPal])
-         local pal = (palettes[editingGuy.values[selectedCategory].fgPal])
-         local lpal = (palettes[editingGuy.values[selectedCategory].linePal])
+         local picked = editingGuy.values[category].fgTex == dotindex
+         local bpal = (palettes[editingGuy.values[category].bgPal])
+         local pal = (palettes[editingGuy.values[category].fgPal])
+         local lpal = (palettes[editingGuy.values[category].linePal])
          local dot = container[dotindex]
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
@@ -1330,10 +1309,16 @@ end
 
 local function buttonClickHelper(value)
    local values = editingGuy.values
-   local f = findPart(selectedCategory)
+   local category = selectedCategory
+         if not editingGuy.values[category] then
+            category = 'skinPatchSnout'
+         end
+
+
+   local f = findPart(category)
    if selectedTab == 'part' then
-      values[selectedCategory]['shape'] = value
-      changePart(selectedCategory, values)
+      values[category]['shape'] = value
+      changePart(category, values)
 
       if (f.kind == 'body') then
          tweenCameraToHeadAndBody()
@@ -1342,39 +1327,48 @@ local function buttonClickHelper(value)
       end
 
       growl(1 + love.math.random() * 2)
-      -- local pitch = 1+love.math.random()*2
-      -- local index = math.ceil(love.math.random()*#hum) -- numbers.mapInto(value, valmin, valmax, 1, #hum)
 
-      -- playingSound = playSound(hum[math.ceil(index)], 1+love.math.random()*2)
-      -- local sndLength = hum[math.ceil(index)]:getDuration() / pitch
-
-      -- myWorld:emit('mouthSaySomething', mouth, sndLength)
-
-      --playSound(scrollItemClickSample)
    end
    if selectedTab == 'colors' then
-      --local whichPart = { 'bgPal', 'fgPal', 'linePal' }
 
-      values[selectedCategory][selectedColoringLayer] = value
-      changePart(selectedCategory, values)
+      values[category][selectedColoringLayer] = value
+      changePart(category, values)
 
       playSound(scrollItemClickSample)
    end
    if selectedTab == 'pattern' then
-      values[selectedCategory]['fgTex'] = value
-      changePart(selectedCategory, values)
-      --local func = f.funcs[2]
-      --func(f.funcs[3], values)
+      values[category]['fgTex'] = value
+      changePart(category, values)
+ 
       playSound(scrollItemClickSample)
    end
 end
 
+
+function drawChildPicker(draw, startX,  currentY, width, cellMargin) 
+   local childrenTabHeight = 0
+   local p = findPart(selectedCategory)
+   if p.children then
+      childrenTabHeight = ((width-cellMargin*2)/(#p.children))
+      if draw then
+         for i =1, #p.children do
+             local sx, sy = createFittingScale(whiterects[1], childrenTabHeight, childrenTabHeight)
+             love.graphics.draw(whiterects[1], startX+ ((i-1) *childrenTabHeight ), currentY, 0, sx, sy)
+         end
+         --love.graphics.rectangle('fill', startX, currentY, childrenTabHeight, childrenTabHeight)
+         --love.graphics.rectangle('fill', startX+childrenTabHeight, currentY, childrenTabHeight, childrenTabHeight)
+         --love.graphics.rectangle('fill', startX+childrenTabHeight+childrenTabHeight, currentY, childrenTabHeight, childrenTabHeight)
+         end
+   end
+   return childrenTabHeight
+end
+
 function partSettingsScrollable(draw, clickX, clickY)
    local startX, startY, width, height = partSettingsPanelDimensions()
-   if selectedTab == 'pattern' then
-      startX = startX + (width / 20)
-      width = width - (width / 10)
-   end
+   --if true or selectedTab == 'pattern' then
+   --   startX = startX + (width / 20)
+   --   width = width - (width / 10)
+   --end
    --local tabs = { 'part', 'bg', 'fg', 'pattern', 'line' }
    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
 
@@ -1396,7 +1390,7 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
    if selectedTab == "part" then
       local p = findPart(selectedCategory)
-      amount = #p.imgs
+      amount = p.imgs and #p.imgs or 0
       renderType = "img"
       renderContainer = p.imgs
    end
@@ -1413,8 +1407,19 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    local extraOffsetToTapes = tabHeight / 5
    local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width)
-   currentY = currentY + minimumHeight + cellMargin
-   local scrollAreaHeight = (height - minimumHeight - tabHeight)
+
+
+   --------- 
+
+   -- todo drawChildSpecificSLidersEtc
+   --
+   local childrenTabHeight = drawChildPicker(draw, startX,  currentY+minimumHeight, width, cellMargin) 
+   currentY = currentY + minimumHeight + childrenTabHeight + cellMargin
+
+
+  
+
+   local scrollAreaHeight = (height - minimumHeight - tabHeight - childrenTabHeight)
 
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
@@ -1726,113 +1731,4 @@ function scrollList(draw, clickX, clickY)
          end
       end
    end
-end
-
-local function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
-   love.graphics.circle("line", cx, cy, buttonRadius)
-   love.graphics.print(label, cx, cy)
-
-   local other = { "hair", "headshape", "eyes", "ears", "nose", "mouth", "chin" }
-   local angleStep = (180 / (#other - 1))
-   local angle = -90
-   for i = 1, #other do
-      local px = cx + r * math.cos(angle * math.pi / 180)
-      local py = cy + r * math.sin(angle * math.pi / 180)
-      angle = angle + angleStep
-      love.graphics.circle("line", px, py, smallButtonRadius)
-   end
-end
-
---local res = { clicked = false }
-
-local function bigButtonWithSmallAroundIt(x, y, textureOrColors)
-   prof.push("big-bitton-small-around")
-   local biggestRadius = 70
-   local bigRadius = 40
-   local radius = 20
-   local diam = radius * 2
-   local rad = -math.pi / 2
-   local number = 4
-   local step = (math.pi / 1.5) / (number - 1)
-
-   love.graphics.setColor(0, 0, 0)
-   love.graphics.circle("line", x, y, bigRadius)
-
-   local first, second, third, fourth, fifth = nil, nil, nil, nil, nil
-
-   if (type(textureOrColors[1]) == "table") then
-      love.graphics.setColor(textureOrColors[1])
-   else
-      local img = mesh.getImage(textureOrColors[1])
-      local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam * 2, diam * 2)
-
-      love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
-   end
-   first = ui.getUICircle(x, y, bigRadius)
-
-   for i = 2, #textureOrColors do
-      local new_x = x + math.cos(rad) * biggestRadius
-      local new_y = y + math.sin(rad) * biggestRadius
-      love.graphics.setColor(0, 0, 0)
-      love.graphics.circle("line", new_x, new_y, radius)
-
-      if (type(textureOrColors[i]) == "table") then
-         love.graphics.setColor(textureOrColors[i])
-         love.graphics.circle("fill", new_x, new_y, radius - 2)
-      else
-         scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 40, 40)
-         prof.push("render-masked-texture")
-         canvas.renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
-         prof.pop("render-masked-texture")
-      end
-
-      local b = ui.getUICircle(new_x, new_y, 30)
-      if (i == 2) then
-         second = b
-      end
-      if (i == 3) then
-         third = b
-      end
-      if (i == 4) then
-         fourth = b
-      end
-      if (i == 5) then
-         fifth = b
-      end
-      rad = rad + step
-   end
-   prof.pop("big-bitton-small-around")
-   return first, second, third, fourth, fifth
-end
-
-local function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
-   if button then
-      values[bodyPart][param] = values[bodyPart][param] + 1
-      if values[bodyPart][param] > maxAmount then
-         values[bodyPart][param] = 1
-      end
-      func(firstParam, values)
-   end
-end
-
-local function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
-   shapeButton, BGButton, FGTexButton, FGButton, LinePalButton =
-       bigButtonWithSmallAroundIt(
-           x,
-           y,
-           {
-               imgArray[values[param].shape],
-               palettes[values[param].bgPal],
-               textures[values[param].fgTex],
-               palettes[values[param].fgPal],
-               palettes[values[param].linePal]
-           }
-       )
-
-   -- todo maybe parametrize palettes and textures?
-   buttonHelper(shapeButton, param, "shape", #imgArray, changeFunc, firstParam)
-   buttonHelper(BGButton, param, "bgPal", #palettes, redoFunc, firstParam)
-   buttonHelper(FGTexButton, param, "fgTex", #textures, redoFunc, firstParam)
-   buttonHelper(FGButton, param, "fgPal", #palettes, redoFunc, firstParam)
-   buttonHelper(LinePalButton, param, "linePal", #palettes, redoFunc, firstParam)
 end

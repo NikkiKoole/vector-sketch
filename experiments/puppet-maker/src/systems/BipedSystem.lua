@@ -454,7 +454,6 @@ function BipedSystem:bipedAttachHeadKeepAngleChangeDistance(e)
 end
 
 function attachHeadWithOrWithoutNeck(e, keepAngleAndDistance)
-    print('neck')
     local neckX, neckY = getPositionsForNeckAttaching(e)
     neckX = neckX or 0
     neckY = neckY or 0

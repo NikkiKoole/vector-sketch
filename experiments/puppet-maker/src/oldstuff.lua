@@ -96,3 +96,115 @@ function drawBBoxDebug()
         love.graphics.pop() -- stores the default coordinate system
     end
 end
+
+
+
+local function drawCirclesAroundCenterCircle(cx, cy, label, buttonRadius, r, smallButtonRadius)
+    love.graphics.circle("line", cx, cy, buttonRadius)
+    love.graphics.print(label, cx, cy)
+ 
+    local other = { "hair", "headshape", "eyes", "ears", "nose", "mouth", "chin" }
+    local angleStep = (180 / (#other - 1))
+    local angle = -90
+    for i = 1, #other do
+       local px = cx + r * math.cos(angle * math.pi / 180)
+       local py = cy + r * math.sin(angle * math.pi / 180)
+       angle = angle + angleStep
+       love.graphics.circle("line", px, py, smallButtonRadius)
+    end
+ end
+ 
+ --local res = { clicked = false }
+ 
+ local function bigButtonWithSmallAroundIt(x, y, textureOrColors)
+    prof.push("big-bitton-small-around")
+    local biggestRadius = 70
+    local bigRadius = 40
+    local radius = 20
+    local diam = radius * 2
+    local rad = -math.pi / 2
+    local number = 4
+    local step = (math.pi / 1.5) / (number - 1)
+ 
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.circle("line", x, y, bigRadius)
+ 
+    local first, second, third, fourth, fifth = nil, nil, nil, nil, nil
+ 
+    if (type(textureOrColors[1]) == "table") then
+       love.graphics.setColor(textureOrColors[1])
+    else
+       local img = mesh.getImage(textureOrColors[1])
+       local scale, xOffset, yOffset = getScaleAndOffsetsForImage(img, diam * 2, diam * 2)
+ 
+       love.graphics.draw(img, x + xOffset, y + yOffset, 0, scale, scale)
+    end
+    first = ui.getUICircle(x, y, bigRadius)
+ 
+    for i = 2, #textureOrColors do
+       local new_x = x + math.cos(rad) * biggestRadius
+       local new_y = y + math.sin(rad) * biggestRadius
+       love.graphics.setColor(0, 0, 0)
+       love.graphics.circle("line", new_x, new_y, radius)
+ 
+       if (type(textureOrColors[i]) == "table") then
+          love.graphics.setColor(textureOrColors[i])
+          love.graphics.circle("fill", new_x, new_y, radius - 2)
+       else
+          scale, xOffset, yOffset = getScaleAndOffsetsForImage(blup2, 40, 40)
+          prof.push("render-masked-texture")
+          canvas.renderMaskedTexture(blup2, textureOrColors[i], new_x + xOffset, new_y + yOffset, scale, scale)
+          prof.pop("render-masked-texture")
+       end
+ 
+       local b = ui.getUICircle(new_x, new_y, 30)
+       if (i == 2) then
+          second = b
+       end
+       if (i == 3) then
+          third = b
+       end
+       if (i == 4) then
+          fourth = b
+       end
+       if (i == 5) then
+          fifth = b
+       end
+       rad = rad + step
+    end
+    prof.pop("big-bitton-small-around")
+    return first, second, third, fourth, fifth
+ end
+ 
+ local function buttonHelper(button, bodyPart, param, maxAmount, func, firstParam)
+    if button then
+       values[bodyPart][param] = values[bodyPart][param] + 1
+       if values[bodyPart][param] > maxAmount then
+          values[bodyPart][param] = 1
+       end
+       func(firstParam, values)
+    end
+ end
+ 
+ local function bigButtonHelper(x, y, param, imgArray, changeFunc, redoFunc, firstParam)
+    shapeButton, BGButton, FGTexButton, FGButton, LinePalButton =
+        bigButtonWithSmallAroundIt(
+            x,
+            y,
+            {
+                imgArray[values[param].shape],
+                palettes[values[param].bgPal],
+                textures[values[param].fgTex],
+                palettes[values[param].fgPal],
+                palettes[values[param].linePal]
+            }
+        )
+ 
+    -- todo maybe parametrize palettes and textures?
+    buttonHelper(shapeButton, param, "shape", #imgArray, changeFunc, firstParam)
+    buttonHelper(BGButton, param, "bgPal", #palettes, redoFunc, firstParam)
+    buttonHelper(FGTexButton, param, "fgTex", #textures, redoFunc, firstParam)
+    buttonHelper(FGButton, param, "fgPal", #palettes, redoFunc, firstParam)
+    buttonHelper(LinePalButton, param, "linePal", #palettes, redoFunc, firstParam)
+ end
+ 
