@@ -1220,17 +1220,15 @@ local function renderElement(type, value, container, x, y, w, h)
          if pickedBG or pickedFG or pickedLP then
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w * 1.5, h * 1.5)
             local offset = (0.1 * scale * w) / 2
-            love.graphics.setColor(0, 0, 0, 1)
 
-            scale = scale + math.sin(love.timer.getTime() * 5) * 0.01
-            love.graphics.draw(dot, -offset + x + (xoff + w / 2), -offset + y + (yoff + h / 2), 0, scale * 1.1,
-                scale * 1.1)
             love.graphics.setColor(container[value])
             love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
+
+            love.graphics.setColor(0, 0, 0, .99)
+            local sx, sy = createFittingScale(circles[1], w * 1.5, h * 1.5)
+            love.graphics.draw(circles[1], x + (xoff + w / 2), y + (yoff + h / 2), 0, sx, sy)
          else
-            --love.graphics.setColor(0, 0, 0, .8)
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
-            --love.graphics.draw(dot, -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, scale, scale)
             love.graphics.setColor(container[value])
             love.graphics.draw(dot, x + (xoff + w / 2), y + (yoff + h / 2), 0, scale, scale)
          end
