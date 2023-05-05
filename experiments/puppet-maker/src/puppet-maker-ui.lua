@@ -882,7 +882,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
             for i = 1, #posts do
                local p = posts[i]
-               local vv = selectedCategory .. p
+               local vv = category .. p
 
                draw_slider_with_2_buttons(vv, startX + (runningElem * elementWidth), currentY,
                    buttonSize,
@@ -1175,6 +1175,11 @@ function partSettingsSurroundings(draw, clickX, clickY)
       local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedCategory)
       currentY = currentY +  minimumHeight  
       drawChildPicker(draw, startX, currentY , width, clickX, clickY) 
+
+      if findPart(selectedCategory).children then
+         local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedChildCategory)
+         currentY = currentY +  minimumHeight  
+      end
    --end
 
    --if clickX ~= nil then
@@ -1388,19 +1393,32 @@ function drawChildPicker(draw, startX,  currentY, width, clickX, clickY)
             local yPosition = currentY+offset
             if draw then
              local sx, sy = createFittingScale(whiterects[1], childrenTabHeight, childrenTabHeight)
+
+
+
              love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , .5)
              love.graphics.draw(whiterects[1], xPosition, yPosition, 0, sx, sy)
+
+             if selectedChildCategory == p.children[i] then
+               love.graphics.setColor(0,0,0, .5)
+               local sx, sy = createFittingScale(rects[1], childrenTabHeight, childrenTabHeight)
+               love.graphics.draw(rects[1], xPosition, yPosition, 0, sx, sy)
+             end
+
              sx, sy = createFittingScale(scrollIcons[p.children[i]] , childrenTabHeight, childrenTabHeight)
              love.graphics.setColor(1,0,0, .8)
              love.graphics.draw(scrollIcons[p.children[i].. 'Mask'],xPosition, yPosition, 0, sx, sy)
              love.graphics.setColor(0,0,0, .8)
              love.graphics.draw(scrollIcons[p.children[i]], xPosition, yPosition, 0, sx, sy)
+
+            
             else
                -- todo this isnt working because the scrollarea is not correct so this will only be called whne i click in the scrollarea
 
               -- print(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)
                if (hit.pointInRect(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)) then
                        print(p.children[i])   
+                       selectedChildCategory = p.children[i]
                    end
             end
 
@@ -1436,6 +1454,9 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
    if selectedTab == "part" then
       local p = findPart(selectedCategory)
+      if p.children then
+         
+      end
       amount = p.imgs and #p.imgs or 0
       renderType = "img"
       renderContainer = p.imgs
@@ -1454,7 +1475,7 @@ function partSettingsScrollable(draw, clickX, clickY)
    local extraOffsetToTapes = tabHeight / 5
    local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedCategory)
 
-
+   local otherHeight = 0
    --------- 
 
    -- todo drawChildSpecificSLidersEtc
@@ -1463,12 +1484,20 @@ function partSettingsScrollable(draw, clickX, clickY)
    
 
    local childrenTabHeight =  childPickerDimensions(width)  --drawChildPicker(draw, startX, currentY , width, clickX, clickY) 
-   currentY = currentY +  minimumHeight + childrenTabHeight + cellMargin
+
+   if findPart(selectedCategory).children then
+     -- print(selectedChildCategory)
+      currentY = currentY +  childrenTabHeight  
+      otherHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedChildCategory)
+      currentY = currentY +  otherHeight  
+   end
+
+   currentY = currentY +  minimumHeight  + cellMargin
 
 
   
 
-   local scrollAreaHeight = (height - minimumHeight - tabHeight - childrenTabHeight)
+   local scrollAreaHeight = (height - minimumHeight - otherHeight - tabHeight - childrenTabHeight)
 
    -- todo weird use of a 'global'
    -- the 5th is the cellsize/rowheight
@@ -1480,8 +1509,8 @@ function partSettingsScrollable(draw, clickX, clickY)
        (cellSize)
    }
    if draw then
-      love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea
-      [4])
+      love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+   --   love.graphics.rectangle('line', settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
    end
    local rowsInPanel = math.ceil((scrollAreaHeight - cellMargin) / (cellSize))
    local endlesssScroll = true
@@ -1779,6 +1808,10 @@ function scrollList(draw, clickX, clickY)
          else
             if (hit.pointInRect(clickX, clickY, scrollListXPosition, yPosition, size, size)) then
                selectedCategory = categories[index]
+               local f = findPart(selectedCategory)
+               if f.children then
+                  selectedChildCategory = f.children[1]
+               end
                playSound(scrollItemClickSample)
             end
          end
