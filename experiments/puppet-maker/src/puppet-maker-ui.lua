@@ -971,11 +971,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
    end
 
    if selectedTab == 'pattern' then
+      local isPatch = category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2'
       -- category == 'patches' or category == 'mouth' or category == 'eyes2' or category == 'arms2' or category == 'legs2'
       if findPart(category).children then
          currentHeight = 0
       else
-         currentHeight = calcCurrentHeight(3)
+         currentHeight = isPatch and calcCurrentHeight(5) or calcCurrentHeight(3)
 
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -1004,7 +1005,27 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 sliderWidth, propupdate,
                 nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
 
+
             runningElem, currentY = updateRowStuff()
+
+
+            if isPatch then
+               draw_slider_with_2_buttons(category .. '.bgAlpha', startX + (runningElem * elementWidth), currentY,
+                   buttonSize,
+                   sliderWidth, propupdate,
+                   nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
+
+
+               runningElem, currentY = updateRowStuff()
+
+               draw_slider_with_2_buttons(category .. '.lineAlpha', startX + (runningElem * elementWidth), currentY,
+                   buttonSize,
+                   sliderWidth, propupdate,
+                   nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
+
+
+               runningElem, currentY = updateRowStuff()
+            end
          end
       end
    end
