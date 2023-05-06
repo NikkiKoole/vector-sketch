@@ -24,6 +24,15 @@ local function getPNGMaskUrl(url)
    return text.replace(url, '.png', '-mask.png')
 end
 
+function setSecondaryColor(alpha)
+   --0xf8 / 255, 0xa0 / 255, 0x67 / 255,
+   love.graphics.setColor(pink[1], pink[2], pink[3], alpha)
+end
+
+function setTernaryColor(alpha)
+   love.graphics.setColor(green[1], green[2], green[3], alpha)
+end
+
 function growl(pitch)
    local index = math.ceil(love.math.random() * #hum)
    local sndLength = hum[math.ceil(index)]:getDuration() / pitch
@@ -74,7 +83,7 @@ function partSettingsPanelDimensions()
    local beginY = 0
    local startX = beginX + w - width - margin
    local startY = beginY + margin
-  
+
    return startX, startY, width, height
 end
 
@@ -95,9 +104,6 @@ function drawTapesForBackground(x, y, w, h)
 
    love.graphics.draw(uiheaders[index], x, y, 0, sx, sy, 0, 0)
 end
-
-
-
 
 function changeValue(name, step, min, max)
    local values = editingGuy.values
@@ -301,7 +307,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
    startX = startX + buttonSize / 2
 
    local rowMultiplier = 1.3
-  -- print('startX', startX)
+   -- print('startX', startX)
    function updateRowStuff()
       runningElem = runningElem + 1
       if runningElem >= elementsInRow then
@@ -965,109 +971,94 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
    end
 
    if selectedTab == 'pattern' then
-
-      if category == 'patches' or category == 'mouth' or category == 'eyes2' then 
+      -- category == 'patches' or category == 'mouth' or category == 'eyes2' or category == 'arms2' or category == 'legs2'
+      if findPart(category).children then
          currentHeight = 0
       else
+         currentHeight = calcCurrentHeight(3)
 
-      currentHeight = calcCurrentHeight(3)
+         if draw then
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
-      if draw then
-         drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+            local propupdate = function(v)
+               changePart(category)
+            end
+            runningElem = 0
 
-         --print(category)
-         --local category = selectedCategory
-         --if not values[category] then
-         --   category = 'skinPatchSnout'
-         --end
+            draw_slider_with_2_buttons(category .. '.texScale', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 1, 9, 1, icons.patterncoarse, icons.patternfine)
 
+            runningElem, currentY = updateRowStuff()
 
-         local propupdate = function(v)
-            changePart(category)
+            draw_slider_with_2_buttons(category .. '.texRot', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0, 15, 1, icons.patternccw, icons.patterncw)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons(category .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
+
+            runningElem, currentY = updateRowStuff()
          end
-         runningElem = 0
-
-         draw_slider_with_2_buttons(category .. '.texScale', startX + (runningElem * elementWidth), currentY,
-             buttonSize,
-             sliderWidth, propupdate,
-             nil, 1, 9, 1, icons.patterncoarse, icons.patternfine)
-
-         runningElem, currentY = updateRowStuff()
-
-         draw_slider_with_2_buttons(category .. '.texRot', startX + (runningElem * elementWidth), currentY,
-             buttonSize,
-             sliderWidth, propupdate,
-             nil, 0, 15, 1, icons.patternccw, icons.patterncw)
-
-         runningElem, currentY = updateRowStuff()
-
-         draw_slider_with_2_buttons(category .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
-             buttonSize,
-             sliderWidth, propupdate,
-             nil, 0, 5, 1, icons.patterntransparent, icons.patternopaque)
-
-         runningElem, currentY = updateRowStuff()
       end
-   end
    end
 
 
    if selectedTab == 'colors' then
-     
-      if category == 'patches' or category == 'mouth' or category == 'eyes2' then 
+      -- category == 'patches' or category == 'mouth' or category == 'eyes2' or category == 'arms2' or category == 'legs2'
+      if findPart(category).children then
          currentHeight = 0
       else
-   
+         local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
 
-      local colorkeys = { 'bgPal', 'fgPal', 'linePal' }
 
-      --local category = selectedCategory
-      --if not values[category] then
-      --   category = 'skinPatchSnout'
-      --end
+         local pickedColors = {
+             palettes[values[category].bgPal],
+             palettes[values[category].fgPal],
+             palettes[values[category].linePal],
+         }
 
-      local pickedColors = {
-         palettes[values[category].bgPal],
-         palettes[values[category].fgPal],
-         palettes[values[category].linePal],
-     }
+         local amount = #pickedColors
 
-      local amount = #pickedColors
-   
-      local buttonWidth = (width / amount) * 0.8
-      local originY = currentY
-      local originX = startX
-      currentY = currentY + 10
+         local buttonWidth = (width / amount) * 0.8
+         local originY = currentY
+         local originX = startX
+         currentY = currentY + 10
 
-      startX = startX + (width / amount) * 0.3
-      local rowStartX = startX
-      currentHeight = buttonWidth + 10 -- width / 3 --math.max(60, 50 + (buttonWidth / 2))
-      if draw then
-         --         buttonSize / 2
-         drawTapesForBackground(originX, originY, width - (buttonSize / 2), currentHeight)
-      end
-      for i = 1, 3 do
-         --love.graphics.setColor(0, 0, 0)
-         --love.graphics.rectangle('line', startX, currentY, buttonWidth, buttonWidth)
+         startX = startX + (width / amount) * 0.3
+         local rowStartX = startX
+         currentHeight = buttonWidth + 10 -- width / 3 --math.max(60, 50 + (buttonWidth / 2))
          if draw then
-            local sx, sy = createFittingScale(colorpickerui[i], buttonWidth, buttonWidth)
-            if selectedColoringLayer == colorkeys[i] then
-               local offset = math.sin(love.timer.getTime() * 5) * 0.02
-               sx = sx * (1.0 + offset)
-               sy = sy * (1.0 + offset)
+            --         buttonSize / 2
+            drawTapesForBackground(originX, originY, width - (buttonSize / 2), currentHeight)
+         end
+         for i = 1, 3 do
+            --love.graphics.setColor(0, 0, 0)
+            --love.graphics.rectangle('line', startX, currentY, buttonWidth, buttonWidth)
+            if draw then
+               local sx, sy = createFittingScale(colorpickerui[i], buttonWidth, buttonWidth)
+               if selectedColoringLayer == colorkeys[i] then
+                  local offset = math.sin(love.timer.getTime() * 5) * 0.02
+                  sx = sx * (1.0 + offset)
+                  sy = sy * (1.0 + offset)
+               end
+               love.graphics.setColor(0, 0, 0)
+               love.graphics.draw(colorpickerui[i], startX, currentY, 0, sx, sy)
+               love.graphics.setColor(pickedColors[i])
+               love.graphics.draw(colorpickeruimask[i], startX, currentY, 0, sx, sx)
             end
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.draw(colorpickerui[i], startX, currentY, 0, sx, sy)
-            love.graphics.setColor(pickedColors[i])
-            love.graphics.draw(colorpickeruimask[i], startX, currentY, 0, sx, sx)
+            if ui.getUIRect('r' .. i, startX, currentY, buttonWidth, buttonWidth) then
+               selectedColoringLayer = colorkeys[i]
+            end
+            startX = startX + buttonWidth
          end
-         if ui.getUIRect('r' .. i, startX, currentY, buttonWidth, buttonWidth) then
-            selectedColoringLayer = colorkeys[i]
-
-         end
-         startX = startX + buttonWidth
       end
-   end
    end
    return currentHeight
 end
@@ -1084,7 +1075,6 @@ function partSettingsSurroundings(draw, clickX, clickY)
    local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
 
    if draw then
-
       local iw = 650
       local ih = 1240
       --local iw, ih = tabui[1]:getDimensions()
@@ -1172,14 +1162,14 @@ function partSettingsSurroundings(draw, clickX, clickY)
 
    --if draw then
 
-      local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedCategory)
-      currentY = currentY +  minimumHeight  
-      drawChildPicker(draw, startX, currentY , width, clickX, clickY) 
+   local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedCategory)
+   currentY = currentY + minimumHeight
+   drawChildPicker(draw, startX, currentY, width, clickX, clickY)
 
-      if findPart(selectedCategory).children then
-         local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedChildCategory)
-         currentY = currentY +  minimumHeight  
-      end
+   if findPart(selectedCategory).children then
+      local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedChildCategory)
+      currentY = currentY + minimumHeight
+   end
    --end
 
    --if clickX ~= nil then
@@ -1196,19 +1186,13 @@ function partSettingCellDimensions(amount, columns, width)
    return rows, cellWidth, cellMargin, cellSize
 end
 
-local function renderElement(type, value, container, x, y, w, h)
+local function renderElement(category, type, value, container, x, y, w, h)
    if (type == "test") then
       love.graphics.rectangle("line", x, y, w, h)
       love.graphics.print(value, x, y)
    end
    if (type == "dot") then
       if (value <= #container) then
-
-         local category = selectedCategory
-         if not editingGuy.values[category] then
-            category = 'skinPatchSnout'
-         end
-
          local dotindex = (value % #dots)
          local pickedBG = editingGuy.values[category].bgPal == value
          local pickedFG = editingGuy.values[category].fgPal == value
@@ -1253,7 +1237,7 @@ local function renderElement(type, value, container, x, y, w, h)
 
          local info = love.filesystem.getInfo(maskUrl)
 
-         local picked = editingGuy.values[selectedCategory].shape == dotindex
+         local picked = editingGuy.values[category].shape == dotindex
          if picked then
             scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
          end
@@ -1264,7 +1248,7 @@ local function renderElement(type, value, container, x, y, w, h)
             imageCache[maskUrl] = mask
 
             love.graphics.setBlendMode('subtract')
-            local pal = (palettes[editingGuy.values[selectedCategory].bgPal])
+            local pal = (palettes[editingGuy.values[category].bgPal])
 
             if picked then
                love.graphics.setColor(1 - pal[1], 1 - pal[2], 1 - pal[3], 1)
@@ -1285,10 +1269,10 @@ local function renderElement(type, value, container, x, y, w, h)
          if dotindex == 0 then
             dotindex = #container
          end
-         local category = selectedCategory
-         if not editingGuy.values[category] then
-            category = 'skinPatchSnout'
-         end
+         --local category = selectedCategory
+         --if not editingGuy.values[category] then
+         --   category = 'skinPatchSnout'
+         --end
          local circleindex = (value % #circles) + 1
          local picked = editingGuy.values[category].fgTex == dotindex
          local bpal = (palettes[editingGuy.values[category].bgPal])
@@ -1331,12 +1315,12 @@ local function renderElement(type, value, container, x, y, w, h)
    end
 end
 
-local function buttonClickHelper(value)
+local function buttonClickHelper(category, value)
    local values = editingGuy.values
-   local category = selectedCategory
-         if not editingGuy.values[category] then
-            category = 'skinPatchSnout'
-         end
+   --local category = selectedCategory
+   --if not editingGuy.values[category] then
+   --   category = 'skinPatchSnout'
+   --end
 
 
    local f = findPart(category)
@@ -1351,10 +1335,8 @@ local function buttonClickHelper(value)
       end
 
       growl(1 + love.math.random() * 2)
-
    end
    if selectedTab == 'colors' then
-
       values[category][selectedColoringLayer] = value
       changePart(category, values)
 
@@ -1363,7 +1345,7 @@ local function buttonClickHelper(value)
    if selectedTab == 'pattern' then
       values[category]['fgTex'] = value
       changePart(category, values)
- 
+
       playSound(scrollItemClickSample)
    end
 end
@@ -1371,60 +1353,64 @@ end
 function childPickerDimensions(width)
    local p = findPart(selectedCategory)
    local childrenTabHeight = 0
-   if p.children then 
-      childrenTabHeight = width/ 5 
+   if p.children then
+      childrenTabHeight = width / 5
    end
-   return childrenTabHeight*1.2
+   return childrenTabHeight * 1.2
 end
 
-function drawChildPicker(draw, startX,  currentY, width, clickX, clickY) 
+function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
    local childrenTabHeight = 0
-   
+
    local p = findPart(selectedCategory)
    if p.children then
-      childrenTabHeight = width/ 5 --((width-cellMargin*2)/(#p.children * 1.5))
+      childrenTabHeight = width / 5 --((width-cellMargin*2)/(#p.children * 1.5))
       if draw then
-         drawTapesForBackground(startX, currentY, width, childrenTabHeight*1.2)
+         drawTapesForBackground(startX, currentY, width, childrenTabHeight * 1.2)
       end
 
-         local offset = childrenTabHeight*0.1
-         for i =1, #p.children do
-            local xPosition =  offset+ startX+ ((i-1) *childrenTabHeight )
-            local yPosition = currentY+offset
-            if draw then
-             local sx, sy = createFittingScale(whiterects[1], childrenTabHeight, childrenTabHeight)
+      local offset = childrenTabHeight * 0.1
+      for i = 1, #p.children do
+         local xPosition = offset + startX + ((i - 1) * childrenTabHeight)
+         local yPosition = currentY + offset
+         if draw then
+            local sx, sy = createFittingScale(whiterects[1], childrenTabHeight, childrenTabHeight)
 
 
 
-             love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , .5)
-             love.graphics.draw(whiterects[1], xPosition, yPosition, 0, sx, sy)
+            --love.graphics.setColor(0xf8 / 255, 0xa0 / 255, 0x67 / 255, .5)
+            --love.graphics.setColor(1, 1, 1, .5)
 
-             if selectedChildCategory == p.children[i] then
-               love.graphics.setColor(0,0,0, .5)
+            love.graphics.setColor(0, 0, 0, 0.1)
+            love.graphics.draw(whiterects[1], xPosition + 2, yPosition + 2, 0, sx, sy)
+
+            love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
+            love.graphics.draw(whiterects[1], xPosition, yPosition, 0, sx, sy)
+
+            if selectedChildCategory == p.children[i] then
+               love.graphics.setColor(0, 0, 0, .8)
                local sx, sy = createFittingScale(rects[1], childrenTabHeight, childrenTabHeight)
                love.graphics.draw(rects[1], xPosition, yPosition, 0, sx, sy)
-             end
-
-             sx, sy = createFittingScale(scrollIcons[p.children[i]] , childrenTabHeight, childrenTabHeight)
-             love.graphics.setColor(1,0,0, .8)
-             love.graphics.draw(scrollIcons[p.children[i].. 'Mask'],xPosition, yPosition, 0, sx, sy)
-             love.graphics.setColor(0,0,0, .8)
-             love.graphics.draw(scrollIcons[p.children[i]], xPosition, yPosition, 0, sx, sy)
-
-            
-            else
-               -- todo this isnt working because the scrollarea is not correct so this will only be called whne i click in the scrollarea
-
-              -- print(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)
-               if (hit.pointInRect(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)) then
-                       print(p.children[i])   
-                       selectedChildCategory = p.children[i]
-                   end
             end
 
+            sx, sy = createFittingScale(scrollIcons[p.children[i]], childrenTabHeight, childrenTabHeight)
+
+            setSecondaryColor(1)
+            love.graphics.draw(scrollIcons[p.children[i] .. 'Mask'], xPosition, yPosition, 0, sx, sy)
+            love.graphics.setColor(0, 0, 0, .8)
+            love.graphics.draw(scrollIcons[p.children[i]], xPosition, yPosition, 0, sx, sy)
+         else
+            -- todo this isnt working because the scrollarea is not correct so this will only be called whne i click in the scrollarea
+
+            -- print(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)
+            if (hit.pointInRect(clickX, clickY, xPosition, yPosition, childrenTabHeight, childrenTabHeight)) then
+               print(p.children[i])
+               selectedChildCategory = p.children[i]
+            end
          end
+      end
    end
-   return childrenTabHeight*1.2
+   return childrenTabHeight * 1.2
 end
 
 function partSettingsScrollable(draw, clickX, clickY)
@@ -1444,6 +1430,12 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    local columns = 3
 
+   local category = selectedCategory
+   local p = findPart(selectedCategory)
+   if p.children then
+      p = findPart(selectedChildCategory)
+      category = selectedChildCategory
+   end
 
 
    if selectedTab == "fg" or selectedTab == "bg" or selectedTab == "line" or selectedTab == "colors" then
@@ -1453,10 +1445,6 @@ function partSettingsScrollable(draw, clickX, clickY)
       renderContainer = palettes
    end
    if selectedTab == "part" then
-      local p = findPart(selectedCategory)
-      if p.children then
-         
-      end
       amount = p.imgs and #p.imgs or 0
       renderType = "img"
       renderContainer = p.imgs
@@ -1476,26 +1464,26 @@ function partSettingsScrollable(draw, clickX, clickY)
    local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedCategory)
 
    local otherHeight = 0
-   --------- 
+   ---------
 
    -- todo drawChildSpecificSLidersEtc
    --
 
-   
 
-   local childrenTabHeight =  childPickerDimensions(width)  --drawChildPicker(draw, startX, currentY , width, clickX, clickY) 
+
+   local childrenTabHeight = childPickerDimensions(width) --drawChildPicker(draw, startX, currentY , width, clickX, clickY)
 
    if findPart(selectedCategory).children then
-     -- print(selectedChildCategory)
-      currentY = currentY +  childrenTabHeight  
+      -- print(selectedChildCategory)
+      currentY = currentY + childrenTabHeight
       otherHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedChildCategory)
-      currentY = currentY +  otherHeight  
+      currentY = currentY + otherHeight
    end
 
-   currentY = currentY +  minimumHeight  + cellMargin
+   currentY = currentY + minimumHeight + cellMargin
 
 
-  
+
 
    local scrollAreaHeight = (height - minimumHeight - otherHeight - tabHeight - childrenTabHeight)
 
@@ -1509,8 +1497,9 @@ function partSettingsScrollable(draw, clickX, clickY)
        (cellSize)
    }
    if draw then
-      love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
-   --   love.graphics.rectangle('line', settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
+      love.graphics.setScissor(settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea
+      [4])
+      --   love.graphics.rectangle('line', settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
    end
    local rowsInPanel = math.ceil((scrollAreaHeight - cellMargin) / (cellSize))
    local endlesssScroll = true
@@ -1528,6 +1517,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                if draw then
                   renderElement(
+                      category,
                       renderType,
                       value,
                       renderContainer,
@@ -1538,7 +1528,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                     if value <= #renderContainer then buttonClickHelper(value) end
+                     if value <= #renderContainer then buttonClickHelper(category, value) end
                   end
                end
             end
@@ -1556,6 +1546,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                if draw then
                   renderElement(
+                      category,
                       renderType,
                       value,
                       renderContainer,
@@ -1566,7 +1557,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                   )
                else
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                     if value <= #renderContainer then buttonClickHelper(value) end
+                     if value <= #renderContainer then buttonClickHelper(category, value) end
                   end
                end
             end
@@ -1589,6 +1580,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                   local value = ((index % rows) * columns) + i
                   if draw then
                      renderElement(
+                         category,
                          renderType,
                          value,
                          renderContainer,
@@ -1599,7 +1591,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                      )
                   else
                      if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                        if value <= #renderContainer then buttonClickHelper(value) end
+                        if value <= #renderContainer then buttonClickHelper(category, value) end
                      end
                   end
                end
@@ -1647,8 +1639,8 @@ function headOrBody(draw, clickX, clickY)
 
 
       --love.graphics.rectangle('fill', margin, topY, size, buttonHeight)
-      love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
-      love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , maskAlpha)
+
+      setSecondaryColor(maskAlpha)
       if (selectedRootButton == 'head') then
          local sx2, sy2 = createFittingScale(rects[1], size, buttonHeight)
          love.graphics.draw(rects[1], margin, topY, 0, sx2, sy2)
@@ -1681,8 +1673,8 @@ function headOrBody(draw, clickX, clickY)
 
       local sx, sy = createFittingScale(bigbuttons.body, size, buttonHeight)
 
-      love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], maskAlpha)
-      love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , maskAlpha)
+
+      setSecondaryColor(maskAlpha)
       if (selectedRootButton == 'body') then
          local sx2, sy2 = createFittingScale(rects[1], size, buttonHeight)
          love.graphics.draw(rects[1], margin, (h / 2), 0, sx2, sy2)
@@ -1729,7 +1721,7 @@ function scrollList(draw, clickX, clickY)
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-   scrollListXPosition = size + margin * 2 -- this is updating a global!!!
+   scrollListXPosition = h / 12 ----margin * 2 -- this is updating a global!!!
    local offset = scrollPosition % 1
 
    local tabIndex = nil
@@ -1781,8 +1773,8 @@ function scrollList(draw, clickX, clickY)
 
             love.graphics.setColor(0.5, 0.5, 0.5, alpha)
             if selectedCategory == categories[index] then
-               love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], alpha)
-               love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , alpha)
+               --setSecondaryColor(alpha)
+               love.graphics.setColor(0, 0, 0, alpha)
                local sx, sy = createFittingScale(rects[1], size, size)
                love.graphics.draw(rects[1], scrollListXPosition, yPosition, 0, sx * sm, sy * sm)
                love.graphics.setColor(0, 0, 0, alpha)
@@ -1797,8 +1789,12 @@ function scrollList(draw, clickX, clickY)
                local m = scrollIcons[categories[index] .. 'Mask']
 
                if (m) then
-                  love.graphics.setColor(colors[tabIndex][1], colors[tabIndex][2], colors[tabIndex][3], alpha)
-                  love.graphics.setColor(0xf8/255, 0xa0/255, 0x67/255 , alpha)
+                  if findPart(categories[index]).kind == 'body' then
+                     setTernaryColor(alpha)
+                  else
+                     setSecondaryColor(alpha)
+                  end
+
                   local sx, sy = createFittingScale(m, size, size)
                   love.graphics.draw(m, scrollListXPosition, yPosition, 0, sx * sm, sy * sm)
                end
@@ -1811,6 +1807,12 @@ function scrollList(draw, clickX, clickY)
                local f = findPart(selectedCategory)
                if f.children then
                   selectedChildCategory = f.children[1]
+               end
+               if f.kind == 'body' then
+                  tweenCameraToHeadAndBody()
+               end
+               if f.kind == 'head' then
+                  tweenCameraToHead()
                end
                playSound(scrollItemClickSample)
             end

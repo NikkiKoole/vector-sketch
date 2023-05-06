@@ -561,12 +561,16 @@ function scene.load()
        bodyMask = love.graphics.newImage('assets/ui/icons/body-mask.png'),
        neck = love.graphics.newImage('assets/ui/icons/neck.png'),
        neckMask = love.graphics.newImage('assets/ui/icons/neck-mask.png'),
+       arms2 = love.graphics.newImage('assets/ui/icons/arm.png'),
+       arms2Mask = love.graphics.newImage('assets/ui/icons/arm-mask.png'),
        arms = love.graphics.newImage('assets/ui/icons/arm.png'),
        armsMask = love.graphics.newImage('assets/ui/icons/arm-mask.png'),
        armhair = love.graphics.newImage('assets/ui/icons/armhair.png'),
        armhairMask = love.graphics.newImage('assets/ui/icons/armhair-mask.png'),
        legs = love.graphics.newImage('assets/ui/icons/leg.png'),
        legsMask = love.graphics.newImage('assets/ui/icons/leg-mask.png'),
+       legs2 = love.graphics.newImage('assets/ui/icons/leg.png'),
+       legs2Mask = love.graphics.newImage('assets/ui/icons/leg-mask.png'),
        leghair = love.graphics.newImage('assets/ui/icons/leghair.png'),
        leghairMask = love.graphics.newImage('assets/ui/icons/leghair-mask.png'),
        hands = love.graphics.newImage('assets/ui/icons/hands.png'),
@@ -581,7 +585,6 @@ function scene.load()
        earsMask = love.graphics.newImage('assets/ui/icons/ears-mask.png'),
        brows = love.graphics.newImage('assets/ui/icons/brows.png'),
        browsMask = love.graphics.newImage('assets/ui/icons/brows-mask.png'),
-
        hair = love.graphics.newImage('assets/ui/icons/hair.png'),
        hairMask = love.graphics.newImage('assets/ui/icons/hair-mask.png'),
        skinPatchEye1 = love.graphics.newImage('assets/ui/icons/skinpatchEye1.png'),
@@ -604,8 +607,8 @@ function scene.load()
        patchesMask = love.graphics.newImage('assets/ui/icons/patches-mask.png'),
        mouth = love.graphics.newImage('assets/ui/icons/mouth.png'),
        mouthMask = love.graphics.newImage('assets/ui/icons/mouth-mask.png'),
-       eyes2 = love.graphics.newImage('assets/ui/icons/eyes2.png'),
-       eyes2Mask = love.graphics.newImage('assets/ui/icons/eyes2-mask.png'),
+       eyes2 = love.graphics.newImage('assets/ui/icons/eyes.png'),
+       eyes2Mask = love.graphics.newImage('assets/ui/icons/eyes-mask.png'),
    }
 
 
@@ -620,7 +623,7 @@ function scene.load()
 
    scrollTickSample = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
    scrollItemClickSample = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
-   selectedRootButton = nil -- could be head or body or nil
+   selectedRootButton = 'body' -- could be head or body or nil
    selectedTab = 'part'
    selectedCategory = 'body'
    selectedColoringLayer = 'bgPal' --- bg fg, line
@@ -777,7 +780,8 @@ function setCategories(rootButton)
          if editingGuy.values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
             -- we dont want these categories when we are a potatohead!
          else
-            if rootButton == parts[i].kind then
+            if parts[i].child ~= true then
+               -- if rootButton == parts[i].kind and parts[i].child ~= true then
                table.insert(categories, parts[i].name)
             end
          end
@@ -1077,7 +1081,7 @@ function scene.draw()
       end
 
       love.graphics.setColor(0, 0, 0)
-      headOrBody(true)
+      --headOrBody(true)
       scrollList(true)
 
       partSettingsPanel()
