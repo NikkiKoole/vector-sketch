@@ -1425,8 +1425,8 @@ function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
 
             -- print(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)
             if (hit.pointInRect(clickX, clickY, xPosition, yPosition, childrenTabHeight, childrenTabHeight)) then
-               print(p.children[i])
                selectedChildCategory = p.children[i]
+               playSound(scrollItemClickSample)
             end
          end
       end
