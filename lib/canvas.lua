@@ -1,6 +1,10 @@
 local lib = {}
 local vivid = require 'vendor.vivid'
 local geom = require 'lib.geom'
+
+
+local shrinkFactor = 2
+
 local mask_effect = love.graphics.newShader [[
    vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
       if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
@@ -169,7 +173,6 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       love.graphics.setShader()
 
 
-      local shrinkFactor = 4
 
       -- I want to know If we do this or not..
       if (renderPatch) then

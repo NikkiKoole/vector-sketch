@@ -937,6 +937,9 @@ function attachCallbacks()
          myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
       end
+      if key == 'm' then 
+         grabShot()
+      end
    end
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
@@ -1006,6 +1009,23 @@ local function updateTheScrolling(dt, thrown, pos)
    end
    return pos
 end
+
+function grabShot() 
+   --print(inspect(head))
+   editingGuy.head.transforms.l[1] = 0
+   editingGuy.head.transforms.l[2] = 0
+   editingGuy.head.transforms.l[4] = 1
+   editingGuy.head.transforms.l[5] = 1
+   render.renderThings(editingGuy.head, true)
+   local part = math.ceil(love.math.random()*1000)
+   render.renderNodeIntoCanvas(editingGuy.head, love.graphics.newCanvas(1024 / 2, 1024 / 2), part..".png")
+      
+
+   local openURL = "file://" .. love.filesystem.getSaveDirectory()
+        love.system.openURL(openURL)
+
+end
+
 
 function scene.update(dt)
    --prof.push("frame")
@@ -1101,7 +1121,9 @@ function scene.draw()
 --      editingGuy.hair.hidden = false
     -- render.renderThings(editingGuy.head, true)
     -- render.renderThings(editingGuy.eye1, true)
-     render.renderThings(root, true)
+
+
+    render.renderThings(root, true)
 
      
 

@@ -298,7 +298,8 @@ local function renderNormallyOrOptimized(shape, isDirty)
          if renderCount then
             renderCount.normal = renderCount.normal + 1
          end
-         --print(shape.name, isDirty)
+
+         -- added fro puppetmaker, needed to render out certain parts
          if not shape.hidden then
             render.renderThings(shape, isDirty)
          end
