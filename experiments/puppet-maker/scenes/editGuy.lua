@@ -1011,6 +1011,7 @@ local function updateTheScrolling(dt, thrown, pos)
 end
 
 function grabShot() 
+   -- todo need to color some pars whit
    --print(inspect(head))
    editingGuy.head.transforms.l[1] = 0
    editingGuy.head.transforms.l[2] = 0
@@ -1019,10 +1020,8 @@ function grabShot()
    render.renderThings(editingGuy.head, true)
    local part = math.ceil(love.math.random()*1000)
    render.renderNodeIntoCanvas(editingGuy.head, love.graphics.newCanvas(1024 / 2, 1024 / 2), part..".png")
-      
-
    local openURL = "file://" .. love.filesystem.getSaveDirectory()
-        love.system.openURL(openURL)
+   love.system.openURL(openURL)
 
 end
 
