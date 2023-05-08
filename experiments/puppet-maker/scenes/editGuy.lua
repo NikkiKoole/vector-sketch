@@ -1088,7 +1088,22 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      render.renderThings(root, true)
+      
+
+     
+--      for i =1 , #editingGuy.head.children do
+--          editingGuy.head.children[i].hidden = true
+--      end
+--      for i =1 , #editingGuy.body.children do
+--       editingGuy.body.children[i].hidden = true
+--   end
+--      editingGuy.head.hidden = true
+--      editingGuy.hair.hidden = false
+    -- render.renderThings(editingGuy.head, true)
+    -- render.renderThings(editingGuy.eye1, true)
+     render.renderThings(root, true)
+
+     
 
       if false then
          for i = 1, #root.children do

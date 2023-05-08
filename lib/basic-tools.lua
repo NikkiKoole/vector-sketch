@@ -51,8 +51,10 @@ local function mountZip(filename, mountpoint)
    end
 end
 
+if false then
 mountZip(base1 .. '/resources.zip', '')
 mountZip(base2 .. '/resources.zip', '')
+end
 --local cwd = love.filesystem.getWorkingDirectory()
 --mountZip(cwd .. 'resources.zip', '')
 -- you need require console. before the rpint overwrite below

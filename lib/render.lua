@@ -299,7 +299,9 @@ local function renderNormallyOrOptimized(shape, isDirty)
             renderCount.normal = renderCount.normal + 1
          end
          --print(shape.name, isDirty)
-         render.renderThings(shape, isDirty)
+         if not shape.hidden then
+            render.renderThings(shape, isDirty)
+         end
       end
    end
 end
