@@ -532,22 +532,23 @@ function handleChild(shape, isDirty)
    end
 end
 
-render.renderNodeIntoCanvas = function(n, canvas, filename)
+render.renderNodeIntoCanvas = function(n, canvas, filename, margin)
    love.graphics.setCanvas({ canvas, stencil = true })
    love.graphics.clear()
    -- this is the default already
    --love.graphics.setBlendMode("alpha")
 
-   drawNodeIntoRect(n, 0, 0, canvas:getWidth(), canvas:getHeight())
+   drawNodeIntoRect(n, 0, 0, canvas:getWidth(), canvas:getHeight(), margin)
 
    love.graphics.setCanvas()
 
    canvas:newImageData():encode("png", filename)
 end
 
-function drawNodeIntoRect(node, x, y, w, h)
+function drawNodeIntoRect(node, x, y, w, h, margin)
    -- first get the nodes bbox
    local bboxbefore = bbox.getBBoxRecursive(node)
+
    local cw = bboxbefore[3] - bboxbefore[1]
    local ch = bboxbefore[4] - bboxbefore[2]
 
@@ -569,8 +570,8 @@ function drawNodeIntoRect(node, x, y, w, h)
 
 
    -- here i am scaling the original
-   node.transforms.l[4] = newScaleW2
-   node.transforms.l[5] = newScaleH2
+   node.transforms.l[4] = newScaleW2 * (margin and margin or 1)
+   node.transforms.l[5] = newScaleH2 * (margin and margin or 1)
    local bboxafter2 = bbox.getBBoxRecursive(node) -- this bbox descirbes the image at the same ratio as original
 
    -- now i need to calculate the offset, which is the same as the difference between the 2 bounding boxes

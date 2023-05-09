@@ -937,7 +937,7 @@ function attachCallbacks()
          myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
       end
-      if key == 'm' then 
+      if key == 'm' then
          grabShot()
       end
    end
@@ -1010,21 +1010,17 @@ local function updateTheScrolling(dt, thrown, pos)
    return pos
 end
 
-function grabShot() 
-   -- todo need to color some pars whit
-   --print(inspect(head))
-   editingGuy.head.transforms.l[1] = 0
-   editingGuy.head.transforms.l[2] = 0
-   editingGuy.head.transforms.l[4] = 1
-   editingGuy.head.transforms.l[5] = 1
+function grabShot()
+   for i = 1, #editingGuy.head.children do
+      editingGuy.head.children[i].hidden = true
+   end
+
    render.renderThings(editingGuy.head, true)
-   local part = math.ceil(love.math.random()*1000)
-   render.renderNodeIntoCanvas(editingGuy.head, love.graphics.newCanvas(1024 / 2, 1024 / 2), part..".png")
+   local part = math.ceil(love.math.random() * 1000)
+   render.renderNodeIntoCanvas(editingGuy.head, love.graphics.newCanvas(1024, 1024), part .. ".png", 0.5)
    local openURL = "file://" .. love.filesystem.getSaveDirectory()
    love.system.openURL(openURL)
-
 end
-
 
 function scene.update(dt)
    --prof.push("frame")
@@ -1107,24 +1103,24 @@ function scene.draw()
 
       prof.push("cam-render")
       cam:push()
-      
-
-     
---      for i =1 , #editingGuy.head.children do
---          editingGuy.head.children[i].hidden = true
---      end
---      for i =1 , #editingGuy.body.children do
---       editingGuy.body.children[i].hidden = true
---   end
---      editingGuy.head.hidden = true
---      editingGuy.hair.hidden = false
-    -- render.renderThings(editingGuy.head, true)
-    -- render.renderThings(editingGuy.eye1, true)
 
 
-    render.renderThings(root, true)
 
-     
+      --      for i =1 , #editingGuy.head.children do
+      --          editingGuy.head.children[i].hidden = true
+      --      end
+      --      for i =1 , #editingGuy.body.children do
+      --       editingGuy.body.children[i].hidden = true
+      --   end
+      --      editingGuy.head.hidden = true
+      --      editingGuy.hair.hidden = false
+      -- render.renderThings(editingGuy.head, true)
+      -- render.renderThings(editingGuy.eye1, true)
+
+
+      render.renderThings(root, true)
+
+
 
       if false then
          for i = 1, #root.children do
