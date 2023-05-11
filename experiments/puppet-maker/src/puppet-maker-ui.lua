@@ -399,7 +399,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                changePart('head', values)
                changePart('body', values)
                myWorld:emit('rescaleFaceparts', potato)
-               setCategories()
+               setCategories(selectedRootButton)
                update()
             end
             draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY, buttonSize,
