@@ -281,9 +281,13 @@ local function pointerPressed(x, y, id)
 
    local size = (h / 12) -- margin around panel
    if (hit.pointInRect(x, y, 0, 0, size, size)) then
-      Timer.clear()
+      local sx, sy = getPointToCenterTransitionOn()
       SM.unload('editGuy')
-      transitionHead(true, 'fiveGuys')
+      Timer.clear()
+      
+      doCircleInTransition(sx, sy, function() if scene then SM.load('fiveGuys') end end)
+
+      --transitionHead(true, 'fiveGuys')
    end
    if (hit.pointInRect(x, y, 0, h - size, size, size)) then
       partRandomize(editingGuy.values, true)
@@ -743,18 +747,14 @@ function scene.load()
    cam:update(w, h)
 
 
-
-
-
-
    --doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
-   transition = nil
-   transitionHead(false, false)
-   --Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
-   --prof.pop('frame')
+   local sx, sy = getPointToCenterTransitionOn()
+   doCircleOutTransition(sx, sy, function() print('done!') end)
+
 end
 
-function transitionHead(transitionIn, scene)
+
+function getPointToCenterTransitionOn()
    local w, h = love.graphics.getDimensions()
    local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
    --getHeadPoints(editingGuy.potato)
@@ -767,15 +767,11 @@ function transitionHead(transitionIn, scene)
    local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
    local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
    local bx, by = focusOn.transforms._g:transformPoint(x, y)
+  
    local sx, sy = cam:getScreenCoordinates(bx, by)
-   if transitionIn then
-      doCircleInTransition(sx, sy, function() if scene then SM.load(scene) end end)
-   else
-      doCircleOutTransition(sx, sy, function() print('done!') end)
-   end
-
-   --doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
+   return sx, sy
 end
+
 
 function skinColorize(bgPal, values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs' }

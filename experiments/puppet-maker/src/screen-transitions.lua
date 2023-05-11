@@ -33,6 +33,7 @@ function doCircleInTransition(x, y, onAfter)
     local w, h = love.graphics.getDimensions()
     print(transition, 'doCircleInTransition')
     transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
+    
     Timer.tween(.3, transition, { alpha = 1 })
     Timer.tween(.7, transition, { radius = 0 }, 'out-back')
     Timer.after(1.01, function()
@@ -51,12 +52,12 @@ function renderTransition(transition)
 end
 
 function doCircleOutTransition(x, y, onAfter)
-    print(x, y, 'doCircleOutTransition')
+    print(x, y, 'hello doingdoCircleOutTransition')
     local w, h = love.graphics.getDimensions()
     transition = { type = 'circle', segments = 17, alpha = 1, x = x, y = y, radius = 0 }
-    Timer.tween(2, transition, { alpha = 0 })
-    Timer.tween(1, transition, { radius = math.max(w, h), segments = 7 }, 'in-back')
-    Timer.after(1.01, function()
+    Timer.tween(1, transition, { alpha = 0 })
+    Timer.tween(.5, transition, { radius = math.max(w, h), segments = 7 }, 'in-back')
+    Timer.after(1.6, function()
         --transition = nil;
         onAfter();
     end)

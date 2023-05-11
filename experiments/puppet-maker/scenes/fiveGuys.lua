@@ -106,9 +106,12 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local size = (h / 12) -- margin around panel
     if (hit.pointInRect(x, y, 0, 0, size, size)) then
-        transitionHead(true, 'editGuy')
-        --doCircleInTransition(0, 0, function() SM.load("editGuy") end)
-        --SM.load("editGuy")
+        local sx, sy = getPointToCenterTransitionOn()
+        SM.unload('fiveGuys')
+        Timer.clear()
+        
+        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
+
     end
 end
 
@@ -130,6 +133,7 @@ function scene.unload()
 end
 
 function scene.load()
+ 
     if (PROF_CAPTURE) then
         ProFi:start()
     end
@@ -222,9 +226,11 @@ function scene.load()
         ProFi:stop()
         ProFi:writeReport('profilingReportInit.txt')
     end
-    transition = nil
-    transitionHead(false)
-    local w, h = love.graphics.getDimensions()
+    
+    local sx, sy = getPointToCenterTransitionOn()
+    doCircleOutTransition(sx, sy, function() print('done!') end)
+
+
 end
 
 function drawGroundPlaneLinesSimple(far, near)
@@ -294,6 +300,7 @@ function drawGroundPlaneLinesSimple(far, near)
 end
 
 function scene.draw()
+ 
     love.graphics.clear(1, 1, 1)
 
     love.graphics.setColor(1, 1, 1, 0.5)
