@@ -749,8 +749,8 @@ function scene.load()
 
    --doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
    local sx, sy = getPointToCenterTransitionOn()
-   doCircleOutTransition(sx, sy, function() print('done!') end)
-
+   doRectOutTransition(sx, sy, function() print('done!') end)
+   
 end
 
 

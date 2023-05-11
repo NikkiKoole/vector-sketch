@@ -109,7 +109,7 @@ local function pointerPressed(x, y, id)
         local sx, sy = getPointToCenterTransitionOn()
         SM.unload('fiveGuys')
         Timer.clear()
-        
+       
         doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
 
     end
@@ -228,7 +228,9 @@ function scene.load()
     end
     
     local sx, sy = getPointToCenterTransitionOn()
-    doCircleOutTransition(sx, sy, function() print('done!') end)
+    sx = 0
+    sy = 0
+    doRectOutTransition(w/2, h/2, function() print('done!') end)
 
 
 end
