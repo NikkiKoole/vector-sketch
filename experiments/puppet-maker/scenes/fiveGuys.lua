@@ -4,7 +4,7 @@ local hit         = require 'lib.hit'
 local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
-local transition  = nil
+
 local parentize   = require 'lib.parentize'
 local render      = require 'lib.render'
 local mesh        = require 'lib.mesh'
@@ -18,86 +18,9 @@ local numbers     = require 'lib.numbers'
 local text        = require 'lib.text'
 
 require 'src.reuse'
+require 'src.screen-transitions'
 
 local pointerInteractees = {}
-
-local function myCircleStencilFunction(x, y, r, s)
-    love.graphics.circle("fill", x, y, r, s)
-end
-local function drawCircleMask(backgroundAlpha, x, y, size, segments)
-    love.graphics.stencil(function() myCircleStencilFunction(x, y, size, segments) end, "replace", 1)
-    love.graphics.setColor(0, 0, 0, backgroundAlpha)
-    local w, h = love.graphics.getDimensions()
-    love.graphics.setStencilTest("less", 1)
-    love.graphics.rectangle('fill', 0, 0, w, h)
-    love.graphics.setStencilTest()
-end
-
-local function myRectStencilFunction(x, y, w, h)
-    love.graphics.push()
-    --love.graphics.translate( -x, -y)
-    love.graphics.rotate(0.5)
-    love.graphics.rectangle("fill", x, y, w, h)
-    love.graphics.pop()
-end
-local function drawRectangleMask(backgroundAlpha, x, y, w, h)
-    love.graphics.stencil(function() myRectStencilFunction(x, y, w, h) end, "replace", 1)
-    love.graphics.setColor(0, 0, 0, backgroundAlpha)
-    local w, h = love.graphics.getDimensions()
-    love.graphics.setStencilTest("less", 1)
-    love.graphics.rectangle('fill', 0, 0, w, h)
-    love.graphics.setStencilTest()
-end
-
-
-local function doCircleInTransition(x, y, onAfter)
-    print(x, y)
-    local w, h = love.graphics.getDimensions()
-    transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
-    Timer.tween(.3, transition, { alpha = 1 })
-    Timer.tween(1, transition, { radius = 0 }, 'out-back')
-    Timer.after(1, function()
-        onAfter();
-        transition = nil;
-    end)
-end
-
-local function doCircleOutTransition(x, y, onAfter)
-    print(x, y)
-    local w, h = love.graphics.getDimensions()
-    transition = { type = 'circle', segments = 17, alpha = 1, x = x, y = y, radius = 0 }
-    Timer.tween(1.3, transition, { alpha = 0 })
-    Timer.tween(1, transition, { radius = math.max(w, h), segments = 7 }, 'in-back')
-    Timer.after(1, function()
-        onAfter();
-        transition = nil;
-    end)
-end
-
-local function doRectOutTransition(x, y, onAfter)
-    local w, h = love.graphics.getDimensions()
-    -- I amdrawing a much higher rectangle so it will cover the screen when rotated
-    local h2 = math.max(w, h) * 3
-    transition = { type = 'rectangle', alpha = 1, x = x, y = y, w = 0, h = h2 * 3 }
-    Timer.tween(2, transition, { alpha = 0 })
-    Timer.tween(3, transition, { w = x < w / 2 and w * 1.5 or -w * 1.5 }, 'out-back')
-    Timer.after(3, function()
-        onAfter();
-        transition = nil;
-    end)
-end
-local function doRectInTransition(x, y, onAfter)
-    local w, h = love.graphics.getDimensions()
-    -- I amdrawing a much higher rectangle so it will cover the screen when rotated
-    local h2 = math.max(w, h) * 3
-    transition = { type = 'rectangle', alpha = 0, x = x, y = y, w = x < w / 2 and w * 1.5 or -w * 1.5, h = h2 * 3 }
-    Timer.tween(.6, transition, { alpha = 1 })
-    Timer.tween(1.2, transition, { w = 0 }, 'out-back')
-    Timer.after(1.2, function()
-        onAfter();
-        transition = nil;
-    end)
-end
 
 local function pointerReleased(x, y, id)
     for i = #pointerInteractees, 1, -1 do
@@ -183,22 +106,35 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local size = (h / 12) -- margin around panel
     if (hit.pointInRect(x, y, 0, 0, size, size)) then
-        local w, h = love.graphics.getDimensions()
-        local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
-        --getHeadPoints(editingGuy.potato)
-        local newPoints = getHeadPointsFromValues(editingGuy.values, focusOn,
-                editingGuy.values.potatoHead and 'body' or 'head')
-
-        local tX = numbers.mapInto(editingGuy.values.noseXAxis, -2, 2, 0, 1)
-        local tY = numbers.mapInto(editingGuy.values.noseYAxis, -3, 3, 0, 1)
-
-        local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
-        local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
-        local bx, by = focusOn.transforms._g:transformPoint(x, y)
-        local sx, sy = cam:getScreenCoordinates(bx, by)
-        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
+        transitionHead(false) 
+       
     end
 end
+
+function transitionHead(transitionIn) 
+    local w, h = love.graphics.getDimensions()
+    local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
+    --getHeadPoints(editingGuy.potato)
+    local newPoints = getHeadPointsFromValues(editingGuy.values, focusOn,
+            editingGuy.values.potatoHead and 'body' or 'head')
+ 
+    local tX = numbers.mapInto(editingGuy.values.noseXAxis, -2, 2, 0, 1)
+    local tY = numbers.mapInto(editingGuy.values.noseYAxis, -3, 3, 0, 1)
+ 
+    local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
+    local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
+    local bx, by = focusOn.transforms._g:transformPoint(x, y)
+    local sx, sy = cam:getScreenCoordinates(bx, by)
+    
+    if transitionIn then
+       doCircleOutTransition(sx, sy, function()  print('jo!') end)
+    else
+       doCircleInTransition(sx, sy, function() SM.load("editGuy")end)
+    end
+ 
+    --doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
+ end
+ 
 
 local function pointerPressed2(x, y, id)
     local w, h = love.graphics.getDimensions()
@@ -309,7 +245,7 @@ function scene.load()
         ProFi:stop()
         ProFi:writeReport('profilingReportInit.txt')
     end
-
+    transitionHead(true) 
     local w, h = love.graphics.getDimensions()
 end
 
@@ -323,15 +259,7 @@ function drawGroundPlaneLinesSimple(far, near)
 
     local s = math.floor(x1 / tileSize) * tileSize
     local e = math.ceil(x2 / tileSize) * tileSize
-
-    --[[
-    local imgarr = {groundimg1, groundimg2, groundimg3, groundimg4, groundimg5,
-                    groundimg6, groundimg7, groundimg8, groundimg9, groundimg10,
-                    groundimg10, groundimg11, groundimg12,groundimg12,groundimg12,
-                    groundimg12,groundimg13,groundimg13,groundimg13}
-    ]]
-    --
-    -- local imgarr = { groundimg6b, groundimg3, groundimg8, groundimg9, groundimg10 }
+    
     local imgarr = { groundimg8 }
 
     local woohoo = 1
@@ -442,12 +370,7 @@ function scene.draw()
 
 
     if transition then
-        if transition.type == 'circle' then
-            drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)
-        end
-        if transition.type == 'rectangle' then
-            drawRectangleMask(transition.alpha, transition.x, transition.y, transition.w, transition.h)
-        end
+        renderTransition(transition)
     end
 end
 

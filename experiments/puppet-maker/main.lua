@@ -37,7 +37,7 @@ Concord = require 'vendor.concord.init'
 myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = false
+PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 local mesh = require "lib.mesh"
@@ -121,6 +121,8 @@ function love.load()
        'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
        '798091', '4C5575', '6E4431', '626964', '613D41',
    }
+
+   transition = nil
 
    for i = 1, #base do
       local r, g, b = hex2rgb(base[i])

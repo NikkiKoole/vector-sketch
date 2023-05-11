@@ -406,6 +406,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 sliderWidth,
                 not (values.potatoHead),
                 f, icons.bodynonpotato, icons.bodypotato)
+
             runningElem, currentY = updateRowStuff()
 
 
@@ -442,14 +443,35 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
 
       if category == 'hair' then
-         currentHeight = calcCurrentHeight(2)
+         currentHeight = calcCurrentHeight(3)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+            runningElem = 0
+
+            local f = function(v) 
+               local lastOne = 12
+               if values['hair']['shape'] == #(findPart('hair').imgs) then
+                  values['hair']['shape'] = 1
+               else
+                  values['hair']['shape'] = 12
+               end
+               changePart('hair', values)
+            end 
+
+            draw_toggle_with_2_buttons('useIt', startX + (runningElem * elementWidth), currentY, buttonSize,
+            sliderWidth,
+            not (values.potatoHead),
+            f, icons.bodynonpotato, icons.bodypotato)
+
+        runningElem, currentY = updateRowStuff()
+
 
             local propupdate = function(v)
-               changePart('hair', values)
+              
+              changePart('hair', values)
+
             end
-            runningElem = 0
+           
 
             draw_slider_with_2_buttons('hairWidthMultiplier', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
@@ -1249,7 +1271,7 @@ local function renderElement(category, type, value, container, x, y, w, h)
             dotindex = #container
          end
          local url = container[dotindex]
-
+        
          local dot = imageCache[url] or love.graphics.newImage(url)
          imageCache[url] = dot
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
@@ -1346,6 +1368,7 @@ local function buttonClickHelper(category, value)
 
    local f = findPart(category)
    if selectedTab == 'part' then
+      print(value)
       values[category]['shape'] = value
       changePart(category, values)
 
@@ -1467,6 +1490,10 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
    if selectedTab == "part" then
       amount = p.imgs and #p.imgs or 0
+      --print(p.imgs[#p.imgs])
+      --if p.imgs[#p.imgs].url == 'assets/parts/null.png' then
+      --   amount = amount - 1
+      --end 
       renderType = "img"
       renderContainer = p.imgs
    end
@@ -1536,6 +1563,8 @@ function partSettingsScrollable(draw, clickX, clickY)
 
             if (index >= 0 and index <= rows - 1) then
                local value = ((index % rows) * columns) + i
+               --print(inspect(renderContainer[value]))
+               if true or renderContainer[value] ~= 'assets/parts/null.png' then
                if draw then
                   renderElement(
                       category,
@@ -1553,6 +1582,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                   end
                end
             end
+            end
          end
       end
    else
@@ -1565,6 +1595,8 @@ function partSettingsScrollable(draw, clickX, clickY)
                local xPosition = currentX + (i - 1) * (cellSize)
                local index = math.ceil( -settingsScrollPosition) + j
                local value = ((index % rows) * columns) + i
+               --print(inspect(renderContainer[value]))
+               if true or renderContainer[value] ~= 'assets/parts/null.png' then
                if draw then
                   renderElement(
                       category,
@@ -1580,7 +1612,7 @@ function partSettingsScrollable(draw, clickX, clickY)
                   if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
                      if value <= #renderContainer then buttonClickHelper(category, value) end
                   end
-               end
+               end end
             end
          end
       else
@@ -1599,6 +1631,8 @@ function partSettingsScrollable(draw, clickX, clickY)
 
                if (index >= 0 and index <= rows - 1) then
                   local value = ((index % rows) * columns) + i
+                  --print(inspect(renderContainer[value]))
+                  if true or renderContainer[value] ~= 'assets/parts/null.png' then
                   if draw then
                      renderElement(
                          category,
@@ -1613,7 +1647,8 @@ function partSettingsScrollable(draw, clickX, clickY)
                   else
                      if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
                         if value <= #renderContainer then buttonClickHelper(category, value) end
-                     end
+                     end 
+                  end
                   end
                end
             end

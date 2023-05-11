@@ -3,7 +3,7 @@ local vivid = require 'vendor.vivid'
 local geom = require 'lib.geom'
 
 
-local shrinkFactor = 2
+local shrinkFactor = 4
 
 local mask_effect = love.graphics.newShader [[
    vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {

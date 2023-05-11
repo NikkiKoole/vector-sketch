@@ -37,6 +37,7 @@ myWorld = Concord.world()
 require 'src.generatePuppet'
 require 'src.puppet-maker-ui'
 require 'src.reuse'
+require 'src.screen-transitions'
 
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
@@ -282,7 +283,8 @@ local function pointerPressed(x, y, id)
    if (hit.pointInRect(x, y, 0, 0, size, size)) then
       Timer.clear()
       SM.unload('editGuy')
-      SM.load("fiveGuys")
+      transitionHead(false) 
+      
    end
    if (hit.pointInRect(x, y, 0, h - size, size, size)) then
       partRandomize(editingGuy.values, true)
@@ -317,6 +319,7 @@ function scene.unload()
 end
 
 function scene.load()
+   print('scene load hello!')
    -- prof.push('frame')
    for i = 1, #fiveGuys do
       fiveGuys[i].guy.transforms.l[1] = 0
@@ -740,8 +743,38 @@ function scene.load()
    camera.centerCameraOnPosition(x1, y1, w1, h1)
    cam:update(w, h)
 
+
+
+
+
+
+   --doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
+   transitionHead(true) 
    --Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
    --prof.pop('frame')
+end
+
+function transitionHead(transitionIn) 
+   local w, h = love.graphics.getDimensions()
+   local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
+   --getHeadPoints(editingGuy.potato)
+   local newPoints = getHeadPointsFromValues(editingGuy.values, focusOn,
+           editingGuy.values.potatoHead and 'body' or 'head')
+
+   local tX = numbers.mapInto(editingGuy.values.noseXAxis, -2, 2, 0, 1)
+   local tY = numbers.mapInto(editingGuy.values.noseYAxis, -3, 3, 0, 1)
+
+   local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
+   local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
+   local bx, by = focusOn.transforms._g:transformPoint(x, y)
+   local sx, sy = cam:getScreenCoordinates(bx, by)
+   if transitionIn then
+      doCircleOutTransition(sx, sy, function() print('done!') end)
+   else
+      doCircleInTransition(sx, sy, function() SM.load("fiveGuys") end)
+   end
+
+   --doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
 end
 
 function skinColorize(bgPal, values)
@@ -1188,7 +1221,9 @@ function scene.draw()
       love.graphics.draw(bigbuttons.dice, 0, h - size, 0, sx, sy)
    end
 
-
+   if transition then
+      renderTransition(transition)
+  end
 
    --local w, h = love.graphics.getDimensions()
    --love.graphics.rectangle('fill', w - 25, 0, 25, 25)
