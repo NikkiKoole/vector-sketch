@@ -1,5 +1,4 @@
-
-local Timer       = require 'vendor.timer'
+local Timer = require 'vendor.timer'
 
 local function myCircleStencilFunction(x, y, r, s)
     love.graphics.circle("fill", x, y, r, s)
@@ -31,39 +30,35 @@ end
 
 
 function doCircleInTransition(x, y, onAfter)
- 
     local w, h = love.graphics.getDimensions()
     print(transition, 'doCircleInTransition')
     transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
     Timer.tween(.3, transition, { alpha = 1 })
-    Timer.tween(1, transition, { radius = 0 }, 'out-back')
-    Timer.after(1.5, function()
-        transition = nil;
+    Timer.tween(.7, transition, { radius = 0 }, 'out-back')
+    Timer.after(1.01, function()
+        --transition = nil;
         onAfter();
-       
     end)
 end
 
 function renderTransition(transition)
-
     if transition.type == 'circle' then
         drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)
     end
     if transition.type == 'rectangle' then
         drawRectangleMask(transition.alpha, transition.x, transition.y, transition.w, transition.h)
-    end 
+    end
 end
 
 function doCircleOutTransition(x, y, onAfter)
     print(x, y, 'doCircleOutTransition')
     local w, h = love.graphics.getDimensions()
     transition = { type = 'circle', segments = 17, alpha = 1, x = x, y = y, radius = 0 }
-    Timer.tween(1.3, transition, { alpha = 0 })
+    Timer.tween(2, transition, { alpha = 0 })
     Timer.tween(1, transition, { radius = math.max(w, h), segments = 7 }, 'in-back')
-    Timer.after(1.5, function()
-        transition = nil;
+    Timer.after(1.01, function()
+        --transition = nil;
         onAfter();
-       
     end)
 end
 

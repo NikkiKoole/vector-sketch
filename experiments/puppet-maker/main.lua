@@ -122,7 +122,7 @@ function love.load()
        '798091', '4C5575', '6E4431', '626964', '613D41',
    }
 
-   transition = nil
+   --transition = nil
 
    for i = 1, #base do
       local r, g, b = hex2rgb(base[i])

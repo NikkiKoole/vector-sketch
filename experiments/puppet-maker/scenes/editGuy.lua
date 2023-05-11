@@ -283,8 +283,7 @@ local function pointerPressed(x, y, id)
    if (hit.pointInRect(x, y, 0, 0, size, size)) then
       Timer.clear()
       SM.unload('editGuy')
-      transitionHead(false) 
-      
+      transitionHead(true, 'fiveGuys')
    end
    if (hit.pointInRect(x, y, 0, h - size, size, size)) then
       partRandomize(editingGuy.values, true)
@@ -749,12 +748,13 @@ function scene.load()
 
 
    --doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
-   transitionHead(true) 
+   transition = nil
+   transitionHead(false, false)
    --Timer.every(5, function() myWorld:emit('blinkEyes', potato) end)
    --prof.pop('frame')
 end
 
-function transitionHead(transitionIn) 
+function transitionHead(transitionIn, scene)
    local w, h = love.graphics.getDimensions()
    local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
    --getHeadPoints(editingGuy.potato)
@@ -769,9 +769,9 @@ function transitionHead(transitionIn)
    local bx, by = focusOn.transforms._g:transformPoint(x, y)
    local sx, sy = cam:getScreenCoordinates(bx, by)
    if transitionIn then
-      doCircleOutTransition(sx, sy, function() print('done!') end)
+      doCircleInTransition(sx, sy, function() if scene then SM.load(scene) end end)
    else
-      doCircleInTransition(sx, sy, function() SM.load("fiveGuys") end)
+      doCircleOutTransition(sx, sy, function() print('done!') end)
    end
 
    --doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
@@ -1223,7 +1223,7 @@ function scene.draw()
 
    if transition then
       renderTransition(transition)
-  end
+   end
 
    --local w, h = love.graphics.getDimensions()
    --love.graphics.rectangle('fill', w - 25, 0, 25, 25)
