@@ -130,7 +130,7 @@ function love.load()
    fiveGuys = {} -- here we keep the 5 differnt guys around, I might as well just generate them here to begin with
 
    parts, _ = generate()
-   amountOfGuys = 5
+   amountOfGuys = 8
 
    prof.push('frame')
    prof.push('creating-guys')

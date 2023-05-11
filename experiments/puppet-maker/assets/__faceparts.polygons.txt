@@ -315,7 +315,7 @@ wrap = "repeat"
 folder = true,
 name = "nose",
 transforms = {
-l = { 473.653, 208.834, 0, 1, 1, 20.934, 112.356, 0, 0 }
+l = { 330.593, 266.098, 0, 1, 1, 33.262, -37.228, 0, 0 }
 }
 }, {
 children = { {
@@ -331,7 +331,7 @@ wrap = "repeat"
 folder = true,
 name = "nose",
 transforms = {
-l = { 804.119, 287.516, 0, 1, 1, 5, 153.5, 0, 0 }
+l = { 804.119, 287.516, 0, 1, 1, 8.252, -40.48, 0, 0 }
 }
 }, {
 children = { {
@@ -347,7 +347,7 @@ wrap = "repeat"
 folder = true,
 name = "nose",
 transforms = {
-l = { 678.493, -52.541, 0, 1, 1, 39, 167.5, 0, 0 }
+l = { 678.493, -52.541, 0, 1, 1, 52.384, -39.731, 0, 0 }
 }
 }, {
 children = { {
@@ -363,7 +363,7 @@ wrap = "repeat"
 folder = true,
 name = "nose",
 transforms = {
-l = { 849.604, 40.596, 0, 1, 1, 14, 155.5, 0, 0 }
+l = { 849.604, 40.596, 0, 1, 1, 36.307, -17.424, 0, 0 }
 }
 }, {
 children = { {
@@ -379,7 +379,7 @@ wrap = "repeat"
 folder = true,
 name = "nose",
 transforms = {
-l = { 1022.706, 36.662, 0, 1, 1, 14, 155.5, 0, 0 }
+l = { 1018.245, 161.584, 0, 1, 1, -1.077, -30.809, 0, 0 }
 }
 } },
 folder = true,
@@ -824,7 +824,55 @@ wrap = "repeat"
 folder = true,
 name = "ear16",
 transforms = {
-l = { 423.148, 631.112, 0, 1, 1, -20.242, 51.55, 0, 0 }
+l = { 510.573, -524.838, 0, 1, 1, -20.242, 51.55, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -105, -181 }, { 311, -181 }, { 311, 131 }, { -105, 131 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/earx1.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "ear1x",
+transforms = {
+l = { 834.371, -302.978, 0, 1, 1, 31.044, -30.996, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -105, -181 }, { 315, -181 }, { 315, 173 }, { -105, 173 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/earx2.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "ear2x",
+transforms = {
+l = { -232.957, -1046.511, 0, 1, 1, 9.06, -9.996, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -105, -181 }, { 234, -181 }, { 234, 188 }, { -105, 188 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/earx3.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "ear3x copy",
+transforms = {
+l = { 696.497, -1153.439, 0, 1, 1, -13.272, -12.225, 0, 0 }
 }
 } },
 folder = true,
