@@ -5,17 +5,17 @@ local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
 
-local parentize   = require 'lib.parentize'
-local render      = require 'lib.render'
-local mesh        = require 'lib.mesh'
+local parentize  = require 'lib.parentize'
+local render     = require 'lib.render'
+local mesh       = require 'lib.mesh'
 
-local camera      = require 'lib.camera'
-local cam         = require('lib.cameraBase').getInstance()
-local transforms  = require 'lib.transform'
-local geom        = require 'lib.geom'
-local bbox        = require 'lib.bbox'
-local numbers     = require 'lib.numbers'
-local text        = require 'lib.text'
+local camera     = require 'lib.camera'
+local cam        = require('lib.cameraBase').getInstance()
+local transforms = require 'lib.transform'
+local geom       = require 'lib.geom'
+local bbox       = require 'lib.bbox'
+local numbers    = require 'lib.numbers'
+local text       = require 'lib.text'
 
 require 'src.reuse'
 require 'src.screen-transitions'
@@ -106,35 +106,34 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local size = (h / 12) -- margin around panel
     if (hit.pointInRect(x, y, 0, 0, size, size)) then
-        transitionHead(false) 
-       
+        transitionHead(false)
+        --doCircleInTransition(0, 0, function() SM.load("editGuy") end)
     end
 end
 
-function transitionHead(transitionIn) 
+function transitionHead(transitionIn)
     local w, h = love.graphics.getDimensions()
     local focusOn = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head
     --getHeadPoints(editingGuy.potato)
     local newPoints = getHeadPointsFromValues(editingGuy.values, focusOn,
             editingGuy.values.potatoHead and 'body' or 'head')
- 
+
     local tX = numbers.mapInto(editingGuy.values.noseXAxis, -2, 2, 0, 1)
     local tY = numbers.mapInto(editingGuy.values.noseYAxis, -3, 3, 0, 1)
- 
+
     local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
     local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
     local bx, by = focusOn.transforms._g:transformPoint(x, y)
     local sx, sy = cam:getScreenCoordinates(bx, by)
-    
+
     if transitionIn then
-       doCircleOutTransition(sx, sy, function()  print('jo!') end)
+        doCircleOutTransition(sx, sy, function() print('jo!') end)
     else
-       doCircleInTransition(sx, sy, function() SM.load("editGuy")end)
+        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
     end
- 
+
     --doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
- end
- 
+end
 
 local function pointerPressed2(x, y, id)
     local w, h = love.graphics.getDimensions()
@@ -245,7 +244,7 @@ function scene.load()
         ProFi:stop()
         ProFi:writeReport('profilingReportInit.txt')
     end
-    transitionHead(true) 
+    -- transitionHead(true)
     local w, h = love.graphics.getDimensions()
 end
 
@@ -259,7 +258,7 @@ function drawGroundPlaneLinesSimple(far, near)
 
     local s = math.floor(x1 / tileSize) * tileSize
     local e = math.ceil(x2 / tileSize) * tileSize
-    
+
     local imgarr = { groundimg8 }
 
     local woohoo = 1

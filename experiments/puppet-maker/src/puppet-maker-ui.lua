@@ -448,7 +448,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
             runningElem = 0
 
-            local f = function(v) 
+            local f = function(v)
                local lastOne = 12
                if values['hair']['shape'] == #(findPart('hair').imgs) then
                   values['hair']['shape'] = 1
@@ -456,22 +456,20 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                   values['hair']['shape'] = 12
                end
                changePart('hair', values)
-            end 
+            end
 
             draw_toggle_with_2_buttons('useIt', startX + (runningElem * elementWidth), currentY, buttonSize,
-            sliderWidth,
-            not (values.potatoHead),
-            f, icons.bodynonpotato, icons.bodypotato)
+                sliderWidth,
+                not (values.potatoHead),
+                f, icons.bodynonpotato, icons.bodypotato)
 
-        runningElem, currentY = updateRowStuff()
+            runningElem, currentY = updateRowStuff()
 
 
             local propupdate = function(v)
-              
-              changePart('hair', values)
-
+               changePart('hair', values)
             end
-           
+
 
             draw_slider_with_2_buttons('hairWidthMultiplier', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
@@ -655,7 +653,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             draw_slider_with_2_buttons('earRotation', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
                 sliderWidth, rotupdate,
-                nil, -1.5, 1.5, .25, icons.earccw, icons.earcw)
+                nil, -1.5, 1.5, .25, icons.earcw, icons.earccw)
 
             runningElem, currentY = updateRowStuff()
 
@@ -1271,7 +1269,7 @@ local function renderElement(category, type, value, container, x, y, w, h)
             dotindex = #container
          end
          local url = container[dotindex]
-        
+
          local dot = imageCache[url] or love.graphics.newImage(url)
          imageCache[url] = dot
          local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
@@ -1493,7 +1491,7 @@ function partSettingsScrollable(draw, clickX, clickY)
       --print(p.imgs[#p.imgs])
       --if p.imgs[#p.imgs].url == 'assets/parts/null.png' then
       --   amount = amount - 1
-      --end 
+      --end
       renderType = "img"
       renderContainer = p.imgs
    end
@@ -1565,23 +1563,23 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                --print(inspect(renderContainer[value]))
                if true or renderContainer[value] ~= 'assets/parts/null.png' then
-               if draw then
-                  renderElement(
-                      category,
-                      renderType,
-                      value,
-                      renderContainer,
-                      xPosition,
-                      yPosition,
-                      cellWidth,
-                      cellHeight
-                  )
-               else
-                  if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                     if value <= #renderContainer then buttonClickHelper(category, value) end
+                  if draw then
+                     renderElement(
+                         category,
+                         renderType,
+                         value,
+                         renderContainer,
+                         xPosition,
+                         yPosition,
+                         cellWidth,
+                         cellHeight
+                     )
+                  else
+                     if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
+                        if value <= #renderContainer then buttonClickHelper(category, value) end
+                     end
                   end
                end
-            end
             end
          end
       end
@@ -1597,22 +1595,23 @@ function partSettingsScrollable(draw, clickX, clickY)
                local value = ((index % rows) * columns) + i
                --print(inspect(renderContainer[value]))
                if true or renderContainer[value] ~= 'assets/parts/null.png' then
-               if draw then
-                  renderElement(
-                      category,
-                      renderType,
-                      value,
-                      renderContainer,
-                      xPosition,
-                      yPosition,
-                      cellWidth,
-                      cellHeight
-                  )
-               else
-                  if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                     if value <= #renderContainer then buttonClickHelper(category, value) end
+                  if draw then
+                     renderElement(
+                         category,
+                         renderType,
+                         value,
+                         renderContainer,
+                         xPosition,
+                         yPosition,
+                         cellWidth,
+                         cellHeight
+                     )
+                  else
+                     if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
+                        if value <= #renderContainer then buttonClickHelper(category, value) end
+                     end
                   end
-               end end
+               end
             end
          end
       else
@@ -1633,22 +1632,22 @@ function partSettingsScrollable(draw, clickX, clickY)
                   local value = ((index % rows) * columns) + i
                   --print(inspect(renderContainer[value]))
                   if true or renderContainer[value] ~= 'assets/parts/null.png' then
-                  if draw then
-                     renderElement(
-                         category,
-                         renderType,
-                         value,
-                         renderContainer,
-                         xPosition,
-                         yPosition,
-                         cellWidth,
-                         cellHeight
-                     )
-                  else
-                     if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
-                        if value <= #renderContainer then buttonClickHelper(category, value) end
-                     end 
-                  end
+                     if draw then
+                        renderElement(
+                            category,
+                            renderType,
+                            value,
+                            renderContainer,
+                            xPosition,
+                            yPosition,
+                            cellWidth,
+                            cellHeight
+                        )
+                     else
+                        if (hit.pointInRect(clickX, clickY, xPosition, yPosition, cellWidth, cellHeight)) then
+                           if value <= #renderContainer then buttonClickHelper(category, value) end
+                        end
+                     end
                   end
                end
             end
