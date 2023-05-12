@@ -105,13 +105,12 @@ local function pointerPressed(x, y, id)
 
     local w, h = love.graphics.getDimensions()
     local size = (h / 12) -- margin around panel
-    if (hit.pointInRect(x, y, 0, 0, size, size)) then
+    if (hit.pointInRect(x, y, w - size, 0, size, size)) then
         local sx, sy = getPointToCenterTransitionOn()
         SM.unload('fiveGuys')
         Timer.clear()
-       
-        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
 
+        doCircleInTransition(sx, sy, function() SM.load("editGuy") end)
     end
 end
 
@@ -128,12 +127,25 @@ local function pointerPressed2(x, y, id)
 end
 
 
+function getCameraZoom()
+    local bbHead1            = bbox.getBBoxRecursive(fiveGuys[1].head)
+    local bbHead2            = bbox.getBBoxRecursive(fiveGuys[#fiveGuys].head)
+    local bbFeet1            = bbox.getBBoxRecursive(fiveGuys[1].feet1)
+    local bbFeet2            = bbox.getBBoxRecursive(fiveGuys[#fiveGuys].feet1)
+    local tlx, tly, brx, bry = bbox.combineBboxes(bbHead1, bbHead2, bbFeet1, bbFeet2)
+
+    local x2, y2, w2, h2     = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+
+    --return x2, y2, w, h * 1.2
+    --local w, h               = love.graphics.getDimensions()
+    return x2, y2, w2, h2
+end
+
 function scene.unload()
     myWorld:clear()
 end
 
 function scene.load()
- 
     if (PROF_CAPTURE) then
         ProFi:start()
     end
@@ -201,9 +213,27 @@ function scene.load()
     local w, h = love.graphics.getDimensions()
 
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
+    --camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
+
+    local x2, y2, w2, h2 = getCameraZoom()
+    print(x2, y2, w2, h2)
+
+    local left = fiveGuys[1].guy.transforms.l[1]
+    local right = fiveGuys[#fiveGuys].guy.transforms.l[1]
+    local wide = (right - left) * 1.5
+
+    camera.centerCameraOnPosition(0, -h2 / 2, wide, h2 * 1.5)
+    --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
+    --print(x, y, w, h)
+    --camera.centerCameraOnPosition(x, y, w, h)
+    -- tweenCameraTo(x, y, w, h)
+
+
     cam:update(w, h)
     prof.pop('frame')
+
+
+
 
     depthMinMax = { min = -1.0, max = 1.0 }
     -- foregroundFactors = { far=.5, near=1}
@@ -213,6 +243,8 @@ function scene.load()
     foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
     groundimg8 = love.graphics.newImage('assets/img/worldparts/ground3.png', { mipmaps = true })
     ding = love.graphics.newImage('assets/img/worldparts/ground52.png', { mipmaps = true })
+    cloud = love.graphics.newImage('assets/img/worldparts/clouds1.png', { mipmaps = true })
+    cloud3 = love.graphics.newImage('assets/img/worldparts/clouds3.png', { mipmaps = true })
     --print(groundimg8)
     heights = {}
     minpos = -1000
@@ -226,13 +258,11 @@ function scene.load()
         ProFi:stop()
         ProFi:writeReport('profilingReportInit.txt')
     end
-    
+
     local sx, sy = getPointToCenterTransitionOn()
     sx = 0
     sy = 0
-    doRectOutTransition(w/2, h/2, function() print('done!') end)
-
-
+    doRectOutTransition(w / 2, h / 2, function() print('done!') end)
 end
 
 function drawGroundPlaneLinesSimple(far, near)
@@ -302,7 +332,6 @@ function drawGroundPlaneLinesSimple(far, near)
 end
 
 function scene.draw()
- 
     love.graphics.clear(1, 1, 1)
 
     love.graphics.setColor(1, 1, 1, 0.5)
@@ -315,21 +344,26 @@ function scene.draw()
 
     if true then
         local size = (h / 12) -- margin around panel
+        local x = w - size
+        local y = 0
+
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(circles[1], size, size)
-        love.graphics.draw(circles[1], 0, 0, 0, sx, sy)
+        love.graphics.draw(circles[1], x, y, 0, sx, sy)
 
         --love.graphics.rectangle('fill', w - size, 0, size, size)
         --love.graphics.setColor(1, 0, 1)
         local sx, sy = createFittingScale(bigbuttons.editguys, size, size)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(bigbuttons.editguysmask, 0, 0, 0, sx, sy)
+        love.graphics.draw(bigbuttons.editguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
-        love.graphics.draw(bigbuttons.editguys, 0, 0, 0, sx, sy)
+        love.graphics.draw(bigbuttons.editguys, x, y, 0, sx, sy)
     end
 
-
-
+    love.graphics.setColor(1, 1, 1, .6)
+    local sx, sy = createFittingScale(cloud, w, h)
+    local bgscale = math.min(sx, sy)
+    love.graphics.draw(cloud, 0, 0, 0, bgscale, bgscale)
 
     -- local x,y = love.mouse.getPosition()
     drawGroundPlaneLinesSimple('foregroundFar', 'foregroundNear')

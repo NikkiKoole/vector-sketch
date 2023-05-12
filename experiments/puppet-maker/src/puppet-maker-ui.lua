@@ -1788,7 +1788,7 @@ function scrollList(draw, clickX, clickY)
    local marginHeight = 2
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
-   scrollListXPosition = h / 12 ----margin * 2 -- this is updating a global!!!
+   scrollListXPosition = margin --h / 12 ----margin * 2 -- this is updating a global!!!
    local offset = scrollPosition % 1
 
    local tabIndex = nil

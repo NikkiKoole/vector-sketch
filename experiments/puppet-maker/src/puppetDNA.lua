@@ -57,7 +57,9 @@ end
 function generate()
     --print('generatre!')
     local legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-        'assets/parts/leg5.png', 'assets/parts/leg6.png', 'assets/parts/leg7.png', 'assets/parts/leg8.png' }
+        'assets/parts/leg5.png', 'assets/parts/leg7.png',
+        'assets/parts/leg1x.png', 'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png',
+        'assets/parts/leg5x.png' }
 
 
     local patchUrls = { 'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png',

@@ -280,7 +280,7 @@ local function pointerPressed(x, y, id)
    end
 
    local size = (h / 12) -- margin around panel
-   if (hit.pointInRect(x, y, 0, 0, size, size)) then
+   if (hit.pointInRect(x, y, w - size, 0, size, size)) then
       local sx, sy = getPointToCenterTransitionOn()
       SM.unload('editGuy')
       Timer.clear()
@@ -289,7 +289,7 @@ local function pointerPressed(x, y, id)
 
       --transitionHead(true, 'fiveGuys')
    end
-   if (hit.pointInRect(x, y, 0, h - size, size, size)) then
+   if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
       partRandomize(editingGuy.values, true)
 
       tweenCameraToHeadAndBody()
@@ -1197,33 +1197,39 @@ function scene.draw()
 
    if true then
       local size = (h / 12) -- margin around panel
+      local x = w - size
+      local y = 0
+
       love.graphics.setColor(0, 0, 0, 0.5)
       local sx, sy = createFittingScale(circles[1], size, size)
-      love.graphics.draw(circles[1], 0, 0, 0, sx, sy)
+      love.graphics.draw(circles[1], x, y, 0, sx, sy)
 
       --love.graphics.rectangle('fill', w - size, 0, size, size)
       --love.graphics.setColor(1, 0, 1)
       local sx, sy = createFittingScale(bigbuttons.fiveguys, size, size)
       love.graphics.setColor(1, 1, 1)
-      love.graphics.draw(bigbuttons.fiveguysmask, 0, 0, 0, sx, sy)
+      love.graphics.draw(bigbuttons.fiveguysmask, x, y, 0, sx, sy)
       love.graphics.setColor(0, 0, 0)
-      love.graphics.draw(bigbuttons.fiveguys, 0, 0, 0, sx, sy)
+      love.graphics.draw(bigbuttons.fiveguys, x, y, 0, sx, sy)
    end
 
 
    if true then
       local size = (h / 12) -- margin around panel
+      local x = w - size
+      local y = h - size
+
       love.graphics.setColor(0, 0, 0, 0.5)
       local sx, sy = createFittingScale(circles[1], size, size)
-      love.graphics.draw(circles[1], 0, h - size, 0, sx, sy)
+      love.graphics.draw(circles[1], x, y, 0, sx, sy)
 
       --love.graphics.rectangle('fill', w - size, 0, size, size)
       --love.graphics.setColor(1, 0, 1)
       local sx, sy = createFittingScale(bigbuttons.dice, size, size)
       love.graphics.setColor(1, 1, 1)
-      love.graphics.draw(bigbuttons.dicemask, 0, h - size, 0, sx, sy)
+      love.graphics.draw(bigbuttons.dicemask, x, y, 0, sx, sy)
       love.graphics.setColor(0, 0, 0)
-      love.graphics.draw(bigbuttons.dice, 0, h - size, 0, sx, sy)
+      love.graphics.draw(bigbuttons.dice, x, y, 0, sx, sy)
    end
 
    if transition then
