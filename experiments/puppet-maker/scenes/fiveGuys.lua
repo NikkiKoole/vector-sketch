@@ -128,11 +128,15 @@ end
 
 
 function getCameraZoom()
-    local bbHead1            = bbox.getBBoxRecursive(fiveGuys[1].head)
-    local bbHead2            = bbox.getBBoxRecursive(fiveGuys[#fiveGuys].head)
-    local bbFeet1            = bbox.getBBoxRecursive(fiveGuys[1].feet1)
-    local bbFeet2            = bbox.getBBoxRecursive(fiveGuys[#fiveGuys].feet1)
-    local tlx, tly, brx, bry = bbox.combineBboxes(bbHead1, bbHead2, bbFeet1, bbFeet2)
+    local bboxes = {}
+    for i = 1, #fiveGuys do
+        local b = bbox.getBBoxRecursive(fiveGuys[i].head)
+        table.insert(bboxes, b)
+        local b = bbox.getBBoxRecursive(fiveGuys[i].feet1)
+        table.insert(bboxes, b)
+    end
+
+    local tlx, tly, brx, bry = bbox.combineBboxes(unpack(bboxes))
 
     local x2, y2, w2, h2     = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
@@ -222,7 +226,7 @@ function scene.load()
     local right = fiveGuys[#fiveGuys].guy.transforms.l[1]
     local wide = (right - left) * 1.5
 
-    camera.centerCameraOnPosition(0, -h2 / 2, wide, h2 * 1.5)
+    camera.centerCameraOnPosition(0, -h2 / 2, wide, h2)
     --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
     --print(x, y, w, h)
     --camera.centerCameraOnPosition(x, y, w, h)
@@ -377,7 +381,7 @@ function scene.draw()
     end
     cam:pop()
 
-    if false then -- this is leaking toop
+    if true then -- this is leaking toop
         local stats = love.graphics.getStats()
         local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
         --   print(inspect(stats))

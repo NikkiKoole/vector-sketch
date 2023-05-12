@@ -243,6 +243,7 @@ function partRandomize(values, applyChangeDirectly)
          --end
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
+         --values[parts[i]].linePal = 13 --math.ceil(love.math.random() * #palettes)
          values[parts[i]].texScale = math.ceil(love.math.random() * 9)
          if (parts[i] == 'head' or parts[i] == 'body') then
             values[parts[i]].flipx = love.math.random() < .5 and -1 or 1
