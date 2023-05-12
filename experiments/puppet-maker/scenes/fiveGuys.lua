@@ -149,6 +149,12 @@ function scene.unload()
     myWorld:clear()
 end
 
+function getBodyYOffsetForDefaultStance(e)
+    local magic = 4.46
+    local d = e.biped.leg1.data
+    return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
+end
+
 function scene.load()
     if (PROF_CAPTURE) then
         ProFi:start()
@@ -204,9 +210,23 @@ function scene.load()
             myWorld:emit('movedBody', fg[i].biped)
         end
         fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 1000
-        fiveGuys[i].body.transforms.l[2] = -700
+
+
+        local offset = getBodyYOffsetForDefaultStance(fg[i].biped)
+        --fiveGuys[i].guy.transforms.l[2] = -800
+        --fg[i].biped.biped.feet1.transforms.l[2] = -300
+        --fiveGuys[i].body.transforms.l[2] = 800
+
+        --myWorld:emit('movedBody', fg[i].biped)
+
+        --root.children[i]
+        --fiveGuys[i].transforms.l[2] = -200
+        --fiveGuys[i].body.transforms.l[2] = -200 --getBodyYOffsetForDefaultStance(fg[i].biped)
+        --print(fiveGuys[i].body.transforms, root.children[i].transforms, fiveGuys[i].guy.transforms)
+        --root.children[i].transforms.l[2] = 700 - getBodyYOffsetForDefaultStance(fg[i].biped) -- -200
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
+        myWorld:emit("tweenIntoDefaultStance", fg[i].biped, false)
         --
         -- myWorld:emit("potatoInit", potato)
     end
@@ -220,7 +240,7 @@ function scene.load()
     --camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
 
     local x2, y2, w2, h2 = getCameraZoom()
-    print(x2, y2, w2, h2)
+    --print(x2, y2, w2, h2)
 
     local left = fiveGuys[1].guy.transforms.l[1]
     local right = fiveGuys[#fiveGuys].guy.transforms.l[1]
@@ -266,7 +286,8 @@ function scene.load()
     local sx, sy = getPointToCenterTransitionOn()
     sx = 0
     sy = 0
-    doRectOutTransition(w / 2, h / 2, function() print('done!') end)
+    doRectOutTransition(w / 2, h / 2, function()
+    end)
 end
 
 function drawGroundPlaneLinesSimple(far, near)
@@ -329,6 +350,7 @@ function drawGroundPlaneLinesSimple(far, near)
 
             -- love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .9)
             love.graphics.setColor(.4, .8, .2, .8)
+            love.graphics.setColor(palettes[6][1], palettes[6][2], palettes[6][3])
             love.graphics.draw(m)
             --love.graphics.draw(m, 0, 400 * s)
         end
@@ -377,11 +399,23 @@ function scene.draw()
         for i = 1, #root.children do
             local px, py = root.children[i].transforms._g:transformPoint(0, 0)
             love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+
+            -- the body
+            local pivx = root.children[i].children[1].transforms.l[6]
+            local pivy = root.children[i].children[1].transforms.l[7]
+            local px, py = root.children[i].children[1].transforms._g:transformPoint(pivx, pivy)
+            love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
+
+            -- the foot
+            local pivx = root.children[i].children[8].transforms.l[6]
+            local pivy = root.children[i].children[8].transforms.l[7]
+            local px, py = root.children[i].children[8].transforms._g:transformPoint(pivx, pivy)
+            love.graphics.rectangle('fill', px - 25, py - 25, 50, 50)
         end
     end
     cam:pop()
 
-    if true then -- this is leaking toop
+    if false then -- this is leaking toop
         local stats = love.graphics.getStats()
         local str = string.format("texture memory used: %.2f MB", stats.texturememory / (1024 * 1024))
         --   print(inspect(stats))
@@ -438,11 +472,13 @@ function scene.update(dt)
 
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
-            doCircleInTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
+            doCircleInTransition(love.math.random() * w, love.math.random() * h, function()
+            end)
         end
         if k == 'w' then
             local w, h = love.graphics.getDimensions()
-            doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
+            doCircleOutTransition(love.math.random() * w, love.math.random() * h, function()
+            end)
         end
         if k == 'r' then
             local w, h = love.graphics.getDimensions()
@@ -452,24 +488,14 @@ function scene.update(dt)
             -- that is to make it able to rotate and still cover the whole screen
             h = math.max(w, h) * 3
             if rand < 0.5 then
-                doRectOutTransition( -offset, -h, function() print('done!') end)
+                doRectOutTransition( -offset, -h, function()
+                end)
             else
-                doRectOutTransition(w + offset, -h, function() print('done!') end)
+                doRectOutTransition(w + offset, -h, function()
+                end)
             end
         end
-        if k == 't' then
-            local w, h = love.graphics.getDimensions()
-            local offset = w * 0.25
-            local rand = love.math.random()
-            -- I am drawing a rectangle that is 3 times the height of the screen
-            -- that is to make it able to rotate and still cover the whole screen
-            h = math.max(w, h) * 3
-            if rand < 0.5 then
-                doRectInTransition( -offset, -h, function() print('done!') end)
-            else
-                doRectInTransition(w + offset, -h, function() print('done!') end)
-            end
-        end
+
         if (k == 'p') then
             if not profiling then
                 ProFi:start()

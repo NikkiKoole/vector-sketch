@@ -307,7 +307,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
    startX = startX + buttonSize / 2
 
    local rowMultiplier = 1.3
-   -- print('startX', startX)
+
    function updateRowStuff()
       runningElem = runningElem + 1
       if runningElem >= elementsInRow then
@@ -705,7 +705,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             local propupdate = function(v)
                changePart('legs', values)
                myWorld:emit("bipedAttachLegs", biped)
-               myWorld:emit("tweenIntoDefaultStance", biped)
+               myWorld:emit("tweenIntoDefaultStance", biped, true)
             end
 
             draw_slider_with_2_buttons('legXAxis', startX + (runningElem * elementWidth), currentY,
@@ -1247,6 +1247,7 @@ local function renderElement(category, type, value, container, x, y, w, h)
    if (type == "dot") then
       if (value <= #container) then
          local dotindex = (value % #dots)
+
          local pickedBG = editingGuy.values[category].bgPal == value
          local pickedFG = editingGuy.values[category].fgPal == value
          local pickedLP = editingGuy.values[category].linePal == value
@@ -1378,7 +1379,6 @@ local function buttonClickHelper(category, value)
 
    local f = findPart(category)
    if selectedTab == 'part' then
-      print(value)
       values[category]['shape'] = value
       changePart(category, values)
 
@@ -1500,10 +1500,7 @@ function partSettingsScrollable(draw, clickX, clickY)
    end
    if selectedTab == "part" then
       amount = p.imgs and #p.imgs or 0
-      --print(p.imgs[#p.imgs])
-      --if p.imgs[#p.imgs].url == 'assets/parts/null.png' then
-      --   amount = amount - 1
-      --end
+
       renderType = "img"
       renderContainer = p.imgs
    end
@@ -1532,7 +1529,6 @@ function partSettingsScrollable(draw, clickX, clickY)
    local childrenTabHeight = childPickerDimensions(width) --drawChildPicker(draw, startX, currentY , width, clickX, clickY)
 
    if findPart(selectedCategory).children then
-      -- print(selectedChildCategory)
       currentY = currentY + childrenTabHeight
       otherHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedChildCategory)
       currentY = currentY + otherHeight
@@ -1573,7 +1569,7 @@ function partSettingsScrollable(draw, clickX, clickY)
 
             if (index >= 0 and index <= rows - 1) then
                local value = ((index % rows) * columns) + i
-               --print(inspect(renderContainer[value]))
+
                if true or renderContainer[value] ~= 'assets/parts/null.png' then
                   if draw then
                      renderElement(
@@ -1789,7 +1785,7 @@ function scrollList(draw, clickX, clickY)
    local size = (h / scrollItemsOnScreen) - marginHeight * 2
 
    scrollListXPosition = margin --h / 12 ----margin * 2 -- this is updating a global!!!
-   local offset = scrollPosition % 1
+   local offset = scroller.position % 1
 
    local tabIndex = nil
    for i = 1, #tabs do
@@ -1803,7 +1799,7 @@ function scrollList(draw, clickX, clickY)
          local newScroll = i + offset
          local yPosition = marginHeight + (newScroll * (h / scrollItemsOnScreen))
 
-         local index = math.ceil( -scrollPosition) + i
+         local index = math.ceil( -scroller.position) + i
          index = (index % #categories) + 1
          if index < 1 then
             index = index + #categories
@@ -1813,7 +1809,7 @@ function scrollList(draw, clickX, clickY)
          end
          local alpha = 0.8
 
-         local whiterectIndex = math.ceil( -scrollPosition) + i
+         local whiterectIndex = math.ceil( -scroller.position) + i
          whiterectIndex = (whiterectIndex % #whiterects) + 1
          local marginb = size / 10
          local scaleX, scaleY = createFittingScale(whiterects[whiterectIndex], size, size)

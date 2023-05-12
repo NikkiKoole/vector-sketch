@@ -83,7 +83,6 @@ end
 
 function getHeadPoints(e)
    local parent = e.potato.head
-   -- print(e.potato)
    local parentName = e.potato.values.potatoHead and 'body' or 'head'
    local meta = getMeta(parent)
 
@@ -194,8 +193,6 @@ function bipedArguments(editingGuy)
 end
 
 function potatoArguments(editingGuy)
-   --print(editingGuy)
-   -- print('potato argumnets', editingGuy.teeth)
    return {
        head = editingGuy.values.potatoHead and editingGuy.body or editingGuy.head,
        eye1 = editingGuy.eye1,
@@ -325,8 +322,6 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
 end
 
 function redoGraphicHelper(part, name, values)
-   -- print(name, part.children, #part.children)
-
    local index = getIndexOfGraphicPart(part)
    local p = part.children and part.children[index] or part
    if p.texture and p.texture.url then
@@ -339,7 +334,7 @@ function redoGraphicHelper(part, name, values)
       textured:release()
       p.texture.canvas = m
    else
-      print('not foing texture updat for', name)
+      --    print('not foing texture updat for', name)
    end
    return part
 end
@@ -445,7 +440,6 @@ end
 function createArmRubberhose(armNr, values, points)
    local flop = armNr == 1 and values.arm1flop or values.arm2flop
    local textured, url = partToTexturedCanvas('arms', values)
-   -- print('creating arm rubberhose', leglengths, values.armLength)
    return createFromImage.rubberhose(
            url, textured,
            flop,
@@ -592,8 +586,6 @@ function changePart(name)
    elseif name == 'hair' then
       if isNullObject(name, values) then
          editingGuy.hair = updateChild(container, editingGuy.hair, copy3(nullChild))
-         --  print('hair', hair)
-         --print('hair was null ')
       else
          -- this was a change but isnt needed anymore I  think
          local headPart = values.potatoHead and editingGuy.body or editingGuy.head
@@ -617,12 +609,9 @@ function changePart(name)
       editingGuy.brow1 = updateChild(container, editingGuy.brow1, createBrowBezier(values, editingGuy.brow1.points))
       editingGuy.brow2 = updateChild(container, editingGuy.brow2, createBrowBezier(values, editingGuy.brow2.points))
    elseif name == 'nose' then
-      -- print('changeart nose')
       if isNullObject(name, values) then
-         print('nullobject nose')
          editingGuy.nose = updateChild(container, editingGuy.nose, copy3(nullFolder))
       else
-         print('not nullobject nose', editingGuy.nose)
          editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then
@@ -645,7 +634,6 @@ function changePart(name)
       myWorld:emit("bipedAttachHands", biped)
    elseif name == 'armhair' then
       if isNullObject(name, values) then
-         --print(armhair1.transforms)
          editingGuy.armhair1 = updateChild(guy, editingGuy.armhair1, copy3(nullChild))
          editingGuy.armhair2 = updateChild(guy, editingGuy.armhair2, copy3(nullChild))
       else
@@ -667,8 +655,6 @@ function changePart(name)
       changePart('leghair')
    elseif name == 'leghair' then
       if isNullObject(name, values) then
-         --print(armhair1.transforms)
-         print('leghair null')
          editingGuy.leghair1 = updateChild(guy, editingGuy.leghair1, copy3(nullChild))
          editingGuy.leghair2 = updateChild(guy, editingGuy.leghair2, copy3(nullChild))
       else

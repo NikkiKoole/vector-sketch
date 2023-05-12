@@ -583,18 +583,18 @@ function BipedSystem:itemReleased(elem)
         if e.biped.body == elem.item then
             --e.biped.body.transforms.l[3] = -1
 
-            BipedSystem:tweenIntoDefaultStance(e)
+            BipedSystem:tweenIntoDefaultStance(e, true)
         end
     end
 end
 
-function BipedSystem:tweenIntoDefaultStance(e)
+function BipedSystem:tweenIntoDefaultStance(e, clear)
     local offset = getBodyYOffsetForDefaultStance(e)
+
     e.biped.head.transforms.l[3] = -.3
-    --  Timer.clear()
+    -- Timer.clear()
+    if clear then Timer.clear() end
     Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
-
-
     Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
     BipedSystem:movedBody(e)
     Timer.during(2.2, function()

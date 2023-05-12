@@ -145,9 +145,9 @@ local function pointerMoved(x, y, dx, dy, id)
    -- only do this when the scroll ui is visible (always currently)
    if scrollerIsDragging and not somethingWasDragged then
       local w, h = love.graphics.getDimensions()
-      local oldScrollPos = scrollPosition
-      scrollPosition = scrollPosition + dy / (h / scrollItemsOnScreen)
-      local newScrollPos = scrollPosition
+      local oldScrollPos = scroller.position
+      scroller.position = scroller.position + dy / (h / scrollItemsOnScreen)
+      local newScrollPos = scroller.position
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
          playSound(scrollTickSample)
@@ -293,7 +293,7 @@ local function pointerPressed(x, y, id)
       partRandomize(editingGuy.values, true)
 
       tweenCameraToHeadAndBody()
-      myWorld:emit("tweenIntoDefaultStance", biped)
+      myWorld:emit("tweenIntoDefaultStance", biped, true)
    end
    myWorld:emit("eyeLookAtPoint", x, y)
 end
@@ -324,7 +324,6 @@ function scene.unload()
 end
 
 function scene.load()
-   print('scene load hello!')
    -- prof.push('frame')
    for i = 1, #fiveGuys do
       fiveGuys[i].guy.transforms.l[1] = 0
@@ -620,7 +619,11 @@ function scene.load()
    }
 
 
-   scrollPosition      = .5
+   scroller            = {
+       position = 5
+   }
+
+   --scrollPosition      = 7.5
    scrollItemsOnScreen = 5
    scrollListXPosition = 0
 
@@ -751,7 +754,10 @@ function scene.load()
 
    --doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
    local sx, sy = getPointToCenterTransitionOn()
-   doRectOutTransition(sx, sy, function() print('done!') end)
+   doRectOutTransition(sx, sy, function()
+   end)
+
+   Timer.tween(.5, scroller, { position = 7 })
 end
 
 function getPointToCenterTransitionOn()
@@ -841,11 +847,10 @@ function getCameraDataZoomOnHeadAndBody()
    local bbHand2            = bbox.getBBoxRecursive(editingGuy.hand2)
 
    local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
-   print(tlx, tly, brx, bry)
-   local x2, y2, w2, h2 = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+   local x2, y2, w2, h2     = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
    --return x2, y2, w, h * 1.2
-   local w, h = love.graphics.getDimensions()
+   local w, h               = love.graphics.getDimensions()
    return 0, y2 + -h2 / 4, w, h2 * 1.5
 end
 
@@ -866,7 +871,6 @@ function tweenCameraToHead()
 end
 
 function tweenCameraToHeadAndBody()
-   print(editingGuy)
    local x, y, w, h = getCameraDataZoomOnHeadAndBody()
    --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
    --print(x, y, w, h)
@@ -876,12 +880,10 @@ end
 
 function attachCallbacks()
    Signal.register('click-settings-scroll-area-item', function(x, y)
-      print('this is just here to trigger on item in scrolarea clicks')
       partSettingsScrollable(false, x, y)
    end)
 
    Signal.register('click-scroll-list-item', function(x, y)
-      print('this is just here to trigger on item in scrollist clicks')
       scrollList(false, x, y)
    end)
 
@@ -938,7 +940,7 @@ function attachCallbacks()
       if key == 'p' then
          partRandomize(values, true)
          tweenCameraToHeadAndBody()
-         myWorld:emit("tweenIntoDefaultStance", biped)
+         myWorld:emit("tweenIntoDefaultStance", biped, true)
       end
       if key == 'f' then
          myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
@@ -954,13 +956,11 @@ function attachCallbacks()
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == '3' then
-         print('moyth<')
          values.mouthScaleX = values.mouthScaleX * 0.75
          --values.mouthScaleY = values.mouthScaleY * 0.75
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == '4' then
-         print('moutgh >')
          values.mouthScaleX = values.mouthScaleX * 1.25
          --values.mouthScaleY = values.mouthScaleY * 1.25
          myWorld:emit('rescaleFaceparts', potato)
@@ -1094,7 +1094,7 @@ function scene.update(dt)
 
 
 
-   scrollPosition = updateTheScrolling(dt, scrollListIsThrown, scrollPosition)
+   scroller.position = updateTheScrolling(dt, scrollListIsThrown, scroller.position)
    settingsScrollPosition = updateTheScrolling(dt, settingsScrollAreaIsThrown, settingsScrollPosition)
 
 

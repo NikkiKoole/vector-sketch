@@ -212,7 +212,6 @@ function love.load()
    SM.load("editGuy")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
-   print('keybd focus', love.window.hasFocus())
 
    love.event.wait()
    love.event.wait()
@@ -265,7 +264,6 @@ function partRandomize(values, applyChangeDirectly)
 end
 
 function love.focus(f)
-   print('love.focus')
    focussed = f
 end
 
@@ -303,7 +301,6 @@ function love.quit()
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
-   print('mousepressed in the manin', button)
    --print('mousepressed', button)
    --if not istouch then
    --   pointerPressed(x, y, 'mouse')
