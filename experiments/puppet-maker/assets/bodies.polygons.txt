@@ -351,7 +351,7 @@ wrap = "repeat"
 folder = true,
 name = "feet1",
 transforms = {
-l = { 0, 0, 0, 1, 1, 629.836, 331.459, 0, 0 }
+l = { 368.857, -45.398, 0, 1, 1, 629.836, 331.459, 0, 0 }
 }
 }, {
 children = { {
@@ -368,38 +368,6 @@ folder = true,
 name = "feet1",
 transforms = {
 l = { 0, 0, 0, 1, 1, 647.392, 354.867, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -219.5, -122.5 }, { 219.5, -122.5 }, { 219.5, 122.5 }, { -219.5, 122.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet4.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1662.051, -152.416, 0, 1, 1, 148.736, -36.837, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -241.5, -106 }, { 241.5, -106 }, { 241.5, 106 }, { -241.5, 106 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet5.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1515.18, 595.218, 0, 1, 1, 148.736, -36.837, 0, 0 }
 }
 }, {
 children = { {
@@ -453,38 +421,6 @@ l = { 927.702, 1491.833, 0, 1, 1, 91.641, -13.122, 0, 0 }
 children = { {
 color = { 0, 0, 0, 1 },
 name = "",
-points = { { -147, -148.5 }, { 147, -148.5 }, { 147, 148.5 }, { -147, 148.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/hand1.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "hand1",
-transforms = {
-l = { 1823.239, 804.416, 0, 1, 1, 83.583, -16.575, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -201, -93 }, { 201, -93 }, { 201, 93 }, { -201, 93 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/hand2.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "hand1",
-transforms = {
-l = { 1989.004, 1066.877, 0, 1, 1, 131.931, 11.053, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
 points = { { -244.5, -147 }, { 244.5, -147 }, { 244.5, 147 }, { -244.5, 147 } },
 texture = {
 filter = "linear",
@@ -496,6 +432,118 @@ folder = true,
 name = "hand1",
 transforms = {
 l = { 2258.372, 925.286, 0, 1, 1, 180.279, -71.83, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 322.5, -147 }, { 322.5, 94 }, { -244.5, 94 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet1x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x1",
+transforms = {
+l = { 1516.09, 1818.002, 0, 1, 1, 180.279, -71.83, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 295.5, -147 }, { 295.5, 46 }, { -244.5, 46 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet2x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x2",
+transforms = {
+l = { 1500.678, 1594.516, 0, 1, 1, 180.279, -71.83, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 260.5, -147 }, { 260.5, 84 }, { -244.5, 84 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet3x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x3",
+transforms = {
+l = { 1030.588, 2126.258, 0, 1, 1, 149.453, -25.592, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 291.5, -147 }, { 291.5, 86 }, { -244.5, 86 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet4x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x4",
+transforms = {
+l = { 999.763, 2411.394, 0, 1, 1, 187.986, -17.886, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 376.5, -147 }, { 376.5, 27 }, { -244.5, 27 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet5x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x5",
+transforms = {
+l = { 961.231, 2657.999, 0, 1, 1, 241.93, -79.537, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 233.5, -147 }, { 233.5, 175 }, { -244.5, 175 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet6x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x6",
+transforms = {
+l = { 1462.144, 2789.008, 0, 1, 1, 110.92, 5.232, 0, 0 }
+}
+}, {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -244.5, -147 }, { 165.5, -147 }, { 165.5, 69 }, { -244.5, 69 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet7x.png",
+wrap = "repeat"
+}
+} },
+folder = true,
+name = "x7",
+transforms = {
+l = { 1770.399, 2580.935, 0, 1, 1, 56.974, -17.887, 0, 0 }
 }
 } },
 folder = true,

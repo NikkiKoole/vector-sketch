@@ -591,6 +591,7 @@ end
 function BipedSystem:tweenIntoDefaultStance(e)
     local offset = getBodyYOffsetForDefaultStance(e)
     e.biped.head.transforms.l[3] = -.3
+    --  Timer.clear()
     Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
 
 

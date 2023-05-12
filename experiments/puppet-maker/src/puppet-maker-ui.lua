@@ -636,18 +636,23 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
       end
 
       if category == 'ears' then
-         currentHeight = calcCurrentHeight(5)
+         currentHeight = calcCurrentHeight(6)
          if draw then
             runningElem = 0
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
-            local rotupdate = function(v)
-               editingGuy.ear1.transforms.l[3] = v
-               editingGuy.ear2.transforms.l[3] = -v
-            end
+
             local propupdate = function(v)
                myWorld:emit('rescaleFaceparts', potato)
                myWorld:emit('potatoInit', potato)
+            end
+            local rotupdate = function(v)
+               editingGuy.values.earRotation = v
+               myWorld:emit('rescaleFaceparts', potato)
+               --editingGuy.ear1.transforms.l[3] = v
+               --editingGuy.ear2.transforms.l[3] = -v
+               --propupdate()
+               --myWorld:emit('rescaleFaceparts', potato)
             end
 
             draw_slider_with_2_buttons('earRotation', startX + (runningElem * elementWidth), currentY,
@@ -658,6 +663,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             runningElem, currentY = updateRowStuff()
 
             draw_slider_with_2_buttons('earWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 3, .5, icons.earsmall, icons.earbig)
+
+            runningElem, currentY = updateRowStuff()
+
+            draw_slider_with_2_buttons('earHeightMultiplier', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
                 sliderWidth, propupdate,
                 nil, .5, 3, .5, icons.earsmall, icons.earbig)

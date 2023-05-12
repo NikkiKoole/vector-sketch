@@ -261,7 +261,7 @@ local function pointerPressed(x, y, id)
 
    if x >= 0 and x <= scrollListXPosition then
       -- this could be clicking in the head or body buttons
-      headOrBody(false, x, y)
+      --  headOrBody(false, x, y)
    end
 
    if x >= scrollListXPosition and x < scrollListXPosition + (h / scrollItemsOnScreen) then
@@ -284,14 +284,16 @@ local function pointerPressed(x, y, id)
       local sx, sy = getPointToCenterTransitionOn()
       SM.unload('editGuy')
       Timer.clear()
-      
+
       doCircleInTransition(sx, sy, function() if scene then SM.load('fiveGuys') end end)
 
       --transitionHead(true, 'fiveGuys')
    end
    if (hit.pointInRect(x, y, 0, h - size, size, size)) then
       partRandomize(editingGuy.values, true)
+
       tweenCameraToHeadAndBody()
+      myWorld:emit("tweenIntoDefaultStance", biped)
    end
    myWorld:emit("eyeLookAtPoint", x, y)
 end
@@ -750,9 +752,7 @@ function scene.load()
    --doCircleOutTransition(love.math.random() * w, love.math.random() * h, function() print('done!') end)
    local sx, sy = getPointToCenterTransitionOn()
    doRectOutTransition(sx, sy, function() print('done!') end)
-   
 end
-
 
 function getPointToCenterTransitionOn()
    local w, h = love.graphics.getDimensions()
@@ -767,11 +767,10 @@ function getPointToCenterTransitionOn()
    local x = numbers.lerp(newPoints[7][1], newPoints[3][1], tX)
    local y = numbers.lerp(newPoints[1][2], newPoints[5][2], tY)
    local bx, by = focusOn.transforms._g:transformPoint(x, y)
-  
+
    local sx, sy = cam:getScreenCoordinates(bx, by)
    return sx, sy
 end
-
 
 function skinColorize(bgPal, values)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs' }
@@ -827,8 +826,10 @@ function getCameraDataZoomOnJustHead()
    end
 
    local tlx, tly, brx, bry = bbox.combineBboxes(bb)
-   local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-   return x2, y2, w * 3, h * 3
+   local x2, y2, w2, h2     = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+   --return x2, y2, w * 3, h * 3
+   local w, h               = love.graphics.getDimensions()
+   return 0, y2 + -h2 / 4, w, h2 * 1.5
 end
 
 function getCameraDataZoomOnHeadAndBody()
@@ -840,15 +841,18 @@ function getCameraDataZoomOnHeadAndBody()
    local bbHand2            = bbox.getBBoxRecursive(editingGuy.hand2)
 
    local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
-   local x2, y2, w, h       = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
+   print(tlx, tly, brx, bry)
+   local x2, y2, w2, h2 = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
 
    --return x2, y2, w, h * 1.2
-   return 0, y2, 500, h * 1.2
+   local w, h = love.graphics.getDimensions()
+   return 0, y2 + -h2 / 4, w, h2 * 1.5
 end
 
 function tweenCameraTo(x, y, w, h)
    --tweenCameraData = {x=x, y=y, w=w, h=h}
    --Timer.tween()
+   -- Timer.clear()
    Timer.tween(0.2, tweenCameraData, { x = x, y = y, w = w, h = h }, 'in-circ')
 
    Timer.during(0.3, function()
@@ -862,7 +866,11 @@ function tweenCameraToHead()
 end
 
 function tweenCameraToHeadAndBody()
+   print(editingGuy)
    local x, y, w, h = getCameraDataZoomOnHeadAndBody()
+   --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
+   --print(x, y, w, h)
+   --camera.centerCameraOnPosition(x, y, w, h)
    tweenCameraTo(x, y, w, h)
 end
 
@@ -930,6 +938,7 @@ function attachCallbacks()
       if key == 'p' then
          partRandomize(values, true)
          tweenCameraToHeadAndBody()
+         myWorld:emit("tweenIntoDefaultStance", biped)
       end
       if key == 'f' then
          myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)

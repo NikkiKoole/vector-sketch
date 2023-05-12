@@ -68,12 +68,13 @@ function generate()
         'assets/parts/hair3.png',
         'assets/parts/hair4.png',
         'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
-        'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png' }
+        'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png', 'assets/parts/hair1x.png',
+        'assets/parts/hair2x.png' }
 
     table.insert(patchUrls, 'assets/parts/null.png')
     table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice
 
-   
+
     local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
     zeroTransform(bodyParts)
 
@@ -91,12 +92,12 @@ function generate()
     local upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
     local lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
 
-   
+
     -- ok haha this cause a bug, because the randomizer doenst know how to handle it properly
     --
-   
+
     -- but why is this an issue for the nose and not for the patch for example
- --   table.insert(noseImgUrls, 'assets/parts/null.png')
+    --   table.insert(noseImgUrls, 'assets/parts/null.png')
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts,                                                    kind = 'head' },
         { name = 'hair',           imgs = hairUrls,        kind = 'head' },

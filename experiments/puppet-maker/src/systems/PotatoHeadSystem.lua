@@ -122,10 +122,15 @@ function PotatoHeadSystem:rescaleFaceparts(e)
     e.potato.nose.transforms.l[5] = values.noseHeightMultiplier * sy
 
     e.potato.ear1.transforms.l[4] = -1 * values.earWidthMultiplier * sx
-    e.potato.ear1.transforms.l[5] = values.earWidthMultiplier * sy
+    e.potato.ear1.transforms.l[5] = values.earHeightMultiplier * sy
 
     e.potato.ear2.transforms.l[4] = values.earWidthMultiplier * sx
-    e.potato.ear2.transforms.l[5] = values.earWidthMultiplier * sy
+    e.potato.ear2.transforms.l[5] = values.earHeightMultiplier * sy
+
+
+    --print('ear1 sx, sy', e.potato.ear1.transforms.l[4], e.potato.ear1.transforms.l[5])
+    e.potato.ear1.transforms.l[3] = e.potato.values.earRotation
+    e.potato.ear2.transforms.l[3] = -e.potato.values.earRotation
 
     e.potato.mouth.transforms.l[4] = 1 * sx * values.mouthScaleX
     e.potato.mouth.transforms.l[5] = 1 * sy * values.mouthScaleY
@@ -175,10 +180,17 @@ function PotatoHeadSystem:potatoInit(e)
 
     local sx, sy = getFaceScale(e)
     e.potato.ear1.transforms.l[4] = -1 * sx * e.potato.values.earWidthMultiplier
+    e.potato.ear1.transforms.l[5] = sy * e.potato.values.earHeightMultiplier
+
+
+    e.potato.ear1.transforms.l[3] = e.potato.values.earRotation
+    e.potato.ear2.transforms.l[3] = -e.potato.values.earRotation
+
 
     e.potato.ear2.transforms.l[1] = numbers.lerp(newPoints[3][1], newPoints[2][1], .5)
     e.potato.ear2.transforms.l[2] = numbers.lerp(newPoints[8][2], newPoints[6][2], tY)
     e.potato.ear2.transforms.l[4] = 1 * sx * e.potato.values.earWidthMultiplier
+    e.potato.ear2.transforms.l[5] = sy * e.potato.values.earHeightMultiplier
 
     local mx, my = getPositionForMouthAttaching(e)
     e.potato.mouth.transforms.l[1] = mx
