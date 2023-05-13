@@ -511,6 +511,7 @@ end
 function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
+    print(e.biped.values.legDefaultStance)
     return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
 
@@ -528,6 +529,7 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
     local d = e.biped.leg1.data
     --print(d.length / d.scaleY)
     -- todo ouch I odnt understand the .66 magic numebr, it sort of works though...
+
     e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e) -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
     BipedSystem:movedBody(e)
 end
@@ -590,7 +592,7 @@ end
 
 function BipedSystem:tweenIntoDefaultStance(e, clear)
     local offset = getBodyYOffsetForDefaultStance(e)
-
+    print('offset')
     e.biped.head.transforms.l[3] = -.3
     -- Timer.clear()
     if clear then Timer.clear() end
