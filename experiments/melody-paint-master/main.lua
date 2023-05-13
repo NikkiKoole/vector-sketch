@@ -69,7 +69,7 @@ function love.load()
    local koalaPenta = { 0, 3, 5, 7, 10, 12 }
    local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
    local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-   scale = koalaHexa --soundforest --minorBlues
+   scale = koalaPenta --soundforest --minorBlues
 
 
 
@@ -95,58 +95,132 @@ function love.load()
    inbetweenmargin = 10
    pictureInBottomScale = .6
 
-   head = love.graphics.newImage('resources/herman.png')
+   head = love.graphics.newImage('resources/theo.png')
    color = colors.dark_green
    drawingValue = 1
    page = initPage()
 
 
-
+   local names = { 'badger',
+       'beach',
+       'bee',
+       'bird',
+       'bison',
+       'butterfly',
+       'cat',
+       'clam',
+       'cow',
+       'crab',
+       'crocodile',
+       'crow',
+       'dog',
+       'duck',
+       'elephant',
+       'fennec',
+       'fish',
+       'flamingo',
+       'flying-fish',
+       'fox',
+       'frog',
+       'goldfish',
+       'gorilla',
+       'hamster',
+       'hen',
+       'hippopotamus',
+       'hummingbird',
+       'hyena',
+       'jellyfish',
+       'kangaroo',
+       'kiwi',
+       'koala',
+       'lemur',
+       'lion',
+       'lizard',
+       'manta',
+       'moose',
+       'ostrich',
+       'owl',
+       'panda-bear',
+       'panther',
+       'parrot',
+       'penguin',
+       'pig',
+       'polar',
+       'porcupine',
+       'puffer',
+       'rabbit',
+       'racoon',
+       'rat',
+       'red',
+       'rhinoceros',
+       'salamander',
+       'scorpion',
+       'sea',
+       'sheep',
+       'shrew',
+       'snail',
+       'snake',
+       'snake2',
+       'spider',
+       'starfish',
+       'tiger',
+       'toucan',
+       'turtle',
+       'walrus',
+       'whale',
+       'wolf',
+       'wolverine',
+       'zebra' }
 
    local sample_data = {
        { 'clam',       'babirhodes/ba' },
        { 'owl',        'babirhodes/bi' },
-       { 'panda-bear', 'babirhodes/rhodes' },
-       --{'clam', 'tpl-dnb/bongos'},
-       -- {'clam', 'synth11'},
-       -- {'owl', 'tpl-dnb/clap'},
-       --  {'panda-bear', 'tpl-dnb/crash'},
+       { 'crab',       'babirhodes/biep2' },
+       { 'elephant',   'babirhodes/biep3' },
+       { 'panda-bear', 'babirhodes/rhodes2' },
+       { 'kangaroo',   'babirhodes/blok2' },
+       { 'jellyfish',  'tpl-dnb/bongos' },
+       { 'koala',      'synth11' },
+       { 'sea',        'synth06' },
+       { 'flamingo',   'VibraphoneHi-MT70' },
+       { 'lemur',      'tpl-dnb/clap' },
+       { 'moose',      'tpl-dnb/crash' },
        { 'antelope',   'tpl-dnb/drum' },
-       { 'flamingo',   'tpl-dnb/hihat' },
+       { 'manta',      'tpl-dnb/hihat' },
        { 'fox',        'tpl-dnb/hihat-open' },
        { 'bee',        'tpl-dnb/kick_01' },
-       { 'crab',       'tpl-dnb/kick_02' },
-       { 'elephant',   'tpl-dnb/snare_01' },
+       { 'lizard',     'tpl-dnb/kick_02' },
+       { 'ostrich',    'tpl-dnb/snare_01' },
        { 'crocodile',  'tpl-dnb/snare_02' },
-       { 'kangaroo',   'cr78/HiHat Metal' },
+       { 'shrew',      'cr78/HiHat Metal' },
        { 'pig',        'cr78/Conga Low' },
        { 'starfish',   'sf1-015' },
        { 'snake',      'cr78/Bongo High' },
-       { 'snake2',     'cr78/Guiro 1' }
+       { 'salamander', 'cr78/Guiro 1' },
+       { 'red',        'bass02' },
+       { 'rabbit',     'bass04' },
+       { 'polar',      'bass07' },
+       { 'badger',     'bass-piano_distorto' },
+       { 'parrot',     'synth11p' },
+       { 'porcupine',  'brass5c' },
+       { 'puffer',     'haw-O1' },
+       { 'rat',        'piano-clickO1' },
+       { 'crow',       'cr78/Cowbell' },
+       --  { 'cow',        '' },
+       --  { 'hyena',      '' },
+       --  { 'butterfly',  '' },
+       --  { 'scorpion',   '' },
+       --  { 'kiwi',       '' },
+       --  { 'snail',      '' },
+       --  { 'toucan',     '' },
    }
 
-   -- local sample_data = {
-   --    {'clam', 'marimba'},
-   --    {'owl', 'bd'},
-   --    {'panda-bear', 'cb'},
-   --    {'antelope', 'hihat-metal'},
-   --    {'flamingo', 'analog3c'},
-   --    {'fox', 'brass5c'},
-   --    {'bee', 'epiano2-1c'},
-   --    {'crab', 'prophet1c'},
-   --    {'elephant', 'guiro'},
-   --    {'crocodile', 'BASS-BigFM'},
-   --    {'kangaroo', 'EPIANO-LomarzOneNote'},
-   --    {'pig', 'BASS-1VCOacidic2'},
-   --    {'starfish', 'CHORD-4OSCSofttone'},
-   --    {'snake', 'mallet-c2'},
-   --    {'snake2', 'mallet-c4'},
-   --    {'badger', 'glockensp-c4'}
-   -- }
+
    sprites = {}
    samples = {}
    for i = 1, #sample_data do
       table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
+
       local data = love.sound.newSoundData('instruments/' .. sample_data[i][2] .. '.wav')
       table.insert(samples, love.audio.newSource(data, 'static'))
    end
@@ -194,7 +268,13 @@ function love.mousepressed(x, y)
 
    if (y > screenHeight - bottommargin + inbetweenmargin) then
       if (x > leftmargin and x < screenWidth - rightmargin) then
-         local index = 1 + math.floor((x - leftmargin) / (bitmapSize * pictureInBottomScale))
+         --local x = leftmargin + ((i - 1) % 16) * size
+         --local y = screenHeight - bottommargin + inbetweenmargin + math.floor((i - 1) / 16) * size
+         local size = pictureInBottomScale * bitmapSize
+         local rowNumber = math.floor((y - (screenHeight - bottommargin + inbetweenmargin)) / size)
+
+
+         local index = 1 + math.floor((x - leftmargin) / (bitmapSize * pictureInBottomScale)) + (rowNumber * 16)
          index = math.min(#sprites, index)
          octave = 0
          local s = samples[index]:clone()
@@ -249,17 +329,22 @@ function love.draw()
    for i = 1, #sprites do
       local img = sprites[i]
       local size = pictureInBottomScale * bitmapSize
+      local x = leftmargin + ((i - 1) % 16) * size
+      local y = screenHeight - bottommargin + inbetweenmargin + math.floor((i - 1) / 16) * size
+
       if (i == drawingValue) then
          love.graphics.setColor(palette[color][1] - .1,
              palette[color][2] - .1,
              palette[color][3] - .1)
          love.graphics.rectangle('fill',
-             leftmargin + size * (i - 1), screenHeight - bottommargin + inbetweenmargin,
+             x, y,
              size, size)
       end
       love.graphics.setColor(1, 1, 1)
+
+
       love.graphics.draw(img,
-          leftmargin + size * (i - 1), screenHeight - bottommargin + inbetweenmargin, 0,
+          x, y, 0,
           pictureInBottomScale, pictureInBottomScale)
    end
 

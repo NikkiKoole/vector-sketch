@@ -12,6 +12,7 @@ local bpm          = 0
 local scale        = {}
 local tuning       = 0
 local swing        = 50
+
 local pattern      = {}
 local samples      = {}
 
@@ -42,7 +43,8 @@ function getPitch(semitone, octave)
    local n = mapInto(freqs[semitone + 1], 261.63, 523.25, 0, 1)
    local o = octave + plusoctave
 
-
+   if o == -7 then return (0.015625 - (0.0078125 - n / 128)) end
+   if o == -6 then return (0.03125 - (0.015625 - n / 64)) end
    if o == -5 then return (0.0625 - (0.03125 - n / 32)) end
    if o == -4 then return (0.125 - (0.0625 - n / 16)) end
    if o == -3 then return (0.25 - (0.125 - n / 8)) end
@@ -54,6 +56,8 @@ function getPitch(semitone, octave)
    if o == 3 then return (8 + 8 * n) end
    if o == 4 then return (16 + 16 * n) end
    if o == 5 then return (32 + 32 * n) end
+   if o == 6 then return (64 + 64 * n) end
+   if o == 7 then return (128 + 128 * n) end
 end
 
 local sources = {}
@@ -117,10 +121,16 @@ while (true) do
                   o = o - 1
                end
 
+               while semi > 12 do
+                  semi = semi - 12
+                  o = o + 1
+               end
+
 
 
 
                local p = getPitch(semi, o)
+
                s:setPitch(p)
 
                -- i only swing the even beats
@@ -128,6 +138,7 @@ while (true) do
 
                local _swing = ((swing - 50) / 50) * 96
                table.insert(queue,
+
                    { beat = beat, tick = tick + (offset and _swing or 0), source = s, index = v })
             end
          end
@@ -139,6 +150,8 @@ while (true) do
       if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
          table.remove(queue, i)
          table.insert(sources, { source = q.source, index = q.index })
+         chokeGroup(q.index)
+
          love.audio.play(q.source)
       end
    end
