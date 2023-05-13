@@ -23,11 +23,31 @@ function love.keypressed(key)
       octave = octave - 1
       octave = math.max( -5, octave)
    end
+   if key == "z" then
+      tuning = tuning - 1
+      channel.main2audio:push({ type = "tuning", data = tuning });
+   end
+   if key == "x" then
+      tuning = tuning + 1
+      channel.main2audio:push({ type = "tuning", data = tuning });
+   end
+   if key == "c" then
+      swing = swing - 1
+      if swing < 50 then swing = 50 end
+      channel.main2audio:push({ type = "swing", data = swing });
+   end
+   if key == "v" then
+      swing = swing + 1
+      if swing > 75 then swing = 75 end
+      channel.main2audio:push({ type = "swing", data = swing });
+   end
 end
 
 function love.load()
    bpm = 90
    octave = 0
+   tuning = 0
+   swing = 50
    thread = love.thread.newThread('audio.lua')
    thread:start()
    channel            = {};
@@ -48,7 +68,10 @@ function love.load()
    local koalaMinor = { 0, 2, 3, 5, 7, 8, 11, 12 }
    local koalaPenta = { 0, 3, 5, 7, 10, 12 }
    local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
-   scale = minorBlues
+   local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
+   scale = koalaHexa --soundforest --minorBlues
+
+
 
    vertical = #scale
    horizontal = 16
@@ -131,6 +154,8 @@ function love.load()
    channel.main2audio:push({ type = "samples", data = samples });
    channel.main2audio:push({ type = "bpm", data = bpm });
    channel.main2audio:push({ type = "scale", data = scale })
+   channel.main2audio:push({ type = "tuning", data = tuning })
+   channel.main2audio:push({ type = "swing", data = swing })
 end
 
 function love.update(dt)
@@ -241,4 +266,5 @@ function love.draw()
    if playing then
       love.graphics.draw(head, leftmargin + (playhead * cellWidth), 0, 0, .5, .5)
    end
+   love.graphics.print('bpm: ' .. bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing, 0, 0)
 end
