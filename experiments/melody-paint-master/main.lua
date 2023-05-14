@@ -69,7 +69,7 @@ function love.load()
    local koalaPenta = { 0, 3, 5, 7, 10, 12 }
    local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
    local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-   scale = koalaPenta --soundforest --minorBlues
+   scale = naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
 
 
 
@@ -101,12 +101,16 @@ function love.load()
    page = initPage()
 
 
-   local names = { 'badger',
+   local names = {
+       'badger',
+       'bat',
        'beach',
        'bee',
+       'beetle',
        'bird',
        'bison',
        'butterfly',
+       'camel',
        'cat',
        'clam',
        'cow',
@@ -138,6 +142,9 @@ function love.load()
        'lizard',
        'manta',
        'moose',
+       'mole',
+       'mussel',
+       'octopus',
        'ostrich',
        'owl',
        'panda-bear',
@@ -170,49 +177,61 @@ function love.load()
        'whale',
        'wolf',
        'wolverine',
-       'zebra' }
+       'zebra',
+   }
+
+   local cr78 = {
+       { 'lemur',       'cr78/Tamb 1' },
+       { 'sheep',       'cr78/Rim Shot' },
+       { 'panther',     'cr78/Bongo High' },
+       { 'kiwi',        'cr78/Bongo Low' },
+       { 'hummingbird', 'cr78/Conga Low' },
+       { 'beetle',      'cr78/Guiro 1' },
+       { 'cow',         'cr78/Cowbell' },
+       { 'scorpion',    'cr78/HiHat Metal' }
+   }
 
    local sample_data = {
-       { 'clam',       'babirhodes/ba' },
-       { 'owl',        'babirhodes/bi' },
-       { 'crab',       'babirhodes/biep2' },
-       { 'elephant',   'babirhodes/biep3' },
-       { 'panda-bear', 'babirhodes/rhodes2' },
-       { 'kangaroo',   'babirhodes/blok2' },
-       { 'jellyfish',  'tpl-dnb/bongos' },
-       { 'koala',      'synth11' },
-       { 'sea',        'synth06' },
-       { 'flamingo',   'VibraphoneHi-MT70' },
-       { 'lemur',      'tpl-dnb/clap' },
-       { 'moose',      'tpl-dnb/crash' },
-       { 'antelope',   'tpl-dnb/drum' },
-       { 'manta',      'tpl-dnb/hihat' },
-       { 'fox',        'tpl-dnb/hihat-open' },
-       { 'bee',        'tpl-dnb/kick_01' },
-       { 'lizard',     'tpl-dnb/kick_02' },
-       { 'ostrich',    'tpl-dnb/snare_01' },
-       { 'crocodile',  'tpl-dnb/snare_02' },
-       { 'shrew',      'cr78/HiHat Metal' },
-       { 'pig',        'cr78/Conga Low' },
-       { 'starfish',   'sf1-015' },
-       { 'snake',      'cr78/Bongo High' },
-       { 'salamander', 'cr78/Guiro 1' },
-       { 'red',        'bass02' },
-       { 'rabbit',     'bass04' },
-       { 'polar',      'bass07' },
-       { 'badger',     'bass-piano_distorto' },
-       { 'parrot',     'synth11p' },
-       { 'porcupine',  'brass5c' },
-       { 'puffer',     'haw-O1' },
-       { 'rat',        'piano-clickO1' },
-       { 'crow',       'cr78/Cowbell' },
-       --  { 'cow',        '' },
-       --  { 'hyena',      '' },
-       --  { 'butterfly',  '' },
-       --  { 'scorpion',   '' },
-       --  { 'kiwi',       '' },
-       --  { 'snail',      '' },
-       --  { 'toucan',     '' },
+       { 'clam',        'babirhodes/ba' }, -- clam
+       { 'owl',         'babirhodes/bi' }, -- owl
+       { 'crab',        'babirhodes/biep2' }, -- crab
+       { 'elephant',    'babirhodes/biep3' },
+       { 'panda-bear',  'babirhodes/rhodes2' }, -- panda
+       { 'kangaroo',    'babirhodes/blok2' },
+       { 'jellyfish',   'tpl-dnb/bongos' },
+       { 'koala',       'synth11' },
+       { 'sea',         'synth06' },
+       { 'flamingo',    'VibraphoneHi-MT70' },
+       { 'lemur',       'tpl-dnb/clap' },
+       { 'moose',       'tpl-dnb/crash' },
+       { 'antelope',    'tpl-dnb/drum' },
+       { 'manta',       'tpl-dnb/hihat' },
+       { 'fox',         'tpl-dnb/hihat-open' },
+       { 'bee',         'tpl-dnb/kick_01' },
+       { 'lizard',      'tpl-dnb/kick_02' },
+       { 'ostrich',     'tpl-dnb/snare_01' },
+       { 'crocodile',   'tpl-dnb/snare_02' },
+       { 'starfish',    'sf1-015' },
+
+       { 'red',         'bass02' },
+       { 'rabbit',      'bass04' },
+       { 'polar',       'bass07' },
+       { 'parrot',      'synth11p' },
+       { 'porcupine',   'brass5c' },
+
+       { 'badger',      'ElkaSolist505/bass-piano_distorto' },
+       { 'puffer',      'ElkaSolist505/haw-O1' },
+       { 'rat',         'ElkaSolist505/piano-clickO1' },
+
+       { 'lemur',       'cr78/Tamb 1' },
+       { 'sheep',       'cr78/Rim Shot' },
+       { 'panther',     'cr78/Bongo High' },
+       { 'kiwi',        'cr78/Bongo Low' },
+       { 'hummingbird', 'cr78/Conga Low' },
+       { 'beetle',      'cr78/Guiro 1' },
+       { 'cow',         'cr78/Cowbell' },
+       { 'scorpion',    'cr78/HiHat Metal' }
+
    }
 
 

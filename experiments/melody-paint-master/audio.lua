@@ -131,6 +131,8 @@ while (true) do
 
                local p = getPitch(semi, o)
 
+               p = p + ( -0.0125 + love.math.random() * 0.025)
+
                s:setPitch(p)
 
                -- i only swing the even beats
@@ -150,7 +152,7 @@ while (true) do
       if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
          table.remove(queue, i)
          table.insert(sources, { source = q.source, index = q.index })
-         chokeGroup(q.index)
+         --chokeGroup(q.index)
 
          love.audio.play(q.source)
       end
