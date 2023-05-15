@@ -107,41 +107,53 @@ while (true) do
          for i = 1, #scale do
             local v = pattern[index][i].value
             local o = pattern[index][i].octave
+            local note_repeat = 1
             if v > 0 then
-               local s
-               if (v <= #samples) then
-                  s = samples[v]:clone()
+               for j = 1, note_repeat do
+                  local s
+                  if (v <= #samples) then
+                     s = samples[v]:clone()
+                  end
+                  --- the stuff about scale
+
+                  local semi = scale[(#scale + 1) - i]
+                  semi = semi + tuning
+                  while semi < 0 do
+                     semi = semi + 12
+                     o = o - 1
+                  end
+
+                  while semi > 12 do
+                     semi = semi - 12
+                     o = o + 1
+                  end
+
+
+
+
+                  local p = getPitch(semi, o)
+
+                  p = p + ( -0.0125 + love.math.random() * 0.025)
+
+                  s:setPitch(p)
+
+                  -- i only swing the even beats
+                  local offset = math.floor(beat) % 2 == 0
+
+                  local _swing = ((swing - 50) / 50) * 96
+
+                  local note_repeat_offset = (96 / note_repeat)
+
+                  local tickOffset = (offset and _swing or 0) + ((j - 1) * note_repeat_offset)
+
+                  table.insert(queue,
+                      {
+                          beat = beat,
+                          tick = tick + tickOffset,
+                          source = s,
+                          index = v
+                      })
                end
-               --- the stuff about scale
-
-               local semi = scale[(#scale + 1) - i]
-               semi = semi + tuning
-               while semi < 0 do
-                  semi = semi + 12
-                  o = o - 1
-               end
-
-               while semi > 12 do
-                  semi = semi - 12
-                  o = o + 1
-               end
-
-
-
-
-               local p = getPitch(semi, o)
-
-               p = p + ( -0.0125 + love.math.random() * 0.025)
-
-               s:setPitch(p)
-
-               -- i only swing the even beats
-               local offset = math.floor(beat) % 2 == 0
-
-               local _swing = ((swing - 50) / 50) * 96
-               table.insert(queue,
-
-                   { beat = beat, tick = tick + (offset and _swing or 0), source = s, index = v })
             end
          end
       end
