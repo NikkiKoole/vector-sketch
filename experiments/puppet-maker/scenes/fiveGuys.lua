@@ -210,7 +210,7 @@ function scene.load()
             myWorld:emit('movedBody', fg[i].biped)
         end
         fiveGuys[i].guy.transforms.l[1] = (i - math.ceil(#fiveGuys / 2)) * 1000
-
+        fiveGuys[i].guy.transforms.l[2] = 0
 
         local offset = getBodyYOffsetForDefaultStance(fg[i].biped)
         --fiveGuys[i].guy.transforms.l[2] = -800
