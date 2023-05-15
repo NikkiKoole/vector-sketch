@@ -230,7 +230,9 @@ function love.load()
        { 'hummingbird', 'cr78/Conga Low' },
        { 'beetle',      'cr78/Guiro 1' },
        { 'cow',         'cr78/Cowbell' },
-       { 'scorpion',    'cr78/HiHat Metal' }
+       { 'scorpion',    'cr78/HiHat Metal' },
+       { 'gorilla',     'macdm/bassmac1' },
+       { 'rhinoceros',  'macdm/bassmac2' }
 
    }
 
