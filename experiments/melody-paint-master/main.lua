@@ -81,13 +81,13 @@ function love.load()
 
    cellHeight = 48
    cellWidth = (screenWidth - leftmargin - rightmargin) / horizontal
-
+   
    bitmapSize = 100
 
    pictureInnerMargin = 4
 
    pictureTopMargin = pictureInnerMargin / 2
-   pictureInCellScale = (cellHeight - pictureInnerMargin) / bitmapSize
+   pictureInCellScale = (math.min(cellHeight, cellWidth) - pictureInnerMargin) / bitmapSize
    pictureLeftMargin = 6
 
    topmargin = 48
