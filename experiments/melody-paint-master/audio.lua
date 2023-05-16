@@ -81,8 +81,14 @@ while (true) do
    local beat = time * (bpm / 60) * 4
    local tick = ((beat % 1) * (96))
 
+   local missedTicks = {}
    if math.floor(tick) - math.floor(lastTick) > 1 then
       print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
+      -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
+      for i = math.floor(lastTick)+1, math.floor(tick)-1 do
+         --print(i)
+         table.insert(missedTicks, i)
+      end
    end
 
 
@@ -107,27 +113,32 @@ while (true) do
          for i = 1, #scale do
             local v = pattern[index][i].value
             local o = pattern[index][i].octave
-            local note_repeat = 1
+           
             if v > 0 then
-               for j = 1, note_repeat do
-                  local s
-                  if (v <= #samples) then
-                     s = samples[v]:clone()
-                  end
-                  --- the stuff about scale
+               local semi = pattern[index][i].semitone
+               semi = semi + tuning
+              
+      
 
-                  local semi = scale[(#scale + 1) - i]
-                  semi = semi + tuning
+                
                   while semi < 0 do
                      semi = semi + 12
                      o = o - 1
                   end
 
                   while semi > 12 do
-                     semi = semi - 12
-                     o = o + 1
-                  end
+                    semi = semi - 12
+                    o = o + 1
+                 end
+                 
+                 print('after', semi, o)
 
+               local note_repeat = 1
+               for j = 1, note_repeat do
+                  local s
+                  if (v <= #samples) then
+                     s = samples[v]:clone()
+                  end
 
 
 
@@ -161,6 +172,12 @@ while (true) do
 
    for i = #queue, 1, -1 do
       local q = queue[i]
+
+      for ti = 1, #missedTicks do
+         t = missedTicks[ti]
+         print('I am in aplace where i need todo aomething with missingticks!')
+      end
+
       if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
          table.remove(queue, i)
          table.insert(sources, { source = q.source, index = q.index })
