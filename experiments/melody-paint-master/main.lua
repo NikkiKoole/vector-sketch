@@ -283,6 +283,9 @@ function love.mousepressed(x, y)
          local cy = 1 + math.floor((y - topmargin) / cellHeight)
          page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingValue
          page[cx][cy].octave = octave
+         page[cx][cy].semitone = scale[(#scale + 1) - cy]
+         --print(cy, scale[(#scale + 1) - cy])
+         --local semi = scale[(#scale + 1) - i]
          channel.main2audio:push({ type = "pattern", data = page });
       end
    end
