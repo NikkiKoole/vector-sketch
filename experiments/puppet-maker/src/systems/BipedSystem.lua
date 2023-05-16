@@ -177,7 +177,7 @@ function BipedSystem:birthGuy(e)
     Timer.clear()
 
     Timer.tween(2, e.biped.leg1.data, { scaleX = leg1SX, scaleY = leg1SY }, 'out-elastic')
-    Timer.tween(5, e.biped.leg1.color, { [4] = leg1Alpha }, 'out-bounce')
+    Timer.tween(1, e.biped.leg1.color, { [4] = leg1Alpha }, 'in-bounce')
     Timer.tween(2, e.biped.feet1.transforms.l, { [4] = 0.1,[5] = 0.1 }, 'out-elastic')
     Timer.tween(2, e.biped.body.transforms.l, { [3] = bodyR,[4] = bodySX,[5] = bodySX }, 'out-elastic')
     Timer.tween(2, e.biped.head.transforms.l, { [3] = headR,[4] = headSX,[5] = headSY }, 'out-elastic')
