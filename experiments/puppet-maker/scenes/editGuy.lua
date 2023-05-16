@@ -966,8 +966,10 @@ function attachCallbacks()
          myWorld:emit('rescaleFaceparts', potato)
       end
       if key == 'b' then
-         myWorld:emit('blinkEyes', potato)
+         -- myWorld:emit('blinkEyes', potato)
+         myWorld:emit('birthGuy', biped)
       end
+
       if key == 'd' then
          myWorld:emit('doinkBody', biped)
       end

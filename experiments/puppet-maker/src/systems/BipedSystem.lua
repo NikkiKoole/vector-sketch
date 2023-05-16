@@ -134,6 +134,78 @@ function getDefaultHandPositions(e)
     return x2, y2, x3, y3
 end
 
+function BipedSystem:birthGuy(e)
+    print('good morning!')
+
+    local hasLegHair = e.biped.leghair1.data
+
+    local leg1SX = e.biped.leg1.data.scaleX
+    local leg1SY = e.biped.leg1.data.scaleY
+
+    local leg1PX = e.biped.leg1.points[2][1]
+    local leg1PY = e.biped.leg1.points[2][2]
+    local leg1Alpha = e.biped.leg1.color[4] or 1
+    -- todo IF leghair only do this
+
+    local feet1SX = e.biped.feet1.transforms.l[4]
+    local feet1SY = e.biped.feet1.transforms.l[5]
+
+    local bodySX = e.biped.body.transforms.l[4]
+    local bodySY = e.biped.body.transforms.l[5]
+    local bodyR = e.biped.body.transforms.l[3]
+
+    local headR = e.biped.head.transforms.l[3]
+    local headSX = e.biped.head.transforms.l[4]
+    local headSY = e.biped.head.transforms.l[5]
+
+
+    e.biped.body.transforms.l[4] = 0.01
+    e.biped.body.transforms.l[5] = 0.01
+
+    e.biped.body.transforms.l[3] = -math.pi
+
+    e.biped.head.transforms.l[3] = math.pi * 1
+    e.biped.head.transforms.l[4] = 0.01
+    e.biped.head.transforms.l[5] = 0.01
+
+    e.biped.leg1.points[2][1] = e.biped.leg1.points[1][1] + 20
+    e.biped.leg1.points[2][2] = e.biped.leg1.points[1][2] + 20
+    e.biped.leg1.color[4] = 0
+    e.biped.leghair1.color[4] = 0
+    e.biped.leg1.data.scaleX = 0.1
+    e.biped.leg1.data.scaleY = 0.1
+    Timer.clear()
+
+    Timer.tween(2, e.biped.leg1.data, { scaleX = leg1SX, scaleY = leg1SY }, 'out-elastic')
+    Timer.tween(5, e.biped.leg1.color, { [4] = leg1Alpha }, 'out-bounce')
+    Timer.tween(2, e.biped.feet1.transforms.l, { [4] = 0.1,[5] = 0.1 }, 'out-elastic')
+    Timer.tween(2, e.biped.body.transforms.l, { [3] = bodyR,[4] = bodySX,[5] = bodySX }, 'out-elastic')
+    Timer.tween(2, e.biped.head.transforms.l, { [3] = headR,[4] = headSX,[5] = headSY }, 'out-elastic')
+    if hasLegHair then
+        local legH1SX = e.biped.leghair1.data.scaleX
+        local legH1SY = e.biped.leghair1.data.scaleY
+        e.biped.leghair1.data.scaleX = 0.1
+        e.biped.leghair1.data.scaleY = 0.1
+        Timer.tween(5, e.biped.leghair1.color, { [4] = leg1Alpha }, 'out-elastic')
+        Timer.tween(2, e.biped.leghair1.data, { scaleX = legH1SX, scaleY = legH1SY }, 'out-elastic')
+    end
+
+    Timer.tween(5, e.biped.leg1.points[2], { [1] = leg1PX,[2] = leg1PY },
+        'out-elastic')
+
+
+    Timer.during(5, function()
+        mesh.remeshNode(e.biped.leg1)
+        mesh.remeshNode(e.biped.leghair1)
+        mesh.remeshNode(e.biped.body)
+        --BipedSystem:movedBody(e)
+        setLegs(e)
+        setArms(e)
+        BipedSystem:bipedAttachFeet(e)
+        attachHeadWithOrWithoutNeck(e, false)
+    end)
+end
+
 function BipedSystem:bipedInit(e)
     --  print('bipedInit', e, e.biped)
     e.biped.body.transforms.l[3] = 0 -- math.pi / 2

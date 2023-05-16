@@ -209,7 +209,7 @@ function love.load()
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("splash")
+   SM.load("editGuy")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
 
