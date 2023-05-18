@@ -200,6 +200,11 @@ function love.load()
        { 'bat',         'mipo/po2' },
        { 'goldfish',    'mipo/mi3' },
        { 'bat',         'mipo/po3' },
+       { 'polar',       'guirojuno/1' },
+       { 'porcupine',   'guirojuno/2' },
+       { 'walrus',      'guirojuno/3' },
+       { 'sea',         'guirojuno/11' },
+       { 'toucan',      'guirojuno/21' },
        { 'clam',        'babirhodes/ba' }, -- clam
        { 'owl',         'babirhodes/bi' }, -- owl
        { 'crab',        'babirhodes/biep2' }, -- crab

@@ -243,7 +243,8 @@ function doTheMipoAnimation()
       playSound(sound, .7 + love.math.random() * 0.5)
       myWorld:emit('mouthSaySomething', mouth, 1)
 
-      Timer.during(15, function()
+      --  Timer.during(15, function()
+      Timer.every(.5, function()
          local M = mipo.children[2]
          local I = mipo.children[3]
 
@@ -258,14 +259,20 @@ function doTheMipoAnimation()
             local originIndex = 1
             for i = 1, #l.children do
                for j = 1, #l.children[i].points do
-                  l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 40 - 20
-                  l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 10 - 5
+                  Timer.tween(0.4, l.children[i].points[j],
+                      {
+                          [1] = origins[k][originIndex][1] + love.math.random() * 100 - 5,
+                          [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
+                      })
+                  --  l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 40 - 20
+                  --  l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 10 - 5
                   originIndex = originIndex + 1
                end
             end
          end
          mesh.meshAll(mipo)
       end)
+      --  end)
    end)
 
 
@@ -283,7 +290,8 @@ function doTheMipoAnimation()
       end)
       playSound(poSound1, .7)
       myWorld:emit('mouthSaySomething', mouth, 1)
-      Timer.during(15, function()
+      -- Timer.during(15, function()
+      Timer.every(.5, function()
          local M = mipo.children[2]
          local I = mipo.children[3]
          local P = mipo.children[4]
@@ -296,14 +304,20 @@ function doTheMipoAnimation()
             local originIndex = 1
             for i = 1, #l.children do
                for j = 1, #l.children[i].points do
-                  l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 100 - 5
-                  l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
+                  Timer.tween(0.4, l.children[i].points[j],
+                      {
+                          [1] = origins[k][originIndex][1] + love.math.random() * 100 - 5,
+                          [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
+                      })
+                  --l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 100 - 5
+                  --l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
                   originIndex = originIndex + 1
                end
             end
          end
          mesh.meshAll(mipo)
       end)
+      -- end)
    end)
 
    Timer.after(2, function()

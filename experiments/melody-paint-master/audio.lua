@@ -85,7 +85,7 @@ while (true) do
    if math.floor(tick) - math.floor(lastTick) > 1 then
       print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
       -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
-      for i = math.floor(lastTick)+1, math.floor(tick)-1 do
+      for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
          --print(i)
          table.insert(missedTicks, i)
       end
@@ -113,25 +113,25 @@ while (true) do
          for i = 1, #scale do
             local v = pattern[index][i].value
             local o = pattern[index][i].octave
-           
+
             if v > 0 then
                local semi = pattern[index][i].semitone
                semi = semi + tuning
-              
-      
 
-                
-                  while semi < 0 do
-                     semi = semi + 12
-                     o = o - 1
-                  end
 
-                  while semi > 12 do
-                    semi = semi - 12
-                    o = o + 1
-                 end
-                 
-                 print('after', semi, o)
+
+
+               while semi < 0 do
+                  semi = semi + 12
+                  o = o - 1
+               end
+
+               while semi > 12 do
+                  semi = semi - 12
+                  o = o + 1
+               end
+
+               --print('after', semi, o)
 
                local note_repeat = 1
                for j = 1, note_repeat do
