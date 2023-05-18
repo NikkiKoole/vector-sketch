@@ -257,6 +257,10 @@ function BipedSystem:birthGuy(e)
         e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + 200
         BipedSystem:tweenIntoDefaultStance(e, false)
     end)
+    Timer.after(2.5, function()
+        e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] + 200
+        BipedSystem:tweenIntoDefaultStance(e, false)
+    end)
 
     Timer.during(4, function()
         mesh.remeshNode(e.biped.leg1)
@@ -673,6 +677,14 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
 
     e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e) -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
     BipedSystem:movedBody(e)
+end
+
+function BipedSystem:breath(e)
+    e.biped.body.transforms.l[2] = e.biped.body.transforms.l[1] - 100
+    Timer.tween(0.5, e.biped.body.transforms.l, { [4] = 1.1 }, 'out-elastic')
+    Timer.during(0.6, function()
+        BipedSystem:movedBody(e)
+    end)
 end
 
 function BipedSystem:doinkBody(e)

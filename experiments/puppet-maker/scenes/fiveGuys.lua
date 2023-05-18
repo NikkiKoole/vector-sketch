@@ -176,6 +176,7 @@ function scene.load()
     for i = 1, #fiveGuys do
         table.insert(root.children, fiveGuys[i].guy)
 
+
         local biped = Concord.entity()
         local potato = Concord.entity()
         myWorld:addEntity(biped)
@@ -199,7 +200,8 @@ function scene.load()
             changePart('hair')
         end
 
-
+        -- this has an efect on the tteh somehow!!!
+        changePart('hair')
 
         table.insert(fg, { biped = biped, potato = potato })
     end

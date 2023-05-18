@@ -296,7 +296,7 @@ function doTheMipoAnimation()
             local originIndex = 1
             for i = 1, #l.children do
                for j = 1, #l.children[i].points do
-                  l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 10 - 5
+                  l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 100 - 5
                   l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
                   originIndex = originIndex + 1
                end
@@ -309,6 +309,7 @@ function doTheMipoAnimation()
    Timer.after(2, function()
       myWorld:emit('doinkBody', biped)
    end)
+
 
    Timer.after(15, function()
       local w, h = love.graphics.getDimensions()
