@@ -71,6 +71,20 @@ end
 --local cam = require('lib.cameraBase').getInstance()
 
 
+
+nullFolder = {
+    folder = true,
+    name = 'nullFolder',
+    transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+    children = {}
+}
+-- im sure it sometimes needs to just be the simplest ofunrenderables
+nullChild = {
+    name = 'nullChild',
+    points = { { 0, 0 }, { 0, 0 }, { 0, 0 } }
+}
+
+
 function love.keypressed(key)
    if key == "escape" then love.event.quit() end
 end
@@ -84,10 +98,15 @@ function love.load()
 
    local os = love.system.getOS()
    print(os)
-   if os == 'iOS' or os == 'Android' then
+   if os == 'iOS' or os == 'Android' or (not (os == 'OS X')) then
       love.window.setFullscreen(true)
    end
 
+
+   miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
+   poSound2 = love.audio.newSource("assets/sounds/po2.wav", "static")
+   miSound1 = love.audio.newSource("assets/sounds/mi.wav", "static")
+   poSound1 = love.audio.newSource("assets/sounds/po.wav", "static")
    splashSound = love.audio.newSource("assets/sounds/music/mipolailoop.mp3", "static")
    introSound = love.audio.newSource("assets/sounds/music/introloop.mp3", "static")
 
@@ -209,7 +228,7 @@ function love.load()
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("editGuy")
+   SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
 
@@ -237,9 +256,9 @@ function partRandomize(values, applyChangeDirectly)
       else
          local p = findPart(parts[i])
          values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
-         --if (parts[i] == 'leghair' or parts[i] == 'armhair' or parts[i] == 'hair') then
-         --   values[parts[i]].shape = #p.imgs
-         --end
+         if (parts[i] == 'leghair' or parts[i] == 'armhair' or parts[i] == 'hair') then
+            --   values[parts[i]].shape = #p.imgs
+         end
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)
          values[parts[i]].bgPal = math.ceil(love.math.random() * #palettes)
          --values[parts[i]].linePal = 13 --math.ceil(love.math.random() * #palettes)

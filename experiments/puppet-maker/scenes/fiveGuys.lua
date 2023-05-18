@@ -188,7 +188,19 @@ function scene.load()
         attachAllFaceParts(fiveGuys[i])
         editingGuy = fiveGuys[i]
 
-        changePart('hair')
+
+        if isNullObject('leghair', editingGuy.values) then
+            changePart('leghair')
+        end
+        if isNullObject('armhair', editingGuy.values) then
+            changePart('armhair')
+        end
+        if isNullObject('hair', editingGuy.values) then
+            changePart('hair')
+        end
+
+
+
         table.insert(fg, { biped = biped, potato = potato })
     end
     prof.pop('initguys')

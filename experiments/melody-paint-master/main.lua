@@ -69,7 +69,7 @@ function love.load()
    local koalaPenta = { 0, 3, 5, 7, 10, 12 }
    local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
    local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-   scale = naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
+   scale = koalaHexa --naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
 
 
 
@@ -81,7 +81,7 @@ function love.load()
 
    cellHeight = 48
    cellWidth = (screenWidth - leftmargin - rightmargin) / horizontal
-   
+
    bitmapSize = 100
 
    pictureInnerMargin = 4
@@ -192,6 +192,14 @@ function love.load()
    }
 
    local sample_data = {
+       { 'zebra',       'mipo/mi' },
+       { 'octopus',     'mipo/po' },
+       { 'goldfish',    'mipo/pi' },
+       { 'bat',         'mipo/mo' },
+       { 'goldfish',    'mipo/mi2' },
+       { 'bat',         'mipo/po2' },
+       { 'goldfish',    'mipo/mi3' },
+       { 'bat',         'mipo/po3' },
        { 'clam',        'babirhodes/ba' }, -- clam
        { 'owl',         'babirhodes/bi' }, -- owl
        { 'crab',        'babirhodes/biep2' }, -- crab
@@ -200,6 +208,7 @@ function love.load()
        { 'kangaroo',    'babirhodes/blok2' },
        { 'jellyfish',   'tpl-dnb/bongos' },
        { 'koala',       'synth11' },
+       { 'flamingo',    'blokfluit' },
        { 'sea',         'synth06' },
        { 'flamingo',    'VibraphoneHi-MT70' },
        { 'lemur',       'tpl-dnb/clap' },

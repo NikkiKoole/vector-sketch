@@ -30,7 +30,7 @@ local Components        = {}
 local Systems           = {}
 
 
-assets = require('vendor.cargo').init('assets')
+--assets = require('vendor.cargo').init('assets')
 
 myWorld = Concord.world()
 
@@ -39,9 +39,14 @@ require 'src.puppet-maker-ui'
 require 'src.reuse'
 require 'src.screen-transitions'
 
+
 Concord.utils.loadNamespace("src/components", Components)
 Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem, Systems.MouthSystem)
+
+--Concord.utils.loadNamespace("src/components", Components)
+--Concord.utils.loadNamespace("src/systems", Systems)
+--myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem, Systems.MouthSystem)
 
 
 -- instead of having these here for alays, i want to precisely add and remove them at the right times
@@ -56,17 +61,6 @@ local skygradient = gradient.makeSkyGradient(16)
 
 
 -- sometimes the nullobject has to behave as a folder (? does it?)
-nullFolder = {
-    folder = true,
-    name = 'nullFolder',
-    transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
-    children = {}
-}
--- im sure it sometimes needs to just be the simplest ofunrenderables
-nullChild = {
-    name = 'nullChild',
-    points = { { 0, 0 }, { 0, 0 }, { 0, 0 } }
-}
 
 
 
@@ -692,7 +686,6 @@ function scene.load()
    potato:give('potato', potatoArguments(editingGuy))
    mouth:give('mouth', mouthArguments(editingGuy))
 
-
    root.children = { editingGuy.guy }
 
    attachAllFaceParts(editingGuy)
@@ -1014,9 +1007,13 @@ function attachCallbacks()
    end
 
    function love.resize(w, h)
-      local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
+      local w, h = love.graphics.getDimensions()
+
+      local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
+      tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
+
       camera.setCameraViewport(cam, w, h)
-      camera.centerCameraOnPosition(bx, by, w * 4, h * 4)
+      camera.centerCameraOnPosition(x1, y1, w1, h1)
       cam:update(w, h)
    end
 
@@ -1101,7 +1098,7 @@ function scene.update(dt)
 
 
 
-   myWorld:emit("update", dt) -- this one is leaking the most actually
+   --myWorld:emit("update", dt) -- this one is leaking the most actually
    --prof.pop("frame")
 end
 

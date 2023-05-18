@@ -1,6 +1,11 @@
 { {
 children = { {
-color = { 0.133, 0.118, 0.118, 1 },
+color = { 0, 0, 0, 0 },
+name = "",
+points = { { -585.216, 154.948 }, { 2509.896, 397.982 }, { 2724.338, -960.15 }, { -656.697, -1146 } }
+}, {
+children = { {
+color = { 1, 0.945, 0.91, 1 },
 data = {
 borderRadius = 1,
 flop = 1,
@@ -25,7 +30,25 @@ l = { 2.142, -0.138, 0, 1, 1, 637.095, 980.659, 0, 0 }
 }
 }, {
 children = { {
-color = { 0.133, 0.118, 0.118, 1 },
+color = { 1, 0.945, 0.91, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 623,
+scale = 1,
+steps = 10,
+width = 181
+},
+name = "",
+points = { { 1030.084, 208.279 }, { 1004.18, -240.438 }, { 1060.241, -672.319 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/leg4.png",
+wrap = "repeat"
+},
+type = "bezier"
+}, {
+color = { 1, 0.945, 0.91, 1 },
 data = {
 borderRadius = 1,
 flop = 1,
@@ -44,38 +67,13 @@ wrap = "repeat"
 }
 } },
 folder = true,
-name = "puntje op i",
-transforms = {
-l = { 1077.073, -821.971, 0, 1, 1, 1037.363, -916.156, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-data = {
-borderRadius = 1,
-flop = 1,
-length = 623,
-scale = 1,
-steps = 10,
-width = 181
-},
-name = "",
-points = { { 1030.084, 208.279 }, { 1004.18, -240.438 }, { 1060.241, -672.319 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/leg4.png",
-wrap = "repeat"
-},
-type = "bezier"
-} },
-folder = true,
 name = "I",
 transforms = {
-l = { 1006.217, 269.271, 0, 1, 1, 1032.21, 208.279, 0, 0 }
+l = { 989.766, 252.82, 0, 1, 1, 1032.21, 208.279, 0, 0 }
 }
 }, {
 children = { {
-color = { 0, 0, 0, 1 },
+color = { 1, 0.945, 0.91, 1 },
 name = "",
 points = { { 1498.685, -485.627 }, { 1448.72, -965.195 }, { 1607.503, -910.613 }, { 1532.92, 34.121 }, { 1392.868, -0.113 } },
 texture = {
@@ -85,7 +83,7 @@ url = "/experiments/puppet-maker/assets/parts/leg1.png",
 wrap = "repeat"
 }
 }, {
-color = { 0, 0, 0, 1 },
+color = { 1, 0.945, 0.91, 1 },
 name = "",
 points = { { 1457.461, -969.928 }, { 1941.307, -1055.313 }, { 2021.948, -419.672 }, { 1476.436, -391.211 } },
 texture = {
@@ -95,7 +93,7 @@ url = "/experiments/puppet-maker/assets/parts/shapes12.png",
 wrap = "repeat"
 }
 }, {
-color = { 0, 0, 0, 1 },
+color = { 1, 0.945, 0.91, 1 },
 name = "",
 points = { { 1612.829, -842.145 }, { 1893.93, -877.282 }, { 1852.937, -525.905 }, { 1601.116, -549.33 } },
 texture = {
@@ -111,7 +109,7 @@ l = { 1546.291, 46.142, 0, 1, 1, 1466.484, -22.566, 0, 0 }
 }
 }, {
 children = { {
-color = { 0, 0, 0, 1 },
+color = { 1, 0.945, 0.91, 1 },
 data = {
 borderRadius = 1,
 flop = 1,
@@ -134,21 +132,10 @@ name = "O",
 transforms = {
 l = { 2281.705, -99.207, 0, 1, 1, 2353.806, -161.592, 0, 0 }
 }
-}, {
-children = { {
-color = { 0, 0, 0, 0.125 },
-name = "",
-points = { { 2439.482, -725.071 }, { 2667.239, -825.285 }, { 2644.463, -638.524 }, { 2157.063, -488.204 }, { 2102.402, -661.299 } },
-texture = {
-filter = "linear",
-squishable = true,
-url = "/experiments/puppet-maker/assets/parts/brow7.png",
-wrap = "repeat"
-}
 } },
 folder = true,
-name = "accent",
+name = "mipo",
 transforms = {
-l = { 2380.909, -623.57, 0, 1, 1, 2384.82, -656.744, 0, 0 }
+l = { 0.001, 0, 0, 1, 1, 1022.716, 175.02, 0, 0 }
 }
 } }
