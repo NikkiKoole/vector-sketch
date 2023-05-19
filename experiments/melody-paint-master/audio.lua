@@ -128,6 +128,11 @@ while (true) do
 
             if v > 0 then
                local semi = pattern[index][i].semitone
+
+               -- todo paraetrize
+               semi = scale[math.ceil(love.math.random()* #scale)]
+
+               --o = love.math.random()*
                semi = semi + tuning
 
 
@@ -188,7 +193,7 @@ while (true) do
 
       for ti = 1, #missedTicks do
          t = missedTicks[ti]
-         print('I am in a place where i need todo aomething with missingticks!', t)
+         print('I am in a place where i need todo aomething with missingticks!', ti, t)
       end
 
       if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
@@ -207,7 +212,7 @@ while (true) do
    lastTick = tick
 
 end
-   love.timer.sleep(0.001)
+   love.timer.sleep(.001)
 
    local v = channel.main2audio:pop();
    if v then

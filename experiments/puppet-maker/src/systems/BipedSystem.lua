@@ -420,7 +420,7 @@ function setLegs(e)
     local body = e.biped.body
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
-
+   
     l1x = l1x or 0
     l1y = l1y or 0
     l2x = l2x or 0
@@ -460,6 +460,7 @@ function setLegs(e)
     e.biped.leghair2.points[2] = e.biped.leg2.points[2]
     mesh.remeshNode(e.biped.leghair2)
 
+    print('setLegs', body.transforms.l[2], e.biped.leg1.points[2][2], e.biped.leg2.points[2][2])
     --end
 end
 
@@ -667,6 +668,7 @@ function getMaxArmLength(e)
 end
 
 function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
+    print('keepFeetPlantedAndStraightenLegs')
     -- print('doing it', leglengths[e.biped.values.legLength])
     --print(leglengths[e.biped.values.legLength])
     --print(inspect(e.biped.leg1.data))

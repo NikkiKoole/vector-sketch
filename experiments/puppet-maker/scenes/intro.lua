@@ -129,6 +129,7 @@ function scene.load()
    if isNullObject('hair', editingGuy.values) then
       changePart('hair')
    end
+   changePart('hair')
 
    stripPath(root, '/experiments/puppet%-maker/')
    parentize.parentize(root)
@@ -367,14 +368,17 @@ function scene.update(dt)
          -- myWorld:emit('blinkEyes', potato)
          myWorld:emit('birthGuy', biped)
       end
+      if key == 'f' then
+         myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
+      end
    end
 
    function love.touchpressed(key, unicode)
-      --  gotoNext()
+        gotoNext()
    end
 
    function love.mousepressed(key, unicode)
-      --  gotoNext()
+        gotoNext()
    end
 
    time = time + dt
