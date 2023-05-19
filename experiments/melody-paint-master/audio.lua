@@ -12,6 +12,7 @@ local bpm          = 0
 local scale        = {}
 local tuning       = 0
 local swing        = 50
+local paused = false
 
 local pattern      = {}
 local samples      = {}
@@ -72,18 +73,29 @@ end
 
 local queue = {}
 
+
+
+
+local beat = 0
+
+
 while (true) do
+
+   if not paused then
    local n = love.timer.getTime()
    local delta = n - now
 
    now = n
    time = time + delta
-   local beat = time * (bpm / 60) * 4
+  -- local beat = time * (bpm / 60) * 4
+   --print(beat)
+  
+   beat = beat + (delta * (bpm / 60) * 4)
    local tick = ((beat % 1) * (96))
-
    local missedTicks = {}
+
    if math.floor(tick) - math.floor(lastTick) > 1 then
-      print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
+      --print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
       -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
       for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
          --print(i)
@@ -91,7 +103,7 @@ while (true) do
       end
    end
 
-
+   --print(tick)
 
    -- i want to be able to swing, so instead of checking every beat we need to check more.
 
@@ -100,7 +112,7 @@ while (true) do
    --print(math.floor(lastBeat), math.floor(beat), math.floor(lastTick), math.floor(tick))
    if (math.floor(lastBeat) ~= math.floor(beat)) then
       -- removes sources that are done from a table, this table is tehre for choking
-
+      --beat = beat+1
       for i = #sources, 1, -1 do
          if not sources[i].source:isPlaying() then
             table.remove(sources, i)
@@ -144,6 +156,7 @@ while (true) do
 
                   local p = getPitch(semi, o)
 
+                  -- todo parametrize
                   p = p + ( -0.0125 + love.math.random() * 0.025)
 
                   s:setPitch(p)
@@ -175,12 +188,13 @@ while (true) do
 
       for ti = 1, #missedTicks do
          t = missedTicks[ti]
-         print('I am in aplace where i need todo aomething with missingticks!')
+         print('I am in a place where i need todo aomething with missingticks!', t)
       end
 
       if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
          table.remove(queue, i)
          table.insert(sources, { source = q.source, index = q.index })
+         -- todo parametrize
          --chokeGroup(q.index)
 
          love.audio.play(q.source)
@@ -192,6 +206,7 @@ while (true) do
    lastBeat = beat
    lastTick = tick
 
+end
    love.timer.sleep(0.001)
 
    local v = channel.main2audio:pop();
@@ -212,9 +227,14 @@ while (true) do
          bpm = v.data
          print('bpm: ', bpm)
       end
-      if (v.type == 'scale') then
+     if (v.type == 'scale') then
          scale = v.data
          print('scale: ', scale)
-      end
+      end 
+      if (v.type == 'paused') then
+         paused = v.data
+         print('paused: ', scale)
+         now          = love.timer.getTime()
+      end 
    end
 end

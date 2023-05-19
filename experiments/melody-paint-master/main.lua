@@ -41,12 +41,18 @@ function love.keypressed(key)
       if swing > 75 then swing = 75 end
       channel.main2audio:push({ type = "swing", data = swing });
    end
+   if key == "space" then
+      paused = not paused
+     
+      channel.main2audio:push({ type = "paused", data = paused });
+   end
 end
 
 function love.load()
    bpm = 90
    octave = 0
    tuning = 0
+   paused= false
    swing = 50
    thread = love.thread.newThread('audio.lua')
    thread:start()
@@ -100,7 +106,10 @@ function love.load()
    drawingValue = 1
    page = initPage()
 
-
+   page[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
    local names = {
        'badger',
        'bat',
@@ -265,6 +274,7 @@ function love.load()
    channel.main2audio:push({ type = "scale", data = scale })
    channel.main2audio:push({ type = "tuning", data = tuning })
    channel.main2audio:push({ type = "swing", data = swing })
+   channel.main2audio:push({ type = "pattern", data = page });
 end
 
 function love.update(dt)
@@ -321,6 +331,11 @@ function love.mousepressed(x, y)
       end
    end
 end
+
+function bool2str(bool)
+   return bool and 'true' or 'false'
+end
+
 
 function love.draw()
    love.graphics.clear(palette[color])
@@ -389,5 +404,5 @@ function love.draw()
    if playing then
       love.graphics.draw(head, leftmargin + (playhead * cellWidth), 0, 0, .5, .5)
    end
-   love.graphics.print('bpm: ' .. bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing, 0, 0)
+   love.graphics.print('bpm: ' .. bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing..', paused: '..bool2str(paused), 0, 0)
 end
