@@ -1,5 +1,10 @@
+package.path = package.path .. ";../../?.lua"
+
+
 require 'palette'
 inspect = require "inspect"
+
+local ui = require 'lib.ui'
 
 function love.keypressed(key)
    if key == "escape" then
@@ -75,7 +80,7 @@ function love.load()
    local koalaPenta = { 0, 3, 5, 7, 10, 12 }
    local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
    local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-   scale = koalaHexa --naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
+   scale = soundforest --naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
 
 
 
@@ -110,6 +115,19 @@ function love.load()
    page[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
    page[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
    page[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+
+
+   paintModes = {'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity'}
+   paintModesIndex = 1
+
+   noteChances= {100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0}
+   
+   noteRepeats= {1,2,3,4}
+  -- noteRepeatIndex = 4   
+
+   notePitchRandoms = {0,1,2}
+  
+
    local names = {
        'badger',
        'bat',
@@ -288,6 +306,15 @@ function love.update(dt)
    assert(not error, error)
 end
 
+
+function indexOf(array, value)
+   for i, v in ipairs(array) do
+       if v == value then
+           return i
+       end
+   end
+   return nil
+end
 function initPage()
    local result = {}
    for x = 1, horizontal do
@@ -300,16 +327,44 @@ function initPage()
    return result
 end
 
-function love.mousepressed(x, y)
+function love.mousepressed(x, y, button)
    if (x > leftmargin and x < screenWidth - rightmargin) then
       if (y > topmargin and y < screenHeight - bottommargin) then
          local cx = 1 + math.floor((x - leftmargin) / cellWidth)
          local cy = 1 + math.floor((y - topmargin) / cellHeight)
-         page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingValue
-         page[cx][cy].octave = octave
-         page[cx][cy].semitone = scale[(#scale + 1) - cy]
-         --print(cy, scale[(#scale + 1) - cy])
-         --local semi = scale[(#scale + 1) - i]
+         if (paintModesIndex == 1) then -- note on off
+            page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingValue
+            page[cx][cy].octave = octave
+            page[cx][cy].semitone = scale[(#scale + 1) - cy]
+         end
+         
+         if (paintModesIndex == 2) then -- note chance
+            local current = page[cx][cy].chance
+            local index = indexOf(noteChances, current) or 1
+               index = index + 1
+               index = index %  #noteChances 
+           
+           
+            page[cx][cy].chance = noteChances[index]
+     
+         end
+         if (paintModesIndex == 3) then -- note repeats
+
+            local current = page[cx][cy].noteRepeat
+            local index = indexOf(noteRepeats, current) or 1
+            index = (index % #noteRepeats ) + 1
+            page[cx][cy].noteRepeat = noteRepeats[index]
+     
+         end
+         if (paintModesIndex == 4) then -- note pitch rnd
+
+            local current = page[cx][cy].notePitchRandomizer
+            local index = indexOf(notePitchRandoms, current) or 1
+            index = (index % #notePitchRandoms ) + 1
+            page[cx][cy].notePitchRandomizer = notePitchRandoms[index]
+     
+         end
+       
          channel.main2audio:push({ type = "pattern", data = page });
       end
    end
@@ -328,6 +383,7 @@ function love.mousepressed(x, y)
          local s = samples[index]:clone()
          love.audio.play(s)
          drawingValue = index
+         paintModesIndex = 1
       end
    end
 end
@@ -338,6 +394,8 @@ end
 
 
 function love.draw()
+   local w,h = love.graphics.getDimensions()
+   ui.handleMouseClickStart()
    love.graphics.clear(palette[color])
    love.graphics.setColor(palette[color][1] - .1,
        palette[color][2] - .1,
@@ -376,6 +434,24 @@ function love.draw()
                 0,
                 pictureInCellScale, pictureInCellScale)
          end
+         local chance = page[x][y].chance
+         if chance ~= nil  then
+            love.graphics.print(chance,
+                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
+                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+         end
+         local noteRepeat = page[x][y].noteRepeat
+         if noteRepeat and noteRepeat > 1 then
+            love.graphics.print(noteRepeat,
+                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
+                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+         end
+         local notePitchRandomizer = page[x][y].notePitchRandomizer
+         if notePitchRandomizer and notePitchRandomizer > 0 then
+            love.graphics.print(notePitchRandomizer,
+                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
+                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+         end
       end
    end
 
@@ -404,5 +480,14 @@ function love.draw()
    if playing then
       love.graphics.draw(head, leftmargin + (playhead * cellWidth), 0, 0, .5, .5)
    end
+
+
+
+   if labelbutton('chance', paintModes[paintModesIndex], w - 100, 00, 100, 20).clicked then
+     
+      paintModesIndex = (paintModesIndex % #paintModes) + 1 
+   end
+   
+
    love.graphics.print('bpm: ' .. bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing..', paused: '..bool2str(paused), 0, 0)
 end

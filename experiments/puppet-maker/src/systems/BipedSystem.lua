@@ -717,9 +717,20 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
 end
 
 function BipedSystem:breath(e)
-    e.biped.body.transforms.l[2] = e.biped.body.transforms.l[1] - 100
-    Timer.tween(0.5, e.biped.body.transforms.l, { [4] = 1.1 }, 'out-elastic')
-    Timer.during(0.6, function()
+    --
+    local bodyBeforeY =  e.biped.body.transforms.l[2]
+    local bodysx = e.biped.body.transforms.l[4]
+    local bodysy = e.biped.body.transforms.l[5]
+
+
+    local yOffset = 5 + love.math.random()*5
+    local scaleOffset = 0.05 * love.math.random()   + 1
+    --e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] - 20
+    Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY-yOffset , [4]=bodysx*scaleOffset, [5]=bodysy*scaleOffset}, 'out-quint')
+    Timer.after(0.5, function()
+    Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY , [4]=bodysx, [5]=bodysy}, 'out-quint') 
+end)
+    Timer.during(1, function()
         BipedSystem:movedBody(e)
     end)
 end

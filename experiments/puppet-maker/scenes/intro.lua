@@ -344,7 +344,26 @@ function doTheMipoAnimation()
       myWorld:emit('doinkBody', biped)
    end)
 
-
+   Timer.after(3.5, function()
+   
+      myWorld:emit('breath',biped)
+   end)
+   Timer.after(5, function()
+   
+      myWorld:emit('breath',biped)
+   end)
+   Timer.after(7, function()
+   
+      myWorld:emit('breath',biped)
+   end)
+   Timer.after(9.5, function()
+   
+      myWorld:emit('breath',biped)
+   end)
+   Timer.after(12, function()
+   
+      myWorld:emit('breath',biped)
+   end)
    Timer.after(15, function()
       local w, h = love.graphics.getDimensions()
       fadeOutTransition(function()

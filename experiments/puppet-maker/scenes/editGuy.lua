@@ -964,7 +964,8 @@ function attachCallbacks()
       end
       if key == 'b' then
          -- myWorld:emit('blinkEyes', potato)
-         myWorld:emit('birthGuy', biped)
+         --myWorld:emit('birthGuy', biped)
+         myWorld:emit('breath', biped)
       end
 
       if key == 'd' then

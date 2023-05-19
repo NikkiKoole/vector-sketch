@@ -126,11 +126,30 @@ while (true) do
             local v = pattern[index][i].value
             local o = pattern[index][i].octave
 
+            if pattern[index][i].chance ~= nil then
+               
+               local rnd = (love.math.random() * 100  )
+               
+               if  rnd > pattern[index][i].chance then
+                  v = 0
+               end
+            end
+
+
             if v > 0 then
                local semi = pattern[index][i].semitone
 
+
+               local notePitchRandom = pattern[index][i].notePitchRandomizer
+
+               if notePitchRandom ~= nil and notePitchRandom ~= 0 then
+                  local i = math.ceil(love.math.random()* #scale)
+                  semi = scale[i]
+               end
                -- todo paraetrize
-               semi = scale[math.ceil(love.math.random()* #scale)]
+               --local i = math.ceil(love.math.random()* #scale)
+
+               --semi = scale[i]
 
                --o = love.math.random()*
                semi = semi + tuning
@@ -150,7 +169,8 @@ while (true) do
 
                --print('after', semi, o)
 
-               local note_repeat = 1
+               local note_repeat = pattern[index][i].noteRepeat or 1
+
                for j = 1, note_repeat do
                   local s
                   if (v <= #samples) then
