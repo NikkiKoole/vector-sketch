@@ -51,6 +51,16 @@ function love.keypressed(key)
      
       channel.main2audio:push({ type = "paused", data = paused });
    end
+   if key == "1" then
+      page = page1
+      channel.main2audio:push({ type = "pattern", data = page });
+     
+   end
+   if key == "2" then
+      page = page2
+      channel.main2audio:push({ type = "pattern", data = page });
+     
+   end
 end
 
 function love.load()
@@ -109,7 +119,21 @@ function love.load()
    head = love.graphics.newImage('resources/theo.png')
    color = colors.dark_green
    drawingValue = 1
-   page = initPage()
+
+   page1 =  initPage()
+   page2 = initPage()
+   page1[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page1[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page1[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page1[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+
+   page2[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page2[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page2[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page2[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+
+
+   page = page1
 
    page[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
    page[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
@@ -126,7 +150,7 @@ function love.load()
   -- noteRepeatIndex = 4   
 
    notePitchRandoms = {0,1,2}
-  
+   noteVelocities = {0, 0.2, 0.4, 0.6, 0.8, 1.0}
 
    local names = {
        'badger',
@@ -364,6 +388,14 @@ function love.mousepressed(x, y, button)
             page[cx][cy].notePitchRandomizer = notePitchRandoms[index]
      
          end
+         if (paintModesIndex == 5) then -- note velocity
+
+            local current = page[cx][cy].noteVelocity
+            local index = indexOf(noteVelocities, current) or 1
+            index = (index % #noteVelocities ) + 1
+            page[cx][cy].noteVelocity = noteVelocities[index]
+     
+         end
        
          channel.main2audio:push({ type = "pattern", data = page });
       end
@@ -449,6 +481,12 @@ function love.draw()
          local notePitchRandomizer = page[x][y].notePitchRandomizer
          if notePitchRandomizer and notePitchRandomizer > 0 then
             love.graphics.print(notePitchRandomizer,
+                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
+                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+         end
+         local noteVelocity = page[x][y].noteVelocity
+         if noteVelocity and noteVelocity > 0 then
+            love.graphics.print(noteVelocity,
                 leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
                 topmargin + pictureTopMargin + (cellHeight * (y - 1)))
          end

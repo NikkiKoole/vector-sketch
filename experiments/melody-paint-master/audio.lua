@@ -146,6 +146,8 @@ while (true) do
                   local i = math.ceil(love.math.random()* #scale)
                   semi = scale[i]
                end
+
+
                -- todo paraetrize
                --local i = math.ceil(love.math.random()* #scale)
 
@@ -181,11 +183,19 @@ while (true) do
 
                   local p = getPitch(semi, o)
 
-                  -- todo parametrize
-                  p = p + ( -0.0125 + love.math.random() * 0.025)
+                  -- todo parametrize micropicth randomizer
+                 -- p = p + ( -0.0125 + love.math.random() * 0.025)
 
                   s:setPitch(p)
 
+                  local velocity  = 1
+                  local noteVelocity = pattern[index][i].noteVelocity
+
+                  if noteVelocity ~= nil and noteVelocity ~= 0 then
+                     velocity = noteVelocity
+                     
+                  end
+                  s:setVolume(velocity)
                   -- i only swing the even beats
                   local offset = math.floor(beat) % 2 == 0
 
