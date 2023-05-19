@@ -172,6 +172,10 @@ function scene.load()
    end
 
    myWorld:emit('birthGuy', biped)
+
+   Timer.after(15, function()
+      Timer.tween(1, fluxObject, { darknessAlpha = 0, puppetMakerAlpha = 0 })
+   end)
    Timer.after(1.5, doTheMipoAnimation)
 end
 
