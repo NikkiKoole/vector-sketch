@@ -296,6 +296,8 @@ function love.load()
        { 'beetle',      'cr78/Guiro 1' },
        { 'cow',         'cr78/Cowbell' },
        { 'scorpion',    'cr78/HiHat Metal' },
+       { 'scorpion',    'cr78/Cymbal' },
+       { 'scorpion',    'cr78/Snare' },
        { 'gorilla',     'macdm/bassmac1' },
        { 'rhinoceros',  'macdm/bassmac2' }
 
