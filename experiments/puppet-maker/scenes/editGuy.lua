@@ -871,6 +871,10 @@ function tweenCameraToHeadAndBody()
    tweenCameraTo(x, y, w, h)
 end
 
+ function  backToIntro()
+   SM.unload('editGuy')
+SM.load('intro')
+end
 function attachCallbacks()
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
@@ -972,6 +976,9 @@ function attachCallbacks()
       end
       if key == 'm' then
          grabShot()
+      end
+      if key == 'i' then
+         backToIntro()
       end
    end
 

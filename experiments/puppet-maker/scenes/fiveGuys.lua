@@ -152,6 +152,7 @@ end
 function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
+   -- return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
     return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
 
@@ -238,9 +239,12 @@ function scene.load()
         --fiveGuys[i].body.transforms.l[2] = -200 --getBodyYOffsetForDefaultStance(fg[i].biped)
         --print(fiveGuys[i].body.transforms, root.children[i].transforms, fiveGuys[i].guy.transforms)
         --root.children[i].transforms.l[2] = 700 - getBodyYOffsetForDefaultStance(fg[i].biped) -- -200
+        --myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
+        myWorld:emit('keepFeetPlantedAndStraightenLegs', fg[i].biped)
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         myWorld:emit("tweenIntoDefaultStance", fg[i].biped, false)
+       
         --
         -- myWorld:emit("potatoInit", potato)
     end

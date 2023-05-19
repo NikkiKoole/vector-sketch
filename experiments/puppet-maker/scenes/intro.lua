@@ -91,7 +91,9 @@ function scene.load()
        transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
        children = {}
    }
-   --parts, _ = generate()
+   
+   parts, _ = generate()
+   
    biped = Concord.entity()
    potato = Concord.entity()
    mouth = Concord.entity()
@@ -136,7 +138,13 @@ function scene.load()
    mesh.meshAll(root)
    render.renderThings(root)
 
+   -- ok i have to call this before the init, weird!!!!!
+   -- todo look at this better
+   myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
    myWorld:emit("bipedInit", biped)
+
+
+  
    myWorld:emit("potatoInit", potato)
    myWorld:emit("mouthInit", mouth)
 
@@ -293,7 +301,14 @@ function doTheMipoAnimation()
             Timer.tween(0.5, O.children[i].color, { [4] = 1 })
          end
       end)
-      playSound(poSound1, .7)
+
+      local sound = poSound1
+      if love.math.random() < 0.2 then
+         sound = poSound2
+      end
+      playSound(sound, .7 + love.math.random() * 0.5)
+
+
       myWorld:emit('mouthSaySomething', mouth, 1)
       -- Timer.during(15, function()
       Timer.every(.5, function()

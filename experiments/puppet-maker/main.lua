@@ -248,7 +248,7 @@ function partRandomize(values, applyChangeDirectly)
 
    values.legLength = math.ceil(love.math.random() * 7)
    values.armLength = math.ceil(love.math.random() * 7)
-   values.legDefaultStance = 0.75 + (love.math.random() / 4.0)
+   values.legDefaultStance =  0.25 +  math.floor(love.math.random()*4) * 0.25   --0.25--  0--0.75 + (love.math.random() / 4.0)
 
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
