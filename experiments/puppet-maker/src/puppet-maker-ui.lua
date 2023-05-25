@@ -424,6 +424,24 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
          end
       end
 
+      if category == 'teeth' then
+         currentHeight = calcCurrentHeight(1)
+
+         if draw then
+            drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+            local propupdate = function(v)
+               values.teethHeightMultiplier = v
+               myWorld:emit('mouthInit', mouth)
+            end
+            draw_slider_with_2_buttons('teethHeightMultiplier', startX, currentY,
+                buttonSize,
+                sliderWidth, propupdate,
+                nil, .5, 3, .5, icons.mouthup, icons.mouthdown)
+         end
+      end
+
+
       if category == 'upperlip' or category == 'lowerlip' then
          currentHeight = calcCurrentHeight(1)
 

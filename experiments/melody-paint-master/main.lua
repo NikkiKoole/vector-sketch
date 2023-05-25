@@ -48,18 +48,16 @@ function love.keypressed(key)
    end
    if key == "space" then
       paused = not paused
-     
+
       channel.main2audio:push({ type = "paused", data = paused });
    end
    if key == "1" then
       page = page1
       channel.main2audio:push({ type = "pattern", data = page });
-     
    end
    if key == "2" then
       page = page2
       channel.main2audio:push({ type = "pattern", data = page });
-     
    end
 end
 
@@ -67,7 +65,7 @@ function love.load()
    bpm = 90
    octave = 0
    tuning = 0
-   paused= false
+   paused = false
    swing = 50
    thread = love.thread.newThread('audio.lua')
    thread:start()
@@ -120,37 +118,37 @@ function love.load()
    color = colors.dark_green
    drawingValue = 1
 
-   page1 =  initPage()
+   page1 = initPage()
    page2 = initPage()
-   page1[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page1[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page1[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page1[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page1[1][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page1[5][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page1[9][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page1[13][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
 
-   page2[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page2[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page2[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page2[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page2[1][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page2[5][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page2[9][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page2[13][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
 
 
    page = page1
 
-   page[1][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page[5][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page[9][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
-   page[13][1] = {value=1, octave=0, semitone= scale[(#scale + 1) - 1]}
+   page[1][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page[5][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page[9][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page[13][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
 
 
-   paintModes = {'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity'}
+   paintModes = { 'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity' }
    paintModesIndex = 1
 
-   noteChances= {100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0}
-   
-   noteRepeats= {1,2,3,4}
-  -- noteRepeatIndex = 4   
+   noteChances = { 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0 }
 
-   notePitchRandoms = {0,1,2}
-   noteVelocities = {0, 0.2, 0.4, 0.6, 0.8, 1.0}
+   noteRepeats = { 1, 2, 3, 4 }
+   -- noteRepeatIndex = 4
+
+   notePitchRandoms = { 0, 1, 2 }
+   noteVelocities = { 0, 0.2, 0.4, 0.6, 0.8, 1.0 }
 
    local names = {
        'badger',
@@ -299,7 +297,8 @@ function love.load()
        { 'scorpion',    'cr78/Cymbal' },
        { 'scorpion',    'cr78/Snare' },
        { 'gorilla',     'macdm/bassmac1' },
-       { 'rhinoceros',  'macdm/bassmac2' }
+       { 'rhinoceros',  'macdm/bassmac2' },
+       { 'hamster',     'guirojuno/rijstei' },
 
    }
 
@@ -332,15 +331,15 @@ function love.update(dt)
    assert(not error, error)
 end
 
-
 function indexOf(array, value)
    for i, v in ipairs(array) do
-       if v == value then
-           return i
-       end
+      if v == value then
+         return i
+      end
    end
    return nil
 end
+
 function initPage()
    local result = {}
    for x = 1, horizontal do
@@ -363,42 +362,35 @@ function love.mousepressed(x, y, button)
             page[cx][cy].octave = octave
             page[cx][cy].semitone = scale[(#scale + 1) - cy]
          end
-         
+
          if (paintModesIndex == 2) then -- note chance
             local current = page[cx][cy].chance
             local index = indexOf(noteChances, current) or 1
-               index = index + 1
-               index = index %  #noteChances 
-           
-           
+            index = index + 1
+            index = index % #noteChances
+
+
             page[cx][cy].chance = noteChances[index]
-     
          end
          if (paintModesIndex == 3) then -- note repeats
-
             local current = page[cx][cy].noteRepeat
             local index = indexOf(noteRepeats, current) or 1
-            index = (index % #noteRepeats ) + 1
+            index = (index % #noteRepeats) + 1
             page[cx][cy].noteRepeat = noteRepeats[index]
-     
          end
          if (paintModesIndex == 4) then -- note pitch rnd
-
             local current = page[cx][cy].notePitchRandomizer
             local index = indexOf(notePitchRandoms, current) or 1
-            index = (index % #notePitchRandoms ) + 1
+            index = (index % #notePitchRandoms) + 1
             page[cx][cy].notePitchRandomizer = notePitchRandoms[index]
-     
          end
          if (paintModesIndex == 5) then -- note velocity
-
             local current = page[cx][cy].noteVelocity
             local index = indexOf(noteVelocities, current) or 1
-            index = (index % #noteVelocities ) + 1
+            index = (index % #noteVelocities) + 1
             page[cx][cy].noteVelocity = noteVelocities[index]
-     
          end
-       
+
          channel.main2audio:push({ type = "pattern", data = page });
       end
    end
@@ -426,9 +418,8 @@ function bool2str(bool)
    return bool and 'true' or 'false'
 end
 
-
 function love.draw()
-   local w,h = love.graphics.getDimensions()
+   local w, h = love.graphics.getDimensions()
    ui.handleMouseClickStart()
    love.graphics.clear(palette[color])
    love.graphics.setColor(palette[color][1] - .1,
@@ -469,7 +460,7 @@ function love.draw()
                 pictureInCellScale, pictureInCellScale)
          end
          local chance = page[x][y].chance
-         if chance ~= nil  then
+         if chance ~= nil then
             love.graphics.print(chance,
                 leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
                 topmargin + pictureTopMargin + (cellHeight * (y - 1)))
@@ -524,10 +515,12 @@ function love.draw()
 
 
    if labelbutton('chance', paintModes[paintModesIndex], w - 100, 00, 100, 20).clicked then
-     
-      paintModesIndex = (paintModesIndex % #paintModes) + 1 
+      paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
-   
 
-   love.graphics.print('bpm: ' .. bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing..', paused: '..bool2str(paused), 0, 0)
+
+   love.graphics.print(
+       'bpm: ' ..
+       bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing .. ', paused: ' ..
+       bool2str(paused), 0, 0)
 end

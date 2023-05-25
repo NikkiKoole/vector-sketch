@@ -152,7 +152,7 @@ end
 function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
-   -- return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
+    -- return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
     return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
 
@@ -228,7 +228,7 @@ function scene.load()
         fiveGuys[i].guy.transforms.l[2] = 0
 
         local offset = getBodyYOffsetForDefaultStance(fg[i].biped)
-        --fiveGuys[i].guy.transforms.l[2] = -800
+        fiveGuys[i].guy.transforms.l[2] = -offset - 700
         --fg[i].biped.biped.feet1.transforms.l[2] = -300
         --fiveGuys[i].body.transforms.l[2] = 800
 
@@ -244,7 +244,7 @@ function scene.load()
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         myWorld:emit("tweenIntoDefaultStance", fg[i].biped, false)
-       
+
         --
         -- myWorld:emit("potatoInit", potato)
     end
@@ -337,8 +337,12 @@ function drawGroundPlaneLinesSimple(far, near)
 
             local x4, y4 = cam:getScreenCoordinates(i + 0.0001, height1 * woohoo, near)
             local x3, y3 = cam:getScreenCoordinates(i + tileSize + .0001, height2 * woohoo, near)
+            -- a bit of an hack to get the ground drawn a bit stretched vertically (* 3)
             local x1, y1 = x4, y4 - s * tileSize
             local x2, y2 = x3, y3 - s * tileSize
+
+            --y4 = y4 + 500
+            -- y3 = y3 + 500
 
             local m = mesh.createTexturedRectangle(imgarr[tileIndex])
 

@@ -159,10 +159,16 @@ function love.load()
 
 
    -- todp move this to the DNA code I thinkk
+
+
+
    for i = 1, amountOfGuys do
       local parts, values = generate()
 
       values = partRandomize(values, false)
+
+
+      local teethIsempty = (values.teeth.shape == #findPart('teeth').imgs)
       fiveGuys[i] = {
           values = copy3(values),
           head = copyAndRedoGraphic('head', values),
@@ -188,7 +194,7 @@ function love.load()
           brow1 = createBrowBezier(values),
           brow2 = createBrowBezier(values),
           mouth = makeMouthParentThing(),
-          teeth = copyAndRedoGraphic('teeth', values),
+          teeth = teethIsempty and copy3(nullFolder) or copyAndRedoGraphic('teeth', values),
           upperlip = createUpperlipBezier(values),
           lowerlip = createLowerlipBezier(values),
           ear1 = copyAndRedoGraphic('ears', values),
@@ -228,7 +234,7 @@ function love.load()
    editingGuy = fiveGuys[1]
 
    SM.setPath("scenes/")
-   SM.load("editGuy")
+   SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
 
@@ -248,7 +254,8 @@ function partRandomize(values, applyChangeDirectly)
 
    values.legLength = math.ceil(love.math.random() * 7)
    values.armLength = math.ceil(love.math.random() * 7)
-   values.legDefaultStance =  0.25 +  math.floor(love.math.random()*4) * 0.25   --0.25--  0--0.75 + (love.math.random() / 4.0)
+   values.legDefaultStance = 0.25 +
+       math.floor(love.math.random() * 4) * 0.25 --0.25--  0--0.75 + (love.math.random() / 4.0)
 
    for i = 1, #parts do
       if values.potatoHead and parts[i] == 'neck' then
@@ -257,6 +264,9 @@ function partRandomize(values, applyChangeDirectly)
          local p = findPart(parts[i])
          values[parts[i]].shape = math.ceil(love.math.random() * #(p.imgs))
          if (parts[i] == 'leghair' or parts[i] == 'armhair' or parts[i] == 'hair') then
+            --   values[parts[i]].shape = #p.imgs
+         end
+         if (parts[i] == 'teeth') then
             --   values[parts[i]].shape = #p.imgs
          end
          values[parts[i]].fgPal = math.ceil(love.math.random() * #palettes)

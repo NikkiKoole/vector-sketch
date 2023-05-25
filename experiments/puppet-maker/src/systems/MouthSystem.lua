@@ -19,8 +19,11 @@ function MouthSystem:mouthInit(e)
     -- e.mouth.lowerlip.transforms.l[1] = mouthx
     -- e.mouth.lowerlip.transforms.l[2] = mouthy
 
+
     e.mouth.teeth.transforms.l[1] = 0 --e.mouth.upperlip.transforms.l[1]
     e.mouth.teeth.transforms.l[2] = -50 --e.mouth.upperlip.transforms.l[2] - 50
+
+    e.mouth.teeth.transforms.l[5] = e.mouth.values.teethHeightMultiplier
 end
 
 function MouthSystem:mouthSaySomething(e, length)
@@ -29,7 +32,7 @@ function MouthSystem:mouthSaySomething(e, length)
 
     local value = { mouthOpen = 0, mouthWide = 1 }
     local wideness = 0.5 + love.math.random()
-    local totalDur = length + 0.1-- 0.2 + 0.2 * love.math.random()
+    local totalDur = length + 0.1 -- 0.2 + 0.2 * love.math.random()
     Timer.tween(totalDur / 3, value, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
     Timer.after(totalDur / 3 + 0.001, function()
         Timer.tween(totalDur / 3, value, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')

@@ -621,9 +621,15 @@ function changePart(name)
       editingGuy.upperlip = updateChild(mouthPart, editingGuy.upperlip,
               createUpperlipBezier(values, editingGuy.upperlip.points))
    elseif name == 'teeth' then
-      local r = copyAndRedoGraphic('teeth', values)
+      if isNullObject(name, values) then
+         local r = copy3(nullFolder)
 
-      editingGuy.teeth = updateChild(mouthPart, editingGuy.teeth, r)
+         editingGuy.teeth = updateChild(mouthPart, editingGuy.teeth, r)
+      else
+         local r = copyAndRedoGraphic('teeth', values)
+
+         editingGuy.teeth = updateChild(mouthPart, editingGuy.teeth, r)
+      end
    elseif name == 'feet' then
       editingGuy.feet1 = updateChild(guy, editingGuy.feet1, copyAndRedoGraphic('feet', values))
       editingGuy.feet2 = updateChild(guy, editingGuy.feet2, copyAndRedoGraphic('feet', values))

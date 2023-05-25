@@ -493,54 +493,6 @@ name = "nose12",
 transforms = {
 l = { 285.099, 1041.357, 0, 1, 1, 42.056, 24.511, 0, 0 }
 }
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -73, -66.5 }, { 291, -66.5 }, { 291, 333.5 }, { -73, 333.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/nose13.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "nose13",
-transforms = {
-l = { -94.114, 1107.087, 0, 1, 1, 119.112, -5.826, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -73, -66.5 }, { 291, -66.5 }, { 291, 321.5 }, { -73, 321.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/nose14.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "nose14",
-transforms = {
-l = { 755.323, 1041.357, 0, 1, 1, 103.944, 34.623, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -73, -66.5 }, { 251, -66.5 }, { 251, 377.5 }, { -73, 377.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/nose15.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "nose15",
-transforms = {
-l = { 1104.198, 990.795, 0, 1, 1, 129.225, 39.679, 0, 0 }
-}
 } },
 folder = true,
 name = "noses",

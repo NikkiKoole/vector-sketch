@@ -99,7 +99,7 @@ function generate()
     --
 
     -- but why is this an issue for the nose and not for the patch for example
-    --   table.insert(noseImgUrls, 'assets/parts/null.png')
+    table.insert(teethImgUrls, 'assets/parts/null.png')
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts,                                                    kind = 'head' },
         { name = 'hair',           imgs = hairUrls,        kind = 'head' },
@@ -387,6 +387,7 @@ function generate()
         handLengthMultiplier    = 1,
         handWidthMultiplier     = 1,
         overBite                = true,
+        teethHeightMultiplier   = 1,
         teeth                   = {
             shape     = 1,
             bgPal     = 5,

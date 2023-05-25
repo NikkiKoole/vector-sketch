@@ -91,9 +91,9 @@ function scene.load()
        transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
        children = {}
    }
-   
+
    parts, _ = generate()
-   
+
    biped = Concord.entity()
    potato = Concord.entity()
    mouth = Concord.entity()
@@ -144,7 +144,7 @@ function scene.load()
    myWorld:emit("bipedInit", biped)
 
 
-  
+
    myWorld:emit("potatoInit", potato)
    myWorld:emit("mouthInit", mouth)
 
@@ -179,6 +179,7 @@ function scene.load()
          end
       end
    end
+
 
    myWorld:emit('birthGuy', biped)
 
@@ -345,24 +346,19 @@ function doTheMipoAnimation()
    end)
 
    Timer.after(3.5, function()
-   
-      myWorld:emit('breath',biped)
+      myWorld:emit('breath', biped)
    end)
    Timer.after(5, function()
-   
-      myWorld:emit('breath',biped)
+      myWorld:emit('breath', biped)
    end)
    Timer.after(7, function()
-   
-      myWorld:emit('breath',biped)
+      myWorld:emit('breath', biped)
    end)
    Timer.after(9.5, function()
-   
-      myWorld:emit('breath',biped)
+      myWorld:emit('breath', biped)
    end)
    Timer.after(12, function()
-   
-      myWorld:emit('breath',biped)
+      myWorld:emit('breath', biped)
    end)
    Timer.after(15, function()
       local w, h = love.graphics.getDimensions()
@@ -408,11 +404,11 @@ function scene.update(dt)
    end
 
    function love.touchpressed(key, unicode)
-        gotoNext()
+      gotoNext()
    end
 
    function love.mousepressed(key, unicode)
-        gotoNext()
+      gotoNext()
    end
 
    time = time + dt
@@ -426,17 +422,17 @@ function scene.update(dt)
          guyFacing = guyFacing * -1
       end
    end
-end
 
-function love.resize(w, h)
-   local w, h = love.graphics.getDimensions()
+   function love.resize(w, h)
+      local w, h = love.graphics.getDimensions()
 
-   local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
-   tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
+      local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
+      tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
 
-   camera.setCameraViewport(cam, w, h)
-   camera.centerCameraOnPosition(x1, y1, w1, h1)
-   cam:update(w, h)
+      camera.setCameraViewport(cam, w, h)
+      camera.centerCameraOnPosition(x1, y1, w1, h1)
+      cam:update(w, h)
+   end
 end
 
 function scene.draw()
