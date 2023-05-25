@@ -12,7 +12,7 @@ local bpm          = 0
 local scale        = {}
 local tuning       = 0
 local swing        = 50
-local paused = false
+local paused       = false
 
 local pattern      = {}
 local samples      = {}
@@ -80,168 +80,164 @@ local beat = 0
 
 
 while (true) do
-
    if not paused then
-   local n = love.timer.getTime()
-   local delta = n - now
+      local n = love.timer.getTime()
+      local delta = n - now
 
-   now = n
-   time = time + delta
-  -- local beat = time * (bpm / 60) * 4
-   --print(beat)
-  
-   beat = beat + (delta * (bpm / 60) * 4)
-   local tick = ((beat % 1) * (96))
-   local missedTicks = {}
+      now = n
+      time = time + delta
+      -- local beat = time * (bpm / 60) * 4
+      --print(beat)
 
-   if math.floor(tick) - math.floor(lastTick) > 1 then
-      --print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
-      -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
-      for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
-         --print(i)
-         table.insert(missedTicks, i)
-      end
-   end
+      beat = beat + (delta * (bpm / 60) * 4)
+      local tick = ((beat % 1) * (96))
+      local missedTicks = {}
 
-   --print(tick)
-
-   -- i want to be able to swing, so instead of checking every beat we need to check more.
-
-   --https://melodiefabriek.com/sound-tech/mpc-swing-reason/
-
-   --print(math.floor(lastBeat), math.floor(beat), math.floor(lastTick), math.floor(tick))
-   if (math.floor(lastBeat) ~= math.floor(beat)) then
-      -- removes sources that are done from a table, this table is tehre for choking
-      --beat = beat+1
-      for i = #sources, 1, -1 do
-         if not sources[i].source:isPlaying() then
-            table.remove(sources, i)
+      if math.floor(tick) - math.floor(lastTick) > 1 then
+         --print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
+         -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
+         for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
+            --print(i)
+            table.insert(missedTicks, i)
          end
       end
 
-      channel.audio2main:push({ type = "playhead", data = math.floor(beat) })
-      local index = 1 + math.floor(beat) % 16
-      if pattern[index] then
-         for i = 1, #scale do
-            local v = pattern[index][i].value
-            local o = pattern[index][i].octave
+      --print(tick)
 
-            if pattern[index][i].chance ~= nil then
-               
-               local rnd = (love.math.random() * 100  )
-               
-               if  rnd > pattern[index][i].chance then
-                  v = 0
-               end
+      -- i want to be able to swing, so instead of checking every beat we need to check more.
+
+      --https://melodiefabriek.com/sound-tech/mpc-swing-reason/
+
+      --print(math.floor(lastBeat), math.floor(beat), math.floor(lastTick), math.floor(tick))
+      if (math.floor(lastBeat) ~= math.floor(beat)) then
+         -- removes sources that are done from a table, this table is tehre for choking
+         --beat = beat+1
+         for i = #sources, 1, -1 do
+            if not sources[i].source:isPlaying() then
+               table.remove(sources, i)
             end
+         end
 
+         channel.audio2main:push({ type = "playhead", data = math.floor(beat) })
+         local index = 1 + math.floor(beat) % 16
+         if pattern[index] then
+            for i = 1, #scale do
+               local v = pattern[index][i].value
+               local o = pattern[index][i].octave
 
-            if v > 0 then
-               local semi = pattern[index][i].semitone
+               if pattern[index][i].chance ~= nil then
+                  local rnd = (love.math.random() * 100)
 
-
-               local notePitchRandom = pattern[index][i].notePitchRandomizer
-
-               if notePitchRandom ~= nil and notePitchRandom ~= 0 then
-                  local i = math.ceil(love.math.random()* #scale)
-                  semi = scale[i]
+                  if rnd > pattern[index][i].chance then
+                     v = 0
+                  end
                end
 
 
-               -- todo paraetrize
-               --local i = math.ceil(love.math.random()* #scale)
-
-               --semi = scale[i]
-
-               --o = love.math.random()*
-               semi = semi + tuning
+               if v > 0 then
+                  local semi = pattern[index][i].semitone
 
 
+                  local notePitchRandom = pattern[index][i].notePitchRandomizer
 
-
-               while semi < 0 do
-                  semi = semi + 12
-                  o = o - 1
-               end
-
-               while semi > 12 do
-                  semi = semi - 12
-                  o = o + 1
-               end
-
-               --print('after', semi, o)
-
-               local note_repeat = pattern[index][i].noteRepeat or 1
-
-               for j = 1, note_repeat do
-                  local s
-                  if (v <= #samples) then
-                     s = samples[v]:clone()
+                  if notePitchRandom ~= nil and notePitchRandom ~= 0 then
+                     local i = math.ceil(love.math.random() * #scale)
+                     semi = scale[i]
                   end
 
 
+                  -- todo paraetrize
+                  --local i = math.ceil(love.math.random()* #scale)
 
-                  local p = getPitch(semi, o)
+                  --semi = scale[i]
 
-                  -- todo parametrize micropicth randomizer
-                 -- p = p + ( -0.0125 + love.math.random() * 0.025)
+                  --o = love.math.random()*
+                  semi = semi + tuning
 
-                  s:setPitch(p)
 
-                  local velocity  = 1
-                  local noteVelocity = pattern[index][i].noteVelocity
 
-                  if noteVelocity ~= nil and noteVelocity ~= 0 then
-                     velocity = noteVelocity
-                     
+
+                  while semi < 0 do
+                     semi = semi + 12
+                     o = o - 1
                   end
-                  s:setVolume(velocity)
-                  -- i only swing the even beats
-                  local offset = math.floor(beat) % 2 == 0
 
-                  local _swing = ((swing - 50) / 50) * 96
+                  while semi > 12 do
+                     semi = semi - 12
+                     o = o + 1
+                  end
 
-                  local note_repeat_offset = (96 / note_repeat)
+                  --print('after', semi, o)
 
-                  local tickOffset = (offset and _swing or 0) + ((j - 1) * note_repeat_offset)
+                  local note_repeat = pattern[index][i].noteRepeat or 1
 
-                  table.insert(queue,
-                      {
-                          beat = beat,
-                          tick = tick + tickOffset,
-                          source = s,
-                          index = v
-                      })
+                  for j = 1, note_repeat do
+                     local s
+                     if (v <= #samples) then
+                        s = samples[v]:clone()
+                     end
+
+
+
+                     local p = getPitch(semi, o)
+
+                     -- todo parametrize micropicth randomizer
+                     -- p = p + ( -0.0125 + love.math.random() * 0.025)
+
+                     s:setPitch(p)
+
+                     local velocity     = 1
+                     local noteVelocity = pattern[index][i].noteVelocity
+
+                     if noteVelocity ~= nil and noteVelocity ~= 0 then
+                        velocity = noteVelocity
+                     end
+                     s:setVolume(velocity)
+                     -- i only swing the even beats
+                     local offset = math.floor(beat) % 2 == 0
+
+                     local _swing = ((swing - 50) / 50) * 96
+
+                     local note_repeat_offset = (96 / note_repeat)
+
+                     local tickOffset = (offset and _swing or 0) + ((j - 1) * note_repeat_offset)
+
+                     table.insert(queue,
+                         {
+                             beat = beat,
+                             tick = tick + tickOffset,
+                             source = s,
+                             index = v
+                         })
+                  end
                end
             end
          end
       end
-   end
 
-   for i = #queue, 1, -1 do
-      local q = queue[i]
+      for i = #queue, 1, -1 do
+         local q = queue[i]
 
-      for ti = 1, #missedTicks do
-         t = missedTicks[ti]
-         print('I am in a place where i need todo aomething with missingticks!', ti, t)
+         for ti = 1, #missedTicks do
+            t = missedTicks[ti]
+            print('I am in a place where i need todo aomething with missingticks!', ti, t)
+         end
+
+         if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
+            table.remove(queue, i)
+            table.insert(sources, { source = q.source, index = q.index })
+            -- todo parametrize
+            --chokeGroup(q.index)
+
+            love.audio.play(q.source)
+         end
       end
 
-      if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
-         table.remove(queue, i)
-         table.insert(sources, { source = q.source, index = q.index })
-         -- todo parametrize
-         --chokeGroup(q.index)
 
-         love.audio.play(q.source)
-      end
+
+      lastBeat = beat
+      lastTick = tick
    end
-
-
-
-   lastBeat = beat
-   lastTick = tick
-
-end
    love.timer.sleep(.001)
 
    local v = channel.main2audio:pop();
@@ -260,16 +256,15 @@ end
       end
       if (v.type == 'bpm') then
          bpm = v.data
-         print('bpm: ', bpm)
       end
-     if (v.type == 'scale') then
+      if (v.type == 'scale') then
          scale = v.data
-         print('scale: ', scale)
-      end 
+      end
       if (v.type == 'paused') then
          paused = v.data
-         print('paused: ', scale)
-         now          = love.timer.getTime()
-      end 
+
+         now    = love.timer.getTime()
+      end
+      --print(v.type, v.data)
    end
 end
