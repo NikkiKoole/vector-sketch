@@ -119,7 +119,9 @@ while (true) do
          end
 
          channel.audio2main:push({ type = "playhead", data = math.floor(beat) })
+
          local index = 1 + math.floor(beat) % 16
+
          if pattern[index] then
             for i = 1, #scale do
                local v = pattern[index][i].value

@@ -88,7 +88,7 @@ function love.load()
    local koalaPenta = { 0, 3, 5, 7, 10, 12 }
    local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
    local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-   scale = soundforest --naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
+   scale = koalaChroma --naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
 
 
 
