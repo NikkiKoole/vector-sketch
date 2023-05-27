@@ -61,6 +61,15 @@ function love.keypressed(key)
    end
 end
 
+function findScaleByName(name)
+   for i = 1, #scales do
+      if scales[i].name == name then
+         return scales[i], i
+      end
+   end
+   return nil, -1
+end
+
 function love.load()
    bpm = 90
    octave = 0
@@ -80,19 +89,30 @@ function love.load()
    screenHeight       = 768
    --love.window.setMode(screenWidth, screenHeight)
 
+   scales             = {
+       { name = 'minorBlues',  notes = { 0, 3, 5, 6, 7, 10, 12 } },
+       { name = 'whole',       notes = { 0, 2, 4, 6, 8, 10 } },
+       { name = 'bebop',       notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
+       { name = 'soundforest', notes = { 0, 2, 5, 9, 12, 16 } },
+       { name = 'naturalMinor', notes = { 0, 2, 3, 5, 7, 8, 10, 12 } },
+       { name = 'koalaMinor',  notes = { 0, 2, 3, 5, 7, 8, 11, 12 } },
+       { name = 'koalaPenta',  notes = { 0, 3, 5, 7, 10, 12 } },
+       { name = 'koalaHexa',   notes = { 0, 3, 4, 7, 8, 11, 12 } },
+       { name = 'koalaChroma', notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 } },
+       { name = 'pentaMinor ', notes = { 0, 2, 3, 4, 6 } },
+       { name = 'gypsy',       notes = { 0, 2, 3, 6, 7, 8, 10 } },
+       { name = 'dorian',      notes = { 0, 2, 3, 5, 7, 9, 10 } },
+       { name = 'augmented',   notes = { 0, 3, 4, 7, 8, 11 } },
+       { name = 'tritone',     notes = { 0, 1, 4, 6, 7, 10 } },
+       { name = 'debug',       notes = { 0, 11, 23, 35, 47 } },
+   }
 
-   local minorBlues = { 0, 3, 5, 6, 7, 10, 12 }
-   local soundforest = { 0, 2, 5, 9, 12, 16 }
-   local naturalMinor = { 0, 2, 3, 5, 7, 8, 10, 12 }
-   local koalaMinor = { 0, 2, 3, 5, 7, 8, 11, 12 }
-   local koalaPenta = { 0, 3, 5, 7, 10, 12 }
-   local koalaHexa = { 0, 3, 4, 7, 8, 11, 12 }
-   local koalaChroma = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }
-   scale = koalaChroma --naturalMinor --koalaPenta -- koalaHexa --koalaPenta --soundforest --minorBlues
+
+   scale = findScaleByName('koalaChroma')
+   notesInScale = scale.notes
 
 
-
-   vertical = #scale
+   vertical = #notesInScale
    horizontal = 16
 
    leftmargin = 30
@@ -120,23 +140,23 @@ function love.load()
 
    page1 = initPage()
    page2 = initPage()
-   page1[1][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page1[5][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page1[9][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page1[13][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page1[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page1[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page1[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page1[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
 
-   page2[1][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page2[5][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page2[9][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page2[13][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page2[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page2[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page2[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page2[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
 
 
    page = page1
 
-   page[1][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page[5][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page[9][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
-   page[13][1] = { value = 1, octave = 0, semitone = scale[(#scale + 1) - 1] }
+   page[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   page[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
 
 
    paintModes = { 'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity' }
@@ -314,7 +334,7 @@ function love.load()
 
    channel.main2audio:push({ type = "samples", data = samples });
    channel.main2audio:push({ type = "bpm", data = bpm });
-   channel.main2audio:push({ type = "scale", data = scale })
+   channel.main2audio:push({ type = "scale", data = notesInScale })
    channel.main2audio:push({ type = "tuning", data = tuning })
    channel.main2audio:push({ type = "swing", data = swing })
    channel.main2audio:push({ type = "pattern", data = page });
@@ -360,7 +380,7 @@ function love.mousepressed(x, y, button)
          if (paintModesIndex == 1) then -- note on off
             page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingValue
             page[cx][cy].octave = octave
-            page[cx][cy].semitone = scale[(#scale + 1) - cy]
+            page[cx][cy].semitone = notesInScale[(#notesInScale + 1) - cy]
          end
 
          if (paintModesIndex == 2) then -- note chance
@@ -516,6 +536,20 @@ function love.draw()
 
    if labelbutton('chance', paintModes[paintModesIndex], w - 100, 00, 100, 20).clicked then
       paintModesIndex = (paintModesIndex % #paintModes) + 1
+   end
+
+   if labelbutton('scale', scale.name, w - 200, 00, 100, 20).clicked then
+      local name, index = findScaleByName(scale.name)
+
+      local newIndex = (index % #scales) + 1
+
+      scale = scales[newIndex]
+      notesInScale = scale.notes
+
+      vertical = #notesInScale
+      bottommargin = screenHeight - (cellHeight * vertical) - topmargin
+      channel.main2audio:push({ type = "scale", data = notesInScale })
+      --paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
 
 

@@ -35,11 +35,12 @@ end
 function getPitch(semitone, octave)
    local plusoctave = 0
    --local octave = 2
-   if semitone > 11 then
+   if semitone > 10 then
       plusoctave = 1
-      semitone = semitone % 12
+      semitone = semitone % 11
    end
 
+   --print('getpitch', semitone, octave + plusoctave)
    local freqs = { 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25 }
    local n = mapInto(freqs[semitone + 1], 261.63, 523.25, 0, 1)
    local o = octave + plusoctave
@@ -59,6 +60,7 @@ function getPitch(semitone, octave)
    if o == 5 then return (32 + 32 * n) end
    if o == 6 then return (64 + 64 * n) end
    if o == 7 then return (128 + 128 * n) end
+   if o == 8 then return (256 + 256 * n) end
 end
 
 local sources = {}
@@ -122,6 +124,13 @@ while (true) do
 
          local index = 1 + math.floor(beat) % 16
 
+
+         -- todo I kinda need a different index per voice, so i can have differnt loop lengths per voice and introduce polyrithm.
+         -- this also calls for a maximum of voices in a part, my guess is 8, or maybe 16 ?
+
+         -- before this i want to be able to swicth scales while working, i havent decided what todo with notes that arent oin the scale no more ...
+
+
          if pattern[index] then
             for i = 1, #scale do
                local v = pattern[index][i].value
@@ -170,7 +179,7 @@ while (true) do
                   end
 
                   --print('after', semi, o)
-
+                  --print(semi, o)
                   local note_repeat = pattern[index][i].noteRepeat or 1
 
                   for j = 1, note_repeat do
