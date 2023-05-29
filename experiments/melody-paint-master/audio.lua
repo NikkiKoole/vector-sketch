@@ -10,6 +10,7 @@ local lastTick     = 0
 local lastBeat     = -1
 local bpm          = 0
 local scale        = {}
+local voices       = {}
 local tuning       = 0
 local swing        = 50
 local paused       = false
@@ -256,6 +257,9 @@ while (true) do
       if (v.type == 'pattern') then
          pattern = v.data
       end
+      if (v.type == 'voices') then
+         voices = v.data
+      end
       if (v.type == 'swing') then
          swing = v.data
       end
@@ -273,7 +277,6 @@ while (true) do
       end
       if (v.type == 'paused') then
          paused = v.data
-
          now    = love.timer.getTime()
       end
       --print(v.type, v.data)

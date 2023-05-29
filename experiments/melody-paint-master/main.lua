@@ -90,21 +90,21 @@ function love.load()
    --love.window.setMode(screenWidth, screenHeight)
 
    scales             = {
-       { name = 'minorBlues',  notes = { 0, 3, 5, 6, 7, 10, 12 } },
-       { name = 'whole',       notes = { 0, 2, 4, 6, 8, 10 } },
-       { name = 'bebop',       notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
-       { name = 'soundforest', notes = { 0, 2, 5, 9, 12, 16 } },
+       { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 12 } },
+       { name = 'whole',        notes = { 0, 2, 4, 6, 8, 10 } },
+       { name = 'bebop',        notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
+       { name = 'soundforest',  notes = { 0, 2, 5, 9, 12, 16 } },
        { name = 'naturalMinor', notes = { 0, 2, 3, 5, 7, 8, 10, 12 } },
-       { name = 'koalaMinor',  notes = { 0, 2, 3, 5, 7, 8, 11, 12 } },
-       { name = 'koalaPenta',  notes = { 0, 3, 5, 7, 10, 12 } },
-       { name = 'koalaHexa',   notes = { 0, 3, 4, 7, 8, 11, 12 } },
-       { name = 'koalaChroma', notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 } },
-       { name = 'pentaMinor ', notes = { 0, 2, 3, 4, 6 } },
-       { name = 'gypsy',       notes = { 0, 2, 3, 6, 7, 8, 10 } },
-       { name = 'dorian',      notes = { 0, 2, 3, 5, 7, 9, 10 } },
-       { name = 'augmented',   notes = { 0, 3, 4, 7, 8, 11 } },
-       { name = 'tritone',     notes = { 0, 1, 4, 6, 7, 10 } },
-       { name = 'debug',       notes = { 0, 11, 23, 35, 47 } },
+       { name = 'koalaMinor',   notes = { 0, 2, 3, 5, 7, 8, 11, 12 } },
+       { name = 'koalaPenta',   notes = { 0, 3, 5, 7, 10, 12 } },
+       { name = 'koalaHexa',    notes = { 0, 3, 4, 7, 8, 11, 12 } },
+       { name = 'koalaChroma',  notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 } },
+       { name = 'pentaMinor ',  notes = { 0, 2, 3, 4, 6 } },
+       { name = 'gypsy',        notes = { 0, 2, 3, 6, 7, 8, 10 } },
+       { name = 'dorian',       notes = { 0, 2, 3, 5, 7, 9, 10 } },
+       { name = 'augmented',    notes = { 0, 3, 4, 7, 8, 11 } },
+       { name = 'tritone',      notes = { 0, 1, 4, 6, 7, 10 } },
+       { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
    }
 
 
@@ -122,6 +122,7 @@ function love.load()
    cellWidth = (screenWidth - leftmargin - rightmargin) / horizontal
 
    bitmapSize = 100
+   voicesHeight = cellHeight
 
    pictureInnerMargin = 4
 
@@ -137,6 +138,7 @@ function love.load()
    head = love.graphics.newImage('resources/theo.png')
    color = colors.dark_green
    drawingValue = 1
+
 
    page1 = initPage()
    page2 = initPage()
@@ -332,12 +334,18 @@ function love.load()
       table.insert(samples, love.audio.newSource(data, 'static'))
    end
 
+   voices = {}
+   for i = 1, 8 do
+      voices[i] = { voiceIndex = i, tuning = 0, volume = 1 }
+   end
+
    channel.main2audio:push({ type = "samples", data = samples });
    channel.main2audio:push({ type = "bpm", data = bpm });
    channel.main2audio:push({ type = "scale", data = notesInScale })
    channel.main2audio:push({ type = "tuning", data = tuning })
    channel.main2audio:push({ type = "swing", data = swing })
    channel.main2audio:push({ type = "pattern", data = page });
+   channel.main2audio:push({ type = "voices", data = voices });
 end
 
 function love.update(dt)
@@ -415,15 +423,20 @@ function love.mousepressed(x, y, button)
       end
    end
 
-   if (y > screenHeight - bottommargin + inbetweenmargin) then
+
+   local startSpritesAtY = screenHeight - bottommargin + voicesHeight + inbetweenmargin
+
+   if (y > startSpritesAtY) then
       if (x > leftmargin and x < screenWidth - rightmargin) then
          --local x = leftmargin + ((i - 1) % 16) * size
          --local y = screenHeight - bottommargin + inbetweenmargin + math.floor((i - 1) / 16) * size
-         local size = pictureInBottomScale * bitmapSize
-         local rowNumber = math.floor((y - (screenHeight - bottommargin + inbetweenmargin)) / size)
-
-
-         local index = 1 + math.floor((x - leftmargin) / (bitmapSize * pictureInBottomScale)) + (rowNumber * 16)
+         -- local size = pictureInBottomScale * bitmapSize
+         local d = 2
+         local size = cellWidth / d
+         local spritesInRow = 16 * d
+         local rowNumber = math.floor((y - startSpritesAtY) / size)
+         local index = 1 + math.floor((x - leftmargin) / (size)) +
+             (rowNumber * spritesInRow)
          index = math.min(#sprites, index)
          octave = 0
          local s = samples[index]:clone()
@@ -505,12 +518,22 @@ function love.draw()
          end
       end
    end
+   local startSpritesAtY = screenHeight - bottommargin + voicesHeight + inbetweenmargin
+
+   for i = 1, 8 do
+      love.graphics.rectangle('line', leftmargin + (i - 1) * cellWidth * 2,
+          startSpritesAtY - voicesHeight - inbetweenmargin, cellWidth * 2,
+          cellWidth - inbetweenmargin)
+   end
+
 
    for i = 1, #sprites do
       local img = sprites[i]
-      local size = pictureInBottomScale * bitmapSize
-      local x = leftmargin + ((i - 1) % 16) * size
-      local y = screenHeight - bottommargin + inbetweenmargin + math.floor((i - 1) / 16) * size
+      local d = 2
+      local size = cellWidth / d
+      local spritesInRow = 16 * d
+      local x = leftmargin + ((i - 1) % spritesInRow) * size
+      local y = startSpritesAtY + math.floor((i - 1) / spritesInRow) * size
 
       if (i == drawingValue) then
          love.graphics.setColor(palette[color][1] - .1,
@@ -522,10 +545,9 @@ function love.draw()
       end
       love.graphics.setColor(1, 1, 1)
 
+      local s = size / bitmapSize
 
-      love.graphics.draw(img,
-          x, y, 0,
-          pictureInBottomScale, pictureInBottomScale)
+      love.graphics.draw(img, x, y, 0, s, s)
    end
 
    if playing then
