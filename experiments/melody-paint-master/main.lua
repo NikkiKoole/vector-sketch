@@ -163,14 +163,11 @@ function love.load()
 
    paintModes = { 'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity' }
    paintModesIndex = 1
-
    noteChances = { 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0 }
-
    noteRepeats = { 1, 2, 3, 4 }
-   -- noteRepeatIndex = 4
-
    notePitchRandoms = { 0, 1, 2 }
    noteVelocities = { 0, 0.2, 0.4, 0.6, 0.8, 1.0 }
+
 
    local names = {
        'badger',
@@ -321,7 +318,6 @@ function love.load()
        { 'gorilla',     'macdm/bassmac1' },
        { 'rhinoceros',  'macdm/bassmac2' },
        { 'hamster',     'guirojuno/rijstei' },
-
    }
 
 
