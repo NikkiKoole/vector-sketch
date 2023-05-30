@@ -3,6 +3,7 @@ require('love.sound')
 require('love.audio')
 require('love.math')
 
+require('inspect')
 local min, max     = ...
 local now          = love.timer.getTime()
 local time         = 0
@@ -227,13 +228,34 @@ while (true) do
          end
       end
 
+      if (#missedTicks) then
+         for ti = 1, #missedTicks do
+            local t = missedTicks[ti]
+            print(t)
+         end
+         --print('I am in a place where i need todo aomething with missingticks!')
+         --print(inspect(missedTicks))
+
+         --print(inspect(queue))
+      end
+      for ti = 1, #missedTicks do
+         t = missedTicks[ti]
+
+         for i = #queue, 1, -1 do
+            local q = queue[i]
+            if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(t) then
+               print('actually missed a tick that i needed!!!!')
+               --print(inspect(q))
+               --print(inspect(t))
+            end
+         end
+      end
+
+
       for i = #queue, 1, -1 do
          local q = queue[i]
 
-         for ti = 1, #missedTicks do
-            t = missedTicks[ti]
-            print('I am in a place where i need todo aomething with missingticks!', ti, t)
-         end
+
 
          if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
             table.remove(queue, i)

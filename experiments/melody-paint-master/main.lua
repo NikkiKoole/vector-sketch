@@ -5,9 +5,6 @@ require 'palette'
 inspect = require "vendor.inspect"
 local ui = require 'lib.ui'
 
-
-
-
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
@@ -115,7 +112,7 @@ function love.load()
 
    local w, h = love.graphics.getDimensions()
 
-   scales             = {
+   scales     = {
        { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 12 } },
        { name = 'whole',        notes = { 0, 2, 4, 6, 8, 10 } },
        { name = 'bebop',        notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
@@ -145,14 +142,14 @@ function love.load()
    leftmargin = 30
    rightmargin = 30
 
-   
+
    cellWidth = (w - leftmargin - rightmargin) / horizontal
-   cellHeight = cellWidth/1.5
+   cellHeight = cellWidth / 1.5
    voicesHeight = cellHeight
 
 
    pictureInnerMargin = 4
-   
+
 
 
 
@@ -372,6 +369,14 @@ function love.load()
    channel.main2audio:push({ type = "voices", data = voices });
 end
 
+function love.resize()
+   local w, h = love.graphics.getDimensions()
+   cellWidth = (w - leftmargin - rightmargin) / horizontal
+   cellHeight = cellWidth / 1.5
+   voicesHeight = cellHeight
+   bottommargin = h - (cellHeight * vertical) - topmargin
+end
+
 function love.update(dt)
    local v = channel.audio2main:pop();
    if v then
@@ -405,7 +410,7 @@ function initPage()
 end
 
 function love.mousepressed(x, y, button)
-   local w,h = love.graphics.getDimensions()
+   local w, h = love.graphics.getDimensions()
 
    if (x > leftmargin and x < w - rightmargin) then
       if (y > topmargin and y < h - bottommargin) then
@@ -450,13 +455,21 @@ function love.mousepressed(x, y, button)
    end
 
 
-   local startSpritesAtY = h - bottommargin + voicesHeight + inbetweenmargin
+   local start8VoicesAtY = h - bottommargin
+   local startSpritesAtY = start8VoicesAtY + voicesHeight + inbetweenmargin
+
+   if y > start8VoicesAtY and y < startSpritesAtY then
+      if (x > leftmargin and x < w - rightmargin) then
+         local d = 8 / horizontal
+         local size = (cellWidth) / d
+         local index = 1 + math.floor((x - leftmargin) / (size))
+         --print(index)
+      end
+   end
 
    if (y > startSpritesAtY) then
       if (x > leftmargin and x < w - rightmargin) then
-     
-      
-         local d =   numberOfSpritesInRow/ horizontal
+         local d = numberOfSpritesInRow / horizontal
          local size = cellWidth / d
          local spritesInRow = numberOfSpritesInRow
          local rowNumber = math.floor((y - startSpritesAtY) / size)
@@ -507,56 +520,60 @@ function love.draw()
 
    love.graphics.setColor(1, 1, 1)
 
+   -- note grid
    for x = 1, horizontal do
       for y = 1, vertical do
          local index = page[x][y].value
 
-
          if (index > 0) then
-            local scale, xo, yo = getScaleAndOffsetsForImage(sprites[index], cellWidth-pictureInnerMargin, cellHeight-pictureInnerMargin)
-           
+            local scale, xo, yo = getScaleAndOffsetsForImage(sprites[index], cellWidth - pictureInnerMargin,
+                    cellHeight - pictureInnerMargin)
+
             love.graphics.draw(sprites[index],
-                leftmargin + xo + cellWidth/2 + (cellWidth * (x - 1)),
-                topmargin + yo + cellHeight/2 +  (cellHeight * (y - 1)),
+                leftmargin + xo + cellWidth / 2 + (cellWidth * (x - 1)),
+                topmargin + yo + cellHeight / 2 + (cellHeight * (y - 1)),
                 0,
                 scale, scale)
-          
          end
          local myX = leftmargin + pictureInnerMargin + (cellWidth * (x - 1))
-         local myY =  topmargin + pictureInnerMargin + (cellHeight * (y - 1))
+         local myY = topmargin + pictureInnerMargin + (cellHeight * (y - 1))
          local chance = page[x][y].chance
          if chance ~= nil then
-            love.graphics.print(chance,myX, myY)
+            love.graphics.print(chance, myX, myY)
          end
          local noteRepeat = page[x][y].noteRepeat
          if noteRepeat and noteRepeat > 1 then
-            love.graphics.print(noteRepeat,myX, myY)
-           
+            love.graphics.print(noteRepeat, myX, myY)
          end
          local notePitchRandomizer = page[x][y].notePitchRandomizer
          if notePitchRandomizer and notePitchRandomizer > 0 then
-            love.graphics.print(notePitchRandomizer,myX, myY)
-         
+            love.graphics.print(notePitchRandomizer, myX, myY)
          end
          local noteVelocity = page[x][y].noteVelocity
          if noteVelocity and noteVelocity > 0 then
-            love.graphics.print(noteVelocity,myX, myY)
-          
+            love.graphics.print(noteVelocity, myX, myY)
          end
       end
    end
    local startSpritesAtY = h - bottommargin + voicesHeight + inbetweenmargin
 
+   -- voices
    for i = 1, 8 do
-      love.graphics.rectangle('line', leftmargin + (i - 1) * cellWidth * 2,
-          startSpritesAtY - voicesHeight - inbetweenmargin, cellWidth * 2,
-          voicesHeight)
+      local x = leftmargin + (i - 1) * cellWidth * 2
+      local y = startSpritesAtY - voicesHeight - inbetweenmargin
+      local cw = cellWidth * 2
+      local ch = voicesHeight
+      love.graphics.rectangle('line', x, y, cw, ch)
+
+      local scale, xo, yo = getScaleAndOffsetsForImage(sprites[1], cw - pictureInnerMargin,
+              ch - pictureInnerMargin)
+      love.graphics.draw(sprites[1], x + xo + cw / 2, y + yo + ch / 2, 0, scale, scale)
    end
 
-
+   -- sample bank
    for i = 1, #sprites do
       local img = sprites[i]
-      local d =   numberOfSpritesInRow/ horizontal
+      local d = numberOfSpritesInRow / horizontal
       local size = cellWidth / d
       local spritesInRow = numberOfSpritesInRow
       local x = leftmargin + ((i - 1) % spritesInRow) * size
