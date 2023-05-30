@@ -2,9 +2,36 @@ package.path = package.path .. ";../../?.lua"
 
 
 require 'palette'
-inspect = require "inspect"
-
+inspect = require "vendor.inspect"
 local ui = require 'lib.ui'
+
+
+
+
+local function createFittingScale(img, desired_w, desired_h)
+   local w, h = img:getDimensions()
+   local sx, sy = desired_w / w, desired_h / h
+   return sx, sy
+end
+
+local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
+   local sx, sy = createFittingScale(img, desiredW, desiredH)
+   local scale = math.min(sx, sy)
+   local xOffset = 0
+   local yOffset = 0
+   if scale == sx then
+      xOffset = -desiredW / 2 -- half the height
+      local something = sx * img:getHeight()
+      local something2 = sy * img:getHeight()
+      yOffset = -desiredH / 2 - (something - something2) / 2
+   elseif scale == sy then
+      yOffset = -desiredH / 2 -- half the height
+      local something = sx * img:getWidth()
+      local something2 = sy * img:getWidth()
+      xOffset = -desiredW / 2 + (something - something2) / 2
+   end
+   return scale, xOffset, yOffset
+end
 
 function love.keypressed(key)
    if key == "escape" then
@@ -85,9 +112,8 @@ function love.load()
    playing            = true
    playhead           = 0
 
-   screenWidth        = 1024
-   screenHeight       = 768
-   --love.window.setMode(screenWidth, screenHeight)
+
+   local w, h = love.graphics.getDimensions()
 
    scales             = {
        { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 12 } },
@@ -115,25 +141,27 @@ function love.load()
    vertical = #notesInScale
    horizontal = 16
 
+   topmargin = 48
    leftmargin = 30
    rightmargin = 30
 
-   cellHeight = 48
-   cellWidth = (screenWidth - leftmargin - rightmargin) / horizontal
-
-   bitmapSize = 100
+   
+   cellWidth = (w - leftmargin - rightmargin) / horizontal
+   cellHeight = cellWidth/1.5
    voicesHeight = cellHeight
 
+
    pictureInnerMargin = 4
+   
 
-   pictureTopMargin = pictureInnerMargin / 2
-   pictureInCellScale = (math.min(cellHeight, cellWidth) - pictureInnerMargin) / bitmapSize
-   pictureLeftMargin = 6
 
-   topmargin = 48
-   bottommargin = screenHeight - (cellHeight * vertical) - topmargin
+
+   bottommargin = h - (cellHeight * vertical) - topmargin
    inbetweenmargin = 10
-   pictureInBottomScale = .6
+
+   numberOfSpritesInRow = 32
+
+
 
    head = love.graphics.newImage('resources/theo.png')
    color = colors.dark_green
@@ -377,8 +405,10 @@ function initPage()
 end
 
 function love.mousepressed(x, y, button)
-   if (x > leftmargin and x < screenWidth - rightmargin) then
-      if (y > topmargin and y < screenHeight - bottommargin) then
+   local w,h = love.graphics.getDimensions()
+
+   if (x > leftmargin and x < w - rightmargin) then
+      if (y > topmargin and y < h - bottommargin) then
          local cx = 1 + math.floor((x - leftmargin) / cellWidth)
          local cy = 1 + math.floor((y - topmargin) / cellHeight)
          if (paintModesIndex == 1) then -- note on off
@@ -420,16 +450,15 @@ function love.mousepressed(x, y, button)
    end
 
 
-   local startSpritesAtY = screenHeight - bottommargin + voicesHeight + inbetweenmargin
+   local startSpritesAtY = h - bottommargin + voicesHeight + inbetweenmargin
 
    if (y > startSpritesAtY) then
-      if (x > leftmargin and x < screenWidth - rightmargin) then
-         --local x = leftmargin + ((i - 1) % 16) * size
-         --local y = screenHeight - bottommargin + inbetweenmargin + math.floor((i - 1) / 16) * size
-         -- local size = pictureInBottomScale * bitmapSize
-         local d = 2
+      if (x > leftmargin and x < w - rightmargin) then
+     
+      
+         local d =   numberOfSpritesInRow/ horizontal
          local size = cellWidth / d
-         local spritesInRow = 16 * d
+         local spritesInRow = numberOfSpritesInRow
          local rowNumber = math.floor((y - startSpritesAtY) / size)
          local index = 1 + math.floor((x - leftmargin) / (size)) +
              (rowNumber * spritesInRow)
@@ -467,12 +496,12 @@ function love.draw()
           palette[color][3] + .05)
       for y = 0, vertical do
          love.graphics.line(leftmargin, topmargin + y * cellHeight,
-             screenWidth - rightmargin, topmargin + y * cellHeight)
+             w - rightmargin, topmargin + y * cellHeight)
       end
 
       for x = 0, horizontal do
          love.graphics.line(leftmargin + x * cellWidth, topmargin,
-             leftmargin + x * cellWidth, screenHeight - bottommargin)
+             leftmargin + x * cellWidth, h - bottommargin)
       end
    end
 
@@ -481,53 +510,55 @@ function love.draw()
    for x = 1, horizontal do
       for y = 1, vertical do
          local index = page[x][y].value
+
+
          if (index > 0) then
+            local scale, xo, yo = getScaleAndOffsetsForImage(sprites[index], cellWidth-pictureInnerMargin, cellHeight-pictureInnerMargin)
+           
             love.graphics.draw(sprites[index],
-                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
-                topmargin + pictureTopMargin + (cellHeight * (y - 1)),
+                leftmargin + xo + cellWidth/2 + (cellWidth * (x - 1)),
+                topmargin + yo + cellHeight/2 +  (cellHeight * (y - 1)),
                 0,
-                pictureInCellScale, pictureInCellScale)
+                scale, scale)
+          
          end
+         local myX = leftmargin + pictureInnerMargin + (cellWidth * (x - 1))
+         local myY =  topmargin + pictureInnerMargin + (cellHeight * (y - 1))
          local chance = page[x][y].chance
          if chance ~= nil then
-            love.graphics.print(chance,
-                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
-                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+            love.graphics.print(chance,myX, myY)
          end
          local noteRepeat = page[x][y].noteRepeat
          if noteRepeat and noteRepeat > 1 then
-            love.graphics.print(noteRepeat,
-                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
-                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+            love.graphics.print(noteRepeat,myX, myY)
+           
          end
          local notePitchRandomizer = page[x][y].notePitchRandomizer
          if notePitchRandomizer and notePitchRandomizer > 0 then
-            love.graphics.print(notePitchRandomizer,
-                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
-                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+            love.graphics.print(notePitchRandomizer,myX, myY)
+         
          end
          local noteVelocity = page[x][y].noteVelocity
          if noteVelocity and noteVelocity > 0 then
-            love.graphics.print(noteVelocity,
-                leftmargin + pictureLeftMargin + (cellWidth * (x - 1)),
-                topmargin + pictureTopMargin + (cellHeight * (y - 1)))
+            love.graphics.print(noteVelocity,myX, myY)
+          
          end
       end
    end
-   local startSpritesAtY = screenHeight - bottommargin + voicesHeight + inbetweenmargin
+   local startSpritesAtY = h - bottommargin + voicesHeight + inbetweenmargin
 
    for i = 1, 8 do
       love.graphics.rectangle('line', leftmargin + (i - 1) * cellWidth * 2,
           startSpritesAtY - voicesHeight - inbetweenmargin, cellWidth * 2,
-          cellWidth - inbetweenmargin)
+          voicesHeight)
    end
 
 
    for i = 1, #sprites do
       local img = sprites[i]
-      local d = 2
+      local d =   numberOfSpritesInRow/ horizontal
       local size = cellWidth / d
-      local spritesInRow = 16 * d
+      local spritesInRow = numberOfSpritesInRow
       local x = leftmargin + ((i - 1) % spritesInRow) * size
       local y = startSpritesAtY + math.floor((i - 1) / spritesInRow) * size
 
@@ -541,9 +572,9 @@ function love.draw()
       end
       love.graphics.setColor(1, 1, 1)
 
-      local s = size / bitmapSize
 
-      love.graphics.draw(img, x, y, 0, s, s)
+      local sx, sy = createFittingScale(img, size, size)
+      love.graphics.draw(img, x, y, 0, sx, sx)
    end
 
    if playing then
@@ -565,7 +596,7 @@ function love.draw()
       notesInScale = scale.notes
 
       vertical = #notesInScale
-      bottommargin = screenHeight - (cellHeight * vertical) - topmargin
+      bottommargin = h - (cellHeight * vertical) - topmargin
       channel.main2audio:push({ type = "scale", data = notesInScale })
       --paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
