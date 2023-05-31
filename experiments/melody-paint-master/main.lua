@@ -52,6 +52,22 @@ function love.keypressed(key)
       octave = octave - 1
       octave = math.max( -5, octave)
    end
+   if key == "a" then
+      voices[drawingVoiceIndex].voiceTuning = voices[drawingVoiceIndex].voiceTuning - 1
+      channel.main2audio:push({ type = "voices", data = voices });
+   end
+   if key == "s" then
+      voices[drawingVoiceIndex].voiceTuning = voices[drawingVoiceIndex].voiceTuning + 1
+      channel.main2audio:push({ type = "voices", data = voices });
+   end
+   if key == "d" then
+      voices[drawingVoiceIndex].voiceVolume = voices[drawingVoiceIndex].voiceVolume - .1
+      channel.main2audio:push({ type = "voices", data = voices });
+   end
+   if key == "f" then
+      voices[drawingVoiceIndex].voiceVolume = voices[drawingVoiceIndex].voiceVolume + .1
+      channel.main2audio:push({ type = "voices", data = voices });
+   end
    if key == "z" then
       tuning = tuning - 1
       channel.main2audio:push({ type = "tuning", data = tuning });
@@ -113,25 +129,26 @@ function love.load()
    local w, h = love.graphics.getDimensions()
 
    scales     = {
-       { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 12 } },
+       { name = 'koalaMinor',   notes = { 0, 2, 3, 5, 7, 8, 11 } },
+       { name = 'koalaHexa',    notes = { 0, 3, 4, 7, 8, 11 } },
+       --
+       { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 11 } },
+       { name = 'naturalMinor', notes = { 0, 2, 3, 5, 7, 8, 10, 11 } },
        { name = 'whole',        notes = { 0, 2, 4, 6, 8, 10 } },
        { name = 'bebop',        notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
-       { name = 'soundforest',  notes = { 0, 2, 5, 9, 12, 16 } },
-       { name = 'naturalMinor', notes = { 0, 2, 3, 5, 7, 8, 10, 12 } },
-       { name = 'koalaMinor',   notes = { 0, 2, 3, 5, 7, 8, 11, 12 } },
-       { name = 'koalaPenta',   notes = { 0, 3, 5, 7, 10, 12 } },
-       { name = 'koalaHexa',    notes = { 0, 3, 4, 7, 8, 11, 12 } },
-       { name = 'koalaChroma',  notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 } },
+       { name = 'soundforest',  notes = { 0, 2, 5, 9, 11, 16 } },
+       { name = 'koalaPenta',   notes = { 0, 3, 5, 7, 10, 11 } },
+       { name = 'chromatic',    notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 } },
        { name = 'pentaMinor ',  notes = { 0, 2, 3, 4, 6 } },
        { name = 'gypsy',        notes = { 0, 2, 3, 6, 7, 8, 10 } },
        { name = 'dorian',       notes = { 0, 2, 3, 5, 7, 9, 10 } },
        { name = 'augmented',    notes = { 0, 3, 4, 7, 8, 11 } },
        { name = 'tritone',      notes = { 0, 1, 4, 6, 7, 10 } },
-       { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
+       -- { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
    }
 
 
-   scale = findScaleByName('koalaChroma')
+   scale = findScaleByName('chromatic')
    notesInScale = scale.notes
 
 
@@ -163,29 +180,30 @@ function love.load()
    head = love.graphics.newImage('resources/theo.png')
    color = colors.dark_green
    drawingValue = 1
-
+   drawingVoiceIndex = 1
 
    page1 = initPage()
    page2 = initPage()
-   page1[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page1[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page1[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page1[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   if false then
+      page1[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page1[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page1[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page1[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
 
-   page2[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page2[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page2[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page2[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page2[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page2[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page2[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page2[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
 
 
+
+
+      page[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+      page[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
+   end
    page = page1
-
-   page[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page[9][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-   page[13][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
-
-
    paintModes = { 'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity' }
    paintModesIndex = 1
    noteChances = { 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0 }
@@ -357,7 +375,7 @@ function love.load()
 
    voices = {}
    for i = 1, 8 do
-      voices[i] = { voiceIndex = i, tuning = 0, volume = 1 }
+      voices[i] = { voiceIndex = i, voiceTuning = 0, voiceVolume = 1 }
    end
 
    channel.main2audio:push({ type = "samples", data = samples });
@@ -412,12 +430,14 @@ end
 function love.mousepressed(x, y, button)
    local w, h = love.graphics.getDimensions()
 
+
+   -- grid
    if (x > leftmargin and x < w - rightmargin) then
       if (y > topmargin and y < h - bottommargin) then
          local cx = 1 + math.floor((x - leftmargin) / cellWidth)
          local cy = 1 + math.floor((y - topmargin) / cellHeight)
          if (paintModesIndex == 1) then -- note on off
-            page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingValue
+            page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingVoiceIndex
             page[cx][cy].octave = octave
             page[cx][cy].semitone = notesInScale[(#notesInScale + 1) - cy]
          end
@@ -458,15 +478,21 @@ function love.mousepressed(x, y, button)
    local start8VoicesAtY = h - bottommargin
    local startSpritesAtY = start8VoicesAtY + voicesHeight + inbetweenmargin
 
+   -- voices
    if y > start8VoicesAtY and y < startSpritesAtY then
       if (x > leftmargin and x < w - rightmargin) then
          local d = 8 / horizontal
          local size = (cellWidth) / d
          local index = 1 + math.floor((x - leftmargin) / (size))
-         --print(index)
+         local sampleIndex = voices[index].voiceIndex
+         local s = samples[sampleIndex]:clone()
+         drawingVoiceIndex = index
+         print('drawingVoiceIndex', drawingVoiceIndex)
+         love.audio.play(s)
       end
    end
 
+   -- samplebank
    if (y > startSpritesAtY) then
       if (x > leftmargin and x < w - rightmargin) then
          local d = numberOfSpritesInRow / horizontal
@@ -479,7 +505,9 @@ function love.mousepressed(x, y, button)
          octave = 0
          local s = samples[index]:clone()
          love.audio.play(s)
-         drawingValue = index
+         -- drawingValue = index
+         voices[drawingVoiceIndex].voiceIndex = index
+         channel.main2audio:push({ type = "voices", data = voices });
          paintModesIndex = 1
       end
    end
@@ -492,6 +520,7 @@ end
 function love.draw()
    local w, h = love.graphics.getDimensions()
    ui.handleMouseClickStart()
+   -- grid lines
    love.graphics.clear(palette[color])
    love.graphics.setColor(palette[color][1] - .1,
        palette[color][2] - .1,
@@ -526,10 +555,12 @@ function love.draw()
          local index = page[x][y].value
 
          if (index > 0) then
-            local scale, xo, yo = getScaleAndOffsetsForImage(sprites[index], cellWidth - pictureInnerMargin,
+            local voiceIndex = voices[index].voiceIndex
+
+            local scale, xo, yo = getScaleAndOffsetsForImage(sprites[voiceIndex], cellWidth - pictureInnerMargin,
                     cellHeight - pictureInnerMargin)
 
-            love.graphics.draw(sprites[index],
+            love.graphics.draw(sprites[voiceIndex],
                 leftmargin + xo + cellWidth / 2 + (cellWidth * (x - 1)),
                 topmargin + yo + cellHeight / 2 + (cellHeight * (y - 1)),
                 0,
@@ -567,7 +598,16 @@ function love.draw()
 
       local scale, xo, yo = getScaleAndOffsetsForImage(sprites[1], cw - pictureInnerMargin,
               ch - pictureInnerMargin)
-      love.graphics.draw(sprites[1], x + xo + cw / 2, y + yo + ch / 2, 0, scale, scale)
+
+      if drawingVoiceIndex == i then
+         love.graphics.setColor(palette[color][1] - .1,
+             palette[color][2] - .1,
+             palette[color][3] - .1)
+         love.graphics.rectangle('fill', x, y, cw, ch)
+      end
+      love.graphics.setColor(1, 1, 1)
+      local index = voices[i].voiceIndex
+      love.graphics.draw(sprites[index], x + xo + cw / 2, y + yo + ch / 2, 0, scale, scale)
    end
 
    -- sample bank
@@ -594,12 +634,13 @@ function love.draw()
       love.graphics.draw(img, x, y, 0, sx, sx)
    end
 
+   -- playhead
    if playing then
       love.graphics.draw(head, leftmargin + (playhead * cellWidth), 0, 0, .5, .5)
    end
 
 
-
+   -- top bar
    if labelbutton('chance', paintModes[paintModesIndex], w - 100, 00, 100, 20).clicked then
       paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
@@ -618,7 +659,7 @@ function love.draw()
       --paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
 
-
+   -- on screen text
    love.graphics.print(
        'bpm: ' ..
        bpm .. ', octave: ' .. octave .. ', tuning: ' .. tuning .. ', swing: ' .. swing .. ', paused: ' ..

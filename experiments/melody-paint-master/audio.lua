@@ -135,7 +135,7 @@ while (true) do
 
          if pattern[index] then
             for i = 1, #scale do
-               local v = pattern[index][i].value
+               local v = pattern[index][i].value -- this is now a voiceindex
                local o = pattern[index][i].octave
 
                if pattern[index][i].chance ~= nil then
@@ -148,6 +148,9 @@ while (true) do
 
 
                if v > 0 then
+                  local vi = voices[v].voiceIndex -- this is now an index into the whole sample library
+                  local vt = voices[v].voiceTuning
+                  local vv = math.min(1, math.max(0, voices[v].voiceVolume))
                   local semi = pattern[index][i].semitone
 
 
@@ -165,7 +168,7 @@ while (true) do
                   --semi = scale[i]
 
                   --o = love.math.random()*
-                  semi = semi + tuning
+                  semi = semi + tuning + vt
 
 
 
@@ -186,8 +189,8 @@ while (true) do
 
                   for j = 1, note_repeat do
                      local s
-                     if (v <= #samples) then
-                        s = samples[v]:clone()
+                     if (vi <= #samples) then
+                        s = samples[vi]:clone()
                      end
 
 
@@ -205,7 +208,8 @@ while (true) do
                      if noteVelocity ~= nil and noteVelocity ~= 0 then
                         velocity = noteVelocity
                      end
-                     s:setVolume(velocity)
+                     --print(vv)
+                     s:setVolume(velocity * vv)
                      -- i only swing the even beats
                      local offset = math.floor(beat) % 2 == 0
 
