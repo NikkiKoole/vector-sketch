@@ -24,12 +24,6 @@ channel.audio2main = love.thread.getChannel("audio2main"); -- from thread
 channel.main2audio = love.thread.getChannel("main2audio"); --from main
 
 
-
-
-
---local mytick = 0
-
-
 function mapInto(x, in_min, in_max, out_min, out_max)
    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
@@ -76,10 +70,6 @@ function chokeGroup(index)
 end
 
 local queue = {}
-
-
-
-
 local beat = 0
 
 
@@ -305,6 +295,12 @@ while (true) do
          paused = v.data
          now    = love.timer.getTime()
       end
+      if (v.type == 'stop') then
+         
+         love.audio.stop( )
+         return love.event.quit()
+      end
       --print(v.type, v.data)
    end
+  
 end

@@ -4,6 +4,7 @@ package.path = package.path .. ";../../?.lua"
 require 'palette'
 inspect = require "vendor.inspect"
 local ui = require 'lib.ui'
+local text = require 'lib.text'
 
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -31,9 +32,7 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
 end
 
 function love.keypressed(key)
-   if key == "escape" then
-      love.event.quit()
-   end
+ 
    if key == "left" then
       bpm = bpm - 10
       bpm = math.max(10, bpm)
@@ -98,6 +97,12 @@ function love.keypressed(key)
    if key == "2" then
       page = page2
       channel.main2audio:push({ type = "pattern", data = page });
+   end
+
+   if key == "escape" then
+      love.audio.stop( )
+      channel.main2audio:push({ type = "stop"});
+      love.event.quit()
    end
 end
 
@@ -291,16 +296,6 @@ function love.load()
        'zebra',
    }
 
-   local cr78 = {
-       { 'lemur',       'cr78/Tamb 1' },
-       { 'sheep',       'cr78/Rim Shot' },
-       { 'panther',     'cr78/Bongo High' },
-       { 'kiwi',        'cr78/Bongo Low' },
-       { 'hummingbird', 'cr78/Conga Low' },
-       { 'beetle',      'cr78/Guiro 1' },
-       { 'cow',         'cr78/Cowbell' },
-       { 'scorpion',    'cr78/HiHat Metal' }
-   }
 
    local sample_data = {
        { 'zebra',       'mipo/mi' },
@@ -533,6 +528,12 @@ function bool2str(bool)
    return bool and 'true' or 'false'
 end
 
+function love.filedropped(file)
+   loadFile(file)
+  
+end
+
+
 function love.draw()
    local w, h = love.graphics.getDimensions()
    ui.handleMouseClickStart()
@@ -674,7 +675,7 @@ function love.draw()
       channel.main2audio:push({ type = "scale", data = notesInScale })
    end
 
-   if newImageButton(save, w - 20, 0, .2, .2).clicked then
+   function saveFile() 
       local str = os.date("%Y%m%d%H%M")
       local path = str .. '.melodypaint.txt'
       local indexToSamplePath = {}
@@ -692,6 +693,23 @@ function love.draw()
       love.filesystem.write(path, inspect(data, { indent = "" }))
       local openURL = "file://" .. love.filesystem.getSaveDirectory() --.. '/' .. shapePath
       love.system.openURL(openURL)
+   end
+   function loadFile(file)
+      local filename = file:getFilename()
+      if text.ends_with(filename, 'melodypaint.txt') then
+   
+      file:open("r")
+      local data = file:read()
+      local tab = (loadstring("return " .. data)())
+      print(inspect(tab))
+      else
+         print('I only work with files of type .melodypain.txt')
+      end
+   end
+
+
+   if newImageButton(save, w - 20, 0, .2, .2).clicked then
+      saveFile()
    end
 
    -- on screen text
