@@ -32,7 +32,6 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
 end
 
 function love.keypressed(key)
- 
    if key == "left" then
       bpm = bpm - 10
       bpm = math.max(10, bpm)
@@ -100,8 +99,8 @@ function love.keypressed(key)
    end
 
    if key == "escape" then
-      love.audio.stop( )
-      channel.main2audio:push({ type = "stop"});
+      love.audio.stop()
+      channel.main2audio:push({ type = "stop" });
       love.event.quit()
    end
 end
@@ -299,6 +298,8 @@ function love.load()
 
    local sample_data = {
        { 'zebra',       'mipo/mi' },
+       { 'zebra',       'mipo/mi' },
+       { 'zebra',       'mipo/mi' },
        { 'octopus',     'mipo/po' },
        { 'goldfish',    'mipo/pi' },
        { 'bat',         'mipo/mo' },
@@ -359,6 +360,7 @@ function love.load()
        { 'cow',         'cr78/Cowbell' },
        { 'scorpion',    'cr78/HiHat Accent' },
        { 'scorpion',    'cr78/HiHat Metal' },
+       { 'zebra',       'cr78/HiHat' },
        { 'scorpion',    'cr78/Cymbal' },
        { 'scorpion',    'cr78/Snare' },
        { 'scorpion',    'cr78/Kick' },
@@ -384,9 +386,10 @@ function love.load()
 
    save = love.graphics.newImage('resources/save.png')
 
+   voiceMax = 12
    voices = {}
-   for i = 1, 8 do
-      voices[i] = { voiceIndex = i, voiceTuning = 0, voiceVolume = 1 }
+   for i = 1, voiceMax do
+      voices[i] = nil -- { voiceIndex = i, voiceTuning = 0, voiceVolume = 1 }
    end
 
    channel.main2audio:push({ type = "samples", data = samples });
@@ -431,7 +434,7 @@ function initPage()
    for x = 1, horizontal do
       local row = {}
       for y = 1, vertical do
-         table.insert(row, { value = 0 })
+         table.insert(row, { value = 0, x = x, y = y })
       end
       table.insert(result, row)
    end
@@ -448,9 +451,11 @@ function love.mousepressed(x, y, button)
          local cx = 1 + math.floor((x - leftmargin) / cellWidth)
          local cy = 1 + math.floor((y - topmargin) / cellHeight)
          if (paintModesIndex == 1) then -- note on off
-            page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingVoiceIndex
-            page[cx][cy].octave = octave
-            page[cx][cy].semitone = notesInScale[(#notesInScale + 1) - cy]
+            if voices[drawingVoiceIndex] then
+               page[cx][cy].value = (page[cx][cy].value > 0) and 0 or drawingVoiceIndex
+               page[cx][cy].octave = octave
+               page[cx][cy].semitone = notesInScale[(#notesInScale + 1) - cy]
+            end
          end
 
          if (paintModesIndex == 2) then -- note chance
@@ -486,20 +491,22 @@ function love.mousepressed(x, y, button)
    end
 
 
-   local start8VoicesAtY = h - bottommargin
-   local startSpritesAtY = start8VoicesAtY + voicesHeight + inbetweenmargin
+   local startVoicesAtY = h - bottommargin
+   local startSpritesAtY = startVoicesAtY + voicesHeight + inbetweenmargin
 
    -- voices
-   if y > start8VoicesAtY and y < startSpritesAtY then
+   if y > startVoicesAtY and y < startSpritesAtY then
       if (x > leftmargin and x < w - rightmargin) then
-         local d = 8 / horizontal
+         local d = voiceMax / horizontal
          local size = (cellWidth) / d
          local index = 1 + math.floor((x - leftmargin) / (size))
-         local sampleIndex = voices[index].voiceIndex
-         local s = samples[sampleIndex].s:clone()
+         if voices[index] then
+            local sampleIndex = voices[index].voiceIndex
+            local s = samples[sampleIndex].s:clone()
+
+            love.audio.play(s)
+         end
          drawingVoiceIndex = index
-         print('drawingVoiceIndex', drawingVoiceIndex)
-         love.audio.play(s)
       end
    end
 
@@ -517,7 +524,14 @@ function love.mousepressed(x, y, button)
          local s = samples[index].s:clone()
          love.audio.play(s)
          -- drawingValue = index
-         voices[drawingVoiceIndex].voiceIndex = index
+
+
+
+         if voices[drawingVoiceIndex] ~= nil then
+            voices[drawingVoiceIndex].voiceIndex = index
+         else
+            voices[drawingVoiceIndex] = { voiceIndex = index, voiceTuning = 0, voiceVolume = 1 }
+         end
          channel.main2audio:push({ type = "voices", data = voices });
          paintModesIndex = 1
       end
@@ -530,9 +544,7 @@ end
 
 function love.filedropped(file)
    loadFile(file)
-  
 end
-
 
 function love.draw()
    local w, h = love.graphics.getDimensions()
@@ -571,7 +583,7 @@ function love.draw()
       for y = 1, vertical do
          local index = page[x][y].value
 
-         if (index > 0) then
+         if (index > 0 and voices[index]) then
             local voiceIndex = voices[index].voiceIndex
 
             local scale, xo, yo = getScaleAndOffsetsForImage(sprites[voiceIndex], cellWidth - pictureInnerMargin,
@@ -606,10 +618,14 @@ function love.draw()
    local startSpritesAtY = h - bottommargin + voicesHeight + inbetweenmargin
 
    -- voices
-   for i = 1, 8 do
-      local x = leftmargin + (i - 1) * cellWidth * 2
+   for i = 1, voiceMax do
+      local d = voiceMax / horizontal
+
+      local size = (cellWidth) / d
+
+      local x = leftmargin + (i - 1) * size
       local y = startSpritesAtY - voicesHeight - inbetweenmargin
-      local cw = cellWidth * 2
+      local cw = size
       local ch = voicesHeight
       love.graphics.rectangle('line', x, y, cw, ch)
 
@@ -623,8 +639,10 @@ function love.draw()
          love.graphics.rectangle('fill', x, y, cw, ch)
       end
       love.graphics.setColor(1, 1, 1)
-      local index = voices[i].voiceIndex
-      love.graphics.draw(sprites[index], x + xo + cw / 2, y + yo + ch / 2, 0, scale, scale)
+      if voices[i] ~= nil then
+         local index = voices[i].voiceIndex
+         love.graphics.draw(sprites[index], x + xo + cw / 2, y + yo + ch / 2, 0, scale, scale)
+      end
    end
 
    -- sample bank
@@ -675,38 +693,92 @@ function love.draw()
       channel.main2audio:push({ type = "scale", data = notesInScale })
    end
 
-   function saveFile() 
+   function optimizePage(p)
+      local r = initPage()
+      for x = 1, #p do
+         for y = 1, #p[x] do
+            if p[x][y].value > 0 then
+               r[x][y] = p[x][y]
+            else
+               r[x][y] = 0
+            end
+         end
+      end
+      return r
+   end
+
+   function filloutOptimizedPage(p)
+      local r = initPage()
+      for x = 1, #p do
+         for y = 1, #p[x] do
+            if p[x][y] ~= 0 and p[x][y].value > 0 then
+               r[x][y] = p[x][y]
+            else
+               --r[x][y] = 0
+            end
+         end
+      end
+      return r
+   end
+
+   function saveFile()
       local str = os.date("%Y%m%d%H%M")
       local path = str .. '.melodypaint.txt'
       local indexToSamplePath = {}
 
       for i = 1, #voices do
-         indexToSamplePath[i] = { index = voices[i].voiceIndex, path = samples[voices[i].voiceIndex].p }
-      end
+         if voices[i] then
+            indexToSamplePath[i] = { index = voices[i].voiceIndex, path = samples[voices[i].voiceIndex].p }
+         else
 
+         end
+      end
       local data = {
           index = indexToSamplePath,
           voices = voices,
-          pages = { page1, page2 }
+          pages = { optimizePage(page1), optimizePage(page2) }
       }
 
       love.filesystem.write(path, inspect(data, { indent = "" }))
       local openURL = "file://" .. love.filesystem.getSaveDirectory() --.. '/' .. shapePath
       love.system.openURL(openURL)
    end
+
    function loadFile(file)
       local filename = file:getFilename()
       if text.ends_with(filename, 'melodypaint.txt') then
-   
-      file:open("r")
-      local data = file:read()
-      local tab = (loadstring("return " .. data)())
-      print(inspect(tab))
+         file:open("r")
+         local data = file:read()
+         local tab = (loadstring("return " .. data)())
+
+         page1 = filloutOptimizedPage(tab.pages[1])
+         page2 = filloutOptimizedPage(tab.pages[2])
+         voices = tab.voices
+         page = page1
+
+         for i = 1, #tab.index do
+            local idx = tab.index[i].index
+            -- bcause i can add and remove and reorder samples at will from the program.
+            -- I need a way to find the correct index again
+            -- this path should be the same as the sample at index
+            local path = tab.index[i].path
+            if (samples[idx].p ~= path) then
+               -- we have to find the new index this sample lives at
+               for si = 1, #samples do
+                  if samples[si].p == path then
+                     local newIndex = si
+                     voices[i].voiceIndex = si
+                  end
+               end
+            end
+         end
+
+         channel.main2audio:push({ type = "pattern", data = page });
+         channel.main2audio:push({ type = "voices", data = voices });
       else
-         print('I only work with files of type .melodypain.txt')
+         print('I only work with files of type .melodypaint.txt')
       end
    end
-
 
    if newImageButton(save, w - 20, 0, .2, .2).clicked then
       saveFile()

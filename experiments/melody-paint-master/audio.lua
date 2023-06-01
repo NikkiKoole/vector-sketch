@@ -225,7 +225,7 @@ while (true) do
       if (#missedTicks) then
          for ti = 1, #missedTicks do
             local t = missedTicks[ti]
-            print(t)
+            --print(t)
          end
          --print('I am in a place where i need todo aomething with missingticks!')
          --print(inspect(missedTicks))
@@ -296,11 +296,9 @@ while (true) do
          now    = love.timer.getTime()
       end
       if (v.type == 'stop') then
-         
-         love.audio.stop( )
+         love.audio.stop()
          return love.event.quit()
       end
       --print(v.type, v.data)
    end
-  
 end
