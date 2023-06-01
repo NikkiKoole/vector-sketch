@@ -371,6 +371,7 @@ function love.load()
        { 'hamster',     'guirojuno/rijstei' },
        { 'rhinoceros',  'Triangles 103' },
        { 'hamster',     'Triangles 101' },
+       { 'hamster',     'prophet1c' },
    }
 
 
