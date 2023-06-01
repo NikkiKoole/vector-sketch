@@ -243,7 +243,7 @@ function newImageButton(img, x, y, sx, sy)
       end
    end
 
-   love.graphics.draw(img, x, y, sx, sy)
+   love.graphics.draw(img, x, y, 0, sx, sy)
 
    return {
        clicked = clicked

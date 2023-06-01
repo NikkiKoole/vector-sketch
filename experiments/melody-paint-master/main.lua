@@ -1,6 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
-
+-- https://www.svgrepo.com/collection/atlas-variety-line-icons/
 require 'palette'
 inspect = require "vendor.inspect"
 local ui = require 'lib.ui'
@@ -311,6 +311,10 @@ function love.load()
        { 'bat',         'mipo/po2' },
        { 'goldfish',    'mipo/mi3' },
        { 'bat',         'mipo/po3' },
+       { 'bat',         'mipo/blah1' },
+       { 'bat',         'mipo/blah2' },
+       { 'bat',         'mipo/blah3' },
+
        { 'polar',       'guirojuno/1' },
        { 'porcupine',   'guirojuno/2' },
        { 'walrus',      'guirojuno/3' },
@@ -354,13 +358,22 @@ function love.load()
        { 'kiwi',        'cr78/Bongo Low' },
        { 'hummingbird', 'cr78/Conga Low' },
        { 'beetle',      'cr78/Guiro 1' },
+       { 'beetle',      'cr78/Guiro 2' },
+       { 'penguin',     'cr78/Clave' },
+       { 'penguin',     'cr78/Maracas' },
        { 'cow',         'cr78/Cowbell' },
+       { 'scorpion',    'cr78/HiHat Accent' },
        { 'scorpion',    'cr78/HiHat Metal' },
        { 'scorpion',    'cr78/Cymbal' },
        { 'scorpion',    'cr78/Snare' },
+       { 'scorpion',    'cr78/Kick' },
+       { 'scorpion',    'cr78/Kick Accent' },
+
        { 'gorilla',     'macdm/bassmac1' },
        { 'rhinoceros',  'macdm/bassmac2' },
        { 'hamster',     'guirojuno/rijstei' },
+       { 'rhinoceros',  'Triangles 103' },
+       { 'hamster',     'Triangles 101' },
    }
 
 
@@ -372,6 +385,9 @@ function love.load()
       local data = love.sound.newSoundData('instruments/' .. sample_data[i][2] .. '.wav')
       table.insert(samples, love.audio.newSource(data, 'static'))
    end
+
+
+   save = love.graphics.newImage('resources/save.png')
 
    voices = {}
    for i = 1, 8 do
@@ -420,7 +436,7 @@ function initPage()
    for x = 1, horizontal do
       local row = {}
       for y = 1, vertical do
-         table.insert(row, { x = x, y = y, value = 0 })
+         table.insert(row, { value = 0 })
       end
       table.insert(result, row)
    end
@@ -641,11 +657,11 @@ function love.draw()
 
 
    -- top bar
-   if labelbutton('chance', paintModes[paintModesIndex], w - 100, 00, 100, 20).clicked then
+   if labelbutton('chance', paintModes[paintModesIndex], w - 100 - 20, 00, 100, 20).clicked then
       paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
 
-   if labelbutton('scale', scale.name, w - 200, 00, 100, 20).clicked then
+   if labelbutton('scale', scale.name, w - 200 - 20, 00, 100, 20).clicked then
       local name, index = findScaleByName(scale.name)
 
       local newIndex = (index % #scales) + 1
@@ -656,7 +672,22 @@ function love.draw()
       vertical = #notesInScale
       bottommargin = h - (cellHeight * vertical) - topmargin
       channel.main2audio:push({ type = "scale", data = notesInScale })
-      --paintModesIndex = (paintModesIndex % #paintModes) + 1
+   end
+
+   if newImageButton(save, w - 20, 0, .2, .2).clicked then
+      print('save')
+      local path = 'test.melodypaint.txt'
+
+      local data = {
+          voices = voices,
+          pages = { page1, page2 }
+      }
+
+      love.filesystem.write(path, inspect(data, { indent = "" }))
+      --render.renderNodeIntoCanvas(root, LG.newCanvas(1024 / 2, 1024 / 2), shapePath .. shapeName .. ".polygons.png")
+      local openURL = "file://" .. love.filesystem.getSaveDirectory() --.. '/' .. shapePath
+      print(openURL)
+      love.system.openURL(openURL)
    end
 
    -- on screen text
