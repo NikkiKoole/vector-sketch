@@ -383,7 +383,7 @@ function love.load()
       table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
 
       local data = love.sound.newSoundData('instruments/' .. sample_data[i][2] .. '.wav')
-      table.insert(samples, love.audio.newSource(data, 'static'))
+      table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i][2] })
    end
 
 
@@ -501,7 +501,7 @@ function love.mousepressed(x, y, button)
          local size = (cellWidth) / d
          local index = 1 + math.floor((x - leftmargin) / (size))
          local sampleIndex = voices[index].voiceIndex
-         local s = samples[sampleIndex]:clone()
+         local s = samples[sampleIndex].s:clone()
          drawingVoiceIndex = index
          print('drawingVoiceIndex', drawingVoiceIndex)
          love.audio.play(s)
@@ -519,7 +519,7 @@ function love.mousepressed(x, y, button)
              (rowNumber * spritesInRow)
          index = math.min(#sprites, index)
          octave = 0
-         local s = samples[index]:clone()
+         local s = samples[index].s:clone()
          love.audio.play(s)
          -- drawingValue = index
          voices[drawingVoiceIndex].voiceIndex = index
@@ -675,18 +675,22 @@ function love.draw()
    end
 
    if newImageButton(save, w - 20, 0, .2, .2).clicked then
-      print('save')
-      local path = 'test.melodypaint.txt'
+      local str = os.date("%Y%m%d%H%M")
+      local path = str .. '.melodypaint.txt'
+      local indexToSamplePath = {}
+
+      for i = 1, #voices do
+         indexToSamplePath[i] = { index = voices[i].voiceIndex, path = samples[voices[i].voiceIndex].p }
+      end
 
       local data = {
+          index = indexToSamplePath,
           voices = voices,
           pages = { page1, page2 }
       }
 
       love.filesystem.write(path, inspect(data, { indent = "" }))
-      --render.renderNodeIntoCanvas(root, LG.newCanvas(1024 / 2, 1024 / 2), shapePath .. shapeName .. ".polygons.png")
       local openURL = "file://" .. love.filesystem.getSaveDirectory() --.. '/' .. shapePath
-      print(openURL)
       love.system.openURL(openURL)
    end
 

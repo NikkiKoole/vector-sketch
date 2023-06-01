@@ -190,7 +190,7 @@ while (true) do
                   for j = 1, note_repeat do
                      local s
                      if (vi <= #samples) then
-                        s = samples[vi]:clone()
+                        s = samples[vi].s:clone()
                      end
 
 
