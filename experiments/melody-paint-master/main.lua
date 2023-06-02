@@ -99,6 +99,10 @@ function love.keypressed(key)
       page = page2
       channel.main2audio:push({ type = "pattern", data = page });
    end
+   if key == "3" then
+      page = page3
+      channel.main2audio:push({ type = "pattern", data = page });
+   end
 
    if key == "escape" then
       love.audio.stop()
@@ -170,6 +174,7 @@ function love.load()
 
    page1 = initPage()
    page2 = initPage()
+   page3 = initPage()
    if false then
       page1[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
       page1[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
@@ -747,7 +752,7 @@ function love.draw()
       local data = {
           index = indexToSamplePath,
           voices = voices,
-          pages = { optimizePage(page1), optimizePage(page2) }
+          pages = { optimizePage(page1), optimizePage(page2), optimizePage(page3) }
       }
 
       love.filesystem.write(path, inspect(data, { indent = "" }))
@@ -764,6 +769,7 @@ function love.draw()
 
          page1 = filloutOptimizedPage(tab.pages[1])
          page2 = filloutOptimizedPage(tab.pages[2])
+         page3 =tab.pages[3] and  filloutOptimizedPage(tab.pages[3]) or initPage()
          voices = tab.voices
          page = page1
 
