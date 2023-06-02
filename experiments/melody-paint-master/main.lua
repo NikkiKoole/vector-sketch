@@ -568,12 +568,16 @@ function love.draw()
    love.graphics.setColor(palette[color][1] - .1,
        palette[color][2] - .1,
        palette[color][3] - .1)
+
+   for i = 1, horizontal/8 do
+     -- print(i)
    love.graphics.rectangle('fill',
-       leftmargin, topmargin,
+       leftmargin + ((i-1)*(cellWidth * 8)), topmargin,
        cellWidth * 4, cellHeight * vertical)
-   love.graphics.rectangle('fill',
-       leftmargin + cellWidth * 8,
-       topmargin, cellWidth * 4, cellHeight * vertical)
+  -- love.graphics.rectangle('fill',
+  --     leftmargin + cellWidth * 8,
+  --     topmargin, cellWidth * 4, cellHeight * vertical)
+   end
 
    if (true) then
       love.graphics.setColor(palette[color][1] + .05,
