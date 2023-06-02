@@ -115,11 +115,15 @@ function findScaleByName(name)
 end
 
 function love.load()
-   bpm = 90
+   defaultBpm = 90
+   defaultSwing = 50
+   defaultTuning = 0
+
+   bpm = defaultBpm
    octave = 0
-   tuning = 0
+   tuning = defaultTuning
    paused = false
-   swing = 50
+   swing = defaultSwing
    thread = love.thread.newThread('audio.lua')
    thread:start()
    channel            = {};
@@ -737,7 +741,10 @@ function love.draw()
       local data = {
           index = indexToSamplePath,
           voices = voices,
-          pages = { optimizePage(page1), optimizePage(page2) }
+          pages = { optimizePage(page1), optimizePage(page2) },
+          tuning = tuning,
+          swing = swing,
+          bpm = bpm
       }
 
       love.filesystem.write(path, inspect(data, { indent = "" }))
@@ -776,6 +783,13 @@ function love.draw()
 
          channel.main2audio:push({ type = "pattern", data = page });
          channel.main2audio:push({ type = "voices", data = voices });
+
+         bpm = tab.bpm or defaultBpm
+         channel.main2audio:push({ type = "bpm", data = bpm });
+         tuning = tab.tuning or defaultTuning
+         channel.main2audio:push({ type = "tuning", data = tuning });
+         swing = tab.swing or defaultSwing
+         channel.main2audio:push({ type = "swing", data = swing });
       else
          print('I only work with files of type .melodypaint.txt')
       end

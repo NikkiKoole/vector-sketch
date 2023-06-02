@@ -222,35 +222,24 @@ while (true) do
          end
       end
 
-      if (#missedTicks) then
-         for ti = 1, #missedTicks do
-            local t = missedTicks[ti]
-            --print(t)
-         end
-         --print('I am in a place where i need todo aomething with missingticks!')
-         --print(inspect(missedTicks))
-
-         --print(inspect(queue))
-      end
+      -- playing missedticks that are to be played right now.
       for ti = 1, #missedTicks do
          t = missedTicks[ti]
 
          for i = #queue, 1, -1 do
             local q = queue[i]
             if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(t) then
-               print('actually missed a tick that i needed!!!!')
-               --print(inspect(q))
-               --print(inspect(t))
+               --print('actually missed a tick that i needed!!!!')
+               table.remove(queue, i)
+               table.insert(sources, { source = q.source, index = q.index })
+               love.audio.play(q.source)
             end
          end
       end
 
-
+      -- playing notes in queue that are to be played right now.
       for i = #queue, 1, -1 do
          local q = queue[i]
-
-
-
          if math.floor(q.beat) == math.floor(beat) and math.floor(q.tick) == math.floor(tick) then
             table.remove(queue, i)
             table.insert(sources, { source = q.source, index = q.index })
@@ -266,7 +255,8 @@ while (true) do
       lastBeat = beat
       lastTick = tick
    end
-   love.timer.sleep(.001)
+
+   love.timer.sleep(1.0 / (96 * 2))
 
    local v = channel.main2audio:pop();
    if v then
