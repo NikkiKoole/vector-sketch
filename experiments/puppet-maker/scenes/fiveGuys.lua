@@ -373,6 +373,7 @@ function drawGroundPlaneLinesSimple(far, near)
             -- love.graphics.setColor(168 / 255, 175 / 255, 97 / 255, .9)
             love.graphics.setColor(.4, .8, .2, .8)
             love.graphics.setColor(palettes[6][1], palettes[6][2], palettes[6][3])
+            love.graphics.setColor(palettes[20][1], palettes[20][2], palettes[20][3])
             love.graphics.draw(m)
             --love.graphics.draw(m, 0, 400 * s)
         end

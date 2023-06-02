@@ -6,6 +6,8 @@ inspect = require "vendor.inspect"
 local ui = require 'lib.ui'
 local text = require 'lib.text'
 
+local audioHelper = require 'audio-helper'
+
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
@@ -105,17 +107,13 @@ function love.keypressed(key)
    end
 end
 
-function findScaleByName(name)
-   for i = 1, #scales do
-      if scales[i].name == name then
-         return scales[i], i
-      end
-   end
-   return nil, -1
-end
+
 
 function love.load()
 
+
+
+   scale = audioHelper.findScaleByName('chromatic')
 
    font = love.graphics.newFont('/resources/WindsorBT-Roman.otf', 16)
    love.graphics.setFont(font)
@@ -136,26 +134,7 @@ function love.load()
 
    local w, h = love.graphics.getDimensions()
 
-   scales     = {
-       { name = 'koalaMinor',   notes = { 0, 2, 3, 5, 7, 8, 11 } },
-       { name = 'koalaHexa',    notes = { 0, 3, 4, 7, 8, 11 } },
-       { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 11 } },
-       { name = 'naturalMinor', notes = { 0, 2, 3, 5, 7, 8, 10, 11 } },
-       { name = 'whole',        notes = { 0, 2, 4, 6, 8, 10 } },
-       { name = 'bebop',        notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
-       { name = 'soundforest',  notes = { 0, 2, 5, 9, 11, 16 } },
-       { name = 'koalaPenta',   notes = { 0, 3, 5, 7, 10, 11 } },
-       { name = 'chromatic',    notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 } },
-       { name = 'pentaMinor ',  notes = { 0, 2, 3, 4, 6 } },
-       { name = 'gypsy',        notes = { 0, 2, 3, 6, 7, 8, 10 } },
-       { name = 'dorian',       notes = { 0, 2, 3, 5, 7, 9, 10 } },
-       { name = 'augmented',    notes = { 0, 3, 4, 7, 8, 11 } },
-       { name = 'tritone',      notes = { 0, 1, 4, 6, 7, 10 } },
-       -- { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
-   }
-
-
-   scale = findScaleByName('chromatic')
+  
    notesInScale = scale.notes
 
 
@@ -715,12 +694,9 @@ function love.draw()
       paintModesIndex = (paintModesIndex % #paintModes) + 1
    end
 
-   if labelbutton('scale', scale.name, w - 200 - 20, 00, 100, 20).clicked then
-      local name, index = findScaleByName(scale.name)
+   if labelbutton('scale',scale.name, w - 200 - 20, 00, 100, 20).clicked then
 
-      local newIndex = (index % #scales) + 1
-
-      scale = scales[newIndex]
+        scale = audioHelper.getNextScale(scale)
       notesInScale = scale.notes
 
       vertical = #notesInScale
