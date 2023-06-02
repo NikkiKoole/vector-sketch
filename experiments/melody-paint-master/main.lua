@@ -115,6 +115,10 @@ function findScaleByName(name)
 end
 
 function love.load()
+
+
+   font = love.graphics.newFont('/resources/WindsorBT-Roman.otf', 16)
+   love.graphics.setFont(font)
    bpm = 90
    octave = 0
    tuning = 0
@@ -177,12 +181,12 @@ function love.load()
    bottommargin = h - (cellHeight * vertical) - topmargin
    inbetweenmargin = 10
 
-   numberOfSpritesInRow = 32
+   numberOfSpritesInRow = 24
 
 
 
    head = love.graphics.newImage('resources/theo.png')
-   color = colors.dark_green
+   color = colors.cream
    drawingValue = 1
    drawingVoiceIndex = 1
 
@@ -374,12 +378,21 @@ function love.load()
        { 'hamster',     'prophet1c' },
    }
 
+   spriteBackgroundMap = {
+      {sw='babirhodes', bg=colors.pink},
+      {sw='tpl-dnb/', bg=colors.orange},
+      {sw='mipo', bg=colors.peach},
+      {sw='guirojuno', bg=colors.brown},
+      {sw='ElkaSolist505', bg=colors.blue},
+      {sw='cr78/', bg= colors.yellow}
+
+   }
+
 
    sprites = {}
    samples = {}
    for i = 1, #sample_data do
       table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
-
       local data = love.sound.newSoundData('instruments/' .. sample_data[i][2] .. '.wav')
       table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i][2] })
    end
@@ -524,7 +537,7 @@ function love.mousepressed(x, y, button)
          octave = 0
          local s = samples[index].s:clone()
          love.audio.play(s)
-         -- drawingValue = index
+         drawingValue = index
 
 
 
@@ -663,10 +676,28 @@ function love.draw()
              x, y,
              size, size)
       end
+      if (voices[drawingVoiceIndex]) then
+      if i == voices[drawingVoiceIndex].voiceIndex then
+         love.graphics.setColor(1,1,1)
+         love.graphics.rectangle('fill',
+         x, y,
+         size, size)
+      end
+   end
       love.graphics.setColor(1, 1, 1)
 
 
       local sx, sy = createFittingScale(img, size, size)
+      
+      for j = 1, #spriteBackgroundMap do
+         if text.starts_with(samples[i].p,   spriteBackgroundMap[j].sw) then 
+            local bg = palette[spriteBackgroundMap[j].bg]
+            
+            love.graphics.setColor(bg[1],bg[2],bg[3], 0.5)
+            love.graphics.rectangle('fill', x, y, size,size)
+         end
+      end
+      love.graphics.setColor(1,1,1)
       love.graphics.draw(img, x, y, 0, sx, sx)
    end
 
