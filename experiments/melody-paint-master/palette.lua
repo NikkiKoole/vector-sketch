@@ -15,6 +15,8 @@ palette={
    {131,118,156,255},
    {255,119,168,255},
    {255,204,170,255},
+   { 238, 226, 188,255 },
+   { 238/2, 226/2, 188/2,255 }
 }
 for i = 1, #palette do
    palette[i] = {
@@ -29,4 +31,5 @@ colors = {
    brown= 5, dark_gray= 6, light_gray=7,  white=8,
    red= 9,   orange=10,    yellow=11,     green=12,
    blue=13,  indigo=14,    pink= 15,      peach=16,
+   light_cream=17, cream=18,
 }

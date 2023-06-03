@@ -114,7 +114,7 @@ while (true) do
 
          channel.audio2main:push({ type = "playhead", data = math.floor(beat) })
 
-         local index = 1 + math.floor(beat) % 16
+         local index = 1 + math.floor(beat) % #pattern
 
 
          -- todo I kinda need a different index per voice, so i can have differnt loop lengths per voice and introduce polyrithm.

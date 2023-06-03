@@ -6,6 +6,8 @@ inspect = require "vendor.inspect"
 local ui = require 'lib.ui'
 local text = require 'lib.text'
 
+local audioHelper = require 'audio-helper'
+
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
    local sx, sy = desired_w / w, desired_h / h
@@ -97,6 +99,10 @@ function love.keypressed(key)
       page = page2
       channel.main2audio:push({ type = "pattern", data = page });
    end
+   if key == "3" then
+      page = page3
+      channel.main2audio:push({ type = "pattern", data = page });
+   end
 
    if key == "escape" then
       love.audio.stop()
@@ -105,21 +111,20 @@ function love.keypressed(key)
    end
 end
 
-function findScaleByName(name)
-   for i = 1, #scales do
-      if scales[i].name == name then
-         return scales[i], i
-      end
-   end
-   return nil, -1
-end
-
 function love.load()
    defaultBpm = 90
    defaultSwing = 50
    defaultTuning = 0
 
    bpm = defaultBpm
+
+
+
+   scale = audioHelper.findScaleByName('chromatic')
+
+   font = love.graphics.newFont('/resources/WindsorBT-Roman.otf', 16)
+   love.graphics.setFont(font)
+   bpm = 90
    octave = 0
    tuning = defaultTuning
    paused = false
@@ -136,27 +141,7 @@ function love.load()
 
    local w, h = love.graphics.getDimensions()
 
-   scales     = {
-       { name = 'koalaMinor',   notes = { 0, 2, 3, 5, 7, 8, 11 } },
-       { name = 'koalaHexa',    notes = { 0, 3, 4, 7, 8, 11 } },
-       --
-       { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 11 } },
-       { name = 'naturalMinor', notes = { 0, 2, 3, 5, 7, 8, 10, 11 } },
-       { name = 'whole',        notes = { 0, 2, 4, 6, 8, 10 } },
-       { name = 'bebop',        notes = { 0, 2, 4, 5, 7, 9, 10, 11 } },
-       { name = 'soundforest',  notes = { 0, 2, 5, 9, 11, 16 } },
-       { name = 'koalaPenta',   notes = { 0, 3, 5, 7, 10, 11 } },
-       { name = 'chromatic',    notes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 } },
-       { name = 'pentaMinor ',  notes = { 0, 2, 3, 4, 6 } },
-       { name = 'gypsy',        notes = { 0, 2, 3, 6, 7, 8, 10 } },
-       { name = 'dorian',       notes = { 0, 2, 3, 5, 7, 9, 10 } },
-       { name = 'augmented',    notes = { 0, 3, 4, 7, 8, 11 } },
-       { name = 'tritone',      notes = { 0, 1, 4, 6, 7, 10 } },
-       -- { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
-   }
 
-
-   scale = findScaleByName('chromatic')
    notesInScale = scale.notes
 
 
@@ -181,17 +166,18 @@ function love.load()
    bottommargin = h - (cellHeight * vertical) - topmargin
    inbetweenmargin = 10
 
-   numberOfSpritesInRow = 32
+   numberOfSpritesInRow = 24
 
 
 
    head = love.graphics.newImage('resources/theo.png')
-   color = colors.dark_green
+   color = colors.cream
    drawingValue = 1
    drawingVoiceIndex = 1
 
    page1 = initPage()
    page2 = initPage()
+   page3 = initPage()
    if false then
       page1[1][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
       page1[5][1] = { value = 1, octave = 0, semitone = notesInScale[(#notesInScale + 1) - 1] }
@@ -378,12 +364,21 @@ function love.load()
        { 'hamster',     'prophet1c' },
    }
 
+   spriteBackgroundMap = {
+       { sw = 'babirhodes',    bg = colors.pink },
+       { sw = 'tpl-dnb/',      bg = colors.orange },
+       { sw = 'mipo',          bg = colors.peach },
+       { sw = 'guirojuno',     bg = colors.brown },
+       { sw = 'ElkaSolist505', bg = colors.blue },
+       { sw = 'cr78/',         bg = colors.yellow }
+
+   }
+
 
    sprites = {}
    samples = {}
    for i = 1, #sample_data do
       table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
-
       local data = love.sound.newSoundData('instruments/' .. sample_data[i][2] .. '.wav')
       table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i][2] })
    end
@@ -528,7 +523,7 @@ function love.mousepressed(x, y, button)
          octave = 0
          local s = samples[index].s:clone()
          love.audio.play(s)
-         -- drawingValue = index
+         drawingValue = index
 
 
 
@@ -559,12 +554,16 @@ function love.draw()
    love.graphics.setColor(palette[color][1] - .1,
        palette[color][2] - .1,
        palette[color][3] - .1)
-   love.graphics.rectangle('fill',
-       leftmargin, topmargin,
-       cellWidth * 4, cellHeight * vertical)
-   love.graphics.rectangle('fill',
-       leftmargin + cellWidth * 8,
-       topmargin, cellWidth * 4, cellHeight * vertical)
+
+   for i = 1, horizontal / 8 do
+      -- print(i)
+      love.graphics.rectangle('fill',
+          leftmargin + ((i - 1) * (cellWidth * 8)), topmargin,
+          cellWidth * 4, cellHeight * vertical)
+      -- love.graphics.rectangle('fill',
+      --     leftmargin + cellWidth * 8,
+      --     topmargin, cellWidth * 4, cellHeight * vertical)
+   end
 
    if (true) then
       love.graphics.setColor(palette[color][1] + .05,
@@ -667,10 +666,28 @@ function love.draw()
              x, y,
              size, size)
       end
+      if (voices[drawingVoiceIndex]) then
+         if i == voices[drawingVoiceIndex].voiceIndex then
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.rectangle('fill',
+                x, y,
+                size, size)
+         end
+      end
       love.graphics.setColor(1, 1, 1)
 
 
       local sx, sy = createFittingScale(img, size, size)
+
+      for j = 1, #spriteBackgroundMap do
+         if text.starts_with(samples[i].p, spriteBackgroundMap[j].sw) then
+            local bg = palette[spriteBackgroundMap[j].bg]
+
+            love.graphics.setColor(bg[1], bg[2], bg[3], 0.5)
+            love.graphics.rectangle('fill', x, y, size, size)
+         end
+      end
+      love.graphics.setColor(1, 1, 1)
       love.graphics.draw(img, x, y, 0, sx, sx)
    end
 
@@ -686,11 +703,7 @@ function love.draw()
    end
 
    if labelbutton('scale', scale.name, w - 200 - 20, 00, 100, 20).clicked then
-      local name, index = findScaleByName(scale.name)
-
-      local newIndex = (index % #scales) + 1
-
-      scale = scales[newIndex]
+      scale = audioHelper.getNextScale(scale)
       notesInScale = scale.notes
 
       vertical = #notesInScale
@@ -761,6 +774,7 @@ function love.draw()
 
          page1 = filloutOptimizedPage(tab.pages[1])
          page2 = filloutOptimizedPage(tab.pages[2])
+         page3 = tab.pages[3] and filloutOptimizedPage(tab.pages[3]) or initPage()
          voices = tab.voices
          page = page1
 
