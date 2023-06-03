@@ -40,7 +40,7 @@ function getPitch(semitone, octave)
    local freqs = { 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25 }
    local n = mapInto(freqs[semitone + 1], 261.63, 523.25, 0, 1)
    local o = octave + plusoctave
-
+   --print('octave in getpicth', o, semitone)
    if o == -7 then return (0.015625 - (0.0078125 - n / 128)) end
    if o == -6 then return (0.03125 - (0.015625 - n / 64)) end
    if o == -5 then return (0.0625 - (0.03125 - n / 32)) end
@@ -139,6 +139,7 @@ while (true) do
 
                if v > 0 then
                   local vi = voices[v].voiceIndex -- this is now an index into the whole sample library
+
                   local vt = voices[v].voiceTuning
                   local vv = math.min(1, math.max(0, voices[v].voiceVolume))
                   local semi = pattern[index][i].semitone
@@ -158,10 +159,8 @@ while (true) do
                   --semi = scale[i]
 
                   --o = love.math.random()*
+
                   semi = semi + tuning + vt
-
-
-
 
                   while semi < 0 do
                      semi = semi + 12
@@ -172,6 +171,7 @@ while (true) do
                      semi = semi - 12
                      o = o + 1
                   end
+
 
                   --print('after', semi, o)
                   --print(semi, o)
@@ -186,7 +186,7 @@ while (true) do
 
 
                      local p = getPitch(semi, o)
-
+                     -- print(semi, o, p)
                      -- todo parametrize micropicth randomizer
                      -- p = p + ( -0.0125 + love.math.random() * 0.025)
 
