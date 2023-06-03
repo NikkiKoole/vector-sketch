@@ -317,7 +317,7 @@ function love.load()
    }
 
 
-   local sample_data = {
+   local sample_data22 = {
 
        { 'zebra',       'mipo/mi' },
        { 'zebra',       'mipo/mi' },
