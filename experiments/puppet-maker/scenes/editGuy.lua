@@ -871,10 +871,11 @@ function tweenCameraToHeadAndBody()
    tweenCameraTo(x, y, w, h)
 end
 
- function  backToIntro()
+function backToIntro()
    SM.unload('editGuy')
-SM.load('intro')
+   SM.load('intro')
 end
+
 function attachCallbacks()
    Signal.register('click-settings-scroll-area-item', function(x, y)
       partSettingsScrollable(false, x, y)
@@ -1057,7 +1058,7 @@ end
 
 function grabShot()
    for i = 1, #editingGuy.head.children do
-      editingGuy.head.children[i].hidden = true
+      --    editingGuy.head.children[i].hidden = true
    end
 
    render.renderThings(editingGuy.head, true)
