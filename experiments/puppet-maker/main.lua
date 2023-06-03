@@ -92,15 +92,18 @@ end
 function love.load()
    --	1180 , 820
    -- iphone 1334, 750
-   love.window.setMode(1024 / 2, 768 / 2,
-       { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
-   love.window.setTitle('☺ Puppet Maker')
+   if false then
+      --love.window.setMode(1024 / 2, 768 / 2,
+      --    { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
+      --love.window.setTitle('☺ Puppet Maker')
 
-   local os = love.system.getOS()
-   print(os)
-   if os == 'iOS' or os == 'Android' or (not (os == 'OS X')) then
-      love.window.setFullscreen(true)
+      local os = love.system.getOS()
+      --print(os)
+      if os == 'iOS' or os == 'Android' or ((os == 'OS X')) then
+         love.window.setFullscreen(true)
+      end
    end
+
 
 
    miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
@@ -274,10 +277,10 @@ function love.load()
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
 
-   love.event.wait()
-   love.event.wait()
+   -- love.event.wait()
+   -- love.event.wait()
 
-   local success = love.window.updateMode(1024 / 2, 768 / 2,
+   local success = love.window.updateMode(1024, 768,
            { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
 end
 
