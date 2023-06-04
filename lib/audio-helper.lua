@@ -164,7 +164,7 @@ lib.loadMelodyPaintFile = function(file, samples)
 
    result.pages = filloutOptimizedPages(tab.pages)
    result.voices = tab.voices
-
+   --   print('loading: ', file:getFilename())
    for i = 1, #tab.index do
       local idx = tab.index[i].index
       -- bcause i can add and remove and reorder samples at will from the program.

@@ -2,11 +2,18 @@ package.path = package.path .. ";../../?.lua"
 
 -- https://www.svgrepo.com/collection/atlas-variety-line-icons/
 require 'palette'
-inspect = require "vendor.inspect"
-local ui = require 'lib.ui'
-local text = require 'lib.text'
+inspect           = require "vendor.inspect"
+local ui          = require 'lib.ui'
+local text        = require 'lib.text'
 
-local audioHelper = require 'audio-helper'
+local audioHelper = require 'lib.audio-helper'
+
+thread            = love.thread.newThread('audio.lua')
+thread:start()
+channel            = {};
+channel.audio2main = love.thread.getChannel("audio2main")
+channel.main2audio = love.thread.getChannel("main2audio")
+
 
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -135,11 +142,7 @@ function love.load()
    playing  = true
    playhead = 0
 
-   thread   = love.thread.newThread('audio.lua')
-   thread:start()
-   channel              = {};
-   channel.audio2main   = love.thread.getChannel("audio2main")
-   channel.main2audio   = love.thread.getChannel("main2audio")
+
 
    local w, h           = love.graphics.getDimensions()
    numberOfSpritesInRow = 24

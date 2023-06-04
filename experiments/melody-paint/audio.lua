@@ -3,7 +3,7 @@ require('love.sound')
 require('love.audio')
 require('love.math')
 
-require('inspect')
+
 local min, max     = ...
 local now          = love.timer.getTime()
 local time         = 0
