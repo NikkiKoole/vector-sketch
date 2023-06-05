@@ -215,6 +215,7 @@ while (true) do
                              tick = tick + tickOffset,
                              source = s,
                              index = v
+                             
                          })
                   end
                end
@@ -232,6 +233,7 @@ while (true) do
                --print('actually missed a tick that i needed!!!!')
                table.remove(queue, i)
                table.insert(sources, { source = q.source, index = q.index })
+              --print(samples[q.index].p)
                love.audio.play(q.source)
             end
          end
@@ -245,7 +247,8 @@ while (true) do
             table.insert(sources, { source = q.source, index = q.index })
             -- todo parametrize
             --chokeGroup(q.index)
-
+      
+            print(samples[voices[q.index].voiceIndex].p)
             love.audio.play(q.source)
          end
       end
