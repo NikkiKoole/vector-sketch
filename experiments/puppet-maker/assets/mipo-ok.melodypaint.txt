@@ -1,0 +1,353 @@
+{
+index = { {
+index = 48,
+path = "cr78/Tamb 1"
+}, {
+index = 16,
+path = "guirojuno/3"
+}, {
+index = 42,
+path = "bass07"
+}, {
+index = 55,
+path = "cr78/Clave"
+}, {
+index = 54,
+path = "cr78/Guiro 2"
+}, {
+index = 20,
+path = "babirhodes/bi"
+}, {
+index = 8,
+path = "mipo/po2"
+}, {
+index = 9,
+path = "mipo/mi3"
+}, {
+index = 23,
+path = "babirhodes/rhodes2"
+} },
+pages = { { { 0, {
+octave = 0,
+semitone = 11,
+value = 1,
+x = 1,
+y = 2
+}, 0, {
+chance = 50,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 5,
+value = 7,
+x = 1,
+y = 4
+}, 0, {
+chance = 50,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 1,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {
+chance = 30,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 6,
+x = 2,
+y = 3
+}, 0, {
+chance = 70,
+notePitchRandomizer = 0,
+octave = 0,
+semitone = 2,
+value = 3,
+x = 2,
+y = 5
+}, 0, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 80,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 3,
+y = 2
+}, 0, {
+chance = 10,
+notePitchRandomizer = 1,
+octave = -1,
+semitone = 5,
+value = 5,
+x = 3,
+y = 4
+}, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 70,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 4,
+y = 2
+}, {
+chance = 20,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 8,
+x = 4,
+y = 3
+}, 0, 0, {
+chance = 80,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 4,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 70,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 5,
+y = 2
+}, 0, 0, 0, {
+chance = 70,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 5,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, {
+chance = 40,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 5,
+value = 6,
+x = 6,
+y = 4
+}, {
+chance = 80,
+octave = 0,
+semitone = 2,
+value = 2,
+x = 6,
+y = 5
+}, 0, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 70,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 7,
+y = 2
+}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 80,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 8,
+y = 2
+}, {
+chance = 30,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 7,
+x = 8,
+y = 3
+}, 0, 0, {
+chance = 70,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 8,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {
+chance = 30,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 8,
+x = 9,
+y = 3
+}, 0, 0, {
+chance = 70,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 9,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 70,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 10,
+y = 2
+}, 0, {
+chance = 40,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 5,
+value = 6,
+x = 10,
+y = 4
+}, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 70,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 11,
+y = 2
+}, 0, {
+chance = 30,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 5,
+value = 7,
+x = 11,
+y = 4
+}, 0, {
+chance = 50,
+octave = 0,
+semitone = 0,
+value = 2,
+x = 11,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 50,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 4,
+value = 9,
+x = 12,
+y = 2
+}, 0, 0, {
+chance = 60,
+notePitchRandomizer = 0,
+octave = 0,
+semitone = 2,
+value = 3,
+x = 12,
+y = 5
+}, {
+chance = 70,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 12,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, 0, {
+chance = 30,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 6,
+x = 13,
+y = 3
+}, {
+chance = 40,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 5,
+value = 8,
+x = 13,
+y = 4
+}, 0, {
+chance = 60,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 13,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 70,
+octave = 0,
+semitone = 11,
+value = 1,
+x = 14,
+y = 2
+}, {
+chance = 20,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 7,
+x = 14,
+y = 3
+}, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, {
+octave = 0,
+semitone = 5,
+value = 2,
+x = 15,
+y = 4
+}, 0, {
+chance = 50,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 15,
+y = 6
+}, 0, 0, 0, 0, 0, 0 }, { 0, {
+chance = 30,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 11,
+value = 6,
+x = 16,
+y = 2
+}, {
+chance = 20,
+notePitchRandomizer = 1,
+octave = 0,
+semitone = 9,
+value = 7,
+x = 16,
+y = 3
+}, 0, 0, {
+chance = 50,
+octave = 0,
+semitone = 0,
+value = 4,
+x = 16,
+y = 6
+}, 0, 0, 0, 0, 0, 0 } }, { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } } },
+voices = { {
+voiceIndex = 48,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 16,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 42,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 55,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 54,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 20,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 8,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 9,
+voiceTuning = 0,
+voiceVolume = 1
+}, {
+voiceIndex = 23,
+voiceTuning = 0,
+voiceVolume = 1
+} }
+}

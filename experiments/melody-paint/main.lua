@@ -388,7 +388,7 @@ end
 function love.update(dt)
    local msg = audioHelper.getMessageFromAudioThread()
    if msg then
-      if (msg.type == 'playhead') then
+      if (msg.type == 'beat') then
          playhead = msg.data % horizontal
       end
    end
@@ -526,6 +526,7 @@ end
 
 function love.filedropped(file)
    local filename = file:getFilename()
+   --print(love.filesystem.read(filename))
    if text.ends_with(filename, 'melodypaint.txt') then
       local result = audioHelper.loadMelodyPaintFile(file, samples)
       if result then

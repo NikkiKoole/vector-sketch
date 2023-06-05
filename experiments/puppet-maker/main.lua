@@ -41,7 +41,22 @@ PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 local mesh = require "lib.mesh"
+local text = require 'lib.text'
 focussed = false
+
+
+lurker = require 'vendor.lurker'
+lurker.quiet = true
+lurker.postswap = function(f) 
+   print("File " .. f .. " was swapped") 
+   focussed = true
+end
+
+local audioHelper = require 'lib.audio-helper'
+
+audioHelper.startAudioThread()
+
+
 function findPart(name)
    for i = 1, #parts do
       --print(parts[i].name)
@@ -50,6 +65,7 @@ function findPart(name)
       end
    end
 end
+
 
 require 'src.generatePuppet'
 local bodypartsGenerate = require 'src.puppetDNA'
@@ -104,6 +120,66 @@ function love.load()
       end
    end
 
+
+   local sample_data = {
+
+      { 'zebra',       'mipo/mi' },
+      { 'zebra',       'mipo/mi' },
+      { 'zebra',       'mipo/mi' },
+
+      { 'octopus',     'mipo/po' },
+      { 'goldfish',    'mipo/pi' },
+      { 'bat',         'mipo/mo' },
+      { 'goldfish',    'mipo/mi2' },
+      { 'bat',         'mipo/po2' },
+      { 'goldfish',    'mipo/mi3' },
+      { 'bat',         'mipo/po3' },
+      { 'bat',         'mipo/blah1' },
+      { 'bat',         'mipo/blah2' },
+      { 'bat',         'mipo/blah3' },
+
+      { 'walrus',      'guirojuno/3' },
+
+      { 'clam',        'babirhodes/ba' }, -- clam
+      { 'owl',         'babirhodes/bi' }, -- owl
+      { 'crab',        'babirhodes/biep2' }, -- crab
+      { 'elephant',    'babirhodes/biep3' },
+      { 'panda-bear',  'babirhodes/rhodes2' }, -- panda
+      { 'kangaroo',    'babirhodes/blok2' },
+
+      { 'red',         'bass02' },
+      { 'rabbit',      'bass04' },
+      { 'polar',       'bass07' },
+
+      { 'lemur',       'cr78/Tamb 1' },
+      { 'sheep',       'cr78/Rim Shot' },
+      { 'panther',     'cr78/Bongo High' },
+      { 'kiwi',        'cr78/Bongo Low' },
+      { 'hummingbird', 'cr78/Conga Low' },
+      { 'beetle',      'cr78/Guiro 1' },
+      { 'beetle',      'cr78/Guiro 2' },
+      { 'penguin',     'cr78/Clave' },
+      { 'penguin',     'cr78/Maracas' },
+      { 'cow',         'cr78/Cowbell' },
+      { 'scorpion',    'cr78/HiHat Accent' },
+      { 'scorpion',    'cr78/HiHat Metal' },
+      { 'zebra',       'cr78/HiHat' },
+      { 'scorpion',    'cr78/Cymbal' },
+      { 'scorpion',    'cr78/Snare' },
+      { 'scorpion',    'cr78/Kick' },
+      { 'scorpion',    'cr78/Kick Accent' },
+
+      { 'rhinoceros',  'Triangles 103' },
+      { 'hamster',     'Triangles 101' },
+  }
+
+  samples = {}
+  for i = 1, #sample_data do
+     --table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
+     local data = love.sound.newSoundData('assets/instruments/' .. sample_data[i][2] .. '.wav')
+     table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i][2] })
+  end
+  audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
 
 
    miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
@@ -276,13 +352,34 @@ function love.load()
    SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
+   loadSong('assets/mipo-ok.melodypaint.txt')
+  --love.event.wait()
+  -- love.event.wait()
 
-   --love.event.wait()
-   --love.event.wait()
-
-   --local success = love.window.updateMode(1024, 768,
-   --        { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
+  -- local success = love.window.updateMode(1024, 768,
+  --         { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
 end
+
+
+function loadSong(filename)
+   if text.ends_with(filename, 'melodypaint.txt') then
+
+      local contents = love.filesystem.read(filename)
+      local tab = (loadstring("return " .. contents)())
+      local result = audioHelper.loadMelodyPaintTab(tab, samples)
+      
+      if result then
+         song = result
+         song.page = song.pages[1]
+         audioHelper.sendMessageToAudioThread({ type = 'song', data = song })
+      else
+         print('no success loading meloypaint file')
+      end
+   else
+      print('i only load files ending in .melodypaint.txt')
+   end
+end
+
 
 function partRandomize(values, applyChangeDirectly)
    local parts = { 'head', 'ears', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair', 'leghair', 'armhair',
@@ -337,6 +434,8 @@ end
 
 function love.update(dt)
    prof.push('frame')
+
+   lurker.update()
    --require("vendor.lurker").update()
    if not focussed then
       -- print('this app is unfocessed!')
@@ -368,12 +467,12 @@ function love.quit()
    print('writing took', love.timer.getTime() - time, 'seconds')
 end
 
-function love.mousepressed(x, y, button, istouch, presses)
+--function love.mousepressed(x, y, button, istouch, presses)
    --print('mousepressed', button)
    --if not istouch then
    --   pointerPressed(x, y, 'mouse')
    --end
-end
+--end
 
 function love.lowmemory()
    print('LOW MEMORY!!!')

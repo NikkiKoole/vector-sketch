@@ -188,23 +188,23 @@ local function removeBrokenSampleFromAllPages(sampleIdx, pages)
    end
    return pages
 end
-lib.loadMelodyPaintFile = function(file, samples)
-   -- this assumes this file exists and is of the right type
-   file:open("r")
-   local data = file:read()
-   local tab = (loadstring("return " .. data)())
+
+
+
+
+lib.loadMelodyPaintTab = function(tab, samples) 
    local result = {}
 
    result.pages = filloutOptimizedPages(tab.pages)
    result.voices = tab.voices
-   --   print('loading: ', file:getFilename())
+
    for i = 1, #tab.index do
       local idx = tab.index[i].index
       -- bcause i can add and remove and reorder samples at will from the program.
       -- I need a way to find the correct index again
       -- this path should be the same as the sample at index
       local path = tab.index[i].path
-
+      print(path)
       if (not samples[idx] or samples[idx].p ~= path) then
          local foundAlternative = false
          -- we have to find the new index this sample lives at
@@ -232,6 +232,15 @@ lib.loadMelodyPaintFile = function(file, samples)
    result.swing = tab.swing or lib.defaultSwing
    result.scale = tab.scale or lib.findScaleByName('chromatic')
    return result
+end
+
+lib.loadMelodyPaintFile = function(file, samples)
+   -- this assumes this file exists and is of the right type
+   file:open("r")
+   local data = file:read()
+   local tab = (loadstring("return " .. data)())
+   return lib.loadMelodyPaintTab(tab, samples)
+   
 end
 
 return lib

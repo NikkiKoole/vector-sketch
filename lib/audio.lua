@@ -112,7 +112,7 @@ while (true) do
             end
          end
 
-         channel.audio2main:push({ type = "playhead", data = math.floor(beat) })
+         channel.audio2main:push({ type = "beat", data = math.floor(beat) })
 
          local index = 1 + math.floor(beat) % #pattern
 
