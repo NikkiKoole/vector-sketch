@@ -8,12 +8,7 @@ local text        = require 'lib.text'
 
 local audioHelper = require 'lib.audio-helper'
 
-thread            = love.thread.newThread('audio.lua')
-thread:start()
-channel            = {};
-channel.audio2main = love.thread.getChannel("audio2main")
-channel.main2audio = love.thread.getChannel("main2audio")
-
+audioHelper.startAudioThread()
 
 local function createFittingScale(img, desired_w, desired_h)
    local w, h = img:getDimensions()
@@ -45,12 +40,10 @@ function love.keypressed(key)
    if key == "left" then
       song.bpm = song.bpm - 10
       song.bpm = math.max(10, song.bpm)
-      channel.main2audio:push({ type = "bpm", data = song.bpm });
    end
    if key == "right" then
       song.bpm = song.bpm + 10
       song.bpm = math.min(300, song.bpm)
-      channel.main2audio:push({ type = "bpm", data = song.bpm });
    end
    if key == "up" then
       octave = octave + 1
@@ -62,74 +55,62 @@ function love.keypressed(key)
    end
    if key == "a" then
       voices[drawingVoiceIndex].voiceTuning = voices[drawingVoiceIndex].voiceTuning - 1
-      channel.main2audio:push({ type = "voices", data = voices });
    end
    if key == "s" then
       voices[drawingVoiceIndex].voiceTuning = voices[drawingVoiceIndex].voiceTuning + 1
-      channel.main2audio:push({ type = "voices", data = voices });
    end
    if key == "d" then
       voices[drawingVoiceIndex].voiceVolume = voices[drawingVoiceIndex].voiceVolume - .1
-      channel.main2audio:push({ type = "voices", data = voices });
    end
    if key == "f" then
       voices[drawingVoiceIndex].voiceVolume = voices[drawingVoiceIndex].voiceVolume + .1
-      channel.main2audio:push({ type = "voices", data = voices });
    end
    if key == "z" then
       song.tuning = song.tuning - 1
-      channel.main2audio:push({ type = "tuning", data = song.tuning });
    end
    if key == "x" then
       song.tuning = song.tuning + 1
-      channel.main2audio:push({ type = "tuning", data = song.tuning });
    end
    if key == "c" then
       song.swing = song.swing - 1
       if song.swing < 50 then song.swing = 50 end
-      channel.main2audio:push({ type = "swing", data = song.swing });
    end
    if key == "v" then
       song.swing = song.swing + 1
       if song.swing > 75 then song.swing = 75 end
-      channel.main2audio:push({ type = "swing", data = song.swing });
    end
-   if key == "space" then
-      paused = not paused
-      channel.main2audio:push({ type = "paused", data = paused });
-   end
+
    if key == "1" then
       if (not song.pages[1]) then
          song.pages[1] = audioHelper.initPage(horizontal, 12)
       end
       song.page = song.pages[1]
-      channel.main2audio:push({ type = "pattern", data = song.page });
    end
    if key == "2" then
       if (not song.pages[2]) then
          song.pages[2] = audioHelper.initPage(horizontal, 12)
       end
       song.page = song.pages[2]
-      channel.main2audio:push({ type = "pattern", data = song.page });
    end
    if key == "3" then
       if (not song.pages[3]) then
          song.pages[3] = audioHelper.initPage(horizontal, 12)
       end
       song.page = song.pages[3]
-      channel.main2audio:push({ type = "pattern", data = song.page });
    end
-
+   audioHelper.sendMessageToAudioThread({ type = "song", data = song });
+   if key == "space" then
+      paused = not paused
+      audioHelper.sendMessageToAudioThread({ type = "paused", data = paused });
+   end
    if key == "escape" then
       love.audio.stop()
-      channel.main2audio:push({ type = "stop" });
+      audioHelper.sendMessageToAudioThread({ type = "stop" });
       love.event.quit()
    end
 end
 
 function love.load()
-   --scale = audioHelper.findScaleByName('chromatic')
-
    song = audioHelper.initSong(16)
    makePatternFitOnscreen(song)
    song.page = song.pages[1]
@@ -141,7 +122,6 @@ function love.load()
    paused   = false
    playing  = true
    playhead = 0
-
 
 
    local w, h           = love.graphics.getDimensions()
@@ -370,8 +350,6 @@ function love.load()
 
        { 'rhinoceros',  'Triangles 103' },
        { 'hamster',     'Triangles 101' },
-
-
    }
 
    spriteBackgroundMap = {
@@ -381,7 +359,6 @@ function love.load()
        { sw = 'guirojuno',     bg = colors.brown },
        { sw = 'ElkaSolist505', bg = colors.blue },
        { sw = 'cr78/',         bg = colors.yellow }
-
    }
 
 
@@ -396,14 +373,8 @@ function love.load()
 
    save = love.graphics.newImage('resources/save.png')
 
-
-   channel.main2audio:push({ type = "samples", data = samples });
-   channel.main2audio:push({ type = "bpm", data = song.bpm });
-   channel.main2audio:push({ type = "scale", data = song.scale.notes })
-   channel.main2audio:push({ type = "tuning", data = song.tuning })
-   channel.main2audio:push({ type = "swing", data = song.swing })
-   channel.main2audio:push({ type = "pattern", data = song.page });
-   channel.main2audio:push({ type = "voices", data = song.voices });
+   audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
+   audioHelper.sendMessageToAudioThread({ type = "song", data = song })
 end
 
 function love.resize()
@@ -415,14 +386,12 @@ function love.resize()
 end
 
 function love.update(dt)
-   local v = channel.audio2main:pop();
-   if v then
-      if (v.type == 'playhead') then
-         playhead = v.data % horizontal
+   local msg = audioHelper.getMessageFromAudioThread()
+   if msg then
+      if (msg.type == 'playhead') then
+         playhead = msg.data % horizontal
       end
    end
-   local error = thread:getError()
-   assert(not error, error)
 end
 
 function indexOf(array, value)
@@ -456,22 +425,23 @@ function love.mousepressed(x, y, button)
             local index = indexOf(noteChances, current) or 1
             index = index + 1
             index = index % #noteChances
-
-
             song.page[cx][cy].chance = noteChances[index]
          end
+
          if (paintModesIndex == 3) then -- note repeats
             local current = song.page[cx][cy].noteRepeat
             local index = indexOf(noteRepeats, current) or 1
             index = (index % #noteRepeats) + 1
             song.page[cx][cy].noteRepeat = noteRepeats[index]
          end
+
          if (paintModesIndex == 4) then -- note pitch rnd
             local current = song.page[cx][cy].notePitchRandomizer
             local index = indexOf(notePitchRandoms, current) or 1
             index = (index % #notePitchRandoms) + 1
             song.page[cx][cy].notePitchRandomizer = notePitchRandoms[index]
          end
+
          if (paintModesIndex == 5) then -- note velocity
             local current = song.page[cx][cy].noteVelocity
             local index = indexOf(noteVelocities, current) or 1
@@ -479,7 +449,7 @@ function love.mousepressed(x, y, button)
             song.page[cx][cy].noteVelocity = noteVelocities[index]
          end
 
-         channel.main2audio:push({ type = "pattern", data = song.page });
+         audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.page });
       end
    end
 
@@ -525,7 +495,7 @@ function love.mousepressed(x, y, button)
          else
             voices[drawingVoiceIndex] = { voiceIndex = index, voiceTuning = 0, voiceVolume = 1 }
          end
-         channel.main2audio:push({ type = "voices", data = voices });
+         audioHelper.sendMessageToAudioThread({ type = "voices", data = voices });
          paintModesIndex = 1
       end
    end
@@ -563,12 +533,7 @@ function love.filedropped(file)
          -- horizontal = #song.pages[1]
          makePatternFitOnscreen(song)
          song.page = song.pages[1]
-         channel.main2audio:push({ type = "pattern", data = song.page });
-         channel.main2audio:push({ type = "voices", data = song.voices });
-         channel.main2audio:push({ type = "bpm", data = song.bpm });
-         channel.main2audio:push({ type = "tuning", data = song.tuning });
-         channel.main2audio:push({ type = "swing", data = song.swing });
-         channel.main2audio:push({ type = "scale", data = song.scale.notes })
+         audioHelper.sendMessageToAudioThread({ type = 'song', data = song })
       else
          print('no success loading meolypaint file')
       end
@@ -736,7 +701,7 @@ function love.draw()
    if labelbutton('scale', song.scale.name, w - 200 - 20, 00, 100, 20).clicked then
       song.scale = audioHelper.getNextScale(song.scale)
       makePatternFitOnscreen(song)
-      channel.main2audio:push({ type = "scale", data = song.scale.notes })
+      audioHelper.sendMessageToAudioThread({ type = "scale", data = song.scale.notes })
    end
 
    if newImageButton(save, w - 20, 0, .2, .2).clicked then

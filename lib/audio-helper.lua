@@ -1,6 +1,6 @@
-local lib           = {}
+local lib                     = {}
 
-local scales        = {
+local scales                  = {
     { name = 'koalaMinor',   notes = { 0, 2, 3, 5, 7, 8, 11 } },
     { name = 'koalaHexa',    notes = { 0, 3, 4, 7, 8, 11 } },
     { name = 'minorBlues',   notes = { 0, 3, 5, 6, 7, 10, 11 } },
@@ -18,10 +18,43 @@ local scales        = {
     -- { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
 }
 
-lib.defaultBpm      = 90
-lib.defaultSwing    = 50
-lib.defaultTuning   = 0
-lib.voiceMax        = 12
+lib.defaultBpm                = 90
+lib.defaultSwing              = 50
+lib.defaultTuning             = 0
+lib.voiceMax                  = 12
+
+local _thread
+local channel                 = {};
+channel.audio2main            = love.thread.getChannel("audio2main")
+channel.main2audio            = love.thread.getChannel("main2audio")
+
+lib.getMessageFromAudioThread = function()
+   local v = channel.audio2main:pop();
+
+   local error = _thread:getError()
+   assert(not error, error)
+   return v
+end
+lib.sendMessageToAudioThread  = function(msg)
+   channel.main2audio:push(msg)
+end
+
+lib.startAudioThread          = function()
+   -- this tries to be 'smart' about loading the thread code..
+   function getFileContents(path)
+      local f = io.open(path, "rb") or io.open('../../' .. path, "rb")
+      assert(f)
+      local content = f:read("*all")
+      f:close()
+      return content
+   end
+
+   local code = getFileContents('lib/audio.lua')
+
+   _thread = love.thread.newThread(code)
+   _thread:start()
+end
+
 
 lib.findScaleByName = function(name)
    for i = 1, #scales do

@@ -15,11 +15,11 @@ local voices       = {}
 local tuning       = 0
 local swing        = 50
 local paused       = false
-
+--local song         = {}
 local pattern      = {}
 local samples      = {}
 
-channel            = {};
+local channel      = {};
 channel.audio2main = love.thread.getChannel("audio2main"); -- from thread
 channel.main2audio = love.thread.getChannel("main2audio"); --from main
 
@@ -260,6 +260,10 @@ while (true) do
 
    local v = channel.main2audio:pop();
    if v then
+      if (v.type == 'samples') then
+         samples = v.data
+      end
+
       if (v.type == 'pattern') then
          pattern = v.data
       end
@@ -272,14 +276,21 @@ while (true) do
       if (v.type == 'tuning') then
          tuning = v.data
       end
-      if (v.type == 'samples') then
-         samples = v.data
-      end
       if (v.type == 'bpm') then
          bpm = v.data
       end
       if (v.type == 'scale') then
          scale = v.data
+      end
+
+      if v.type == 'song' then
+         local song = v.data
+         pattern = song.page
+         voices = song.voices
+         swing = song.swing
+         tuning = song.tuning
+         bpm = song.bpm
+         scale = song.scale.notes
       end
       if (v.type == 'paused') then
          paused = v.data
