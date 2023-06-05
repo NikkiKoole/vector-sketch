@@ -214,7 +214,8 @@ while (true) do
                              beat = beat,
                              tick = tick + tickOffset,
                              source = s,
-                             index = v
+                             index = v,
+                             pitch = p
                              
                          })
                   end
@@ -235,6 +236,7 @@ while (true) do
                table.insert(sources, { source = q.source, index = q.index })
               --print(samples[q.index].p)
                love.audio.play(q.source)
+               channel.audio2main:push({ type = "played", data = {pitch=q.pitch, path=samples[voices[q.index].voiceIndex].p, source=q.source} })
             end
          end
       end
@@ -248,8 +250,9 @@ while (true) do
             -- todo parametrize
             --chokeGroup(q.index)
       
-            print(samples[voices[q.index].voiceIndex].p)
+
             love.audio.play(q.source)
+            channel.audio2main:push({ type = "played", data = {pitch=q.pitch,path=samples[voices[q.index].voiceIndex].p, source=q.source} })
          end
       end
 

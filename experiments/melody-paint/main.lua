@@ -407,6 +407,10 @@ function love.update(dt)
       if (msg.type == 'beat') then
          playhead = msg.data % horizontal
       end
+      if (msg.type == 'played') then
+       --  print('played', msg.data.path, msg.data.source, msg.data.pitch)
+      end
+      
    end
 end
 
