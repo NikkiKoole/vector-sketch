@@ -298,14 +298,18 @@ function love.load()
        { 'hamster',     'Triangles 101' },
        { 'hamster',     'prophet1c' },
        { 'hamster',     'mp7/Quijada' },
-       { 'hamster',     'mp7/Guira' },
+       { 'hamster',     'mp7/Guira2' },
        { 'hamster',     'mp7/GuiraKick' },
        { 'hamster',     'mp7/Clave' },
        { 'kangaroo',    'legowelt/Synth Brassy Italo' },
        { 'kangaroo',    'legowelt/Synth Swimpy 3' },
        { 'kangaroo',    'legowelt/Synth SoftTooter' },
+       { 'kangaroo',    'legowelt/SYNTH-Littleblip' },
+       { 'kangaroo',    'legowelt/SYNTH-LittleblipLow' },
+       { 'kangaroo',    'legowelt/Bass SimpleSloppy3' },
+       { 'kangaroo',    'legowelt/BASS-JojabiBass' },
+
        
-      
    }
 
 
