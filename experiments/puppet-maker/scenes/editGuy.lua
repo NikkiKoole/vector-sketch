@@ -356,10 +356,10 @@ function scene.load()
 
 
    bigbuttons        = {
-       head = love.graphics.newImage('assets/ui/big-button-head.png'),
-       headmask = love.graphics.newImage('assets/ui/big-button-head-mask.png'),
-       body = love.graphics.newImage('assets/ui/big-button-body.png'),
-       bodymask = love.graphics.newImage('assets/ui/big-button-body-mask.png'),
+       --head = love.graphics.newImage('assets/ui/big-button-head.png'),
+       --headmask = love.graphics.newImage('assets/ui/big-button-head-mask.png'),
+       --body = love.graphics.newImage('assets/ui/big-button-body.png'),
+       --bodymask = love.graphics.newImage('assets/ui/big-button-body-mask.png'),
        fiveguys = love.graphics.newImage('assets/ui/big-button-fiveguys.png'),
        fiveguysmask = love.graphics.newImage('assets/ui/big-button-fiveguys-mask.png'),
        editguys = love.graphics.newImage('assets/ui/big-button-editguys.png'),
