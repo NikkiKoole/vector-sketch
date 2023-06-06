@@ -21,7 +21,7 @@ local parse         = require 'lib.parse-file'
 local bbox          = require 'lib.bbox'
 require 'src.screen-transitions'
 myWorld = Concord.world()
-
+local audioHelper = require 'lib.audio-helper'
 require 'src.generatePuppet'
 require 'src.puppet-maker-ui'
 require 'src.reuse'
@@ -255,7 +255,7 @@ function doTheMipoAnimation()
          sound = miSound2
       end
       playSound(sound, .7 + love.math.random() * 0.5)
-      myWorld:emit('mouthSaySomething', mouth, 1)
+      myWorld:emit('mouthSaySomething', mouth, editingGuy, 1)
 
       --  Timer.during(15, function()
       Timer.every(.5, function()
@@ -310,7 +310,7 @@ function doTheMipoAnimation()
       playSound(sound, .7 + love.math.random() * 0.5)
 
 
-      myWorld:emit('mouthSaySomething', mouth, 1)
+      myWorld:emit('mouthSaySomething', mouth, editingGuy, 1)
       -- Timer.during(15, function()
       Timer.every(.5, function()
          local M = mipo.children[2]
@@ -369,6 +369,10 @@ function doTheMipoAnimation()
    end)
 end
 
+function scene.handleAudioMessage()
+
+end
+
 function scene.unload()
    print('unload')
    Timer.clear()
@@ -376,6 +380,7 @@ function scene.unload()
 end
 
 function gotoNext()
+   audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
    Timer.clear()
    SM.unload('intro')
    SM.load("editGuy")

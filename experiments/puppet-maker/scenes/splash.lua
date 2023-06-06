@@ -21,6 +21,10 @@ function gotoNext()
        end)
 end
 
+function scene.handleAudioMessage()
+
+end
+
 function scene.load()
    splashSound:setVolume(.25)
 

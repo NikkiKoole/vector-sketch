@@ -31,12 +31,13 @@ end
 function getPitch(semitone, octave)
    local plusoctave = 0
    --local octave = 2
+   --print(semitone)
    if semitone > 10 then
       plusoctave = 1
       semitone = semitone % 11
    end
 
-   --print('getpitch', semitone, octave + plusoctave)
+   -- print('getpitch', semitone, octave + plusoctave)
    local freqs = { 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25 }
    local n = mapInto(freqs[semitone + 1], 261.63, 523.25, 0, 1)
    local o = octave + plusoctave
@@ -161,7 +162,7 @@ while (true) do
                   --o = love.math.random()*
 
                   semi = semi + tuning + vt
-
+                  --print(semi)
                   while semi < 0 do
                      semi = semi + 12
                      o = o - 1
@@ -216,7 +217,6 @@ while (true) do
                              source = s,
                              index = v,
                              pitch = p
-                             
                          })
                   end
                end
@@ -234,9 +234,12 @@ while (true) do
                --print('actually missed a tick that i needed!!!!')
                table.remove(queue, i)
                table.insert(sources, { source = q.source, index = q.index })
-              --print(samples[q.index].p)
+               --print(samples[q.index].p)
                love.audio.play(q.source)
-               channel.audio2main:push({ type = "played", data = {pitch=q.pitch, path=samples[voices[q.index].voiceIndex].p, source=q.source} })
+               channel.audio2main:push({
+                   type = "played",
+                   data = { pitch = q.pitch, path = samples[voices[q.index].voiceIndex].p, source = q.source }
+               })
             end
          end
       end
@@ -249,10 +252,13 @@ while (true) do
             table.insert(sources, { source = q.source, index = q.index })
             -- todo parametrize
             --chokeGroup(q.index)
-      
+
 
             love.audio.play(q.source)
-            channel.audio2main:push({ type = "played", data = {pitch=q.pitch,path=samples[voices[q.index].voiceIndex].p, source=q.source} })
+            channel.audio2main:push({
+                type = "played",
+                data = { pitch = q.pitch, path = samples[voices[q.index].voiceIndex].p, source = q.source }
+            })
          end
       end
 

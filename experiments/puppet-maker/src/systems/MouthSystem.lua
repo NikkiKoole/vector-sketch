@@ -26,7 +26,7 @@ function MouthSystem:mouthInit(e)
     e.mouth.teeth.transforms.l[5] = e.mouth.values.teethHeightMultiplier
 end
 
-function MouthSystem:mouthSaySomething(e, length)
+function MouthSystem:mouthSaySomething(e, editing, length)
     local maxOpen = .25 + love.math.random() * 0.15
     local minWide = .5 + love.math.random() * 0.15
 
@@ -39,11 +39,11 @@ function MouthSystem:mouthSaySomething(e, length)
     end)
 
     Timer.during((totalDur / 3) * 2 + 0.001, function(dt)
-        MouthSystem:mouthOpener(e, value.mouthOpen, value.mouthWide)
+        MouthSystem:mouthOpener(e, editing, value.mouthOpen, value.mouthWide)
     end)
 end
 
-function MouthSystem:mouthOpener(e, openNess, wideness)
+function MouthSystem:mouthOpener(e, editing, openNess, wideness)
     if true then
         --editingGuy.mouthOpenNess = openNess
         -- print(inspect(e.mouth))
@@ -63,15 +63,18 @@ function MouthSystem:mouthOpener(e, openNess, wideness)
         -- editingGuy.lowerlip.children[1].data.points = p2
         -- mesh.meshAll(editingGuy.upperlip.children[1])
         e.mouth.teeth.transforms.l[2] = e.mouth.upperlip.transforms.l[2] - 50 - (openNess * 100)
-        editingGuy.upperlip = updateChild(e.mouth.mouth, editingGuy.upperlip,
-                createUpperlipBezier(e.mouth.values, p1))
-        editingGuy.lowerlip = updateChild(e.mouth.mouth, editingGuy.lowerlip,
-                createLowerlipBezier(e.mouth.values, p2))
+
+        if editing then
+            editing.upperlip = updateChild(e.mouth.mouth, editing.upperlip,
+                    createUpperlipBezier(e.mouth.values, p1))
+            editing.lowerlip = updateChild(e.mouth.mouth, editing.lowerlip,
+                    createLowerlipBezier(e.mouth.values, p2))
 
 
-        parentize.parentize(editingGuy.guy)
-        mesh.meshAll(editingGuy.guy)
-        mouth:give('mouth', mouthArguments(editingGuy))
+            parentize.parentize(editing.guy)
+            mesh.meshAll(editing.guy)
+            mouth:give('mouth', mouthArguments(editing))
+        end
     end
 end
 

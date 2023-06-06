@@ -93,6 +93,12 @@ function scene.draw()
   end
 end
 
+function scene.handleAudioMessage(msg)
+  if funcDefined("handleAudioMessage") then
+    scene.current.handleAudioMessage(msg)
+  end
+end
+
 --                --
 --------------------
 -- ERROR CHECKERS --

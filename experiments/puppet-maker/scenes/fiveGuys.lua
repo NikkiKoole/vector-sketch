@@ -5,17 +5,19 @@ local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
 
-local parentize  = require 'lib.parentize'
-local render     = require 'lib.render'
-local mesh       = require 'lib.mesh'
+local parentize   = require 'lib.parentize'
+local render      = require 'lib.render'
+local mesh        = require 'lib.mesh'
 
-local camera     = require 'lib.camera'
-local cam        = require('lib.cameraBase').getInstance()
-local transforms = require 'lib.transform'
-local geom       = require 'lib.geom'
-local bbox       = require 'lib.bbox'
-local numbers    = require 'lib.numbers'
-local text       = require 'lib.text'
+local audioHelper = require 'lib.audio-helper'
+
+local camera      = require 'lib.camera'
+local cam         = require('lib.cameraBase').getInstance()
+local transforms  = require 'lib.transform'
+local geom        = require 'lib.geom'
+local bbox        = require 'lib.bbox'
+local numbers     = require 'lib.numbers'
+local text        = require 'lib.text'
 
 require 'src.reuse'
 require 'src.screen-transitions'
@@ -156,7 +158,31 @@ function getBodyYOffsetForDefaultStance(e)
     return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
 
+function scene.handleAudioMessage(msg)
+    if msg.type == 'played' then
+        -- print(inspect(msg))
+        --print(msg.data.path)
+        local path = msg.data.path
+        if path == "mipo/po3" or path == 'mipo/pi' then
+            local sndLength = msg.data.source:getDuration() / msg.data.pitch
+            local index = math.ceil(math.random() * #fg)
+            --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
+            myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], sndLength)
+        elseif (path == 'Triangles 101' or path == 'Triangles 103') then
+            local index = math.ceil(math.random() * #fg)
+            myWorld:emit('breath', fg[index].biped)
+            --  print(path)
+        elseif (path == 'babirhodes/rhodes2') then
+            local index = math.ceil(math.random() * #fg)
+            myWorld:emit('doinkBodyLight', fg[index].biped)
+        end
+        --print(path)
+        --print('handling audio message from fiveGuy')
+    end
+end
+
 function scene.load()
+    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
     if (PROF_CAPTURE) then
         ProFi:start()
     end
@@ -171,25 +197,30 @@ function scene.load()
         children = {}
     }
 
-    local fg = {}
+    fg = {}
     prof.push('initguys')
 
+    local editingBefore = editingGuy
     for i = 1, #fiveGuys do
         table.insert(root.children, fiveGuys[i].guy)
 
 
         local biped = Concord.entity()
         local potato = Concord.entity()
+        local mouth = Concord.entity()
+
         myWorld:addEntity(biped)
         myWorld:addEntity(potato)
+        myWorld:addEntity(mouth)
 
-
-        biped:give('biped', bipedArguments(fiveGuys[i]))
-        potato:give('potato', potatoArguments(fiveGuys[i]))
-
-        attachAllFaceParts(fiveGuys[i])
         editingGuy = fiveGuys[i]
 
+        biped:give('biped', bipedArguments(editingGuy))
+        potato:give('potato', potatoArguments(editingGuy))
+        mouth:give('mouth', mouthArguments(editingGuy))
+
+
+        attachAllFaceParts(editingGuy)
 
         if isNullObject('leghair', editingGuy.values) then
             changePart('leghair')
@@ -204,8 +235,9 @@ function scene.load()
         -- this has an efect on the tteh somehow!!!
         changePart('hair')
 
-        table.insert(fg, { biped = biped, potato = potato })
+        table.insert(fg, { biped = biped, potato = potato, mouth = mouth })
     end
+    editingGuy = editingBefore
     prof.pop('initguys')
     -- editingGuy = fiveGuys[1]
 
@@ -244,7 +276,7 @@ function scene.load()
         myWorld:emit("bipedInit", fg[i].biped)
         myWorld:emit("potatoInit", fg[i].potato)
         myWorld:emit("tweenIntoDefaultStance", fg[i].biped, false)
-
+        -- myWorld:emit('mouthSaySomething', fg[i].mouth, fiveGuys[i], 2)
         --
         -- myWorld:emit("potatoInit", potato)
     end
@@ -494,6 +526,11 @@ function scene.update(dt)
             love.event.quit()
         end
 
+        if k == 'm' then
+            print('M')
+            --local index = math.ceil(math.random() * #fg)
+            --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
+        end
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
             doCircleInTransition(love.math.random() * w, love.math.random() * h, function()

@@ -134,7 +134,7 @@ function love.load()
 
    paintModes           = { 'note on/off', 'note chance', 'note repeat', 'note pitch rnd', 'velocity' }
    paintModesIndex      = 1
-   noteChances          = { 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0 }
+   noteChances          = { 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5, 0 }
    noteRepeats          = { 1, 2, 3, 4 }
    notePitchRandoms     = { 0, 1, 2 }
    noteVelocities       = { 0, 0.2, 0.4, 0.6, 0.8, 1.0 }
@@ -309,7 +309,7 @@ function love.load()
        { 'kangaroo',    'legowelt/Bass SimpleSloppy3' },
        { 'kangaroo',    'legowelt/BASS-JojabiBass' },
 
-       
+
    }
 
 
@@ -363,7 +363,7 @@ function love.load()
 
        { 'rhinoceros',  'Triangles 103' },
        { 'hamster',     'Triangles 101' },
-  
+
    }
 
    spriteBackgroundMap = {
@@ -373,8 +373,8 @@ function love.load()
        { sw = 'guirojuno',     bg = colors.brown },
        { sw = 'ElkaSolist505', bg = colors.blue },
        { sw = 'cr78/',         bg = colors.yellow },
-       {sw= 'mp7', bg=colors.green},
-       {sw='legowelt', bg=colors.dark_blue}
+       { sw = 'mp7',           bg = colors.green },
+       { sw = 'legowelt',      bg = colors.dark_blue }
    }
 
 
@@ -408,9 +408,8 @@ function love.update(dt)
          playhead = msg.data % horizontal
       end
       if (msg.type == 'played') then
-       --  print('played', msg.data.path, msg.data.source, msg.data.pitch)
+         --  print('played', msg.data.path, msg.data.source, msg.data.pitch)
       end
-      
    end
 end
 

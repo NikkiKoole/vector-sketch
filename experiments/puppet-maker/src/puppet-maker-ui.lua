@@ -38,7 +38,7 @@ function growl(pitch)
    local sndLength = hum[math.ceil(index)]:getDuration() / pitch
    playingSound = playSound(hum[math.ceil(index)], pitch)
 
-   myWorld:emit('mouthSaySomething', mouth, sndLength)
+   myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
 end
 
 function createFittingScale(img, desired_w, desired_h)

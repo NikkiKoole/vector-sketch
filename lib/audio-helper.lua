@@ -15,6 +15,7 @@ local scales                  = {
     { name = 'dorian',       notes = { 0, 2, 3, 5, 7, 9, 10 } },
     { name = 'augmented',    notes = { 0, 3, 4, 7, 8, 11 } },
     { name = 'tritone',      notes = { 0, 1, 4, 6, 7, 10 } },
+    { name = 'soundforest2', notes = { 0 - 12, 2 - 12, 5 - 12, 9 - 12, 0, 2, 5, 9, 11, 13, 16 } },
     -- { name = 'debug',        notes = { 0, 11, 23, 35, 47 } },
 }
 
@@ -192,7 +193,7 @@ end
 
 
 
-lib.loadMelodyPaintTab = function(tab, samples) 
+lib.loadMelodyPaintTab = function(tab, samples)
    local result = {}
 
    result.pages = filloutOptimizedPages(tab.pages)
@@ -240,7 +241,6 @@ lib.loadMelodyPaintFile = function(file, samples)
    local data = file:read()
    local tab = (loadstring("return " .. data)())
    return lib.loadMelodyPaintTab(tab, samples)
-   
 end
 
 return lib

@@ -105,11 +105,11 @@ local function getPositionsForLegsAttaching(e)
         local l2x, l2y  = body.transforms._g:transformPoint(mx2, newPoints[4][2])
         -- this -50 on the y axis is to make the legs always more or less touch the body
         -- usually the lines have some margin in the drawings.
-        
+
         l1x, l1y        = e.biped.guy.transforms._g:inverseTransformPoint(l1x, l1y)
         --print('huh', newPoints[6][2], l1y)
         l2x, l2y        = e.biped.guy.transforms._g:inverseTransformPoint(l2x, l2y)
-        
+
         return l1x, l1y, l2x, l2y
     else
         local lc1 = node.findNodeByName(body, 'leg1')
@@ -200,7 +200,6 @@ function BipedSystem:finishBirth(e)
 end
 
 function BipedSystem:birthGuy(e)
-
     birthData = getDataBefore(e)
     setAllToZero(e, birthData)
 
@@ -282,17 +281,16 @@ function BipedSystem:birthGuy(e)
 end
 
 function BipedSystem:angleFeet(e)
-
     if false then
-    local derivative = e.biped.leg1._curve:getDerivative()
-    local dx, dy = derivative:evaluate(1)
-    local angle = math.atan2(dy, dx) - math.pi / 2
-    e.biped.feet1.transforms.l[3] =   angle
+        local derivative = e.biped.leg1._curve:getDerivative()
+        local dx, dy = derivative:evaluate(1)
+        local angle = math.atan2(dy, dx) - math.pi / 2
+        e.biped.feet1.transforms.l[3] = angle
 
-    local derivative = e.biped.leg2._curve:getDerivative()
-    local dx, dy = derivative:evaluate(1)
-    local angle = math.atan2(dy, dx) - math.pi / 2
-    e.biped.feet2.transforms.l[3] = angle
+        local derivative = e.biped.leg2._curve:getDerivative()
+        local dx, dy = derivative:evaluate(1)
+        local angle = math.atan2(dy, dx) - math.pi / 2
+        e.biped.feet2.transforms.l[3] = angle
     end
 
     -- a bit lame this is, but when we have a stance we dont want the berfect perpendicular feet, just rotate to 0
@@ -302,17 +300,16 @@ function BipedSystem:angleFeet(e)
     transforms.setTransforms(e.biped.feet1)
 end
 
-
 function BipedSystem:bipedInit(e)
     e.biped.body.transforms.l[3] = 0
     transforms.setTransforms(e.biped.body)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
 
 
---    print('lengt? ', e.biped.leg1.data.length, l1x, l1y)
-    e.biped.leg1.points[1]  = { l1x, l1y }
-    e.biped.leg1.points[2] = { l1x, l1y + (e.biped.leg1.data.length / 4.46) / 1 }
-   -- print( e.biped.leg1.points[2][1],  e.biped.leg1.points[2][2])
+    --    print('lengt? ', e.biped.leg1.data.length, l1x, l1y)
+    e.biped.leg1.points[1]     = { l1x, l1y }
+    e.biped.leg1.points[2]     = { l1x, l1y + (e.biped.leg1.data.length / 4.46) / 1 }
+    -- print( e.biped.leg1.points[2][1],  e.biped.leg1.points[2][2])
     e.biped.leghair1.points[1] = e.biped.leg1.points[1]
     e.biped.leghair1.points[2] = e.biped.leg1.points[2]
 
@@ -327,7 +324,7 @@ function BipedSystem:bipedInit(e)
 
 
     -- feet rotations
- 
+
 
 
     BipedSystem:bipedAttachFeet(e)
@@ -446,30 +443,27 @@ function BipedSystem:bipedDirection(e, dir)
 end
 
 function setLegs(e)
-
     local keep = not e.biped.values.feetPinned --  pinnedFeet
     --print('setting legs')
     local body = e.biped.body
     --local lc1, lc2 = getPositionsForLegsAttaching(e)
     local l1x, l1y, l2x, l2y = getPositionsForLegsAttaching(e)
-   
+
     l1x = l1x or 0
     l1y = l1y or 0
     l2x = l2x or 0
     l2y = l2y or 0
-   
+
 
     local angle, dist = getAngleAndDistance(e.biped.leg1.points[2][1], e.biped.leg1.points[2][2],
             e.biped.leg1.points[1][1], e.biped.leg1.points[1][2])
 
-   -- print( angle, dist)
+    -- print( angle, dist)
     e.biped.leg1.points[1] = { l1x, l1y }
-   
+
     if keep then
-      
         local newx, newy = setAngleAndDistance(l1x, l1y, angle, dist)
         e.biped.leg1.points[2] = { newx, newy }
-
     end
     mesh.remeshNode(e.biped.leg1)
 
@@ -692,7 +686,7 @@ end
 function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
-  --  print(e.biped.values.legDefaultStance)
+    --  print(e.biped.values.legDefaultStance)
     return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
 
@@ -703,7 +697,7 @@ function getMaxArmLength(e)
 end
 
 function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
-   -- print('keepFeetPlantedAndStraightenLegs')
+    -- print('keepFeetPlantedAndStraightenLegs')
     -- print('doing it', leglengths[e.biped.values.legLength])
     --print(leglengths[e.biped.values.legLength])
     --print(inspect(e.biped.leg1.data))
@@ -718,21 +712,41 @@ end
 
 function BipedSystem:breath(e)
     --
-    local bodyBeforeY =  e.biped.body.transforms.l[2]
+    local bodyBeforeY = e.biped.body.transforms.l[2]
     local bodysx = e.biped.body.transforms.l[4]
     local bodysy = e.biped.body.transforms.l[5]
 
 
-    local yOffset = 5 + love.math.random()*5
-    local scaleOffset = 0.05 * love.math.random()   + 1
+    local yOffset = 5 + love.math.random() * 5
+    local scaleOffset = 0.05 * love.math.random() + 1
     --e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] - 20
-    Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY-yOffset , [4]=bodysx*scaleOffset, [5]=bodysy*scaleOffset}, 'out-quint')
+    Timer.tween(0.5, e.biped.body.transforms.l,
+        { [2] = bodyBeforeY - yOffset,[4] = bodysx * scaleOffset,[5] = bodysy * scaleOffset }, 'out-quint')
     Timer.after(0.5, function()
-    Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY , [4]=bodysx, [5]=bodysy}, 'out-quint') 
-end)
+        Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY,[4] = bodysx,[5] = bodysy }, 'out-quint')
+    end)
     Timer.during(1, function()
         BipedSystem:movedBody(e)
     end)
+end
+
+function BipedSystem:doinkBodyLight(e)
+    local dir = love.math.random() < .5 and 1 or -1
+    local str = .2
+    local oldX = 0
+    local oldY = 0
+    e.biped.body.transforms.l[3] = str * dir
+    e.biped.body.transforms.l[1] = oldX + (dir * str * 100)
+
+    Timer.tween(2, e.biped.body.transforms.l, { [3] = 0,[1] = oldX }, 'out-elastic')
+
+    e.biped.head.transforms.l[3] = str * dir
+    Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
+
+    Timer.during(2, function()
+        BipedSystem:movedBody(e)
+    end)
+    -- Timer
 end
 
 function BipedSystem:doinkBody(e)

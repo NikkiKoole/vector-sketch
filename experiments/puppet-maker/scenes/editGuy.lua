@@ -20,6 +20,7 @@ local transforms        = require 'lib.transform'
 local numbers           = require 'lib.numbers'
 local ui                = require 'lib.ui'
 local gradient          = require 'lib.gradient'
+local audioHelper       = require 'lib.audio-helper'
 
 local bodypartsGenerate = require 'src.puppetDNA'
 local camera            = require 'lib.camera'
@@ -305,7 +306,9 @@ end
 
 
 
-
+function scene.handleAudioMessage(msg)
+   --print('handling audio message from editGuy')
+end
 
 function scene.unload()
    Signal.clear('click-settings-scroll-area-item')
@@ -751,6 +754,10 @@ function scene.load()
    end)
 
    Timer.tween(.5, scroller, { position = 7 })
+
+
+   audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
+   audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 end
 
 function getPointToCenterTransitionOn()
@@ -976,8 +983,12 @@ function attachCallbacks()
          myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
       end
+      if k == 'm' then
+         print('M')
+         myWorld:emit('mouthSaySomething', mouth, 1)
+      end
       if key == 'm' then
-         grabShot()
+         -- grabShot()
       end
       if key == 'i' then
          backToIntro()
