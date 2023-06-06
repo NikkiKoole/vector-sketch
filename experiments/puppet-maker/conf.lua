@@ -7,7 +7,7 @@ function love.conf(t)
     --t.window.height= 1668
 
     t.window.title = "Mipo pupppetmaker"
-    t.window.icon = "ikoon.png"
+    t.window.icon = "icoon.png"
 
     -- t.window.resizable = true
     --t.window.msaa = 4
