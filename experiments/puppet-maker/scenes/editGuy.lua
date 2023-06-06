@@ -980,12 +980,12 @@ function attachCallbacks()
          myWorld:emit('doinkBody', biped)
       end
       if key == 'm' then
-         myWorld:emit('mouthSaySomething', mouth, love.math.random())
+         --myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
       end
       if k == 'm' then
-         print('M')
-         myWorld:emit('mouthSaySomething', mouth, 1)
+        -- print('M')
+        -- myWorld:emit('mouthSaySomething', mouth, 1)
       end
       if key == 'm' then
          -- grabShot()
