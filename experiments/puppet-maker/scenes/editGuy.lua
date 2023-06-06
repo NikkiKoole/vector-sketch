@@ -935,8 +935,8 @@ function attachCallbacks()
       end
 
       if key == 's' then
-         local bgPal = math.ceil(love.math.random() * #palettes)
-         skinColorize(bgPal, values)
+       --  local bgPal = math.ceil(love.math.random() * #palettes)
+       --  skinColorize(bgPal, values)
       end
       if key == 'h' then
          local fgPal = math.ceil(love.math.random() * #palettes)
@@ -987,8 +987,8 @@ function attachCallbacks()
         -- print('M')
         -- myWorld:emit('mouthSaySomething', mouth, 1)
       end
-      if key == 'm' then
-         -- grabShot()
+      if key == 's' then
+          grabShot()
       end
       if key == 'i' then
          backToIntro()

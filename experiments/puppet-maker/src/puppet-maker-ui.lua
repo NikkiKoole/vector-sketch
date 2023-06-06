@@ -461,7 +461,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
 
       if category == 'hair' then
-         currentHeight = calcCurrentHeight(3)
+         currentHeight = calcCurrentHeight(2)
          if draw then
             drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
             runningElem = 0
@@ -476,13 +476,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                changePart('hair', values)
             end
 
+            if false then
             draw_toggle_with_2_buttons('useIt', startX + (runningElem * elementWidth), currentY, buttonSize,
                 sliderWidth,
                 not (values.potatoHead),
                 f, icons.bodynonpotato, icons.bodypotato)
 
             runningElem, currentY = updateRowStuff()
-
+            end
 
             local propupdate = function(v)
                changePart('hair', values)
