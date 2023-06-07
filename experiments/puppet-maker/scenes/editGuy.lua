@@ -318,6 +318,9 @@ local function pointerPressed(x, y, id)
       end
       partRandomize(editingGuy.values, true)
 
+      -- this seems to fi the issue the best, 2 inits and this order of operations, now we
+      -- have an identical stance in 5 guys and in edit!!
+
       myWorld:emit('bipedInit', biped)
       myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
       myWorld:emit('bipedInit', biped)
