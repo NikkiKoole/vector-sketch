@@ -22,7 +22,7 @@ local scales                  = {
 lib.defaultBpm                = 90
 lib.defaultSwing              = 50
 lib.defaultTuning             = 0
-lib.voiceMax                  = 12
+lib.voiceMax                  = 16
 
 local _thread
 local channel                 = {};
@@ -43,6 +43,7 @@ end
 lib.startAudioThread          = function()
    -- this tries to be 'smart' about loading the thread code..
    function getFileContents(path)
+      print(path, '../..' .. path)
       local f = io.open(path, "rb") or io.open('../../' .. path, "rb")
       assert(f)
       local content = f:read("*all")
@@ -50,10 +51,18 @@ lib.startAudioThread          = function()
       return content
    end
 
-   local code = getFileContents('lib/audio.lua')
+   local os = love.system.getOS()
+   --print(os)
+   if os == 'iOS' or os == 'Android' then
+      _thread = love.thread.newThread('audio.lua')
+      _thread:start()
+   else
+      local code = getFileContents('lib/audio.lua')
+      _thread = love.thread.newThread(code)
+      _thread:start()
+   end
 
-   _thread = love.thread.newThread(code)
-   _thread:start()
+   --
 end
 
 

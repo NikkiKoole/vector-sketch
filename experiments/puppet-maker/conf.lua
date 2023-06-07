@@ -25,5 +25,6 @@ function love.conf(t)
     else
         t.window.borderless = true -- setting this will hide the status bar
         t.window.fullscreen = true
+        t.window.resizable = false
     end
 end

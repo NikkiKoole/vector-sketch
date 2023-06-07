@@ -36,7 +36,7 @@ end
 function growl(pitch)
    local index = math.ceil(love.math.random() * #hum)
    local sndLength = hum[math.ceil(index)]:getDuration() / pitch
-   playingSound = playSound(hum[math.ceil(index)], pitch)
+   playingSound = playSound(hum[math.ceil(index)], pitch, 2)
 
    myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
 end
@@ -192,7 +192,7 @@ function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
 
    local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
            sliderimg.track2,
-           sliderimg.thumb3,
+           sliderimg.thumb5,
            nil, getValueMaybeNested(prop), valmin, valmax)
    if v.value then
       local m = math.ceil(1 / math.abs(valstep))
@@ -477,12 +477,12 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
 
             if false then
-            draw_toggle_with_2_buttons('useIt', startX + (runningElem * elementWidth), currentY, buttonSize,
-                sliderWidth,
-                not (values.potatoHead),
-                f, icons.bodynonpotato, icons.bodypotato)
+               draw_toggle_with_2_buttons('useIt', startX + (runningElem * elementWidth), currentY, buttonSize,
+                   sliderWidth,
+                   not (values.potatoHead),
+                   f, icons.bodynonpotato, icons.bodypotato)
 
-            runningElem, currentY = updateRowStuff()
+               runningElem, currentY = updateRowStuff()
             end
 
             local propupdate = function(v)

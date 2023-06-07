@@ -14,6 +14,35 @@ local mouseState = {
     released = false,
     offset = { x = 0, y = 0 }
 }
+
+-- this isnt in use (yet) but i hope to swap mouseState for this, and have all my ui working with touch and mouse in the future
+local pressed_pointers = {}
+ui.addToPressedPointers = function(x, y, id)
+   -- check we dont have it alread
+   local foundAlready = false
+   for i = 1, #pressed_pointers do
+      if pressed_pointers[i].id == id then
+         pressed_pointers[i].x = x
+         pressed_pointers[i].y = y
+         foundAlready = true
+      end
+   end
+   if foundAlready == false then
+      table.insert(pressed_pointers, { id = id, x = x, y = y })
+   end
+   -- print(#pressed_pointers)
+end
+
+ui.removeFromPressedPointers = function(id)
+   for i = #pressed_pointers, 1, -1 do
+      if pressed_pointers[i].id == id then
+         table.remove(pressed_pointers, i)
+      end
+   end
+   --print(#pressed_pointers)
+end
+
+
 ui.mouseHovered = function()
    return mouseState.hoveredSomething
 end
@@ -519,7 +548,7 @@ function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value
    end
    if hover then
       mouseState.hoveredSomething = true
-      love.mouse.setCursor(cursors.hand)
+      --love.mouse.setCursor(cursors.hand)
       if mouseState.click then
          lastDraggedElement = { id = id }
          mouseState.hoveredSomething = true
@@ -530,7 +559,7 @@ function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value
    if love.mouse.isDown(1) then
       if lastDraggedElement and lastDraggedElement.id == id then
          mouseState.hoveredSomething = true
-         love.mouse.setCursor(cursors.hand)
+         --love.mouse.setCursor(cursors.hand)
          local mx, my = love.mouse.getPosition()
          result = numbers.mapInto(mx + mouseState.offset.x, x, x + width - (tbw * scale), min, max)
          if result < min then

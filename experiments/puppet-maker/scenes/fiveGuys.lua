@@ -418,19 +418,6 @@ function scene.draw()
 
     love.graphics.setColor(1, 1, 1, 0.5)
     love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
-    love.graphics.setColor(1, 1, 1, .6)
-    local w, h = love.graphics.getDimensions()
-    local sx, sy = createFittingScale(cloud, w, h)
-    local bgscale = math.min(sx, sy)
-    love.graphics.draw(cloud, 0, 0, 0, bgscale, bgscale)
-end
-
-
-function scene.drawOld()
-    love.graphics.clear(1, 1, 1)
-
-    love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
 
     -- love.graphics.setColor(1, 0, 1)

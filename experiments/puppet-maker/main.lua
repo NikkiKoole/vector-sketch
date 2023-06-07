@@ -121,64 +121,27 @@ function love.load()
 
 
    local sample_data = {
-
-       { 'zebra',       'mipo/mi' },
-       { 'zebra',       'mipo/mi' },
-       { 'zebra',       'mipo/mi' },
-
-       { 'octopus',     'mipo/po' },
-       { 'goldfish',    'mipo/pi' },
-       { 'bat',         'mipo/mo' },
-       { 'goldfish',    'mipo/mi2' },
-       { 'bat',         'mipo/po2' },
-       { 'goldfish',    'mipo/mi3' },
-       { 'bat',         'mipo/po3' },
-       { 'bat',         'mipo/blah1' },
-       { 'bat',         'mipo/blah2' },
-       { 'bat',         'mipo/blah3' },
-
-       { 'walrus',      'guirojuno/3' },
-
-       { 'clam',        'babirhodes/ba' }, -- clam
-       { 'owl',         'babirhodes/bi' }, -- owl
-       { 'crab',        'babirhodes/biep2' }, -- crab
-       { 'elephant',    'babirhodes/biep3' },
-       { 'panda-bear',  'babirhodes/rhodes2' }, -- panda
-       { 'kangaroo',    'babirhodes/blok2' },
-
-       { 'red',         'bass02' },
-       { 'rabbit',      'bass04' },
-       { 'polar',       'bass07' },
-
-       { 'lemur',       'cr78/Tamb 1' },
-       { 'sheep',       'cr78/Rim Shot' },
-       { 'panther',     'cr78/Bongo High' },
-       { 'kiwi',        'cr78/Bongo Low' },
-       { 'hummingbird', 'cr78/Conga Low' },
-       { 'beetle',      'cr78/Guiro 1' },
-       { 'beetle',      'cr78/Guiro 2' },
-       { 'penguin',     'cr78/Clave' },
-       { 'penguin',     'cr78/Maracas' },
-       { 'cow',         'cr78/Cowbell' },
-       { 'scorpion',    'cr78/HiHat Accent' },
-       { 'scorpion',    'cr78/HiHat Metal' },
-       { 'zebra',       'cr78/HiHat' },
-       { 'scorpion',    'cr78/Cymbal' },
-       { 'scorpion',    'cr78/Snare' },
-       { 'scorpion',    'cr78/Kick' },
-       { 'scorpion',    'cr78/Kick Accent' },
-
-       { 'rhinoceros',  'Triangles 103' },
-       { 'hamster',     'Triangles 101' },
-
-       { 'hamster',     'mp7/Quijada' },
-   }
+       'cr78/Conga Low',
+       'cr78/Bongo Low',
+       'cr78/Tamb 1',
+       'cr78/Bongo High',
+       'cr78/Guiro 1',
+       'Triangles 101',
+       'Triangles 103',
+       'babirhodes/rhodes2',
+       'babirhodes/ba',
+       'babirhodes/bi',
+       'babirhodes/biep2',
+       'babirhodes/biep3',
+       'mipo/pi',
+       'mipo/po3',
+       'mp7/Quijada' }
 
    samples = {}
    for i = 1, #sample_data do
       --table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
-      local data = love.sound.newSoundData('assets/instruments/' .. sample_data[i][2] .. '.wav')
-      table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i][2] })
+      local data = love.sound.newSoundData('assets/instruments/' .. sample_data[i] .. '.wav')
+      table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i] })
    end
    audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
 
@@ -353,7 +316,7 @@ function love.load()
    SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
-   loadSong('assets/mipo3.melodypaint.txt')
+   loadSong('assets/mipo4.melodypaint.txt')
    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
    --love.event.wait()
@@ -472,10 +435,10 @@ function love.draw()
    prof.pop('frame')
 end
 
-function love.resize(w, h)
-   --camera.setCameraViewport(cam, 1000, 1000)
-   --cam:update(w, h)
-end
+--function love.resize(w, h)
+--camera.setCameraViewport(cam, 1000, 1000)
+--cam:update(w, h)
+--end
 
 function love.quit()
    -- this takes annoyingly long

@@ -106,6 +106,14 @@ function playSound(sound, optionalPitch, volumeMultiplier)
    return s
 end
 
+local findSample = function(path)
+   for i = 1, #samples do
+      if samples[i].p == path then
+         return samples[i]
+      end
+   end
+end
+
 function hittestPixel()
    local mx, my = love.mouse.getPosition()
    local wx, wy = cam:getWorldCoordinates(mx, my)
@@ -285,6 +293,10 @@ local function pointerPressed(x, y, id)
       --transitionHead(true, 'fiveGuys')
    end
    if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
+      local s = findSample('mp7/Quijada')
+      if s then
+         playSound(s.s, 1, 1)
+      end
       partRandomize(editingGuy.values, true)
 
       tweenCameraToHeadAndBody()
@@ -292,6 +304,8 @@ local function pointerPressed(x, y, id)
    end
    myWorld:emit("eyeLookAtPoint", x, y)
 end
+
+
 
 local function hex2rgb(hex)
    hex = hex:gsub("#", "")
@@ -434,6 +448,7 @@ function scene.load()
        thumb2Mask = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb2-mask.png'),
        thumb3 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb3.png'),
        thumb4 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb4.png'),
+       thumb5 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb5.png'),
    }
    toggle    = {
        body1 = love.graphics.newImage('assets/ui/interfaceparts/togglebody1.png'),
@@ -935,8 +950,8 @@ function attachCallbacks()
       end
 
       if key == 's' then
-       --  local bgPal = math.ceil(love.math.random() * #palettes)
-       --  skinColorize(bgPal, values)
+         --  local bgPal = math.ceil(love.math.random() * #palettes)
+         --  skinColorize(bgPal, values)
       end
       if key == 'h' then
          local fgPal = math.ceil(love.math.random() * #palettes)
@@ -976,6 +991,12 @@ function attachCallbacks()
          myWorld:emit('breath', biped)
       end
 
+      if key == 'v' then
+         myWorld:emit('blinkEyes', potato)
+         --myWorld:emit('birthGuy', biped)
+         --myWorld:emit('breath', biped)
+      end
+
       if key == 'd' then
          myWorld:emit('doinkBody', biped)
       end
@@ -984,11 +1005,11 @@ function attachCallbacks()
          --myWorld:emit('mouthOpener', potato, love.math.random())
       end
       if k == 'm' then
-        -- print('M')
-        -- myWorld:emit('mouthSaySomething', mouth, 1)
+         -- print('M')
+         -- myWorld:emit('mouthSaySomething', mouth, 1)
       end
       if key == 's' then
-          grabShot()
+         grabShot()
       end
       if key == 'i' then
          backToIntro()
@@ -997,11 +1018,13 @@ function attachCallbacks()
 
    function love.touchpressed(id, x, y, dx, dy, pressure)
       pointerPressed(x, y, id)
+      ui.addToPressedPointers(x, y, id)
    end
 
    function love.mousepressed(x, y, button, istouch, presses)
       if not istouch then
          pointerPressed(x, y, 'mouse')
+         ui.addToPressedPointers(x, y, 'mouse')
       end
    end
 
@@ -1019,11 +1042,13 @@ function attachCallbacks()
       lastDraggedElement = nil
       if not istouch then
          pointerReleased(x, y, 'mouse')
+         ui.removeFromPressedPointers('mouse')
       end
    end
 
    function love.touchreleased(id, x, y, dx, dy, pressure)
       pointerReleased(x, y, id)
+      ui.removeFromPressedPointers(id)
    end
 
    function love.resize(w, h)
