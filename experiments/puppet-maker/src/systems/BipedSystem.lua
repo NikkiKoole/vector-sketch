@@ -714,23 +714,24 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
 end
 
 function BipedSystem:breath(e)
-    --
-    local bodyBeforeY = e.biped.body.transforms.l[2]
-    local bodysx = e.biped.body.transforms.l[4]
-    local bodysy = e.biped.body.transforms.l[5]
+    if false then
+        local bodyBeforeY = e.biped.body.transforms.l[2]
+        local bodysx = e.biped.body.transforms.l[4]
+        local bodysy = e.biped.body.transforms.l[5]
 
 
-    local yOffset = 5 + love.math.random() * 5
-    local scaleOffset = 0.05 * love.math.random() + 1
-    --e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] - 20
-    Timer.tween(0.5, e.biped.body.transforms.l,
-        { [2] = bodyBeforeY - yOffset,[4] = bodysx * scaleOffset,[5] = bodysy * scaleOffset }, 'out-quint')
-    Timer.after(0.5, function()
-        Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY,[4] = bodysx,[5] = bodysy }, 'out-quint')
-    end)
-    Timer.during(1, function()
-        BipedSystem:movedBody(e)
-    end)
+        local yOffset = 5 + love.math.random() * 5
+        local scaleOffset = 0.05 * love.math.random() + 1
+        --e.biped.body.transforms.l[2] = e.biped.body.transforms.l[2] - 20
+        Timer.tween(0.5, e.biped.body.transforms.l,
+            { [2] = bodyBeforeY - yOffset,[4] = bodysx * scaleOffset,[5] = bodysy * scaleOffset }, 'out-quint')
+        Timer.after(0.5, function()
+            Timer.tween(0.5, e.biped.body.transforms.l, { [2] = bodyBeforeY,[4] = bodysx,[5] = bodysy }, 'out-quint')
+        end)
+        Timer.during(1, function()
+            BipedSystem:movedBody(e)
+        end)
+    end
 end
 
 function BipedSystem:doinkBodyLight(e)
@@ -817,13 +818,21 @@ function BipedSystem:tweenIntoDefaultStance(e, clear)
     --print('offset')
     e.biped.head.transforms.l[3] = -.3
     -- Timer.clear()
-    if clear then Timer.clear() end
-    Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
-    Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
-    BipedSystem:movedBody(e)
-    Timer.during(2.2, function()
+    if false then
+        if clear then Timer.clear() end
+        Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
+        Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
         BipedSystem:movedBody(e)
-    end)
+        Timer.during(2.2, function()
+            BipedSystem:movedBody(e)
+        end)
+    else
+        Timer.clear()
+        e.biped.head.transforms.l[3] = 0
+        e.biped.body.transforms.l[1] = 0
+        e.biped.body.transforms.l[2] = offset
+        BipedSystem:movedBody(e)
+    end
 end
 
 function BipedSystem:movedBody(e)

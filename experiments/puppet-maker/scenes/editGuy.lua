@@ -318,8 +318,11 @@ local function pointerPressed(x, y, id)
       end
       partRandomize(editingGuy.values, true)
 
-      tweenCameraToHeadAndBody()
+      myWorld:emit('bipedInit', biped)
+      myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
+      myWorld:emit('bipedInit', biped)
       myWorld:emit("tweenIntoDefaultStance", biped, true)
+      tweenCameraToHeadAndBody()
    end
    myWorld:emit("eyeLookAtPoint", x, y)
 end
