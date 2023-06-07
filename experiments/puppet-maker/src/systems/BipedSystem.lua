@@ -735,7 +735,7 @@ end
 
 function BipedSystem:doinkBodyLight(e)
     local dir = love.math.random() < .5 and 1 or -1
-    local str = .2
+    local str = .1
     local oldX = 0
     local oldY = 0
     e.biped.body.transforms.l[3] = str * dir
