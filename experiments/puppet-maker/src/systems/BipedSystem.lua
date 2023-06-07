@@ -714,7 +714,7 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
 end
 
 function BipedSystem:breath(e)
-    if false then
+    if true then
         local bodyBeforeY = e.biped.body.transforms.l[2]
         local bodysx = e.biped.body.transforms.l[4]
         local bodysy = e.biped.body.transforms.l[5]
@@ -818,7 +818,7 @@ function BipedSystem:tweenIntoDefaultStance(e, clear)
     --print('offset')
     e.biped.head.transforms.l[3] = -.3
     -- Timer.clear()
-    if false then
+    if true then
         if clear then Timer.clear() end
         Timer.tween(1.2, e.biped.head.transforms.l, { [3] = 0 }, 'out-elastic')
         Timer.tween(2, e.biped.body.transforms.l, { [1] = 0,[2] = offset }, 'out-elastic')
