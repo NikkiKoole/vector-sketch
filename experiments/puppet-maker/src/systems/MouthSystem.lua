@@ -44,7 +44,7 @@ function MouthSystem:mouthSaySomething(e, editing, length)
 end
 
 function MouthSystem:mouthOpener(e, editing, openNess, wideness)
-    if true then
+    if true and e.mouth and e.mouth.upperlip then
         --editingGuy.mouthOpenNess = openNess
         -- print(inspect(e.mouth))
         local url = e.mouth.upperlip.children[1].texture.url

@@ -173,6 +173,25 @@ function pointerReleased(x, y, id)
    for i = #pointerInteractees, 1, -1 do
       if pointerInteractees[i].id == id then
          myWorld:emit('itemReleased', pointerInteractees[i])
+         if (pointerInteractees[i].item and pointerInteractees[i].item == editingGuy.body) then
+            local soundArray = hum;
+            local pitch = love.math.random() * 0.25 + 0.8
+            local index = math.ceil(love.math.random() * #soundArray)
+            local sndLength = soundArray[math.ceil(index)]:getDuration() / pitch
+            playingSound = playSound(soundArray[math.ceil(index)], pitch, 2)
+
+            myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
+            myWorld:emit('blinkEyes', potato)
+         else
+            local item = pointerInteractees[i].item
+            if (item and item == editingGuy.hand1 or item == editingGuy.hand2) then
+               local sfx = pickRandomFrom(rubberplonks)
+               local pitch = 1
+               playSound(sfx, pitch, sfx:getDuration() / pitch)
+            end
+            -- playSOund(rubberplonks[math.ceil(math.random)])
+         end
+
          table.remove(pointerInteractees, i)
       end
    end
@@ -321,6 +340,13 @@ end
 
 
 function scene.handleAudioMessage(msg)
+   if msg.type == 'played' then
+      local path = msg.data.path
+
+      if path == 'Triangles 101' or path == 'Triangles 103' or path == 'babirhodes/rhodes2' then
+         myWorld:emit('breath', biped)
+      end
+   end
    --print('handling audio message from editGuy')
 end
 
@@ -666,6 +692,12 @@ function scene.load()
        love.audio.newSource('assets/sounds/fx/tsk2.wav', 'static'),
 
    }
+   biep = {
+       love.audio.newSource('assets/instruments/babirhodes/ba.wav', 'static'),
+       love.audio.newSource('assets/instruments/babirhodes/bi.wav', 'static'),
+       love.audio.newSource('assets/instruments/babirhodes/biep2.wav', 'static'),
+       love.audio.newSource('assets/instruments/babirhodes/biep3.wav', 'static'),
+   }
 
    headz = {}
    for i = 1, 8 do
@@ -958,7 +990,14 @@ function attachCallbacks()
          hairColorize(fgPal, values)
       end
       if key == 'p' then
+         --local offset = getBodyYOffsetForDefaultStance(biped)
+         --editingGuy.guy.transforms.l[2] = offset
          partRandomize(values, true)
+         --
+         --
+
+         -- myWorld:emit('bipedInit', biped)
+
          tweenCameraToHeadAndBody()
          myWorld:emit("tweenIntoDefaultStance", biped, true)
       end

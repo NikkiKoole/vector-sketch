@@ -1016,7 +1016,7 @@ type = "bezier"
 folder = true,
 name = "upperlip",
 transforms = {
-l = { -58.041, -930.138, 0, 1, 1, 0, 0, 0, 0 }
+l = { -11.336, -1015.765, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -1041,7 +1041,7 @@ type = "bezier"
 folder = true,
 name = "upperlip",
 transforms = {
-l = { -109.372, -641.28, 0, 1, 1, 0, 0, 0, 0 }
+l = { -101.588, -781.396, 0, 1, 1, 0, 0, 0, 0 }
 }
 }, {
 children = { {
@@ -1066,32 +1066,7 @@ type = "bezier"
 folder = true,
 name = "upperlip",
 transforms = {
-l = { 496.297, 412.505, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-data = {
-borderRadius = 1,
-flop = 1,
-length = 145,
-scale = 1,
-steps = 5.3277777777778,
-width = 610.5
-},
-name = "",
-points = { { 411, 411 }, { 0, 411 }, { -411, 411 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/upperlip4.png",
-wrap = "repeat"
-},
-type = "bezier"
-} },
-folder = true,
-name = "upperlip copy",
-transforms = {
-l = { -109.987, -620.178, 0, 1, 1, 0, 0, 0, 0 }
+l = { 91.515, 365.8, 0, 1, 1, 0, 0, 0, 0 }
 }
 } },
 folder = true,
@@ -1460,5 +1435,37 @@ folder = true,
 name = "mouthtest",
 transforms = {
 l = { 4489.433, 1634.37, 0, 1, 1, -40.911, -890.102, 0, 0 }
+}
+}, {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+data = {
+borderRadius = 1,
+flop = 1,
+length = 145,
+scale = 1,
+steps = 5.3277777777778,
+width = 610.5
+},
+name = "",
+points = { { 411, 411 }, { 0, 411 }, { -411, 411 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/upperlip4.png",
+wrap = "repeat"
+},
+type = "bezier"
+} },
+folder = true,
+name = "snavel",
+transforms = {
+l = { -86.635, -472.277, 0, 1, 1, 0, 0, 0, 0 }
+}
+} },
+folder = true,
+name = "unused",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
 }
 } }

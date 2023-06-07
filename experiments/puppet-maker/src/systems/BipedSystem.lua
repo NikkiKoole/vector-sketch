@@ -706,7 +706,10 @@ function BipedSystem:keepFeetPlantedAndStraightenLegs(e)
     --print(d.length / d.scaleY)
     -- todo ouch I odnt understand the .66 magic numebr, it sort of works though...
 
-    e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e) -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
+    e.biped.body.transforms.l[2] = getBodyYOffsetForDefaultStance(e) --+ 700
+    --print(e.biped.feet1.transforms.l[2])
+    --e.biped.feet1.transforms.l[2] = 0
+    --   700 -- -( (d.length / magic)  * d.scaleY)   *(d.borderRadius+.66    )  *  e.biped.values.legDefaultStance   -- leglengths[e.biped.values.legLength] / d.scaleY
     BipedSystem:movedBody(e)
 end
 
@@ -773,34 +776,37 @@ function BipedSystem:itemReleased(elem)
         if e.biped.head == elem.item then
             --print('head released')
         end
-        if not e.biped.values.handsPinned then
-            if e.biped.hand1 == elem.item then
-                local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
-                Timer.tween(1.2, e.biped.arm1.points[2], { [1] = h1x,[2] = h1y }, 'out-elastic')
-                Timer.during(1.3, function()
-                    e.biped.hand1.transforms.l[1] = e.biped.arm1.points[2][1]
-                    e.biped.hand1.transforms.l[2] = e.biped.arm1.points[2][2]
-                    e.biped.armhair1.points[2] = e.biped.arm1.points[2]
-                    mesh.remeshNode(e.biped.armhair1)
-                    mesh.remeshNode(e.biped.arm1)
-                end)
-            end
-            if e.biped.hand2 == elem.item then
-                local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
-                Timer.tween(1.2, e.biped.arm2.points[2], { [1] = h2x,[2] = h2y }, 'out-elastic')
-                Timer.during(1.3, function()
-                    e.biped.hand2.transforms.l[1] = e.biped.arm2.points[2][1]
-                    e.biped.hand2.transforms.l[2] = e.biped.arm2.points[2][2]
-                    e.biped.armhair2.points[2] = e.biped.arm2.points[2]
-                    mesh.remeshNode(e.biped.armhair2)
-                    mesh.remeshNode(e.biped.arm2)
-                end)
+        if true then
+            if not e.biped.values.handsPinned then
+                if e.biped.hand1 == elem.item then
+                    local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
+                    Timer.tween(1.2, e.biped.arm1.points[2], { [1] = h1x,[2] = h1y }, 'out-elastic')
+                    Timer.during(1.3, function()
+                        e.biped.hand1.transforms.l[1] = e.biped.arm1.points[2][1]
+                        e.biped.hand1.transforms.l[2] = e.biped.arm1.points[2][2]
+                        e.biped.armhair1.points[2] = e.biped.arm1.points[2]
+                        mesh.remeshNode(e.biped.armhair1)
+                        mesh.remeshNode(e.biped.arm1)
+                    end)
+                end
+                if e.biped.hand2 == elem.item then
+                    local h1x, h1y, h2x, h2y = getDefaultHandPositions(e)
+                    Timer.tween(1.2, e.biped.arm2.points[2], { [1] = h2x,[2] = h2y }, 'out-elastic')
+                    Timer.during(1.3, function()
+                        e.biped.hand2.transforms.l[1] = e.biped.arm2.points[2][1]
+                        e.biped.hand2.transforms.l[2] = e.biped.arm2.points[2][2]
+                        e.biped.armhair2.points[2] = e.biped.arm2.points[2]
+                        mesh.remeshNode(e.biped.armhair2)
+                        mesh.remeshNode(e.biped.arm2)
+                    end)
+                end
             end
         end
         if e.biped.body == elem.item then
             --e.biped.body.transforms.l[3] = -1
-
-            BipedSystem:tweenIntoDefaultStance(e, true)
+            -- trigger a sound
+            --playRandomPuppetSound()
+            BipedSystem:tweenIntoDefaultStance(e, false)
         end
     end
 end

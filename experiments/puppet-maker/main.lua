@@ -57,6 +57,11 @@ local audioHelper = require 'lib.audio-helper'
 audioHelper.startAudioThread()
 
 
+function pickRandomFrom(array)
+   local index = math.ceil(love.math.random() * #array)
+   return array[index]
+end
+
 function findPart(name)
    for i = 1, #parts do
       --print(parts[i].name)
@@ -69,7 +74,7 @@ end
 require 'src.generatePuppet'
 local bodypartsGenerate = require 'src.puppetDNA'
 
-if false then
+if true then
    local a, b, c, d, e
    repeat
       a, b, c, d, e = love.event.wait()
@@ -167,6 +172,17 @@ function love.load()
        love.graphics.newImage('assets/img/tiles/tiles.png'),
 
    }
+
+   rubberplonks = {
+       love.audio.newSource("assets/sounds/fx/rubber-plonk1.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-plonk2.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-plonk3.wav", "static")
+   }
+   rubberstretches = {
+       love.audio.newSource("assets/sounds/fx/rubber-stretch1.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-stretch2.wav", "static"),
+   }
+
 
    for i = 1, #textures do
       textures[i]:setWrap('mirroredrepeat', 'mirroredrepeat')
@@ -319,11 +335,11 @@ function love.load()
    loadSong('assets/mipo4.melodypaint.txt')
    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
-   --love.event.wait()
-   -- love.event.wait()
+   love.event.wait()
+   love.event.wait()
 
-   -- local success = love.window.updateMode(1024, 768,
-   --         { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
+   -- local success = love.window.updateMode(1024, 768, { fullscreen = false }) --,
+   --  { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
 end
 
 function loadSong(filename)
@@ -396,7 +412,9 @@ function love.focus(f)
 end
 
 function love.mousefocus(f)
-   focussed = f
+   if f == true then
+      focussed = f
+   end
 end
 
 function love.update(dt)

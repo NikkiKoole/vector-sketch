@@ -24,11 +24,33 @@ require 'src.screen-transitions'
 
 local pointerInteractees = {}
 
+
 local function pointerReleased(x, y, id)
     for i = #pointerInteractees, 1, -1 do
         if pointerInteractees[i].id == id then
             myWorld:emit('itemReleased', pointerInteractees[i])
-            --print(inspect(pointerInteractees[i]))
+            --print(inspect(pointerInteractees[i].id))
+
+            for j = 1, #fg do
+                if (pointerInteractees[i].item and pointerInteractees[i].item == fiveGuys[j].body) then
+                    local soundArray = hum;
+                    local pitch = love.math.random() * 0.25 + 0.8
+                    local index = math.ceil(love.math.random() * #soundArray)
+                    local sndLength = soundArray[math.ceil(index)]:getDuration() / pitch
+                    playingSound = playSound(soundArray[math.ceil(index)], pitch, 2)
+
+                    myWorld:emit('mouthSaySomething', fg[j].mouth, fiveGuys[j], sndLength)
+                    myWorld:emit('blinkEyes', fg[j].potato)
+                else
+                    local item = pointerInteractees[i].item
+                    if (item and item == fiveGuys[j].hand1 or item == fiveGuys[j].hand2) then
+                        local sfx = pickRandomFrom(rubberplonks)
+                        local pitch = 1
+                        playSound(sfx, pitch, sfx:getDuration() / pitch)
+                    end
+                end
+            end
+
             table.remove(pointerInteractees, i)
         end
     end
