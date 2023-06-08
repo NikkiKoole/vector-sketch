@@ -451,10 +451,10 @@ makingMarketingScreens = false
 makingMarketingScreensIndex = 0
 
 local resolutions = {
-   {1024,768},
-   {300,300},
-   {2000,2000}, 
-   {400,400}
+   {2778, 1284},  --6.7
+   {2688, 1242},  --6.5
+   {2208,1242},   -- 5.5 
+   {2732,2048}    -- 12.9 
 }
 
 
@@ -464,9 +464,9 @@ function love.draw()
       local w = resolutions[makingMarketingScreensIndex][1]
       local h = resolutions[makingMarketingScreensIndex][2]
       print('making marketing screenhsot',makingMarketingScreensIndex, w,h)
-      local success = love.window.updateMode(w, h, { fullscreen = false })
+      local success = love.window.updateMode(w/2, h/2, { fullscreen = false })
       love.resize(w,h)
-      love.graphics.captureScreenshot( 'marketing'..w..'x'..h..'.png' )
+      love.graphics.captureScreenshot( 'marketing@'..w..'x'..h..'.png' )
    end
 
    prof.push('frame')
