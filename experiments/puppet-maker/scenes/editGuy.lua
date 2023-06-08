@@ -301,7 +301,7 @@ local function pointerPressed(x, y, id)
       end
    end
 
-   local size = (h / 12) -- margin around panel
+   local size = (h / 8) -- margin around panel
    if (hit.pointInRect(x, y, w - size, 0, size, size)) then
       local sx, sy = getPointToCenterTransitionOn()
       SM.unload('editGuy')
@@ -1279,7 +1279,7 @@ function scene.draw()
 
 
    if true then
-      local size = (h / 12) -- margin around panel
+      local size = (h / 8) -- margin around panel
       local x = w - size
       local y = 0
 
@@ -1298,7 +1298,7 @@ function scene.draw()
 
 
    if true then
-      local size = (h / 12) -- margin around panel
+      local size = (h / 8) -- margin around panel
       local x = w - size
       local y = h - size
 

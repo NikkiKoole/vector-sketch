@@ -59,8 +59,17 @@ function generate()
     local legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
         'assets/parts/leg5.png', 'assets/parts/leg7.png',
         'assets/parts/leg1x.png', 'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png',
-        'assets/parts/leg5x.png' }
+        'assets/parts/leg5x.png', 'assets/parts/neck8.png', }
 
+    local neckUrls = {
+
+        'assets/parts/neck1.png', 'assets/parts/neck2.png', 'assets/parts/neck3.png', 'assets/parts/neck4.png',
+        'assets/parts/neck5.png', 'assets/parts/neck6.png', 'assets/parts/neck7.png', 'assets/parts/neck8.png',
+        'assets/parts/neck9.png', 'assets/parts/neck10.png',
+        'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
+        'assets/parts/leg5.png',
+        'assets/parts/leg1x.png', 'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png',
+        'assets/parts/leg5x.png' }
 
     local patchUrls = { 'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png',
         'assets/parts/patch4.png' }
@@ -117,7 +126,7 @@ function generate()
         { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts,                                                kind = 'head',                   child = true },
         { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts,                                                kind = 'head',                   child = true },
         { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,                                                   kind = 'head',                   child = true },
-        { name = 'neck',           imgs = legUrls,         kind = 'body' },
+        { name = 'neck',           imgs = neckUrls,        kind = 'body' },
         { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,                                                    kind = 'body' },
         { name = 'arms2',          imgs = legUrls,         kind = 'body',                                                    children = { 'arms', 'armhair' } },
         { name = 'armhair',        imgs = hairUrls,        kind = 'body',                                                    child = true },

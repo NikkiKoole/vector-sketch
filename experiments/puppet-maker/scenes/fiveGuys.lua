@@ -128,7 +128,7 @@ local function pointerPressed(x, y, id)
     myWorld:emit("eyeLookAtPoint", x, y)
 
     local w, h = love.graphics.getDimensions()
-    local size = (h / 12) -- margin around panel
+    local size = (h / 8) -- margin around panel
     if (hit.pointInRect(x, y, w - size, 0, size, size)) then
         local sx, sy = getPointToCenterTransitionOn()
         SM.unload('fiveGuys')
@@ -447,7 +447,7 @@ function scene.draw()
     -- love.graphics.rectangle('fill', w - 25, 0, 25, 25)
 
     if true then
-        local size = (h / 12) -- margin around panel
+        local size = (h / 8) -- margin around panel
         local x = w - size
         local y = 0
 
