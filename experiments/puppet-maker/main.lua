@@ -447,10 +447,38 @@ function love.update(dt)
    prof.pop('frame')
 end
 
+makingMarketingScreens = false
+makingMarketingScreensIndex = 0
+
+local resolutions = {
+   {1024,768},
+   {300,300},
+   {2000,2000}, 
+   {400,400}
+}
+
+
+
 function love.draw()
+   if makingMarketingScreens then
+      local w = resolutions[makingMarketingScreensIndex][1]
+      local h = resolutions[makingMarketingScreensIndex][2]
+      print('making marketing screenhsot',makingMarketingScreensIndex, w,h)
+      local success = love.window.updateMode(w, h, { fullscreen = false })
+      love.resize(w,h)
+      love.graphics.captureScreenshot( 'marketing'..w..'x'..h..'.png' )
+   end
+
    prof.push('frame')
    SM.draw()
    prof.pop('frame')
+
+   if makingMarketingScreensIndex < #resolutions then
+      makingMarketingScreensIndex= makingMarketingScreensIndex + 1
+   else
+      makingMarketingScreens = false
+   end
+  
 end
 
 --function love.resize(w, h)
@@ -474,4 +502,16 @@ end
 
 function love.lowmemory()
    print('LOW MEMORY!!!')
+end
+
+
+
+function makeMarketingScreenshots() 
+   makingMarketingScreens = true
+   makingMarketingScreensIndex = 1
+
+
+   local openURL = "file://" .. love.filesystem.getSaveDirectory()
+   love.system.openURL(openURL)
+
 end

@@ -954,6 +954,9 @@ function attachCallbacks()
 
    function love.keypressed(key, unicode)
       local values = editingGuy.values
+      if key== 'm' then
+         makeMarketingScreenshots()
+      end
       if key == 'escape' then
          love.event.quit()
       end
@@ -1039,14 +1042,14 @@ function attachCallbacks()
       if key == 'd' then
          myWorld:emit('doinkBody', biped)
       end
-      if key == 'm' then
+      --if key == 'm' then
          --myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
-      end
-      if k == 'm' then
+      --end
+      --if k == 'm' then
          -- print('M')
          -- myWorld:emit('mouthSaySomething', mouth, 1)
-      end
+      --end
       if key == 's' then
          grabShot()
       end
