@@ -548,11 +548,14 @@ function scene.update(dt)
             love.event.quit()
         end
 
-        if k == 'm' then
-            print('M')
+        --if k == 'm' then
+        --    print('M')
             --local index = math.ceil(math.random() * #fg)
             --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
-        end
+        --end
+        if k== 'm' then
+            makeMarketingScreenshots()
+         end
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
             doCircleInTransition(love.math.random() * w, love.math.random() * h, function()
