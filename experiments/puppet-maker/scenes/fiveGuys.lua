@@ -542,7 +542,8 @@ function scene.update(dt)
     function love.touchreleased(id, x, y, dx, dy, pressure)
         pointerReleased(x, y, id)
     end
-
+    
+    if false then
     function love.resize(w, h)
 
         local centerGuyIndex = math.ceil(#fiveGuys / 2)
@@ -571,7 +572,7 @@ function scene.update(dt)
 
         
      end
-
+    end
 
     function love.keypressed(k)
         if k == 'escape' then
