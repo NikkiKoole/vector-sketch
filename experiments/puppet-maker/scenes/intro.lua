@@ -406,6 +406,12 @@ function scene.update(dt)
       if key == 'f' then
          myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
       end
+
+         if key== 'm' then
+            makeMarketingScreenshots('intro')
+         end
+
+      
    end
 
    function love.touchpressed(key, unicode)

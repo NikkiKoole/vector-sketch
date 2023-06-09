@@ -955,7 +955,7 @@ function attachCallbacks()
    function love.keypressed(key, unicode)
       local values = editingGuy.values
       if key== 'm' then
-         makeMarketingScreenshots()
+         makeMarketingScreenshots('editor')
       end
       if key == 'escape' then
          love.event.quit()

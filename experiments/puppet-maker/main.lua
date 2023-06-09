@@ -438,7 +438,7 @@ function love.update(dt)
       end
    end
 
-   if focussed then
+   if focussed and not makingMarketingScreens then
       gesture.update(dt)
       SM.update(dt)
    end
@@ -449,6 +449,7 @@ end
 
 makingMarketingScreens = false
 makingMarketingScreensIndex = 0
+makingMarketingScreensName = ''
 
 local resolutions = {
    {2778, 1284},  --6.7
@@ -466,7 +467,7 @@ function love.draw()
       print('making marketing screenhsot',makingMarketingScreensIndex, w,h)
       local success = love.window.updateMode(w/2, h/2, { fullscreen = false })
       love.resize(w,h)
-      love.graphics.captureScreenshot( 'marketing@'..w..'x'..h..'.png' )
+      love.graphics.captureScreenshot( 'marketing '..makingMarketingScreensName..'@'..w..'x'..h..'.png' )
    end
 
    prof.push('frame')
@@ -506,9 +507,10 @@ end
 
 
 
-function makeMarketingScreenshots() 
+function makeMarketingScreenshots(name) 
    makingMarketingScreens = true
    makingMarketingScreensIndex = 1
+   makingMarketingScreensName = name or ''
 
 
    local openURL = "file://" .. love.filesystem.getSaveDirectory()

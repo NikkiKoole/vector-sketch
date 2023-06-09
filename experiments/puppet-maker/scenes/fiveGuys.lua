@@ -554,7 +554,7 @@ function scene.update(dt)
             --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
         --end
         if k== 'm' then
-            makeMarketingScreenshots()
+            makeMarketingScreenshots('overworld')
          end
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
