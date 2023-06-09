@@ -1096,7 +1096,8 @@ function attachCallbacks()
    function love.resize(w, h)
       local w, h = love.graphics.getDimensions()
 
-      local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
+      --local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
+      local x1, y1, w1, h1 = getCameraDataZoomOnJustHead()
       tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
 
       camera.setCameraViewport(cam, w, h)

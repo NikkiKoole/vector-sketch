@@ -452,10 +452,14 @@ makingMarketingScreensIndex = 0
 makingMarketingScreensName = ''
 
 local resolutions = {
-   {2778, 1284},  --6.7
-   {2688, 1242},  --6.5
-   {2208,1242},   -- 5.5 
-   {2732,2048}    -- 12.9 
+   {2796, 1290, '6-7'},  --6.7
+   {2796/2, 1290/2, '6-7-50%'},  --6.7
+   {2688, 1242, '6-5'},  --6.5
+   {2688/2, 1242/2, '6-5-50%'},  --6.5
+   {2208,1242, '5-5'},   -- 5.5 
+   {2208/2,1242/2, '5-5-50%'},   -- 5.5 
+   {2732,2048, '12-9'} ,   -- 12.9 
+   {2732/2,2048/2, '12-9-50%'} ,   -- 12.9 
 }
 
 
@@ -464,10 +468,11 @@ function love.draw()
    if makingMarketingScreens then
       local w = resolutions[makingMarketingScreensIndex][1]
       local h = resolutions[makingMarketingScreensIndex][2]
+      local type = resolutions[makingMarketingScreensIndex][3]
       print('making marketing screenhsot',makingMarketingScreensIndex, w,h)
       local success = love.window.updateMode(w/2, h/2, { fullscreen = false })
       love.resize(w,h)
-      love.graphics.captureScreenshot( 'marketing '..makingMarketingScreensName..'@'..w..'x'..h..'.png' )
+      love.graphics.captureScreenshot( 'puppetmaker-marketing-'..makingMarketingScreensName..'-'..type..'.png' )
    end
 
    prof.push('frame')
