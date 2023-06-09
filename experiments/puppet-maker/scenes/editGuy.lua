@@ -301,7 +301,7 @@ local function pointerPressed(x, y, id)
       end
    end
 
-   local size = (h / 12) -- margin around panel
+   local size = (h / 8) -- margin around panel
    if (hit.pointInRect(x, y, w - size, 0, size, size)) then
       local sx, sy = getPointToCenterTransitionOn()
       SM.unload('editGuy')
@@ -960,6 +960,9 @@ function attachCallbacks()
 
    function love.keypressed(key, unicode)
       local values = editingGuy.values
+      if key== 'm' then
+         makeMarketingScreenshots('editor')
+      end
       if key == 'escape' then
          love.event.quit()
       end
@@ -1045,14 +1048,14 @@ function attachCallbacks()
       if key == 'd' then
          myWorld:emit('doinkBody', biped)
       end
-      if key == 'm' then
+      --if key == 'm' then
          --myWorld:emit('mouthSaySomething', mouth, love.math.random())
          --myWorld:emit('mouthOpener', potato, love.math.random())
-      end
-      if k == 'm' then
+      --end
+      --if k == 'm' then
          -- print('M')
          -- myWorld:emit('mouthSaySomething', mouth, 1)
-      end
+      --end
       if key == 's' then
          grabShot()
       end
@@ -1100,6 +1103,7 @@ function attachCallbacks()
       local w, h = love.graphics.getDimensions()
 
       local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
+      --local x1, y1, w1, h1 = getCameraDataZoomOnJustHead()
       tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
 
       camera.setCameraViewport(cam, w, h)
@@ -1285,7 +1289,7 @@ function scene.draw()
 
 
    if true then
-      local size = (h / 12) -- margin around panel
+      local size = (h / 8) -- margin around panel
       local x = w - size
       local y = 0
 
@@ -1304,7 +1308,7 @@ function scene.draw()
 
 
    if true then
-      local size = (h / 12) -- margin around panel
+      local size = (h / 8) -- margin around panel
       local x = w - size
       local y = h - size
 

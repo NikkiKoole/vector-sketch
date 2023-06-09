@@ -1,4 +1,4 @@
-local debug = false
+local debug = true
 
 function love.conf(t)
     t.window.width = 1024
@@ -20,8 +20,8 @@ function love.conf(t)
         --t.window.resizable = true
         t.window.resizable = true
 
-        t.window.minwidth = 1024 / 2
-        t.window.minheight = 768 / 2
+        --t.window.minwidth = 1024 / 2
+        --t.window.minheight = 768 / 2
     else
         t.window.borderless = true -- setting this will hide the status bar
         t.window.fullscreen = true

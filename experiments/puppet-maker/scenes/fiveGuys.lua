@@ -128,7 +128,7 @@ local function pointerPressed(x, y, id)
     myWorld:emit("eyeLookAtPoint", x, y)
 
     local w, h = love.graphics.getDimensions()
-    local size = (h / 12) -- margin around panel
+    local size = (h / 8) -- margin around panel
     if (hit.pointInRect(x, y, w - size, 0, size, size)) then
         local sx, sy = getPointToCenterTransitionOn()
         SM.unload('fiveGuys')
@@ -447,7 +447,7 @@ function scene.draw()
     -- love.graphics.rectangle('fill', w - 25, 0, 25, 25)
 
     if true then
-        local size = (h / 12) -- margin around panel
+        local size = (h / 8) -- margin around panel
         local x = w - size
         local y = 0
 
@@ -543,16 +543,50 @@ function scene.update(dt)
         pointerReleased(x, y, id)
     end
 
+    if false then
+    function love.resize(w, h)
+
+        local centerGuyIndex = math.ceil(#fiveGuys / 2)
+        local bx, by = fiveGuys[centerGuyIndex].body.transforms._g:transformPoint(0, 0)
+        local w, h = love.graphics.getDimensions()
+    
+        camera.setCameraViewport(cam, w, h)
+        --camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
+    
+        local x2, y2, w2, h2 = getCameraZoom()
+        --print(x2, y2, w2, h2)
+    
+        local left = fiveGuys[1].guy.transforms.l[1]
+        local right = fiveGuys[#fiveGuys].guy.transforms.l[1]
+        local wide = (right - left) * 1.5
+    
+        camera.centerCameraOnPosition(0, -h2 / 2, wide, h2)
+        --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
+        --print(x, y, w, h)
+        --camera.centerCameraOnPosition(x, y, w, h)
+        -- tweenCameraTo(x, y, w, h)
+    
+    
+        cam:update(w, h)
+
+
+        
+     end
+    end
+
     function love.keypressed(k)
         if k == 'escape' then
             love.event.quit()
         end
 
-        if k == 'm' then
-            print('M')
+        --if k == 'm' then
+        --    print('M')
             --local index = math.ceil(math.random() * #fg)
             --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
-        end
+        --end
+        if k== 'm' then
+            makeMarketingScreenshots('overworld')
+         end
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
             doCircleInTransition(love.math.random() * w, love.math.random() * h, function()

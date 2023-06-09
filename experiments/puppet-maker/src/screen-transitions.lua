@@ -37,7 +37,14 @@ end
 
 function doCircleInTransition(x, y, onAfter)
     local w, h = love.graphics.getDimensions()
-
+    if transition and transition.type == 'circle' then
+        if transition.radius ~= 0 then
+            onAfter();
+            return;
+        end
+    else
+        print('another case', inspect(transition))
+    end
     transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
 
     Timer.tween(.3, transition, { alpha = 1 })
@@ -76,9 +83,9 @@ function doRectOutTransition(x, y, onAfter)
     -- I amdrawing a much higher rectangle so it will cover the screen when rotated
     local h2 = math.max(w, h) * 3
     transition = { type = 'rectangle', alpha = 1, x = x, y = y, w = 0, h = h2 * 3 }
-    Timer.tween(1, transition, { alpha = 0 })
+    Timer.tween(2, transition, { alpha = 0 })
     -- Timer.tween(3, transition, { w = x < w / 2 and w * 1.5 or -w * 1.5 }, 'out-back')
-    Timer.after(1, function()
+    Timer.after(2, function()
         onAfter();
         --transition = nil;
     end)
