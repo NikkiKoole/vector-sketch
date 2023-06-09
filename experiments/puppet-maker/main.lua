@@ -472,7 +472,7 @@ function love.draw()
       print('making marketing screenhsot',makingMarketingScreensIndex, w,h)
       local success = love.window.updateMode(w/2, h/2, { fullscreen = false })
       love.resize(w,h)
-      love.graphics.captureScreenshot( 'puppetmaker-marketing-'..makingMarketingScreensName..'-'..type..'.png' )
+      love.graphics.captureScreenshot( 'puppetmaker-marketing-'..makingMarketingScreensName..'-'..type..'-'..os.date("%Y%m%d%H%M%S")..'.png' )
    end
 
    prof.push('frame')
