@@ -904,7 +904,7 @@ function getCameraDataZoomOnHeadAndBody()
 
    --return x2, y2, w, h * 1.2
    local w, h               = love.graphics.getDimensions()
-   return 0, y2 + -h2 / 4, w, h2 * 1.5
+   return 0 + w / 4, y2 - (h2 / 4), w, h2 * 1.5
 end
 
 function tweenCameraTo(x, y, w, h)
@@ -960,7 +960,7 @@ function attachCallbacks()
 
    function love.keypressed(key, unicode)
       local values = editingGuy.values
-      if key== 'm' then
+      if key == 'm' then
          makeMarketingScreenshots('editor')
       end
       if key == 'escape' then
@@ -1049,12 +1049,12 @@ function attachCallbacks()
          myWorld:emit('doinkBody', biped)
       end
       --if key == 'm' then
-         --myWorld:emit('mouthSaySomething', mouth, love.math.random())
-         --myWorld:emit('mouthOpener', potato, love.math.random())
+      --myWorld:emit('mouthSaySomething', mouth, love.math.random())
+      --myWorld:emit('mouthOpener', potato, love.math.random())
       --end
       --if k == 'm' then
-         -- print('M')
-         -- myWorld:emit('mouthSaySomething', mouth, 1)
+      -- print('M')
+      -- myWorld:emit('mouthSaySomething', mouth, 1)
       --end
       if key == 's' then
          grabShot()

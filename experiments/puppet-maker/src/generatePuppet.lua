@@ -521,7 +521,7 @@ function copyAndRedoGraphic(name, values)
 end
 
 function removeChild(elem)
-   if elem._parent then
+   if elem and elem._parent then
       local index = node.getIndex(elem)
       if index >= 0 then table.remove(elem._parent.children, index) end
    else
@@ -615,11 +615,15 @@ function changePart(name)
          editingGuy.nose = updateChild(container, editingGuy.nose, copyAndRedoGraphic('nose', values))
       end
    elseif name == 'lowerlip' then
-      editingGuy.lowerlip = updateChild(mouthPart, editingGuy.lowerlip,
-              createLowerlipBezier(values, editingGuy.lowerlip.points))
+      if (editingGuy.lowerlip) then
+         editingGuy.lowerlip = updateChild(mouthPart, editingGuy.lowerlip,
+                 createLowerlipBezier(values, editingGuy.lowerlip.points))
+      end
    elseif name == 'upperlip' then
-      editingGuy.upperlip = updateChild(mouthPart, editingGuy.upperlip,
-              createUpperlipBezier(values, editingGuy.upperlip.points))
+      if (editingGuy.upperlip) then
+         editingGuy.upperlip = updateChild(mouthPart, editingGuy.upperlip,
+                 createUpperlipBezier(values, editingGuy.upperlip.points))
+      end
    elseif name == 'teeth' then
       if isNullObject(name, values) then
          local r = copy3(nullFolder)

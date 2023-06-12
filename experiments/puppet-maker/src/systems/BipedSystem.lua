@@ -687,6 +687,7 @@ function getBodyYOffsetForDefaultStance(e)
     local magic = 4.46
     local d = e.biped.leg1.data
     --  print(e.biped.values.legDefaultStance)
+    --print(d.scaleY)
     return -((d.length / magic) * d.scaleY) * (d.borderRadius + .66) * e.biped.values.legDefaultStance
 end
 

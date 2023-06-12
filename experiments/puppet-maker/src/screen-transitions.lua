@@ -43,7 +43,7 @@ function doCircleInTransition(x, y, onAfter)
             return;
         end
     else
-        print('another case', inspect(transition))
+        -- print('another case', inspect(transition))
     end
     transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
 
@@ -83,9 +83,9 @@ function doRectOutTransition(x, y, onAfter)
     -- I amdrawing a much higher rectangle so it will cover the screen when rotated
     local h2 = math.max(w, h) * 3
     transition = { type = 'rectangle', alpha = 1, x = x, y = y, w = 0, h = h2 * 3 }
-    Timer.tween(2, transition, { alpha = 0 })
+    Timer.tween(.3, transition, { alpha = 0 })
     -- Timer.tween(3, transition, { w = x < w / 2 and w * 1.5 or -w * 1.5 }, 'out-back')
-    Timer.after(2, function()
+    Timer.after(.31, function()
         onAfter();
         --transition = nil;
     end)
