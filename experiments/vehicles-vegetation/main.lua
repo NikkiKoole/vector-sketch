@@ -207,6 +207,8 @@ function love.mousepressed(x, y)
 
     local bodies = {objects.ball.body, objects.ball2.body}
     local hit = false
+    local epsilon = 0.01
+
     for i = 1, #bodies do
             local body = bodies[i]
         local bx, by = body:getPosition()
@@ -217,7 +219,13 @@ function love.mousepressed(x, y)
             mouseJoints.jointBody = body
             mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
             mouseJoints.joint:setDampingRatio(.5)
-            body:applyLinearImpulse( 0, 1000 )  -- so you can drag it through the floor from  there!!
+
+            local vx, vy = body:getLinearVelocity( )
+            
+            if math.abs(vx) < epsilon and math.abs(vy) < epsilon then
+            body:applyLinearImpulse( 0, 100 )  -- so you can drag it through the floor from  there!!
+                print('jo!')
+            end
             hit = true
 
         end
