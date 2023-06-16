@@ -1,6 +1,7 @@
 package.path = package.path .. ";../../?.lua"
 
 local lurker = require 'vendor.lurker'
+local inspect = require 'vendor.inspect'
 lurker.quiet = true
 require 'palette'
 
@@ -24,7 +25,9 @@ end
 -- https://www.iforce2d.net/b2dtut/one-way-walls
 -- in the original tutorial they hack box2d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
 local disabledContacts = {}
---local lastDisabledPosition = nil
+local lastDisabledPositions = nil
+local lastBodyThatUsedDisabledPosition = nil
+
 
 
 function contactShouldBeDisabled(a, b, contact)  
@@ -33,21 +36,36 @@ function contactShouldBeDisabled(a, b, contact)
     local bb =  b:getBody()
 
     local fixtureA, fixtureB = contact:getFixtures( )
+    local result = false
     if (mouseJoints.jointBody) then 
         if (ab == mouseJoints.jointBody and fixtureB:getUserData() == 'ground') then
-            return true
+            result = true
         end
         if (bb == mouseJoints.jointBody and fixtureA:getUserData() == 'ground') then
-            return true
+            result = true
         end
     end
-    return false
+
+    return result
+
 end
 
 function beginContact(a, b, contact)
- 
+    
     if contactShouldBeDisabled(a, b, contact) then
         contact:setEnabled(false)
+        local point = {contact:getPositions()}
+        -- i also should keep around what body (cirlcle) this is about, 
+        -- and also eventually probably also waht touch id or mouse this is.. 
+        lastDisabledPositions = point
+        -- we want to know if a or b was the mousejoint thing.
+        if a:getBody() == mouseJoints.jointBody  then
+            lastBodyThatUsedDisabledPosition = a
+        end
+        if b:getBody() == mouseJoints.jointBody  then
+            lastBodyThatUsedDisabledPosition = b
+        end
+
         table.insert(disabledContacts, contact)
     end
   
@@ -172,15 +190,8 @@ function love.load()
     objects.ground.shape = love.physics.newRectangleShape(width, height/10)
     objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
     objects.ground.fixture:setUserData("ground")
-
-    if false then
-    objects.ground2 = {}
-    objects.ground2.body = love.physics.newBody(world, width/2, height  - (height/10) + 10, "static")
-    objects.ground2.shape = love.physics.newRectangleShape(width, height/10)
-    objects.ground2.fixture = love.physics.newFixture(objects.ground2.body, objects.ground2.shape, 1)
-    objects.ground2.fixture:setUserData("ground")
-    end
-
+    objects.ground.body:setTransform( width/2, height  - (height/10), 0.2 )  --  <= here we se an anlgle to the ground!!
+    objects.ground.fixture:setFriction(0.1)
 
     mouseJoints = {
         joint = nil,
@@ -203,8 +214,22 @@ function killMouseJointIfPossible()
     end
 end
 
+
+
+
 function love.mousereleased()
+     -- now we have to find a few things out to check if i want to shoot my thing
+    -- first off, are we below the ground ?
+    if (mouseJoints.joint) then
+        if (mouseJoints.jointBody) then
+            print(mouseJoints.jointBody:getPosition())
+            local groundPoints = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints())}
+            print(inspect(groundPoints))
+        end
+    end
     killMouseJointIfPossible()
+   
+
 end
 
 function love.mousepressed(x, y)
@@ -299,11 +324,12 @@ function love.draw()
     drawCenteredBackgroundText('Pull back to aim and shoot.')
     drawThing(objects.carousel)
     drawThing(objects.ground)
-    --drawThing(objects.ground2)
+
     drawThing(objects.ball)
     drawThing(objects.ball2)
-
-
+    if lastDisabledPositions then
+        love.graphics.circle('fill', lastDisabledPositions[1], lastDisabledPositions[2], 10)
+    end
 
     --drawCircle(objects.ball.body, objects.ball.shape)
 end
