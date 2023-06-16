@@ -22,17 +22,17 @@ end
 
 
 -- https://www.iforce2d.net/b2dtut/one-way-walls
--- in the original tutorial they hack box3d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
+-- in the original tutorial they hack box2d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
 local disabledContacts = {}
 --local lastDisabledPosition = nil
 
 
 function contactShouldBeDisabled(a, b, contact)  
+    -- contacts should ONLY be dsiabled if it is betweena ground object and a thing that is dragged.
     local ab =  a:getBody()
     local bb =  b:getBody()
-    --print(ab:getUserData())
+
     local fixtureA, fixtureB = contact:getFixtures( )
-    --print(a:getFixture())
     if (mouseJoints.jointBody) then 
         if (ab == mouseJoints.jointBody and fixtureB:getUserData() == 'ground') then
             return true
@@ -45,30 +45,11 @@ function contactShouldBeDisabled(a, b, contact)
 end
 
 function beginContact(a, b, contact)
-    --local ab =  a:getBody()
-    --local bb =  b:getBody()
-    -- if the collision is with a thing that has a mousejoint (in other words if we are dragging it with the mopuse)
-    --local withMouseDraggedObject = false
-
+ 
     if contactShouldBeDisabled(a, b, contact) then
+        contact:setEnabled(false)
         table.insert(disabledContacts, contact)
     end
-    if false then
-    if (mouseJoints.jointBody) then
-        if (ab == mouseJoints.jointBody or bb == mouseJoints.jointBody) then
-                --print('begin colliding with amousedragged item')
-                withMouseDraggedObject = true
-                --contact:setEnabled( false )
-                table.insert(disabledContacts, contact)
-              --  lastDisabledPosition = contact:getPositions()
-        end
-    end
-end
-
-    if not  withMouseDraggedObject then 
-        --print('vanilla')
-    end
-
   
 end
 
@@ -82,10 +63,10 @@ function endContact(a, b, contact)
 end
 
 function preSolve(a, b, contact)
+    -- this is so contacts keep on being disabled if they are on that list (sadly they are being re-enabled by box2d.... )
     for i =1, #disabledContacts do
        disabledContacts[i]:setEnabled(false)
     end
-
 end
 
 function postSolve(a, b, contact, normalimpulse, tangentimpulse)
@@ -175,14 +156,11 @@ function love.load()
 
     end
 
-    --objects.ball.fixture:setDensity(3)
-    -- objects.ball.body:setLinearDamping(5)
-
 
     angularVelocity = 2
     objects.carousel = {}
     objects.carousel.body = love.physics.newBody(world, width / 2, height / 2, "kinematic")
-    objects.carousel.shape = love.physics.newRectangleShape(width / 5, width / 10)
+    objects.carousel.shape = love.physics.newRectangleShape(width / 2, width / 10)
     objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
     objects.carousel.body:setAngularVelocity(angularVelocity)
     objects.carousel.fixture:setUserData("caroussel")
