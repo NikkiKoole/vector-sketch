@@ -19,21 +19,75 @@ function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
 end
 
-function beginContact(a, b, coll)
+
+
+-- https://www.iforce2d.net/b2dtut/one-way-walls
+-- in the original tutorial they hack box3d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
+local disabledContacts = {}
+
+function beginContact(a, b, contact)
+    local ab =  a:getBody()
+    local bb =  b:getBody()
+    -- if the collision is with a thing that has a mousejoint (in other words if we are dragging it with the mopuse)
+    local withMouseDraggedObject = false
+    if (mouseJoints.jointBody) then
+        if (ab == mouseJoints.jointBody or bb == mouseJoints.jointBody) then
+                print('begin colliding with amousedragged item')
+                withMouseDraggedObject = true
+                contact:setEnabled( false )
+                table.insert(disabledContacts, contact)
+        end
+    end
+
+    if not  withMouseDraggedObject then 
+        print('vanilla')
+    end
+
+  
+end
+
+function endContact(a, b, contact)
+    for i = #disabledContacts, 1, -1 do
+        if disabledContacts[i] == contact then
+            table.remove(disabledContacts, i)
+        end
+    end 
 
 end
 
-function endContact(a, b, coll)
+function preSolve(a, b, contact)
+    for i =1, #disabledContacts do
+        disabledContacts[i]:setEnabled(false)
+    end
 
 end
 
-function preSolve(a, b, coll)
+function postSolve(a, b, contact, normalimpulse, tangentimpulse)
 
 end
 
-function postSolve(a, b, coll, normalimpulse, tangentimpulse)
-
-end
+function capsule(w, h, cs)
+    -- cs == cornerSize
+    local w2 = w/2
+    local h2 = h/2
+    local bt = -h2 + cs
+    local bb = h2 - cs
+    local bl = -w2 + cs
+    local br = w2 - cs
+ 
+    local result = {
+      -w2, bt,
+       bl, -h2,
+       br, -h2,
+       w2, bt,
+       w2, bb,
+       br, h2,
+       bl, h2,
+      -w2, bb
+    }
+    return result
+ 
+ end
 
 function love.load()
     local font = love.graphics.newFont('WindsorBT-Roman.otf', 48)
@@ -66,14 +120,18 @@ function love.load()
     objects.border.fixture:setFriction(.5)
 
     ballRadius = love.physics.getMeter() / 2
+    
     objects.ball = {}
     objects.ball.body = love.physics.newBody(world, width / 2, height / 2, "dynamic")
+    
     objects.ball.body:setFixedRotation(true)
-    objects.ball.shape = love.physics.newCircleShape(ballRadius)
+    --objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20, ballRadius + love.math.random() * 20, 5))
+    objects.ball.shape =  love.physics.newCircleShape(ballRadius)
     objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
     objects.ball.fixture:setRestitution(.4) -- let the ball bounce
     objects.ball.fixture:setUserData("ball")
     objects.ball.fixture:setFriction(.5)
+
     --objects.ball.fixture:setDensity(3)
     -- objects.ball.body:setLinearDamping(5)
 
@@ -81,11 +139,19 @@ function love.load()
     angularVelocity = 2
     objects.carousel = {}
     objects.carousel.body = love.physics.newBody(world, width / 2, height / 2, "kinematic")
-    --objects.carousel.shape = love.physics.newCircleShape(20)
     objects.carousel.shape = love.physics.newRectangleShape(width / 5, width / 10)
     objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
     objects.carousel.body:setAngularVelocity(angularVelocity)
-    objects.carousel.fixture:setUserData("wall")
+    objects.carousel.fixture:setUserData("caroussel")
+
+
+
+    objects.ground = {}
+    objects.ground.body = love.physics.newBody(world, width/2, height  - (height/10), "static")
+    objects.ground.shape = love.physics.newRectangleShape(width, height/10)
+    objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+    objects.ground.fixture:setUserData("ground")
+
 
 
     mouseJoints = {
@@ -121,33 +187,48 @@ function love.mousepressed(x, y)
     if (distance < ballRadius) then
         mouseJoints.jointBody = objects.ball.body
         mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
-        mouseJoints.joint:setDampingRatio(1)
+        mouseJoints.joint:setDampingRatio(.5)
     else
         killMouseJointIfPossible()
     end
 end
 
-function drawBlock(thing)
+function drawThing(thing)
+    
     local cx, cy = thing.body:getWorldCenter()
     local d = thing.fixture:getDensity()
-    love.graphics.setColor(0.20 * (d * 3), 1.0 - d * 5, 0.20)
-    love.graphics.polygon("fill", thing.body:getWorldPoints(thing.shape:getPoints()))
-    love.graphics.setColor(1, 0.5, 0.20)
-    love.graphics.setLineWidth(3)
-    love.graphics.polygon("line", thing.body:getWorldPoints(thing.shape:getPoints()))
-    love.graphics.setColor(1, 1, 1)
+    local t = thing.body:getType()
+
+    local shape = thing.shape
+    local body = thing.body
+
+    if t == 'kinematic' then
+        love.graphics.setColor(palette[colors.peach][1], palette[colors.peach][2], palette[colors.peach][3])  
+    elseif (t == 'dynamic') then
+        love.graphics.setColor(palette[colors.blue][1], palette[colors.blue][2], palette[colors.blue][3])  
+    elseif (t == 'static') then
+        love.graphics.setColor(palette[colors.green][1], palette[colors.green][2], palette[colors.green][3])  
+    end
+    
+    if ( shape:getType( ) == 'polygon') then
+        love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
+        love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])  
+        love.graphics.setLineWidth(3)
+        love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
+    end
+
+    if ( shape:getType( ) == 'circle') then
+        love.graphics.setColor(palette[colors.orange][1], palette[colors.orange][2], palette[colors.orange][3])
+        love.graphics.circle("fill", body:getX(), body:getY(), shape:getRadius())
+        love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
+        love.graphics.setLineWidth(3)
+        love.graphics.circle("line", body:getX(), body:getY(), shape:getRadius())
+    end
+  
+   
 end
 
-function drawCircle(body, shape)
-    love.graphics.setColor(palette[colors.orange][1], palette[colors.orange][2], palette[colors.orange][3])
 
-    love.graphics.circle("fill", body:getX(), body:getY(), shape:getRadius())
-    love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
-
-
-    love.graphics.setLineWidth(3)
-    love.graphics.circle("line", body:getX(), body:getY(), shape:getRadius())
-end
 
 function drawCenteredBackgroundText(str)
     local width, height = love.graphics.getDimensions()
@@ -172,8 +253,10 @@ function love.draw()
         vlooienspel:getWidth() / 2, vlooienspel:getHeight() / 2)
     love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
     drawCenteredBackgroundText('Pull back to aim and shoot.')
-    drawBlock(objects.carousel)
-    drawCircle(objects.ball.body, objects.ball.shape)
+    drawThing(objects.carousel)
+    drawThing(objects.ground)
+    drawThing(objects.ball)
+    --drawCircle(objects.ball.body, objects.ball.shape)
 end
 
 function drawMeterGrid()
