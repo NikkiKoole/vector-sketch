@@ -24,20 +24,46 @@ end
 -- https://www.iforce2d.net/b2dtut/one-way-walls
 -- in the original tutorial they hack box3d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
 local disabledContacts = {}
+--local lastDisabledPosition = nil
 
-function beginContact(a, b, contact)
+
+function contactShouldBeDisabled(a, b, contact)  
     local ab =  a:getBody()
     local bb =  b:getBody()
+    --print(ab:getUserData())
+    local fixtureA, fixtureB = contact:getFixtures( )
+    --print(a:getFixture())
+    if (mouseJoints.jointBody) then 
+        if (ab == mouseJoints.jointBody and fixtureB:getUserData() == 'ground') then
+            return true
+        end
+        if (bb == mouseJoints.jointBody and fixtureA:getUserData() == 'ground') then
+            return true
+        end
+    end
+    return false
+end
+
+function beginContact(a, b, contact)
+    --local ab =  a:getBody()
+    --local bb =  b:getBody()
     -- if the collision is with a thing that has a mousejoint (in other words if we are dragging it with the mopuse)
-    local withMouseDraggedObject = false
+    --local withMouseDraggedObject = false
+
+    if contactShouldBeDisabled(a, b, contact) then
+        table.insert(disabledContacts, contact)
+    end
+    if false then
     if (mouseJoints.jointBody) then
         if (ab == mouseJoints.jointBody or bb == mouseJoints.jointBody) then
                 --print('begin colliding with amousedragged item')
                 withMouseDraggedObject = true
                 --contact:setEnabled( false )
                 table.insert(disabledContacts, contact)
+              --  lastDisabledPosition = contact:getPositions()
         end
     end
+end
 
     if not  withMouseDraggedObject then 
         --print('vanilla')
@@ -298,6 +324,9 @@ function love.draw()
     --drawThing(objects.ground2)
     drawThing(objects.ball)
     drawThing(objects.ball2)
+
+
+
     --drawCircle(objects.ball.body, objects.ball.shape)
 end
 
