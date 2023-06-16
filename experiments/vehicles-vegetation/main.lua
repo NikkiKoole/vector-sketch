@@ -32,15 +32,15 @@ function beginContact(a, b, contact)
     local withMouseDraggedObject = false
     if (mouseJoints.jointBody) then
         if (ab == mouseJoints.jointBody or bb == mouseJoints.jointBody) then
-                print('begin colliding with amousedragged item')
+                --print('begin colliding with amousedragged item')
                 withMouseDraggedObject = true
-                contact:setEnabled( false )
+                --contact:setEnabled( false )
                 table.insert(disabledContacts, contact)
         end
     end
 
     if not  withMouseDraggedObject then 
-        print('vanilla')
+        --print('vanilla')
     end
 
   
@@ -52,18 +52,18 @@ function endContact(a, b, contact)
             table.remove(disabledContacts, i)
         end
     end 
-
+   -- print(#disabledContacts)
 end
 
 function preSolve(a, b, contact)
     for i =1, #disabledContacts do
-        disabledContacts[i]:setEnabled(false)
+       disabledContacts[i]:setEnabled(false)
     end
 
 end
 
 function postSolve(a, b, contact, normalimpulse, tangentimpulse)
-
+    
 end
 
 function capsule(w, h, cs)
@@ -120,7 +120,10 @@ function love.load()
     objects.border.fixture:setFriction(.5)
 
     ballRadius = love.physics.getMeter() / 2
-    
+
+
+
+
     objects.ball = {}
     objects.ball.body = love.physics.newBody(world, width / 2, height / 2, "dynamic")
     
@@ -131,6 +134,20 @@ function love.load()
     objects.ball.fixture:setRestitution(.4) -- let the ball bounce
     objects.ball.fixture:setUserData("ball")
     objects.ball.fixture:setFriction(.5)
+
+    if true then
+        objects.ball2 = {}
+        objects.ball2.body = love.physics.newBody(world, 100 + width / 2, height / 2, "dynamic")
+        
+        objects.ball2.body:setFixedRotation(true)
+        --objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20, ballRadius + love.math.random() * 20, 5))
+        objects.ball2.shape =  love.physics.newCircleShape(ballRadius)
+        objects.ball2.fixture = love.physics.newFixture(objects.ball2.body, objects.ball2.shape, 1)
+        objects.ball2.fixture:setRestitution(.4) -- let the ball bounce
+        objects.ball2.fixture:setUserData("ball")
+        objects.ball2.fixture:setFriction(.5)
+
+    end
 
     --objects.ball.fixture:setDensity(3)
     -- objects.ball.body:setLinearDamping(5)
@@ -152,6 +169,13 @@ function love.load()
     objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
     objects.ground.fixture:setUserData("ground")
 
+    if false then
+    objects.ground2 = {}
+    objects.ground2.body = love.physics.newBody(world, width/2, height  - (height/10) + 10, "static")
+    objects.ground2.shape = love.physics.newRectangleShape(width, height/10)
+    objects.ground2.fixture = love.physics.newFixture(objects.ground2.body, objects.ground2.shape, 1)
+    objects.ground2.fixture:setUserData("ground")
+    end
 
 
     mouseJoints = {
@@ -164,7 +188,7 @@ function love.load()
         palette[colors.light_cream][3])
     love.window.setMode(width, height, { resizable = true })
 
-    grabDevelopmentScreenshot()
+    --grabDevelopmentScreenshot()
 end
 
 function killMouseJointIfPossible()
@@ -180,17 +204,25 @@ function love.mousereleased()
 end
 
 function love.mousepressed(x, y)
-    local bx, by = objects.ball.body:getPosition()
-    local dx, dy = x - bx, y - by
-    local distance = math.sqrt(dx * dx + dy * dy)
 
-    if (distance < ballRadius) then
-        mouseJoints.jointBody = objects.ball.body
-        mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
-        mouseJoints.joint:setDampingRatio(.5)
-    else
-        killMouseJointIfPossible()
-    end
+    local bodies = {objects.ball.body, objects.ball2.body}
+    local hit = false
+    for i = 1, #bodies do
+            local body = bodies[i]
+        local bx, by = body:getPosition()
+        local dx, dy = x - bx, y - by
+        local distance = math.sqrt(dx * dx + dy * dy)
+
+        if (distance < ballRadius) then
+            mouseJoints.jointBody = body
+            mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
+            mouseJoints.joint:setDampingRatio(.5)
+            body:applyLinearImpulse( 0, 1000 )  -- so you can drag it through the floor from  there!!
+            hit = true
+
+        end
+    end 
+    if hit == false then killMouseJointIfPossible() end
 end
 
 function drawThing(thing)
@@ -255,7 +287,9 @@ function love.draw()
     drawCenteredBackgroundText('Pull back to aim and shoot.')
     drawThing(objects.carousel)
     drawThing(objects.ground)
+    --drawThing(objects.ground2)
     drawThing(objects.ball)
+    drawThing(objects.ball2)
     --drawCircle(objects.ball.body, objects.ball.shape)
 end
 
