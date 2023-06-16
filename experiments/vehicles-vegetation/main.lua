@@ -153,8 +153,8 @@ function love.load()
     objects.ball.body = love.physics.newBody(world, width / 2, height / 2, "dynamic")
     
     objects.ball.body:setFixedRotation(true)
-    --objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20, ballRadius + love.math.random() * 20, 5))
-    objects.ball.shape =  love.physics.newCircleShape(ballRadius)
+    objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20, ballRadius * 3 + love.math.random() * 20, 5))
+    --objects.ball.shape =  love.physics.newCircleShape(ballRadius)
     objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1)
     objects.ball.fixture:setRestitution(.4) -- let the ball bounce
     objects.ball.fixture:setUserData("ball")
@@ -316,6 +316,11 @@ function love.draw()
     love.graphics.rectangle("fill", 0, height - margin, width, margin)
     love.graphics.rectangle("fill", 0, 0, margin, height)
     love.graphics.rectangle("fill", width - margin, 0, margin, height)
+
+    love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
+    love.graphics.rectangle("line", 0, 0, width, height)
+    love.graphics.rectangle("line", margin, margin, width-margin*2, height-margin*2)
+
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
