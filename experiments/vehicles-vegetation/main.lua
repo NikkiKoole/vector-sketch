@@ -20,13 +20,12 @@ end
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
+    if k == '1' then startExample(1) end
+    if k == '2' then startExample(2) end
 end
 
 -- https://www.iforce2d.net/b2dtut/one-way-walls
 -- in the original tutorial they hack box2d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
-
-
-
 
 function contactShouldBeDisabled(a, b, contact)
     -- contacts should ONLY be dsiabled if it is betweena ground object and a thing that is dragged.
@@ -54,13 +53,13 @@ function beginContact(a, b, contact)
         -- i also should keep around what body (cirlcle) this is about,
         -- and also eventually probably also waht touch id or mouse this is..
 
-        lastDisabledPositions = point
+        positionOfLastDisabledContact = point
         -- we want to know if a or b was the mousejoint thing.
         if a:getBody() == mouseJoints.jointBody then
-            lastBodyThatUsedDisabledPosition = a
+            bodyLastDisabledContact = a
         end
         if b:getBody() == mouseJoints.jointBody then
-            lastBodyThatUsedDisabledPosition = b
+            bodyLastDisabledContact = b
         end
 
         table.insert(disabledContacts, contact)
@@ -123,42 +122,44 @@ function makeBall(x, y, radius)
     return ball
 end
 
-function love.load()
-    -- before these were local but that didnt work with lurker
-    disabledContacts = {}
-    lastDisabledPositions = nil
-    lastBodyThatUsedDisabledPosition = nil
+function makeCarousell(x, y, width, height, angularVelocity)
+    local carousel = {}
+    carousel.body = love.physics.newBody(world, x, y, "kinematic")
+    carousel.shape = love.physics.newRectangleShape(width, height)
+    carousel.fixture = love.physics.newFixture(carousel.body, carousel.shape, 1)
+    carousel.body:setAngularVelocity(angularVelocity)
+    carousel.fixture:setUserData("caroussel")
+    return carousel
+end
 
-    local font = love.graphics.newFont('WindsorBT-Roman.otf', 48)
-    love.graphics.setFont(font)
+function makeBorderChain(width, height, margin)
+    local border = {}
+    border.body = love.physics.newBody(world, 0, 0)
 
-    vlooienspel = love.graphics.newImage('vlooienspel.jpg')
 
-    local width = 800
-    local height = 600
-
-    love.physics.setMeter(100)
-
-    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
-    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
-
-    objects = {}
-    objects.border = {}
-    objects.border.body = love.physics.newBody(world, 0, 0)
-
-    margin = 20
     --angularVelocity = 5
-    objects.border.shape = love.physics.newChainShape(true,
+    border.shape = love.physics.newChainShape(true,
             margin, margin,
             width - margin, margin,
             width - margin, height - margin,
             margin, height - margin)
 
-    objects.border.fixture = love.physics.newFixture(objects.border.body, objects.border.shape)
-    objects.border.fixture:setUserData("border")
-    objects.border.fixture:setFriction(.5)
+    border.fixture = love.physics.newFixture(border.body, border.shape)
+    border.fixture:setUserData("border")
+    border.fixture:setFriction(.5)
+    return border
+end
 
+function startExample(number)
+    local width, height = love.graphics.getDimensions()
+    love.physics.setMeter(100)
+    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
+    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
+    objects = {}
+    margin = 20
+
+    objects.border = makeBorderChain(width, height, margin)
     ballRadius = love.physics.getMeter() / 4
 
     objects.balls = {}
@@ -167,23 +168,9 @@ function love.load()
                 margin + love.math.random() * height / 2, ballRadius)
     end
 
-
-
-
     angularVelocity = 2
-    objects.carousel = {}
-    objects.carousel.body = love.physics.newBody(world, width / 2, height / 2, "kinematic")
-    objects.carousel.shape = love.physics.newRectangleShape(width / 4, width / 20)
-    objects.carousel.fixture = love.physics.newFixture(objects.carousel.body, objects.carousel.shape, 1)
-    objects.carousel.body:setAngularVelocity(angularVelocity)
-    objects.carousel.fixture:setUserData("caroussel")
-
-    objects.carousel2 = {}
-    objects.carousel2.body = love.physics.newBody(world, width / 2 + width / 4, height / 2, "kinematic")
-    objects.carousel2.shape = love.physics.newRectangleShape(width / 4, width / 20)
-    objects.carousel2.fixture = love.physics.newFixture(objects.carousel2.body, objects.carousel2.shape, 1)
-    objects.carousel2.body:setAngularVelocity( -angularVelocity)
-    objects.carousel2.fixture:setUserData("caroussel")
+    objects.carousel = makeCarousell(width / 2, height / 2, width / 4, width / 20, angularVelocity)
+    objects.carousel2 = makeCarousell(width / 2 + width / 4, height / 2, width / 4, width / 20, -angularVelocity)
 
 
     objects.ground = {}
@@ -191,20 +178,36 @@ function love.load()
     objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
     objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
     objects.ground.fixture:setUserData("ground")
-    objects.ground.body:setTransform(width / 2, height - (height / 10), 0.02) --  <= here we se an anlgle to the ground!!
-    objects.ground.fixture:setFriction(0.1)
+    objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
+    objects.ground.fixture:setFriction(0.01)
+end
+
+function love.load()
+    local font = love.graphics.newFont('WindsorBT-Roman.otf', 48)
+    love.graphics.setFont(font)
+
+    vlooienspel = love.graphics.newImage('vlooienspel.jpg')
+
+    local width = 800
+    local height = 600
+
+    -- before these were local but that didnt work with lurker
+    -- all of these are relevant to the vlooienspel experiment, and not to others (I think)
+    disabledContacts = {}
+    positionOfLastDisabledContact = nil
+    bodyLastDisabledContact = nil
 
     mouseJoints = {
         joint = nil,
         jointBody = nil
     }
 
-
+    startExample(1)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
-    love.window.setMode(width, height, { resizable = true })
 
-    --grabDevelopmentScreenshot()
+
+    grabDevelopmentScreenshot()
 end
 
 function killMouseJointIfPossible()
@@ -225,18 +228,18 @@ function love.mousereleased()
             local tr = { points[3], points[4] }
             -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
             -- oh wait, this is actually kinda good enough-ish (tm)
-            if (lastBodyThatUsedDisabledPosition and lastBodyThatUsedDisabledPosition:getBody() == mouseJoints.jointBody) then
+            if (bodyLastDisabledContact and bodyLastDisabledContact:getBody() == mouseJoints.jointBody) then
                 local x1, y1 = mouseJoints.jointBody:getPosition()
-                local x2 = lastDisabledPositions[1]
-                local y2 = lastDisabledPositions[2]
+                local x2 = positionOfLastDisabledContact[1]
+                local y2 = positionOfLastDisabledContact[2]
 
                 local delta = Vector(x1 - x2, y1 - y2)
                 local l = delta:getLength()
                 local v = delta:getNormalized() * l * -5
-
-                lastBodyThatUsedDisabledPosition:getBody():applyLinearImpulse(v.x, v.y)
-                lastBodyThatUsedDisabledPosition = nil
-                lastDisabledPositions = nil
+                if v.y > 0 then v.y = 0 end -- i odnt want  you shoooting downward!
+                bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                bodyLastDisabledContact = nil
+                positionOfLastDisabledContact = nil
                 --
             end
         end
@@ -263,7 +266,7 @@ function love.mousepressed(x, y)
             local vx, vy = body:getLinearVelocity()
 
             if math.abs(vx) < epsilon and math.abs(vy) < epsilon then
-                body:applyLinearImpulse(0, 100) -- so you can drag it through the floor from  there!!
+                body:applyLinearImpulse(0, 200) -- so you can drag it through the floor from  there!!
             end
             hit = true
         end
@@ -301,6 +304,16 @@ function drawThing(thing)
         love.graphics.setLineWidth(3)
         love.graphics.circle("line", body:getX(), body:getY(), shape:getRadius())
     end
+
+    if shape:getType() == 'chain' then
+        love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
+        local points = { body:getWorldPoints(shape:getPoints()) }
+        for i = 1, #points, 2 do
+            if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
+        end
+        love.graphics.setLineWidth(3)
+        love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
+    end
 end
 
 function drawCenteredBackgroundText(str)
@@ -316,14 +329,9 @@ function love.draw()
     drawMeterGrid()
 
     love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
-    love.graphics.rectangle("fill", 0, 0, width, margin)
-    love.graphics.rectangle("fill", 0, height - margin, width, margin)
-    love.graphics.rectangle("fill", 0, 0, margin, height)
-    love.graphics.rectangle("fill", width - margin, 0, margin, height)
+
 
     love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
-    love.graphics.rectangle("line", 0, 0, width, height)
-    love.graphics.rectangle("line", margin, margin, width - margin * 2, height - margin * 2)
 
 
     love.graphics.setColor(1, 1, 1)
@@ -338,13 +346,15 @@ function love.draw()
         drawThing(objects.balls[i])
     end
 
-    if lastDisabledPositions then
-        love.graphics.circle('fill', lastDisabledPositions[1], lastDisabledPositions[2], 10)
-        if (lastBodyThatUsedDisabledPosition) then
-            local posx, posy = lastBodyThatUsedDisabledPosition:getBody():getPosition()
-            love.graphics.line(lastDisabledPositions[1], lastDisabledPositions[2], posx, posy)
+    if positionOfLastDisabledContact then
+        love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
+        if (bodyLastDisabledContact) then
+            local posx, posy = bodyLastDisabledContact:getBody():getPosition()
+            love.graphics.line(positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], posx, posy)
         end
     end
+
+    drawThing(objects.border)
 
     --drawCircle(objects.ball.body, objects.ball.shape)
 end
