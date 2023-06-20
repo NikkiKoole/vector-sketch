@@ -151,32 +151,80 @@ function startExample(number)
     local width, height = love.graphics.getDimensions()
     love.physics.setMeter(100)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
-    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
-
     objects = {}
-    margin = 20
+    if number == 1 then
+        
+        world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-    objects.border = makeBorderChain(width, height, margin)
-    ballRadius = love.physics.getMeter() / 4
+        
+        local margin = 20
 
-    objects.balls = {}
-    for i = 1, 10 do
-        objects.balls[i] = makeBall(margin * 2 + (love.math.random() * width) - margin * 4,
-                margin + love.math.random() * height / 2, ballRadius)
+        objects.border = makeBorderChain(width, height, margin)
+        ballRadius = love.physics.getMeter() / 4
+
+        objects.balls = {}
+        for i = 1, 20 do
+            objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width- ballRadius*2)) ,
+                    margin + love.math.random() * height / 2, ballRadius)
+        end
+
+        angularVelocity = 2
+        objects.carousel = makeCarousell(width / 2, height / 2, width / 4, width / 20, angularVelocity)
+        objects.carousel2 = makeCarousell(width / 2 + width / 4, height / 2, width / 4, width / 20, -angularVelocity)
+
+
+        objects.ground = {}
+        objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
+        objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
+        objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+        objects.ground.fixture:setUserData("ground")
+        objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
+        objects.ground.fixture:setFriction(0.01)
     end
 
-    angularVelocity = 2
-    objects.carousel = makeCarousell(width / 2, height / 2, width / 4, width / 20, angularVelocity)
-    objects.carousel2 = makeCarousell(width / 2 + width / 4, height / 2, width / 4, width / 20, -angularVelocity)
+    if number == 2 then 
+        world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+        local margin = 20
+
+        objects.border = makeBorderChain(width, height, margin)
+
+        objects.ground = {}
+        objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
+        objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
+        objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+        objects.ground.fixture:setUserData("ground")
+        --objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
+        objects.ground.fixture:setFriction(0.01)
 
 
-    objects.ground = {}
-    objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
-    objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
-    objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
-    objects.ground.fixture:setUserData("ground")
-    objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
-    objects.ground.fixture:setFriction(0.01)
+        objects.carbody = {}
+
+        objects.carbody.body = love.physics.newBody(world, width / 2, height/2, "dynamic")
+        objects.carbody.shape = love.physics.newRectangleShape(400, 100)
+        objects.carbody.fixture = love.physics.newFixture(objects.carbody.body, objects.carbody.shape, 1)
+       -- objects.carbody.fixture:setFilterData( 1,65535,-1)
+
+        objects.wheel1 = {}
+        objects.wheel1.body = love.physics.newBody(world, width / 2, height/2, "dynamic")
+        objects.wheel1.shape = love.physics.newCircleShape(50)
+        objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, 1)
+        --objects.wheel1.fixture:setFilterData( 1,65535,-1)
+
+        local joint = love.physics.newRevoluteJoint( objects.carbody.body, objects.wheel1.body,  0, 0, false )
+        joint:setMotorEnabled( true )
+        joint:setMotorSpeed( 200 )
+        joint:setMaxMotorTorque( 500 )
+        objects.balls = {}
+
+        ballRadius = love.physics.getMeter() / 4
+          if false then  
+        for i = 1, 20 do
+            objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width- ballRadius*2)) ,
+                    margin + love.math.random() * height / 2, ballRadius)
+        end 
+    end
+
+    end
     example = number
 end
 
@@ -186,8 +234,6 @@ function love.load()
 
     vlooienspel = love.graphics.newImage('vlooienspel.jpg')
     pedal = love.graphics.newImage('pedal.jpg')
-    local width = 800
-    local height = 600
 
     -- before these were local but that didnt work with lurker
     -- all of these are relevant to the vlooienspel experiment, and not to others (I think)
@@ -200,7 +246,7 @@ function love.load()
         jointBody = nil
     }
     example = nil
-    startExample(1)
+    startExample(2)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
 
@@ -250,23 +296,25 @@ function love.mousepressed(x, y)
     local hit = false
     local epsilon = 1
 
-    for i = 1, #objects.balls do
-        local body = objects.balls[i].body
-        local bx, by = body:getPosition()
-        local dx, dy = x - bx, y - by
-        local distance = math.sqrt(dx * dx + dy * dy)
+    if objects and objects.balls then
+        for i = 1, #objects.balls do
+            local body = objects.balls[i].body
+            local bx, by = body:getPosition()
+            local dx, dy = x - bx, y - by
+            local distance = math.sqrt(dx * dx + dy * dy)
 
-        if (distance < ballRadius) then
-            mouseJoints.jointBody = body
-            mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
-            mouseJoints.joint:setDampingRatio(.5)
+            if (distance < ballRadius) then
+                mouseJoints.jointBody = body
+                mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
+                mouseJoints.joint:setDampingRatio(.5)
 
-            local vx, vy = body:getLinearVelocity()
+                local vx, vy = body:getLinearVelocity()
 
-            if math.abs(vx) < epsilon and math.abs(vy) < epsilon then
-                body:applyLinearImpulse(0, 200) -- so you can drag it through the floor from  there!!
+                if math.abs(vx) < epsilon and math.abs(vy) < epsilon then
+                    body:applyLinearImpulse(0, 200) -- so you can drag it through the floor from  there!!
+                end
+                hit = true
             end
-            hit = true
         end
     end
     if hit == false then killMouseJointIfPossible() end
@@ -333,6 +381,14 @@ function love.draw()
             vlooienspel:getWidth() / 2, vlooienspel:getHeight() / 2)
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Pull back to aim and shoot.')
+
+        drawThing(objects.carousel)
+        drawThing(objects.carousel2)
+        drawThing(objects.ground)
+        for i = 1, #objects.balls do
+            drawThing(objects.balls[i])
+        end
+        drawThing(objects.border)
     end
     if example == 2 then
         love.graphics.setColor(1, 1, 1)
@@ -340,14 +396,17 @@ function love.draw()
             pedal:getWidth() / 2, pedal:getHeight() / 2)
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
+
+        drawThing(objects.ground)
+        drawThing(objects.carbody)
+        drawThing(objects.wheel1)
+
+        for i = 1, #objects.balls do
+            drawThing(objects.balls[i])
+        end
     end
 
-    drawThing(objects.carousel)
-    drawThing(objects.carousel2)
-    drawThing(objects.ground)
-    for i = 1, #objects.balls do
-        drawThing(objects.balls[i])
-    end
+  
 
     if positionOfLastDisabledContact then
         love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
@@ -357,7 +416,7 @@ function love.draw()
         end
     end
 
-    drawThing(objects.border)
+   
 end
 
 function drawMeterGrid()
