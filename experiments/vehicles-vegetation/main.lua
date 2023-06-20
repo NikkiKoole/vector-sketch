@@ -135,9 +135,6 @@ end
 function makeBorderChain(width, height, margin)
     local border = {}
     border.body = love.physics.newBody(world, 0, 0)
-
-
-    --angularVelocity = 5
     border.shape = love.physics.newChainShape(true,
             margin, margin,
             width - margin, margin,
@@ -180,6 +177,7 @@ function startExample(number)
     objects.ground.fixture:setUserData("ground")
     objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
     objects.ground.fixture:setFriction(0.01)
+    example = number
 end
 
 function love.load()
@@ -187,7 +185,7 @@ function love.load()
     love.graphics.setFont(font)
 
     vlooienspel = love.graphics.newImage('vlooienspel.jpg')
-
+    pedal = love.graphics.newImage('pedal.jpg')
     local width = 800
     local height = 600
 
@@ -201,7 +199,7 @@ function love.load()
         joint = nil,
         jointBody = nil
     }
-
+    example = nil
     startExample(1)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
@@ -250,7 +248,7 @@ end
 function love.mousepressed(x, y)
     --local bodies = { objects.ball.body, objects.ball2.body }
     local hit = false
-    local epsilon = 0.01
+    local epsilon = 1
 
     for i = 1, #objects.balls do
         local body = objects.balls[i].body
@@ -328,17 +326,22 @@ function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
 
-    love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
 
+    if example == 1 then
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
+            vlooienspel:getWidth() / 2, vlooienspel:getHeight() / 2)
+        love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
+        drawCenteredBackgroundText('Pull back to aim and shoot.')
+    end
+    if example == 2 then
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(pedal, width / 2, height / 4, 0, 1, 1,
+            pedal:getWidth() / 2, pedal:getHeight() / 2)
+        love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
+        drawCenteredBackgroundText('Make me some vehicles.')
+    end
 
-    love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
-
-
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
-        vlooienspel:getWidth() / 2, vlooienspel:getHeight() / 2)
-    love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
-    drawCenteredBackgroundText('Pull back to aim and shoot.')
     drawThing(objects.carousel)
     drawThing(objects.carousel2)
     drawThing(objects.ground)
@@ -355,8 +358,6 @@ function love.draw()
     end
 
     drawThing(objects.border)
-
-    --drawCircle(objects.ball.body, objects.ball.shape)
 end
 
 function drawMeterGrid()
