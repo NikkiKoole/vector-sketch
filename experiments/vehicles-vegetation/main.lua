@@ -153,10 +153,9 @@ function startExample(number)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     objects = {}
     if number == 1 then
-        
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-        
+
         local margin = 20
 
         objects.border = makeBorderChain(width, height, margin)
@@ -164,7 +163,7 @@ function startExample(number)
 
         objects.balls = {}
         for i = 1, 20 do
-            objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width- ballRadius*2)) ,
+            objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * height / 2, ballRadius)
         end
 
@@ -182,7 +181,7 @@ function startExample(number)
         objects.ground.fixture:setFriction(0.01)
     end
 
-    if number == 2 then 
+    if number == 2 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
         local margin = 20
 
@@ -199,31 +198,35 @@ function startExample(number)
 
         objects.carbody = {}
 
-        objects.carbody.body = love.physics.newBody(world, width / 2, height/2, "dynamic")
+        objects.carbody.body = love.physics.newBody(world, width / 2, height / 2, "dynamic")
         objects.carbody.shape = love.physics.newRectangleShape(400, 100)
         objects.carbody.fixture = love.physics.newFixture(objects.carbody.body, objects.carbody.shape, 1)
-       -- objects.carbody.fixture:setFilterData( 1,65535,-1)
+        objects.carbody.fixture:setFilterData(1, 65535, -1)
 
         objects.wheel1 = {}
-        objects.wheel1.body = love.physics.newBody(world, width / 2, height/2, "dynamic")
-        objects.wheel1.shape = love.physics.newCircleShape(50)
+        objects.wheel1.body = love.physics.newBody(world, width / 2 + 200, height / 2, "dynamic")
+        --objects.wheel1.shape = love.physics.newCircleShape(50)
+        objects.wheel1.shape = love.physics.newRectangleShape(20, 20)
+        -- objects.wheel1.body:setTransform(200, 0, 0)
         objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, 1)
-        --objects.wheel1.fixture:setFilterData( 1,65535,-1)
+        objects.wheel1.fixture:setFilterData(1, 65535, -1)
 
-        local joint = love.physics.newRevoluteJoint( objects.carbody.body, objects.wheel1.body,  0, 0, false )
-        joint:setMotorEnabled( true )
-        joint:setMotorSpeed( 200 )
-        joint:setMaxMotorTorque( 500 )
+        if true then
+            objects.joint = love.physics.newRevoluteJoint(objects.carbody.body, objects.wheel1.body, -200, 0, 0, -1,
+                    true)
+            objects.joint:setMotorEnabled(true)
+            objects.joint:setMotorSpeed(200)
+            objects.joint:setMaxMotorTorque(50)
+        end
         objects.balls = {}
 
         ballRadius = love.physics.getMeter() / 4
-          if false then  
-        for i = 1, 20 do
-            objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width- ballRadius*2)) ,
-                    margin + love.math.random() * height / 2, ballRadius)
-        end 
-    end
-
+        if false then
+            for i = 1, 20 do
+                objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
+                        margin + love.math.random() * height / 2, ballRadius)
+            end
+        end
     end
     example = number
 end
@@ -251,7 +254,7 @@ function love.load()
         palette[colors.light_cream][3])
 
 
-    grabDevelopmentScreenshot()
+    -- grabDevelopmentScreenshot()
 end
 
 function killMouseJointIfPossible()
@@ -321,8 +324,8 @@ function love.mousepressed(x, y)
 end
 
 function drawThing(thing)
-    local cx, cy = thing.body:getWorldCenter()
-    local d = thing.fixture:getDensity()
+    --local cx, cy = thing.body:getWorldCenter()
+    --local d = thing.fixture:getDensity()
     local t = thing.body:getType()
 
     local shape = thing.shape
@@ -404,9 +407,16 @@ function love.draw()
         for i = 1, #objects.balls do
             drawThing(objects.balls[i])
         end
+
+        -- print(inspect(objects.joint))
+        if false then
+            x1, y1, x2, y2 = objects.joint:getAnchors()
+            --print(x1, y1, x2, y2)
+            love.graphics.line(x1, y1, x2, y2)
+        end
     end
 
-  
+
 
     if positionOfLastDisabledContact then
         love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
@@ -415,8 +425,6 @@ function love.draw()
             love.graphics.line(positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], posx, posy)
         end
     end
-
-   
 end
 
 function drawMeterGrid()
