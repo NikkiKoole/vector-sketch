@@ -84,6 +84,7 @@ function love.load()
     obj3.body = love.physics.newBody(world, width / 2 - 100, 100, "dynamic")
     --obj3.shape = love.physics.newRectangleShape(100, 100)
     obj3.shape = love.physics.newCircleShape(100)
+    obj3.shape = love.physics.newPolygonShape(npoly(100, 7))
     -- obj3.shape = love.physics.newPolygonShape(capsule(120, 120, 30))
     -- obj3.shape = love.physics.newPolygonShape(npoly(120, 8))
     obj3.fixture = love.physics.newFixture(obj3.body, obj3.shape, .1)
@@ -95,7 +96,7 @@ function love.load()
     obj4.body = love.physics.newBody(world, width / 2 + 100, 100, "dynamic")
     --obj3.shape = love.physics.newRectangleShape(100, 100)
     obj4.shape = love.physics.newCircleShape(80)
-    obj4.shape = love.physics.newPolygonShape(npoly(70, 8))
+    obj4.shape = love.physics.newPolygonShape(npoly(70, 7))
     -- obj4.shape = love.physics.newPolygonShape(capsule(180, 160, 30))
     obj4.fixture = love.physics.newFixture(obj4.body, obj4.shape, .1)
     obj4.fixture:setFriction(1)
@@ -107,7 +108,7 @@ function love.load()
     --joint:setLength(5)
 
 
-    local torque = 10000
+    local torque = 15000
     motorSpeed = 20
     joint2 = love.physics.newRevoluteJoint(obj2.body, obj3.body, obj3.body:getX(), obj3.body:getY(), false)
     --joint2 = love.physics.newRevoluteJoint(obj2.body, obj3.body, 0, 0, false)
