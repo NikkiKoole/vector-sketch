@@ -59,6 +59,7 @@ c.maybePan = function(dx, dy, id)
    end
 end
 
+
 c.camDataToScreen = function(cd, parallaxData, px, py)
    local camData = c.createCamData(cd, parallaxData)
    local x, y = cam:getScreenCoordinates(px, py, camData)

@@ -456,6 +456,18 @@ function love.update(dt)
     world:update(dt)
 end
 
+
+function love.mousemoved(x,y,dx,dy) 
+    if love.keyboard.isDown('space') then
+    
+
+       local x,y = cam:getTranslation()
+      cam:setTranslation(x-dx/ cam.scale, y-dy/ cam.scale)
+
+      -- cam:setTranslation(x, y)
+    end
+
+end
 function love.wheelmoved(dx, dy)
     if true then
        local newScale = cam.scale * (1 + dy / 10)
