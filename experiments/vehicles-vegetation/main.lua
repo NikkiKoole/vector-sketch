@@ -3,6 +3,8 @@ package.path = package.path .. ";../../?.lua"
 local lurker = require 'vendor.lurker'
 local inspect = require 'vendor.inspect'
 Vector = require 'vendor.brinevector'
+local cam               = require('lib.cameraBase').getInstance()
+local camera            = require 'lib.camera'
 
 lurker.quiet = true
 require 'palette'
@@ -252,8 +254,9 @@ function love.load()
     startExample(2)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
-
-
+    local w, h = love.graphics.getDimensions()
+        camera.setCameraViewport(cam, w,h)
+camera.centerCameraOnPosition(w/2,h/2, w,h)
     -- grabDevelopmentScreenshot()
 end
 
@@ -294,7 +297,8 @@ function love.mousereleased()
     killMouseJointIfPossible()
 end
 
-function love.mousepressed(x, y)
+function love.mousepressed(mx, my)
+    local wx, wy = cam:getWorldCoordinates(mx, my)
     --local bodies = { objects.ball.body, objects.ball2.body }
     local hit = false
     local epsilon = 1
@@ -303,12 +307,12 @@ function love.mousepressed(x, y)
         for i = 1, #objects.balls do
             local body = objects.balls[i].body
             local bx, by = body:getPosition()
-            local dx, dy = x - bx, y - by
+            local dx, dy = wx - bx, wy - by
             local distance = math.sqrt(dx * dx + dy * dy)
 
             if (distance < ballRadius) then
                 mouseJoints.jointBody = body
-                mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, x, y)
+                mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
                 mouseJoints.joint:setDampingRatio(.5)
 
                 local vx, vy = body:getLinearVelocity()
@@ -377,7 +381,7 @@ function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
 
-
+    cam:push()
     if example == 1 then
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
@@ -425,11 +429,14 @@ function love.draw()
             love.graphics.line(positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], posx, posy)
         end
     end
+
+    cam:pop()
 end
 
 function drawMeterGrid()
+    
     local width, height = love.graphics.getDimensions()
-    local ppm = love.physics.getMeter()
+    local ppm = love.physics.getMeter() * cam.scale
     love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3], 0.2)
     for x = 0, width, ppm do
         love.graphics.line(x, 0, x, height)
@@ -442,7 +449,18 @@ end
 function love.update(dt)
     lurker.update()
     if (mouseJoints.joint) then
-        mouseJoints.joint:setTarget(love.mouse.getPosition())
+        local mx, my = love.mouse.getPosition()
+        local wx, wy = cam:getWorldCoordinates(mx, my)
+        mouseJoints.joint:setTarget(wx, wy)
     end
     world:update(dt)
 end
+
+function love.wheelmoved(dx, dy)
+    if true then
+       local newScale = cam.scale * (1 + dy / 10)
+       if (newScale > 0.01 and newScale < 50) then
+          cam:scaleToPoint(1 + dy / 10)
+       end
+    end
+ end
