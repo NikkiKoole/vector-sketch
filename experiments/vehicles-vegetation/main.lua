@@ -20,36 +20,66 @@ function grabDevelopmentScreenshot()
     love.system.openURL(openURL)
 end
 
+local motorSpeed = 20
+local motorTorque = 15000
+
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == '1' then startExample(1) end
     if k == '2' then startExample(2) end
+    if example == 2 then
+        if k == 'left' then 
+            motorSpeed = motorSpeed - 10 
+            objects.joint1:setMotorSpeed(motorSpeed)
+            objects.joint2:setMotorSpeed(motorSpeed)
+        end
+        if k == 'right' then 
+            motorSpeed = motorSpeed + 10 
+            objects.joint1:setMotorSpeed(motorSpeed)
+            objects.joint2:setMotorSpeed(motorSpeed)
+        end
+        if k == 'up' then 
+            motorTorque = motorTorque + 10 
+            objects.joint1:setMaxMotorTorque(motorTorque)
+            objects.joint2:setMaxMotorTorque(motorTorque)
+           
+        end
+        if k == 'down' then 
+            motorTorque = motorTorque - 10 
+            objects.joint1:setMaxMotorTorque(motorTorque)
+            objects.joint2:setMaxMotorTorque(motorTorque)
+           
+          
+        end
+    end
 end
 
 -- https://www.iforce2d.net/b2dtut/one-way-walls
 -- in the original tutorial they hack box2d to stop reenabling contacts every frame, i cannot do that. so i must keep a list around.
 
 function contactShouldBeDisabled(a, b, contact)
-    -- contacts should ONLY be dsiabled if it is betweena ground object and a thing that is dragged.
     local ab = a:getBody()
     local bb = b:getBody()
 
     local fixtureA, fixtureB = contact:getFixtures()
     local result = false
+
+    -- for some reason the other way around doesnt happen so fixtureA is the ground and the other one might be ball
+
+
+    -- this disables contact between a dragged item and the ground
     if (mouseJoints.jointBody) then
-        if (ab == mouseJoints.jointBody and fixtureB:getUserData() == 'ground') then
-            result = true
-        end
         if (bb == mouseJoints.jointBody and fixtureA:getUserData() == 'ground') then
             result = true
         end
     end
-    if fixtureB:getUserData() == 'ground' and fixtureA:getUserData() == 'ball' then
-        print(inspect(bb))
-    end
+    
+    -- this disables contact between  balls and the ground if ballcenterY < collisionY (ball below ground)
     if fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'ball' then
-        --print(inspect(ab))
-        -- I want to know if the ball is below the cahin at this position.
+        local x1,y1 = contact:getPositions( )
+        if y1 < bb:getY() then
+            result = true
+        end
     end
 
     return result
@@ -120,10 +150,25 @@ function makeBall(x, y, radius)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-    ball.body:setFixedRotation(true)
+   --ball.body:setFixedRotation(true)
     --objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
     --        ballRadius * 3 + love.math.random() * 20, 5))
     ball.shape = love.physics.newCircleShape(ballRadius)
+    ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
+    ball.fixture:setRestitution(.4) -- let the ball bounce
+    ball.fixture:setUserData("ball")
+    ball.fixture:setFriction(.5)
+    return ball
+end
+
+function makeBlock(x,y, size)
+    local ball = {}
+    ball.body = love.physics.newBody(world, x, y, "dynamic")
+
+   ball.body:setFixedRotation(true)
+    ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
+            ballRadius * 3 + love.math.random() * 20, 5))
+    --ball.shape = love.physics.newCircleShape(ballRadius)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData("ball")
@@ -159,7 +204,7 @@ end
 function makeChainGround()
     local width, height = love.graphics.getDimensions()
     local points = {}
-    for i = -100, 100 do
+    for i = -1000, 1000 do
         local cool = 1.78
 
         local amplitude = 500 * cool
@@ -185,6 +230,7 @@ function startExample(number)
     love.physics.setMeter(100)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     objects = {}
+    ballRadius = love.physics.getMeter() / 4
     if number == 1 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
@@ -192,13 +238,21 @@ function startExample(number)
         local margin = 20
 
         -- objects.border = makeBorderChain(width, height, margin)
-        ballRadius = love.physics.getMeter() / 4
+       
 
         objects.balls = {}
-        for i = 1, 20 do
+        for i = 1, 120 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * height / 2, ballRadius)
         end
+
+
+        objects.blocks = {}
+        for i = 1, 120 do
+            objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
+                    margin + love.math.random() * height / 2, ballRadius)
+        end
+
 
         angularVelocity = 2
         objects.carousel = makeCarousell(width / 2, height / 2, width / 4, width / 20, angularVelocity)
@@ -240,30 +294,48 @@ function startExample(number)
             objects.ground.fixture:setFriction(0.01)
         end
 
-        objects.carbody = {}
 
-        objects.carbody.body = love.physics.newBody(world, width / 2, height / 2, "dynamic")
-        objects.carbody.shape = love.physics.newRectangleShape(400, 100)
-        objects.carbody.fixture = love.physics.newFixture(objects.carbody.body, objects.carbody.shape, 1)
-        objects.carbody.fixture:setFilterData(1, 65535, -1)
+  
 
+        local carbody = {}
+
+        carbody.body = love.physics.newBody(world, width / 2, 0, "dynamic")
+        carbody.shape = love.physics.newRectangleShape(400, 100)
+        carbody.fixture = love.physics.newFixture(carbody.body, carbody.shape, .5)
+        --carbody.fixture:setFilterData(1, 65535, -1)
+        --carbody.body:setFixedRotation(true)
+        objects.blocks = {carbody}
+        
         objects.wheel1 = {}
-        objects.wheel1.body = love.physics.newBody(world, width / 2 + 200, height / 2, "dynamic")
-        --objects.wheel1.shape = love.physics.newCircleShape(50)
-        objects.wheel1.shape = love.physics.newRectangleShape(20, 20)
-        -- objects.wheel1.body:setTransform(200, 0, 0)
-        objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, 1)
+        objects.wheel1.body = love.physics.newBody(world, width / 2 - 100 , 40, "dynamic")
+        objects.wheel1.shape = love.physics.newCircleShape(60)
+        objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, .5)
         objects.wheel1.fixture:setFilterData(1, 65535, -1)
 
-        if true then
-            objects.joint = love.physics.newRevoluteJoint(objects.carbody.body, objects.wheel1.body, -200, 0, 0, -1,
-                    true)
-            objects.joint:setMotorEnabled(true)
-            objects.joint:setMotorSpeed(200)
-            objects.joint:setMaxMotorTorque(50)
-        end
+
+        objects.joint1 = love.physics.newRevoluteJoint(carbody.body, objects.wheel1.body, objects.wheel1.body:getX(), objects.wheel1.body:getY(), false)
+        objects.joint1:setMotorEnabled(true)
+        objects.joint1:setMotorSpeed(motorSpeed)
+        objects.joint1:setMaxMotorTorque(motorTorque)
+
+        objects.wheel2 = {}
+        objects.wheel2.body = love.physics.newBody(world, width / 2 + 100 , 40, "dynamic")
+        objects.wheel2.shape = love.physics.newCircleShape(60)
+        objects.wheel2.fixture = love.physics.newFixture(objects.wheel2.body, objects.wheel2.shape, .5)
+        objects.wheel2.fixture:setFilterData(1, 65535, -1)
+
+
+        objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(), objects.wheel2.body:getY(), false)
+        objects.joint2:setMotorEnabled(true)
+        objects.joint2:setMotorSpeed(motorSpeed)
+        objects.joint2:setMaxMotorTorque(motorTorque)
+
         objects.balls = {}
 
+        for i = 1, 120 do
+            objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
+                    margin + love.math.random() * height / 2, ballRadius)
+        end
         ballRadius = love.physics.getMeter() / 4
         if false then
             for i = 1, 20 do
@@ -276,7 +348,7 @@ function startExample(number)
 end
 
 function love.load()
-    local font = love.graphics.newFont('WindsorBT-Roman.otf', 48)
+    local font = love.graphics.newFont('WindsorBT-Roman.otf', 40)
     love.graphics.setFont(font)
 
     vlooienspel = love.graphics.newImage('vlooienspel.jpg')
@@ -298,8 +370,8 @@ function love.load()
         palette[colors.light_cream][3])
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2, w, h)
-    -- grabDevelopmentScreenshot()
+    camera.centerCameraOnPosition(w / 2, h / 2, w*2, h*2)
+    grabDevelopmentScreenshot()
 end
 
 function killMouseJointIfPossible()
@@ -327,8 +399,12 @@ function love.mousereleased()
 
                 local delta = Vector(x1 - x2, y1 - y2)
                 local l = delta:getLength()
-                local v = delta:getNormalized() * l * -5
-                if v.y > 0 then v.y = 0 end -- i odnt want  you shoooting downward!
+                local v = delta:getNormalized() * l * -2
+                if v.y > 0 then
+
+                    v.y = 0 
+                    v.x = 0
+                end -- i odnt want  you shoooting downward!
                 bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
                 bodyLastDisabledContact = nil
                 positionOfLastDisabledContact = nil
@@ -342,31 +418,36 @@ end
 function love.mousepressed(mx, my)
     local wx, wy = cam:getWorldCoordinates(mx, my)
     --local bodies = { objects.ball.body, objects.ball2.body }
-    local hit = false
-    local epsilon = 1
+    local hitAny = false
+    local epsilon = 10
 
-    if objects and objects.balls then
-        for i = 1, #objects.balls do
-            local body = objects.balls[i].body
+
+    local containers = {'balls', 'blocks'}
+
+    for j = 1, #containers do
+        local str = containers[j]
+    if objects and objects[str] then
+        for i = 1, #objects[str] do
+            local body = objects[str][i].body
             local bx, by = body:getPosition()
             local dx, dy = wx - bx, wy - by
             local distance = math.sqrt(dx * dx + dy * dy)
+            local hitThisOne =objects[str][i].fixture:testPoint(wx, wy )
 
-            if (distance < ballRadius) then
+            if (hitThisOne) then
                 mouseJoints.jointBody = body
                 mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
                 mouseJoints.joint:setDampingRatio(.5)
 
                 local vx, vy = body:getLinearVelocity()
+                body:setPosition(body:getX(), body:getY()-1)
 
-                if math.abs(vx) < epsilon and math.abs(vy) < epsilon then
-                    body:applyLinearImpulse(0, 200) -- so you can drag it through the floor from  there!!
-                end
-                hit = true
+               hitAny = true
             end
         end
     end
-    if hit == false then killMouseJointIfPossible() end
+end
+    if hitAny == false then killMouseJointIfPossible() end
 end
 
 function drawThing(thing)
@@ -424,20 +505,24 @@ function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
 
-    cam:push()
+    
     if example == 1 then
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
             vlooienspel:getWidth() / 2, vlooienspel:getHeight() / 2)
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Pull back to aim and shoot.')
-
+        cam:push()
         drawThing(objects.carousel)
         drawThing(objects.carousel2)
         drawThing(objects.ground)
         for i = 1, #objects.balls do
             drawThing(objects.balls[i])
         end
+        for i = 1, #objects.blocks do
+            drawThing(objects.blocks[i])
+        end
+        cam:pop()
         --  drawThing(objects.border)
     end
     if example == 2 then
@@ -446,11 +531,14 @@ function love.draw()
             pedal:getWidth() / 2, pedal:getHeight() / 2)
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
-
+        cam:push()
         drawThing(objects.ground)
-        drawThing(objects.carbody)
+        --drawThing(objects.carbody)
+        for i = 1, #objects.blocks do
+            drawThing(objects.blocks[i])
+        end
         drawThing(objects.wheel1)
-
+        drawThing(objects.wheel2)
         for i = 1, #objects.balls do
             drawThing(objects.balls[i])
         end
@@ -461,10 +549,13 @@ function love.draw()
             --print(x1, y1, x2, y2)
             love.graphics.line(x1, y1, x2, y2)
         end
+        cam:pop()
+
+        love.graphics.print('motorspeed = '..motorSpeed..', torque = '..motorTorque, 0,0)
     end
 
 
-
+    cam:push()
     if positionOfLastDisabledContact then
         love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
         if (bodyLastDisabledContact) then
@@ -472,8 +563,8 @@ function love.draw()
             love.graphics.line(positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], posx, posy)
         end
     end
-
     cam:pop()
+   
 end
 
 function drawMeterGrid()
