@@ -28,28 +28,25 @@ function love.keypressed(k)
     if k == '1' then startExample(1) end
     if k == '2' then startExample(2) end
     if example == 2 then
-        if k == 'left' then 
-            motorSpeed = motorSpeed - 10 
+        if k == 'left' then
+            motorSpeed = motorSpeed - 10
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
-        if k == 'right' then 
-            motorSpeed = motorSpeed + 10 
+        if k == 'right' then
+            motorSpeed = motorSpeed + 10
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
-        if k == 'up' then 
-            motorTorque = motorTorque + 10 
+        if k == 'up' then
+            motorTorque = motorTorque + 10
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
-           
         end
-        if k == 'down' then 
-            motorTorque = motorTorque - 10 
+        if k == 'down' then
+            motorTorque = motorTorque - 10
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
-           
-          
         end
     end
 end
@@ -73,10 +70,10 @@ function contactShouldBeDisabled(a, b, contact)
             result = true
         end
     end
-    
+
     -- this disables contact between  balls and the ground if ballcenterY < collisionY (ball below ground)
     if fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'ball' then
-        local x1,y1 = contact:getPositions( )
+        local x1, y1 = contact:getPositions()
         if y1 < bb:getY() then
             result = true
         end
@@ -150,7 +147,7 @@ function makeBall(x, y, radius)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-   --ball.body:setFixedRotation(true)
+    --ball.body:setFixedRotation(true)
     --objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
     --        ballRadius * 3 + love.math.random() * 20, 5))
     ball.shape = love.physics.newCircleShape(ballRadius)
@@ -161,11 +158,11 @@ function makeBall(x, y, radius)
     return ball
 end
 
-function makeBlock(x,y, size)
+function makeBlock(x, y, size)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-   ball.body:setFixedRotation(true)
+    ball.body:setFixedRotation(true)
     ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
             ballRadius * 3 + love.math.random() * 20, 5))
     --ball.shape = love.physics.newCircleShape(ballRadius)
@@ -230,7 +227,7 @@ function startExample(number)
     love.physics.setMeter(100)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     objects = {}
-    ballRadius = love.physics.getMeter() / 4
+    ballRadius = love.physics.getMeter() / 12
     if number == 1 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
@@ -238,7 +235,7 @@ function startExample(number)
         local margin = 20
 
         -- objects.border = makeBorderChain(width, height, margin)
-       
+
 
         objects.balls = {}
         for i = 1, 120 do
@@ -295,37 +292,40 @@ function startExample(number)
         end
 
 
-  
+
 
         local carbody = {}
 
         carbody.body = love.physics.newBody(world, width / 2, 0, "dynamic")
         carbody.shape = love.physics.newRectangleShape(400, 100)
         carbody.fixture = love.physics.newFixture(carbody.body, carbody.shape, .5)
+        carbody.fixture:setUserData("carbody")
         --carbody.fixture:setFilterData(1, 65535, -1)
         --carbody.body:setFixedRotation(true)
-        objects.blocks = {carbody}
-        
+        objects.blocks = { carbody }
+
         objects.wheel1 = {}
-        objects.wheel1.body = love.physics.newBody(world, width / 2 - 100 , 40, "dynamic")
+        objects.wheel1.body = love.physics.newBody(world, width / 2 - 100, 40, "dynamic")
         objects.wheel1.shape = love.physics.newCircleShape(60)
         objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, .5)
         objects.wheel1.fixture:setFilterData(1, 65535, -1)
 
 
-        objects.joint1 = love.physics.newRevoluteJoint(carbody.body, objects.wheel1.body, objects.wheel1.body:getX(), objects.wheel1.body:getY(), false)
+        objects.joint1 = love.physics.newRevoluteJoint(carbody.body, objects.wheel1.body, objects.wheel1.body:getX(),
+                objects.wheel1.body:getY(), false)
         objects.joint1:setMotorEnabled(true)
         objects.joint1:setMotorSpeed(motorSpeed)
         objects.joint1:setMaxMotorTorque(motorTorque)
 
         objects.wheel2 = {}
-        objects.wheel2.body = love.physics.newBody(world, width / 2 + 100 , 40, "dynamic")
+        objects.wheel2.body = love.physics.newBody(world, width / 2 + 100, 40, "dynamic")
         objects.wheel2.shape = love.physics.newCircleShape(60)
         objects.wheel2.fixture = love.physics.newFixture(objects.wheel2.body, objects.wheel2.shape, .5)
         objects.wheel2.fixture:setFilterData(1, 65535, -1)
 
 
-        objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(), objects.wheel2.body:getY(), false)
+        objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(),
+                objects.wheel2.body:getY(), false)
         objects.joint2:setMotorEnabled(true)
         objects.joint2:setMotorSpeed(motorSpeed)
         objects.joint2:setMaxMotorTorque(motorTorque)
@@ -334,7 +334,7 @@ function startExample(number)
 
         for i = 1, 120 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                    margin + love.math.random() * height / 2, ballRadius)
+                    margin + love.math.random() * height / 8, ballRadius)
         end
         ballRadius = love.physics.getMeter() / 4
         if false then
@@ -370,7 +370,7 @@ function love.load()
         palette[colors.light_cream][3])
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2, w*2, h*2)
+    camera.centerCameraOnPosition(w / 2, h / 2, w * 2, h * 2)
     grabDevelopmentScreenshot()
 end
 
@@ -399,10 +399,10 @@ function love.mousereleased()
 
                 local delta = Vector(x1 - x2, y1 - y2)
                 local l = delta:getLength()
+                print(l)
                 local v = delta:getNormalized() * l * -2
                 if v.y > 0 then
-
-                    v.y = 0 
+                    v.y = 0
                     v.x = 0
                 end -- i odnt want  you shoooting downward!
                 bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
@@ -422,31 +422,31 @@ function love.mousepressed(mx, my)
     local epsilon = 10
 
 
-    local containers = {'balls', 'blocks'}
+    local containers = { 'balls', 'blocks' }
 
     for j = 1, #containers do
         local str = containers[j]
-    if objects and objects[str] then
-        for i = 1, #objects[str] do
-            local body = objects[str][i].body
-            local bx, by = body:getPosition()
-            local dx, dy = wx - bx, wy - by
-            local distance = math.sqrt(dx * dx + dy * dy)
-            local hitThisOne =objects[str][i].fixture:testPoint(wx, wy )
+        if objects and objects[str] then
+            for i = 1, #objects[str] do
+                local body = objects[str][i].body
+                local bx, by = body:getPosition()
+                local dx, dy = wx - bx, wy - by
+                local distance = math.sqrt(dx * dx + dy * dy)
+                local hitThisOne = objects[str][i].fixture:testPoint(wx, wy)
 
-            if (hitThisOne) then
-                mouseJoints.jointBody = body
-                mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
-                mouseJoints.joint:setDampingRatio(.5)
+                if (hitThisOne) then
+                    mouseJoints.jointBody = body
+                    mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
+                    mouseJoints.joint:setDampingRatio(.5)
 
-                local vx, vy = body:getLinearVelocity()
-                body:setPosition(body:getX(), body:getY()-1)
+                    local vx, vy = body:getLinearVelocity()
+                    body:setPosition(body:getX(), body:getY() - 1)
 
-               hitAny = true
+                    hitAny = true
+                end
             end
         end
     end
-end
     if hitAny == false then killMouseJointIfPossible() end
 end
 
@@ -505,7 +505,7 @@ function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
 
-    
+
     if example == 1 then
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
@@ -551,7 +551,7 @@ function love.draw()
         end
         cam:pop()
 
-        love.graphics.print('motorspeed = '..motorSpeed..', torque = '..motorTorque, 0,0)
+        love.graphics.print('motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0, 0)
     end
 
 
@@ -564,7 +564,6 @@ function love.draw()
         end
     end
     cam:pop()
-   
 end
 
 function drawMeterGrid()
@@ -585,6 +584,48 @@ function love.update(dt)
         local mx, my = love.mouse.getPosition()
         local wx, wy = cam:getWorldCoordinates(mx, my)
         mouseJoints.joint:setTarget(wx, wy)
+
+
+        local fixtures = mouseJoints.jointBody:getFixtures();
+        if fixtures and fixtures[1]:getUserData() == 'carbody' then
+            local DEGTORAD = 1 / 57.295779513
+            local body = mouseJoints.jointBody
+            if body then
+                --https://www.iforce2d.net/b2dtut/rotate-to-angle
+                local angle = body:getAngle()
+
+                --
+                local divider = 10
+
+                local nextAngle = angle + body:getAngularVelocity() / divider
+                local desiredAngle = 0
+                local totalRotation = desiredAngle - nextAngle
+                while (totalRotation < -180 * DEGTORAD) do
+                    totalRotation = totalRotation + 360 * DEGTORAD
+                end
+
+                while (totalRotation > 180 * DEGTORAD) do
+                    totalRotation = totalRotation - 360 * DEGTORAD
+                end
+
+                local desiredAngularVelocity = totalRotation * divider
+                --local torque = body:getInertia() * desiredAngularVelocity / (1 / 60.0)
+                --body:applyTorque(torque)
+
+                local impulse = body:getInertia() * desiredAngularVelocity
+                body:applyAngularImpulse(impulse)
+            end
+
+            -- next issue, if we throw a car it needs to NOT spina orund too, for tha t I prolly need somethign like
+            -- https://www.iforce2d.net/b2dtut/jumpability
+            -- magic word -- SENSORS
+
+
+
+
+
+            --mouseJoints.jointBody:applyTorque(angle * 0.125)
+        end
     end
     world:update(dt)
 end
