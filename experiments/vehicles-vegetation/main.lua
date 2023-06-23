@@ -1,12 +1,12 @@
-package.path = package.path .. ";../../?.lua"
+package.path  = package.path .. ";../../?.lua"
 
-local lurker = require 'vendor.lurker'
+local lurker  = require 'vendor.lurker'
 local inspect = require 'vendor.inspect'
-Vector = require 'vendor.brinevector'
-local cam               = require('lib.cameraBase').getInstance()
-local camera            = require 'lib.camera'
+Vector        = require 'vendor.brinevector'
+local cam     = require('lib.cameraBase').getInstance()
+local camera  = require 'lib.camera'
 
-lurker.quiet = true
+lurker.quiet  = true
 require 'palette'
 
 lurker.postswap = function(f)
@@ -149,6 +149,30 @@ function makeBorderChain(width, height, margin)
     return border
 end
 
+function makeChainGround()
+    local width, height = love.graphics.getDimensions()
+    local points = {}
+    for i = -100, 100 do
+        local cool = 1.78
+
+        local amplitude = 500 * cool
+        local frequency = 33
+        local h = love.math.noise(i / frequency, 1, 1) * amplitude
+        h = h - (amplitude / 2)
+
+        table.insert(points, i * 100)
+        table.insert(points, h)
+    end
+    --print(inspect(points))
+    local thing = {}
+    thing.body = love.physics.newBody(world, width / 2, height - (height / 10))
+    thing.shape = love.physics.newChainShape(false, unpack(points))
+    thing.fixture = love.physics.newFixture(thing.body, thing.shape)
+    thing.fixture:setUserData("border")
+    thing.fixture:setFriction(.5)
+    return thing
+end
+
 function startExample(number)
     local width, height = love.graphics.getDimensions()
     love.physics.setMeter(100)
@@ -160,7 +184,7 @@ function startExample(number)
 
         local margin = 20
 
-        objects.border = makeBorderChain(width, height, margin)
+        -- objects.border = makeBorderChain(width, height, margin)
         ballRadius = love.physics.getMeter() / 4
 
         objects.balls = {}
@@ -173,12 +197,17 @@ function startExample(number)
         objects.carousel = makeCarousell(width / 2, height / 2, width / 4, width / 20, angularVelocity)
         objects.carousel2 = makeCarousell(width / 2 + width / 4, height / 2, width / 4, width / 20, -angularVelocity)
 
+        objects.ground = makeChainGround()
 
-        objects.ground = {}
-        objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
-        objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
-        objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
         objects.ground.fixture:setUserData("ground")
+
+        if false then
+            objects.ground = {}
+            objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
+            objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
+            objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+            objects.ground.fixture:setUserData("ground")
+        end
         objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
         objects.ground.fixture:setFriction(0.01)
     end
@@ -187,16 +216,22 @@ function startExample(number)
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
         local margin = 20
 
-        objects.border = makeBorderChain(width, height, margin)
 
-        objects.ground = {}
-        objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
-        objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
-        objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+
+
+        -- objects.border = makeBorderChain(width, height, margin)
+
+        objects.ground = makeChainGround()
         objects.ground.fixture:setUserData("ground")
-        --objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
-        objects.ground.fixture:setFriction(0.01)
-
+        if false then
+            objects.ground = {}
+            objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
+            objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
+            objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+            objects.ground.fixture:setUserData("ground")
+            --objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
+            objects.ground.fixture:setFriction(0.01)
+        end
 
         objects.carbody = {}
 
@@ -255,8 +290,8 @@ function love.load()
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
     local w, h = love.graphics.getDimensions()
-        camera.setCameraViewport(cam, w,h)
-camera.centerCameraOnPosition(w/2,h/2, w,h)
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(w / 2, h / 2, w, h)
     -- grabDevelopmentScreenshot()
 end
 
@@ -365,7 +400,8 @@ function drawThing(thing)
             if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
         end
         love.graphics.setLineWidth(3)
-        love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
+        love.graphics.line(body:getWorldPoints(shape:getPoints()))
+        --love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
     end
 end
 
@@ -395,7 +431,7 @@ function love.draw()
         for i = 1, #objects.balls do
             drawThing(objects.balls[i])
         end
-        drawThing(objects.border)
+        --  drawThing(objects.border)
     end
     if example == 2 then
         love.graphics.setColor(1, 1, 1)
@@ -434,7 +470,6 @@ function love.draw()
 end
 
 function drawMeterGrid()
-    
     local width, height = love.graphics.getDimensions()
     local ppm = love.physics.getMeter() * cam.scale
     love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3], 0.2)
@@ -456,23 +491,20 @@ function love.update(dt)
     world:update(dt)
 end
 
-
-function love.mousemoved(x,y,dx,dy) 
+function love.mousemoved(x, y, dx, dy)
     if love.keyboard.isDown('space') then
-    
+        local x, y = cam:getTranslation()
+        cam:setTranslation(x - dx / cam.scale, y - dy / cam.scale)
 
-       local x,y = cam:getTranslation()
-      cam:setTranslation(x-dx/ cam.scale, y-dy/ cam.scale)
-
-      -- cam:setTranslation(x, y)
+        -- cam:setTranslation(x, y)
     end
-
 end
+
 function love.wheelmoved(dx, dy)
     if true then
-       local newScale = cam.scale * (1 + dy / 10)
-       if (newScale > 0.01 and newScale < 50) then
-          cam:scaleToPoint(1 + dy / 10)
-       end
+        local newScale = cam.scale * (1 + dy / 10)
+        if (newScale > 0.01 and newScale < 50) then
+            cam:scaleToPoint(1 + dy / 10)
+        end
     end
- end
+end
