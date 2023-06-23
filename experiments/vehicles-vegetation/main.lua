@@ -44,6 +44,13 @@ function contactShouldBeDisabled(a, b, contact)
             result = true
         end
     end
+    if fixtureB:getUserData() == 'ground' and fixtureA:getUserData() == 'ball' then
+        print(inspect(bb))
+    end
+    if fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'ball' then
+        --print(inspect(ab))
+        -- I want to know if the ball is below the cahin at this position.
+    end
 
     return result
 end
@@ -159,13 +166,13 @@ function makeChainGround()
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         h = h - (amplitude / 2)
-
+        --   h = h + height / 2
         table.insert(points, i * 100)
         table.insert(points, h)
     end
     --print(inspect(points))
     local thing = {}
-    thing.body = love.physics.newBody(world, width / 2, height - (height / 10))
+    thing.body = love.physics.newBody(world, 0, 0)
     thing.shape = love.physics.newChainShape(false, unpack(points))
     thing.fixture = love.physics.newFixture(thing.body, thing.shape)
     thing.fixture:setUserData("border")
