@@ -84,7 +84,7 @@ function love.load()
     obj3.body = love.physics.newBody(world, width / 2 - 100, 100, "dynamic")
     --obj3.shape = love.physics.newRectangleShape(100, 100)
     obj3.shape = love.physics.newCircleShape(100)
-    obj3.shape = love.physics.newPolygonShape(npoly(100, 7))
+    --obj3.shape = love.physics.newPolygonShape(npoly(100, 7))
     -- obj3.shape = love.physics.newPolygonShape(capsule(120, 120, 30))
     -- obj3.shape = love.physics.newPolygonShape(npoly(120, 8))
     obj3.fixture = love.physics.newFixture(obj3.body, obj3.shape, .1)
@@ -96,19 +96,31 @@ function love.load()
     obj4.body = love.physics.newBody(world, width / 2 + 100, 100, "dynamic")
     --obj3.shape = love.physics.newRectangleShape(100, 100)
     obj4.shape = love.physics.newCircleShape(80)
-    obj4.shape = love.physics.newPolygonShape(npoly(70, 7))
+    --obj4.shape = love.physics.newPolygonShape(npoly(70, 7))
     -- obj4.shape = love.physics.newPolygonShape(capsule(180, 160, 30))
     obj4.fixture = love.physics.newFixture(obj4.body, obj4.shape, .1)
     obj4.fixture:setFriction(1)
     obj4.fixture:setFilterData(1, 65535, -1)
     table.insert(objects, obj4)
 
+
+    local obj5 = {}
+    obj5.body = love.physics.newBody(world, width / 2 + 400, 100, "dynamic")
+    --obj3.shape = love.physics.newRectangleShape(100, 100)
+    --obj5.shape = love.physics.newCircleShape(50)
+    obj5.shape = love.physics.newPolygonShape(npoly(70, 7))
+    -- obj4.shape = love.physics.newPolygonShape(capsule(180, 160, 30))
+    obj5.fixture = love.physics.newFixture(obj5.body, obj5.shape, .1)
+    obj5.fixture:setFriction(1)
+    obj5.fixture:setFilterData(1, 65535, -1)
+    table.insert(objects, obj5)
+
     --joint = love.physics.newDistanceJoint(obj2.body, obj3.body, obj2.body:getX(), obj2.body:getY(), obj3.body:getX(),
     --        obj3.body:getY())
     --joint:setLength(5)
 
 
-    local torque = 15000
+    local torque = 10000
     motorSpeed = 20
     joint2 = love.physics.newRevoluteJoint(obj2.body, obj3.body, obj3.body:getX(), obj3.body:getY(), false)
     --joint2 = love.physics.newRevoluteJoint(obj2.body, obj3.body, 0, 0, false)
@@ -122,6 +134,13 @@ function love.load()
     joint3:setMotorEnabled(true)
     joint3:setMotorSpeed(motorSpeed)
     joint3:setMaxMotorTorque(torque)
+
+
+    joint4 = love.physics.newRevoluteJoint(obj2.body, obj5.body, obj5.body:getX(), obj5.body:getY(), false)
+    --joint2 = love.physics.newRevoluteJoint(obj2.body, obj3.body, 0, 0, false)
+    joint4:setMotorEnabled(true)
+    joint4:setMotorSpeed(motorSpeed)
+    joint4:setMaxMotorTorque(torque)
 end
 
 function drawThing(thing)
