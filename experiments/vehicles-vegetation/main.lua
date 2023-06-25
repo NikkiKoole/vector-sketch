@@ -9,9 +9,17 @@ local camera  = require 'lib.camera'
 lurker.quiet  = true
 require 'palette'
 
+-- check this for multiple fixtures, -> sensor for gorund
+-- https://love2d.org/forums/viewtopic.php?t=80950
+-- lift the rendering from windfield :
+--https://github.com/a327ex/windfield/blob/master/windfield/init.lua
 lurker.postswap = function(f)
     print("File " .. f .. " was swapped")
     grabDevelopmentScreenshot()
+end
+
+function bool2str(bool)
+    return bool and 'true' or 'false'
 end
 
 function grabDevelopmentScreenshot()
@@ -22,6 +30,7 @@ end
 
 local motorSpeed = 20
 local motorTorque = 15000
+local carIsTouching = 0
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
@@ -29,22 +38,22 @@ function love.keypressed(k)
     if k == '2' then startExample(2) end
     if example == 2 then
         if k == 'left' then
-            motorSpeed = motorSpeed - 10
+            motorSpeed = motorSpeed - 100
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
         if k == 'right' then
-            motorSpeed = motorSpeed + 10
+            motorSpeed = motorSpeed + 100
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
         if k == 'up' then
-            motorTorque = motorTorque + 10
+            motorTorque = motorTorque + 100
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
         end
         if k == 'down' then
-            motorTorque = motorTorque - 10
+            motorTorque = motorTorque - 100
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
         end
@@ -66,6 +75,7 @@ function contactShouldBeDisabled(a, b, contact)
 
     -- this disables contact between a dragged item and the ground
     if (mouseJoints.jointBody) then
+        --print(fixtureB:getUserData())
         if (bb == mouseJoints.jointBody and fixtureA:getUserData() == 'ground') then
             result = true
         end
@@ -80,6 +90,14 @@ function contactShouldBeDisabled(a, b, contact)
     end
 
     return result
+end
+
+function isContactBetweenGroundAndCarGroundSensor(contact)
+    local fixtureA, fixtureB = contact:getFixtures()
+    --print(fixtureA:getUserData(), fixtureB:getUserData())
+    print(fixtureA:isSensor(), fixtureB:isSensor())
+    return (fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'carGroundSensor') or
+        (fixtureB:getUserData() == 'ground' and fixtureA:getUserData() == 'carGroundSensor')
 end
 
 function beginContact(a, b, contact)
@@ -100,6 +118,11 @@ function beginContact(a, b, contact)
 
         table.insert(disabledContacts, contact)
     end
+    if isContactBetweenGroundAndCarGroundSensor(contact) then
+        print('touching', carIsTouching)
+
+        carIsTouching = carIsTouching + 1
+    end
 end
 
 function endContact(a, b, contact)
@@ -107,6 +130,10 @@ function endContact(a, b, contact)
         if disabledContacts[i] == contact then
             table.remove(disabledContacts, i)
         end
+    end
+    if isContactBetweenGroundAndCarGroundSensor(contact) then
+        print('no touching', carIsTouching)
+        carIsTouching = carIsTouching - 1
     end
 end
 
@@ -203,14 +230,22 @@ function makeChainGround()
     local points = {}
     for i = -1000, 1000 do
         local cool = 1.78
-
         local amplitude = 500 * cool
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
-        h = h - (amplitude / 2)
+        local y1 = h - (amplitude / 2)
+
+
+        local cool = 1.78
+        local amplitude = 500 * cool
+        local frequency = 17
+        local h = love.math.noise(i / frequency, 1, 1) * amplitude
+        local y2 = h - (amplitude / 2)
+
+
         --   h = h + height / 2
         table.insert(points, i * 100)
-        table.insert(points, h)
+        table.insert(points, y1 + y2)
     end
     --print(inspect(points))
     local thing = {}
@@ -227,15 +262,14 @@ function startExample(number)
     love.physics.setMeter(100)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     objects = {}
-    ballRadius = love.physics.getMeter() / 12
+    ballRadius = love.physics.getMeter() / 4
+    ----
+    ---- VLOOIENSPEL
+    -----
     if number == 1 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-
         local margin = 20
-
-        -- objects.border = makeBorderChain(width, height, margin)
-
 
         objects.balls = {}
         for i = 1, 120 do
@@ -269,7 +303,9 @@ function startExample(number)
         objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
         objects.ground.fixture:setFriction(0.01)
     end
-
+    ----
+    ---- VEHICLES
+    -----
     if number == 2 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
         local margin = 20
@@ -292,6 +328,11 @@ function startExample(number)
         end
 
 
+        objects.blocks = {}
+        for i = 1, 1 do
+            objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
+                    margin + love.math.random() * -height / 2, ballRadius)
+        end
 
 
         local carbody = {}
@@ -302,7 +343,43 @@ function startExample(number)
         carbody.fixture:setUserData("carbody")
         --carbody.fixture:setFilterData(1, 65535, -1)
         --carbody.body:setFixedRotation(true)
-        objects.blocks = { carbody }
+        -- objects.blocks = { carbody }
+        objects.carbody = carbody
+        table.insert(objects.blocks, carbody)
+
+        if true then
+            local carsensor = {}
+            -- carsensor.body = love.physics.newBody(world, width / 2, 0, "dynamic")
+            --carsensor.shape = love.physics.newRectangleShape(5, 300)
+            local xOffset = 100
+            local polyWidth = 20
+            local polyLength = 110
+            carsensor.shape = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
+                    polyLength,
+                    xOffset, polyLength)
+            carsensor.fixture = love.physics.newFixture(carbody.body, carsensor.shape, .5)
+            carsensor.fixture:setSensor(true)
+            carsensor.fixture:setUserData("carGroundSensor")
+
+            --table.insert(objects.blocks, carsensor)
+        end
+
+        if true then
+            local carsensor = {}
+            -- carsensor.body = love.physics.newBody(world, width / 2, 0, "dynamic")
+            --carsensor.shape = love.physics.newRectangleShape(5, 300)
+            local xOffset = -100
+            local polyWidth = 20
+            local polyLength = 110
+            carsensor.shape = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
+                    polyLength,
+                    xOffset, polyLength)
+            carsensor.fixture = love.physics.newFixture(carbody.body, carsensor.shape, .5)
+            carsensor.fixture:setSensor(true)
+            carsensor.fixture:setUserData("carGroundSensor")
+
+            --table.insert(objects.blocks, carsensor)
+        end
 
         objects.wheel1 = {}
         objects.wheel1.body = love.physics.newBody(world, width / 2 - 100, 40, "dynamic")
@@ -332,9 +409,9 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 120 do
+        for i = 1, 1 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                    margin + love.math.random() * height / 8, ballRadius)
+                    margin + love.math.random() * -height / 2, ballRadius)
         end
         ballRadius = love.physics.getMeter() / 4
         if false then
@@ -371,7 +448,7 @@ function love.load()
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2, w * 2, h * 2)
-    grabDevelopmentScreenshot()
+    --grabDevelopmentScreenshot()
 end
 
 function killMouseJointIfPossible()
@@ -394,18 +471,20 @@ function love.mousereleased()
             -- oh wait, this is actually kinda good enough-ish (tm)
             if (bodyLastDisabledContact and bodyLastDisabledContact:getBody() == mouseJoints.jointBody) then
                 local x1, y1 = mouseJoints.jointBody:getPosition()
-                local x2 = positionOfLastDisabledContact[1]
-                local y2 = positionOfLastDisabledContact[2]
+                if (#positionOfLastDisabledContact > 0) then
+                    local x2 = positionOfLastDisabledContact[1]
+                    local y2 = positionOfLastDisabledContact[2]
 
-                local delta = Vector(x1 - x2, y1 - y2)
-                local l = delta:getLength()
-                print(l)
-                local v = delta:getNormalized() * l * -2
-                if v.y > 0 then
-                    v.y = 0
-                    v.x = 0
-                end -- i odnt want  you shoooting downward!
-                bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                    local delta = Vector(x1 - x2, y1 - y2)
+                    local l = delta:getLength()
+                    -- print(l)
+                    local v = delta:getNormalized() * l * -2
+                    if v.y > 0 then
+                        v.y = 0
+                        v.x = 0
+                    end -- i odnt want  you shoooting downward!
+                    bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                end
                 bodyLastDisabledContact = nil
                 positionOfLastDisabledContact = nil
                 --
@@ -432,17 +511,22 @@ function love.mousepressed(mx, my)
                 local bx, by = body:getPosition()
                 local dx, dy = wx - bx, wy - by
                 local distance = math.sqrt(dx * dx + dy * dy)
-                local hitThisOne = objects[str][i].fixture:testPoint(wx, wy)
 
-                if (hitThisOne) then
-                    mouseJoints.jointBody = body
-                    mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
-                    mouseJoints.joint:setDampingRatio(.5)
+                local fixtures = body:getFixtures()
+                for _, fixture in ipairs(fixtures) do
+                    local hitThisOne = fixture:testPoint(wx, wy)
+                    local isSensor = fixture:isSensor()
+                    if (hitThisOne) then
+                        mouseJoints.jointBody = body
+                        mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
+                        --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
+                        mouseJoints.joint:setDampingRatio(.5)
 
-                    local vx, vy = body:getLinearVelocity()
-                    body:setPosition(body:getX(), body:getY() - 1)
+                        local vx, vy = body:getLinearVelocity()
+                        body:setPosition(body:getX(), body:getY() - 1)
 
-                    hitAny = true
+                        hitAny = true
+                    end
                 end
             end
         end
@@ -450,47 +534,66 @@ function love.mousepressed(mx, my)
     if hitAny == false then killMouseJointIfPossible() end
 end
 
-function drawThing(thing)
-    --local cx, cy = thing.body:getWorldCenter()
-    --local d = thing.fixture:getDensity()
-    local t = thing.body:getType()
-
-    local shape = thing.shape
-    local body = thing.body
-
-    if t == 'kinematic' then
-        love.graphics.setColor(palette[colors.peach][1], palette[colors.peach][2], palette[colors.peach][3])
-    elseif (t == 'dynamic') then
-        love.graphics.setColor(palette[colors.blue][1], palette[colors.blue][2], palette[colors.blue][3])
-    elseif (t == 'static') then
-        love.graphics.setColor(palette[colors.green][1], palette[colors.green][2], palette[colors.green][3])
+function getBodyColor(body)
+    if body:getType() == 'kinematic' then
+        return palette[colors.peach]
     end
-
-    if (shape:getType() == 'polygon') then
-        love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
-        love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
-        love.graphics.setLineWidth(3)
-        love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
+    if body:getType() == 'dynamic' then
+        return palette[colors.blue]
     end
-
-    if (shape:getType() == 'circle') then
-        love.graphics.setColor(palette[colors.orange][1], palette[colors.orange][2], palette[colors.orange][3])
-        love.graphics.circle("fill", body:getX(), body:getY(), shape:getRadius())
-        love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
-        love.graphics.setLineWidth(3)
-        love.graphics.circle("line", body:getX(), body:getY(), shape:getRadius())
+    if body:getType() == 'static' then
+        return palette[colors.green]
     end
+    --fixture:getShape():type() == 'PolygonShape' then
+end
 
-    if shape:getType() == 'chain' then
-        love.graphics.setColor(palette[colors.black][1], palette[colors.black][2], palette[colors.black][3])
-        local points = { body:getWorldPoints(shape:getPoints()) }
-        for i = 1, #points, 2 do
-            if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
+function drawWorld(world)
+    -- get the current color values to reapply
+    local r, g, b, a = love.graphics.getColor()
+    -- alpha value is optional
+    alpha = .8
+    -- Colliders debug
+    love.graphics.setColor(0, 0, 0, alpha)
+    local bodies = world:getBodies()
+    love.graphics.setLineWidth(3)
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
+        for _, fixture in ipairs(fixtures) do
+            if fixture:getShape():type() == 'PolygonShape' then
+                local color = getBodyColor(body)
+                love.graphics.setColor(color[1], color[2], color[3], alpha)
+                love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
+            elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
+                local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
+                for i = 1, #points, 2 do
+                    if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
+                end
+            elseif fixture:getShape():type() == 'CircleShape' then
+                local body_x, body_y = body:getPosition()
+                local shape_x, shape_y = fixture:getShape():getPoint()
+                local r = fixture:getShape():getRadius()
+                local color = getBodyColor(body)
+                love.graphics.setColor(color[1], color[2], color[3], alpha)
+                love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, 360)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360)
+            end
         end
-        love.graphics.setLineWidth(3)
-        love.graphics.line(body:getWorldPoints(shape:getPoints()))
-        --love.graphics.polygon("line", body:getWorldPoints(shape:getPoints()))
     end
+    love.graphics.setColor(255, 255, 255, alpha)
+
+    -- Joint debug
+    love.graphics.setColor(1, 0, 0, alpha)
+    local joints = world:getJoints()
+    for _, joint in ipairs(joints) do
+        local x1, y1, x2, y2 = joint:getAnchors()
+        if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
+        if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
+    end
+
+    love.graphics.setColor(r, g, b, a)
 end
 
 function drawCenteredBackgroundText(str)
@@ -505,7 +608,6 @@ function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
 
-
     if example == 1 then
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(vlooienspel, width / 2, height / 4, 0, 1, 1,
@@ -513,17 +615,8 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Pull back to aim and shoot.')
         cam:push()
-        drawThing(objects.carousel)
-        drawThing(objects.carousel2)
-        drawThing(objects.ground)
-        for i = 1, #objects.balls do
-            drawThing(objects.balls[i])
-        end
-        for i = 1, #objects.blocks do
-            drawThing(objects.blocks[i])
-        end
+        drawWorld(world)
         cam:pop()
-        --  drawThing(objects.border)
     end
     if example == 2 then
         love.graphics.setColor(1, 1, 1)
@@ -532,31 +625,21 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-        drawThing(objects.ground)
-        --drawThing(objects.carbody)
-        for i = 1, #objects.blocks do
-            drawThing(objects.blocks[i])
-        end
-        drawThing(objects.wheel1)
-        drawThing(objects.wheel2)
-        for i = 1, #objects.balls do
-            drawThing(objects.balls[i])
-        end
 
-        -- print(inspect(objects.joint))
-        if false then
-            x1, y1, x2, y2 = objects.joint:getAnchors()
-            --print(x1, y1, x2, y2)
-            love.graphics.line(x1, y1, x2, y2)
-        end
+        drawWorld(world)
+
         cam:pop()
 
-        love.graphics.print('motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0, 0)
+        love.graphics.print(
+            bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
+            0)
     end
 
 
     cam:push()
-    if positionOfLastDisabledContact then
+
+    if positionOfLastDisabledContact and #positionOfLastDisabledContact > 0 then
+        -- print(inspect(positionOfLastDisabledContact))
         love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
         if (bodyLastDisabledContact) then
             local posx, posy = bodyLastDisabledContact:getBody():getPosition()
@@ -578,6 +661,33 @@ function drawMeterGrid()
     end
 end
 
+function rotateCarToHorizontal(body, divider)
+    local DEGTORAD = 1 / 57.295779513
+    --https://www.iforce2d.net/b2dtut/rotate-to-angle
+    local angle = body:getAngle()
+
+    --
+    --local divider = 10
+
+    local nextAngle = angle + body:getAngularVelocity() / divider
+    local desiredAngle = 0
+    local totalRotation = desiredAngle - nextAngle
+    while (totalRotation < -180 * DEGTORAD) do
+        totalRotation = totalRotation + 360 * DEGTORAD
+    end
+
+    while (totalRotation > 180 * DEGTORAD) do
+        totalRotation = totalRotation - 360 * DEGTORAD
+    end
+
+    local desiredAngularVelocity = totalRotation * divider
+    --local torque = body:getInertia() * desiredAngularVelocity / (1 / 60.0)
+    --body:applyTorque(torque)
+
+    local impulse = body:getInertia() * desiredAngularVelocity
+    body:applyAngularImpulse(impulse)
+end
+
 function love.update(dt)
     lurker.update()
     if (mouseJoints.joint) then
@@ -587,44 +697,31 @@ function love.update(dt)
 
 
         local fixtures = mouseJoints.jointBody:getFixtures();
-        if fixtures and fixtures[1]:getUserData() == 'carbody' then
-            local DEGTORAD = 1 / 57.295779513
-            local body = mouseJoints.jointBody
-            if body then
-                --https://www.iforce2d.net/b2dtut/rotate-to-angle
-                local angle = body:getAngle()
-
-                --
-                local divider = 10
-
-                local nextAngle = angle + body:getAngularVelocity() / divider
-                local desiredAngle = 0
-                local totalRotation = desiredAngle - nextAngle
-                while (totalRotation < -180 * DEGTORAD) do
-                    totalRotation = totalRotation + 360 * DEGTORAD
+        for i = 1, #fixtures do
+            local f = fixtures[i]
+            if f:getUserData() == 'carbody' then
+                local body = mouseJoints.jointBody
+                if body then
+                    rotateCarToHorizontal(body, 10)
                 end
 
-                while (totalRotation > 180 * DEGTORAD) do
-                    totalRotation = totalRotation - 360 * DEGTORAD
-                end
+                -- next issue, if we throw a car it needs to NOT spina orund too, for tha t I prolly need somethign like
+                -- https://www.iforce2d.net/b2dtut/jumpability
+                -- magic word -- SENSORS
 
-                local desiredAngularVelocity = totalRotation * divider
-                --local torque = body:getInertia() * desiredAngularVelocity / (1 / 60.0)
-                --body:applyTorque(torque)
 
-                local impulse = body:getInertia() * desiredAngularVelocity
-                body:applyAngularImpulse(impulse)
+
+
+
+                --mouseJoints.jointBody:applyTorque(angle * 0.125)
             end
-
-            -- next issue, if we throw a car it needs to NOT spina orund too, for tha t I prolly need somethign like
-            -- https://www.iforce2d.net/b2dtut/jumpability
-            -- magic word -- SENSORS
-
-
-
-
-
-            --mouseJoints.jointBody:applyTorque(angle * 0.125)
+        end
+    end
+    if false then
+        if objects.carbody then
+            if (carIsTouching < 1) then
+                rotateCarToHorizontal(objects.carbody.body, 10)
+            end
         end
     end
     world:update(dt)
