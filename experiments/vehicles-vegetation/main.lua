@@ -28,14 +28,15 @@ function grabDevelopmentScreenshot()
     love.system.openURL(openURL)
 end
 
-local motorSpeed = 20
-local motorTorque = 15000
+local motorSpeed = 0
+local motorTorque = 1500
 local carIsTouching = 0
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == '1' then startExample(1) end
     if k == '2' then startExample(2) end
+    if k == '3' then startExample(3) end
     if example == 2 then
         if k == 'left' then
             motorSpeed = motorSpeed - 100
@@ -56,6 +57,16 @@ function love.keypressed(k)
             motorTorque = motorTorque - 100
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
+        end
+        if k == 's' then
+            if objects.carbody then
+                local angle = objects.carbody.body:getAngle()
+                --print(angle)
+
+                local n = Vector.angled(Vector(200, 0), angle)
+                objects.carbody.body:applyLinearImpulse(n.x, n.y)
+                --local delta = Vector(x1 - x2, y1 - y2)
+            end
         end
     end
 end
@@ -95,7 +106,7 @@ end
 function isContactBetweenGroundAndCarGroundSensor(contact)
     local fixtureA, fixtureB = contact:getFixtures()
     --print(fixtureA:getUserData(), fixtureB:getUserData())
-    print(fixtureA:isSensor(), fixtureB:isSensor())
+    --print(fixtureA:isSensor(), fixtureB:isSensor())
     return (fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'carGroundSensor') or
         (fixtureB:getUserData() == 'ground' and fixtureA:getUserData() == 'carGroundSensor')
 end
@@ -119,7 +130,7 @@ function beginContact(a, b, contact)
         table.insert(disabledContacts, contact)
     end
     if isContactBetweenGroundAndCarGroundSensor(contact) then
-        print('touching', carIsTouching)
+        --print('touching', carIsTouching)
 
         carIsTouching = carIsTouching + 1
     end
@@ -132,7 +143,7 @@ function endContact(a, b, contact)
         end
     end
     if isContactBetweenGroundAndCarGroundSensor(contact) then
-        print('no touching', carIsTouching)
+        -- print('no touching', carIsTouching)
         carIsTouching = carIsTouching - 1
     end
 end
@@ -386,7 +397,7 @@ function startExample(number)
         objects.wheel1.shape = love.physics.newCircleShape(60)
         objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, .5)
         objects.wheel1.fixture:setFilterData(1, 65535, -1)
-
+        objects.wheel1.fixture:setFriction(2.5)
 
         objects.joint1 = love.physics.newRevoluteJoint(carbody.body, objects.wheel1.body, objects.wheel1.body:getX(),
                 objects.wheel1.body:getY(), false)
@@ -399,7 +410,7 @@ function startExample(number)
         objects.wheel2.shape = love.physics.newCircleShape(60)
         objects.wheel2.fixture = love.physics.newFixture(objects.wheel2.body, objects.wheel2.shape, .5)
         objects.wheel2.fixture:setFilterData(1, 65535, -1)
-
+        objects.wheel2.fixture:setFriction(2.5)
 
         objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(),
                 objects.wheel2.body:getY(), false)
@@ -516,12 +527,14 @@ function love.mousepressed(mx, my)
                 for _, fixture in ipairs(fixtures) do
                     local hitThisOne = fixture:testPoint(wx, wy)
                     local isSensor = fixture:isSensor()
-                    if (hitThisOne) then
+                    if (hitThisOne and not isSensor) then
                         mouseJoints.jointBody = body
                         mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
                         --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
-                        mouseJoints.joint:setDampingRatio(.5)
 
+                        mouseJoints.joint:setDampingRatio(0.5)
+                        mouseJoints.joint:setMaxForce(500000)
+                        --print(mouseJoints.joint:getMaxForce())
                         local vx, vy = body:getLinearVelocity()
                         body:setPosition(body:getX(), body:getY() - 1)
 
@@ -702,15 +715,15 @@ function love.update(dt)
             if f:getUserData() == 'carbody' then
                 local body = mouseJoints.jointBody
                 if body then
-                    rotateCarToHorizontal(body, 10)
+                    if (carIsTouching < 1) then
+                        rotateCarToHorizontal(body, 10)
+                    end
                 end
 
                 -- next issue, if we throw a car it needs to NOT spina orund too, for tha t I prolly need somethign like
                 -- https://www.iforce2d.net/b2dtut/jumpability
                 -- magic word -- SENSORS
-
-
-
+                -- yeah this just kinda sucks, its less fun and more buggy...
 
 
                 --mouseJoints.jointBody:applyTorque(angle * 0.125)
@@ -725,6 +738,12 @@ function love.update(dt)
         end
     end
     world:update(dt)
+    local w, h = love.graphics.getDimensions()
+    if false then
+        if (objects.carbody) then
+            camera.centerCameraOnPosition(objects.carbody.body:getX(), objects.carbody.body:getY(), w * 2, h * 2)
+        end
+    end
 end
 
 function love.mousemoved(x, y, dx, dy)
