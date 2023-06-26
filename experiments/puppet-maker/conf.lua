@@ -1,4 +1,4 @@
-local debug = false
+local debug = true
 
 function love.conf(t)
     t.window.width = 1024

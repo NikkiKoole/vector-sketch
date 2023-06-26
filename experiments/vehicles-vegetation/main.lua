@@ -199,14 +199,14 @@ function makeChain(x, y)
     local lastLink = makeLink(x, y)
     for i = 1, amt do
         local link = makeLink(x, y + (i * linkHeight) * dir)
-        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), false)
+        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
 
-        joint:setLowerLimit( -math.pi / 16)
-        joint:setUpperLimit(math.pi / 16)
+        joint:setLowerLimit( -math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
         joint:setLimitsEnabled(true)
 
         local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
-                link:getY())
+                link:getY() )
         lastLink = link
     end
 
@@ -219,10 +219,10 @@ function makeChain(x, y)
     local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
     local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
             weight:getY())
-    joint:setLowerLimit( -math.pi / 16)
-    joint:setUpperLimit(math.pi / 16)
+    joint:setLowerLimit( -math.pi / 32)
+    joint:setUpperLimit(math.pi / 32)
     joint:setLimitsEnabled(true)
-
+    weight:setFixedRotation(true)
     table.insert(objects.blocks, weight)
     -- objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(),
     --             objects.wheel2.body:getY(), false)
