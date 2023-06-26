@@ -181,6 +181,52 @@ function capsule(w, h, cs)
     return result
 end
 
+function makeChain(x, y)
+    --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
+    local linkHeight = 20
+    local dir = 1
+    local amt = 3
+
+
+    function makeLink(x, y)
+        local body = love.physics.newBody(world, x, y, "dynamic")
+        local shape = love.physics.newRectangleShape(20, linkHeight)
+        local fixture = love.physics.newFixture(body, shape, .3)
+        return body
+    end
+
+    local lastLink = makeLink(x, y)
+    for i = 1, amt do
+        local link = makeLink(x, y + (i * linkHeight) * dir)
+        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), false)
+
+        joint:setLowerLimit( -math.pi / 16)
+        joint:setUpperLimit(math.pi / 16)
+        joint:setLimitsEnabled(true)
+
+        local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
+                link:getY())
+        lastLink = link
+    end
+
+
+    local weight = love.physics.newBody(world, x, y + ((amt + 2) * linkHeight) * dir, "dynamic")
+    local shape = love.physics.newRectangleShape(50, 50)
+    local fixture = love.physics.newFixture(weight, shape, 1)
+
+
+    local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
+    local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
+            weight:getY())
+    joint:setLowerLimit( -math.pi / 16)
+    joint:setUpperLimit(math.pi / 16)
+    joint:setLimitsEnabled(true)
+
+    table.insert(objects.blocks, weight)
+    -- objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(),
+    --             objects.wheel2.body:getY(), false)
+end
+
 function makeBall(x, y, radius)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
@@ -241,14 +287,14 @@ function makeChainGround()
     local points = {}
     for i = -1000, 1000 do
         local cool = 1.78
-        local amplitude = 500 * cool
+        local amplitude = 100 * cool
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y1 = h - (amplitude / 2)
 
 
         local cool = 1.78
-        local amplitude = 500 * cool
+        local amplitude = 200 * cool
         local frequency = 17
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y2 = h - (amplitude / 2)
@@ -319,6 +365,10 @@ function startExample(number)
     -----
     if number == 2 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+
+
+
+
         local margin = 20
 
 
@@ -335,12 +385,12 @@ function startExample(number)
             objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
             objects.ground.fixture:setUserData("ground")
             --objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
-            objects.ground.fixture:setFriction(0.01)
+            objects.ground.fixture:setFriction(1)
         end
 
 
         objects.blocks = {}
-        for i = 1, 1 do
+        for i = 1, 10 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
@@ -349,7 +399,7 @@ function startExample(number)
         local carbody = {}
 
         carbody.body = love.physics.newBody(world, width / 2, 0, "dynamic")
-        carbody.shape = love.physics.newRectangleShape(400, 100)
+        carbody.shape = love.physics.newRectangleShape(300, 100)
         carbody.fixture = love.physics.newFixture(carbody.body, carbody.shape, .5)
         carbody.fixture:setUserData("carbody")
         --carbody.fixture:setFilterData(1, 65535, -1)
@@ -357,6 +407,25 @@ function startExample(number)
         -- objects.blocks = { carbody }
         objects.carbody = carbody
         table.insert(objects.blocks, carbody)
+
+        local xOffset = -100
+        local polyWidth = 20
+        local polyLength = -110
+
+        local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
+                polyLength,
+                xOffset, polyLength)
+        local backfixture = love.physics.newFixture(carbody.body, backside, .5)
+
+
+        local xOffset = 100
+        local polyWidth = 20
+        local polyLength = -110
+
+        local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
+                polyLength,
+                xOffset, polyLength)
+        local backfixture = love.physics.newFixture(carbody.body, backside, .5)
 
         if true then
             local carsensor = {}
@@ -393,8 +462,8 @@ function startExample(number)
         end
 
         objects.wheel1 = {}
-        objects.wheel1.body = love.physics.newBody(world, width / 2 - 100, 40, "dynamic")
-        objects.wheel1.shape = love.physics.newCircleShape(60)
+        objects.wheel1.body = love.physics.newBody(world, width / 2 - 110, 40, "dynamic")
+        objects.wheel1.shape = love.physics.newCircleShape(25)
         objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, .5)
         objects.wheel1.fixture:setFilterData(1, 65535, -1)
         objects.wheel1.fixture:setFriction(2.5)
@@ -406,8 +475,8 @@ function startExample(number)
         objects.joint1:setMaxMotorTorque(motorTorque)
 
         objects.wheel2 = {}
-        objects.wheel2.body = love.physics.newBody(world, width / 2 + 100, 40, "dynamic")
-        objects.wheel2.shape = love.physics.newCircleShape(60)
+        objects.wheel2.body = love.physics.newBody(world, width / 2 + 110, 40, "dynamic")
+        objects.wheel2.shape = love.physics.newCircleShape(25)
         objects.wheel2.fixture = love.physics.newFixture(objects.wheel2.body, objects.wheel2.shape, .5)
         objects.wheel2.fixture:setFilterData(1, 65535, -1)
         objects.wheel2.fixture:setFriction(2.5)
@@ -420,9 +489,13 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 1 do
+        for i = 1, 10 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
+        end
+
+        for i = 1, 10 do
+            makeChain(i * 20, -1000)
         end
         ballRadius = love.physics.getMeter() / 4
         if false then
@@ -506,6 +579,7 @@ function love.mousereleased()
 end
 
 function love.mousepressed(mx, my)
+    -- killMouseJointIfPossible()
     local wx, wy = cam:getWorldCoordinates(mx, my)
     --local bodies = { objects.ball.body, objects.ball2.body }
     local hitAny = false
@@ -514,36 +588,35 @@ function love.mousepressed(mx, my)
 
     local containers = { 'balls', 'blocks' }
 
-    for j = 1, #containers do
-        local str = containers[j]
-        if objects and objects[str] then
-            for i = 1, #objects[str] do
-                local body = objects[str][i].body
-                local bx, by = body:getPosition()
-                local dx, dy = wx - bx, wy - by
-                local distance = math.sqrt(dx * dx + dy * dy)
 
-                local fixtures = body:getFixtures()
-                for _, fixture in ipairs(fixtures) do
-                    local hitThisOne = fixture:testPoint(wx, wy)
-                    local isSensor = fixture:isSensor()
-                    if (hitThisOne and not isSensor) then
-                        mouseJoints.jointBody = body
-                        mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
-                        --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
+    local bodies = world:getBodies()
+    for _, body in ipairs(bodies) do
+        local bx, by = body:getPosition()
+        local dx, dy = wx - bx, wy - by
+        local distance = math.sqrt(dx * dx + dy * dy)
 
-                        mouseJoints.joint:setDampingRatio(0.5)
-                        mouseJoints.joint:setMaxForce(500000)
-                        --print(mouseJoints.joint:getMaxForce())
-                        local vx, vy = body:getLinearVelocity()
-                        body:setPosition(body:getX(), body:getY() - 1)
+        local fixtures = body:getFixtures()
+        for _, fixture in ipairs(fixtures) do
+            local hitThisOne = fixture:testPoint(wx, wy)
+            local isSensor = fixture:isSensor()
+            if (hitThisOne and not isSensor) then
+                mouseJoints.jointBody = body
+                mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
+                --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
 
-                        hitAny = true
-                    end
-                end
+                mouseJoints.joint:setDampingRatio(0.5)
+                mouseJoints.joint:setMaxForce(500000)
+                --print(mouseJoints.joint:getMaxForce())
+                local vx, vy = body:getLinearVelocity()
+                body:setPosition(body:getX(), body:getY() - 1)
+
+                hitAny = true
             end
         end
+        -- end
     end
+
+
     if hitAny == false then killMouseJointIfPossible() end
 end
 
@@ -646,6 +719,9 @@ function love.draw()
         love.graphics.print(
             bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
             0)
+        if (objects.carbody) then
+            love.graphics.print(objects.carbody.body:getY(), 0, 40)
+        end
     end
 
 
