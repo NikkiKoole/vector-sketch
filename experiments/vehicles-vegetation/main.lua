@@ -183,14 +183,15 @@ end
 
 function makeChain(x, y)
     --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
-    local linkHeight = 20
+    local linkHeight = 70
+    local linkWidth = 40
     local dir = 1
     local amt = 3
 
 
     function makeLink(x, y)
         local body = love.physics.newBody(world, x, y, "dynamic")
-        local shape = love.physics.newRectangleShape(20, linkHeight)
+        local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
         local fixture = love.physics.newFixture(body, shape, .3)
         return body
     end
@@ -210,8 +211,8 @@ function makeChain(x, y)
     end
 
 
-    local weight = love.physics.newBody(world, x, y + ((amt + 2) * linkHeight) * dir, "dynamic")
-    local shape = love.physics.newRectangleShape(50, 50)
+    local weight = love.physics.newBody(world, x, y + ((amt + 1) * linkHeight) * dir, "dynamic")
+    local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
     local fixture = love.physics.newFixture(weight, shape, 1)
 
 
@@ -390,7 +391,7 @@ function startExample(number)
 
 
         objects.blocks = {}
-        for i = 1, 10 do
+        for i = 1, 30 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
@@ -418,7 +419,7 @@ function startExample(number)
         local backfixture = love.physics.newFixture(carbody.body, backside, .5)
 
 
-        local xOffset = 100
+        local xOffset = 80
         local polyWidth = 20
         local polyLength = -110
 
@@ -489,12 +490,12 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 10 do
+        for i = 1, 30 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 10 do
+        for i = 1, 30 do
             makeChain(i * 20, -1000)
         end
         ballRadius = love.physics.getMeter() / 4
@@ -600,6 +601,7 @@ function love.mousepressed(mx, my)
             local hitThisOne = fixture:testPoint(wx, wy)
             local isSensor = fixture:isSensor()
             if (hitThisOne and not isSensor) then
+                killMouseJointIfPossible()
                 mouseJoints.jointBody = body
                 mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
                 --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
