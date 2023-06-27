@@ -112,6 +112,7 @@ end
 function love.load()
    --	1180 , 820
    -- iphone 1334, 750
+   --love.mouse.setVisible(false)
    if false then
       --love.window.setMode(1024 / 2, 768 / 2,
       --    { resizable = true, vsync = true, minwidth = 400, minheight = 300, msaa = 2, highdpi = true })
@@ -452,14 +453,14 @@ makingMarketingScreensIndex = 0
 makingMarketingScreensName = ''
 
 local resolutions = {
-   {2796, 1290, '6-7'},  --6.7
-   {2796/2, 1290/2, '6-7-50%'},  --6.7
-   {2688, 1242, '6-5'},  --6.5
-   {2688/2, 1242/2, '6-5-50%'},  --6.5
-   {2208,1242, '5-5'},   -- 5.5 
-   {2208/2,1242/2, '5-5-50%'},   -- 5.5 
-   {2732,2048, '12-9'} ,   -- 12.9 
-   {2732/2,2048/2, '12-9-50%'} ,   -- 12.9 
+    { 2796,     1290,     '6-7' }, --6.7
+    { 2796 / 2, 1290 / 2, '6-7-50%' }, --6.7
+    { 2688,     1242,     '6-5' }, --6.5
+    { 2688 / 2, 1242 / 2, '6-5-50%' }, --6.5
+    { 2208,     1242,     '5-5' }, -- 5.5
+    { 2208 / 2, 1242 / 2, '5-5-50%' }, -- 5.5
+    { 2732,     2048,     '12-9' }, -- 12.9
+    { 2732 / 2, 2048 / 2, '12-9-50%' }, -- 12.9
 }
 
 
@@ -469,10 +470,11 @@ function love.draw()
       local w = resolutions[makingMarketingScreensIndex][1]
       local h = resolutions[makingMarketingScreensIndex][2]
       local type = resolutions[makingMarketingScreensIndex][3]
-      print('making marketing screenhsot',makingMarketingScreensIndex, w,h)
-      local success = love.window.updateMode(w/2, h/2, { fullscreen = false })
-      love.resize(w,h)
-      love.graphics.captureScreenshot( 'puppetmaker-marketing-'..makingMarketingScreensName..'-'..type..'-'..os.date("%Y%m%d%H%M%S")..'.png' )
+      print('making marketing screenhsot', makingMarketingScreensIndex, w, h)
+      local success = love.window.updateMode(w / 2, h / 2, { fullscreen = false })
+      love.resize(w, h)
+      love.graphics.captureScreenshot('puppetmaker-marketing-' ..
+      makingMarketingScreensName .. '-' .. type .. '-' .. os.date("%Y%m%d%H%M%S") .. '.png')
    end
 
    prof.push('frame')
@@ -480,11 +482,10 @@ function love.draw()
    prof.pop('frame')
 
    if makingMarketingScreensIndex < #resolutions then
-      makingMarketingScreensIndex= makingMarketingScreensIndex + 1
+      makingMarketingScreensIndex = makingMarketingScreensIndex + 1
    else
       makingMarketingScreens = false
    end
-  
 end
 
 --function love.resize(w, h)
@@ -510,9 +511,7 @@ function love.lowmemory()
    print('LOW MEMORY!!!')
 end
 
-
-
-function makeMarketingScreenshots(name) 
+function makeMarketingScreenshots(name)
    makingMarketingScreens = true
    makingMarketingScreensIndex = 1
    makingMarketingScreensName = name or ''
@@ -520,5 +519,4 @@ function makeMarketingScreenshots(name)
 
    local openURL = "file://" .. love.filesystem.getSaveDirectory()
    love.system.openURL(openURL)
-
 end

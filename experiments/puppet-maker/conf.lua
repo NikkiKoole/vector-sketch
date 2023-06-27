@@ -19,7 +19,7 @@ function love.conf(t)
     if debug then
         --t.window.resizable = true
         t.window.resizable = true
-
+        t.window.borderless = true
         --t.window.minwidth = 1024 / 2
         --t.window.minheight = 768 / 2
     else

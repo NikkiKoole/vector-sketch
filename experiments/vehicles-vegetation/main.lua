@@ -181,6 +181,96 @@ function capsule(w, h, cs)
     return result
 end
 
+function makeRectPoly(w, h, x, y)
+    return love.physics.newPolygonShape(
+            x, y,
+            x + w, y,
+            x + w, y + h,
+            x, y + h
+        )
+end
+
+function makeGuy(x, y)
+    -- a body
+    -- attached are 2 upperlegs
+    -- attached to the upperlegs are lowerlegs
+    -- attached to the lowerlegs are feet
+
+    --local torso = {}
+    local torsoWidth = 100
+    local torsoHeight = 200
+
+    local ulWidth = 10
+    local ulHeight = 100
+
+    local torso = love.physics.newBody(world, x, y, "dynamic")
+    -- torso:setFixedRotation(true)
+    local torsoShape = love.physics.newRectangleShape(torsoWidth, torsoHeight)
+    local fixture = love.physics.newFixture(torso, torsoShape, 1)
+    fixture:setUserData('torso')
+    -- fixture:setFilterData(1, 65535, -1)
+
+    local ulleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
+    local ullegShape = makeRectPoly(ulWidth, ulHeight, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+    local fixture = love.physics.newFixture(ulleg, ullegShape, 1)
+    --fixture:setSensor(true)
+    --fixture:setFilterData(1, 65535, -1)
+    local torsoULjoint1 = love.physics.newRevoluteJoint(torso, ulleg, ulleg:getX(), ulleg:getY(), false)
+
+
+    torsoULjoint1:setLowerLimit( -math.pi / 16)
+    torsoULjoint1:setUpperLimit(math.pi / 16)
+    torsoULjoint1:setLimitsEnabled(true)
+
+
+    local leftFoot = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
+    local leftFootShape = makeRectPoly(50, 10, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+    local fixture = love.physics.newFixture(leftFoot, leftFootShape, 1)
+    --fixture:setFilterData(1, 65535, -1)
+    local ULFeetjoint1 = love.physics.newRevoluteJoint(ulleg, leftFoot, leftFoot:getX(), leftFoot:getY(), false)
+
+
+    --leftFoot:setFixedRotation(true)
+
+    ULFeetjoint1:setLowerLimit(0 - math.pi)
+    ULFeetjoint1:setUpperLimit(math.pi / 8 - math.pi)
+    ULFeetjoint1:setLimitsEnabled(true)
+
+    --ULFeetjoint1:setLowerLimit(0)
+    --ULFeetjoint1:setUpperLimit(math.pi)
+    --ULFeetjoint1:setLimitsEnabled(true)
+
+
+
+    local ulleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2, "dynamic")
+    local ullegShape = makeRectPoly(ulWidth, ulHeight, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+    local fixture = love.physics.newFixture(ulleg, ullegShape, .5)
+    --fixture:setSensor(true)
+    fixture:setFilterData(1, 65535, -1)
+    local torsoULjoint2 = love.physics.newRevoluteJoint(torso, ulleg, ulleg:getX(), ulleg:getY(), false)
+
+
+    torsoULjoint2:setLowerLimit( -math.pi / 16)
+    torsoULjoint2:setUpperLimit(math.pi / 16)
+    torsoULjoint2:setLimitsEnabled(true)
+
+
+    local leftFoot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
+    local leftFootShape = makeRectPoly(50, 10, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+    local fixture = love.physics.newFixture(leftFoot, leftFootShape, .5)
+    fixture:setFilterData(1, 65535, -1)
+    local ULFeetjoint2 = love.physics.newRevoluteJoint(ulleg, leftFoot, leftFoot:getX(), leftFoot:getY(), false)
+
+    -- leftFoot:setFixedRotation(true)
+
+    ULFeetjoint2:setLowerLimit(0)
+
+    ULFeetjoint2:setUpperLimit(math.pi / 8)
+    ULFeetjoint2:setLimitsEnabled(true)
+
+    return torso
+end
+
 function makeChain(x, y)
     --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
     local linkHeight = 70
@@ -206,7 +296,7 @@ function makeChain(x, y)
         joint:setLimitsEnabled(true)
 
         local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
-                link:getY() )
+                link:getY())
         lastLink = link
     end
 
@@ -490,13 +580,19 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 30 do
+        for i = 1, 3 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 30 do
+        for i = 1, 3 do
             makeChain(i * 20, -1000)
+        end
+
+
+
+        for i = 1, 20 do
+            makeGuy(i * 100, -300)
         end
         ballRadius = love.physics.getMeter() / 4
         if false then
@@ -752,7 +848,7 @@ function drawMeterGrid()
     end
 end
 
-function rotateCarToHorizontal(body, divider)
+function rotateToHorizontal(body, divider)
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     local angle = body:getAngle()
@@ -794,7 +890,7 @@ function love.update(dt)
                 local body = mouseJoints.jointBody
                 if body then
                     if (carIsTouching < 1) then
-                        rotateCarToHorizontal(body, 10)
+                        rotateToHorizontal(body, 10)
                     end
                 end
 
@@ -806,12 +902,19 @@ function love.update(dt)
 
                 --mouseJoints.jointBody:applyTorque(angle * 0.125)
             end
+            if f:getUserData() == 'torso' then
+                --print('jo found a torso to rotate!')
+                local body = mouseJoints.jointBody
+                if body then
+                    rotateToHorizontal(body, 10)
+                end
+            end
         end
     end
     if false then
         if objects.carbody then
             if (carIsTouching < 1) then
-                rotateCarToHorizontal(objects.carbody.body, 10)
+                rotateToHorizontal(objects.carbody.body, 10)
             end
         end
     end
