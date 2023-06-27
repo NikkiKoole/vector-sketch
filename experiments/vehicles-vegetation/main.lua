@@ -203,8 +203,10 @@ function makeGuy(x, y)
         return value - range, value + range
     end
 
-    local torsoWidth = 100
-    local torsoHeight = 200
+
+
+    local torsoWidth = love.math.random() * 100 + 30
+    local torsoHeight = love.math.random() * 200 + 100
 
     local ulWidth = 10
     local ulHeight = 40
@@ -223,22 +225,26 @@ function makeGuy(x, y)
     local ulleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local ullegShape = makeRectPoly(ulWidth, ulHeight, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(ulleg, ullegShape, 1)
+    fixture:setUserData('legpart')
+    fixture:setFilterData(1, 65535, -1)
     local torsoULjoint1 = love.physics.newRevoluteJoint(torso, ulleg, ulleg:getX(), ulleg:getY(), false)
 
     torsoULjoint1:setLowerLimit( -math.pi / 16)
     torsoULjoint1:setUpperLimit(math.pi / 16)
-    torsoULjoint1:setLimitsEnabled(true)
+    -- torsoULjoint1:setLimitsEnabled(true)
 
     -- LOWER LEFT LEG
     local llleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
     local lllegShape = makeRectPoly(llWidth, llHeight, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(llleg, lllegShape, 1)
+    fixture:setUserData('legpart')
+    fixture:setFilterData(1, 65535, -1)
     local torsoULjoint1 = love.physics.newRevoluteJoint(ulleg, llleg, llleg:getX(), llleg:getY(), false)
 
     local low, up = limitsAround(0, math.pi / 16)
     torsoULjoint1:setLowerLimit(low)
     torsoULjoint1:setUpperLimit(up)
-    torsoULjoint1:setLimitsEnabled(true)
+    --torsoULjoint1:setLimitsEnabled(true)
 
 
 
@@ -246,13 +252,14 @@ function makeGuy(x, y)
     local leftFoot = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     local leftFootShape = makeRectPoly(10, 50, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(leftFoot, leftFootShape, 1)
+    fixture:setFilterData(1, 65535, -1)
     local ULFeetjoint1 = love.physics.newRevoluteJoint(llleg, leftFoot, leftFoot:getX(), leftFoot:getY(), false)
 
 
     local low, up = limitsAround(math.pi / 4, math.pi / 2)
     ULFeetjoint1:setLowerLimit(low)
     ULFeetjoint1:setUpperLimit(up)
-    ULFeetjoint1:setLimitsEnabled(true)
+    -- ULFeetjoint1:setLimitsEnabled(true)
 
     --local dj = love.physics.newDistanceJoint(llleg, leftFoot, llleg:getX(), llleg:getY() + llHeight, leftFoot:getX(),
     --        leftFoot:getY())
@@ -262,6 +269,7 @@ function makeGuy(x, y)
     local urleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local urlegShape = makeRectPoly(ulWidth, ulHeight, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(urleg, urlegShape, .5)
+    fixture:setUserData('legpart')
     --fixture:setSensor(true)
     --fixture:setFilterData(1, 65535, -1)
     local torsoULjoint2 = love.physics.newRevoluteJoint(torso, urleg, urleg:getX(), urleg:getY(), false)
@@ -276,6 +284,7 @@ function makeGuy(x, y)
     local lrleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
     local lrlegShape = makeRectPoly(llWidth, llHeight, 0, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(lrleg, lrlegShape, 1)
+    fixture:setUserData('legpart')
     local torsoULjoint1 = love.physics.newRevoluteJoint(urleg, lrleg, lrleg:getX(), lrleg:getY(), false)
     -- end
     local low, up = limitsAround(0, math.pi / 16)
@@ -957,6 +966,11 @@ function love.update(dt)
         for _, fixture in ipairs(fixtures) do
             if fixture:getUserData() == 'torso' then
                 rotateToHorizontal(body, 1)
+            end
+
+            if fixture:getUserData() == 'legpart' then
+                print('rotating legpart')
+                rotateToHorizontal(body, 60)
             end
         end
     end
