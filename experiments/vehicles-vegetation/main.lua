@@ -212,6 +212,19 @@ local function makeTrapeziumPoly(w, h, x, y)
         )
 end
 
+function makeCarShape(w,h, cx, cy)
+
+    return love.physics.newPolygonShape(
+        cx - w/2, cy - h/2,
+        cx - w/2, cy + h/2 - h/8,
+        cx - w/2 + w/8, cy + h/2 ,
+        cx + w/2 - w/8, cy + h/2,
+        cx + w/2, cy + h/2 -h/8,
+        cx + w/2, cy + h/4
+    )
+end
+
+
 function makeGuy(x, y, groupId)
     -- a body
     -- attached are 2 upperlegs
@@ -251,9 +264,10 @@ function makeGuy(x, y, groupId)
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
     local torsoShape =   makeRectPoly(torsoWidth, torsoHeight, -torsoWidth/2, -torsoHeight/2) --love.physics.newRectangleShape(torsoWidth, torsoHeight)
-    local fixture = love.physics.newFixture(torso, torsoShape, 1)
+    local fixture = love.physics.newFixture(torso, torsoShape, 2)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
+    --fixture:setRestitution(0.5)
 
     -- UPPER LEFT LEG
     local ulleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
@@ -262,7 +276,7 @@ function makeGuy(x, y, groupId)
     local fixture = love.physics.newFixture(ulleg, ullegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
-
+    --fixture:setRestitution(0.5)
     local torsoULjoint1 = love.physics.newRevoluteJoint(torso, ulleg, ulleg:getX(), ulleg:getY(), false)
     --torsoULjoint1:setDampingRatio(0.5)
     --limitsAround((math.pi / 4) , math.pi / 8, torsoULjoint1)
@@ -299,6 +313,7 @@ function makeGuy(x, y, groupId)
     local fixture = love.physics.newFixture(leftFoot, leftFootShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setFriction(1)
+    --fixture:setRestitution(1)
     leftFoot:setAngle(math.pi/2)
     local ULFeetjoint1 = love.physics.newRevoluteJoint(llleg, leftFoot, leftFoot:getX(), leftFoot:getY(), false)
    -- limitsAround( -math.pi / 2 - math.pi, math.pi / 8, ULFeetjoint1)
@@ -362,12 +377,26 @@ function makeGuy(x, y, groupId)
 end
 
 
-function makeSnappyElastic()
+function makeSnappyElastic(x,y)
     -- ceiling
 
+    local ceiling = love.physics.newBody(world, x, y , "static")
+    local shape = love.physics.newRectangleShape(20, 20)
+    local fixture = love.physics.newFixture(ceiling, shape, 1)
     -- rubberband
 
-    
+
+    local bandW = 20
+    local bandH = 200
+    local band = love.physics.newBody(world, x, y , "dynamic")
+    local bandshape =  makeRectPoly2(bandW, bandH, 0, bandH/2)
+    local fixture = love.physics.newFixture(band, bandshape, 1)
+
+    local joint = love.physics.newDistanceJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+    joint:setDampingRatio(0.7)
+    joint:setFrequency(5)
+    local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+
 end
 
 function makeChain(x, y)
@@ -588,13 +617,13 @@ function startExample(number)
 
 
 
-
-
+        local carBodyHeight = 150
+        local carBodyWidth = 400
 
         local carbody = {}
 
-        carbody.body = love.physics.newBody(world, width / 2, 0, "dynamic")
-        carbody.shape = love.physics.newRectangleShape(300, 100)
+        carbody.body = love.physics.newBody(world, width / 2, -3000, "dynamic")
+        carbody.shape = makeCarShape(carBodyWidth,carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
         carbody.fixture = love.physics.newFixture(carbody.body, carbody.shape, .5)
         carbody.fixture:setUserData("carbody")
         --carbody.fixture:setFilterData(1, 65535, -1)
@@ -657,8 +686,8 @@ function startExample(number)
         end
 
         objects.wheel1 = {}
-        objects.wheel1.body = love.physics.newBody(world, width / 2 - 110, 40, "dynamic")
-        objects.wheel1.shape = love.physics.newCircleShape(25)
+        objects.wheel1.body = love.physics.newBody(world, width / 2 - (carBodyWidth/3), -3000+ carBodyHeight/2 - 50/2, "dynamic")
+        objects.wheel1.shape = love.physics.newCircleShape(50)
         objects.wheel1.fixture = love.physics.newFixture(objects.wheel1.body, objects.wheel1.shape, .5)
         objects.wheel1.fixture:setFilterData(1, 65535, -1)
         objects.wheel1.fixture:setFriction(2.5)
@@ -670,7 +699,7 @@ function startExample(number)
         objects.joint1:setMaxMotorTorque(motorTorque)
 
         objects.wheel2 = {}
-        objects.wheel2.body = love.physics.newBody(world, width / 2 + 110, 40, "dynamic")
+        objects.wheel2.body = love.physics.newBody(world, width / 2 + (carBodyWidth/3), -3000+carBodyHeight/2 - 25/2, "dynamic")
         objects.wheel2.shape = love.physics.newCircleShape(25)
         objects.wheel2.fixture = love.physics.newFixture(objects.wheel2.body, objects.wheel2.shape, .5)
         objects.wheel2.fixture:setFilterData(1, 65535, -1)
@@ -685,7 +714,7 @@ function startExample(number)
         objects.balls = {}
 
         for i = 1, 13 do
-            --ballRadius = love.math.random() * 300 + 130
+            ballRadius = 10--love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
@@ -699,6 +728,11 @@ function startExample(number)
         for i = 1, 30 do
             makeGuy(i * 200, -1000, i)
         end
+
+for i =1, 10 do
+    makeSnappyElastic(i*100, -2000)
+end
+
         ballRadius = love.physics.getMeter() / 4
         if false then
             for i = 1, 20 do
@@ -808,7 +842,7 @@ function love.mousepressed(mx, my)
                 --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
 
                 mouseJoints.joint:setDampingRatio(0.5)
-                mouseJoints.joint:setMaxForce(300000)
+                mouseJoints.joint:setMaxForce(100000)
                 --print(mouseJoints.joint:getMaxForce())
                 local vx, vy = body:getLinearVelocity()
                 body:setPosition(body:getX(), body:getY() - 1)
