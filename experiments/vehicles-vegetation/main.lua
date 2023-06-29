@@ -203,12 +203,14 @@ function makeRectPoly2(w, h, x, y)
         )
 end
 
-local function makeTrapeziumPoly(w, h, x, y)
+local function makeTrapeziumPoly(w, w2, h, x, y)
+    local cx = x
+    local cy = y
     return love.physics.newPolygonShape(
-            x, y,
-            x + w, y,
-            x + w, y + h,
-            x, y + h
+            cx - w/2, cy - h/2,
+            cx + w/2, cy - h/2,
+            cx + w2/2, cy + h/2,
+            cx - w2/2, cy + h/2
         )
 end
 
@@ -263,7 +265,8 @@ function makeGuy(x, y, groupId)
 
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
-    local torsoShape =   makeRectPoly(torsoWidth, torsoHeight, -torsoWidth/2, -torsoHeight/2) --love.physics.newRectangleShape(torsoWidth, torsoHeight)
+    --local torsoShape =  makeRectPoly2(torsoWidth, torsoHeight,0,0) -- makeRectPoly(torsoWidth, torsoHeight, -torsoWidth/2, -torsoHeight/2) --love.physics.newRectangleShape(torsoWidth, torsoHeight)
+    local torsoShape =  makeTrapeziumPoly(torsoWidth, torsoWidth*1.2, torsoHeight,0,0)
     local fixture = love.physics.newFixture(torso, torsoShape, 2)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
@@ -391,12 +394,17 @@ function makeSnappyElastic(x,y)
     local band = love.physics.newBody(world, x, y , "dynamic")
     local bandshape =  makeRectPoly2(bandW, bandH, 0, bandH/2)
     local fixture = love.physics.newFixture(band, bandshape, 1)
+    --band:setAngle(math.pi)
 
     local joint = love.physics.newDistanceJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
     joint:setDampingRatio(0.7)
     joint:setFrequency(5)
-    local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
 
+
+    local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+    --rJoint:setLowerLimit(-math.pi/8)
+    --rJoint:setUpperLimit(math.pi/8)
+    --rJoint:setLimitsEnabled(true)
 end
 
 function makeChain(x, y)
@@ -465,7 +473,7 @@ function makeBlock(x, y, size)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-    ball.body:setFixedRotation(true)
+    --ball.body:setFixedRotation(true)
     ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
             ballRadius * 3 + love.math.random() * 20, 5))
     --ball.shape = love.physics.newCircleShape(ballRadius)
