@@ -190,6 +190,28 @@ function makeRectPoly(w, h, x, y)
         )
 end
 
+
+function makeRectPoly2(w, h, x, y)
+
+    local cx = x
+    local cy = y
+    return love.physics.newPolygonShape(
+            cx - w/2, cy - h/2,
+            cx + w/2, cy - h/2,
+            cx + w/2, cy + h/2,
+            cx - w/2, cy + h/2
+        )
+end
+
+local function makeTrapeziumPoly(w, h, x, y)
+    return love.physics.newPolygonShape(
+            x, y,
+            x + w, y,
+            x + w, y + h,
+            x, y + h
+        )
+end
+
 function makeGuy(x, y, groupId)
     -- a body
     -- attached are 2 upperlegs
@@ -220,7 +242,7 @@ function makeGuy(x, y, groupId)
     local torsoHeight = love.math.random() * 200 + 50
 
     local ulWidth = 10
-    local ulHeight = 150 + love.math.random() * 70
+    local ulHeight = 100 + love.math.random() * 30
 
     local llWidth = 10
     local llHeight = ulHeight
@@ -228,14 +250,15 @@ function makeGuy(x, y, groupId)
 
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
-    local torsoShape = love.physics.newRectangleShape(torsoWidth, torsoHeight)
+    local torsoShape =   makeRectPoly(torsoWidth, torsoHeight, -torsoWidth/2, -torsoHeight/2) --love.physics.newRectangleShape(torsoWidth, torsoHeight)
     local fixture = love.physics.newFixture(torso, torsoShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
 
     -- UPPER LEFT LEG
     local ulleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
-    local ullegShape = makeRectPoly(ulWidth, ulHeight, -ulWidth / 2, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+   -- local ullegShape = makeRectPoly2(ulWidth, ulHeight, -ulWidth / 2, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+    local ullegShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight/2) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(ulleg, ullegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -254,7 +277,7 @@ function makeGuy(x, y, groupId)
 
     -- LOWER LEFT LEG
     local llleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
-    local lllegShape = makeRectPoly(llWidth, llHeight, -llWidth / 2, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
+    local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight/2) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(llleg, lllegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -263,7 +286,7 @@ function makeGuy(x, y, groupId)
     --limitsAround( -(math.pi / 4), math.pi / 4, torsoULjoint1)
    -- limitsAround(0, math.pi / 4, torsoULjoint1)
 
-   torsoULjoint1:setLowerLimit(-math.pi / 4)
+   torsoULjoint1:setLowerLimit(-math.pi / 8)
    torsoULjoint1:setUpperLimit( 0)
    torsoULjoint1:setLimitsEnabled(true)
    -- limitsAround(0, math.pi / 16, torsoULjoint1)
@@ -288,7 +311,7 @@ function makeGuy(x, y, groupId)
     -- UPPER RIGHT LEG
     local urleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local urlegShape = makeRectPoly(ulWidth, ulHeight, -ulWidth / 2, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
-    local fixture = love.physics.newFixture(urleg, urlegShape, .5)
+    local fixture = love.physics.newFixture(urleg, urlegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint2 = love.physics.newRevoluteJoint(torso, urleg, urleg:getX(), urleg:getY(), false)
@@ -309,10 +332,10 @@ function makeGuy(x, y, groupId)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint1 = love.physics.newRevoluteJoint(urleg, lrleg, lrleg:getX(), lrleg:getY(), false)
-    limitsAround(0, math.pi / 16, torsoULjoint1)
+    --limitsAround(0, math.pi / 16, torsoULjoint1)
 
     torsoULjoint1:setLowerLimit(0)
-    torsoULjoint1:setUpperLimit( math.pi / 4)
+    torsoULjoint1:setUpperLimit( math.pi / 8)
     torsoULjoint1:setLimitsEnabled(true)
      
     --limitsAround(0, math.pi / 4, torsoULjoint1)
@@ -336,6 +359,15 @@ function makeGuy(x, y, groupId)
 
 
     return torso
+end
+
+
+function makeSnappyElastic()
+    -- ceiling
+
+    -- rubberband
+
+    
 end
 
 function makeChain(x, y)
@@ -776,7 +808,7 @@ function love.mousepressed(mx, my)
                 --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
 
                 mouseJoints.joint:setDampingRatio(0.5)
-                mouseJoints.joint:setMaxForce(100000)
+                mouseJoints.joint:setMaxForce(300000)
                 --print(mouseJoints.joint:getMaxForce())
                 local vx, vy = body:getLinearVelocity()
                 body:setPosition(body:getX(), body:getY() - 1)
@@ -1039,7 +1071,7 @@ function love.update(dt)
 
 
 
-               rotateToHorizontal(body, 0, 30)
+               rotateToHorizontal(body, 0, 15)
             end
 
             if fixture:getUserData() == 'legpart' then
@@ -1064,7 +1096,7 @@ function love.update(dt)
                 end
 
 
-               rotateToHorizontal(body, 0, 10)
+               rotateToHorizontal(body, 0, 15)
             end
         end
     end
