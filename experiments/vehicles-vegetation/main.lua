@@ -216,11 +216,11 @@ function makeGuy(x, y, groupId)
 
 
 
-    local torsoWidth = love.math.random() * 10 + 50
-    local torsoHeight = love.math.random() * 20 + 50
+    local torsoWidth = love.math.random() * 100 + 50
+    local torsoHeight = love.math.random() * 200 + 50
 
     local ulWidth = 10
-    local ulHeight = 50 + love.math.random() * 70
+    local ulHeight = 150 + love.math.random() * 70
 
     local llWidth = 10
     local llHeight = ulHeight
@@ -246,7 +246,11 @@ function makeGuy(x, y, groupId)
     --limitsAround(0, math.pi / 4, torsoULjoint1)
 
    -- print(torsoULjoint1:getJointAngle())
-    limitsAround(0, math.pi / 16, torsoULjoint1)
+   torsoULjoint1:setLowerLimit(0)
+   torsoULjoint1:setUpperLimit( math.pi / 4)
+   torsoULjoint1:setLimitsEnabled(true)
+  --  limitsAround(0, math.pi / 16, torsoULjoint1)
+
 
     -- LOWER LEFT LEG
     local llleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
@@ -258,11 +262,15 @@ function makeGuy(x, y, groupId)
 
     --limitsAround( -(math.pi / 4), math.pi / 4, torsoULjoint1)
    -- limitsAround(0, math.pi / 4, torsoULjoint1)
-    limitsAround(0, math.pi / 16, torsoULjoint1)
+
+   torsoULjoint1:setLowerLimit(-math.pi / 4)
+   torsoULjoint1:setUpperLimit( 0)
+   torsoULjoint1:setLimitsEnabled(true)
+   -- limitsAround(0, math.pi / 16, torsoULjoint1)
 
 
     -- LEFT FOOT
-    if false then
+    if true then
     local leftFoot = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     local leftFootShape = makeRectPoly(10, 50, -5, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
     local fixture = love.physics.newFixture(leftFoot, leftFootShape, 1)
@@ -284,7 +292,12 @@ function makeGuy(x, y, groupId)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint2 = love.physics.newRevoluteJoint(torso, urleg, urleg:getX(), urleg:getY(), false)
-    limitsAround(0, math.pi / 16, torsoULjoint2)
+    
+    torsoULjoint2:setLowerLimit(-math.pi / 4)
+   torsoULjoint2:setUpperLimit( 0)
+   torsoULjoint2:setLimitsEnabled(true)
+    
+    --limitsAround(0, math.pi / 16, torsoULjoint2)
 
     --limitsAround(0, math.pi / 4, torsoULjoint2)
 
@@ -297,10 +310,15 @@ function makeGuy(x, y, groupId)
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint1 = love.physics.newRevoluteJoint(urleg, lrleg, lrleg:getX(), lrleg:getY(), false)
     limitsAround(0, math.pi / 16, torsoULjoint1)
+
+    torsoULjoint1:setLowerLimit(0)
+    torsoULjoint1:setUpperLimit( math.pi / 4)
+    torsoULjoint1:setLimitsEnabled(true)
+     
     --limitsAround(0, math.pi / 4, torsoULjoint1)
 
 
-    if false then
+    if true then
     local leftFoot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     leftFoot:setAngle(-math.pi/2)
     local leftFootShape = makeRectPoly(10, 50, -5, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
@@ -758,7 +776,7 @@ function love.mousepressed(mx, my)
                 --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
 
                 mouseJoints.joint:setDampingRatio(0.5)
-                mouseJoints.joint:setMaxForce(50000)
+                mouseJoints.joint:setMaxForce(100000)
                 --print(mouseJoints.joint:getMaxForce())
                 local vx, vy = body:getLinearVelocity()
                 body:setPosition(body:getX(), body:getY() - 1)
@@ -906,6 +924,7 @@ end
 function rotateToHorizontal(body, desiredAngle, divider)
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
+    if true then
     local angle = body:getAngle()
     local nextAngle = angle + body:getAngularVelocity() / divider
 
@@ -921,9 +940,35 @@ function rotateToHorizontal(body, desiredAngle, divider)
         totalRotation = totalRotation - 360 * DEGTORAD
     end
 
-    local desiredAngularVelocity = totalRotation * divider
+    local desiredAngularVelocity = (totalRotation * divider) 
     local impulse = body:getInertia() * desiredAngularVelocity
-    body:applyAngularImpulse(impulse)
+   
+   -- body:applyAngularImpulse(impulse)
+
+    local torque = body:getInertia() * desiredAngularVelocity / (1/divider)
+    body:applyTorque(torque)
+
+
+
+end 
+
+    if false then
+    local bodyAngle = body:getAngle()
+    local nextAngle = bodyAngle + body:getAngularVelocity() / 60.0
+    local totalRotation = desiredAngle - nextAngle
+    while ( totalRotation < -180 * DEGTORAD )  do 
+        totalRotation = totalRotation +  360 * DEGTORAD; 
+    end
+    while ( totalRotation >  180 * DEGTORAD ) do 
+        totalRotation  = totalRotation -  360 * DEGTORAD; 
+    end
+    local  desiredAngularVelocity = totalRotation * 60;
+    local change = 1 * DEGTORAD; --allow 1 degree rotation per time step
+    desiredAngularVelocity = math.min( change, math.max(-change, desiredAngularVelocity));
+    local  impulse = body:getInertia() * desiredAngularVelocity;
+    body:applyAngularImpulse( impulse );
+end
+
 end
 
 function love.update(dt)
@@ -981,7 +1026,7 @@ function love.update(dt)
                 --    body:setAngle(a % math.pi)
                 --end
 
-                if false then
+                if true then
                     if a > (2 * math.pi) then
                         a = a - (2 * math.pi)
                         body:setAngle(a)
@@ -994,7 +1039,7 @@ function love.update(dt)
 
 
 
-               rotateToHorizontal(body, 0, 50)
+               rotateToHorizontal(body, 0, 30)
             end
 
             if fixture:getUserData() == 'legpart' then
@@ -1007,7 +1052,7 @@ function love.update(dt)
                 --end
 
 
-                if false then
+                if true then
                     if a > (2 * math.pi) then
                         a = a - (2 * math.pi)
                         body:setAngle(a)
@@ -1019,7 +1064,7 @@ function love.update(dt)
                 end
 
 
-               -- rotateToHorizontal(body, 0, 2)
+               rotateToHorizontal(body, 0, 10)
             end
         end
     end
