@@ -229,23 +229,12 @@ end
 
 function makeGuy(x, y, groupId)
     -- a body
-    -- attached are 2 upperlegs
-    -- attached to the upperlegs are lowerlegs
-    -- attached to the lowerlegs are feet
-
-    --local torso = {}
-
+   
 
     local function limitsAround(value, range, joint)
         local low = value - range
         local high = value + range
-        --return value - range, value + range
 
-        --if low < high then
-        --    low = low - math.pi * 2
-            --high = high + math.pi * 2
-        --end
-        --print(low, high)
         joint:setLowerLimit(low)
         joint:setUpperLimit(high)
         joint:setLimitsEnabled(true)
@@ -407,12 +396,12 @@ function makeSnappyElastic(x,y)
     --rJoint:setLimitsEnabled(true)
 end
 
-function makeChain(x, y)
+function makeChain(x, y, amt)
     --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
     local linkHeight = 70
     local linkWidth = 40
     local dir = 1
-    local amt = 3
+   -- local amt = 3
 
 
     function makeLink(x, y)
@@ -727,8 +716,8 @@ function startExample(number)
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 3 do
-            makeChain(i * 20, -1000)
+        for i = 1, 13 do
+            makeChain(i * 20, -3000, 8)
         end
 
 
