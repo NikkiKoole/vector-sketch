@@ -204,7 +204,11 @@ function makeGuy(x, y, groupId)
         local high = value + range
         --return value - range, value + range
 
-
+        if low < high then
+            low = low - math.pi * 2
+            --high = high + math.pi * 2
+        end
+        print(low, high)
         joint:setLowerLimit(low)
         joint:setUpperLimit(high)
         joint:setLimitsEnabled(true)
@@ -212,14 +216,14 @@ function makeGuy(x, y, groupId)
 
 
 
-    local torsoWidth = love.math.random() * 100 + 30
-    local torsoHeight = love.math.random() * 200 + 100
+    local torsoWidth = love.math.random() * 10 + 50
+    local torsoHeight = love.math.random() * 20 + 50
 
     local ulWidth = 10
-    local ulHeight = 40 + love.math.random() * 70
+    local ulHeight = 10 + love.math.random() * 70
 
     local llWidth = 10
-    local llHeight = 40
+    local llHeight = ulHeight
 
 
     -- TORSO
@@ -235,8 +239,11 @@ function makeGuy(x, y, groupId)
     local fixture = love.physics.newFixture(ulleg, ullegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
+
     local torsoULjoint1 = love.physics.newRevoluteJoint(torso, ulleg, ulleg:getX(), ulleg:getY(), false)
-    limitsAround(0, math.pi / 2, torsoULjoint1)
+    --torsoULjoint1:setDampingRatio(0.5)
+    limitsAround((math.pi / 4) + 2 * math.pi, math.pi / 4, torsoULjoint1)
+    --limitsAround(0, math.pi / 4, torsoULjoint1)
 
     -- LOWER LEFT LEG
     local llleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
@@ -246,7 +253,8 @@ function makeGuy(x, y, groupId)
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint1 = love.physics.newRevoluteJoint(ulleg, llleg, llleg:getX(), llleg:getY(), false)
 
-    limitsAround( -math.pi / 4, math.pi / 4, torsoULjoint1)
+    --limitsAround( -(math.pi / 4), math.pi / 4, torsoULjoint1)
+    --limitsAround(0, math.pi / 4, torsoULjoint1)
 
 
 
@@ -271,8 +279,8 @@ function makeGuy(x, y, groupId)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint2 = love.physics.newRevoluteJoint(torso, urleg, urleg:getX(), urleg:getY(), false)
-
-    limitsAround(0, math.pi / 2, torsoULjoint2)
+    limitsAround((math.pi / 4), math.pi / 4, torsoULjoint1)
+    --limitsAround(0, math.pi / 4, torsoULjoint2)
 
     -- LOWER RIGHT LEG
 
@@ -282,8 +290,8 @@ function makeGuy(x, y, groupId)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
     local torsoULjoint1 = love.physics.newRevoluteJoint(urleg, lrleg, lrleg:getX(), lrleg:getY(), false)
-    limitsAround(math.pi / 4, math.pi / 4, torsoULjoint1)
-
+    limitsAround((math.pi / 4), math.pi / 4, torsoULjoint1)
+    --limitsAround(0, math.pi / 4, torsoULjoint1)
 
     local leftFoot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     local leftFootShape = makeRectPoly(10, 50, -5, 0) --  love.physics.newRectangleShape(ulWidth, ulHeight)
@@ -629,8 +637,8 @@ function startExample(number)
 
 
 
-        for i = 1, 10 do
-            makeGuy(i * 400, -1000, i)
+        for i = 1, 30 do
+            makeGuy(i * 200, -1000, i)
         end
         ballRadius = love.physics.getMeter() / 4
         if false then
@@ -886,16 +894,15 @@ function drawMeterGrid()
     end
 end
 
-function rotateToHorizontal(body, divider)
+function rotateToHorizontal(body, desiredAngle, divider)
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     local angle = body:getAngle()
-
-    --
-    --local divider = 10
-
     local nextAngle = angle + body:getAngularVelocity() / divider
-    local desiredAngle = 0
+
+
+
+
     local totalRotation = desiredAngle - nextAngle
     while (totalRotation < -180 * DEGTORAD) do
         totalRotation = totalRotation + 360 * DEGTORAD
@@ -906,9 +913,6 @@ function rotateToHorizontal(body, divider)
     end
 
     local desiredAngularVelocity = totalRotation * divider
-    --local torque = body:getInertia() * desiredAngularVelocity / (1 / 60.0)
-    --body:applyTorque(torque)
-
     local impulse = body:getInertia() * desiredAngularVelocity
     body:applyAngularImpulse(impulse)
 end
@@ -928,7 +932,7 @@ function love.update(dt)
                 local body = mouseJoints.jointBody
                 if body then
                     if (carIsTouching < 1) then
-                        rotateToHorizontal(body, 10)
+                        rotateToHorizontal(body, 0, 10)
                     end
                 end
 
@@ -944,7 +948,7 @@ function love.update(dt)
                 --print('jo found a torso to rotate!')
                 local body = mouseJoints.jointBody
                 if body then
-                    rotateToHorizontal(body, 10)
+                    rotateToHorizontal(body, 0, 10)
                 end
             end
         end
@@ -952,7 +956,7 @@ function love.update(dt)
     if false then
         if objects.carbody then
             if (carIsTouching < 1) then
-                rotateToHorizontal(objects.carbody.body, 10)
+                rotateToHorizontal(objects.carbody.body, 0, 10)
             end
         end
     end
@@ -962,18 +966,51 @@ function love.update(dt)
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
             if fixture:getUserData() == 'torso' then
-                rotateToHorizontal(body, 20)
+                local a = body:getAngle()
+                --if math.abs(a) > math.pi then
+                -- print(a, a % math.pi)
+                --    body:setAngle(a % math.pi)
+                --end
+
+                if true then
+                    if a > (2 * math.pi) then
+                        a = a - (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                    if a < -(2 * math.pi) then
+                        a = a + (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                end
+
+
+
+                rotateToHorizontal(body, 0, 6)
             end
 
             if fixture:getUserData() == 'legpart' then
                 --print('rotating legpart')
                 --if body:setAngle( angle )
                 local a = body:getAngle()
-                if math.abs(a) > math.pi then
-                    -- print(a, a % math.pi)
-                    body:setAngle(a % math.pi)
+                --if math.abs(a) > math.pi then
+                -- print(a, a % math.pi)
+                --     body:setAngle(a % math.pi)
+                --end
+
+
+                if true then
+                    if a > (2 * math.pi) then
+                        a = a - (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                    if a < -(2 * math.pi) then
+                        a = a + (2 * math.pi)
+                        body:setAngle(a)
+                    end
                 end
-                rotateToHorizontal(body, 20)
+
+
+                rotateToHorizontal(body, 0, 15)
             end
         end
     end
