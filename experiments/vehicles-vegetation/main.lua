@@ -341,6 +341,9 @@ end
 function makeSnappyElastic(x, y)
     -- ceiling
 
+    local bandW = 20
+    local bandH = 200 + love.math.random()*200
+
     local ceiling = love.physics.newBody(world, x, y, "static")
     local shape = love.physics.newRectangleShape(20, 20)
     local fixture = love.physics.newFixture(ceiling, shape, 1)
@@ -348,22 +351,27 @@ function makeSnappyElastic(x, y)
     -- rubberband
 
 
-    local bandW = 20
-    local bandH = 200
+  
     local band = love.physics.newBody(world, x, y, "dynamic")
     local bandshape = makeRectPoly2(bandW, bandH, 0, bandH / 2)
     local fixture = love.physics.newFixture(band, bandshape, 1)
    
 
    -- local hitPoint = love.physics.newBody(world, x, y, "dynamic")
-    local bandshape =  makeRectPoly2(10, 10, 0, 0)
+    local bandshape2 =  makeRectPoly2(10, 10, 0, 0)
+    local fixture = love.physics.newFixture(band, bandshape2, 1)
+    fixture:setUserData('connector')
+
+    if true then
+    local bandshape =  makeRectPoly2(10, 10, 0, bandH)
     local fixture = love.physics.newFixture(band, bandshape, 1)
     fixture:setUserData('connector')
+    end
 
 
     local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
 
-    table.insert(snapJoints, {band=band,  rJoint=rJoint, ceiling=ceiling, x=x, y=y})
+    table.insert(snapJoints, {band=band,  rJoint=rJoint, ceiling=ceiling})
 
 
 end
@@ -874,6 +882,28 @@ function getBodyColor(body)
     --fixture:getShape():type() == 'PolygonShape' then
 end
 
+
+
+
+function getCenterOfPoints(points)  
+    local tlx = math.huge
+    local tly = math.huge
+    local brx = -math.huge
+    local bry = -math.huge
+    for ip = 1, #points, 2 do
+       if points[ip + 0] < tlx then tlx = points[ip + 0] end
+       if points[ip + 1] < tly then tly = points[ip + 1] end
+       if points[ip + 0] > brx then brx = points[ip + 0] end
+       if points[ip + 1] > bry then bry = points[ip + 1] end
+    end
+    --return tlx, tly, brx, bry
+    local w = brx - tlx
+    local h = bry - tly
+    return tlx + w/2, tly + h/2
+end
+
+
+
 function drawWorld(world)
     -- get the current color values to reapply
     local r, g, b, a = love.graphics.getColor()
@@ -1022,6 +1052,9 @@ function rotateToHorizontal(body, desiredAngle, divider)
    
 end
 
+
+
+
 function love.update(dt)
     lurker.update()
     if (mouseJoints.joint) then
@@ -1046,28 +1079,35 @@ function love.update(dt)
                 end 
 
                 if found == false then
-                    --print('this thing actually could be connected!')
-                    local pos1  = {mouseJoints.jointBody:getPosition()}
-                    --print(inspect())
+
+                    local connectorPoints = {mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints())}
+                    local center = {getCenterOfPoints(connectorPoints)  }
+                    
+                    local pos1 = center
+
+
+
                     for j =1, #snapJoints do 
-                        --print(snapJoints[j].rJoint)
+              
                         if snapJoints[j].rJoint == nil then
-                            --print('empty at', j)
-                            --local pos2 = {snapJoints[j].x, snapJoints[j].y}
+
                             local pos2 = {snapJoints[j].ceiling:getPosition()}
-                            --print(inspect(pos1), inspect(pos2))
-                            local distance = Vector(pos1[1], pos1[2], pos2[1], pos2[2] )
-                            --print(j, distance:getLength())
+                          
 
                             local a = pos1[1] - pos2[1]
                             local b = pos1[2] - pos2[2]
                             local d = math.sqrt(a*a + b*b)
-                            --print(d)
+
                             if d < 20 then
-                                local ceiling = snapJoints[j].ceiling
+                               
+                                local connectorPoints = {mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints())}
+                                local center = {getCenterOfPoints(connectorPoints)  }
                                 local band = mouseJoints.jointBody
+
+                                local ceiling =     snapJoints[j].ceiling
+                               
                                 snapJoints[j].band = band
-                                snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+                                snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), center[1], center[2])
 
                             end
 
@@ -1165,7 +1205,7 @@ function love.update(dt)
 
             local delta = Vector(reaction2[1], reaction2[2])
             local l = delta:getLength()
-            if l > 70000 then
+            if l > 100000 then
                 snapJoints[i].rJoint:destroy()
                 snapJoints[i].rJoint = nil
                 snapJoints[i].band = nil

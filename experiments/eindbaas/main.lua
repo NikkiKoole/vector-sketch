@@ -6,7 +6,7 @@ local parse = require 'lib.parse-file'
 local parentize = require 'lib.parentize'
 local render = require 'lib.render'
 local mesh = require 'lib.mesh'
-local bbox = require 'lib.bbox'
+local bbox = require 'lib.'
 
 function love.keypressed(key)
    if key == 'escape' then
