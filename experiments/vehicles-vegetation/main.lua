@@ -353,19 +353,19 @@ function makeSnappyElastic(x, y)
     local band = love.physics.newBody(world, x, y, "dynamic")
     local bandshape = makeRectPoly2(bandW, bandH, 0, bandH / 2)
     local fixture = love.physics.newFixture(band, bandshape, 1)
-    --band:setAngle(math.pi)
+   
 
-    local joint = love.physics.newRopeJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY(), 100)
-   --joint:setDampingRatio(0.7)
-   -- joint:setFrequency(5)
+   -- local hitPoint = love.physics.newBody(world, x, y, "dynamic")
+    local bandshape =  makeRectPoly2(10, 10, 0, 0)
+    local fixture = love.physics.newFixture(band, bandshape, 1)
+    fixture:setUserData('connector')
 
 
     local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
 
-    table.insert(snapJoints, {band=band, joint=joint, rJoint=rJoint})
-    --rJoint:setLowerLimit(-math.pi/8)
-    --rJoint:setUpperLimit(math.pi/8)
-    --rJoint:setLimitsEnabled(true)
+    table.insert(snapJoints, {band=band,  rJoint=rJoint, ceiling=ceiling, x=x, y=y})
+
+
 end
 
 function makeChain(x, y, amt)
@@ -1033,6 +1033,49 @@ function love.update(dt)
         local fixtures = mouseJoints.jointBody:getFixtures();
         for i = 1, #fixtures do
             local f = fixtures[i]
+
+            if f:getUserData() == 'connector' then
+                -- first make sure we are not yet connected
+                --print('jo!')
+                local found = false
+                for j =1 ,#snapJoints do
+                    if snapJoints[j].band == mouseJoints.jointBody   then
+                        --print('found!')
+                        found = true
+                    end
+                end 
+
+                if found == false then
+                    --print('this thing actually could be connected!')
+                    local pos1  = {mouseJoints.jointBody:getPosition()}
+                    --print(inspect())
+                    for j =1, #snapJoints do 
+                        --print(snapJoints[j].rJoint)
+                        if snapJoints[j].rJoint == nil then
+                            --print('empty at', j)
+                            --local pos2 = {snapJoints[j].x, snapJoints[j].y}
+                            local pos2 = {snapJoints[j].ceiling:getPosition()}
+                            --print(inspect(pos1), inspect(pos2))
+                            local distance = Vector(pos1[1], pos1[2], pos2[1], pos2[2] )
+                            --print(j, distance:getLength())
+
+                            local a = pos1[1] - pos2[1]
+                            local b = pos1[2] - pos2[2]
+                            local d = math.sqrt(a*a + b*b)
+                            --print(d)
+                            if d < 20 then
+                                local ceiling = snapJoints[j].ceiling
+                                local band = mouseJoints.jointBody
+                                snapJoints[j].band = band
+                                snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+
+                            end
+
+                        end
+                    end
+                end
+            end
+
             if f:getUserData() == 'carbody' then
                 local body = mouseJoints.jointBody
                 if body then
@@ -1057,6 +1100,7 @@ function love.update(dt)
                     rotateToHorizontal(body, 0, 10)
                 end
             end
+
         end
     end
     if false then
@@ -1071,12 +1115,11 @@ function love.update(dt)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
+
+
+
             if fixture:getUserData() == 'torso' then
                 local a = body:getAngle()
-                --if math.abs(a) > math.pi then
-                -- print(a, a % math.pi)
-                --    body:setAngle(a % math.pi)
-                --end
 
                 if true then
                     if a > (2 * math.pi) then
@@ -1095,14 +1138,7 @@ function love.update(dt)
             end
 
             if fixture:getUserData() == 'legpart' then
-                --print('rotating legpart')
-                --if body:setAngle( angle )
                 local a = body:getAngle()
-                --if math.abs(a) > math.pi then
-                -- print(a, a % math.pi)
-                --     body:setAngle(a % math.pi)
-                --end
-
 
                 if true then
                     if a > (2 * math.pi) then
@@ -1123,21 +1159,19 @@ function love.update(dt)
 
 
     for i = #snapJoints, 1, -1 do
-        local pos = {snapJoints[i].band:getPosition()}
-        local anchors = {snapJoints[i].joint:getAnchors()}
-        local reaction = {snapJoints[i].joint:getReactionForce(1/dt)}
-        local reaction2 = {snapJoints[i].rJoint:getReactionForce(1/dt)}
+        if (snapJoints[i].rJoint) then
+            local reaction2 = {snapJoints[i].rJoint:getReactionForce(1/dt)}
 
 
-        local delta = Vector(reaction2[1], reaction2[2])
-        local l = delta:getLength()
-        if l > 40000 then
-        --print(i, l)
-        snapJoints[i].joint:destroy()
-        snapJoints[i].rJoint:destroy()
-        table.remove(snapJoints, i)
+            local delta = Vector(reaction2[1], reaction2[2])
+            local l = delta:getLength()
+            if l > 70000 then
+                snapJoints[i].rJoint:destroy()
+                snapJoints[i].rJoint = nil
+                snapJoints[i].band = nil
+               -- table.remove(snapJoints, i)
+            end
         end
-        
     end
 
     world:update(dt)
