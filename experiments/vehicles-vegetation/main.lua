@@ -590,8 +590,6 @@ function makeVehicle(x,y)
 
     if true then
         local carsensor = {}
-        -- carsensor.body = love.physics.newBody(world, width / 2, 0, "dynamic")
-        --carsensor.shape = love.physics.newRectangleShape(5, 300)
         local xOffset = -100
         local polyWidth = 20
         local polyLength = 110
@@ -601,11 +599,8 @@ function makeVehicle(x,y)
         carsensor.fixture = love.physics.newFixture(carbody, carsensor.shape, .5)
         carsensor.fixture:setSensor(true)
         carsensor.fixture:setUserData("carGroundSensor")
-
-        --table.insert(objects.blocks, carsensor)
     end
 
-    --local wheel1 = {}
     local wheel1 = love.physics.newBody(world, x - (carBodyWidth / 3), y + carBodyHeight / 2 -
         50 / 2, "dynamic")
     local shape = love.physics.newCircleShape(50)
