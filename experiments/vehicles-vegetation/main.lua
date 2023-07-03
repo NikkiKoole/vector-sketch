@@ -32,6 +32,20 @@ local motorSpeed = 0
 local motorTorque = 1500
 local carIsTouching = 0
 
+function npoly(radius, sides)
+    local angle = 0
+    local angle_increment = (math.pi * 2) / sides
+    local result = {}
+    for i = 1, sides do
+        x = 0 + radius * math.cos(angle)
+        y = 0 + radius * math.sin(angle)
+        angle = angle + angle_increment
+        table.insert(result, x)
+        table.insert(result, y)
+    end
+    return result
+end
+
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == '1' then startExample(1) end
@@ -39,37 +53,37 @@ function love.keypressed(k)
     if k == '3' then startExample(3) end
     if example == 2 then
         if false then
-        if k == 'left' then
-            motorSpeed = motorSpeed - 100
-            objects.joint1:setMotorSpeed(motorSpeed)
-            objects.joint2:setMotorSpeed(motorSpeed)
-        end
-        if k == 'right' then
-            motorSpeed = motorSpeed + 100
-            objects.joint1:setMotorSpeed(motorSpeed)
-            objects.joint2:setMotorSpeed(motorSpeed)
-        end
-        if k == 'up' then
-            motorTorque = motorTorque + 100
-            objects.joint1:setMaxMotorTorque(motorTorque)
-            objects.joint2:setMaxMotorTorque(motorTorque)
-        end
-        if k == 'down' then
-            motorTorque = motorTorque - 100
-            objects.joint1:setMaxMotorTorque(motorTorque)
-            objects.joint2:setMaxMotorTorque(motorTorque)
-        end
-        if k == 's' then
-            if objects.carbody then
-                local angle = objects.carbody.body:getAngle()
-                --print(angle)
+            if k == 'left' then
+                motorSpeed = motorSpeed - 100
+                objects.joint1:setMotorSpeed(motorSpeed)
+                objects.joint2:setMotorSpeed(motorSpeed)
+            end
+            if k == 'right' then
+                motorSpeed = motorSpeed + 100
+                objects.joint1:setMotorSpeed(motorSpeed)
+                objects.joint2:setMotorSpeed(motorSpeed)
+            end
+            if k == 'up' then
+                motorTorque = motorTorque + 100
+                objects.joint1:setMaxMotorTorque(motorTorque)
+                objects.joint2:setMaxMotorTorque(motorTorque)
+            end
+            if k == 'down' then
+                motorTorque = motorTorque - 100
+                objects.joint1:setMaxMotorTorque(motorTorque)
+                objects.joint2:setMaxMotorTorque(motorTorque)
+            end
+            if k == 's' then
+                if objects.carbody then
+                    local angle = objects.carbody.body:getAngle()
+                    --print(angle)
 
-                local n = Vector.angled(Vector(400, 0), angle)
-                objects.carbody.body:applyLinearImpulse(n.x, n.y)
-                --local delta = Vector(x1 - x2, y1 - y2)
+                    local n = Vector.angled(Vector(400, 0), angle)
+                    objects.carbody.body:applyLinearImpulse(n.x, n.y)
+                    --local delta = Vector(x1 - x2, y1 - y2)
+                end
             end
         end
-    end
     end
 end
 
@@ -226,8 +240,6 @@ function makeCarShape(w, h, cx, cy)
 end
 
 function makeGuy(x, y, groupId)
-
-
     local function limitsAround(value, range, joint)
         local low = value - range
         local high = value + range
@@ -252,7 +264,7 @@ function makeGuy(x, y, groupId)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
 
-    
+
     -- UPPER LEFT LEG
     local upleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local uplegShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
@@ -268,7 +280,7 @@ function makeGuy(x, y, groupId)
 
     -- LOWER LEFT LEG
     local lowleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
-    local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2) 
+    local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2)
     local fixture = love.physics.newFixture(lowleg, lllegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -278,12 +290,12 @@ function makeGuy(x, y, groupId)
     joint:setUpperLimit(0)
     joint:setLimitsEnabled(true)
 
-    
+
     -- LEFT FOOT
 
     local foot = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight,
             "dynamic")
-    local footShape = makeRectPoly(10, 50, -5, 0) 
+    local footShape = makeRectPoly(10, 50, -5, 0)
     local fixture = love.physics.newFixture(foot, footShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setFriction(1)
@@ -295,7 +307,7 @@ function makeGuy(x, y, groupId)
 
     -- UPPER RIGHT LEG
     local upleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2, "dynamic")
-    local uplegShape = makeRectPoly(ulWidth, ulHeight, -ulWidth / 2, 0) 
+    local uplegShape = makeRectPoly(ulWidth, ulHeight, -ulWidth / 2, 0)
     local fixture = love.physics.newFixture(upleg, uplegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -321,10 +333,10 @@ function makeGuy(x, y, groupId)
 
 
     -- RIGHT FOOT
- 
+
     local foot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     foot:setAngle( -math.pi / 2)
-    local footShape = makeRectPoly(10, 50, -5, 0) 
+    local footShape = makeRectPoly(10, 50, -5, 0)
     local fixture = love.physics.newFixture(foot, footShape, .5)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setFriction(1)
@@ -342,7 +354,7 @@ function makeSnappyElastic(x, y)
     -- ceiling
 
     local bandW = 20
-    local bandH = 200 + love.math.random()*200
+    local bandH = 200 + love.math.random() * 200
 
     local ceiling = love.physics.newBody(world, x, y, "static")
     local shape = love.physics.newRectangleShape(20, 20)
@@ -351,29 +363,27 @@ function makeSnappyElastic(x, y)
     -- rubberband
 
 
-  
+
     local band = love.physics.newBody(world, x, y, "dynamic")
     local bandshape = makeRectPoly2(bandW, bandH, 0, bandH / 2)
     local fixture = love.physics.newFixture(band, bandshape, 1)
-   
 
-   -- local hitPoint = love.physics.newBody(world, x, y, "dynamic")
-    local bandshape2 =  makeRectPoly2(10, 10, 0, 0)
+
+    -- local hitPoint = love.physics.newBody(world, x, y, "dynamic")
+    local bandshape2 = makeRectPoly2(10, 10, 0, 0)
     local fixture = love.physics.newFixture(band, bandshape2, 1)
     fixture:setUserData('connector')
 
     if true then
-    local bandshape =  makeRectPoly2(10, 10, 0, bandH)
-    local fixture = love.physics.newFixture(band, bandshape, 1)
-    fixture:setUserData('connector')
+        local bandshape = makeRectPoly2(10, 10, 0, bandH)
+        local fixture = love.physics.newFixture(band, bandshape, 1)
+        fixture:setUserData('connector')
     end
 
 
     local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
 
-    table.insert(snapJoints, {band=band,  rJoint=rJoint, ceiling=ceiling})
-
-
+    table.insert(snapJoints, { band = band, rJoint = rJoint, ceiling = ceiling })
 end
 
 function makeChain(x, y, amt)
@@ -510,39 +520,37 @@ function makeChainGround()
     return thing
 end
 
-
-function makeSeeSaw(x,y)
-    
-    local plank =  love.physics.newBody(world, x, y, "dynamic")
-    local shape = love.physics.newRectangleShape(1800,60)
+function makeSeeSaw(x, y)
+    local plank = love.physics.newBody(world, x, y, "dynamic")
+    local shape = love.physics.newRectangleShape(1800, 60)
     local fixture = love.physics.newFixture(plank, shape, 1)
 
-   -- local side1 = love.physics.newBody(world, x - 900, y, "dynamic")
+    -- local side1 = love.physics.newBody(world, x - 900, y, "dynamic")
     local shape1 = makeRectPoly2(20, 150, -900, 0)
     local fixture = love.physics.newFixture(plank, shape1, 1)
 
     local shape2 = makeRectPoly2(20, 150, 900, 0)
     local fixture = love.physics.newFixture(plank, shape2, 1)
 
-    local axis =  love.physics.newBody(world, x, y, "static")
-    local shape = makeTrapeziumPoly(20, 480, 600, 0,0)
+    local axis = love.physics.newBody(world, x, y, "static")
+    local shape = makeTrapeziumPoly(20, 480, 600, 0, 0)
     local fixture = love.physics.newFixture(axis, shape, 1)
 
     local joint = love.physics.newRevoluteJoint(axis, plank, plank:getX(), plank:getY(), false)
-    joint:setLowerLimit(-math.pi/4)
-    joint:setUpperLimit(math.pi/4)
+    joint:setLowerLimit( -math.pi / 4)
+    joint:setUpperLimit(math.pi / 4)
     joint:setLimitsEnabled(true)
 end
 
-function makeVehicle(x,y)
+function makeVehicle(x, y)
     local carBodyHeight = 150
-    local carBodyWidth = 400
+    local carBodyWidth  = 400
 
     --local carbody = {}
 
-    local carbody  = love.physics.newBody(world, x, y, "dynamic")
-    local shape = makeCarShape(carBodyWidth, carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
-    local fixture = love.physics.newFixture(carbody, shape, .5)
+    local carbody       = love.physics.newBody(world, x, y, "dynamic")
+    local shape         = makeCarShape(carBodyWidth, carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
+    local fixture       = love.physics.newFixture(carbody, shape, .5)
     fixture:setUserData("carbody")
     --carbody.fixture:setFilterData(1, 65535, -1)
     --carbody.body:setFixedRotation(true)
@@ -551,24 +559,24 @@ function makeVehicle(x,y)
     --table.insert(objects.blocks, carbody)
 
     if false then
-    local xOffset = -100
-    local polyWidth = 20
-    local polyLength = -110
+        local xOffset = -100
+        local polyWidth = 20
+        local polyLength = -110
 
-    local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
-            polyLength,
-            xOffset, polyLength)
-    local backfixture = love.physics.newFixture(carbody, backside, .5)
+        local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
+                polyLength,
+                xOffset, polyLength)
+        local backfixture = love.physics.newFixture(carbody, backside, .5)
 
 
-    local xOffset = 80
-    local polyWidth = 20
-    local polyLength = -110
+        local xOffset = 80
+        local polyWidth = 20
+        local polyLength = -110
 
-    local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
-            polyLength,
-            xOffset, polyLength)
-    local backfixture = love.physics.newFixture(carbody, backside, .5)
+        local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
+                polyLength,
+                xOffset, polyLength)
+        local backfixture = love.physics.newFixture(carbody, backside, .5)
     end
 
     if true then
@@ -613,8 +621,24 @@ function makeVehicle(x,y)
     joint1:setMotorSpeed(motorSpeed)
     joint1:setMaxMotorTorque(motorTorque)
 
+
+    -- how to add pedals to this ?
+
+    local pedalwheel = love.physics.newBody(world, x, y - carBodyHeight / 2, "dynamic")
+    local shape = love.physics.newPolygonShape(npoly(50, 7)) --love.physics.newRectangleShape(100, 100) --(50)-- love.physics.newCircleShape(50)
+    local fixture = love.physics.newFixture(pedalwheel, shape, .5)
+    fixture:setFilterData(1, 65535, -1)
+    fixture:setFriction(2.5)
+    fixture:setSensor(true)
+    local joint1 = love.physics.newRevoluteJoint(carbody, pedalwheel, pedalwheel:getX(), pedalwheel:getY(), false)
+
+    --joint1:setMotorEnabled(true)
+    --joint1:setMotorSpeed(motorSpeed)
+    --joint1:setMaxMotorTorque(motorTorque)
+
+
     --local wheel2 = {}
-    local wheel2 = love.physics.newBody(world, x + (carBodyWidth / 3), y + carBodyHeight / 2 -25 / 2, "dynamic")
+    local wheel2 = love.physics.newBody(world, x + (carBodyWidth / 3), y + carBodyHeight / 2 - 25 / 2, "dynamic")
     local shape = love.physics.newCircleShape(25)
     local fixture = love.physics.newFixture(wheel2, shape, .5)
     fixture:setFilterData(1, 65535, -1)
@@ -624,7 +648,6 @@ function makeVehicle(x,y)
     joint2:setMotorEnabled(true)
     joint2:setMotorSpeed(motorSpeed)
     joint2:setMaxMotorTorque(motorTorque)
-
 end
 
 function startExample(number)
@@ -712,7 +735,7 @@ function startExample(number)
 
 
 
-        
+
         objects.balls = {}
 
         for i = 1, 13 do
@@ -724,8 +747,8 @@ function startExample(number)
         for i = 1, 13 do
             makeChain(i * 20, -3000, 8)
         end
-        for i =1 , 10 do
-         makeVehicle(width/2 + i * 400, -3000)
+        for i = 1, 10 do
+            makeVehicle(width / 2 + i * 400, -3000)
         end
         for i = 1, 30 do
             makeGuy(i * 200, -1000, i)
@@ -877,27 +900,22 @@ function getBodyColor(body)
     --fixture:getShape():type() == 'PolygonShape' then
 end
 
-
-
-
-function getCenterOfPoints(points)  
+function getCenterOfPoints(points)
     local tlx = math.huge
     local tly = math.huge
     local brx = -math.huge
     local bry = -math.huge
     for ip = 1, #points, 2 do
-       if points[ip + 0] < tlx then tlx = points[ip + 0] end
-       if points[ip + 1] < tly then tly = points[ip + 1] end
-       if points[ip + 0] > brx then brx = points[ip + 0] end
-       if points[ip + 1] > bry then bry = points[ip + 1] end
+        if points[ip + 0] < tlx then tlx = points[ip + 0] end
+        if points[ip + 1] < tly then tly = points[ip + 1] end
+        if points[ip + 0] > brx then brx = points[ip + 0] end
+        if points[ip + 1] > bry then bry = points[ip + 1] end
     end
     --return tlx, tly, brx, bry
     local w = brx - tlx
     local h = bry - tly
-    return tlx + w/2, tly + h/2
+    return tlx + w / 2, tly + h / 2
 end
-
-
 
 function drawWorld(world)
     -- get the current color values to reapply
@@ -1036,19 +1054,14 @@ function rotateToHorizontal(body, desiredAngle, divider)
         end
 
         local desiredAngularVelocity = (totalRotation * divider)
-        
+
         --local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
 
         local torque = body:getInertia() * desiredAngularVelocity / (1 / divider)
         body:applyTorque(torque)
     end
-
-   
 end
-
-
-
 
 function love.update(dt)
     lurker.update()
@@ -1066,46 +1079,41 @@ function love.update(dt)
                 -- first make sure we are not yet connected
                 --print('jo!')
                 local found = false
-                for j =1 ,#snapJoints do
-                    if snapJoints[j].band == mouseJoints.jointBody   then
+                for j = 1, #snapJoints do
+                    if snapJoints[j].band == mouseJoints.jointBody then
                         --print('found!')
                         found = true
                     end
-                end 
+                end
 
                 if found == false then
+                    local connectorPoints = { mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints()) }
+                    local center = { getCenterOfPoints(connectorPoints) }
 
-                    local connectorPoints = {mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints())}
-                    local center = {getCenterOfPoints(connectorPoints)  }
-                    
                     local pos1 = center
 
 
 
-                    for j =1, #snapJoints do 
-              
+                    for j = 1, #snapJoints do
                         if snapJoints[j].rJoint == nil then
+                            local pos2 = { snapJoints[j].ceiling:getPosition() }
 
-                            local pos2 = {snapJoints[j].ceiling:getPosition()}
-                          
 
                             local a = pos1[1] - pos2[1]
                             local b = pos1[2] - pos2[2]
-                            local d = math.sqrt(a*a + b*b)
+                            local d = math.sqrt(a * a + b * b)
 
                             if d < 20 then
-                               
-                                local connectorPoints = {mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints())}
-                                local center = {getCenterOfPoints(connectorPoints)  }
+                                local connectorPoints = { mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints()) }
+                                local center = { getCenterOfPoints(connectorPoints) }
                                 local band = mouseJoints.jointBody
 
-                                local ceiling =     snapJoints[j].ceiling
-                               
+                                local ceiling = snapJoints[j].ceiling
+
                                 snapJoints[j].band = band
-                                snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), center[1], center[2])
-
+                                snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(),
+                                        ceiling:getY(), center[1], center[2])
                             end
-
                         end
                     end
                 end
@@ -1116,7 +1124,7 @@ function love.update(dt)
                 if body then
                     -- i dont have a cartouching per car, its global so wont work for all
                     --if (carIsTouching < 1) then
-                        rotateToHorizontal(body, 0, 10)
+                    rotateToHorizontal(body, 0, 10)
                     --end
                 end
 
@@ -1135,7 +1143,6 @@ function love.update(dt)
                     rotateToHorizontal(body, 0, 10)
                 end
             end
-
         end
     end
     if false then
@@ -1150,9 +1157,6 @@ function love.update(dt)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
-
-
-
             if fixture:getUserData() == 'torso' then
                 local a = body:getAngle()
 
@@ -1187,7 +1191,7 @@ function love.update(dt)
                 end
 
 
-                rotateToHorizontal(body,0, 15)
+                rotateToHorizontal(body, 0, 15)
             end
         end
     end
@@ -1195,7 +1199,7 @@ function love.update(dt)
 
     for i = #snapJoints, 1, -1 do
         if (snapJoints[i].rJoint) then
-            local reaction2 = {snapJoints[i].rJoint:getReactionForce(1/dt)}
+            local reaction2 = { snapJoints[i].rJoint:getReactionForce(1 / dt) }
 
 
             local delta = Vector(reaction2[1], reaction2[2])
@@ -1204,7 +1208,7 @@ function love.update(dt)
                 snapJoints[i].rJoint:destroy()
                 snapJoints[i].rJoint = nil
                 snapJoints[i].band = nil
-               -- table.remove(snapJoints, i)
+                -- table.remove(snapJoints, i)
             end
         end
     end
