@@ -5,6 +5,8 @@ local inspect = require 'vendor.inspect'
 Vector        = require 'vendor.brinevector'
 local cam     = require('lib.cameraBase').getInstance()
 local camera  = require 'lib.camera'
+local generatePolygon = require('lib.generate-polygon').generatePolygon
+
 
 lurker.quiet  = true
 require 'palette'
@@ -45,6 +47,18 @@ function npoly(radius, sides)
     end
     return result
 end
+
+
+function getRandomConvexPoly(radius, numVerts) 
+    local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    while not love.math.isConvex( vertices ) do
+        vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    end
+    return vertices
+    
+end
+
+
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
@@ -196,6 +210,32 @@ function capsule(w, h, cs)
     }
     return result
 end
+function capsuleXY(w, h, cs,x,y)
+    -- cs == cornerSize
+    local w2 = w / 2
+    local h2 = h / 2
+
+    local bt = -h2 + cs
+    local bb = h2 - cs
+    local bl = -w2 + cs
+    local br = w2 - cs
+
+    local result = {
+        x+-w2 , y+bt,
+        x+bl, y+-h2,
+        x+br, y+-h2,
+        x+w2, y+bt,
+        x+w2, y+bb,
+        x+br, y+h2,
+        x+bl, y+h2,
+        x+-w2, y+bb
+    }
+    return result
+end
+
+
+
+
 
 function makeRectPoly(w, h, x, y)
     return love.physics.newPolygonShape(
@@ -239,6 +279,23 @@ function makeCarShape(w, h, cx, cy)
         )
 end
 
+
+
+function makeUShape(w,h, thickness) 
+    return love.physics.newPolygonShape(
+        -w/2, -h/2,
+        -w/2, h/2,
+        w/2, h/2,
+        w/2, -h/2,
+        w/2 - thickness, -h/2,
+        w/2 - thickness, h/2 - thickness,
+        -w/2 + thickness, h/2 - thickness,
+        -w/2 + thickness, -h/2
+    )
+
+end
+
+
 function makeGuy(x, y, groupId)
     local function limitsAround(value, range, joint)
         local low = value - range
@@ -260,7 +317,7 @@ function makeGuy(x, y, groupId)
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
     local torsoShape = makeTrapeziumPoly(torsoWidth, torsoWidth * 1.2, torsoHeight, 0, 0)
-    local fixture = love.physics.newFixture(torso, torsoShape, 2)
+    local fixture = love.physics.newFixture(torso, torsoShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
 
@@ -337,7 +394,7 @@ function makeGuy(x, y, groupId)
     local foot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     foot:setAngle( -math.pi / 2)
     local footShape = makeRectPoly(10, 50, -5, 0)
-    local fixture = love.physics.newFixture(foot, footShape, .5)
+    local fixture = love.physics.newFixture(foot, footShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setFriction(1)
 
@@ -493,7 +550,7 @@ function makeChainGround()
     local points = {}
     for i = -1000, 1000 do
         local cool = 1.78
-        local amplitude = 500 * cool
+        local amplitude = 1500 * cool
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y1 = h - (amplitude / 2)
@@ -557,6 +614,29 @@ function makeVehicle(x, y)
     -- objects.blocks = { carbody }
     --objects.carbody = carbody
     --table.insert(objects.blocks, carbody)
+
+
+
+    --local uShape = love.physics.newBody(world, x+carBodyWidth/2, y, "dynamic")
+    --local uShapeShape = makeUShape(50,50,5)
+    --local uShapeFixture = love.physics.newFixture(carbody, uShapeShape, .5)
+
+
+    
+    local uShape1 =  love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth/2 , 0) )--   makeRectPoly2(10,30, carBodyWidth/2, 0)
+    local fixture = love.physics.newFixture(carbody, uShape1, 1)
+    fixture:setFriction(2.5)
+
+    local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth/2 + 10 + 20 , 0) )--makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
+    local fixture = love.physics.newFixture(carbody, uShape2, 1)
+    fixture:setFriction(2.5)
+
+
+    local iShape1 =  love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth/2 - 30 , 0) )-- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
+    local fixture = love.physics.newFixture(carbody, iShape1, 1)
+    fixture:setFriction(2.5)
+
+
 
     if false then
         local xOffset = -100
@@ -630,7 +710,10 @@ function makeVehicle(x, y)
     fixture:setFilterData(1, 65535, -1)
     fixture:setFriction(2.5)
     fixture:setSensor(true)
-    local joint1 = love.physics.newRevoluteJoint(carbody, pedalwheel, pedalwheel:getX(), pedalwheel:getY(), false)
+    local joint2 = love.physics.newRevoluteJoint(carbody, pedalwheel, pedalwheel:getX(), pedalwheel:getY(), false)
+
+    table.insert(vehiclePedalConnection, {wheelJoint=joint1, pedalJoint=joint2, pedalWheel=pedalwheel})
+
 
     --joint1:setMotorEnabled(true)
     --joint1:setMotorSpeed(motorSpeed)
@@ -653,7 +736,7 @@ end
 function startExample(number)
     local width, height = love.graphics.getDimensions()
     love.physics.setMeter(100)
-    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
+    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter()*1.5, true)
     objects = {}
     ballRadius = love.physics.getMeter() / 4
     ----
@@ -734,7 +817,11 @@ function startExample(number)
 
 
 
-
+        for i =1 , 10 do
+            local body = love.physics.newBody(world, i*100, -2000, "dynamic")
+           local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
+           local fixture = love.physics.newFixture(body, shape, 2)
+        end
 
         objects.balls = {}
 
@@ -747,6 +834,9 @@ function startExample(number)
         for i = 1, 13 do
             makeChain(i * 20, -3000, 8)
         end
+
+
+        vehiclePedalConnection = {}
         for i = 1, 10 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
@@ -875,7 +965,7 @@ function love.mousepressed(mx, my)
                 mouseJoints.joint:setMaxForce(500000)
                 --print(mouseJoints.joint:getMaxForce())
                 local vx, vy = body:getLinearVelocity()
-                body:setPosition(body:getX(), body:getY() - 1)
+                body:setPosition(body:getX(), body:getY() - 20)
 
                 hitAny = true
             end
@@ -1211,6 +1301,15 @@ function love.update(dt)
                 -- table.remove(snapJoints, i)
             end
         end
+    end
+
+
+    for i =1 , #vehiclePedalConnection do 
+        local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle( )
+
+        vehiclePedalConnection[i].pedalWheel:setAngle(angle /3 )
+
+  
     end
 
     world:update(dt)
