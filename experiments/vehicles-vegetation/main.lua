@@ -550,14 +550,14 @@ function makeChainGround()
     local points = {}
     for i = -1000, 1000 do
         local cool = 1.78
-        local amplitude = 1500 * cool
+        local amplitude = 100 * cool
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y1 = h - (amplitude / 2)
 
 
         local cool = 1.78
-        local amplitude = 200 * cool
+        local amplitude = 100 * cool
         local frequency = 17
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y2 = h - (amplitude / 2)
@@ -632,7 +632,7 @@ function makeVehicle(x, y)
     fixture:setFriction(2.5)
 
 
-    local iShape1 =  love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth/2 - 30 , 0) )-- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
+    local iShape1 =  love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth/2 - 40 , 0) )-- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
     local fixture = love.physics.newFixture(carbody, iShape1, 1)
     fixture:setFriction(2.5)
 
