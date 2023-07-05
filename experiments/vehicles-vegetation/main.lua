@@ -873,18 +873,9 @@ function love.load()
 
     -- before these were local but that didnt work with lurker
     -- all of these are relevant to the vlooienspel experiment, and not to others (I think)
+
     disabledContacts = {}
-    --positionOfLastDisabledContact = nil
-    --bodyLastDisabledContact = nil
-
-    -- mouseJoints = {
-    --     joint = nil,
-    --     jointBody = nil
-    -- }
-
-    pointerJoints = {
-
-    }
+    pointerJoints = {}
 
 
     example = nil
@@ -1127,12 +1118,10 @@ function love.draw()
 
         cam:pop()
 
-        love.graphics.print(
-            bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
-            0)
-        if (objects.carbody) then
-            love.graphics.print(objects.carbody.body:getY(), 0, 40)
-        end
+        --love.graphics.print(
+        --    bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
+        --    0)
+        love.graphics.print(love.timer.getFPS(), 0, 0)
     end
 
 
@@ -1360,8 +1349,6 @@ function love.mousemoved(x, y, dx, dy)
     if love.keyboard.isDown('space') then
         local x, y = cam:getTranslation()
         cam:setTranslation(x - dx / cam.scale, y - dy / cam.scale)
-
-        -- cam:setTranslation(x, y)
     end
 end
 
