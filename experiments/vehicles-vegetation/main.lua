@@ -146,17 +146,25 @@ function beginContact(a, b, contact)
         -- i also should keep around what body (cirlcle) this is about,
         -- and also eventually probably also waht touch id or mouse this is..
 
-        positionOfLastDisabledContact = point
-        -- we want to know if a or b was the mousejoint thing.
-        if false then
-            if a:getBody() == mouseJoints.jointBody then
+
+        for i = 1, #pointerJoints do
+            local mj = pointerJoints[i]
+
+            local bodyLastDisabledContact = nil
+            if mj.jointBody == a:getBody() then
                 bodyLastDisabledContact = a
             end
-            if b:getBody() == mouseJoints.jointBody then
+            if mj.jointBody == b:getBody() then
                 bodyLastDisabledContact = b
             end
+            if bodyLastDisabledContact then
+                -- do i need to keep something in the pointerJoints too ???
+                -- positionOfLastDisabledContact
+                pointerJoints[i].bodyLastDisabledContact = bodyLastDisabledContact
+                pointerJoints[i].positionOfLastDisabledContact = point
+                table.insert(disabledContacts, contact)
+            end
         end
-        table.insert(disabledContacts, contact)
     end
     if isContactBetweenGroundAndCarGroundSensor(contact) then
         --print('touching', carIsTouching)
@@ -866,8 +874,8 @@ function love.load()
     -- before these were local but that didnt work with lurker
     -- all of these are relevant to the vlooienspel experiment, and not to others (I think)
     disabledContacts = {}
-    positionOfLastDisabledContact = nil
-    bodyLastDisabledContact = nil
+    --positionOfLastDisabledContact = nil
+    --bodyLastDisabledContact = nil
 
     -- mouseJoints = {
     --     joint = nil,
@@ -889,24 +897,23 @@ function love.load()
     --grabDevelopmentScreenshot()
 end
 
-function love.mousereleased()
-    -- now we have to find a few things out to check if i want to shoot my thing
-    -- first off, are we below the ground ?
-
+local function pointerReleased(id, x, y)
     for i = 1, #pointerJoints do
-        if false then
-            if (mouseJoints.joint) then
-                if (mouseJoints.jointBody) then
+        local mj = pointerJoints[i]
+        -- if false then
+        if mj.id == id then
+            if (mj.joint) then
+                if (mj.jointBody) then
                     local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
                     local tl = { points[1], points[2] }
                     local tr = { points[3], points[4] }
                     -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
                     -- oh wait, this is actually kinda good enough-ish (tm)
-                    if (bodyLastDisabledContact and bodyLastDisabledContact:getBody() == mouseJoints.jointBody) then
-                        local x1, y1 = mouseJoints.jointBody:getPosition()
-                        if (#positionOfLastDisabledContact > 0) then
-                            local x2 = positionOfLastDisabledContact[1]
-                            local y2 = positionOfLastDisabledContact[2]
+                    if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
+                        local x1, y1 = mj.jointBody:getPosition()
+                        if (#mj.positionOfLastDisabledContact > 0) then
+                            local x2 = mj.positionOfLastDisabledContact[1]
+                            local y2 = mj.positionOfLastDisabledContact[2]
 
                             local delta = Vector(x1 - x2, y1 - y2)
                             local l = delta:getLength()
@@ -916,17 +923,29 @@ function love.mousereleased()
                                 v.y = 0
                                 v.x = 0
                             end -- i odnt want  you shoooting downward!
-                            bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                            mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
                         end
-                        bodyLastDisabledContact = nil
-                        positionOfLastDisabledContact = nil
+                        mj.bodyLastDisabledContact = nil
+                        mj.positionOfLastDisabledContact = nil
                         --
                     end
                 end
             end
+            --   end
         end
     end
-    killMouseJointIfPossible('mouse')
+    killMouseJointIfPossible(id)
+end
+
+function love.touchreleased(id, x, y)
+    pointerReleased(id, x, y)
+end
+
+function love.mousereleased(x, y)
+    -- now we have to find a few things out to check if i want to shoot my thing
+    -- first off, are we below the ground ?
+
+    pointerReleased('mouse', x, y)
 end
 
 function killMouseJointIfPossible(id)
@@ -961,31 +980,28 @@ local function getPointerPosition(id)
 end
 
 
-function love.mousepressed(mx, my)
-    -- killMouseJointIfPossible()
-    local wx, wy = cam:getWorldCoordinates(mx, my)
-    --local bodies = { objects.ball.body, objects.ball2.body }
+function love.touchpressed(id, x, y)
+    pointerPressed(id, x, y)
+end
+
+function love.mousepressed(x, y)
+    pointerPressed('mouse', x, y)
+end
+
+function pointerPressed(id, x, y)
+    local wx, wy = cam:getWorldCoordinates(x, y)
     local hitAny = false
-    local epsilon = 10
-
-
-    local containers = { 'balls', 'blocks' }
-
-
     local bodies = world:getBodies()
-    for _, body in ipairs(bodies) do
-        local bx, by = body:getPosition()
-        local dx, dy = wx - bx, wy - by
-        local distance = math.sqrt(dx * dx + dy * dy)
 
+    for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
             local hitThisOne = fixture:testPoint(wx, wy)
             local isSensor = fixture:isSensor()
             if (hitThisOne and not isSensor) then
-                killMouseJointIfPossible()
+                killMouseJointIfPossible(id)
 
-                pointerJoints = { makePointerJoint('mouse', body, wx, wy) }
+                table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
 
                 local vx, vy = body:getLinearVelocity()
                 body:setPosition(body:getX(), body:getY() - 10)
@@ -993,11 +1009,9 @@ function love.mousepressed(mx, my)
                 hitAny = true
             end
         end
-        -- end
     end
 
-
-    if hitAny == false then killMouseJointIfPossible() end
+    if hitAny == false then killMouseJointIfPossible(id) end
 end
 
 function getBodyColor(body)
@@ -1124,12 +1138,15 @@ function love.draw()
 
     cam:push()
 
-    if positionOfLastDisabledContact and #positionOfLastDisabledContact > 0 then
-        -- print(inspect(positionOfLastDisabledContact))
-        love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
-        if (bodyLastDisabledContact) then
-            local posx, posy = bodyLastDisabledContact:getBody():getPosition()
-            love.graphics.line(positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], posx, posy)
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        if mj.positionOfLastDisabledContact and #mj.positionOfLastDisabledContact > 0 then
+            -- print(inspect(positionOfLastDisabledContact))
+            love.graphics.circle('fill', mj.positionOfLastDisabledContact[1], mj.positionOfLastDisabledContact[2], 10)
+            if (mj.bodyLastDisabledContact) then
+                local posx, posy = mj.bodyLastDisabledContact:getBody():getPosition()
+                love.graphics.line(mj.positionOfLastDisabledContact[1], mj.positionOfLastDisabledContact[2], posx, posy)
+            end
         end
     end
     cam:pop()
