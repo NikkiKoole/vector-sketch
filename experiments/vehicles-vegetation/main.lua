@@ -1,14 +1,14 @@
-package.path  = package.path .. ";../../?.lua"
+package.path          = package.path .. ";../../?.lua"
 
-local lurker  = require 'vendor.lurker'
-local inspect = require 'vendor.inspect'
-Vector        = require 'vendor.brinevector'
-local cam     = require('lib.cameraBase').getInstance()
-local camera  = require 'lib.camera'
+local lurker          = require 'vendor.lurker'
+local inspect         = require 'vendor.inspect'
+Vector                = require 'vendor.brinevector'
+local cam             = require('lib.cameraBase').getInstance()
+local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 
 
-lurker.quiet  = true
+lurker.quiet = true
 require 'palette'
 
 -- check this for multiple fixtures, -> sensor for gorund
@@ -48,17 +48,13 @@ function npoly(radius, sides)
     return result
 end
 
-
-function getRandomConvexPoly(radius, numVerts) 
+function getRandomConvexPoly(radius, numVerts)
     local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
-    while not love.math.isConvex( vertices ) do
+    while not love.math.isConvex(vertices) do
         vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
     end
     return vertices
-    
 end
-
-
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
@@ -210,7 +206,8 @@ function capsule(w, h, cs)
     }
     return result
 end
-function capsuleXY(w, h, cs,x,y)
+
+function capsuleXY(w, h, cs, x, y)
     -- cs == cornerSize
     local w2 = w / 2
     local h2 = h / 2
@@ -221,21 +218,17 @@ function capsuleXY(w, h, cs,x,y)
     local br = w2 - cs
 
     local result = {
-        x+-w2 , y+bt,
-        x+bl, y+-h2,
-        x+br, y+-h2,
-        x+w2, y+bt,
-        x+w2, y+bb,
-        x+br, y+h2,
-        x+bl, y+h2,
-        x+-w2, y+bb
+        x + -w2, y + bt,
+        x + bl, y + -h2,
+        x + br, y + -h2,
+        x + w2, y + bt,
+        x + w2, y + bb,
+        x + br, y + h2,
+        x + bl, y + h2,
+        x + -w2, y + bb
     }
     return result
 end
-
-
-
-
 
 function makeRectPoly(w, h, x, y)
     return love.physics.newPolygonShape(
@@ -279,22 +272,18 @@ function makeCarShape(w, h, cx, cy)
         )
 end
 
-
-
-function makeUShape(w,h, thickness) 
+function makeUShape(w, h, thickness)
     return love.physics.newPolygonShape(
-        -w/2, -h/2,
-        -w/2, h/2,
-        w/2, h/2,
-        w/2, -h/2,
-        w/2 - thickness, -h/2,
-        w/2 - thickness, h/2 - thickness,
-        -w/2 + thickness, h/2 - thickness,
-        -w/2 + thickness, -h/2
-    )
-
+            -w / 2, -h / 2,
+            -w / 2, h / 2,
+            w / 2, h / 2,
+            w / 2, -h / 2,
+            w / 2 - thickness, -h / 2,
+            w / 2 - thickness, h / 2 - thickness,
+            -w / 2 + thickness, h / 2 - thickness,
+            -w / 2 + thickness, -h / 2
+        )
 end
-
 
 function makeGuy(x, y, groupId)
     local function limitsAround(value, range, joint)
@@ -317,7 +306,7 @@ function makeGuy(x, y, groupId)
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
     local torsoShape = makeTrapeziumPoly(torsoWidth, torsoWidth * 1.2, torsoHeight, 0, 0)
-    local fixture = love.physics.newFixture(torso, torsoShape, 1)
+    local fixture = love.physics.newFixture(torso, torsoShape, .5)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
 
@@ -550,7 +539,7 @@ function makeChainGround()
     local points = {}
     for i = -1000, 1000 do
         local cool = 1.78
-        local amplitude = 1500 * cool
+        local amplitude = 150 * cool
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y1 = h - (amplitude / 2)
@@ -622,17 +611,17 @@ function makeVehicle(x, y)
     --local uShapeFixture = love.physics.newFixture(carbody, uShapeShape, .5)
 
 
-    
-    local uShape1 =  love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth/2 , 0) )--   makeRectPoly2(10,30, carBodyWidth/2, 0)
+
+    local uShape1 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2, 0)) --   makeRectPoly2(10,30, carBodyWidth/2, 0)
     local fixture = love.physics.newFixture(carbody, uShape1, 1)
     fixture:setFriction(2.5)
 
-    local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth/2 + 10 + 20 , 0) )--makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
+    local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2 + 10 + 20, 0)) --makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
     local fixture = love.physics.newFixture(carbody, uShape2, 1)
     fixture:setFriction(2.5)
 
 
-    local iShape1 =  love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth/2 - 30 , 0) )-- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
+    local iShape1 = love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth / 2 - 30, 0)) -- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
     local fixture = love.physics.newFixture(carbody, iShape1, 1)
     fixture:setFriction(2.5)
 
@@ -712,7 +701,7 @@ function makeVehicle(x, y)
     fixture:setSensor(true)
     local joint2 = love.physics.newRevoluteJoint(carbody, pedalwheel, pedalwheel:getX(), pedalwheel:getY(), false)
 
-    table.insert(vehiclePedalConnection, {wheelJoint=joint1, pedalJoint=joint2, pedalWheel=pedalwheel})
+    table.insert(vehiclePedalConnection, { wheelJoint = joint1, pedalJoint = joint2, pedalWheel = pedalwheel })
 
 
     --joint1:setMotorEnabled(true)
@@ -736,7 +725,7 @@ end
 function startExample(number)
     local width, height = love.graphics.getDimensions()
     love.physics.setMeter(100)
-    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter()*1.5, true)
+    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter() * 10, true)
     objects = {}
     ballRadius = love.physics.getMeter() / 4
     ----
@@ -817,10 +806,10 @@ function startExample(number)
 
 
 
-        for i =1 , 10 do
-            local body = love.physics.newBody(world, i*100, -2000, "dynamic")
-           local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
-           local fixture = love.physics.newFixture(body, shape, 2)
+        for i = 1, 10 do
+            local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
+            local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
+            local fixture = love.physics.newFixture(body, shape, 2)
         end
 
         objects.balls = {}
@@ -1281,7 +1270,7 @@ function love.update(dt)
                 end
 
 
-                rotateToHorizontal(body, 0, 15)
+                rotateToHorizontal(body, 0, 50)
             end
         end
     end
@@ -1304,12 +1293,10 @@ function love.update(dt)
     end
 
 
-    for i =1 , #vehiclePedalConnection do 
-        local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle( )
+    for i = 1, #vehiclePedalConnection do
+        local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle()
 
-        vehiclePedalConnection[i].pedalWheel:setAngle(angle /3 )
-
-  
+        vehiclePedalConnection[i].pedalWheel:setAngle(angle / 3)
     end
 
     world:update(dt)
