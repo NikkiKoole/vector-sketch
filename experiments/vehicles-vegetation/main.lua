@@ -434,15 +434,15 @@ function makeSnappyElastic(x, y)
     local bandshape2 = makeRectPoly2(10, 10, 0, 0)
     local fixture = love.physics.newFixture(band, bandshape2, 1)
     fixture:setUserData('connector')
-    fixture:setSensor(true)
+   -- fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
 
     --if true then
-        local bandshape = makeRectPoly2(20, 20, 0, bandH)
+        local bandshape = makeRectPoly2(10, 10, 0, bandH)
         local fixture = love.physics.newFixture(band, bandshape, 1)
         fixture:setUserData('connector')
-        fixture:setSensor(true)
+       -- fixture:setSensor(true)
         table.insert(connectors, { at = fixture, to = nil, joint = nil })
     --end
 
@@ -635,20 +635,25 @@ function makeVehicle(x, y)
     local uShape1 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2, 0)) --   makeRectPoly2(10,30, carBodyWidth/2, 0)
     local fixture = love.physics.newFixture(carbody, uShape1, 1)
     fixture:setFriction(2.5)
-    --  fixture:setUserData('connector')
-    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
+      fixture:setUserData('connector')
+      fixture:setSensor(true)
+      table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
     local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2 + 10 + 20, 0)) --makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
     local fixture = love.physics.newFixture(carbody, uShape2, 1)
     fixture:setFriction(2.5)
+    fixture:setUserData('connector')
+    fixture:setSensor(true)
     --  fixture:setUserData('connector')
-    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
+      table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
 
     local iShape1 = love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth / 2 - 30, 0)) -- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
     local fixture = love.physics.newFixture(carbody, iShape1, 1)
     fixture:setUserData('connector')
-    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    fixture:setUserData('connector')
+    fixture:setSensor(true)
+      table.insert(connectors, { at = fixture, to = nil, joint = nil })
     --  fixture:setFriction(2.5)
 
 
@@ -852,15 +857,15 @@ function startExample(number)
 
 
         vehiclePedalConnection = {}
-        for i = 1, 3 do
-            --   makeVehicle(width / 2 + i * 400, -3000)
+        for i = 1, 13 do
+               makeVehicle(width / 2 + i * 400, -3000)
         end
         for i = 1, 3 do
             --       makeGuy(i * 200, -1000, i)
         end
 
 
-        for i = 1, 4 do
+        for i = 1, 14 do
             makeSnappyElastic(i * 100, -1500)
         end
 
@@ -1149,7 +1154,7 @@ function love.draw()
 
 
         for i = 1, #connectors do
-            love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
+       --     love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
         end
     end
 
@@ -1211,6 +1216,10 @@ function rotateToHorizontal(body, desiredAngle, divider)
     end
 end
 
+local function getCentroidOfFixture(body, fixture) 
+    return {getCenterOfPoints( {body:getWorldPoints(fixture:getShape():getPoints())})}
+end
+
 function love.update(dt)
     lurker.update()
 
@@ -1244,20 +1253,22 @@ function love.update(dt)
 
 
 
-                    if found == false then
-                        local connectorPoints = { mj.jointBody:getWorldPoints(f:getShape():getPoints()) }
-                        local center = { getCenterOfPoints(connectorPoints) }
+                   
 
-                        local pos1 = center
-                        --print('jo!', k, inspect(pos1))
+
+                    if found == false then
+                        local pos1 = getCentroidOfFixture(mj.jointBody, f)
                         local done = false
+
                         for j = 1, #connectors do
                             local theOtherBody = connectors[j].at:getBody()
 
                             if theOtherBody ~= f:getBody() and connectors[j].to == nil then
-                            local connectorPoints = {  theOtherBody:getWorldPoints(    connectors[j].at:getShape():getPoints() ) }
+                                local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
+                            
+                                --local connectorPoints = {  theOtherBody:getWorldPoints(    connectors[j].at:getShape():getPoints() ) }
 
-                            local pos2 = { getCenterOfPoints(connectorPoints) }     --{ theOtherBody:getPosition() }
+                            --local pos2 = { getCenterOfPoints(connectorPoints) }     --{ theOtherBody:getPosition() }
                           --  print(inspect(pos2))
                             --print(inspect(pos2))
                             local a = pos1[1] - pos2[1]
@@ -1276,7 +1287,7 @@ function love.update(dt)
                                 for p = 1, #connectorCooldownList do
                                     if connectorCooldownList[p].index == j then
                                         isOnCooldown = true
-                                        print('isOnCooldown', j)
+                                        --print('isOnCooldown', j)
                                     end
                                 end
                                 -- print(d)
@@ -1290,7 +1301,7 @@ function love.update(dt)
                                     connectors[j].to = f --mj.jointBody
                                     connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
                                             pos2[1],
-                                            pos2[2], center[1], center[2])
+                                            pos2[2], pos1[1], pos1[2])
                                     print('connect', j, d, k)
                                     -- done = true
                                     --  print(j)
@@ -1386,17 +1397,27 @@ function love.update(dt)
 
             for j = 1, #pointerJoints do
                 local mj = pointerJoints[j]
-                if mj.jointBody == connectors[i].to:getBody() then
+                if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
                     found = true
                 end
             end
-            if l > 100000 and found then
+            if found then
+              --  print(l)
+            end
+
+            local b1, b2 = connectors[i].joint:getBodies()
+           
+            local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
+            if l > breakForce and found then
+                
+
+               -- print(b1:getMass(), b2:getMass())
                 connectors[i].joint:destroy()
                 connectors[i].joint = nil
                 --connectors[i].to:getBody():setPosition(connectors[i].to:getBody():getX(),
                 --    connectors[i].to:getBody():getY() + 100)
                 connectors[i].to = nil
-                print('broke it', i)
+                print('broke it', i, l)
                 table.insert(connectorCooldownList, { runningFor = 0, index = i })
             end
         end
@@ -1405,7 +1426,7 @@ function love.update(dt)
     local now = love.timer.getTime()
     for i = #connectorCooldownList, 1, -1 do
         connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
-        if (connectorCooldownList[i].runningFor > 0.1) then
+        if (connectorCooldownList[i].runningFor > 0.5) then
             table.remove(connectorCooldownList, i)
         end
     end
