@@ -434,12 +434,15 @@ function makeSnappyElastic(x, y)
     local bandshape2 = makeRectPoly2(10, 10, 0, 0)
     local fixture = love.physics.newFixture(band, bandshape2, 1)
     fixture:setUserData('connector')
+    fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
+
     --if true then
-        local bandshape = makeRectPoly2(10, 10, 0, bandH)
+        local bandshape = makeRectPoly2(20, 20, 0, bandH)
         local fixture = love.physics.newFixture(band, bandshape, 1)
         fixture:setUserData('connector')
+        fixture:setSensor(true)
         table.insert(connectors, { at = fixture, to = nil, joint = nil })
     --end
 
@@ -1250,7 +1253,12 @@ function love.update(dt)
                         local done = false
                         for j = 1, #connectors do
                             local theOtherBody = connectors[j].at:getBody()
-                            local pos2 = { theOtherBody:getPosition() }
+
+                            if theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                            local connectorPoints = {  theOtherBody:getWorldPoints(    connectors[j].at:getShape():getPoints() ) }
+
+                            local pos2 = { getCenterOfPoints(connectorPoints) }     --{ theOtherBody:getPosition() }
+                          --  print(inspect(pos2))
                             --print(inspect(pos2))
                             local a = pos1[1] - pos2[1]
                             local b = pos1[2] - pos2[2]
@@ -1258,7 +1266,7 @@ function love.update(dt)
 
                             --print(d)
                             --if connectors[j].at ~= f then
-                            if theOtherBody ~= f:getBody() then
+                           
                                 --if done == false and theOtherBody ~= f:getBody() and connectors[j].to == nil then
                                 --print('SKIP THIS ONE')
 
@@ -1272,7 +1280,7 @@ function love.update(dt)
                                     end
                                 end
                                 -- print(d)
-                                if d < 50 and not isOnCooldown then
+                                if d < 20 and not isOnCooldown then
                                     --print(d)
                                     -- if theOtherBody ~= mj.jointBody and connectors[j].to == nil then
                                     --print('JO', d, j)
@@ -1281,8 +1289,8 @@ function love.update(dt)
                                     --local b = theOtherBody
                                     connectors[j].to = f --mj.jointBody
                                     connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
-                                            theOtherBody:getX(),
-                                            theOtherBody:getY(), center[1], center[2])
+                                            pos2[1],
+                                            pos2[2], center[1], center[2])
                                     print('connect', j, d, k)
                                     -- done = true
                                     --  print(j)
