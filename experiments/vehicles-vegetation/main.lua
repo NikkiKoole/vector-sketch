@@ -1225,15 +1225,17 @@ function love.update(dt)
 
                 if f:getUserData() == 'connector' then
                     -- first make sure we are not yet connected
-                    --print('jo!')
+                    --print('jo!', k)
                     local found = false
 
 
                     for j = 1, #connectors do
+                        --print('check', )
+
                         if connectors[j].to and connectors[j].to == f then
                             --print('NEW FIX!!')
-                            --  found = true
-                            print('connected already', j, k)
+                            found = true
+                            -- print('connected already', j, k)
                         end
                     end
 
@@ -1244,12 +1246,13 @@ function love.update(dt)
                         local center = { getCenterOfPoints(connectorPoints) }
 
                         local pos1 = center
-
+                        --print('jo!', k, inspect(pos1))
                         local done = false
                         for j = 1, #connectors do
                             local theOtherBody = connectors[j].at:getBody()
 
-                            if done == false and theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                            if theOtherBody ~= f:getBody() then
+                                --if done == false and theOtherBody ~= f:getBody() and connectors[j].to == nil then
                                 --print('SKIP THIS ONE')
 
                                 local pos2 = { theOtherBody:getPosition() }
@@ -1277,8 +1280,8 @@ function love.update(dt)
                                     connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
                                             theOtherBody:getX(),
                                             theOtherBody:getY(), center[1], center[2])
-                                    print('connect', j)
-                                    done = true
+                                    print('connect', j, d, k)
+                                    -- done = true
                                     --  print(j)
                                     --end
                                 end
