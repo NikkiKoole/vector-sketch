@@ -128,7 +128,9 @@ function contactShouldBeDisabled(a, b, contact)
         end
     end
 
-    return result
+    --return result
+
+    return false
 end
 
 function isContactBetweenGroundAndCarGroundSensor(contact)
@@ -416,6 +418,8 @@ function makeSnappyElastic(x, y)
     local ceiling = love.physics.newBody(world, x, y, "static")
     local shape = love.physics.newRectangleShape(20, 20)
     local fixture = love.physics.newFixture(ceiling, shape, 1)
+    fixture:setUserData('connector')
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
     fixture:setSensor(true)
     -- rubberband
 
@@ -430,17 +434,19 @@ function makeSnappyElastic(x, y)
     local bandshape2 = makeRectPoly2(10, 10, 0, 0)
     local fixture = love.physics.newFixture(band, bandshape2, 1)
     fixture:setUserData('connector')
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
     if true then
         local bandshape = makeRectPoly2(10, 10, 0, bandH)
         local fixture = love.physics.newFixture(band, bandshape, 1)
         fixture:setUserData('connector')
+        table.insert(connectors, { at = fixture, to = nil, joint = nil })
     end
 
 
-    local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+    -- local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
 
-    table.insert(snapJoints, { band = band, rJoint = rJoint, ceiling = ceiling })
+    -- table.insert(snapJoints, { band = band, rJoint = rJoint, ceiling = ceiling })
 end
 
 function makeChain(x, y, amt)
@@ -626,15 +632,21 @@ function makeVehicle(x, y)
     local uShape1 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2, 0)) --   makeRectPoly2(10,30, carBodyWidth/2, 0)
     local fixture = love.physics.newFixture(carbody, uShape1, 1)
     fixture:setFriction(2.5)
+    --  fixture:setUserData('connector')
+    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
     local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2 + 10 + 20, 0)) --makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
     local fixture = love.physics.newFixture(carbody, uShape2, 1)
     fixture:setFriction(2.5)
+    --  fixture:setUserData('connector')
+    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
 
     local iShape1 = love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth / 2 - 30, 0)) -- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
     local fixture = love.physics.newFixture(carbody, iShape1, 1)
-    fixture:setFriction(2.5)
+    fixture:setUserData('connector')
+    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    --  fixture:setFriction(2.5)
 
 
 
@@ -785,8 +797,8 @@ function startExample(number)
     if number == 2 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-
-
+        snapJoints = {}
+        connectors = {}
 
         local margin = 20
 
@@ -810,14 +822,14 @@ function startExample(number)
 
 
         objects.blocks = {}
-        for i = 1, 30 do
+        for i = 1, 3 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
 
 
-        for i = 1, 10 do
+        for i = 1, 1 do
             local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
             local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
             local fixture = love.physics.newFixture(body, shape, 2)
@@ -825,27 +837,27 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 13 do
+        for i = 1, 1 do
             ballRadius = 10 --love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 13 do
-            makeChain(i * 20, -3000, 8)
+        for i = 1, 3 do
+            --     makeChain(i * 20, -3000, 8)
         end
 
 
         vehiclePedalConnection = {}
-        for i = 1, 10 do
-            makeVehicle(width / 2 + i * 400, -3000)
+        for i = 1, 3 do
+            --   makeVehicle(width / 2 + i * 400, -3000)
         end
-        for i = 1, 30 do
-            makeGuy(i * 200, -1000, i)
+        for i = 1, 3 do
+            --       makeGuy(i * 200, -1000, i)
         end
 
-        snapJoints = {}
-        for i = 1, 10 do
+
+        for i = 1, 3 do
             makeSnappyElastic(i * 100, -2000)
         end
 
@@ -876,7 +888,7 @@ function love.load()
 
     disabledContacts = {}
     pointerJoints = {}
-
+    connectorCooldownList = {}
 
     example = nil
     startExample(2)
@@ -1092,6 +1104,15 @@ function drawCenteredBackgroundText(str)
     love.graphics.print(str, width / 2 - textw / 2, height / 2 - texth / 2)
 end
 
+function getIndexOfConnector(conn)
+    for i = 1, #connectors do
+        if connectors[i].at == conn then
+            return i
+        end
+    end
+    return -1
+end
+
 function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
@@ -1122,6 +1143,11 @@ function love.draw()
         --    bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
         --    0)
         love.graphics.print(love.timer.getFPS(), 0, 0)
+
+
+        for i = 1, #connectors do
+            love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
+        end
     end
 
 
@@ -1194,19 +1220,24 @@ function love.update(dt)
 
 
             local fixtures = mj.jointBody:getFixtures();
-            for i = 1, #fixtures do
-                local f = fixtures[i]
+            for k = 1, #fixtures do
+                local f = fixtures[k]
 
                 if f:getUserData() == 'connector' then
                     -- first make sure we are not yet connected
                     --print('jo!')
                     local found = false
-                    for j = 1, #snapJoints do
-                        if snapJoints[j].band == mj.jointBody then
-                            --print('found!')
-                            found = true
+
+
+                    for j = 1, #connectors do
+                        if connectors[j].to and connectors[j].to == f then
+                            --print('NEW FIX!!')
+                            --  found = true
+                            print('connected already', j, k)
                         end
                     end
+
+
 
                     if found == false then
                         local connectorPoints = { mj.jointBody:getWorldPoints(f:getShape():getPoints()) }
@@ -1214,28 +1245,42 @@ function love.update(dt)
 
                         local pos1 = center
 
+                        local done = false
+                        for j = 1, #connectors do
+                            local theOtherBody = connectors[j].at:getBody()
 
+                            if done == false and theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                                --print('SKIP THIS ONE')
 
-                        for j = 1, #snapJoints do
-                            if snapJoints[j].rJoint == nil then
-                                local pos2 = { snapJoints[j].ceiling:getPosition() }
-
-
+                                local pos2 = { theOtherBody:getPosition() }
+                                --print(inspect(pos2))
                                 local a = pos1[1] - pos2[1]
                                 local b = pos1[2] - pos2[2]
                                 local d = math.sqrt(a * a + b * b)
 
-                                if d < 20 then
-                                    local connectorPoints = {
-                                        mj.jointBody:getWorldPoints(f:getShape():getPoints()) }
-                                    local center = { getCenterOfPoints(connectorPoints) }
-                                    local band = mj.jointBody
+                                local isOnCooldown = false
+                                for p = 1, #connectorCooldownList do
+                                    if connectorCooldownList[p].index == j then
+                                        isOnCooldown = true
+                                        print('isOnCooldown', j)
+                                    end
+                                end
+                                -- print(d)
+                                if d < 50 and not isOnCooldown then
+                                    --print(d)
+                                    -- if theOtherBody ~= mj.jointBody and connectors[j].to == nil then
+                                    --print('JO', d, j)
 
-                                    local ceiling = snapJoints[j].ceiling
 
-                                    snapJoints[j].band = band
-                                    snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(),
-                                            ceiling:getY(), center[1], center[2])
+                                    --local b = theOtherBody
+                                    connectors[j].to = f --mj.jointBody
+                                    connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
+                                            theOtherBody:getX(),
+                                            theOtherBody:getY(), center[1], center[2])
+                                    print('connect', j)
+                                    done = true
+                                    --  print(j)
+                                    --end
                                 end
                             end
                         end
@@ -1312,20 +1357,42 @@ function love.update(dt)
         end
     end
 
+    -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
-    for i = #snapJoints, 1, -1 do
-        if (snapJoints[i].rJoint) then
-            local reaction2 = { snapJoints[i].rJoint:getReactionForce(1 / dt) }
-
-
+    --print(#connectors)
+    for i = #connectors, 1, -1 do
+        -- we can only break a  joint if we have one
+        -- print(i, connectors[i].joint, connectors[i].to)
+        if connectors[i].joint then
+            --print('joint at ', i)
+            local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
             local delta = Vector(reaction2[1], reaction2[2])
             local l = delta:getLength()
-            if l > 100000 then
-                snapJoints[i].rJoint:destroy()
-                snapJoints[i].rJoint = nil
-                snapJoints[i].band = nil
-                -- table.remove(snapJoints, i)
+            local found = false
+
+            for j = 1, #pointerJoints do
+                local mj = pointerJoints[j]
+                if mj.jointBody == connectors[i].to:getBody() then
+                    found = true
+                end
             end
+            if l > 100000 and found then
+                connectors[i].joint:destroy()
+                connectors[i].joint = nil
+                --connectors[i].to:getBody():setPosition(connectors[i].to:getBody():getX(),
+                --    connectors[i].to:getBody():getY() + 100)
+                connectors[i].to = nil
+                print('broke it', i)
+                table.insert(connectorCooldownList, { runningFor = 0, index = i })
+            end
+        end
+    end
+
+    local now = love.timer.getTime()
+    for i = #connectorCooldownList, 1, -1 do
+        connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
+        if (connectorCooldownList[i].runningFor > 0.1) then
+            table.remove(connectorCooldownList, i)
         end
     end
 
