@@ -1,14 +1,14 @@
-package.path  = package.path .. ";../../?.lua"
+package.path          = package.path .. ";../../?.lua"
 
-local lurker  = require 'vendor.lurker'
-local inspect = require 'vendor.inspect'
-Vector        = require 'vendor.brinevector'
-local cam     = require('lib.cameraBase').getInstance()
-local camera  = require 'lib.camera'
+local lurker          = require 'vendor.lurker'
+local inspect         = require 'vendor.inspect'
+Vector                = require 'vendor.brinevector'
+local cam             = require('lib.cameraBase').getInstance()
+local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 
 
-lurker.quiet  = true
+lurker.quiet = true
 require 'palette'
 
 -- check this for multiple fixtures, -> sensor for gorund
@@ -48,17 +48,13 @@ function npoly(radius, sides)
     return result
 end
 
-
-function getRandomConvexPoly(radius, numVerts) 
+function getRandomConvexPoly(radius, numVerts)
     local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
-    while not love.math.isConvex( vertices ) do
+    while not love.math.isConvex(vertices) do
         vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
     end
     return vertices
-    
 end
-
-
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
@@ -115,13 +111,15 @@ function contactShouldBeDisabled(a, b, contact)
 
 
     -- this disables contact between a dragged item and the ground
-    if (mouseJoints.jointBody) then
-        --print(fixtureB:getUserData())
-        if (bb == mouseJoints.jointBody and fixtureA:getUserData() == 'ground') then
-            result = true
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        if (mj.jointBody) then
+            --print(fixtureB:getUserData())
+            if (bb == mj.jointBody and fixtureA:getUserData() == 'ground') then
+                result = true
+            end
         end
     end
-
     -- this disables contact between  balls and the ground if ballcenterY < collisionY (ball below ground)
     if fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'ball' then
         local x1, y1 = contact:getPositions()
@@ -130,7 +128,9 @@ function contactShouldBeDisabled(a, b, contact)
         end
     end
 
-    return result
+    --return result
+
+    return false
 end
 
 function isContactBetweenGroundAndCarGroundSensor(contact)
@@ -148,16 +148,25 @@ function beginContact(a, b, contact)
         -- i also should keep around what body (cirlcle) this is about,
         -- and also eventually probably also waht touch id or mouse this is..
 
-        positionOfLastDisabledContact = point
-        -- we want to know if a or b was the mousejoint thing.
-        if a:getBody() == mouseJoints.jointBody then
-            bodyLastDisabledContact = a
-        end
-        if b:getBody() == mouseJoints.jointBody then
-            bodyLastDisabledContact = b
-        end
 
-        table.insert(disabledContacts, contact)
+        for i = 1, #pointerJoints do
+            local mj = pointerJoints[i]
+
+            local bodyLastDisabledContact = nil
+            if mj.jointBody == a:getBody() then
+                bodyLastDisabledContact = a
+            end
+            if mj.jointBody == b:getBody() then
+                bodyLastDisabledContact = b
+            end
+            if bodyLastDisabledContact then
+                -- do i need to keep something in the pointerJoints too ???
+                -- positionOfLastDisabledContact
+                pointerJoints[i].bodyLastDisabledContact = bodyLastDisabledContact
+                pointerJoints[i].positionOfLastDisabledContact = point
+                table.insert(disabledContacts, contact)
+            end
+        end
     end
     if isContactBetweenGroundAndCarGroundSensor(contact) then
         --print('touching', carIsTouching)
@@ -210,7 +219,8 @@ function capsule(w, h, cs)
     }
     return result
 end
-function capsuleXY(w, h, cs,x,y)
+
+function capsuleXY(w, h, cs, x, y)
     -- cs == cornerSize
     local w2 = w / 2
     local h2 = h / 2
@@ -221,21 +231,17 @@ function capsuleXY(w, h, cs,x,y)
     local br = w2 - cs
 
     local result = {
-        x+-w2 , y+bt,
-        x+bl, y+-h2,
-        x+br, y+-h2,
-        x+w2, y+bt,
-        x+w2, y+bb,
-        x+br, y+h2,
-        x+bl, y+h2,
-        x+-w2, y+bb
+        x + -w2, y + bt,
+        x + bl, y + -h2,
+        x + br, y + -h2,
+        x + w2, y + bt,
+        x + w2, y + bb,
+        x + br, y + h2,
+        x + bl, y + h2,
+        x + -w2, y + bb
     }
     return result
 end
-
-
-
-
 
 function makeRectPoly(w, h, x, y)
     return love.physics.newPolygonShape(
@@ -279,22 +285,18 @@ function makeCarShape(w, h, cx, cy)
         )
 end
 
-
-
-function makeUShape(w,h, thickness) 
+function makeUShape(w, h, thickness)
     return love.physics.newPolygonShape(
-        -w/2, -h/2,
-        -w/2, h/2,
-        w/2, h/2,
-        w/2, -h/2,
-        w/2 - thickness, -h/2,
-        w/2 - thickness, h/2 - thickness,
-        -w/2 + thickness, h/2 - thickness,
-        -w/2 + thickness, -h/2
-    )
-
+            -w / 2, -h / 2,
+            -w / 2, h / 2,
+            w / 2, h / 2,
+            w / 2, -h / 2,
+            w / 2 - thickness, -h / 2,
+            w / 2 - thickness, h / 2 - thickness,
+            -w / 2 + thickness, h / 2 - thickness,
+            -w / 2 + thickness, -h / 2
+        )
 end
-
 
 function makeGuy(x, y, groupId)
     local function limitsAround(value, range, joint)
@@ -317,7 +319,7 @@ function makeGuy(x, y, groupId)
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
     local torsoShape = makeTrapeziumPoly(torsoWidth, torsoWidth * 1.2, torsoHeight, 0, 0)
-    local fixture = love.physics.newFixture(torso, torsoShape, 1)
+    local fixture = love.physics.newFixture(torso, torsoShape, .5)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('torso')
 
@@ -411,11 +413,13 @@ function makeSnappyElastic(x, y)
     -- ceiling
 
     local bandW = 20
-    local bandH = 200 + love.math.random() * 200
+    local bandH = 100 + love.math.random() * 100
 
     local ceiling = love.physics.newBody(world, x, y, "static")
     local shape = love.physics.newRectangleShape(20, 20)
     local fixture = love.physics.newFixture(ceiling, shape, 1)
+    fixture:setUserData('connector')
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
     fixture:setSensor(true)
     -- rubberband
 
@@ -430,17 +434,19 @@ function makeSnappyElastic(x, y)
     local bandshape2 = makeRectPoly2(10, 10, 0, 0)
     local fixture = love.physics.newFixture(band, bandshape2, 1)
     fixture:setUserData('connector')
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
-    if true then
+    --if true then
         local bandshape = makeRectPoly2(10, 10, 0, bandH)
         local fixture = love.physics.newFixture(band, bandshape, 1)
         fixture:setUserData('connector')
-    end
+        table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    --end
 
 
-    local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
+    -- local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
 
-    table.insert(snapJoints, { band = band, rJoint = rJoint, ceiling = ceiling })
+    -- table.insert(snapJoints, { band = band, rJoint = rJoint, ceiling = ceiling })
 end
 
 function makeChain(x, y, amt)
@@ -550,7 +556,7 @@ function makeChainGround()
     local points = {}
     for i = -1000, 1000 do
         local cool = 1.78
-        local amplitude = 100 * cool
+        local amplitude = 150 * cool
         local frequency = 33
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y1 = h - (amplitude / 2)
@@ -622,19 +628,25 @@ function makeVehicle(x, y)
     --local uShapeFixture = love.physics.newFixture(carbody, uShapeShape, .5)
 
 
-    
-    local uShape1 =  love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth/2 , 0) )--   makeRectPoly2(10,30, carBodyWidth/2, 0)
+
+    local uShape1 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2, 0)) --   makeRectPoly2(10,30, carBodyWidth/2, 0)
     local fixture = love.physics.newFixture(carbody, uShape1, 1)
     fixture:setFriction(2.5)
+    --  fixture:setUserData('connector')
+    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
-    local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth/2 + 10 + 20 , 0) )--makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
+    local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2 + 10 + 20, 0)) --makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
     local fixture = love.physics.newFixture(carbody, uShape2, 1)
     fixture:setFriction(2.5)
+    --  fixture:setUserData('connector')
+    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
 
 
-    local iShape1 =  love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth/2 - 40 , 0) )-- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
+    local iShape1 = love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth / 2 - 30, 0)) -- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
     local fixture = love.physics.newFixture(carbody, iShape1, 1)
-    fixture:setFriction(2.5)
+    fixture:setUserData('connector')
+    --  table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    --  fixture:setFriction(2.5)
 
 
 
@@ -712,7 +724,7 @@ function makeVehicle(x, y)
     fixture:setSensor(true)
     local joint2 = love.physics.newRevoluteJoint(carbody, pedalwheel, pedalwheel:getX(), pedalwheel:getY(), false)
 
-    table.insert(vehiclePedalConnection, {wheelJoint=joint1, pedalJoint=joint2, pedalWheel=pedalwheel})
+    table.insert(vehiclePedalConnection, { wheelJoint = joint1, pedalJoint = joint2, pedalWheel = pedalwheel })
 
 
     --joint1:setMotorEnabled(true)
@@ -736,7 +748,7 @@ end
 function startExample(number)
     local width, height = love.graphics.getDimensions()
     love.physics.setMeter(100)
-    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter()*1.5, true)
+    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter() * 4, true)
     objects = {}
     ballRadius = love.physics.getMeter() / 4
     ----
@@ -785,8 +797,8 @@ function startExample(number)
     if number == 2 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
-
-
+        snapJoints = {}
+        connectors = {}
 
         local margin = 20
 
@@ -810,43 +822,43 @@ function startExample(number)
 
 
         objects.blocks = {}
-        for i = 1, 30 do
+        for i = 1, 3 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
 
 
-        for i =1 , 10 do
-            local body = love.physics.newBody(world, i*100, -2000, "dynamic")
-           local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
-           local fixture = love.physics.newFixture(body, shape, 2)
+        for i = 1, 1 do
+            local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
+            local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
+            local fixture = love.physics.newFixture(body, shape, 2)
         end
 
         objects.balls = {}
 
-        for i = 1, 13 do
+        for i = 1, 1 do
             ballRadius = 10 --love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 13 do
-            makeChain(i * 20, -3000, 8)
+        for i = 1, 3 do
+            --     makeChain(i * 20, -3000, 8)
         end
 
 
         vehiclePedalConnection = {}
-        for i = 1, 10 do
-            makeVehicle(width / 2 + i * 400, -3000)
+        for i = 1, 3 do
+            --   makeVehicle(width / 2 + i * 400, -3000)
         end
-        for i = 1, 30 do
-            makeGuy(i * 200, -1000, i)
+        for i = 1, 3 do
+            --       makeGuy(i * 200, -1000, i)
         end
 
-        snapJoints = {}
-        for i = 1, 10 do
-            makeSnappyElastic(i * 100, -2000)
+
+        for i = 1, 4 do
+            makeSnappyElastic(i * 100, -1500)
         end
 
 
@@ -873,14 +885,11 @@ function love.load()
 
     -- before these were local but that didnt work with lurker
     -- all of these are relevant to the vlooienspel experiment, and not to others (I think)
-    disabledContacts = {}
-    positionOfLastDisabledContact = nil
-    bodyLastDisabledContact = nil
 
-    mouseJoints = {
-        joint = nil,
-        jointBody = nil
-    }
+    disabledContacts = {}
+    pointerJoints = {}
+    connectorCooldownList = {}
+
     example = nil
     startExample(2)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
@@ -891,90 +900,121 @@ function love.load()
     --grabDevelopmentScreenshot()
 end
 
-function killMouseJointIfPossible()
-    if (mouseJoints.joint) then
-        mouseJoints.joint:destroy()
-        mouseJoints.joint     = nil
-        mouseJoints.jointBody = nil
-    end
-end
+local function pointerReleased(id, x, y)
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        -- if false then
+        if mj.id == id then
+            if (mj.joint) then
+                if (mj.jointBody) then
+                    local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
+                    local tl = { points[1], points[2] }
+                    local tr = { points[3], points[4] }
+                    -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
+                    -- oh wait, this is actually kinda good enough-ish (tm)
+                    if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
+                        local x1, y1 = mj.jointBody:getPosition()
+                        if (#mj.positionOfLastDisabledContact > 0) then
+                            local x2 = mj.positionOfLastDisabledContact[1]
+                            local y2 = mj.positionOfLastDisabledContact[2]
 
-function love.mousereleased()
-    -- now we have to find a few things out to check if i want to shoot my thing
-    -- first off, are we below the ground ?
-    if (mouseJoints.joint) then
-        if (mouseJoints.jointBody) then
-            local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
-            local tl = { points[1], points[2] }
-            local tr = { points[3], points[4] }
-            -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
-            -- oh wait, this is actually kinda good enough-ish (tm)
-            if (bodyLastDisabledContact and bodyLastDisabledContact:getBody() == mouseJoints.jointBody) then
-                local x1, y1 = mouseJoints.jointBody:getPosition()
-                if (#positionOfLastDisabledContact > 0) then
-                    local x2 = positionOfLastDisabledContact[1]
-                    local y2 = positionOfLastDisabledContact[2]
-
-                    local delta = Vector(x1 - x2, y1 - y2)
-                    local l = delta:getLength()
-                    -- print(l)
-                    local v = delta:getNormalized() * l * -2
-                    if v.y > 0 then
-                        v.y = 0
-                        v.x = 0
-                    end -- i odnt want  you shoooting downward!
-                    bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                            local delta = Vector(x1 - x2, y1 - y2)
+                            local l = delta:getLength()
+                            -- print(l)
+                            local v = delta:getNormalized() * l * -2
+                            if v.y > 0 then
+                                v.y = 0
+                                v.x = 0
+                            end -- i odnt want  you shoooting downward!
+                            mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                        end
+                        mj.bodyLastDisabledContact = nil
+                        mj.positionOfLastDisabledContact = nil
+                        --
+                    end
                 end
-                bodyLastDisabledContact = nil
-                positionOfLastDisabledContact = nil
-                --
             end
+            --   end
         end
     end
-    killMouseJointIfPossible()
+    killMouseJointIfPossible(id)
 end
 
-function love.mousepressed(mx, my)
-    -- killMouseJointIfPossible()
-    local wx, wy = cam:getWorldCoordinates(mx, my)
-    --local bodies = { objects.ball.body, objects.ball2.body }
+function love.touchreleased(id, x, y)
+    pointerReleased(id, x, y)
+end
+
+function love.mousereleased(x, y)
+    -- now we have to find a few things out to check if i want to shoot my thing
+    -- first off, are we below the ground ?
+
+    pointerReleased('mouse', x, y)
+end
+
+function killMouseJointIfPossible(id)
+    local index = -1
+    for i = 1, #pointerJoints do
+        if pointerJoints[i].id == id then
+            index = i
+            pointerJoints[i].joint:destroy()
+            pointerJoints[i].joint     = nil
+            pointerJoints[i].jointBody = nil
+        end
+    end
+    table.remove(pointerJoints, index)
+end
+
+local function makePointerJoint(id, bodyToAttachTo, wx, wy)
+    local pointerJoint = {}
+    pointerJoint.id = id
+    pointerJoint.jointBody = bodyToAttachTo
+    pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
+    pointerJoint.joint:setDampingRatio(0.5)
+    pointerJoint.joint:setMaxForce(500000)
+    return pointerJoint
+end
+
+local function getPointerPosition(id)
+    if id == 'mouse' then
+        return love.mouse.getPosition()
+    else
+        return love.touch.getPosition(id)
+    end
+end
+
+
+function love.touchpressed(id, x, y)
+    pointerPressed(id, x, y)
+end
+
+function love.mousepressed(x, y)
+    pointerPressed('mouse', x, y)
+end
+
+function pointerPressed(id, x, y)
+    local wx, wy = cam:getWorldCoordinates(x, y)
     local hitAny = false
-    local epsilon = 10
-
-
-    local containers = { 'balls', 'blocks' }
-
-
     local bodies = world:getBodies()
-    for _, body in ipairs(bodies) do
-        local bx, by = body:getPosition()
-        local dx, dy = wx - bx, wy - by
-        local distance = math.sqrt(dx * dx + dy * dy)
 
+    for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
             local hitThisOne = fixture:testPoint(wx, wy)
             local isSensor = fixture:isSensor()
             if (hitThisOne and not isSensor) then
-                killMouseJointIfPossible()
-                mouseJoints.jointBody = body
-                mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, wx, wy)
-                --mouseJoints.joint = love.physics.newMouseJoint(mouseJoints.jointBody, body:getX(), body:getY())
+                killMouseJointIfPossible(id)
 
-                mouseJoints.joint:setDampingRatio(0.5)
-                mouseJoints.joint:setMaxForce(500000)
-                --print(mouseJoints.joint:getMaxForce())
+                table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
+
                 local vx, vy = body:getLinearVelocity()
-                body:setPosition(body:getX(), body:getY() - 20)
+                body:setPosition(body:getX(), body:getY() - 10)
 
                 hitAny = true
             end
         end
-        -- end
     end
 
-
-    if hitAny == false then killMouseJointIfPossible() end
+    if hitAny == false then killMouseJointIfPossible(id) end
 end
 
 function getBodyColor(body)
@@ -1064,6 +1104,15 @@ function drawCenteredBackgroundText(str)
     love.graphics.print(str, width / 2 - textw / 2, height / 2 - texth / 2)
 end
 
+function getIndexOfConnector(conn)
+    for i = 1, #connectors do
+        if connectors[i].at == conn then
+            return i
+        end
+    end
+    return -1
+end
+
 function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
@@ -1090,23 +1139,29 @@ function love.draw()
 
         cam:pop()
 
-        love.graphics.print(
-            bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
-            0)
-        if (objects.carbody) then
-            love.graphics.print(objects.carbody.body:getY(), 0, 40)
+        --love.graphics.print(
+        --    bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
+        --    0)
+        love.graphics.print(love.timer.getFPS(), 0, 0)
+
+
+        for i = 1, #connectors do
+            love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
         end
     end
 
 
     cam:push()
 
-    if positionOfLastDisabledContact and #positionOfLastDisabledContact > 0 then
-        -- print(inspect(positionOfLastDisabledContact))
-        love.graphics.circle('fill', positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], 10)
-        if (bodyLastDisabledContact) then
-            local posx, posy = bodyLastDisabledContact:getBody():getPosition()
-            love.graphics.line(positionOfLastDisabledContact[1], positionOfLastDisabledContact[2], posx, posy)
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        if mj.positionOfLastDisabledContact and #mj.positionOfLastDisabledContact > 0 then
+            -- print(inspect(positionOfLastDisabledContact))
+            love.graphics.circle('fill', mj.positionOfLastDisabledContact[1], mj.positionOfLastDisabledContact[2], 10)
+            if (mj.bodyLastDisabledContact) then
+                local posx, posy = mj.bodyLastDisabledContact:getBody():getPosition()
+                love.graphics.line(mj.positionOfLastDisabledContact[1], mj.positionOfLastDisabledContact[2], posx, posy)
+            end
         end
     end
     cam:pop()
@@ -1155,82 +1210,104 @@ end
 
 function love.update(dt)
     lurker.update()
-    if (mouseJoints.joint) then
-        local mx, my = love.mouse.getPosition()
-        local wx, wy = cam:getWorldCoordinates(mx, my)
-        mouseJoints.joint:setTarget(wx, wy)
+
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        if (mj.joint) then
+            local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            mj.joint:setTarget(wx, wy)
 
 
-        local fixtures = mouseJoints.jointBody:getFixtures();
-        for i = 1, #fixtures do
-            local f = fixtures[i]
+            local fixtures = mj.jointBody:getFixtures();
+            for k = 1, #fixtures do
+                local f = fixtures[k]
 
-            if f:getUserData() == 'connector' then
-                -- first make sure we are not yet connected
-                --print('jo!')
-                local found = false
-                for j = 1, #snapJoints do
-                    if snapJoints[j].band == mouseJoints.jointBody then
-                        --print('found!')
-                        found = true
+                if f:getUserData() == 'connector' then
+                    -- first make sure we are not yet connected
+                    --print('jo!', k)
+                    local found = false
+
+
+                    for j = 1, #connectors do
+                        --print('check', )
+
+                        if connectors[j].to and connectors[j].to == f then
+                            --print('NEW FIX!!')
+                            found = true
+                            -- print('connected already', j, k)
+                        end
                     end
-                end
-
-                if found == false then
-                    local connectorPoints = { mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints()) }
-                    local center = { getCenterOfPoints(connectorPoints) }
-
-                    local pos1 = center
 
 
 
-                    for j = 1, #snapJoints do
-                        if snapJoints[j].rJoint == nil then
-                            local pos2 = { snapJoints[j].ceiling:getPosition() }
+                    if found == false then
+                        local connectorPoints = { mj.jointBody:getWorldPoints(f:getShape():getPoints()) }
+                        local center = { getCenterOfPoints(connectorPoints) }
 
-
+                        local pos1 = center
+                        --print('jo!', k, inspect(pos1))
+                        local done = false
+                        for j = 1, #connectors do
+                            local theOtherBody = connectors[j].at:getBody()
+                            local pos2 = { theOtherBody:getPosition() }
+                            --print(inspect(pos2))
                             local a = pos1[1] - pos2[1]
                             local b = pos1[2] - pos2[2]
                             local d = math.sqrt(a * a + b * b)
 
-                            if d < 20 then
-                                local connectorPoints = { mouseJoints.jointBody:getWorldPoints(f:getShape():getPoints()) }
-                                local center = { getCenterOfPoints(connectorPoints) }
-                                local band = mouseJoints.jointBody
+                            --print(d)
+                            --if connectors[j].at ~= f then
+                            if theOtherBody ~= f:getBody() then
+                                --if done == false and theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                                --print('SKIP THIS ONE')
 
-                                local ceiling = snapJoints[j].ceiling
+                               
 
-                                snapJoints[j].band = band
-                                snapJoints[j].rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(),
-                                        ceiling:getY(), center[1], center[2])
+                                local isOnCooldown = false
+                                for p = 1, #connectorCooldownList do
+                                    if connectorCooldownList[p].index == j then
+                                        isOnCooldown = true
+                                        print('isOnCooldown', j)
+                                    end
+                                end
+                                -- print(d)
+                                if d < 50 and not isOnCooldown then
+                                    --print(d)
+                                    -- if theOtherBody ~= mj.jointBody and connectors[j].to == nil then
+                                    --print('JO', d, j)
+
+
+                                    --local b = theOtherBody
+                                    connectors[j].to = f --mj.jointBody
+                                    connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
+                                            theOtherBody:getX(),
+                                            theOtherBody:getY(), center[1], center[2])
+                                    print('connect', j, d, k)
+                                    -- done = true
+                                    --  print(j)
+                                    --end
+                                end
                             end
                         end
                     end
                 end
-            end
 
-            if f:getUserData() == 'carbody' then
-                local body = mouseJoints.jointBody
-                if body then
-                    -- i dont have a cartouching per car, its global so wont work for all
-                    --if (carIsTouching < 1) then
-                    rotateToHorizontal(body, 0, 10)
-                    --end
+                if f:getUserData() == 'carbody' then
+                    local body = mj.jointBody
+                    if body then
+                        -- i dont have a cartouching per car, its global so wont work for all
+                        --if (carIsTouching < 1) then
+                        rotateToHorizontal(body, 0, 10)
+                        --end
+                    end
                 end
-
-                -- next issue, if we throw a car it needs to NOT spina orund too, for tha t I prolly need somethign like
-                -- https://www.iforce2d.net/b2dtut/jumpability
-                -- magic word -- SENSORS
-                -- yeah this just kinda sucks, its less fun and more buggy...
-
-
-                --mouseJoints.jointBody:applyTorque(angle * 0.125)
-            end
-            if f:getUserData() == 'torso' then
-                --print('jo found a torso to rotate!')
-                local body = mouseJoints.jointBody
-                if body then
-                    rotateToHorizontal(body, 0, 10)
+                if f:getUserData() == 'torso' then
+                    --print('jo found a torso to rotate!')
+                    local body = mj.jointBody
+                    if body then
+                        rotateToHorizontal(body, 0, 10)
+                    end
                 end
             end
         end
@@ -1281,35 +1358,55 @@ function love.update(dt)
                 end
 
 
-                rotateToHorizontal(body, 0, 15)
+                rotateToHorizontal(body, 0, 20)
             end
         end
     end
 
+    -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
-    for i = #snapJoints, 1, -1 do
-        if (snapJoints[i].rJoint) then
-            local reaction2 = { snapJoints[i].rJoint:getReactionForce(1 / dt) }
-
-
+    --print(#connectors)
+    for i = #connectors, 1, -1 do
+        -- we can only break a  joint if we have one
+        -- print(i, connectors[i].joint, connectors[i].to)
+        if connectors[i].joint then
+            --print('joint at ', i)
+            local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
             local delta = Vector(reaction2[1], reaction2[2])
             local l = delta:getLength()
-            if l > 100000 then
-                snapJoints[i].rJoint:destroy()
-                snapJoints[i].rJoint = nil
-                snapJoints[i].band = nil
-                -- table.remove(snapJoints, i)
+            local found = false
+
+            for j = 1, #pointerJoints do
+                local mj = pointerJoints[j]
+                if mj.jointBody == connectors[i].to:getBody() then
+                    found = true
+                end
+            end
+            if l > 100000 and found then
+                connectors[i].joint:destroy()
+                connectors[i].joint = nil
+                --connectors[i].to:getBody():setPosition(connectors[i].to:getBody():getX(),
+                --    connectors[i].to:getBody():getY() + 100)
+                connectors[i].to = nil
+                print('broke it', i)
+                table.insert(connectorCooldownList, { runningFor = 0, index = i })
             end
         end
     end
 
+    local now = love.timer.getTime()
+    for i = #connectorCooldownList, 1, -1 do
+        connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
+        if (connectorCooldownList[i].runningFor > 0.1) then
+            table.remove(connectorCooldownList, i)
+        end
+    end
 
-    for i =1 , #vehiclePedalConnection do 
-        local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle( )
 
-        vehiclePedalConnection[i].pedalWheel:setAngle(angle /3 )
+    for i = 1, #vehiclePedalConnection do
+        local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle()
 
-  
+        vehiclePedalConnection[i].pedalWheel:setAngle(angle / 3)
     end
 
     world:update(dt)
@@ -1325,8 +1422,6 @@ function love.mousemoved(x, y, dx, dy)
     if love.keyboard.isDown('space') then
         local x, y = cam:getTranslation()
         cam:setTranslation(x - dx / cam.scale, y - dy / cam.scale)
-
-        -- cam:setTranslation(x, y)
     end
 end
 
