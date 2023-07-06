@@ -324,6 +324,9 @@ function makeGuy(x, y, groupId)
     fixture:setUserData('torso')
 
 
+    makeAndAddConnector(torso, 0, -torsoHeight/2)
+
+
     -- UPPER LEFT LEG
     local upleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local uplegShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
@@ -359,6 +362,11 @@ function makeGuy(x, y, groupId)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setFriction(1)
     foot:setAngle(math.pi / 2)
+
+
+
+    makeAndAddConnector(foot, 0, 0)
+
 
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
     limitsAround(0, math.pi / 16, joint)
@@ -403,53 +411,36 @@ function makeGuy(x, y, groupId)
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
     limitsAround(0, math.pi / 8, joint)
 
-
-
-
     return torso
 end
+
+
+function makeAndAddConnector(parent, x,y)
+local bandshape2 = makeRectPoly2(10, 10, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 1)
+    fixture:setUserData('connector')
+    fixture:setSensor(true)
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
+end
+
 
 function makeSnappyElastic(x, y)
     -- ceiling
 
     local bandW = 20
     local bandH = 100 + love.math.random() * 100
-
     local ceiling = love.physics.newBody(world, x, y, "static")
-    local shape = love.physics.newRectangleShape(20, 20)
-    local fixture = love.physics.newFixture(ceiling, shape, 1)
-    fixture:setUserData('connector')
-    table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    fixture:setSensor(true)
-    -- rubberband
 
-
+    makeAndAddConnector(ceiling, 0, 0)
 
     local band = love.physics.newBody(world, x, y, "dynamic")
     local bandshape = makeRectPoly2(bandW, bandH, 0, bandH / 2)
     local fixture = love.physics.newFixture(band, bandshape, 1)
 
-
-    -- local hitPoint = love.physics.newBody(world, x, y, "dynamic")
-    local bandshape2 = makeRectPoly2(10, 10, 0, 0)
-    local fixture = love.physics.newFixture(band, bandshape2, 1)
-    fixture:setUserData('connector')
-   -- fixture:setSensor(true)
-    table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    makeAndAddConnector(band, 0,0)
+    makeAndAddConnector(band, 0,bandH)
 
 
-    --if true then
-        local bandshape = makeRectPoly2(10, 10, 0, bandH)
-        local fixture = love.physics.newFixture(band, bandshape, 1)
-        fixture:setUserData('connector')
-       -- fixture:setSensor(true)
-        table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    --end
-
-
-    -- local rJoint = love.physics.newRevoluteJoint(ceiling, band, ceiling:getX(), ceiling:getY(), band:getX(), band:getY())
-
-    -- table.insert(snapJoints, { band = band, rJoint = rJoint, ceiling = ceiling })
 end
 
 function makeChain(x, y, amt)
@@ -493,19 +484,14 @@ function makeChain(x, y, amt)
     joint:setLowerLimit( -math.pi / 32)
     joint:setUpperLimit(math.pi / 32)
     joint:setLimitsEnabled(true)
-    --weight:setFixedRotation(true)
     table.insert(objects.blocks, weight)
-    -- objects.joint2 = love.physics.newRevoluteJoint(carbody.body, objects.wheel2.body, objects.wheel2.body:getX(),
-    --             objects.wheel2.body:getY(), false)
+  
 end
 
 function makeBall(x, y, radius)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-    --ball.body:setFixedRotation(true)
-    --objects.ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
-    --        ballRadius * 3 + love.math.random() * 20, 5))
     ball.shape = love.physics.newCircleShape(ballRadius)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
@@ -518,10 +504,8 @@ function makeBlock(x, y, size)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-    --ball.body:setFixedRotation(true)
     ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
-            ballRadius * 3 + love.math.random() * 20, 5))
-    --ball.shape = love.physics.newCircleShape(ballRadius)
+    ballRadius * 3 + love.math.random() * 20, 5))
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData("ball")
@@ -564,19 +548,16 @@ function makeChainGround()
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y1 = h - (amplitude / 2)
 
-
         local cool = 1.78
         local amplitude = 100 * cool
         local frequency = 17
         local h = love.math.noise(i / frequency, 1, 1) * amplitude
         local y2 = h - (amplitude / 2)
 
-
-        --   h = h + height / 2
         table.insert(points, i * 100)
         table.insert(points, y1 + y2)
     end
-    --print(inspect(points))
+
     local thing = {}
     thing.body = love.physics.newBody(world, 0, 0)
     thing.shape = love.physics.newChainShape(false, unpack(points))
@@ -590,8 +571,7 @@ function makeSeeSaw(x, y)
     local plank = love.physics.newBody(world, x, y, "dynamic")
     local shape = love.physics.newRectangleShape(1800, 60)
     local fixture = love.physics.newFixture(plank, shape, 1)
-
-    -- local side1 = love.physics.newBody(world, x - 900, y, "dynamic")
+    
     local shape1 = makeRectPoly2(20, 150, -900, 0)
     local fixture = love.physics.newFixture(plank, shape1, 1)
 
@@ -612,49 +592,19 @@ function makeVehicle(x, y)
     local carBodyHeight = 150
     local carBodyWidth  = 400
 
-    --local carbody = {}
-
     local carbody       = love.physics.newBody(world, x, y, "dynamic")
     local shape         = makeCarShape(carBodyWidth, carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
     local fixture       = love.physics.newFixture(carbody, shape, .5)
+
     fixture:setUserData("carbody")
-    --carbody.fixture:setFilterData(1, 65535, -1)
-    --carbody.body:setFixedRotation(true)
-    -- objects.blocks = { carbody }
-    --objects.carbody = carbody
-    --table.insert(objects.blocks, carbody)
+
+
+     makeAndAddConnector(carbody, carBodyWidth / 2 + 25, carBodyHeight/2 -15)
 
 
 
-    --local uShape = love.physics.newBody(world, x+carBodyWidth/2, y, "dynamic")
-    --local uShapeShape = makeUShape(50,50,5)
-    --local uShapeFixture = love.physics.newFixture(carbody, uShapeShape, .5)
 
-
-
-    local uShape1 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2, 0)) --   makeRectPoly2(10,30, carBodyWidth/2, 0)
-    local fixture = love.physics.newFixture(carbody, uShape1, 1)
-    fixture:setFriction(2.5)
-      fixture:setUserData('connector')
-      fixture:setSensor(true)
-      table.insert(connectors, { at = fixture, to = nil, joint = nil })
-
-    local uShape2 = love.physics.newPolygonShape(capsuleXY(10, 50, 5, carBodyWidth / 2 + 10 + 20, 0)) --makeRectPoly2(10,30, carBodyWidth/2 + 10 + 20, 0)
-    local fixture = love.physics.newFixture(carbody, uShape2, 1)
-    fixture:setFriction(2.5)
-    fixture:setUserData('connector')
-    fixture:setSensor(true)
-    --  fixture:setUserData('connector')
-      table.insert(connectors, { at = fixture, to = nil, joint = nil })
-
-
-    local iShape1 = love.physics.newPolygonShape(capsuleXY(15, 50, 5, -carBodyWidth / 2 - 30, 0)) -- makeRectPoly2(18,100, -carBodyWidth/2 - 30 , 0)
-    local fixture = love.physics.newFixture(carbody, iShape1, 1)
-    fixture:setUserData('connector')
-    fixture:setUserData('connector')
-    fixture:setSensor(true)
-      table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    --  fixture:setFriction(2.5)
+makeAndAddConnector(carbody, -carBodyWidth / 2 - 25, carBodyHeight/2 -15)
 
 
 
@@ -681,8 +631,6 @@ function makeVehicle(x, y)
 
     if true then
         local carsensor = {}
-        -- carsensor.body = love.physics.newBody(world, width / 2, 0, "dynamic")
-        --carsensor.shape = love.physics.newRectangleShape(5, 300)
         local xOffset = 100
         local polyWidth = 20
         local polyLength = 110
@@ -693,7 +641,6 @@ function makeVehicle(x, y)
         carsensor.fixture:setSensor(true)
         carsensor.fixture:setUserData("carGroundSensor")
 
-        --table.insert(objects.blocks, carsensor)
     end
 
     if true then
@@ -742,7 +689,7 @@ function makeVehicle(x, y)
 
     --local wheel2 = {}
     local wheel2 = love.physics.newBody(world, x + (carBodyWidth / 3), y + carBodyHeight / 2 - 25 / 2, "dynamic")
-    local shape = love.physics.newCircleShape(25)
+    local shape = love.physics.newCircleShape(35)
     local fixture = love.physics.newFixture(wheel2, shape, .5)
     fixture:setFilterData(1, 65535, -1)
     fixture:setFriction(2.5)
@@ -809,10 +756,6 @@ function startExample(number)
         connectors = {}
 
         local margin = 20
-
-
-
-
         -- objects.border = makeBorderChain(width, height, margin)
 
         objects.ground = makeChainGround()
@@ -823,9 +766,7 @@ function startExample(number)
             objects.ground.shape = love.physics.newRectangleShape(width * 10, height / 4)
             objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
             objects.ground.fixture:setUserData("ground")
-            --objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
             objects.ground.fixture:setFriction(1)
-            --objects.ground.fixture:setRestitution(10.9)
         end
 
 
@@ -835,9 +776,7 @@ function startExample(number)
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-
-
-        for i = 1, 1 do
+        for i = 1, 10 do
             local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
             local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
             local fixture = love.physics.newFixture(body, shape, 2)
@@ -845,7 +784,7 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 1 do
+        for i = 1, 10 do
             ballRadius = 10 --love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
@@ -858,14 +797,14 @@ function startExample(number)
 
         vehiclePedalConnection = {}
         for i = 1, 13 do
-               makeVehicle(width / 2 + i * 400, -3000)
+            makeVehicle(width / 2 + i * 400, -3000)
         end
-        for i = 1, 3 do
-            --       makeGuy(i * 200, -1000, i)
+        for i = 1, 13 do
+            makeGuy(i * 200, -1000, i)
         end
 
 
-        for i = 1, 14 do
+        for i = 1, 34 do
             makeSnappyElastic(i * 100, -1500)
         end
 
@@ -1236,25 +1175,19 @@ function love.update(dt)
                 local f = fixtures[k]
 
                 if f:getUserData() == 'connector' then
-                    -- first make sure we are not yet connected
-                    --print('jo!', k)
+               
                     local found = false
 
 
                     for j = 1, #connectors do
-                        --print('check', )
+    
 
                         if connectors[j].to and connectors[j].to == f then
-                            --print('NEW FIX!!')
+                      
                             found = true
-                            -- print('connected already', j, k)
+                 
                         end
                     end
-
-
-
-                   
-
 
                     if found == false then
                         local pos1 = getCentroidOfFixture(mj.jointBody, f)
@@ -1265,22 +1198,12 @@ function love.update(dt)
 
                             if theOtherBody ~= f:getBody() and connectors[j].to == nil then
                                 local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
-                            
-                                --local connectorPoints = {  theOtherBody:getWorldPoints(    connectors[j].at:getShape():getPoints() ) }
 
-                            --local pos2 = { getCenterOfPoints(connectorPoints) }     --{ theOtherBody:getPosition() }
-                          --  print(inspect(pos2))
-                            --print(inspect(pos2))
                             local a = pos1[1] - pos2[1]
                             local b = pos1[2] - pos2[2]
                             local d = math.sqrt(a * a + b * b)
 
-                            --print(d)
-                            --if connectors[j].at ~= f then
-                           
-                                --if done == false and theOtherBody ~= f:getBody() and connectors[j].to == nil then
-                                --print('SKIP THIS ONE')
-
+        
                                
 
                                 local isOnCooldown = false
@@ -1290,22 +1213,15 @@ function love.update(dt)
                                         --print('isOnCooldown', j)
                                     end
                                 end
-                                -- print(d)
+                     
                                 if d < 20 and not isOnCooldown then
-                                    --print(d)
-                                    -- if theOtherBody ~= mj.jointBody and connectors[j].to == nil then
-                                    --print('JO', d, j)
-
-
-                                    --local b = theOtherBody
+              
                                     connectors[j].to = f --mj.jointBody
                                     connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
                                             pos2[1],
                                             pos2[2], pos1[1], pos1[2])
-                                    print('connect', j, d, k)
-                                    -- done = true
-                                    --  print(j)
-                                    --end
+                                    --print('connect', j, d, k)
+                            
                                 end
                             end
                         end
