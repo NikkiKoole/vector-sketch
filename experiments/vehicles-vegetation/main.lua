@@ -324,8 +324,29 @@ function makeGuy(x, y, groupId)
     fixture:setUserData('torso')
 
 
-    makeAndAddConnector(torso, 0, -torsoHeight/2)
+    --makeAndAddConnector(torso, 0, -torsoHeight / 2)
 
+
+
+    local headHeight = 100
+    local headWidth = 50
+    -- HEAD -- inlcuding distance joint
+
+    local head = love.physics.newBody(world, x, y - torsoHeight, "dynamic")
+    local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
+    -- local headShape = makeRectPoly2(headWidth, headHeight, 0, headHeight / 2)
+    local fixture = love.physics.newFixture(head, headShape, .5)
+    fixture:setUserData('head')
+
+    local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
+
+    local joint = love.physics.newDistanceJoint(torso, head, bx, by, head:getX(),
+            head:getY(), true)
+
+    joint:setLength(1)
+    joint:setFrequency(12)
+    joint:setDampingRatio(0)
+    --local joint = love.physics.newRevoluteJoint(torso, head, head:getX(), head:getY(), false)
 
     -- UPPER LEFT LEG
     local upleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
@@ -414,15 +435,13 @@ function makeGuy(x, y, groupId)
     return torso
 end
 
-
-function makeAndAddConnector(parent, x,y)
-local bandshape2 = makeRectPoly2(10, 10, x, y)
+function makeAndAddConnector(parent, x, y)
+    local bandshape2 = makeRectPoly2(10, 10, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
     fixture:setUserData('connector')
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 end
-
 
 function makeSnappyElastic(x, y)
     -- ceiling
@@ -437,10 +456,8 @@ function makeSnappyElastic(x, y)
     local bandshape = makeRectPoly2(bandW, bandH, 0, bandH / 2)
     local fixture = love.physics.newFixture(band, bandshape, 1)
 
-    makeAndAddConnector(band, 0,0)
-    makeAndAddConnector(band, 0,bandH)
-
-
+    makeAndAddConnector(band, 0, 0)
+    makeAndAddConnector(band, 0, bandH)
 end
 
 function makeChain(x, y, amt)
@@ -485,7 +502,6 @@ function makeChain(x, y, amt)
     joint:setUpperLimit(math.pi / 32)
     joint:setLimitsEnabled(true)
     table.insert(objects.blocks, weight)
-  
 end
 
 function makeBall(x, y, radius)
@@ -505,7 +521,7 @@ function makeBlock(x, y, size)
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
     ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
-    ballRadius * 3 + love.math.random() * 20, 5))
+            ballRadius * 3 + love.math.random() * 20, 5))
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData("ball")
@@ -571,7 +587,7 @@ function makeSeeSaw(x, y)
     local plank = love.physics.newBody(world, x, y, "dynamic")
     local shape = love.physics.newRectangleShape(1800, 60)
     local fixture = love.physics.newFixture(plank, shape, 1)
-    
+
     local shape1 = makeRectPoly2(20, 150, -900, 0)
     local fixture = love.physics.newFixture(plank, shape1, 1)
 
@@ -598,15 +614,8 @@ function makeVehicle(x, y)
 
     fixture:setUserData("carbody")
 
-
-     makeAndAddConnector(carbody, carBodyWidth / 2 + 25, carBodyHeight/2 -15)
-
-
-
-
-makeAndAddConnector(carbody, -carBodyWidth / 2 - 25, carBodyHeight/2 -15)
-
-
+    makeAndAddConnector(carbody, carBodyWidth / 2 + 25, carBodyHeight / 2 - 15)
+    makeAndAddConnector(carbody, -carBodyWidth / 2 - 25, carBodyHeight / 2 - 15)
 
     if false then
         local xOffset = -100
@@ -640,7 +649,6 @@ makeAndAddConnector(carbody, -carBodyWidth / 2 - 25, carBodyHeight/2 -15)
         carsensor.fixture = love.physics.newFixture(carbody, carsensor.shape, .5)
         carsensor.fixture:setSensor(true)
         carsensor.fixture:setUserData("carGroundSensor")
-
     end
 
     if true then
@@ -776,7 +784,7 @@ function startExample(number)
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 10 do
+        for i = 1, 1 do
             local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
             local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
             local fixture = love.physics.newFixture(body, shape, 2)
@@ -784,7 +792,7 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 10 do
+        for i = 1, 1 do
             ballRadius = 10 --love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
@@ -796,7 +804,7 @@ function startExample(number)
 
 
         vehiclePedalConnection = {}
-        for i = 1, 13 do
+        for i = 1, 1 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
         for i = 1, 13 do
@@ -804,7 +812,7 @@ function startExample(number)
         end
 
 
-        for i = 1, 34 do
+        for i = 1, 3 do
             makeSnappyElastic(i * 100, -1500)
         end
 
@@ -1093,7 +1101,7 @@ function love.draw()
 
 
         for i = 1, #connectors do
-       --     love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
+            --     love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
         end
     end
 
@@ -1155,8 +1163,8 @@ function rotateToHorizontal(body, desiredAngle, divider)
     end
 end
 
-local function getCentroidOfFixture(body, fixture) 
-    return {getCenterOfPoints( {body:getWorldPoints(fixture:getShape():getPoints())})}
+local function getCentroidOfFixture(body, fixture)
+    return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
 
 function love.update(dt)
@@ -1175,17 +1183,12 @@ function love.update(dt)
                 local f = fixtures[k]
 
                 if f:getUserData() == 'connector' then
-               
                     local found = false
 
 
                     for j = 1, #connectors do
-    
-
                         if connectors[j].to and connectors[j].to == f then
-                      
                             found = true
-                 
                         end
                     end
 
@@ -1199,12 +1202,12 @@ function love.update(dt)
                             if theOtherBody ~= f:getBody() and connectors[j].to == nil then
                                 local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
 
-                            local a = pos1[1] - pos2[1]
-                            local b = pos1[2] - pos2[2]
-                            local d = math.sqrt(a * a + b * b)
+                                local a = pos1[1] - pos2[1]
+                                local b = pos1[2] - pos2[2]
+                                local d = math.sqrt(a * a + b * b)
 
-        
-                               
+
+
 
                                 local isOnCooldown = false
                                 for p = 1, #connectorCooldownList do
@@ -1213,15 +1216,13 @@ function love.update(dt)
                                         --print('isOnCooldown', j)
                                     end
                                 end
-                     
+
                                 if d < 20 and not isOnCooldown then
-              
                                     connectors[j].to = f --mj.jointBody
                                     connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
                                             pos2[1],
                                             pos2[2], pos1[1], pos1[2])
                                     --print('connect', j, d, k)
-                            
                                 end
                             end
                         end
@@ -1295,6 +1296,26 @@ function love.update(dt)
 
                 rotateToHorizontal(body, 0, 20)
             end
+
+            if false then
+                if fixture:getUserData() == 'head' then
+                    local a = body:getAngle()
+
+                    if true then
+                        if a > (2 * math.pi) then
+                            a = a - (2 * math.pi)
+                            body:setAngle(a)
+                        end
+                        if a < -(2 * math.pi) then
+                            a = a + (2 * math.pi)
+                            body:setAngle(a)
+                        end
+                    end
+
+
+                    rotateToHorizontal(body, math.pi, 60)
+                end
+            end
         end
     end
 
@@ -1318,16 +1339,14 @@ function love.update(dt)
                 end
             end
             if found then
-              --  print(l)
+                --  print(l)
             end
 
             local b1, b2 = connectors[i].joint:getBodies()
-           
+
             local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
             if l > breakForce and found then
-                
-
-               -- print(b1:getMass(), b2:getMass())
+                -- print(b1:getMass(), b2:getMass())
                 connectors[i].joint:destroy()
                 connectors[i].joint = nil
                 --connectors[i].to:getBody():setPosition(connectors[i].to:getBody():getX(),
