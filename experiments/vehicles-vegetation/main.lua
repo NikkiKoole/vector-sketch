@@ -315,6 +315,8 @@ function makeGuy(x, y, groupId)
     local llWidth = 10
     local llHeight = ulHeight
 
+    local feetLength = 80
+    local feetThick = 20
 
     -- TORSO
     local torso = love.physics.newBody(world, x, y, "dynamic")
@@ -332,12 +334,14 @@ function makeGuy(x, y, groupId)
     local headWidth = 50
     -- HEAD -- inlcuding distance joint
 
-    local head = love.physics.newBody(world, x, y - torsoHeight, "dynamic")
+    local head = love.physics.newBody(world, x, y - torsoHeight/2, "dynamic")
     local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
     -- local headShape = makeRectPoly2(headWidth, headHeight, 0, headHeight / 2)
-    local fixture = love.physics.newFixture(head, headShape, .5)
+    local fixture = love.physics.newFixture(head, headShape, .1)
+    fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData('head')
 
+    if false then
     local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
 
     local joint = love.physics.newDistanceJoint(torso, head, bx, by, head:getX(),
@@ -346,7 +350,77 @@ function makeGuy(x, y, groupId)
     joint:setLength(1)
     joint:setFrequency(12)
     joint:setDampingRatio(0)
-    --local joint = love.physics.newRevoluteJoint(torso, head, head:getX(), head:getY(), false)
+    end
+    head:setAngle(math.pi)
+    local joint = love.physics.newRevoluteJoint(torso, head, head:getX(), head:getY(), false)
+    
+    joint:setLowerLimit(-math.pi/16)
+  -- 
+  joint:setUpperLimit( math.pi/16)
+    joint:setLimitsEnabled(true)
+   
+
+    -- UPPER LEFT ARM 
+
+    if true then
+    local uparm = love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2, "dynamic")
+   -- local uparmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
+    local uparmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
+    local fixture = love.physics.newFixture(uparm, uparmShape, 1)
+    fixture:setFilterData(1, 65535, -1 * groupId)
+    local bx, by = uparm:getWorldPoint(0, 0)
+    local joint = love.physics.newRevoluteJoint(torso, uparm, bx, by, true)
+    joint:setLowerLimit(0)
+    joint:setUpperLimit(math.pi )
+    joint:setLimitsEnabled(true)
+
+
+
+    local lowarm = love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")
+   --local lowarmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
+    local lowarmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
+    local fixture = love.physics.newFixture(lowarm, lowarmShape, 1)
+    fixture:setFilterData(1, 65535, -1 * groupId)
+    local bx, by = lowarm:getWorldPoint(0, 0)
+    local joint = love.physics.newRevoluteJoint(uparm, lowarm, bx, by, true)
+    joint:setLowerLimit(0)
+    joint:setUpperLimit(math.pi )
+    joint:setLimitsEnabled(true)
+
+
+    makeAndAddConnector(lowarm, 0, ulHeight)
+    end
+
+
+
+    if true then
+        local uparm = love.physics.newBody(world, x + torsoWidth / 2 + ulWidth/2, y - torsoHeight / 2, "dynamic")
+       -- local uparmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
+        local uparmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
+        local fixture = love.physics.newFixture(uparm, uparmShape, 1)
+        fixture:setFilterData(1, 65535, -1 * groupId)
+        local bx, by = uparm:getWorldPoint(0, 0)
+        local joint = love.physics.newRevoluteJoint(torso, uparm, bx, by, true)
+        joint:setLowerLimit(-math.pi)
+        joint:setUpperLimit(0 )
+        joint:setLimitsEnabled(true)
+    
+    
+    
+        local lowarm = love.physics.newBody(world, x + torsoWidth / 2 + ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")
+       --local lowarmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
+        local lowarmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
+        local fixture = love.physics.newFixture(lowarm, lowarmShape, 1)
+        fixture:setFilterData(1, 65535, -1 * groupId)
+        local bx, by = lowarm:getWorldPoint(0, 0)
+        local joint = love.physics.newRevoluteJoint(uparm, lowarm, bx, by, true)
+        joint:setLowerLimit(-math.pi)
+        joint:setUpperLimit(0 )
+        joint:setLimitsEnabled(true)
+        makeAndAddConnector(lowarm, 0, ulHeight)
+        end
+    
+
 
     -- UPPER LEFT LEG
     local upleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
@@ -363,7 +437,8 @@ function makeGuy(x, y, groupId)
 
     -- LOWER LEFT LEG
     local lowleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
-    local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2)
+    --local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2)
+    local lllegShape = love.physics.newPolygonShape(capsuleXY(llWidth, llHeight,8, 0, llHeight / 2))
     local fixture = love.physics.newFixture(lowleg, lllegShape, 1)
     fixture:setUserData('legpart')
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -378,10 +453,12 @@ function makeGuy(x, y, groupId)
 
     local foot = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight,
             "dynamic")
-    local footShape = makeRectPoly(10, 50, -5, 0)
+    local footShape = makeRectPoly(feetThick, feetLength, -feetThick/2, 0)
+   -- local footShape = makeRectPoly2(feetThick, feetLength, 0, feetLength/2)
+    --local footShape = love.physics.newPolygonShape(capsuleXY(feetThick, feetLength,8, 0, feetLength/2))
     local fixture = love.physics.newFixture(foot, footShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setFriction(1)
+   -- fixture:setFriction(1)
     foot:setAngle(math.pi / 2)
 
 
@@ -424,10 +501,10 @@ function makeGuy(x, y, groupId)
 
     local foot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     foot:setAngle( -math.pi / 2)
-    local footShape = makeRectPoly(10, 50, -5, 0)
+    local footShape = makeRectPoly(feetThick, feetLength, -feetThick/2, 0)
     local fixture = love.physics.newFixture(foot, footShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setFriction(1)
+  --  fixture:setFriction(1)
 
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
     limitsAround(0, math.pi / 8, joint)
@@ -807,7 +884,7 @@ function startExample(number)
         for i = 1, 1 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
-        for i = 1, 13 do
+        for i = 1, 30 do
             makeGuy(i * 200, -1000, i)
         end
 
@@ -1294,7 +1371,7 @@ function love.update(dt)
                 end
 
 
-                rotateToHorizontal(body, 0, 20)
+                rotateToHorizontal(body, 0, 50)
             end
 
             if false then
