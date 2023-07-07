@@ -1357,8 +1357,12 @@ function love.update(dt)
             end
 
             if fixture:getUserData() == 'legpart' then
+              
+
+
                 local a = body:getAngle()
 
+               
                 if true then
                     if a > (2 * math.pi) then
                         a = a - (2 * math.pi)
@@ -1371,7 +1375,8 @@ function love.update(dt)
                 end
 
 
-                rotateToHorizontal(body, 0, 50)
+                rotateToHorizontal(body, 0, 30)
+            
             end
 
             if false then
