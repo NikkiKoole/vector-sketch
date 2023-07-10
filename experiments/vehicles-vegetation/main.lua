@@ -34,6 +34,17 @@ local motorSpeed = 0
 local motorTorque = 1500
 local carIsTouching = 0
 
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType= bodyType,
+       
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
 function npoly(radius, sides)
     local angle = 0
     local angle_increment = (math.pi * 2) / sides
@@ -115,19 +126,20 @@ function contactShouldBeDisabled(a, b, contact)
         local mj = pointerJoints[i]
         if (mj.jointBody) then
             --print(fixtureB:getUserData())
-            if (bb == mj.jointBody and fixtureA:getUserData() == 'ground') then
+            if (bb == mj.jointBody and fixtureA:getUserData() and fixtureA:getUserData().bodyType == 'ground') then
                 result = true
             end
         end
     end
     -- this disables contact between  balls and the ground if ballcenterY < collisionY (ball below ground)
-    if fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'ball' then
+    if fixtureA:getUserData() and fixtureB:getUserData() then
+    if fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'ball' then
         local x1, y1 = contact:getPositions()
         if y1 < bb:getY() then
             result = true
         end
     end
-
+end
     --return result
 
     return false
@@ -137,8 +149,11 @@ function isContactBetweenGroundAndCarGroundSensor(contact)
     local fixtureA, fixtureB = contact:getFixtures()
     --print(fixtureA:getUserData(), fixtureB:getUserData())
     --print(fixtureA:isSensor(), fixtureB:isSensor())
-    return (fixtureA:getUserData() == 'ground' and fixtureB:getUserData() == 'carGroundSensor') or
-        (fixtureB:getUserData() == 'ground' and fixtureA:getUserData() == 'carGroundSensor')
+    if fixtureA:getUserData() and fixtureB:getUserData() then
+    return (fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'carGroundSensor') or
+        (fixtureB:getUserData().bodyType == 'ground' and fixtureA:getUserData().bodyType == 'carGroundSensor')
+    else
+        return false end
 end
 
 function beginContact(a, b, contact)
@@ -323,7 +338,7 @@ function makeGuy(x, y, groupId)
     local torsoShape = makeTrapeziumPoly(torsoWidth, torsoWidth * 1.2, torsoHeight, 0, 0)
     local fixture = love.physics.newFixture(torso, torsoShape, .5)
     fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setUserData('torso')
+    fixture:setUserData(makeUserData('torso'))
 
 
     --makeAndAddConnector(torso, 0, -torsoHeight / 2)
@@ -339,7 +354,7 @@ function makeGuy(x, y, groupId)
     -- local headShape = makeRectPoly2(headWidth, headHeight, 0, headHeight / 2)
     local fixture = love.physics.newFixture(head, headShape, .1)
     fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setUserData('head')
+    fixture:setUserData(makeUserData('head'))
 
     if false then
     local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
@@ -426,7 +441,7 @@ function makeGuy(x, y, groupId)
     local upleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local uplegShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
     local fixture = love.physics.newFixture(upleg, uplegShape, 1)
-    fixture:setUserData('legpart')
+    fixture:setUserData(makeUserData('legpart'))
     fixture:setFilterData(1, 65535, -1 * groupId)
 
     local joint = love.physics.newRevoluteJoint(torso, upleg, upleg:getX(), upleg:getY(), false)
@@ -440,7 +455,7 @@ function makeGuy(x, y, groupId)
     --local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2)
     local lllegShape = love.physics.newPolygonShape(capsuleXY(llWidth, llHeight,8, 0, llHeight / 2))
     local fixture = love.physics.newFixture(lowleg, lllegShape, 1)
-    fixture:setUserData('legpart')
+    fixture:setUserData(makeUserData('legpart'))
     fixture:setFilterData(1, 65535, -1 * groupId)
 
     local joint = love.physics.newRevoluteJoint(upleg, lowleg, lowleg:getX(), lowleg:getY(), false)
@@ -474,7 +489,7 @@ function makeGuy(x, y, groupId)
     local upleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2, "dynamic")
     local uplegShape = makeRectPoly(ulWidth, ulHeight, -ulWidth / 2, 0)
     local fixture = love.physics.newFixture(upleg, uplegShape, 1)
-    fixture:setUserData('legpart')
+    fixture:setUserData(makeUserData('legpart'))
     fixture:setFilterData(1, 65535, -1 * groupId)
     local joint = love.physics.newRevoluteJoint(torso, upleg, upleg:getX(), upleg:getY(), false)
 
@@ -489,7 +504,7 @@ function makeGuy(x, y, groupId)
     local lowleg = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
     local lowlegShape = makeRectPoly(llWidth, llHeight, -llWidth / 2, 0)
     local fixture = love.physics.newFixture(lowleg, lowlegShape, 1)
-    fixture:setUserData('legpart')
+    fixture:setUserData(makeUserData('legpart'))
     fixture:setFilterData(1, 65535, -1 * groupId)
     local joint = love.physics.newRevoluteJoint(upleg, lowleg, lowleg:getX(), lowleg:getY(), false)
     joint:setLowerLimit(0)
@@ -515,7 +530,7 @@ end
 function makeAndAddConnector(parent, x, y)
     local bandshape2 = makeRectPoly2(10, 10, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
-    fixture:setUserData('connector')
+    fixture:setUserData(makeUserData('connector'))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 end
@@ -588,7 +603,7 @@ function makeBall(x, y, radius)
     ball.shape = love.physics.newCircleShape(ballRadius)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
-    ball.fixture:setUserData("ball")
+    ball.fixture:setUserData(makeUserData("ball"))
     ball.fixture:setFriction(.5)
     return ball
 end
@@ -601,7 +616,7 @@ function makeBlock(x, y, size)
             ballRadius * 3 + love.math.random() * 20, 5))
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
-    ball.fixture:setUserData("ball")
+    ball.fixture:setUserData(makeUserData("ball"))
     ball.fixture:setFriction(.5)
     return ball
 end
@@ -612,7 +627,7 @@ function makeCarousell(x, y, width, height, angularVelocity)
     carousel.shape = love.physics.newRectangleShape(width, height)
     carousel.fixture = love.physics.newFixture(carousel.body, carousel.shape, 1)
     carousel.body:setAngularVelocity(angularVelocity)
-    carousel.fixture:setUserData("caroussel")
+    carousel.fixture:setUserData(makeUserData("caroussel"))
     return carousel
 end
 
@@ -626,7 +641,7 @@ function makeBorderChain(width, height, margin)
             margin, height - margin)
 
     border.fixture = love.physics.newFixture(border.body, border.shape)
-    border.fixture:setUserData("border")
+    border.fixture:setUserData(makeUserData("border"))
     border.fixture:setFriction(.5)
     return border
 end
@@ -681,6 +696,9 @@ function makeSeeSaw(x, y)
     joint:setLimitsEnabled(true)
 end
 
+
+
+
 function makeVehicle(x, y)
     local carBodyHeight = 150
     local carBodyWidth  = 400
@@ -689,7 +707,8 @@ function makeVehicle(x, y)
     local shape         = makeCarShape(carBodyWidth, carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
     local fixture       = love.physics.newFixture(carbody, shape, .5)
 
-    fixture:setUserData("carbody")
+
+    fixture:setUserData(makeUserData("carbody"))
 
     makeAndAddConnector(carbody, carBodyWidth / 2 + 25, carBodyHeight / 2 - 15)
     makeAndAddConnector(carbody, -carBodyWidth / 2 - 25, carBodyHeight / 2 - 15)
@@ -725,7 +744,7 @@ function makeVehicle(x, y)
                 xOffset, polyLength)
         carsensor.fixture = love.physics.newFixture(carbody, carsensor.shape, .5)
         carsensor.fixture:setSensor(true)
-        carsensor.fixture:setUserData("carGroundSensor")
+        carsensor.fixture:setUserData(makeUserData("carGroundSensor"))
     end
 
     if true then
@@ -738,7 +757,7 @@ function makeVehicle(x, y)
                 xOffset, polyLength)
         carsensor.fixture = love.physics.newFixture(carbody, carsensor.shape, .5)
         carsensor.fixture:setSensor(true)
-        carsensor.fixture:setUserData("carGroundSensor")
+        carsensor.fixture:setUserData(makeUserData("carGroundSensor"))
     end
 
     local wheel1 = love.physics.newBody(world, x - (carBodyWidth / 3), y + carBodyHeight / 2 -
@@ -819,14 +838,14 @@ function startExample(number)
 
         objects.ground = makeChainGround()
 
-        objects.ground.fixture:setUserData("ground")
+        objects.ground.fixture:setUserData(makeUserData("ground"))
 
         if false then
             objects.ground = {}
             objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
             objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
             objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
-            objects.ground.fixture:setUserData("ground")
+            objects.ground.fixture:setUserData(makeUserData("ground"))
         end
         objects.ground.body:setTransform(width / 2, height - (height / 10), 0) --  <= here we se an anlgle to the ground!!
         objects.ground.fixture:setFriction(0.01)
@@ -844,13 +863,13 @@ function startExample(number)
         -- objects.border = makeBorderChain(width, height, margin)
 
         objects.ground = makeChainGround()
-        objects.ground.fixture:setUserData("ground")
+        objects.ground.fixture:setUserData(makeUserData("ground"))
         if true then
             objects.ground = {}
             objects.ground.body = love.physics.newBody(world, width / 2, -500, "static")
             objects.ground.shape = love.physics.newRectangleShape(width * 10, height / 4)
             objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
-            objects.ground.fixture:setUserData("ground")
+            objects.ground.fixture:setUserData(makeUserData("ground"))
             objects.ground.fixture:setFriction(1)
         end
 
@@ -1259,7 +1278,7 @@ function love.update(dt)
             for k = 1, #fixtures do
                 local f = fixtures[k]
 
-                if f:getUserData() == 'connector' then
+                if f:getUserData().bodyType == 'connector' then
                     local found = false
 
 
@@ -1306,7 +1325,7 @@ function love.update(dt)
                     end
                 end
 
-                if f:getUserData() == 'carbody' then
+                if f:getUserData().bodyType == 'carbody' then
                     local body = mj.jointBody
                     if body then
                         -- i dont have a cartouching per car, its global so wont work for all
@@ -1315,7 +1334,7 @@ function love.update(dt)
                         --end
                     end
                 end
-                if f:getUserData() == 'torso' then
+                if f:getUserData().bodyType == 'torso' then
                     --print('jo found a torso to rotate!')
                     local body = mj.jointBody
                     if body then
@@ -1337,7 +1356,8 @@ function love.update(dt)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
-            if fixture:getUserData() == 'torso' then
+            if fixture:getUserData() then
+           if fixture:getUserData().bodyType == 'torso' then
                 local a = body:getAngle()
 
                 if true then
@@ -1356,7 +1376,7 @@ function love.update(dt)
                 rotateToHorizontal(body, 0, 15)
             end
 
-            if fixture:getUserData() == 'legpart' then
+            if fixture:getUserData().bodyType == 'legpart' then
               
 
 
@@ -1380,7 +1400,7 @@ function love.update(dt)
             end
 
             if false then
-                if fixture:getUserData() == 'head' then
+                if fixture:getUserData().bodyType == 'head' then
                     local a = body:getAngle()
 
                     if true then
@@ -1398,7 +1418,8 @@ function love.update(dt)
                     rotateToHorizontal(body, math.pi, 60)
                 end
             end
-        end
+        end 
+    end
     end
 
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
