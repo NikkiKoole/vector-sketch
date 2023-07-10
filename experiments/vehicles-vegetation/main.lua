@@ -1277,7 +1277,7 @@ function love.update(dt)
             local fixtures = mj.jointBody:getFixtures();
             for k = 1, #fixtures do
                 local f = fixtures[k]
-
+                if f:getUserData() and f:getUserData().bodyType then
                 if f:getUserData().bodyType == 'connector' then
                     local found = false
 
@@ -1340,7 +1340,7 @@ function love.update(dt)
                     if body then
                         rotateToHorizontal(body, 0, 10)
                     end
-                end
+                end end
             end
         end
     end
@@ -1370,19 +1370,11 @@ function love.update(dt)
                         body:setAngle(a)
                     end
                 end
-
-
-
                 rotateToHorizontal(body, 0, 15)
             end
 
-            if fixture:getUserData().bodyType == 'legpart' then
-              
-
-
+            if  fixture:getUserData().bodyType == 'legpart' then
                 local a = body:getAngle()
-
-               
                 if true then
                     if a > (2 * math.pi) then
                         a = a - (2 * math.pi)
@@ -1393,10 +1385,7 @@ function love.update(dt)
                         body:setAngle(a)
                     end
                 end
-
-
                 rotateToHorizontal(body, 0, 30)
-            
             end
 
             if false then
@@ -1448,6 +1437,7 @@ function love.update(dt)
             local b1, b2 = connectors[i].joint:getBodies()
 
             local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
+            --print(connectors[i].to:getUserData().bodyType, connectors[i].at:getUserData().bodyType)
             if l > breakForce and found then
                 -- print(b1:getMass(), b2:getMass())
                 connectors[i].joint:destroy()
