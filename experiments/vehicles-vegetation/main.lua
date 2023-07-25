@@ -390,6 +390,30 @@ function makeGuy(x, y, groupId)
     joint:setLimitsEnabled(true)
 
 
+        -- this works but I only want it (the freq and damping) to be 
+    local stretchInbetween =   love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")  
+    local stretchShape = love.physics.newCircleShape(5)
+    local fixture = love.physics.newFixture(stretchInbetween, stretchShape, 1)
+    fixture:setFilterData(1, 65535, -1 * groupId)
+    local bx, by = stretchInbetween:getWorldPoint(0, 0)
+    local bx2, by2 = uparm:getWorldPoint(0, 0)
+    
+        local stretchy = false
+
+        -- so i probably want to enable this joint with the stretch behaviour when you are dragging the attached hand (and only then)
+        if stretchy then
+             local joint = love.physics.newDistanceJoint(uparm, stretchInbetween, bx, by, bx, by, false)
+    joint:setDampingRatio(1)
+    joint:setFrequency(20)
+   
+    --joint:setLength(0)
+    --joint:setDampingRatio(0)
+    --joint:setFrequency(60)
+
+        else
+    local joint = love.physics.newRevoluteJoint(uparm, stretchInbetween, bx, by, true)
+        end
+   
 
     local lowarm = love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")
    --local lowarmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
@@ -397,7 +421,7 @@ function makeGuy(x, y, groupId)
     local fixture = love.physics.newFixture(lowarm, lowarmShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     local bx, by = lowarm:getWorldPoint(0, 0)
-    local joint = love.physics.newRevoluteJoint(uparm, lowarm, bx, by, true)
+    local joint = love.physics.newRevoluteJoint(stretchInbetween, lowarm, bx, by, true)
     joint:setLowerLimit(0)
     joint:setUpperLimit(math.pi )
     joint:setLimitsEnabled(true)
