@@ -398,20 +398,16 @@ function makeGuy(x, y, groupId)
     local bx, by = stretchInbetween:getWorldPoint(0, 0)
     local bx2, by2 = uparm:getWorldPoint(0, 0)
     
-        local stretchy = false
+        local stretchy = true
 
-        -- so i probably want to enable this joint with the stretch behaviour when you are dragging the attached hand (and only then)
+        -- so i probably want to enable this joint with the stretch behaviour when you are dragging the attached hand (and only then) and destroyed on release
         if stretchy then
-             local joint = love.physics.newDistanceJoint(uparm, stretchInbetween, bx, by, bx, by, false)
-    joint:setDampingRatio(1)
-    joint:setFrequency(20)
-   
-    --joint:setLength(0)
-    --joint:setDampingRatio(0)
-    --joint:setFrequency(60)
-
+        local joint = love.physics.newDistanceJoint(uparm, stretchInbetween, bx, by, bx, by, false)
+        joint:setLength(0)
+        joint:setDampingRatio(.1)
+        joint:setFrequency(20)
         else
-    local joint = love.physics.newRevoluteJoint(uparm, stretchInbetween, bx, by, true)
+        local joint = love.physics.newRevoluteJoint(uparm, stretchInbetween, bx, by, true)
         end
    
 

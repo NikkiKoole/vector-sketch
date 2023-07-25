@@ -7,10 +7,17 @@ end
 
 function love.load()
     success = love.window.setMode( 1024, 1024 , {vsync=false})
-    sprites = {"Evening.png", "Morning.png", "Sunrise.png", "Sunset.png"}
+    sprites = {"Evening.png", "Morning.png", "Sunrise.png", "Sunset.png", "bigger.png"}
     images = {}
 
-testsize = 100
+    testsize = 100
+
+    --https://love2d.org/wiki/love.graphics.newSpriteBatch
+    local Image = love.graphics.newImage( 'atlas.png' )
+   local batch = love.graphics.newSpriteBatch(Image)
+
+    local q1 = love.graphics.newQuad
+
 
     for i =1, # sprites do
     images[i] = love.graphics.newImage(sprites[i])
