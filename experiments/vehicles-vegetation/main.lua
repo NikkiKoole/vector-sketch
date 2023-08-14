@@ -345,11 +345,30 @@ function makeGuy(x, y, groupId)
 
 
 
+    -- NECK
+    local neckThick = 20
+    local neckLength = 30
+    
+    local neck = love.physics.newBody(world, x, y - torsoHeight/2, "dynamic")
+    local neckShape =  makeRectPoly2(neckThick, neckLength, 0, neckLength/2)
+    local fixture = love.physics.newFixture(neck, neckShape, 1)
+    fixture:setFilterData(1, 65535, -1 * groupId)
+    fixture:setUserData(makeUserData('neck'))
+    neck:setAngle(math.pi)
+    local joint = love.physics.newRevoluteJoint(torso, neck, neck:getX(), neck:getY(), false)
+    joint:setLowerLimit(-math.pi/16)
+    -- 
+    joint:setUpperLimit( math.pi/16)
+      joint:setLimitsEnabled(true)
+
+
+
+
     local headHeight = 100
     local headWidth = 50
     -- HEAD -- inlcuding distance joint
 
-    local head = love.physics.newBody(world, x, y - torsoHeight/2, "dynamic")
+    local head = love.physics.newBody(world, x, y - torsoHeight/2 - neckLength, "dynamic")
     local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
     -- local headShape = makeRectPoly2(headWidth, headHeight, 0, headHeight / 2)
     local fixture = love.physics.newFixture(head, headShape, .1)
@@ -359,7 +378,7 @@ function makeGuy(x, y, groupId)
     if false then
     local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
 
-    local joint = love.physics.newDistanceJoint(torso, head, bx, by, head:getX(),
+    local joint = love.physics.newDistanceJoint(neck, head, bx, by, head:getX(),
             head:getY(), true)
 
     joint:setLength(1)
@@ -367,7 +386,7 @@ function makeGuy(x, y, groupId)
     joint:setDampingRatio(0)
     end
     head:setAngle(math.pi)
-    local joint = love.physics.newRevoluteJoint(torso, head, head:getX(), head:getY(), false)
+    local joint = love.physics.newRevoluteJoint(neck, head, head:getX(), head:getY(), false)
     
     joint:setLowerLimit(-math.pi/16)
   -- 
@@ -383,6 +402,7 @@ function makeGuy(x, y, groupId)
     local uparmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
     local fixture = love.physics.newFixture(uparm, uparmShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
+    fixture:setUserData(makeUserData('armpart'))
     local bx, by = uparm:getWorldPoint(0, 0)
     local joint = love.physics.newRevoluteJoint(torso, uparm, bx, by, true)
     joint:setLowerLimit(0)
@@ -398,14 +418,14 @@ function makeGuy(x, y, groupId)
     local bx, by = stretchInbetween:getWorldPoint(0, 0)
     local bx2, by2 = uparm:getWorldPoint(0, 0)
     
-        local stretchy = true
+        local stretchy = false
 
         -- so i probably want to enable this joint with the stretch behaviour when you are dragging the attached hand (and only then) and destroyed on release
         if stretchy then
         local joint = love.physics.newDistanceJoint(uparm, stretchInbetween, bx, by, bx, by, false)
         joint:setLength(0)
-        joint:setDampingRatio(.1)
-        joint:setFrequency(20)
+        joint:setDampingRatio(.8)
+        joint:setFrequency(30)
         else
         local joint = love.physics.newRevoluteJoint(uparm, stretchInbetween, bx, by, true)
         end
@@ -415,6 +435,7 @@ function makeGuy(x, y, groupId)
    --local lowarmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
     local lowarmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
     local fixture = love.physics.newFixture(lowarm, lowarmShape, 1)
+    fixture:setUserData(makeUserData('armpart'))
     fixture:setFilterData(1, 65535, -1 * groupId)
     local bx, by = lowarm:getWorldPoint(0, 0)
     local joint = love.physics.newRevoluteJoint(stretchInbetween, lowarm, bx, by, true)
@@ -498,7 +519,7 @@ function makeGuy(x, y, groupId)
 
 
 
-    makeAndAddConnector(foot, 0, 0)
+    --makeAndAddConnector(foot, 0, 0)
 
 
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
@@ -900,7 +921,7 @@ function startExample(number)
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
-        for i = 1, 1 do
+        for i = 1, 10 do
             local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
             local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
             local fixture = love.physics.newFixture(body, shape, 2)
@@ -1393,6 +1414,38 @@ function love.update(dt)
                 rotateToHorizontal(body, 0, 15)
             end
 
+            if fixture:getUserData().bodyType == 'neck' then
+                local a = body:getAngle()
+
+                if true then
+                    if a > (2 * math.pi) then
+                        a = a - (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                    if a < -(2 * math.pi) then
+                        a = a + (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                end
+                rotateToHorizontal(body, math.pi, 25)
+            end
+
+            if fixture:getUserData().bodyType == 'head' then
+                local a = body:getAngle()
+
+                if true then
+                    if a > (2 * math.pi) then
+                        a = a - (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                    if a < -(2 * math.pi) then
+                        a = a + (2 * math.pi)
+                        body:setAngle(a)
+                    end
+                end
+                rotateToHorizontal(body, math.pi, 15)
+            end
+
             if  fixture:getUserData().bodyType == 'legpart' then
                 local a = body:getAngle()
                 if true then
@@ -1407,6 +1460,8 @@ function love.update(dt)
                 end
                 rotateToHorizontal(body, 0, 30)
             end
+
+         
 
             if false then
                 if fixture:getUserData().bodyType == 'head' then
@@ -1424,7 +1479,7 @@ function love.update(dt)
                     end
 
 
-                    rotateToHorizontal(body, math.pi, 60)
+                    rotateToHorizontal(body, math.pi, 15)
                 end
             end
         end 
