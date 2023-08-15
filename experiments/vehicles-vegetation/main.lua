@@ -313,6 +313,84 @@ function makeUShape(w, h, thickness)
         )
 end
 
+
+
+
+
+function addLimb(x,y, root,  upW, upH,  groupId, name, limits) 
+    -- a limb has 3 parts upper, lower and extremity 
+    -- upperleg/lowerleg/foot or upperarm/lowerarm/hand
+
+   local upLowerLimit = limits[1] 
+   local upUpperLimit = limits[2] 
+   local lowLowerLimit = limits[3] 
+   local lowUpperLimit = limits[4] 
+
+
+    local uparm = love.physics.newBody(world, x , y, "dynamic")
+    uparm:setAngularDamping( 1 )
+    local upShape = love.physics.newPolygonShape(capsuleXY(upW, upH,4, 0, upH / 2 ))
+    local upFix = love.physics.newFixture(uparm, upShape, 1)
+    upFix:setFilterData(1, 65535, -1 * groupId)
+    upFix:setUserData(makeUserData(name))
+
+    local bx, by = uparm:getWorldPoint(0, 0)
+    local joint = love.physics.newRevoluteJoint(root, uparm, bx, by, true)
+    joint:setLowerLimit(upLowerLimit)
+    joint:setUpperLimit(upUpperLimit)
+    joint:setLimitsEnabled(true)
+
+
+    local stretchy = true
+    local stretcher = nil 
+
+    
+
+    local lowarm = love.physics.newBody(world, x , y + upH + 6, "dynamic")
+    lowarm:setAngularDamping( 1 )
+    local lowShape = love.physics.newPolygonShape(capsuleXY(upW, upH,4, 0, upH / 2 ))
+    local lowFix = love.physics.newFixture(lowarm, lowShape, 1)
+    lowFix:setFilterData(1, 65535, -1 * groupId)
+    lowFix:setUserData(makeUserData(name))
+
+
+    if stretchy then
+        stretcher = love.physics.newBody(world, x, y + upH + 6, "dynamic")  
+        stretcher:setAngularDamping( 1 )
+        local stretchShape = love.physics.newCircleShape(6)
+        local fixture = love.physics.newFixture(stretcher, stretchShape, 3)
+        fixture:setFilterData(1, 65535, -1 * groupId)
+       --fixture:setFriction(1)
+        local bx, by = stretcher:getWorldPoint(0, 0)
+        local bx2, by2 = lowarm:getWorldPoint(0, 0)
+        local joint = love.physics.newDistanceJoint(uparm, stretcher, bx, by, bx2, by2, false)
+        
+        joint:setLength(6)
+        joint:setDampingRatio(1)
+        joint:setFrequency(150)
+
+        if true then
+            --local joint = love.physics.newRevoluteJoint(uparm, stretcher, bx, by, false)
+          --  joint:setLowerLimit(lowLowerLimit)
+          --  joint:setUpperLimit(lowUpperLimit )
+          --  joint:setLimitsEnabled(true)
+        end
+    end
+
+
+
+    local attachLowArmTo = stretcher or uparm
+    local bx, by = lowarm:getWorldPoint(0, 0)
+    local joint = love.physics.newRevoluteJoint(attachLowArmTo, lowarm, bx, by, true)
+    joint:setLowerLimit(lowLowerLimit)
+    joint:setUpperLimit(lowUpperLimit )
+    joint:setLimitsEnabled(true)
+
+    makeAndAddConnector(lowarm, 0, upH)
+end
+
+
+
 function makeGuy(x, y, groupId)
     local function limitsAround(value, range, joint)
         local low = value - range
@@ -351,7 +429,7 @@ function makeGuy(x, y, groupId)
     
     local neck = love.physics.newBody(world, x, y - torsoHeight/2, "dynamic")
     local neckShape =  makeRectPoly2(neckThick, neckLength, 0, neckLength/2)
-    local fixture = love.physics.newFixture(neck, neckShape, 1)
+    local fixture = love.physics.newFixture(neck, neckShape, 10)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData(makeUserData('neck'))
     neck:setAngle(math.pi)
@@ -396,86 +474,20 @@ function makeGuy(x, y, groupId)
 
     -- UPPER LEFT ARM 
 
-    if true then
-    local uparm = love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2, "dynamic")
-   -- local uparmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
-    local uparmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
-    local fixture = love.physics.newFixture(uparm, uparmShape, 1)
-    fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setUserData(makeUserData('armpart'))
-    local bx, by = uparm:getWorldPoint(0, 0)
-    local joint = love.physics.newRevoluteJoint(torso, uparm, bx, by, true)
-    joint:setLowerLimit(0)
-    joint:setUpperLimit(math.pi )
-    joint:setLimitsEnabled(true)
+
+addLimb(x - torsoWidth / 2 - ulWidth/2, 
+y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId, 
+'armpart', {0,math.pi, 0,math.pi})
+
+addLimb(x + torsoWidth / 2 - ulWidth/2, 
+y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId, 
+'armpart', {-math.pi, 0,-math.pi, 0})
 
 
-        -- this works but I only want it (the freq and damping) to be 
-    local stretchInbetween =   love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")  
-    local stretchShape = love.physics.newCircleShape(5)
-    local fixture = love.physics.newFixture(stretchInbetween, stretchShape, 1)
-    fixture:setFilterData(1, 65535, -1 * groupId)
-    local bx, by = stretchInbetween:getWorldPoint(0, 0)
-    local bx2, by2 = uparm:getWorldPoint(0, 0)
-    
-        local stretchy = false
+  
 
-        -- so i probably want to enable this joint with the stretch behaviour when you are dragging the attached hand (and only then) and destroyed on release
-        if stretchy then
-        local joint = love.physics.newDistanceJoint(uparm, stretchInbetween, bx, by, bx, by, false)
-        joint:setLength(0)
-        joint:setDampingRatio(.8)
-        joint:setFrequency(30)
-        else
-        local joint = love.physics.newRevoluteJoint(uparm, stretchInbetween, bx, by, true)
-        end
+
    
-
-    local lowarm = love.physics.newBody(world, x - torsoWidth / 2 - ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")
-   --local lowarmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
-    local lowarmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
-    local fixture = love.physics.newFixture(lowarm, lowarmShape, 1)
-    fixture:setUserData(makeUserData('armpart'))
-    fixture:setFilterData(1, 65535, -1 * groupId)
-    local bx, by = lowarm:getWorldPoint(0, 0)
-    local joint = love.physics.newRevoluteJoint(stretchInbetween, lowarm, bx, by, true)
-    joint:setLowerLimit(0)
-    joint:setUpperLimit(math.pi )
-    joint:setLimitsEnabled(true)
-
-
-    makeAndAddConnector(lowarm, 0, ulHeight)
-    end
-
-
-
-    if true then
-        local uparm = love.physics.newBody(world, x + torsoWidth / 2 + ulWidth/2, y - torsoHeight / 2, "dynamic")
-       -- local uparmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
-        local uparmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
-        local fixture = love.physics.newFixture(uparm, uparmShape, 1)
-        fixture:setFilterData(1, 65535, -1 * groupId)
-        local bx, by = uparm:getWorldPoint(0, 0)
-        local joint = love.physics.newRevoluteJoint(torso, uparm, bx, by, true)
-        joint:setLowerLimit(-math.pi)
-        joint:setUpperLimit(0 )
-        joint:setLimitsEnabled(true)
-    
-    
-    
-        local lowarm = love.physics.newBody(world, x + torsoWidth / 2 + ulWidth/2, y - torsoHeight / 2 + ulHeight + 6, "dynamic")
-       --local lowarmShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
-        local lowarmShape = love.physics.newPolygonShape(capsuleXY(ulWidth, ulHeight,4, 0, ulHeight / 2 ))
-        local fixture = love.physics.newFixture(lowarm, lowarmShape, 1)
-        fixture:setFilterData(1, 65535, -1 * groupId)
-        local bx, by = lowarm:getWorldPoint(0, 0)
-        local joint = love.physics.newRevoluteJoint(uparm, lowarm, bx, by, true)
-        joint:setLowerLimit(-math.pi)
-        joint:setUpperLimit(0 )
-        joint:setLimitsEnabled(true)
-        makeAndAddConnector(lowarm, 0, ulHeight)
-        end
-    
 
 
     -- UPPER LEFT LEG
