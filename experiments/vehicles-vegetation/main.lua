@@ -328,9 +328,9 @@ function addLimb(x,y, root,  upW, upH,  groupId, name, limits)
 
 
     local uparm = love.physics.newBody(world, x , y, "dynamic")
-    uparm:setAngularDamping( 1 )
+    --uparm:setAngularDamping( 1 )
     local upShape = love.physics.newPolygonShape(capsuleXY(upW, upH,4, 0, upH / 2 ))
-    local upFix = love.physics.newFixture(uparm, upShape, 1)
+    local upFix = love.physics.newFixture(uparm, upShape, 2)
     upFix:setFilterData(1, 65535, -1 * groupId)
     upFix:setUserData(makeUserData(name))
 
@@ -341,15 +341,15 @@ function addLimb(x,y, root,  upW, upH,  groupId, name, limits)
     joint:setLimitsEnabled(true)
 
 
-    local stretchy = true
+    local stretchy = false
     local stretcher = nil 
 
     
 
     local lowarm = love.physics.newBody(world, x , y + upH + 6, "dynamic")
-    lowarm:setAngularDamping( 1 )
+   -- lowarm:setAngularDamping( 1 )
     local lowShape = love.physics.newPolygonShape(capsuleXY(upW, upH,4, 0, upH / 2 ))
-    local lowFix = love.physics.newFixture(lowarm, lowShape, 1)
+    local lowFix = love.physics.newFixture(lowarm, lowShape, 2)
     lowFix:setFilterData(1, 65535, -1 * groupId)
     lowFix:setUserData(makeUserData(name))
 
@@ -367,14 +367,9 @@ function addLimb(x,y, root,  upW, upH,  groupId, name, limits)
         
         joint:setLength(6)
         joint:setDampingRatio(1)
-        joint:setFrequency(150)
+        joint:setFrequency(60)
 
-        if true then
-            --local joint = love.physics.newRevoluteJoint(uparm, stretcher, bx, by, false)
-          --  joint:setLowerLimit(lowLowerLimit)
-          --  joint:setUpperLimit(lowUpperLimit )
-          --  joint:setLimitsEnabled(true)
-        end
+      
     end
 
 
@@ -386,6 +381,7 @@ function addLimb(x,y, root,  upW, upH,  groupId, name, limits)
     joint:setUpperLimit(lowUpperLimit )
     joint:setLimitsEnabled(true)
 
+    
     makeAndAddConnector(lowarm, 0, upH)
 end
 
@@ -403,7 +399,7 @@ function makeGuy(x, y, groupId)
 
     local torsoWidth = love.math.random() * 100 + 50
     local torsoHeight = love.math.random() * 200 + 50
-    local ulWidth = 10
+    local ulWidth = 20
     local ulHeight = 100 + love.math.random() * 30
     local llWidth = 10
     local llHeight = ulHeight
@@ -472,8 +468,7 @@ function makeGuy(x, y, groupId)
     joint:setLimitsEnabled(true)
    
 
-    -- UPPER LEFT ARM 
-
+ 
 
 addLimb(x - torsoWidth / 2 - ulWidth/2, 
 y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId, 
