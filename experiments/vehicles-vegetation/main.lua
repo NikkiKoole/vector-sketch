@@ -36,8 +36,8 @@ local carIsTouching = 0
 
 local function makeUserData(bodyType, moreData)
     local result = {
-        bodyType= bodyType,
-       
+        bodyType = bodyType,
+
     }
     if moreData then
         result.data = moreData
@@ -133,13 +133,13 @@ function contactShouldBeDisabled(a, b, contact)
     end
     -- this disables contact between  balls and the ground if ballcenterY < collisionY (ball below ground)
     if fixtureA:getUserData() and fixtureB:getUserData() then
-    if fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'ball' then
-        local x1, y1 = contact:getPositions()
-        if y1 < bb:getY() then
-            result = true
+        if fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'ball' then
+            local x1, y1 = contact:getPositions()
+            if y1 < bb:getY() then
+                result = true
+            end
         end
     end
-end
     --return result
 
     return false
@@ -150,10 +150,11 @@ function isContactBetweenGroundAndCarGroundSensor(contact)
     --print(fixtureA:getUserData(), fixtureB:getUserData())
     --print(fixtureA:isSensor(), fixtureB:isSensor())
     if fixtureA:getUserData() and fixtureB:getUserData() then
-    return (fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'carGroundSensor') or
-        (fixtureB:getUserData().bodyType == 'ground' and fixtureA:getUserData().bodyType == 'carGroundSensor')
+        return (fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'carGroundSensor') or
+            (fixtureB:getUserData().bodyType == 'ground' and fixtureA:getUserData().bodyType == 'carGroundSensor')
     else
-        return false end
+        return false
+    end
 end
 
 function beginContact(a, b, contact)
@@ -313,23 +314,19 @@ function makeUShape(w, h, thickness)
         )
 end
 
-
-
-
-
-function addLimb(x,y, root,  upW, upH,  groupId, name, limits) 
-    -- a limb has 3 parts upper, lower and extremity 
+function addLimb(x, y, root, upW, upH, groupId, name, limits)
+    -- a limb has 3 parts upper, lower and extremity
     -- upperleg/lowerleg/foot or upperarm/lowerarm/hand
 
-   local upLowerLimit = limits[1] 
-   local upUpperLimit = limits[2] 
-   local lowLowerLimit = limits[3] 
-   local lowUpperLimit = limits[4] 
+    local upLowerLimit = limits[1]
+    local upUpperLimit = limits[2]
+    local lowLowerLimit = limits[3]
+    local lowUpperLimit = limits[4]
 
 
-    local uparm = love.physics.newBody(world, x , y, "dynamic")
+    local uparm = love.physics.newBody(world, x, y, "dynamic")
     --uparm:setAngularDamping( 1 )
-    local upShape = love.physics.newPolygonShape(capsuleXY(upW, upH,4, 0, upH / 2 ))
+    local upShape = love.physics.newPolygonShape(capsuleXY(upW, upH, 4, 0, upH / 2))
     local upFix = love.physics.newFixture(uparm, upShape, 2)
     upFix:setFilterData(1, 65535, -1 * groupId)
     upFix:setUserData(makeUserData(name))
@@ -338,38 +335,36 @@ function addLimb(x,y, root,  upW, upH,  groupId, name, limits)
     local joint = love.physics.newRevoluteJoint(root, uparm, bx, by, true)
     joint:setLowerLimit(upLowerLimit)
     joint:setUpperLimit(upUpperLimit)
-    joint:setLimitsEnabled(true)
+    joint:setLimitsEnabled(false)
 
 
     local stretchy = false
-    local stretcher = nil 
+    local stretcher = nil
 
-    
 
-    local lowarm = love.physics.newBody(world, x , y + upH + 6, "dynamic")
-   -- lowarm:setAngularDamping( 1 )
-    local lowShape = love.physics.newPolygonShape(capsuleXY(upW, upH,4, 0, upH / 2 ))
+
+    local lowarm = love.physics.newBody(world, x, y + upH + 6, "dynamic")
+    -- lowarm:setAngularDamping( 1 )
+    local lowShape = love.physics.newPolygonShape(capsuleXY(upW, upH, 4, 0, upH / 2))
     local lowFix = love.physics.newFixture(lowarm, lowShape, 2)
     lowFix:setFilterData(1, 65535, -1 * groupId)
     lowFix:setUserData(makeUserData(name))
 
 
     if stretchy then
-        stretcher = love.physics.newBody(world, x, y + upH + 6, "dynamic")  
-        stretcher:setAngularDamping( 1 )
+        stretcher = love.physics.newBody(world, x, y + upH + 6, "dynamic")
+        stretcher:setAngularDamping(1)
         local stretchShape = love.physics.newCircleShape(6)
         local fixture = love.physics.newFixture(stretcher, stretchShape, 3)
         fixture:setFilterData(1, 65535, -1 * groupId)
-       --fixture:setFriction(1)
+        --fixture:setFriction(1)
         local bx, by = stretcher:getWorldPoint(0, 0)
         local bx2, by2 = lowarm:getWorldPoint(0, 0)
         local joint = love.physics.newDistanceJoint(uparm, stretcher, bx, by, bx2, by2, false)
-        
+
         joint:setLength(6)
         joint:setDampingRatio(1)
         joint:setFrequency(60)
-
-      
     end
 
 
@@ -378,14 +373,12 @@ function addLimb(x,y, root,  upW, upH,  groupId, name, limits)
     local bx, by = lowarm:getWorldPoint(0, 0)
     local joint = love.physics.newRevoluteJoint(attachLowArmTo, lowarm, bx, by, true)
     joint:setLowerLimit(lowLowerLimit)
-    joint:setUpperLimit(lowUpperLimit )
-    joint:setLimitsEnabled(true)
+    joint:setUpperLimit(lowUpperLimit)
+    joint:setLimitsEnabled(false)
 
-    
+
     makeAndAddConnector(lowarm, 0, upH)
 end
-
-
 
 function makeGuy(x, y, groupId)
     local function limitsAround(value, range, joint)
@@ -416,24 +409,25 @@ function makeGuy(x, y, groupId)
 
 
     --makeAndAddConnector(torso, 0, -torsoHeight / 2)
+    --makeAndAddConnector(torso, 0, torsoHeight / 2)
 
 
 
     -- NECK
     local neckThick = 20
     local neckLength = 30
-    
-    local neck = love.physics.newBody(world, x, y - torsoHeight/2, "dynamic")
-    local neckShape =  makeRectPoly2(neckThick, neckLength, 0, neckLength/2)
+
+    local neck = love.physics.newBody(world, x, y - torsoHeight / 2, "dynamic")
+    local neckShape = makeRectPoly2(neckThick, neckLength, 0, neckLength / 2)
     local fixture = love.physics.newFixture(neck, neckShape, 10)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData(makeUserData('neck'))
     neck:setAngle(math.pi)
     local joint = love.physics.newRevoluteJoint(torso, neck, neck:getX(), neck:getY(), false)
-    joint:setLowerLimit(-math.pi/16)
-    -- 
-    joint:setUpperLimit( math.pi/16)
-      joint:setLimitsEnabled(true)
+    joint:setLowerLimit( -math.pi / 16)
+    --
+    joint:setUpperLimit(math.pi / 16)
+    joint:setLimitsEnabled(true)
 
 
 
@@ -442,7 +436,7 @@ function makeGuy(x, y, groupId)
     local headWidth = 50
     -- HEAD -- inlcuding distance joint
 
-    local head = love.physics.newBody(world, x, y - torsoHeight/2 - neckLength, "dynamic")
+    local head = love.physics.newBody(world, x, y - torsoHeight / 2 - neckLength, "dynamic")
     local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
     -- local headShape = makeRectPoly2(headWidth, headHeight, 0, headHeight / 2)
     local fixture = love.physics.newFixture(head, headShape, .1)
@@ -450,39 +444,36 @@ function makeGuy(x, y, groupId)
     fixture:setUserData(makeUserData('head'))
 
     if false then
-    local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
+        local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
 
-    local joint = love.physics.newDistanceJoint(neck, head, bx, by, head:getX(),
-            head:getY(), true)
+        local joint = love.physics.newDistanceJoint(neck, head, bx, by, head:getX(),
+                head:getY(), true)
 
-    joint:setLength(1)
-    joint:setFrequency(12)
-    joint:setDampingRatio(0)
+        joint:setLength(1)
+        joint:setFrequency(12)
+        joint:setDampingRatio(0)
     end
     head:setAngle(math.pi)
     local joint = love.physics.newRevoluteJoint(neck, head, head:getX(), head:getY(), false)
-    
-    joint:setLowerLimit(-math.pi/16)
-  -- 
-  joint:setUpperLimit( math.pi/16)
+
+    joint:setLowerLimit( -math.pi / 16)
+    --
+    joint:setUpperLimit(math.pi / 16)
     joint:setLimitsEnabled(true)
-   
 
- 
+    addLimb(x - torsoWidth / 2 - ulWidth / 2,
+        y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
+        'armpart', { 0, math.pi, 0, math.pi })
 
-addLimb(x - torsoWidth / 2 - ulWidth/2, 
-y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId, 
-'armpart', {0,math.pi, 0,math.pi})
-
-addLimb(x + torsoWidth / 2 - ulWidth/2, 
-y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId, 
-'armpart', {-math.pi, 0,-math.pi, 0})
+    addLimb(x + torsoWidth / 2 - ulWidth / 2,
+        y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
+        'armpart', { -math.pi, 0, -math.pi, 0 })
 
 
-  
 
 
-   
+
+
 
 
     -- UPPER LEFT LEG
@@ -501,7 +492,7 @@ y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
     -- LOWER LEFT LEG
     local lowleg = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight, "dynamic")
     --local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2)
-    local lllegShape = love.physics.newPolygonShape(capsuleXY(llWidth, llHeight,8, 0, llHeight / 2))
+    local lllegShape = love.physics.newPolygonShape(capsuleXY(llWidth, llHeight, 8, 0, llHeight / 2))
     local fixture = love.physics.newFixture(lowleg, lllegShape, 1)
     fixture:setUserData(makeUserData('legpart'))
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -516,12 +507,12 @@ y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
 
     local foot = love.physics.newBody(world, x - torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight,
             "dynamic")
-    local footShape = makeRectPoly(feetThick, feetLength, -feetThick/2, 0)
-   -- local footShape = makeRectPoly2(feetThick, feetLength, 0, feetLength/2)
+    local footShape = makeRectPoly(feetThick, feetLength, -feetThick / 2, 0)
+    -- local footShape = makeRectPoly2(feetThick, feetLength, 0, feetLength/2)
     --local footShape = love.physics.newPolygonShape(capsuleXY(feetThick, feetLength,8, 0, feetLength/2))
     local fixture = love.physics.newFixture(foot, footShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
-   -- fixture:setFriction(1)
+    -- fixture:setFriction(1)
     foot:setAngle(math.pi / 2)
 
 
@@ -564,10 +555,10 @@ y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
 
     local foot = love.physics.newBody(world, x + torsoWidth / 2, y + torsoHeight / 2 + ulHeight + llHeight, "dynamic")
     foot:setAngle( -math.pi / 2)
-    local footShape = makeRectPoly(feetThick, feetLength, -feetThick/2, 0)
+    local footShape = makeRectPoly(feetThick, feetLength, -feetThick / 2, 0)
     local fixture = love.physics.newFixture(foot, footShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
-  --  fixture:setFriction(1)
+    --  fixture:setFriction(1)
 
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
     limitsAround(0, math.pi / 8, joint)
@@ -743,9 +734,6 @@ function makeSeeSaw(x, y)
     joint:setUpperLimit(math.pi / 4)
     joint:setLimitsEnabled(true)
 end
-
-
-
 
 function makeVehicle(x, y)
     local carBodyHeight = 150
@@ -1238,15 +1226,8 @@ function love.draw()
 
         cam:pop()
 
-        --love.graphics.print(
-        --    bool2str(carIsTouching >= 2) .. ' motorspeed = ' .. motorSpeed .. ', torque = ' .. motorTorque, 0,
-        --    0)
+
         love.graphics.print(love.timer.getFPS(), 0, 0)
-
-
-        for i = 1, #connectors do
-            --     love.graphics.print(i .. 'to ' .. (getIndexOfConnector(connectors[i].to) or 'nil'), 10, i * 40)
-        end
     end
 
 
@@ -1311,6 +1292,22 @@ local function getCentroidOfFixture(body, fixture)
     return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
 
+local function getRidOfBigRotationsInBody(body)
+    local a = body:getAngle()
+
+    if true then
+        if a > (2 * math.pi) then
+            a = a - (2 * math.pi)
+            body:setAngle(a)
+        end
+        if a < -(2 * math.pi) then
+            a = a + (2 * math.pi)
+            body:setAngle(a)
+        end
+    end
+end
+
+
 function love.update(dt)
     lurker.update()
 
@@ -1326,69 +1323,70 @@ function love.update(dt)
             for k = 1, #fixtures do
                 local f = fixtures[k]
                 if f:getUserData() and f:getUserData().bodyType then
-                if f:getUserData().bodyType == 'connector' then
-                    local found = false
+                    if f:getUserData().bodyType == 'connector' then
+                        local found = false
 
-
-                    for j = 1, #connectors do
-                        if connectors[j].to and connectors[j].to == f then
-                            found = true
-                        end
-                    end
-
-                    if found == false then
-                        local pos1 = getCentroidOfFixture(mj.jointBody, f)
-                        local done = false
 
                         for j = 1, #connectors do
-                            local theOtherBody = connectors[j].at:getBody()
+                            if connectors[j].to and connectors[j].to == f then
+                                found = true
+                            end
+                        end
 
-                            if theOtherBody ~= f:getBody() and connectors[j].to == nil then
-                                local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
+                        if found == false then
+                            local pos1 = getCentroidOfFixture(mj.jointBody, f)
+                            local done = false
 
-                                local a = pos1[1] - pos2[1]
-                                local b = pos1[2] - pos2[2]
-                                local d = math.sqrt(a * a + b * b)
+                            for j = 1, #connectors do
+                                local theOtherBody = connectors[j].at:getBody()
+
+                                if theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                                    local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
+
+                                    local a = pos1[1] - pos2[1]
+                                    local b = pos1[2] - pos2[2]
+                                    local d = math.sqrt(a * a + b * b)
 
 
 
 
-                                local isOnCooldown = false
-                                for p = 1, #connectorCooldownList do
-                                    if connectorCooldownList[p].index == j then
-                                        isOnCooldown = true
-                                        --print('isOnCooldown', j)
+                                    local isOnCooldown = false
+                                    for p = 1, #connectorCooldownList do
+                                        if connectorCooldownList[p].index == j then
+                                            isOnCooldown = true
+                                            --print('isOnCooldown', j)
+                                        end
                                     end
-                                end
 
-                                if d < 20 and not isOnCooldown then
-                                    connectors[j].to = f --mj.jointBody
-                                    connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
-                                            pos2[1],
-                                            pos2[2], pos1[1], pos1[2])
-                                    --print('connect', j, d, k)
+                                    if d < 20 and not isOnCooldown then
+                                        connectors[j].to = f --mj.jointBody
+                                        connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
+                                                pos2[1],
+                                                pos2[2], pos1[1], pos1[2])
+                                        --print('connect', j, d, k)
+                                    end
                                 end
                             end
                         end
                     end
-                end
 
-                if f:getUserData().bodyType == 'carbody' then
-                    local body = mj.jointBody
-                    if body then
-                        -- i dont have a cartouching per car, its global so wont work for all
-                        --if (carIsTouching < 1) then
-                        rotateToHorizontal(body, 0, 10)
-                        --end
+                    if f:getUserData().bodyType == 'carbody' then
+                        local body = mj.jointBody
+                        if body then
+                            -- i dont have a cartouching per car, its global so wont work for all
+                            --if (carIsTouching < 1) then
+                            rotateToHorizontal(body, 0, 10)
+                            --end
+                        end
+                    end
+                    if f:getUserData().bodyType == 'torso' then
+                        --print('jo found a torso to rotate!')
+                        local body = mj.jointBody
+                        if body then
+                            rotateToHorizontal(body, 0, 10)
+                        end
                     end
                 end
-                if f:getUserData().bodyType == 'torso' then
-                    --print('jo found a torso to rotate!')
-                    local body = mj.jointBody
-                    if body then
-                        rotateToHorizontal(body, 0, 10)
-                    end
-                end end
             end
         end
     end
@@ -1400,97 +1398,60 @@ function love.update(dt)
         end
     end
 
+
+
+
     local bodies = world:getBodies()
+
+    local upsideDown = false
+
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
-            if fixture:getUserData() then
-           if fixture:getUserData().bodyType == 'torso' then
-                local a = body:getAngle()
-
-                if true then
-                    if a > (2 * math.pi) then
-                        a = a - (2 * math.pi)
-                        body:setAngle(a)
+            if true then
+                if fixture:getUserData() then
+                    if fixture:getUserData().bodyType == 'torso' then
+                        getRidOfBigRotationsInBody(body)
+                        local desired = upsideDown and -math.pi or 0
+                        rotateToHorizontal(body, desired, 25)
                     end
-                    if a < -(2 * math.pi) then
-                        a = a + (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                end
-                rotateToHorizontal(body, 0, 15)
-            end
 
-            if fixture:getUserData().bodyType == 'neck' then
-                local a = body:getAngle()
+                    if not upsideDown then
+                        if fixture:getUserData().bodyType == 'neck' then
+                            getRidOfBigRotationsInBody(body)
 
-                if true then
-                    if a > (2 * math.pi) then
-                        a = a - (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                    if a < -(2 * math.pi) then
-                        a = a + (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                end
-                rotateToHorizontal(body, math.pi, 25)
-            end
-
-            if fixture:getUserData().bodyType == 'head' then
-                local a = body:getAngle()
-
-                if true then
-                    if a > (2 * math.pi) then
-                        a = a - (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                    if a < -(2 * math.pi) then
-                        a = a + (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                end
-                rotateToHorizontal(body, math.pi, 15)
-            end
-
-            if  fixture:getUserData().bodyType == 'legpart' then
-                local a = body:getAngle()
-                if true then
-                    if a > (2 * math.pi) then
-                        a = a - (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                    if a < -(2 * math.pi) then
-                        a = a + (2 * math.pi)
-                        body:setAngle(a)
-                    end
-                end
-                rotateToHorizontal(body, 0, 30)
-            end
-
-         
-
-            if false then
-                if fixture:getUserData().bodyType == 'head' then
-                    local a = body:getAngle()
-
-                    if true then
-                        if a > (2 * math.pi) then
-                            a = a - (2 * math.pi)
-                            body:setAngle(a)
+                            rotateToHorizontal(body, -math.pi, 25)
                         end
-                        if a < -(2 * math.pi) then
-                            a = a + (2 * math.pi)
-                            body:setAngle(a)
+
+                        if fixture:getUserData().bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, -math.pi, 15)
                         end
                     end
 
+                    if not upsideDown then
+                        if fixture:getUserData().bodyType == 'legpart' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 50)
+                        end
+                    end
+                    if upsideDown then
+                        if fixture:getUserData().bodyType == 'armpart' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 50)
+                        end
+                    end
 
-                    rotateToHorizontal(body, math.pi, 15)
+                    if false then
+                        if fixture:getUserData().bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+
+                            rotateToHorizontal(body, math.pi, 15)
+                        end
+                    end
                 end
             end
-        end 
-    end
+        end
     end
 
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
@@ -1500,7 +1461,6 @@ function love.update(dt)
         -- we can only break a  joint if we have one
         -- print(i, connectors[i].joint, connectors[i].to)
         if connectors[i].joint then
-            --print('joint at ', i)
             local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
             local delta = Vector(reaction2[1], reaction2[2])
             local l = delta:getLength()
@@ -1512,20 +1472,14 @@ function love.update(dt)
                     found = true
                 end
             end
-            if found then
-                --  print(l)
-            end
 
             local b1, b2 = connectors[i].joint:getBodies()
 
             local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
-            --print(connectors[i].to:getUserData().bodyType, connectors[i].at:getUserData().bodyType)
             if l > breakForce and found then
-                -- print(b1:getMass(), b2:getMass())
                 connectors[i].joint:destroy()
                 connectors[i].joint = nil
-                --connectors[i].to:getBody():setPosition(connectors[i].to:getBody():getX(),
-                --    connectors[i].to:getBody():getY() + 100)
+
                 connectors[i].to = nil
                 print('broke it', i, l)
                 table.insert(connectorCooldownList, { runningFor = 0, index = i })
@@ -1544,7 +1498,6 @@ function love.update(dt)
 
     for i = 1, #vehiclePedalConnection do
         local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle()
-
         vehiclePedalConnection[i].pedalWheel:setAngle(angle / 3)
     end
 
