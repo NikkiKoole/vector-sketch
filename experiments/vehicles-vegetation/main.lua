@@ -377,7 +377,7 @@ function addLimb(x, y, root, upW, upH, groupId, name, limits)
     joint:setLimitsEnabled(false)
 
 
-    makeAndAddConnector(lowarm, 0, upH)
+    makeAndAddConnector(lowarm, 0, upH, 'guy' .. groupId)
 end
 
 function makeGuy(x, y, groupId)
@@ -566,10 +566,10 @@ function makeGuy(x, y, groupId)
     return torso
 end
 
-function makeAndAddConnector(parent, x, y)
+function makeAndAddConnector(parent, x, y, id)
     local bandshape2 = makeRectPoly2(10, 10, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
-    fixture:setUserData(makeUserData('connector'))
+    fixture:setUserData(makeUserData('connector', { id = id }))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 end
@@ -1340,21 +1340,28 @@ function love.update(dt)
                             for j = 1, #connectors do
                                 local theOtherBody = connectors[j].at:getBody()
 
-                                if theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                                -- maybe verify that both connector dont point to the same agent (as in are both part of the same character)
+                                local skipCausePointingToSameAgent = false
+                                if (f:getUserData().data and connectors[j].at:getUserData() and connectors[j].at:getUserData().data) then
+                                    if f:getUserData().data.id and connectors[j].at:getUserData().data.id then
+                                        if f:getUserData().data.id == connectors[j].at:getUserData().data.id then
+                                            skipCausePointingToSameAgent = true
+                                        end
+                                    end
+                                end
+
+                                if not skipCausePointingToSameAgent and theOtherBody ~= f:getBody() and connectors[j].to == nil then
                                     local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
 
                                     local a = pos1[1] - pos2[1]
                                     local b = pos1[2] - pos2[2]
                                     local d = math.sqrt(a * a + b * b)
 
-
-
-
                                     local isOnCooldown = false
+
                                     for p = 1, #connectorCooldownList do
                                         if connectorCooldownList[p].index == j then
                                             isOnCooldown = true
-                                            --print('isOnCooldown', j)
                                         end
                                     end
 
@@ -1403,7 +1410,7 @@ function love.update(dt)
 
     local bodies = world:getBodies()
 
-    local upsideDown = false
+    local upsideDown = true
 
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -1419,7 +1426,6 @@ function love.update(dt)
                     if not upsideDown then
                         if fixture:getUserData().bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-
                             rotateToHorizontal(body, -math.pi, 25)
                         end
 
