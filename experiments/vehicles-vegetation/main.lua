@@ -297,7 +297,8 @@ function makeCarShape(w, h, cx, cy)
             cx - w / 2 + w / 8, cy + h / 2,
             cx + w / 2 - w / 8, cy + h / 2,
             cx + w / 2, cy + h / 2 - h / 5,
-            cx + w / 2, cy + h / 4
+            --cx + w / 2, cy + h / 4
+            cx + w / 2, cy - h / 2
         )
 end
 
@@ -314,7 +315,7 @@ function makeUShape(w, h, thickness)
         )
 end
 
-function addLimb(x, y, root, upW, upH, groupId, name, limits)
+function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limits)
     -- a limb has 3 parts upper, lower and extremity
     -- upperleg/lowerleg/foot or upperarm/lowerarm/hand
 
@@ -325,7 +326,6 @@ function addLimb(x, y, root, upW, upH, groupId, name, limits)
 
 
     local uparm = love.physics.newBody(world, x, y, "dynamic")
-    --uparm:setAngularDamping( 1 )
     local upShape = love.physics.newPolygonShape(capsuleXY(upW, upH, 4, 0, upH / 2))
     local upFix = love.physics.newFixture(uparm, upShape, 2)
     upFix:setFilterData(1, 65535, -1 * groupId)
@@ -341,11 +341,8 @@ function addLimb(x, y, root, upW, upH, groupId, name, limits)
     local stretchy = false
     local stretcher = nil
 
-
-
     local lowarm = love.physics.newBody(world, x, y + upH + 6, "dynamic")
-    -- lowarm:setAngularDamping( 1 )
-    local lowShape = love.physics.newPolygonShape(capsuleXY(upW, upH, 4, 0, upH / 2))
+    local lowShape = love.physics.newPolygonShape(capsuleXY(lowW, lowH, 4, 0, lowH / 2))
     local lowFix = love.physics.newFixture(lowarm, lowShape, 2)
     lowFix:setFilterData(1, 65535, -1 * groupId)
     lowFix:setUserData(makeUserData(name))
@@ -376,8 +373,16 @@ function addLimb(x, y, root, upW, upH, groupId, name, limits)
     joint:setUpperLimit(lowUpperLimit)
     joint:setLimitsEnabled(false)
 
+    local hand = love.physics.newBody(world, x, y + upH + 6 + lowH + 6 , "dynamic")
+    local handShape = love.physics.newPolygonShape(capsuleXY(exW, exH, 4, 0, exH/2 ))
+    local handFix = love.physics.newFixture(hand, handShape, 2)
+    handFix:setFilterData(1, 65535, -1 * groupId)
+    --handFix:setUserData(makeUserData(name))
+    local bx, by = hand:getWorldPoint(0, 0)
+    local joint = love.physics.newRevoluteJoint(lowarm, hand, bx, by, true)
 
-    makeAndAddConnector(lowarm, 0, upH, 'guy' .. groupId)
+
+   makeAndAddConnector(hand, 0, exH/2, 'guy' .. groupId, exW*2)
 end
 
 function makeGuy(x, y, groupId)
@@ -393,11 +398,11 @@ function makeGuy(x, y, groupId)
     local torsoWidth = love.math.random() * 100 + 50
     local torsoHeight = love.math.random() * 200 + 50
     local ulWidth = 20
-    local ulHeight = 100 + love.math.random() * 30
-    local llWidth = 10
-    local llHeight = ulHeight
+    local ulHeight = 200 + love.math.random() * 30
+    local llWidth = 20
+    local llHeight = 100 + love.math.random() * 30
 
-    local feetLength = 80
+    local feetLength = 60
     local feetThick = 20
 
     -- TORSO
@@ -462,11 +467,11 @@ function makeGuy(x, y, groupId)
     joint:setLimitsEnabled(true)
 
     addLimb(x - torsoWidth / 2 - ulWidth / 2,
-        y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
+        y - torsoHeight / 2, torso, ulWidth, ulHeight-100, llWidth, llHeight,  feetThick, feetLength, groupId,
         'armpart', { 0, math.pi, 0, math.pi })
 
     addLimb(x + torsoWidth / 2 - ulWidth / 2,
-        y - torsoHeight / 2, torso, ulWidth, ulHeight, groupId,
+        y - torsoHeight / 2, torso, ulWidth, ulHeight-100, llWidth, llHeight,  feetThick, feetLength, groupId,
         'armpart', { -math.pi, 0, -math.pi, 0 })
 
 
@@ -521,7 +526,7 @@ function makeGuy(x, y, groupId)
 
 
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
-    limitsAround(0, math.pi / 16, joint)
+    limitsAround(0, math.pi / 8, joint)
 
 
     -- UPPER RIGHT LEG
@@ -566,8 +571,9 @@ function makeGuy(x, y, groupId)
     return torso
 end
 
-function makeAndAddConnector(parent, x, y, id)
-    local bandshape2 = makeRectPoly2(10, 10, x, y)
+function makeAndAddConnector(parent, x, y, id, size)
+    size = size or 10
+    local bandshape2 = makeRectPoly2(size, size, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
     fixture:setUserData(makeUserData('connector', { id = id }))
     fixture:setSensor(true)
@@ -936,7 +942,7 @@ function startExample(number)
 
 
         vehiclePedalConnection = {}
-        for i = 1, 1 do
+        for i = 1, 10 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
         for i = 1, 30 do
@@ -1365,7 +1371,13 @@ function love.update(dt)
                                         end
                                     end
 
-                                    if d < 20 and not isOnCooldown then
+                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = f:getBoundingBox( 1 )
+                                    local w1 = bottomRightX - topLeftX
+                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = theOtherBody:getFixtures()[1]:getBoundingBox( 1 )
+                                    local w2 = bottomRightX - topLeftX
+                                    local maxD = (w1 + w2)/2
+                                   
+                                    if d < maxD and not isOnCooldown then
                                         connectors[j].to = f --mj.jointBody
                                         connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
                                                 pos2[1],
@@ -1410,7 +1422,7 @@ function love.update(dt)
 
     local bodies = world:getBodies()
 
-    local upsideDown = true
+    local upsideDown = false
 
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -1444,7 +1456,7 @@ function love.update(dt)
                     if upsideDown then
                         if fixture:getUserData().bodyType == 'armpart' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 50)
+                            rotateToHorizontal(body, 0, 30)
                         end
                     end
 
