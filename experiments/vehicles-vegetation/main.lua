@@ -336,7 +336,9 @@ function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limi
     local joint = love.physics.newRevoluteJoint(root, upleg, upleg:getX(), upleg:getY(), false)
     joint:setLowerLimit(upLowerLimit)
     joint:setUpperLimit(upUpperLimit)
-    joint:setLimitsEnabled(true)
+    local enabled = true 
+    if name == 'armpart' then enabled = false end
+    joint:setLimitsEnabled(enabled)
 
 
     -- LOWER LEFT LEG
@@ -1457,6 +1459,10 @@ function love.update(dt)
                         if fixture:getUserData().bodyType == 'armpart' then
                             getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, 0, 50)
+                        end
+                        if fixture:getUserData().bodyType == 'legpart' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, math.pi, 10)
                         end
                        
                     end
