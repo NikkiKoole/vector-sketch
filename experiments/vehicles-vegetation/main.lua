@@ -474,7 +474,7 @@ function makeGuy(x, y, groupId)
     local llWidth = 20
     local llHeight = 100 + love.math.random() * 30
 
-    local feetLength = 60
+    local feetLength = 20 
     local feetThick = 20
 
     -- TORSO
@@ -541,7 +541,7 @@ function makeGuy(x, y, groupId)
 
 
       addLimb(x - torsoWidth / 2, y - torsoHeight / 2, torso, ulWidth, ulHeight-100,  llWidth, llHeight,  feetThick, feetLength, 
-  groupId, 'armpart', { 0, math.pi, 0, math.pi, -math.pi / 8, math.pi / 8 })
+  groupId, 'armpart', { 0, math.pi , 0, math.pi, -math.pi / 8, math.pi / 8 })
   
   addLimb(x + torsoWidth / 2, y - torsoHeight / 2, torso, ulWidth, ulHeight-100,  llWidth, llHeight,  feetThick, feetLength, 
   groupId, 'armpart', { -math.pi, 0, -math.pi, 0, -math.pi / 8, math.pi / 8 })
@@ -1402,7 +1402,7 @@ function love.update(dt)
 
     local bodies = world:getBodies()
 
-    local upsideDown = false
+    local upsideDown = true
 
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -1432,7 +1432,7 @@ function love.update(dt)
                     if fixture:getUserData().bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
-                        rotateToHorizontal(body, desired, 25)
+                        rotateToHorizontal(body, desired, 50)
                     end
 
                     if not upsideDown then
@@ -1458,6 +1458,7 @@ function love.update(dt)
                             getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, 0, 50)
                         end
+                       
                     end
 
                     if false then
