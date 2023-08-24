@@ -91,8 +91,8 @@ function getRandomConvexPoly(radius, numVerts)
 end
 local creationData = {
     torso = {w=100, h = 200, d=.5, shape='trapezium'},
-    neck = { w = 12, h = 230, d=1, shape='rect2', jointLow=-math.pi/16, jointUp=math.pi/16, jle=true },
-    head = { w = 50, h = 100, d=.1, shape='capsule', jointLow=-math.pi/16, jointUp=math.pi/16, jle=true },
+    neck = { w = 12, h = 230, d=1, shape='rect2', limits={low=-math.pi/16, up=math.pi/16, enabled=true} },
+    head = { w = 50, h = 100, d=.1, shape='capsule', limits={low=-math.pi/16, up=math.pi/16, enabled=true} },
    
     upArm = {w=20, h=200, d=1, shape='capsule'},
     lowArm = {w=20, h=100, d=1, shape='capsule'},
@@ -575,9 +575,11 @@ end
 
 local function makeConnectingRevoluteJoint(data, this, from) 
     local joint = love.physics.newRevoluteJoint(from, this, this:getX(), this:getY(), false)
-    joint:setLowerLimit(data.jointLow)
-    joint:setUpperLimit(data.jointUp)
-    joint:setLimitsEnabled(data.jle)
+    if data.limits then 
+    joint:setLowerLimit(data.limits.low)
+    joint:setUpperLimit(data.limits.up)
+    joint:setLimitsEnabled(data.limits.enabled)
+    end
     return joint
 end
 
@@ -1264,7 +1266,7 @@ function pointerPressed(id, x, y)
                 table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
 
                 local vx, vy = body:getLinearVelocity()
-                body:setPosition(body:getX(), body:getY() - 10)
+              -- body:setPosition(body:getX(), body:getY() - 10)
 
                 hitAny = true
             end
