@@ -20,6 +20,12 @@ lurker.postswap = function(f)
     grabDevelopmentScreenshot()
 end
 
+local creationData = {
+    neck = { w = 12, h = 230 },
+    head = { w = 50, h = 100 }
+}
+
+
 function bool2str(bool)
     return bool and 'true' or 'false'
 end
@@ -97,6 +103,8 @@ function love.keypressed(k)
         --print(inspect(box2dGuys[1]))
         --local b = box2dGuys[1].torso
         --b:applyLinearImpulse(0, 50000)
+        creationData.head.w = 150 + love.math.random() * 100
+        creationData.head.h = 150 + love.math.random() * 100
         updateHead(box2dGuys[1], 1)
         print('should randomize stuff on the first guy')
     end
@@ -509,6 +517,7 @@ local function findJointBetween2Bodies(body1, body2)
     return nil
 end
 
+
 function updateHead(box2dGuy, groupId)
     -- find the current joint between neck and head
     -- release head from body (destroy joint between them)
@@ -531,18 +540,27 @@ function updateHead(box2dGuy, groupId)
     end
 
     if jointToBreak then
-        local hx, hy = box2dGuy.head:getPosition()
+        -- instead of just asking what my position is and reusing that i ought to -i think- calculate the best position for the head
+
+        --local hx, hy = box2dGuy.head:getPosition()
+        --print('neck:', box2dGuy.neck:getLocalPoint(0, creationData.neck.h))
+        --print('hx,hy', hx, hy)
+        --print('localh', box2dGuy.head:getWorldPoint(0, 0))
+        --print('localn', box2dGuy.neck:getWorldPoint(0, creationData.neck.h))
+        local hx, hy = box2dGuy.neck:getWorldPoint(0, creationData.neck.h)
+
         local ha = box2dGuy.head:getAngle()
         local na = box2dGuy.neck:getAngle()
         jointToBreak:destroy()
         box2dGuy.head:destroy()
 
 
-        local headWidth = 150 + love.math.random() * 100
-        local headHeight = 100 + love.math.random() * 100
+        -- local headWidth = 150 + love.math.random() * 100
+        -- local headHeight = 100 + love.math.random() * 100
 
         local head = love.physics.newBody(world, hx, hy, "dynamic")
-        local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
+        local headShape = love.physics.newPolygonShape(capsuleXY(creationData.head.w, creationData.head.h, 10, 0,
+                creationData.head.h / 2))
         local fixture = love.physics.newFixture(head, headShape, .1)
         fixture:setFilterData(1, 65535, -1 * groupId)
         fixture:setUserData(makeUserData('head'))
@@ -569,15 +587,6 @@ function updateHead(box2dGuy, groupId)
 end
 
 function makeGuy(x, y, groupId)
-    local function limitsAround(value, range, joint)
-        local low = value - range
-        local high = value + range
-
-        joint:setLowerLimit(low)
-        joint:setUpperLimit(high)
-        joint:setLimitsEnabled(true)
-    end
-
     local torsoWidth = love.math.random() * 100 + 50
     local torsoHeight = love.math.random() * 200 + 50
     local ulWidth = 20
@@ -607,7 +616,7 @@ function makeGuy(x, y, groupId)
 
     local neck = love.physics.newBody(world, x, y - torsoHeight / 2, "dynamic")
     local neckShape = makeRectPoly2(neckThick, neckLength, 0, neckLength / 2)
-    local fixture = love.physics.newFixture(neck, neckShape, 10)
+    local fixture = love.physics.newFixture(neck, neckShape, 1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData(makeUserData('neck'))
     neck:setAngle(math.pi)
@@ -620,12 +629,13 @@ function makeGuy(x, y, groupId)
 
 
 
-    local headHeight = 100
-    local headWidth = 150
+    --local headHeight = 100
+    --local headWidth = 150
     -- HEAD -- inlcuding distance joint
 
     local head = love.physics.newBody(world, x, y - torsoHeight / 2 - neckLength, "dynamic")
-    local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
+    local headShape = love.physics.newPolygonShape(capsuleXY(creationData.head.w, creationData.head.h, 10, 0,
+            creationData.head.h / 2))
     local fixture = love.physics.newFixture(head, headShape, .1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData(makeUserData('head'))
