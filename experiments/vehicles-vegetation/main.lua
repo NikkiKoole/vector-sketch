@@ -33,6 +33,27 @@ end
 local motorSpeed = 0
 local motorTorque = 1500
 local carIsTouching = 0
+local function makePointerJoint(id, bodyToAttachTo, wx, wy)
+    local pointerJoint = {}
+    pointerJoint.id = id
+    pointerJoint.jointBody = bodyToAttachTo
+    pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
+    pointerJoint.joint:setDampingRatio(0.5)
+    pointerJoint.joint:setMaxForce(500000)
+
+    --localX, localY = bodyToAttachTo:getLocalPoint(wy, wy)
+    --pointerJoint.lx = localX
+    --pointerJoint.ly = localY
+    return pointerJoint
+end
+
+local function getPointerPosition(id)
+    if id == 'mouse' then
+        return love.mouse.getPosition()
+    else
+        return love.touch.getPosition(id)
+    end
+end
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -72,6 +93,17 @@ function love.keypressed(k)
     if k == '1' then startExample(1) end
     if k == '2' then startExample(2) end
     if k == '3' then startExample(3) end
+    if (k == 'q' and example == 3) then
+        --print(inspect(box2dGuys[1]))
+        --local b = box2dGuys[1].torso
+        --b:applyLinearImpulse(0, 50000)
+        updateHead(box2dGuys[1], 1)
+        print('should randomize stuff on the first guy')
+    end
+    if (k == 'w' and example == 3) then
+        print(inspect(box2dGuys[2]))
+        print('should randomize stuff on the second guy')
+    end
     if example == 2 then
         if false then
             if k == 'left' then
@@ -315,9 +347,7 @@ function makeUShape(w, h, thickness)
         )
 end
 
-
 function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limits, footAngle)
-
     local upLowerLimit = limits[1]
     local upUpperLimit = limits[2]
     local lowLowerLimit = limits[3]
@@ -326,7 +356,7 @@ function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limi
     local exUpperLimit = limits[6]
 
     -- UPPER LEFT LEG
-    local upleg = love.physics.newBody(world, x , y , "dynamic")
+    local upleg = love.physics.newBody(world, x, y, "dynamic")
     --local uplegShape = makeRectPoly2(ulWidth, ulHeight, 0, ulHeight / 2)
     local uplegShape = love.physics.newPolygonShape(capsuleXY(upW, upH, 4, 0, upH / 2))
     local fixture = love.physics.newFixture(upleg, uplegShape, 1)
@@ -336,13 +366,13 @@ function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limi
     local joint = love.physics.newRevoluteJoint(root, upleg, upleg:getX(), upleg:getY(), false)
     joint:setLowerLimit(upLowerLimit)
     joint:setUpperLimit(upUpperLimit)
-    local enabled = true 
+    local enabled = true
     if name == 'armpart' then enabled = false end
     joint:setLimitsEnabled(enabled)
 
 
     -- LOWER LEFT LEG
-    local lowleg = love.physics.newBody(world, x, y  + upH, "dynamic")
+    local lowleg = love.physics.newBody(world, x, y + upH, "dynamic")
     --local lllegShape = makeRectPoly2(llWidth, llHeight, 0, llHeight / 2)
     local lllegShape = love.physics.newPolygonShape(capsuleXY(lowW, lowH, 4, 0, lowH / 2))
     local fixture = love.physics.newFixture(lowleg, lllegShape, 1)
@@ -357,9 +387,9 @@ function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limi
 
     -- LEFT FOOT
 
-    local foot = love.physics.newBody(world, x , y + upH + lowH,
+    local foot = love.physics.newBody(world, x, y + upH + lowH,
             "dynamic")
-    local footShape = makeRectPoly(exW, exH, -exW / 2, -exH/8)
+    local footShape = makeRectPoly(exW, exH, -exW / 2, -exH / 8)
 
     local fixture = love.physics.newFixture(foot, footShape, 2)
     fixture:setFilterData(1, 65535, -1 * groupId)
@@ -367,22 +397,16 @@ function addLimb(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limi
         foot:setAngle(footAngle)
     end
 
-
-
-   -- makeAndAddConnector(foot, 0, 0)
-
-    makeAndAddConnector(foot, 0, exH/2, 'guy' .. groupId, exW*2)
+    makeAndAddConnector(foot, 0, exH / 2, 'guy' .. groupId, exW * 2)
 
     local joint = love.physics.newRevoluteJoint(lowleg, foot, foot:getX(), foot:getY(), false)
     joint:setLowerLimit(exLowerLimit)
     joint:setUpperLimit(exUpperLimit)
-   joint:setLimitsEnabled(true)
+    joint:setLimitsEnabled(true)
 
-
-    ---limitsAround(0, math.pi / 4, joint)
+    local data = { upper = upleg, lower = lowleg, extremity = foot }
+    return data
 end
-
-
 
 function addArm(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limits)
     -- a limb has 3 parts upper, lower and extremity
@@ -444,8 +468,8 @@ function addArm(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limit
     joint:setUpperLimit(lowUpperLimit)
     joint:setLimitsEnabled(true)
 
-    local hand = love.physics.newBody(world, x, y + upH + 6 + lowH  , "dynamic")
-    local handShape = love.physics.newPolygonShape(capsuleXY(exW, exH, 4, 0, exH/2 ))
+    local hand = love.physics.newBody(world, x, y + upH + 6 + lowH, "dynamic")
+    local handShape = love.physics.newPolygonShape(capsuleXY(exW, exH, 4, 0, exH / 2))
     local handFix = love.physics.newFixture(hand, handShape, 2)
     handFix:setFilterData(1, 65535, -1 * groupId)
     --handFix:setUserData(makeUserData(name))
@@ -455,8 +479,93 @@ function addArm(x, y, root, upW, upH, lowW, lowH, exW, exH, groupId, name, limit
     joint:setUpperLimit(exUpperLimit)
     joint:setLimitsEnabled(true)
 
-    hand:setAngle(-math.pi / 2)
-   --makeAndAddConnector(hand, 0, exH/2, 'guy' .. groupId, exW*2)
+    hand:setAngle( -math.pi / 2)
+    --makeAndAddConnector(hand, 0, exH/2, 'guy' .. groupId, exW*2)
+end
+
+local function tableContains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+
+local function findJointBetween2Bodies(body1, body2)
+    local joints1 = body1:getJoints()
+    local joints2 = body2:getJoints()
+
+    local result = {}
+    for i = 1, #joints2 do
+        if tableContains(joints1, joints2[i]) then
+            table.insert(result, joints2[i])
+        end
+    end
+    if #result <= 1 then
+        return result[1]
+    end
+    print('something werid happened')
+    return nil
+end
+
+function updateHead(box2dGuy, groupId)
+    -- find the current joint between neck and head
+    -- release head from body (destroy joint between them)
+    -- create new head
+    -- attach to neck
+    local jointToBreak = findJointBetween2Bodies(box2dGuy.neck, box2dGuy.head)
+    --  print(jointToBreak)
+
+
+
+    local recreatePointerJoint = nil
+    for i = 1, #pointerJoints do
+        if (pointerJoints[i].jointBody == box2dGuy.head) then
+            print('this iwll cause an issue')
+            local tx, ty = pointerJoints[i].joint:getTarget()
+            x1, y1, x2, y2 = pointerJoints[i].joint:getAnchors()
+            print(x1, y1, x2, y2, tx, ty)
+            recreatePointerJoint = { targetX = x2, targetY = y2, id = pointerJoints[i].id }
+        end
+    end
+
+    if jointToBreak then
+        local hx, hy = box2dGuy.head:getPosition()
+        local ha = box2dGuy.head:getAngle()
+        local na = box2dGuy.neck:getAngle()
+        jointToBreak:destroy()
+        box2dGuy.head:destroy()
+
+
+        local headWidth = 150 + love.math.random() * 100
+        local headHeight = 100 + love.math.random() * 100
+
+        local head = love.physics.newBody(world, hx, hy, "dynamic")
+        local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
+        local fixture = love.physics.newFixture(head, headShape, .1)
+        fixture:setFilterData(1, 65535, -1 * groupId)
+        fixture:setUserData(makeUserData('head'))
+        print(ha, na)
+        head:setAngle(na) -- ??? why do i need to set to the neck angle insytead of head angle
+        --head:setAngle(math.pi)
+
+        local joint = love.physics.newRevoluteJoint(box2dGuy.neck, head, head:getX(), head:getY(), false)
+
+        joint:setLowerLimit( -math.pi / 16)
+        --
+        joint:setUpperLimit(math.pi / 16)
+        joint:setLimitsEnabled(true)
+        box2dGuy.head = head
+
+        -- this tagretX and Y is not correct, but its not a bigg deal either
+        if (recreatePointerJoint) then
+            killMouseJointIfPossible(recreatePointerJoint.id)
+            table.insert(pointerJoints,
+                makePointerJoint(recreatePointerJoint.id, head, recreatePointerJoint.targetX,
+                    recreatePointerJoint.targetY))
+        end
+    end
 end
 
 function makeGuy(x, y, groupId)
@@ -476,7 +585,7 @@ function makeGuy(x, y, groupId)
     local llWidth = 20
     local llHeight = 100 + love.math.random() * 30
 
-    local feetLength = 20 
+    local feetLength = 20
     local feetThick = 20
 
     -- TORSO
@@ -493,8 +602,8 @@ function makeGuy(x, y, groupId)
 
 
     -- NECK
-    local neckThick = 20
-    local neckLength = 30
+    local neckThick = 12
+    local neckLength = 230
 
     local neck = love.physics.newBody(world, x, y - torsoHeight / 2, "dynamic")
     local neckShape = makeRectPoly2(neckThick, neckLength, 0, neckLength / 2)
@@ -512,26 +621,15 @@ function makeGuy(x, y, groupId)
 
 
     local headHeight = 100
-    local headWidth = 50
+    local headWidth = 150
     -- HEAD -- inlcuding distance joint
 
     local head = love.physics.newBody(world, x, y - torsoHeight / 2 - neckLength, "dynamic")
     local headShape = love.physics.newPolygonShape(capsuleXY(headWidth, headHeight, 10, 0, headHeight / 2))
-    -- local headShape = makeRectPoly2(headWidth, headHeight, 0, headHeight / 2)
     local fixture = love.physics.newFixture(head, headShape, .1)
     fixture:setFilterData(1, 65535, -1 * groupId)
     fixture:setUserData(makeUserData('head'))
 
-    if false then
-        local bx, by = torso:getWorldPoint(0, -torsoHeight / 2)
-
-        local joint = love.physics.newDistanceJoint(neck, head, bx, by, head:getX(),
-                head:getY(), true)
-
-        joint:setLength(1)
-        joint:setFrequency(12)
-        joint:setDampingRatio(0)
-    end
     head:setAngle(math.pi)
     local joint = love.physics.newRevoluteJoint(neck, head, head:getX(), head:getY(), false)
 
@@ -542,20 +640,26 @@ function makeGuy(x, y, groupId)
 
 
 
-      addLimb(x - torsoWidth / 2, y - torsoHeight / 2, torso, ulWidth, ulHeight-100,  llWidth, llHeight,  feetThick, feetLength, 
-  groupId, 'armpart', { 0, math.pi , 0, math.pi, -math.pi / 8, math.pi / 8 })
-  
-  addLimb(x + torsoWidth / 2, y - torsoHeight / 2, torso, ulWidth, ulHeight-100,  llWidth, llHeight,  feetThick, feetLength, 
-  groupId, 'armpart', { -math.pi, 0, -math.pi, 0, -math.pi / 8, math.pi / 8 })
+    local arml = addLimb(x - torsoWidth / 2, y - torsoHeight / 2, torso, ulWidth, ulHeight - 100, llWidth, llHeight,
+            feetThick,
+            feetLength,
+            groupId, 'armpart', { 0, math.pi, 0, math.pi, -math.pi / 8, math.pi / 8 })
 
-    addLimb(x - torsoWidth / 2, y + torsoHeight / 2, torso, ulWidth, ulHeight,  llWidth, llHeight,  feetThick, feetLength, 
-    groupId, 'legpart', {0,math.pi/2, -math.pi/8,0, -math.pi/8, math.pi/8}, math.pi/2)
-    
-    addLimb(x + torsoWidth / 2, y + torsoHeight / 2, torso, ulWidth, ulHeight,  llWidth, llHeight,  feetThick, feetLength, 
-    groupId, 'legpart', {-math.pi/2,0 , 0, math.pi/8, -math.pi/8, math.pi/8}, -math.pi/2)
+    local armr = addLimb(x + torsoWidth / 2, y - torsoHeight / 2, torso, ulWidth, ulHeight - 100, llWidth, llHeight,
+            feetThick,
+            feetLength,
+            groupId, 'armpart', { -math.pi, 0, -math.pi, 0, -math.pi / 8, math.pi / 8 })
 
-  
-    return torso
+    local legl = addLimb(x - torsoWidth / 2, y + torsoHeight / 2, torso, ulWidth, ulHeight, llWidth, llHeight, feetThick,
+            feetLength,
+            groupId, 'legpart', { 0, math.pi / 2, -math.pi / 8, 0, -math.pi / 8, math.pi / 8 }, math.pi / 2)
+
+    local legr = addLimb(x + torsoWidth / 2, y + torsoHeight / 2, torso, ulWidth, ulHeight, llWidth, llHeight, feetThick,
+            feetLength,
+            groupId, 'legpart', { -math.pi / 2, 0, 0, math.pi / 8, -math.pi / 8, math.pi / 8 }, -math.pi / 2)
+
+    local data = { torso = torso, neck = neck, head = head, arml = arml, armr = armr, legl = legl, legr = legr }
+    return data
 end
 
 function makeAndAddConnector(parent, x, y, id, size)
@@ -839,6 +943,9 @@ function startExample(number)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter() * 4, true)
     objects = {}
     ballRadius = love.physics.getMeter() / 4
+    vehiclePedalConnection = {}
+    box2dGuys = {}
+    connectors = {}
     ----
     ---- VLOOIENSPEL
     -----
@@ -928,7 +1035,7 @@ function startExample(number)
         end
 
 
-        vehiclePedalConnection = {}
+
         for i = 1, 10 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
@@ -953,6 +1060,24 @@ function startExample(number)
             end
         end
     end
+
+    if number == 3 then
+        world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+
+        snapJoints = {}
+        connectors = {}
+
+        local margin = 20
+        -- objects.border = makeBorderChain(width, height, margin)
+
+        objects.ground = makeChainGround()
+        objects.ground.fixture:setUserData(makeUserData("ground"))
+
+        for i = 1, 2 do
+            table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
+        end
+    end
+
     example = number
 end
 
@@ -971,7 +1096,7 @@ function love.load()
     connectorCooldownList = {}
 
     example = nil
-    startExample(2)
+    startExample(3)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
     local w, h = love.graphics.getDimensions()
@@ -1036,32 +1161,15 @@ function killMouseJointIfPossible(id)
     for i = 1, #pointerJoints do
         if pointerJoints[i].id == id then
             index = i
-            pointerJoints[i].joint:destroy()
+            if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
+                pointerJoints[i].joint:destroy()
+            end
             pointerJoints[i].joint     = nil
             pointerJoints[i].jointBody = nil
         end
     end
     table.remove(pointerJoints, index)
 end
-
-local function makePointerJoint(id, bodyToAttachTo, wx, wy)
-    local pointerJoint = {}
-    pointerJoint.id = id
-    pointerJoint.jointBody = bodyToAttachTo
-    pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
-    pointerJoint.joint:setDampingRatio(0.5)
-    pointerJoint.joint:setMaxForce(500000)
-    return pointerJoint
-end
-
-local function getPointerPosition(id)
-    if id == 'mouse' then
-        return love.mouse.getPosition()
-    else
-        return love.touch.getPosition(id)
-    end
-end
-
 
 function love.touchpressed(id, x, y)
     pointerPressed(id, x, y)
@@ -1224,6 +1332,22 @@ function love.draw()
     end
 
 
+
+    if example == 3 then
+        love.graphics.setColor(1, 1, 1)
+
+        love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
+        drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
+        cam:push()
+
+        drawWorld(world)
+
+        cam:pop()
+
+
+        love.graphics.print(love.timer.getFPS(), 0, 0)
+    end
+
     cam:push()
 
     for i = 1, #pointerJoints do
@@ -1358,12 +1482,13 @@ function love.update(dt)
                                         end
                                     end
 
-                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = f:getBoundingBox( 1 )
+                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = f:getBoundingBox(1)
                                     local w1 = bottomRightX - topLeftX
-                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = theOtherBody:getFixtures()[1]:getBoundingBox( 1 )
+                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = theOtherBody:getFixtures()[1]
+                                        :getBoundingBox(1)
                                     local w2 = bottomRightX - topLeftX
-                                    local maxD = (w1 + w2)/2
-                                   
+                                    local maxD = (w1 + w2) / 2
+
                                     if d < maxD and not isOnCooldown then
                                         connectors[j].to = f --mj.jointBody
                                         connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
@@ -1377,7 +1502,6 @@ function love.update(dt)
                     end
 
                     if f:getUserData().bodyType == 'carbody' then
-                        
                         local body = mj.jointBody
                         if body then
                             -- i dont have a cartouching per car, its global so wont work for all
@@ -1386,7 +1510,6 @@ function love.update(dt)
                             --end
                         end
                     end
-                  
                 end
             end
         end
@@ -1404,33 +1527,24 @@ function love.update(dt)
 
     local bodies = world:getBodies()
 
-    local upsideDown = true
+    local upsideDown = false
 
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
-        
-       
+
+
         local isBeingPointerJointed = false
-              for j = 1, #pointerJoints do
-                local mj = pointerJoints[j]
-                if mj.jointBody == body  then
-                    isBeingPointerJointed = true
-                end
-            end 
+        for j = 1, #pointerJoints do
+            local mj = pointerJoints[j]
+            if mj.jointBody == body then
+                isBeingPointerJointed = true
+            end
+        end
 
         for _, fixture in ipairs(fixtures) do
-
-           
             --print(isBeingPointerJointed)
             if true and not isBeingPointerJointed then
-
-
-
-
                 if fixture:getUserData() then
-
-
-
                     if fixture:getUserData().bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
@@ -1440,7 +1554,7 @@ function love.update(dt)
                     if not upsideDown then
                         if fixture:getUserData().bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 25)
+                            --  rotateToHorizontal(body, -math.pi, 25)
                         end
 
                         if fixture:getUserData().bodyType == 'head' then
@@ -1464,7 +1578,6 @@ function love.update(dt)
                             getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, math.pi, 10)
                         end
-                       
                     end
 
                     if false then
@@ -1482,36 +1595,37 @@ function love.update(dt)
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
     --print(#connectors)
-    for i = #connectors, 1, -1 do
-        -- we can only break a  joint if we have one
-        -- print(i, connectors[i].joint, connectors[i].to)
-        if connectors[i].joint then
-            local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
-            local delta = Vector(reaction2[1], reaction2[2])
-            local l = delta:getLength()
-            local found = false
+    if connectors then
+        for i = #connectors, 1, -1 do
+            -- we can only break a  joint if we have one
+            -- print(i, connectors[i].joint, connectors[i].to)
+            if connectors[i].joint then
+                local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
+                local delta = Vector(reaction2[1], reaction2[2])
+                local l = delta:getLength()
+                local found = false
 
-            for j = 1, #pointerJoints do
-                local mj = pointerJoints[j]
-                if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
-                    found = true
+                for j = 1, #pointerJoints do
+                    local mj = pointerJoints[j]
+                    if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
+                        found = true
+                    end
                 end
-            end
 
-            local b1, b2 = connectors[i].joint:getBodies()
+                local b1, b2 = connectors[i].joint:getBodies()
 
-            local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
-            if l > breakForce and found then
-                connectors[i].joint:destroy()
-                connectors[i].joint = nil
+                local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
+                if l > breakForce and found then
+                    connectors[i].joint:destroy()
+                    connectors[i].joint = nil
 
-                connectors[i].to = nil
-                print('broke it', i, l)
-                table.insert(connectorCooldownList, { runningFor = 0, index = i })
+                    connectors[i].to = nil
+                    print('broke it', i, l)
+                    table.insert(connectorCooldownList, { runningFor = 0, index = i })
+                end
             end
         end
     end
-
     local now = love.timer.getTime()
     for i = #connectorCooldownList, 1, -1 do
         connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
@@ -1520,10 +1634,11 @@ function love.update(dt)
         end
     end
 
-
-    for i = 1, #vehiclePedalConnection do
-        local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle()
-        vehiclePedalConnection[i].pedalWheel:setAngle(angle / 3)
+    if vehiclePedalConnection then
+        for i = 1, #vehiclePedalConnection do
+            local angle = vehiclePedalConnection[i].wheelJoint:getJointAngle()
+            vehiclePedalConnection[i].pedalWheel:setAngle(angle / 3)
+        end
     end
 
     world:update(dt)
