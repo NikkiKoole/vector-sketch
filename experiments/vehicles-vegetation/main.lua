@@ -530,7 +530,7 @@ function updateHead(box2dGuy, groupId)
         local fixture = makeGuyFixture(creation.head, 'head', groupId, head, headShape)
 
         -- ok so first we set the angle to the default.
-        head:setAngle(prevA + math.pi) -- ??? why do i need to set to the neck angle insytead of head angle
+        head:setAngle(prevA) -- ??? why do i need to set to the neck angle insytead of head angle
         --head:setAngle(math.pi)
         box2dGuy.head = head
         local joint = makeConnectingRevoluteJoint(creation.head, box2dGuy.head, box2dGuy.neck)
@@ -546,7 +546,7 @@ end
 
 function makeGuy(x, y, groupId)
     local function getAngleOffset(key, side)
-        if key == 'neck' or key == 'head' then
+        if key == 'neck' then
             return math.pi
         elseif key == 'foot' then
             if side == 'left' then
@@ -561,14 +561,14 @@ function makeGuy(x, y, groupId)
     local function makePart(cd, key, offsetX, offsetY, parent, side)
         local x, y = parent:getWorldPoint(offsetX, offsetY)
 
-        --local prevA = parent:getAngle()
+        local prevA = parent:getAngle()
         local xangle = getAngleOffset(key, side)
 
         local body = love.physics.newBody(world, x, y, "dynamic")
         local shape = makeShapeFromCreationPart(cd)
         local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
-        body:setAngle(xangle)
+        body:setAngle(prevA + xangle)
         local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
 
         return body
