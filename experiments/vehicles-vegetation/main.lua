@@ -1,5 +1,4 @@
 package.path          = package.path .. ";../../?.lua"
-
 local lurker          = require 'vendor.lurker'
 local inspect         = require 'vendor.inspect'
 Vector                = require 'vendor.brinevector'
@@ -20,8 +19,6 @@ lurker.postswap = function(f)
     grabDevelopmentScreenshot()
 end
 
-
-
 function bool2str(bool)
     return bool and 'true' or 'false'
 end
@@ -35,6 +32,7 @@ end
 local motorSpeed = 0
 local motorTorque = 1500
 local carIsTouching = 0
+
 local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     local pointerJoint = {}
     pointerJoint.id = id
@@ -42,10 +40,6 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
     pointerJoint.joint:setDampingRatio(0.5)
     pointerJoint.joint:setMaxForce(500000)
-
-    --localX, localY = bodyToAttachTo:getLocalPoint(wy, wy)
-    --pointerJoint.lx = localX
-    --pointerJoint.ly = localY
     return pointerJoint
 end
 
@@ -60,7 +54,6 @@ end
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
-
     }
     if moreData then
         result.data = moreData
@@ -110,18 +103,12 @@ function love.keypressed(k)
     if k == '2' then startExample(2) end
     if k == '3' then startExample(3) end
     if (k == 'q' and example == 3) then
-        --print(inspect(box2dGuys[1]))
-        --local b = box2dGuys[1].torso
-        --b:applyLinearImpulse(0, 50000)
         creation.head.w = 150 + love.math.random() * 100
         creation.head.h = 150 + love.math.random() * 100
-
         creation.neck.w = 12 + love.math.random() * 20
         creation.neck.h = 100 + love.math.random() * 200
         updateHead(box2dGuys[1], 1)
         updateNeck(box2dGuys[1], 1)
-
-        --print('should randomize stuff on the first guy')
     end
     if (k == 'w' and example == 3) then
         --print(inspect(box2dGuys[2]))
@@ -174,13 +161,10 @@ function contactShouldBeDisabled(a, b, contact)
     local result = false
 
     -- for some reason the other way around doesnt happen so fixtureA is the ground and the other one might be ball
-
-
     -- this disables contact between a dragged item and the ground
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
         if (mj.jointBody) then
-            --print(fixtureB:getUserData())
             if (bb == mj.jointBody and fixtureA:getUserData() and fixtureA:getUserData().bodyType == 'ground') then
                 result = true
             end
@@ -202,8 +186,6 @@ end
 
 function isContactBetweenGroundAndCarGroundSensor(contact)
     local fixtureA, fixtureB = contact:getFixtures()
-    --print(fixtureA:getUserData(), fixtureB:getUserData())
-    --print(fixtureA:isSensor(), fixtureB:isSensor())
     if fixtureA:getUserData() and fixtureB:getUserData() then
         return (fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'carGroundSensor') or
             (fixtureB:getUserData().bodyType == 'ground' and fixtureA:getUserData().bodyType == 'carGroundSensor')
@@ -412,7 +394,6 @@ local function findJointBetween2Bodies(body1, body2)
     if #result <= 1 then
         return result[1]
     end
-    print('something werid happened')
     return nil
 end
 
@@ -478,7 +459,6 @@ function updateNeck(box2dGuy, groupId)
         local thisA = box2dGuy.neck:getAngle()
         jointToBreak:destroy()
         box2dGuy.neck:destroy()
-
 
         local neck = love.physics.newBody(world, hx, hy, "dynamic")
         local neckShape = makeShapeFromCreationPart(creation.neck) -- makeRectPoly2(creationData.neck.w, creationData.neck.h, 0,  creationData.neck.h / 2)
@@ -603,8 +583,6 @@ function makeGuy(x, y, groupId)
     local luarm = makePart(creation.upArm, 'armpart', -creation.torso.w / 2, -creation.torso.h / 2, torso, 'left')
     local llarm = makePart(creation.lowArm, 'armpart', 0, creation.upArm.h, luarm, 'left')
     local lhand = makePart(creation.hand, 'hand', 0, creation.lowArm.h, llarm, 'left')
-
-
 
     local data = { torso = torso, neck = neck, head = head }
     return data
@@ -867,11 +845,6 @@ function makeVehicle(x, y)
     table.insert(vehiclePedalConnection, { wheelJoint = joint1, pedalJoint = joint2, pedalWheel = pedalwheel })
 
 
-    --joint1:setMotorEnabled(true)
-    --joint1:setMotorSpeed(motorSpeed)
-    --joint1:setMaxMotorTorque(motorTorque)
-
-
     --local wheel2 = {}
     local wheel2 = love.physics.newBody(world, x + (carBodyWidth / 3), y + carBodyHeight / 2 - 25 / 2, "dynamic")
     local shape = love.physics.newCircleShape(35)
@@ -924,7 +897,7 @@ function startExample(number)
 
         objects.ground.fixture:setUserData(makeUserData("ground"))
 
-        if false then
+         if false then
             objects.ground = {}
             objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
             objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
@@ -981,9 +954,7 @@ function startExample(number)
         for i = 1, 3 do
             makeChain(i * 20, -3000, 8)
         end
-
-
-
+       
         for i = 1, 10 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
@@ -1331,14 +1302,12 @@ function rotateToHorizontal(body, desiredAngle, divider)
         local angle = body:getAngle()
         local nextAngle = angle + body:getAngularVelocity() / divider
 
-
-
-
         local totalRotation = desiredAngle - nextAngle
         while (totalRotation < -180 * DEGTORAD) do
             totalRotation = totalRotation + 360 * DEGTORAD
         end
 
+        
         while (totalRotation > 180 * DEGTORAD) do
             totalRotation = totalRotation - 360 * DEGTORAD
         end
