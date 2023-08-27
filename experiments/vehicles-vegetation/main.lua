@@ -449,6 +449,38 @@ local function makeGuyFixture(data, key, groupId, body, shape)
 end
 
 
+
+
+local function getAngleOffset(key, side)
+    if key == 'neck' then
+        return math.pi
+    elseif key == 'foot' then
+        if side == 'left' then
+            return math.pi / 2
+        else
+            return -math.pi / 2
+        end
+    end
+    return 0
+end
+
+local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
+    local x, y = parent:getWorldPoint(offsetX, offsetY)
+
+    local prevA = parent:getAngle()
+    local xangle = getAngleOffset(key, side)
+
+    local body = love.physics.newBody(world, x, y, "dynamic")
+    local shape = makeShapeFromCreationPart(cd)
+    local fixture = makeGuyFixture(cd, key, groupId, body, shape)
+
+    body:setAngle(prevA + xangle)
+    local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
+
+    return body
+end
+
+
 function updateNeck(box2dGuy, groupId)
     local jointToBreak = findJointBetween2Bodies(box2dGuy.torso, box2dGuy.neck)
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.neck)
@@ -524,34 +556,51 @@ function updateHead(box2dGuy, groupId)
     end
 end
 
+
+
+function genericBodyPartUpdate() 
+    -- look up who is my parent and what are my children
+
+
+    local map = {
+        torso = {p=nil, c={'neck', 'luarm', 'ruarm', 'luleg', 'ruleg'}}
+        neck = {p='torso', c='head'}
+        head = {p='neck'},
+        
+        luarm = {p='torso', c ='llarm'}
+        llarm = {p='luarm', c ='lhand'}
+        lhand = {p='llarm'},
+        
+        ruarm = {p='torso', c ='rlarm'}
+        rlarm = {p='ruarm', c ='rhand'}
+        rhand = {p='rlarm'}
+
+        luleg = {p='torso', c ='llleg'}
+        llleg = {p='luleg', c ='lfoot'}
+        lfoot = {p='llleg'},
+        
+        ruleg = {p='torso', c ='rlleg'}
+        rlleg = {p='ruleg', c ='rfoot'}
+        rfoot = {p='rlleg'}
+
+    }
+
+    
+
+
+
+
+    --local jointToBreak = findJointBetween2Bodies(box2dGuy.neck, box2dGuy.head)
+    --local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.head)
+
+end
+
 function makeGuy(x, y, groupId)
-    local function getAngleOffset(key, side)
-        if key == 'neck' then
-            return math.pi
-        elseif key == 'foot' then
-            if side == 'left' then
-                return math.pi / 2
-            else
-                return -math.pi / 2
-            end
-        end
-        return 0
-    end
+
 
     local function makePart(cd, key, offsetX, offsetY, parent, side)
-        local x, y = parent:getWorldPoint(offsetX, offsetY)
-
-        local prevA = parent:getAngle()
-        local xangle = getAngleOffset(key, side)
-
-        local body = love.physics.newBody(world, x, y, "dynamic")
-        local shape = makeShapeFromCreationPart(cd)
-        local fixture = makeGuyFixture(cd, key, groupId, body, shape)
-
-        body:setAngle(prevA + xangle)
-        local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
-
-        return body
+        -- needed to wrap groupid
+        return makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     end
 
 
