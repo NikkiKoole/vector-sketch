@@ -563,26 +563,25 @@ function genericBodyPartUpdate()
 
 
     local map = {
-        torso = {p=nil, c={'neck', 'luarm', 'ruarm', 'luleg', 'ruleg'}}
-        neck = {p='torso', c='head'}
+        torso = {c={'neck', 'luarm', 'ruarm', 'luleg', 'ruleg'}},
+        neck = {p='torso', c='head'},
         head = {p='neck'},
         
-        luarm = {p='torso', c ='llarm'}
-        llarm = {p='luarm', c ='lhand'}
+        luarm = {p='torso', c ='llarm'},
+        llarm = {p='luarm', c ='lhand'},
         lhand = {p='llarm'},
         
-        ruarm = {p='torso', c ='rlarm'}
-        rlarm = {p='ruarm', c ='rhand'}
-        rhand = {p='rlarm'}
+        ruarm = {p='torso', c ='rlarm'},
+        rlarm = {p='ruarm', c ='rhand'},
+        rhand = {p='rlarm'},
 
-        luleg = {p='torso', c ='llleg'}
-        llleg = {p='luleg', c ='lfoot'}
+        luleg = {p='torso', c ='llleg'},
+        llleg = {p='luleg', c ='lfoot'},
         lfoot = {p='llleg'},
         
-        ruleg = {p='torso', c ='rlleg'}
-        rlleg = {p='ruleg', c ='rfoot'}
+        ruleg = {p='torso', c ='rlleg'},
+        rlleg = {p='ruleg', c ='rfoot'},
         rfoot = {p='rlleg'}
-
     }
 
     
