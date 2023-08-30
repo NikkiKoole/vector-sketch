@@ -1361,11 +1361,11 @@ function love.keypressed(k)
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
 
-        --  genericBodyPartUpdate(box2dGuys[1], 1, 'lhand')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
         --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
         genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
-        -- genericBodyPartUpdate(box2dGuys[1], 1, 'luarm')
-        -- genericBodyPartUpdate(box2dGuys[1], 1, 'llarm')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
         -- genericBodyPartUpdate(box2dGuys[1], 1, 'luarm')
     end
     if (k == 'w' and example == 3) then

@@ -187,12 +187,14 @@ local function getRecreateConnectorData(allAttachedFixtures)
 end
 
 local function useRecreateConnectorData(recreateConnectorData, body)
-    --print(recreateConnectorData.fixture) -- its broken already, just use this to find in connecto list
-    --print(inspect(recreateConnectorData.ud))
-    --print(inspect(recreateConnectorData.ud.data))
-
-    makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, recreateConnectorData.ud.data,
-        creation.foot.w * 2)
+    local data = recreateConnectorData.ud.data
+    local type = data.type
+    assert(type)
+    if type == 'foot' then
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data, creation.foot.w * 2)
+    elseif type == 'hand' then
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.hand.h / 2, data, creation.hand.w * 2)
+    end
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
@@ -329,10 +331,15 @@ function makeGuy(x, y, groupId)
     local ruarm = makePart('ruarm', 'armpart', torso, 'right')
     local rlarm = makePart('rlarm', 'armpart', ruarm, 'right')
     local rhand = makePart('rhand', 'hand', rlarm, 'right')
+    makeAndAddConnector(rhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w * 2)
+
+
+
 
     local luarm = makePart('luarm', 'armpart', torso, 'left')
     local llarm = makePart('llarm', 'armpart', luarm, 'left')
     local lhand = makePart('lhand', 'hand', llarm, 'left')
+    makeAndAddConnector(lhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w * 2)
 
     local data = {
         torso = torso,
