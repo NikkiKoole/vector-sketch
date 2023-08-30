@@ -6,6 +6,8 @@ local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 
+require 'box2dGuyCreation'
+local creation = getCreation()
 
 lurker.quiet = true
 require 'palette'
@@ -21,6 +23,26 @@ end
 
 function bool2str(bool)
     return bool and 'true' or 'false'
+end
+
+local function getCenterOfPoints(points)
+    local tlx = math.huge
+    local tly = math.huge
+    local brx = -math.huge
+    local bry = -math.huge
+    for ip = 1, #points, 2 do
+        if points[ip + 0] < tlx then tlx = points[ip + 0] end
+        if points[ip + 1] < tly then tly = points[ip + 1] end
+        if points[ip + 0] > brx then brx = points[ip + 0] end
+        if points[ip + 1] > bry then bry = points[ip + 1] end
+    end
+    --return tlx, tly, brx, bry
+    local w = brx - tlx
+    local h = bry - tly
+    return tlx + w / 2, tly + h / 2
+end
+local function getCentroidOfFixture(body, fixture)
+    return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
 
 function grabDevelopmentScreenshot()
@@ -58,6 +80,7 @@ local function makeUserData(bodyType, moreData)
     if moreData then
         result.data = moreData
     end
+    --print(inspect(result))
     return result
 end
 
@@ -81,73 +104,6 @@ function getRandomConvexPoly(radius, numVerts)
         vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
     end
     return vertices
-end
-
-local creation = {
-    torso = { w = 100, h = 200, d = .5, shape = 'trapezium' },
-    neck = { w = 12, h = 230, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { w = 50, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
-    lowArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
-    hand = { w = 20, h = 20, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 20, h = 100, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 20, h = 100, d = 1, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
-    foot = { w = 20, h = 50, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-}
-
-
-
-function love.keypressed(k)
-    if k == 'escape' then love.event.quit() end
-    if k == '1' then startExample(1) end
-    if k == '2' then startExample(2) end
-    if k == '3' then startExample(3) end
-    if (k == 'q' and example == 3) then
-        creation.head.w = 150 + love.math.random() * 100
-        creation.head.h = 150 + love.math.random() * 100
-        creation.neck.w = 12 + love.math.random() * 20
-        creation.neck.h = 100 + love.math.random() * 200
-        updateHead(box2dGuys[1], 1)
-        updateNeck(box2dGuys[1], 1)
-    end
-    if (k == 'w' and example == 3) then
-        --print(inspect(box2dGuys[2]))
-        --print('should randomize stuff on the second guy')
-    end
-    if example == 2 then
-        if false then
-            if k == 'left' then
-                motorSpeed = motorSpeed - 100
-                objects.joint1:setMotorSpeed(motorSpeed)
-                objects.joint2:setMotorSpeed(motorSpeed)
-            end
-            if k == 'right' then
-                motorSpeed = motorSpeed + 100
-                objects.joint1:setMotorSpeed(motorSpeed)
-                objects.joint2:setMotorSpeed(motorSpeed)
-            end
-            if k == 'up' then
-                motorTorque = motorTorque + 100
-                objects.joint1:setMaxMotorTorque(motorTorque)
-                objects.joint2:setMaxMotorTorque(motorTorque)
-            end
-            if k == 'down' then
-                motorTorque = motorTorque - 100
-                objects.joint1:setMaxMotorTorque(motorTorque)
-                objects.joint2:setMaxMotorTorque(motorTorque)
-            end
-            if k == 's' then
-                if objects.carbody then
-                    local angle = objects.carbody.body:getAngle()
-                    --print(angle)
-
-                    local n = Vector.angled(Vector(400, 0), angle)
-                    objects.carbody.body:applyLinearImpulse(n.x, n.y)
-                    --local delta = Vector(x1 - x2, y1 - y2)
-                end
-            end
-        end
-    end
 end
 
 -- https://www.iforce2d.net/b2dtut/one-way-walls
@@ -372,277 +328,50 @@ function makeShape(shapeType, w, h)
     end
 end
 
-local function tableContains(table, element)
-    for _, value in pairs(table) do
-        if value == element then
-            return true
-        end
-    end
-    return false
-end
-
-local function findJointBetween2Bodies(body1, body2)
-    local joints1 = body1:getJoints()
-    local joints2 = body2:getJoints()
-
-    local result = {}
-    for i = 1, #joints2 do
-        if tableContains(joints1, joints2[i]) then
-            table.insert(result, joints2[i])
-        end
-    end
-    if #result <= 1 then
-        return result[1]
-    end
-    return nil
-end
-
-
-local function getRecreatePointerJoint(body)
-    local recreatePointerJoint = nil
-    for i = 1, #pointerJoints do
-        if (pointerJoints[i].jointBody == body) then
-            local tx, ty = pointerJoints[i].joint:getTarget()
-            x1, y1, x2, y2 = pointerJoints[i].joint:getAnchors()
-            recreatePointerJoint = { targetX = x2, targetY = y2, id = pointerJoints[i].id }
-        end
-    end
-    return recreatePointerJoint
-end
-
-local function useRecreatePointerJoint(recreatePointerJoint, body)
-    killMouseJointIfPossible(recreatePointerJoint.id)
-    table.insert(pointerJoints,
-        makePointerJoint(recreatePointerJoint.id, body, recreatePointerJoint.targetX,
-            recreatePointerJoint.targetY))
-end
-
-local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
-    local joint = love.physics.newRevoluteJoint(from, this, this:getX(), this:getY(), false)
-    if data.limits then
-        local needsFlipping = false
-        if (optionalSide) then
-            if data.limits.side then
-                if (optionalSide ~= data.limits.side) then
-                    needsFlipping = true
-                end
-            end
-        end
-
-        if needsFlipping then
-            joint:setLowerLimit( -1 * data.limits.up)
-            joint:setUpperLimit( -1 * data.limits.low)
-        else
-            joint:setLowerLimit(data.limits.low)
-            joint:setUpperLimit(data.limits.up)
-        end
-        joint:setLimitsEnabled(data.limits.enabled)
-    end
-    return joint
-end
-
-local function makeGuyFixture(data, key, groupId, body, shape)
-    local fixture = love.physics.newFixture(body, shape, data.d)
-    fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setUserData(makeUserData(key))
-    return fixture
-end
-
-
-
-
-local function getAngleOffset(key, side)
-    if key == 'neck' then
-        return math.pi
-    elseif key == 'foot' then
-        if side == 'left' then
-            return math.pi / 2
-        else
-            return -math.pi / 2
-        end
-    end
-    return 0
-end
-
-local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
-    local x, y = parent:getWorldPoint(offsetX, offsetY)
-
-    local prevA = parent:getAngle()
-    local xangle = getAngleOffset(key, side)
-
-    local body = love.physics.newBody(world, x, y, "dynamic")
-    local shape = makeShapeFromCreationPart(cd)
-    local fixture = makeGuyFixture(cd, key, groupId, body, shape)
-
-    body:setAngle(prevA + xangle)
-    local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
-
-    return body
-end
-
-
-function updateNeck(box2dGuy, groupId)
-    local jointToBreak = findJointBetween2Bodies(box2dGuy.torso, box2dGuy.neck)
-    local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.neck)
-
-    if jointToBreak then
-        local hx, hy = box2dGuy.torso:getWorldPoint(0, -creation.torso.h / 2)
-        local prevA = box2dGuy.torso:getAngle()
-        local thisA = box2dGuy.neck:getAngle()
-        jointToBreak:destroy()
-        box2dGuy.neck:destroy()
-
-        local neck = love.physics.newBody(world, hx, hy, "dynamic")
-        local neckShape = makeShapeFromCreationPart(creation.neck) -- makeRectPoly2(creationData.neck.w, creationData.neck.h, 0,  creationData.neck.h / 2)
-        local fixture = makeGuyFixture(creation.neck, 'neck', groupId, neck, neckShape)
-
-        neck:setAngle(prevA + math.pi)
-
-
-        local joint = makeConnectingRevoluteJoint(creation.neck, neck, box2dGuy.torso)
-
-
-        box2dGuy.neck = neck
-        neck:setAngle(thisA)
-
-        if (recreatePointerJoint) then
-            useRecreatePointerJoint(recreatePointerJoint, box2dGuy.neck)
-        end
-
-        -- reattaching existing stuff after this
-        local nx, ny = box2dGuy.neck:getWorldPoint(0, creation.neck.h)
-        box2dGuy.head:setPosition(nx, ny)
-        box2dGuy.head:setAngle(thisA)
-
-        local joint = makeConnectingRevoluteJoint(creation.head, box2dGuy.head, box2dGuy.neck)
-    end
-end
-
-function updateHead(box2dGuy, groupId)
-    -- find the current joint between neck and head
-    -- release head from body (destroy joint between them)
-    -- create new head
-    -- attach to neck
-    local jointToBreak = findJointBetween2Bodies(box2dGuy.neck, box2dGuy.head)
-    local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.head)
-
-
-    if jointToBreak then
-        -- instead of just asking what my position is and reusing that i ought to -i think- calculate the best position for the head
-
-        local hx, hy = box2dGuy.neck:getWorldPoint(0, creation.neck.h)
-        local prevA = box2dGuy.neck:getAngle()
-        local thisA = box2dGuy.head:getAngle()
-
-        jointToBreak:destroy()
-        box2dGuy.head:destroy()
-
-        local head = love.physics.newBody(world, hx, hy, "dynamic")
-        local headShape = makeShapeFromCreationPart(creation.head) -- makeRectPoly2(creationData.neck.w, creationData.neck.h, 0,  creationData.neck.h / 2)
-        local fixture = makeGuyFixture(creation.head, 'head', groupId, head, headShape)
-
-        -- ok so first we set the angle to the default.
-        head:setAngle(prevA) -- ??? why do i need to set to the neck angle insytead of head angle
-        --head:setAngle(math.pi)
-        box2dGuy.head = head
-        local joint = makeConnectingRevoluteJoint(creation.head, box2dGuy.head, box2dGuy.neck)
-
-        -- then we set it to the desired
-        head:setAngle(thisA)
-        -- this tagretX and Y is not correct, but its not a bigg deal either
-        if (recreatePointerJoint) then
-            useRecreatePointerJoint(recreatePointerJoint, box2dGuy.head)
-        end
-    end
-end
-
-
-
-function genericBodyPartUpdate() 
-    -- look up who is my parent and what are my children
-
-
-    local map = {
-        torso = {c={'neck', 'luarm', 'ruarm', 'luleg', 'ruleg'}},
-        neck = {p='torso', c='head'},
-        head = {p='neck'},
-        
-        luarm = {p='torso', c ='llarm'},
-        llarm = {p='luarm', c ='lhand'},
-        lhand = {p='llarm'},
-        
-        ruarm = {p='torso', c ='rlarm'},
-        rlarm = {p='ruarm', c ='rhand'},
-        rhand = {p='rlarm'},
-
-        luleg = {p='torso', c ='llleg'},
-        llleg = {p='luleg', c ='lfoot'},
-        lfoot = {p='llleg'},
-        
-        ruleg = {p='torso', c ='rlleg'},
-        rlleg = {p='ruleg', c ='rfoot'},
-        rfoot = {p='rlleg'}
-    }
-
-    
-
-
-
-
-    --local jointToBreak = findJointBetween2Bodies(box2dGuy.neck, box2dGuy.head)
-    --local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.head)
-
-end
-
-function makeGuy(x, y, groupId)
-
-
-    local function makePart(cd, key, offsetX, offsetY, parent, side)
-        -- needed to wrap groupid
-        return makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
-    end
-
-
-    local torso = love.physics.newBody(world, x, y, "dynamic")
-    local torsoShape = makeShapeFromCreationPart(creation.torso)
-    local fixture = makeGuyFixture(creation.torso, 'torso', groupId, torso, torsoShape)
-
-
-    local neck = makePart(creation.neck, 'neck', 0, -creation.torso.h / 2, torso)
-    local head = makePart(creation.head, 'head', 0, creation.neck.h, neck)
-
-    local luleg = makePart(creation.upLeg, 'legpart', -creation.torso.w / 2, creation.torso.h / 2, torso, 'left')
-    local llleg = makePart(creation.lowLeg, 'legpart', 0, creation.upLeg.h, luleg, 'left')
-    local lfoot = makePart(creation.foot, 'foot', 0, creation.lowLeg.h, llleg, 'left')
-
-    makeAndAddConnector(lfoot, 0, creation.foot.h / 2, 'guy' .. groupId, creation.foot.w * 2)
-
-    local ruleg = makePart(creation.upLeg, 'legpart', creation.torso.w / 2, creation.torso.h / 2, torso, 'right')
-    local rlleg = makePart(creation.lowLeg, 'legpart', 0, creation.upLeg.h, ruleg, 'right')
-    local rfoot = makePart(creation.foot, 'foot', 0, creation.lowLeg.h, rlleg, 'right')
-
-    makeAndAddConnector(rfoot, 0, creation.foot.h / 2, 'guy' .. groupId, creation.foot.w * 2)
-
-
-    local ruarm = makePart(creation.upArm, 'armpart', creation.torso.w / 2, -creation.torso.h / 2, torso, 'right')
-    local rlarm = makePart(creation.lowArm, 'armpart', 0, creation.upArm.h, ruarm, 'right')
-    local rhand = makePart(creation.hand, 'hand', 0, creation.lowArm.h, rlarm, 'right')
-
-    local luarm = makePart(creation.upArm, 'armpart', -creation.torso.w / 2, -creation.torso.h / 2, torso, 'left')
-    local llarm = makePart(creation.lowArm, 'armpart', 0, creation.upArm.h, luarm, 'left')
-    local lhand = makePart(creation.hand, 'hand', 0, creation.lowArm.h, llarm, 'left')
-
-    local data = { torso = torso, neck = neck, head = head }
-    return data
-end
-
-function makeAndAddConnector(parent, x, y, id, size)
+function makeAndAddConnector(parent, x, y, data, size)
     size = size or 10
     local bandshape2 = makeRectPoly2(size, size, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
-    fixture:setUserData(makeUserData('connector', { id = id }))
+    --print(inspect(data))
+    fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
+end
+
+function getJointBetween2Connectors(to, at)
+    local pos1 = getCentroidOfFixture(to:getBody(), to)
+    local pos2 = getCentroidOfFixture(at:getBody(), at)
+    local j = love.physics.newRevoluteJoint(at:getBody(), to:getBody(),
+            pos2[1],
+            pos2[2], pos1[1], pos1[2])
+    return j
+end
+
+function makeAndReplaceConnector(recreate, parent, x, y, data, size)
+    size = size or 10
+    local bandshape2 = makeRectPoly2(size, size, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 1)
+
+    fixture:setUserData(makeUserData('connector', data))
+    fixture:setSensor(true)
+
+    -- we are remaking a connector, keep all its connections working here!
+    for i = 1, #connectors do
+        if connectors[i].at and connectors[i].at == recreate.oldFixture then
+            connectors[i].at = fixture
+            if connectors[i].to then
+                local j = getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+                connectors[i].joint = j
+            end
+        end
+
+        if connectors[i].to and connectors[i].to == recreate.oldFixture then
+            connectors[i].to = fixture
+
+            local j = getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+            connectors[i].joint = j
+        end
+    end
 end
 
 function makeSnappyElastic(x, y)
@@ -945,7 +674,7 @@ function startExample(number)
 
         objects.ground.fixture:setUserData(makeUserData("ground"))
 
-         if false then
+        if false then
             objects.ground = {}
             objects.ground.body = love.physics.newBody(world, width / 2, height - (height / 10), "static")
             objects.ground.shape = love.physics.newRectangleShape(width, height / 4)
@@ -1002,7 +731,7 @@ function startExample(number)
         for i = 1, 3 do
             makeChain(i * 20, -3000, 8)
         end
-       
+
         for i = 1, 10 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
@@ -1185,23 +914,6 @@ function getBodyColor(body)
     --fixture:getShape():type() == 'PolygonShape' then
 end
 
-local function getCenterOfPoints(points)
-    local tlx = math.huge
-    local tly = math.huge
-    local brx = -math.huge
-    local bry = -math.huge
-    for ip = 1, #points, 2 do
-        if points[ip + 0] < tlx then tlx = points[ip + 0] end
-        if points[ip + 1] < tly then tly = points[ip + 1] end
-        if points[ip + 0] > brx then brx = points[ip + 0] end
-        if points[ip + 1] > bry then bry = points[ip + 1] end
-    end
-    --return tlx, tly, brx, bry
-    local w = brx - tlx
-    local h = bry - tly
-    return tlx + w / 2, tly + h / 2
-end
-
 function drawWorld(world)
     -- get the current color values to reapply
     local r, g, b, a = love.graphics.getColor()
@@ -1355,7 +1067,7 @@ function rotateToHorizontal(body, desiredAngle, divider)
             totalRotation = totalRotation + 360 * DEGTORAD
         end
 
-        
+
         while (totalRotation > 180 * DEGTORAD) do
             totalRotation = totalRotation - 360 * DEGTORAD
         end
@@ -1368,10 +1080,6 @@ function rotateToHorizontal(body, desiredAngle, divider)
         local torque = body:getInertia() * desiredAngularVelocity / (1 / divider)
         body:applyTorque(torque)
     end
-end
-
-local function getCentroidOfFixture(body, fixture)
-    return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
 
 local function getRidOfBigRotationsInBody(body)
@@ -1391,7 +1099,7 @@ end
 
 
 function love.update(dt)
-    lurker.update()
+    -- lurker.update()
 
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
@@ -1456,10 +1164,8 @@ function love.update(dt)
 
                                     if d < maxD and not isOnCooldown then
                                         connectors[j].to = f --mj.jointBody
-                                        connectors[j].joint = love.physics.newRevoluteJoint(theOtherBody, mj.jointBody,
-                                                pos2[1],
-                                                pos2[2], pos1[1], pos1[2])
-                                        --print('connect', j, d, k)
+                                        local joint = getJointBetween2Connectors(connectors[j].to, connectors[j].at)
+                                        connectors[j].joint = joint
                                     end
                                 end
                             end
@@ -1564,6 +1270,7 @@ function love.update(dt)
         for i = #connectors, 1, -1 do
             -- we can only break a  joint if we have one
             -- print(i, connectors[i].joint, connectors[i].to)
+
             if connectors[i].joint then
                 local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
                 local delta = Vector(reaction2[1], reaction2[2])
@@ -1633,4 +1340,70 @@ end
 
 function love.resize(w, h)
     world:update(0)
+end
+
+function love.keypressed(k)
+    if k == 'escape' then love.event.quit() end
+    if k == '1' then startExample(1) end
+    if k == '2' then startExample(2) end
+    if k == '3' then startExample(3) end
+    if (k == 'q' and example == 3) then
+        creation.upArm.h = 150 + love.math.random() * 100
+        creation.lowArm.h = 150 + love.math.random() * 100
+        creation.foot.h = 50 + love.math.random() * 100
+        creation.hand.h = 150 + love.math.random() * 100
+        creation.head.w = 150 + love.math.random() * 100
+        creation.head.h = 150 + love.math.random() * 100
+        creation.neck.w = 12 + love.math.random() * 20
+        creation.neck.h = 100 + love.math.random() * 200
+        creation.torso.h = 200 + love.math.random() * 200
+        creation.torso.w = 200 + love.math.random() * 200
+        --updateHead(box2dGuys[1], 1)
+        --updateNeck(box2dGuys[1], 1)
+
+        --  genericBodyPartUpdate(box2dGuys[1], 1, 'lhand')
+        --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
+        -- genericBodyPartUpdate(box2dGuys[1], 1, 'luarm')
+        -- genericBodyPartUpdate(box2dGuys[1], 1, 'llarm')
+        -- genericBodyPartUpdate(box2dGuys[1], 1, 'luarm')
+    end
+    if (k == 'w' and example == 3) then
+        --print(inspect(box2dGuys[2]))
+        --print('should randomize stuff on the second guy')
+    end
+    if example == 2 then
+        if false then
+            if k == 'left' then
+                motorSpeed = motorSpeed - 100
+                objects.joint1:setMotorSpeed(motorSpeed)
+                objects.joint2:setMotorSpeed(motorSpeed)
+            end
+            if k == 'right' then
+                motorSpeed = motorSpeed + 100
+                objects.joint1:setMotorSpeed(motorSpeed)
+                objects.joint2:setMotorSpeed(motorSpeed)
+            end
+            if k == 'up' then
+                motorTorque = motorTorque + 100
+                objects.joint1:setMaxMotorTorque(motorTorque)
+                objects.joint2:setMaxMotorTorque(motorTorque)
+            end
+            if k == 'down' then
+                motorTorque = motorTorque - 100
+                objects.joint1:setMaxMotorTorque(motorTorque)
+                objects.joint2:setMaxMotorTorque(motorTorque)
+            end
+            if k == 's' then
+                if objects.carbody then
+                    local angle = objects.carbody.body:getAngle()
+                    --print(angle)
+
+                    local n = Vector.angled(Vector(400, 0), angle)
+                    objects.carbody.body:applyLinearImpulse(n.x, n.y)
+                    --local delta = Vector(x1 - x2, y1 - y2)
+                end
+            end
+        end
+    end
 end
