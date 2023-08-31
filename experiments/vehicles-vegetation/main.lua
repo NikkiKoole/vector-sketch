@@ -769,6 +769,16 @@ function startExample(number)
         objects.ground = makeChainGround()
         objects.ground.fixture:setUserData(makeUserData("ground"))
 
+        if false then
+            objects.ground = {}
+            objects.ground.body = love.physics.newBody(world, width / 2, -500, "static")
+            objects.ground.shape = love.physics.newRectangleShape(width * 10, height / 4)
+            objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+            objects.ground.fixture:setUserData(makeUserData("ground"))
+            objects.ground.fixture:setFriction(1)
+        end
+
+
         for i = 1, 2 do
             table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
         end
@@ -1237,7 +1247,7 @@ function love.update(dt)
                     if not upsideDown then
                         if fixture:getUserData().bodyType == 'legpart' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 50)
+                            rotateToHorizontal(body, 0, 30)
                         end
                     end
                     if upsideDown then
@@ -1348,25 +1358,40 @@ function love.keypressed(k)
     if k == '2' then startExample(2) end
     if k == '3' then startExample(3) end
     if (k == 'q' and example == 3) then
-        creation.upArm.h = 150 + love.math.random() * 100
-        creation.lowArm.h = 150 + love.math.random() * 100
-        creation.foot.h = 50 + love.math.random() * 100
-        creation.hand.h = 150 + love.math.random() * 100
-        creation.head.w = 150 + love.math.random() * 100
-        creation.head.h = 150 + love.math.random() * 100
-        creation.neck.w = 12 + love.math.random() * 20
-        creation.neck.h = 100 + love.math.random() * 200
-        creation.torso.h = 200 + love.math.random() * 200
-        creation.torso.w = 200 + love.math.random() * 200
+        -- local impulse = body:getInertia() * desiredAngularVelocity
+        -- body:applyAngularImpulse(impulse)
+        local body = box2dGuys[2].torso
+        body:applyLinearImpulse(0, -1000)
+
+        creation.upLeg.h = 150 + love.math.random() * 100
+        creation.lowLeg.h = 150 + love.math.random() * 100
+        creation.upLeg.w = 15 + love.math.random() * 10
+        creation.lowLeg.w = 15 + love.math.random() * 10
+        --    creation.upArm.h = 150 + love.math.random() * 100
+        --    creation.lowArm.h = 150 + love.math.random() * 100
+        --    creation.foot.h = 50 + love.math.random() * 100
+        --    creation.hand.h = 150 + love.math.random() * 100
+        --    creation.head.w = 150 + love.math.random() * 100
+        --    creation.head.h = 150 + love.math.random() * 100
+        --    creation.neck.w = 12 + love.math.random() * 20
+        --    creation.neck.h = 100 + love.math.random() * 200
+        --    creation.torso.h = 200 + love.math.random() * 200
+        --    creation.torso.w = 200 + love.math.random() * 200
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
-
-        genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
+        --  genericBodyPartUpdate(box2dGuys[2], 2, 'torso')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
         --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-        -- genericBodyPartUpdate(box2dGuys[1], 1, 'luarm')
+        --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
+        --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
     end
     if (k == 'w' and example == 3) then
         --print(inspect(box2dGuys[2]))

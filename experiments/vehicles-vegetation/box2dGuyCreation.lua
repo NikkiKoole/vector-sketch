@@ -28,8 +28,8 @@ local creation = {
     upArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 20, h = 20, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 20, h = 100, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 20, h = 100, d = 1, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upLeg = { w = 20, h = 200, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 20, h = 200, d = 1, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     foot = { w = 20, h = 50, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 
@@ -112,7 +112,12 @@ end
 local function makeGuyFixture(data, key, groupId, body, shape)
     local fixture = love.physics.newFixture(body, shape, data.d)
     fixture:setFilterData(1, 65535, -1 * groupId)
-    fixture:setUserData(makeUserData(key))
+
+    local fixedKey = key
+    if key == 'upLeg' or key == 'lowLeg' then
+        fixedKey = 'legpart'
+    end
+    fixture:setUserData(makeUserData(fixedKey))
     return fixture
 end
 
@@ -203,30 +208,18 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
 
     local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
-    --print(partName, parentName)
-    --  assert(parentName)
-    --  assert(box2dGuy[parentName] and box2dGuy[partName])
-
-
-
-
-    -- check if we have an attached connector here
-    -- also check what the other thing attached to that connector is btw
-    --print(inspect(box2dGuy[partName]:getFixtures()))
-
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
-
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
+    local thisA = box2dGuy[partName]:getAngle()
 
     if parentName then
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
-
 
         if jointWithParentToBreak then
             local offsetX, offsetY = getOffsetFromParent(partName)
             local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
             local prevA = box2dGuy[parentName]:getAngle()
-            local thisA = box2dGuy[partName]:getAngle()
+
             jointWithParentToBreak:destroy()
 
             box2dGuy[partName]:destroy()
@@ -236,41 +229,71 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             local shape = makeShapeFromCreationPart(createData)
             local fixture = makeGuyFixture(createData, data.alias or partName, groupId, body, shape)
 
-
-            local xangle = getAngleOffset(data.alias or partName, 'left') -- what LEFT!
+            local leftOrRight = (partName):find('l', 1, true) == 1 and 'left' or 'right'
+            local xangle = getAngleOffset(data.alias or partName, leftOrRight) -- what LEFT!
+            --if xangle ~= 0 then
             body:setAngle(prevA + xangle)
+            --end
+            print(prevA, xangle, thisA)
 
-
-
-            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName])
-
+            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName], leftOrRight)
 
             box2dGuy[partName] = body
             body:setAngle(thisA)
-
-            if (recreatePointerJoint) then
-                useRecreatePointerJoint(recreatePointerJoint, box2dGuy[partName])
-            end
-
-            if (recreateConnectorData) then
-                useRecreateConnectorData(recreateConnectorData, box2dGuy[partName])
-            end
-            -- reattach children
-
-            local childName = data.c
-            if childName then
-                local childData = getParentAndChildrenFromPartName(childName)
-                local offsetX, offsetY = getOffsetFromParent(childName)
-                local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-                box2dGuy[childName]:setPosition(nx, ny)
-                box2dGuy[childName]:setAngle(thisA)
-                local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
-                        box2dGuy[partName])
-            end
         end
     end
 
+    if not parentName or partName == 'torso' then
+        print('joj jo joze')
+        local hx, hy = box2dGuy[partName]:getWorldPoint(0, 0)
+        box2dGuy[partName]:destroy()
+        local createData = creation[partName]
+        local body = love.physics.newBody(world, hx, hy, "dynamic")
+        local shape = makeShapeFromCreationPart(createData)
+        local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
+        box2dGuy[partName] = body
+    end
 
+    if (recreatePointerJoint) then
+        useRecreatePointerJoint(recreatePointerJoint, box2dGuy[partName])
+    end
+
+    if (recreateConnectorData) then
+        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName])
+    end
+    -- reattach children
+
+
+    local function reAttachChild(childName)
+        local childData = getParentAndChildrenFromPartName(childName)
+        local offsetX, offsetY = getOffsetFromParent(childName)
+        local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
+        box2dGuy[childName]:setPosition(nx, ny)
+        box2dGuy[childName]:setAngle(thisA)
+
+
+        local data2 = getParentAndChildrenFromPartName(childName)
+
+        local leftOrRight = childName:find('l', 1, true) == 1 and 'left' or 'right'
+        print(childName, leftOrRight)
+        local xangle = getAngleOffset(data2.alias or childName, leftOrRight) -- what LEFT!
+        print('xangel', xangle)
+        box2dGuy[childName]:setAngle(thisA + xangle)
+        --box2dGuy[childName]:setAngle(xangle)
+        --print(childName, thisA, xangle)
+        local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
+                box2dGuy[partName], leftOrRight)
+    end
+
+    local childName = data.c
+    if childName and (type(childName) == 'string') then
+        reAttachChild(childName)
+    end
+    if childName and (type(childName) == 'table') then
+        for i = 1, #childName do
+            reAttachChild(childName[i])
+        end
+    end
     --local jointToBreak = findJointBetween2Bodies(box2dGuy.neck, box2dGuy.head)
     --local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.head)
 end
