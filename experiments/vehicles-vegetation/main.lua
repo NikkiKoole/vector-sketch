@@ -1361,12 +1361,25 @@ function love.keypressed(k)
         -- local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
         local body = box2dGuys[2].torso
-        body:applyLinearImpulse(0, -1000)
+        -- body:applyLinearImpulse(0, -10000)
 
-        creation.upLeg.h = 150 + love.math.random() * 100
-        creation.lowLeg.h = 150 + love.math.random() * 100
-        creation.upLeg.w = 15 + love.math.random() * 10
-        creation.lowLeg.w = 15 + love.math.random() * 10
+        local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+
+
+        creation.upLeg.h = 15 + love.math.random() * 400
+        creation.lowLeg.h = 15 + love.math.random() * 400
+        creation.upLeg.w = 15 + love.math.random() * 100
+        creation.lowLeg.w = 15 + love.math.random() * 100
+        creation.torso.h = 200 + love.math.random() * 200
+        creation.torso.w = 200 + love.math.random() * 200
+
+
+        local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+        local bx, by = body:getPosition()
+        print('bx/by', bx, by)
+        if (newLegLength > oldLegLength) then
+            body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
+        end
         --    creation.upArm.h = 150 + love.math.random() * 100
         --    creation.lowArm.h = 150 + love.math.random() * 100
         --    creation.foot.h = 50 + love.math.random() * 100
@@ -1375,13 +1388,12 @@ function love.keypressed(k)
         --    creation.head.h = 150 + love.math.random() * 100
         --    creation.neck.w = 12 + love.math.random() * 20
         --    creation.neck.h = 100 + love.math.random() * 200
-        --    creation.torso.h = 200 + love.math.random() * 200
-        --    creation.torso.w = 200 + love.math.random() * 200
+
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
         genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
-        --  genericBodyPartUpdate(box2dGuys[2], 2, 'torso')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'torso')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
         --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
         --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
