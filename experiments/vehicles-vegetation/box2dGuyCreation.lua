@@ -25,11 +25,11 @@ local creation = {
     torso = { w = 100, h = 200, d = .5, shape = 'trapezium' },
     neck = { w = 12, h = 230, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { w = 50, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 20, h = 180, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
-    lowArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
-    hand = { w = 20, h = 20, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 20, h = 200, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 20, h = 200, d = 1, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upArm = { w = 20, h = 180, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
+    lowArm = { w = 20, h = 80, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
+    hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    upLeg = { w = 20, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 20, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     foot = { w = 20, h = 50, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 
@@ -110,7 +110,7 @@ local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
 end
 
 local function makeGuyFixture(data, key, groupId, body, shape)
-    local fixture = love.physics.newFixture(body, shape, data.d)
+    local fixture = love.physics.newFixture(body, shape, data.d )
     fixture:setFilterData(1, 65535, -1 * groupId)
 
     local fixedKey = key

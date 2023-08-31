@@ -489,13 +489,13 @@ function makeBalloon(x,y )
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-    ball.shape = love.physics.newCircleShape(300)
+    ball.shape = love.physics.newCircleShape(180)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 0)
   --  ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData(makeUserData("balloon"))
    -- ball.fixture:setFriction(.5)
 
-   makeAndAddConnector(ball.body,0,350,nil, 50)
+   makeAndAddConnector(ball.body,0,200,nil, 50)
     return ball
 end
 
@@ -1258,7 +1258,7 @@ function love.update(dt)
                         --getRidOfBigRotationsInBody(body)
                         --local desired = upsideDown and -math.pi or 0
                         --rotateToHorizontal(body, desired, 50)
-                       local up =  -9.81 * love.physics.getMeter() * 10
+                       local up =  -9.81 * love.physics.getMeter() * 4.5
                        print('hello!')
                         body:applyForce( 0, up )
                     end
