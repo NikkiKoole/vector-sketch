@@ -25,7 +25,7 @@ local creation = {
     torso = { w = 100, h = 200, d = .5, shape = 'trapezium' },
     neck = { w = 12, h = 230, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { w = 50, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
+    upArm = { w = 20, h = 180, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 20, h = 80, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 20, h = 20, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     upLeg = { w = 20, h = 200, d = 1, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
@@ -244,6 +244,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
 
     if not parentName or partName == 'torso' then
+        local aa = box2dGuy[partName]:getAngle()
         print('joj jo joze')
         local hx, hy = box2dGuy[partName]:getWorldPoint(0, 0)
         box2dGuy[partName]:destroy()
@@ -252,6 +253,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local shape = makeShapeFromCreationPart(createData)
         local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
         box2dGuy[partName] = body
+        box2dGuy[partName]:setAngle(aa)
     end
 
     if (recreatePointerJoint) then
@@ -269,20 +271,14 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
         box2dGuy[childName]:setPosition(nx, ny)
-        box2dGuy[childName]:setAngle(thisA)
-
-
+        local aa = box2dGuy[childName]:getAngle()
         local data2 = getParentAndChildrenFromPartName(childName)
 
         local leftOrRight = childName:find('l', 1, true) == 1 and 'left' or 'right'
-        print(childName, leftOrRight)
         local xangle = getAngleOffset(data2.alias or childName, leftOrRight) -- what LEFT!
-        print('xangel', xangle)
-        box2dGuy[childName]:setAngle(thisA + xangle)
-        --box2dGuy[childName]:setAngle(xangle)
-        --print(childName, thisA, xangle)
-        local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
-                box2dGuy[partName], leftOrRight)
+        box2dGuy[childName]:setAngle(thisA+xangle)
+        local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],box2dGuy[partName], leftOrRight)
+        box2dGuy[childName]:setAngle(aa)
     end
 
     local childName = data.c
@@ -294,8 +290,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             reAttachChild(childName[i])
         end
     end
-    --local jointToBreak = findJointBetween2Bodies(box2dGuy.neck, box2dGuy.head)
-    --local recreatePointerJoint = getRecreatePointerJoint(box2dGuy.head)
+   
 end
 
 function getOffsetFromParent(partName)

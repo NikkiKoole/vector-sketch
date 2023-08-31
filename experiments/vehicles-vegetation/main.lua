@@ -331,7 +331,7 @@ end
 function makeAndAddConnector(parent, x, y, data, size)
     size = size or 10
     local bandshape2 = makeRectPoly2(size, size, x, y)
-    local fixture = love.physics.newFixture(parent, bandshape2, 1)
+    local fixture = love.physics.newFixture(parent, bandshape2, 0)
     --print(inspect(data))
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
@@ -484,6 +484,21 @@ function makeBorderChain(width, height, margin)
     border.fixture:setFriction(.5)
     return border
 end
+
+function makeBalloon(x,y )
+    local ball = {}
+    ball.body = love.physics.newBody(world, x, y, "dynamic")
+
+    ball.shape = love.physics.newCircleShape(300)
+    ball.fixture = love.physics.newFixture(ball.body, ball.shape, 0)
+  --  ball.fixture:setRestitution(.4) -- let the ball bounce
+    ball.fixture:setUserData(makeUserData("balloon"))
+   -- ball.fixture:setFriction(.5)
+
+   makeAndAddConnector(ball.body,0,350,nil, 50)
+    return ball
+end
+
 
 function makeChainGround()
     local width, height = love.graphics.getDimensions()
@@ -728,6 +743,12 @@ function startExample(number)
                     margin + love.math.random() * -height / 2, ballRadius)
         end
 
+
+
+        for i =1, 5 do
+            makeBalloon(i*100, -1000)
+        end
+
         for i = 1, 3 do
             makeChain(i * 20, -3000, 8)
         end
@@ -769,9 +790,9 @@ function startExample(number)
         objects.ground = makeChainGround()
         objects.ground.fixture:setUserData(makeUserData("ground"))
 
-        if false then
+        if true then
             objects.ground = {}
-            objects.ground.body = love.physics.newBody(world, width / 2, -500, "static")
+            objects.ground.body = love.physics.newBody(world, width / 2, -2000, "static")
             objects.ground.shape = love.physics.newRectangleShape(width * 10, height / 4)
             objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
             objects.ground.fixture:setUserData(makeUserData("ground"))
@@ -782,6 +803,11 @@ function startExample(number)
         for i = 1, 2 do
             table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
         end
+
+        for i =1, 5 do
+            makeBalloon(i*100, -1000)
+        end
+
     end
 
     example = number
@@ -1226,6 +1252,18 @@ function love.update(dt)
             --print(isBeingPointerJointed)
             if true and not isBeingPointerJointed then
                 if fixture:getUserData() then
+
+
+                    if fixture:getUserData().bodyType == 'balloon' then
+                        --getRidOfBigRotationsInBody(body)
+                        --local desired = upsideDown and -math.pi or 0
+                        --rotateToHorizontal(body, desired, 50)
+                       local up =  -9.81 * love.physics.getMeter() * 10
+                       print('hello!')
+                        body:applyForce( 0, up )
+                    end
+                   
+
                     if fixture:getUserData().bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
@@ -1248,6 +1286,10 @@ function love.update(dt)
                         if fixture:getUserData().bodyType == 'legpart' then
                             getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, 0, 30)
+                        end
+                        if fixture:getUserData().bodyType == 'armpart' then
+                            getRidOfBigRotationsInBody(body)
+
                         end
                     end
                     if upsideDown then
@@ -1366,12 +1408,12 @@ function love.keypressed(k)
         local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
 
-        creation.upLeg.h = 15 + love.math.random() * 400
-        creation.lowLeg.h = 15 + love.math.random() * 400
-        creation.upLeg.w = 15 + love.math.random() * 100
-        creation.lowLeg.w = 15 + love.math.random() * 100
-        creation.torso.h = 200 + love.math.random() * 200
-        creation.torso.w = 200 + love.math.random() * 200
+        --creation.upLeg.h = 15 + love.math.random() * 400
+       --- creation.lowLeg.h = 15 + love.math.random() * 400
+        --creation.upLeg.w = 15 + love.math.random() * 100
+        --creation.lowLeg.w = 15 + love.math.random() * 100
+        creation.torso.h = 50 + love.math.random() * 200
+        creation.torso.w = 50 + love.math.random() * 200
 
 
         local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
@@ -1392,17 +1434,17 @@ function love.keypressed(k)
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
+        --genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
         genericBodyPartUpdate(box2dGuys[2], 2, 'torso')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
         --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
         --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
+       -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
+       -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+       -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
+       -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
         --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
     end
     if (k == 'w' and example == 3) then
