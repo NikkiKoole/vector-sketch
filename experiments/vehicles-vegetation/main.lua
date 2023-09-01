@@ -1359,7 +1359,7 @@ function love.update(dt)
                     if not upsideDown then
                         if fixture:getUserData().bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-                             rotateToHorizontal(body, -math.pi, 30)
+                             rotateToHorizontal(body, -math.pi, 10)
                         end
 
                         if fixture:getUserData().bodyType == 'head' then
