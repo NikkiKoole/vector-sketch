@@ -23,8 +23,9 @@ end
 
 local creation = {
     torso = { w = 100, h = 200, d = .5, shape = 'trapezium' },
-    neck = { w = 40, h = 400, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { w = 50, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 40, h = 350, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+
+    head = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 20, h = 180, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 20, h = 80, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
@@ -49,7 +50,7 @@ end
 local function findJointBetween2Bodies(body1, body2)
     local joints1 = body1:getJoints()
     local joints2 = body2:getJoints()
-
+    print(#joints1, #joints2)
     local result = {}
     for i = 1, #joints2 do
         if tableContains(joints1, joints2[i]) then
@@ -135,26 +136,32 @@ local function getAngleOffset(key, side)
 end
 
 local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
+        print('parent', parent)
     local x, y = parent:getWorldPoint(offsetX, offsetY)
 
     local prevA = parent:getAngle()
     local xangle = getAngleOffset(key, side)
 
-    local body
-
-    -- if key == 'neck' then
-    --     local first, last = makeChain2(x, y, 1, groupId)
-    --     first:setAngle(prevA + xangle)
-    --     local joint = makeConnectingRevoluteJoint(cd, first, parent, side)
-    --     body = last
-    -- else
-    body = love.physics.newBody(world, x, y, "dynamic")
+   -- local body
+   --if false then
+    -- local first, last
+    -- if key == 'neck' and creation.neck.links and creation.neck.links > 1 then
+    --     print('neck')
+    --      first, last = makeSpine(x, y, creation.neck.links, groupId, creation.neck.h)
+    --      first:setAngle(prevA + xangle)
+    --      local joint = makeConnectingRevoluteJoint(cd, first, parent, side)
+    --      --body = last
+    --      return first, last
+    --  else
+    --  end
+    local body = love.physics.newBody(world, x, y, "dynamic")
+   
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
     body:setAngle(prevA + xangle)
     local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
-    -- end
+     
     return body
 end
 
@@ -221,9 +228,12 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     local thisA = box2dGuy[partName]:getAngle()
 
     if parentName then
+        --box2dGuy[partName]:destroy()
+    --print(parentName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
+           -- print('got here')
             local offsetX, offsetY = getOffsetFromParent(partName)
             local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
             local prevA = box2dGuy[parentName]:getAngle()
@@ -242,7 +252,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             --if xangle ~= 0 then
             body:setAngle(prevA + xangle)
             --end
-            print(prevA, xangle, thisA)
+           -- print(prevA, xangle, thisA)
 
             local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName], leftOrRight)
 
@@ -290,6 +300,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         box2dGuy[childName]:setAngle(aa)
     end
 
+  
     local childName = data.c
     if childName and (type(childName) == 'string') then
         reAttachChild(childName)
@@ -299,6 +310,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             reAttachChild(childName[i])
         end
     end
+
 end
 
 function getOffsetFromParent(partName)
@@ -315,6 +327,13 @@ function getOffsetFromParent(partName)
     elseif partName == 'ruleg' then
         return creation.torso.w / 2, creation.torso.h / 2
     else
+
+        if (partName=='head') then
+          
+            return 0, creation.neck.h/ (creation.neck.links or 1)
+            --return 0,0
+        end
+
         local p = data.p
         -- now look for the alias of the parent...
         local temp = getParentAndChildrenFromPartName(p)
@@ -338,7 +357,7 @@ function makeGuy(x, y, groupId)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
 
     getOffsetFromParent('llarm')
-    local neck = makePart('neck', 'neck', torso)
+    local neck= makePart('neck', 'neck', torso)
     local head = makePart('head', 'head', neck)
 
     local luleg = makePart('luleg', 'legpart', torso, 'left')
