@@ -391,18 +391,53 @@ function makeSnappyElastic(x, y)
     makeAndAddConnector(band, 0, bandH)
 end
 
-function makeChain(x, y, amt)
-    --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
-    local linkHeight = 70
-    local linkWidth = 40
+function makeChain2(x, y, amt, groupId)
+    local linkHeight = 30
+    local linkWidth = 50
     local dir = 1
     -- local amt = 3
-
-
+    local count = 1
     function makeLink(x, y)
         local body = love.physics.newBody(world, x, y, "dynamic")
         local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
         local fixture = love.physics.newFixture(body, shape, .3)
+        fixture:setFilterData(1, 65535, -1 * groupId)
+        fixture:setUserData(makeUserData('neck'))
+        count = count + 1
+        return body
+    end
+
+    local lastLink = makeLink(x, y)
+    local firstLink = lastLink
+    for i = 1, amt do
+        local link = makeLink(x, y + (i * linkHeight) * dir)
+        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
+
+        joint:setLowerLimit( -math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
+        joint:setLimitsEnabled(true)
+
+        local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
+                link:getY())
+        lastLink = link
+    end
+
+    return firstLink, lastLink
+end
+
+function makeChain(x, y, amt)
+    --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
+    local linkHeight = 20
+    local linkWidth = 50
+    local dir = 1
+    -- local amt = 3
+    local count = 1
+
+    function makeLink(x, y)
+        local body = love.physics.newBody(world, x, y, "dynamic")
+        local shape = love.physics.newRectangleShape(linkWidth + count * 5, linkHeight)
+        local fixture = love.physics.newFixture(body, shape, .3)
+        count = count + 1
         return body
     end
 
@@ -420,19 +455,20 @@ function makeChain(x, y, amt)
         lastLink = link
     end
 
+    if false then
+        local weight = love.physics.newBody(world, x, y + ((amt + 1) * linkHeight) * dir, "dynamic")
+        local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
+        local fixture = love.physics.newFixture(weight, shape, 1)
 
-    local weight = love.physics.newBody(world, x, y + ((amt + 1) * linkHeight) * dir, "dynamic")
-    local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
-    local fixture = love.physics.newFixture(weight, shape, 1)
 
-
-    local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
-    local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
-            weight:getY())
-    joint:setLowerLimit( -math.pi / 32)
-    joint:setUpperLimit(math.pi / 32)
-    joint:setLimitsEnabled(true)
-    table.insert(objects.blocks, weight)
+        local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
+        local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
+                weight:getY())
+        joint:setLowerLimit( -math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
+        joint:setLimitsEnabled(true)
+        table.insert(objects.blocks, weight)
+    end
 end
 
 function makeBall(x, y, radius)
@@ -485,20 +521,19 @@ function makeBorderChain(width, height, margin)
     return border
 end
 
-function makeBalloon(x,y )
+function makeBalloon(x, y)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
     ball.shape = love.physics.newCircleShape(180)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 0)
-  --  ball.fixture:setRestitution(.4) -- let the ball bounce
+    --  ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData(makeUserData("balloon"))
-   -- ball.fixture:setFriction(.5)
+    -- ball.fixture:setFriction(.5)
 
-   makeAndAddConnector(ball.body,0,200,nil, 50)
+    makeAndAddConnector(ball.body, 0, 200, nil, 50)
     return ball
 end
-
 
 function makeChainGround()
     local width, height = love.graphics.getDimensions()
@@ -745,8 +780,8 @@ function startExample(number)
 
 
 
-        for i =1, 5 do
-            makeBalloon(i*100, -1000)
+        for i = 1, 5 do
+            makeBalloon(i * 100, -1000)
         end
 
         for i = 1, 3 do
@@ -804,10 +839,9 @@ function startExample(number)
             table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
         end
 
-        for i =1, 5 do
-            makeBalloon(i*100, -1000)
+        for i = 1, 5 do
+            makeBalloon(i * 100, -1000)
         end
-
     end
 
     example = number
@@ -1134,8 +1168,77 @@ local function getRidOfBigRotationsInBody(body)
 end
 
 
+function maybeConnectThisConnector(f, mj)
+    local found = false
+
+
+    for j = 1, #connectors do
+        if connectors[j].to and connectors[j].to == f then
+            found = true
+        end
+    end
+
+    if found == false then
+        --print(mj.jointBody, f:getBody())
+        local pos1 = getCentroidOfFixture(f:getBody(), f)
+        local done = false
+
+        for j = 1, #connectors do
+            local theOtherBody = connectors[j].at:getBody()
+
+            -- maybe verify that both connector dont point to the same agent (as in are both part of the same character)
+            local skipCausePointingToSameAgent = false
+            if (f:getUserData().data and connectors[j].at:getUserData() and connectors[j].at:getUserData().data) then
+                if f:getUserData().data.id and connectors[j].at:getUserData().data.id then
+                    if f:getUserData().data.id == connectors[j].at:getUserData().data.id then
+                        skipCausePointingToSameAgent = true
+                    end
+                end
+            end
+
+            if not skipCausePointingToSameAgent and theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
+
+                local a = pos1[1] - pos2[1]
+                local b = pos1[2] - pos2[2]
+                local d = math.sqrt(a * a + b * b)
+
+                local isOnCooldown = false
+
+                for p = 1, #connectorCooldownList do
+                    if connectorCooldownList[p].index == j then
+                        isOnCooldown = true
+                    end
+                end
+
+                local topLeftX, topLeftY, bottomRightX, bottomRightY = f:getBoundingBox(1)
+                local w1 = bottomRightX - topLeftX
+                local topLeftX, topLeftY, bottomRightX, bottomRightY = theOtherBody:getFixtures()[1]
+                    :getBoundingBox(1)
+                local w2 = bottomRightX - topLeftX
+                local maxD = (w1 + w2) / 2
+
+                if d < maxD and not isOnCooldown then
+                    connectors[j].to = f --mj.jointBody
+                    local joint = getJointBetween2Connectors(connectors[j].to, connectors[j].at)
+                    connectors[j].joint = joint
+                end
+            end
+        end
+    end
+end
+
 function love.update(dt)
     -- lurker.update()
+
+
+
+    -- this is way too agressive, maybe firgure out a way where i go 1 or 2 nodes up and down to check
+    if false then
+        for j = 1, #connectors do
+            maybeConnectThisConnector(connectors[j].at)
+        end
+    end
 
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
@@ -1150,62 +1253,7 @@ function love.update(dt)
                 local f = fixtures[k]
                 if f:getUserData() and f:getUserData().bodyType then
                     if f:getUserData().bodyType == 'connector' then
-                        local found = false
-
-
-                        for j = 1, #connectors do
-                            if connectors[j].to and connectors[j].to == f then
-                                found = true
-                            end
-                        end
-
-                        if found == false then
-                            local pos1 = getCentroidOfFixture(mj.jointBody, f)
-                            local done = false
-
-                            for j = 1, #connectors do
-                                local theOtherBody = connectors[j].at:getBody()
-
-                                -- maybe verify that both connector dont point to the same agent (as in are both part of the same character)
-                                local skipCausePointingToSameAgent = false
-                                if (f:getUserData().data and connectors[j].at:getUserData() and connectors[j].at:getUserData().data) then
-                                    if f:getUserData().data.id and connectors[j].at:getUserData().data.id then
-                                        if f:getUserData().data.id == connectors[j].at:getUserData().data.id then
-                                            skipCausePointingToSameAgent = true
-                                        end
-                                    end
-                                end
-
-                                if not skipCausePointingToSameAgent and theOtherBody ~= f:getBody() and connectors[j].to == nil then
-                                    local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
-
-                                    local a = pos1[1] - pos2[1]
-                                    local b = pos1[2] - pos2[2]
-                                    local d = math.sqrt(a * a + b * b)
-
-                                    local isOnCooldown = false
-
-                                    for p = 1, #connectorCooldownList do
-                                        if connectorCooldownList[p].index == j then
-                                            isOnCooldown = true
-                                        end
-                                    end
-
-                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = f:getBoundingBox(1)
-                                    local w1 = bottomRightX - topLeftX
-                                    local topLeftX, topLeftY, bottomRightX, bottomRightY = theOtherBody:getFixtures()[1]
-                                        :getBoundingBox(1)
-                                    local w2 = bottomRightX - topLeftX
-                                    local maxD = (w1 + w2) / 2
-
-                                    if d < maxD and not isOnCooldown then
-                                        connectors[j].to = f --mj.jointBody
-                                        local joint = getJointBetween2Connectors(connectors[j].to, connectors[j].at)
-                                        connectors[j].joint = joint
-                                    end
-                                end
-                            end
-                        end
+                        maybeConnectThisConnector(f)
                     end
 
                     if f:getUserData().bodyType == 'carbody' then
@@ -1252,17 +1300,15 @@ function love.update(dt)
             --print(isBeingPointerJointed)
             if true and not isBeingPointerJointed then
                 if fixture:getUserData() then
-
-
                     if fixture:getUserData().bodyType == 'balloon' then
                         --getRidOfBigRotationsInBody(body)
                         --local desired = upsideDown and -math.pi or 0
                         --rotateToHorizontal(body, desired, 50)
-                       local up =  -9.81 * love.physics.getMeter() * 4.5
-                       print('hello!')
-                        body:applyForce( 0, up )
+                        local up = -9.81 * love.physics.getMeter() * 4.5
+
+                        body:applyForce(0, up)
                     end
-                   
+
 
                     if fixture:getUserData().bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
@@ -1273,7 +1319,7 @@ function love.update(dt)
                     if not upsideDown then
                         if fixture:getUserData().bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-                            --  rotateToHorizontal(body, -math.pi, 25)
+                            -- rotateToHorizontal(body, 0, 50)
                         end
 
                         if fixture:getUserData().bodyType == 'head' then
@@ -1289,7 +1335,6 @@ function love.update(dt)
                         end
                         if fixture:getUserData().bodyType == 'armpart' then
                             getRidOfBigRotationsInBody(body)
-
                         end
                     end
                     if upsideDown then
@@ -1409,7 +1454,7 @@ function love.keypressed(k)
 
 
         --creation.upLeg.h = 15 + love.math.random() * 400
-       --- creation.lowLeg.h = 15 + love.math.random() * 400
+        --- creation.lowLeg.h = 15 + love.math.random() * 400
         --creation.upLeg.w = 15 + love.math.random() * 100
         --creation.lowLeg.w = 15 + love.math.random() * 100
         creation.torso.h = 50 + love.math.random() * 200
@@ -1441,10 +1486,10 @@ function love.keypressed(k)
         --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-       -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
-       -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-       -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
-       -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
         --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
     end
     if (k == 'w' and example == 3) then

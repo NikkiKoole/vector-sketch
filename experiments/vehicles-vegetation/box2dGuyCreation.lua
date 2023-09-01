@@ -23,7 +23,7 @@ end
 
 local creation = {
     torso = { w = 100, h = 200, d = .5, shape = 'trapezium' },
-    neck = { w = 12, h = 230, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 40, h = 400, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { w = 50, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 20, h = 180, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 20, h = 80, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
@@ -110,7 +110,7 @@ local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
 end
 
 local function makeGuyFixture(data, key, groupId, body, shape)
-    local fixture = love.physics.newFixture(body, shape, data.d )
+    local fixture = love.physics.newFixture(body, shape, data.d)
     fixture:setFilterData(1, 65535, -1 * groupId)
 
     local fixedKey = key
@@ -140,13 +140,21 @@ local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     local prevA = parent:getAngle()
     local xangle = getAngleOffset(key, side)
 
-    local body = love.physics.newBody(world, x, y, "dynamic")
+    local body
+
+    -- if key == 'neck' then
+    --     local first, last = makeChain2(x, y, 1, groupId)
+    --     first:setAngle(prevA + xangle)
+    --     local joint = makeConnectingRevoluteJoint(cd, first, parent, side)
+    --     body = last
+    -- else
+    body = love.physics.newBody(world, x, y, "dynamic")
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
     body:setAngle(prevA + xangle)
     local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
-
+    -- end
     return body
 end
 
@@ -276,8 +284,9 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
 
         local leftOrRight = childName:find('l', 1, true) == 1 and 'left' or 'right'
         local xangle = getAngleOffset(data2.alias or childName, leftOrRight) -- what LEFT!
-        box2dGuy[childName]:setAngle(thisA+xangle)
-        local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],box2dGuy[partName], leftOrRight)
+        box2dGuy[childName]:setAngle(thisA + xangle)
+        local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
+                box2dGuy[partName], leftOrRight)
         box2dGuy[childName]:setAngle(aa)
     end
 
@@ -290,7 +299,6 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             reAttachChild(childName[i])
         end
     end
-   
 end
 
 function getOffsetFromParent(partName)
