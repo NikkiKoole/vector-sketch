@@ -136,7 +136,7 @@ local function getAngleOffset(key, side)
 end
 
 local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
-        print('parent', parent)
+     --   print('parent', parent)
     local x, y = parent:getWorldPoint(offsetX, offsetY)
 
     local prevA = parent:getAngle()

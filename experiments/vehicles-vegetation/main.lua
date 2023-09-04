@@ -832,10 +832,10 @@ function startExample(number)
         for i = 1, 10 do
             makeVehicle(width / 2 + i * 400, -3000)
         end
-        for i = 1, 30 do
-            makeGuy(i * 200, -1000, i)
-        end
 
+        for i = 1, 50 do
+            table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
+        end
 
         for i = 1, 3 do
             makeSnappyElastic(i * 100, -1500)
@@ -1253,8 +1253,19 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-        print(#box2dGuys)
+       -- print(#box2dGuys)
         drawWorld(world)
+        local tlx, tly =  cam:getWorldCoordinates(-200,0)
+        local brx, bry =  cam:getWorldCoordinates(width+200, height)
+        for i = 1 , #box2dGuys do
+            local x, y = box2dGuys[i].torso:getPosition()
+            
+       
+            if x >= tlx and x <=  brx then
+               drawSkinOver(box2dGuys[i])
+            end
+
+            end
 
         cam:pop()
 
@@ -1272,8 +1283,11 @@ function love.draw()
         cam:push()
 
         drawWorld(world)
-        drawSkinOver(box2dGuys[1])
-        drawSkinOver(box2dGuys[2])
+        for i = 1 , #box2dGuys do
+            print(box2dGuys[i].torso:getPosition())
+        drawSkinOver(box2dGuys[i])
+        end
+        
 
         cam:pop()
 
