@@ -1075,33 +1075,18 @@ function drawWorld(world)
 end
 
 function drawSkinOver(box2dGuy) 
-    print(inspect(box2dGuy))
-    -- luleg
-    -- llleg
+   -- print(inspect(box2dGuy))
 
-   -- lets render a texture over some bodyparts.
-   -- lets start witha bezier line over the legft leg
-
-
-
---creation.upLeg.h
---creation.lowLeg.h
    local ax, ay = box2dGuy.luleg:getPosition()
    local bx, by = box2dGuy.llleg:getPosition()
    local cx, cy = box2dGuy.lfoot:getPosition()
 
 
-   --local m = geom.lerpLine(ax,ay, cx, cy, 0.5)
-   --print(inspect(m))
-   --local mx = m.x
-   --local my = m.y
-   --local my = geom.lerpLine(ax,ay, cx, cy, 0.5)
-
-   --local bx2, by2 =  geom.positionControlPoints({x=ax, y=ay}, {x=cx,y=cy}, 100, -1, 0.25)
-   -- print(inspect(bx2))
-    local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by,cx,cy})
+    local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by,bx,by, bx,by,cx,cy})
     love.graphics.line( curve:render())
 
+
+    -----
     local ax, ay = box2dGuy.ruleg:getPosition()
     local bx, by = box2dGuy.rlleg:getPosition()
     local cx, cy = box2dGuy.rfoot:getPosition()
@@ -1110,26 +1095,15 @@ function drawSkinOver(box2dGuy)
      local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by,cx,cy})
      love.graphics.line( curve:render())
 
-
+    ----
     local ax, ay = box2dGuy.luarm:getPosition()
     local bx, by = box2dGuy.llarm:getPosition()
     local cx, cy = box2dGuy.lhand:getPosition()
  
-    -- love.graphics.rectangle("fill", ax,ay,30,30)
-    -- love.graphics.rectangle("fill", bx,by,30,30)
-    -- love.graphics.rectangle("fill", cx,cy,30,30)
-     local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by,cx,cy})
+
+     local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by, bx,by,cx,cy})
      love.graphics.line( curve:render())
 
-
-   -- love.graphics.rectangle("fill", 0,0,100,100)
-
-  -- local body =box2dGuy.luleg 
-   --local fixtures = body:getFixtures()
-   --for _, fixture in ipairs(fixtures) do
-   --if fixture:getShape():type() == 'PolygonShape' then
-   -- print(body:getWorldPoints(fixture:getShape():getPoints()))
-   --end
 
 
 end
