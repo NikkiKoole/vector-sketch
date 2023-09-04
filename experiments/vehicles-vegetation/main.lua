@@ -902,6 +902,12 @@ function love.load()
     pointerJoints = {}
     connectorCooldownList = {}
 
+
+    image3 = love.graphics.newImage("assets/leg1.png")
+   --image3:setMipmapFilter( 'nearest', 1 )
+   mesh3 = createTexturedTriangleStrip(image3)
+
+
     example = nil
     startExample(3)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
@@ -1074,6 +1080,33 @@ function drawWorld(world)
     love.graphics.setColor(r, g, b, a)
 end
 
+function createTexturedTriangleStrip(image)
+    -- this assumes an strip that is oriented vertically
+    
+    local w, h = image:getDimensions( )
+    local vertices = {}
+    local segments = 20
+    local hPart = h / (segments-1)
+    local hv = 1/ (segments-1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+    for i =1, segments do
+       
+       vertices[index + 1] = {-w/2, runningHP, 0,runningHV }
+       vertices[index +  2] = {w/2, runningHP, 1,runningHV }
+ 
+       runningHV = runningHV + hv
+       runningHP = runningHP + hPart
+       index = index + 2
+    end
+ 
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+ 
+    return mesh
+ end
+
 function drawSkinOver(box2dGuy) 
    -- print(inspect(box2dGuy))
 
@@ -1082,8 +1115,56 @@ function drawSkinOver(box2dGuy)
    local cx, cy = box2dGuy.lfoot:getPosition()
 
 
-    local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by,bx,by, bx,by,cx,cy})
+    local curve = love.math.newBezierCurve({ax,ay, bx,by,bx,by,bx,by,cx,cy})
     love.graphics.line( curve:render())
+
+
+
+
+    local dl = curve:getDerivative()
+   --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
+   --local dr = curveR:getDerivative()
+
+   
+   
+   --local curve = love.math.newBezierCurve({mx, my,  mx+50, my + 100, mx, my + 5})
+   for i =1, 1 do
+
+
+    local w, h = image3:getDimensions( )
+      local count = mesh3:getVertexCount( )
+
+      for j =1, count, 2 do
+
+         local index = (j-1)/ (count-2)
+         local xl,yl = curve:evaluate(index)
+         --local xr,yr = curveR:evaluate(index) 
+
+         local dx, dy = dl:evaluate(index)
+         local a = math.atan2(dy,dx) + math.pi/2
+         local a2 = math.atan2(dy,dx) - math.pi/2
+
+         local line  = w/2  
+         local x2 =   xl + line * math.cos(a)
+         local y2 =  yl + line * math.sin(a)
+         local x3 =   xl + line * math.cos(a2)
+         local y3 =  yl + line * math.sin(a2)
+         
+         if false then
+         love.graphics.line(xl,yl, x2, y2)
+         love.graphics.line(xl,yl, x3, y3)
+         end
+         
+         local x, y, u, v, r, g, b, a = mesh3:getVertex(j )
+         mesh3:setVertex(j, {x2, y2, u,v})
+         x, y, u, v, r, g, b, a = mesh3:getVertex(j +1)
+         mesh3:setVertex(j+1, {x3, y3, u,v})
+      end
+    end
+      --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
+      --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
+      love.graphics.draw(mesh3, 0, 0, 0, 1, 1)
+
 
 
     -----
