@@ -3,7 +3,7 @@ local vivid = require 'vendor.vivid'
 local geom = require 'lib.geom'
 
 
-local shrinkFactor = 4
+local shrinkFactor = 6
 
 local mask_effect = love.graphics.newShader [[
    vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
@@ -146,7 +146,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    if true then
       local lineartColor = lineColor or { 0, 0, 0, 1 }
       local lw, lh = lineart:getDimensions()
-      local canvas = love.graphics.newCanvas(lw, lh)
+      --  local dpiScale = 1 --love.graphics.getDPIScale()
+      local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
 
       love.graphics.setCanvas({ canvas, stencil = false }) --<<<
       --
