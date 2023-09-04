@@ -1142,7 +1142,7 @@ function texturedCurve(curve, image, mesh)
          local a = math.atan2(dy,dx) + math.pi/2
          local a2 = math.atan2(dy,dx) - math.pi/2
 
-         local line  = w/4  --- here we can make the texture wider!! 
+         local line  = w/2.5  --- here we can make the texture wider!! 
          local x2 =   xl + line * math.cos(a)
          local y2 =  yl + line * math.sin(a)
          local x3 =   xl + line * math.cos(a2)
