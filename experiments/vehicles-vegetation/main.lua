@@ -1641,8 +1641,8 @@ function love.keypressed(k)
         --- creation.lowLeg.h = 15 + love.math.random() * 400
         --creation.upLeg.w = 15 + love.math.random() * 100
         --creation.lowLeg.w = 15 + love.math.random() * 100
-        creation.torso.h = 50 + love.math.random() * 200
-        creation.torso.w = 50 + love.math.random() * 200
+        creation.torso.h = 50 + love.math.random() * 500
+        creation.torso.w = 50 + love.math.random() * 500
 
 
         local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
