@@ -1085,7 +1085,7 @@ function createTexturedTriangleStrip(image)
     
     local w, h = image:getDimensions( )
     local vertices = {}
-    local segments = 20
+    local segments = 8
     local hPart = h / (segments-1)
     local hv = 1/ (segments-1)
     local runningHV = 0
@@ -1107,19 +1107,8 @@ function createTexturedTriangleStrip(image)
     return mesh
  end
 
-function drawSkinOver(box2dGuy) 
-   -- print(inspect(box2dGuy))
 
-   local ax, ay = box2dGuy.luleg:getPosition()
-   local bx, by = box2dGuy.llleg:getPosition()
-   local cx, cy = box2dGuy.lfoot:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ax,ay, bx,by,bx,by,bx,by,cx,cy})
-    love.graphics.line( curve:render())
-
-
-
+function texturedCurve(curve) 
 
     local dl = curve:getDerivative()
    --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
@@ -1144,15 +1133,15 @@ function drawSkinOver(box2dGuy)
          local a = math.atan2(dy,dx) + math.pi/2
          local a2 = math.atan2(dy,dx) - math.pi/2
 
-         local line  = w/2  
+         local line  = w/4  --- here we can make the texture wider!! 
          local x2 =   xl + line * math.cos(a)
          local y2 =  yl + line * math.sin(a)
          local x3 =   xl + line * math.cos(a2)
          local y3 =  yl + line * math.sin(a2)
          
          if false then
-         love.graphics.line(xl,yl, x2, y2)
-         love.graphics.line(xl,yl, x3, y3)
+         --love.graphics.line(xl,yl, x2, y2)
+         --love.graphics.line(xl,yl, x3, y3)
          end
          
          local x, y, u, v, r, g, b, a = mesh3:getVertex(j )
@@ -1164,6 +1153,22 @@ function drawSkinOver(box2dGuy)
       --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
       --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
       love.graphics.draw(mesh3, 0, 0, 0, 1, 1)
+end
+
+function drawSkinOver(box2dGuy) 
+   -- print(inspect(box2dGuy))
+    love.graphics.setColor(0,0,0,1)
+   local ax, ay = box2dGuy.luleg:getPosition()
+   local bx, by = box2dGuy.llleg:getPosition()
+   local cx, cy = box2dGuy.lfoot:getPosition()
+
+
+    local curve = love.math.newBezierCurve({ax,ay, bx,by,bx,by,cx,cy})
+    love.graphics.line( curve:render())
+
+
+    texturedCurve(curve)
+
 
 
 
@@ -1185,7 +1190,7 @@ function drawSkinOver(box2dGuy)
      local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by, bx,by,cx,cy})
      love.graphics.line( curve:render())
 
-
+     texturedCurve(curve)
 
 end
 

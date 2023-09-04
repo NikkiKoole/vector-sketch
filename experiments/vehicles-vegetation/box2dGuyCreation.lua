@@ -31,7 +31,7 @@ local creation = {
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     upLeg = { w = 20, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 20, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
-    foot = { w = 20, h = 50, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 
 function getCreation()
