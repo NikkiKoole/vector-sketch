@@ -907,6 +907,15 @@ function love.load()
    --image3:setMipmapFilter( 'nearest', 1 )
    mesh3 = createTexturedTriangleStrip(image3)
 
+   image4 = love.graphics.newImage("assets/leg7.png")
+   --image3:setMipmapFilter( 'nearest', 1 )
+   mesh4 = createTexturedTriangleStrip(image4)
+
+   image5 = love.graphics.newImage("assets/leg2.png")
+   --image3:setMipmapFilter( 'nearest', 1 )
+   mesh5 = createTexturedTriangleStrip(image5)
+
+
 
     example = nil
     startExample(3)
@@ -1108,7 +1117,7 @@ function createTexturedTriangleStrip(image)
  end
 
 
-function texturedCurve(curve) 
+function texturedCurve(curve, image, mesh) 
 
     local dl = curve:getDerivative()
    --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
@@ -1120,8 +1129,8 @@ function texturedCurve(curve)
    for i =1, 1 do
 
 
-    local w, h = image3:getDimensions( )
-      local count = mesh3:getVertexCount( )
+    local w, h = image:getDimensions( )
+      local count = mesh:getVertexCount( )
 
       for j =1, count, 2 do
 
@@ -1144,15 +1153,15 @@ function texturedCurve(curve)
          --love.graphics.line(xl,yl, x3, y3)
          end
          
-         local x, y, u, v, r, g, b, a = mesh3:getVertex(j )
-         mesh3:setVertex(j, {x2, y2, u,v})
-         x, y, u, v, r, g, b, a = mesh3:getVertex(j +1)
-         mesh3:setVertex(j+1, {x3, y3, u,v})
+         local x, y, u, v, r, g, b, a = mesh:getVertex(j )
+         mesh:setVertex(j, {x2, y2, u,v})
+         x, y, u, v, r, g, b, a = mesh:getVertex(j +1)
+         mesh:setVertex(j+1, {x3, y3, u,v})
       end
     end
       --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
       --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
-      love.graphics.draw(mesh3, 0, 0, 0, 1, 1)
+      love.graphics.draw(mesh, 0, 0, 0, 1, 1)
 end
 
 function drawSkinOver(box2dGuy) 
@@ -1167,7 +1176,7 @@ function drawSkinOver(box2dGuy)
     love.graphics.line( curve:render())
 
 
-    texturedCurve(curve)
+    texturedCurve(curve, image3, mesh3)
 
 
 
@@ -1190,8 +1199,20 @@ function drawSkinOver(box2dGuy)
      local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by, bx,by,cx,cy})
      love.graphics.line( curve:render())
 
-     texturedCurve(curve)
+     texturedCurve(curve, image5, mesh5)
 
+
+
+      ----
+    local ax, ay = box2dGuy.ruarm:getPosition()
+    local bx, by = box2dGuy.rlarm:getPosition()
+    local cx, cy = box2dGuy.rhand:getPosition()
+ 
+
+     local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by, bx,by,cx,cy})
+     love.graphics.line( curve:render())
+
+     texturedCurve(curve, image5, mesh5)
 end
 
 function drawCenteredBackgroundText(str)
@@ -1232,7 +1253,7 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-
+        print(#box2dGuys)
         drawWorld(world)
 
         cam:pop()
@@ -1251,6 +1272,7 @@ function love.draw()
         cam:push()
 
         drawWorld(world)
+        drawSkinOver(box2dGuys[1])
         drawSkinOver(box2dGuys[2])
 
         cam:pop()
