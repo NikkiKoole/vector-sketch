@@ -5,13 +5,20 @@ Vector                = require 'vendor.brinevector'
 local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
-local geom = require 'lib.geom'
+local geom            = require 'lib.geom'
 
 require 'box2dGuyCreation'
 local creation = getCreation()
 
 lurker.quiet = true
 require 'palette'
+
+
+local manual_gc = require 'vendor.batteries.manual_gc'
+
+PROF_CAPTURE = false
+prof = require 'vendor.jprof'
+ProFi = require 'vendor.ProFi'
 
 -- check this for multiple fixtures, -> sensor for gorund
 -- https://love2d.org/forums/viewtopic.php?t=80950
@@ -392,31 +399,29 @@ function makeSnappyElastic(x, y)
     makeAndAddConnector(band, 0, bandH)
 end
 
-
-
-function makeSpine(x,y, amt, groupId, totalHeight)
-    local linkHeight = totalHeight/ (amt)
+function makeSpine(x, y, amt, groupId, totalHeight)
+    local linkHeight = totalHeight / (amt)
     local linkWidth = 50
     local dir = 1
     local count = 1
 
     function makeLink(x, y)
         local body = love.physics.newBody(world, x, y, "dynamic")
-        local shape =  makeShape('rect2', linkWidth, linkHeight)  
+        local shape = makeShape('rect2', linkWidth, linkHeight)
         local fixture = love.physics.newFixture(body, shape, .3)
         fixture:setFilterData(1, 65535, -1 * groupId)
         fixture:setUserData(makeUserData('neck'))
-       -- body:setAngle(-math.pi)
+        -- body:setAngle(-math.pi)
         count = count + 1
         return body
     end
 
     local lastLink = makeLink(x, y)
-   -- lastLink:setAngle(-math.pi)
+    -- lastLink:setAngle(-math.pi)
     local firstLink = lastLink
     for i = 1, amt do
         local link = makeLink(x, y + (i * (linkHeight + 2)) * dir)
-        
+
         local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
 
         joint:setLowerLimit( -math.pi / 8)
@@ -425,15 +430,15 @@ function makeSpine(x,y, amt, groupId, totalHeight)
 
         local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
                 link:getY())
-        
-                lastLink:setAngle(math.pi)
+
+        lastLink:setAngle(math.pi)
         lastLink = link
     end
     return firstLink, lastLink
 end
 
 function makeChain2(x, y, amt, groupId, totalHeight)
-    local linkHeight = totalHeight/ (amt)
+    local linkHeight = totalHeight / (amt)
     local linkWidth = 50
     local dir = 1
     -- local amt = 3
@@ -902,18 +907,19 @@ function love.load()
     pointerJoints = {}
     connectorCooldownList = {}
 
+    -- if (PROF_CAPTURE) then ProFi:start() end
 
     image3 = love.graphics.newImage("assets/leg1.png")
-   --image3:setMipmapFilter( 'nearest', 1 )
-   mesh3 = createTexturedTriangleStrip(image3)
+    --image3:setMipmapFilter( 'nearest', 1 )
+    mesh3 = createTexturedTriangleStrip(image3)
 
-   image4 = love.graphics.newImage("assets/leg7.png")
-   --image3:setMipmapFilter( 'nearest', 1 )
-   mesh4 = createTexturedTriangleStrip(image4)
+    image4 = love.graphics.newImage("assets/leg7.png")
+    --image3:setMipmapFilter( 'nearest', 1 )
+    mesh4 = createTexturedTriangleStrip(image4)
 
-   image5 = love.graphics.newImage("assets/leg2.png")
-   --image3:setMipmapFilter( 'nearest', 1 )
-   mesh5 = createTexturedTriangleStrip(image5)
+    image5 = love.graphics.newImage("assets/leg2.png")
+    --image3:setMipmapFilter( 'nearest', 1 )
+    mesh5 = createTexturedTriangleStrip(image5)
 
 
 
@@ -1091,89 +1097,83 @@ end
 
 function createTexturedTriangleStrip(image)
     -- this assumes an strip that is oriented vertically
-    
-    local w, h = image:getDimensions( )
+
+    local w, h = image:getDimensions()
     local vertices = {}
     local segments = 8
-    local hPart = h / (segments-1)
-    local hv = 1/ (segments-1)
+    local hPart = h / (segments - 1)
+    local hv = 1 / (segments - 1)
     local runningHV = 0
     local runningHP = 0
     local index = 0
-    for i =1, segments do
-       
-       vertices[index + 1] = {-w/2, runningHP, 0,runningHV }
-       vertices[index +  2] = {w/2, runningHP, 1,runningHV }
- 
-       runningHV = runningHV + hv
-       runningHP = runningHP + hPart
-       index = index + 2
+    for i = 1, segments do
+        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
+        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
+
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
     end
- 
+
     local mesh = love.graphics.newMesh(vertices, "strip")
     mesh:setTexture(image)
- 
+
     return mesh
- end
-
-
-function texturedCurve(curve, image, mesh) 
-
-    local dl = curve:getDerivative()
-   --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
-   --local dr = curveR:getDerivative()
-
-   
-   
-   --local curve = love.math.newBezierCurve({mx, my,  mx+50, my + 100, mx, my + 5})
-   for i =1, 1 do
-
-
-    local w, h = image:getDimensions( )
-      local count = mesh:getVertexCount( )
-
-      for j =1, count, 2 do
-
-         local index = (j-1)/ (count-2)
-         local xl,yl = curve:evaluate(index)
-         --local xr,yr = curveR:evaluate(index) 
-
-         local dx, dy = dl:evaluate(index)
-         local a = math.atan2(dy,dx) + math.pi/2
-         local a2 = math.atan2(dy,dx) - math.pi/2
-
-         local line  = w/2.5  --- here we can make the texture wider!! 
-         local x2 =   xl + line * math.cos(a)
-         local y2 =  yl + line * math.sin(a)
-         local x3 =   xl + line * math.cos(a2)
-         local y3 =  yl + line * math.sin(a2)
-         
-         if false then
-         --love.graphics.line(xl,yl, x2, y2)
-         --love.graphics.line(xl,yl, x3, y3)
-         end
-         
-         local x, y, u, v, r, g, b, a = mesh:getVertex(j )
-         mesh:setVertex(j, {x2, y2, u,v})
-         x, y, u, v, r, g, b, a = mesh:getVertex(j +1)
-         mesh:setVertex(j+1, {x3, y3, u,v})
-      end
-    end
-      --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
-      --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
-      love.graphics.draw(mesh, 0, 0, 0, 1, 1)
 end
 
-function drawSkinOver(box2dGuy) 
-   -- print(inspect(box2dGuy))
-    love.graphics.setColor(0,0,0,1)
-   local ax, ay = box2dGuy.luleg:getPosition()
-   local bx, by = box2dGuy.llleg:getPosition()
-   local cx, cy = box2dGuy.lfoot:getPosition()
+function texturedCurve(curve, image, mesh)
+    local dl = curve:getDerivative()
+    --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
+    --local dr = curveR:getDerivative()
 
 
-    local curve = love.math.newBezierCurve({ax,ay, bx,by,bx,by,cx,cy})
-    love.graphics.line( curve:render())
+
+    --local curve = love.math.newBezierCurve({mx, my,  mx+50, my + 100, mx, my + 5})
+    for i = 1, 1 do
+        local w, h = image:getDimensions()
+        local count = mesh:getVertexCount()
+
+        for j = 1, count, 2 do
+            local index  = (j - 1) / (count - 2)
+            local xl, yl = curve:evaluate(index)
+            --local xr,yr = curveR:evaluate(index)
+
+            local dx, dy = dl:evaluate(index)
+            local a      = math.atan2(dy, dx) + math.pi / 2
+            local a2     = math.atan2(dy, dx) - math.pi / 2
+
+            local line   = w / 2.5 --- here we can make the texture wider!!
+            local x2     = xl + line * math.cos(a)
+            local y2     = yl + line * math.sin(a)
+            local x3     = xl + line * math.cos(a2)
+            local y3     = yl + line * math.sin(a2)
+
+            if false then
+                --love.graphics.line(xl,yl, x2, y2)
+                --love.graphics.line(xl,yl, x3, y3)
+            end
+
+            local x, y, u, v, r, g, b, a = mesh:getVertex(j)
+            mesh:setVertex(j, { x2, y2, u, v })
+            x, y, u, v, r, g, b, a = mesh:getVertex(j + 1)
+            mesh:setVertex(j + 1, { x3, y3, u, v })
+        end
+    end
+    --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
+    --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
+    love.graphics.draw(mesh, 0, 0, 0, 1, 1)
+end
+
+function drawSkinOver(box2dGuy)
+    -- print(inspect(box2dGuy))
+    love.graphics.setColor(0, 0, 0, 1)
+    local ax, ay = box2dGuy.luleg:getPosition()
+    local bx, by = box2dGuy.llleg:getPosition()
+    local cx, cy = box2dGuy.lfoot:getPosition()
+
+
+    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+    love.graphics.line(curve:render())
 
 
     texturedCurve(curve, image3, mesh3)
@@ -1185,34 +1185,34 @@ function drawSkinOver(box2dGuy)
     local ax, ay = box2dGuy.ruleg:getPosition()
     local bx, by = box2dGuy.rlleg:getPosition()
     local cx, cy = box2dGuy.rfoot:getPosition()
- 
- 
-     local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by,cx,cy})
-     love.graphics.line( curve:render())
+
+
+    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+    love.graphics.line(curve:render())
 
     ----
     local ax, ay = box2dGuy.luarm:getPosition()
     local bx, by = box2dGuy.llarm:getPosition()
     local cx, cy = box2dGuy.lhand:getPosition()
- 
-
-     local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by, bx,by,cx,cy})
-     love.graphics.line( curve:render())
-
-     texturedCurve(curve, image5, mesh5)
 
 
+    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
+    love.graphics.line(curve:render())
 
-      ----
+    texturedCurve(curve, image5, mesh5)
+
+
+
+    ----
     local ax, ay = box2dGuy.ruarm:getPosition()
     local bx, by = box2dGuy.rlarm:getPosition()
     local cx, cy = box2dGuy.rhand:getPosition()
- 
 
-     local curve = love.math.newBezierCurve({ax,ay, bx,by, bx,by, bx,by,cx,cy})
-     love.graphics.line( curve:render())
 
-     texturedCurve(curve, image5, mesh5)
+    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
+    love.graphics.line(curve:render())
+
+    texturedCurve(curve, image5, mesh5)
 end
 
 function drawCenteredBackgroundText(str)
@@ -1253,19 +1253,18 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-       -- print(#box2dGuys)
+        -- print(#box2dGuys)
         drawWorld(world)
-        local tlx, tly =  cam:getWorldCoordinates(-200,0)
-        local brx, bry =  cam:getWorldCoordinates(width+200, height)
-        for i = 1 , #box2dGuys do
+        local tlx, tly = cam:getWorldCoordinates( -200, 0)
+        local brx, bry = cam:getWorldCoordinates(width + 200, height)
+        for i = 1, #box2dGuys do
             local x, y = box2dGuys[i].torso:getPosition()
-            
-       
-            if x >= tlx and x <=  brx then
-               drawSkinOver(box2dGuys[i])
-            end
 
+
+            if x >= tlx and x <= brx then
+                drawSkinOver(box2dGuys[i])
             end
+        end
 
         cam:pop()
 
@@ -1283,11 +1282,11 @@ function love.draw()
         cam:push()
 
         drawWorld(world)
-        for i = 1 , #box2dGuys do
-            print(box2dGuys[i].torso:getPosition())
-        drawSkinOver(box2dGuys[i])
+        for i = 1, #box2dGuys do
+            --print(box2dGuys[i].torso:getPosition())
+            drawSkinOver(box2dGuys[i])
         end
-        
+
 
         cam:pop()
 
@@ -1426,6 +1425,86 @@ function maybeConnectThisConnector(f, mj)
     end
 end
 
+function rotateAllBodies(bodies)
+    local upsideDown = false
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
+
+
+        local isBeingPointerJointed = false
+        for j = 1, #pointerJoints do
+            local mj = pointerJoints[j]
+            if mj.jointBody == body then
+                isBeingPointerJointed = true
+            end
+        end
+
+        for _, fixture in ipairs(fixtures) do
+            --print(isBeingPointerJointed)
+            if true and not isBeingPointerJointed then
+                local userData = fixture:getUserData()
+                if userData then
+                    if userData.bodyType == 'balloon' then
+                        --getRidOfBigRotationsInBody(body)
+                        --local desired = upsideDown and -math.pi or 0
+                        --rotateToHorizontal(body, desired, 50)
+                        local up = -9.81 * love.physics.getMeter() * 4.5
+
+                        body:applyForce(0, up)
+                    end
+
+
+                    if userData.bodyType == 'torso' then
+                        getRidOfBigRotationsInBody(body)
+                        local desired = upsideDown and -math.pi or 0
+                        rotateToHorizontal(body, desired, 50)
+                    end
+
+                    if not upsideDown then
+                        if userData.bodyType == 'neck' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, -math.pi, 10)
+                        end
+
+                        if userData.bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, -math.pi, 15)
+                        end
+                    end
+
+                    if not upsideDown then
+                        if userData.bodyType == 'legpart' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        if userData.bodyType == 'armpart' then
+                            getRidOfBigRotationsInBody(body)
+                        end
+                    end
+                    if upsideDown then
+                        if userData.bodyType == 'armpart' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 50)
+                        end
+                        if userData.bodyType == 'legpart' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, math.pi, 10)
+                        end
+                    end
+
+                    if false then
+                        if userData.bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+
+                            rotateToHorizontal(body, math.pi, 15)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 function love.update(dt)
     -- lurker.update()
 
@@ -1480,115 +1559,44 @@ function love.update(dt)
 
     local bodies = world:getBodies()
 
-    local upsideDown = false
-
-    for _, body in ipairs(bodies) do
-        local fixtures = body:getFixtures()
 
 
-        local isBeingPointerJointed = false
-        for j = 1, #pointerJoints do
-            local mj = pointerJoints[j]
-            if mj.jointBody == body then
-                isBeingPointerJointed = true
-            end
-        end
+    rotateAllBodies(world:getBodies())
 
-        for _, fixture in ipairs(fixtures) do
-            --print(isBeingPointerJointed)
-            if true and not isBeingPointerJointed then
-                if fixture:getUserData() then
-                    if fixture:getUserData().bodyType == 'balloon' then
-                        --getRidOfBigRotationsInBody(body)
-                        --local desired = upsideDown and -math.pi or 0
-                        --rotateToHorizontal(body, desired, 50)
-                        local up = -9.81 * love.physics.getMeter() * 4.5
-
-                        body:applyForce(0, up)
-                    end
-
-
-                    if fixture:getUserData().bodyType == 'torso' then
-                        getRidOfBigRotationsInBody(body)
-                        local desired = upsideDown and -math.pi or 0
-                        rotateToHorizontal(body, desired, 50)
-                    end
-
-                    if not upsideDown then
-                        if fixture:getUserData().bodyType == 'neck' then
-                            getRidOfBigRotationsInBody(body)
-                             rotateToHorizontal(body, -math.pi, 10)
-                        end
-
-                        if fixture:getUserData().bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 15)
-                        end
-                    end
-
-                    if not upsideDown then
-                        if fixture:getUserData().bodyType == 'legpart' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
-                        end
-                        if fixture:getUserData().bodyType == 'armpart' then
-                            getRidOfBigRotationsInBody(body)
-                        end
-                    end
-                    if upsideDown then
-                        if fixture:getUserData().bodyType == 'armpart' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 50)
-                        end
-                        if fixture:getUserData().bodyType == 'legpart' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, math.pi, 10)
-                        end
-                    end
-
-                    if false then
-                        if fixture:getUserData().bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
-
-                            rotateToHorizontal(body, math.pi, 15)
-                        end
-                    end
-                end
-            end
-        end
-    end
 
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
     --print(#connectors)
-    if connectors then
-        for i = #connectors, 1, -1 do
-            -- we can only break a  joint if we have one
-            -- print(i, connectors[i].joint, connectors[i].to)
+    if false then
+        if connectors then
+            for i = #connectors, 1, -1 do
+                -- we can only break a  joint if we have one
+                -- print(i, connectors[i].joint, connectors[i].to)
 
-            if connectors[i].joint then
-                local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
-                local delta = Vector(reaction2[1], reaction2[2])
-                local l = delta:getLength()
-                local found = false
+                if connectors[i].joint then
+                    local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
+                    local delta = Vector(reaction2[1], reaction2[2])
+                    local l = delta:getLength()
+                    local found = false
 
-                for j = 1, #pointerJoints do
-                    local mj = pointerJoints[j]
-                    if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
-                        found = true
+                    for j = 1, #pointerJoints do
+                        local mj = pointerJoints[j]
+                        if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
+                            found = true
+                        end
                     end
-                end
 
-                local b1, b2 = connectors[i].joint:getBodies()
+                    local b1, b2 = connectors[i].joint:getBodies()
 
-                local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
-                if l > breakForce and found then
-                    connectors[i].joint:destroy()
-                    connectors[i].joint = nil
+                    local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
+                    if l > breakForce and found then
+                        connectors[i].joint:destroy()
+                        connectors[i].joint = nil
 
-                    connectors[i].to = nil
-                    print('broke it', i, l)
-                    table.insert(connectorCooldownList, { runningFor = 0, index = i })
+                        connectors[i].to = nil
+                        print('broke it', i, l)
+                        table.insert(connectorCooldownList, { runningFor = 0, index = i })
+                    end
                 end
             end
         end
@@ -1615,6 +1623,8 @@ function love.update(dt)
             camera.centerCameraOnPosition(objects.carbody.body:getX(), objects.carbody.body:getY(), w * 2, h * 2)
         end
     end
+
+    manual_gc(0.002, 2)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -1642,6 +1652,18 @@ function love.keypressed(k)
     if k == '1' then startExample(1) end
     if k == '2' then startExample(2) end
     if k == '3' then startExample(3) end
+
+    if (k == 'p') then
+        if not profiling then
+            ProFi:start()
+        else
+            ProFi:stop()
+            ProFi:writeReport('log/MyProfilingReport.txt')
+        end
+        profiling = not profiling
+    end
+
+
     if (k == 'q' and example == 3) then
         -- local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
@@ -1671,8 +1693,8 @@ function love.keypressed(k)
         --    creation.hand.h = 150 + love.math.random() * 100
         --    creation.head.w = 150 + love.math.random() * 100
         --    creation.head.h = 150 + love.math.random() * 100
-            creation.neck.w = 12 + love.math.random() * 20
-            creation.neck.h = 100 + love.math.random() * 200
+        creation.neck.w = 12 + love.math.random() * 20
+        creation.neck.h = 100 + love.math.random() * 200
 
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)

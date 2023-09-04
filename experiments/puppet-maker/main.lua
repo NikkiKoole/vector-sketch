@@ -1,6 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
-local manual_gc = require 'vendor.batteries.manual_gc'
+--local manual_gc = require 'vendor.batteries.manual_gc'
 
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
    require("lldebugger").start()
@@ -444,7 +444,7 @@ function love.update(dt)
       SM.update(dt)
    end
    --collectgarbage()
-   manual_gc(0.002, 2)
+   --manual_gc(0.002, 2)
    prof.pop('frame')
 end
 
