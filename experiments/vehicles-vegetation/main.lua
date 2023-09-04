@@ -391,8 +391,48 @@ function makeSnappyElastic(x, y)
     makeAndAddConnector(band, 0, bandH)
 end
 
-function makeChain2(x, y, amt, groupId)
-    local linkHeight = 30
+
+
+function makeSpine(x,y, amt, groupId, totalHeight)
+    local linkHeight = totalHeight/ (amt)
+    local linkWidth = 50
+    local dir = 1
+    local count = 1
+
+    function makeLink(x, y)
+        local body = love.physics.newBody(world, x, y, "dynamic")
+        local shape =  makeShape('rect2', linkWidth, linkHeight)  
+        local fixture = love.physics.newFixture(body, shape, .3)
+        fixture:setFilterData(1, 65535, -1 * groupId)
+        fixture:setUserData(makeUserData('neck'))
+       -- body:setAngle(-math.pi)
+        count = count + 1
+        return body
+    end
+
+    local lastLink = makeLink(x, y)
+   -- lastLink:setAngle(-math.pi)
+    local firstLink = lastLink
+    for i = 1, amt do
+        local link = makeLink(x, y + (i * (linkHeight + 2)) * dir)
+        
+        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
+
+        joint:setLowerLimit( -math.pi / 8)
+        joint:setUpperLimit(math.pi / 8)
+        joint:setLimitsEnabled(true)
+
+        local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
+                link:getY())
+        
+                lastLink:setAngle(math.pi)
+        lastLink = link
+    end
+    return firstLink, lastLink
+end
+
+function makeChain2(x, y, amt, groupId, totalHeight)
+    local linkHeight = totalHeight/ (amt)
     local linkWidth = 50
     local dir = 1
     -- local amt = 3
@@ -1319,7 +1359,7 @@ function love.update(dt)
                     if not upsideDown then
                         if fixture:getUserData().bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-                            -- rotateToHorizontal(body, 0, 50)
+                             rotateToHorizontal(body, -math.pi, 10)
                         end
 
                         if fixture:getUserData().bodyType == 'head' then
@@ -1473,13 +1513,13 @@ function love.keypressed(k)
         --    creation.hand.h = 150 + love.math.random() * 100
         --    creation.head.w = 150 + love.math.random() * 100
         --    creation.head.h = 150 + love.math.random() * 100
-        --    creation.neck.w = 12 + love.math.random() * 20
-        --    creation.neck.h = 100 + love.math.random() * 200
+            creation.neck.w = 12 + love.math.random() * 20
+            creation.neck.h = 100 + love.math.random() * 200
 
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
-        --genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
+        genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
         genericBodyPartUpdate(box2dGuys[2], 2, 'torso')
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
         --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
