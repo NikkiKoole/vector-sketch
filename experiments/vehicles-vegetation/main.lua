@@ -7,7 +7,9 @@ local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 local geom            = require 'lib.geom'
 
+
 require 'box2dGuyCreation'
+require 'texturedBox2d'
 local creation = getCreation()
 
 lurker.quiet = true
@@ -631,6 +633,34 @@ function makeSeeSaw(x, y)
     joint:setLimitsEnabled(true)
 end
 
+function makeBodyFromData(data, x, y)
+    --  print(inspect(data))
+
+
+    local ball = {}
+    ball.body = love.physics.newBody(world, x, y, "dynamic")
+
+    local flatted = {}
+    for i = 1, #data.points do
+        table.insert(flatted, data.points[i][1])
+        table.insert(flatted, data.points[i][2])
+    end
+
+    ball.shape = love.physics.newPolygonShape(flatted)
+    ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
+    --ball.fixture:setRestitution(0.8) -- let the ball bounce
+    ball.fixture:setUserData(makeUserData("ball"))
+
+
+    local pivotShape = makeRectPoly2(10, 10, data.pivotX, data.pivotY)
+    local fixture = love.physics.newFixture(ball.body, pivotShape, .5)
+    fixture:setSensor(true)
+
+    --ball.fixture:setFriction(.5)
+    ball.textureData = data
+    return ball
+end
+
 function makeVehicle(x, y)
     local carBodyHeight = 150
     local carBodyWidth  = 400
@@ -739,6 +769,7 @@ function startExample(number)
     ballRadius = love.physics.getMeter() / 4
     vehiclePedalConnection = {}
     box2dGuys = {}
+    box2dTorsos = {} -- these are th
     connectors = {}
     ----
     ---- VLOOIENSPEL
@@ -888,6 +919,14 @@ function startExample(number)
         for i = 1, 5 do
             makeBalloon(i * 100, -1000)
         end
+
+
+        -- make a shape per meta thing loaded from bodies.
+        local data = loadBodies()
+        for i = 1, #data do
+            --print(inspect(data[i]))
+            table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
+        end
     end
 
     example = number
@@ -922,7 +961,7 @@ function love.load()
     mesh5 = createTexturedTriangleStrip(image5)
 
 
-
+    --create()
     example = nil
     startExample(3)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
@@ -1095,126 +1134,6 @@ function drawWorld(world)
     love.graphics.setColor(r, g, b, a)
 end
 
-function createTexturedTriangleStrip(image)
-    -- this assumes an strip that is oriented vertically
-
-    local w, h = image:getDimensions()
-    local vertices = {}
-    local segments = 8
-    local hPart = h / (segments - 1)
-    local hv = 1 / (segments - 1)
-    local runningHV = 0
-    local runningHP = 0
-    local index = 0
-    for i = 1, segments do
-        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
-        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
-
-        runningHV = runningHV + hv
-        runningHP = runningHP + hPart
-        index = index + 2
-    end
-
-    local mesh = love.graphics.newMesh(vertices, "strip")
-    mesh:setTexture(image)
-
-    return mesh
-end
-
-function texturedCurve(curve, image, mesh)
-    local dl = curve:getDerivative()
-    --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
-    --local dr = curveR:getDerivative()
-
-
-
-    --local curve = love.math.newBezierCurve({mx, my,  mx+50, my + 100, mx, my + 5})
-    for i = 1, 1 do
-        local w, h = image:getDimensions()
-        local count = mesh:getVertexCount()
-
-        for j = 1, count, 2 do
-            local index  = (j - 1) / (count - 2)
-            local xl, yl = curve:evaluate(index)
-            --local xr,yr = curveR:evaluate(index)
-
-            local dx, dy = dl:evaluate(index)
-            local a      = math.atan2(dy, dx) + math.pi / 2
-            local a2     = math.atan2(dy, dx) - math.pi / 2
-
-            local line   = w / 2.5 --- here we can make the texture wider!!
-            local x2     = xl + line * math.cos(a)
-            local y2     = yl + line * math.sin(a)
-            local x3     = xl + line * math.cos(a2)
-            local y3     = yl + line * math.sin(a2)
-
-            if false then
-                --love.graphics.line(xl,yl, x2, y2)
-                --love.graphics.line(xl,yl, x3, y3)
-            end
-
-            local x, y, u, v, r, g, b, a = mesh:getVertex(j)
-            mesh:setVertex(j, { x2, y2, u, v })
-            x, y, u, v, r, g, b, a = mesh:getVertex(j + 1)
-            mesh:setVertex(j + 1, { x3, y3, u, v })
-        end
-    end
-    --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
-    --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
-    love.graphics.draw(mesh, 0, 0, 0, 1, 1)
-end
-
-function drawSkinOver(box2dGuy)
-    -- print(inspect(box2dGuy))
-    love.graphics.setColor(0, 0, 0, 1)
-    local ax, ay = box2dGuy.luleg:getPosition()
-    local bx, by = box2dGuy.llleg:getPosition()
-    local cx, cy = box2dGuy.lfoot:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
-
-
-    texturedCurve(curve, image3, mesh3)
-
-
-
-
-    -----
-    local ax, ay = box2dGuy.ruleg:getPosition()
-    local bx, by = box2dGuy.rlleg:getPosition()
-    local cx, cy = box2dGuy.rfoot:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
-
-    ----
-    local ax, ay = box2dGuy.luarm:getPosition()
-    local bx, by = box2dGuy.llarm:getPosition()
-    local cx, cy = box2dGuy.lhand:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
-
-    texturedCurve(curve, image5, mesh5)
-
-
-
-    ----
-    local ax, ay = box2dGuy.ruarm:getPosition()
-    local bx, by = box2dGuy.rlarm:getPosition()
-    local cx, cy = box2dGuy.rhand:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
-
-    texturedCurve(curve, image5, mesh5)
-end
-
 function drawCenteredBackgroundText(str)
     local width, height = love.graphics.getDimensions()
     local font = love.graphics.getFont()
@@ -1265,7 +1184,9 @@ function love.draw()
                 drawSkinOver(box2dGuys[i])
             end
         end
-
+        for i = 1, #box2dTorsos do
+            drawTorsoOver(box2dTorsos[i])
+        end
         cam:pop()
 
 
@@ -1286,7 +1207,9 @@ function love.draw()
             --print(box2dGuys[i].torso:getPosition())
             drawSkinOver(box2dGuys[i])
         end
-
+        for i = 1, #box2dTorsos do
+            drawTorsoOver(box2dTorsos[i])
+        end
 
         cam:pop()
 
