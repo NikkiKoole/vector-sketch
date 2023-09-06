@@ -930,7 +930,7 @@ function startExample(number)
 
         local data = loadBodies()
         for i = 1, #data do
-            table.insert(box2dGuys, makeGuy(i * 400, -1000, i, data[i].points))
+            table.insert(box2dGuys, makeGuy(i * 400, -1000, i))
         end
 
         for i = 1, 5 do
@@ -1570,7 +1570,7 @@ function love.update(dt)
 end
 
 function love.mousemoved(x, y, dx, dy)
-    if love.keyboard.isDown('space') then
+    if love.keyboard.isDown('space') or love.mouse.isDown(3) then
         local x, y = cam:getTranslation()
         cam:setTranslation(x - dx / cam.scale, y - dy / cam.scale)
     end

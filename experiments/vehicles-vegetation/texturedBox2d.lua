@@ -212,6 +212,8 @@ function drawSkinOver(box2dGuy)
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
     love.graphics.line(curve:render())
 
+    texturedCurve(curve, image3, mesh3)
+
     ----
     local ax, ay = box2dGuy.luarm:getPosition()
     local bx, by = box2dGuy.llarm:getPosition()
