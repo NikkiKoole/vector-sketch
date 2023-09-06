@@ -6,7 +6,7 @@ local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 local geom            = require 'lib.geom'
-
+local bbox            = require 'lib.bbox'
 
 require 'box2dGuyCreation'
 require 'texturedBox2d'
@@ -637,24 +637,41 @@ function makeBodyFromData(data, x, y)
     --  print(inspect(data))
 
 
-    local ball = {}
-    ball.body = love.physics.newBody(world, x, y, "dynamic")
+    local ball           = {}
+    ball.body            = love.physics.newBody(world, x, y, "dynamic")
 
-    local flatted = {}
-    for i = 1, #data.points do
-        table.insert(flatted, data.points[i][1])
-        table.insert(flatted, data.points[i][2])
+    local flatted        = {}
+
+    local requiredWidth  = 100
+    local requiredHeight = 200
+
+
+    local tlx, tly, brx, bry = bbox.getPointsBBox(data.points)
+    local bbw = (brx - tlx)
+    local bbh = (bry - tly)
+
+    local wscale = requiredWidth / bbw
+    local hscale = requiredHeight / bbh
+
+    ball.scaleData = {
+        wscale = wscale,
+        hscale = hscale
+    }
+
+    for i = 1, #data.points do -- these are them meta points drawn in vector sketch
+        table.insert(flatted, data.points[i][1] * wscale)
+        table.insert(flatted, data.points[i][2] * hscale)
     end
 
     ball.shape = love.physics.newPolygonShape(flatted)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     --ball.fixture:setRestitution(0.8) -- let the ball bounce
-    ball.fixture:setUserData(makeUserData("ball"))
+    --ball.fixture:setUserData(makeUserData("ball"))
 
 
-    local pivotShape = makeRectPoly2(10, 10, data.pivotX, data.pivotY)
-    local fixture = love.physics.newFixture(ball.body, pivotShape, .5)
-    fixture:setSensor(true)
+    --local pivotShape = makeRectPoly2(10, 10, data.pivotX, data.pivotY)
+    --local fixture = love.physics.newFixture(ball.body, pivotShape, .5)
+    --fixture:setSensor(true)
 
     --ball.fixture:setFriction(.5)
     ball.textureData = data
@@ -911,9 +928,9 @@ function startExample(number)
             objects.ground.fixture:setFriction(1)
         end
 
-
-        for i = 1, 2 do
-            table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
+        local data = loadBodies()
+        for i = 1, #data do
+            table.insert(box2dGuys, makeGuy(i * 400, -1000, i, data[i].points))
         end
 
         for i = 1, 5 do
@@ -922,7 +939,7 @@ function startExample(number)
 
 
         -- make a shape per meta thing loaded from bodies.
-        local data = loadBodies()
+
         for i = 1, #data do
             --print(inspect(data[i]))
             table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
@@ -1380,7 +1397,7 @@ function rotateAllBodies(bodies)
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
-                        rotateToHorizontal(body, desired, 50)
+                        rotateToHorizontal(body, desired, 30)
                     end
 
                     if not upsideDown then
@@ -1491,7 +1508,7 @@ function love.update(dt)
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
     --print(#connectors)
-    if false then
+    if true then
         if connectors then
             for i = #connectors, 1, -1 do
                 -- we can only break a  joint if we have one
@@ -1513,6 +1530,7 @@ function love.update(dt)
                     local b1, b2 = connectors[i].joint:getBodies()
 
                     local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
+                    --print(breakForce)
                     if l > breakForce and found then
                         connectors[i].joint:destroy()
                         connectors[i].joint = nil

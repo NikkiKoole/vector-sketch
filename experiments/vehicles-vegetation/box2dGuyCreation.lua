@@ -1,4 +1,5 @@
 package.path  = package.path .. ";../../?.lua"
+local bbox    = require 'lib.bbox'
 local inspect = require 'vendor.inspect'
 
 local function makePointerJoint(id, bodyToAttachTo, wx, wy)
@@ -22,15 +23,14 @@ end
 
 
 local creation = {
-    torso = { w = 100, h = 200, d = .5, shape = 'trapezium' },
-    neck = { w = 40, h = 350, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-
+    torso = { w = 300, h = 300, d = .5, shape = 'trapezium' },
+    neck = { w = 40, h = 50, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 20, h = 180, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
-    lowArm = { w = 20, h = 80, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
+    upArm = { w = 40, h = 180, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
+    lowArm = { w = 40, h = 80, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 20, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 20, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upLeg = { w = 40, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 40, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 
@@ -136,14 +136,14 @@ local function getAngleOffset(key, side)
 end
 
 local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
-     --   print('parent', parent)
+    --   print('parent', parent)
     local x, y = parent:getWorldPoint(offsetX, offsetY)
 
     local prevA = parent:getAngle()
     local xangle = getAngleOffset(key, side)
 
-   -- local body
-   --if false then
+    -- local body
+    --if false then
     -- local first, last
     -- if key == 'neck' and creation.neck.links and creation.neck.links > 1 then
     --     print('neck')
@@ -155,13 +155,13 @@ local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     --  else
     --  end
     local body = love.physics.newBody(world, x, y, "dynamic")
-   
+
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
     body:setAngle(prevA + xangle)
     local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
-     
+
     return body
 end
 
@@ -229,11 +229,11 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
 
     if parentName then
         --box2dGuy[partName]:destroy()
-    --print(parentName)
+        --print(parentName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
-           -- print('got here')
+            -- print('got here')
             local offsetX, offsetY = getOffsetFromParent(partName)
             local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
             local prevA = box2dGuy[parentName]:getAngle()
@@ -252,7 +252,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             --if xangle ~= 0 then
             body:setAngle(prevA + xangle)
             --end
-           -- print(prevA, xangle, thisA)
+            -- print(prevA, xangle, thisA)
 
             local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName], leftOrRight)
 
@@ -300,7 +300,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         box2dGuy[childName]:setAngle(aa)
     end
 
-  
+
     local childName = data.c
     if childName and (type(childName) == 'string') then
         reAttachChild(childName)
@@ -310,7 +310,6 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             reAttachChild(childName[i])
         end
     end
-
 end
 
 function getOffsetFromParent(partName)
@@ -327,10 +326,8 @@ function getOffsetFromParent(partName)
     elseif partName == 'ruleg' then
         return creation.torso.w / 2, creation.torso.h / 2
     else
-
-        if (partName=='head') then
-          
-            return 0, creation.neck.h/ (creation.neck.links or 1)
+        if (partName == 'head') then
+            return 0, creation.neck.h / (creation.neck.links or 1)
             --return 0,0
         end
 
@@ -342,7 +339,7 @@ function getOffsetFromParent(partName)
     end
 end
 
-function makeGuy(x, y, groupId)
+function makeGuy(x, y, groupId, torsoPoints)
     local function makePart(name, key, parent, side)
         -- needed to wrap groupid
         local data = getParentAndChildrenFromPartName(name)
@@ -352,12 +349,48 @@ function makeGuy(x, y, groupId)
     end
 
 
-    local torso = love.physics.newBody(world, x, y, "dynamic")
-    local torsoShape = makeShapeFromCreationPart(creation.torso)
-    local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
+    local torso
+    if torsoPoints then
+        local shapedTorso = love.physics.newBody(world, x, y, "dynamic")
+
+
+        local requiredWidth  = creation.torso.w
+        local requiredHeight = creation.torso.h
+
+
+        local tlx, tly, brx, bry = bbox.getPointsBBox(torsoPoints)
+        local bbw = (brx - tlx)
+        local bbh = (bry - tly)
+
+        local wscale = requiredWidth / bbw
+        local hscale = requiredHeight / bbh
+
+        --ball.scaleData = {
+        --    wscale = wscale,
+        --    hscale = hscale
+        -- }
+
+
+        local flatted = {}
+        for i = 1, #torsoPoints do
+            table.insert(flatted, torsoPoints[i][1] * wscale)
+            table.insert(flatted, torsoPoints[i][2] * hscale)
+        end
+
+        local shapedTorsoShape = love.physics.newPolygonShape(flatted)
+        --  local shapedTorsoFixture = love.physics.newFixture(shapedTorso, shapedTorsoShape, 1)
+        local fixture = makeGuyFixture('torso', 'torso', groupId, shapedTorso, shapedTorsoShape)
+        torso = shapedTorso
+    else
+        torso = love.physics.newBody(world, x, y, "dynamic")
+        local torsoShape = makeShapeFromCreationPart(creation.torso)
+        local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
+    end
+
+
 
     getOffsetFromParent('llarm')
-    local neck= makePart('neck', 'neck', torso)
+    local neck = makePart('neck', 'neck', torso)
     local head = makePart('head', 'head', neck)
 
     local luleg = makePart('luleg', 'legpart', torso, 'left')

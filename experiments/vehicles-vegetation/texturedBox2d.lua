@@ -2,6 +2,7 @@ local parse   = require 'lib.parse-file'
 local node    = require 'lib.node'
 local inspect = require 'vendor.inspect'
 local mesh    = require 'lib.mesh'
+local bbox    = require 'lib.bbox'
 
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
@@ -166,15 +167,15 @@ function drawTorsoOver(box2dTorso)
     local tp = box2dTorso.textureData.texturePoints
     local pointsW = tp[2][1] - tp[1][1]
     local pointsH = tp[3][2] - tp[1][2]
+    --print(inspect(tp))
+    --local mx = pointsW / 2
+    -- local my = pointsH / 2
 
-    local mx = pointsW / 2
-    local my = pointsH / 2
+    local sx = (pointsW / w) * box2dTorso.scaleData.wscale
+    local sy = (pointsH / h) * box2dTorso.scaleData.hscale
 
-    local sx = pointsW / w
-    local sy = pointsH / h
-
-    local offx = pointsW - w
-    local offy = pointsH - h
+    -- local offx = pointsW - w
+    -- local offy = pointsH - h
     --print(sx, sy)
 
 
