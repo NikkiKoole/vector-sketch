@@ -179,17 +179,8 @@ function drawTorsoOver(box2dTorso)
 
 
     love.graphics.setColor(0, 0, 0)
-    love.graphics.draw(img, x, y, r, sx, sy, ox, oy)
+    love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
 
-
-    love.graphics.setColor(1, 0, 0)
-    local ax, ay = box2dTorso.body:getPosition()
-    love.graphics.rectangle("fill", ax, ay, 15, 15)
-    local bx, by = box2dTorso.body:getWorldPoint(w, h)
-    love.graphics.rectangle("fill", bx, by, 15, 15)
-
-    local cx, cy = box2dTorso.body:getWorldPoint(ox, oy)
-    love.graphics.rectangle("fill", cx, cy, 15, 15)
 
     --print(bx - ax, by - ay)
 end

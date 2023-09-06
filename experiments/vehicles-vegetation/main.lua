@@ -917,7 +917,7 @@ function startExample(number)
         end
 
         for i = 1, 5 do
-            makeBalloon(i * 100, -1000)
+            --      makeBalloon(i * 100, -1000)
         end
 
 
@@ -1429,7 +1429,8 @@ function rotateAllBodies(bodies)
 end
 
 function love.update(dt)
-    -- lurker.update()
+    lurker.update()
+
 
 
 
