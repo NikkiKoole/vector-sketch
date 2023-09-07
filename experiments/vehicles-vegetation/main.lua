@@ -945,11 +945,11 @@ function startExample(number)
             objects.ground.fixture:setFriction(1)
         end
 
-        local data = loadBodies()
+        data = loadBodies()
 
         local rndIndex = math.ceil(love.math.random() * #data)
         changeMetaPoints('torso', data[rndIndex].points)
-        -- print(inspect(data[3]))
+       
         changeMetaTexture('torso', data[rndIndex])
 
         -- print(inspect(data[6]))
@@ -1392,7 +1392,7 @@ function maybeConnectThisConnector(f, mj)
 end
 
 function rotateAllBodies(bodies)
-    local upsideDown = false
+    local upsideDown = true
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -1635,6 +1635,13 @@ function love.keypressed(k)
     if (k == 'q' and example == 3) then
         -- local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
+
+
+        local rndIndex = math.ceil(love.math.random() * #data)
+        changeMetaPoints('torso', data[rndIndex].points)
+       
+        changeMetaTexture('torso', data[rndIndex])
+
         local body = box2dGuys[2].torso
         -- body:applyLinearImpulse(0, -10000)
 

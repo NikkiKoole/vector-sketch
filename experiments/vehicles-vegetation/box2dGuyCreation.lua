@@ -23,14 +23,14 @@ end
 
 
 local creation = {
-    torso = { w = 300, h = 300, d = .5, shape = 'trapezium' },
+    torso = { w = 300, h = 300, d = 2.5, shape = 'trapezium' },
     neck = { w = 40, h = 50, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { w = 100, h = 100, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 40, h = 180, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
-    lowArm = { w = 40, h = 80, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
+    upArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
+    lowArm = { w = 40, h = 80, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 40, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 40, h = 200, d = .5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upLeg = { w = 80, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 80, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 
