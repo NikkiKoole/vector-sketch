@@ -160,23 +160,14 @@ function drawTorsoOver(box2dTorso)
     local w, h = img:getDimensions()
     local x, y = box2dTorso.body:getPosition()
     local r = box2dTorso.body:getAngle()
-    local ox = box2dTorso.textureData.pivotX
-    local oy = box2dTorso.textureData.pivotY
 
-    --print(inspect(box2dTorso.textureData.texturePoints))
+
     local tp = box2dTorso.textureData.texturePoints
     local pointsW = tp[2][1] - tp[1][1]
     local pointsH = tp[3][2] - tp[1][2]
-    --print(inspect(tp))
-    --local mx = pointsW / 2
-    -- local my = pointsH / 2
 
     local sx = (pointsW / w) * box2dTorso.scaleData.wscale
     local sy = (pointsH / h) * box2dTorso.scaleData.hscale
-
-    -- local offx = pointsW - w
-    -- local offy = pointsH - h
-    --print(sx, sy)
 
 
     love.graphics.setColor(0, 0, 0)
@@ -186,8 +177,25 @@ function drawTorsoOver(box2dTorso)
     --print(bx - ax, by - ay)
 end
 
-function drawSkinOver(box2dGuy)
+function drawSkinOver(box2dGuy, creation)
     -- print(inspect(box2dGuy))
+
+    if creation and creation.torso.metaURL then
+        local img = mesh.getImage(creation.torso.metaURL)
+        local w, h = img:getDimensions()
+        local x, y = box2dGuy.torso:getPosition()
+        local r = box2dGuy.torso:getAngle()
+
+        local wscale = creation.torso.w / creation.torso.metaPointsW
+        local hscale = creation.torso.h / creation.torso.metaPointsH
+
+        local sx = (creation.torso.metaTexturePointsW / w) * wscale
+        local sy = (creation.torso.metaTexturePointsH / h) * hscale
+
+        love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
+    end
+
+
     love.graphics.setColor(0, 0, 0, 1)
     local ax, ay = box2dGuy.luleg:getPosition()
     local bx, by = box2dGuy.llleg:getPosition()
@@ -195,7 +203,7 @@ function drawSkinOver(box2dGuy)
 
 
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
+    --love.graphics.line(curve:render())
 
 
     texturedCurve(curve, image3, mesh3)
@@ -210,7 +218,7 @@ function drawSkinOver(box2dGuy)
 
 
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
+    -- love.graphics.line(curve:render())
 
     texturedCurve(curve, image3, mesh3)
 
@@ -221,7 +229,7 @@ function drawSkinOver(box2dGuy)
 
 
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
+    -- love.graphics.line(curve:render())
 
     texturedCurve(curve, image5, mesh5)
 
@@ -234,7 +242,7 @@ function drawSkinOver(box2dGuy)
 
 
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-    love.graphics.line(curve:render())
+    --  love.graphics.line(curve:render())
 
     texturedCurve(curve, image5, mesh5)
 end

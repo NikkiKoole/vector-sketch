@@ -319,7 +319,24 @@ function makeUShape(w, h, thickness)
 end
 
 function makeShapeFromCreationPart(part)
-    return makeShape(part.shape, part.w, part.h)
+    if part.metaPoints then
+        -- print('jabbadabbadoo!')
+        --print(part.w, part.h)
+
+        local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
+        local bbw = (brx - tlx)
+        local bbh = (bry - tly)
+        local wscale = part.w / bbw
+        local hscale = part.h / bbh
+        local flatted = {}
+        for i = 1, #part.metaPoints do
+            table.insert(flatted, part.metaPoints[i][1] * wscale)
+            table.insert(flatted, part.metaPoints[i][2] * hscale)
+        end
+        return love.physics.newPolygonShape(flatted)
+    else
+        return makeShape(part.shape, part.w, part.h)
+    end
 end
 
 function makeShape(shapeType, w, h)
@@ -642,8 +659,8 @@ function makeBodyFromData(data, x, y)
 
     local flatted        = {}
 
-    local requiredWidth  = 100
-    local requiredHeight = 200
+    local requiredWidth  = 300
+    local requiredHeight = 300
 
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(data.points)
@@ -652,7 +669,7 @@ function makeBodyFromData(data, x, y)
 
     local wscale = requiredWidth / bbw
     local hscale = requiredHeight / bbh
-
+    print('correct wh scale', wscale, hscale)
     ball.scaleData = {
         wscale = wscale,
         hscale = hscale
@@ -866,8 +883,8 @@ function startExample(number)
 
         objects.balls = {}
 
-        for i = 1, 1 do
-            ballRadius = 10 --love.math.random() * 300 + 130
+        for i = 1, 20 do
+            ballRadius = 50 --love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
         end
@@ -929,6 +946,15 @@ function startExample(number)
         end
 
         local data = loadBodies()
+
+
+        changeMetaPoints('torso', data[3].points)
+        -- print(inspect(data[3]))
+        changeMetaTexture('torso', data[3])
+
+        -- print(inspect(data[6]))
+        --creation.torso.metaPoints = data[1].points
+
         for i = 1, #data do
             table.insert(box2dGuys, makeGuy(i * 400, -1000, i))
         end
@@ -941,7 +967,7 @@ function startExample(number)
         -- make a shape per meta thing loaded from bodies.
 
         for i = 1, #data do
-            --print(inspect(data[i]))
+            --    --print(inspect(data[i]))
             table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
         end
     end
@@ -1198,7 +1224,7 @@ function love.draw()
 
 
             if x >= tlx and x <= brx then
-                drawSkinOver(box2dGuys[i])
+                drawSkinOver(box2dGuys[i], creation)
             end
         end
         for i = 1, #box2dTorsos do
@@ -1222,7 +1248,7 @@ function love.draw()
         drawWorld(world)
         for i = 1, #box2dGuys do
             --print(box2dGuys[i].torso:getPosition())
-            drawSkinOver(box2dGuys[i])
+            drawSkinOver(box2dGuys[i], creation)
         end
         for i = 1, #box2dTorsos do
             drawTorsoOver(box2dTorsos[i])
@@ -1415,7 +1441,7 @@ function rotateAllBodies(bodies)
                     if not upsideDown then
                         if userData.bodyType == 'legpart' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
+                            rotateToHorizontal(body, 0, 25)
                         end
                         if userData.bodyType == 'armpart' then
                             getRidOfBigRotationsInBody(body)
@@ -1629,8 +1655,8 @@ function love.keypressed(k)
         if (newLegLength > oldLegLength) then
             body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
         end
-        --    creation.upArm.h = 150 + love.math.random() * 100
-        --    creation.lowArm.h = 150 + love.math.random() * 100
+        creation.upArm.h = 150 + love.math.random() * 100
+        creation.lowArm.h = 150 + love.math.random() * 100
         --    creation.foot.h = 50 + love.math.random() * 100
         --    creation.hand.h = 150 + love.math.random() * 100
         --    creation.head.w = 150 + love.math.random() * 100
@@ -1641,8 +1667,14 @@ function love.keypressed(k)
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'neck')
-        genericBodyPartUpdate(box2dGuys[2], 2, 'torso')
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        end
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
         --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
         --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')

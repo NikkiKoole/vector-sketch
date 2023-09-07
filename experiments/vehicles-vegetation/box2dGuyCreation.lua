@@ -34,6 +34,32 @@ local creation = {
     foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 
+
+function changeMetaPoints(key, value)
+    creation[key].metaPoints = value
+
+    local tlx, tly, brx, bry = bbox.getPointsBBox(value)
+    local bbw = (brx - tlx)
+    local bbh = (bry - tly)
+
+    --creation[key].metaPointsBB = { bbox.getPointsBBox(value) }
+    creation[key].metaPointsW = bbw
+    creation[key].metaPointsH = bbh
+
+
+    -- print(inspect(creation[key].metaPointsBB))
+end
+
+function changeMetaTexture(key, data)
+    creation[key].metaURL = data.url
+    creation[key].metaTexturePoints = data.texturePoints
+    local tlx, tly, brx, bry = bbox.getPointsBBox(data.texturePoints)
+    local bbw = (brx - tlx)
+    local bbh = (bry - tly)
+    creation[key].metaTexturePointsW = bbw
+    creation[key].metaTexturePointsH = bbh
+end
+
 function getCreation()
     return creation
 end
@@ -312,23 +338,46 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
 end
 
+function getScaledTorsoMetaPoint(index)
+    local wscale = creation.torso.w / creation.torso.metaPointsW
+    local hscale = creation.torso.h / creation.torso.metaPointsH
+    return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
+end
+
 function getOffsetFromParent(partName)
     local data = getParentAndChildrenFromPartName(partName)
 
     if partName == 'neck' then
+        if creation.torso.metaPoints then
+            return getScaledTorsoMetaPoint(1)
+        end
+
         return 0, -creation.torso.h / 2
     elseif partName == 'luarm' then
+        if creation.torso.metaPoints then
+            return getScaledTorsoMetaPoint(8)
+        end
         return -creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'ruarm' then
+        if creation.torso.metaPoints then
+            return getScaledTorsoMetaPoint(2)
+        end
+
+
         return creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'luleg' then
+        if creation.torso.metaPoints then
+            return getScaledTorsoMetaPoint(6)
+        end
         return -creation.torso.w / 2, creation.torso.h / 2
     elseif partName == 'ruleg' then
+        if creation.torso.metaPoints then
+            return getScaledTorsoMetaPoint(4)
+        end
         return creation.torso.w / 2, creation.torso.h / 2
     else
         if (partName == 'head') then
             return 0, creation.neck.h / (creation.neck.links or 1)
-            --return 0,0
         end
 
         local p = data.p
@@ -348,44 +397,10 @@ function makeGuy(x, y, groupId, torsoPoints)
         return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
     end
 
+    local torso = love.physics.newBody(world, x, y, "dynamic")
+    local torsoShape = makeShapeFromCreationPart(creation.torso)
+    local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
 
-    local torso
-    if torsoPoints then
-        local shapedTorso = love.physics.newBody(world, x, y, "dynamic")
-
-
-        local requiredWidth  = creation.torso.w
-        local requiredHeight = creation.torso.h
-
-
-        local tlx, tly, brx, bry = bbox.getPointsBBox(torsoPoints)
-        local bbw = (brx - tlx)
-        local bbh = (bry - tly)
-
-        local wscale = requiredWidth / bbw
-        local hscale = requiredHeight / bbh
-
-        --ball.scaleData = {
-        --    wscale = wscale,
-        --    hscale = hscale
-        -- }
-
-
-        local flatted = {}
-        for i = 1, #torsoPoints do
-            table.insert(flatted, torsoPoints[i][1] * wscale)
-            table.insert(flatted, torsoPoints[i][2] * hscale)
-        end
-
-        local shapedTorsoShape = love.physics.newPolygonShape(flatted)
-        --  local shapedTorsoFixture = love.physics.newFixture(shapedTorso, shapedTorsoShape, 1)
-        local fixture = makeGuyFixture('torso', 'torso', groupId, shapedTorso, shapedTorsoShape)
-        torso = shapedTorso
-    else
-        torso = love.physics.newBody(world, x, y, "dynamic")
-        local torsoShape = makeShapeFromCreationPart(creation.torso)
-        local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
-    end
 
 
 
