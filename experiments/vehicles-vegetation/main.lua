@@ -904,7 +904,7 @@ function startExample(number)
         end
 
         for i = 1, 50 do
-            table.insert(box2dGuys, makeGuy(i * 200, -1000, i))
+            table.insert(box2dGuys, makeGuy(i * 400, -1300, i))
         end
 
         for i = 1, 3 do
@@ -947,10 +947,10 @@ function startExample(number)
 
         local data = loadBodies()
 
-
-        changeMetaPoints('torso', data[3].points)
+        local rndIndex = math.ceil(love.math.random() * #data)
+        changeMetaPoints('torso', data[rndIndex].points)
         -- print(inspect(data[3]))
-        changeMetaTexture('torso', data[3])
+        changeMetaTexture('torso', data[rndIndex])
 
         -- print(inspect(data[6]))
         --creation.torso.metaPoints = data[1].points
