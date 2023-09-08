@@ -9,7 +9,6 @@ local function stripPath(root, path)
         local str = root.texture.url
         local shortened = string.gsub(str, path, '')
         root.texture.url = shortened
-        --print(shortened)
     end
 
     if root.children then
@@ -46,18 +45,14 @@ local function zeroTransform(arr)
             arr[i].transforms.l[2] = 0
         end
     end
-    --print(arr[1].transforms)
 end
 function loadBodies()
     local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
     zeroTransform(bodyParts)
-    --print(inspect(bodyParts))
+
 
     local result = {}
     for i = 1, #bodyParts do
-        -- print(bodyParts[i])
-        --print()
-        --print(i, inspect(bodyParts[i].transforms.l))
         local me = {
             pivotX = bodyParts[i].transforms.l[6],
             pivotY = bodyParts[i].transforms.l[7]
@@ -65,20 +60,15 @@ function loadBodies()
         for j = 1, #bodyParts[i].children do
             local child = bodyParts[i].children[j]
             if child.texture and child.texture.url then
-                -- print()
                 local img = mesh.getImage(child.texture.url)
-                --print(child.texture.url, img:getDimensions())
-                --print(inspect(child))
+
                 me.url = child.texture.url
                 me.texturePoints = child.points
             end
             if child.type == 'meta' then
-                print(inspect(child.points))
+                --print(inspect(child.points))
                 me.points = child.points
             end
-
-            --print(inspect(bodyParts[i].children[j]))
-            --  local mesh = require 'lib.mesh'
         end
         table.insert(result, me)
     end
@@ -155,7 +145,6 @@ function texturedCurve(curve, image, mesh)
 end
 
 function drawTorsoOver(box2dTorso)
-    --print(inspect(box2dTorso))
     local img = mesh.getImage(box2dTorso.textureData.url)
     local w, h = img:getDimensions()
     local x, y = box2dTorso.body:getPosition()
@@ -172,14 +161,10 @@ function drawTorsoOver(box2dTorso)
 
     love.graphics.setColor(0, 0, 0)
     love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
-
-
-    --print(bx - ax, by - ay)
 end
 
 function drawSkinOver(box2dGuy, creation)
-    -- print(inspect(box2dGuy))
-
+    love.graphics.setColor(0, 0, 0, 1)
     if creation and creation.torso.metaURL then
         local img = mesh.getImage(creation.torso.metaURL)
         local w, h = img:getDimensions()

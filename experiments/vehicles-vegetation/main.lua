@@ -90,7 +90,6 @@ local function makeUserData(bodyType, moreData)
     if moreData then
         result.data = moreData
     end
-    --print(inspect(result))
     return result
 end
 
@@ -188,8 +187,6 @@ function beginContact(a, b, contact)
         end
     end
     if isContactBetweenGroundAndCarGroundSensor(contact) then
-        --print('touching', carIsTouching)
-
         carIsTouching = carIsTouching + 1
     end
 end
@@ -201,7 +198,6 @@ function endContact(a, b, contact)
         end
     end
     if isContactBetweenGroundAndCarGroundSensor(contact) then
-        -- print('no touching', carIsTouching)
         carIsTouching = carIsTouching - 1
     end
 end
@@ -320,9 +316,6 @@ end
 
 function makeShapeFromCreationPart(part)
     if part.metaPoints then
-        -- print('jabbadabbadoo!')
-        --print(part.w, part.h)
-
         local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
         local bbw = (brx - tlx)
         local bbh = (bry - tly)
@@ -359,7 +352,6 @@ function makeAndAddConnector(parent, x, y, data, size)
     size = size or 10
     local bandshape2 = makeRectPoly2(size, size, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
-    --print(inspect(data))
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
@@ -651,9 +643,6 @@ function makeSeeSaw(x, y)
 end
 
 function makeBodyFromData(data, x, y)
-    --  print(inspect(data))
-
-
     local ball           = {}
     ball.body            = love.physics.newBody(world, x, y, "dynamic")
 
@@ -669,7 +658,7 @@ function makeBodyFromData(data, x, y)
 
     local wscale = requiredWidth / bbw
     local hscale = requiredHeight / bbh
-    print('correct wh scale', wscale, hscale)
+
     ball.scaleData = {
         wscale = wscale,
         hscale = hscale
@@ -805,6 +794,7 @@ function startExample(number)
     box2dGuys = {}
     box2dTorsos = {} -- these are th
     connectors = {}
+    pointerJoints = {}
     ----
     ---- VLOOIENSPEL
     -----
@@ -948,12 +938,11 @@ function startExample(number)
         data = loadBodies()
 
         local rndIndex = math.ceil(love.math.random() * #data)
+
         changeMetaPoints('torso', data[rndIndex].points)
-       
         changeMetaTexture('torso', data[rndIndex])
 
-        -- print(inspect(data[6]))
-        --creation.torso.metaPoints = data[1].points
+
 
         for i = 1, #data do
             table.insert(box2dGuys, makeGuy(i * 400, -1000, i))
@@ -967,7 +956,6 @@ function startExample(number)
         -- make a shape per meta thing loaded from bodies.
 
         for i = 1, #data do
-            --    --print(inspect(data[i]))
             table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
         end
     end
@@ -1035,7 +1023,7 @@ local function pointerReleased(id, x, y)
 
                             local delta = Vector(x1 - x2, y1 - y2)
                             local l = delta:getLength()
-                            -- print(l)
+
                             local v = delta:getNormalized() * l * -2
                             if v.y > 0 then
                                 v.y = 0
@@ -1215,7 +1203,6 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-        -- print(#box2dGuys)
         drawWorld(world)
         local tlx, tly = cam:getWorldCoordinates( -200, 0)
         local brx, bry = cam:getWorldCoordinates(width + 200, height)
@@ -1247,7 +1234,6 @@ function love.draw()
 
         drawWorld(world)
         for i = 1, #box2dGuys do
-            --print(box2dGuys[i].torso:getPosition())
             drawSkinOver(box2dGuys[i], creation)
         end
         for i = 1, #box2dTorsos do
@@ -1265,7 +1251,6 @@ function love.draw()
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
         if mj.positionOfLastDisabledContact and #mj.positionOfLastDisabledContact > 0 then
-            -- print(inspect(positionOfLastDisabledContact))
             love.graphics.circle('fill', mj.positionOfLastDisabledContact[1], mj.positionOfLastDisabledContact[2], 10)
             if (mj.bodyLastDisabledContact) then
                 local posx, posy = mj.bodyLastDisabledContact:getBody():getPosition()
@@ -1342,7 +1327,6 @@ function maybeConnectThisConnector(f, mj)
     end
 
     if found == false then
-        --print(mj.jointBody, f:getBody())
         local pos1 = getCentroidOfFixture(f:getBody(), f)
         local done = false
 
@@ -1392,7 +1376,7 @@ function maybeConnectThisConnector(f, mj)
 end
 
 function rotateAllBodies(bodies)
-    local upsideDown = true
+    local upsideDown = false
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -1406,8 +1390,7 @@ function rotateAllBodies(bodies)
         end
 
         for _, fixture in ipairs(fixtures) do
-            --print(isBeingPointerJointed)
-            if true and not isBeingPointerJointed then
+            if false and not isBeingPointerJointed then
                 local userData = fixture:getUserData()
                 if userData then
                     if userData.bodyType == 'balloon' then
@@ -1533,12 +1516,10 @@ function love.update(dt)
 
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
-    --print(#connectors)
     if true then
         if connectors then
             for i = #connectors, 1, -1 do
                 -- we can only break a  joint if we have one
-                -- print(i, connectors[i].joint, connectors[i].to)
 
                 if connectors[i].joint then
                     local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
@@ -1639,7 +1620,7 @@ function love.keypressed(k)
 
         local rndIndex = math.ceil(love.math.random() * #data)
         changeMetaPoints('torso', data[rndIndex].points)
-       
+
         changeMetaTexture('torso', data[rndIndex])
 
         local body = box2dGuys[2].torso
@@ -1647,6 +1628,8 @@ function love.keypressed(k)
 
         local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
+
+        creation.isPotatoHead = not creation.isPotatoHead
 
         --creation.upLeg.h = 15 + love.math.random() * 400
         --- creation.lowLeg.h = 15 + love.math.random() * 400
@@ -1658,7 +1641,6 @@ function love.keypressed(k)
 
         local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
         local bx, by = body:getPosition()
-        --print('bx/by', bx, by)
         if (newLegLength > oldLegLength) then
             body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
         end
@@ -1668,14 +1650,16 @@ function love.keypressed(k)
         --    creation.hand.h = 150 + love.math.random() * 100
         --    creation.head.w = 150 + love.math.random() * 100
         --    creation.head.h = 150 + love.math.random() * 100
-        creation.neck.w = 12 + love.math.random() * 20
-        creation.neck.h = 100 + love.math.random() * 200
+        --creation.neck.w = 12 + love.math.random() * 20
+        --creation.neck.h = 100 + love.math.random() * 200
 
         --updateHead(box2dGuys[1], 1)
         --updateNeck(box2dGuys[1], 1)
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
         for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            print('jo', creation.isPotatoHead)
+            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
             genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
@@ -1722,7 +1706,6 @@ function love.keypressed(k)
             if k == 's' then
                 if objects.carbody then
                     local angle = objects.carbody.body:getAngle()
-                    --print(angle)
 
                     local n = Vector.angled(Vector(400, 0), angle)
                     objects.carbody.body:applyLinearImpulse(n.x, n.y)
