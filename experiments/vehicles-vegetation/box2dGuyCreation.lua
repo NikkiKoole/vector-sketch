@@ -403,19 +403,8 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
         local offsetX, offsetY = getOffsetFromParent(name)
         return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
     end
-    local torso = box2dGuy.torso
-    if not willBePotato then
-        local neck = makePart('neck', 'neck', torso)
-        local head = makePart('head', 'head', neck)
 
-        local lear = makePart('lear', 'ear', head, 'left')
-        local rear = makePart('rear', 'ear', head, 'right')
-        box2dGuy.lear = lear
-        box2dGuy.rear = rear
-        box2dGuy.neck = neck
-        box2dGuy.head = head
-        print('hello remade some parts')
-    else
+    if willBePotato then
         box2dGuy.neck:destroy()
         box2dGuy.head:destroy()
         box2dGuy.lear:destroy()
@@ -424,6 +413,18 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
         box2dGuy.rear = nil
         box2dGuy.neck = nil
         box2dGuy.head = nil
+    else
+        local torso = box2dGuy.torso
+
+        local neck = makePart('neck', 'neck', torso)
+        local head = makePart('head', 'head', neck)
+        local lear = makePart('lear', 'ear', head, 'left')
+        local rear = makePart('rear', 'ear', head, 'right')
+
+        box2dGuy.lear = lear
+        box2dGuy.rear = rear
+        box2dGuy.neck = neck
+        box2dGuy.head = head
     end
 end
 
