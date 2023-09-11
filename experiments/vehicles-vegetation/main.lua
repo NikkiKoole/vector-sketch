@@ -322,9 +322,18 @@ function makeShapeFromCreationPart(part)
         local wscale = part.w / bbw
         local hscale = part.h / bbh
         local flatted = {}
+
+        local offsetX = 0
+        local offsetY = 0
+        if part.metaOffsetX or part.metaOfsetY then
+            --print('dcwjicojie')
+            offsetX = part.metaOffsetX * wscale
+            offsetY = part.metaOffsetY * hscale
+        end
+
         for i = 1, #part.metaPoints do
-            table.insert(flatted, part.metaPoints[i][1] * wscale)
-            table.insert(flatted, part.metaPoints[i][2] * hscale)
+            table.insert(flatted, offsetX + part.metaPoints[i][1] * wscale)
+            table.insert(flatted, offsetY + part.metaPoints[i][2] * hscale)
         end
         return love.physics.newPolygonShape(flatted)
     else
@@ -937,10 +946,30 @@ function startExample(number)
 
         data = loadBodies()
 
-        local rndIndex = math.ceil(love.math.random() * #data)
+        bodyRndIndex = math.ceil(love.math.random() * #data)
+        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                data[bodyRndIndex]
+                .points)
+        changeMetaPoints('torso', flippedFloppedBodyPoints)
+        changeMetaTexture('torso', data[bodyRndIndex])
 
-        changeMetaPoints('torso', data[rndIndex].points)
-        changeMetaTexture('torso', data[rndIndex])
+
+        --
+        if true then
+            headRndIndex = math.ceil(love.math.random() * #data)
+
+
+
+            local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                    data[headRndIndex].points)
+
+            changeMetaPoints('head', flippedFloppedHeadPoints)
+            changeMetaTexture('head', data[headRndIndex])
+        end
+        --
+
+
+
 
 
 
@@ -991,6 +1020,18 @@ function love.load()
     --image3:setMipmapFilter( 'nearest', 1 )
     mesh5 = createTexturedTriangleStrip(image5)
 
+
+    image6 = love.graphics.newImage('assets/hair1x.png')
+    mesh6 = createTexturedTriangleStrip(image6)
+
+    image7 = love.graphics.newImage('assets/hair2x.png')
+    mesh7 = createTexturedTriangleStrip(image7)
+
+    image8 = love.graphics.newImage('assets/hair1.png')
+    mesh8 = createTexturedTriangleStrip(image8)
+
+    image9 = love.graphics.newImage('assets/hair6.png')
+    mesh9 = createTexturedTriangleStrip(image9)
 
     --create()
     example = nil
@@ -1390,7 +1431,7 @@ function rotateAllBodies(bodies)
         end
 
         for _, fixture in ipairs(fixtures) do
-            if false and not isBeingPointerJointed then
+            if true and not isBeingPointerJointed then
                 local userData = fixture:getUserData()
                 if userData then
                     if userData.bodyType == 'balloon' then
@@ -1612,75 +1653,119 @@ function love.keypressed(k)
         profiling = not profiling
     end
 
-
-    if (k == 'q' and example == 3) then
-        -- local impulse = body:getInertia() * desiredAngularVelocity
-        -- body:applyAngularImpulse(impulse)
-
-
-        local rndIndex = math.ceil(love.math.random() * #data)
-        changeMetaPoints('torso', data[rndIndex].points)
-
-        changeMetaTexture('torso', data[rndIndex])
-
-        local body = box2dGuys[2].torso
-        -- body:applyLinearImpulse(0, -10000)
-
-        local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
-
-
-        creation.isPotatoHead = not creation.isPotatoHead
-
-        --creation.upLeg.h = 15 + love.math.random() * 400
-        --- creation.lowLeg.h = 15 + love.math.random() * 400
-        --creation.upLeg.w = 15 + love.math.random() * 100
-        --creation.lowLeg.w = 15 + love.math.random() * 100
-        creation.torso.h = 50 + love.math.random() * 500
-        creation.torso.w = 50 + love.math.random() * 500
-
-
-        local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
-        local bx, by = body:getPosition()
-        if (newLegLength > oldLegLength) then
-            body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
+    if example == 3 then
+        if (k == 'h') then
+            creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
+            -- getFlippedMetaObject()
+            local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                    data[bodyRndIndex]
+                    .points)
+            changeMetaPoints('torso', flippedFloppedBodyPoints)
+            for i = 1, #box2dGuys do
+                genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+            end
         end
-        creation.upArm.h = 150 + love.math.random() * 100
-        creation.lowArm.h = 150 + love.math.random() * 100
-        --    creation.foot.h = 50 + love.math.random() * 100
-        --    creation.hand.h = 150 + love.math.random() * 100
-        --    creation.head.w = 150 + love.math.random() * 100
-        --    creation.head.h = 150 + love.math.random() * 100
-        --creation.neck.w = 12 + love.math.random() * 20
-        --creation.neck.h = 100 + love.math.random() * 200
 
-        --updateHead(box2dGuys[1], 1)
-        --updateNeck(box2dGuys[1], 1)
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
-        for i = 1, #box2dGuys do
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
-            print('jo', creation.isPotatoHead)
-            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
-            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
-            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        if k == 'v' then
+            creation.torso.flipy = creation.torso.flipy == 1 and -1 or 1
+            local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                    data[bodyRndIndex]
+                    .points)
+            changeMetaPoints('torso', flippedFloppedBodyPoints)
+            for i = 1, #box2dGuys do
+                genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+            end
         end
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
-        --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
-        --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
-        --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+        if k == 'r' then
+            creation.head.h = 50 + love.math.random() * 300
+            creation.head.w = 50 + love.math.random() * 300
+
+            headRndIndex = math.ceil(love.math.random() * #data)
+            local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                    data[headRndIndex]
+                    .points)
+
+            changeMetaPoints('head', flippedFloppedHeadPoints)
+            changeMetaTexture('head', data[headRndIndex])
+            for i = 1, #box2dGuys do
+                --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+                --print('jo', creation.isPotatoHead)
+
+                --   handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+
+                genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            end
+        end
+        if (k == 'q') then
+            -- local impulse = body:getInertia() * desiredAngularVelocity
+            -- body:applyAngularImpulse(impulse)
+
+
+            bodyRndIndex = math.ceil(love.math.random() * #data)
+            local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                    data[bodyRndIndex]
+                    .points)
+            changeMetaPoints('torso', flippedFloppedBodyPoints)
+            changeMetaTexture('torso', data[bodyRndIndex])
+
+            local body = box2dGuys[2].torso
+            -- body:applyLinearImpulse(0, -10000)
+
+            local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+
+
+            --  creation.isPotatoHead = not creation.isPotatoHead
+
+            --creation.upLeg.h = 15 + love.math.random() * 400
+            --- creation.lowLeg.h = 15 + love.math.random() * 400
+            --creation.upLeg.w = 15 + love.math.random() * 100
+            --creation.lowLeg.w = 15 + love.math.random() * 100
+            creation.torso.h = 50 + love.math.random() * 500
+            creation.torso.w = 50 + love.math.random() * 500
+
+
+            local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+            local bx, by = body:getPosition()
+            if (newLegLength > oldLegLength) then
+                body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
+            end
+            creation.upArm.h = 150 + love.math.random() * 100
+            creation.lowArm.h = 150 + love.math.random() * 100
+            --    creation.foot.h = 50 + love.math.random() * 100
+            --    creation.hand.h = 150 + love.math.random() * 100
+            --    creation.head.w = 150 + love.math.random() * 100
+            --    creation.head.h = 150 + love.math.random() * 100
+            --creation.neck.w = 12 + love.math.random() * 20
+            --creation.neck.h = 100 + love.math.random() * 200
+
+            --updateHead(box2dGuys[1], 1)
+            --updateNeck(box2dGuys[1], 1)
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
+            for i = 1, #box2dGuys do
+                --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+                --print('jo', creation.isPotatoHead)
+
+                --   handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+
+                genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+                genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+                genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+                genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+            end
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
+            --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
+            --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
+            -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
+            --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+        end
     end
-    if (k == 'w' and example == 3) then
-        --print(inspect(box2dGuys[2]))
-        --print('should randomize stuff on the second guy')
-    end
+
     if example == 2 then
         if false then
             if k == 'left' then

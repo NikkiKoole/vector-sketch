@@ -5,16 +5,16 @@ local inspect = require 'vendor.inspect'
 
 
 local creation = {
-    isPotatoHead = true, -- if true then in dont have a neck or head
-    torso = { w = 300, h = 300, d = 2.5, shape = 'trapezium' },
+    isPotatoHead = false, -- if true then in dont have a neck or head
+    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.5, shape = 'trapezium' },
     neck = { w = 40, h = 50, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 40, h = 80, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 80, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 80, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 function getCreation()
@@ -140,7 +140,7 @@ end
 
 
 
-function changeMetaPoints(key, value)
+function changeMetaPoints(key, value, xoff, yoff)
     creation[key].metaPoints = value
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(value)
@@ -150,6 +150,12 @@ function changeMetaPoints(key, value)
     --creation[key].metaPointsBB = { bbox.getPointsBBox(value) }
     creation[key].metaPointsW = bbw
     creation[key].metaPointsH = bbh
+
+
+    if key == 'head' then
+        creation[key].metaOffsetX = value[5][1]
+        creation[key].metaOffsetY = value[5][2]
+    end
 end
 
 function changeMetaTexture(key, data)
@@ -160,6 +166,61 @@ function changeMetaTexture(key, data)
     local bbh = (bry - tly)
     creation[key].metaTexturePointsW = bbw
     creation[key].metaTexturePointsH = bbh
+end
+
+function getFlippedMetaObject(flipx, flipy, points)
+    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+    local mx = tlx + (brx - tlx) / 2
+    local my = tly + (bry - tly) / 2
+    local newPoints = {}
+
+    for i = 1, #points do
+        local newY = points[i][2]
+        if flipy == -1 then
+            local dy = my - points[i][2]
+            newY = my + dy
+        end
+        local newX = points[i][1]
+        if flipx == -1 then
+            local dx = mx - points[i][1]
+            newX = mx + dx
+        end
+        newPoints[i] = { newX, newY }
+    end
+    local temp = copy3(newPoints)
+    if flipy == -1 and flipx == 1 then
+        newPoints[1] = temp[5]
+        newPoints[2] = temp[4]
+        newPoints[3] = temp[3]
+        newPoints[4] = temp[2]
+        newPoints[5] = temp[1]
+        newPoints[6] = temp[8]
+        newPoints[7] = temp[7]
+        newPoints[8] = temp[6]
+    end
+    if flipx == -1 and flipy == 1 then
+        newPoints[1] = temp[1]
+        newPoints[2] = temp[8]
+        newPoints[3] = temp[7]
+        newPoints[4] = temp[6]
+        newPoints[5] = temp[5]
+        newPoints[6] = temp[4]
+        newPoints[7] = temp[3]
+        newPoints[8] = temp[2]
+    end
+    if flipx == -1 and flipy == -1 then
+        newPoints[1] = temp[5]
+        newPoints[2] = temp[6]
+        newPoints[3] = temp[7]
+        newPoints[4] = temp[8]
+        newPoints[5] = temp[1]
+        newPoints[6] = temp[2]
+        newPoints[7] = temp[3]
+        newPoints[8] = temp[4]
+    end
+
+
+    return newPoints
 end
 
 local function tableContains(table, element)
@@ -396,6 +457,10 @@ function getScaledTorsoMetaPoint(index)
 end
 
 function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
+    if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
+        return
+    end
+
     local function makePart(name, key, parent, side)
         -- needed to wrap groupid
         local data = getParentAndChildrenFromPartName(name)

@@ -1,9 +1,11 @@
-local parse   = require 'lib.parse-file'
-local node    = require 'lib.node'
-local inspect = require 'vendor.inspect'
-local mesh    = require 'lib.mesh'
-local bbox    = require 'lib.bbox'
+local parse    = require 'lib.parse-file'
+local node     = require 'lib.node'
+local inspect  = require 'vendor.inspect'
+local mesh     = require 'lib.mesh'
+local bbox     = require 'lib.bbox'
 
+local polyline = require 'lib.polyline'
+local unloop   = require 'lib.unpack-points'
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
@@ -80,28 +82,31 @@ function createTexturedTriangleStrip(image)
 
     local w, h = image:getDimensions()
     local vertices = {}
-    local segments = 8
+    local segments = 11
     local hPart = h / (segments - 1)
     local hv = 1 / (segments - 1)
     local runningHV = 0
     local runningHP = 0
     local index = 0
+
     for i = 1, segments do
         vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
         vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
-
+        -- print(i, runningHV, runningHP)
         runningHV = runningHV + hv
         runningHP = runningHP + hPart
         index = index + 2
     end
-
+    --print(h)
     local mesh = love.graphics.newMesh(vertices, "strip")
     mesh:setTexture(image)
 
     return mesh
 end
 
-function texturedCurve(curve, image, mesh)
+function texturedCurve(curve, image, mesh, dir, scaleW)
+    if not dir then dir = 1 end
+    if not scaleW then scaleW = 2.5 end
     local dl = curve:getDerivative()
     --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
     --local dr = curveR:getDerivative()
@@ -122,7 +127,7 @@ function texturedCurve(curve, image, mesh)
             local a      = math.atan2(dy, dx) + math.pi / 2
             local a2     = math.atan2(dy, dx) - math.pi / 2
 
-            local line   = w / 2.5 --- here we can make the texture wider!!
+            local line   = (w * dir) / scaleW --- here we can make the texture wider!!, also flip it
             local x2     = xl + line * math.cos(a)
             local y2     = yl + line * math.sin(a)
             local x3     = xl + line * math.cos(a2)
@@ -177,8 +182,37 @@ function drawSkinOver(box2dGuy, creation)
         local sx = (creation.torso.metaTexturePointsW / w) * wscale
         local sy = (creation.torso.metaTexturePointsH / h) * hscale
 
-        love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
+
+        love.graphics.draw(img, x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
     end
+
+
+    if creation and creation.head.metaURL then
+        local img = mesh.getImage(creation.head.metaURL)
+        local w, h = img:getDimensions()
+
+        local x, y = box2dGuy.head:getWorldPoint(0, 0)
+        --print(x, y)
+        --local x, y = box2dGuy.head:getPosition(0, -800)
+
+        local r = box2dGuy.head:getAngle()
+        --print(inspect(creation.head))
+        local wscale = creation.head.w / creation.head.metaPointsW
+        local hscale = creation.head.h / creation.head.metaPointsH
+
+        local sx = (creation.head.metaTexturePointsW / w) * wscale
+        local sy = (creation.head.metaTexturePointsH / h) * hscale
+
+        if creation.head.metaOffsetX or creation.head.metaOffsetY then
+            --     print('o!', creation.head.metaOffsetX, creation.head.metaOffsetY)
+            x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale, creation.head.metaOffsetY * hscale)
+        end
+
+        love.graphics.draw(img, x, y, r, sx * creation.head
+        .flipx, sy * creation.head.flipy, w / 2, h / 2)
+    end
+
+
 
 
     love.graphics.setColor(0, 0, 0, 1)
@@ -193,9 +227,6 @@ function drawSkinOver(box2dGuy, creation)
 
     texturedCurve(curve, image3, mesh3)
 
-
-
-
     -----
     local ax, ay = box2dGuy.ruleg:getPosition()
     local bx, by = box2dGuy.rlleg:getPosition()
@@ -203,9 +234,9 @@ function drawSkinOver(box2dGuy, creation)
 
 
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    -- love.graphics.line(curve:render())
 
     texturedCurve(curve, image3, mesh3)
+    texturedCurve(curve, image9, mesh9, 1, 9)
 
     ----
     local ax, ay = box2dGuy.luarm:getPosition()
@@ -217,7 +248,8 @@ function drawSkinOver(box2dGuy, creation)
     -- love.graphics.line(curve:render())
 
     texturedCurve(curve, image5, mesh5)
-
+    texturedCurve(curve, image9, mesh9, 1, 5)
+    --texturedCurve(curve, image8, mesh8)
 
 
     ----
@@ -230,4 +262,5 @@ function drawSkinOver(box2dGuy, creation)
     --  love.graphics.line(curve:render())
 
     texturedCurve(curve, image5, mesh5)
+    --texturedCurve(curve, image6, mesh6)
 end
