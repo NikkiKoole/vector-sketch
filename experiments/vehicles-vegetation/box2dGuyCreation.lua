@@ -16,8 +16,8 @@ local creation = {
     upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    lfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    rfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 function getCreation()
     return creation
@@ -278,10 +278,12 @@ local function findJointBetween2Bodies(body1, body2)
             table.insert(result, joints2[i])
         end
     end
-    if #result <= 1 then
-        return result[1]
-    end
-    return nil
+    --  if #result <= 1 then
+    --      return result[1]
+    --  end
+    -- print('more the one')
+    return result
+    --return nil
 end
 
 
@@ -328,6 +330,11 @@ local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
         end
         joint:setLimitsEnabled(data.limits.enabled)
     end
+
+
+    local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
+    fjoint:setMaxTorque(1000)
+
     return joint
 end
 
@@ -409,9 +416,9 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             local offsetX, offsetY = getOffsetFromParent(partName)
             local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
             local prevA = box2dGuy[parentName]:getAngle()
-
-            jointWithParentToBreak:destroy()
-
+            for i = 1, #jointWithParentToBreak do
+                jointWithParentToBreak[i]:destroy()
+            end
             box2dGuy[partName]:destroy()
 
             local createData = creation[data.alias or partName]

@@ -1275,7 +1275,6 @@ function love.draw()
         for i = 1, #box2dGuys do
             local x, y = box2dGuys[i].torso:getPosition()
 
-
             if x >= tlx and x <= brx then
                 drawSkinOver(box2dGuys[i], creation)
             end
@@ -1298,13 +1297,14 @@ function love.draw()
         drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
 
-        drawWorld(world)
+        --   drawWorld(world)
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation)
         end
         for i = 1, #box2dTorsos do
             drawTorsoOver(box2dTorsos[i])
         end
+
 
         cam:pop()
 
