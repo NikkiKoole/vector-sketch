@@ -1,4 +1,6 @@
-package.path          = package.path .. ";../../?.lua"
+package.path = package.path .. ";../../?.lua"
+
+require 'lib.basic-tools'
 local lurker          = require 'vendor.lurker'
 local inspect         = require 'vendor.inspect'
 Vector                = require 'vendor.brinevector'
@@ -315,6 +317,7 @@ function makeUShape(w, h, thickness)
 end
 
 function makeShapeFromCreationPart(part)
+    --print(inspect(part))
     if part.metaPoints then
         local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
         local bbw = (brx - tlx)
@@ -327,13 +330,13 @@ function makeShapeFromCreationPart(part)
         local offsetY = 0
         if part.metaOffsetX or part.metaOfsetY then
             --print('dcwjicojie')
-            offsetX = part.metaOffsetX * wscale
-            offsetY = part.metaOffsetY * hscale
+            offsetX = part.metaOffsetX
+            offsetY = part.metaOffsetY
         end
 
         for i = 1, #part.metaPoints do
-            table.insert(flatted, offsetX + part.metaPoints[i][1] * wscale)
-            table.insert(flatted, offsetY + part.metaPoints[i][2] * hscale)
+            table.insert(flatted, (offsetX + part.metaPoints[i][1]) * wscale)
+            table.insert(flatted, (offsetY + part.metaPoints[i][2]) * hscale)
         end
         return love.physics.newPolygonShape(flatted)
     else
@@ -971,13 +974,25 @@ function startExample(number)
 
 
         if false then
-            data = loadVectorSketch('assets/feet.polygons.txt', 'feet')
-            local flippedFloppedFootPoints = getFlippedMetaObject(1, 1, data[1].points)
-            changeMetaPoints('foot', flippedFloppedFootPoints)
-            changeMetaTexture('foot', data[1])
+            feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+            local flippedFloppedFootPoints = feetdata[1].points --getFlippedMetaObject(1, 1, feetdata[1].points)
+            changeMetaPoints('lfoot', flippedFloppedFootPoints, feetdata)
+            changeMetaTexture('lfoot', feetdata[1])
 
-            creation.foot.w = mesh.getImage(creation.foot.metaURL):getWidth() / 2
-            creation.foot.h = mesh.getImage(creation.foot.metaURL):getHeight() / 2
+
+            creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
+            creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
+            --print(inspect(data))
+        end
+
+        if false then
+            feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+            local flippedFloppedFootPoints = getFlippedMetaObject(1, 1, feetdata[1].points)
+            changeMetaPoints('rfoot', flippedFloppedFootPoints)
+            changeMetaTexture('rfoot', feetdata[1])
+
+            creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+            creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
             --print(inspect(data))
         end
 

@@ -15,9 +15,9 @@ local creation = {
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
-    foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    --lfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    --rfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    lfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    rfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 function getCreation()
     return creation
@@ -38,10 +38,10 @@ function getParentAndChildrenFromPartName(partName)
         rhand = { p = 'rlarm', alias = 'hand' },
         luleg = { p = 'torso', c = 'llleg', alias = 'upLeg' },
         llleg = { p = 'luleg', c = 'lfoot', alias = 'lowLeg' },
-        lfoot = { p = 'llleg', alias = 'foot' },
+        lfoot = { p = 'llleg' },
         ruleg = { p = 'torso', c = 'rlleg', alias = 'upLeg' },
         rlleg = { p = 'ruleg', c = 'rfoot', alias = 'lowLeg' },
-        rfoot = { p = 'rlleg', alias = 'foot' }
+        rfoot = { p = 'rlleg' }
     }
     return map[partName]
 end
@@ -128,6 +128,7 @@ function getOffsetFromParent(partName)
 end
 
 local function getAngleOffset(key, side)
+    -- print(key, side)
     if key == 'neck' then
         return math.pi
     elseif key == 'ear' then
@@ -137,13 +138,12 @@ local function getAngleOffset(key, side)
             return -math.pi / 2
         end
         --return math.pi / 2 ---math.pi / 2
-    elseif key == 'foot' then
-        if side == 'left' then
-            return math.pi / 2
-        else
-            return -math.pi / 2
-        end
+    elseif key == 'lfoot' then
+        return math.pi / 2
+    elseif key == 'rfoot' then
+        return -math.pi / 2
     end
+
     return 0
 end
 
@@ -169,7 +169,7 @@ end
 
 
 
-function changeMetaPoints(key, value, xoff, yoff)
+function changeMetaPoints(key, value, data)
     creation[key].metaPoints = value
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(value)
@@ -184,6 +184,13 @@ function changeMetaPoints(key, value, xoff, yoff)
     if key == 'head' then
         creation[key].metaOffsetX = value[5][1]
         creation[key].metaOffsetY = value[5][2]
+    end
+    if key == 'lfoot' then
+        print('LFOOT', inspect(data))
+        creation[key].metaOffsetX = data.pivotX
+        creation[key].metaOffsetY = data.pivotY
+        -- creation[key].metaOffsetX = value[5][1]
+        -- creation[key].metaOffsetY = value[5][2]
     end
 end
 
@@ -342,6 +349,7 @@ local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     local prevA = parent:getAngle()
     local xangle = getAngleOffset(key, side)
     local body = love.physics.newBody(world, x, y, "dynamic")
+    --print(inspect(cd))
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
@@ -523,6 +531,7 @@ function makeGuy(x, y, groupId)
         local data = getParentAndChildrenFromPartName(name)
         local creationName = data.alias or name
         local offsetX, offsetY = getOffsetFromParent(name)
+        -- print(creationName)
         return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
     end
 
@@ -544,16 +553,16 @@ function makeGuy(x, y, groupId)
     local luleg = makePart('luleg', 'legpart', torso, 'left')
     local llleg = makePart('llleg', 'legpart', luleg, 'left')
 
-    --local lfoot = makePart('lfoot', 'foot', llleg)
-    local lfoot = makePart('lfoot', 'foot', llleg, 'left')
+    local lfoot = makePart('lfoot', 'lfoot', llleg)
+    --local lfoot = makePart('lfoot', 'foot', llleg, 'left')
 
-    makeAndAddConnector(lfoot, 0, creation.foot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.foot.w * 2)
+    --makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.lfoot.w * 2)
 
     local ruleg = makePart('ruleg', 'legpart', torso, 'right')
     local rlleg = makePart('rlleg', 'legpart', ruleg, 'right')
-    local rfoot = makePart('rfoot', 'foot', rlleg, 'right')
-
-    makeAndAddConnector(rfoot, 0, creation.foot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.foot.w * 2)
+    -- local rfoot = makePart('rfoot', 'foot', rlleg, 'right')
+    local rfoot = makePart('rfoot', 'rfoot', rlleg)
+    --makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.rfoot.w * 2)
 
 
     local ruarm = makePart('ruarm', 'armpart', torso, 'right')
