@@ -1,0 +1,29 @@
+{ {
+children = { {
+children = { {
+color = { 0, 0, 0, 1 },
+name = "",
+points = { { -147, -84 }, { 147, -84 }, { 147, 84 }, { -147, 84 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/feet2.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 118.378, -14.894 }, { 112.156, 45.264 }, { 0.503, 71.418 }, { -118.191, 61.36 }, { -136.297, 20.118 }, { -58.844, -38.224 }, { 29.674, -71.418 }, { 136.297, -67.394 } },
+type = "meta"
+} },
+folder = true,
+name = "feet1",
+transforms = {
+l = { 0, 0, 0, 1, 1, 91.508, -0, 0, 0 }
+}
+} },
+folder = true,
+name = "feet",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+}
+} }

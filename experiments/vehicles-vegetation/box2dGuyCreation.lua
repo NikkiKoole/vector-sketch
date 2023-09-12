@@ -7,7 +7,7 @@ local inspect = require 'vendor.inspect'
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.5, shape = 'trapezium' },
-    neck = { w = 40, h = 50, d = 1, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 40, h = 50, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
@@ -16,6 +16,8 @@ local creation = {
     upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    --lfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    --rfoot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 }
 function getCreation()
     return creation
@@ -42,6 +44,23 @@ function getParentAndChildrenFromPartName(partName)
         rfoot = { p = 'rlleg', alias = 'foot' }
     }
     return map[partName]
+end
+
+function getScaledTorsoMetaPoint(index)
+    local wscale = creation.torso.w / creation.torso.metaPointsW
+    local hscale = creation.torso.h / creation.torso.metaPointsH
+    return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
+end
+
+function getScaledHeadMetaPoint(index)
+    local wscale = creation.head.w / creation.head.metaPointsW
+    local hscale = creation.head.h / creation.head.metaPointsH
+
+    if creation.head.metaOffsetX or creation.head.metaOffsetY then
+        return (creation.head.metaPoints[index][1] + creation.head.metaOffsetX) * wscale,
+            (creation.head.metaPoints[index][2] + creation.head.metaOffsetY) * hscale
+    end
+    return creation.head.metaPoints[index][1] * wscale, creation.head.metaPoints[index][2] * hscale
 end
 
 function getOffsetFromParent(partName)
@@ -79,11 +98,21 @@ function getOffsetFromParent(partName)
         -- if creation.torso.metaPoints then
         --     return getScaledTorsoMetaPoint(4)
         -- end
+
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(7)
+        end
+
         return -creation.head.w / 2, creation.head.h / 2
     elseif partName == 'rear' then
         -- if creation.torso.metaPoints then
         --     return getScaledTorsoMetaPoint(4)
         -- end
+
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(3)
+        end
+
         return creation.head.w / 2, creation.head.h / 2
     else
         if (partName == 'head') then
@@ -440,7 +469,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
     if childName and (type(childName) == 'table') then
         for i = 1, #childName do
-            print(childName[i])
+            --  print(childName[i])
             if creation.isPotatoHead and childName[i] == 'neck' then
 
             else
@@ -450,12 +479,6 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
 end
 
-function getScaledTorsoMetaPoint(index)
-    local wscale = creation.torso.w / creation.torso.metaPointsW
-    local hscale = creation.torso.h / creation.torso.metaPointsH
-    return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
-end
-
 function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
     if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
         return
@@ -463,6 +486,7 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
 
     local function makePart(name, key, parent, side)
         -- needed to wrap groupid
+
         local data = getParentAndChildrenFromPartName(name)
         local creationName = data.alias or name
         local offsetX, offsetY = getOffsetFromParent(name)
@@ -519,6 +543,8 @@ function makeGuy(x, y, groupId)
 
     local luleg = makePart('luleg', 'legpart', torso, 'left')
     local llleg = makePart('llleg', 'legpart', luleg, 'left')
+
+    --local lfoot = makePart('lfoot', 'foot', llleg)
     local lfoot = makePart('lfoot', 'foot', llleg, 'left')
 
     makeAndAddConnector(lfoot, 0, creation.foot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.foot.w * 2)

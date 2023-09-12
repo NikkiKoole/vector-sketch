@@ -1029,7 +1029,7 @@ local function drawUIAroundGraphNodes(w, h)
              }
          )
       end
-      if (currentNode.texture and currentNode.type == 'rubberhose')  then
+      if (currentNode.texture and currentNode.type == 'rubberhose') then
          table.insert(
              row2,
              {
@@ -1040,7 +1040,7 @@ local function drawUIAroundGraphNodes(w, h)
              }
          )
       end
-      if (currentNode.texture and currentNode.type == 'bezier')  then
+      if (currentNode.texture and currentNode.type == 'bezier') then
          table.insert(
              row2,
              {
@@ -1865,7 +1865,7 @@ function mylib:mousemoved(x, y, dx, dy)
    end
 
    if currentNode == nil and lastDraggedElement == nil and editingMode == 'move' and editingModeSub ~= 'group-move' and
-       love.mouse.isDown(1) or LK.isDown('space') then
+       love.mouse.isDown(3) or LK.isDown('space') then
       local ddx, ddy = dx, dy
       -- when ingame editing, sometimes you edit a root with a parent
       if root._parent ~= nil then

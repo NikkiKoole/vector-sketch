@@ -48,8 +48,8 @@ local function zeroTransform(arr)
         end
     end
 end
-function loadBodies()
-    local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
+function loadVectorSketch(path, groupName)
+    local bodyImgUrls, bodyParts = loadGroupFromFile(path, groupName)
     zeroTransform(bodyParts)
 
 

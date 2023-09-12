@@ -7,7 +7,7 @@ local camera          = require 'lib.camera'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 local geom            = require 'lib.geom'
 local bbox            = require 'lib.bbox'
-
+local mesh            = require 'lib.mesh'
 require 'box2dGuyCreation'
 require 'texturedBox2d'
 local creation = getCreation()
@@ -944,7 +944,7 @@ function startExample(number)
             objects.ground.fixture:setFriction(1)
         end
 
-        data = loadBodies()
+        data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
 
         bodyRndIndex = math.ceil(love.math.random() * #data)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
@@ -952,13 +952,14 @@ function startExample(number)
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
-
+        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth()
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight()
+        -- print(mesh.getImage(creation.torso.metaURL))
+        -- makecreation the dimensions of the image
 
         --
         if true then
             headRndIndex = math.ceil(love.math.random() * #data)
-
-
 
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
                     data[headRndIndex].points)
@@ -969,13 +970,22 @@ function startExample(number)
         --
 
 
+        if false then
+            data = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+            local flippedFloppedFootPoints = getFlippedMetaObject(1, 1, data[1].points)
+            changeMetaPoints('foot', flippedFloppedFootPoints)
+            changeMetaTexture('foot', data[1])
 
+            creation.foot.w = mesh.getImage(creation.foot.metaURL):getWidth() / 2
+            creation.foot.h = mesh.getImage(creation.foot.metaURL):getHeight() / 2
+            --print(inspect(data))
+        end
 
-
-
-        for i = 1, #data do
+        for i = 1, 10 do
             table.insert(box2dGuys, makeGuy(i * 400, -1000, i))
         end
+
+
 
         for i = 1, 5 do
             --      makeBalloon(i * 100, -1000)
@@ -1677,8 +1687,8 @@ function love.keypressed(k)
             end
         end
         if k == 'r' then
-            creation.head.h = 50 + love.math.random() * 300
-            creation.head.w = 50 + love.math.random() * 300
+            --  creation.head.h = 50 + love.math.random() * 300
+            --  creation.head.w = 50 + love.math.random() * 300
 
             headRndIndex = math.ceil(love.math.random() * #data)
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
@@ -1687,20 +1697,31 @@ function love.keypressed(k)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
+
+            creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
+            creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
+
             for i = 1, #box2dGuys do
-                --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
-                --print('jo', creation.isPotatoHead)
-
-                --   handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
-
                 genericBodyPartUpdate(box2dGuys[i], i, 'head')
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            end
+        end
+        if k == 't' then
+            creation.head.flipy = creation.head.flipy == 1 and -1 or 1
+            local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                    data[headRndIndex]
+                    .points)
+
+            changeMetaPoints('head', flippedFloppedHeadPoints)
+            changeMetaTexture('head', data[headRndIndex])
+            for i = 1, #box2dGuys do
+                genericBodyPartUpdate(box2dGuys[i], i, 'head')
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
             end
         end
         if (k == 'q') then
-            -- local impulse = body:getInertia() * desiredAngularVelocity
-            -- body:applyAngularImpulse(impulse)
-
-
             bodyRndIndex = math.ceil(love.math.random() * #data)
             local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                     data[bodyRndIndex]
@@ -1709,8 +1730,6 @@ function love.keypressed(k)
             changeMetaTexture('torso', data[bodyRndIndex])
 
             local body = box2dGuys[2].torso
-            -- body:applyLinearImpulse(0, -10000)
-
             local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
 
@@ -1720,8 +1739,12 @@ function love.keypressed(k)
             --- creation.lowLeg.h = 15 + love.math.random() * 400
             --creation.upLeg.w = 15 + love.math.random() * 100
             --creation.lowLeg.w = 15 + love.math.random() * 100
-            creation.torso.h = 50 + love.math.random() * 500
-            creation.torso.w = 50 + love.math.random() * 500
+
+            creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() / 2
+            creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() / 2
+
+            --   creation.torso.h = 50 + love.math.random() * 500
+            --  creation.torso.w = 50 + love.math.random() * 500
 
 
             local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
@@ -1752,50 +1775,52 @@ function love.keypressed(k)
                 genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
                 genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
             end
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
-            --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
-            --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
-            --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
         end
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
+        --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
+        --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
+        --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
     end
+end
 
-    if example == 2 then
-        if false then
-            if k == 'left' then
-                motorSpeed = motorSpeed - 100
-                objects.joint1:setMotorSpeed(motorSpeed)
-                objects.joint2:setMotorSpeed(motorSpeed)
-            end
-            if k == 'right' then
-                motorSpeed = motorSpeed + 100
-                objects.joint1:setMotorSpeed(motorSpeed)
-                objects.joint2:setMotorSpeed(motorSpeed)
-            end
-            if k == 'up' then
-                motorTorque = motorTorque + 100
-                objects.joint1:setMaxMotorTorque(motorTorque)
-                objects.joint2:setMaxMotorTorque(motorTorque)
-            end
-            if k == 'down' then
-                motorTorque = motorTorque - 100
-                objects.joint1:setMaxMotorTorque(motorTorque)
-                objects.joint2:setMaxMotorTorque(motorTorque)
-            end
-            if k == 's' then
-                if objects.carbody then
-                    local angle = objects.carbody.body:getAngle()
+if example == 2 then
+    if false then
+        if k == 'left' then
+            motorSpeed = motorSpeed - 100
+            objects.joint1:setMotorSpeed(motorSpeed)
+            objects.joint2:setMotorSpeed(motorSpeed)
+        end
+        if k == 'right' then
+            motorSpeed = motorSpeed + 100
+            objects.joint1:setMotorSpeed(motorSpeed)
+            objects.joint2:setMotorSpeed(motorSpeed)
+        end
+        if k == 'up' then
+            motorTorque = motorTorque + 100
+            objects.joint1:setMaxMotorTorque(motorTorque)
+            objects.joint2:setMaxMotorTorque(motorTorque)
+        end
+        if k == 'down' then
+            motorTorque = motorTorque - 100
+            objects.joint1:setMaxMotorTorque(motorTorque)
+            objects.joint2:setMaxMotorTorque(motorTorque)
+        end
+        if k == 's' then
+            if objects.carbody then
+                local angle = objects.carbody.body:getAngle()
 
-                    local n = Vector.angled(Vector(400, 0), angle)
-                    objects.carbody.body:applyLinearImpulse(n.x, n.y)
-                    --local delta = Vector(x1 - x2, y1 - y2)
-                end
+                local n = Vector.angled(Vector(400, 0), angle)
+                objects.carbody.body:applyLinearImpulse(n.x, n.y)
+                --local delta = Vector(x1 - x2, y1 - y2)
             end
         end
     end
