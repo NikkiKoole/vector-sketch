@@ -185,16 +185,10 @@ function changeMetaPoints(key, value, data)
         creation[key].metaOffsetX = value[5][1]
         creation[key].metaOffsetY = value[5][2]
     end
-    if key == 'lfoot' then
-        print('LFOOT', inspect(data))
-        creation[key].metaOffsetX = data.pivotX
-        creation[key].metaOffsetY = data.pivotY
-        -- creation[key].metaOffsetX = value[5][1]
-        -- creation[key].metaOffsetY = value[5][2]
-    end
 end
 
 function changeMetaTexture(key, data)
+    print(data.url, creation[key], key)
     creation[key].metaURL = data.url
     creation[key].metaTexturePoints = data.texturePoints
     local tlx, tly, brx, bry = bbox.getPointsBBox(data.texturePoints)
@@ -202,6 +196,9 @@ function changeMetaTexture(key, data)
     local bbh = (bry - tly)
     creation[key].metaTexturePointsW = bbw
     creation[key].metaTexturePointsH = bbh
+    print(inspect(data))
+    creation[key].metaPivotX = data.pivotX
+    creation[key].metaPivotY = data.pivotY
 end
 
 function getFlippedMetaObject(flipx, flipy, points)
@@ -331,9 +328,9 @@ local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
         joint:setLimitsEnabled(data.limits.enabled)
     end
 
-
+    -- friction
     local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
-    fjoint:setMaxTorque(1000)
+    fjoint:setMaxTorque(50000)
 
     return joint
 end

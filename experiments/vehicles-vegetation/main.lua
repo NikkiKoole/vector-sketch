@@ -906,7 +906,7 @@ function startExample(number)
         end
 
         for i = 1, 50 do
-            table.insert(box2dGuys, makeGuy(i * 400, -1300, i))
+            table.insert(box2dGuys, makeGuy(i * 800, -1300, i))
         end
 
         for i = 1, 3 do
@@ -971,33 +971,21 @@ function startExample(number)
             changeMetaTexture('head', data[headRndIndex])
         end
         --
+        feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
 
 
-        if false then
-            feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
-            local flippedFloppedFootPoints = feetdata[1].points --getFlippedMetaObject(1, 1, feetdata[1].points)
-            changeMetaPoints('lfoot', flippedFloppedFootPoints, feetdata)
-            changeMetaTexture('lfoot', feetdata[1])
+        local footIndex = math.ceil(math.random() * #feetdata)
 
+        changeMetaTexture('lfoot', feetdata[footIndex])
+        creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
+        creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
 
-            creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
-            creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
-            --print(inspect(data))
-        end
+        changeMetaTexture('rfoot', feetdata[footIndex])
+        creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
+        creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
 
-        if false then
-            feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
-            local flippedFloppedFootPoints = getFlippedMetaObject(1, 1, feetdata[1].points)
-            changeMetaPoints('rfoot', flippedFloppedFootPoints)
-            changeMetaTexture('rfoot', feetdata[1])
-
-            creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
-            creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
-            --print(inspect(data))
-        end
-
-        for i = 1, 10 do
-            table.insert(box2dGuys, makeGuy(i * 400, -1000, i))
+        for i = 1, 2 do
+            table.insert(box2dGuys, makeGuy(i * 800, -1000, i))
         end
 
 
@@ -1032,6 +1020,13 @@ function love.load()
     connectorCooldownList = {}
 
     -- if (PROF_CAPTURE) then ProFi:start() end
+    image1 = love.graphics.newImage("assets/leg5.png")
+    --image3:setMipmapFilter( 'nearest', 1 )
+    mesh1 = createTexturedTriangleStrip(image1)
+
+    image2 = love.graphics.newImage("assets/leg5x.png")
+    --image3:setMipmapFilter( 'nearest', 1 )
+    mesh2 = createTexturedTriangleStrip(image2)
 
     image3 = love.graphics.newImage("assets/leg1.png")
     --image3:setMipmapFilter( 'nearest', 1 )
@@ -1057,6 +1052,9 @@ function love.load()
 
     image9 = love.graphics.newImage('assets/hair6.png')
     mesh9 = createTexturedTriangleStrip(image9)
+
+    image10 = love.graphics.newImage('assets/legp2.png')
+    mesh10 = createTexturedTriangleStrip(image10)
 
     --create()
     example = nil
@@ -1270,8 +1268,8 @@ function love.draw()
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
         drawWorld(world)
-        local tlx, tly = cam:getWorldCoordinates( -200, 0)
-        local brx, bry = cam:getWorldCoordinates(width + 200, height)
+        local tlx, tly = cam:getWorldCoordinates( -1000, 0)
+        local brx, bry = cam:getWorldCoordinates(width + 1000, height)
         for i = 1, #box2dGuys do
             local x, y = box2dGuys[i].torso:getPosition()
 
@@ -1297,7 +1295,7 @@ function love.draw()
         drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
 
-        --   drawWorld(world)
+        --drawWorld(world)
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation)
         end
@@ -1734,6 +1732,21 @@ function love.keypressed(k)
                 genericBodyPartUpdate(box2dGuys[i], i, 'head')
                 genericBodyPartUpdate(box2dGuys[i], i, 'lear')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            end
+        end
+        if k == 'f' then
+            local footIndex = math.ceil(math.random() * #feetdata)
+
+            changeMetaTexture('lfoot', feetdata[footIndex])
+            creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
+            creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
+
+            changeMetaTexture('rfoot', feetdata[footIndex])
+            creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
+            creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+            for i = 1, #box2dGuys do
+                genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
             end
         end
         if (k == 'q') then

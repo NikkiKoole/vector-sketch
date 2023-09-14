@@ -55,9 +55,10 @@ function loadVectorSketch(path, groupName)
 
     local result = {}
     for i = 1, #bodyParts do
+        -- print(bodyParts[i].transforms.l[1], bodyParts[i].transforms.l[6])
         local me = {
-            pivotX = bodyParts[i].transforms.l[6],
-            pivotY = bodyParts[i].transforms.l[7]
+            pivotX = bodyParts[i].transforms.l[6] - bodyParts[i].transforms.l[1],
+            pivotY = bodyParts[i].transforms.l[7] - bodyParts[i].transforms.l[2]
         }
         for j = 1, #bodyParts[i].children do
             local child = bodyParts[i].children[j]
@@ -225,7 +226,7 @@ function drawSkinOver(box2dGuy, creation)
     --love.graphics.line(curve:render())
 
 
-    texturedCurve(curve, image3, mesh3)
+    texturedCurve(curve, image10, mesh10)
 
     -----
     local ax, ay = box2dGuy.ruleg:getPosition()
@@ -235,8 +236,8 @@ function drawSkinOver(box2dGuy, creation)
 
     local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
 
-    texturedCurve(curve, image3, mesh3)
-    texturedCurve(curve, image9, mesh9, 1, 9)
+    texturedCurve(curve, image1, mesh1)
+    --texturedCurve(curve, image9, mesh9, 1, 9)
 
     ----
     local ax, ay = box2dGuy.luarm:getPosition()
@@ -263,4 +264,38 @@ function drawSkinOver(box2dGuy, creation)
 
     texturedCurve(curve, image5, mesh5)
     --texturedCurve(curve, image6, mesh6)
+
+
+    -- left foot
+    if creation and creation.lfoot.metaURL then
+        local img = mesh.getImage(creation.lfoot.metaURL)
+        local w, h = img:getDimensions()
+
+        local x, y = box2dGuy.lfoot:getWorldPoint(0, 0)
+        local r = box2dGuy.lfoot:getAngle() - math.pi / 2
+
+        local wscale = creation.lfoot.h / w --creation.lfoot.metaPointsW
+        local hscale = creation.lfoot.w / h --creation.lfoot.metaPointsH
+
+        local ox = creation.lfoot.metaPivotX - creation.lfoot.metaTexturePoints[1][1]
+        local oy = creation.lfoot.metaPivotY - creation.lfoot.metaTexturePoints[1][2]
+
+        love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
+    end
+    -- right foot
+    if creation and creation.rfoot.metaURL then
+        local img = mesh.getImage(creation.rfoot.metaURL)
+        local w, h = img:getDimensions()
+
+        local x, y = box2dGuy.rfoot:getWorldPoint(0, 0)
+        local r = box2dGuy.rfoot:getAngle() + math.pi / 2
+
+        local wscale = creation.rfoot.h / w --creation.lfoot.metaPointsW
+        local hscale = creation.rfoot.w / h --creation.lfoot.metaPointsH
+
+        local ox = creation.rfoot.metaPivotX - creation.rfoot.metaTexturePoints[1][1]
+        local oy = creation.rfoot.metaPivotY - creation.rfoot.metaTexturePoints[1][2]
+
+        love.graphics.draw(img, x, y, r, -wscale, hscale, ox, oy)
+    end
 end
