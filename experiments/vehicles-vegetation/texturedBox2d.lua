@@ -188,31 +188,77 @@ function drawSkinOver(box2dGuy, creation)
     end
 
 
-    if creation and creation.head.metaURL then
-        local img = mesh.getImage(creation.head.metaURL)
+    -- left ear
+    if creation and creation.ear.metaURL then
+        local img = mesh.getImage(creation.ear.metaURL)
         local w, h = img:getDimensions()
 
-        local x, y = box2dGuy.head:getWorldPoint(0, 0)
-        --print(x, y)
-        --local x, y = box2dGuy.head:getPosition(0, -800)
+        local x, y = box2dGuy.lear:getWorldPoint(0, 0)
+        local r = box2dGuy.lear:getAngle() - math.pi / 2
 
-        local r = box2dGuy.head:getAngle()
-        --print(inspect(creation.head))
-        local wscale = creation.head.w / creation.head.metaPointsW
-        local hscale = creation.head.h / creation.head.metaPointsH
+        local wscale = creation.ear.h / w * 2 --creation.lfoot.metaPointsW
+        local hscale = creation.ear.w / h * 2 --creation.lfoot.metaPointsH
 
-        local sx = (creation.head.metaTexturePointsW / w) * wscale
-        local sy = (creation.head.metaTexturePointsH / h) * hscale
+        local ox = creation.ear.metaPivotX - creation.ear.metaTexturePoints[1][1]
+        local oy = creation.ear.metaPivotY - creation.ear.metaTexturePoints[1][2]
 
-        if creation.head.metaOffsetX or creation.head.metaOffsetY then
-            --     print('o!', creation.head.metaOffsetX, creation.head.metaOffsetY)
-            x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale, creation.head.metaOffsetY * hscale)
-        end
-
-        love.graphics.draw(img, x, y, r, sx * creation.head
-        .flipx, sy * creation.head.flipy, w / 2, h / 2)
+        love.graphics.draw(img, x, y, r, -wscale, -hscale, ox, oy)
     end
 
+    if creation and creation.ear.metaURL then
+        local img = mesh.getImage(creation.ear.metaURL)
+        local w, h = img:getDimensions()
+
+        local x, y = box2dGuy.rear:getWorldPoint(0, 0)
+        local r = box2dGuy.rear:getAngle() + math.pi / 2
+
+        local wscale = creation.ear.h / w * 2 --creation.lfoot.metaPointsW
+        local hscale = creation.ear.w / h * 2 --creation.lfoot.metaPointsH
+
+        local ox = creation.ear.metaPivotX - creation.ear.metaTexturePoints[1][1]
+        local oy = creation.ear.metaPivotY - creation.ear.metaTexturePoints[1][2]
+
+        love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
+    end
+
+
+    if not creation.isPotatoHead then
+        if creation and creation.head.metaURL then
+            local img = mesh.getImage(creation.head.metaURL)
+            local w, h = img:getDimensions()
+
+            local x, y = box2dGuy.head:getWorldPoint(0, 0)
+            --print(x, y)
+            --local x, y = box2dGuy.head:getPosition(0, -800)
+
+            local r = box2dGuy.head:getAngle()
+            --print(inspect(creation.head))
+            local wscale = creation.head.w / creation.head.metaPointsW
+            local hscale = creation.head.h / creation.head.metaPointsH
+
+            local sx = (creation.head.metaTexturePointsW / w) * wscale
+            local sy = (creation.head.metaTexturePointsH / h) * hscale
+
+            if creation.head.metaOffsetX or creation.head.metaOffsetY then
+                --     print('o!', creation.head.metaOffsetX, creation.head.metaOffsetY)
+                x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale, creation.head.metaOffsetY * hscale)
+            end
+
+            love.graphics.draw(img, x, y, r, sx * creation.head
+            .flipx, sy * creation.head.flipy, w / 2, h / 2)
+        end
+    end
+
+
+    love.graphics.setColor(0, 0, 0, 1)
+
+    local ax, ay = box2dGuy.neck:getPosition()
+    local bx, by = box2dGuy.neck1:getPosition()
+    local cx, cy = box2dGuy.head:getPosition()
+
+
+    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+    texturedCurve(curve, image10, mesh10)
 
 
 
@@ -264,6 +310,37 @@ function drawSkinOver(box2dGuy, creation)
 
     texturedCurve(curve, image5, mesh5)
     --texturedCurve(curve, image6, mesh6)
+
+    if creation and creation.hand.metaURL then
+        local img = mesh.getImage(creation.hand.metaURL)
+        local w, h = img:getDimensions()
+
+        local x, y = box2dGuy.lhand:getWorldPoint(0, 0)
+        local r = box2dGuy.lhand:getAngle() - math.pi / 2
+
+        local wscale = creation.hand.h / w --creation.lfoot.metaPointsW
+        local hscale = creation.hand.w / h --creation.lfoot.metaPointsH
+
+        local ox = creation.hand.metaPivotX - creation.hand.metaTexturePoints[1][1]
+        local oy = creation.hand.metaPivotY - creation.hand.metaTexturePoints[1][2]
+
+        love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
+    end
+    if creation and creation.hand.metaURL then
+        local img = mesh.getImage(creation.hand.metaURL)
+        local w, h = img:getDimensions()
+
+        local x, y = box2dGuy.rhand:getWorldPoint(0, 0)
+        local r = box2dGuy.rhand:getAngle() - math.pi / 2
+
+        local wscale = creation.hand.h / w --creation.lfoot.metaPointsW
+        local hscale = creation.hand.w / h --creation.lfoot.metaPointsH
+
+        local ox = creation.hand.metaPivotX - creation.hand.metaTexturePoints[1][1]
+        local oy = creation.hand.metaPivotY - creation.hand.metaTexturePoints[1][2]
+
+        love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
+    end
 
 
     -- left foot

@@ -7,11 +7,12 @@ local inspect = require 'vendor.inspect'
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.5, shape = 'trapezium' },
-    neck = { w = 40, h = 50, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 40, h = 125, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 40, h = 125, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
-    lowArm = { w = 40, h = 80, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
+    upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
+    lowArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
     hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
@@ -26,8 +27,9 @@ end
 function getParentAndChildrenFromPartName(partName)
     local map = {
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
-        neck = { p = 'torso', c = 'head' },
-        head = { p = 'neck', c = { 'lear', 'rear' } },
+        neck = { p = 'torso', c = 'neck1' },
+        neck1 = { p = 'neck', c = 'head' },
+        head = { p = 'neck1', c = { 'lear', 'rear' } },
         lear = { p = 'head', alias = 'ear' },
         rear = { p = 'head', alias = 'ear' },
         luarm = { p = 'torso', c = 'llarm', alias = 'upArm' },
@@ -131,6 +133,8 @@ local function getAngleOffset(key, side)
     -- print(key, side)
     if key == 'neck' then
         return math.pi
+    elseif key == 'neck1' then
+        return 0
     elseif key == 'ear' then
         if side == 'left' then
             return math.pi / 2
@@ -196,7 +200,7 @@ function changeMetaTexture(key, data)
     local bbh = (bry - tly)
     creation[key].metaTexturePointsW = bbw
     creation[key].metaTexturePointsH = bbh
-    print(inspect(data))
+    --print(inspect(data))
     creation[key].metaPivotX = data.pivotX
     creation[key].metaPivotY = data.pivotY
 end
@@ -399,9 +403,10 @@ end
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
     -- look up who is my parent and what are my children
 
-
+    print(partName)
     local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
+
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()
@@ -507,6 +512,7 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
 
     if willBePotato then
         box2dGuy.neck:destroy()
+        box2dGuy.neck1:destroy()
         box2dGuy.head:destroy()
         box2dGuy.lear:destroy()
         box2dGuy.rear:destroy()
@@ -518,13 +524,15 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
         local torso = box2dGuy.torso
 
         local neck = makePart('neck', 'neck', torso)
-        local head = makePart('head', 'head', neck)
+        local neck1 = makePart('neck1', 'neck1', neck)
+        local head = makePart('head', 'head', neck1)
         local lear = makePart('lear', 'ear', head, 'left')
         local rear = makePart('rear', 'ear', head, 'right')
 
         box2dGuy.lear = lear
         box2dGuy.rear = rear
         box2dGuy.neck = neck
+        box2dGuy.neck1 = neck1
         box2dGuy.head = head
     end
 end
@@ -543,12 +551,14 @@ function makeGuy(x, y, groupId)
     local torsoShape = makeShapeFromCreationPart(creation.torso)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
 
-    local head, neck, lear, rear
+    local head, neck, neck1, lear, rear
     if creation.isPotatoHead then
         --neck = makePart('neck', 'neck', torso)
     else
         neck = makePart('neck', 'neck', torso)
-        head = makePart('head', 'head', neck)
+        neck1 = makePart('neck1', 'neck1', neck)
+
+        head = makePart('head', 'head', neck1)
 
         lear = makePart('lear', 'ear', head, 'left')
         rear = makePart('rear', 'ear', head, 'right')
@@ -572,7 +582,7 @@ function makeGuy(x, y, groupId)
     local ruarm = makePart('ruarm', 'armpart', torso, 'right')
     local rlarm = makePart('rlarm', 'armpart', ruarm, 'right')
     local rhand = makePart('rhand', 'hand', rlarm, 'right')
-    makeAndAddConnector(rhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w * 2)
+    makeAndAddConnector(rhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w + 5)
 
 
 
@@ -580,11 +590,12 @@ function makeGuy(x, y, groupId)
     local luarm = makePart('luarm', 'armpart', torso, 'left')
     local llarm = makePart('llarm', 'armpart', luarm, 'left')
     local lhand = makePart('lhand', 'hand', llarm, 'left')
-    makeAndAddConnector(lhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w * 2)
+    makeAndAddConnector(lhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w + 5)
 
     local data = {
         torso = torso,
         neck = neck,
+        neck1 = neck1,
         head = head,
         lear = lear,
         rear = rear,

@@ -72,7 +72,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     pointerJoint.id = id
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
-    pointerJoint.joint:setDampingRatio(0.5)
+    pointerJoint.joint:setDampingRatio(.5)
     pointerJoint.joint:setMaxForce(500000)
     return pointerJoint
 end
@@ -698,7 +698,7 @@ end
 
 function makeVehicle(x, y)
     local carBodyHeight = 150
-    local carBodyWidth  = 400
+    local carBodyWidth  = 800
 
     local carbody       = love.physics.newBody(world, x, y, "dynamic")
     local shape         = makeCarShape(carBodyWidth, carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
@@ -798,8 +798,8 @@ end
 
 function startExample(number)
     local width, height = love.graphics.getDimensions()
-    love.physics.setMeter(100)
-    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter() * 4, true)
+    love.physics.setMeter(500)
+    world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     objects = {}
     ballRadius = love.physics.getMeter() / 4
     vehiclePedalConnection = {}
@@ -938,6 +938,9 @@ function startExample(number)
         objects.ground = makeChainGround()
         objects.ground.fixture:setUserData(makeUserData("ground"))
 
+
+
+
         if true then
             objects.ground = {}
             objects.ground.body = love.physics.newBody(world, width / 2, -2000, "static")
@@ -945,6 +948,11 @@ function startExample(number)
             objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
             objects.ground.fixture:setUserData(makeUserData("ground"))
             objects.ground.fixture:setFriction(1)
+        end
+
+
+        for i = 1, 10 do
+            makeVehicle(width / 2 + i * 400, -3000)
         end
 
         data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
@@ -983,6 +991,25 @@ function startExample(number)
         changeMetaTexture('rfoot', feetdata[footIndex])
         creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+
+
+        local handIndex = math.ceil(math.random() * #feetdata)
+        changeMetaTexture('hand', feetdata[handIndex])
+        creation.hand.w = mesh.getImage(creation.hand.metaURL):getHeight() / 2
+        creation.hand.h = mesh.getImage(creation.hand.metaURL):getWidth() / 2
+
+
+        eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
+        local earIndex = math.ceil(math.random() * #eardata)
+        --print(eardata[earIndex])
+        changeMetaTexture('ear', eardata[earIndex])
+        creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
+        creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
+
+
+
+
+
 
         for i = 1, 2 do
             table.insert(box2dGuys, makeGuy(i * 800, -1000, i))
@@ -1267,7 +1294,7 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-        drawWorld(world)
+        --drawWorld(world)
         local tlx, tly = cam:getWorldCoordinates( -1000, 0)
         local brx, bry = cam:getWorldCoordinates(width + 1000, height)
         for i = 1, #box2dGuys do
@@ -1461,12 +1488,13 @@ function rotateAllBodies(bodies)
                         --getRidOfBigRotationsInBody(body)
                         --local desired = upsideDown and -math.pi or 0
                         --rotateToHorizontal(body, desired, 50)
-                        local up = -9.81 * love.physics.getMeter() * 4.5
+                        local up = -9.81 * love.physics.getMeter() * 1.5 --4.5
 
                         body:applyForce(0, up)
                     end
-
-
+                    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
+                        getRidOfBigRotationsInBody(body)
+                    end
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
@@ -1476,7 +1504,11 @@ function rotateAllBodies(bodies)
                     if not upsideDown then
                         if userData.bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 10)
+                            rotateToHorizontal(body, -math.pi, 50)
+                        end
+                        if userData.bodyType == 'neck1' then
+                            getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, -math.pi, 50)
                         end
 
                         if userData.bodyType == 'head' then
@@ -1488,7 +1520,7 @@ function rotateAllBodies(bodies)
                     if not upsideDown then
                         if userData.bodyType == 'legpart' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 25)
+                            rotateToHorizontal(body, 0, 35)
                         end
                         if userData.bodyType == 'armpart' then
                             getRidOfBigRotationsInBody(body)
@@ -1519,7 +1551,7 @@ function rotateAllBodies(bodies)
 end
 
 function love.update(dt)
-    lurker.update()
+    --    lurker.update()
 
 
 
@@ -1699,25 +1731,50 @@ function love.keypressed(k)
                 genericBodyPartUpdate(box2dGuys[i], i, 'torso')
             end
         end
+
+        if k == 'e' then
+            local earIndex = math.ceil(math.random() * #eardata)
+            --print(eardata[earIndex])
+            changeMetaTexture('ear', eardata[earIndex])
+            creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 2
+            creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 2
+            for i = 1, #box2dGuys do
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            end
+        end
+
         if k == 'r' then
             --  creation.head.h = 50 + love.math.random() * 300
             --  creation.head.w = 50 + love.math.random() * 300
+            if not creation.isPotatoHead then
+                headRndIndex = math.ceil(love.math.random() * #data)
+                local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                        data[headRndIndex]
+                        .points)
 
-            headRndIndex = math.ceil(love.math.random() * #data)
-            local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-                    data[headRndIndex]
-                    .points)
+                changeMetaPoints('head', flippedFloppedHeadPoints)
+                changeMetaTexture('head', data[headRndIndex])
 
-            changeMetaPoints('head', flippedFloppedHeadPoints)
-            changeMetaTexture('head', data[headRndIndex])
+                creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
+                creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
 
-            creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
-            creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
+                for i = 1, #box2dGuys do
+                    genericBodyPartUpdate(box2dGuys[i], i, 'head')
+                    genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                    genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+                end
+            end
+        end
 
+        if k == 'j' then
+            local handIndex = math.ceil(math.random() * #feetdata)
+            changeMetaTexture('hand', feetdata[handIndex])
+            creation.hand.w = mesh.getImage(creation.hand.metaURL):getHeight() / 2
+            creation.hand.h = mesh.getImage(creation.hand.metaURL):getWidth() / 2
             for i = 1, #box2dGuys do
-                genericBodyPartUpdate(box2dGuys[i], i, 'head')
-                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
             end
         end
         if k == 't' then
@@ -1761,7 +1818,7 @@ function love.keypressed(k)
             local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
 
-            --  creation.isPotatoHead = not creation.isPotatoHead
+            -- creation.isPotatoHead = not creation.isPotatoHead
 
             --creation.upLeg.h = 15 + love.math.random() * 400
             --- creation.lowLeg.h = 15 + love.math.random() * 400
@@ -1796,15 +1853,17 @@ function love.keypressed(k)
                 --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
                 --print('jo', creation.isPotatoHead)
 
-                --   handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+                handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
 
                 genericBodyPartUpdate(box2dGuys[i], i, 'torso')
                 genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
                 genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
                 genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
-                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+                if (not creation.isPotatoHead) then
+                    genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                    genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+                end
             end
         end
         -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
