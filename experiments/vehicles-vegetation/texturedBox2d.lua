@@ -221,26 +221,19 @@ function drawSkinOver(box2dGuy, creation)
         love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
     end
 
-
+    -- HHHEEEEAAADDD
     if not creation.isPotatoHead then
         if creation and creation.head.metaURL then
             local img = mesh.getImage(creation.head.metaURL)
             local w, h = img:getDimensions()
-
             local x, y = box2dGuy.head:getWorldPoint(0, 0)
-            --print(x, y)
-            --local x, y = box2dGuy.head:getPosition(0, -800)
-
             local r = box2dGuy.head:getAngle()
-            --print(inspect(creation.head))
             local wscale = creation.head.w / creation.head.metaPointsW
             local hscale = creation.head.h / creation.head.metaPointsH
-
             local sx = (creation.head.metaTexturePointsW / w) * wscale
             local sy = (creation.head.metaTexturePointsH / h) * hscale
 
             if creation.head.metaOffsetX or creation.head.metaOffsetY then
-                --     print('o!', creation.head.metaOffsetX, creation.head.metaOffsetY)
                 x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale, creation.head.metaOffsetY * hscale)
             end
 
@@ -248,6 +241,8 @@ function drawSkinOver(box2dGuy, creation)
             .flipx, sy * creation.head.flipy, w / 2, h / 2)
         end
     end
+
+    -- maybe start trying out to draw eyes and nose
 
 
     love.graphics.setColor(0, 0, 0, 1)

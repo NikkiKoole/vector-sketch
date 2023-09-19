@@ -1008,6 +1008,10 @@ function startExample(number)
 
 
 
+        -- eyes
+        eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+        pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
+        nosedata = loadVectorSketch('assets/faceparts.polygons.txt', 'noses')
 
 
 
@@ -1033,6 +1037,7 @@ function startExample(number)
 end
 
 function love.load()
+    stiff = true
     local font = love.graphics.newFont('WindsorBT-Roman.otf', 40)
     love.graphics.setFont(font)
 
@@ -1467,7 +1472,7 @@ function maybeConnectThisConnector(f, mj)
 end
 
 function rotateAllBodies(bodies)
-    local upsideDown = false
+    --local upsideDown = false
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -1481,7 +1486,7 @@ function rotateAllBodies(bodies)
         end
 
         for _, fixture in ipairs(fixtures) do
-            if true and not isBeingPointerJointed then
+            if (stiff) and not isBeingPointerJointed then
                 local userData = fixture:getUserData()
                 if userData then
                     if userData.bodyType == 'balloon' then
@@ -1492,7 +1497,11 @@ function rotateAllBodies(bodies)
 
                         body:applyForce(0, up)
                     end
+                    --print(userData.bodyType)
                     if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
+                        --  getRidOfBigRotationsInBody(body)
+                    end
+                    if userData.bodyType == 'hand' then
                         getRidOfBigRotationsInBody(body)
                     end
                     if userData.bodyType == 'torso' then
@@ -1697,7 +1706,12 @@ function love.keypressed(k)
     if k == '1' then startExample(1) end
     if k == '2' then startExample(2) end
     if k == '3' then startExample(3) end
-
+    if k == 'u' then
+        upsideDown = not upsideDown
+    end
+    if k == 's' then
+        stiff = not stiff
+    end
     if (k == 'p') then
         if not profiling then
             ProFi:start()
