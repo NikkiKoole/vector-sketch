@@ -21,6 +21,8 @@ local creation = {
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    eye = { w = 10, h = 10 },
+    pupil = { w = 10, h = 10 },
 }
 function getCreation()
     return creation
@@ -368,10 +370,10 @@ local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
 
 
 
-    if key == 'neck' or key == 'neck1' then
-        print(key)
-        print(inspect(cd))
-    end
+    --if key == 'neck' or key == 'neck1' then
+    -- print(key)
+    -- print(inspect(cd))
+    --end
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
@@ -560,7 +562,7 @@ function makeGuy(x, y, groupId)
         local creationName = data.alias or name
         local offsetX, offsetY = getOffsetFromParent(name)
         -- print(creationName)
-        print(key, offsetX, offsetY)
+        --      print(key, offsetX, offsetY)
         return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
     end
 

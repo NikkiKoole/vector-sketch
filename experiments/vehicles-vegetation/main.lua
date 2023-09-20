@@ -1020,7 +1020,18 @@ function startExample(number)
 
         -- eyes
         eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+        eyeIndex = math.ceil(math.random() * #eyedata)
+        changeMetaTexture('eye', eyedata[eyeIndex])
+        creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+        creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+        -- pupils
+
         pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
+        pupilIndex = math.ceil(math.random() * #pupildata)
+        changeMetaTexture('pupil', pupildata[pupilIndex])
+        creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight()
+        creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth()
+
         nosedata = loadVectorSketch('assets/faceparts.polygons.txt', 'noses')
 
 
@@ -1508,8 +1519,10 @@ function rotateAllBodies(bodies)
                         body:applyForce(0, up)
                     end
                     --print(userData.bodyType)
-                    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
-                        getRidOfBigRotationsInBody(body)
+                    if not upsideDown then
+                        if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
+                            getRidOfBigRotationsInBody(body)
+                        end
                     end
                     if userData.bodyType == 'hand' then
                         getRidOfBigRotationsInBody(body)
@@ -1526,11 +1539,11 @@ function rotateAllBodies(bodies)
                     if not upsideDown then
                         if userData.bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 50)
+                            rotateToHorizontal(body, -math.pi, 20)
                         end
                         if userData.bodyType == 'neck1' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 50)
+                            rotateToHorizontal(body, -math.pi, 20)
                         end
 
                         if userData.bodyType == 'head' then
@@ -1770,7 +1783,16 @@ function love.keypressed(k)
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
             end
         end
-
+        if k == 'i' then
+            eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+            eyeIndex = math.ceil(math.random() * #eyedata)
+            changeMetaTexture('eye', eyedata[eyeIndex])
+            creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+            creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+            for i = 1, #box2dGuys do
+                --genericBodyPartUpdate(box2dGuys[i], i, 'eye')
+            end
+        end
         if k == 'r' then
             --  creation.head.h = 50 + love.math.random() * 300
             --  creation.head.w = 50 + love.math.random() * 300

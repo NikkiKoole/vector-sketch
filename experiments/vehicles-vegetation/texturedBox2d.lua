@@ -6,6 +6,8 @@ local bbox     = require 'lib.bbox'
 
 local polyline = require 'lib.polyline'
 local unloop   = require 'lib.unpack-points'
+local numbers  = require 'lib.numbers'
+
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
@@ -242,14 +244,37 @@ function drawSkinOver(box2dGuy, creation)
 
 
             if true then
-                love.graphics.setColor(1, 0, 1, 1)
+                --  love.graphics.setColor(1, 0, 1, 1)
                 local f = creation.head.metaPoints
-                for i = 1, #f do
-                    local eyex, eyey = box2dGuy.head:getWorldPoint(
-                            (f[i][1] + creation.head.metaOffsetX) * sx,
-                            (f[i][2] + creation.head.metaOffsetY) * sy)
-                    love.graphics.circle('fill', eyex, eyey, 15)
-                end
+                --for i = 1, #f do
+
+
+                leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
+                rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
+
+                local eyelx, eyely = box2dGuy.head:getWorldPoint(
+                        (leftEyeX + creation.head.metaOffsetX) * sx,
+                        (f[3][2] + creation.head.metaOffsetY) * sy)
+
+                local eyerx, eyery = box2dGuy.head:getWorldPoint(
+                        (rightEyeX + creation.head.metaOffsetX) * sx,
+                        (f[3][2] + creation.head.metaOffsetY) * sy)
+
+
+                local img = mesh.getImage(creation.eye.metaURL)
+                local w, h = img:getDimensions()
+
+                local wscale = creation.eye.h / w --* 2 --creation.lfoot.metaPointsW
+                local hscale = creation.eye.w / h --* 2 --creation.lfoot.metaPointsH
+
+
+                local ox = creation.eye.metaPivotX - creation.eye.metaTexturePoints[1][1]
+                local oy = creation.eye.metaPivotY - creation.eye.metaTexturePoints[1][2]
+
+
+                love.graphics.draw(img, eyelx, eyely, r, wscale * 0.5 * -1, hscale * 0.5, ox, oy)
+                love.graphics.draw(img, eyerx, eyery, r, wscale * 0.5, hscale * 0.5, ox, oy)
+                --end
             end
         end
     end
@@ -333,6 +358,9 @@ function drawSkinOver(box2dGuy, creation)
         local ox = creation.lhand.metaPivotX - creation.lhand.metaTexturePoints[1][1]
         local oy = creation.lhand.metaPivotY - creation.lhand.metaTexturePoints[1][2]
 
+        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.print(r, x, y)
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
     end
     if creation and creation.rhand.metaURL then
@@ -348,6 +376,9 @@ function drawSkinOver(box2dGuy, creation)
         local ox = creation.rhand.metaPivotX - creation.rhand.metaTexturePoints[1][1]
         local oy = creation.rhand.metaPivotY - creation.rhand.metaTexturePoints[1][2]
 
+        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.print(r, x, y)
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
     end
 
@@ -365,7 +396,9 @@ function drawSkinOver(box2dGuy, creation)
 
         local ox = creation.lfoot.metaPivotX - creation.lfoot.metaTexturePoints[1][1]
         local oy = creation.lfoot.metaPivotY - creation.lfoot.metaTexturePoints[1][2]
-
+        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.print(r, x, y)
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, wscale * 1.1, hscale * 1.1, ox, oy)
     end
     -- right foot
@@ -381,7 +414,9 @@ function drawSkinOver(box2dGuy, creation)
 
         local ox = creation.rfoot.metaPivotX - creation.rfoot.metaTexturePoints[1][1]
         local oy = creation.rfoot.metaPivotY - creation.rfoot.metaTexturePoints[1][2]
-
+        love.graphics.setColor(1, 0, 0, 1)
+        love.graphics.print(r, x, y)
+        love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, -wscale * 1.1, hscale * 1.1, ox, oy)
     end
 end
