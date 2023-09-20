@@ -340,6 +340,7 @@ function makeShapeFromCreationPart(part)
         end
         return love.physics.newPolygonShape(flatted)
     else
+        --  print(inspect(part))
         return makeShape(part.shape, part.w, part.h)
     end
 end
@@ -938,7 +939,7 @@ function startExample(number)
         objects.ground = makeChainGround()
         objects.ground.fixture:setUserData(makeUserData("ground"))
 
-
+        objects.ground.fixture:setFriction(1)
 
 
         if true then
@@ -982,8 +983,9 @@ function startExample(number)
         feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
 
 
-        local footIndex = math.ceil(math.random() * #feetdata)
+        local footIndex = 12 --math.ceil(math.random() * #feetdata)
 
+        --changeMetaPoints('lfoot', feetdata[footIndex].points)
         changeMetaTexture('lfoot', feetdata[footIndex])
         creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
         creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
@@ -993,10 +995,18 @@ function startExample(number)
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
 
 
-        local handIndex = math.ceil(math.random() * #feetdata)
-        changeMetaTexture('hand', feetdata[handIndex])
-        creation.hand.w = mesh.getImage(creation.hand.metaURL):getHeight() / 2
-        creation.hand.h = mesh.getImage(creation.hand.metaURL):getWidth() / 2
+        local handIndex = 12 --math.ceil(math.random() * #feetdata)
+
+
+        changeMetaTexture('lhand', feetdata[handIndex])
+        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
+        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
+
+
+        changeMetaTexture('rhand', feetdata[handIndex])
+        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
+        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
+
 
 
         eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
@@ -1327,7 +1337,7 @@ function love.draw()
         drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
 
-        --drawWorld(world)
+        drawWorld(world)
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation)
         end
@@ -1499,10 +1509,13 @@ function rotateAllBodies(bodies)
                     end
                     --print(userData.bodyType)
                     if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
-                        --  getRidOfBigRotationsInBody(body)
+                        getRidOfBigRotationsInBody(body)
                     end
                     if userData.bodyType == 'hand' then
                         getRidOfBigRotationsInBody(body)
+                    end
+                    if userData.bodyType == 'hand' then
+                        --   getRidOfBigRotationsInBody(body)
                     end
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
@@ -1783,9 +1796,13 @@ function love.keypressed(k)
 
         if k == 'j' then
             local handIndex = math.ceil(math.random() * #feetdata)
-            changeMetaTexture('hand', feetdata[handIndex])
-            creation.hand.w = mesh.getImage(creation.hand.metaURL):getHeight() / 2
-            creation.hand.h = mesh.getImage(creation.hand.metaURL):getWidth() / 2
+            changeMetaTexture('lhand', feetdata[handIndex])
+            changeMetaTexture('rhand', feetdata[handIndex])
+            creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
+            creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
+
+            creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
+            creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rhand')

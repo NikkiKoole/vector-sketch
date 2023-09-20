@@ -7,13 +7,15 @@ local inspect = require 'vendor.inspect'
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.5, shape = 'trapezium' },
-    neck = { w = 40, h = 125, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 40, h = 125, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 40, h = 225, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 40, h = 225, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
-    hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    --hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'right', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
@@ -34,10 +36,10 @@ function getParentAndChildrenFromPartName(partName)
         rear = { p = 'head', alias = 'ear' },
         luarm = { p = 'torso', c = 'llarm', alias = 'upArm' },
         llarm = { p = 'luarm', c = 'lhand', alias = 'lowArm' },
-        lhand = { p = 'llarm', alias = 'hand' },
+        lhand = { p = 'llarm' },
         ruarm = { p = 'torso', c = 'rlarm', alias = 'upArm' },
         rlarm = { p = 'ruarm', c = 'rhand', alias = 'lowArm' },
-        rhand = { p = 'rlarm', alias = 'hand' },
+        rhand = { p = 'rlarm' },
         luleg = { p = 'torso', c = 'llleg', alias = 'upLeg' },
         llleg = { p = 'luleg', c = 'lfoot', alias = 'lowLeg' },
         lfoot = { p = 'llleg' },
@@ -118,7 +120,7 @@ function getOffsetFromParent(partName)
         return creation.head.w / 2, creation.head.h / 2
     else
         if (partName == 'head') then
-            return 0, creation.neck.h / (creation.neck.links or 1)
+            return 0, creation.neck1.h / (creation.neck1.links or 1)
         end
 
         local p = data.p
@@ -189,10 +191,15 @@ function changeMetaPoints(key, value, data)
         creation[key].metaOffsetX = value[5][1]
         creation[key].metaOffsetY = value[5][2]
     end
+
+    -- if key == 'lhand' then
+    --     creation[key].metaOffsetX = data.pivotX ---value[1][1]
+    --     creation[key].metaOffsetY = data.pivotY -- value[1][2]
+    -- end
 end
 
 function changeMetaTexture(key, data)
-    print(data.url, creation[key], key)
+    --print(data.url, creation[key], key)
     creation[key].metaURL = data.url
     creation[key].metaTexturePoints = data.texturePoints
     local tlx, tly, brx, bry = bbox.getPointsBBox(data.texturePoints)
@@ -358,6 +365,13 @@ local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     local xangle = getAngleOffset(key, side)
     local body = love.physics.newBody(world, x, y, "dynamic")
     --print(inspect(cd))
+
+
+
+    if key == 'neck' or key == 'neck1' then
+        print(key)
+        print(inspect(cd))
+    end
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
@@ -395,15 +409,17 @@ local function useRecreateConnectorData(recreateConnectorData, body)
     assert(type)
     if type == 'foot' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data, creation.foot.w * 2)
-    elseif type == 'hand' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.hand.h / 2, data, creation.hand.w * 2)
+    elseif type == 'lhand' then
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w * 2)
+    elseif type == 'rhand' then
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rhand.h / 2, data, creation.rhand.w * 2)
     end
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
     -- look up who is my parent and what are my children
 
-    print(partName)
+    --print(partName)
     local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
 
@@ -544,6 +560,7 @@ function makeGuy(x, y, groupId)
         local creationName = data.alias or name
         local offsetX, offsetY = getOffsetFromParent(name)
         -- print(creationName)
+        print(key, offsetX, offsetY)
         return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
     end
 
@@ -582,7 +599,7 @@ function makeGuy(x, y, groupId)
     local ruarm = makePart('ruarm', 'armpart', torso, 'right')
     local rlarm = makePart('rlarm', 'armpart', ruarm, 'right')
     local rhand = makePart('rhand', 'hand', rlarm, 'right')
-    makeAndAddConnector(rhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w + 10)
+    makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.rhand.w + 10)
 
 
 
@@ -590,7 +607,7 @@ function makeGuy(x, y, groupId)
     local luarm = makePart('luarm', 'armpart', torso, 'left')
     local llarm = makePart('llarm', 'armpart', luarm, 'left')
     local lhand = makePart('lhand', 'hand', llarm, 'left')
-    makeAndAddConnector(lhand, 0, creation.hand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.hand.w + 10)
+    makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.lhand.w + 10)
 
     local data = {
         torso = torso,
