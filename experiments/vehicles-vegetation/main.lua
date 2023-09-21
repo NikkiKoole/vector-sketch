@@ -707,7 +707,7 @@ function makeVehicle(x, y)
 
 
     fixture:setUserData(makeUserData("carbody"))
-
+    fixture:setFriction(1)
     makeAndAddConnector(carbody, carBodyWidth / 2 + 25, carBodyHeight / 2 - 15)
     makeAndAddConnector(carbody, -carBodyWidth / 2 - 25, carBodyHeight / 2 - 15)
 
