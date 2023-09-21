@@ -21,6 +21,7 @@ local creation = {
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    hair1 = {w=40,h=140, d=1, shape='capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true } },
     eye = { w = 10, h = 10 },
     pupil = { w = 10, h = 10 },
 }
@@ -33,7 +34,8 @@ function getParentAndChildrenFromPartName(partName)
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         neck = { p = 'torso', c = 'neck1' },
         neck1 = { p = 'neck', c = 'head' },
-        head = { p = 'neck1', c = { 'lear', 'rear' } },
+        head = { p = 'neck1', c = { 'lear', 'rear', 'hair1' } },
+        hair1 = {p='head'},
         lear = { p = 'head', alias = 'ear' },
         rear = { p = 'head', alias = 'ear' },
         luarm = { p = 'torso', c = 'llarm', alias = 'upArm' },
@@ -100,6 +102,10 @@ function getOffsetFromParent(partName)
             return getScaledTorsoMetaPoint(4)
         end
         return creation.torso.w / 2, creation.torso.h / 2
+    elseif partName== 'hair1' then
+        if creation.head.metaPoints then
+            return getScaledHeadMetaPoint(5)
+        end
     elseif partName == 'lear' then
         -- if creation.torso.metaPoints then
         --     return getScaledTorsoMetaPoint(4)
@@ -342,16 +348,20 @@ local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
     end
 
     -- friction
+    if data.friction then
     local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
-    fjoint:setMaxTorque(50000)
-
+    fjoint:setMaxTorque(data.friction)
+    end
     return joint
 end
 
 local function makeGuyFixture(data, key, groupId, body, shape)
     local fixture = love.physics.newFixture(body, shape, data.d)
+    if (key == 'hair1') then
+        fixture:setFilterData(1, 65535, 1 * groupId)
+    else
     fixture:setFilterData(1, 65535, -1 * groupId)
-
+    end
     local fixedKey = key
     if key == 'upLeg' or key == 'lowLeg' then
         fixedKey = 'legpart'
@@ -570,7 +580,7 @@ function makeGuy(x, y, groupId)
     local torsoShape = makeShapeFromCreationPart(creation.torso)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
 
-    local head, neck, neck1, lear, rear
+    local head, neck, neck1, lear, rear, hair1
     if creation.isPotatoHead then
         --neck = makePart('neck', 'neck', torso)
     else
@@ -581,6 +591,9 @@ function makeGuy(x, y, groupId)
 
         lear = makePart('lear', 'ear', head, 'left')
         rear = makePart('rear', 'ear', head, 'right')
+
+
+        hair1 = makePart('hair1', 'hair1', head)
     end
 
     local luleg = makePart('luleg', 'legpart', torso, 'left')
@@ -630,6 +643,7 @@ function makeGuy(x, y, groupId)
         ruleg = ruleg,
         rlleg = rlleg,
         rfoot = rfoot,
+        hair1 = hair1
     }
     return data
 end
