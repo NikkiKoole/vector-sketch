@@ -22,11 +22,11 @@ local creation = {
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
 
-    hair1 = {w=180,h=500, d=0.1, shape='capsule', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
-    hair2 = {w=150,h=100, d=0.1, shape='capsule', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
-    hair3 = {w=150,h=150, d=0.1, shape='capsule', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction=5000 },
-    hair4 = {w=150,h=100, d=0.1, shape='capsule', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
-    hair5 = {w=180,h=500, d=0.1, shape='capsule', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction=5000 },
+    hair1 = {w=180,h=500, d=0.1, shape='capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true } , friction=5000},
+    hair2 = {w=150,h=100, d=0.1, shape='capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
+    hair3 = {w=150,h=150, d=0.1, shape='capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction=5000 },
+    hair4 = {w=150,h=100, d=0.1, shape='capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
+    hair5 = {w=180,h=500, d=0.1, shape='capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction=5000 },
 
     eye = { w = 10, h = 10 },
     pupil = { w = 10, h = 10 },
@@ -398,6 +398,7 @@ end
 local function makeGuyFixture(data, key, groupId, body, shape)
     local fixture = love.physics.newFixture(body, shape, data.d)
    if (string.match(key, 'hair')) then
+    -- haird doesnt collide
         fixture:setFilterData(0, 65535, -1 * groupId)
     else
     fixture:setFilterData(1, 65535, -1 * groupId)

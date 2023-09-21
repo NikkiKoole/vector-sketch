@@ -354,6 +354,10 @@ function makeShape(shapeType, w, h)
         -- ipv hardcoded 10 i use w/5
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
                 h / 2))
+    elseif (shapeType == 'capsule2') then
+                -- ipv hardcoded 10 i use w/5
+                return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
+                        0))
     elseif (shapeType == 'trapezium') then
         return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
     elseif (shapeType == 'trapezium2') then
