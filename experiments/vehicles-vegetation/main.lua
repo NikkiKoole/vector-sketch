@@ -1524,6 +1524,7 @@ function rotateAllBodies(bodies)
                             getRidOfBigRotationsInBody(body)
                         end
                     end
+
                     if userData.bodyType == 'hand' then
                         getRidOfBigRotationsInBody(body)
                     end

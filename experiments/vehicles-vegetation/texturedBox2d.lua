@@ -276,6 +276,28 @@ function drawSkinOver(box2dGuy, creation)
                 love.graphics.draw(img, eyerx, eyery, r, wscale * 0.5, hscale * 0.5, ox, oy)
                 --end
             end
+
+            love.graphics.setColor(1, 0, 0, 1)
+            -- hair1x
+            if true then
+                local img = mesh.getImage('assets/parts/hair1x.png')
+                local w, h = img:getDimensions()
+                -- editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
+                --return createFromImage.vanillaline(
+                --    url, textured,
+                --        values.hairWidthMultiplier, values.hairTension, hairLine)
+
+                local f = creation.head.metaPoints
+                local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+                for i = 1, #hairLine do
+                    local eyelx, eyely = box2dGuy.head:getWorldPoint(
+                            (hairLine[i][1] + creation.head.metaOffsetX) * sx,
+                            (hairLine[i][2] + creation.head.metaOffsetY) * sy)
+                    love.graphics.circle('fill', eyelx, eyely, 5)
+
+                    love.graphics.draw(img, eyelx, eyely, r, wscale * 0.5 * -1, hscale * 0.5, w / 2, h / 2)
+                end
+            end
         end
     end
 
@@ -359,7 +381,7 @@ function drawSkinOver(box2dGuy, creation)
         local oy = creation.lhand.metaPivotY - creation.lhand.metaTexturePoints[1][2]
 
         love.graphics.setColor(1, 0, 0, 1)
-        love.graphics.print(r, x, y)
+        --love.graphics.print(r, x, y)
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
     end
@@ -377,7 +399,7 @@ function drawSkinOver(box2dGuy, creation)
         local oy = creation.rhand.metaPivotY - creation.rhand.metaTexturePoints[1][2]
 
         love.graphics.setColor(1, 0, 0, 1)
-        love.graphics.print(r, x, y)
+        --love.graphics.print(r, x, y)
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
     end
@@ -397,7 +419,7 @@ function drawSkinOver(box2dGuy, creation)
         local ox = creation.lfoot.metaPivotX - creation.lfoot.metaTexturePoints[1][1]
         local oy = creation.lfoot.metaPivotY - creation.lfoot.metaTexturePoints[1][2]
         love.graphics.setColor(1, 0, 0, 1)
-        love.graphics.print(r, x, y)
+        -- love.graphics.print(r, x, y)
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, wscale * 1.1, hscale * 1.1, ox, oy)
     end
@@ -415,7 +437,7 @@ function drawSkinOver(box2dGuy, creation)
         local ox = creation.rfoot.metaPivotX - creation.rfoot.metaTexturePoints[1][1]
         local oy = creation.rfoot.metaPivotY - creation.rfoot.metaTexturePoints[1][2]
         love.graphics.setColor(1, 0, 0, 1)
-        love.graphics.print(r, x, y)
+        --   love.graphics.print(r, x, y)
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.draw(img, x, y, r, -wscale * 1.1, hscale * 1.1, ox, oy)
     end
