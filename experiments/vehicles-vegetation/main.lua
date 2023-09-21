@@ -1452,6 +1452,9 @@ function maybeConnectThisConnector(f, mj)
         local done = false
 
         for j = 1, #connectors do
+            if (connectors[j].at:isDestroyed()) then
+                print('THIS IS A DESTROYED CONNECTOR, WHY IS IT  STILL HEREE??')
+            end
             local theOtherBody = connectors[j].at:getBody()
 
             -- maybe verify that both connector dont point to the same agent (as in are both part of the same character)
