@@ -7,9 +7,9 @@ local inspect = require 'vendor.inspect'
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.5, shape = 'trapezium' },
-    neck = { w = 40, h = 125, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 40, h = 125, d = 10, shape = 'rect2', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 40, h = 45, d = 3, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 40, h = 45, d = 3, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 3, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
     lowArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
@@ -21,13 +21,11 @@ local creation = {
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-
-    hair1 = {w=180,h=500, d=0.1, shape='capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true } , friction=5000},
-    hair2 = {w=150,h=100, d=0.1, shape='capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
-    hair3 = {w=150,h=150, d=0.1, shape='capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction=5000 },
-    hair4 = {w=150,h=100, d=0.1, shape='capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true } , friction=5000},
-    hair5 = {w=180,h=500, d=0.1, shape='capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction=5000 },
-
+    hair1 = { w = 180, h = 500, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+    hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+    hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+    hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+    hair5 = { w = 180, h = 500, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
     eye = { w = 10, h = 10 },
     pupil = { w = 10, h = 10 },
 }
@@ -40,12 +38,12 @@ function getParentAndChildrenFromPartName(partName)
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         neck = { p = 'torso', c = 'neck1' },
         neck1 = { p = 'neck', c = 'head' },
-        head = { p = 'neck1', c = { 'lear', 'rear', 'hair1','hair2', 'hair3','hair4','hair5'   } },
-        hair1 = {p='head'},
-        hair2 = {p='head'},
-        hair3 = {p='head'},
-        hair4 = {p='head'},
-        hair5 = {p='head'},
+        head = { p = 'neck1', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } },
+        hair1 = { p = 'head' },
+        hair2 = { p = 'head' },
+        hair3 = { p = 'head' },
+        hair4 = { p = 'head' },
+        hair5 = { p = 'head' },
         lear = { p = 'head', alias = 'ear' },
         rear = { p = 'head', alias = 'ear' },
         luarm = { p = 'torso', c = 'llarm', alias = 'upArm' },
@@ -112,23 +110,23 @@ function getOffsetFromParent(partName)
             return getScaledTorsoMetaPoint(4)
         end
         return creation.torso.w / 2, creation.torso.h / 2
-    elseif partName== 'hair1' then
+    elseif partName == 'hair1' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(3)
         end
-    elseif partName== 'hair2' then
+    elseif partName == 'hair2' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(4)
         end
-    elseif partName== 'hair3' then
+    elseif partName == 'hair3' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(5)
         end
-    elseif partName== 'hair4' then
+    elseif partName == 'hair4' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(6)
         end
-    elseif partName== 'hair5' then
+    elseif partName == 'hair5' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(7)
         end
@@ -184,19 +182,19 @@ local function getAngleOffset(key, side)
         return -math.pi / 2
     end
     if (key == 'hair1') then
-        return -math.pi/2
+        return -math.pi / 2
     end
     if (key == 'hair2') then
-        return -math.pi/4
+        return -math.pi / 4
     end
     if (key == 'hair3') then
         return 0
     end
     if (key == 'hair4') then
-        return math.pi/4
+        return math.pi / 4
     end
     if (key == 'hair5') then
-        return math.pi/2
+        return math.pi / 2
     end
     return 0
 end
@@ -389,19 +387,19 @@ local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
 
     -- friction
     if data.friction then
-    local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
-    fjoint:setMaxTorque(data.friction)
+        local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
+        fjoint:setMaxTorque(data.friction)
     end
     return joint
 end
 
 local function makeGuyFixture(data, key, groupId, body, shape)
     local fixture = love.physics.newFixture(body, shape, data.d)
-   if (string.match(key, 'hair')) then
-    -- haird doesnt collide
+    if (string.match(key, 'hair')) then
+        -- haird doesnt collide
         fixture:setFilterData(0, 65535, -1 * groupId)
     else
-    fixture:setFilterData(1, 65535, -1 * groupId)
+        fixture:setFilterData(1, 65535, -1 * groupId)
     end
     local fixedKey = key
     if key == 'upLeg' or key == 'lowLeg' then

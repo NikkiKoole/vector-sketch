@@ -355,9 +355,9 @@ function makeShape(shapeType, w, h)
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
                 h / 2))
     elseif (shapeType == 'capsule2') then
-                -- ipv hardcoded 10 i use w/5
-                return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
-                        0))
+        -- ipv hardcoded 10 i use w/5
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
+                0))
     elseif (shapeType == 'trapezium') then
         return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
     elseif (shapeType == 'trapezium2') then
@@ -1399,6 +1399,12 @@ function rotateToHorizontal(body, desiredAngle, divider)
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     if true then
         local angle = body:getAngle()
+        if angle > 0 then
+            body:setAngle(angle % (2 * math.pi))
+        else
+            body:setAngle(angle % ( -2 * math.pi))
+        end
+        angle = body:getAngle()
         local nextAngle = angle + body:getAngularVelocity() / divider
 
         local totalRotation = desiredAngle - nextAngle
@@ -1422,9 +1428,14 @@ function rotateToHorizontal(body, desiredAngle, divider)
 end
 
 local function getRidOfBigRotationsInBody(body)
-    local a = body:getAngle()
-
-    if true then
+    -- local a = body:getAngle()
+    local angle = body:getAngle()
+    if angle > 0 then
+        body:setAngle(angle % (2 * math.pi))
+    else
+        body:setAngle(angle % ( -2 * math.pi))
+    end
+    if false then
         if a > (2 * math.pi) then
             a = a - (2 * math.pi)
             body:setAngle(a)
@@ -1541,7 +1552,7 @@ function rotateAllBodies(bodies)
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
-                        rotateToHorizontal(body, desired, 30)
+                        rotateToHorizontal(body, desired, 50)
                     end
 
                     if not upsideDown then
