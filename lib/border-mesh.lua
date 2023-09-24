@@ -108,8 +108,9 @@ end
 bordermesh.unloosenVanillaline = function(points, tension, spacing)
    local work = unloop.unpackNodePoints(points, true)
    local output = {}
-   for i = 0, 100 do
-      local t = (i / 100)
+   local amt = 10
+   for i = 0, amt do
+      local t = (i / amt)
       if t >= 1 then t = 0.99999999 end
       local x, y = GetSplinePos(work, t, tension)
       table.insert(output, { x, y })
@@ -138,7 +139,7 @@ bordermesh.makeBorderMesh = function(node)
 
    output = unloop.unpackNodePoints(rrr)
    local verts, indices, draw_mode = polyline.render('miter', output, node.borderThickness, nil, nil,
-      node.borderRandomizerMultiplier)
+           node.borderRandomizerMultiplier)
    local mesh = love.graphics.newMesh(formats.simple_format, verts, draw_mode)
    return mesh
 end

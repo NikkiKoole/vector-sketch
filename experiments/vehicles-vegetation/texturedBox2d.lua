@@ -7,6 +7,7 @@ local bbox     = require 'lib.bbox'
 local polyline = require 'lib.polyline'
 local unloop   = require 'lib.unpack-points'
 local numbers  = require 'lib.numbers'
+local border   = require 'lib.border-mesh'
 
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
@@ -23,6 +24,23 @@ local function stripPath(root, path)
 
     return root
 end
+local function getDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+
+    return distance
+end
+local function getLengthOfPath(path)
+    local result = 0
+    for i = 1, #path - 1 do
+        local a = path[i]
+        local b = path[i + 1]
+        result = result + getDistance(a[1], a[2], b[1], b[2])
+    end
+    return result
+end
+
 
 local function loadGroupFromFile(url, groupName)
     local imgs = {}
@@ -246,6 +264,7 @@ function drawSkinOver(box2dGuy, creation)
             if true then
                 --  love.graphics.setColor(1, 0, 1, 1)
                 local f = creation.head.metaPoints
+
                 --for i = 1, #f do
 
 
@@ -277,168 +296,210 @@ function drawSkinOver(box2dGuy, creation)
                 --end
             end
 
-            love.graphics.setColor(1, 0, 0, 1)
+            --            love.graphics.setColor(1, 0, 0, 1)
+            love.graphics.setColor(0, 0, 0, 1)
             -- hair1x
-            if true then
-                local img = mesh.getImage('assets/parts/hair1x.png')
-                local w, h = img:getDimensions()
-                -- editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
-                --return createFromImage.vanillaline(
-                --    url, textured,
-                --        values.hairWidthMultiplier, values.hairTension, hairLine)
+            if false then
+                if true or box2dGuy.hairNeedsRedo then
+                    local img = mesh.getImage('assets/parts/hair1x.png')
+                    local w, h = img:getDimensions()
+                    -- editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
+                    --return createFromImage.vanillaline(
+                    --    url, textured,
+                    --        values.hairWidthMultiplier, values.hairTension, hairLine)
+                    -- print(creation.head.flipy)
+                    local f = creation.head.metaPoints
+                    -- print(inspect(f))
+                    local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+                    --for i = 1, #hairLine do
+                    --  local eyelx, eyely = box2dGuy.head:getWorldPoint(
+                    --          (hairLine[i][1] + creation.head.metaOffsetX) * sx,
+                    --          (hairLine[i][2] + creation.head.metaOffsetY) * sy)
+                    --love.graphics.circle('fill', eyelx, eyely, 5)
+                    --print(getLengthOfPath(hairLine))
 
-                local f = creation.head.metaPoints
-                local hairLine = { f[3], f[4], f[5], f[6], f[7] }
-                for i = 1, #hairLine do
-                    local eyelx, eyely = box2dGuy.head:getWorldPoint(
-                            (hairLine[i][1] + creation.head.metaOffsetX) * sx,
-                            (hairLine[i][2] + creation.head.metaOffsetY) * sy)
-                    love.graphics.circle('fill', eyelx, eyely, 5)
 
-                    love.graphics.draw(img, eyelx, eyely, r, wscale * 0.5 * -1, hscale * 0.5, w / 2, h / 2)
+                    local points = hairLine
+                    local hairTension = .02
+                    local spacing = 3
+                    local coords
+                    --print('vanillaline stuff', shape.data)
+                    --if shape.data and shape.data.tension then
+                    coords = border.unloosenVanillaline(points, hairTension, spacing)
+                    --else
+                    --   coords = unloop.unpackNodePoints(points, false)
+                    --end
+                    local width = 160 * 3 -- shape.data and shape.data.width or 60
+                    -- print(inspect(coords), inspect(points))
+                    local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
+                    local vertsWithUVs = {}
+
+                    for i = 1, #verts do
+                        local u = (i % 2 == 1) and 0 or 1
+                        local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+                        vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+                    end
+                    local vertices = vertsWithUVs
+                    local m = love.graphics.newMesh(vertices, "strip")
+                    --print(inspect(vertices))
+                    m:setTexture(img)
+                    love.graphics.draw(m, x, y, r, sx * creation.head
+                    .flipx, sy)
+
+                    -- local factor = (length / height)
+                    -- currentNode.data = {}
+                    -- currentNode.data.width = (width * factor) * hairWidthMultiplier
+                    -- currentNode.data.tension = hairTension
+                    -- currentNode.data.spacing = 5
+
+
+
+                    --love.graphics.draw(img, eyelx, eyely, r, wscale * 0.5 * -1, hscale * 0.5, w / 2, h / 2)
+                    -- end
                 end
             end
         end
-    end
 
-    -- maybe start trying out to draw eyes and nose
-
+        -- maybe start trying out to draw eyes and nose
 
 
 
-    love.graphics.setColor(0, 0, 0, 1)
 
-    local ax, ay = box2dGuy.neck:getPosition()
-    local bx, by = box2dGuy.neck1:getPosition()
-    local cx, cy = box2dGuy.head:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    texturedCurve(curve, image10, mesh10)
-
-
-
-    love.graphics.setColor(0, 0, 0, 1)
-    local ax, ay = box2dGuy.luleg:getPosition()
-    local bx, by = box2dGuy.llleg:getPosition()
-    local cx, cy = box2dGuy.lfoot:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-    --love.graphics.line(curve:render())
-
-
-    texturedCurve(curve, image10, mesh10)
-
-    -----
-    local ax, ay = box2dGuy.ruleg:getPosition()
-    local bx, by = box2dGuy.rlleg:getPosition()
-    local cx, cy = box2dGuy.rfoot:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-
-    texturedCurve(curve, image1, mesh1)
-    --texturedCurve(curve, image9, mesh9, 1, 9)
-
-    ----
-    local ax, ay = box2dGuy.luarm:getPosition()
-    local bx, by = box2dGuy.llarm:getPosition()
-    local cx, cy = box2dGuy.lhand:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-    -- love.graphics.line(curve:render())
-
-    texturedCurve(curve, image5, mesh5)
-    texturedCurve(curve, image9, mesh9, 1, 5)
-    --texturedCurve(curve, image8, mesh8)
-
-
-    ----
-    local ax, ay = box2dGuy.ruarm:getPosition()
-    local bx, by = box2dGuy.rlarm:getPosition()
-    local cx, cy = box2dGuy.rhand:getPosition()
-
-
-    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-    --  love.graphics.line(curve:render())
-
-    texturedCurve(curve, image5, mesh5)
-    --texturedCurve(curve, image6, mesh6)
-
-    if creation and creation.lhand.metaURL then
-        local img = mesh.getImage(creation.lhand.metaURL)
-        local w, h = img:getDimensions()
-
-        local x, y = box2dGuy.lhand:getWorldPoint(0, 0)
-        local r = box2dGuy.lhand:getAngle() - math.pi / 2
-
-        local wscale = creation.lhand.h / w --creation.lfoot.metaPointsW
-        local hscale = creation.lhand.w / h --creation.lfoot.metaPointsH
-
-        local ox = creation.lhand.metaPivotX - creation.lhand.metaTexturePoints[1][1]
-        local oy = creation.lhand.metaPivotY - creation.lhand.metaTexturePoints[1][2]
-
-        love.graphics.setColor(1, 0, 0, 1)
-        --love.graphics.print(r, x, y)
         love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
-    end
-    if creation and creation.rhand.metaURL then
-        local img = mesh.getImage(creation.rhand.metaURL)
-        local w, h = img:getDimensions()
 
-        local x, y = box2dGuy.rhand:getWorldPoint(0, 0)
-        local r = box2dGuy.rhand:getAngle() - math.pi / 2
+        local ax, ay = box2dGuy.neck:getPosition()
+        local bx, by = box2dGuy.neck1:getPosition()
+        local cx, cy = box2dGuy.head:getPosition()
 
-        local wscale = creation.rhand.h / w --creation.lfoot.metaPointsW
-        local hscale = creation.rhand.w / h --creation.lfoot.metaPointsH
 
-        local ox = creation.rhand.metaPivotX - creation.rhand.metaTexturePoints[1][1]
-        local oy = creation.rhand.metaPivotY - creation.rhand.metaTexturePoints[1][2]
+        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+        texturedCurve(curve, image10, mesh10)
 
-        love.graphics.setColor(1, 0, 0, 1)
-        --love.graphics.print(r, x, y)
+
+
         love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
-    end
+        local ax, ay = box2dGuy.luleg:getPosition()
+        local bx, by = box2dGuy.llleg:getPosition()
+        local cx, cy = box2dGuy.lfoot:getPosition()
 
 
-    -- left foot
-    if creation and creation.lfoot.metaURL then
-        local img = mesh.getImage(creation.lfoot.metaURL)
-        local w, h = img:getDimensions()
+        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+        --love.graphics.line(curve:render())
 
-        local x, y = box2dGuy.lfoot:getWorldPoint(0, 0)
-        local r = box2dGuy.lfoot:getAngle() - math.pi / 2
 
-        local wscale = creation.lfoot.h / w --creation.lfoot.metaPointsW
-        local hscale = creation.lfoot.w / h --creation.lfoot.metaPointsH
+        texturedCurve(curve, image10, mesh10)
 
-        local ox = creation.lfoot.metaPivotX - creation.lfoot.metaTexturePoints[1][1]
-        local oy = creation.lfoot.metaPivotY - creation.lfoot.metaTexturePoints[1][2]
-        love.graphics.setColor(1, 0, 0, 1)
-        -- love.graphics.print(r, x, y)
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.draw(img, x, y, r, wscale * 1.1, hscale * 1.1, ox, oy)
-    end
-    -- right foot
-    if creation and creation.rfoot.metaURL then
-        local img = mesh.getImage(creation.rfoot.metaURL)
-        local w, h = img:getDimensions()
+        -----
+        local ax, ay = box2dGuy.ruleg:getPosition()
+        local bx, by = box2dGuy.rlleg:getPosition()
+        local cx, cy = box2dGuy.rfoot:getPosition()
 
-        local x, y = box2dGuy.rfoot:getWorldPoint(0, 0)
-        local r = box2dGuy.rfoot:getAngle() + math.pi / 2
 
-        local wscale = creation.rfoot.h / w --creation.lfoot.metaPointsW
-        local hscale = creation.rfoot.w / h --creation.lfoot.metaPointsH
+        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
 
-        local ox = creation.rfoot.metaPivotX - creation.rfoot.metaTexturePoints[1][1]
-        local oy = creation.rfoot.metaPivotY - creation.rfoot.metaTexturePoints[1][2]
-        love.graphics.setColor(1, 0, 0, 1)
-        --   love.graphics.print(r, x, y)
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.draw(img, x, y, r, -wscale * 1.1, hscale * 1.1, ox, oy)
+        texturedCurve(curve, image1, mesh1)
+        --texturedCurve(curve, image9, mesh9, 1, 9)
+
+        ----
+        local ax, ay = box2dGuy.luarm:getPosition()
+        local bx, by = box2dGuy.llarm:getPosition()
+        local cx, cy = box2dGuy.lhand:getPosition()
+
+
+        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
+        -- love.graphics.line(curve:render())
+
+        texturedCurve(curve, image5, mesh5)
+        texturedCurve(curve, image9, mesh9, 1, 5)
+        --texturedCurve(curve, image8, mesh8)
+
+
+        ----
+        local ax, ay = box2dGuy.ruarm:getPosition()
+        local bx, by = box2dGuy.rlarm:getPosition()
+        local cx, cy = box2dGuy.rhand:getPosition()
+
+
+        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
+        --  love.graphics.line(curve:render())
+
+        texturedCurve(curve, image5, mesh5)
+        --texturedCurve(curve, image6, mesh6)
+
+        if creation and creation.lhand.metaURL then
+            local img = mesh.getImage(creation.lhand.metaURL)
+            local w, h = img:getDimensions()
+
+            local x, y = box2dGuy.lhand:getWorldPoint(0, 0)
+            local r = box2dGuy.lhand:getAngle() - math.pi / 2
+
+            local wscale = creation.lhand.h / w --creation.lfoot.metaPointsW
+            local hscale = creation.lhand.w / h --creation.lfoot.metaPointsH
+
+            local ox = creation.lhand.metaPivotX - creation.lhand.metaTexturePoints[1][1]
+            local oy = creation.lhand.metaPivotY - creation.lhand.metaTexturePoints[1][2]
+
+            love.graphics.setColor(1, 0, 0, 1)
+            --love.graphics.print(r, x, y)
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
+        end
+        if creation and creation.rhand.metaURL then
+            local img = mesh.getImage(creation.rhand.metaURL)
+            local w, h = img:getDimensions()
+
+            local x, y = box2dGuy.rhand:getWorldPoint(0, 0)
+            local r = box2dGuy.rhand:getAngle() - math.pi / 2
+
+            local wscale = creation.rhand.h / w --creation.lfoot.metaPointsW
+            local hscale = creation.rhand.w / h --creation.lfoot.metaPointsH
+
+            local ox = creation.rhand.metaPivotX - creation.rhand.metaTexturePoints[1][1]
+            local oy = creation.rhand.metaPivotY - creation.rhand.metaTexturePoints[1][2]
+
+            love.graphics.setColor(1, 0, 0, 1)
+            --love.graphics.print(r, x, y)
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
+        end
+
+
+        -- left foot
+        if creation and creation.lfoot.metaURL then
+            local img = mesh.getImage(creation.lfoot.metaURL)
+            local w, h = img:getDimensions()
+
+            local x, y = box2dGuy.lfoot:getWorldPoint(0, 0)
+            local r = box2dGuy.lfoot:getAngle() - math.pi / 2
+
+            local wscale = creation.lfoot.h / w --creation.lfoot.metaPointsW
+            local hscale = creation.lfoot.w / h --creation.lfoot.metaPointsH
+
+            local ox = creation.lfoot.metaPivotX - creation.lfoot.metaTexturePoints[1][1]
+            local oy = creation.lfoot.metaPivotY - creation.lfoot.metaTexturePoints[1][2]
+            love.graphics.setColor(1, 0, 0, 1)
+            -- love.graphics.print(r, x, y)
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.draw(img, x, y, r, wscale * 1.1, hscale * 1.1, ox, oy)
+        end
+        -- right foot
+        if creation and creation.rfoot.metaURL then
+            local img = mesh.getImage(creation.rfoot.metaURL)
+            local w, h = img:getDimensions()
+
+            local x, y = box2dGuy.rfoot:getWorldPoint(0, 0)
+            local r = box2dGuy.rfoot:getAngle() + math.pi / 2
+
+            local wscale = creation.rfoot.h / w --creation.lfoot.metaPointsW
+            local hscale = creation.rfoot.w / h --creation.lfoot.metaPointsH
+
+            local ox = creation.rfoot.metaPivotX - creation.rfoot.metaTexturePoints[1][1]
+            local oy = creation.rfoot.metaPivotY - creation.rfoot.metaTexturePoints[1][2]
+            love.graphics.setColor(1, 0, 0, 1)
+            --   love.graphics.print(r, x, y)
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.draw(img, x, y, r, -wscale * 1.1, hscale * 1.1, ox, oy)
+        end
     end
 end

@@ -6,26 +6,27 @@ local inspect = require 'vendor.inspect'
 
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
-    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.5, shape = 'trapezium' },
-    neck = { w = 40, h = 45, d = 3, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 40, h = 45, d = 3, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 3, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    hasPhysicsHair = false,
+    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 1.5, shape = 'trapezium' },
+    neck = { w = 140, h = 50, d = 4, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 50, d = 4, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false }, friction = 5000 },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false } },
-    lowArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = true } },
+    upArm = { w = 40, h = 180, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 5000 },
+    lowArm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = false }, friction = 5000 },
     --hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'right', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = false }, friction = 5000 },
+    rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'right', low = -math.pi / 8, up = math.pi / 8, enabled = false }, friction = 5000 },
     upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
     lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    hair1 = { w = 180, h = 500, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+    hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
     hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
     hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
     hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair5 = { w = 180, h = 500, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+    hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
     eye = { w = 10, h = 10 },
     pupil = { w = 10, h = 10 },
 }
@@ -397,6 +398,7 @@ local function makeGuyFixture(data, key, groupId, body, shape)
     local fixture = love.physics.newFixture(body, shape, data.d)
     if (string.match(key, 'hair')) then
         -- haird doesnt collide
+
         fixture:setFilterData(0, 65535, -1 * groupId)
     else
         fixture:setFilterData(1, 65535, -1 * groupId)
@@ -404,6 +406,12 @@ local function makeGuyFixture(data, key, groupId, body, shape)
     local fixedKey = key
     if key == 'upLeg' or key == 'lowLeg' then
         fixedKey = 'legpart'
+    end
+    if key == 'upArm' or key == 'lowArm' then
+        fixedKey = 'armpart'
+    end
+    if string.match(key, 'neck') then
+        fixedKey = 'neck'
     end
     fixture:setUserData(makeUserData(fixedKey))
     return fixture
@@ -534,6 +542,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local childData = getParentAndChildrenFromPartName(childName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
+        print(childName)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
         local data2 = getParentAndChildrenFromPartName(childName)
@@ -554,12 +563,54 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     if childName and (type(childName) == 'table') then
         for i = 1, #childName do
             --  print(childName[i])
+            local skip = false
             if creation.isPotatoHead and childName[i] == 'neck' then
+                -- do not reattach neck wehnwe are a potato
+                skip = true
+            end
+            if not creation.hasPhysicsHair and string.match(childName[i], 'hair') then
+                skip = true
+            end
 
-            else
+            if not skip then
                 reAttachChild(childName[i])
             end
         end
+    end
+end
+
+function handlePhysicsHairOrNo(hair, box2dGuy, groupId)
+    local function makePart(name, key, parent, side)
+        -- needed to wrap groupid
+
+        local data = getParentAndChildrenFromPartName(name)
+        local creationName = data.alias or name
+        local offsetX, offsetY = getOffsetFromParent(name)
+        return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
+    end
+    if not hair then
+        box2dGuy.hair1:destroy()
+        box2dGuy.hair2:destroy()
+        box2dGuy.hair3:destroy()
+        box2dGuy.hair4:destroy()
+        box2dGuy.hair5:destroy()
+        box2dGuy.hair1 = nil
+        box2dGuy.hair2 = nil
+        box2dGuy.hair3 = nil
+        box2dGuy.hair4 = nil
+        box2dGuy.hair5 = nil
+    else
+        local head = box2dGuy.head
+        local hair1 = makePart('hair1', 'hair1', head)
+        local hair2 = makePart('hair2', 'hair2', head)
+        local hair3 = makePart('hair3', 'hair3', head)
+        local hair4 = makePart('hair4', 'hair4', head)
+        local hair5 = makePart('hair5', 'hair5', head)
+        box2dGuy.hair1 = hair1
+        box2dGuy.hair2 = hair2
+        box2dGuy.hair3 = hair3
+        box2dGuy.hair4 = hair4
+        box2dGuy.hair5 = hair5
     end
 end
 
@@ -619,7 +670,7 @@ function makeGuy(x, y, groupId)
     local torsoShape = makeShapeFromCreationPart(creation.torso)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
 
-    local head, neck, neck1, lear, rear, hair1, hair2, hair3
+    local head, neck, neck1, lear, rear
     if creation.isPotatoHead then
         --neck = makePart('neck', 'neck', torso)
     else
@@ -630,8 +681,10 @@ function makeGuy(x, y, groupId)
 
         lear = makePart('lear', 'ear', head, 'left')
         rear = makePart('rear', 'ear', head, 'right')
+    end
 
-
+    local hair1, hair2, hair3, hair4, hair5
+    if creation.hasPhysicsHair then
         hair1 = makePart('hair1', 'hair1', head)
         hair2 = makePart('hair2', 'hair2', head)
         hair3 = makePart('hair3', 'hair3', head)

@@ -1003,13 +1003,13 @@ function startExample(number)
 
 
         changeMetaTexture('lhand', feetdata[handIndex])
-        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
-        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
+        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 4
+        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 4
 
 
         changeMetaTexture('rhand', feetdata[handIndex])
-        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
-        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
+        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 4
+        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 4
 
 
 
@@ -1121,7 +1121,7 @@ function love.load()
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2, w * 2, h * 2)
-    --grabDevelopmentScreenshot()
+    grabDevelopmentScreenshot()
 end
 
 local function pointerReleased(id, x, y)
@@ -1324,7 +1324,7 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-        --drawWorld(world)
+        -- drawWorld(world)
         local tlx, tly = cam:getWorldCoordinates( -1000, 0)
         local brx, bry = cam:getWorldCoordinates(width + 1000, height)
         for i = 1, #box2dGuys do
@@ -1354,7 +1354,7 @@ function love.draw()
 
         drawWorld(world)
         for i = 1, #box2dGuys do
-            drawSkinOver(box2dGuys[i], creation)
+            -- drawSkinOver(box2dGuys[i], creation)
         end
         for i = 1, #box2dTorsos do
             drawTorsoOver(box2dTorsos[i])
@@ -1399,10 +1399,12 @@ function rotateToHorizontal(body, desiredAngle, divider)
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     if true then
         local angle = body:getAngle()
-        if angle > 0 then
-            body:setAngle(angle % (2 * math.pi))
-        else
-            body:setAngle(angle % ( -2 * math.pi))
+        if true then
+            if angle > 0 then
+                body:setAngle(angle % (2 * math.pi))
+            else
+                body:setAngle(angle % ( -2 * math.pi))
+            end
         end
         angle = body:getAngle()
         local nextAngle = angle + body:getAngularVelocity() / divider
@@ -1428,14 +1430,14 @@ function rotateToHorizontal(body, desiredAngle, divider)
 end
 
 local function getRidOfBigRotationsInBody(body)
-    -- local a = body:getAngle()
-    local angle = body:getAngle()
-    if angle > 0 then
-        body:setAngle(angle % (2 * math.pi))
-    else
-        body:setAngle(angle % ( -2 * math.pi))
-    end
-    if false then
+    --local angle = body:getAngle()
+    --if angle > 0 then
+    --    body:setAngle(angle % (2 * math.pi))
+    --else
+    --    body:setAngle(angle % ( -2 * math.pi))
+    --end
+    local a = body:getAngle()
+    if true then
         if a > (2 * math.pi) then
             a = a - (2 * math.pi)
             body:setAngle(a)
@@ -1510,8 +1512,11 @@ function maybeConnectThisConnector(f, mj)
     end
 end
 
-function rotateAllBodies(bodies)
+lastDt = 0
+
+function rotateAllBodies(bodies, dt)
     --local upsideDown = false
+    lastDt = dt
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
 
@@ -1525,9 +1530,18 @@ function rotateAllBodies(bodies)
         end
 
         for _, fixture in ipairs(fixtures) do
+            if isBeingPointerJointed then
+                getRidOfBigRotationsInBody(body)
+            end
+
             if (stiff) and not isBeingPointerJointed then
                 local userData = fixture:getUserData()
+
+
+
                 if userData then
+                    -- getRidOfBigRotationsInBody(body)
+                    --print(userData.bodyType)
                     if userData.bodyType == 'balloon' then
                         --getRidOfBigRotationsInBody(body)
                         --local desired = upsideDown and -math.pi or 0
@@ -1544,7 +1558,7 @@ function rotateAllBodies(bodies)
                     end
 
                     if userData.bodyType == 'hand' then
-                        getRidOfBigRotationsInBody(body)
+                        -- getRidOfBigRotationsInBody(body)
                     end
                     if userData.bodyType == 'hand' then
                         --   getRidOfBigRotationsInBody(body)
@@ -1552,17 +1566,14 @@ function rotateAllBodies(bodies)
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
-                        rotateToHorizontal(body, desired, 50)
+                        rotateToHorizontal(body, desired, 25)
                     end
 
                     if not upsideDown then
                         if userData.bodyType == 'neck' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 20)
-                        end
-                        if userData.bodyType == 'neck1' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 20)
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, -math.pi, 10)
+                            --rotateToHorizontal(body, 0, 50)
                         end
 
                         if userData.bodyType == 'head' then
@@ -1574,19 +1585,21 @@ function rotateAllBodies(bodies)
                     if not upsideDown then
                         if userData.bodyType == 'legpart' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 35)
+                            rotateToHorizontal(body, 0, 30)
                         end
                         if userData.bodyType == 'armpart' then
-                            getRidOfBigRotationsInBody(body)
+                            --print('jo!')
+                            --rotateToHorizontal(body, 0, 35)
+                            --getRidOfBigRotationsInBody(body)
                         end
                     end
                     if upsideDown then
                         if userData.bodyType == 'armpart' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 50)
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
                         end
                         if userData.bodyType == 'legpart' then
-                            getRidOfBigRotationsInBody(body)
+                            --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, math.pi, 10)
                         end
                     end
@@ -1605,10 +1618,7 @@ function rotateAllBodies(bodies)
 end
 
 function love.update(dt)
-    --    lurker.update()
-
-
-
+    lurker.update()
 
     -- this is way too agressive, maybe firgure out a way where i go 1 or 2 nodes up and down to check
     if false then
@@ -1661,7 +1671,7 @@ function love.update(dt)
 
 
 
-    rotateAllBodies(world:getBodies())
+    rotateAllBodies(world:getBodies(), dt)
 
 
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
@@ -1744,6 +1754,10 @@ end
 
 function love.resize(w, h)
     world:update(0)
+end
+
+function vloer_voor_theo()
+    print('Ja Hallo is dit een vloer of zin het letters?')
 end
 
 function love.keypressed(k)
@@ -1889,8 +1903,9 @@ function love.keypressed(k)
             local body = box2dGuys[2].torso
             local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
+            creation.hasPhysicsHair = not creation.hasPhysicsHair
 
-            -- creation.isPotatoHead = not creation.isPotatoHead
+            --creation.isPotatoHead = not creation.isPotatoHead
 
             --creation.upLeg.h = 15 + love.math.random() * 400
             --- creation.lowLeg.h = 15 + love.math.random() * 400
@@ -1926,7 +1941,7 @@ function love.keypressed(k)
                 --print('jo', creation.isPotatoHead)
 
                 handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
-
+                handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
                 genericBodyPartUpdate(box2dGuys[i], i, 'torso')
                 genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
                 genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
