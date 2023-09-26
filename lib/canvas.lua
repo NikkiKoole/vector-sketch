@@ -3,7 +3,7 @@ local vivid = require 'vendor.vivid'
 local geom = require 'lib.geom'
 
 
-local shrinkFactor = 6
+local shrinkFactor = 1
 
 local mask_effect = love.graphics.newShader [[
    vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
@@ -138,6 +138,27 @@ local maskShader = love.graphics.newShader([[
         return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a  );
 	}
 ]])
+
+
+lib.makeTexturedCanvas2 = function(lineart)
+   local lw, lh = lineart:getDimensions()
+   local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
+
+   love.graphics.setCanvas({ canvas, stencil = false }) --<<<
+
+   local flipx = 1
+   local flipy = 1
+   local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
+   print(sx, sy, ox, oy)
+   love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
+   love.graphics.setCanvas()
+   local imageData = canvas:newImageData()
+
+   return imageData
+end
+
+
+
 
 
 lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale,

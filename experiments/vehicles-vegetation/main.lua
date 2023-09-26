@@ -1003,13 +1003,13 @@ function startExample(number)
 
 
         changeMetaTexture('lhand', feetdata[handIndex])
-        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 4
-        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 4
+        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
+        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
 
 
         changeMetaTexture('rhand', feetdata[handIndex])
-        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 4
-        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 4
+        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
+        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
 
 
 
@@ -1354,7 +1354,7 @@ function love.draw()
 
         drawWorld(world)
         for i = 1, #box2dGuys do
-            -- drawSkinOver(box2dGuys[i], creation)
+            drawSkinOver(box2dGuys[i], creation, cam)
         end
         for i = 1, #box2dTorsos do
             drawTorsoOver(box2dTorsos[i])
@@ -1531,7 +1531,7 @@ function rotateAllBodies(bodies, dt)
 
         for _, fixture in ipairs(fixtures) do
             if isBeingPointerJointed then
-                getRidOfBigRotationsInBody(body)
+                --     getRidOfBigRotationsInBody(body)
             end
 
             if (stiff) and not isBeingPointerJointed then
@@ -1618,7 +1618,7 @@ function rotateAllBodies(bodies, dt)
 end
 
 function love.update(dt)
-    lurker.update()
+    -- lurker.update()
 
     -- this is way too agressive, maybe firgure out a way where i go 1 or 2 nodes up and down to check
     if false then
@@ -1782,6 +1782,14 @@ function love.keypressed(k)
     end
 
     if example == 3 then
+        if k == 'n' then
+            creation.hasNeck = not creation.hasNeck
+            for i = 1, #box2dGuys do
+                handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
+                --genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+                genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            end
+        end
         if (k == 'h') then
             creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
             -- getFlippedMetaObject()

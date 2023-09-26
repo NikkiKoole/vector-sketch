@@ -9,6 +9,95 @@ local unloop   = require 'lib.unpack-points'
 local numbers  = require 'lib.numbers'
 local border   = require 'lib.border-mesh'
 
+local text     = require 'lib.text'
+local canvas   = require 'lib.canvas'
+
+palettes       = {}
+local base     = {
+    '020202', '333233', '814800', 'e6c800', 'efebd8',
+    '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+    'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+    'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+    '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+    'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+    'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+    '798091', '4C5575', '6E4431', '626964', '613D41',
+}
+
+local base     = {
+    '020202',
+    '4f3166', '6f323a', '872f44', 'efebd8', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
+    'dca941', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
+    '938541', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
+    '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
+    '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'a95c42', 'c37c61',
+    'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+    '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
+    '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'd76656', 'b16890'
+
+}
+
+local base     = {
+    '020202',
+    '4f3166', '69445D', '613D41', 'efebd8', '6f323a', '872f44', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
+    'dca941', 'e6c800', 'f8df00', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
+    '938541', '808b1c', '8A934E', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
+    '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
+    '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'CB433A', 'a95c42',
+    'c37c61', 'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+    '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
+    '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'f0644d', 'ff7376', 'd76656', 'b16890',
+    '020202', '333233', '814800', 'efebd8',
+    '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+    'fa8a00', 'fef1d0',
+    'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+    '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+    '8F4839', 'EEC488',
+    'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+    '798091', '4C5575', '6E4431', '626964',
+
+}
+
+textures       = {
+    love.graphics.newImage('assets/bodytextures/texture-type0.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type2t.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type1.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type3.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type4.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type5.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type6.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type7.png'),
+
+}
+
+function hex2rgb(hex)
+    hex = hex:gsub("#", "")
+    return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+        tonumber("0x" .. hex:sub(5, 6))
+        / 255
+end
+
+for i = 1, #base do
+    local r, g, b = hex2rgb(base[i])
+    table.insert(palettes, { r, g, b })
+end
+local function getPNGMaskUrl(url)
+    return text.replace(url, '.png', '-mask.png')
+end
+
+function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
+                              renderPatch)
+    local img = mesh.getImage(url, optionalSettings)
+    local maskUrl = getPNGMaskUrl(url)
+    local mask = mesh.getImage(maskUrl)
+    -- print(url)
+    -- print(love.graphics.getDPIScale())
+    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
+            renderPatch)
+
+    return cnv
+end
+
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
@@ -189,22 +278,60 @@ function drawTorsoOver(box2dTorso)
     love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
 end
 
-function drawSkinOver(box2dGuy, creation)
+--[[
+  local texturedcanvas = helperTexturedCanvas(
+           url,
+           textures[values[partName].bgTex],
+           palettes[values[partName].bgPal],
+           values[partName].bgAlpha,
+           textures[values[partName].fgTex],
+           palettes[values[partName].fgPal],
+           values[partName].fgAlpha,
+           values[partName].texRot,
+           texscales[values[partName].texScale],
+           palettes[values[partName].linePal],
+           values[partName].lineAlpha,
+           flipX, flipY,
+           optionalImageSettings,
+           renderPatch
+       )
+]]
+--
+
+
+function drawSkinOver(box2dGuy, creation, cam)
     love.graphics.setColor(0, 0, 0, 1)
     if creation and creation.torso.metaURL then
-        local img = mesh.getImage(creation.torso.metaURL)
-        local w, h = img:getDimensions()
-        local x, y = box2dGuy.torso:getPosition()
-        local r = box2dGuy.torso:getAngle()
+        -- local maskUrl = getPNGMaskUrl(creation.torso.metaURL)
+        -- print(maskUrl)
+        cam:pop()
+        local cnv = helperTexturedCanvas(creation.torso.metaURL, textures[1], palettes[1], 5, textures[2], palettes[34],
+                5, 5, 5,
+                palettes[55], 5, 1, 1, nil, nil)
+        --print(cnv)
+        --local url = creation.torso.metaURL
+
+        --local cnv = canvas.makeTexturedCanvas2(mesh.getImage(url))
+        cam:push()
+        local img    = love.graphics.newImage(cnv)
+        --local img    = mesh.getImage(creation.torso.metaURL)
+        local w, h   = img:getDimensions()
+
+        local x, y   = box2dGuy.torso:getPosition()
+        local r      = box2dGuy.torso:getAngle()
 
         local wscale = creation.torso.w / creation.torso.metaPointsW
         local hscale = creation.torso.h / creation.torso.metaPointsH
 
-        local sx = (creation.torso.metaTexturePointsW / w) * wscale
-        local sy = (creation.torso.metaTexturePointsH / h) * hscale
+        local sx     = (creation.torso.metaTexturePointsW / w) * wscale
+        local sy     = (creation.torso.metaTexturePointsH / h) * hscale
 
-
+        print(x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
+        --  print(x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
+        love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(img, x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
+        love.graphics.setColor(0, 0, 0, 1)
+        --love.graphics.draw(img, x, y, r, 1, 1, w / 2, h / 2)
     end
 
 
@@ -367,15 +494,15 @@ function drawSkinOver(box2dGuy, creation)
 
 
         love.graphics.setColor(0, 0, 0, 1)
+        if box2dGuy.neck and box2dGuy.neck1 then
+            local ax, ay = box2dGuy.neck:getPosition()
+            local bx, by = box2dGuy.neck1:getPosition()
+            local cx, cy = box2dGuy.head:getPosition()
 
-        local ax, ay = box2dGuy.neck:getPosition()
-        local bx, by = box2dGuy.neck1:getPosition()
-        local cx, cy = box2dGuy.head:getPosition()
 
-
-        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-        texturedCurve(curve, image10, mesh10)
-
+            local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+            texturedCurve(curve, image10, mesh10)
+        end
 
 
         love.graphics.setColor(0, 0, 0, 1)
