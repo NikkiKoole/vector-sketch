@@ -140,24 +140,6 @@ local maskShader = love.graphics.newShader([[
 ]])
 
 
-lib.makeTexturedCanvas2 = function(lineart)
-   local lw, lh = lineart:getDimensions()
-   local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
-
-   love.graphics.setCanvas({ canvas, stencil = false }) --<<<
-
-   local flipx = 1
-   local flipy = 1
-   local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
-   print(sx, sy, ox, oy)
-   love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
-   love.graphics.setCanvas()
-   local imageData = canvas:newImageData()
-
-   return imageData
-end
-
-
 
 
 

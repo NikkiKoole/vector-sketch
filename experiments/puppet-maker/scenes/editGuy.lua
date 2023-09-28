@@ -727,7 +727,7 @@ function scene.load()
 
 
 
-   parts, _ = generate()
+   parts = generateParts()
 
 
    biped = Concord.entity()

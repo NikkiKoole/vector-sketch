@@ -52,6 +52,9 @@ lurker.postswap = function(f)
    focussed = true
 end
 
+
+
+
 local audioHelper = require 'lib.audio-helper'
 
 audioHelper.startAudioThread()
@@ -161,7 +164,7 @@ function love.load()
 
 
    textures = {
-       love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
+      love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
        love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
        love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
        love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
@@ -246,7 +249,11 @@ function love.load()
 
    fiveGuys = {} -- here we keep the 5 differnt guys around, I might as well just generate them here to begin with
 
-   parts, _ = generate()
+   parts, urls = generateParts()
+   for i = 1, #urls do
+     -- mesh.getImage(urls[i])
+   end
+   print(inspect(urls))
    amountOfGuys = 5
 
    prof.push('frame')
@@ -259,7 +266,7 @@ function love.load()
 
 
    for i = 1, amountOfGuys do
-      local parts, values = generate()
+      local values = generateValues()
 
       values = partRandomize(values, false)
 
@@ -328,12 +335,12 @@ function love.load()
 
 
    editingGuy = fiveGuys[1]
-
+   loadSong('assets/mipo4.melodypaint.txt')
    SM.setPath("scenes/")
    SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
-   loadSong('assets/mipo4.melodypaint.txt')
+  
    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
    love.event.wait()

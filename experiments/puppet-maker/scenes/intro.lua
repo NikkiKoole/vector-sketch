@@ -92,7 +92,7 @@ function scene.load()
        children = {}
    }
 
-   parts, _ = generate()
+   parts = generateParts()
 
    biped = Concord.entity()
    potato = Concord.entity()

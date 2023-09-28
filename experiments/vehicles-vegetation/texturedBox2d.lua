@@ -347,33 +347,17 @@ function drawSkinOver(box2dGuy, creation)
                 if true or box2dGuy.hairNeedsRedo then
                     local img = mesh.getImage('assets/parts/hair1x.png')
                     local w, h = img:getDimensions()
-                    -- editingGuy.hair = updateChild(container, editingGuy.hair, createHairVanillaLine(values, hairLine))
-                    --return createFromImage.vanillaline(
-                    --    url, textured,
-                    --        values.hairWidthMultiplier, values.hairTension, hairLine)
-                    -- print(creation.head.flipy)
                     local f = creation.head.metaPoints
-                    -- print(inspect(f))
                     local hairLine = { f[3], f[4], f[5], f[6], f[7] }
-                    --for i = 1, #hairLine do
-                    --  local eyelx, eyely = box2dGuy.head:getWorldPoint(
-                    --          (hairLine[i][1] + creation.head.metaOffsetX) * sx,
-                    --          (hairLine[i][2] + creation.head.metaOffsetY) * sy)
-                    --love.graphics.circle('fill', eyelx, eyely, 5)
-                    --print(getLengthOfPath(hairLine))
-
-
+                
                     local points = hairLine
                     local hairTension = .02
                     local spacing = 3
                     local coords
-                    --print('vanillaline stuff', shape.data)
-                    --if shape.data and shape.data.tension then
+
                     coords = border.unloosenVanillaline(points, hairTension, spacing)
-                    --else
-                    --   coords = unloop.unpackNodePoints(points, false)
-                    --end
-                    local width = 160 * 3 -- shape.data and shape.data.width or 60
+
+                    local width = 160 * 3 
                     -- print(inspect(coords), inspect(points))
                     local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
@@ -388,8 +372,7 @@ function drawSkinOver(box2dGuy, creation)
                     local m = love.graphics.newMesh(vertices, "strip")
                     --print(inspect(vertices))
                     m:setTexture(img)
-                    love.graphics.draw(m, x, y, r, sx * creation.head
-                    .flipx, sy)
+                    love.graphics.draw(m, x, y, r, sx * creation.head.flipx , sy )
 
                     -- local factor = (length / height)
                     -- currentNode.data = {}

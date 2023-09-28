@@ -1,9 +1,100 @@
 { {
+children = {},
+folder = true,
+name = "bodies-old",
+transforms = {
+l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
 children = { {
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
 name = "romp",
-points = { { -181, -359 }, { 339, -359 }, { 339, 497 }, { -181, 497 } },
+points = { { -169.5, -280 }, { 169.5, -280 }, { 169.5, 280 }, { -169.5, 280 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA1.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -2.454, -260.91 }, { 105.509, -126.774 }, { 146.404, 74.429 }, { 110.416, 241.28 }, { -15.54, 260.91 }, { -141.496, 211.836 }, { -146.404, 72.793 }, { -89.151, -128.41 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy",
+transforms = {
+l = { 1667.977, 1569.8, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -144.5, -234 }, { 144.5, -234 }, { 144.5, 234 }, { -144.5, 234 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA2.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 10.309, -221.016 }, { 48.697, -94.171 }, { 90.422, 37.681 }, { 105.443, 172.871 }, { -6.381, 219.603 }, { -126.549, 154.512 }, { -108.19, 46.026 }, { -41.43, -99.178 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy copy",
+transforms = {
+l = { 1073.325, 1559.635, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -185, -211 }, { 185, -211 }, { 185, 211 }, { -185, 211 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA3.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -26.528, -189.455 }, { 105.509, -126.774 }, { 163.739, 10.826 }, { 118.676, 161.037 }, { 1.845, 187.741 }, { -113.317, 144.347 }, { -163.387, 20.84 }, { -140.021, -116.019 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy copy copy",
+transforms = {
+l = { 519.333, 1569.8, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -154, -207 }, { 154, -207 }, { 154, 207 }, { -154, 207 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA4.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 27.977, -188.886 }, { 132.615, -157.494 }, { 129.625, 15.906 }, { 104.213, 199.771 }, { -9.394, 193.791 }, { -134.96, 184.822 }, { -125.991, 15.906 }, { -63.208, -153.01 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy copy copy copy",
+transforms = {
+l = { -42.861, 1569.8, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -260, -428 }, { 260, -428 }, { 260, 428 }, { -260, 428 } },
 texture = {
 filter = "linear",
 url = "/experiments/puppet-maker/assets/parts/shapes10.png",
@@ -12,7 +103,7 @@ wrap = "repeat"
 }, {
 color = { 0, 0, 0, 1 },
 name = "8way",
-points = { { 62.826, -311.986 }, { 220.382, -189.093 }, { 289.706, 66.147 }, { 204.626, 406.467 }, { 56.524, 463.187 }, { -82.125, 400.165 }, { -126.24, 81.902 }, { -101.032, -167.035 } },
+points = { { -18.907, -387.587 }, { 138.649, -264.693 }, { 207.973, -9.454 }, { 122.893, 330.866 }, { -25.209, 387.587 }, { -163.858, 324.565 }, { -207.973, 6.301 }, { -182.765, -242.636 } },
 type = "meta"
 } },
 folder = true,
@@ -24,112 +115,7 @@ l = { -3430.659, 1022.711, 0, 1, 1, 79, 497, 0, 0 }
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
 name = "romp",
-points = { { -181, -359 }, { 377, -359 }, { 377, -36 }, { -181, -36 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes12.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 108.798, -315.571 }, { 292.068, -266.699 }, { 333.609, -164.068 }, { 267.632, -90.76 }, { 108.798, -66.324 }, { -50.036, -85.873 }, { -138.006, -171.399 }, { -59.811, -266.699 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { 1592.757, 2447.363, 0, 1, 1, 98, -36, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 471, -359 }, { 471, 573 }, { -181, 573 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes11.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 145.631, -321.191 }, { 255.92, -232.96 }, { 312.64, 101.058 }, { 388.266, 498.098 }, { 148.782, 498.098 }, { -87.551, 494.946 }, { -37.134, 79 }, { 29.04, -229.809 } },
-type = "meta"
-} },
-folder = true,
-name = "body       ",
-transforms = {
-l = { -2763.5, 1671.591, 0, 1, 1, 79, 497, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 305, -359 }, { 305, 197 }, { -181, 197 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes13.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 62.826, -311.986 }, { 206.477, -220.969 }, { 245.843, -66.423 }, { 221.654, 139.103 }, { 53.754, 166.263 }, { -86.985, 146.51 }, { -74.914, -73.712 }, { -28.258, -223.885 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -1507.983, 2719.893, 0, 1, 1, 62, 197, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 607, -359 }, { 607, 349 }, { -181, 349 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes8.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 219.719, -104.598 }, { 496.826, -294.297 }, { 556.45, 10.443 }, { 347.769, 272.122 }, { 168.9, 315.183 }, { 9.905, 252.248 }, { -82.842, 53.504 }, { -99.404, -274.422 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -2507.604, 858.206, 0, 1, 1, 213, 349, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 541, -359 }, { 541, 570 }, { -181, 570 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes9.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { 175.784, -324.395 }, { 474.879, -216.211 }, { 446.242, 44.702 }, { 417.606, 493.346 }, { 163.056, 506.073 }, { -104.221, 499.709 }, { -129.676, 66.975 }, { -142.403, -219.393 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -1602.823, 1406.554, 0, 1, 1, 180, 570, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 541, -359 }, { 541, 570 }, { -181, 570 } },
+points = { { -361, -464.5 }, { 361, -464.5 }, { 361, 464.5 }, { -361, 464.5 } },
 texture = {
 filter = "linear",
 url = "/experiments/puppet-maker/assets/parts/shapes7.png",
@@ -138,7 +124,7 @@ wrap = "repeat"
 }, {
 color = { 0, 0, 0, 1 },
 name = "8way",
-points = { { 142.022, -321.269 }, { 274.748, -219.772 }, { 438.704, 74.307 }, { 425.691, 477.69 }, { 152.432, 534.945 }, { -79.188, 488.1 }, { -89.598, 97.73 }, { 14.501, -206.76 } },
+points = { { -32.531, -428.107 }, { 108.537, -311.083 }, { 290.189, -4.682 }, { 277.057, 349.869 }, { -22.121, 428.107 }, { -296.351, 358.623 }, { -285.408, -0.305 }, { -180.356, -293.575 } },
 type = "meta"
 } },
 folder = true,
@@ -150,148 +136,22 @@ l = { -1118.447, 227.602, 0, 1, 1, 180, 570, 0, 0 }
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
 name = "romp",
-points = { { -181, -359 }, { 69, -359 }, { 69, 25 }, { -181, 25 } },
+points = { { -243, -278 }, { 243, -278 }, { 243, 278 }, { -243, 278 } },
 texture = {
 filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes6.png",
+url = "/experiments/puppet-maker/assets/parts/shapes13.png",
 wrap = "repeat"
 }
 }, {
 color = { 0, 0, 0, 1 },
 name = "8way",
-points = { { -56.415, -344.311 }, { 12.509, -276.885 }, { 24.496, -166.007 }, { 28.991, -26.66 }, { -60.91, -17.67 }, { -135.828, -28.158 }, { -138.824, -174.997 }, { -114.851, -281.38 } },
+points = { { -16.603, -239.125 }, { 127.048, -148.108 }, { 166.414, 6.438 }, { 142.225, 211.964 }, { -25.675, 239.124 }, { -166.414, 219.371 }, { -154.343, -0.851 }, { -107.687, -151.024 } },
 type = "meta"
 } },
 folder = true,
 name = "body",
 transforms = {
-l = { 1040.188, 27.928, 0, 1, 1, -56, 25, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 13, -359 }, { 13, -21 }, { -181, -21 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes5.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { -90.245, -342.299 }, { -12.117, -297.655 }, { -9.327, -174.882 }, { -20.488, -54.9 }, { -87.455, -46.53 }, { -162.792, -54.9 }, { -165.583, -158.141 }, { -168.373, -280.913 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { 297.859, 498.286, 0, 1, 1, -84, -21, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 183, -359 }, { 183, -93 }, { -181, -93 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes4.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { -2.505, -345.224 }, { 140.264, -304.362 }, { 148.838, -202.842 }, { 145.394, -116.751 }, { -6.126, -113.308 }, { -133.54, -120.195 }, { -150.758, -213.173 }, { -154.368, -307.808 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -112.281, 676.374, 0, 1, 1, 1, -93, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 143, -359 }, { 143, 83 }, { -181, 83 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes3.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { -21.317, -347.163 }, { 116.191, -268.587 }, { 119.958, -158.054 }, { 92.035, 7.335 }, { -17.509, 43.85 }, { -124.904, 11.631 }, { -159.271, -136.575 }, { -148.531, -289.077 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { 481.856, -214.106, 0, 1, 1, -19, 84.612, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 71, -359 }, { 71, 102 }, { -181, 102 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/shapes2.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { -54.674, -346.296 }, { 7.664, -258.758 }, { 26.232, -115.514 }, { 48.765, 63.944 }, { -49.587, 86.073 }, { -152.856, 56.568 }, { -131.601, -112.862 }, { -111.706, -257.432 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { 0, 0, 0, 1, 1, -55, 102, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 121, -359 }, { 121, 343 }, { -181, 343 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/romp3.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { -21.317, -347.163 }, { 57.485, -256.666 }, { 75.491, 3.419 }, { 27.475, 235.495 }, { -70.557, 317.522 }, { -154.584, 219.49 }, { -152.583, 11.422 }, { -131.814, -258.765 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -210.469, -523.471, 0, 1, 1, 0, 359, 0, 0 }
-}
-}, {
-children = { {
-color = { 0.133, 0.118, 0.118, 1 },
-name = "romp",
-points = { { -181, -359 }, { 181, -359 }, { 181, 359 }, { -181, 359 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/romp2.png",
-wrap = "repeat"
-}
-}, {
-color = { 0, 0, 0, 1 },
-name = "8way",
-points = { { -21.317, -347.163 }, { 90.285, -247.689 }, { 142.351, -6.7 }, { 117.062, 241.727 }, { -7.896, 310.156 }, { -109.052, 231.314 }, { -138.803, -5.212 }, { -131.814, -258.765 } },
-type = "meta"
-} },
-folder = true,
-name = "body",
-transforms = {
-l = { -1702.068, -231.666, 0, 1, 1, 0, 359, 0, 0 }
+l = { -1507.983, 2719.893, 0, 1, 1, 62, 197, 0, 0 }
 }
 }, {
 children = { {
@@ -314,241 +174,241 @@ name = "body",
 transforms = {
 l = { -561.243, 0, 0, 1, 1, 0, 359, 0, 0 }
 }
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -208, -407 }, { 208, -407 }, { 208, 407 }, { -208, 407 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/romp2.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -10.195, -364.624 }, { 118.907, -238.104 }, { 178.294, 20.1 }, { 126.653, 270.559 }, { 0.133, 358.348 }, { -139.297, 255.066 }, { -167.699, 27.846 }, { -152.207, -238.104 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { -1702.068, -231.666, 0, 1, 1, 0, 359, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -151, -351 }, { 151, -351 }, { 151, 351 }, { -151, 351 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/romp3.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 18.23, -332.342 }, { 97.032, -241.845 }, { 115.038, 18.24 }, { 67.022, 250.316 }, { -31.01, 332.343 }, { -115.037, 234.311 }, { -113.036, 26.243 }, { -92.267, -243.944 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { -210.469, -523.471, 0, 1, 1, 0, 359, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -126, -230.5 }, { 126, -230.5 }, { 126, 230.5 }, { -126, 230.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes2.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -2.628, -216.184 }, { 59.71, -128.646 }, { 78.278, 14.598 }, { 100.811, 194.055 }, { 2.459, 216.185 }, { -100.81, 186.68 }, { -79.555, 17.25 }, { -59.66, -127.321 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 0, 0, 0, 1, 1, -55, 102, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -162, -221 }, { 162, -221 }, { 162, 221 }, { -162, 221 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes3.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -1.661, -195.507 }, { 135.847, -116.93 }, { 139.614, -6.398 }, { 111.691, 158.992 }, { 2.147, 195.506 }, { -105.248, 163.287 }, { -139.614, 15.082 }, { -128.875, -137.421 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 481.856, -214.106, 0, 1, 1, -19, 84.612, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -182, -133 }, { 182, -133 }, { 182, 133 }, { -182, 133 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes4.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 0.26, -115.958 }, { 143.029, -75.096 }, { 151.603, 26.424 }, { 148.159, 112.515 }, { -3.361, 115.958 }, { -130.775, 109.071 }, { -147.993, 16.093 }, { -151.603, -78.542 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { -112.281, 676.374, 0, 1, 1, 1, -93, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -97, -169 }, { 97, -169 }, { 97, 169 }, { -97, 169 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes5.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -1.395, -147.885 }, { 76.733, -103.24 }, { 79.523, 19.532 }, { 68.362, 139.514 }, { 1.395, 147.884 }, { -73.942, 139.514 }, { -76.733, 36.273 }, { -79.523, -86.499 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 297.859, 498.286, 0, 1, 1, -84, -21, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -125, -192 }, { 125, -192 }, { 125, 192 }, { -125, 192 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes6.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -1.498, -163.32 }, { 67.426, -95.894 }, { 79.413, 14.983 }, { 83.908, 154.331 }, { -5.993, 163.32 }, { -80.911, 152.832 }, { -83.907, 5.993 }, { -59.934, -100.389 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 1040.188, 27.928, 0, 1, 1, -56, 25, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -260, -324 }, { 260, -324 }, { 260, 324 }, { -260, 324 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes9.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 10.611, -315.121 }, { 221.128, -240.27 }, { 188.381, 10.011 }, { 160.312, 271.988 }, { -36.171, 271.988 }, { -206.923, 257.953 }, { -230.314, -8.702 }, { -220.958, -273.018 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { -1602.823, 1406.554, 0, 1, 1, 180, 570, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -394, -354 }, { 394, -354 }, { 394, 354 }, { -394, 354 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes8.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 2.382, -194.674 }, { 322.756, -262.785 }, { 342.938, 32.363 }, { 196.625, 236.697 }, { -27.889, 330.034 }, { -212.042, 211.47 }, { -290.243, 29.841 }, { -325.56, -247.649 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { -2507.604, 858.206, 0, 1, 1, 213, 349, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -326, -466 }, { 326, -466 }, { 326, 466 }, { -326, 466 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes11.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -4.727, -409.644 }, { 105.562, -321.413 }, { 162.282, 12.604 }, { 237.909, 409.644 }, { -1.576, 409.644 }, { -237.909, 406.493 }, { -187.492, -9.454 }, { -121.318, -318.263 } },
+type = "meta"
+} },
+folder = true,
+name = "body       ",
+transforms = {
+l = { -2763.5, 1671.591, 0, 1, 1, 79, 497, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -279, -161.5 }, { 279, -161.5 }, { 279, 161.5 }, { -279, 161.5 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapes12.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 10.996, -124.624 }, { 194.266, -75.751 }, { 235.807, 26.88 }, { 169.831, 100.188 }, { 10.996, 124.624 }, { -147.838, 105.075 }, { -235.808, 19.549 }, { -157.613, -75.751 } },
+type = "meta"
+} },
+folder = true,
+name = "body",
+transforms = {
+l = { 1592.757, 2447.363, 0, 1, 1, 98, -36, 0, 0 }
+}
 } },
 folder = true,
 name = "bodies",
 transforms = {
 l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 }
-}
-}, {
-children = { {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { 427, 271 }, { 721, 271 }, { 721, 439 }, { 427, 439 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet1.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1634.052, 300.131, 0, 1, 1, 676.021, 343.964, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { 427, 271 }, { 694, 271 }, { 694, 416 }, { 427, 416 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet3.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 368.857, -45.398, 0, 1, 1, 629.836, 331.459, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { 427, 271 }, { 721, 271 }, { 721, 439 }, { 427, 439 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet2.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 0, 0, 0, 1, 1, 647.392, 354.867, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -306, -146.5 }, { 306, -146.5 }, { 306, 146.5 }, { -306, 146.5 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet6.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 786.639, 1014.681, 0, 1, 1, 244.186, -44.946, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -273, -150 }, { 273, -150 }, { 273, 150 }, { -273, 150 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet7.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1",
-transforms = {
-l = { 1497.518, 1019.096, 0, 1, 1, 180.278, -13.122, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -273, -150 }, { 192, -150 }, { 192, 153 }, { -273, 153 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet8.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "feet1 copy",
-transforms = {
-l = { 927.702, 1491.833, 0, 1, 1, 91.641, -13.122, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 244.5, -147 }, { 244.5, 147 }, { -244.5, 147 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/hand3.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "hand1",
-transforms = {
-l = { 2258.372, 925.286, 0, 1, 1, 180.279, -71.83, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 322.5, -147 }, { 322.5, 94 }, { -244.5, 94 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet1x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x1",
-transforms = {
-l = { 1516.09, 1818.002, 0, 1, 1, 180.279, -71.83, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 295.5, -147 }, { 295.5, 46 }, { -244.5, 46 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet2x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x2",
-transforms = {
-l = { 1500.678, 1594.516, 0, 1, 1, 180.279, -71.83, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 260.5, -147 }, { 260.5, 84 }, { -244.5, 84 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet3x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x3",
-transforms = {
-l = { 1030.588, 2126.258, 0, 1, 1, 149.453, -25.592, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 291.5, -147 }, { 291.5, 86 }, { -244.5, 86 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet4x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x4",
-transforms = {
-l = { 999.763, 2411.394, 0, 1, 1, 187.986, -17.886, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 376.5, -147 }, { 376.5, 27 }, { -244.5, 27 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet5x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x5",
-transforms = {
-l = { 961.231, 2657.999, 0, 1, 1, 241.93, -79.537, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 233.5, -147 }, { 233.5, 175 }, { -244.5, 175 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet6x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x6",
-transforms = {
-l = { 1462.144, 2789.008, 0, 1, 1, 110.92, 5.232, 0, 0 }
-}
-}, {
-children = { {
-color = { 0, 0, 0, 1 },
-name = "",
-points = { { -244.5, -147 }, { 165.5, -147 }, { 165.5, 69 }, { -244.5, 69 } },
-texture = {
-filter = "linear",
-url = "/experiments/puppet-maker/assets/parts/feet7x.png",
-wrap = "repeat"
-}
-} },
-folder = true,
-name = "x7",
-transforms = {
-l = { 1770.399, 2580.935, 0, 1, 1, 56.974, -17.887, 0, 0 }
-}
-} },
-folder = true,
-name = "feet",
-transforms = {
-l = { 7.258, -7.258, 0, 1, 1, 0, 0, 0, 0 }
 }
 } }

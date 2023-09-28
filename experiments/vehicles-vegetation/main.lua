@@ -1515,7 +1515,7 @@ function love.draw()
         drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
 
-        drawWorld(world)
+        --drawWorld(world)
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
         end
