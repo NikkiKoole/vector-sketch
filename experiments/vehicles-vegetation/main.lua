@@ -13,8 +13,10 @@ local mesh            = require 'lib.mesh'
 require 'box2dGuyCreation'
 require 'texturedBox2d'
 local creation = getCreation()
+local canvas   = require 'lib.canvas'
 
-lurker.quiet = true
+local text     = require 'lib.text'
+lurker.quiet   = true
 require 'palette'
 
 
@@ -24,6 +26,76 @@ PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 
+
+palettes   = {}
+local base = {
+    '020202', '333233', '814800', 'e6c800', 'efebd8',
+    '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+    'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+    'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+    '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+    'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+    'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+    '798091', '4C5575', '6E4431', '626964', '613D41',
+}
+
+local base = {
+    '020202',
+    '4f3166', '6f323a', '872f44', 'efebd8', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
+    'dca941', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
+    '938541', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
+    '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
+    '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'a95c42', 'c37c61',
+    'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+    '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
+    '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'd76656', 'b16890'
+
+}
+
+local base = {
+    '020202',
+    '4f3166', '69445D', '613D41', 'efebd8', '6f323a', '872f44', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
+    'dca941', 'e6c800', 'f8df00', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
+    '938541', '808b1c', '8A934E', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
+    '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
+    '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'CB433A', 'a95c42',
+    'c37c61', 'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+    '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
+    '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'f0644d', 'ff7376', 'd76656', 'b16890',
+    '020202', '333233', '814800', 'efebd8',
+    '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+    'fa8a00', 'fef1d0',
+    'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+    '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+    '8F4839', 'EEC488',
+    'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+    '798091', '4C5575', '6E4431', '626964',
+
+}
+
+textures   = {
+    love.graphics.newImage('assets/bodytextures/texture-type0.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type2t.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type1.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type3.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type4.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type5.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type6.png'),
+    love.graphics.newImage('assets/bodytextures/texture-type7.png'),
+
+}
+
+function hex2rgb(hex)
+    hex = hex:gsub("#", "")
+    return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+        tonumber("0x" .. hex:sub(5, 6))
+        / 255
+end
+
+for i = 1, #base do
+    local r, g, b = hex2rgb(base[i])
+    table.insert(palettes, { r, g, b })
+end
 -- check this for multiple fixtures, -> sensor for gorund
 -- https://love2d.org/forums/viewtopic.php?t=80950
 -- lift the rendering from windfield :
@@ -801,6 +873,25 @@ function makeVehicle(x, y)
     joint2:setMaxMotorTorque(motorTorque)
 end
 
+local function getPNGMaskUrl(url)
+    return text.replace(url, '.png', '-mask.png')
+end
+
+
+function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
+                              renderPatch)
+    print(url)
+    local img = mesh.getImage(url, optionalSettings)
+    local maskUrl = getPNGMaskUrl(url)
+    local mask = mesh.getImage(maskUrl)
+    -- print(url)
+    -- print(love.graphics.getDPIScale())
+    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
+            renderPatch)
+
+    return cnv
+end
+
 function startExample(number)
     local width, height = love.graphics.getDimensions()
     love.physics.setMeter(500)
@@ -940,36 +1031,44 @@ function startExample(number)
         local margin = 20
         -- objects.border = makeBorderChain(width, height, margin)
 
-        objects.ground = makeChainGround()
-        objects.ground.fixture:setUserData(makeUserData("ground"))
 
-        objects.ground.fixture:setFriction(1)
-
-
-        if true then
-            objects.ground = {}
-            objects.ground.body = love.physics.newBody(world, width / 2, -2000, "static")
-            objects.ground.shape = love.physics.newRectangleShape(width * 10, height / 4)
-            objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
-            objects.ground.fixture:setUserData(makeUserData("ground"))
-            objects.ground.fixture:setFriction(1)
-        end
+        local top = love.physics.newBody(world, width / 2, -4000, "static")
+        local topshape = love.physics.newRectangleShape(width * 10, height / 4)
+        local topfixture = love.physics.newFixture(top, topshape, 1)
 
 
-        for i = 1, 10 do
-            makeVehicle(width / 2 + i * 400, -3000)
-        end
+        local bottom = love.physics.newBody(world, width / 2, 00, "static")
+        local bottomshape = love.physics.newRectangleShape(width * 10, height / 4)
+        local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
+
+        local left = love.physics.newBody(world, -3000, -2000, "static")
+        local leftshape = love.physics.newRectangleShape(height / 4, 4000)
+        local leftfixture = love.physics.newFixture(left, leftshape, 1)
+
+        local right = love.physics.newBody(world, 3000, -2000, "static")
+        local rightshape = love.physics.newRectangleShape(height / 4, 4000)
+        local rightfixture = love.physics.newFixture(right, rightshape, 1)
+
 
         data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
-
         bodyRndIndex = math.ceil(love.math.random() * #data)
+
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                 data[bodyRndIndex]
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
-        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth()
-        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight()
+
+
+        torsoCanvas = love.graphics.newImage(helperTexturedCanvas(creation.torso.metaURL,
+                textures[1], palettes[12], 5,
+                textures[2], palettes[34], 2,
+                0, 1,
+                palettes[1], 5,
+                1, 1, nil, nil))
+
+        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * 1
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * 1
         -- print(mesh.getImage(creation.torso.metaURL))
         -- makecreation the dimensions of the image
 
@@ -982,6 +1081,13 @@ function startExample(number)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
+
+            headCanvas = love.graphics.newImage(helperTexturedCanvas(creation.head.metaURL,
+                    textures[1], palettes[12], 5,
+                    textures[2], palettes[34], 2,
+                    0, 1,
+                    palettes[1], 5,
+                    1, 1, nil, nil))
         end
         --
         feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
@@ -997,6 +1103,13 @@ function startExample(number)
         changeMetaTexture('rfoot', feetdata[footIndex])
         creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+
+        footCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lfoot.metaURL,
+                textures[1], palettes[12], 5,
+                textures[2], palettes[34], 2,
+                0, 1,
+                palettes[1], 5,
+                1, 1, nil, nil))
 
 
         local handIndex = 12 --math.ceil(math.random() * #feetdata)
@@ -1040,8 +1153,8 @@ function startExample(number)
 
 
 
-        for i = 1, 2 do
-            table.insert(box2dGuys, makeGuy(i * 800, -1000, i))
+        for i = 1, 5 do
+            table.insert(box2dGuys, makeGuy( -2000 + i * 800, -1000, i))
         end
 
 
@@ -1053,9 +1166,9 @@ function startExample(number)
 
         -- make a shape per meta thing loaded from bodies.
 
-        for i = 1, #data do
-            table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
-        end
+        -- for i = 1, #data do
+        --     table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
+        -- end
     end
 
     example = number
@@ -1098,20 +1211,34 @@ function love.load()
     mesh5 = createTexturedTriangleStrip(image5)
 
 
-    image6 = love.graphics.newImage('assets/hair1x.png')
+    image6 = love.graphics.newImage('assets/parts/hair1x.png')
     mesh6 = createTexturedTriangleStrip(image6)
 
-    image7 = love.graphics.newImage('assets/hair2x.png')
+    image7 = love.graphics.newImage('assets/parts/hair2x.png')
     mesh7 = createTexturedTriangleStrip(image7)
 
-    image8 = love.graphics.newImage('assets/hair1.png')
+    image8 = love.graphics.newImage('assets/parts/hair1.png')
     mesh8 = createTexturedTriangleStrip(image8)
 
-    image9 = love.graphics.newImage('assets/hair6.png')
+    image9 = love.graphics.newImage('assets/parts/hair6.png')
     mesh9 = createTexturedTriangleStrip(image9)
+
+
+
+    legimg = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
+            textures[1], palettes[randInt(#palettes)], 5,
+            textures[2], palettes[randInt(#palettes)], 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+
+    legmesh = createTexturedTriangleStrip(legimg)
+
 
     image10 = love.graphics.newImage('assets/legp2.png')
     mesh10 = createTexturedTriangleStrip(image10)
+
+
 
     --create()
     example = nil
@@ -1120,7 +1247,7 @@ function love.load()
         palette[colors.light_cream][3])
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2, w * 2, h * 2)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 4, h * 4)
     grabDevelopmentScreenshot()
 end
 
@@ -1130,7 +1257,7 @@ local function pointerReleased(id, x, y)
         -- if false then
         if mj.id == id then
             if (mj.joint) then
-                if (mj.jointBody) then
+                if (mj.jointBody and objects.ground) then
                     local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
                     local tl = { points[1], points[2] }
                     local tr = { points[3], points[4] }
@@ -1198,10 +1325,31 @@ function love.mousepressed(x, y)
     pointerPressed('mouse', x, y)
 end
 
+-- note: there is an issue in here, when you press on a hand that is over a body, you probaly want the hand but
+-- to fix this i think we want to add all possible interactions of this click to a temp list.
+-- then afterward find the best one to connect.
+
+local function makePrio(fixture)
+    if fixture:getUserData() then
+        if fixture:getUserData().bodyType == 'hand' then
+            return 3
+        end
+        if fixture:getUserData().bodyType == 'armpart' then
+            return 2
+        end
+    end
+    return 1
+end
+
 function pointerPressed(id, x, y)
     local wx, wy = cam:getWorldCoordinates(x, y)
-    local hitAny = false
     local bodies = world:getBodies()
+    print('checking')
+
+    local temp = {}
+
+
+
 
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -1209,19 +1357,29 @@ function pointerPressed(id, x, y)
             local hitThisOne = fixture:testPoint(wx, wy)
             local isSensor = fixture:isSensor()
             if (hitThisOne and not isSensor) then
-                killMouseJointIfPossible(id)
+                table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
+                --killMouseJointIfPossible(id)
+                --table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
 
-                table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
-
-                local vx, vy = body:getLinearVelocity()
+                --local vx, vy = body:getLinearVelocity()
                 -- body:setPosition(body:getX(), body:getY() - 10)
-
-                hitAny = true
+                -- print('true')
+                -- hitAny = true
             end
         end
     end
-
-    if hitAny == false then killMouseJointIfPossible(id) end
+    if #temp > 0 then
+        table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
+        -- find the best one, that means, if we find one with userdata hands that goes first, then arms
+        --for i = 1, #temp do
+        --    print(inspect(temp[i].fixture:getUserData()))
+        --end
+        --print(inspect(temp))
+        killMouseJointIfPossible(id)
+        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy))
+    end
+    print('done checking', #pointerJoints)
+    if #temp == 0 then killMouseJointIfPossible(id) end
 end
 
 function getBodyColor(body)
@@ -1303,6 +1461,10 @@ function getIndexOfConnector(conn)
     return -1
 end
 
+function randInt(length)
+    return math.ceil(math.random() * length)
+end
+
 function love.draw()
     local width, height = love.graphics.getDimensions()
     drawMeterGrid()
@@ -1324,7 +1486,7 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
-        -- drawWorld(world)
+        drawWorld(world)
         local tlx, tly = cam:getWorldCoordinates( -1000, 0)
         local brx, bry = cam:getWorldCoordinates(width + 1000, height)
         for i = 1, #box2dGuys do
@@ -1341,6 +1503,7 @@ function love.draw()
 
 
         love.graphics.print(love.timer.getFPS(), 0, 0)
+        --love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
     end
 
 
@@ -1365,6 +1528,7 @@ function love.draw()
 
 
         love.graphics.print(love.timer.getFPS(), 0, 0)
+        -- love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
     end
 
     cam:push()
@@ -1618,7 +1782,8 @@ function rotateAllBodies(bodies, dt)
 end
 
 function love.update(dt)
-    -- lurker.update()
+    lurker.update()
+
 
     -- this is way too agressive, maybe firgure out a way where i go 1 or 2 nodes up and down to check
     if false then
@@ -1633,7 +1798,6 @@ function love.update(dt)
             local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
             local wx, wy = cam:getWorldCoordinates(mx, my)
             mj.joint:setTarget(wx, wy)
-
 
             local fixtures = mj.jointBody:getFixtures();
             for k = 1, #fixtures do
@@ -1767,6 +1931,26 @@ function love.keypressed(k)
     if k == '3' then startExample(3) end
     if k == 'u' then
         upsideDown = not upsideDown
+        if not upsideDown then
+            for i = 1, #box2dGuys do
+                box2dGuys[i].luleg:setAngle(0)
+                box2dGuys[i].llleg:setAngle(0)
+                box2dGuys[i].lfoot:setAngle(math.pi / 2)
+                box2dGuys[i].ruleg:setAngle(0)
+                box2dGuys[i].rlleg:setAngle(0)
+                box2dGuys[i].rfoot:setAngle( -math.pi / 2)
+            end
+        end
+        if upsideDown then
+            for i = 1, #box2dGuys do
+                box2dGuys[i].luleg:setAngle(math.pi * 2)
+                box2dGuys[i].llleg:setAngle(math.pi * 2)
+                box2dGuys[i].lfoot:setAngle(math.pi / 2)
+                box2dGuys[i].ruleg:setAngle(math.pi * 2)
+                box2dGuys[i].rlleg:setAngle(math.pi * 2)
+                box2dGuys[i].rfoot:setAngle( -math.pi / 2)
+            end
+        end
     end
     if k == 's' then
         stiff = not stiff
@@ -1782,6 +1966,27 @@ function love.keypressed(k)
     end
 
     if example == 3 then
+        if k == '-' then
+            print('rest hard!')
+            for i = 1, #box2dGuys do
+                box2dGuys[i].head:setAngle( -math.pi)
+                if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
+                if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
+                box2dGuys[i].torso:setAngle(0)
+                box2dGuys[i].luleg:setAngle(0)
+                box2dGuys[i].llleg:setAngle(0)
+                box2dGuys[i].lfoot:setAngle(math.pi / 2)
+                box2dGuys[i].ruleg:setAngle(0)
+                box2dGuys[i].rlleg:setAngle(0)
+                box2dGuys[i].rfoot:setAngle( -math.pi / 2)
+                box2dGuys[i].luarm:setAngle(0)
+                box2dGuys[i].llarm:setAngle(0)
+                box2dGuys[i].lhand:setAngle(0)
+                box2dGuys[i].ruarm:setAngle(0)
+                box2dGuys[i].rlarm:setAngle(0)
+                box2dGuys[i].rhand:setAngle(0)
+            end
+        end
         if k == 'n' then
             creation.hasNeck = not creation.hasNeck
             for i = 1, #box2dGuys do
@@ -1817,8 +2022,8 @@ function love.keypressed(k)
             local earIndex = math.ceil(math.random() * #eardata)
             --print(eardata[earIndex])
             changeMetaTexture('ear', eardata[earIndex])
-            creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 2
-            creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 2
+            creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
+            creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'lear')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
@@ -1845,6 +2050,14 @@ function love.keypressed(k)
 
                 changeMetaPoints('head', flippedFloppedHeadPoints)
                 changeMetaTexture('head', data[headRndIndex])
+
+
+                headCanvas = love.graphics.newImage(helperTexturedCanvas(creation.head.metaURL,
+                        textures[1], palettes[randInt(#palettes)], 5,
+                        textures[2], palettes[randInt(#palettes)], 2,
+                        0, 1,
+                        palettes[1], 5,
+                        1, 1, nil, nil))
 
                 creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
                 creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
@@ -1895,6 +2108,14 @@ function love.keypressed(k)
             changeMetaTexture('rfoot', feetdata[footIndex])
             creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
             creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+
+            footCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lfoot.metaURL,
+                    textures[1], palettes[randInt(#palettes)], 5,
+                    textures[2], palettes[34], 2,
+                    0, 1,
+                    palettes[1], 5,
+                    1, 1, nil, nil))
+
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
@@ -1907,6 +2128,15 @@ function love.keypressed(k)
                     .points)
             changeMetaPoints('torso', flippedFloppedBodyPoints)
             changeMetaTexture('torso', data[bodyRndIndex])
+
+            torsoCanvas = love.graphics.newImage(helperTexturedCanvas(creation.torso.metaURL,
+                    textures[1], palettes[randInt(#palettes)], 5,
+                    textures[2], palettes[34], 2,
+                    0, 1,
+                    palettes[1], 5,
+                    1, 1, nil, nil))
+
+
 
             local body = box2dGuys[2].torso
             local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h

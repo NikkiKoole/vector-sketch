@@ -10,6 +10,90 @@ children = { {
 children = { {
 color = { 0.133, 0.118, 0.118, 1 },
 name = "romp",
+points = { { -169.5, -280 }, { 169.5, -280 }, { 169.5, 280 }, { -169.5, 280 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA1.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -2.454, -260.91 }, { 105.509, -126.774 }, { 146.404, 74.429 }, { 110.416, 241.28 }, { -15.54, 260.91 }, { -141.496, 211.836 }, { -146.404, 72.793 }, { -89.151, -128.41 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy",
+transforms = {
+l = { 1667.977, 1569.8, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -144.5, -234 }, { 144.5, -234 }, { 144.5, 234 }, { -144.5, 234 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA2.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 10.309, -221.016 }, { 48.697, -94.171 }, { 90.422, 37.681 }, { 105.443, 172.871 }, { -6.381, 219.603 }, { -126.549, 154.512 }, { -108.19, 46.026 }, { -41.43, -99.178 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy copy",
+transforms = {
+l = { 1073.325, 1559.635, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -185, -211 }, { 185, -211 }, { 185, 211 }, { -185, 211 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA3.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { -26.528, -189.455 }, { 105.509, -126.774 }, { 163.739, 10.826 }, { 118.676, 161.037 }, { 1.845, 187.741 }, { -113.317, 144.347 }, { -163.387, 20.84 }, { -140.021, -116.019 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy copy copy",
+transforms = {
+l = { 519.333, 1569.8, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
+points = { { -154, -207 }, { 154, -207 }, { 154, 207 }, { -154, 207 } },
+texture = {
+filter = "linear",
+url = "/experiments/puppet-maker/assets/parts/shapeA4.png",
+wrap = "repeat"
+}
+}, {
+color = { 0, 0, 0, 1 },
+name = "8way",
+points = { { 27.977, -188.886 }, { 132.615, -157.494 }, { 129.625, 15.906 }, { 104.213, 199.771 }, { -9.394, 193.791 }, { -134.96, 184.822 }, { -125.991, 15.906 }, { -63.208, -153.01 } },
+type = "meta"
+} },
+folder = true,
+name = "body copy copy copy copy",
+transforms = {
+l = { -42.861, 1569.8, 0, 1, 1, 0, 0, 0, 0 }
+}
+}, {
+children = { {
+color = { 0.133, 0.118, 0.118, 1 },
+name = "romp",
 points = { { -260, -428 }, { 260, -428 }, { 260, 428 }, { -260, 428 } },
 texture = {
 filter = "linear",
