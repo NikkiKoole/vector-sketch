@@ -1033,20 +1033,20 @@ function startExample(number)
 
 
         local top = love.physics.newBody(world, width / 2, -4000, "static")
-        local topshape = love.physics.newRectangleShape(width * 10, height / 4)
+        local topshape = love.physics.newRectangleShape(width * 10, height / 2)
         local topfixture = love.physics.newFixture(top, topshape, 1)
 
 
         local bottom = love.physics.newBody(world, width / 2, 00, "static")
-        local bottomshape = love.physics.newRectangleShape(width * 10, height / 4)
+        local bottomshape = love.physics.newRectangleShape(width * 10, height / 2)
         local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
 
         local left = love.physics.newBody(world, -3000, -2000, "static")
-        local leftshape = love.physics.newRectangleShape(height / 4, 4000)
+        local leftshape = love.physics.newRectangleShape(height / 2, 4000)
         local leftfixture = love.physics.newFixture(left, leftshape, 1)
 
         local right = love.physics.newBody(world, 3000, -2000, "static")
-        local rightshape = love.physics.newRectangleShape(height / 4, 4000)
+        local rightshape = love.physics.newRectangleShape(height / 2, 4000)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
 
 
