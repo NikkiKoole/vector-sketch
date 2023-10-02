@@ -216,7 +216,21 @@ end
 
 
 
-
+function drawPlantOver(data, i)
+    local imgs = { grassImage1, grassImage2 }
+    local index = (i % #imgs) + 1
+    --  print(index)
+    local img = imgs[index]
+    if data then
+        --print(inspect(data))
+        love.graphics.setColor(0, 0, 0, 1)
+        local w, h = img:getDimensions()
+        local x, y = data[1]:getPosition()
+        local r    = data[1]:getAngle()
+        love.graphics.draw(img, x, y, r, 1, 1, w, h)
+    end
+    --love.graphics.draw(img, x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
+end
 
 function drawSkinOver(box2dGuy, creation)
     love.graphics.setColor(0, 0, 0, 1)
@@ -349,7 +363,7 @@ function drawSkinOver(box2dGuy, creation)
                     local w, h = img:getDimensions()
                     local f = creation.head.metaPoints
                     local hairLine = { f[3], f[4], f[5], f[6], f[7] }
-                
+
                     local points = hairLine
                     local hairTension = .02
                     local spacing = 3
@@ -357,7 +371,7 @@ function drawSkinOver(box2dGuy, creation)
 
                     coords = border.unloosenVanillaline(points, hairTension, spacing)
 
-                    local width = 160 * 3 
+                    local width = 160 * 3
                     -- print(inspect(coords), inspect(points))
                     local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
@@ -372,7 +386,7 @@ function drawSkinOver(box2dGuy, creation)
                     local m = love.graphics.newMesh(vertices, "strip")
                     --print(inspect(vertices))
                     m:setTexture(img)
-                    love.graphics.draw(m, x, y, r, sx * creation.head.flipx , sy )
+                    love.graphics.draw(m, x, y, r, sx * creation.head.flipx, sy)
 
                     -- local factor = (length / height)
                     -- currentNode.data = {}

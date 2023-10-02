@@ -772,7 +772,8 @@ function makeGuy(x, y, groupId)
     local ruarm = makePart('ruarm', 'armpart', torso, 'right')
     local rlarm = makePart('rlarm', 'armpart', ruarm, 'right')
     local rhand = makePart('rhand', 'hand', rlarm, 'right')
-    makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.rhand.w + 20)
+    makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.rhand.w + 10,
+        creation.rhand.h + 10)
 
 
 
@@ -780,7 +781,8 @@ function makeGuy(x, y, groupId)
     local luarm = makePart('luarm', 'armpart', torso, 'left')
     local llarm = makePart('llarm', 'armpart', luarm, 'left')
     local lhand = makePart('lhand', 'hand', llarm, 'left')
-    makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.lhand.w + 20)
+    makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.lhand.w + 10,
+        creation.lhand.h + 10)
 
     local data = {
         torso = torso,

@@ -233,7 +233,20 @@ function isContactBetweenGroundAndCarGroundSensor(contact)
     end
 end
 
+function isContactThatShouldJustAffectOneParty(contact)
+    local fixtureA, fixtureB = contact:getFixtures()
+    if fixtureA:getUserData() and fixtureB:getUserData() then
+        if fixtureA:getUserData().bodyType == 'no-effect' then
+            print('jo!')
+            return true
+        end
+        --print(fixtureA:getUserData().bodyType, fixtureB:getUserData().bodyType)
+    else
+    end
+end
+
 function beginContact(a, b, contact)
+    isContactThatShouldJustAffectOneParty(contact)
     if contactShouldBeDisabled(a, b, contact) then
         contact:setEnabled(false)
         local point = { contact:getPositions() }
@@ -437,9 +450,10 @@ function makeShape(shapeType, w, h)
     end
 end
 
-function makeAndAddConnector(parent, x, y, data, size)
+function makeAndAddConnector(parent, x, y, data, size, size2)
     size = size or 10
-    local bandshape2 = makeRectPoly2(size, size, x, y)
+    size2 = size2 or size
+    local bandshape2 = makeRectPoly2(size, size2, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
@@ -773,6 +787,27 @@ function makeBodyFromData(data, x, y)
     return ball
 end
 
+function makeGrassThing(x, y, i)
+    local imgs = { grassImage1, grassImage2 }
+    local index = (i % #imgs) + 1
+    local w, h = imgs[index]:getDimensions()
+
+    local body = love.physics.newBody(world, x, y, "static")
+    local shape1 = makeRectPoly2(5, 5, 0, 0)
+    local fixture = love.physics.newFixture(body, shape1, 1)
+    fixture:setSensor(true)
+    --fixture:setUserData(makeUserData("no-effect"))
+
+    local grass = love.physics.newBody(world, x, y, "dynamic")
+    local shape1 = makeRectPoly2(w, h, -w / 2, -h / 2)
+    local fixture = love.physics.newFixture(grass, shape1, .1)
+    fixture:setFilterData(1, 65535, -9999)
+    fixture:setUserData(makeUserData("keep-rotation", { rotation = 0 + (love.math.random() * 2) - 1 }))
+    local joint1 = love.physics.newRevoluteJoint(grass, body, x - w / 2, y, false)
+
+    return { grass }
+end
+
 function makeVehicle(x, y)
     local carBodyHeight = 150
     local carBodyWidth  = 800
@@ -903,6 +938,7 @@ function startExample(number)
     box2dTorsos = {} -- these are th
     connectors = {}
     pointerJoints = {}
+    grass = {}
     ----
     ---- VLOOIENSPEL
     -----
@@ -1030,6 +1066,21 @@ function startExample(number)
 
         local margin = 20
         -- objects.border = makeBorderChain(width, height, margin)
+        local w, h = love.graphics.getDimensions()
+        print(inspect(cam))
+
+
+
+        print(cam:getScreenCoordinates(0, 0))
+        print(cam:getWorldCoordinates(0, 0))
+        local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+        local cambrx, cambry = cam:getWorldCoordinates(w, h)
+        local camcx, camcy = cam:getWorldCoordinates(w / 2, h / 2)
+
+        --local check = love.physics.newBody(world, camcx, camcy, "static")
+        --local checkshape = love.physics.newRectangleShape(cambrx - camtlx, cambry - camtly)
+        --local checkfixture = love.physics.newFixture(check, checkshape, 1)
+
 
 
         local top = love.physics.newBody(world, width / 2, -4000, "static")
@@ -1048,6 +1099,13 @@ function startExample(number)
         local right = love.physics.newBody(world, 3000, -2000, "static")
         local rightshape = love.physics.newRectangleShape(height / 2, 4000)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
+
+
+        table.insert(grass, makeGrassThing(0, -500, 1))
+        table.insert(grass, makeGrassThing(200, -900, 2))
+        table.insert(grass, makeGrassThing(500, -800, 3))
+
+
 
 
         data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
@@ -1153,8 +1211,8 @@ function startExample(number)
 
 
 
-        for i = 1, 5 do
-            table.insert(box2dGuys, makeGuy( -2000 + i * 800, -1000, i))
+        for i = 1, 1 do
+            table.insert(box2dGuys, makeGuy( -2000 + i * 100, -1000, i))
         end
 
 
@@ -1189,6 +1247,7 @@ function love.load()
     pointerJoints = {}
     connectorCooldownList = {}
 
+    borderImage = love.graphics.newImage("assets/border.png")
     -- if (PROF_CAPTURE) then ProFi:start() end
     image1 = love.graphics.newImage("assets/leg5.png")
     --image3:setMipmapFilter( 'nearest', 1 )
@@ -1223,7 +1282,8 @@ function love.load()
     image9 = love.graphics.newImage('assets/parts/hair6.png')
     mesh9 = createTexturedTriangleStrip(image9)
 
-
+    grassImage1 = love.graphics.newImage('leave1.png')
+    grassImage2 = love.graphics.newImage('leave2.png')
 
     legimg = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
             textures[1], palettes[randInt(#palettes)], 5,
@@ -1234,20 +1294,20 @@ function love.load()
 
     legmesh = createTexturedTriangleStrip(legimg)
 
-
+    local w, h = love.graphics.getDimensions()
     image10 = love.graphics.newImage('assets/legp2.png')
     mesh10 = createTexturedTriangleStrip(image10)
 
-
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 4, h * 4)
 
     --create()
     example = nil
     startExample(3)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
-    local w, h = love.graphics.getDimensions()
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 4, h * 4)
+
+
     grabDevelopmentScreenshot()
 end
 
@@ -1344,7 +1404,7 @@ end
 function pointerPressed(id, x, y)
     local wx, wy = cam:getWorldCoordinates(x, y)
     local bodies = world:getBodies()
-    print('checking')
+    --print('checking')
 
     local temp = {}
 
@@ -1352,19 +1412,21 @@ function pointerPressed(id, x, y)
 
 
     for _, body in ipairs(bodies) do
-        local fixtures = body:getFixtures()
-        for _, fixture in ipairs(fixtures) do
-            local hitThisOne = fixture:testPoint(wx, wy)
-            local isSensor = fixture:isSensor()
-            if (hitThisOne and not isSensor) then
-                table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
-                --killMouseJointIfPossible(id)
-                --table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
+        if body:getType() ~= 'kinematic' then
+            local fixtures = body:getFixtures()
+            for _, fixture in ipairs(fixtures) do
+                local hitThisOne = fixture:testPoint(wx, wy)
+                local isSensor = fixture:isSensor()
+                if (hitThisOne and not isSensor) then
+                    table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
+                    --killMouseJointIfPossible(id)
+                    --table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
 
-                --local vx, vy = body:getLinearVelocity()
-                -- body:setPosition(body:getX(), body:getY() - 10)
-                -- print('true')
-                -- hitAny = true
+                    --local vx, vy = body:getLinearVelocity()
+                    -- body:setPosition(body:getX(), body:getY() - 10)
+                    -- print('true')
+                    -- hitAny = true
+                end
             end
         end
     end
@@ -1378,7 +1440,7 @@ function pointerPressed(id, x, y)
         killMouseJointIfPossible(id)
         table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy))
     end
-    print('done checking', #pointerJoints)
+    -- print('done checking', #pointerJoints)
     if #temp == 0 then killMouseJointIfPossible(id) end
 end
 
@@ -1519,6 +1581,9 @@ function love.draw()
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
         end
+        for i = 1, #grass do
+            drawPlantOver(grass[i], i)
+        end
         for i = 1, #box2dTorsos do
             drawTorsoOver(box2dTorsos[i])
         end
@@ -1544,6 +1609,11 @@ function love.draw()
         end
     end
     cam:pop()
+
+    local bw, bh = borderImage:getDimensions()
+    local w, h = love.graphics.getDimensions();
+    love.graphics.setColor(.9, .8, .8, 0.9)
+    love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
 end
 
 function drawMeterGrid()
@@ -1697,9 +1767,17 @@ function rotateAllBodies(bodies, dt)
             if isBeingPointerJointed then
                 --     getRidOfBigRotationsInBody(body)
             end
+            local userData = fixture:getUserData()
+            if (userData) then
+                if userData.bodyType == 'keep-rotation' then
+                    print(inspect(userData))
+                    rotateToHorizontal(body, userData.data.rotation, 5)
+                end
+            end
+
 
             if (stiff) and not isBeingPointerJointed then
-                local userData = fixture:getUserData()
+                --local userData = fixture:getUserData()
 
 
 
@@ -2138,7 +2216,7 @@ function love.keypressed(k)
 
 
 
-            local body = box2dGuys[2].torso
+            local body = box2dGuys[1].torso
             local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
             creation.hasPhysicsHair = not creation.hasPhysicsHair
