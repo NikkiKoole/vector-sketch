@@ -214,10 +214,10 @@ end
 ]]
 --
 
-function drawSpriet(x, y, index, r)
+function drawSpriet(x, y, index, r, sy)
     local img = spriet[index]
     local w, h = img:getDimensions()
-    love.graphics.draw(img, x, y, r, 1, 1, w, h)
+    love.graphics.draw(img, x, y, r, 1, sy, w, h)
 end
 
 function drawPlantOver(data, i)

@@ -1308,12 +1308,11 @@ function love.load()
     local dist = 30
     local startX = -3000
     for i = 1, 200 do
-        sprietUnder[i] = { startX + i * dist, -500, math.ceil(love.math.random() * #spriet), 0 }
-        sprietUnder[200 + i] = { startX + i * dist + love.math.random() * 3, -400,
-            math.ceil(love.math.random() * #spriet), 0 }
-        sprietUnder[400 + i] = { startX + i * dist, -300, math.ceil(love.math.random() * #spriet), 0 }
-        sprietOver[i] = { startX + i * dist, -200, math.ceil(love.math.random() * #spriet), 0 }
-        sprietOver[200 + i] = { startX + i * dist, -100, math.ceil(love.math.random() * #spriet), 0 }
+        sprietUnder[i] = { startX + i * dist, -500, math.ceil(love.math.random() * #spriet), 0, 2.1 }
+        sprietUnder[200 + i] = { startX + i * dist, -400, math.ceil(love.math.random() * #spriet), 0, 1.8 }
+        sprietUnder[400 + i] = { startX + i * dist, -300, math.ceil(love.math.random() * #spriet), 0, 1.5 }
+        sprietOver[i] = { startX + i * dist, -200, math.ceil(love.math.random() * #spriet), 0, 1.2 }
+        sprietOver[200 + i] = { startX + i * dist, -100, math.ceil(love.math.random() * #spriet), 0, 1 }
     end
 
 
@@ -1621,18 +1620,18 @@ function love.draw()
         love.graphics.setColor(10 / 255, 122 / 255, 42 / 255, 1)
 
         local amplitude = 100
-        local freq = 4
+        local freq = 2
         local a = math.sin((delta or 0) * freq) / amplitude
         for i = 1, 200 do
             local s = sprietUnder[i]
             a = math.sin((delta or 0) * freq) / amplitude
-            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
             a = math.sin(((delta or 0) + .2) * freq) / amplitude
             s = sprietUnder[200 + i]
-            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
             s = sprietUnder[400 + i]
             a = math.sin(((delta or 0) + .4) * freq) / amplitude
-            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
         end
 
 
@@ -1658,9 +1657,9 @@ function love.draw()
         local a = math.sin((delta or 0) * freq) / amplitude
         for i = 1, 200 do
             local s = sprietOver[i]
-            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
             s = sprietOver[200 + i]
-            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
         end
 
 
