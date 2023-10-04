@@ -214,16 +214,21 @@ end
 ]]
 --
 
-
+function drawSpriet(x, y, index, r)
+    local img = spriet[index]
+    local w, h = img:getDimensions()
+    love.graphics.draw(img, x, y, r, 1, 1, w, h)
+end
 
 function drawPlantOver(data, i)
-    local imgs = { grassImage1, grassImage2 }
+    local imgs = plantImages
     local index = (i % #imgs) + 1
     --  print(index)
     local img = imgs[index]
     if data then
         --print(inspect(data))
-        love.graphics.setColor(0, 0, 0, 1)
+
+        love.graphics.setColor(10 / 255, 122 / 255, 42 / 255, 1)
         local w, h = img:getDimensions()
         local x, y = data[1]:getPosition()
         local r    = data[1]:getAngle()
@@ -359,19 +364,25 @@ function drawSkinOver(box2dGuy, creation)
             -- hair1x
             if true then
                 if true or box2dGuy.hairNeedsRedo then
-                    local img = mesh.getImage('assets/parts/hair1x.png')
+                    --local img = mesh.getImage('assets/parts/hair1x.png')
+                    local img = mesh.getImage('haarnew2.png')
                     local w, h = img:getDimensions()
                     local f = creation.head.metaPoints
-                    local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+                    -- note: make this a parameter
+                    local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
+                    --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
 
                     local points = hairLine
                     local hairTension = .02
-                    local spacing = 3
+                    local spacing = 10
                     local coords
 
                     coords = border.unloosenVanillaline(points, hairTension, spacing)
-
-                    local width = 160 * 3
+                    local length = getLengthOfPath(hairLine)
+                    local factor = (length / h)
+                    --print(length)
+                    local hairWidthMultiplier = .5
+                    local width = (w * factor) * hairWidthMultiplier --30 --160 * 10
                     -- print(inspect(coords), inspect(points))
                     local verts, indices, draw_mode = polyline.render('miter', coords, width)
 

@@ -26,6 +26,14 @@ PROF_CAPTURE = false
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 
+if true then
+    local a, b, c, d, e
+    repeat
+        a, b, c, d, e = love.event.wait()
+        --print(a, b, c, d, e)
+    until a == "focus" or a == 'mousepressed'
+end
+
 
 palettes   = {}
 local base = {
@@ -788,10 +796,11 @@ function makeBodyFromData(data, x, y)
 end
 
 function makeGrassThing(x, y, i)
-    local imgs = { grassImage1, grassImage2 }
+    local imgs = plantImages
     local index = (i % #imgs) + 1
     local w, h = imgs[index]:getDimensions()
-
+    w = w / 3
+    h = h / 3
     local body = love.physics.newBody(world, x, y, "static")
     local shape1 = makeRectPoly2(5, 5, 0, 0)
     local fixture = love.physics.newFixture(body, shape1, 1)
@@ -802,7 +811,7 @@ function makeGrassThing(x, y, i)
     local shape1 = makeRectPoly2(w, h, -w / 2, -h / 2)
     local fixture = love.physics.newFixture(grass, shape1, .1)
     fixture:setFilterData(1, 65535, -9999)
-    fixture:setUserData(makeUserData("keep-rotation", { rotation = 0 + (love.math.random() * 2) - 1 }))
+    fixture:setUserData(makeUserData("keep-rotation", { rotation = 0 + love.math.random() * 0.4 - 0.2 }))
     local joint1 = love.physics.newRevoluteJoint(grass, body, x - w / 2, y, false)
 
     return { grass }
@@ -1101,10 +1110,9 @@ function startExample(number)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
 
 
-        table.insert(grass, makeGrassThing(0, -500, 1))
-        table.insert(grass, makeGrassThing(200, -900, 2))
-        table.insert(grass, makeGrassThing(500, -800, 3))
-
+        for i = 1, 100 do
+            --table.insert(grass, makeGrassThing(i * 40, -500, i))
+        end
 
 
 
@@ -1211,8 +1219,8 @@ function startExample(number)
 
 
 
-        for i = 1, 1 do
-            table.insert(box2dGuys, makeGuy( -2000 + i * 100, -1000, i))
+        for i = 1, 5 do
+            table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000, i))
         end
 
 
@@ -1282,8 +1290,34 @@ function love.load()
     image9 = love.graphics.newImage('assets/parts/hair6.png')
     mesh9 = createTexturedTriangleStrip(image9)
 
-    grassImage1 = love.graphics.newImage('leave1.png')
-    grassImage2 = love.graphics.newImage('leave2.png')
+
+    spriet = {
+        love.graphics.newImage('spriet1.png'),
+        love.graphics.newImage('spriet2.png'),
+        love.graphics.newImage('spriet3.png'),
+        love.graphics.newImage('spriet4.png'),
+        love.graphics.newImage('spriet5.png'),
+        love.graphics.newImage('spriet6.png'),
+        love.graphics.newImage('spriet7.png'),
+        love.graphics.newImage('spriet8.png'),
+    }
+
+    sprietUnder = {}
+    sprietOver = {}
+
+    local dist = 30
+    local startX = -3000
+    for i = 1, 200 do
+        sprietUnder[i] = { startX + i * dist, -500, math.ceil(love.math.random() * #spriet), 0 }
+        sprietUnder[200 + i] = { startX + i * dist + love.math.random() * 3, -400,
+            math.ceil(love.math.random() * #spriet), 0 }
+        sprietUnder[400 + i] = { startX + i * dist, -300, math.ceil(love.math.random() * #spriet), 0 }
+        sprietOver[i] = { startX + i * dist, -200, math.ceil(love.math.random() * #spriet), 0 }
+        sprietOver[200 + i] = { startX + i * dist, -100, math.ceil(love.math.random() * #spriet), 0 }
+    end
+
+
+
 
     legimg = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
             textures[1], palettes[randInt(#palettes)], 5,
@@ -1308,7 +1342,7 @@ function love.load()
         palette[colors.light_cream][3])
 
 
-    grabDevelopmentScreenshot()
+    --grabDevelopmentScreenshot()
 end
 
 local function pointerReleased(id, x, y)
@@ -1577,21 +1611,69 @@ function love.draw()
         drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
 
+
+        love.graphics.rectangle('fill', 200, -500, 100, 100)
+        --i * 40, -500
+
+
+
+
+        love.graphics.setColor(10 / 255, 122 / 255, 42 / 255, 1)
+
+        local amplitude = 100
+        local freq = 4
+        local a = math.sin((delta or 0) * freq) / amplitude
+        for i = 1, 200 do
+            local s = sprietUnder[i]
+            a = math.sin((delta or 0) * freq) / amplitude
+            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            a = math.sin(((delta or 0) + .2) * freq) / amplitude
+            s = sprietUnder[200 + i]
+            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            s = sprietUnder[400 + i]
+            a = math.sin(((delta or 0) + .4) * freq) / amplitude
+            drawSpriet(s[1], s[2], s[3], s[4] + a)
+        end
+
+
+        --for i = 1, #grass do
+        --    drawPlantOver(grass[i], i)
+        --end
+
         --drawWorld(world)
+
+
+
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
         end
         for i = 1, #grass do
-            drawPlantOver(grass[i], i)
+            --   drawPlantOver(grass[i], i)
         end
         for i = 1, #box2dTorsos do
             drawTorsoOver(box2dTorsos[i])
         end
 
+        love.graphics.setColor(10 / 255, 122 / 255, 42 / 255, 1)
+        local a = math.sin((delta or 0) * freq) / amplitude
+        for i = 1, 200 do
+            local s = sprietOver[i]
+            drawSpriet(s[1], s[2], s[3], s[4] + a)
+            s = sprietOver[200 + i]
+            drawSpriet(s[1], s[2], s[3], s[4] + a)
+        end
+
+
 
         cam:pop()
 
 
+        local bw, bh = borderImage:getDimensions()
+        local w, h = love.graphics.getDimensions();
+        love.graphics.setColor(.9, .8, .8, 0.9)
+        love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
+
+        love.graphics.setColor(.4, .4, .4, 0.9)
         love.graphics.print(love.timer.getFPS(), 0, 0)
         -- love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
     end
@@ -1609,11 +1691,6 @@ function love.draw()
         end
     end
     cam:pop()
-
-    local bw, bh = borderImage:getDimensions()
-    local w, h = love.graphics.getDimensions();
-    love.graphics.setColor(.9, .8, .8, 0.9)
-    love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
 end
 
 function drawMeterGrid()
@@ -1770,8 +1847,8 @@ function rotateAllBodies(bodies, dt)
             local userData = fixture:getUserData()
             if (userData) then
                 if userData.bodyType == 'keep-rotation' then
-                    print(inspect(userData))
-                    rotateToHorizontal(body, userData.data.rotation, 5)
+                    --  print(inspect(userData))
+                    rotateToHorizontal(body, userData.data.rotation, 50)
                 end
             end
 
@@ -1859,10 +1936,10 @@ function rotateAllBodies(bodies, dt)
     end
 end
 
+delta = 0
 function love.update(dt)
+    delta = delta + dt
     lurker.update()
-
-
     -- this is way too agressive, maybe firgure out a way where i go 1 or 2 nodes up and down to check
     if false then
         for j = 1, #connectors do
