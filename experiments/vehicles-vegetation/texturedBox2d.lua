@@ -270,10 +270,10 @@ function drawSkinOver(box2dGuy, creation)
         --love.graphics.draw(img, x, y, r, 1, 1, w / 2, h / 2)
     end
 
-
+    love.graphics.setColor(1, 1, 1, 1)
     -- left ear
     if creation and creation.ear.metaURL then
-        local img = mesh.getImage(creation.ear.metaURL)
+        local img = earCanvas -- mesh.getImage(creation.ear.metaURL)
         local w, h = img:getDimensions()
 
         local x, y = box2dGuy.lear:getWorldPoint(0, 0)
@@ -289,7 +289,7 @@ function drawSkinOver(box2dGuy, creation)
     end
 
     if creation and creation.ear.metaURL then
-        local img = mesh.getImage(creation.ear.metaURL)
+        local img = earCanvas --mesh.getImage(creation.ear.metaURL)
         local w, h = img:getDimensions()
 
         local x, y = box2dGuy.rear:getWorldPoint(0, 0)
@@ -303,7 +303,7 @@ function drawSkinOver(box2dGuy, creation)
 
         love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
     end
-
+    love.graphics.setColor(0, 0, 0, 1)
     -- HHHEEEEAAADDD
     if not creation.isPotatoHead then
         if creation and creation.head.metaURL then
@@ -370,6 +370,9 @@ function drawSkinOver(box2dGuy, creation)
                     local f = creation.head.metaPoints
                     -- note: make this a parameter
                     local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
+
+                    local hairLine = { { f[1][1], f[1][2] }, f[2], f[3], f[4], f[5], f[6], f[7], f[8],
+                        { f[1][1], f[1][2] }, }
                     --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
 
                     local points = hairLine
@@ -426,7 +429,10 @@ function drawSkinOver(box2dGuy, creation)
 
 
             local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-            texturedCurve(curve, image10, mesh10)
+            --texturedCurve(curve, image10, mesh10)
+
+            love.graphics.setColor(1, 1, 1, 1)
+            texturedCurve(curve, neckCanvas, neckmesh)
         end
 
 
@@ -440,7 +446,7 @@ function drawSkinOver(box2dGuy, creation)
         --love.graphics.line(curve:render())
 
         love.graphics.setColor(1, 1, 1, 1)
-        texturedCurve(curve, legimg, legmesh)
+        texturedCurve(curve, legCanvas, legmesh)
         love.graphics.setColor(0, 0, 0, 1)
         -----
         local ax, ay = box2dGuy.ruleg:getPosition()
@@ -450,8 +456,10 @@ function drawSkinOver(box2dGuy, creation)
 
         local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
 
-        texturedCurve(curve, image1, mesh1)
-        texturedCurve(curve, image9, mesh9, 1, 9)
+        --texturedCurve(curve, image1, mesh1)
+        love.graphics.setColor(1, 1, 1, 1)
+        texturedCurve(curve, legCanvas, legmesh)
+        --texturedCurve(curve, image9, mesh9, 1, 9)
 
         ----
         local ax, ay = box2dGuy.luarm:getPosition()
@@ -461,8 +469,9 @@ function drawSkinOver(box2dGuy, creation)
 
         local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
         -- love.graphics.line(curve:render())
-
-        texturedCurve(curve, image5, mesh5)
+        --love.graphics.setColor(0, 0, 0, 1)
+        texturedCurve(curve, armCanvas, armmesh)
+        -- texturedCurve(curve, image5, mesh5)
         texturedCurve(curve, image9, mesh9, 1, 5)
         --texturedCurve(curve, image8, mesh8)
 
@@ -475,12 +484,12 @@ function drawSkinOver(box2dGuy, creation)
 
         local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
         --  love.graphics.line(curve:render())
-
-        texturedCurve(curve, image5, mesh5)
+        texturedCurve(curve, armCanvas, armmesh)
+        --texturedCurve(curve, image5, mesh5)
         --texturedCurve(curve, image6, mesh6)
-
+        love.graphics.setColor(1, 1, 1, 1)
         if creation and creation.lhand.metaURL then
-            local img = mesh.getImage(creation.lhand.metaURL)
+            local img = handCanvas -- mesh.getImage(creation.lhand.metaURL)
             local w, h = img:getDimensions()
 
             local x, y = box2dGuy.lhand:getWorldPoint(0, 0)
@@ -492,13 +501,13 @@ function drawSkinOver(box2dGuy, creation)
             local ox = creation.lhand.metaPivotX - creation.lhand.metaTexturePoints[1][1]
             local oy = creation.lhand.metaPivotY - creation.lhand.metaTexturePoints[1][2]
 
-            love.graphics.setColor(1, 0, 0, 1)
+            --love.graphics.setColor(1, 0, 0, 1)
             --love.graphics.print(r, x, y)
-            love.graphics.setColor(0, 0, 0, 1)
+            --love.graphics.setColor(0, 0, 0, 1)
             love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
         end
         if creation and creation.rhand.metaURL then
-            local img = mesh.getImage(creation.rhand.metaURL)
+            local img = handCanvas -- mesh.getImage(creation.rhand.metaURL)
             local w, h = img:getDimensions()
 
             local x, y = box2dGuy.rhand:getWorldPoint(0, 0)
@@ -510,12 +519,12 @@ function drawSkinOver(box2dGuy, creation)
             local ox = creation.rhand.metaPivotX - creation.rhand.metaTexturePoints[1][1]
             local oy = creation.rhand.metaPivotY - creation.rhand.metaTexturePoints[1][2]
 
-            love.graphics.setColor(1, 0, 0, 1)
+            -- love.graphics.setColor(1, 0, 0, 1)
             --love.graphics.print(r, x, y)
-            love.graphics.setColor(0, 0, 0, 1)
+            --  love.graphics.setColor(0, 0, 0, 1)
             love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
         end
-
+        love.graphics.setColor(0, 0, 0, 1)
 
         -- left foot
         if creation and creation.lfoot.metaURL then

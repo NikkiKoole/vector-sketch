@@ -18,13 +18,14 @@ local canvas   = require 'lib.canvas'
 local text     = require 'lib.text'
 lurker.quiet   = true
 require 'palette'
+local gradient    = require 'lib.gradient'
+local skygradient = gradient.makeSkyGradient(10)
 
+local manual_gc   = require 'vendor.batteries.manual_gc'
 
-local manual_gc = require 'vendor.batteries.manual_gc'
-
-PROF_CAPTURE = false
-prof = require 'vendor.jprof'
-ProFi = require 'vendor.ProFi'
+PROF_CAPTURE      = false
+prof              = require 'vendor.jprof'
+ProFi             = require 'vendor.ProFi'
 
 if true then
     local a, b, c, d, e
@@ -1126,6 +1127,10 @@ function startExample(number)
         changeMetaTexture('torso', data[bodyRndIndex])
 
 
+
+
+
+
         torsoCanvas = love.graphics.newImage(helperTexturedCanvas(creation.torso.metaURL,
                 textures[1], palettes[12], 5,
                 textures[2], palettes[34], 2,
@@ -1190,6 +1195,13 @@ function startExample(number)
         creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
         creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
 
+        handCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lhand.metaURL,
+                textures[1], palettes[12], 5,
+                textures[2], palettes[34], 2,
+                0, 1,
+                palettes[1], 5,
+                1, 1, nil, nil))
+
 
 
         eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
@@ -1199,6 +1211,12 @@ function startExample(number)
         creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
         creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
 
+        earCanvas = love.graphics.newImage(helperTexturedCanvas(creation.ear.metaURL,
+                textures[1], palettes[12], 5,
+                textures[2], palettes[34], 2,
+                0, 1,
+                palettes[1], 5,
+                1, 1, nil, nil))
 
 
         -- eyes
@@ -1255,7 +1273,7 @@ function love.load()
     pointerJoints = {}
     connectorCooldownList = {}
 
-    borderImage = love.graphics.newImage("assets/border.png")
+    borderImage = love.graphics.newImage("assets/border_shaduw.png")
     -- if (PROF_CAPTURE) then ProFi:start() end
     image1 = love.graphics.newImage("assets/leg5.png")
     --image3:setMipmapFilter( 'nearest', 1 )
@@ -1291,6 +1309,9 @@ function love.load()
     mesh9 = createTexturedTriangleStrip(image9)
 
 
+    cloud = love.graphics.newImage('clouds1.png', { mipmaps = true })
+    print('elo!', cloud)
+
     spriet = {
         love.graphics.newImage('spriet1.png'),
         love.graphics.newImage('spriet2.png'),
@@ -1318,14 +1339,34 @@ function love.load()
 
 
 
-    legimg = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
+    legCanvas = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
             textures[1], palettes[randInt(#palettes)], 5,
             textures[2], palettes[randInt(#palettes)], 2,
             0, 1,
             palettes[1], 5,
             1, 1, nil, nil))
 
-    legmesh = createTexturedTriangleStrip(legimg)
+    legmesh = createTexturedTriangleStrip(legCanvas)
+
+
+
+    armCanvas = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
+            textures[1], palettes[randInt(#palettes)], 5,
+            textures[2], palettes[randInt(#palettes)], 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+
+    armmesh = createTexturedTriangleStrip(armCanvas)
+
+    neckCanvas = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
+            textures[1], palettes[randInt(#palettes)], 5,
+            textures[2], palettes[randInt(#palettes)], 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+
+    neckmesh = createTexturedTriangleStrip(neckCanvas)
 
     local w, h = love.graphics.getDimensions()
     image10 = love.graphics.newImage('assets/legp2.png')
@@ -1560,9 +1601,28 @@ function randInt(length)
     return math.ceil(math.random() * length)
 end
 
+function createFittingScale(img, desired_w, desired_h)
+    local w, h = img:getDimensions()
+    local sx, sy = desired_w / w, desired_h / h
+    return sx, sy
+end
+
 function love.draw()
     local width, height = love.graphics.getDimensions()
-    drawMeterGrid()
+    love.graphics.clear(1, 1, 1)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
+
+    love.graphics.setColor(1, 1, 1, .6)
+    local sx, sy = createFittingScale(cloud, width, height)
+    local bgscale = math.min(sx, sy)
+    love.graphics.draw(cloud, 0, 0, 0, bgscale, bgscale)
+
+
+
+
+    --drawMeterGrid()
 
     if example == 1 then
         love.graphics.setColor(1, 1, 1)
@@ -1607,7 +1667,7 @@ function love.draw()
         love.graphics.setColor(1, 1, 1)
 
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
-        drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
+        -- drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
 
 
@@ -1625,10 +1685,10 @@ function love.draw()
         for i = 1, 200 do
             local s = sprietUnder[i]
             a = math.sin((delta or 0) * freq) / amplitude
-            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
+            --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
             a = math.sin(((delta or 0) + .2) * freq) / amplitude
             s = sprietUnder[200 + i]
-            drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
+            --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
             s = sprietUnder[400 + i]
             a = math.sin(((delta or 0) + .4) * freq) / amplitude
             drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
@@ -1645,7 +1705,7 @@ function love.draw()
         --    drawPlantOver(grass[i], i)
         --end
 
-        drawWorld(world)
+        --drawWorld(world)
 
 
 
@@ -2182,6 +2242,14 @@ function love.keypressed(k)
             local earIndex = math.ceil(math.random() * #eardata)
             --print(eardata[earIndex])
             changeMetaTexture('ear', eardata[earIndex])
+
+            earCanvas = love.graphics.newImage(helperTexturedCanvas(creation.ear.metaURL,
+                    textures[1], palettes[12], 5,
+                    textures[2], palettes[34], 2,
+                    0, 1,
+                    palettes[1], 5,
+                    1, 1, nil, nil))
+
             creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
             creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
             for i = 1, #box2dGuys do
@@ -2239,6 +2307,14 @@ function love.keypressed(k)
 
             creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
             creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
+
+            handCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lhand.metaURL,
+                    textures[1], palettes[12], 5,
+                    textures[2], palettes[34], 2,
+                    0, 1,
+                    palettes[1], 5,
+                    1, 1, nil, nil))
+
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
