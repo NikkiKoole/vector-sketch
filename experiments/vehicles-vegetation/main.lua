@@ -921,11 +921,23 @@ end
 local function getPNGMaskUrl(url)
     return text.replace(url, '.png', '-mask.png')
 end
+function createRandomColoredBlackOutlineTexture(url)
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[math.ceil(math.random() * #palettes)]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[math.ceil(math.random() * #palettes)]
 
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end
 
 function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
                               renderPatch)
-    print(url)
+    --print(url)
     local img = mesh.getImage(url, optionalSettings)
     local maskUrl = getPNGMaskUrl(url)
     local mask = mesh.getImage(maskUrl)
@@ -1131,13 +1143,7 @@ function startExample(number)
 
 
 
-        torsoCanvas = love.graphics.newImage(helperTexturedCanvas(creation.torso.metaURL,
-                textures[1], palettes[12], 5,
-                textures[2], palettes[34], 2,
-                0, 1,
-                palettes[1], 5,
-                1, 1, nil, nil))
-
+        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * 1
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * 1
         -- print(mesh.getImage(creation.torso.metaURL))
@@ -1152,13 +1158,7 @@ function startExample(number)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
-
-            headCanvas = love.graphics.newImage(helperTexturedCanvas(creation.head.metaURL,
-                    textures[1], palettes[12], 5,
-                    textures[2], palettes[34], 2,
-                    0, 1,
-                    palettes[1], 5,
-                    1, 1, nil, nil))
+            headCanvas = createRandomColoredBlackOutlineTexture(creation.head.metaURL)
         end
         --
         feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
@@ -1175,12 +1175,10 @@ function startExample(number)
         creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
 
-        footCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lfoot.metaURL,
-                textures[1], palettes[12], 5,
-                textures[2], palettes[34], 2,
-                0, 1,
-                palettes[1], 5,
-                1, 1, nil, nil))
+        footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
+
+
+
 
 
         local handIndex = 12 --math.ceil(math.random() * #feetdata)
@@ -1195,12 +1193,8 @@ function startExample(number)
         creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
         creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
 
-        handCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lhand.metaURL,
-                textures[1], palettes[12], 5,
-                textures[2], palettes[34], 2,
-                0, 1,
-                palettes[1], 5,
-                1, 1, nil, nil))
+        handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
+
 
 
 
@@ -1210,13 +1204,8 @@ function startExample(number)
         changeMetaTexture('ear', eardata[earIndex])
         creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
         creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
+        earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
 
-        earCanvas = love.graphics.newImage(helperTexturedCanvas(creation.ear.metaURL,
-                textures[1], palettes[12], 5,
-                textures[2], palettes[34], 2,
-                0, 1,
-                palettes[1], 5,
-                1, 1, nil, nil))
 
 
         -- eyes
@@ -1238,7 +1227,7 @@ function startExample(number)
 
 
         for i = 1, 5 do
-            table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000, i))
+            table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000 + (i % 2) * -1000, i))
         end
 
 
@@ -1308,6 +1297,10 @@ function love.load()
     image9 = love.graphics.newImage('assets/parts/hair6.png')
     mesh9 = createTexturedTriangleStrip(image9)
 
+    image11 = love.graphics.newImage('assets/parts/hair9.png')
+    mesh11 = createTexturedTriangleStrip(image11)
+
+
 
     cloud = love.graphics.newImage('clouds1.png', { mipmaps = true })
     print('elo!', cloud)
@@ -1338,34 +1331,14 @@ function love.load()
 
 
 
-
-    legCanvas = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
-            textures[1], palettes[randInt(#palettes)], 5,
-            textures[2], palettes[randInt(#palettes)], 2,
-            0, 1,
-            palettes[1], 5,
-            1, 1, nil, nil))
-
+    legCanvas = createRandomColoredBlackOutlineTexture('assets/legp2.png')
     legmesh = createTexturedTriangleStrip(legCanvas)
 
 
-
-    armCanvas = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
-            textures[1], palettes[randInt(#palettes)], 5,
-            textures[2], palettes[randInt(#palettes)], 2,
-            0, 1,
-            palettes[1], 5,
-            1, 1, nil, nil))
-
+    armCanvas = createRandomColoredBlackOutlineTexture('assets/legp2.png')
     armmesh = createTexturedTriangleStrip(armCanvas)
 
-    neckCanvas = love.graphics.newImage(helperTexturedCanvas('assets/legp2.png',
-            textures[1], palettes[randInt(#palettes)], 5,
-            textures[2], palettes[randInt(#palettes)], 2,
-            0, 1,
-            palettes[1], 5,
-            1, 1, nil, nil))
-
+    neckCanvas = createRandomColoredBlackOutlineTexture('assets/legp2.png')
     neckmesh = createTexturedTriangleStrip(neckCanvas)
 
     local w, h = love.graphics.getDimensions()
@@ -2242,13 +2215,8 @@ function love.keypressed(k)
             local earIndex = math.ceil(math.random() * #eardata)
             --print(eardata[earIndex])
             changeMetaTexture('ear', eardata[earIndex])
+            earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
 
-            earCanvas = love.graphics.newImage(helperTexturedCanvas(creation.ear.metaURL,
-                    textures[1], palettes[12], 5,
-                    textures[2], palettes[34], 2,
-                    0, 1,
-                    palettes[1], 5,
-                    1, 1, nil, nil))
 
             creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
             creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
@@ -2278,14 +2246,7 @@ function love.keypressed(k)
 
                 changeMetaPoints('head', flippedFloppedHeadPoints)
                 changeMetaTexture('head', data[headRndIndex])
-
-
-                headCanvas = love.graphics.newImage(helperTexturedCanvas(creation.head.metaURL,
-                        textures[1], palettes[randInt(#palettes)], 5,
-                        textures[2], palettes[randInt(#palettes)], 2,
-                        0, 1,
-                        palettes[1], 5,
-                        1, 1, nil, nil))
+                headCanvas = createRandomColoredBlackOutlineTexture(creation.head.metaURL)
 
                 creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
                 creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
@@ -2307,13 +2268,8 @@ function love.keypressed(k)
 
             creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
             creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
+            handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
 
-            handCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lhand.metaURL,
-                    textures[1], palettes[12], 5,
-                    textures[2], palettes[34], 2,
-                    0, 1,
-                    palettes[1], 5,
-                    1, 1, nil, nil))
 
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
@@ -2344,13 +2300,8 @@ function love.keypressed(k)
             changeMetaTexture('rfoot', feetdata[footIndex])
             creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
             creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+            footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
 
-            footCanvas = love.graphics.newImage(helperTexturedCanvas(creation.lfoot.metaURL,
-                    textures[1], palettes[randInt(#palettes)], 5,
-                    textures[2], palettes[34], 2,
-                    0, 1,
-                    palettes[1], 5,
-                    1, 1, nil, nil))
 
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
@@ -2364,13 +2315,8 @@ function love.keypressed(k)
                     .points)
             changeMetaPoints('torso', flippedFloppedBodyPoints)
             changeMetaTexture('torso', data[bodyRndIndex])
+            torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
 
-            torsoCanvas = love.graphics.newImage(helperTexturedCanvas(creation.torso.metaURL,
-                    textures[1], palettes[randInt(#palettes)], 5,
-                    textures[2], palettes[34], 2,
-                    0, 1,
-                    palettes[1], 5,
-                    1, 1, nil, nil))
 
 
 

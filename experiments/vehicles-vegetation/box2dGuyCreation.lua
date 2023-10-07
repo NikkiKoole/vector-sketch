@@ -8,7 +8,7 @@ local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     hasPhysicsHair = false,
     hasNeck = true,
-    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 1.5, shape = 'trapezium' },
+    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = .15, shape = 'trapezium' },
     neck = { w = 140, h = 250, d = 4, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false } },
     neck1 = { w = 140, h = 250, d = 4, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false }, friction = 5000 },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false } },

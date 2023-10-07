@@ -322,14 +322,14 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
 
     local v = mesh.makeSquishableUVsFromPoints(first)
     local msh = love.graphics.newMesh(v, 'fan')
-    local img = mesh.getImage('borsthaar4.png')
+    local img = mesh.getImage('borsthaar6.png')
     msh:setTexture(img)
     -- mesh.addUVToVerts(verts, img, node.points, node.texture)
 
 
-    love.graphics.setColor(.4, 0, 0, .8)
+
     love.graphics.draw(msh, x, y, r, sx, sy)
-    love.graphics.setColor(1, 1, 1, 1)
+    -- love.graphics.setColor(1, 1, 1, 1)
     --    print(inspect(f))
 end
 
@@ -339,7 +339,9 @@ function drawSkinOver(box2dGuy, creation)
     if creation then
         if creation.torso.metaURL then
             local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
+            love.graphics.setColor(.4, 0, 0, .8)
             drawSquishableHairOver(x, y, r, sx, sy, creation)
+            love.graphics.setColor(1, 1, 1, 1)
         end
 
 
@@ -464,12 +466,16 @@ function drawSkinOver(box2dGuy, creation)
 
 
         renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy)
-        renderCurvedObject('luarm', 'llarm', 'lhand', image9, mesh9, box2dGuy, 1, 15)
+        love.graphics.setColor(.4, 0, 0, .8)
+        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, 2)
+        love.graphics.setColor(1, 1, 1, 1)
 
 
 
         renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy)
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', image9, mesh9, box2dGuy, 1, 15)
+        love.graphics.setColor(.4, 0, 0, .8)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, 2)
+        love.graphics.setColor(1, 1, 1, 1)
 
 
         if creation.lhand.metaURL then
