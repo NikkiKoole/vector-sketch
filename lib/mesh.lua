@@ -203,9 +203,9 @@ mesh.makeVertices = function(shape)
          end
       end
    else
-               -- i re-use this in puppetmaker to get the angle for the feet
-         --print(cp1.x, cp1.y, cp2.x, cp2.y)
-         -- todo whne the curve is null we make a perfect one for it using lerp
+      -- i re-use this in puppetmaker to get the angle for the feet
+      --print(cp1.x, cp1.y, cp2.x, cp2.y)
+      -- todo whne the curve is null we make a perfect one for it using lerp
 
 
 
@@ -226,7 +226,7 @@ mesh.makeVertices = function(shape)
          local scaleY = (shape.data.scaleY or 1) * scale
          local cp1, cp2 = geom.positionControlPoints(start, eind, shape.data.length * scaleY, shape.data.flop,
                  shape.data.borderRadius)
-         
+
          local rubberhoseSuccess = true
          if (tostring(cp1.x) == 'nan' or tostring(cp2.x) == 'nan' or tostring(cp1.y) == 'nan' or tostring(cp2.y) == 'nan') then
             rubberhoseSuccess = false
@@ -234,8 +234,8 @@ mesh.makeVertices = function(shape)
 
          local curve = nil
          local thickness = nil
-         local magicRubberhose =  4.46  -- this value is coming from the way rubberhoses are constructed
-         local magicDivider = 3  -- some things need to be divide by 3, don't understand why
+         local magicRubberhose = 4.46 -- this value is coming from the way rubberhoses are constructed
+         local magicDivider = 3 -- some things need to be divide by 3, don't understand why
          local coords = {}
 
          -- setting up the data according to if we have succeeded in the rubberhose setup
@@ -243,14 +243,13 @@ mesh.makeVertices = function(shape)
             curve = love.math.newBezierCurve({ start.x, start.y, cp1.x, cp1.y, cp2.x, cp2.y, eind.x, eind.y })
             shape._curve = curve
             local stretchyWidthDivider = 1
-            thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider } 
+            thickness = { scaleX * (shape.data.width / 3) / stretchyWidthDivider }
             local steps = shape.data.steps
 
             for i = 0, steps do
                local px, py = curve:evaluate(i / steps)
                table.insert(coords, { px, py })
             end
-
          else
             curve = love.math.newBezierCurve({ start.x, start.y, numbers.lerp(start.x, eind.x, .5),
                     numbers.lerp(start.y, eind.y, .5), eind.x, eind.y, })
@@ -259,15 +258,15 @@ mesh.makeVertices = function(shape)
             local stretchyWidthDivider = 1
             local d = (geom.distance(start.x, start.y, eind.x, eind.y))
             local m = ((shape.data.length * math.abs(scaleX)) / magicRubberhose)
-            
+
             -- this does the actual stretchy stuff!!
-            local mult = numbers.mapInto(d, m, m*10, 1, 10/magicDivider)
-               thickness = { scaleX * (shape.data.width / magicDivider) / (stretchyWidthDivider*mult) } 
-               coords = { shape.points[1], shape.points[2] }
+            local mult = numbers.mapInto(d, m, m * 10, 1, 10 / magicDivider)
+            thickness = { scaleX * (shape.data.width / magicDivider) / (stretchyWidthDivider * mult) }
+            coords = { shape.points[1], shape.points[2] }
          end
 
-        
-         
+
+
          -- ok we have our coordinates, now we create UV's and vertices
          coords = unloop.unpackNodePoints(coords, false)
 
@@ -383,6 +382,7 @@ mesh.makeSquishableUVsFromPoints = function(points)
       verts[5] = { v[5][1], v[5][2], 0, 1 }
       verts[6] = { v[2][1], v[2][2], 0, 0 } -- this is an extra one to make it go round
    end
+
    if #v == 9 then
       verts[1] = { v[1][1], v[1][2], 0.5, 0.5 }
       verts[2] = { v[2][1], v[2][2], 0, 0 }

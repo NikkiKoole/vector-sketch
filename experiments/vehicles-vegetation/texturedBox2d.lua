@@ -305,13 +305,43 @@ function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier
     end
 end
 
+function drawSquishableHairOver(x, y, r, sx, sy, creation)
+    -- first get the polygon from the meta object that describes the shape in 8 points
+    -- optionally grow that polygon outwards from the middle
+    local f = creation.torso.metaPoints
+    local p = {}
+    for i = 1, #f do
+        p[i] = {}
+        p[i][1] = f[i][1] * 1.3
+        p[i][2] = f[i][2] * 1.3
+    end
+
+
+    local first = { { 0, 0 }, p[8], p[1], p[2], p[3], p[4], p[5], p[6], p[7] }
+    -- TableConcat(first, p)
+
+    local v = mesh.makeSquishableUVsFromPoints(first)
+    local msh = love.graphics.newMesh(v, 'fan')
+    local img = mesh.getImage('borsthaar4.png')
+    msh:setTexture(img)
+    -- mesh.addUVToVerts(verts, img, node.points, node.texture)
+
+
+    love.graphics.setColor(.4, 0, 0, .8)
+    love.graphics.draw(msh, x, y, r, sx, sy)
+    love.graphics.setColor(1, 1, 1, 1)
+    --    print(inspect(f))
+end
+
 function drawSkinOver(box2dGuy, creation)
     love.graphics.setColor(1, 1, 1, 1)
 
     if creation then
         if creation.torso.metaURL then
-            renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
+            local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
+            drawSquishableHairOver(x, y, r, sx, sy, creation)
         end
+
 
         if creation.ear.metaURL then
             renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, -1 * 2, box2dGuy, creation)
