@@ -1077,12 +1077,12 @@ function startExample(number)
         local margin = 20
         -- objects.border = makeBorderChain(width, height, margin)
         local w, h = love.graphics.getDimensions()
-        print(inspect(cam))
+        -- print(inspect(cam))
 
 
 
-        print(cam:getScreenCoordinates(0, 0))
-        print(cam:getWorldCoordinates(0, 0))
+        --print(cam:getScreenCoordinates(0, 0))
+        -- print(cam:getWorldCoordinates(0, 0))
         local camtlx, camtly = cam:getWorldCoordinates(0, 0)
         local cambrx, cambry = cam:getWorldCoordinates(w, h)
         local camcx, camcy = cam:getWorldCoordinates(w / 2, h / 2)

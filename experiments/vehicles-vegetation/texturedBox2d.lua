@@ -237,332 +237,227 @@ function drawPlantOver(data, i)
     --love.graphics.draw(img, x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
 end
 
+-- torso/head
+function renderMetaObject(img, name, box2dGuy, creation)
+    local img    = img -- love.graphics.newImage(torsoCanvas)
+    local w, h   = img:getDimensions()
+
+    local x, y   = box2dGuy[name]:getPosition()
+    local r      = box2dGuy[name]:getAngle()
+
+    local wscale = creation[name].w / creation[name].metaPointsW
+    local hscale = creation[name].h / creation[name].metaPointsH
+
+    local sx     = (creation[name].metaTexturePointsW / w) * wscale
+    local sy     = (creation[name].metaTexturePointsH / h) * hscale
+
+    if name == 'head' and (creation.head.metaOffsetX or creation.head.metaOffsetY) then
+        x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale,
+                creation.head.metaOffsetY * hscale)
+    end
+
+    love.graphics.draw(img, x, y, r, sx * creation[name].flipx, sy * creation[name].flipy, w / 2, h / 2)
+
+    return x, y, r, sx, sy
+end
+
+-- note : DONT USE THE sx/sy multiplier to support all types of sizes,
+-- just use it for flipping with -1+1 and optionally addsome kind of divider if , for example, all ear images are drawn x2 too big
+function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplier, box2dGuy, creation)
+    local img = img -- mesh.getImage(creation.ear.metaURL)
+    local w, h = img:getDimensions()
+
+    local x, y = box2dGuy[name]:getWorldPoint(0, 0)
+    local r = box2dGuy[name]:getAngle() + extraR
+
+    local wscale = creation[nameP].h / w
+    local hscale = creation[nameP].w / h
+
+    local ox = creation[nameP].metaPivotX - creation[nameP].metaTexturePoints[1][1]
+    local oy = creation[nameP].metaPivotY - creation[nameP].metaTexturePoints[1][2]
+
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox, oy)
+end
+
+function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
+    local img = img -- mesh.getImage(creation.eye.metaURL)
+    local w, h = img:getDimensions()
+
+    local wscale = creation[name].h / w --* 2 --creation.lfoot.metaPointsW
+    local hscale = creation[name].w / h --* 2 --creation.lfoot.metaPointsH
+
+
+    local ox = creation[name].metaPivotX - creation[name].metaTexturePoints[1][1]
+    local oy = creation[name].metaPivotY - creation[name].metaTexturePoints[1][2]
+
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox, oy)
+end
+
+function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
+    local ax, ay = box2dGuy[p1]:getPosition()
+    local bx, by = box2dGuy[p2]:getPosition()
+    local cx, cy = box2dGuy[p3]:getPosition()
+    local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
+    if (dir ~= nil or wmultiplier ~= nil) then
+        texturedCurve(curve, canvas, mesh, dir, wmultiplier)
+    else
+        texturedCurve(curve, canvas, mesh)
+    end
+end
+
 function drawSkinOver(box2dGuy, creation)
-    love.graphics.setColor(0, 0, 0, 1)
-    if creation and creation.torso.metaURL then
-        -- local maskUrl = getPNGMaskUrl(creation.torso.metaURL)
-        -- print(maskUrl)
-
-
-        --print(cnv)
-        --local url = creation.torso.metaURL
-
-        --local cnv = canvas.makeTexturedCanvas2(mesh.getImage(url))
-
-        local img    = torsoCanvas -- love.graphics.newImage(torsoCanvas)
-        -- local img    = mesh.getImage(creation.torso.metaURL)
-        local w, h   = img:getDimensions()
-
-        local x, y   = box2dGuy.torso:getPosition()
-        local r      = box2dGuy.torso:getAngle()
-
-        local wscale = creation.torso.w / creation.torso.metaPointsW
-        local hscale = creation.torso.h / creation.torso.metaPointsH
-
-        local sx     = (creation.torso.metaTexturePointsW / w) * wscale
-        local sy     = (creation.torso.metaTexturePointsH / h) * hscale
-
-        --   print(x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
-        --  print(x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(img, x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
-        love.graphics.setColor(0, 0, 0, 1)
-        --love.graphics.draw(img, x, y, r, 1, 1, w / 2, h / 2)
-    end
-
     love.graphics.setColor(1, 1, 1, 1)
-    -- left ear
-    if creation and creation.ear.metaURL then
-        local img = earCanvas -- mesh.getImage(creation.ear.metaURL)
-        local w, h = img:getDimensions()
 
-        local x, y = box2dGuy.lear:getWorldPoint(0, 0)
-        local r = box2dGuy.lear:getAngle() - math.pi / 2
+    if creation then
+        if creation.torso.metaURL then
+            renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
+        end
 
-        local wscale = creation.ear.h / w * 2 --creation.lfoot.metaPointsW
-        local hscale = creation.ear.w / h * 2 --creation.lfoot.metaPointsH
+        if creation.ear.metaURL then
+            renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, -1 * 2, box2dGuy, creation)
+            renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, -1 * 2, box2dGuy, creation)
+        end
 
-        local ox = creation.ear.metaPivotX - creation.ear.metaTexturePoints[1][1]
-        local oy = creation.ear.metaPivotY - creation.ear.metaTexturePoints[1][2]
+        love.graphics.setColor(0, 0, 0, 1)
+        -- HHHEEEEAAADDD
+        if not creation.isPotatoHead then
+            if creation.head.metaURL then
+                love.graphics.setColor(1, 1, 1, 1)
+                local x, y, r, sx, sy = renderMetaObject(headCanvas, 'head', box2dGuy, creation)
 
-        love.graphics.draw(img, x, y, r, -wscale, -hscale, ox, oy)
-    end
-
-    if creation and creation.ear.metaURL then
-        local img = earCanvas --mesh.getImage(creation.ear.metaURL)
-        local w, h = img:getDimensions()
-
-        local x, y = box2dGuy.rear:getWorldPoint(0, 0)
-        local r = box2dGuy.rear:getAngle() + math.pi / 2
-
-        local wscale = creation.ear.h / w * 2 --creation.lfoot.metaPointsW
-        local hscale = creation.ear.w / h * 2 --creation.lfoot.metaPointsH
-
-        local ox = creation.ear.metaPivotX - creation.ear.metaTexturePoints[1][1]
-        local oy = creation.ear.metaPivotY - creation.ear.metaTexturePoints[1][2]
-
-        love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
-    end
-    love.graphics.setColor(0, 0, 0, 1)
-    -- HHHEEEEAAADDD
-    if not creation.isPotatoHead then
-        if creation and creation.head.metaURL then
-            local img = headCanvas --mesh.getImage(creation.head.metaURL)
-            local w, h = img:getDimensions()
-            local x, y = box2dGuy.head:getWorldPoint(0, 0)
-            local r = box2dGuy.head:getAngle()
-            local wscale = creation.head.w / creation.head.metaPointsW
-            local hscale = creation.head.h / creation.head.metaPointsH
-            local sx = (creation.head.metaTexturePointsW / w) * wscale
-            local sy = (creation.head.metaTexturePointsH / h) * hscale
-
-            if creation.head.metaOffsetX or creation.head.metaOffsetY then
-                x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale, creation.head.metaOffsetY * hscale)
-            end
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(img, x, y, r, sx * creation.head
-            .flipx, sy * creation.head.flipy, w / 2, h / 2)
-
-            love.graphics.setColor(0, 0, 0, 1)
-            if true then
-                --  love.graphics.setColor(1, 0, 1, 1)
-                local f = creation.head.metaPoints
-
-                --for i = 1, #f do
-
-
-                leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
-                rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
-
-                local eyelx, eyely = box2dGuy.head:getWorldPoint(
-                        (leftEyeX + creation.head.metaOffsetX) * sx,
-                        (f[3][2] + creation.head.metaOffsetY) * sy)
-
-                local eyerx, eyery = box2dGuy.head:getWorldPoint(
-                        (rightEyeX + creation.head.metaOffsetX) * sx,
-                        (f[3][2] + creation.head.metaOffsetY) * sy)
-
-
-                local img = mesh.getImage(creation.eye.metaURL)
-                local w, h = img:getDimensions()
-
-                local wscale = creation.eye.h / w --* 2 --creation.lfoot.metaPointsW
-                local hscale = creation.eye.w / h --* 2 --creation.lfoot.metaPointsH
-
-
-                local ox = creation.eye.metaPivotX - creation.eye.metaTexturePoints[1][1]
-                local oy = creation.eye.metaPivotY - creation.eye.metaTexturePoints[1][2]
-
-
-                love.graphics.draw(img, eyelx, eyely, r, wscale * 0.5 * -1, hscale * 0.5, ox, oy)
-                love.graphics.draw(img, eyerx, eyery, r, wscale * 0.5, hscale * 0.5, ox, oy)
-                --end
-            end
-
-            --            love.graphics.setColor(1, 0, 0, 1)
-            love.graphics.setColor(0, 0, 0, 1)
-            -- hair1x
-            if true then
-                if true or box2dGuy.hairNeedsRedo then
-                    --local img = mesh.getImage('assets/parts/hair1x.png')
-                    local img = mesh.getImage('haarnew2.png')
-                    local w, h = img:getDimensions()
+                if true then
+                    --  love.graphics.setColor(1, 0, 1, 1)
                     local f = creation.head.metaPoints
-                    -- note: make this a parameter
-                    local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
 
-                    local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
-                    local hairLine = { f[3], f[4], f[5], f[6], f[7] }
 
-                    local points = hairLine
-                    local hairTension = .02
-                    local spacing = 10
-                    local coords
+                    leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
+                    rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
 
-                    coords = border.unloosenVanillaline(points, hairTension, spacing)
-                    local length = getLengthOfPath(hairLine)
-                    local factor = (length / h)
-                    --print(length)
-                    local hairWidthMultiplier = .5
-                    local width = (w * factor) * hairWidthMultiplier --30 --160 * 10
-                    -- print(inspect(coords), inspect(points))
-                    local verts, indices, draw_mode = polyline.render('miter', coords, width)
+                    local eyelx, eyely = box2dGuy.head:getWorldPoint(
+                            (leftEyeX + creation.head.metaOffsetX) * sx,
+                            (f[3][2] + creation.head.metaOffsetY) * sy)
 
-                    local vertsWithUVs = {}
+                    local eyerx, eyery = box2dGuy.head:getWorldPoint(
+                            (rightEyeX + creation.head.metaOffsetX) * sx,
+                            (f[3][2] + creation.head.metaOffsetY) * sy)
 
-                    for i = 1, #verts do
-                        local u = (i % 2 == 1) and 0 or 1
-                        local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
-                        vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+                    renderNonAttachedObject(mesh.getImage(creation.eye.metaURL),
+                        'eye', r, eyelx, eyely, -0.5, 0.5,
+                        box2dGuy, creation)
+                    renderNonAttachedObject(mesh.getImage(creation.eye.metaURL),
+                        'eye', r, eyerx, eyery, 0.5, 0.5,
+                        box2dGuy, creation)
+                end
+
+                --            love.graphics.setColor(1, 0, 0, 1)
+                love.graphics.setColor(0, 0, 0, 1)
+                -- hair1x
+                if true then
+                    if true or box2dGuy.hairNeedsRedo then
+                        --local img = mesh.getImage('assets/parts/hair1x.png')
+                        local img = mesh.getImage('haarnew2.png')
+                        local w, h = img:getDimensions()
+                        local f = creation.head.metaPoints
+                        -- note: make this a parameter
+                        local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
+
+                        local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
+                        local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+
+                        local points = hairLine
+                        local hairTension = .02
+                        local spacing = 10
+                        local coords
+
+                        coords = border.unloosenVanillaline(points, hairTension, spacing)
+                        local length = getLengthOfPath(hairLine)
+                        local factor = (length / h)
+                        --print(length)
+                        local hairWidthMultiplier = .5
+                        local width = (w * factor) * hairWidthMultiplier --30 --160 * 10
+                        -- print(inspect(coords), inspect(points))
+                        local verts, indices, draw_mode = polyline.render('miter', coords, width)
+
+                        local vertsWithUVs = {}
+
+                        for i = 1, #verts do
+                            local u = (i % 2 == 1) and 0 or 1
+                            local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
+                            vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
+                        end
+                        local vertices = vertsWithUVs
+                        local m = love.graphics.newMesh(vertices, "strip")
+                        --print(inspect(vertices))
+                        m:setTexture(img)
+                        love.graphics.draw(m, x, y, r, sx * creation.head.flipx, sy)
                     end
-                    local vertices = vertsWithUVs
-                    local m = love.graphics.newMesh(vertices, "strip")
-                    --print(inspect(vertices))
-                    m:setTexture(img)
-                    love.graphics.draw(m, x, y, r, sx * creation.head.flipx, sy)
-
-                    -- local factor = (length / height)
-                    -- currentNode.data = {}
-                    -- currentNode.data.width = (width * factor) * hairWidthMultiplier
-                    -- currentNode.data.tension = hairTension
-                    -- currentNode.data.spacing = 5
-
-
-
-                    --love.graphics.draw(img, eyelx, eyely, r, wscale * 0.5 * -1, hscale * 0.5, w / 2, h / 2)
-                    -- end
                 end
             end
         end
 
-        -- maybe start trying out to draw eyes and nose
 
+        --
+        -- maybe start trying out to draw eyes and nose
 
 
 
         love.graphics.setColor(0, 0, 0, 1)
         if box2dGuy.neck and box2dGuy.neck1 then
-            local ax, ay = box2dGuy.neck:getPosition()
-            local bx, by = box2dGuy.neck1:getPosition()
-            local cx, cy = box2dGuy.head:getPosition()
+            love.graphics.setColor(1, 1, 1, 1)
+            renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy)
+        end
 
+        if false then
+            local img = headCanvas --mesh.getImage(creation.head.metaURL)
+            local ow, oh = img:getDimensions()
+            local x, y = box2dGuy.head:getWorldPoint(0, 0)
+            local r = box2dGuy.head:getAngle()
 
-            local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-            --texturedCurve(curve, image10, mesh10)
+            local maskImage = mesh.getImage('masker-machteld.png')
+            local w, h = maskImage:getDimensions()
+
+            local sx = w / ow
+            local sy = h / oh
+
+            --print(sx, sy)
 
             love.graphics.setColor(1, 1, 1, 1)
-            texturedCurve(curve, neckCanvas, neckmesh)
+            love.graphics.draw(maskImage, x, y, r, sx / 2, sy * -0.5, w / 2, h)
         end
 
-
-        love.graphics.setColor(0, 0, 0, 1)
-        local ax, ay = box2dGuy.luleg:getPosition()
-        local bx, by = box2dGuy.llleg:getPosition()
-        local cx, cy = box2dGuy.lfoot:getPosition()
-
-
-        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-        --love.graphics.line(curve:render())
-
-        love.graphics.setColor(1, 1, 1, 1)
-        texturedCurve(curve, legCanvas, legmesh)
-        love.graphics.setColor(0, 0, 0, 1)
-        -----
-        local ax, ay = box2dGuy.ruleg:getPosition()
-        local bx, by = box2dGuy.rlleg:getPosition()
-        local cx, cy = box2dGuy.rfoot:getPosition()
-
-
-        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, cx, cy })
-
-        --texturedCurve(curve, image1, mesh1)
-        love.graphics.setColor(1, 1, 1, 1)
-        texturedCurve(curve, legCanvas, legmesh)
-        --texturedCurve(curve, image9, mesh9, 1, 9)
-
-        ----
-        local ax, ay = box2dGuy.luarm:getPosition()
-        local bx, by = box2dGuy.llarm:getPosition()
-        local cx, cy = box2dGuy.lhand:getPosition()
-
-
-        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-        -- love.graphics.line(curve:render())
         --love.graphics.setColor(0, 0, 0, 1)
-        texturedCurve(curve, armCanvas, armmesh)
-        -- texturedCurve(curve, image5, mesh5)
-        texturedCurve(curve, image9, mesh9, 1, 5)
-        --texturedCurve(curve, image8, mesh8)
-
+        love.graphics.setColor(1, 1, 1, 1)
+        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy)
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy)
 
         ----
-        local ax, ay = box2dGuy.ruarm:getPosition()
-        local bx, by = box2dGuy.rlarm:getPosition()
-        local cx, cy = box2dGuy.rhand:getPosition()
 
 
-        local curve = love.math.newBezierCurve({ ax, ay, bx, by, bx, by, bx, by, cx, cy })
-        --  love.graphics.line(curve:render())
-        texturedCurve(curve, armCanvas, armmesh)
-        --texturedCurve(curve, image5, mesh5)
-        --texturedCurve(curve, image6, mesh6)
-        love.graphics.setColor(1, 1, 1, 1)
-        if creation and creation.lhand.metaURL then
-            local img = handCanvas -- mesh.getImage(creation.lhand.metaURL)
-            local w, h = img:getDimensions()
+        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy)
+        renderCurvedObject('luarm', 'llarm', 'lhand', image9, mesh9, box2dGuy, 1, 15)
 
-            local x, y = box2dGuy.lhand:getWorldPoint(0, 0)
-            local r = box2dGuy.lhand:getAngle() - math.pi / 2
 
-            local wscale = creation.lhand.h / w --creation.lfoot.metaPointsW
-            local hscale = creation.lhand.w / h --creation.lfoot.metaPointsH
 
-            local ox = creation.lhand.metaPivotX - creation.lhand.metaTexturePoints[1][1]
-            local oy = creation.lhand.metaPivotY - creation.lhand.metaTexturePoints[1][2]
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image9, mesh9, box2dGuy, 1, 15)
 
-            --love.graphics.setColor(1, 0, 0, 1)
-            --love.graphics.print(r, x, y)
-            --love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.draw(img, x, y, r, wscale, hscale, ox, oy)
+
+        if creation.lhand.metaURL then
+            renderAtachedObject(handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
         end
-        if creation and creation.rhand.metaURL then
-            local img = handCanvas -- mesh.getImage(creation.rhand.metaURL)
-            local w, h = img:getDimensions()
-
-            local x, y = box2dGuy.rhand:getWorldPoint(0, 0)
-            local r = box2dGuy.rhand:getAngle() - math.pi / 2
-
-            local wscale = creation.rhand.h / w --creation.lfoot.metaPointsW
-            local hscale = creation.rhand.w / h --creation.lfoot.metaPointsH
-
-            local ox = creation.rhand.metaPivotX - creation.rhand.metaTexturePoints[1][1]
-            local oy = creation.rhand.metaPivotY - creation.rhand.metaTexturePoints[1][2]
-
-            -- love.graphics.setColor(1, 0, 0, 1)
-            --love.graphics.print(r, x, y)
-            --  love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.draw(img, x, y, r, wscale, -hscale, ox, oy)
+        if creation.rhand.metaURL then
+            renderAtachedObject(handCanvas, 'rhand', 'rhand', -math.pi / 2, 1, -1, box2dGuy, creation)
         end
         love.graphics.setColor(0, 0, 0, 1)
 
         -- left foot
-        if creation and creation.lfoot.metaURL then
-            local img = footCanvas
-            --local img = mesh.getImage(creation.lfoot.metaURL)
-            local w, h = img:getDimensions()
-
-            local x, y = box2dGuy.lfoot:getWorldPoint(0, 0)
-            local r = box2dGuy.lfoot:getAngle() - math.pi / 2
-
-            local wscale = creation.lfoot.h / w --creation.lfoot.metaPointsW
-            local hscale = creation.lfoot.w / h --creation.lfoot.metaPointsH
-
-            local ox = creation.lfoot.metaPivotX - creation.lfoot.metaTexturePoints[1][1]
-            local oy = creation.lfoot.metaPivotY - creation.lfoot.metaTexturePoints[1][2]
-            --love.graphics.setColor(1, 0, 0, 1)
-            -- love.graphics.print(r, x, y)
+        if creation.lfoot.metaURL then
             love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(img, x, y, r, wscale * 1.1, hscale * 1.1, ox, oy)
+            renderAtachedObject(footCanvas, 'lfoot', 'lfoot', -math.pi / 2, 1.1, 1.1, box2dGuy, creation)
         end
         -- right foot
-        if creation and creation.rfoot.metaURL then
-            local img = footCanvas
-            -- local img = mesh.getImage(creation.rfoot.metaURL)
-            local w, h = img:getDimensions()
-
-            local x, y = box2dGuy.rfoot:getWorldPoint(0, 0)
-            local r = box2dGuy.rfoot:getAngle() + math.pi / 2
-
-            local wscale = creation.rfoot.h / w --creation.lfoot.metaPointsW
-            local hscale = creation.rfoot.w / h --creation.lfoot.metaPointsH
-
-            local ox = creation.rfoot.metaPivotX - creation.rfoot.metaTexturePoints[1][1]
-            local oy = creation.rfoot.metaPivotY - creation.rfoot.metaTexturePoints[1][2]
-            -- love.graphics.setColor(1, 0, 0, 1)
-            --   love.graphics.print(r, x, y)
-            -- love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(img, x, y, r, -wscale * 1.1, hscale * 1.1, ox, oy)
+        if creation.rfoot.metaURL then
+            renderAtachedObject(footCanvas, 'rfoot', 'rfoot', math.pi / 2, -1.1, 1.1, box2dGuy, creation)
         end
     end
 end
