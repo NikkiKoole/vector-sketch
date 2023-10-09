@@ -164,7 +164,7 @@ function love.load()
 
 
    textures = {
-      love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
        love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
        love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
        love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
@@ -251,7 +251,7 @@ function love.load()
 
    parts, urls = generateParts()
    for i = 1, #urls do
-     -- mesh.getImage(urls[i])
+      -- mesh.getImage(urls[i])
    end
    print(inspect(urls))
    amountOfGuys = 5
@@ -340,7 +340,7 @@ function love.load()
    SM.load("splash")
    print(love.graphics.getStats().texturememory / (1024 * 1024) .. ' MB of texture memory, for ' .. #fiveGuys .. ' guys.')
    print(love.filesystem.getIdentity())
-  
+
    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
    love.event.wait()

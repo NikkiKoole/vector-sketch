@@ -8,10 +8,10 @@ local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     hasPhysicsHair = false,
     hasNeck = true,
-    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = .15, shape = 'trapezium' },
-    neck = { w = 140, h = 250, d = 4, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false } },
-    neck1 = { w = 140, h = 250, d = 4, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false }, friction = 5000 },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false } },
+    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
+    neck = { w = 140, h = 50, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 50, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true }, friction = 5000 },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },
     lowArm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
@@ -30,6 +30,9 @@ local creation = {
     hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
     eye = { w = 10, h = 10 },
     pupil = { w = 10, h = 10 },
+    nose = { w = 10, h = 10 },
+    upperlip = { w = 10, h = 10 },
+    lowerlip = { w = 10, h = 10 },
 }
 function getCreation()
     return creation
@@ -182,7 +185,7 @@ end
 local function getAngleOffset(key, side)
     -- print(key, side)
     if key == 'neck' then
-        return math.pi
+        return -math.pi
     elseif key == 'neck1' then
         return 0
     elseif key == 'ear' then

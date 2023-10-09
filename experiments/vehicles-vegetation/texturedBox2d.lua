@@ -322,7 +322,7 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
 
     local v = mesh.makeSquishableUVsFromPoints(first)
     local msh = love.graphics.newMesh(v, 'fan')
-    local img = mesh.getImage('borsthaar6.png')
+    local img = mesh.getImage('borsthaar7.png')
     msh:setTexture(img)
     -- mesh.addUVToVerts(verts, img, node.points, node.texture)
 
@@ -345,6 +345,11 @@ function drawSkinOver(box2dGuy, creation)
         end
 
 
+        if box2dGuy.neck and box2dGuy.neck1 then
+            love.graphics.setColor(1, 1, 1, 1)
+            renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy)
+        end
+
         if creation.ear.metaURL then
             renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, -1 * 2, box2dGuy, creation)
             renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, -1 * 2, box2dGuy, creation)
@@ -362,8 +367,8 @@ function drawSkinOver(box2dGuy, creation)
                     local f = creation.head.metaPoints
 
 
-                    leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
-                    rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
+                    local leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
+                    local rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
 
                     local eyelx, eyely = box2dGuy.head:getWorldPoint(
                             (leftEyeX + creation.head.metaOffsetX) * sx,
@@ -373,12 +378,50 @@ function drawSkinOver(box2dGuy, creation)
                             (rightEyeX + creation.head.metaOffsetX) * sx,
                             (f[3][2] + creation.head.metaOffsetY) * sy)
 
-                    renderNonAttachedObject(mesh.getImage(creation.eye.metaURL),
+                    renderNonAttachedObject(eyeCanvas,
                         'eye', r, eyelx, eyely, -0.5, 0.5,
                         box2dGuy, creation)
-                    renderNonAttachedObject(mesh.getImage(creation.eye.metaURL),
+                    renderNonAttachedObject(eyeCanvas,
                         'eye', r, eyerx, eyery, 0.5, 0.5,
                         box2dGuy, creation)
+
+                    renderNonAttachedObject(pupilCanvas,
+                        'pupil', r, eyelx, eyely, -0.5 / 2, 0.5 / 2,
+                        box2dGuy, creation)
+                    renderNonAttachedObject(pupilCanvas,
+                        'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
+                        box2dGuy, creation)
+
+
+                    local noseX = numbers.lerp(f[3][1], f[7][1], 0.5)
+                    local noseY = f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
+
+                    local nx, ny = box2dGuy.head:getWorldPoint(
+                            (noseX + creation.head.metaOffsetX) * sx,
+                            (noseY + creation.head.metaOffsetY) * sy)
+
+                    renderNonAttachedObject(noseCanvas,
+                        'nose', r, nx, ny, 0.5, -0.5,
+                        box2dGuy, creation)
+
+
+                    local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
+                    local mouthY = numbers.lerp(f[1][1], f[8][1], 0.85) --f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
+                    local mx, my = box2dGuy.head:getWorldPoint(
+                            (mouthX + creation.head.metaOffsetX) * sx,
+                            (mouthY + creation.head.metaOffsetY) * sy)
+
+                    love.graphics.rectangle('fill', mx - 10, my - 10, 20, 20)
+
+
+                    renderNonAttachedObject(upperlipCanvas,
+                        'nose', r, mx, my, 0.5, -0.5,
+                        box2dGuy, creation)
+
+
+                    --
+
+                    --  love.graphics.rectangle('fill', nx - 5, ny - 5, 10, 10)
                 end
 
                 --            love.graphics.setColor(1, 0, 0, 1)
@@ -434,28 +477,7 @@ function drawSkinOver(box2dGuy, creation)
 
 
         love.graphics.setColor(0, 0, 0, 1)
-        if box2dGuy.neck and box2dGuy.neck1 then
-            love.graphics.setColor(1, 1, 1, 1)
-            renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy)
-        end
 
-        if false then
-            local img = headCanvas --mesh.getImage(creation.head.metaURL)
-            local ow, oh = img:getDimensions()
-            local x, y = box2dGuy.head:getWorldPoint(0, 0)
-            local r = box2dGuy.head:getAngle()
-
-            local maskImage = mesh.getImage('masker-machteld.png')
-            local w, h = maskImage:getDimensions()
-
-            local sx = w / ow
-            local sy = h / oh
-
-            --print(sx, sy)
-
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(maskImage, x, y, r, sx / 2, sy * -0.5, w / 2, h)
-        end
 
         --love.graphics.setColor(0, 0, 0, 1)
         love.graphics.setColor(1, 1, 1, 1)

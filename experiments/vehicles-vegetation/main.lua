@@ -35,7 +35,7 @@ if true then
     until a == "focus" or a == 'mousepressed'
 end
 
-
+--love.math.setRandomSeed(love.timer.getTime())
 palettes   = {}
 local base = {
     '020202', '333233', '814800', 'e6c800', 'efebd8',
@@ -694,13 +694,13 @@ function makeBalloon(x, y)
     local ball = {}
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
-    ball.shape = love.physics.newCircleShape(180)
+    ball.shape = love.physics.newCircleShape(480)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 0)
     --  ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData(makeUserData("balloon"))
     -- ball.fixture:setFriction(.5)
 
-    makeAndAddConnector(ball.body, 0, 200, nil, 50)
+    makeAndAddConnector(ball.body, 0, 600, nil, 50)
     return ball
 end
 
@@ -935,6 +935,36 @@ function createRandomColoredBlackOutlineTexture(url)
             1, 1, nil, nil))
 end
 
+function createBlackColoredBlackOutlineTexture(url)
+    -- todo make this more optimal and readable, 5 is white in any case
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[1]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[1]
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end
+
+function createWhiteColoredBlackOutlineTexture(url)
+    -- todo make this more optimal and readable, 5 is white in any case
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[5]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[5]
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end
+
 function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
                               renderPatch)
     --print(url)
@@ -947,6 +977,42 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
             renderPatch)
 
     return cnv
+end
+
+function randomFaceParts()
+    eyeIndex = math.ceil(love.math.random() * #eyedata)
+    changeMetaTexture('eye', eyedata[eyeIndex])
+    print(#eyedata, eyeIndex)
+    creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+    creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+    eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
+
+    pupilIndex = math.ceil(love.math.random() * #pupildata)
+    changeMetaTexture('pupil', pupildata[pupilIndex])
+    creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
+    creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
+    pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)
+
+
+    noseIndex = math.ceil(love.math.random() * #pupildata)
+    changeMetaTexture('nose', nosedata[noseIndex])
+    creation.nose.w = mesh.getImage(creation.nose.metaURL):getHeight()
+    creation.nose.h = mesh.getImage(creation.nose.metaURL):getWidth()
+    noseCanvas = createRandomColoredBlackOutlineTexture(creation.nose.metaURL)
+
+
+    upperlipIndex = math.ceil(love.math.random() * #upperlipdata)
+    changeMetaTexture('upperlip', upperlipdata[upperlipIndex])
+    creation.upperlip.w = mesh.getImage(creation.upperlip.metaURL):getHeight()
+    creation.upperlip.h = mesh.getImage(creation.upperlip.metaURL):getWidth()
+    upperlipCanvas = createRandomColoredBlackOutlineTexture(creation.upperlip.metaURL)
+
+
+    lowerlipIndex = math.ceil(love.math.random() * #lowerlipdata)
+    changeMetaTexture('lowerlip', lowerlipdata[lowerlipIndex])
+    creation.lowerlip.w = mesh.getImage(creation.lowerlip.metaURL):getHeight()
+    creation.lowerlip.h = mesh.getImage(creation.lowerlip.metaURL):getWidth()
+    lowerlipCanvas = createRandomColoredBlackOutlineTexture(creation.lowerlip.metaURL)
 end
 
 function startExample(number)
@@ -1025,6 +1091,19 @@ function startExample(number)
         end
 
 
+        if true then
+            objects.ground = {}
+            objects.ground.body = love.physics.newBody(world, width / 2, -3500, "static")
+            objects.ground.shape = love.physics.newRectangleShape(width * 10, height / 4)
+            objects.ground.fixture = love.physics.newFixture(objects.ground.body, objects.ground.shape, 1)
+            objects.ground.fixture:setUserData(makeUserData("ground"))
+            objects.ground.fixture:setFriction(1)
+        end
+
+
+
+
+
         objects.blocks = {}
         for i = 1, 3 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
@@ -1052,7 +1131,7 @@ function startExample(number)
         end
 
         for i = 1, 3 do
-            makeChain(i * 20, -3000, 8)
+            --     makeChain(i * 20, -3000, 8)
         end
 
         for i = 1, 10 do
@@ -1064,7 +1143,7 @@ function startExample(number)
         end
 
         for i = 1, 3 do
-            makeSnappyElastic(i * 100, -1500)
+            --     makeSnappyElastic(i * 100, -1500)
         end
 
 
@@ -1199,7 +1278,7 @@ function startExample(number)
 
 
         eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
-        local earIndex = math.ceil(math.random() * #eardata)
+        local earIndex = math.ceil(love.math.random() * #eardata)
         --print(eardata[earIndex])
         changeMetaTexture('ear', eardata[earIndex])
         creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
@@ -1208,23 +1287,21 @@ function startExample(number)
 
 
 
+
+
+
         -- eyes
         eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
-        eyeIndex = math.ceil(math.random() * #eyedata)
-        changeMetaTexture('eye', eyedata[eyeIndex])
-        creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
-        creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
         -- pupils
-
         pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
-        pupilIndex = math.ceil(math.random() * #pupildata)
-        changeMetaTexture('pupil', pupildata[pupilIndex])
-        creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight()
-        creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth()
-
         nosedata = loadVectorSketch('assets/faceparts.polygons.txt', 'noses')
 
+        upperlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'upperlips')
+        lowerlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'lowerlips')
+        --teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeth')
 
+        print(#upperlipdata, #lowerlipdata)
+        randomFaceParts()
 
         for i = 1, 5 do
             table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000 + (i % 2) * -1000, i))
@@ -1672,6 +1749,16 @@ function love.draw()
         end
 
 
+        love.graphics.setColor(1, 1, 1, 1)
+        local img = mesh.getImage('stoelL.png')
+        love.graphics.draw(img, 100, -100, 0, 1, 1, 0, img:getHeight())
+
+        local img = mesh.getImage('tafel.png')
+        love.graphics.draw(img, 300, -100, 0, 1, 1, 0, img:getHeight())
+
+
+        local img = mesh.getImage('stoelR.png')
+        love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
 
 
         --for i = 1, #grass do
@@ -1903,7 +1990,7 @@ function rotateAllBodies(bodies, dt)
                         --getRidOfBigRotationsInBody(body)
                         --local desired = upsideDown and -math.pi or 0
                         --rotateToHorizontal(body, desired, 50)
-                        local up = -9.81 * love.physics.getMeter() * 1.5 --4.5
+                        local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
 
                         body:applyForce(0, up)
                     end
@@ -2126,12 +2213,16 @@ function love.keypressed(k)
         upsideDown = not upsideDown
         if not upsideDown then
             for i = 1, #box2dGuys do
+                box2dGuys[i].head:setAngle( -math.pi)
+                box2dGuys[i].neck:setAngle( -math.pi)
+                box2dGuys[i].neck1:setAngle( -math.pi)
+                --box2dGuys[i].torso:setAngle(0)
                 box2dGuys[i].luleg:setAngle(0)
                 box2dGuys[i].llleg:setAngle(0)
-                box2dGuys[i].lfoot:setAngle(math.pi / 2)
+                -- box2dGuys[i].lfoot:setAngle(math.pi / 2)
                 box2dGuys[i].ruleg:setAngle(0)
                 box2dGuys[i].rlleg:setAngle(0)
-                box2dGuys[i].rfoot:setAngle( -math.pi / 2)
+                -- box2dGuys[i].rfoot:setAngle( -math.pi / 2)
             end
         end
         if upsideDown then
@@ -2157,233 +2248,239 @@ function love.keypressed(k)
         end
         profiling = not profiling
     end
+    --if example == 2 then
 
-    if example == 3 then
-        if k == '-' then
-            print('rest hard!')
-            for i = 1, #box2dGuys do
-                box2dGuys[i].head:setAngle( -math.pi)
-                if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
-                if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
-                box2dGuys[i].torso:setAngle(0)
-                box2dGuys[i].luleg:setAngle(0)
-                box2dGuys[i].llleg:setAngle(0)
-                box2dGuys[i].lfoot:setAngle(math.pi / 2)
-                box2dGuys[i].ruleg:setAngle(0)
-                box2dGuys[i].rlleg:setAngle(0)
-                box2dGuys[i].rfoot:setAngle( -math.pi / 2)
-                box2dGuys[i].luarm:setAngle(0)
-                box2dGuys[i].llarm:setAngle(0)
-                box2dGuys[i].lhand:setAngle(0)
-                box2dGuys[i].ruarm:setAngle(0)
-                box2dGuys[i].rlarm:setAngle(0)
-                box2dGuys[i].rhand:setAngle(0)
-            end
+    --end
+    --if example == 3 then
+    if k == '-' then
+        print('rest hard!')
+        for i = 1, #box2dGuys do
+            box2dGuys[i].head:setAngle( -math.pi)
+            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
+            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
+            box2dGuys[i].torso:setAngle(0)
+            box2dGuys[i].luleg:setAngle(0)
+            box2dGuys[i].llleg:setAngle(0)
+            box2dGuys[i].lfoot:setAngle(math.pi / 2)
+            box2dGuys[i].ruleg:setAngle(0)
+            box2dGuys[i].rlleg:setAngle(0)
+            box2dGuys[i].rfoot:setAngle( -math.pi / 2)
+            box2dGuys[i].luarm:setAngle(0)
+            box2dGuys[i].llarm:setAngle(0)
+            box2dGuys[i].lhand:setAngle(0)
+            box2dGuys[i].ruarm:setAngle(0)
+            box2dGuys[i].rlarm:setAngle(0)
+            box2dGuys[i].rhand:setAngle(0)
         end
-        if k == 'n' then
-            creation.hasNeck = not creation.hasNeck
-            for i = 1, #box2dGuys do
-                handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
-                --genericBodyPartUpdate(box2dGuys[i], i, 'torso')
-                genericBodyPartUpdate(box2dGuys[i], i, 'head')
-            end
+    end
+    if k == 'n' then
+        creation.hasNeck = not creation.hasNeck
+        for i = 1, #box2dGuys do
+            handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
+            --genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+            genericBodyPartUpdate(box2dGuys[i], i, 'head')
         end
-        if (k == 'h') then
-            creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
-            -- getFlippedMetaObject()
-            local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-                    data[bodyRndIndex]
-                    .points)
-            changeMetaPoints('torso', flippedFloppedBodyPoints)
-            for i = 1, #box2dGuys do
-                genericBodyPartUpdate(box2dGuys[i], i, 'torso')
-            end
+    end
+    if (k == 'h') then
+        creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
+        -- getFlippedMetaObject()
+        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                data[bodyRndIndex]
+                .points)
+        changeMetaPoints('torso', flippedFloppedBodyPoints)
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
+    end
 
-        if k == 'v' then
-            creation.torso.flipy = creation.torso.flipy == 1 and -1 or 1
-            local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-                    data[bodyRndIndex]
-                    .points)
-            changeMetaPoints('torso', flippedFloppedBodyPoints)
-            for i = 1, #box2dGuys do
-                genericBodyPartUpdate(box2dGuys[i], i, 'torso')
-            end
+    if k == 'v' then
+        creation.torso.flipy = creation.torso.flipy == 1 and -1 or 1
+        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                data[bodyRndIndex]
+                .points)
+        changeMetaPoints('torso', flippedFloppedBodyPoints)
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
+    end
 
-        if k == 'e' then
-            local earIndex = math.ceil(math.random() * #eardata)
-            --print(eardata[earIndex])
-            changeMetaTexture('ear', eardata[earIndex])
-            earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
+    if k == 'e' then
+        local earIndex = math.ceil(math.random() * #eardata)
+        --print(eardata[earIndex])
+        changeMetaTexture('ear', eardata[earIndex])
+        earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
 
 
-            creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
-            creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
-            for i = 1, #box2dGuys do
-                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
-            end
+        creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
+        creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
-        if k == 'i' then
-            eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
-            eyeIndex = math.ceil(math.random() * #eyedata)
-            changeMetaTexture('eye', eyedata[eyeIndex])
-            creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
-            creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
-            for i = 1, #box2dGuys do
-                --genericBodyPartUpdate(box2dGuys[i], i, 'eye')
-            end
+    end
+    if k == 'i' then
+        eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+        eyeIndex = math.ceil(math.random() * #eyedata)
+        changeMetaTexture('eye', eyedata[eyeIndex])
+        creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+        creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+        for i = 1, #box2dGuys do
+            --genericBodyPartUpdate(box2dGuys[i], i, 'eye')
         end
-        if k == 'r' then
-            --  creation.head.h = 50 + love.math.random() * 300
-            --  creation.head.w = 50 + love.math.random() * 300
-            if not creation.isPotatoHead then
-                headRndIndex = math.ceil(love.math.random() * #data)
-                local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-                        data[headRndIndex]
-                        .points)
+    end
 
-                changeMetaPoints('head', flippedFloppedHeadPoints)
-                changeMetaTexture('head', data[headRndIndex])
-                headCanvas = createRandomColoredBlackOutlineTexture(creation.head.metaURL)
-
-                creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
-                creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
-
-                for i = 1, #box2dGuys do
-                    genericBodyPartUpdate(box2dGuys[i], i, 'head')
-                    genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-                    genericBodyPartUpdate(box2dGuys[i], i, 'rear')
-                end
-            end
-        end
-
-        if k == 'j' then
-            local handIndex = math.ceil(math.random() * #feetdata)
-            changeMetaTexture('lhand', feetdata[handIndex])
-            changeMetaTexture('rhand', feetdata[handIndex])
-            creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
-            creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
-
-            creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
-            creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
-            handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
-
-
-            for i = 1, #box2dGuys do
-                genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
-            end
-        end
-        if k == 't' then
-            creation.head.flipy = creation.head.flipy == 1 and -1 or 1
+    if k == 'l' then
+        randomFaceParts()
+    end
+    if k == 'r' then
+        --  creation.head.h = 50 + love.math.random() * 300
+        --  creation.head.w = 50 + love.math.random() * 300
+        if not creation.isPotatoHead then
+            headRndIndex = math.ceil(love.math.random() * #data)
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
                     data[headRndIndex]
                     .points)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
+            headCanvas = createRandomColoredBlackOutlineTexture(creation.head.metaURL)
+
+            creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
+            creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
+
             for i = 1, #box2dGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'head')
                 genericBodyPartUpdate(box2dGuys[i], i, 'lear')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
             end
         end
-        if k == 'f' then
-            local footIndex = math.ceil(math.random() * #feetdata)
-
-            changeMetaTexture('lfoot', feetdata[footIndex])
-            creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
-            creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
-
-            changeMetaTexture('rfoot', feetdata[footIndex])
-            creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
-            creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
-            footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
-
-
-            for i = 1, #box2dGuys do
-                genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
-            end
-        end
-        if (k == 'q') then
-            bodyRndIndex = math.ceil(love.math.random() * #data)
-            local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-                    data[bodyRndIndex]
-                    .points)
-            changeMetaPoints('torso', flippedFloppedBodyPoints)
-            changeMetaTexture('torso', data[bodyRndIndex])
-            torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
-
-
-
-
-            local body = box2dGuys[1].torso
-            local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
-
-            creation.hasPhysicsHair = not creation.hasPhysicsHair
-
-            --creation.isPotatoHead = not creation.isPotatoHead
-
-            --creation.upLeg.h = 15 + love.math.random() * 400
-            --- creation.lowLeg.h = 15 + love.math.random() * 400
-            --creation.upLeg.w = 15 + love.math.random() * 100
-            --creation.lowLeg.w = 15 + love.math.random() * 100
-
-            creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() / 2
-            creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() / 2
-
-            --   creation.torso.h = 50 + love.math.random() * 500
-            --  creation.torso.w = 50 + love.math.random() * 500
-
-
-            local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
-            local bx, by = body:getPosition()
-            if (newLegLength > oldLegLength) then
-                body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
-            end
-            creation.upArm.h = 150 + love.math.random() * 100
-            creation.lowArm.h = 150 + love.math.random() * 100
-            --    creation.foot.h = 50 + love.math.random() * 100
-            --    creation.hand.h = 150 + love.math.random() * 100
-            --    creation.head.w = 150 + love.math.random() * 100
-            --    creation.head.h = 150 + love.math.random() * 100
-            --creation.neck.w = 12 + love.math.random() * 20
-            --creation.neck.h = 100 + love.math.random() * 200
-
-            --updateHead(box2dGuys[1], 1)
-            --updateNeck(box2dGuys[1], 1)
-            -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
-            for i = 1, #box2dGuys do
-                --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
-                --print('jo', creation.isPotatoHead)
-
-                handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
-                handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
-                genericBodyPartUpdate(box2dGuys[i], i, 'torso')
-                genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
-                genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
-                genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
-                if (not creation.isPotatoHead) then
-                    genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-                    genericBodyPartUpdate(box2dGuys[i], i, 'rear')
-                end
-            end
-        end
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
-        --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
-        --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
-        --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
     end
+
+    if k == 'j' then
+        local handIndex = math.ceil(math.random() * #feetdata)
+        changeMetaTexture('lhand', feetdata[handIndex])
+        changeMetaTexture('rhand', feetdata[handIndex])
+        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
+        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
+
+        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() / 2
+        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() / 2
+        handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
+
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
+        end
+    end
+    if k == 't' then
+        creation.head.flipy = creation.head.flipy == 1 and -1 or 1
+        local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                data[headRndIndex]
+                .points)
+
+        changeMetaPoints('head', flippedFloppedHeadPoints)
+        changeMetaTexture('head', data[headRndIndex])
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+        end
+    end
+    if k == 'f' then
+        local footIndex = math.ceil(math.random() * #feetdata)
+
+        changeMetaTexture('lfoot', feetdata[footIndex])
+        creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
+        creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
+
+        changeMetaTexture('rfoot', feetdata[footIndex])
+        creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
+        creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+        footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
+
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
+        end
+    end
+    if (k == 'q') then
+        bodyRndIndex = math.ceil(love.math.random() * #data)
+        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                data[bodyRndIndex]
+                .points)
+        changeMetaPoints('torso', flippedFloppedBodyPoints)
+        changeMetaTexture('torso', data[bodyRndIndex])
+        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+
+
+
+
+        local body = box2dGuys[1].torso
+        local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+
+        creation.hasPhysicsHair = not creation.hasPhysicsHair
+
+        --creation.isPotatoHead = not creation.isPotatoHead
+
+        --creation.upLeg.h = 15 + love.math.random() * 400
+        --- creation.lowLeg.h = 15 + love.math.random() * 400
+        --creation.upLeg.w = 15 + love.math.random() * 100
+        --creation.lowLeg.w = 15 + love.math.random() * 100
+
+        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() / 2
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() / 2
+
+        --   creation.torso.h = 50 + love.math.random() * 500
+        --  creation.torso.w = 50 + love.math.random() * 500
+
+
+        local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+        local bx, by = body:getPosition()
+        if (newLegLength > oldLegLength) then
+            body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
+        end
+        creation.upArm.h = 150 + love.math.random() * 100
+        creation.lowArm.h = 150 + love.math.random() * 100
+        --    creation.foot.h = 50 + love.math.random() * 100
+        --    creation.hand.h = 150 + love.math.random() * 100
+        --    creation.head.w = 150 + love.math.random() * 100
+        --    creation.head.h = 150 + love.math.random() * 100
+        --creation.neck.w = 12 + love.math.random() * 20
+        --creation.neck.h = 100 + love.math.random() * 200
+
+        --updateHead(box2dGuys[1], 1)
+        --updateNeck(box2dGuys[1], 1)
+        -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
+        for i = 1, #box2dGuys do
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            --print('jo', creation.isPotatoHead)
+
+            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+            handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+            if (not creation.isPotatoHead) then
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            end
+        end
+    end
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
+    --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
+    --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
+    -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
+    --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
+    --end
 end
 
 if example == 2 then
