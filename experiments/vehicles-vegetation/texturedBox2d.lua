@@ -172,7 +172,8 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
     end
     --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
     --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
-    love.graphics.draw(mesh, 0, 0, 0, 1, 1)
+
+    --love.graphics.draw(mesh, 0, 0, 0, 1, 1)
 end
 
 function drawTorsoOver(box2dTorso)
@@ -305,6 +306,18 @@ function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier
     end
 end
 
+function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
+    --local ax, ay = box2dGuy[p1]:getPosition()
+    --local bx, by = box2dGuy[p2]:getPosition()
+    --local cx, cy = box2dGuy[p3]:getPosition()
+    local curve = love.math.newBezierCurve({ p1[1], p1[2], p2[1], p2[2], p2[1], p2[2], p3[1], p3[2] })
+    if (dir ~= nil or wmultiplier ~= nil) then
+        texturedCurve(curve, canvas, mesh, dir, wmultiplier)
+    else
+        texturedCurve(curve, canvas, mesh, -1, 3)
+    end
+end
+
 function drawSquishableHairOver(x, y, r, sx, sy, creation)
     -- first get the polygon from the meta object that describes the shape in 8 points
     -- optionally grow that polygon outwards from the middle
@@ -348,6 +361,7 @@ function drawSkinOver(box2dGuy, creation)
         if box2dGuy.neck and box2dGuy.neck1 then
             love.graphics.setColor(1, 1, 1, 1)
             renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy)
+            love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
         end
 
         if creation.ear.metaURL then
@@ -400,9 +414,6 @@ function drawSkinOver(box2dGuy, creation)
                             (noseX + creation.head.metaOffsetX) * sx,
                             (noseY + creation.head.metaOffsetY) * sy)
 
-                    renderNonAttachedObject(noseCanvas,
-                        'nose', r, nx, ny, 0.5, -0.5,
-                        box2dGuy, creation)
 
 
                     local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
@@ -411,17 +422,23 @@ function drawSkinOver(box2dGuy, creation)
                             (mouthX + creation.head.metaOffsetX) * sx,
                             (mouthY + creation.head.metaOffsetY) * sy)
 
-                    love.graphics.rectangle('fill', mx - 10, my - 10, 20, 20)
 
 
-                    renderNonAttachedObject(upperlipCanvas,
-                        'nose', r, mx, my, 0.5, -0.5,
+                    local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
+
+                    renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, upperlipCanvas,
+                        mouthmesh, box2dGuy)
+                    love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
+
+                    mouthmesh = createTexturedTriangleStrip(lowerlipCanvas)
+
+                    renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, upperlipCanvas,
+                        mouthmesh, box2dGuy)
+                    love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
+
+                    renderNonAttachedObject(noseCanvas,
+                        'nose', r, nx, ny, 0.5, -0.5,
                         box2dGuy, creation)
-
-
-                    --
-
-                    --  love.graphics.rectangle('fill', nx - 5, ny - 5, 10, 10)
                 end
 
                 --            love.graphics.setColor(1, 0, 0, 1)
@@ -482,21 +499,27 @@ function drawSkinOver(box2dGuy, creation)
         --love.graphics.setColor(0, 0, 0, 1)
         love.graphics.setColor(1, 1, 1, 1)
         renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy)
+        love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
         renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy)
+        love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
 
         ----
 
 
         renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy)
+        love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
         love.graphics.setColor(.4, 0, 0, .8)
         renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, 2)
+        love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
         love.graphics.setColor(1, 1, 1, 1)
 
 
 
         renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy)
+        love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
         love.graphics.setColor(.4, 0, 0, .8)
         renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, 2)
+        love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
         love.graphics.setColor(1, 1, 1, 1)
 
 
