@@ -33,6 +33,7 @@ local creation = {
     nose = { w = 10, h = 10 },
     upperlip = { w = 10, h = 10 },
     lowerlip = { w = 10, h = 10 },
+    teeth = { w = 10, h = 10 },
 }
 function getCreation()
     return creation

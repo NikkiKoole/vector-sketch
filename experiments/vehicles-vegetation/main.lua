@@ -1013,6 +1013,13 @@ function randomFaceParts()
     creation.lowerlip.w = mesh.getImage(creation.lowerlip.metaURL):getHeight()
     creation.lowerlip.h = mesh.getImage(creation.lowerlip.metaURL):getWidth()
     lowerlipCanvas = createRandomColoredBlackOutlineTexture(creation.lowerlip.metaURL)
+
+    teethIndex = math.ceil(love.math.random() * #teethdata)
+    changeMetaTexture('teeth', teethdata[teethIndex])
+    print(creation.teeth.metaURL)
+    creation.teeth.w = mesh.getImage(creation.teeth.metaURL):getHeight()
+    creation.teeth.h = mesh.getImage(creation.teeth.metaURL):getWidth()
+    teethCanvas = createWhiteColoredBlackOutlineTexture(creation.teeth.metaURL)
 end
 
 function startExample(number)
@@ -1298,9 +1305,9 @@ function startExample(number)
 
         upperlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'upperlips')
         lowerlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'lowerlips')
-        --teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeth')
+        teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
 
-        print(#upperlipdata, #lowerlipdata)
+        print(#upperlipdata, #lowerlipdata, #teethdata)
         randomFaceParts()
 
         for i = 1, 5 do
