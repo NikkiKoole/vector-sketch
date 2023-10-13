@@ -424,6 +424,13 @@ function drawSkinOver(box2dGuy, creation)
 
 
 
+                    local scaleX = 200 / teethCanvas:getWidth()
+                    renderNonAttachedObject(teethCanvas,
+                        'teeth', r, mx, my, scaleX, -1 * scaleX,
+                        box2dGuy, creation)
+                    -- love.graphics.rectangle('fill', mx, my, 10, 10)
+
+
                     local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
 
                     renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, upperlipCanvas,
@@ -440,9 +447,6 @@ function drawSkinOver(box2dGuy, creation)
                     --local toothmesh = createTexturedTriangleStrip(teethCanvas)
 
 
-                    renderNonAttachedObject(teethCanvas,
-                        'teeth', r, mx, my, 0.5, -0.5,
-                        box2dGuy, creation)
 
                     --renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, teethCanvas,
                     --    toothmesh, box2dGuy)

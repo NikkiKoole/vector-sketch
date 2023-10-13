@@ -183,7 +183,7 @@ function getOffsetFromParent(partName)
     end
 end
 
-local function getAngleOffset(key, side)
+local function getAngleOffset(key, side, creation)
     -- print(key, side)
     if key == 'neck' then
         return -math.pi
@@ -215,6 +215,14 @@ local function getAngleOffset(key, side)
     end
     if (key == 'hair5') then
         return math.pi / 2
+    end
+    if key == 'head' then
+        --print('jojo')
+        --print(creation.hasNeck)
+        if (not creation.hasNeck) then
+            return -math.pi
+        end
+        return 0
     end
     return 0
 end
@@ -444,7 +452,7 @@ end
 local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     local x, y = parent:getWorldPoint(offsetX, offsetY)
     local prevA = parent:getAngle()
-    local xangle = getAngleOffset(key, side)
+    local xangle = getAngleOffset(key, side, creation)
     local body = love.physics.newBody(world, x, y, "dynamic")
     --print(inspect(cd))
 
@@ -528,7 +536,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             local fixture = makeGuyFixture(createData, data.alias or partName, groupId, body, shape)
 
             local leftOrRight = (partName):find('l', 1, true) == 1 and 'left' or 'right'
-            local xangle = getAngleOffset(data.alias or partName, leftOrRight) -- what LEFT!
+            local xangle = getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT!
 
             body:setAngle(prevA + xangle)
 
@@ -566,13 +574,13 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local childData = getParentAndChildrenFromPartName(childName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-        print(childName)
+        --  print(childName)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
         local data2 = getParentAndChildrenFromPartName(childName)
 
         local leftOrRight = childName:find('l', 1, true) == 1 and 'left' or 'right'
-        local xangle = getAngleOffset(data2.alias or childName, leftOrRight) -- what LEFT!
+        local xangle = getAngleOffset(data2.alias or childName, leftOrRight, creation) -- what LEFT!
         box2dGuy[childName]:setAngle(thisA + xangle)
         local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
                 box2dGuy[partName], leftOrRight)
