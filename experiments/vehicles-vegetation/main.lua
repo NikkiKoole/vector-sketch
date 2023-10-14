@@ -2221,8 +2221,13 @@ function love.keypressed(k)
         if not upsideDown then
             for i = 1, #box2dGuys do
                 box2dGuys[i].head:setAngle( -math.pi)
-                box2dGuys[i].neck:setAngle( -math.pi)
-                box2dGuys[i].neck1:setAngle( -math.pi)
+                if box2dGuys[i].neck then
+                    box2dGuys[i].neck:setAngle( -math.pi)
+                end
+
+                if box2dGuys[i].neck1 then
+                    box2dGuys[i].neck1:setAngle( -math.pi)
+                end
                 --box2dGuys[i].torso:setAngle(0)
                 box2dGuys[i].luleg:setAngle(0)
                 box2dGuys[i].llleg:setAngle(0)
