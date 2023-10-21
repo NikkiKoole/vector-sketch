@@ -2,11 +2,9 @@ inspect = require 'vendor.inspect'
 
 
 require 'lib.basic-tools'
-
 require 'src.palettes'
 require 'src.dopesheet'
 require 'src.file-screen'
-
 require 'lib.basics'
 
 local ui = require 'lib.ui'
