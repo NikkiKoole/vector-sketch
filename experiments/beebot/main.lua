@@ -14,9 +14,7 @@ function love.load()
       margin = cellSize/6,
       angle = 0  -- [0,1,2,3]
    }
-
    delta = 0
-
    mode = 'editing' -- ['editing', 'moving']
 end
 
@@ -34,10 +32,10 @@ function drawBeebot()
 end
 
 function drawButton(x,y)
-love.graphics.setColor(1,1,1)
-love.graphics.rectangle('fill', x,y, 64, 64)
-love.graphics.setColor(0,0,0)
-love.graphics.rectangle('line', x,y, 64, 64)
+   love.graphics.setColor(1,1,1)
+   love.graphics.rectangle('fill', x,y, 64, 64)
+   love.graphics.setColor(0,0,0)
+   love.graphics.rectangle('line', x,y, 64, 64)
 end
 
 function drawButtons()
