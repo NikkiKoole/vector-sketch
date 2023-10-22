@@ -1333,11 +1333,11 @@ end
 
 function love.load()
     stiff = true
-    local font = love.graphics.newFont('WindsorBT-Roman.otf', 40)
+    local font = love.graphics.newFont('assets/WindsorBT-Roman.otf', 40)
     love.graphics.setFont(font)
 
-    vlooienspel = love.graphics.newImage('vlooienspel.jpg')
-    pedal = love.graphics.newImage('pedal.jpg')
+    vlooienspel = love.graphics.newImage('assets/ui/vlooienspel.jpg')
+    pedal = love.graphics.newImage('assets/ui/pedal.jpg')
 
     -- before these were local but that didnt work with lurker
     -- all of these are relevant to the vlooienspel experiment, and not to others (I think)
@@ -1346,25 +1346,25 @@ function love.load()
     pointerJoints = {}
     connectorCooldownList = {}
 
-    borderImage = love.graphics.newImage("assets/border_shaduw.png")
+    borderImage = love.graphics.newImage("assets/ui/border_shaduw.png")
     -- if (PROF_CAPTURE) then ProFi:start() end
-    image1 = love.graphics.newImage("assets/leg5.png")
+    image1 = love.graphics.newImage("assets/parts/leg5.png")
     --image3:setMipmapFilter( 'nearest', 1 )
     mesh1 = createTexturedTriangleStrip(image1)
 
-    image2 = love.graphics.newImage("assets/leg5x.png")
+    image2 = love.graphics.newImage("assets/parts/leg5x.png")
     --image3:setMipmapFilter( 'nearest', 1 )
     mesh2 = createTexturedTriangleStrip(image2)
 
-    image3 = love.graphics.newImage("assets/leg1.png")
+    image3 = love.graphics.newImage("assets/parts/leg1.png")
     --image3:setMipmapFilter( 'nearest', 1 )
     mesh3 = createTexturedTriangleStrip(image3)
 
-    image4 = love.graphics.newImage("assets/leg7.png")
+    image4 = love.graphics.newImage("assets/parts/leg7.png")
     --image3:setMipmapFilter( 'nearest', 1 )
     mesh4 = createTexturedTriangleStrip(image4)
 
-    image5 = love.graphics.newImage("assets/leg2.png")
+    image5 = love.graphics.newImage("assets/parts/leg2.png")
     --image3:setMipmapFilter( 'nearest', 1 )
     mesh5 = createTexturedTriangleStrip(image5)
 
@@ -1386,18 +1386,18 @@ function love.load()
 
 
 
-    cloud = love.graphics.newImage('clouds1.png', { mipmaps = true })
+    cloud = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
     print('elo!', cloud)
 
     spriet = {
-        love.graphics.newImage('spriet1.png'),
-        love.graphics.newImage('spriet2.png'),
-        love.graphics.newImage('spriet3.png'),
-        love.graphics.newImage('spriet4.png'),
-        love.graphics.newImage('spriet5.png'),
-        love.graphics.newImage('spriet6.png'),
-        love.graphics.newImage('spriet7.png'),
-        love.graphics.newImage('spriet8.png'),
+        love.graphics.newImage('assets/world/spriet1.png'),
+        love.graphics.newImage('assets/world/spriet2.png'),
+        love.graphics.newImage('assets/world/spriet3.png'),
+        love.graphics.newImage('assets/world/spriet4.png'),
+        love.graphics.newImage('assets/world/spriet5.png'),
+        love.graphics.newImage('assets/world/spriet6.png'),
+        love.graphics.newImage('assets/world/spriet7.png'),
+        love.graphics.newImage('assets/world/spriet8.png'),
     }
 
     sprietUnder = {}
@@ -1415,18 +1415,18 @@ function love.load()
 
 
 
-    legCanvas = createRandomColoredBlackOutlineTexture('assets/legp2.png')
+    legCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
     legmesh = createTexturedTriangleStrip(legCanvas)
 
 
-    armCanvas = createRandomColoredBlackOutlineTexture('assets/legp2.png')
+    armCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
     armmesh = createTexturedTriangleStrip(armCanvas)
 
-    neckCanvas = createRandomColoredBlackOutlineTexture('assets/legp2.png')
+    neckCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
     neckmesh = createTexturedTriangleStrip(neckCanvas)
 
     local w, h = love.graphics.getDimensions()
-    image10 = love.graphics.newImage('assets/legp2.png')
+    image10 = love.graphics.newImage('assets/parts/legp2.png')
     mesh10 = createTexturedTriangleStrip(image10)
 
     camera.setCameraViewport(cam, w, h)
@@ -1757,14 +1757,14 @@ function love.draw()
 
 
         love.graphics.setColor(1, 1, 1, 1)
-        local img = mesh.getImage('stoelL.png')
+        local img = mesh.getImage('assets/world/stoelL.png')
         love.graphics.draw(img, 100, -100, 0, 1, 1, 0, img:getHeight())
 
-        local img = mesh.getImage('tafel.png')
+        local img = mesh.getImage('assets/world/tafel.png')
         love.graphics.draw(img, 300, -100, 0, 1, 1, 0, img:getHeight())
 
 
-        local img = mesh.getImage('stoelR.png')
+        local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
 
 

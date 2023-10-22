@@ -335,7 +335,7 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
 
     local v = mesh.makeSquishableUVsFromPoints(first)
     local msh = love.graphics.newMesh(v, 'fan')
-    local img = mesh.getImage('borsthaar7.png')
+    local img = mesh.getImage('assets/parts/borsthaar7.png')
     msh:setTexture(img)
     -- mesh.addUVToVerts(verts, img, node.points, node.texture)
 
@@ -464,7 +464,7 @@ function drawSkinOver(box2dGuy, creation)
                 if true then
                     if true or box2dGuy.hairNeedsRedo then
                         --local img = mesh.getImage('assets/parts/hair1x.png')
-                        local img = mesh.getImage('haarnew2.png')
+                        local img = mesh.getImage('assets/parts/haarnew2.png')
                         local w, h = img:getDimensions()
                         local f = creation.head.metaPoints
                         -- note: make this a parameter
