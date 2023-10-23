@@ -79,7 +79,6 @@ local base = {
     '8F4839', 'EEC488',
     'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
     '798091', '4C5575', '6E4431', '626964',
-
 }
 
 textures   = {
@@ -105,6 +104,8 @@ for i = 1, #base do
     local r, g, b = hex2rgb(base[i])
     table.insert(palettes, { r, g, b })
 end
+
+
 -- check this for multiple fixtures, -> sensor for gorund
 -- https://love2d.org/forums/viewtopic.php?t=80950
 -- lift the rendering from windfield :
@@ -1384,10 +1385,8 @@ function love.load()
     image11 = love.graphics.newImage('assets/parts/hair9.png')
     mesh11 = createTexturedTriangleStrip(image11)
 
-
-
     cloud = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
-    print('elo!', cloud)
+
 
     spriet = {
         love.graphics.newImage('assets/world/spriet1.png'),
@@ -1772,7 +1771,7 @@ function love.draw()
         --    drawPlantOver(grass[i], i)
         --end
 
-        --drawWorld(world)
+        drawWorld(world)
 
 
 
@@ -1798,8 +1797,9 @@ function love.draw()
 
 
         cam:pop()
-
-
+        love.graphics.setColor(0, 0, 0)
+        drawCenteredBackgroundText(
+            "b: ody, h:ead,  f: eet, t: bodyflip, j: hand\n, i:eye, e:ear, v:torsoflip\n, h:torsoflip, n:neck, u:psidedown, \np:profile, s:stiff  ")
         local bw, bh = borderImage:getDimensions()
         local w, h = love.graphics.getDimensions();
         love.graphics.setColor(.9, .8, .8, 0.9)
@@ -2224,17 +2224,14 @@ function love.keypressed(k)
                 if box2dGuys[i].neck then
                     box2dGuys[i].neck:setAngle( -math.pi)
                 end
-
                 if box2dGuys[i].neck1 then
                     box2dGuys[i].neck1:setAngle( -math.pi)
                 end
-                --box2dGuys[i].torso:setAngle(0)
+
                 box2dGuys[i].luleg:setAngle(0)
                 box2dGuys[i].llleg:setAngle(0)
-                -- box2dGuys[i].lfoot:setAngle(math.pi / 2)
                 box2dGuys[i].ruleg:setAngle(0)
                 box2dGuys[i].rlleg:setAngle(0)
-                -- box2dGuys[i].rfoot:setAngle( -math.pi / 2)
             end
         end
         if upsideDown then
@@ -2252,13 +2249,16 @@ function love.keypressed(k)
         stiff = not stiff
     end
     if (k == 'p') then
-        if not profiling then
-            ProFi:start()
-        else
-            ProFi:stop()
-            ProFi:writeReport('log/MyProfilingReport.txt')
+        creation.isPotatoHead = not creation.isPotatoHead
+        if false then
+            if not profiling then
+                ProFi:start()
+            else
+                ProFi:stop()
+                ProFi:writeReport('log/MyProfilingReport.txt')
+            end
+            profiling = not profiling
         end
-        profiling = not profiling
     end
     --if example == 2 then
 
@@ -2289,13 +2289,11 @@ function love.keypressed(k)
         creation.hasNeck = not creation.hasNeck
         for i = 1, #box2dGuys do
             handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
-            --genericBodyPartUpdate(box2dGuys[i], i, 'torso')
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
         end
     end
-    if (k == 'h') then
+    if (k == 't') then
         creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
-        -- getFlippedMetaObject()
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                 data[bodyRndIndex]
                 .points)
@@ -2318,10 +2316,8 @@ function love.keypressed(k)
 
     if k == 'e' then
         local earIndex = math.ceil(math.random() * #eardata)
-        --print(eardata[earIndex])
         changeMetaTexture('ear', eardata[earIndex])
         earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
-
 
         creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
         creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
@@ -2331,22 +2327,21 @@ function love.keypressed(k)
         end
     end
     if k == 'i' then
-        eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+        --eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
         eyeIndex = math.ceil(math.random() * #eyedata)
         changeMetaTexture('eye', eyedata[eyeIndex])
         creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
         creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+        eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
         for i = 1, #box2dGuys do
-            --genericBodyPartUpdate(box2dGuys[i], i, 'eye')
+            --    genericBodyPartUpdate(box2dGuys[i], i, 'eye')
         end
     end
 
     if k == 'l' then
         randomFaceParts()
     end
-    if k == 'r' then
-        --  creation.head.h = 50 + love.math.random() * 300
-        --  creation.head.w = 50 + love.math.random() * 300
+    if k == 'h' then
         if not creation.isPotatoHead then
             headRndIndex = math.ceil(love.math.random() * #data)
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
@@ -2385,7 +2380,7 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
         end
     end
-    if k == 't' then
+    if k == 'r' then
         creation.head.flipy = creation.head.flipy == 1 and -1 or 1
         local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
                 data[headRndIndex]
@@ -2417,7 +2412,10 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
         end
     end
-    if (k == 'q') then
+
+
+
+    if (k == 'b') then
         bodyRndIndex = math.ceil(love.math.random() * #data)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                 data[bodyRndIndex]
@@ -2426,27 +2424,12 @@ function love.keypressed(k)
         changeMetaTexture('torso', data[bodyRndIndex])
         torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
 
-
-
-
         local body = box2dGuys[1].torso
         local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
 
-        creation.hasPhysicsHair = not creation.hasPhysicsHair
-
-        --creation.isPotatoHead = not creation.isPotatoHead
-
-        --creation.upLeg.h = 15 + love.math.random() * 400
-        --- creation.lowLeg.h = 15 + love.math.random() * 400
-        --creation.upLeg.w = 15 + love.math.random() * 100
-        --creation.lowLeg.w = 15 + love.math.random() * 100
-
+        --creation.hasPhysicsHair = not creation.hasPhysicsHair
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() / 2
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() / 2
-
-        --   creation.torso.h = 50 + love.math.random() * 500
-        --  creation.torso.w = 50 + love.math.random() * 500
-
 
         local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
         local bx, by = body:getPosition()
@@ -2455,20 +2438,8 @@ function love.keypressed(k)
         end
         creation.upArm.h = 150 + love.math.random() * 100
         creation.lowArm.h = 150 + love.math.random() * 100
-        --    creation.foot.h = 50 + love.math.random() * 100
-        --    creation.hand.h = 150 + love.math.random() * 100
-        --    creation.head.w = 150 + love.math.random() * 100
-        --    creation.head.h = 150 + love.math.random() * 100
-        --creation.neck.w = 12 + love.math.random() * 20
-        --creation.neck.h = 100 + love.math.random() * 200
 
-        --updateHead(box2dGuys[1], 1)
-        --updateNeck(box2dGuys[1], 1)
-        -- genericBodyPartUpdate(box2dGuys[2], 2, 'head')
         for i = 1, #box2dGuys do
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck')
-            --print('jo', creation.isPotatoHead)
-
             handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
             handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
@@ -2476,23 +2447,13 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+
             if (not creation.isPotatoHead) then
                 genericBodyPartUpdate(box2dGuys[i], i, 'lear')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
             end
         end
     end
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'lhand')
-    --  genericBodyPartUpdate(box2dGuys[1], 1, 'ruarm')
-    --genericBodyPartUpdate(box2dGuys[2], 2, 'lfoot')
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'luarm')
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'llarm')
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'luleg')
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'llleg')
-    -- genericBodyPartUpdate(box2dGuys[2], 2, 'rlleg')
-    --    genericBodyPartUpdate(box2dGuys[2], 2, 'ruleg')
-    --end
 end
 
 if example == 2 then

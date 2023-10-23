@@ -3,16 +3,11 @@ local node     = require 'lib.node'
 local inspect  = require 'vendor.inspect'
 local mesh     = require 'lib.mesh'
 local bbox     = require 'lib.bbox'
-
 local polyline = require 'lib.polyline'
 local unloop   = require 'lib.unpack-points'
 local numbers  = require 'lib.numbers'
 local border   = require 'lib.border-mesh'
-
 local text     = require 'lib.text'
-
-
-
 
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
@@ -29,6 +24,7 @@ local function stripPath(root, path)
 
     return root
 end
+
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -36,6 +32,7 @@ local function getDistance(x1, y1, x2, y2)
 
     return distance
 end
+
 local function getLengthOfPath(path)
     local result = 0
     for i = 1, #path - 1 do
@@ -45,7 +42,6 @@ local function getLengthOfPath(path)
     end
     return result
 end
-
 
 local function loadGroupFromFile(url, groupName)
     local imgs = {}
@@ -65,6 +61,7 @@ local function loadGroupFromFile(url, groupName)
     end
     return imgs, parts
 end
+
 local function zeroTransform(arr)
     for i = 1, #arr do
         if arr[i].transforms then
@@ -73,14 +70,13 @@ local function zeroTransform(arr)
         end
     end
 end
+
 function loadVectorSketch(path, groupName)
     local bodyImgUrls, bodyParts = loadGroupFromFile(path, groupName)
     zeroTransform(bodyParts)
 
-
     local result = {}
     for i = 1, #bodyParts do
-        -- print(bodyParts[i].transforms.l[1], bodyParts[i].transforms.l[6])
         local me = {
             pivotX = bodyParts[i].transforms.l[6] - bodyParts[i].transforms.l[1],
             pivotY = bodyParts[i].transforms.l[7] - bodyParts[i].transforms.l[2]
@@ -134,35 +130,24 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 2.5 end
     local dl = curve:getDerivative()
-    --local curveR = love.math.newBezierCurve({w, 0, w+offsetW, h/2, w, h})
-    --local dr = curveR:getDerivative()
 
-
-
-    --local curve = love.math.newBezierCurve({mx, my,  mx+50, my + 100, mx, my + 5})
     for i = 1, 1 do
         local w, h = image:getDimensions()
         local count = mesh:getVertexCount()
 
         for j = 1, count, 2 do
-            local index  = (j - 1) / (count - 2)
-            local xl, yl = curve:evaluate(index)
-            --local xr,yr = curveR:evaluate(index)
+            local index                  = (j - 1) / (count - 2)
+            local xl, yl                 = curve:evaluate(index)
 
-            local dx, dy = dl:evaluate(index)
-            local a      = math.atan2(dy, dx) + math.pi / 2
-            local a2     = math.atan2(dy, dx) - math.pi / 2
+            local dx, dy                 = dl:evaluate(index)
+            local a                      = math.atan2(dy, dx) + math.pi / 2
+            local a2                     = math.atan2(dy, dx) - math.pi / 2
 
-            local line   = (w * dir) / scaleW --- here we can make the texture wider!!, also flip it
-            local x2     = xl + line * math.cos(a)
-            local y2     = yl + line * math.sin(a)
-            local x3     = xl + line * math.cos(a2)
-            local y3     = yl + line * math.sin(a2)
-
-            if false then
-                --love.graphics.line(xl,yl, x2, y2)
-                --love.graphics.line(xl,yl, x3, y3)
-            end
+            local line                   = (w * dir) / scaleW --- here we can make the texture wider!!, also flip it
+            local x2                     = xl + line * math.cos(a)
+            local y2                     = yl + line * math.sin(a)
+            local x3                     = xl + line * math.cos(a2)
+            local y3                     = yl + line * math.sin(a2)
 
             local x, y, u, v, r, g, b, a = mesh:getVertex(j)
             mesh:setVertex(j, { x2, y2, u, v })
@@ -170,10 +155,6 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
             mesh:setVertex(j + 1, { x3, y3, u, v })
         end
     end
-    --love.graphics.draw(mesh2, mx, my, 0, flip, .5)
-    --love.graphics.draw(mesh2, mx+488, my, 0, flip, .5)
-
-    --love.graphics.draw(mesh, 0, 0, 0, 1, 1)
 end
 
 function drawTorsoOver(box2dTorso)
@@ -182,7 +163,6 @@ function drawTorsoOver(box2dTorso)
     local x, y = box2dTorso.body:getPosition()
     local r = box2dTorso.body:getAngle()
 
-
     local tp = box2dTorso.textureData.texturePoints
     local pointsW = tp[2][1] - tp[1][1]
     local pointsH = tp[3][2] - tp[1][2]
@@ -190,30 +170,9 @@ function drawTorsoOver(box2dTorso)
     local sx = (pointsW / w) * box2dTorso.scaleData.wscale
     local sy = (pointsH / h) * box2dTorso.scaleData.hscale
 
-
     love.graphics.setColor(0, 0, 0)
     love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
 end
-
---[[
-  local texturedcanvas = helperTexturedCanvas(
-           url,
-           textures[values[partName].bgTex],
-           palettes[values[partName].bgPal],
-           values[partName].bgAlpha,
-           textures[values[partName].fgTex],
-           palettes[values[partName].fgPal],
-           values[partName].fgAlpha,
-           values[partName].texRot,
-           texscales[values[partName].texScale],
-           palettes[values[partName].linePal],
-           values[partName].lineAlpha,
-           flipX, flipY,
-           optionalImageSettings,
-           renderPatch
-       )
-]]
---
 
 function drawSpriet(x, y, index, r, sy)
     local img = spriet[index]
@@ -227,15 +186,12 @@ function drawPlantOver(data, i)
     --  print(index)
     local img = imgs[index]
     if data then
-        --print(inspect(data))
-
         love.graphics.setColor(10 / 255, 122 / 255, 42 / 255, 1)
         local w, h = img:getDimensions()
         local x, y = data[1]:getPosition()
         local r    = data[1]:getAngle()
         love.graphics.draw(img, x, y, r, 1, 1, w, h)
     end
-    --love.graphics.draw(img, x, y, r, sx * creation.torso.flipx, sy * creation.torso.flipy, w / 2, h / 2)
 end
 
 -- torso/head
@@ -267,13 +223,10 @@ end
 function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplier, box2dGuy, creation)
     local img = img -- mesh.getImage(creation.ear.metaURL)
     local w, h = img:getDimensions()
-
     local x, y = box2dGuy[name]:getWorldPoint(0, 0)
     local r = box2dGuy[name]:getAngle() + extraR
-
     local wscale = creation[nameP].h / w
     local hscale = creation[nameP].w / h
-
     local ox = creation[nameP].metaPivotX - creation[nameP].metaTexturePoints[1][1]
     local oy = creation[nameP].metaPivotY - creation[nameP].metaTexturePoints[1][2]
 
@@ -283,11 +236,8 @@ end
 function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
     local img = img -- mesh.getImage(creation.eye.metaURL)
     local w, h = img:getDimensions()
-
     local wscale = creation[name].h / w --* 2 --creation.lfoot.metaPointsW
     local hscale = creation[name].w / h --* 2 --creation.lfoot.metaPointsH
-
-
     local ox = creation[name].metaPivotX - creation[name].metaTexturePoints[1][1]
     local oy = creation[name].metaPivotY - creation[name].metaTexturePoints[1][2]
 
@@ -329,21 +279,12 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
         p[i][2] = f[i][2] * 1.3
     end
 
-
     local first = { { 0, 0 }, p[8], p[1], p[2], p[3], p[4], p[5], p[6], p[7] }
-    -- TableConcat(first, p)
-
     local v = mesh.makeSquishableUVsFromPoints(first)
     local msh = love.graphics.newMesh(v, 'fan')
     local img = mesh.getImage('assets/parts/borsthaar7.png')
     msh:setTexture(img)
-    -- mesh.addUVToVerts(verts, img, node.points, node.texture)
-
-
-
     love.graphics.draw(msh, x, y, r, sx, sy)
-    -- love.graphics.setColor(1, 1, 1, 1)
-    --    print(inspect(f))
 end
 
 function drawSkinOver(box2dGuy, creation)
@@ -357,20 +298,21 @@ function drawSkinOver(box2dGuy, creation)
             love.graphics.setColor(1, 1, 1, 1)
         end
 
-
         if box2dGuy.neck and box2dGuy.neck1 then
             love.graphics.setColor(1, 1, 1, 1)
             renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy)
             love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
         end
 
-        if creation.ear.metaURL then
-            renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, -1 * 2, box2dGuy, creation)
-            renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, -1 * 2, box2dGuy, creation)
+        if not creation.isPotatoHead then
+            if creation.ear.metaURL then
+                renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, -1 * 2, box2dGuy, creation)
+                renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, -1 * 2, box2dGuy, creation)
+            end
         end
 
         love.graphics.setColor(0, 0, 0, 1)
-        -- HHHEEEEAAADDD
+
         if not creation.isPotatoHead then
             if creation.head.metaURL then
                 love.graphics.setColor(1, 1, 1, 1)
@@ -380,10 +322,8 @@ function drawSkinOver(box2dGuy, creation)
                     --  love.graphics.setColor(1, 0, 1, 1)
                     local f = creation.head.metaPoints
 
-
                     local leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
                     local rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
-
                     local eyelx, eyely = box2dGuy.head:getWorldPoint(
                             (leftEyeX + creation.head.metaOffsetX) * sx,
                             (f[3][2] + creation.head.metaOffsetY) * sy)
@@ -414,43 +354,27 @@ function drawSkinOver(box2dGuy, creation)
                             (noseX + creation.head.metaOffsetX) * sx,
                             (noseY + creation.head.metaOffsetY) * sy)
 
-
-
                     local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
                     local mouthY = numbers.lerp(f[1][1], f[8][1], 0.85) --f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
                     local mx, my = box2dGuy.head:getWorldPoint(
                             (mouthX + creation.head.metaOffsetX) * sx,
                             (mouthY + creation.head.metaOffsetY) * sy)
 
-
-
                     local scaleX = 200 / teethCanvas:getWidth()
                     renderNonAttachedObject(teethCanvas,
                         'teeth', r, mx, my, scaleX, -1 * scaleX,
                         box2dGuy, creation)
-                    -- love.graphics.rectangle('fill', mx, my, 10, 10)
-
 
                     local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
-
-                    renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, upperlipCanvas,
+                    renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, -20 }, { 100, 0 }, upperlipCanvas,
                         mouthmesh, box2dGuy)
                     love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
 
                     mouthmesh = createTexturedTriangleStrip(lowerlipCanvas)
 
-                    renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, upperlipCanvas,
+                    renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 20 }, { 100, 0 }, upperlipCanvas,
                         mouthmesh, box2dGuy)
                     love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
-
-
-                    --local toothmesh = createTexturedTriangleStrip(teethCanvas)
-
-
-
-                    --renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 0 }, { 100, 0 }, teethCanvas,
-                    --    toothmesh, box2dGuy)
-                    --love.graphics.draw(toothmesh, mx, my, r - math.pi, 1, 1)
 
 
                     renderNonAttachedObject(noseCanvas,
@@ -504,24 +428,13 @@ function drawSkinOver(box2dGuy, creation)
             end
         end
 
-
-        --
-        -- maybe start trying out to draw eyes and nose
-
-
-
         love.graphics.setColor(0, 0, 0, 1)
 
-
-        --love.graphics.setColor(0, 0, 0, 1)
         love.graphics.setColor(1, 1, 1, 1)
         renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy)
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
         renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy)
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-
-        ----
-
 
         renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy)
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
@@ -530,15 +443,12 @@ function drawSkinOver(box2dGuy, creation)
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
         love.graphics.setColor(1, 1, 1, 1)
 
-
-
         renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy)
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
         love.graphics.setColor(.4, 0, 0, .8)
         renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, 2)
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
         love.graphics.setColor(1, 1, 1, 1)
-
 
         if creation.lhand.metaURL then
             renderAtachedObject(handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)

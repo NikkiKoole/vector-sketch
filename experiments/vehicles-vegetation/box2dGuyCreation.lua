@@ -9,8 +9,8 @@ local creation = {
     hasPhysicsHair = false,
     hasNeck = true,
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-    neck = { w = 140, h = 250, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 140, h = 250, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 140, h = 25, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 25, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },
@@ -68,9 +68,13 @@ function getParentAndChildrenFromPartName(partName, creation)
     if creation and partName == 'head' and creation.hasNeck == false then
         return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
     end
+    if creation and partName == 'torso' and creation.isPotatoHead then
+        return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
+    end
     if creation and partName == 'torso' and creation.hasNeck == false then
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
+    print(partName)
     return map[partName]
 end
 
@@ -146,21 +150,29 @@ function getOffsetFromParent(partName)
         -- if creation.torso.metaPoints then
         --     return getScaledTorsoMetaPoint(4)
         -- end
-
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(7)
+        if creation.isPotatoHead then
+            if creation.head.metaPoints then
+                return getScaledTorsoMetaPoint(7)
+            end
+        else
+            if creation.head.metaPoints then
+                return getScaledHeadMetaPoint(7)
+            end
         end
-
         return -creation.head.w / 2, creation.head.h / 2
     elseif partName == 'rear' then
         -- if creation.torso.metaPoints then
         --     return getScaledTorsoMetaPoint(4)
         -- end
-
-        if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(3)
+        if creation.isPotatoHead then
+            if creation.head.metaPoints then
+                return getScaledTorsoMetaPoint(3)
+            end
+        else
+            if creation.head.metaPoints then
+                return getScaledHeadMetaPoint(3)
+            end
         end
-
         return creation.head.w / 2, creation.head.h / 2
     else
         if (partName == 'head') then
@@ -512,13 +524,13 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     --print(partName)
     local data = getParentAndChildrenFromPartName(partName, creation)
     local parentName = data.p
-    print(partName, parentName)
+    --print(partName, parentName)
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()
 
     if parentName then
-        print(parentName, partName)
+        --print(parentName, partName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
@@ -574,7 +586,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local childData = getParentAndChildrenFromPartName(childName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-        --  print(childName)
+        print(childName)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
         local data2 = getParentAndChildrenFromPartName(childName)
@@ -614,6 +626,10 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
 end
 
 function handlePhysicsHairOrNo(hair, box2dGuy, groupId)
+    -- we need to find out if we can leave early..
+    if hair and box2dGuy.hair1 then return end
+    if not hair and not box2dGuy.hair1 then return end
+
     local function makePart(name, key, parent, side)
         -- needed to wrap groupid
 
@@ -634,12 +650,12 @@ function handlePhysicsHairOrNo(hair, box2dGuy, groupId)
         box2dGuy.hair4 = nil
         box2dGuy.hair5 = nil
     else
-        local head = box2dGuy.head
-        local hair1 = makePart('hair1', 'hair1', head)
-        local hair2 = makePart('hair2', 'hair2', head)
-        local hair3 = makePart('hair3', 'hair3', head)
-        local hair4 = makePart('hair4', 'hair4', head)
-        local hair5 = makePart('hair5', 'hair5', head)
+        local attachTo = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
+        local hair1 = makePart('hair1', 'hair1', attachTo)
+        local hair2 = makePart('hair2', 'hair2', attachTo)
+        local hair3 = makePart('hair3', 'hair3', attachTo)
+        local hair4 = makePart('hair4', 'hair4', attachTo)
+        local hair5 = makePart('hair5', 'hair5', attachTo)
         box2dGuy.hair1 = hair1
         box2dGuy.hair2 = hair2
         box2dGuy.hair3 = hair3
@@ -741,6 +757,8 @@ function makeGuy(x, y, groupId)
 
     local head, neck, neck1, lear, rear
     if creation.isPotatoHead then
+        lear = makePart('lear', 'ear', torso, 'left')
+        rear = makePart('rear', 'ear', torso, 'right')
         --neck = makePart('neck', 'neck', torso)
     else
         if creation.hasNeck then
@@ -759,11 +777,12 @@ function makeGuy(x, y, groupId)
 
     local hair1, hair2, hair3, hair4, hair5
     if creation.hasPhysicsHair then
-        hair1 = makePart('hair1', 'hair1', head)
-        hair2 = makePart('hair2', 'hair2', head)
-        hair3 = makePart('hair3', 'hair3', head)
-        hair4 = makePart('hair4', 'hair4', head)
-        hair5 = makePart('hair5', 'hair5', head)
+        local attachTo = creation.isPotatoHead and torso or head
+        hair1 = makePart('hair1', 'hair1', attachTo)
+        hair2 = makePart('hair2', 'hair2', attachTo)
+        hair3 = makePart('hair3', 'hair3', attachTo)
+        hair4 = makePart('hair4', 'hair4', attachTo)
+        hair5 = makePart('hair5', 'hair5', attachTo)
     end
 
     local luleg = makePart('luleg', 'legpart', torso, 'left')
