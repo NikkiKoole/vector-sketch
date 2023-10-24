@@ -2220,7 +2220,9 @@ function love.keypressed(k)
         upsideDown = not upsideDown
         if not upsideDown then
             for i = 1, #box2dGuys do
-                box2dGuys[i].head:setAngle( -math.pi)
+                if box2dGuys[i].head then
+                    box2dGuys[i].head:setAngle( -math.pi)
+                end
                 if box2dGuys[i].neck then
                     box2dGuys[i].neck:setAngle( -math.pi)
                 end
@@ -2250,6 +2252,15 @@ function love.keypressed(k)
     end
     if (k == 'p') then
         creation.isPotatoHead = not creation.isPotatoHead
+        creation.hasNeck = not creation.isPotatoHead
+
+        for i = 1, #box2dGuys do
+            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+            handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+        end
+
+
         if false then
             if not profiling then
                 ProFi:start()

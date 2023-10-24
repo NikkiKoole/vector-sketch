@@ -105,15 +105,26 @@ function getOffsetFromParent(partName)
 
         return 0, -creation.torso.h / 2
     elseif partName == 'luarm' then
-        if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(8)
+        if creation.isPotatoHead then
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(7)
+            end
+        else
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(8)
+            end
         end
         return -creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'ruarm' then
-        if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(2)
+        if creation.isPotatoHead then
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(3)
+            end
+        else
+            if creation.torso.metaPoints then
+                return getScaledTorsoMetaPoint(2)
+            end
         end
-
 
         return creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'luleg' then
@@ -152,7 +163,7 @@ function getOffsetFromParent(partName)
         -- end
         if creation.isPotatoHead then
             if creation.head.metaPoints then
-                return getScaledTorsoMetaPoint(7)
+                return getScaledTorsoMetaPoint(8)
             end
         else
             if creation.head.metaPoints then
@@ -166,7 +177,7 @@ function getOffsetFromParent(partName)
         -- end
         if creation.isPotatoHead then
             if creation.head.metaPoints then
-                return getScaledTorsoMetaPoint(3)
+                return getScaledTorsoMetaPoint(2)
             end
         else
             if creation.head.metaPoints then
@@ -276,6 +287,10 @@ function changeMetaPoints(key, value, data)
     if key == 'head' then
         creation[key].metaOffsetX = value[5][1]
         creation[key].metaOffsetY = value[5][2]
+    end
+    if key == 'torso' then
+        creation[key].metaOffsetX = 0
+        creation[key].metaOffsetY = 0
     end
 
     -- if key == 'lhand' then
@@ -722,8 +737,19 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
         box2dGuy.lear = nil
         box2dGuy.rear = nil
         box2dGuy.neck = nil
+        box2dGuy.neck1 = nil
         box2dGuy.head = nil
+
+        local torso = box2dGuy.torso
+        local lear = makePart('lear', 'ear', torso, 'left')
+        local rear = makePart('rear', 'ear', torso, 'right')
+        box2dGuy.lear = lear
+        box2dGuy.rear = rear
     else
+        -- destroy ears from torso
+        box2dGuy.lear:destroy()
+        box2dGuy.rear:destroy()
+
         local torso = box2dGuy.torso
 
         local neck = makePart('neck', 'neck', torso)
