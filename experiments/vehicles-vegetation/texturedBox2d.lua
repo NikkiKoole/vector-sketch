@@ -291,7 +291,7 @@ function drawSkinOver(box2dGuy, creation)
     love.graphics.setColor(1, 1, 1, 1)
 
     if creation then
-        if creation.torso.metaURL then
+        if creation.torso.metaURL and not creation.isPotatoHead then
             local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
             love.graphics.setColor(.4, 0, 0, .8)
             drawSquishableHairOver(x, y, r, sx, sy, creation)
@@ -326,11 +326,19 @@ function drawSkinOver(box2dGuy, creation)
         --if creation.head.metaURL then
         love.graphics.setColor(1, 1, 1, 1)
         local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
+        if creation.isPotatoHead then
+            love.graphics.setColor(.4, 0, 0, .8)
+            drawSquishableHairOver(x, y, r, sx, sy, creation)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
 
+        if (creation.isPotatoHead) then
+            --    sy = sy * -1
+        end
         if true then
             --  love.graphics.setColor(1, 0, 1, 1)
-            local f = creation.head.metaPoints
-
+            local f = faceData.metaPoints
+            --sy = sy * -1
             local leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
             local rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
             local eyelx, eyely = facePart:getWorldPoint(
@@ -375,13 +383,13 @@ function drawSkinOver(box2dGuy, creation)
                 box2dGuy, creation)
 
             local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
-            renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, -20 }, { 100, 0 }, upperlipCanvas,
+            renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, -20 * math.random() }, { 100, 0 }, upperlipCanvas,
                 mouthmesh, box2dGuy)
             love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
 
             mouthmesh = createTexturedTriangleStrip(lowerlipCanvas)
 
-            renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 20 }, { 100, 0 }, upperlipCanvas,
+            renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 20 * math.random() }, { 100, 0 }, upperlipCanvas,
                 mouthmesh, box2dGuy)
             love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
 
@@ -399,7 +407,7 @@ function drawSkinOver(box2dGuy, creation)
                 --local img = mesh.getImage('assets/parts/hair1x.png')
                 local img = mesh.getImage('assets/parts/haarnew2.png')
                 local w, h = img:getDimensions()
-                local f = creation.head.metaPoints
+                local f = faceData.metaPoints
                 -- note: make this a parameter
                 local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
 
