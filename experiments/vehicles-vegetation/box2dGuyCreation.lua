@@ -11,7 +11,7 @@ local creation = {
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
     neck = { w = 140, h = 125, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     neck1 = { w = 140, h = 125, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false } },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },
     lowArm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
@@ -708,7 +708,7 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local head = makePart('head', 'head', torso)
         box2dGuy.head = head
         -- head:setAngle( -math.pi)
-        head:setAngle(0)
+        --  head:setAngle(0)
     else
         box2dGuy.head:destroy()
         local torso = box2dGuy.torso
@@ -716,7 +716,7 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local neck1 = makePart('neck1', 'neck1', neck)
         local head = makePart('head', 'head', neck1)
         --head:setAngle( -math.pi)
-        head:setAngle(0)
+        -- head:setAngle(0)
         box2dGuy.neck = neck
         box2dGuy.neck1 = neck1
         box2dGuy.head = head
@@ -806,7 +806,7 @@ function makeGuy(x, y, groupId)
         end
         -- note I am using this in afew places, it fixes some isue id rather not have to fix a all
         --head:setAngle( -math.pi)
-        head:setAngle(0)
+        -- head:setAngle(0)
         lear = makePart('lear', 'ear', head, 'left')
         rear = makePart('rear', 'ear', head, 'right')
     end

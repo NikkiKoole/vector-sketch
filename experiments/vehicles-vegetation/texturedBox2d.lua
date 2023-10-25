@@ -320,7 +320,7 @@ function drawSkinOver(box2dGuy, creation)
         local faceData = creation.isPotatoHead and creation.torso or creation.head
 
 
-        print(creation.head.metaOffsetX, creation.torso.metaOffsetX)
+        --print(creation.head.metaOffsetX, creation.torso.metaOffsetX)
 
         --if not creation.isPotatoHead then
         --if creation.head.metaURL then

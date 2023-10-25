@@ -1842,7 +1842,7 @@ function rotateToHorizontal(body, desiredAngle, divider)
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     if true then
         local angle = body:getAngle()
-        if true then
+        if false then
             if angle > 0 then
                 body:setAngle(angle % (2 * math.pi))
             else
@@ -2021,16 +2021,24 @@ function rotateAllBodies(bodies, dt)
                     end
 
                     if not upsideDown then
-                        if userData.bodyType == 'neck' then
-                            --getRidOfBigRotationsInBody(body)
+                        if userData.bodyType == 'neck1' then
+                            getRidOfBigRotationsInBody(body)
                             -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            --rotateToHorizontal(body, 0, 50)
+                            rotateToHorizontal(body, 0, 5)
+                        end
+                        if userData.bodyType == 'neck' then
+                            getRidOfBigRotationsInBody(body)
+                            -- rotateToHorizontal(body, -math.pi, 40)
+                            --rotateToHorizontal(body, 0, 10)
+                            rotateToHorizontal(body, 0, 5)
                         end
 
                         if userData.bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
+                            --  getRidOfBigRotationsInBody(body)
                             --rotateToHorizontal(body, -math.pi, 15)
+
+                            --  print(body:getAngle())
                             rotateToHorizontal(body, 0, 15)
                         end
                     end
@@ -2280,7 +2288,8 @@ function love.keypressed(k)
     if k == '-' then
         print('rest hard!')
         for i = 1, #box2dGuys do
-            box2dGuys[i].head:setAngle( -math.pi)
+            if (box2dGuys[i].head) then box2dGuys[i].head:setAngle( -2 * math.pi) end
+            print(box2dGuys[i].head:getAngle())
             if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
             if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
             box2dGuys[i].torso:setAngle(0)
