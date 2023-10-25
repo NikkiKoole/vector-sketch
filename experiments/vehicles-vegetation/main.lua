@@ -2023,13 +2023,15 @@ function rotateAllBodies(bodies, dt)
                     if not upsideDown then
                         if userData.bodyType == 'neck' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 10)
+                            -- rotateToHorizontal(body, -math.pi, 40)
+                            --rotateToHorizontal(body, 0, 10)
                             --rotateToHorizontal(body, 0, 50)
                         end
 
                         if userData.bodyType == 'head' then
                             getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, -math.pi, 15)
+                            --rotateToHorizontal(body, -math.pi, 15)
+                            rotateToHorizontal(body, 0, 15)
                         end
                     end
 

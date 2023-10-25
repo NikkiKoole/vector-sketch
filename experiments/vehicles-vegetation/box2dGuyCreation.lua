@@ -9,9 +9,9 @@ local creation = {
     hasPhysicsHair = false,
     hasNeck = true,
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-    neck = { w = 140, h = 25, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 140, h = 25, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 140, h = 125, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 125, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = false } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },
     lowArm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
@@ -243,6 +243,8 @@ local function getAngleOffset(key, side, creation)
         --print('jojo')
         --print(creation.hasNeck)
         if (not creation.hasNeck) then
+            return 0
+        else
             return -math.pi
         end
         return 0
@@ -288,9 +290,13 @@ function changeMetaPoints(key, value, data)
         creation[key].metaOffsetX = value[5][1]
         creation[key].metaOffsetY = value[5][2]
     end
+    if key == 'head' then
+        creation[key].metaOffsetX = value[1][1]
+        creation[key].metaOffsetY = value[1][2]
+    end
     if key == 'torso' then
-        creation[key].metaOffsetX = 0
-        creation[key].metaOffsetY = 0
+        --creation[key].metaOffsetX = 0
+        --creation[key].metaOffsetY = 0
     end
 
     -- if key == 'lhand' then
@@ -485,10 +491,11 @@ local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
 
 
 
-    --if key == 'neck' or key == 'neck1' then
-    -- print(key)
-    -- print(inspect(cd))
-    --end
+    if key == 'neck' or key == 'neck1' then
+        -- print(key)
+        -- print(inspect(cd))
+        --  print(prevA, xangle)
+    end
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
@@ -700,14 +707,16 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local torso = box2dGuy.torso
         local head = makePart('head', 'head', torso)
         box2dGuy.head = head
-        head:setAngle( -math.pi)
+        -- head:setAngle( -math.pi)
+        head:setAngle(0)
     else
         box2dGuy.head:destroy()
         local torso = box2dGuy.torso
         local neck = makePart('neck', 'neck', torso)
         local neck1 = makePart('neck1', 'neck1', neck)
         local head = makePart('head', 'head', neck1)
-        head:setAngle( -math.pi)
+        --head:setAngle( -math.pi)
+        head:setAngle(0)
         box2dGuy.neck = neck
         box2dGuy.neck1 = neck1
         box2dGuy.head = head
@@ -796,7 +805,8 @@ function makeGuy(x, y, groupId)
             head = makePart('head', 'head', torso)
         end
         -- note I am using this in afew places, it fixes some isue id rather not have to fix a all
-        head:setAngle( -math.pi)
+        --head:setAngle( -math.pi)
+        head:setAngle(0)
         lear = makePart('lear', 'ear', head, 'left')
         rear = makePart('rear', 'ear', head, 'right')
     end
