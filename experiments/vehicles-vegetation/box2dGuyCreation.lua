@@ -9,8 +9,9 @@ local creation = {
     hasPhysicsHair = false,
     hasNeck = true,
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-    neck = { w = 140, h = 125, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 140, h = 125, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+
+    neck = { w = 140, h = 500, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 500, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
     ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },

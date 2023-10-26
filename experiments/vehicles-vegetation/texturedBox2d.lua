@@ -304,12 +304,12 @@ function drawSkinOver(box2dGuy, creation)
             love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
         end
 
-        if not creation.isPotatoHead then
+        --if not creation.isPotatoHead then
             if creation.ear.metaURL then
-                renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, -1 * 2, box2dGuy, creation)
-                renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, -1 * 2, box2dGuy, creation)
+                renderAtachedObject(earCanvas, 'lear', 'ear', - math.pi/2, -1 * 2,  2, box2dGuy, creation)
+                renderAtachedObject(earCanvas, 'rear', 'ear', math.pi/2, 1 * 2,  2, box2dGuy, creation)
             end
-        end
+        --end
 
         love.graphics.setColor(0, 0, 0, 1)
 
@@ -350,20 +350,7 @@ function drawSkinOver(box2dGuy, creation)
                     (rightEyeX + faceData.metaOffsetX) * sx,
                     (f[3][2] + faceData.metaOffsetY) * sy)
 
-            renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyelx, eyely, -0.5, 0.5,
-                box2dGuy, creation)
-            renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyerx, eyery, 0.5, 0.5,
-                box2dGuy, creation)
-
-            renderNonAttachedObject(pupilCanvas,
-                'pupil', r, eyelx, eyely, -0.5 / 2, 0.5 / 2,
-                box2dGuy, creation)
-            renderNonAttachedObject(pupilCanvas,
-                'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
-                box2dGuy, creation)
-
+         
 
             local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
             local noseY = f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
@@ -378,21 +365,40 @@ function drawSkinOver(box2dGuy, creation)
                     (mouthX + faceData.metaOffsetX) * sx,
                     (mouthY + faceData.metaOffsetY) * sy)
 
-            local scaleX = 200 / teethCanvas:getWidth()
+
+            local mouthWidth = (f[3][1] - f[7][1])/2
+
+            local scaleX = mouthWidth / teethCanvas:getWidth()
             renderNonAttachedObject(teethCanvas,
                 'teeth', r, mx, my, scaleX, -1 * scaleX,
                 box2dGuy, creation)
 
             local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
-            renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, -20 * math.random() }, { 100, 0 }, upperlipCanvas,
+            renderCurvedObjectFromSimplePoints({ -mouthWidth/2, 0 }, { 0, -20 }, { mouthWidth/2, 0 }, upperlipCanvas,
                 mouthmesh, box2dGuy)
             love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
 
             mouthmesh = createTexturedTriangleStrip(lowerlipCanvas)
 
-            renderCurvedObjectFromSimplePoints({ -100, 0 }, { 0, 20 * math.random() }, { 100, 0 }, upperlipCanvas,
+            renderCurvedObjectFromSimplePoints({ -mouthWidth/2, 0 }, { 0, 20 }, { mouthWidth/2, 0 }, upperlipCanvas,
                 mouthmesh, box2dGuy)
             love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
+
+
+            renderNonAttachedObject(eyeCanvas,
+            'eye', r, eyelx, eyely, -0.5, 0.5,
+            box2dGuy, creation)
+        renderNonAttachedObject(eyeCanvas,
+            'eye', r, eyerx, eyery, 0.5, 0.5,
+            box2dGuy, creation)
+
+        renderNonAttachedObject(pupilCanvas,
+            'pupil', r, eyelx, eyely, -0.5 / 2, 0.5 / 2,
+            box2dGuy, creation)
+        renderNonAttachedObject(pupilCanvas,
+            'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
+            box2dGuy, creation)
+
 
 
             renderNonAttachedObject(noseCanvas,
@@ -412,8 +418,8 @@ function drawSkinOver(box2dGuy, creation)
                 -- note: make this a parameter
                 --local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
 
-                ---local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
-                local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+                local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4]}
+              --  local hairLine = { f[7], f[8], f[1], f[2], f[3] }
 
                 local points = hairLine
                 local hairTension = .02

@@ -449,6 +449,7 @@ function makeShape(shapeType, w, h)
         -- ipv hardcoded 10 i use w/5
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
                 h / 2))
+
     elseif (shapeType == 'capsule2') then
         -- ipv hardcoded 10 i use w/5
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
@@ -1771,7 +1772,7 @@ function love.draw()
         --    drawPlantOver(grass[i], i)
         --end
 
-        drawWorld(world)
+     --   drawWorld(world)
 
 
 
@@ -1837,26 +1838,46 @@ function drawMeterGrid()
     end
 end
 
-function rotateToHorizontal(body, desiredAngle, divider)
+function rotateToHorizontal(body, desiredAngle, divider, pr)
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     if true then
-        local angle = body:getAngle()
-        if false then
-            if angle > 0 then
-                body:setAngle(angle % (2 * math.pi))
-            else
-                body:setAngle(angle % ( -2 * math.pi))
+      
+        
+        if true then
+           
+            --if angle > 0 then
+             --   body:setAngle(angle % (2 * math.pi))
+            --else
+             --   body:setAngle(angle % ( -2 * math.pi))
+            --end
+
+
+            local angle = body:getAngle()
+            local a = angle
+            while a > (4 * math.pi) do
+                a = a - (2 * math.pi)
+                body:setAngle(a)
+
+            end
+            while a < -(4 * math.pi) do
+                a = a + (2 * math.pi)
+                body:setAngle(a)
             end
         end
+
+
         angle = body:getAngle()
         local nextAngle = angle + body:getAngularVelocity() / divider
 
+        if pr == true then
+            print(angle, nextAngle, body:getAngularVelocity(), desiredAngle)
+        end
         local totalRotation = desiredAngle - nextAngle
+        
         while (totalRotation < -180 * DEGTORAD) do
             totalRotation = totalRotation + 360 * DEGTORAD
         end
-
 
         while (totalRotation > 180 * DEGTORAD) do
             totalRotation = totalRotation - 360 * DEGTORAD
@@ -1868,7 +1889,7 @@ function rotateToHorizontal(body, desiredAngle, divider)
         -- body:applyAngularImpulse(impulse)
 
         local torque = body:getInertia() * desiredAngularVelocity / (1 / divider)
-        body:applyTorque(torque)
+       body:applyTorque(torque)
     end
 end
 
@@ -2023,23 +2044,23 @@ function rotateAllBodies(bodies, dt)
                     if not upsideDown then
                         if userData.bodyType == 'neck1' then
                             getRidOfBigRotationsInBody(body)
-                            -- rotateToHorizontal(body, -math.pi, 40)
+                          --  -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, 0, 5)
+                            rotateToHorizontal(body, 0, 15)
                         end
                         if userData.bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
                             -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, 0, 5)
+                           rotateToHorizontal(body, -math.pi, 15)
                         end
 
                         if userData.bodyType == 'head' then
-                            --  getRidOfBigRotationsInBody(body)
+                           --  getRidOfBigRotationsInBody(body)
                             --rotateToHorizontal(body, -math.pi, 15)
 
                             --  print(body:getAngle())
-                            rotateToHorizontal(body, 0, 15)
+                            rotateToHorizontal(body,0 , 15)
                         end
                     end
 
@@ -2234,10 +2255,10 @@ function love.keypressed(k)
                     box2dGuys[i].head:setAngle( -math.pi)
                 end
                 if box2dGuys[i].neck then
-                    box2dGuys[i].neck:setAngle( -math.pi)
+                    box2dGuys[i].neck:setAngle( 0)
                 end
                 if box2dGuys[i].neck1 then
-                    box2dGuys[i].neck1:setAngle( -math.pi)
+                    box2dGuys[i].neck1:setAngle( 0)
                 end
 
                 box2dGuys[i].luleg:setAngle(0)
@@ -2290,8 +2311,8 @@ function love.keypressed(k)
         for i = 1, #box2dGuys do
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle( -2 * math.pi) end
             print(box2dGuys[i].head:getAngle())
-            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
-            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
+            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( 0) end
+            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( 0) end
             box2dGuys[i].torso:setAngle(0)
             box2dGuys[i].luleg:setAngle(0)
             box2dGuys[i].llleg:setAngle(0)
