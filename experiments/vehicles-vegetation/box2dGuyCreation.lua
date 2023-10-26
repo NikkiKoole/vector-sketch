@@ -75,7 +75,7 @@ function getParentAndChildrenFromPartName(partName, creation)
     if creation and partName == 'torso' and creation.hasNeck == false then
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
-    print(partName)
+    --print(partName)
     return map[partName]
 end
 
@@ -609,7 +609,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local childData = getParentAndChildrenFromPartName(childName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-        print(childName)
+       -- print(childName)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
         local data2 = getParentAndChildrenFromPartName(childName)

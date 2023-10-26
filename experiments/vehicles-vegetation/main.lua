@@ -984,7 +984,7 @@ end
 function randomFaceParts()
     eyeIndex = math.ceil(love.math.random() * #eyedata)
     changeMetaTexture('eye', eyedata[eyeIndex])
-    print(#eyedata, eyeIndex)
+  --  print(#eyedata, eyeIndex)
     creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
     creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
     eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
@@ -1309,7 +1309,7 @@ function startExample(number)
         lowerlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'lowerlips')
         teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
 
-        print(#upperlipdata, #lowerlipdata, #teethdata)
+       -- print(#upperlipdata, #lowerlipdata, #teethdata)
         randomFaceParts()
 
         for i = 1, 5 do
@@ -1772,7 +1772,7 @@ function love.draw()
         --    drawPlantOver(grass[i], i)
         --end
 
-     --   drawWorld(world)
+        drawWorld(world)
 
 
 
@@ -2046,7 +2046,7 @@ function rotateAllBodies(bodies, dt)
                             getRidOfBigRotationsInBody(body)
                           --  -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, 0, 15)
+                            rotateToHorizontal(body,  -math.pi, 15)
                         end
                         if userData.bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
@@ -2056,7 +2056,7 @@ function rotateAllBodies(bodies, dt)
                         end
 
                         if userData.bodyType == 'head' then
-                           --  getRidOfBigRotationsInBody(body)
+                            -- getRidOfBigRotationsInBody(body)
                             --rotateToHorizontal(body, -math.pi, 15)
 
                             --  print(body:getAngle())
@@ -2309,10 +2309,12 @@ function love.keypressed(k)
     if k == '-' then
         print('rest hard!')
         for i = 1, #box2dGuys do
+
+            print( box2dGuys[i].neck:getAngle(),  box2dGuys[i].neck1:getAngle()  )
+
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle( -2 * math.pi) end
-            print(box2dGuys[i].head:getAngle())
-            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( 0) end
-            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( 0) end
+            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
+            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
             box2dGuys[i].torso:setAngle(0)
             box2dGuys[i].luleg:setAngle(0)
             box2dGuys[i].llleg:setAngle(0)
