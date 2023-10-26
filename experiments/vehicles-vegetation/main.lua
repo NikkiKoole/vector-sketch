@@ -2056,11 +2056,11 @@ function rotateAllBodies(bodies, dt)
                         end
 
                         if userData.bodyType == 'head' then
-                            -- getRidOfBigRotationsInBody(body)
+                         --    getRidOfBigRotationsInBody(body)
                             --rotateToHorizontal(body, -math.pi, 15)
 
                             --  print(body:getAngle())
-                            rotateToHorizontal(body,0 , 15)
+                            rotateToHorizontal(body,-math.pi*2 , 15)
                         end
                     end
 
