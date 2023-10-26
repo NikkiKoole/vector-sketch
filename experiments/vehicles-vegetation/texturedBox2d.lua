@@ -321,26 +321,27 @@ function drawSkinOver(box2dGuy, creation)
 
 
         --print(creation.head.metaOffsetX, creation.torso.metaOffsetX)
-
         --if not creation.isPotatoHead then
         --if creation.head.metaURL then
         love.graphics.setColor(1, 1, 1, 1)
         local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
+       
         if creation.isPotatoHead then
             love.graphics.setColor(.4, 0, 0, .8)
             drawSquishableHairOver(x, y, r, sx, sy, creation)
             love.graphics.setColor(1, 1, 1, 1)
         end
-
+        r = r + math.pi
         if (creation.isPotatoHead) then
             --    sy = sy * -1
         end
+
         if true then
             --  love.graphics.setColor(1, 0, 1, 1)
             local f = faceData.metaPoints
             --sy = sy * -1
-            local leftEyeX = numbers.lerp(f[3][1], f[7][1], 0.2)
-            local rightEyeX = numbers.lerp(f[3][1], f[7][1], 0.8)
+            local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
+            local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
             local eyelx, eyely = facePart:getWorldPoint(
                     (leftEyeX + faceData.metaOffsetX) * sx,
                     (f[3][2] + faceData.metaOffsetY) * sy)
@@ -364,7 +365,7 @@ function drawSkinOver(box2dGuy, creation)
                 box2dGuy, creation)
 
 
-            local noseX = numbers.lerp(f[3][1], f[7][1], 0.5)
+            local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
             local noseY = f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
 
             local nx, ny = facePart:getWorldPoint(
@@ -372,7 +373,7 @@ function drawSkinOver(box2dGuy, creation)
                     (noseY + faceData.metaOffsetY) * sy)
 
             local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
-            local mouthY = numbers.lerp(f[1][1], f[8][1], 0.85) --f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
+            local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85) --f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
             local mx, my = facePart:getWorldPoint(
                     (mouthX + faceData.metaOffsetX) * sx,
                     (mouthY + faceData.metaOffsetY) * sy)
@@ -409,10 +410,10 @@ function drawSkinOver(box2dGuy, creation)
                 local w, h = img:getDimensions()
                 local f = faceData.metaPoints
                 -- note: make this a parameter
-                local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
+                --local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
 
-                local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
-                local hairLine = { f[3], f[4], f[5], f[6], f[7] }
+                ---local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
+                local hairLine = { f[7], f[8], f[1], f[2], f[3] }
 
                 local points = hairLine
                 local hairTension = .02
@@ -439,7 +440,7 @@ function drawSkinOver(box2dGuy, creation)
                 local m = love.graphics.newMesh(vertices, "strip")
                 --print(inspect(vertices))
                 m:setTexture(img)
-                love.graphics.draw(m, x, y, r, sx * creation.head.flipx, sy)
+                love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx, sy)
             end
         end
         -- end

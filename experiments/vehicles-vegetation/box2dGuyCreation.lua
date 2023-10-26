@@ -286,17 +286,17 @@ function changeMetaPoints(key, value, data)
     creation[key].metaPointsH = bbh
 
 
-    if key == 'head' then
-        creation[key].metaOffsetX = value[5][1]
-        creation[key].metaOffsetY = value[5][2]
-    end
+    --if key == 'head' then
+    --    creation[key].metaOffsetX = value[5][1]
+    --    creation[key].metaOffsetY = value[5][2]
+    --end
     if key == 'head' then
         creation[key].metaOffsetX = value[1][1]
         creation[key].metaOffsetY = value[1][2]
     end
     if key == 'torso' then
-        --creation[key].metaOffsetX = 0
-        --creation[key].metaOffsetY = 0
+        creation[key].metaOffsetX = 0--value[1][1]
+        creation[key].metaOffsetY = 0--value[1][2]
     end
 
     -- if key == 'lhand' then
