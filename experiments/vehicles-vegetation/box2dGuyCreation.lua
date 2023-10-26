@@ -9,7 +9,6 @@ local creation = {
     hasPhysicsHair = false,
     hasNeck = true,
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-
     neck = { w = 140, h = 500, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     neck1 = { w = 140, h = 500, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
@@ -246,7 +245,7 @@ local function getAngleOffset(key, side, creation)
         if (not creation.hasNeck) then
             return 0
         else
-            return -math.pi
+            return math.pi
         end
         return 0
     end
@@ -296,8 +295,8 @@ function changeMetaPoints(key, value, data)
         creation[key].metaOffsetY = value[1][2]
     end
     if key == 'torso' then
-        creation[key].metaOffsetX = 0--value[1][1]
-        creation[key].metaOffsetY = 0--value[1][2]
+        creation[key].metaOffsetX = 0 --value[1][1]
+        creation[key].metaOffsetY = 0 --value[1][2]
     end
 
     -- if key == 'lhand' then
@@ -609,7 +608,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local childData = getParentAndChildrenFromPartName(childName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-       -- print(childName)
+        -- print(childName)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
         local data2 = getParentAndChildrenFromPartName(childName)

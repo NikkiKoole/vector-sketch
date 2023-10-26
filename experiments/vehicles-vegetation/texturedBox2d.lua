@@ -287,6 +287,18 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
     love.graphics.draw(msh, x, y, r, sx, sy)
 end
 
+function drawNumbersOver(box2dGuy)
+    local parts = { 'torso', 'head', 'neck', 'neck1', 'lear', 'rear' }
+
+    for i = 1, #parts do
+        local p = parts[i]
+        local x, y = box2dGuy[p]:getPosition()
+        local a = box2dGuy[p]:getAngle()
+        love.graphics.print(string.format(
+            "%.2f ", a), x, y)
+    end
+end
+
 function drawSkinOver(box2dGuy, creation)
     love.graphics.setColor(1, 1, 1, 1)
 
@@ -305,10 +317,10 @@ function drawSkinOver(box2dGuy, creation)
         end
 
         --if not creation.isPotatoHead then
-            if creation.ear.metaURL then
-                renderAtachedObject(earCanvas, 'lear', 'ear', - math.pi/2, -1 * 2,  2, box2dGuy, creation)
-                renderAtachedObject(earCanvas, 'rear', 'ear', math.pi/2, 1 * 2,  2, box2dGuy, creation)
-            end
+        if creation.ear.metaURL then
+            renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, 2, box2dGuy, creation)
+            renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
+        end
         --end
 
         love.graphics.setColor(0, 0, 0, 1)
@@ -325,7 +337,7 @@ function drawSkinOver(box2dGuy, creation)
         --if creation.head.metaURL then
         love.graphics.setColor(1, 1, 1, 1)
         local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
-       
+
         if creation.isPotatoHead then
             love.graphics.setColor(.4, 0, 0, .8)
             drawSquishableHairOver(x, y, r, sx, sy, creation)
@@ -350,7 +362,7 @@ function drawSkinOver(box2dGuy, creation)
                     (rightEyeX + faceData.metaOffsetX) * sx,
                     (f[3][2] + faceData.metaOffsetY) * sy)
 
-         
+
 
             local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
             local noseY = f[3][2] -- numbers.lerp(f[1][2], f[8][2], 0.25)
@@ -366,7 +378,7 @@ function drawSkinOver(box2dGuy, creation)
                     (mouthY + faceData.metaOffsetY) * sy)
 
 
-            local mouthWidth = (f[3][1] - f[7][1])/2
+            local mouthWidth = (f[3][1] - f[7][1]) / 2
 
             local scaleX = mouthWidth / teethCanvas:getWidth()
             renderNonAttachedObject(teethCanvas,
@@ -374,30 +386,30 @@ function drawSkinOver(box2dGuy, creation)
                 box2dGuy, creation)
 
             local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
-            renderCurvedObjectFromSimplePoints({ -mouthWidth/2, 0 }, { 0, -20 }, { mouthWidth/2, 0 }, upperlipCanvas,
+            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, -20 }, { mouthWidth / 2, 0 }, upperlipCanvas,
                 mouthmesh, box2dGuy)
             love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
 
             mouthmesh = createTexturedTriangleStrip(lowerlipCanvas)
 
-            renderCurvedObjectFromSimplePoints({ -mouthWidth/2, 0 }, { 0, 20 }, { mouthWidth/2, 0 }, upperlipCanvas,
+            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, 20 }, { mouthWidth / 2, 0 }, upperlipCanvas,
                 mouthmesh, box2dGuy)
             love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
 
 
             renderNonAttachedObject(eyeCanvas,
-            'eye', r, eyelx, eyely, -0.5, 0.5,
-            box2dGuy, creation)
-        renderNonAttachedObject(eyeCanvas,
-            'eye', r, eyerx, eyery, 0.5, 0.5,
-            box2dGuy, creation)
+                'eye', r, eyelx, eyely, -0.5, 0.5,
+                box2dGuy, creation)
+            renderNonAttachedObject(eyeCanvas,
+                'eye', r, eyerx, eyery, 0.5, 0.5,
+                box2dGuy, creation)
 
-        renderNonAttachedObject(pupilCanvas,
-            'pupil', r, eyelx, eyely, -0.5 / 2, 0.5 / 2,
-            box2dGuy, creation)
-        renderNonAttachedObject(pupilCanvas,
-            'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
-            box2dGuy, creation)
+            renderNonAttachedObject(pupilCanvas,
+                'pupil', r, eyelx, eyely, -0.5 / 2, 0.5 / 2,
+                box2dGuy, creation)
+            renderNonAttachedObject(pupilCanvas,
+                'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
+                box2dGuy, creation)
 
 
 
@@ -418,8 +430,8 @@ function drawSkinOver(box2dGuy, creation)
                 -- note: make this a parameter
                 --local hairLine = { f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[1] }
 
-                local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4]}
-              --  local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+                local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
+                --  local hairLine = { f[7], f[8], f[1], f[2], f[3] }
 
                 local points = hairLine
                 local hairTension = .02
