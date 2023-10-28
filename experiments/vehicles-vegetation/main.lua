@@ -105,11 +105,6 @@ for i = 1, #base do
     table.insert(palettes, { r, g, b })
 end
 
-
--- check this for multiple fixtures, -> sensor for gorund
--- https://love2d.org/forums/viewtopic.php?t=80950
--- lift the rendering from windfield :
---https://github.com/a327ex/windfield/blob/master/windfield/init.lua
 lurker.postswap = function(f)
     print("File " .. f .. " was swapped")
     grabDevelopmentScreenshot()
@@ -135,6 +130,7 @@ local function getCenterOfPoints(points)
     local h = bry - tly
     return tlx + w / 2, tly + h / 2
 end
+
 local function getCentroidOfFixture(body, fixture)
     return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
@@ -263,7 +259,6 @@ function beginContact(a, b, contact)
         -- i also should keep around what body (cirlcle) this is about,
         -- and also eventually probably also waht touch id or mouse this is..
 
-
         for i = 1, #pointerJoints do
             local mj = pointerJoints[i]
 
@@ -275,8 +270,6 @@ function beginContact(a, b, contact)
                 bodyLastDisabledContact = b
             end
             if bodyLastDisabledContact then
-                -- do i need to keep something in the pointerJoints too ???
-                -- positionOfLastDisabledContact
                 pointerJoints[i].bodyLastDisabledContact = bodyLastDisabledContact
                 pointerJoints[i].positionOfLastDisabledContact = point
                 table.insert(disabledContacts, contact)
@@ -541,7 +534,6 @@ function makeSpine(x, y, amt, groupId, totalHeight)
     end
 
     local lastLink = makeLink(x, y)
-    -- lastLink:setAngle(-math.pi)
     local firstLink = lastLink
     for i = 1, amt do
         local link = makeLink(x, y + (i * (linkHeight + 2)) * dir)
@@ -784,16 +776,8 @@ function makeBodyFromData(data, x, y)
 
     ball.shape = love.physics.newPolygonShape(flatted)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
-    --ball.fixture:setRestitution(0.8) -- let the ball bounce
-    --ball.fixture:setUserData(makeUserData("ball"))
-
-
-    --local pivotShape = makeRectPoly2(10, 10, data.pivotX, data.pivotY)
-    --local fixture = love.physics.newFixture(ball.body, pivotShape, .5)
-    --fixture:setSensor(true)
-
-    --ball.fixture:setFriction(.5)
     ball.textureData = data
+    
     return ball
 end
 
@@ -807,8 +791,6 @@ function makeGrassThing(x, y, i)
     local shape1 = makeRectPoly2(5, 5, 0, 0)
     local fixture = love.physics.newFixture(body, shape1, 1)
     fixture:setSensor(true)
-    --fixture:setUserData(makeUserData("no-effect"))
-
     local grass = love.physics.newBody(world, x, y, "dynamic")
     local shape1 = makeRectPoly2(w, h, -w / 2, -h / 2)
     local fixture = love.physics.newFixture(grass, shape1, .1)
@@ -822,11 +804,9 @@ end
 function makeVehicle(x, y)
     local carBodyHeight = 150
     local carBodyWidth  = 800
-
     local carbody       = love.physics.newBody(world, x, y, "dynamic")
     local shape         = makeCarShape(carBodyWidth, carBodyHeight, 0, 0) --makeRectPoly2(300, 100, 0, 0)  --love.physics.newRectangleShape(300, 100)
     local fixture       = love.physics.newFixture(carbody, shape, .5)
-
 
     fixture:setUserData(makeUserData("carbody"))
     fixture:setFriction(1)
@@ -842,8 +822,6 @@ function makeVehicle(x, y)
                 polyLength,
                 xOffset, polyLength)
         local backfixture = love.physics.newFixture(carbody, backside, .5)
-
-
         local xOffset = 80
         local polyWidth = 20
         local polyLength = -110
@@ -1098,7 +1076,6 @@ function startExample(number)
             objects.ground.fixture:setFriction(1)
         end
 
-
         if true then
             objects.ground = {}
             objects.ground.body = love.physics.newBody(world, width / 2, -3500, "static")
@@ -1107,12 +1084,9 @@ function startExample(number)
             objects.ground.fixture:setUserData(makeUserData("ground"))
             objects.ground.fixture:setFriction(1)
         end
-
-
-
-
-
+        
         objects.blocks = {}
+
         for i = 1, 3 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
                     margin + love.math.random() * -height / 2, ballRadius)
@@ -1154,11 +1128,9 @@ function startExample(number)
             --     makeSnappyElastic(i * 100, -1500)
         end
 
-
         makeSeeSaw(6000, -500)
-
-
         ballRadius = love.physics.getMeter() / 4
+
         if false then
             for i = 1, 20 do
                 objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
@@ -1174,28 +1146,14 @@ function startExample(number)
         connectors = {}
 
         local margin = 20
-        -- objects.border = makeBorderChain(width, height, margin)
         local w, h = love.graphics.getDimensions()
-        -- print(inspect(cam))
-
-
-
-        --print(cam:getScreenCoordinates(0, 0))
-        -- print(cam:getWorldCoordinates(0, 0))
         local camtlx, camtly = cam:getWorldCoordinates(0, 0)
         local cambrx, cambry = cam:getWorldCoordinates(w, h)
         local camcx, camcy = cam:getWorldCoordinates(w / 2, h / 2)
 
-        --local check = love.physics.newBody(world, camcx, camcy, "static")
-        --local checkshape = love.physics.newRectangleShape(cambrx - camtlx, cambry - camtly)
-        --local checkfixture = love.physics.newFixture(check, checkshape, 1)
-
-
-
         local top = love.physics.newBody(world, width / 2, -4000, "static")
         local topshape = love.physics.newRectangleShape(width * 10, height / 2)
         local topfixture = love.physics.newFixture(top, topshape, 1)
-
 
         local bottom = love.physics.newBody(world, width / 2, 00, "static")
         local bottomshape = love.physics.newRectangleShape(width * 10, height / 2)
@@ -1209,12 +1167,9 @@ function startExample(number)
         local rightshape = love.physics.newRectangleShape(height / 2, 4000)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
 
-
         for i = 1, 100 do
             --table.insert(grass, makeGrassThing(i * 40, -500, i))
         end
-
-
 
         data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         bodyRndIndex = math.ceil(love.math.random() * #data)
@@ -1225,18 +1180,10 @@ function startExample(number)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
 
-
-
-
-
-
         torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * 1
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * 1
-        -- print(mesh.getImage(creation.torso.metaURL))
-        -- makecreation the dimensions of the image
 
-        --
         if true then
             headRndIndex = math.ceil(love.math.random() * #data)
 
@@ -1250,10 +1197,8 @@ function startExample(number)
         --
         feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
 
-
         local footIndex = 12 --math.ceil(math.random() * #feetdata)
 
-        --changeMetaPoints('lfoot', feetdata[footIndex].points)
         changeMetaTexture('lfoot', feetdata[footIndex])
         creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
         creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
@@ -1264,13 +1209,8 @@ function startExample(number)
 
         footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
 
-
-
-
-
         local handIndex = 12 --math.ceil(math.random() * #feetdata)
-
-
+        
         changeMetaTexture('lhand', feetdata[handIndex])
         creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
         creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
@@ -1282,9 +1222,6 @@ function startExample(number)
 
         handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
 
-
-
-
         eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
         local earIndex = math.ceil(love.math.random() * #eardata)
         --print(eardata[earIndex])
@@ -1292,11 +1229,6 @@ function startExample(number)
         creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
         creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
         earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
-
-
-
-
-
 
         -- eyes
         eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
@@ -1308,25 +1240,15 @@ function startExample(number)
         lowerlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'lowerlips')
         teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
 
-        -- print(#upperlipdata, #lowerlipdata, #teethdata)
         randomFaceParts()
 
         for i = 1, 5 do
             table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000 + (i % 2) * -1000, i))
         end
 
-
-
         for i = 1, 5 do
             --      makeBalloon(i * 100, -1000)
         end
-
-
-        -- make a shape per meta thing loaded from bodies.
-
-        -- for i = 1, #data do
-        --     table.insert(box2dTorsos, makeBodyFromData(data[i], i * 100, -2000))
-        -- end
     end
 
     example = number
@@ -1387,7 +1309,6 @@ function love.load()
 
     cloud = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
 
-
     spriet = {
         love.graphics.newImage('assets/world/spriet1.png'),
         love.graphics.newImage('assets/world/spriet2.png'),
@@ -1412,11 +1333,8 @@ function love.load()
         sprietOver[i] = { startX + i * dist, -100, math.ceil(love.math.random() * #spriet), 0, 1 }
     end
 
-
-
     legCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
     legmesh = createTexturedTriangleStrip(legCanvas)
-
 
     armCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
     armmesh = createTexturedTriangleStrip(armCanvas)
@@ -1430,13 +1348,11 @@ function love.load()
 
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 4, h * 4)
-
     --create()
     example = nil
     startExample(3)
     love.graphics.setBackgroundColor(palette[colors.light_cream][1], palette[colors.light_cream][2],
         palette[colors.light_cream][3])
-
 
     --grabDevelopmentScreenshot()
 end
@@ -1486,9 +1402,6 @@ function love.touchreleased(id, x, y)
 end
 
 function love.mousereleased(x, y)
-    -- now we have to find a few things out to check if i want to shoot my thing
-    -- first off, are we below the ground ?
-
     pointerReleased('mouse', x, y)
 end
 
@@ -1534,13 +1447,7 @@ end
 function pointerPressed(id, x, y)
     local wx, wy = cam:getWorldCoordinates(x, y)
     local bodies = world:getBodies()
-    --print('checking')
-
     local temp = {}
-
-
-
-
     for _, body in ipairs(bodies) do
         if body:getType() ~= 'kinematic' then
             local fixtures = body:getFixtures()
@@ -1549,28 +1456,16 @@ function pointerPressed(id, x, y)
                 local isSensor = fixture:isSensor()
                 if (hitThisOne and not isSensor) then
                     table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
-                    --killMouseJointIfPossible(id)
-                    --table.insert(pointerJoints, makePointerJoint(id, body, wx, wy))
-
-                    --local vx, vy = body:getLinearVelocity()
-                    -- body:setPosition(body:getX(), body:getY() - 10)
-                    -- print('true')
-                    -- hitAny = true
                 end
             end
         end
     end
     if #temp > 0 then
         table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
-        -- find the best one, that means, if we find one with userdata hands that goes first, then arms
-        --for i = 1, #temp do
-        --    print(inspect(temp[i].fixture:getUserData()))
-        --end
-        --print(inspect(temp))
         killMouseJointIfPossible(id)
         table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy))
     end
-    -- print('done checking', #pointerJoints)
+
     if #temp == 0 then killMouseJointIfPossible(id) end
 end
 
@@ -1584,7 +1479,6 @@ function getBodyColor(body)
     if body:getType() == 'static' then
         return palette[colors.green]
     end
-    --fixture:getShape():type() == 'PolygonShape' then
 end
 
 function drawWorld(world)
@@ -1623,7 +1517,6 @@ function drawWorld(world)
         end
     end
     love.graphics.setColor(255, 255, 255, alpha)
-
     -- Joint debug
     love.graphics.setColor(1, 0, 0, alpha)
     local joints = world:getJoints()
@@ -1675,9 +1568,6 @@ function love.draw()
     local bgscale = math.min(sx, sy)
     love.graphics.draw(cloud, 0, 0, 0, bgscale, bgscale)
 
-
-
-
     --drawMeterGrid()
 
     if example == 1 then
@@ -1712,20 +1602,14 @@ function love.draw()
         end
         cam:pop()
 
-
         love.graphics.print(love.timer.getFPS(), 0, 0)
-        --love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
     end
-
-
 
     if example == 3 then
         love.graphics.setColor(1, 1, 1)
 
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
-        -- drawCenteredBackgroundText('Body moving, changing.\nPress q & w to change a body.')
         cam:push()
-
 
         love.graphics.rectangle('fill', 200, -500, 100, 100)
         --i * 40, -500
@@ -1765,15 +1649,8 @@ function love.draw()
 
         local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
-
-
-        --for i = 1, #grass do
-        --    drawPlantOver(grass[i], i)
-        --end
-
+        
         drawWorld(world)
-
-
 
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
@@ -1798,8 +1675,6 @@ function love.draw()
             --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
         end
 
-
-
         cam:pop()
         love.graphics.setColor(0, 0, 0)
         drawCenteredBackgroundText(
@@ -1808,7 +1683,6 @@ function love.draw()
         local w, h = love.graphics.getDimensions();
         love.graphics.setColor(.9, .8, .8, 0.9)
         love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
-
         love.graphics.setColor(.4, .4, .4, 0.9)
         love.graphics.print(love.timer.getFPS(), 0, 0)
         -- love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
@@ -1852,52 +1726,38 @@ function rotateToHorizontal(body, desiredAngle, divider, pr)
         local angularVelocity = body:getAngularVelocity()
         local inertia = body:getInertia()
         local didSomething = false
-        if true then
-            --if angle > 0 then
-            --    body:setAngle(angle % (2 * math.pi))
-            --else
-            --    body:setAngle(angle % ( -2 * math.pi))
-            --end
-
-
+        if false then
             if false then
                 while a > (2 * math.pi) do
                     a = a - (2 * math.pi)
-
                     body:setAngle(a)
-                    print('getting in first one', a, angle)
+--                    print('getting in first one', a, angle)
                     didSomething = true
                 end
                 while a < -(2 * math.pi) do
                     a = a + (2 * math.pi)
                     body:setAngle(a)
-                    print('getting in second one')
+--                    print('getting in second one')
                     didSomething = true
                 end
             end
         end
         if didSomething then
-            print('jo')
+--            print('jo')
             return
         end
         angle = a -- body:getAngle()
         local nextAngle = angle + angularVelocity / divider
-
-        if pr == true then
-            print(angle, nextAngle, body:getAngularVelocity(), desiredAngle)
-        end
         local totalRotation = desiredAngle - nextAngle
-
+        
         while (totalRotation < -180 * DEGTORAD) do
             totalRotation = totalRotation + 360 * DEGTORAD
         end
-
         while (totalRotation > 180 * DEGTORAD) do
             totalRotation = totalRotation - 360 * DEGTORAD
         end
 
         local desiredAngularVelocity = (totalRotation * divider)
-
         --local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
 
@@ -2159,16 +2019,9 @@ function love.update(dt)
         end
     end
 
-
-
-
     local bodies = world:getBodies()
-
-
-
     rotateAllBodies(world:getBodies(), dt)
-
-
+    
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
     if true then
@@ -2296,17 +2149,15 @@ function love.keypressed(k)
     if k == 's' then
         stiff = not stiff
     end
+
     if (k == 'p') then
         creation.isPotatoHead = not creation.isPotatoHead
         creation.hasNeck = not creation.isPotatoHead
-
         for i = 1, #box2dGuys do
             handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
             handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
-
-
         if false then
             if not profiling then
                 ProFi:start()
@@ -2317,9 +2168,6 @@ function love.keypressed(k)
             profiling = not profiling
         end
     end
-    --if example == 2 then
-
-    --end
     --if example == 3 then
     if k == '-' then
         print('rest hard!')
@@ -2344,6 +2192,7 @@ function love.keypressed(k)
             box2dGuys[i].rhand:setAngle(0)
         end
     end
+
     if k == 'n' then
         creation.hasNeck = not creation.hasNeck
         for i = 1, #box2dGuys do
@@ -2351,6 +2200,7 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
         end
     end
+
     if (k == 't') then
         creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
@@ -2400,6 +2250,7 @@ function love.keypressed(k)
     if k == 'l' then
         randomFaceParts()
     end
+    
     if k == 'h' then
         if not creation.isPotatoHead then
             headRndIndex = math.ceil(love.math.random() * #data)
@@ -2439,6 +2290,7 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
         end
     end
+    
     if k == 'r' then
         creation.head.flipy = creation.head.flipy == 1 and -1 or 1
         local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
@@ -2453,6 +2305,7 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
     end
+    
     if k == 'f' then
         local footIndex = math.ceil(math.random() * #feetdata)
 
@@ -2471,8 +2324,6 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
         end
     end
-
-
 
     if (k == 'b') then
         bodyRndIndex = math.ceil(love.math.random() * #data)
@@ -2522,21 +2373,25 @@ if example == 2 then
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
+        
         if k == 'right' then
             motorSpeed = motorSpeed + 100
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
+
         if k == 'up' then
             motorTorque = motorTorque + 100
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
         end
+
         if k == 'down' then
             motorTorque = motorTorque - 100
             objects.joint1:setMaxMotorTorque(motorTorque)
             objects.joint2:setMaxMotorTorque(motorTorque)
         end
+
         if k == 's' then
             if objects.carbody then
                 local angle = objects.carbody.body:getAngle()
