@@ -383,6 +383,22 @@ local function tableContains(table, element)
     return false
 end
 
+function toggleAllJointLimits(guy, value)
+   setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
+   setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
+   setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
+
+      setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
+      setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
+--      setJointLimitBetweenBodies(guy.llleg, guy.lfoot, value, 'revolute')
+      setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
+      setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
+--      setJointLimitBetweenBodies(guy.rlleg, guy.rfoot, value, 'revolute')
+
+end
+
+
+
 local function findJointBetween2Bodies(body1, body2)
     local joints1 = body1:getJoints()
     local joints2 = body2:getJoints()
@@ -401,6 +417,18 @@ local function findJointBetween2Bodies(body1, body2)
     --return nil
 end
 
+function setJointLimitBetweenBodies(body1, body2, state,  ofType)
+   local joints = findJointBetween2Bodies(body1, body2)
+   if joints then
+      for i =1, #joints do
+         print(joints[i]:getType())
+         if ofType == nil or joints[i]:getType() == ofType then
+            print('doing it', state)
+            joints[i]:setLimitsEnabled(state)
+         end
+      end
+   end
+end
 
 local function getRecreatePointerJoint(body)
     local recreatePointerJoint = nil

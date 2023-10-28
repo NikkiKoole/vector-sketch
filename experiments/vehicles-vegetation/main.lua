@@ -2169,6 +2169,11 @@ function love.keypressed(k)
         end
     end
     --if example == 3 then
+    if k == 'l' then
+        for i = 1, #box2dGuys do
+           toggleAllJointLimits(box2dGuys[i], false)
+        end
+    end
     if k == '-' then
         print('rest hard!')
         for i = 1, #box2dGuys do

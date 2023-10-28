@@ -291,11 +291,12 @@ function drawNumbersOver(box2dGuy)
     local parts = { 'torso', 'head', 'neck', 'neck1', 'lear', 'rear' }
 
     for i = 1, #parts do
-        local p = parts[i]
+       local p = parts[i]
+       if box2dGuys[p] then
         local x, y = box2dGuy[p]:getPosition()
         local a = box2dGuy[p]:getAngle()
         love.graphics.print(string.format(
-            "%.2f ", a), x, y)
+            "%.2f ", a), x, y) end
     end
 end
 
