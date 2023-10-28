@@ -2233,8 +2233,8 @@ function love.keypressed(k)
         changeMetaTexture('ear', eardata[earIndex])
         earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
 
-        creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
-        creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
+        creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 2
+        creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 2
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
