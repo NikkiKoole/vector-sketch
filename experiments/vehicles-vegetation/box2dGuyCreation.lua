@@ -407,6 +407,7 @@ local function findJointBetween2Bodies(body1, body2)
     for i = 1, #joints2 do
         if tableContains(joints1, joints2[i]) then
             table.insert(result, joints2[i])
+            --print(joints2[i]:getType())
         end
     end
     --  if #result <= 1 then

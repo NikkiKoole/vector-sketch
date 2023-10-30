@@ -288,15 +288,17 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
 end
 
 function drawNumbersOver(box2dGuy)
-    local parts = { 'torso', 'head', 'neck', 'neck1', 'lear', 'rear' }
+    local parts = { 'torso', 'head', 'neck', 'neck1', 'lear', 'rear', 'luleg', 'ruleg', 'llleg', 'rlleg', 'lfoot',
+        'rfoot' }
 
     for i = 1, #parts do
-       local p = parts[i]
-       if box2dGuys[p] then
-        local x, y = box2dGuy[p]:getPosition()
-        local a = box2dGuy[p]:getAngle()
-        love.graphics.print(string.format(
-            "%.2f ", a), x, y) end
+        local p = parts[i]
+        if box2dGuy[p] then
+            local x, y = box2dGuy[p]:getPosition()
+            local a = box2dGuy[p]:getAngle()
+            love.graphics.print(string.format(
+                "%.2f ", a), x, y)
+        end
     end
 end
 
