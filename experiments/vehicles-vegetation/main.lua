@@ -777,7 +777,7 @@ function makeBodyFromData(data, x, y)
     ball.shape = love.physics.newPolygonShape(flatted)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.textureData = data
-    
+
     return ball
 end
 
@@ -1084,7 +1084,7 @@ function startExample(number)
             objects.ground.fixture:setUserData(makeUserData("ground"))
             objects.ground.fixture:setFriction(1)
         end
-        
+
         objects.blocks = {}
 
         for i = 1, 3 do
@@ -1151,20 +1151,20 @@ function startExample(number)
         local cambrx, cambry = cam:getWorldCoordinates(w, h)
         local camcx, camcy = cam:getWorldCoordinates(w / 2, h / 2)
 
-        local top = love.physics.newBody(world, width / 2, -4000, "static")
-        local topshape = love.physics.newRectangleShape(width * 10, height / 2)
+        local top = love.physics.newBody(world, width / 2, -8000, "static")
+        local topshape = love.physics.newRectangleShape(width * 10, height * 10)
         local topfixture = love.physics.newFixture(top, topshape, 1)
 
-        local bottom = love.physics.newBody(world, width / 2, 00, "static")
-        local bottomshape = love.physics.newRectangleShape(width * 10, height / 2)
+        local bottom = love.physics.newBody(world, width / 2, 3000, "static")
+        local bottomshape = love.physics.newRectangleShape(width * 10, height * 10)
         local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
 
         local left = love.physics.newBody(world, -3000, -2000, "static")
-        local leftshape = love.physics.newRectangleShape(height / 2, 4000)
+        local leftshape = love.physics.newRectangleShape(height / 2, 8000)
         local leftfixture = love.physics.newFixture(left, leftshape, 1)
 
         local right = love.physics.newBody(world, 3000, -2000, "static")
-        local rightshape = love.physics.newRectangleShape(height / 2, 4000)
+        local rightshape = love.physics.newRectangleShape(height / 2, 8000)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
 
         for i = 1, 100 do
@@ -1210,7 +1210,7 @@ function startExample(number)
         footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
 
         local handIndex = 12 --math.ceil(math.random() * #feetdata)
-        
+
         changeMetaTexture('lhand', feetdata[handIndex])
         creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() / 2
         creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() / 2
@@ -1649,7 +1649,7 @@ function love.draw()
 
         local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
-        
+
         drawWorld(world)
 
         for i = 1, #box2dGuys do
@@ -1731,25 +1731,25 @@ function rotateToHorizontal(body, desiredAngle, divider, pr)
                 while a > (2 * math.pi) do
                     a = a - (2 * math.pi)
                     body:setAngle(a)
---                    print('getting in first one', a, angle)
+                    --                    print('getting in first one', a, angle)
                     didSomething = true
                 end
                 while a < -(2 * math.pi) do
                     a = a + (2 * math.pi)
                     body:setAngle(a)
---                    print('getting in second one')
+                    --                    print('getting in second one')
                     didSomething = true
                 end
             end
         end
         if didSomething then
---            print('jo')
+            --            print('jo')
             return
         end
         angle = a -- body:getAngle()
         local nextAngle = angle + angularVelocity / divider
         local totalRotation = desiredAngle - nextAngle
-        
+
         while (totalRotation < -180 * DEGTORAD) do
             totalRotation = totalRotation + 360 * DEGTORAD
         end
@@ -1865,13 +1865,13 @@ function rotateAllBodies(bodies, dt)
                 isBeingPointerJointed = true
             end
         end
-
         for _, fixture in ipairs(fixtures) do
             if isBeingPointerJointed then
                 --     getRidOfBigRotationsInBody(body)
             end
             local userData = fixture:getUserData()
             if (userData) then
+                -- print(userData.bodyType)
                 if userData.bodyType == 'keep-rotation' then
                     --  print(inspect(userData))
                     rotateToHorizontal(body, userData.data.rotation, 50)
@@ -1938,9 +1938,26 @@ function rotateAllBodies(bodies, dt)
                     end
 
                     if not upsideDown then
-                        if userData.bodyType == 'legpart' then
-                            getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
+                        if userData.bodyType == 'luleg' then
+                            local a = creation.upLeg.stanceAngle
+                            --  print(a)
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                        if userData.bodyType == 'ruleg' then
+                            local a = creation.upLeg.stanceAngle * -1
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                        if userData.bodyType == 'llleg' then
+                            local a = creation.lowLeg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                        if userData.bodyType == 'rlleg' then
+                            local a = creation.lowLeg.stanceAngle * -1
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
                         end
                         if userData.bodyType == 'armpart' then
                             --print('jo!')
@@ -1955,7 +1972,7 @@ function rotateAllBodies(bodies, dt)
                         end
                         if userData.bodyType == 'legpart' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, math.pi, 10)
+                            --rotateToHorizontal(body, math.pi, 10)
                         end
                     end
 
@@ -2021,7 +2038,7 @@ function love.update(dt)
 
     local bodies = world:getBodies()
     rotateAllBodies(world:getBodies(), dt)
-    
+
     -- snapJoint will break only if AND you are interacting on it AND the force is bigger then X
 
     if true then
@@ -2171,7 +2188,7 @@ function love.keypressed(k)
     --if example == 3 then
     if k == 'l' then
         for i = 1, #box2dGuys do
-           toggleAllJointLimits(box2dGuys[i], false)
+            toggleAllJointLimits(box2dGuys[i], false)
         end
     end
     if k == '-' then
@@ -2205,6 +2222,9 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
         end
     end
+
+
+
 
     if (k == 't') then
         creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
@@ -2255,7 +2275,7 @@ function love.keypressed(k)
     if k == 'l' then
         randomFaceParts()
     end
-    
+
     if k == 'h' then
         if not creation.isPotatoHead then
             headRndIndex = math.ceil(love.math.random() * #data)
@@ -2295,7 +2315,7 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
         end
     end
-    
+
     if k == 'r' then
         creation.head.flipy = creation.head.flipy == 1 and -1 or 1
         local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
@@ -2310,7 +2330,21 @@ function love.keypressed(k)
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
     end
-    
+
+    if k == 'y' then
+        -- creation.upLeg.stanceAngle = love.math.random() * math.pi / 2
+        creation.upLeg.h = 100 + love.math.random() * 700
+        creation.lowLeg.h = 100 + love.math.random() * 700
+        print(creation.upLeg.stanceAngle)
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlleg')
+        end
+    end
+
+
     if k == 'f' then
         local footIndex = math.ceil(math.random() * #feetdata)
 
@@ -2378,7 +2412,7 @@ if example == 2 then
             objects.joint1:setMotorSpeed(motorSpeed)
             objects.joint2:setMotorSpeed(motorSpeed)
         end
-        
+
         if k == 'right' then
             motorSpeed = motorSpeed + 100
             objects.joint1:setMotorSpeed(motorSpeed)

@@ -9,17 +9,17 @@ local creation = {
     hasPhysicsHair = false,
     hasNeck = true,
     torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-    neck = { w = 140, h = 500, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 140, h = 500, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
-    ear = { w = 100, h = 100, d = .1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    ear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },
     lowArm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
     --hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'right', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
@@ -214,32 +214,36 @@ local function getAngleOffset(key, side, creation)
         return 0
     elseif key == 'ear' then
         if side == 'left' then
-            return math.pi / 2
+            return creation.ear.stanceAngle
+            --return math.pi / 2
         else
-            return -math.pi / 2
+            return creation.ear.stanceAngle * -1
+            --return -math.pi / 2
         end
         --return math.pi / 2 ---math.pi / 2
     elseif key == 'lfoot' then
         return math.pi / 2
     elseif key == 'rfoot' then
         return -math.pi / 2
-    end
-    if (key == 'hair1') then
+    elseif (key == 'hair1') then
         return -math.pi / 2
-    end
-    if (key == 'hair2') then
+    elseif (key == 'hair2') then
         return -math.pi / 4
-    end
-    if (key == 'hair3') then
+    elseif (key == 'hair3') then
         return 0
-    end
-    if (key == 'hair4') then
+    elseif (key == 'hair4') then
         return math.pi / 4
-    end
-    if (key == 'hair5') then
+    elseif (key == 'hair5') then
         return math.pi / 2
-    end
-    if key == 'head' then
+    elseif (key == 'luleg') then
+        return creation.upLeg.stanceAngle
+    elseif (key == 'llleg') then
+        return creation.lowLeg.stanceAngle
+    elseif (key == 'ruleg') then
+        return creation.upLeg.stanceAngle * -1
+    elseif (key == 'rlleg') then
+        return creation.lowLeg.stanceAngle * -1
+    elseif key == 'head' then
         --print('jojo')
         --print(creation.hasNeck)
         if (not creation.hasNeck) then
@@ -248,6 +252,8 @@ local function getAngleOffset(key, side, creation)
             return math.pi
         end
         return 0
+    else
+        print('??', key)
     end
     return 0
 end
@@ -262,6 +268,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     return pointerJoint
 end
 local function makeUserData(bodyType, moreData)
+    print('making usrDAta', bodyType)
     local result = {
         bodyType = bodyType,
     }
@@ -384,20 +391,17 @@ local function tableContains(table, element)
 end
 
 function toggleAllJointLimits(guy, value)
-   setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
-   setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
-   setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
+    setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
+    setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
+    setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
 
-      setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
-      setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
---      setJointLimitBetweenBodies(guy.llleg, guy.lfoot, value, 'revolute')
-      setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
-      setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
---      setJointLimitBetweenBodies(guy.rlleg, guy.rfoot, value, 'revolute')
-
+    setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
+    setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
+    --      setJointLimitBetweenBodies(guy.llleg, guy.lfoot, value, 'revolute')
+    setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
+    setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
+    --      setJointLimitBetweenBodies(guy.rlleg, guy.rfoot, value, 'revolute')
 end
-
-
 
 local function findJointBetween2Bodies(body1, body2)
     local joints1 = body1:getJoints()
@@ -418,17 +422,17 @@ local function findJointBetween2Bodies(body1, body2)
     --return nil
 end
 
-function setJointLimitBetweenBodies(body1, body2, state,  ofType)
-   local joints = findJointBetween2Bodies(body1, body2)
-   if joints then
-      for i =1, #joints do
-         print(joints[i]:getType())
-         if ofType == nil or joints[i]:getType() == ofType then
-            print('doing it', state)
-            joints[i]:setLimitsEnabled(state)
-         end
-      end
-   end
+function setJointLimitBetweenBodies(body1, body2, state, ofType)
+    local joints = findJointBetween2Bodies(body1, body2)
+    if joints then
+        for i = 1, #joints do
+            print(joints[i]:getType())
+            if ofType == nil or joints[i]:getType() == ofType then
+                print('doing it', state)
+                joints[i]:setLimitsEnabled(state)
+            end
+        end
+    end
 end
 
 local function getRecreatePointerJoint(body)
@@ -497,15 +501,16 @@ local function makeGuyFixture(data, key, groupId, body, shape)
     --    fixture:setFilterData(0, 65535, -1 * groupId)
     --end
     local fixedKey = key
-    if key == 'upLeg' or key == 'lowLeg' then
-        fixedKey = 'legpart'
-    end
+    --if key == 'upLeg' or key == 'lowLeg' then
+    --    fixedKey = 'legpart'
+    --end
     if key == 'upArm' or key == 'lowArm' then
         fixedKey = 'armpart'
     end
     if string.match(key, 'neck') then
         fixedKey = 'neck'
     end
+    print(fixedKey)
     fixture:setUserData(makeUserData(fixedKey))
     return fixture
 end
@@ -575,7 +580,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     --print(partName)
     local data = getParentAndChildrenFromPartName(partName, creation)
     local parentName = data.p
-    --print(partName, parentName)
+    print(partName, parentName)
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()
@@ -596,18 +601,23 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             local createData = creation[data.alias or partName]
             local body = love.physics.newBody(world, hx, hy, "dynamic")
             local shape = makeShapeFromCreationPart(createData)
-            local fixture = makeGuyFixture(createData, data.alias or partName, groupId, body, shape)
+            local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
 
             local leftOrRight = (partName):find('l', 1, true) == 1 and 'left' or 'right'
             local xangle = getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT!
-
+            --if string.match(partName, 'leg') then
+            --    body:setAngle(xangle)
+            --else
             body:setAngle(prevA + xangle)
-
+            --end
 
             local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName], leftOrRight)
 
             box2dGuy[partName] = body
+            --if not string.match(partName, 'leg') then
             body:setAngle(thisA)
+            --end
+            -- print('breaking someting')
         end
     end
 
@@ -850,16 +860,16 @@ function makeGuy(x, y, groupId)
         hair5 = makePart('hair5', 'hair5', attachTo)
     end
 
-    local luleg = makePart('luleg', 'legpart', torso, 'left')
-    local llleg = makePart('llleg', 'legpart', luleg, 'left')
+    local luleg = makePart('luleg', 'luleg', torso, 'left')
+    local llleg = makePart('llleg', 'llleg', luleg, 'left')
 
     local lfoot = makePart('lfoot', 'lfoot', llleg)
     --local lfoot = makePart('lfoot', 'foot', llleg, 'left')
 
     --makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.lfoot.w * 2)
 
-    local ruleg = makePart('ruleg', 'legpart', torso, 'right')
-    local rlleg = makePart('rlleg', 'legpart', ruleg, 'right')
+    local ruleg = makePart('ruleg', 'ruleg', torso, 'right')
+    local rlleg = makePart('rlleg', 'rlleg', ruleg, 'right')
     -- local rfoot = makePart('rfoot', 'foot', rlleg, 'right')
     local rfoot = makePart('rfoot', 'rfoot', rlleg)
     --makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' }, creation.rfoot.w * 2)
