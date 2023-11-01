@@ -1242,7 +1242,7 @@ function startExample(number)
 
         randomFaceParts()
 
-        for i = 1, 5 do
+        for i = 1, 1 do
             table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000 + (i % 2) * -1000, i))
         end
 

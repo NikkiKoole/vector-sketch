@@ -18,8 +18,8 @@ local creation = {
     --hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { side = 'right', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-    lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
+    upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = math.pi/2, limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
+    lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = -math.pi/2, limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
     --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
@@ -519,6 +519,8 @@ end
 local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
     local x, y = parent:getWorldPoint(offsetX, offsetY)
     local prevA = parent:getAngle()
+
+
     local xangle = getAngleOffset(key, side, creation)
     local body = love.physics.newBody(world, x, y, "dynamic")
     --print(inspect(cd))
@@ -604,7 +606,14 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
 
             local leftOrRight = (partName):find('l', 1, true) == 1 and 'left' or 'right'
-            local xangle = getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT!
+            local xangle 
+            if string.match(partName, 'leg') then
+                xangle = getAngleOffset(partName, leftOrRight, creation) -- what LEFT!
+
+            else
+                xangle =  getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT! 
+            end
+            --local xangle = getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT!
             --if string.match(partName, 'leg') then
             --    body:setAngle(xangle)
             --else
@@ -653,7 +662,16 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local data2 = getParentAndChildrenFromPartName(childName)
 
         local leftOrRight = childName:find('l', 1, true) == 1 and 'left' or 'right'
-        local xangle = getAngleOffset(data2.alias or childName, leftOrRight, creation) -- what LEFT!
+
+        local xangle
+        if string.match(childName, 'leg') then
+            xangle = getAngleOffset(childName, leftOrRight, creation) -- what LEFT!
+
+        else
+            xangle =  getAngleOffset(data2.alias or childName, leftOrRight, creation) -- what LEFT! 
+        end
+
+       -- local xangle = getAngleOffset(data2.alias or childName, leftOrRight, creation) -- what LEFT!
         box2dGuy[childName]:setAngle(thisA + xangle)
         local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
                 box2dGuy[partName], leftOrRight)
