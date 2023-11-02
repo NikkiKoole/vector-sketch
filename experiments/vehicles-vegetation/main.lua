@@ -1249,8 +1249,8 @@ function startExample(number)
 
         randomFaceParts()
 
-        for i = 1, 1 do
-            table.insert(box2dGuys, makeGuy( -2000 + i * 400, -1000 + (i % 2) * -1000, i))
+        for i = 1, 3 do
+            table.insert(box2dGuys, makeGuy( -2000 + i * 600, -1000 + (i % 2) * -1000, i))
         end
 
         for i = 1, 5 do
@@ -1662,7 +1662,7 @@ function love.draw()
         drawWorld(world)
 
         for i = 1, #box2dGuys do
-            --     drawSkinOver(box2dGuys[i], creation, cam)
+                 drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do
@@ -1905,11 +1905,11 @@ function rotateAllBodies(bodies, dt)
                         body:applyForce(0, up)
                     end
                     --print(userData.bodyType)
-                    if not upsideDown then
-                        if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
-                            getRidOfBigRotationsInBody(body)
-                        end
-                    end
+                    --if not upsideDown then
+                    --    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
+                    --        getRidOfBigRotationsInBody(body)
+                    --    end
+                    --end
 
                     if userData.bodyType == 'hand' then
                         -- getRidOfBigRotationsInBody(body)
@@ -1968,21 +1968,31 @@ function rotateAllBodies(bodies, dt)
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, a, 30)
                         end
-                        if userData.bodyType == 'armpart' then
-                            --print('jo!')
-                            --rotateToHorizontal(body, 0, 35)
-                            --getRidOfBigRotationsInBody(body)
-                        end
+                       
                     end
                     if upsideDown then
-                        if userData.bodyType == 'armpart' then
+                        if userData.bodyType == 'luarm' then
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, 0, 30)
                         end
-                        if userData.bodyType == 'legpart' then
+                        if userData.bodyType == 'llarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        if userData.bodyType == 'ruarm' then
+                           
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        if userData.bodyType == 'rlarm' then
+                           -- print('doing stuff!')
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                       -- if userData.bodyType == 'legpart' then
                             --getRidOfBigRotationsInBody(body)
                             --rotateToHorizontal(body, math.pi, 10)
-                        end
+                       -- end
                     end
 
                     if false then
@@ -2232,9 +2242,6 @@ function love.keypressed(k)
         end
     end
 
-
-
-
     if (k == 't') then
         creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
@@ -2259,7 +2266,6 @@ function love.keypressed(k)
 
     if k == 'e' then
         local earIndex = math.ceil(love.math.random() * #eardata)
-        --print(eardata[earIndex])
         changeMetaTexture('lear', eardata[earIndex])
         creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() / 4
         creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() / 4
@@ -2391,10 +2397,7 @@ function love.keypressed(k)
         torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
 
         local body = box2dGuys[1].torso
-
-
         local longestLeg = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
-
         local oldLegLength = longestLeg + creation.torso.h
 
         --creation.hasPhysicsHair = not creation.hasPhysicsHair

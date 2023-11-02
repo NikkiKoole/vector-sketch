@@ -2,9 +2,6 @@ package.path  = package.path .. ";../../?.lua"
 local bbox    = require 'lib.bbox'
 local inspect = require 'vendor.inspect'
 
-
-
-
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
@@ -14,27 +11,18 @@ local creation = {
     neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
-    --ear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     lear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
     rear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = -math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    --upArm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi, enabled = false }, friction = 4000 },
     luarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi, enabled = false }, friction = 4000 },
     ruarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = -math.pi, up = 0, enabled = false }, friction = 4000 },
     llarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
     rlarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = (math.pi - 0.5) * -1, up = 0, enabled = false }, friction = 2000 },
-    --lowArm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { side = 'left', low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
-    --hand = { w = 40, h = 40, d = 2, shape = 'rect2', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     luleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 2, enabled = true } },
     ruleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 2, up = 0, enabled = true } },
-    --upLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { side = 'left', low = 0, up = math.pi / 2, enabled = true } },
-
-
     llleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 8, up = 0, enabled = true } },
     rlleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 8, enabled = true } },
-    --lowLeg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { side = 'left', low = -math.pi / 8, up = 0, enabled = true } },
-    --foot = { w = 20, h = 150, d = 2, shape = 'rect1', limits = { side = 'left', low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
     hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
@@ -88,7 +76,6 @@ function getParentAndChildrenFromPartName(partName, creation)
     if creation and partName == 'torso' and creation.hasNeck == false then
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
-    --print(partName)
     return map[partName]
 end
 
@@ -139,7 +126,6 @@ function getOffsetFromParent(partName)
                 return getScaledTorsoMetaPoint(2)
             end
         end
-
         return creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'luleg' then
         if creation.torso.metaPoints then
@@ -172,9 +158,6 @@ function getOffsetFromParent(partName)
             return getScaledHeadMetaPoint(7)
         end
     elseif partName == 'lear' then
-        -- if creation.torso.metaPoints then
-        --     return getScaledTorsoMetaPoint(4)
-        -- end
         if creation.isPotatoHead then
             if creation.head.metaPoints then
                 return getScaledTorsoMetaPoint(8)
@@ -186,9 +169,6 @@ function getOffsetFromParent(partName)
         end
         return -creation.head.w / 2, creation.head.h / 2
     elseif partName == 'rear' then
-        -- if creation.torso.metaPoints then
-        --     return getScaledTorsoMetaPoint(4)
-        -- end
         if creation.isPotatoHead then
             if creation.head.metaPoints then
                 return getScaledTorsoMetaPoint(2)
@@ -215,18 +195,17 @@ function getOffsetFromParent(partName)
         local p = data.p
         -- now look for the alias of the parent...
         local temp = getParentAndChildrenFromPartName(p)
-        local part = temp.alias or p
+        local part = p
         return 0, creation[part].h
     end
 end
 
-local function getAngleOffset(key, side, creation)
+local function getAngleOffset(key, creation)
     -- print(key, side)
     if key == 'neck' then
         return -math.pi
     elseif key == 'neck1' then
         return 0
-        --elseif key == 'ear' then
     elseif key == 'lear' then
         return creation.lear.stanceAngle
     elseif key == 'rear' then
@@ -247,19 +226,13 @@ local function getAngleOffset(key, side, creation)
         return math.pi / 2
     elseif (key == 'luleg') then
         return creation.luleg.stanceAngle
-        --return creation.upLeg.stanceAngle
     elseif (key == 'llleg') then
         return creation.llleg.stanceAngle
-        --return creation.lowLeg.stanceAngle
     elseif (key == 'ruleg') then
         return creation.ruleg.stanceAngle
-        --return creation.upLeg.stanceAngle * -1
     elseif (key == 'rlleg') then
         return creation.rlleg.stanceAngle
-        --return creation.lowLeg.stanceAngle * -1
     elseif key == 'head' then
-        --print('jojo')
-        --print(creation.hasNeck)
         if (not creation.hasNeck) then
             return 0
         else
@@ -281,8 +254,8 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     pointerJoint.joint:setMaxForce(500000)
     return pointerJoint
 end
+
 local function makeUserData(bodyType, moreData)
-    --print('making usrDAta', bodyType)
     local result = {
         bodyType = bodyType,
     }
@@ -291,9 +264,6 @@ local function makeUserData(bodyType, moreData)
     end
     return result
 end
-
-
-
 
 function changeMetaPoints(key, value, data)
     creation[key].metaPoints = value
@@ -378,8 +348,6 @@ function getFlippedMetaObject(flipx, flipy, points)
         newPoints[7] = temp[3]
         newPoints[8] = temp[4]
     end
-
-
     return newPoints
 end
 
@@ -424,7 +392,6 @@ function setJointLimitBetweenBodies(body1, body2, state, ofType)
         for i = 1, #joints do
             print(joints[i]:getType())
             if ofType == nil or joints[i]:getType() == ofType then
-                print('doing it', state)
                 joints[i]:setLimitsEnabled(state)
             end
         end
@@ -443,9 +410,6 @@ local function getRecreatePointerJoint(body)
     return recreatePointerJoint
 end
 
-
-
-
 local function useRecreatePointerJoint(recreatePointerJoint, body)
     killMouseJointIfPossible(recreatePointerJoint.id)
     table.insert(pointerJoints,
@@ -456,26 +420,11 @@ end
 local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
     local joint = love.physics.newRevoluteJoint(from, this, this:getX(), this:getY(), false)
     if data.limits then
-        local needsFlipping = false
-        if (optionalSide) then
-            if data.limits.side then
-                if (optionalSide ~= data.limits.side) then
-                    needsFlipping = true
-                end
-            end
-        end
-
-        if needsFlipping then
-            joint:setLowerLimit( -1 * data.limits.up)
-            joint:setUpperLimit( -1 * data.limits.low)
-        else
-            joint:setLowerLimit(data.limits.low)
-            joint:setUpperLimit(data.limits.up)
-        end
+        joint:setLowerLimit(data.limits.low)
+        joint:setUpperLimit(data.limits.up)
         joint:setLimitsEnabled(data.limits.enabled)
     end
 
-    -- friction
     if data.friction then
         local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
         fjoint:setMaxTorque(data.friction)
@@ -486,8 +435,7 @@ end
 local function makeGuyFixture(data, key, groupId, body, shape)
     local fixture = love.physics.newFixture(body, shape, data.d)
     if (string.match(key, 'hair')) then
-        -- haird doesnt collide
-
+        -- hair does not collide
         fixture:setFilterData(0, 65535, -1 * groupId)
     else
         fixture:setFilterData(1, 65535, -1 * groupId)
@@ -503,19 +451,19 @@ local function makeGuyFixture(data, key, groupId, body, shape)
 end
 
 
-local function makePart_(cd, key, offsetX, offsetY, parent, groupId, side)
+local function makePart_(key, parent, groupId)
+    local offsetX, offsetY = getOffsetFromParent(key)
+    local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
     local prevA = parent:getAngle()
 
-
-    local xangle = getAngleOffset(key, side, creation)
+    local xangle = getAngleOffset(key, creation)
     local body = love.physics.newBody(world, x, y, "dynamic")
     local shape = makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
-
     body:setAngle(prevA + xangle)
-    local joint = makeConnectingRevoluteJoint(cd, body, parent, side)
+    local joint = makeConnectingRevoluteJoint(cd, body, parent)
 
     return body
 end
@@ -552,18 +500,14 @@ local function useRecreateConnectorData(recreateConnectorData, body)
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
-    -- look up who is my parent and what are my children
 
-    --print(partName)
     local data = getParentAndChildrenFromPartName(partName, creation)
     local parentName = data.p
-    print(partName, parentName)
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()
 
     if parentName then
-        --print(parentName, partName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
@@ -575,33 +519,17 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             end
             box2dGuy[partName]:destroy()
 
-            local createData = creation[data.alias or partName]
+            local createData = creation[partName]
             local body = love.physics.newBody(world, hx, hy, "dynamic")
             local shape = makeShapeFromCreationPart(createData)
             local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-
-            local leftOrRight = (partName):find('l', 1, true) == 1 and 'left' or 'right'
-            local xangle 
-            if string.match(partName, 'leg') then
-                xangle = getAngleOffset(partName, leftOrRight, creation) -- what LEFT!
-
-            else
-                xangle =  getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT! 
-            end
-            --local xangle = getAngleOffset(data.alias or partName, leftOrRight, creation) -- what LEFT!
-            --if string.match(partName, 'leg') then
-            --    body:setAngle(xangle)
-            --else
+            local xangle =  getAngleOffset(partName, creation) 
             body:setAngle(prevA + xangle)
-            --end
-
-            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName], leftOrRight)
+            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName])
 
             box2dGuy[partName] = body
-            --if not string.match(partName, 'leg') then
             body:setAngle(thisA)
-            --end
-            -- print('breaking someting')
+
         end
     end
 
@@ -628,28 +556,15 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
 
 
     local function reAttachChild(childName)
-        local childData = getParentAndChildrenFromPartName(childName)
         local offsetX, offsetY = getOffsetFromParent(childName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-        -- print(childName)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
-        local data2 = getParentAndChildrenFromPartName(childName)
+        local xangle = getAngleOffset(childName, creation) -- what LEFT!
 
-        local leftOrRight = childName:find('l', 1, true) == 1 and 'left' or 'right'
-
-        local xangle
-        if string.match(childName, 'leg') then
-            xangle = getAngleOffset(childName, leftOrRight, creation) -- what LEFT!
-
-        else
-            xangle =  getAngleOffset(data2.alias or childName, leftOrRight, creation) -- what LEFT! 
-        end
-
-       -- local xangle = getAngleOffset(data2.alias or childName, leftOrRight, creation) -- what LEFT!
         box2dGuy[childName]:setAngle(thisA + xangle)
-        local joint = makeConnectingRevoluteJoint(creation[childData.alias or childName], box2dGuy[childName],
-                box2dGuy[partName], leftOrRight)
+        local joint = makeConnectingRevoluteJoint(creation[childName], box2dGuy[childName],
+                box2dGuy[partName])
         box2dGuy[childName]:setAngle(aa)
     end
 
@@ -660,18 +575,14 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
     if childName and (type(childName) == 'table') then
         for i = 1, #childName do
-            --  print(childName[i])
             local skip = false
             if creation.isPotatoHead and childName[i] == 'neck' then
-                -- do not reattach neck wehnwe are a potato
                 skip = true
             end
             if not creation.hasPhysicsHair and string.match(childName[i], 'hair') then
                 skip = true
             end
-            --if not creation.hasNeck and string.match(childName[i], 'neck') then
-            --    skip = true
-            --end
+
             if not skip then
                 reAttachChild(childName[i])
             end
@@ -683,17 +594,10 @@ function handlePhysicsHairOrNo(hair, box2dGuy, groupId)
     -- we need to find out if we can leave early..
     if hair and box2dGuy.hair1 then return end
     if not hair and not box2dGuy.hair1 then return end
-
     local function makePart(name, parent)
-        -- needed to wrap groupid
-
-        local data = getParentAndChildrenFromPartName(name)
-        local creationName = data.alias or name
-        local offsetX, offsetY = getOffsetFromParent(name)
-        local key = name
-        local side = nil
-        return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
+        return makePart_(name, parent, groupId)
     end
+
     if not hair then
         box2dGuy.hair1:destroy()
         box2dGuy.hair2:destroy()
@@ -723,14 +627,7 @@ end
 function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
     --if not willHaveNeck and box2dGuy.neck == nil
     local function makePart(name, parent)
-        -- needed to wrap groupid
-
-        local data = getParentAndChildrenFromPartName(name)
-        local creationName = data.alias or name
-        local offsetX, offsetY = getOffsetFromParent(name)
-        local side = nil
-        local key = name
-        return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
+        return makePart_(name, parent, groupId)
     end
 
     if not willHaveNeck then
@@ -739,20 +636,15 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         box2dGuy.head:destroy()
         box2dGuy.neck = nil
         box2dGuy.neck1 = nil
-
         local torso = box2dGuy.torso
         local head = makePart('head', torso)
         box2dGuy.head = head
-        -- head:setAngle( -math.pi)
-        --  head:setAngle(0)
     else
         box2dGuy.head:destroy()
         local torso = box2dGuy.torso
         local neck = makePart('neck', torso)
         local neck1 = makePart('neck1', neck)
         local head = makePart('head', neck1)
-        --head:setAngle( -math.pi)
-        -- head:setAngle(0)
         box2dGuy.neck = neck
         box2dGuy.neck1 = neck1
         box2dGuy.head = head
@@ -765,14 +657,7 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
     end
 
     local function makePart(name, parent)
-        -- needed to wrap groupid
-
-        local data = getParentAndChildrenFromPartName(name)
-        local creationName = data.alias or name
-        local offsetX, offsetY = getOffsetFromParent(name)
-        local key = name
-        local side = nil
-        return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
+        return makePart_(name, parent, groupId)
     end
 
     if willBePotato then
@@ -814,14 +699,9 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
 end
 
 function makeGuy(x, y, groupId)
+
     local function makePart(name, parent)
-        -- needed to wrap groupid
-        local data = getParentAndChildrenFromPartName(name)
-        local creationName = data.alias or name
-        local offsetX, offsetY = getOffsetFromParent(name)
-        local key = name
-        local side = nil
-        return makePart_(creation[creationName], key, offsetX, offsetY, parent, groupId, side)
+        return makePart_( name, parent, groupId)
     end
 
     local torso = love.physics.newBody(world, x, y, "dynamic")
