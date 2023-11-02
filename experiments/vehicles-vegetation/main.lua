@@ -1225,10 +1225,17 @@ function startExample(number)
         eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
         local earIndex = math.ceil(love.math.random() * #eardata)
         --print(eardata[earIndex])
-        changeMetaTexture('ear', eardata[earIndex])
-        creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 4
-        creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 4
-        earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
+        changeMetaTexture('lear', eardata[earIndex])
+        creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() / 4
+        creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() / 4
+        earCanvas = createRandomColoredBlackOutlineTexture(creation.lear.metaURL)
+
+        changeMetaTexture('rear', eardata[earIndex])
+        creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() / 4
+        creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() / 4
+        --earCanvas = createRandomColoredBlackOutlineTexture(creation.rear.metaURL)
+
+        --changeMetaTexture('lear', eardata[earIndex])
 
         -- eyes
         eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
@@ -1433,11 +1440,13 @@ end
 -- then afterward find the best one to connect.
 
 local function makePrio(fixture)
-    if fixture:getUserData() then
-        if fixture:getUserData().bodyType == 'hand' then
+    local ud = fixture:getUserData()
+    if ud then
+        if string.match(ud.bodyType, 'hand') then
             return 3
         end
-        if fixture:getUserData().bodyType == 'armpart' then
+
+        if string.match(ud.bodyType, 'arm') then
             return 2
         end
     end
@@ -1653,7 +1662,7 @@ function love.draw()
         drawWorld(world)
 
         for i = 1, #box2dGuys do
-            drawSkinOver(box2dGuys[i], creation, cam)
+            --     drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do
@@ -1939,23 +1948,23 @@ function rotateAllBodies(bodies, dt)
 
                     if not upsideDown then
                         if userData.bodyType == 'luleg' then
-                            local a = creation.upLeg.stanceAngle
+                            local a = creation.luleg.stanceAngle
                             --  print(a)
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, a, 30)
                         end
                         if userData.bodyType == 'ruleg' then
-                            local a = creation.upLeg.stanceAngle * -1
+                            local a = creation.ruleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, a, 30)
                         end
                         if userData.bodyType == 'llleg' then
-                            local a = creation.lowLeg.stanceAngle
+                            local a = creation.llleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, a, 30)
                         end
                         if userData.bodyType == 'rlleg' then
-                            local a = creation.lowLeg.stanceAngle * -1
+                            local a = creation.rlleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, a, 30)
                         end
@@ -2249,12 +2258,18 @@ function love.keypressed(k)
     end
 
     if k == 'e' then
-        local earIndex = math.ceil(math.random() * #eardata)
-        changeMetaTexture('ear', eardata[earIndex])
-        earCanvas = createRandomColoredBlackOutlineTexture(creation.ear.metaURL)
+        local earIndex = math.ceil(love.math.random() * #eardata)
+        --print(eardata[earIndex])
+        changeMetaTexture('lear', eardata[earIndex])
+        creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() / 4
+        creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() / 4
+        earCanvas = createRandomColoredBlackOutlineTexture(creation.lear.metaURL)
 
-        creation.ear.w = mesh.getImage(creation.ear.metaURL):getHeight() / 2
-        creation.ear.h = mesh.getImage(creation.ear.metaURL):getWidth() / 2
+        changeMetaTexture('rear', eardata[earIndex])
+        creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() / 4
+        creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() / 4
+
+
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
@@ -2333,9 +2348,11 @@ function love.keypressed(k)
 
     if k == 'y' then
         -- creation.upLeg.stanceAngle = love.math.random() * math.pi / 2
-        creation.upLeg.h = 100 + love.math.random() * 700
-        creation.lowLeg.h = 100 + love.math.random() * 700
-        print(creation.upLeg.stanceAngle)
+        creation.luleg.h = 100 + love.math.random() * 700
+        creation.ruleg.h = creation.luleg.h
+        creation.llleg.h = 100 + love.math.random() * 700
+        creation.rlleg.h = creation.llleg.h
+        --  print(creation.upLeg.stanceAngle)
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
@@ -2374,20 +2391,26 @@ function love.keypressed(k)
         torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
 
         local body = box2dGuys[1].torso
-        local oldLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+
+
+        local longestLeg = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
+
+        local oldLegLength = longestLeg + creation.torso.h
 
         --creation.hasPhysicsHair = not creation.hasPhysicsHair
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() / 2
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() / 2
 
-        local newLegLength = creation.upLeg.h + creation.lowLeg.h + creation.torso.h
+        local newLegLength = longestLeg + creation.torso.h
         local bx, by = body:getPosition()
         if (newLegLength > oldLegLength) then
             body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
         end
-        creation.upArm.h = 150 + love.math.random() * 100
-        creation.lowArm.h = 150 + love.math.random() * 100
 
+        creation.luarm.h = 150 + love.math.random() * 100
+        creation.llarm.h = 150 + love.math.random() * 100
+        creation.ruarm.h = creation.luarm.h
+        creation.rlarm.h = creation.llarm.h
         for i = 1, #box2dGuys do
             handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
             handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
