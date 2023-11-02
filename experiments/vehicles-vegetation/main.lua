@@ -1139,6 +1139,7 @@ function startExample(number)
         end
     end
 
+
     if number == 3 then
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
@@ -1151,20 +1152,23 @@ function startExample(number)
         local cambrx, cambry = cam:getWorldCoordinates(w, h)
         local camcx, camcy = cam:getWorldCoordinates(w / 2, h / 2)
 
+        local wallThickness = 5000
+
+
         local top = love.physics.newBody(world, width / 2, -8000, "static")
-        local topshape = love.physics.newRectangleShape(width * 10, height * 10)
+        local topshape = love.physics.newRectangleShape(width * 10, wallThickness)
         local topfixture = love.physics.newFixture(top, topshape, 1)
 
-        local bottom = love.physics.newBody(world, width / 2, 3000, "static")
-        local bottomshape = love.physics.newRectangleShape(width * 10, height * 10)
+        local bottom = love.physics.newBody(world, width / 2, 2300, "static")
+        local bottomshape = love.physics.newRectangleShape(width * 10, wallThickness)
         local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
 
-        local left = love.physics.newBody(world, -3000, -2000, "static")
-        local leftshape = love.physics.newRectangleShape(height / 2, 8000)
+        local left = love.physics.newBody(world, -6000, -2000, "static")
+        local leftshape = love.physics.newRectangleShape(wallThickness, 8000)
         local leftfixture = love.physics.newFixture(left, leftshape, 1)
 
-        local right = love.physics.newBody(world, 3000, -2000, "static")
-        local rightshape = love.physics.newRectangleShape(height / 2, 8000)
+        local right = love.physics.newBody(world, 6000, -2000, "static")
+        local rightshape = love.physics.newRectangleShape(wallThickness, 8000)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
 
         for i = 1, 100 do
@@ -1249,7 +1253,7 @@ function startExample(number)
 
         randomFaceParts()
 
-        for i = 1, 3 do
+        for i = 1, 5 do
             table.insert(box2dGuys, makeGuy( -2000 + i * 600, -1000 + (i % 2) * -1000, i))
         end
 
@@ -1662,7 +1666,7 @@ function love.draw()
         drawWorld(world)
 
         for i = 1, #box2dGuys do
-                 drawSkinOver(box2dGuys[i], creation, cam)
+            drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do
@@ -1968,7 +1972,6 @@ function rotateAllBodies(bodies, dt)
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, a, 30)
                         end
-                       
                     end
                     if upsideDown then
                         if userData.bodyType == 'luarm' then
@@ -1980,19 +1983,18 @@ function rotateAllBodies(bodies, dt)
                             rotateToHorizontal(body, 0, 30)
                         end
                         if userData.bodyType == 'ruarm' then
-                           
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, 0, 30)
                         end
                         if userData.bodyType == 'rlarm' then
-                           -- print('doing stuff!')
+                            -- print('doing stuff!')
                             --getRidOfBigRotationsInBody(body)
                             rotateToHorizontal(body, 0, 30)
                         end
-                       -- if userData.bodyType == 'legpart' then
-                            --getRidOfBigRotationsInBody(body)
-                            --rotateToHorizontal(body, math.pi, 10)
-                       -- end
+                        -- if userData.bodyType == 'legpart' then
+                        --getRidOfBigRotationsInBody(body)
+                        --rotateToHorizontal(body, math.pi, 10)
+                        -- end
                     end
 
                     if false then
@@ -2222,7 +2224,7 @@ function love.keypressed(k)
             if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
             if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
             box2dGuys[i].lear:setAngle(math.pi / 2)
-            box2dGuys[i].rear:setAngle(-math.pi / 2)
+            box2dGuys[i].rear:setAngle( -math.pi / 2)
             box2dGuys[i].torso:setAngle(0)
             box2dGuys[i].luleg:setAngle(0)
             box2dGuys[i].llleg:setAngle(0)
@@ -2241,12 +2243,11 @@ function love.keypressed(k)
 
     if k == 'n' then
         if not creation.isPotatoHead then
-
-        creation.hasNeck = not creation.hasNeck
-        for i = 1, #box2dGuys do
-            handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
-            genericBodyPartUpdate(box2dGuys[i], i, 'head')
-        end 
+            creation.hasNeck = not creation.hasNeck
+            for i = 1, #box2dGuys do
+                handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
+                genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            end
         end
     end
 
