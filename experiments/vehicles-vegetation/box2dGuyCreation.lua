@@ -361,13 +361,16 @@ local function tableContains(table, element)
 end
 
 function toggleAllJointLimits(guy, value)
-    setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
-    setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
-    setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
 
+    if not creation.isPotatoHead and creation.hasNeck then
+       
+            setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
+            setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute') 
+            setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
+        
+    end
     setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
     setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
-
     setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
     setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
 end
@@ -390,7 +393,7 @@ function setJointLimitBetweenBodies(body1, body2, state, ofType)
     local joints = findJointBetween2Bodies(body1, body2)
     if joints then
         for i = 1, #joints do
-            print(joints[i]:getType())
+       --     print(joints[i]:getType())
             if ofType == nil or joints[i]:getType() == ofType then
                 joints[i]:setLimitsEnabled(state)
             end
@@ -626,6 +629,8 @@ end
 
 function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
     --if not willHaveNeck and box2dGuy.neck == nil
+    --if creation.isPotatoHead then return end
+    --print(box2dGuy.isPotatoHead)
     local function makePart(name, parent)
         return makePart_(name, parent, groupId)
     end
@@ -640,6 +645,8 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local head = makePart('head', torso)
         box2dGuy.head = head
     else
+
+       -- if not  box2dGuy.isPotatoHead then
         box2dGuy.head:destroy()
         local torso = box2dGuy.torso
         local neck = makePart('neck', torso)
@@ -647,7 +654,8 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local head = makePart('head', neck1)
         box2dGuy.neck = neck
         box2dGuy.neck1 = neck1
-        box2dGuy.head = head
+        box2dGuy.head = head 
+   -- end
     end
 end
 
@@ -661,8 +669,12 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
     end
 
     if willBePotato then
+        if ( box2dGuy.neck) then
         box2dGuy.neck:destroy()
+        end
+        if ( box2dGuy.neck1) then
         box2dGuy.neck1:destroy()
+        end
         box2dGuy.head:destroy()
         box2dGuy.lear:destroy()
         box2dGuy.rear:destroy()

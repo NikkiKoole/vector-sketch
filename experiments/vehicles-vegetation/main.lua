@@ -2144,6 +2144,8 @@ function vloer_voor_theo()
     print('Ja Hallo is dit een vloer of zin het letters?')
 end
 
+local jointsEnabled = true
+
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == '1' then startExample(1) end
@@ -2205,19 +2207,22 @@ function love.keypressed(k)
         end
     end
     --if example == 3 then
-    if k == 'l' then
+    if k == 'j' then
+        jointsEnabled = not jointsEnabled
         for i = 1, #box2dGuys do
-            toggleAllJointLimits(box2dGuys[i], false)
+            toggleAllJointLimits(box2dGuys[i], jointsEnabled)
         end
     end
     if k == '-' then
         print('rest hard!')
         for i = 1, #box2dGuys do
-            print(box2dGuys[i].neck:getAngle(), box2dGuys[i].neck1:getAngle())
+            --print(box2dGuys[i].neck:getAngle(), box2dGuys[i].neck1:getAngle())
 
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle(0) end
             if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
             if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
+            box2dGuys[i].lear:setAngle(math.pi / 2)
+            box2dGuys[i].rear:setAngle(-math.pi / 2)
             box2dGuys[i].torso:setAngle(0)
             box2dGuys[i].luleg:setAngle(0)
             box2dGuys[i].llleg:setAngle(0)
@@ -2235,10 +2240,13 @@ function love.keypressed(k)
     end
 
     if k == 'n' then
+        if not creation.isPotatoHead then
+
         creation.hasNeck = not creation.hasNeck
         for i = 1, #box2dGuys do
             handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
+        end 
         end
     end
 
