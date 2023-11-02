@@ -320,9 +320,9 @@ function drawSkinOver(box2dGuy, creation)
         end
 
         --if not creation.isPotatoHead then
-        if creation.ear.metaURL then
-            renderAtachedObject(earCanvas, 'lear', 'ear', -math.pi / 2, -1 * 2, 2, box2dGuy, creation)
-            renderAtachedObject(earCanvas, 'rear', 'ear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
+        if creation.lear.metaURL then
+            renderAtachedObject(earCanvas, 'lear', 'lear', -math.pi / 2, -1 * 2, 2, box2dGuy, creation)
+            renderAtachedObject(earCanvas, 'rear', 'rear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
         end
         --end
 
