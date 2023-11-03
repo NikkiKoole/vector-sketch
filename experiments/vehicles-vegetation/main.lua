@@ -1148,32 +1148,70 @@ function startExample(number)
 
         local margin = 20
         local w, h = love.graphics.getDimensions()
-        local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-        local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+
+        local bw, bh = borderImage:getDimensions()
+        local sx = w / bw
+        local sy = h / bh
+        --local w, h = love.graphics.getDimensions();
+        --love.graphics.setColor(.9, .8, .8, 0.9)
+        --love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
+
+
+        local bmpTopThick = 40 * sy
+        local bmpBottomThick = 40 * sy
+        local bmpLeftThick = 50 * sx
+        local bmpRightThick = 40 * sx
+
+
+        local camtlx, camtly = cam:getWorldCoordinates(bmpLeftThick, bmpTopThick)
+        local cambrx, cambry = cam:getWorldCoordinates(w - bmpRightThick, h - bmpBottomThick)
         local camcx, camcy = cam:getWorldCoordinates(w / 2, h / 2)
 
         local wallThickness = 5000
+        local halft = wallThickness / 2
+        local screenWorldWidth = cambrx - camtlx
+        local screenWorldHeight = cambry - camtly
+        local length = math.max(screenWorldWidth, screenWorldHeight) * 2
 
 
-        local top = love.physics.newBody(world, width / 2, -8000, "static")
-        local topshape = love.physics.newRectangleShape(width * 10, wallThickness)
+        local top = love.physics.newBody(world, width / 2, camtly - halft, "static")
+        local topshape = love.physics.newRectangleShape(length, wallThickness)
         local topfixture = love.physics.newFixture(top, topshape, 1)
 
-        local bottom = love.physics.newBody(world, width / 2, 2300, "static")
-        local bottomshape = love.physics.newRectangleShape(width * 10, wallThickness)
+        local bottom = love.physics.newBody(world, width / 2, cambry + halft, "static")
+        local bottomshape = love.physics.newRectangleShape(length, wallThickness)
         local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
 
-        local left = love.physics.newBody(world, -6000, -2000, "static")
-        local leftshape = love.physics.newRectangleShape(wallThickness, 8000)
+        local left = love.physics.newBody(world, camtlx - halft, height / 2, "static")
+        local leftshape = love.physics.newRectangleShape(wallThickness, length)
         local leftfixture = love.physics.newFixture(left, leftshape, 1)
 
-        local right = love.physics.newBody(world, 6000, -2000, "static")
-        local rightshape = love.physics.newRectangleShape(wallThickness, 8000)
+        local right = love.physics.newBody(world, cambrx + halft, height / 2, "static")
+        local rightshape = love.physics.newRectangleShape(wallThickness, length)
         local rightfixture = love.physics.newFixture(right, rightshape, 1)
 
-        for i = 1, 100 do
-            --table.insert(grass, makeGrassThing(i * 40, -500, i))
+
+        local dist = 30 --  screenWorldWidth / 200
+        sprietWidthAmt = screenWorldWidth / dist
+        local startX = camtlx
+        local startY = cambry + 200
+        for i = 1, sprietWidthAmt do
+            sprietUnder[i] = { startX + i * dist, startY - 500, math.ceil(love.math.random() * #spriet), 0, 2.1 }
+            sprietUnder[sprietWidthAmt + i] = { startX + i * dist, startY - 400, math.ceil(love.math.random() * #spriet),
+                0, 1.8 }
+            sprietUnder[(sprietWidthAmt * 2) + i] = { startX + i * dist, startY - 300,
+                math.ceil(love.math.random() * #spriet), 0, 1.5 }
+            sprietUnder[(sprietWidthAmt * 3) + i] = { startX + i * dist, startY - 200,
+                math.ceil(love.math.random() * #spriet), 0, 1.2 }
+            sprietOver[i] = { startX + i * dist, startY - 100, math.ceil(love.math.random() * #spriet), 0, 1 }
         end
+
+
+
+        --for i = 1, 100 do
+        --table.insert(grass, makeGrassThing(i * 40, -500, i))
+        --end
 
         data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         bodyRndIndex = math.ceil(love.math.random() * #data)
@@ -1253,8 +1291,9 @@ function startExample(number)
 
         randomFaceParts()
 
-        for i = 1, 5 do
-            table.insert(box2dGuys, makeGuy( -2000 + i * 600, -1000 + (i % 2) * -1000, i))
+        local amt = 5
+        for i = 1, amt do
+            table.insert(box2dGuys, makeGuy(camtlx + (i * screenWorldWidth / (amt + 1)), camcy + (i % 2) * -1000, i))
         end
 
         for i = 1, 5 do
@@ -1334,15 +1373,6 @@ function love.load()
     sprietUnder = {}
     sprietOver = {}
 
-    local dist = 30
-    local startX = -3000
-    for i = 1, 200 do
-        sprietUnder[i] = { startX + i * dist, -500, math.ceil(love.math.random() * #spriet), 0, 2.1 }
-        sprietUnder[200 + i] = { startX + i * dist, -400, math.ceil(love.math.random() * #spriet), 0, 1.8 }
-        sprietUnder[400 + i] = { startX + i * dist, -300, math.ceil(love.math.random() * #spriet), 0, 1.5 }
-        sprietUnder[600 + i] = { startX + i * dist, -200, math.ceil(love.math.random() * #spriet), 0, 1.2 }
-        sprietOver[i] = { startX + i * dist, -100, math.ceil(love.math.random() * #spriet), 0, 1 }
-    end
 
     legCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
     legmesh = createTexturedTriangleStrip(legCanvas)
@@ -1358,7 +1388,7 @@ function love.load()
     mesh10 = createTexturedTriangleStrip(image10)
 
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 4, h * 4)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 5, h * 3)
     --create()
     example = nil
     startExample(3)
@@ -1624,7 +1654,7 @@ function love.draw()
         love.graphics.setColor(palette[colors.cream][1], palette[colors.cream][2], palette[colors.cream][3])
         cam:push()
 
-        love.graphics.rectangle('fill', 200, -500, 100, 100)
+        -- love.graphics.rectangle('fill', 200, -500, 100, 100)
         --i * 40, -500
 
 
@@ -1635,18 +1665,18 @@ function love.draw()
         local amplitude = 50
         local freq = 2
         local a = math.sin((delta or 0) * freq) / amplitude
-        for i = 1, 200 do
+        for i = 1, sprietWidthAmt do
             local s = sprietUnder[i]
             a = math.sin((delta or 0) * freq) / amplitude
             --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
             a = math.sin(((delta or 0) + .2) * freq) / amplitude
-            s = sprietUnder[200 + i]
+            s = sprietUnder[(sprietWidthAmt) + i]
             --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
-            s = sprietUnder[400 + i]
+            s = sprietUnder[(sprietWidthAmt * 2) + i]
             a = math.sin(((delta or 0) + .4) * freq) / amplitude
             drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
 
-            s = sprietUnder[600 + i]
+            s = sprietUnder[(sprietWidthAmt * 3) + i]
             a = math.sin(((delta or 0) + .4) * freq) / amplitude
             drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
         end
@@ -1663,14 +1693,14 @@ function love.draw()
         local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
 
-        drawWorld(world)
+        --  drawWorld(world)
 
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do
-            drawNumbersOver(box2dGuys[i])
+            --       drawNumbersOver(box2dGuys[i])
         end
         for i = 1, #grass do
             --   drawPlantOver(grass[i], i)
@@ -1681,17 +1711,17 @@ function love.draw()
 
         love.graphics.setColor(10 / 255, 122 / 255, 42 / 255, 1)
         local a = math.sin((delta or 0) * freq) / amplitude
-        for i = 1, 200 do
+        for i = 1, sprietWidthAmt do
             local s = sprietOver[i]
             drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
-            s = sprietOver[200 + i]
+            s = sprietOver[sprietWidthAmt + i]
             --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
         end
 
         cam:pop()
         love.graphics.setColor(0, 0, 0)
-        drawCenteredBackgroundText(
-            "b: ody, h:ead,  f: eet, t: bodyflip, j: hand\n, i:eye, e:ear, v:torsoflip\n, h:torsoflip, n:neck, u:psidedown, \np:profile, s:stiff  ")
+        --drawCenteredBackgroundText(
+        --    "b: ody, h:ead,  f: eet, t: bodyflip, j: hand\n, i:eye, e:ear, v:torsoflip\n, h:torsoflip, n:neck, u:psidedown, \np:profile, s:stiff  ")
         local bw, bh = borderImage:getDimensions()
         local w, h = love.graphics.getDimensions();
         love.graphics.setColor(.9, .8, .8, 0.9)
