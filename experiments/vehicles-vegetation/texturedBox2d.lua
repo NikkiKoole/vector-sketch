@@ -445,11 +445,9 @@ function drawSkinOver(box2dGuy, creation)
                 'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
                 box2dGuy, creation)
 
-
             love.graphics.setColor(0, 1, 0, 1)
 
             renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
-
 
             love.graphics.setColor(1, 1, 1, 1)
             local browmesh = createTexturedTriangleStrip(browCanvas)
@@ -462,20 +460,11 @@ function drawSkinOver(box2dGuy, creation)
                 browmesh, box2dGuy)
             love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
 
-            --love.graphics.setColor(0, 0, 0, 1)
             renderNonAttachedObject(noseCanvas,
                 'nose', r, nx, ny, 0.5, -0.5,
                 box2dGuy, creation)
         end
 
-        --            love.graphics.setColor(1, 0, 0, 1)
-        love.graphics.setColor(0, 0, 0, 1)
-        -- hair1x
-
-        --print(r, sx, sy)
-        --renderHair()
-
-        --love.graphics.setColor(0, 0, 0, 1)box2dGuy, faceData, creation, r, sx, sy
 
         love.graphics.setColor(1, 1, 1, 1)
         renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy)
