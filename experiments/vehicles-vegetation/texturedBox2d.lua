@@ -7,7 +7,6 @@ local numbers  = require 'lib.numbers'
 local border   = require 'lib.border-mesh'
 
 local function stripPath(root, path)
-
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
         local shortened = string.gsub(str, path, '')
@@ -46,7 +45,7 @@ local function loadGroupFromFile(url, groupName)
     local parts = {}
     local whole = parse.parseFile(url)
     local group = node.findNodeByName(whole, groupName) or {}
-    
+
     for i = 1, #group.children do
         local p = group.children[i]
         stripPath(p, '/experiments/puppet%-maker/')
@@ -302,7 +301,7 @@ function drawNumbersOver(box2dGuy)
     end
 end
 
-function renderHair(box2dGuy, faceData, creation, r, sx, sy)
+function renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
     if true then
         if true or box2dGuy.hairNeedsRedo then
             --print('jojo')
@@ -311,9 +310,9 @@ function renderHair(box2dGuy, faceData, creation, r, sx, sy)
             local w, h = img:getDimensions()
             local f = faceData.metaPoints
 
-            
+
             --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
-              local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+            local hairLine = { f[7], f[8], f[1], f[2], f[3] }
 
             local points = hairLine
             local hairTension = .02
@@ -347,7 +346,6 @@ function drawSkinOver(box2dGuy, creation)
     love.graphics.setColor(1, 1, 1, 1)
 
     if creation then
-
         if creation.torso.metaURL and not creation.isPotatoHead then
             local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
             love.graphics.setColor(.4, 0, 0, .8)
@@ -382,7 +380,7 @@ function drawSkinOver(box2dGuy, creation)
             love.graphics.setColor(1, 1, 1, 1)
         end
         r = r + math.pi
-        
+
         if true then
             local f = faceData.metaPoints
             local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
@@ -404,13 +402,13 @@ function drawSkinOver(box2dGuy, creation)
                 (f[3][2] + faceData.metaOffsetY - 100) * sy)
 
             local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
-            local noseY = f[3][2] 
+            local noseY = f[3][2]
             local nx, ny = facePart:getWorldPoint(
                 (noseX + faceData.metaOffsetX) * sx,
                 (noseY + faceData.metaOffsetY) * sy)
 
             local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
-            local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85) 
+            local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85)
             local mx, my = facePart:getWorldPoint(
                 (mouthX + faceData.metaOffsetX) * sx,
                 (mouthY + faceData.metaOffsetY) * sy)
@@ -447,6 +445,12 @@ function drawSkinOver(box2dGuy, creation)
                 'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
                 box2dGuy, creation)
 
+
+            love.graphics.setColor(0, 1, 0, 1)
+
+            renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
+
+
             love.graphics.setColor(1, 1, 1, 1)
             local browmesh = createTexturedTriangleStrip(browCanvas)
             renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, -10 }, { 0, 0 }, { mouthWidth / 2, 0 }, browCanvas,
@@ -469,53 +473,8 @@ function drawSkinOver(box2dGuy, creation)
         -- hair1x
 
         --print(r, sx, sy)
-        --renderHair(box2dGuy, faceData, creation, r, sx, sy)
         --renderHair()
 
-        if true then
-            if true or box2dGuy.hairNeedsRedo then
-                --print('jojo')
-                --local img = mesh.getImage('assets/parts/hair1x.png')
-                local img = mesh.getImage('assets/parts/haarnew2.png')
-                local w, h = img:getDimensions()
-                local f = faceData.metaPoints
-    
-                
-                --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
-                  local hairLine = { f[7], f[8], f[1], f[2], f[3] }
-    
-                local points = hairLine
-                local hairTension = .02
-                local spacing = 10
-                local coords
-    
-                coords = border.unloosenVanillaline(points, hairTension, spacing)
-                local length = getLengthOfPath(hairLine)
-                local factor = (length / h)
-                local hairWidthMultiplier = .5
-                local width = (w * factor) * hairWidthMultiplier --30 --160 * 10
-                local verts, indices, draw_mode = polyline.render('miter', coords, width)
-    
-                local vertsWithUVs = {}
-    
-                for i = 1, #verts do
-                    local u = (i % 2 == 1) and 0 or 1
-                    local v = math.floor(((i - 1) / 2)) / (#verts / 2 - 1)
-                    vertsWithUVs[i] = { verts[i][1], verts[i][2], u, v }
-                end
-    
-                local vertices = vertsWithUVs
-                local m = love.graphics.newMesh(vertices, "strip")
-                m:setTexture(img)
-                love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx, sy)
-            end
-        end
-
-
-
-        --function renderHair()
-
-        
         --love.graphics.setColor(0, 0, 0, 1)box2dGuy, faceData, creation, r, sx, sy
 
         love.graphics.setColor(1, 1, 1, 1)

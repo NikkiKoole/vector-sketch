@@ -2411,17 +2411,19 @@ function love.keypressed(k)
     end
 
     if k == 'r' then
-        creation.head.flipy = creation.head.flipy == 1 and -1 or 1
-        local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-            data[headRndIndex]
-            .points)
+        if not creation.isPotatoHead then
+            creation.head.flipy = creation.head.flipy == 1 and -1 or 1
+            local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                data[headRndIndex]
+                .points)
 
-        changeMetaPoints('head', flippedFloppedHeadPoints)
-        changeMetaTexture('head', data[headRndIndex])
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'head')
-            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            changeMetaPoints('head', flippedFloppedHeadPoints)
+            changeMetaTexture('head', data[headRndIndex])
+            for i = 1, #box2dGuys do
+                genericBodyPartUpdate(box2dGuys[i], i, 'head')
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            end
         end
     end
 
