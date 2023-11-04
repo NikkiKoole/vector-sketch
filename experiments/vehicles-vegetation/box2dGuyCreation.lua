@@ -1,6 +1,6 @@
-package.path  = package.path .. ";../../?.lua"
-local bbox    = require 'lib.bbox'
-local inspect = require 'vendor.inspect'
+package.path   = package.path .. ";../../?.lua"
+local bbox     = require 'lib.bbox'
+local inspect  = require 'vendor.inspect'
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 local creation = {
@@ -30,6 +30,7 @@ local creation = {
     hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
     hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
     hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+    brow = { w = 10, h = 10 },
     eye = { w = 10, h = 10 },
     pupil = { w = 10, h = 10 },
     nose = { w = 10, h = 10 },
@@ -240,7 +241,7 @@ local function getAngleOffset(key, creation)
         end
         return 0
     else
-        print('??', key)
+        --  print('??', key)
     end
     return 0
 end
@@ -361,13 +362,10 @@ local function tableContains(table, element)
 end
 
 function toggleAllJointLimits(guy, value)
-
     if not creation.isPotatoHead and creation.hasNeck then
-       
-            setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
-            setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute') 
-            setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
-        
+        setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
+        setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
+        setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
     end
     setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
     setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
@@ -393,7 +391,7 @@ function setJointLimitBetweenBodies(body1, body2, state, ofType)
     local joints = findJointBetween2Bodies(body1, body2)
     if joints then
         for i = 1, #joints do
-       --     print(joints[i]:getType())
+            --     print(joints[i]:getType())
             if ofType == nil or joints[i]:getType() == ofType then
                 joints[i]:setLimitsEnabled(state)
             end
@@ -503,7 +501,6 @@ local function useRecreateConnectorData(recreateConnectorData, body)
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
-
     local data = getParentAndChildrenFromPartName(partName, creation)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
@@ -526,13 +523,12 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
             local body = love.physics.newBody(world, hx, hy, "dynamic")
             local shape = makeShapeFromCreationPart(createData)
             local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-            local xangle =  getAngleOffset(partName, creation) 
+            local xangle = getAngleOffset(partName, creation)
             body:setAngle(prevA + xangle)
             local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName])
 
             box2dGuy[partName] = body
             body:setAngle(thisA)
-
         end
     end
 
@@ -645,8 +641,7 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local head = makePart('head', torso)
         box2dGuy.head = head
     else
-
-       -- if not  box2dGuy.isPotatoHead then
+        -- if not  box2dGuy.isPotatoHead then
         box2dGuy.head:destroy()
         local torso = box2dGuy.torso
         local neck = makePart('neck', torso)
@@ -654,8 +649,8 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         local head = makePart('head', neck1)
         box2dGuy.neck = neck
         box2dGuy.neck1 = neck1
-        box2dGuy.head = head 
-   -- end
+        box2dGuy.head = head
+        -- end
     end
 end
 
@@ -669,11 +664,11 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
     end
 
     if willBePotato then
-        if ( box2dGuy.neck) then
-        box2dGuy.neck:destroy()
+        if (box2dGuy.neck) then
+            box2dGuy.neck:destroy()
         end
-        if ( box2dGuy.neck1) then
-        box2dGuy.neck1:destroy()
+        if (box2dGuy.neck1) then
+            box2dGuy.neck1:destroy()
         end
         box2dGuy.head:destroy()
         box2dGuy.lear:destroy()
@@ -711,9 +706,8 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
 end
 
 function makeGuy(x, y, groupId)
-
     local function makePart(name, parent)
-        return makePart_( name, parent, groupId)
+        return makePart_(name, parent, groupId)
     end
 
     local torso = love.physics.newBody(world, x, y, "dynamic")

@@ -365,6 +365,13 @@ function drawSkinOver(box2dGuy, creation)
                     (rightEyeX + faceData.metaOffsetX) * sx,
                     (f[3][2] + faceData.metaOffsetY) * sy)
 
+            local browlx, browly = facePart:getWorldPoint(
+                    (leftEyeX + faceData.metaOffsetX) * sx,
+                    (f[3][2] + faceData.metaOffsetY - 50) * sy)
+
+            local browrx, browry = facePart:getWorldPoint(
+                    (rightEyeX + faceData.metaOffsetX) * sx,
+                    (f[3][2] + faceData.metaOffsetY - 50) * sy)
 
 
             local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
@@ -414,8 +421,18 @@ function drawSkinOver(box2dGuy, creation)
                 'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
                 box2dGuy, creation)
 
+            love.graphics.setColor(1, 1, 1, 1)
+            local browmesh = createTexturedTriangleStrip(browCanvas)
+            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, 0 }, { mouthWidth / 2, 0 }, browCanvas,
+                browmesh, box2dGuy)
+            love.graphics.draw(browmesh, browlx, browly, r, 1, 1)
 
+            local browmesh = createTexturedTriangleStrip(browCanvas)
+            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, 0 }, { mouthWidth / 2, 0 }, browCanvas,
+                browmesh, box2dGuy)
+            love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
 
+            --love.graphics.setColor(0, 0, 0, 1)
             renderNonAttachedObject(noseCanvas,
                 'nose', r, nx, ny, 0.5, -0.5,
                 box2dGuy, creation)

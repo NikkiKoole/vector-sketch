@@ -995,10 +995,18 @@ function randomFaceParts()
 
     teethIndex = math.ceil(love.math.random() * #teethdata)
     changeMetaTexture('teeth', teethdata[teethIndex])
-    print(creation.teeth.metaURL)
+    -- print(creation.teeth.metaURL)
     creation.teeth.w = mesh.getImage(creation.teeth.metaURL):getHeight()
     creation.teeth.h = mesh.getImage(creation.teeth.metaURL):getWidth()
     teethCanvas = createWhiteColoredBlackOutlineTexture(creation.teeth.metaURL)
+
+    browIndex = math.ceil(love.math.random() * #eyebrowsdata)
+    changeMetaTexture('brow', eyebrowsdata[browIndex])
+    --print(inspect(eyebrowsdata[browIndex]))
+    -- print(creation.brow.metaURL)
+    creation.brow.w = mesh.getImage(creation.brow.metaURL):getHeight()
+    creation.brow.h = mesh.getImage(creation.brow.metaURL):getWidth()
+    browCanvas = createWhiteColoredBlackOutlineTexture(creation.brow.metaURL)
 end
 
 function startExample(number)
@@ -1141,6 +1149,10 @@ function startExample(number)
 
 
     if number == 3 then
+        local w, h = love.graphics.getDimensions()
+        camera.setCameraViewport(cam, w, h)
+        camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 2500, 2500)
+
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
         snapJoints = {}
@@ -1288,7 +1300,8 @@ function startExample(number)
         upperlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'upperlips')
         lowerlipdata = loadVectorSketch('assets/faceparts.polygons.txt', 'lowerlips')
         teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
-
+        eyebrowsdata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyebrows')
+        print(eyebrowsdata)
         randomFaceParts()
 
         local amt = 5
@@ -1387,8 +1400,10 @@ function love.load()
     image10 = love.graphics.newImage('assets/parts/legp2.png')
     mesh10 = createTexturedTriangleStrip(image10)
 
+    --print(inspect(cam:getScale()))
     camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, w * 5, h * 3)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 2000, 2000)
+
     --create()
     example = nil
     startExample(3)
