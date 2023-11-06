@@ -350,58 +350,58 @@ end
 
 function makeRectPoly(w, h, x, y)
     return love.physics.newPolygonShape(
-        x, y,
-        x + w, y,
-        x + w, y + h,
-        x, y + h
-    )
+            x, y,
+            x + w, y,
+            x + w, y + h,
+            x, y + h
+        )
 end
 
 function makeRectPoly2(w, h, x, y)
     local cx = x
     local cy = y
     return love.physics.newPolygonShape(
-        cx - w / 2, cy - h / 2,
-        cx + w / 2, cy - h / 2,
-        cx + w / 2, cy + h / 2,
-        cx - w / 2, cy + h / 2
-    )
+            cx - w / 2, cy - h / 2,
+            cx + w / 2, cy - h / 2,
+            cx + w / 2, cy + h / 2,
+            cx - w / 2, cy + h / 2
+        )
 end
 
 local function makeTrapeziumPoly(w, w2, h, x, y)
     local cx = x
     local cy = y
     return love.physics.newPolygonShape(
-        cx - w / 2, cy - h / 2,
-        cx + w / 2, cy - h / 2,
-        cx + w2 / 2, cy + h / 2,
-        cx - w2 / 2, cy + h / 2
-    )
+            cx - w / 2, cy - h / 2,
+            cx + w / 2, cy - h / 2,
+            cx + w2 / 2, cy + h / 2,
+            cx - w2 / 2, cy + h / 2
+        )
 end
 
 function makeCarShape(w, h, cx, cy)
     return love.physics.newPolygonShape(
-        cx - w / 2, cy - h / 2,
-        cx - w / 2, cy + h / 2 - h / 5,
-        cx - w / 2 + w / 8, cy + h / 2,
-        cx + w / 2 - w / 8, cy + h / 2,
-        cx + w / 2, cy + h / 2 - h / 5,
-        --cx + w / 2, cy + h / 4
-        cx + w / 2, cy - h / 2
-    )
+            cx - w / 2, cy - h / 2,
+            cx - w / 2, cy + h / 2 - h / 5,
+            cx - w / 2 + w / 8, cy + h / 2,
+            cx + w / 2 - w / 8, cy + h / 2,
+            cx + w / 2, cy + h / 2 - h / 5,
+            --cx + w / 2, cy + h / 4
+            cx + w / 2, cy - h / 2
+        )
 end
 
 function makeUShape(w, h, thickness)
     return love.physics.newPolygonShape(
-        -w / 2, -h / 2,
-        -w / 2, h / 2,
-        w / 2, h / 2,
-        w / 2, -h / 2,
-        w / 2 - thickness, -h / 2,
-        w / 2 - thickness, h / 2 - thickness,
-        -w / 2 + thickness, h / 2 - thickness,
-        -w / 2 + thickness, -h / 2
-    )
+            -w / 2, -h / 2,
+            -w / 2, h / 2,
+            w / 2, h / 2,
+            w / 2, -h / 2,
+            w / 2 - thickness, -h / 2,
+            w / 2 - thickness, h / 2 - thickness,
+            -w / 2 + thickness, h / 2 - thickness,
+            -w / 2 + thickness, -h / 2
+        )
 end
 
 function makeShapeFromCreationPart(part)
@@ -441,11 +441,11 @@ function makeShape(shapeType, w, h)
     elseif (shapeType == 'capsule') then
         -- ipv hardcoded 10 i use w/5
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
-            h / 2))
+                h / 2))
     elseif (shapeType == 'capsule2') then
         -- ipv hardcoded 10 i use w/5
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
-            0))
+                0))
     elseif (shapeType == 'trapezium') then
         return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
     elseif (shapeType == 'trapezium2') then
@@ -467,8 +467,8 @@ function getJointBetween2Connectors(to, at)
     local pos1 = getCentroidOfFixture(to:getBody(), to)
     local pos2 = getCentroidOfFixture(at:getBody(), at)
     local j = love.physics.newRevoluteJoint(at:getBody(), to:getBody(),
-        pos2[1],
-        pos2[2], pos1[1], pos1[2])
+            pos2[1],
+            pos2[2], pos1[1], pos1[2])
     return j
 end
 
@@ -540,12 +540,12 @@ function makeSpine(x, y, amt, groupId, totalHeight)
 
         local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
 
-        joint:setLowerLimit(-math.pi / 8)
+        joint:setLowerLimit( -math.pi / 8)
         joint:setUpperLimit(math.pi / 8)
         joint:setLimitsEnabled(true)
 
         local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
-            link:getY())
+                link:getY())
 
         lastLink:setAngle(math.pi)
         lastLink = link
@@ -575,12 +575,12 @@ function makeChain2(x, y, amt, groupId, totalHeight)
         local link = makeLink(x, y + (i * linkHeight) * dir)
         local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
 
-        joint:setLowerLimit(-math.pi / 32)
+        joint:setLowerLimit( -math.pi / 32)
         joint:setUpperLimit(math.pi / 32)
         joint:setLimitsEnabled(true)
 
         local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
-            link:getY())
+                link:getY())
         lastLink = link
     end
 
@@ -608,12 +608,12 @@ function makeChain(x, y, amt)
         local link = makeLink(x, y + (i * linkHeight) * dir)
         local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
 
-        joint:setLowerLimit(-math.pi / 32)
+        joint:setLowerLimit( -math.pi / 32)
         joint:setUpperLimit(math.pi / 32)
         joint:setLimitsEnabled(true)
 
         local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
-            link:getY())
+                link:getY())
         lastLink = link
     end
 
@@ -625,8 +625,8 @@ function makeChain(x, y, amt)
 
         local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
         local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
-            weight:getY())
-        joint:setLowerLimit(-math.pi / 32)
+                weight:getY())
+        joint:setLowerLimit( -math.pi / 32)
         joint:setUpperLimit(math.pi / 32)
         joint:setLimitsEnabled(true)
         table.insert(objects.blocks, weight)
@@ -650,7 +650,7 @@ function makeBlock(x, y, size)
     ball.body = love.physics.newBody(world, x, y, "dynamic")
 
     ball.shape = love.physics.newPolygonShape(capsule(ballRadius + love.math.random() * 20,
-        ballRadius * 3 + love.math.random() * 20, 5))
+            ballRadius * 3 + love.math.random() * 20, 5))
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, 1)
     ball.fixture:setRestitution(.4) -- let the ball bounce
     ball.fixture:setUserData(makeUserData("ball"))
@@ -672,10 +672,10 @@ function makeBorderChain(width, height, margin)
     local border = {}
     border.body = love.physics.newBody(world, 0, 0)
     border.shape = love.physics.newChainShape(true,
-        margin, margin,
-        width - margin, margin,
-        width - margin, height - margin,
-        margin, height - margin)
+            margin, margin,
+            width - margin, margin,
+            width - margin, height - margin,
+            margin, height - margin)
 
     border.fixture = love.physics.newFixture(border.body, border.shape)
     border.fixture:setUserData(makeUserData("border"))
@@ -742,7 +742,7 @@ function makeSeeSaw(x, y)
     local fixture = love.physics.newFixture(axis, shape, 1)
 
     local joint = love.physics.newRevoluteJoint(axis, plank, plank:getX(), plank:getY(), false)
-    joint:setLowerLimit(-math.pi / 4)
+    joint:setLowerLimit( -math.pi / 4)
     joint:setUpperLimit(math.pi / 4)
     joint:setLimitsEnabled(true)
 end
@@ -819,16 +819,16 @@ function makeVehicle(x, y)
         local polyLength = -110
 
         local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
-            polyLength,
-            xOffset, polyLength)
+                polyLength,
+                xOffset, polyLength)
         local backfixture = love.physics.newFixture(carbody, backside, .5)
         local xOffset = 80
         local polyWidth = 20
         local polyLength = -110
 
         local backside = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
-            polyLength,
-            xOffset, polyLength)
+                polyLength,
+                xOffset, polyLength)
         local backfixture = love.physics.newFixture(carbody, backside, .5)
     end
 
@@ -838,8 +838,8 @@ function makeVehicle(x, y)
         local polyWidth = 20
         local polyLength = 110
         carsensor.shape = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
-            polyLength,
-            xOffset, polyLength)
+                polyLength,
+                xOffset, polyLength)
         carsensor.fixture = love.physics.newFixture(carbody, carsensor.shape, .5)
         carsensor.fixture:setSensor(true)
         carsensor.fixture:setUserData(makeUserData("carGroundSensor"))
@@ -851,8 +851,8 @@ function makeVehicle(x, y)
         local polyWidth = 20
         local polyLength = 110
         carsensor.shape = love.physics.newPolygonShape(xOffset, 0, xOffset + polyWidth, 0, xOffset + polyWidth,
-            polyLength,
-            xOffset, polyLength)
+                polyLength,
+                xOffset, polyLength)
         carsensor.fixture = love.physics.newFixture(carbody, carsensor.shape, .5)
         carsensor.fixture:setSensor(true)
         carsensor.fixture:setUserData(makeUserData("carGroundSensor"))
@@ -907,11 +907,11 @@ function createRandomColoredBlackOutlineTexture(url)
     local pal2 = palettes[math.ceil(math.random() * #palettes)]
 
     return love.graphics.newImage(helperTexturedCanvas(url,
-        tex1, pal1, 5,
-        tex2, pal2, 2,
-        0, 1,
-        palettes[1], 5,
-        1, 1, nil, nil))
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
 end
 
 function createBlackColoredBlackOutlineTexture(url)
@@ -922,11 +922,11 @@ function createBlackColoredBlackOutlineTexture(url)
     local pal2 = palettes[1]
 
     return love.graphics.newImage(helperTexturedCanvas(url,
-        tex1, pal1, 5,
-        tex2, pal2, 2,
-        0, 1,
-        palettes[1], 5,
-        1, 1, nil, nil))
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
 end
 
 function createNonColoredRandomOutlineTexture(url)
@@ -937,11 +937,11 @@ function createNonColoredRandomOutlineTexture(url)
 
     local rnd = palettes[math.ceil(math.random() * #palettes)]
     return love.graphics.newImage(helperTexturedCanvas(url,
-        tex1, pal1, 5,
-        tex2, pal2, 2,
-        0, 1,
-        rnd, 5,
-        1, 1, nil, nil))
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            rnd, 5,
+            1, 1, nil, nil))
 end
 
 function createWhiteColoredBlackOutlineTexture(url)
@@ -952,11 +952,11 @@ function createWhiteColoredBlackOutlineTexture(url)
     local pal2 = palettes[5]
 
     return love.graphics.newImage(helperTexturedCanvas(url,
-        tex1, pal1, 5,
-        tex2, pal2, 2,
-        0, 1,
-        palettes[1], 5,
-        1, 1, nil, nil))
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
 end
 
 --- helper texture canvas
@@ -971,7 +971,7 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
     -- print(url)
     -- print(love.graphics.getDPIScale())
     local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
-        renderPatch)
+            renderPatch)
 
     return cnv
 end
@@ -1051,14 +1051,14 @@ function startExample(number)
         objects.balls = {}
         for i = 1, 120 do
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                margin + love.math.random() * height / 2, ballRadius)
+                    margin + love.math.random() * height / 2, ballRadius)
         end
 
 
         objects.blocks = {}
         for i = 1, 120 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                margin + love.math.random() * height / 2, ballRadius)
+                    margin + love.math.random() * height / 2, ballRadius)
         end
 
 
@@ -1116,7 +1116,7 @@ function startExample(number)
 
         for i = 1, 3 do
             objects.blocks[i] = makeBlock(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                margin + love.math.random() * -height / 2, ballRadius)
+                    margin + love.math.random() * -height / 2, ballRadius)
         end
 
         for i = 1, 10 do
@@ -1130,7 +1130,7 @@ function startExample(number)
         for i = 1, 20 do
             ballRadius = 50 --love.math.random() * 300 + 130
             objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                margin + love.math.random() * -height / 2, ballRadius)
+                    margin + love.math.random() * -height / 2, ballRadius)
         end
 
 
@@ -1161,7 +1161,7 @@ function startExample(number)
         if false then
             for i = 1, 20 do
                 objects.balls[i] = makeBall(ballRadius + (love.math.random() * (width - ballRadius * 2)),
-                    margin + love.math.random() * height / 2, ballRadius)
+                        margin + love.math.random() * height / 2, ballRadius)
             end
         end
     end
@@ -1248,8 +1248,8 @@ function startExample(number)
         bodyRndIndex = math.ceil(love.math.random() * #data)
 
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-            data[bodyRndIndex]
-            .points)
+                data[bodyRndIndex]
+                .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
 
@@ -1261,7 +1261,7 @@ function startExample(number)
             headRndIndex = math.ceil(love.math.random() * #data)
 
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-                data[headRndIndex].points)
+                    data[headRndIndex].points)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
@@ -1665,7 +1665,7 @@ function love.draw()
         drawCenteredBackgroundText('Make me some vehicles.')
         cam:push()
         drawWorld(world)
-        local tlx, tly = cam:getWorldCoordinates(-1000, 0)
+        local tlx, tly = cam:getWorldCoordinates( -1000, 0)
         local brx, bry = cam:getWorldCoordinates(width + 1000, height)
         for i = 1, #box2dGuys do
             local x, y = box2dGuys[i].torso:getPosition()
@@ -2223,7 +2223,7 @@ function love.keypressed(k)
             if not upsideDown then
                 for i = 1, #box2dGuys do
                     if box2dGuys[i].head then
-                        box2dGuys[i].head:setAngle(-math.pi)
+                        box2dGuys[i].head:setAngle( -math.pi)
                     end
                     if box2dGuys[i].neck then
                         box2dGuys[i].neck:setAngle(0)
@@ -2245,7 +2245,7 @@ function love.keypressed(k)
                     box2dGuys[i].lfoot:setAngle(math.pi / 2)
                     box2dGuys[i].ruleg:setAngle(math.pi * 2)
                     box2dGuys[i].rlleg:setAngle(math.pi * 2)
-                    box2dGuys[i].rfoot:setAngle(-math.pi / 2)
+                    box2dGuys[i].rfoot:setAngle( -math.pi / 2)
                 end
             end
         end
@@ -2285,17 +2285,17 @@ function love.keypressed(k)
             --print(box2dGuys[i].neck:getAngle(), box2dGuys[i].neck1:getAngle())
 
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle(0) end
-            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle(-math.pi) end
-            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle(-math.pi) end
+            if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
+            if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
             box2dGuys[i].lear:setAngle(math.pi / 2)
-            box2dGuys[i].rear:setAngle(-math.pi / 2)
+            box2dGuys[i].rear:setAngle( -math.pi / 2)
             box2dGuys[i].torso:setAngle(0)
             box2dGuys[i].luleg:setAngle(0)
             box2dGuys[i].llleg:setAngle(0)
             box2dGuys[i].lfoot:setAngle(math.pi / 2)
             box2dGuys[i].ruleg:setAngle(0)
             box2dGuys[i].rlleg:setAngle(0)
-            box2dGuys[i].rfoot:setAngle(-math.pi / 2)
+            box2dGuys[i].rfoot:setAngle( -math.pi / 2)
             box2dGuys[i].luarm:setAngle(0)
             box2dGuys[i].llarm:setAngle(0)
             box2dGuys[i].lhand:setAngle(0)
@@ -2318,8 +2318,8 @@ function love.keypressed(k)
     if (k == 't') then
         creation.torso.flipx = creation.torso.flipx == 1 and -1 or 1
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-            data[bodyRndIndex]
-            .points)
+                data[bodyRndIndex]
+                .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
@@ -2329,8 +2329,8 @@ function love.keypressed(k)
     if k == 'v' then
         creation.torso.flipy = creation.torso.flipy == 1 and -1 or 1
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-            data[bodyRndIndex]
-            .points)
+                data[bodyRndIndex]
+                .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
@@ -2374,8 +2374,8 @@ function love.keypressed(k)
         if not creation.isPotatoHead then
             headRndIndex = math.ceil(love.math.random() * #data)
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-                data[headRndIndex]
-                .points)
+                    data[headRndIndex]
+                    .points)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
@@ -2414,8 +2414,8 @@ function love.keypressed(k)
         if not creation.isPotatoHead then
             creation.head.flipy = creation.head.flipy == 1 and -1 or 1
             local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-                data[headRndIndex]
-                .points)
+                    data[headRndIndex]
+                    .points)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
@@ -2465,8 +2465,8 @@ function love.keypressed(k)
     if (k == 'b') then
         bodyRndIndex = math.ceil(love.math.random() * #data)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-            data[bodyRndIndex]
-            .points)
+                data[bodyRndIndex]
+                .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
         torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)

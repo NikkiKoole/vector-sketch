@@ -209,7 +209,7 @@ function renderMetaObject(img, name, box2dGuy, creation)
 
     if name == 'head' and (creation.head.metaOffsetX or creation.head.metaOffsetY) then
         x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale,
-            creation.head.metaOffsetY * hscale)
+                creation.head.metaOffsetY * hscale)
     end
 
     love.graphics.draw(img, x, y, r, sx * creation[name].flipx, sy * creation[name].flipy, w / 2, h / 2)
@@ -233,7 +233,7 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
 end
 
 function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
-    local img = img                     -- mesh.getImage(creation.eye.metaURL)
+    local img = img -- mesh.getImage(creation.eye.metaURL)
     local w, h = img:getDimensions()
     local wscale = creation[name].h / w --* 2 --creation.lfoot.metaPointsW
     local hscale = creation[name].w / h --* 2 --creation.lfoot.metaPointsH
@@ -265,6 +265,8 @@ function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, 
     else
         texturedCurve(curve, canvas, mesh, -1, 3)
     end
+
+    return curve
 end
 
 function drawSquishableHairOver(x, y, r, sx, sy, creation)
@@ -386,49 +388,89 @@ function drawSkinOver(box2dGuy, creation)
             local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
             local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
             local eyelx, eyely = facePart:getWorldPoint(
-                (leftEyeX + faceData.metaOffsetX) * sx,
-                (f[3][2] + faceData.metaOffsetY) * sy)
+                    (leftEyeX + faceData.metaOffsetX) * sx,
+                    (f[3][2] + faceData.metaOffsetY) * sy)
 
             local eyerx, eyery = facePart:getWorldPoint(
-                (rightEyeX + faceData.metaOffsetX) * sx,
-                (f[3][2] + faceData.metaOffsetY) * sy)
+                    (rightEyeX + faceData.metaOffsetX) * sx,
+                    (f[3][2] + faceData.metaOffsetY) * sy)
 
             local browlx, browly = facePart:getWorldPoint(
-                (leftEyeX + faceData.metaOffsetX) * sx,
-                (f[3][2] + faceData.metaOffsetY - 100) * sy)
+                    (leftEyeX + faceData.metaOffsetX) * sx,
+                    (f[3][2] + faceData.metaOffsetY - 100) * sy)
 
             local browrx, browry = facePart:getWorldPoint(
-                (rightEyeX + faceData.metaOffsetX) * sx,
-                (f[3][2] + faceData.metaOffsetY - 100) * sy)
+                    (rightEyeX + faceData.metaOffsetX) * sx,
+                    (f[3][2] + faceData.metaOffsetY - 100) * sy)
 
             local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
             local noseY = f[3][2]
             local nx, ny = facePart:getWorldPoint(
-                (noseX + faceData.metaOffsetX) * sx,
-                (noseY + faceData.metaOffsetY) * sy)
+                    (noseX + faceData.metaOffsetX) * sx,
+                    (noseY + faceData.metaOffsetY) * sy)
+
+
+
+
 
             local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
             local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85)
             local mx, my = facePart:getWorldPoint(
-                (mouthX + faceData.metaOffsetX) * sx,
-                (mouthY + faceData.metaOffsetY) * sy)
-
+                    (mouthX + faceData.metaOffsetX) * sx,
+                    (mouthY + faceData.metaOffsetY) * sy)
+            local tx, ty = facePart:getWorldPoint(
+                    (mouthX + faceData.metaOffsetX) * sx,
+                    (mouthY + faceData.metaOffsetY - 20) * sy)
             local mouthWidth = (f[3][1] - f[7][1]) / 2
+
             local scaleX = mouthWidth / teethCanvas:getWidth()
+            local upperlipmesh = createTexturedTriangleStrip(upperlipCanvas)
+
+            local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
+                    { 0, love.math.random() * -20 },
+                    { mouthWidth / 2, 0 },
+                    upperlipCanvas,
+                    upperlipmesh, box2dGuy)
+
+            local lowerlipmesh = createTexturedTriangleStrip(lowerlipCanvas)
+
+            local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, love.math.random() * 120 },
+                    { mouthWidth / 2, 0 },
+                    upperlipCanvas,
+                    lowerlipmesh, box2dGuy)
+
+
+            local holePolygon = {}
+
+
+            for i = 0, 6 do
+                local x, y = upperCurve:evaluate(i / 6)
+                table.insert(holePolygon, { x, y })
+            end
+            for i = 0, 6 do
+                local x, y = lowerCurve:evaluate(1 - (i / 6))
+                table.insert(holePolygon, { x, y })
+            end
+            local mesh = love.graphics.newMesh(holePolygon, "fan")
+
+            local myStencilFunction = function()
+                love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
+            end
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.stencil(myStencilFunction, "replace", 1)
+
+            love.graphics.setStencilTest("greater", 0)
             renderNonAttachedObject(teethCanvas,
-                'teeth', r, mx, my, scaleX, -1 * scaleX,
+                'teeth', r, tx, ty, scaleX * 2, -1 * scaleX * 2,
                 box2dGuy, creation)
 
-            local mouthmesh = createTexturedTriangleStrip(upperlipCanvas)
-            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, -20 }, { mouthWidth / 2, 0 }, upperlipCanvas,
-                mouthmesh, box2dGuy)
-            love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
+            love.graphics.setStencilTest()
 
-            mouthmesh = createTexturedTriangleStrip(lowerlipCanvas)
-
-            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, 20 }, { mouthWidth / 2, 0 }, upperlipCanvas,
-                mouthmesh, box2dGuy)
-            love.graphics.draw(mouthmesh, mx, my, r - math.pi, 1, 1)
+            love.graphics.draw(upperlipmesh, mx, my, r - math.pi, 1, 1)
+            love.graphics.draw(lowerlipmesh, mx, my, r - math.pi, 1, 1)
+            --end
 
             renderNonAttachedObject(eyeCanvas,
                 'eye', r, eyelx, eyely, -0.5, 0.5,
