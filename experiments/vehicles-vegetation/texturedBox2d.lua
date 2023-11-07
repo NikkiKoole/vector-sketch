@@ -492,7 +492,7 @@ function drawSkinOver(box2dGuy, creation)
 
             local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
             local angle, dist = getAngleAndDistance(cx, cy, mx, my)
-            local px1, py1 = setAngleAndDistance(0, 0, angle, math.min(dist, 20), 1, 1)
+            local px1, py1 = setAngleAndDistance(0, 0, angle, math.min(dist, 10), 1, 1)
 
             local pupillx, pupilly = facePart:getWorldPoint(
                     (leftEyeX + faceData.metaOffsetX - px1) * sx,
@@ -500,7 +500,7 @@ function drawSkinOver(box2dGuy, creation)
 
             local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
             local angle, dist = getAngleAndDistance(cx, cy, mx, my)
-            local px2, py2 = setAngleAndDistance(0, 0, angle, math.min(dist, 20), 1, 1)
+            local px2, py2 = setAngleAndDistance(0, 0, angle, math.min(dist, 10), 1, 1)
 
             local pupilrx, pupilry = facePart:getWorldPoint(
                     (rightEyeX + faceData.metaOffsetX - px2) * sx,
