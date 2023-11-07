@@ -986,6 +986,7 @@ function randomFaceParts()
 
     pupilIndex = math.ceil(love.math.random() * #pupildata)
     changeMetaTexture('pupil', pupildata[pupilIndex])
+
     creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
     creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
     pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)

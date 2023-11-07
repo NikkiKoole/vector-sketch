@@ -5,7 +5,7 @@ local mesh     = require 'lib.mesh'
 local polyline = require 'lib.polyline'
 local numbers  = require 'lib.numbers'
 local border   = require 'lib.border-mesh'
-
+local cam      = require('lib.cameraBase').getInstance()
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
@@ -344,6 +344,85 @@ function renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
     end
 end
 
+function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
+    local f = faceData.metaPoints
+    local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
+    local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85)
+
+
+    local mx, my = facePart:getWorldPoint(
+            (mouthX + faceData.metaOffsetX) * sx,
+            (mouthY + faceData.metaOffsetY) * sy)
+
+    local tx, ty = facePart:getWorldPoint(
+            (mouthX + faceData.metaOffsetX) * sx,
+            (mouthY + faceData.metaOffsetY - 20) * sy)
+    local mouthWidth = (f[3][1] - f[7][1]) / 2
+
+    local scaleX = mouthWidth / teethCanvas:getWidth()
+    local upperlipmesh = createTexturedTriangleStrip(upperlipCanvas)
+
+    local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
+            { 0, -20 },
+            { mouthWidth / 2, 0 },
+            upperlipCanvas,
+            upperlipmesh, box2dGuy)
+
+    local lowerlipmesh = createTexturedTriangleStrip(lowerlipCanvas)
+
+    local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
+            { 0, 20 },
+            { mouthWidth / 2, 0 },
+            upperlipCanvas,
+            lowerlipmesh, box2dGuy)
+
+
+    local holePolygon = {}
+
+
+    for i = 0, 6 do
+        local x, y = upperCurve:evaluate(i / 6)
+        table.insert(holePolygon, { x, y })
+    end
+    for i = 0, 6 do
+        local x, y = lowerCurve:evaluate(1 - (i / 6))
+        table.insert(holePolygon, { x, y })
+    end
+    local mesh = love.graphics.newMesh(holePolygon, "fan")
+
+    local myStencilFunction = function()
+        love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
+    end
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.stencil(myStencilFunction, "replace", 1)
+
+    love.graphics.setStencilTest("greater", 0)
+    renderNonAttachedObject(teethCanvas,
+        'teeth', r, tx, ty, scaleX * 2, -1 * scaleX * 2,
+        box2dGuy, creation)
+
+    love.graphics.setStencilTest()
+
+    love.graphics.draw(upperlipmesh, mx, my, r - math.pi, 1, 1)
+    love.graphics.draw(lowerlipmesh, mx, my, r - math.pi, 1, 1)
+end
+
+local function getAngleAndDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local angle = math.atan2(dy, dx)
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+
+    return angle, distance
+end
+local function setAngleAndDistance(sx, sy, angle, distance, scaleX, scaleY)
+    local newx = sx + (distance * scaleX) * math.cos(angle)
+    local newy = sy + (distance * scaleY) * math.sin(angle)
+    return newx, newy
+end
+
 function drawSkinOver(box2dGuy, creation)
     love.graphics.setColor(1, 1, 1, 1)
 
@@ -384,9 +463,25 @@ function drawSkinOver(box2dGuy, creation)
         r = r + math.pi
 
         if true then
+            --box2dGuy.eye
+            local mx, my = love.mouse.getPosition()
+
+            -- do my mouse relative to the pupils
+
+            local eyeMultiplierFix = 0.5
+            local pupilMultiplierFix = 0.25
+
+            local eyeCanvasWith = eyeCanvas:getWidth()
+            local eyeCanvasHeight = eyeCanvas:getHeight()
+            local maxPupilOffsetW = eyeCanvasWith * (pupilMultiplierFix)
+            local maxPupilOffsetH = eyeCanvasHeight * (pupilMultiplierFix)
+
             local f = faceData.metaPoints
             local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
             local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
+
+
+
             local eyelx, eyely = facePart:getWorldPoint(
                     (leftEyeX + faceData.metaOffsetX) * sx,
                     (f[3][2] + faceData.metaOffsetY) * sy)
@@ -394,6 +489,24 @@ function drawSkinOver(box2dGuy, creation)
             local eyerx, eyery = facePart:getWorldPoint(
                     (rightEyeX + faceData.metaOffsetX) * sx,
                     (f[3][2] + faceData.metaOffsetY) * sy)
+
+            local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
+            local angle, dist = getAngleAndDistance(cx, cy, mx, my)
+            local px1, py1 = setAngleAndDistance(0, 0, angle, math.min(dist, 20), 1, 1)
+
+            local pupillx, pupilly = facePart:getWorldPoint(
+                    (leftEyeX + faceData.metaOffsetX - px1) * sx,
+                    (f[3][2] + faceData.metaOffsetY - py1) * sy)
+
+            local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
+            local angle, dist = getAngleAndDistance(cx, cy, mx, my)
+            local px2, py2 = setAngleAndDistance(0, 0, angle, math.min(dist, 20), 1, 1)
+
+            local pupilrx, pupilry = facePart:getWorldPoint(
+                    (rightEyeX + faceData.metaOffsetX - px2) * sx,
+                    (f[3][2] + faceData.metaOffsetY - py2) * sy)
+
+
 
             local browlx, browly = facePart:getWorldPoint(
                     (leftEyeX + faceData.metaOffsetX) * sx,
@@ -409,82 +522,22 @@ function drawSkinOver(box2dGuy, creation)
                     (noseX + faceData.metaOffsetX) * sx,
                     (noseY + faceData.metaOffsetY) * sy)
 
+            drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
 
-
-
-
-            local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
-            local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85)
-            local mx, my = facePart:getWorldPoint(
-                    (mouthX + faceData.metaOffsetX) * sx,
-                    (mouthY + faceData.metaOffsetY) * sy)
-            local tx, ty = facePart:getWorldPoint(
-                    (mouthX + faceData.metaOffsetX) * sx,
-                    (mouthY + faceData.metaOffsetY - 20) * sy)
-            local mouthWidth = (f[3][1] - f[7][1]) / 2
-
-            local scaleX = mouthWidth / teethCanvas:getWidth()
-            local upperlipmesh = createTexturedTriangleStrip(upperlipCanvas)
-
-            local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-                    { 0, love.math.random() * -20 },
-                    { mouthWidth / 2, 0 },
-                    upperlipCanvas,
-                    upperlipmesh, box2dGuy)
-
-            local lowerlipmesh = createTexturedTriangleStrip(lowerlipCanvas)
-
-            local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 }, { 0, love.math.random() * 120 },
-                    { mouthWidth / 2, 0 },
-                    upperlipCanvas,
-                    lowerlipmesh, box2dGuy)
-
-
-            local holePolygon = {}
-
-
-            for i = 0, 6 do
-                local x, y = upperCurve:evaluate(i / 6)
-                table.insert(holePolygon, { x, y })
-            end
-            for i = 0, 6 do
-                local x, y = lowerCurve:evaluate(1 - (i / 6))
-                table.insert(holePolygon, { x, y })
-            end
-            local mesh = love.graphics.newMesh(holePolygon, "fan")
-
-            local myStencilFunction = function()
-                love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
-            end
-            love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.stencil(myStencilFunction, "replace", 1)
-
-            love.graphics.setStencilTest("greater", 0)
-            renderNonAttachedObject(teethCanvas,
-                'teeth', r, tx, ty, scaleX * 2, -1 * scaleX * 2,
-                box2dGuy, creation)
-
-            love.graphics.setStencilTest()
-
-            love.graphics.draw(upperlipmesh, mx, my, r - math.pi, 1, 1)
-            love.graphics.draw(lowerlipmesh, mx, my, r - math.pi, 1, 1)
-            --end
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyelx, eyely, -0.5, 0.5,
+                'eye', r, eyelx, eyely, -eyeMultiplierFix, eyeMultiplierFix,
                 box2dGuy, creation)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyerx, eyery, 0.5, 0.5,
+                'eye', r, eyerx, eyery, eyeMultiplierFix, eyeMultiplierFix,
                 box2dGuy, creation)
 
             renderNonAttachedObject(pupilCanvas,
-                'pupil', r, eyelx, eyely, -0.5 / 2, 0.5 / 2,
+                'pupil', r, pupillx, pupilly, -pupilMultiplierFix, pupilMultiplierFix,
                 box2dGuy, creation)
             renderNonAttachedObject(pupilCanvas,
-                'pupil', r, eyerx, eyery, 0.5 / 2, 0.5 / 2,
+                'pupil', r, pupilrx, pupilry, pupilMultiplierFix, pupilMultiplierFix,
                 box2dGuy, creation)
 
             love.graphics.setColor(0, 1, 0, 1)
@@ -493,12 +546,13 @@ function drawSkinOver(box2dGuy, creation)
 
             love.graphics.setColor(1, 1, 1, 1)
             local browmesh = createTexturedTriangleStrip(browCanvas)
-            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, -10 }, { 0, 0 }, { mouthWidth / 2, 0 }, browCanvas,
+            local faceWidth = (f[3][1] - f[7][1]) / 2
+            renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
                 browmesh, box2dGuy)
             love.graphics.draw(browmesh, browlx, browly, r, 1, 1)
 
             local browmesh = createTexturedTriangleStrip(browCanvas)
-            renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, -10 }, { 0, 0 }, { mouthWidth / 2, 0 }, browCanvas,
+            renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
                 browmesh, box2dGuy)
             love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
 
