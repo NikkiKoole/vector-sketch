@@ -38,6 +38,10 @@ local creation = {
     lowerlip = { w = 10, h = 10 },
     teeth = { w = 10, h = 10 },
 }
+multipliers    = {
+    torso = { hMultiplier = 1 }
+
+}
 function getCreation()
     return creation
 end

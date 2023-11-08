@@ -10,6 +10,8 @@ local generatePolygon = require('lib.generate-polygon').generatePolygon
 local geom            = require 'lib.geom'
 local bbox            = require 'lib.bbox'
 local mesh            = require 'lib.mesh'
+
+local ui              = require 'lib.ui'
 require 'box2dGuyCreation'
 require 'texturedBox2d'
 local creation = getCreation()
@@ -1256,7 +1258,7 @@ function startExample(number)
 
         torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * 1
-        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * 1
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
 
         if true then
             headRndIndex = math.ceil(love.math.random() * #data)
@@ -1635,6 +1637,7 @@ function createFittingScale(img, desired_w, desired_h)
 end
 
 function love.draw()
+    ui.handleMouseClickStart()
     local width, height = love.graphics.getDimensions()
     love.graphics.clear(1, 1, 1)
 
@@ -1763,6 +1766,13 @@ function love.draw()
         love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
         love.graphics.setColor(.4, .4, .4, 0.9)
         love.graphics.print(love.timer.getFPS(), 0, 0)
+
+
+        local s = h_slider('torsoHeightMultiplier', 20, 20, 100, multipliers.torso.hMultiplier, 0.5, 4)
+        if s.value then
+            multipliers.torso.hMultiplier = s.value
+            --print(s.value)
+        end
         -- love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
     end
 
@@ -2478,7 +2488,7 @@ function love.keypressed(k)
 
         --creation.hasPhysicsHair = not creation.hasPhysicsHair
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() / 2
-        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() / 2
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
 
         local newLegLength = longestLeg + creation.torso.h
         local bx, by = body:getPosition()

@@ -524,7 +524,6 @@ function drawSkinOver(box2dGuy, creation)
 
             drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
 
-
             renderNonAttachedObject(eyeCanvas,
                 'eye', r, eyelx, eyely, -eyeMultiplierFix, eyeMultiplierFix,
                 box2dGuy, creation)
@@ -533,11 +532,13 @@ function drawSkinOver(box2dGuy, creation)
                 'eye', r, eyerx, eyery, eyeMultiplierFix, eyeMultiplierFix,
                 box2dGuy, creation)
 
+
+            local rnd = love.math.random() * 0.01 - 0.005
             renderNonAttachedObject(pupilCanvas,
-                'pupil', r, pupillx, pupilly, -pupilMultiplierFix, pupilMultiplierFix,
+                'pupil', r, pupillx, pupilly, -pupilMultiplierFix + rnd, pupilMultiplierFix + rnd,
                 box2dGuy, creation)
             renderNonAttachedObject(pupilCanvas,
-                'pupil', r, pupilrx, pupilry, pupilMultiplierFix, pupilMultiplierFix,
+                'pupil', r, pupilrx, pupilry, pupilMultiplierFix + rnd, pupilMultiplierFix,
                 box2dGuy, creation)
 
             love.graphics.setColor(0, 1, 0, 1)
