@@ -1173,7 +1173,7 @@ function startExample(number)
     if number == 3 then
         local w, h = love.graphics.getDimensions()
         camera.setCameraViewport(cam, w, h)
-        camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 2500, 2500)
+        camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
         world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
@@ -1187,10 +1187,6 @@ function startExample(number)
         local bw, bh = borderImage:getDimensions()
         local sx = w / bw
         local sy = h / bh
-        --local w, h = love.graphics.getDimensions();
-        --love.graphics.setColor(.9, .8, .8, 0.9)
-        --love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
-
 
         local bmpTopThick = 40 * sy
         local bmpBottomThick = 40 * sy
@@ -1309,6 +1305,12 @@ function startExample(number)
         changeMetaTexture('rear', eardata[earIndex])
         creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() / 4
         creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() / 4
+
+
+
+
+
+
         --earCanvas = createRandomColoredBlackOutlineTexture(creation.rear.metaURL)
 
         --changeMetaTexture('lear', eardata[earIndex])
@@ -1409,7 +1411,20 @@ function love.load()
     sprietOver = {}
 
 
-    legCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
+    legCanvas        = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
+    local l          = legCanvas:getHeight()
+    creation.luleg.l = l / 2
+    creation.ruleg.l = l / 2
+    creation.llleg.l = l / 2
+    creation.rlleg.l = l / 2
+    local l          = legCanvas:getWidth()
+    creation.luleg.w = l
+    creation.ruleg.w = l
+    creation.llleg.w = l
+    creation.rlleg.w = l
+
+
+
     legmesh = createTexturedTriangleStrip(legCanvas)
 
     armCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
@@ -1476,6 +1491,7 @@ local function pointerReleased(id, x, y)
 end
 
 function love.touchreleased(id, x, y)
+    -- lastDraggedElement = nil
     pointerReleased(id, x, y)
 end
 
@@ -1499,10 +1515,12 @@ function killMouseJointIfPossible(id)
 end
 
 function love.touchpressed(id, x, y)
+    lastDraggedElement = nil
     pointerPressed(id, x, y)
 end
 
 function love.mousepressed(x, y)
+    lastDraggedElement = nil
     pointerPressed('mouse', x, y)
 end
 
@@ -1636,6 +1654,137 @@ function createFittingScale(img, desired_w, desired_h)
     return sx, sy
 end
 
+function drawTempSiders()
+    -- hwat has a weird baked in scale ?
+    -- feet /2
+
+    local s = h_slider('torsoHeightMultiplier', 20, 20, 100, multipliers.torso.hMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.torso.hMultiplier = s.value
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+        end
+    end
+    local s = h_slider('torsoWidthMultiplier', 20, 50, 100, multipliers.torso.wMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.torso.wMultiplier = s.value
+        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+        end
+    end
+    local s = h_slider('legLengthMultiplier', 20, 80, 100, multipliers.leg.lMultiplier, 0.25, 4)
+    if s.value then
+        local l                     = legCanvas:getHeight()
+        creation.luleg.h            = l * s.value / 2
+        creation.ruleg.h            = l * s.value / 2
+        creation.llleg.h            = l * s.value / 2
+        creation.rlleg.h            = l * s.value / 2
+        multipliers.leg.lMultiplier = s.value
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlleg')
+        end
+    end
+    local s = h_slider('legWidthMultiplier', 20, 110, 100, multipliers.leg.wMultiplier, 0.25, 2)
+    if s.value then
+        local l                     = legCanvas:getWidth()
+        creation.luleg.w            = l * s.value
+        creation.ruleg.w            = l * s.value
+        creation.llleg.w            = l * s.value
+        creation.rlleg.w            = l * s.value
+        multipliers.leg.wMultiplier = s.value
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlleg')
+        end
+    end
+    local s = h_slider('feetHeightMultiplier', 20, 130, 100, multipliers.feet.hMultiplier, 0.5, 4)
+    if s.value then
+        multipliers.feet.hMultiplier = s.value
+        creation.lfoot.h             = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2 *
+            multipliers.feet.hMultiplier
+        creation.rfoot.h             = creation.lfoot.h
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
+        end
+    end
+    local s = h_slider('feetWidthMultiplier', 20, 160, 100, multipliers.feet.wMultiplier, 0.5, 4)
+    if s.value then
+        multipliers.feet.wMultiplier = s.value
+        creation.lfoot.w             = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2 *
+            multipliers.feet.wMultiplier
+        creation.rfoot.w             = creation.lfoot.w
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
+        end
+    end
+    local s = h_slider('armLengthMultiplier', 20, 190, 100, multipliers.arm.lMultiplier, 0.25, 4)
+    if s.value then
+        local l                     = armCanvas:getHeight()
+        creation.luarm.h            = l * s.value / 2
+        creation.ruarm.h            = l * s.value / 2
+        creation.llarm.h            = l * s.value / 2
+        creation.rlarm.h            = l * s.value / 2
+        multipliers.arm.lMultiplier = s.value
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        end
+    end
+    local s = h_slider('armWidthMultiplier', 20, 220, 100, multipliers.arm.wMultiplier, 0.25, 4)
+    if s.value then
+        local l                     = armCanvas:getWidth()
+        creation.luarm.w            = l * s.value / 2
+        creation.ruarm.w            = l * s.value / 2
+        creation.llarm.w            = l * s.value / 2
+        creation.rlarm.w            = l * s.value / 2
+        multipliers.arm.wMultiplier = s.value
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        end
+    end
+
+    local s = h_slider('handHeightMultiplier', 20, 250, 100, multipliers.hand.hMultiplier, 0.5, 4)
+    if s.value then
+        multipliers.hand.hMultiplier = s.value
+        creation.lhand.h             = mesh.getImage(creation.lhand.metaURL):getWidth() / 2 *
+            multipliers.hand.hMultiplier
+        creation.rhand.h             = creation.lhand.h
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
+        end
+    end
+
+    local s = h_slider('handWidthMultiplier', 20, 280, 100, multipliers.hand.wMultiplier, 0.5, 4)
+    if s.value then
+        multipliers.hand.wMultiplier = s.value
+        creation.lhand.w             = mesh.getImage(creation.lhand.metaURL):getHeight() / 2 *
+            multipliers.hand.wMultiplier
+        creation.rhand.w             = creation.lhand.w
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
+        end
+    end
+
+    ----
+    ----
+end
+
 function love.draw()
     ui.handleMouseClickStart()
     local width, height = love.graphics.getDimensions()
@@ -1731,7 +1880,7 @@ function love.draw()
         local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
 
-        --  drawWorld(world)
+        drawWorld(world)
 
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
@@ -1766,14 +1915,7 @@ function love.draw()
         love.graphics.draw(borderImage, 0, 0, 0, w / bw, h / bh)
         love.graphics.setColor(.4, .4, .4, 0.9)
         love.graphics.print(love.timer.getFPS(), 0, 0)
-
-
-        local s = h_slider('torsoHeightMultiplier', 20, 20, 100, multipliers.torso.hMultiplier, 0.5, 4)
-        if s.value then
-            multipliers.torso.hMultiplier = s.value
-            --print(s.value)
-        end
-        -- love.graphics.print(inspect(love.graphics.getStats()), 0, 30)
+        drawTempSiders()
     end
 
     cam:push()

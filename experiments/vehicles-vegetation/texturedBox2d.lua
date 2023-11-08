@@ -127,7 +127,7 @@ end
 
 function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
-    if not scaleW then scaleW = 2.5 end
+    if not scaleW then scaleW = 1 / 2.5 end
     local dl = curve:getDerivative()
 
     for i = 1, 1 do
@@ -142,7 +142,7 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
             local a                      = math.atan2(dy, dx) + math.pi / 2
             local a2                     = math.atan2(dy, dx) - math.pi / 2
 
-            local line                   = (w * dir) / scaleW --- here we can make the texture wider!!, also flip it
+            local line                   = (w * dir) * scaleW --- here we can make the texture wider!!, also flip it
             local x2                     = xl + line * math.cos(a)
             local y2                     = yl + line * math.sin(a)
             local x3                     = xl + line * math.cos(a2)
@@ -263,7 +263,7 @@ function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, 
     if (dir ~= nil or wmultiplier ~= nil) then
         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
     else
-        texturedCurve(curve, canvas, mesh, -1, 3)
+        texturedCurve(curve, canvas, mesh, -1, 1 / 3)
     end
 
     return curve
@@ -564,25 +564,26 @@ function drawSkinOver(box2dGuy, creation)
 
 
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy)
+        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier)
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy)
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier)
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
 
-        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy)
+        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
         love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, 2)
+        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
         love.graphics.setColor(1, 1, 1, 1)
 
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
         love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, 2)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
         love.graphics.setColor(1, 1, 1, 1)
 
+        love.graphics.setColor(1, 1, 1, 1)
         if creation.lhand.metaURL then
             renderAtachedObject(handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
         end

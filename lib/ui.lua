@@ -614,6 +614,7 @@ function h_slider(id, x, y, width, v, min, max)
 
    if love.mouse.isDown(1) then
       if lastDraggedElement and lastDraggedElement.id == id then
+         --print('jo!')
          mouseState.hoveredSomething = true
          love.mouse.setCursor(cursors.hand)
          local mx, my = love.mouse.getPosition()

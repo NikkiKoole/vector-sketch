@@ -39,8 +39,11 @@ local creation = {
     teeth = { w = 10, h = 10 },
 }
 multipliers    = {
-    torso = { hMultiplier = 1 }
-
+    torso = { hMultiplier = 1, wMultiplier = 1 },
+    leg = { lMultiplier = 1, wMultiplier = 1 },
+    feet = { wMultiplier = 1, hMultiplier = 1 },
+    arm = { lMultiplier = 1, wMultiplier = 1 },
+    hand = { wMultiplier = 1, hMultiplier = 1 },
 }
 function getCreation()
     return creation
