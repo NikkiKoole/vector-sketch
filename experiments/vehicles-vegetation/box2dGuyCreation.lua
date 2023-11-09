@@ -44,6 +44,9 @@ multipliers    = {
     feet = { wMultiplier = 1, hMultiplier = 1 },
     arm = { lMultiplier = 1, wMultiplier = 1 },
     hand = { wMultiplier = 1, hMultiplier = 1 },
+    neck =  {wMultiplier = 1, hMultiplier = 1 },
+    head =  {wMultiplier = 1, hMultiplier = 1 },
+    ear =  {wMultiplier = 1, hMultiplier = 1 },
 }
 function getCreation()
     return creation

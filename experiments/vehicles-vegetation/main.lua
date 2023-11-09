@@ -153,7 +153,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
     pointerJoint.joint:setDampingRatio(.5)
-    pointerJoint.joint:setMaxForce(500000)
+    pointerJoint.joint:setMaxForce(5000000)
     return pointerJoint
 end
 
@@ -1431,6 +1431,9 @@ function love.load()
     armmesh = createTexturedTriangleStrip(armCanvas)
 
     neckCanvas = createRandomColoredBlackOutlineTexture('assets/parts/legp2.png')
+
+    creation.neck.w = neckCanvas:getWidth()/2
+    creation.neck.h = neckCanvas:getHeight()/2
     neckmesh = createTexturedTriangleStrip(neckCanvas)
 
     local w, h = love.graphics.getDimensions()
@@ -1657,6 +1660,7 @@ end
 function drawTempSiders()
     -- hwat has a weird baked in scale ?
     -- feet /2
+    -- ears / 2
 
     local s = h_slider('torsoHeightMultiplier', 20, 20, 100, multipliers.torso.hMultiplier, 0.25, 4)
     if s.value then
@@ -1782,7 +1786,95 @@ function drawTempSiders()
     end
 
     ----
-    ----
+    ---- second column
+
+    local s = h_slider('neckWidthMultiplier', 180, 20, 100, multipliers.neck.wMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.neck.wMultiplier = s.value
+        creation.neck.w             = neckCanvas:getWidth()/2  *
+            multipliers.neck.wMultiplier
+        creation.neck1.w             = creation.neck.w
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+    local s = h_slider('neckHeightMultiplier', 180, 50, 100, multipliers.neck.hMultiplier, 0.25, 2)
+    if s.value then
+        multipliers.neck.hMultiplier = s.value
+        creation.neck.h             = neckCanvas:getHeight()/2  *
+            multipliers.neck.hMultiplier
+        creation.neck1.h             = creation.neck.h
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+
+    local s = h_slider('headWidthMultiplier', 180, 80, 100, multipliers.head.wMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.head.wMultiplier = s.value
+        creation.head.w             = mesh.getImage(creation.head.metaURL):getWidth()  *
+        multipliers.head.wMultiplier
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+    local s = h_slider('headHeightMultiplier', 180, 110, 100, multipliers.head.hMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.head.hMultiplier = s.value
+        creation.head.h             = mesh.getImage(creation.head.metaURL):getHeight()  *
+        multipliers.head.hMultiplier
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+
+    local s = h_slider('earWidthMultiplier', 180, 140, 100, multipliers.ear.wMultiplier, 0.25, 8)
+    if s.value then
+        multipliers.ear.wMultiplier = s.value
+        creation.lear.w             = mesh.getImage(creation.lear.metaURL):getWidth()/2  *
+        multipliers.ear.wMultiplier
+        creation.rear.w =     creation.lear.w   
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+    local s = h_slider('earHeightMultiplier', 180, 170, 100, multipliers.ear.hMultiplier, 0.25, 8)
+    if s.value then
+        multipliers.ear.hMultiplier = s.value
+        creation.lear.h             = mesh.getImage(creation.lear.metaURL):getHeight()/2  *
+        multipliers.ear.hMultiplier
+        creation.rear.h =     creation.lear.h
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+
+    local s = h_slider('earStanceThing', 180, 200, 100, creation.lear.stanceAngle, 0,  math.pi )
+    if s.value then
+        creation.lear.stanceAngle = s.value
+        creation.rear.stanceAngle = -1* s.value
+        --multipliers.ear.hMultiplier = s.value
+        --creation.lear.h             = mesh.getImage(creation.lear.metaURL):getHeight()/2  *
+        --multipliers.ear.hMultiplier
+        --creation.rear.h =     creation.lear.h
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+
+    -- todo ear something about stanceangle
 end
 
 function love.draw()
@@ -1880,7 +1972,7 @@ function love.draw()
         local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
 
-        drawWorld(world)
+      --  drawWorld(world)
 
         for i = 1, #box2dGuys do
             drawSkinOver(box2dGuys[i], creation, cam)

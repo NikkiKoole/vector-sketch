@@ -436,7 +436,7 @@ function drawSkinOver(box2dGuy, creation)
 
         if box2dGuy.neck and box2dGuy.neck1 then
             love.graphics.setColor(1, 1, 1, 1)
-            renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy)
+            renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy, 1, multipliers.neck.wMultiplier)
             love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
         end
 
