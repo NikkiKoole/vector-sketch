@@ -318,13 +318,13 @@ function renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
 
             local points = hairLine
             local hairTension = .02
-            local spacing = 10
+            local spacing = 10 * multipliers.hair.sMultiplier
             local coords
 
             coords = border.unloosenVanillaline(points, hairTension, spacing)
             local length = getLengthOfPath(hairLine)
             local factor = (length / h)
-            local hairWidthMultiplier = .5
+            local hairWidthMultiplier =  1 * multipliers.hair.wMultiplier
             local width = (w * factor) * hairWidthMultiplier --30 --160 * 10
             local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
@@ -492,19 +492,19 @@ function drawSkinOver(box2dGuy, creation)
 
             local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
             local angle, dist = getAngleAndDistance(cx, cy, mx, my)
-            local px1, py1 = setAngleAndDistance(0, 0, angle, math.min(dist, 10), 1, 1)
+            local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
 
             local pupillx, pupilly = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX - px1) * sx,
-                    (f[3][2] + faceData.metaOffsetY - py1) * sy)
+                    (leftEyeX + faceData.metaOffsetX + px1) * sx,
+                    (f[3][2] + faceData.metaOffsetY + py1) * sy)
 
             local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
             local angle, dist = getAngleAndDistance(cx, cy, mx, my)
-            local px2, py2 = setAngleAndDistance(0, 0, angle, math.min(dist, 10), 1, 1)
+            local px2, py2 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
 
             local pupilrx, pupilry = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX - px2) * sx,
-                    (f[3][2] + faceData.metaOffsetY - py2) * sy)
+                    (rightEyeX + faceData.metaOffsetX + px2) * sx,
+                    (f[3][2] + faceData.metaOffsetY + py2) * sy)
 
 
 
@@ -535,10 +535,10 @@ function drawSkinOver(box2dGuy, creation)
 
             local rnd = love.math.random() * 0.01 - 0.005
             renderNonAttachedObject(pupilCanvas,
-                'pupil', r, pupillx, pupilly, -pupilMultiplierFix + rnd, pupilMultiplierFix + rnd,
+                'pupil', 0, pupillx, pupilly, -pupilMultiplierFix + rnd, pupilMultiplierFix + rnd,
                 box2dGuy, creation)
             renderNonAttachedObject(pupilCanvas,
-                'pupil', r, pupilrx, pupilry, pupilMultiplierFix + rnd, pupilMultiplierFix,
+                'pupil', 0, pupilrx, pupilry, pupilMultiplierFix + rnd, pupilMultiplierFix,
                 box2dGuy, creation)
 
             love.graphics.setColor(0, 1, 0, 1)
@@ -558,7 +558,7 @@ function drawSkinOver(box2dGuy, creation)
             love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
 
             renderNonAttachedObject(noseCanvas,
-                'nose', r, nx, ny, 0.5, -0.5,
+                'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5,
                 box2dGuy, creation)
         end
 

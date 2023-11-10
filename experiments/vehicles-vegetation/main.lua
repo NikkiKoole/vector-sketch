@@ -1819,7 +1819,6 @@ function drawTempSiders()
 
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
     end
     local s = h_slider('headHeightMultiplier', 180, 110, 100, multipliers.head.hMultiplier, 0.25, 4)
@@ -1830,7 +1829,6 @@ function drawTempSiders()
 
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
     end
 
@@ -1843,7 +1841,6 @@ function drawTempSiders()
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
     end
     local s = h_slider('earHeightMultiplier', 180, 170, 100, multipliers.ear.hMultiplier, 0.25, 8)
@@ -1855,7 +1852,6 @@ function drawTempSiders()
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
     end
 
@@ -1863,18 +1859,28 @@ function drawTempSiders()
     if s.value then
         creation.lear.stanceAngle = s.value
         creation.rear.stanceAngle = -1* s.value
-        --multipliers.ear.hMultiplier = s.value
-        --creation.lear.h             = mesh.getImage(creation.lear.metaURL):getHeight()/2  *
-        --multipliers.ear.hMultiplier
-        --creation.rear.h =     creation.lear.h
+
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
-            --genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
     end
 
-    -- todo ear something about stanceangle
+
+    local s = h_slider('hairWidthMultiplier', 180, 230, 100, multipliers.hair.wMultiplier, 0.01, 2)
+    if s.value then
+        multipliers.hair.wMultiplier = s.value
+    end
+    local s = h_slider('hairSpacingMultiplier', 180, 260, 100, multipliers.hair.sMultiplier, 1, 10)
+    if s.value then
+        multipliers.hair.sMultiplier = s.value
+    end
+
+    local s = h_slider('noseWidthMultiplier', 180, 290, 100, multipliers.nose.wMultiplier, 0.5, 4)
+    if s.value then
+        multipliers.nose.wMultiplier = s.value
+    end
+    
 end
 
 function love.draw()

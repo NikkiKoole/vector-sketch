@@ -47,6 +47,8 @@ multipliers    = {
     neck =  {wMultiplier = 1, hMultiplier = 1 },
     head =  {wMultiplier = 1, hMultiplier = 1 },
     ear =  {wMultiplier = 1, hMultiplier = 1 },
+    hair = {wMultiplier = 1, sMultiplier=1},
+    nose = {wMultiplier = 1, hMultiplier=1}
 }
 function getCreation()
     return creation
