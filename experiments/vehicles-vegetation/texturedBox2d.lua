@@ -525,11 +525,11 @@ function drawSkinOver(box2dGuy, creation)
             drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyelx, eyely, -eyeMultiplierFix, eyeMultiplierFix,
+                'eye', r, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier, eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyerx, eyery, eyeMultiplierFix, eyeMultiplierFix,
+                'eye', r, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier, eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
 
 
@@ -558,7 +558,7 @@ function drawSkinOver(box2dGuy, creation)
             love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
 
             renderNonAttachedObject(noseCanvas,
-                'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5,
+                'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5 * multipliers.nose.hMultiplier,
                 box2dGuy, creation)
         end
 

@@ -1876,10 +1876,24 @@ function drawTempSiders()
         multipliers.hair.sMultiplier = s.value
     end
 
-    local s = h_slider('noseWidthMultiplier', 180, 290, 100, multipliers.nose.wMultiplier, 0.5, 4)
+    local s = h_slider('noseWidthMultiplier', 180, 290, 100, multipliers.nose.wMultiplier, 0.25, 4)
     if s.value then
         multipliers.nose.wMultiplier = s.value
     end
+    local s = h_slider('noseHeightMultiplier', 180, 320, 100, multipliers.nose.hMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.nose.hMultiplier = s.value
+    end
+
+    local s = h_slider('eyeWidthMultiplier', 180, 350, 100, multipliers.eye.wMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.eye.wMultiplier = s.value
+    end
+    local s = h_slider('eyeHeightMultiplier', 180, 380, 100, multipliers.eye.hMultiplier, 0.25, 4)
+    if s.value then
+        multipliers.eye.hMultiplier = s.value
+    end
+    
     
 end
 
