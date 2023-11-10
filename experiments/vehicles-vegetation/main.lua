@@ -1895,6 +1895,7 @@ function drawTempSiders()
     end
     
     
+    
 end
 
 function love.draw()
