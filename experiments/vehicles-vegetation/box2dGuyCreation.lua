@@ -44,12 +44,16 @@ multipliers    = {
     feet = { wMultiplier = 1, hMultiplier = 1 },
     arm = { lMultiplier = 1, wMultiplier = 1 },
     hand = { wMultiplier = 1, hMultiplier = 1 },
-    neck =  {wMultiplier = 1, hMultiplier = 1 },
-    head =  {wMultiplier = 1, hMultiplier = 1 },
-    ear =  {wMultiplier = 1, hMultiplier = 1 },
-    hair = {wMultiplier = 1, sMultiplier=1},
-    nose = {wMultiplier = 1, hMultiplier=1},
-    eye = {wMultiplier = 1, hMultiplier=1}
+    neck = { wMultiplier = 1, hMultiplier = 1 },
+    head = { wMultiplier = 1, hMultiplier = 1 },
+    ear = { wMultiplier = 1, hMultiplier = 1 },
+    hair = { wMultiplier = 1, sMultiplier = 1 },
+    nose = { wMultiplier = 1, hMultiplier = 1 },
+    eye = { wMultiplier = 1, hMultiplier = 1 }
+}
+positioners    = {
+    leg = { x = 0.5 }
+
 }
 function getCreation()
     return creation
@@ -81,15 +85,29 @@ function getParentAndChildrenFromPartName(partName, creation)
         rlleg = { p = 'ruleg', c = 'rfoot' },
         rfoot = { p = 'rlleg' }
     }
+    -- print(creation, partName)
+    -- print('jo?')
     if creation and partName == 'head' and creation.hasNeck == false then
+        --   print('jo 1?')
         return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
     end
+    --  if creation and partName == 'head' and creation.isPotatoHead == true then
+    --print('jo 2?')
+    --     return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
+    -- end
     if creation and partName == 'torso' and creation.isPotatoHead then
+        -- print('jo 3?')
         return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
     end
     if creation and partName == 'torso' and creation.hasNeck == false then
+        --print('jo 4?')
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
+    local result = map[partName]
+    if result.p == 'head' and creation.isPotatoHead then
+        result.p = 'torso'
+    end
+    --print('jo 5?')
     return map[partName]
 end
 
@@ -110,8 +128,15 @@ function getScaledHeadMetaPoint(index)
     return creation.head.metaPoints[index][1] * wscale, creation.head.metaPoints[index][2] * hscale
 end
 
+local function clamp(x, min, max)
+    return x < min and min or (x > max and max or x)
+end
+local function lerp(a, b, amount)
+    return a + (b - a) * clamp(amount, 0, 1)
+end
+
 function getOffsetFromParent(partName)
-    local data = getParentAndChildrenFromPartName(partName)
+    local data = getParentAndChildrenFromPartName(partName, creation)
 
     if partName == 'neck' then
         if creation.torso.metaPoints then
@@ -143,12 +168,23 @@ function getOffsetFromParent(partName)
         return creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'luleg' then
         if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(6)
+            -- lerp between 6 and 5
+            local t = positioners.leg.x
+            local ax, ay = getScaledTorsoMetaPoint(6)
+            local bx, by = getScaledTorsoMetaPoint(5)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry --getScaledTorsoMetaPoint(6)
         end
         return -creation.torso.w / 2, creation.torso.h / 2
     elseif partName == 'ruleg' then
         if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(4)
+            local t = positioners.leg.x
+            local ax, ay = getScaledTorsoMetaPoint(4)
+            local bx, by = getScaledTorsoMetaPoint(5)
+            local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+            return rx, ry --getScaledTorsoMetaPoint(6)
+
+            --return getScaledTorsoMetaPoint(4)
         end
         return creation.torso.w / 2, creation.torso.h / 2
     elseif partName == 'hair1' then
@@ -208,7 +244,7 @@ function getOffsetFromParent(partName)
 
         local p = data.p
         -- now look for the alias of the parent...
-        local temp = getParentAndChildrenFromPartName(p)
+        local temp = getParentAndChildrenFromPartName(p, creation)
         local part = p
         return 0, creation[part].h
     end
@@ -521,6 +557,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     local thisA = box2dGuy[partName]:getAngle()
 
     if parentName then
+        --  print(parentName, partName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
