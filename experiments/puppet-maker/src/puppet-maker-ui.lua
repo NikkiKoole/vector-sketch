@@ -923,7 +923,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
 
       if category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2' then
-         local posts = { 'ScaleX', 'ScaleY', 'Angle', 'X', 'Y' }
+         print('jo here we have some issue with the new names')
+        -- local posts = { 'ScaleX', 'ScaleY', 'Angle', 'X', 'Y' }
+         local posts = { 'PV.sx', 'PV.sy', 'PV.r', 'PV.tx', 'PV.ty' }
          local mins = { .25, .25, 0, -6, -6 }
          local maxs = { 3, 3, 15, 6, 6 }
          local fs = { 4.0, 4.0, 1, 1, 1 }
@@ -940,7 +942,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             for i = 1, #posts do
                local p = posts[i]
                local vv = category .. p
-
+               print(vv)
+            --   vv = 'skinPatchSnoutPV.sx'
                draw_slider_with_2_buttons(vv, startX + (runningElem * elementWidth), currentY,
                    buttonSize,
                    sliderWidth, propupdate,
@@ -1020,7 +1023,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
          end
       end
    end
-
+   
    if selectedTab == 'pattern' then
       local isPatch = category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2'
       -- category == 'patches' or category == 'mouth' or category == 'eyes2' or category == 'arms2' or category == 'legs2'
@@ -1549,6 +1552,7 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    if findPart(selectedCategory).children then
       currentY = currentY + childrenTabHeight
+      print(selectedCategory, selectedChildCategory)
       otherHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedChildCategory)
       currentY = currentY + otherHeight
    end

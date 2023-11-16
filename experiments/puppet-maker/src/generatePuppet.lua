@@ -316,8 +316,8 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
    local img = mesh.getImage(url, optionalSettings)
    local maskUrl = getPNGMaskUrl(url)
    local mask = mesh.getImage(maskUrl)
-   print(url)
-   print(love.graphics.getDPIScale())
+   --print(url)
+   --print(love.graphics.getDPIScale())
    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, renderPatch)
 
    return cnv
@@ -354,31 +354,31 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
          local p = {}
 
          p.imageData = partToTexturedCanvas('skinPatchSnout', values)
-         p.sx = values.skinPatchSnoutScaleX
-         p.sy = values.skinPatchSnoutScaleY
-         p.r = values.skinPatchSnoutAngle
-         p.tx = values.skinPatchSnoutX
-         p.ty = values.skinPatchSnoutY
+         p.sx = values.skinPatchSnoutPV.sx
+         p.sy = values.skinPatchSnoutPV.sy
+         p.r = values.skinPatchSnoutPV.r
+         p.tx = values.skinPatchSnoutPV.tx
+         p.ty = values.skinPatchSnoutPV.ty
          table.insert(renderPatch, p)
       end
       if not isNullObject('skinPatchEye1', values) then
          local p     = {}
          p.imageData = partToTexturedCanvas('skinPatchEye1', values)
-         p.sx        = values.skinPatchEye1ScaleX
-         p.sy        = values.skinPatchEye1ScaleY
-         p.r         = values.skinPatchEye1Angle
-         p.tx        = values.skinPatchEye1X
-         p.ty        = values.skinPatchEye1Y
+         p.sx        = values.skinPatchEye1PV.sx
+         p.sy        = values.skinPatchEye1PV.sy
+         p.r         = values.skinPatchEye1PV.r
+         p.tx        = values.skinPatchEye1PV.tx
+         p.ty        = values.skinPatchEye1PV.ty
          table.insert(renderPatch, p)
       end
       if not isNullObject('skinPatchEye2', values) then
          local p     = {}
          p.imageData = partToTexturedCanvas('skinPatchEye2', values)
-         p.sx        = values.skinPatchEye2ScaleX
-         p.sy        = values.skinPatchEye2ScaleY
-         p.r         = values.skinPatchEye2Angle
-         p.tx        = values.skinPatchEye2X
-         p.ty        = values.skinPatchEye2Y
+         p.sx        = values.skinPatchEye2PV.sx
+         p.sy        = values.skinPatchEye2PV.sy
+         p.r         = values.skinPatchEye2PV.r
+         p.tx        = values.skinPatchEye2PV.tx
+         p.ty        = values.skinPatchEye2PV.ty
          table.insert(renderPatch, p)
       end
    end

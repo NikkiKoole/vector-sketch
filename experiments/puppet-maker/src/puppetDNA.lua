@@ -10,7 +10,6 @@ local function stripPath(root, path)
         local str = root.texture.url
         local shortened = string.gsub(str, path, '')
         root.texture.url = shortened
-        --print(shortened)
     end
 
     if root.children then
@@ -49,367 +48,123 @@ local function zeroTransform(arr)
             arr[i].transforms.l[2] = 0
         end
     end
-    --print(arr[1].transforms)
 end
 
 
+function createDefaultTextureValues()
+    return {
+        shape     = 1,
+        bgPal     = 4,
+        fgPal     = 1,
+        bgTex     = 1,
+        fgTex     = 2,
+        linePal   = 1,
+        bgAlpha   = 5,
+        fgAlpha   = 5,
+        lineAlpha = 5,
+        texRot    = 0,
+        texScale  = 1,
+    }
+end
 
-function generateValues() 
+function createDefaultPatchValues()
+    return {
+        sx = 1,
+        sy = 1,
+        r = 1,
+        tx = 0,
+        ty = 3
+    }
+end
+
+function generateValues()
     local values = {
-        handsPinned             = false,
-        feetPinned              = true,
-        faceScale               = 1,
-        faceScaleX              = 1,
-        faceScaleY              = 1,
-        mouthScaleX             = 1,
-        mouthScaleY             = 1,
-        potatoHead              = false,
-        skinPatchSnout          = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 5,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
-        skinPatchSnoutScaleX    = 1,
-        skinPatchSnoutScaleY    = 1,
-        skinPatchSnoutAngle     = 1,
-        skinPatchSnoutX         = 0,
-        skinPatchSnoutY         = 3,
-        skinPatchEye1           = {
-            shape     = 1,
-            bgPal     = 1,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 1,
-            fgAlpha   = 1,
-            lineAlpha = 1,
-            texRot    = 0,
-            texScale  = 1,
-        },
-        skinPatchEye1ScaleX     = .5,
-        skinPatchEye1ScaleY     = 1,
-        skinPatchEye1Angle      = 1,
-        skinPatchEye1X          = -2,
-        skinPatchEye1Y          = -3,
-        skinPatchEye2           = {
-            shape     = 1,
-            bgPal     = 1,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 1,
-            fgAlpha   = 1,
-            lineAlpha = 1,
-            texRot    = 0,
-            texScale  = 1,
-        },
-        skinPatchEye2ScaleX     = .5,
-        skinPatchEye2ScaleY     = 1,
-        skinPatchEye2Angle      = 7,
-        skinPatchEye2X          = 2,
-        skinPatchEye2Y          = -3,
-        upperlip                = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 11,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        handsPinned      = false,
+        feetPinned       = true,
+        faceScale        = 1,
+        faceScaleX       = 1,
+        faceScaleY       = 1,
+        mouthScaleX      = 1,
+        mouthScaleY      = 1,
+        potatoHead       = false,
+        skinPatchSnout   = createDefaultTextureValues(),
+        skinPatchSnoutPV = createDefaultPatchValues(),
+        skinPatchEye1           = createDefaultTextureValues(),
+        skinPatchEye1PV         = createDefaultPatchValues(),
+        skinPatchEye2           = createDefaultTextureValues(),
+        skinPatchEye2PV         = createDefaultPatchValues(),
+        upperlip                = createDefaultTextureValues(),
         upperlipWidthMultiplier = 1,
-        lowerlip                = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 11,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        lowerlip                = createDefaultTextureValues(),
         lowerlipWidthMultiplier = 1,
         mouthXAxis              = 0,
         mouthYAxis              = 2,
-        eyes                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 5,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        eyes                    = createDefaultTextureValues(),
         eyeWidthMultiplier      = 1,
         eyeHeightMultiplier     = 1,
         eyeRotation             = 0,
         eyeYAxis                = 0,
         eyeXAxisBetween         = 0,
-        pupils                  = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 5,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        pupils                  = createDefaultTextureValues(),
         pupilSizeMultiplier     = 1,
-        ears                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        ears                    = createDefaultTextureValues(),
         earUnderHead            = true,
         earWidthMultiplier      = 1,
         earHeightMultiplier     = 1,
         earRotation             = 0,
         earYAxis                = 0, -- -2,-1,0,1,2
-        brows                   = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        brows                   = createDefaultTextureValues(),
         browsWidthMultiplier    = .5,
         browsWideMultiplier     = 1,
         browsDefaultBend        = 1,
         browYAxis               = 1,
-        nose                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-
-        },
+        nose                    = createDefaultTextureValues(),
         noseXAxis               = 0, --  -2,-1,0,1,2
         noseYAxis               = 0, --  -3, -2,-1,0,1,2, 3
         noseWidthMultiplier     = 1,
         noseHeightMultiplier    = 1,
-        leghair                 = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
-        legs                    = {
-            shape     = 7,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        leghair                 = createDefaultTextureValues(),
+        legs                    = createDefaultTextureValues(),
         legDefaultStance        = .5,
         legLength               = 5,
         legWidthMultiplier      = 1,
         leg1flop                = -1,
         leg2flop                = 1,
         legXAxis                = 0,
-        armhair                 = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
-        arms                    = {
-            shape     = 7,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        armhair                 = createDefaultTextureValues(),
+        arms                    = createDefaultTextureValues(),
         armLength               = 2,
         armWidthMultiplier      = 1,
         arm1flop                = -1,
         arm2flop                = 1,
-        hands                   = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        hands                   = createDefaultTextureValues(),
         handLengthMultiplier    = 1,
         handWidthMultiplier     = 1,
         overBite                = true,
         teethHeightMultiplier   = 1,
-        teeth                   = {
-            shape     = 1,
-            bgPal     = 5,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
-        body                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            flipy     = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 1,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        teeth                   = createDefaultTextureValues(),
+        body                    = createDefaultTextureValues(),
         bodyWidthMultiplier     = 1,
         bodyHeightMultiplier    = 1,
-        head                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-
-            bgAlpha   = 5,
-            fgAlpha   = 1,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        head                    = createDefaultTextureValues(),
         headWidthMultiplier     = 1,
         headHeightMultiplier    = 1,
-        hair                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 5,
-            bgTex     = 1,
-            fgTex     = 1,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-
-
-        },
+        hair                    = createDefaultTextureValues(),
         hairWidthMultiplier     = 1,
         hairTension             = 0.001,
-        neck                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        neck                    = createDefaultTextureValues(),
         neckLength              = 1,
         neckWidthMultiplier     = 1,
-        feet                    = {
-            shape     = 1,
-            bgPal     = 4,
-            fgPal     = 1,
-            bgTex     = 1,
-            fgTex     = 2,
-            linePal   = 1,
-            bgAlpha   = 5,
-            fgAlpha   = 5,
-            lineAlpha = 5,
-            texRot    = 0,
-            texScale  = 1,
-        },
+        feet                    = createDefaultTextureValues(),
         feetLengthMultiplier    = 1,
         feetWidthMultiplier     = 1,
     }
     return values
 end
-local function TableConcat(t1,t2)
-    for i=1,#t2 do
-        t1[#t1+1] = t2[i]
+
+local function TableConcat(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
     end
     return t1
 end
@@ -499,14 +254,13 @@ function generateParts()
     }
 
     local urls = {}
-    urls= TableConcat(urls, legUrls)
-    urls= TableConcat(urls, neckUrls)
-    urls= TableConcat(urls, patchUrls)
-    urls= TableConcat(urls, hairUrls)
-    urls= TableConcat(urls, bodyImgUrls)
-    urls= TableConcat(urls, feetImgUrls)
-    urls= TableConcat(urls, eyeImgUrls)
-    urls= TableConcat(urls, pupilImgUrls)
-   -- print(inspect(urls))
+    urls = TableConcat(urls, legUrls)
+    urls = TableConcat(urls, neckUrls)
+    urls = TableConcat(urls, patchUrls)
+    urls = TableConcat(urls, hairUrls)
+    urls = TableConcat(urls, bodyImgUrls)
+    urls = TableConcat(urls, feetImgUrls)
+    urls = TableConcat(urls, eyeImgUrls)
+    urls = TableConcat(urls, pupilImgUrls)
     return parts, urls
 end
