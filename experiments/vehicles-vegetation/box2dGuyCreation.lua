@@ -1,7 +1,7 @@
 package.path   = package.path .. ";../../?.lua"
 local bbox     = require 'lib.bbox'
 local inspect  = require 'vendor.inspect'
-
+local canvas   = require 'lib.canvas'
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 local creation = {
     isPotatoHead = false, -- if true then in dont have a neck or head
@@ -85,35 +85,28 @@ function getParentAndChildrenFromPartName(partName, creation)
         rlleg = { p = 'ruleg', c = 'rfoot' },
         rfoot = { p = 'rlleg' }
     }
-    -- print(creation, partName)
-    -- print('jo?')
+
     if creation and partName == 'head' and creation.hasNeck == false then
-        --   print('jo 1?')
         return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
     end
-    --  if creation and partName == 'head' and creation.isPotatoHead == true then
-    --print('jo 2?')
-    --     return { p = 'torso', c = { 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
-    -- end
+
     if creation and partName == 'torso' and creation.isPotatoHead then
-        -- print('jo 3?')
         return { c = { 'luarm', 'ruarm', 'luleg', 'ruleg', 'lear', 'rear', 'hair1', 'hair2', 'hair3', 'hair4', 'hair5' } }
     end
     if creation and partName == 'torso' and creation.hasNeck == false then
-        --print('jo 4?')
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
     local result = map[partName]
     if result.p == 'head' and creation.isPotatoHead then
         result.p = 'torso'
     end
-    --print('jo 5?')
     return map[partName]
 end
 
 function getScaledTorsoMetaPoint(index)
     local wscale = creation.torso.w / creation.torso.metaPointsW
     local hscale = creation.torso.h / creation.torso.metaPointsH
+
     return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
 end
 
@@ -246,7 +239,10 @@ function getOffsetFromParent(partName)
         -- now look for the alias of the parent...
         local temp = getParentAndChildrenFromPartName(p, creation)
         local part = p
-        return 0, creation[part].h
+        --  local s = canvas.getShrinkFactor()
+        -- wscale = wscale * s
+        --  hscale = hscale * s
+        return 0, creation[part].h --/ s
     end
 end
 

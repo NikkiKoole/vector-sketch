@@ -2,6 +2,7 @@ package.path = package.path .. ";../../?.lua"
 
 require 'lib.basic-tools'
 local lurker          = require 'vendor.lurker'
+lurker.quiet          = true
 local inspect         = require 'vendor.inspect'
 Vector                = require 'vendor.brinevector'
 local cam             = require('lib.cameraBase').getInstance()
@@ -10,19 +11,15 @@ local generatePolygon = require('lib.generate-polygon').generatePolygon
 local geom            = require 'lib.geom'
 local bbox            = require 'lib.bbox'
 local mesh            = require 'lib.mesh'
-
 local ui              = require 'lib.ui'
 require 'box2dGuyCreation'
 require 'texturedBox2d'
 local creation = getCreation()
 local canvas   = require 'lib.canvas'
-
 local text     = require 'lib.text'
-lurker.quiet   = true
 require 'palette'
 local gradient    = require 'lib.gradient'
 local skygradient = gradient.makeSkyGradient(10)
-
 local manual_gc   = require 'vendor.batteries.manual_gc'
 
 PROF_CAPTURE      = false
@@ -36,7 +33,7 @@ if true then
         --print(a, b, c, d, e)
     until a == "focus" or a == 'mousepressed'
 end
-
+love.math.setRandomSeed(2)
 --love.math.setRandomSeed(love.timer.getTime())
 palettes   = {}
 local base = {
@@ -83,7 +80,10 @@ local base = {
     '798091', '4C5575', '6E4431', '626964',
 }
 
-textures   = {
+
+
+
+textures = {
     love.graphics.newImage('assets/bodytextures/texture-type0.png'),
     love.graphics.newImage('assets/bodytextures/texture-type2t.png'),
     love.graphics.newImage('assets/bodytextures/texture-type1.png'),

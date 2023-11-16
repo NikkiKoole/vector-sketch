@@ -6,6 +6,7 @@ local polyline = require 'lib.polyline'
 local numbers  = require 'lib.numbers'
 local border   = require 'lib.border-mesh'
 local cam      = require('lib.cameraBase').getInstance()
+local canvas   = require 'lib.canvas'
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
@@ -129,7 +130,8 @@ function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 / 2.5 end
     local dl = curve:getDerivative()
-
+    -- scaleW = scaleW * 3
+    --scaleW = scaleW * canvas.getShrinkFactor()
     for i = 1, 1 do
         local w, h = image:getDimensions()
         local count = mesh:getVertexCount()
@@ -324,7 +326,7 @@ function renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
             coords = border.unloosenVanillaline(points, hairTension, spacing)
             local length = getLengthOfPath(hairLine)
             local factor = (length / h)
-            local hairWidthMultiplier =  1 * multipliers.hair.wMultiplier
+            local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
             local width = (w * factor) * hairWidthMultiplier --30 --160 * 10
             local verts, indices, draw_mode = polyline.render('miter', coords, width)
 
@@ -525,11 +527,13 @@ function drawSkinOver(box2dGuy, creation)
             drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier, eyeMultiplierFix * multipliers.eye.hMultiplier,
+                'eye', r, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier,
+                eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier, eyeMultiplierFix * multipliers.eye.hMultiplier,
+                'eye', r, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier,
+                eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
 
 
