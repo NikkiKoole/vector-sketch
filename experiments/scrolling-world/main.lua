@@ -9,7 +9,7 @@ Vector = require 'vendor.brinevector'
 Concord = require 'vendor.concord.init'
 SM = require 'vendor.SceneMgr'
 
-require 'lib.basic-tools'
+require 'lib.printC'
 
 local ui = require 'lib.ui'
 local camera = require 'lib.camera'
@@ -44,7 +44,8 @@ local gesture = require 'lib.gesture'
 
    https://stackoverflow.com/questions/168891/is-it-faster-to-sort-a-list-after-inserting-items-or-adding-them-to-a-sorted-lis
 
-]] --
+]]
+--
 
 
 -- utility functions that ought to be somewehre else
@@ -85,7 +86,6 @@ end
 
 
 function drawDebugStrings()
-
    if uiState.showFPS then
       love.graphics.setFont(smallfont)
       shadedText('fps: ' .. love.timer.getFPS(), 20, 20)
@@ -93,7 +93,6 @@ function drawDebugStrings()
       local delta = love.timer.getAverageDelta()
       shadedText(string.format("Avg. frame time: %.3f ms", 1000 * delta), 200, 20)
       love.graphics.setFont(font)
-
    end
 
    if uiState.showNumbers then
@@ -111,7 +110,6 @@ function drawDebugStrings()
 end
 
 function drawUI()
-
    local W, H = love.graphics.getDimensions()
 
    if uiState.show then
@@ -158,7 +156,6 @@ function drawUI()
    end
 
    love.graphics.circle('fill', W - 25, 25, 25)
-
 end
 
 function love.wheelmoved(dx, dy)
@@ -201,8 +198,8 @@ function love.load()
    smallfont = love.graphics.newFont("assets/adlib.ttf", 20)
 
    cursors = {
-      --   hand= love.mouse.getSystemCursor("hand"),
-      --   arrow= love.mouse.getSystemCursor("arrow")
+       --   hand= love.mouse.getSystemCursor("hand"),
+       --   arrow= love.mouse.getSystemCursor("arrow")
    }
 
 
@@ -210,13 +207,13 @@ function love.load()
 
 
    uiState = {
-      show = true,
-      showFPS = true,
-      showNumbers = true,
-      showBBoxes = false,
-      showBouncy = true,
-      showTouches = false,
-      gravityValue = 5000
+       show = true,
+       showFPS = true,
+       showNumbers = true,
+       showBBoxes = false,
+       showBouncy = true,
+       showTouches = false,
+       gravityValue = 5000
    }
 
 
@@ -224,10 +221,6 @@ function love.load()
 
    -- Add scene "intro" to scene table
    SM.load("world")
-
-
-
-
 end
 
 function love.update(dt)

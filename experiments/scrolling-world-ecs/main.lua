@@ -11,7 +11,7 @@ Vector = require 'vendor.brinevector'
 Concord = require 'vendor.concord.init'
 SM = require 'vendor.SceneMgr'
 
-require 'lib.basic-tools'
+require 'lib.printC'
 
 local ui = require 'lib.ui'
 local cam = require('lib.cameraBase').getInstance()
@@ -70,7 +70,6 @@ function love.keypressed(key)
 end
 
 function drawDebugStrings()
-
    if uiState.showFPS then
       love.graphics.setFont(smallfont)
 
@@ -103,7 +102,6 @@ function drawDebugStrings()
 end
 
 function drawUI()
-
    local W, H = love.graphics.getDimensions()
 
    if uiState.show then
@@ -150,7 +148,6 @@ function drawUI()
    end
 
    love.graphics.circle('fill', W - 25, 25, 25)
-
 end
 
 function love.wheelmoved(dx, dy)
@@ -181,20 +178,19 @@ function love.load()
 
 
    uiState = {
-      show = false,
-      showFPS = true,
-      showNumbers = false,
-      showBBoxes = false,
-      showBouncy = true,
-      showTouches = false,
-      gravityValue = 5000
+       show = false,
+       showFPS = true,
+       showNumbers = false,
+       showBBoxes = false,
+       showBouncy = true,
+       showTouches = false,
+       gravityValue = 5000
    }
 
    SM.setPath("scenes/")
 
    -- Add scene "intro" to scene table
    SM.load("world")
-
 end
 
 function love.update(dt)
@@ -215,7 +211,6 @@ function love.draw()
    if uiState.showBouncy then
       local value = camera.getTranslateSchedulerValues()
       love.graphics.line(W / 2, 100, W / 2 + value, 0)
-
    end
    if uiState.showTouches then
       local touches = love.touch.getTouches()

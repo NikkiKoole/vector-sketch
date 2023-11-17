@@ -1,7 +1,7 @@
 inspect = require 'vendor.inspect'
 
 
-require 'lib.basic-tools'
+require 'lib.printC'
 require 'src.palettes'
 require 'src.dopesheet'
 require 'src.file-screen'

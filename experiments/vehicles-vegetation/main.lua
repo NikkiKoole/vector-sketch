@@ -1,6 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
-require 'lib.basic-tools'
+require 'lib.printC'
 local lurker          = require 'vendor.lurker'
 lurker.quiet          = true
 local inspect         = require 'vendor.inspect'

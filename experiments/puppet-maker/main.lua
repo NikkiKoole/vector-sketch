@@ -1,6 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
---local manual_gc = require 'vendor.batteries.manual_gc'
+local manual_gc = require 'vendor.batteries.manual_gc'
 
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
    require("lldebugger").start()
@@ -31,13 +31,13 @@ jit.off()
 
 SM = require 'vendor.SceneMgr'
 
-require 'lib.basic-tools'
+require 'lib.printC'
 gesture = require 'lib.gesture'
 Concord = require 'vendor.concord.init'
 myWorld = Concord.world()
 inspect = require 'vendor.inspect'
 
-PROF_CAPTURE = false
+PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
 local mesh = require "lib.mesh"
@@ -96,15 +96,15 @@ end
 
 
 nullFolder = {
-   folder = true,
-   name = 'nullFolder',
-   transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
-   children = {}
+    folder = true,
+    name = 'nullFolder',
+    transforms = { l = { 0, 0, 0, 1, 1, 0, 0 } },
+    children = {}
 }
 -- im sure it sometimes needs to just be the simplest ofunrenderables
 nullChild = {
-   name = 'nullChild',
-   points = { { 0, 0 }, { 0, 0 }, { 0, 0 } }
+    name = 'nullChild',
+    points = { { 0, 0 }, { 0, 0 }, { 0, 0 } }
 }
 
 
@@ -130,21 +130,21 @@ function love.load()
 
 
    local sample_data = {
-      'cr78/Conga Low',
-      'cr78/Bongo Low',
-      'cr78/Tamb 1',
-      'cr78/Bongo High',
-      'cr78/Guiro 1',
-      'Triangles 101',
-      'Triangles 103',
-      'babirhodes/rhodes2',
-      'babirhodes/ba',
-      'babirhodes/bi',
-      'babirhodes/biep2',
-      'babirhodes/biep3',
-      'mipo/pi',
-      'mipo/po3',
-      'mp7/Quijada' }
+       'cr78/Conga Low',
+       'cr78/Bongo Low',
+       'cr78/Tamb 1',
+       'cr78/Bongo High',
+       'cr78/Guiro 1',
+       'Triangles 101',
+       'Triangles 103',
+       'babirhodes/rhodes2',
+       'babirhodes/ba',
+       'babirhodes/bi',
+       'babirhodes/biep2',
+       'babirhodes/biep3',
+       'mipo/pi',
+       'mipo/po3',
+       'mp7/Quijada' }
 
    samples = {}
    for i = 1, #sample_data do
@@ -164,27 +164,27 @@ function love.load()
 
 
    textures = {
-      love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type4.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type5.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type6.png'),
-      love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
-      love.graphics.newImage('assets/img/tiles/tiles2.png'),
-      love.graphics.newImage('assets/img/tiles/tiles.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type4.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type5.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type6.png'),
+       love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
+       love.graphics.newImage('assets/img/tiles/tiles2.png'),
+       love.graphics.newImage('assets/img/tiles/tiles.png'),
 
    }
 
    rubberplonks = {
-      love.audio.newSource("assets/sounds/fx/rubber-plonk1.wav", "static"),
-      love.audio.newSource("assets/sounds/fx/rubber-plonk2.wav", "static"),
-      love.audio.newSource("assets/sounds/fx/rubber-plonk3.wav", "static")
+       love.audio.newSource("assets/sounds/fx/rubber-plonk1.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-plonk2.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-plonk3.wav", "static")
    }
    rubberstretches = {
-      love.audio.newSource("assets/sounds/fx/rubber-stretch1.wav", "static"),
-      love.audio.newSource("assets/sounds/fx/rubber-stretch2.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-stretch1.wav", "static"),
+       love.audio.newSource("assets/sounds/fx/rubber-stretch2.wav", "static"),
    }
 
 
@@ -194,48 +194,48 @@ function love.load()
 
    palettes = {}
    local base = {
-      '020202', '333233', '814800', 'e6c800', 'efebd8',
-      '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
-      'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
-      'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
-      '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
-      'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
-      'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
-      '798091', '4C5575', '6E4431', '626964', '613D41',
+       '020202', '333233', '814800', 'e6c800', 'efebd8',
+       '808b1c', '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+       'f0644d', 'fa8a00', 'f8df00', 'ff7376', 'fef1d0',
+       'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+       '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+       'CB433A', '8F4839', '8A934E', '69445D', 'EEC488',
+       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+       '798091', '4C5575', '6E4431', '626964', '613D41',
    }
 
    local base = {
-      '020202',
-      '4f3166', '6f323a', '872f44', 'efebd8', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
-      'dca941', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
-      '938541', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
-      '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
-      '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'a95c42', 'c37c61',
-      'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
-      '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
-      '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'd76656', 'b16890'
+       '020202',
+       '4f3166', '6f323a', '872f44', 'efebd8', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
+       'dca941', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
+       '938541', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
+       '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
+       '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'a95c42', 'c37c61',
+       'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+       '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
+       '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'd76656', 'b16890'
 
    }
 
 
    local base = {
-      '020202',
-      '4f3166', '69445D', '613D41', 'efebd8', '6f323a', '872f44', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
-      'dca941', 'e6c800', 'f8df00', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
-      '938541', '808b1c', '8A934E', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
-      '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
-      '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'CB433A', 'a95c42',
-      'c37c61', 'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
-      '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
-      '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'f0644d', 'ff7376', 'd76656', 'b16890',
-      '020202', '333233', '814800', 'efebd8',
-      '1a5f8f', '66a5bc', '87727b', 'a23d7e',
-      'fa8a00', 'fef1d0',
-      'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
-      '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
-      '8F4839', 'EEC488',
-      'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
-      '798091', '4C5575', '6E4431', '626964',
+       '020202',
+       '4f3166', '69445D', '613D41', 'efebd8', '6f323a', '872f44', '8d184c', 'be193b', 'd2453a', 'd6642f', 'd98524',
+       'dca941', 'e6c800', 'f8df00', 'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf', '9c9d9f',
+       '938541', '808b1c', '8A934E', '86a542', '57843d', '45783c', '2a5b3e', '1b4141', '1e294b', '0d5f7f', '065966',
+       '1b9079', '3ca37d', '49abac', '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3', '045b9f',
+       '9377b2', '686094', '5f4769', '815562', '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34', 'CB433A', 'a95c42',
+       'c37c61', 'd19150', 'de9832', 'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
+       '252f38', '42505f', '465059', '57595a', '6e7c8c', '75899c', 'aabdce', '807b7b',
+       '857b7e', '8d7e8a', 'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267', 'f0644d', 'ff7376', 'd76656', 'b16890',
+       '020202', '333233', '814800', 'efebd8',
+       '1a5f8f', '66a5bc', '87727b', 'a23d7e',
+       'fa8a00', 'fef1d0',
+       'ffa8a2', '6e614c', '418090', 'b5d9a4', 'c0b99e',
+       '4D391F', '4B6868', '9F7344', '9D7630', 'D3C281',
+       '8F4839', 'EEC488',
+       'C77D52', 'C2997A', '9C5F43', '9C8D81', '965D64',
+       '798091', '4C5575', '6E4431', '626964',
 
    }
 
@@ -273,46 +273,46 @@ function love.load()
 
       local teethIsempty = (values.teeth.shape == #findPart('teeth').imgs)
       fiveGuys[i] = {
-         values = copy3(values),
-         head = copyAndRedoGraphic('head', values),
-         neck = createNeckRubberhose(values),
-         body = copyAndRedoGraphic('body', values),
-         hair = createHairVanillaLine(values),
-         arm1 = createArmRubberhose(1, values),
-         arm2 = createArmRubberhose(2, values),
-         armhair1 = createArmHairRubberhose(1, values),
-         armhair2 = createArmHairRubberhose(2, values),
-         hand1 = copyAndRedoGraphic('hands', values),
-         hand2 = copyAndRedoGraphic('hands', values),
-         leg1 = createLegRubberhose(1, values),
-         leg2 = createLegRubberhose(2, values),
-         leghair1 = createLegHairRubberhose(1, values),
-         leghair2 = createLegHairRubberhose(2, values),
-         feet1 = copyAndRedoGraphic('feet', values),
-         feet2 = copyAndRedoGraphic('feet', values),
-         eye1 = copyAndRedoGraphic('eyes', values),
-         eye2 = copyAndRedoGraphic('eyes', values),
-         pupil1 = copyAndRedoGraphic('pupils', values),
-         pupil2 = copyAndRedoGraphic('pupils', values),
-         brow1 = createBrowBezier(values),
-         brow2 = createBrowBezier(values),
-         mouth = makeMouthParentThing(),
-         teeth = teethIsempty and copy3(nullFolder) or copyAndRedoGraphic('teeth', values),
-         upperlip = createUpperlipBezier(values),
-         lowerlip = createLowerlipBezier(values),
-         ear1 = copyAndRedoGraphic('ears', values),
-         ear2 = copyAndRedoGraphic('ears', values),
-         nose = copyAndRedoGraphic('nose', values),
+          values = copy3(values),
+          head = copyAndRedoGraphic('head', values),
+          neck = createNeckRubberhose(values),
+          body = copyAndRedoGraphic('body', values),
+          hair = createHairVanillaLine(values),
+          arm1 = createArmRubberhose(1, values),
+          arm2 = createArmRubberhose(2, values),
+          armhair1 = createArmHairRubberhose(1, values),
+          armhair2 = createArmHairRubberhose(2, values),
+          hand1 = copyAndRedoGraphic('hands', values),
+          hand2 = copyAndRedoGraphic('hands', values),
+          leg1 = createLegRubberhose(1, values),
+          leg2 = createLegRubberhose(2, values),
+          leghair1 = createLegHairRubberhose(1, values),
+          leghair2 = createLegHairRubberhose(2, values),
+          feet1 = copyAndRedoGraphic('feet', values),
+          feet2 = copyAndRedoGraphic('feet', values),
+          eye1 = copyAndRedoGraphic('eyes', values),
+          eye2 = copyAndRedoGraphic('eyes', values),
+          pupil1 = copyAndRedoGraphic('pupils', values),
+          pupil2 = copyAndRedoGraphic('pupils', values),
+          brow1 = createBrowBezier(values),
+          brow2 = createBrowBezier(values),
+          mouth = makeMouthParentThing(),
+          teeth = teethIsempty and copy3(nullFolder) or copyAndRedoGraphic('teeth', values),
+          upperlip = createUpperlipBezier(values),
+          lowerlip = createLowerlipBezier(values),
+          ear1 = copyAndRedoGraphic('ears', values),
+          ear2 = copyAndRedoGraphic('ears', values),
+          nose = copyAndRedoGraphic('nose', values),
       }
 
       -- maybe we can do a cleanuop phase for the leg and arm hair here.
 
 
       local guy = {
-         folder = true,
-         name = 'guy',
-         transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
-         children = {}
+          folder = true,
+          name = 'guy',
+          transforms = { l = { 0, 0, 0, 1, 1, 0, 0, 0, 0 } },
+          children = {}
       }
 
 
@@ -371,8 +371,8 @@ end
 function partRandomize(values, applyChangeDirectly)
    -- print('doing a randomizer!')
    local parts = { 'head', 'ears', 'eyes', 'pupils', 'neck', 'nose', 'body', 'arms', 'hands', 'feet', 'legs', 'hair',
-      'leghair', 'armhair',
-      'brows', 'upperlip', 'lowerlip', 'skinPatchSnout','skinPatchEye1', 'skinPatchEye2', 'teeth' }
+       'leghair', 'armhair',
+       'brows', 'upperlip', 'lowerlip', 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2', 'teeth' }
 
 
    values.overBite = love.math.random() < .5 and true or false
@@ -417,16 +417,16 @@ function partRandomize(values, applyChangeDirectly)
             values[parts[i]].fgPal = 5
             values[parts[i]].bgPal = 5
          end
-         
-         if (parts[i] == 'skinPatchEye1') then 
+
+         if (parts[i] == 'skinPatchEye1') then
             values.skinPatchEye1PV.tx = -2
             values.skinPatchEye1PV.ty = -3
          end
-         if (parts[i] == 'skinPatchEye2') then 
+         if (parts[i] == 'skinPatchEye2') then
             values.skinPatchEye2PV.tx = 2
             values.skinPatchEye2PV.ty = -3
          end
-         if (parts[i] == 'skinPatchEye2') then 
+         if (parts[i] == 'skinPatchEye2') then
          end
 
          if applyChangeDirectly then
@@ -473,7 +473,7 @@ function love.update(dt)
       SM.update(dt)
    end
    --collectgarbage()
-   --manual_gc(0.002, 2)
+   manual_gc(0.002, 2)
    prof.pop('frame')
 end
 
@@ -482,14 +482,14 @@ makingMarketingScreensIndex = 0
 makingMarketingScreensName = ''
 
 local resolutions = {
-   { 2796,     1290,     '6-7' },       --6.7
-   { 2796 / 2, 1290 / 2, '6-7-50%' },   --6.7
-   { 2688,     1242,     '6-5' },       --6.5
-   { 2688 / 2, 1242 / 2, '6-5-50%' },   --6.5
-   { 2208,     1242,     '5-5' },       -- 5.5
-   { 2208 / 2, 1242 / 2, '5-5-50%' },   -- 5.5
-   { 2732,     2048,     '12-9' },      -- 12.9
-   { 2732 / 2, 2048 / 2, '12-9-50%' },  -- 12.9
+    { 2796,     1290,     '6-7' }, --6.7
+    { 2796 / 2, 1290 / 2, '6-7-50%' }, --6.7
+    { 2688,     1242,     '6-5' }, --6.5
+    { 2688 / 2, 1242 / 2, '6-5-50%' }, --6.5
+    { 2208,     1242,     '5-5' }, -- 5.5
+    { 2208 / 2, 1242 / 2, '5-5-50%' }, -- 5.5
+    { 2732,     2048,     '12-9' }, -- 12.9
+    { 2732 / 2, 2048 / 2, '12-9-50%' }, -- 12.9
 }
 
 
@@ -503,7 +503,7 @@ function love.draw()
       local success = love.window.updateMode(w / 2, h / 2, { fullscreen = false })
       love.resize(w, h)
       love.graphics.captureScreenshot('puppetmaker-marketing-' ..
-         makingMarketingScreensName .. '-' .. type .. '-' .. os.date("%Y%m%d%H%M%S") .. '.png')
+      makingMarketingScreensName .. '-' .. type .. '-' .. os.date("%Y%m%d%H%M%S") .. '.png')
    end
 
    prof.push('frame')

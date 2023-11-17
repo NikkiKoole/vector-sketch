@@ -209,7 +209,7 @@ function scene.load()
         ProFi:start()
     end
 
-    prof.push('frame')
+    prof.push('frame2')
     -- print(myWorld)
 
     root = {
@@ -326,7 +326,7 @@ function scene.load()
 
 
     cam:update(w, h)
-    prof.pop('frame')
+    prof.pop('frame2')
 
 
 
@@ -544,34 +544,30 @@ function scene.update(dt)
     end
 
     if false then
-    function love.resize(w, h)
+        function love.resize(w, h)
+            local centerGuyIndex = math.ceil(#fiveGuys / 2)
+            local bx, by = fiveGuys[centerGuyIndex].body.transforms._g:transformPoint(0, 0)
+            local w, h = love.graphics.getDimensions()
 
-        local centerGuyIndex = math.ceil(#fiveGuys / 2)
-        local bx, by = fiveGuys[centerGuyIndex].body.transforms._g:transformPoint(0, 0)
-        local w, h = love.graphics.getDimensions()
-    
-        camera.setCameraViewport(cam, w, h)
-        --camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
-    
-        local x2, y2, w2, h2 = getCameraZoom()
-        --print(x2, y2, w2, h2)
-    
-        local left = fiveGuys[1].guy.transforms.l[1]
-        local right = fiveGuys[#fiveGuys].guy.transforms.l[1]
-        local wide = (right - left) * 1.5
-    
-        camera.centerCameraOnPosition(0, -h2 / 2, wide, h2)
-        --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
-        --print(x, y, w, h)
-        --camera.centerCameraOnPosition(x, y, w, h)
-        -- tweenCameraTo(x, y, w, h)
-    
-    
-        cam:update(w, h)
+            camera.setCameraViewport(cam, w, h)
+            --camera.centerCameraOnPosition(bx, by, w * 8, h * 5)
+
+            local x2, y2, w2, h2 = getCameraZoom()
+            --print(x2, y2, w2, h2)
+
+            local left = fiveGuys[1].guy.transforms.l[1]
+            local right = fiveGuys[#fiveGuys].guy.transforms.l[1]
+            local wide = (right - left) * 1.5
+
+            camera.centerCameraOnPosition(0, -h2 / 2, wide, h2)
+            --camera.centerCameraOnPosition(tweenCameraData.x, tweenCameraData.y, tweenCameraData.w, tweenCameraData.h)
+            --print(x, y, w, h)
+            --camera.centerCameraOnPosition(x, y, w, h)
+            -- tweenCameraTo(x, y, w, h)
 
 
-        
-     end
+            cam:update(w, h)
+        end
     end
 
     function love.keypressed(k)
@@ -581,12 +577,12 @@ function scene.update(dt)
 
         --if k == 'm' then
         --    print('M')
-            --local index = math.ceil(math.random() * #fg)
-            --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
+        --local index = math.ceil(math.random() * #fg)
+        --myWorld:emit('mouthSaySomething', fg[index].mouth, fiveGuys[index], 1)
         --end
-        if k== 'm' then
+        if k == 'm' then
             makeMarketingScreenshots('overworld')
-         end
+        end
         if k == 'c' then
             local w, h = love.graphics.getDimensions()
             doCircleInTransition(love.math.random() * w, love.math.random() * h, function()
