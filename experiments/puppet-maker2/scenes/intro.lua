@@ -27,7 +27,6 @@ function scene.load()
     creamColor = { 238 / 255, 226 / 255, 188 / 255 }
     blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff }
     bgColor = creamColor
-    print('jo hello?')
     introSound:setVolume(.5)
     introSound:setLooping(true)
     introSound:play()
@@ -99,15 +98,8 @@ function scene.load()
 
     local w, h = love.graphics.getDimensions()
 
-
-    -- local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
-    -- tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
-
-    -- camera.setCameraViewport(cam, w, h)
-    -- camera.centerCameraOnPosition(x1, y1, w1, h1)
-
-    local w1 = 400
-    local h1 = 400
+    local w1 = w / 1.5
+    local h1 = h / 1.5
     local y1 = 100
     mipobb = bbox.getBBoxRecursive(mipo)
 

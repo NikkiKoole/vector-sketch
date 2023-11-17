@@ -59,6 +59,8 @@ function love.load()
 
     SM.setPath("scenes/")
     SM.load("splash")
+
+    love.window.updateMode(200, 200, { fullscreen = false })
 end
 
 function love.update(dt)
