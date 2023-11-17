@@ -8,8 +8,7 @@ local Timer         = require 'vendor.timer'
 local fluxObject    = { headerOffset = 0, guyY = 0, darknessAlpha = 0, puppetMakerAlpha = 0 }
 local numbers       = require 'lib.numbers'
 
---local Components    = {}
---local Systems       = {}
+
 require 'lib.printC'
 local parentize = require 'lib.parentize'
 local mesh      = require 'lib.mesh'
@@ -20,44 +19,20 @@ local bbox      = require 'lib.bbox'
 local parse     = require 'lib.parse-file'
 local bbox      = require 'lib.bbox'
 require 'src.screen-transitions'
---myWorld = Concord.world()
+
 local audioHelper = require 'lib.audio-helper'
---require 'src.generatePuppet'
---require 'src.puppet-maker-ui'
---require 'src.reuse'
 
-if false then
-    function getCameraDataZoomOnHeadAndBody()
-        local bbHead             = bbox.getBBoxRecursive(editingGuy.head)
-        local bbBody             = bbox.getBBoxRecursive(editingGuy.body)
-        local bbFeet1            = bbox.getBBoxRecursive(editingGuy.feet1)
-        local bbFeet2            = bbox.getBBoxRecursive(editingGuy.feet2)
-        local bbHand1            = bbox.getBBoxRecursive(editingGuy.hand1)
-        local bbHand2            = bbox.getBBoxRecursive(editingGuy.hand2)
-
-        local tlx, tly, brx, bry = bbox.combineBboxes(bbHead, bbBody, bbFeet1, bbFeet2, bbHand1, bbHand2)
-        local x2, y2, w2, h2     = bbox.getMiddleAndDimsOfBBox(tlx, tly, brx, bry)
-
-        --return x2, y2, w, h * 1.2
-        local w, h               = love.graphics.getDimensions()
-        return 0, y2 + -h2 / 4, w, h2 * 1.5
-    end
-end
---Concord.utils.loadNamespace("src/components", Components)
---Concord.utils.loadNamespace("src/systems", Systems)
---myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem, Systems.MouthSystem)
 
 function scene.load()
     creamColor = { 238 / 255, 226 / 255, 188 / 255 }
     blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff }
     bgColor = creamColor
+    print('jo hello?')
     introSound:setVolume(.5)
     introSound:setLooping(true)
     introSound:play()
-    ----
-    --  for i = 1, #fiveGuys do
-    --     fiveGuys[i].guy.transforms.l[1] = 0
-    -- end
+
+
     Timer.after(.1, function()
         Timer.tween(1, bgColor, { [1] = blueColor[1],[2] = blueColor[2],[3] = blueColor[3] }, 'out-cubic')
     end)
@@ -115,40 +90,10 @@ function scene.load()
     root.children = { mipo }
 
 
-    --  local guybb = bbox.getBBoxRecursive(editingGuy.guy)
-
-
-
-
-    -- attachAllFaceParts(editingGuy)
-    --  changePart('hair')
-
-    -- a bit of a cheap fix to fic teh null objects hair stuff
-    -- if isNullObject('leghair', editingGuy.values) then
-    --     changePart('leghair')
-    -- end
-    -- if isNullObject('armhair', editingGuy.values) then
-    --     changePart('armhair')
-    -- end
-    -- if isNullObject('hair', editingGuy.values) then
-    --     changePart('hair')
-    -- end
-    --changePart('hair')
-
     stripPath(root, '/experiments/puppet%-maker/')
     parentize.parentize(root)
     mesh.meshAll(root)
     render.renderThings(root)
-
-    -- ok i have to call this before the init, weird!!!!!
-    -- todo look at this better
-    -- myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
-    -- myWorld:emit("bipedInit", biped)
-
-
-
-    -- myWorld:emit("potatoInit", potato)
-    -- myWorld:emit("mouthInit", mouth)
 
     render.renderThings(root, true)
 
@@ -161,8 +106,8 @@ function scene.load()
     -- camera.setCameraViewport(cam, w, h)
     -- camera.centerCameraOnPosition(x1, y1, w1, h1)
 
-    local w1 = 200
-    local h1 = 200
+    local w1 = 400
+    local h1 = 400
     local y1 = 100
     mipobb = bbox.getBBoxRecursive(mipo)
 
@@ -383,7 +328,7 @@ end
 function scene.unload()
     print('unload')
     Timer.clear()
-    myWorld:emit('finishBirth', biped)
+    --myWorld:emit('finishBirth', biped)
 end
 
 function gotoNext()
