@@ -8,19 +8,18 @@ local Timer         = require 'vendor.timer'
 local fluxObject    = { headerOffset = 0, guyY = 0, darknessAlpha = 0, puppetMakerAlpha = 0 }
 local numbers       = require 'lib.numbers'
 
+--require 'lib.printC'
+local parentize     = require 'lib.parentize'
+local mesh          = require 'lib.mesh'
+local render        = require 'lib.render'
+local camera        = require 'lib.camera'
+local cam           = require('lib.cameraBase').getInstance()
+local bbox          = require 'lib.bbox'
+local parse         = require 'lib.parse-file'
+local bbox          = require 'lib.bbox'
+local wipes         = require 'src.screen-transitions'
 
-require 'lib.printC'
-local parentize = require 'lib.parentize'
-local mesh      = require 'lib.mesh'
-local render    = require 'lib.render'
-local camera    = require 'lib.camera'
-local cam       = require('lib.cameraBase').getInstance()
-local bbox      = require 'lib.bbox'
-local parse     = require 'lib.parse-file'
-local bbox      = require 'lib.bbox'
-require 'src.screen-transitions'
-
-local audioHelper = require 'lib.audio-helper'
+local audioHelper   = require 'lib.audio-helper'
 
 
 function scene.load()
@@ -62,34 +61,12 @@ function scene.load()
         children = {}
     }
 
-    if false then
-        guyFacing = -1
 
-        guyX = 0.75
+    mipo = parse.parseFile('/assets/intro/mipo.polygons.txt')[1]
 
-
-
-        parts = generateParts()
-
-        biped = Concord.entity()
-        potato = Concord.entity()
-        mouth = Concord.entity()
-
-        myWorld:addEntity(biped)
-        myWorld:addEntity(potato)
-        myWorld:addEntity(mouth)
-
-        biped:give('biped', bipedArguments(editingGuy))
-        potato:give('potato', potatoArguments(editingGuy))
-        mouth:give('mouth', mouthArguments(editingGuy))
-    end
-    mipo = parse.parseFile('/assets/mipo.polygons.txt')[1]
-    --root.children = { mipo, editingGuy.guy }
-    print(inspect(mipo))
     root.children = { mipo }
 
-
-    stripPath(root, '/experiments/puppet%-maker/')
+    stripPath(root, '/experiments/puppet%-maker2/')
     parentize.parentize(root)
     mesh.meshAll(root)
     render.renderThings(root)
@@ -101,7 +78,7 @@ function scene.load()
     local w1 = w / 1.5
     local h1 = h / 1.5
     local y1 = 100
-    mipobb = bbox.getBBoxRecursive(mipo)
+    local mipobb = bbox.getBBoxRecursive(mipo)
 
     local mw = mipobb[4] - mipobb[2]
     local mh = mipobb[3] - mipobb[1]
@@ -121,9 +98,6 @@ function scene.load()
             end
         end
     end
-
-
-    -- myWorld:emit('birthGuy', biped)
 
     Timer.after(15, function()
         Timer.tween(1, fluxObject, { darknessAlpha = 0, puppetMakerAlpha = 0 })
@@ -145,45 +119,48 @@ function doTheMipoAnimation()
     -- show mipo letters
 
     local M = mipo.children[2]
-    local originM = {}
     local I = mipo.children[3]
-    local originI = {}
     local P = mipo.children[4]
-    local originP = {}
     local O = mipo.children[5]
+
+    local originM = {}
+    local originI = {}
+    local originP = {}
     local originO = {}
 
-    local letter = M
-    for i = 1, #letter.children do
-        for j = 1, #letter.children[i].points do
-            table.insert(originM, { letter.children[i].points[j][1], letter.children[i].points[j][2] })
-        end
-    end
-    local letter = I
-    for i = 1, #letter.children do
-        for j = 1, #letter.children[i].points do
-            table.insert(originI, { letter.children[i].points[j][1], letter.children[i].points[j][2] })
-        end
-    end
-    local letter = P
-    for i = 1, #letter.children do
-        for j = 1, #letter.children[i].points do
-            table.insert(originP, { letter.children[i].points[j][1], letter.children[i].points[j][2] })
-        end
-    end
-    local letter = O
-    for i = 1, #letter.children do
-        for j = 1, #letter.children[i].points do
-            table.insert(originO, { letter.children[i].points[j][1], letter.children[i].points[j][2] })
+    local function cachePoints(letter, cacheHere)
+        for i = 1, #letter.children do
+            for j = 1, #letter.children[i].points do
+                table.insert(cacheHere, { letter.children[i].points[j][1], letter.children[i].points[j][2] })
+            end
         end
     end
 
+    cachePoints(M, originM)
+    cachePoints(I, originI)
+    cachePoints(P, originP)
+    cachePoints(O, originO)
 
+    local function randomTweenLetterPoints(letters, origins)
+        for k = 1, #letters do
+            local l           = letters[k]
+            local originIndex = 1
+            for i = 1, #l.children do
+                for j = 1, #l.children[i].points do
+                    Timer.tween(0.4, l.children[i].points[j],
+                        {
+                            [1] = origins[k][originIndex][1] + love.math.random() * 100 - 5,
+                            [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
+                        })
+
+                    originIndex = originIndex + 1
+                end
+            end
+        end
+    end
 
     -- MI
     Timer.after(0.5, function()
-        local M = mipo.children[2]
-        local I = mipo.children[3]
         for i = 1, #M.children do
             Timer.tween(0.5, M.children[i].color, { [4] = 1 })
         end
@@ -197,45 +174,19 @@ function doTheMipoAnimation()
             sound = miSound2
         end
         playSound(sound, .7 + love.math.random() * 0.5)
-        --myWorld:emit('mouthSaySomething', mouth, editingGuy, 1)
 
-        --  Timer.during(15, function()
         Timer.every(.5, function()
-            local M = mipo.children[2]
-            local I = mipo.children[3]
-
-            --  local P = mipo.children[4]
-            --  local O = mipo.children[5]
-
             local letters = { M, I }
             local origins = { originM, originI }
 
-            for k = 1, #letters do
-                local l           = letters[k]
-                local originIndex = 1
-                for i = 1, #l.children do
-                    for j = 1, #l.children[i].points do
-                        Timer.tween(0.4, l.children[i].points[j],
-                            {
-                                [1] = origins[k][originIndex][1] + love.math.random() * 100 - 5,
-                                [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
-                            })
-                        --  l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 40 - 20
-                        --  l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 10 - 5
-                        originIndex = originIndex + 1
-                    end
-                end
-            end
+            randomTweenLetterPoints(letters, origins)
             mesh.meshAll(mipo)
         end)
-        --  end)
     end)
 
 
     -- PO
     Timer.after(1, function()
-        local P = mipo.children[4]
-        local O = mipo.children[5]
         for i = 1, #P.children do
             Timer.tween(0.5, P.children[i].color, { [4] = 1 })
         end
@@ -251,59 +202,15 @@ function doTheMipoAnimation()
         end
         playSound(sound, .7 + love.math.random() * 0.5)
 
-
-        --  myWorld:emit('mouthSaySomething', mouth, editingGuy, 1)
-        -- Timer.during(15, function()
         Timer.every(.5, function()
-            local M = mipo.children[2]
-            local I = mipo.children[3]
-            local P = mipo.children[4]
-            local O = mipo.children[5]
-
             local letters = { P, O }
             local origins = { originP, originO }
-            for k = 1, #letters do
-                local l = letters[k]
-                local originIndex = 1
-                for i = 1, #l.children do
-                    for j = 1, #l.children[i].points do
-                        Timer.tween(0.4, l.children[i].points[j],
-                            {
-                                [1] = origins[k][originIndex][1] + love.math.random() * 100 - 5,
-                                [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
-                            })
-                        --l.children[i].points[j][1] = origins[k][originIndex][1] + love.math.random() * 100 - 5
-                        --l.children[i].points[j][2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
-                        originIndex = originIndex + 1
-                    end
-                end
-            end
+            randomTweenLetterPoints(letters, origins)
+
             mesh.meshAll(mipo)
         end)
-        -- end)
     end)
 
-    if false then
-        Timer.after(2, function()
-            myWorld:emit('doinkBody', biped)
-        end)
-
-        Timer.after(3.5, function()
-            myWorld:emit('breath', biped)
-        end)
-        Timer.after(5, function()
-            myWorld:emit('breath', biped)
-        end)
-        Timer.after(7, function()
-            myWorld:emit('breath', biped)
-        end)
-        Timer.after(9.5, function()
-            myWorld:emit('breath', biped)
-        end)
-        Timer.after(12, function()
-            myWorld:emit('breath', biped)
-        end)
-    end
     Timer.after(15, function()
         local w, h = love.graphics.getDimensions()
         fadeOutTransition(function()
@@ -318,9 +225,7 @@ function scene.handleAudioMessage()
 end
 
 function scene.unload()
-    print('unload')
     Timer.clear()
-    --myWorld:emit('finishBirth', biped)
 end
 
 function gotoNext()
@@ -343,17 +248,6 @@ function scene.update(dt)
         if key == 'space' then
             gotoNext()
         end
-        if key == 'b' then
-            -- myWorld:emit('blinkEyes', potato)
-            -- myWorld:emit('birthGuy', biped)
-        end
-        if key == 'f' then
-            --   myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
-        end
-
-        if key == 'm' then
-            --  makeMarketingScreenshots('intro')
-        end
     end
 
     function love.touchpressed(key, unicode)
@@ -365,17 +259,7 @@ function scene.update(dt)
     end
 
     time = time + dt
-    --flux.update(dt)
     Timer.update(dt)
-
-    -- print(fluxObject.guyY)
-
-    -- if (math.floor(fluxObject.guyY) == 1) then
-    --    guyX = guyX + (0.007 * guyFacing)
-    --    if (guyX < -0.1 or guyX > 1.1) then
-    --       guyFacing = guyFacing * -1
-    --    end
-    -- end
 
     function love.resize(w, h)
         local w, h = love.graphics.getDimensions()
@@ -393,38 +277,24 @@ function scene.draw()
     --love.graphics.clear(238 / 255, 226 / 255, 188 / 255)
     love.graphics.clear(bgColor)
 
-    screenWidth, screenHeight = love.graphics.getDimensions()
-
-    darkWidth, darkHeight = darkness:getDimensions()
-
-    local scaleX = screenWidth / blobWidth
-    local scaleY = screenHeight / blobHeight
-    local scale = math.min(scaleX, scaleY)
-    scale = scale * 0.7
+    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local darkWidth, darkHeight = darkness:getDimensions()
 
     love.graphics.setColor(1, 1, 1, fluxObject.darknessAlpha)
     local dscaleX = screenWidth / darkWidth
     local dscaleY = screenHeight / darkHeight
     love.graphics.draw(darkness, 0, 0, 0, dscaleX, dscaleY)
 
-
-
-
     cam:push()
     render.renderThings(root, true)
     cam:pop()
 
-
-
-
-
-    blobWidth, blobHeight = poppetjeMaker:getDimensions()
+    local blobWidth, blobHeight = poppetjeMaker:getDimensions()
     scaleX = screenWidth / blobWidth
     scaleY = screenHeight / blobHeight
     scale = math.min(scaleX, scaleY)
     scale = scale * 0.5
     scale = scale + (math.sin(time) * 0.01)
-
 
     love.graphics.setColor(1, 1, 1, 0.5 * (fluxObject.headerOffset) * fluxObject.puppetMakerAlpha)
     love.graphics.draw(poppetjeMaker, 1 + (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
@@ -432,13 +302,11 @@ function scene.draw()
 
     love.graphics.setColor(1, 1, 1, fluxObject.puppetMakerAlpha)
 
-
     love.graphics.draw(poppetjeMaker, (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
         screenHeight - (blobHeight * scale), 0, scale, scale, blobWidth / 2, blobHeight / 2)
 
-
     if transition then
-        renderTransition(transition)
+        wipes.renderTransition(transition)
     end
 end
 

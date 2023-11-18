@@ -1,5 +1,8 @@
 local Timer = require 'vendor.timer'
 
+
+local lib = {}
+
 local function myCircleStencilFunction(x, y, r, s)
     love.graphics.circle("fill", x, y, r, s)
 end
@@ -55,7 +58,7 @@ function doCircleInTransition(x, y, onAfter)
     end)
 end
 
-function renderTransition(transition)
+lib.renderTransition = function(transition)
     if transition.type == 'circle' then
         drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)
     end
@@ -114,3 +117,5 @@ function fadeOutTransition(onAfter)
         transition = nil;
     end)
 end
+
+return lib

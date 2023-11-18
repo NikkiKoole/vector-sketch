@@ -1,13 +1,8 @@
 local Timer = require 'vendor.timer'
-
 local fluxObject = { blobScale = 0, blobOffset = 0, headerOffset = 0, alpha1 = 0.1, alpha2 = .25 }
-
 local scene = {}
 local header = love.graphics.newImage('assets/intro/splash-header.png')
 local blob = love.graphics.newImage('assets/intro/splash-blob.png')
-
-local clock1 = nil
-local clock2 = nil
 
 function scene.modify(obj)
 end
@@ -73,8 +68,8 @@ end
 function scene.draw()
     love.graphics.clear(238 / 255, 226 / 255, 188 / 255)
 
-    screenWidth, screenHeight = love.graphics.getDimensions()
-    blobWidth, blobHeight = blob:getDimensions()
+    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local blobWidth, blobHeight = blob:getDimensions()
     local scaleX = screenWidth / blobWidth
     local scaleY = screenHeight / blobHeight
     local scale = math.min(scaleX, scaleY)

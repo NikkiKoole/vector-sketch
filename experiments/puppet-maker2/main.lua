@@ -7,7 +7,7 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 jit.off()
-
+require 'lib.printC'
 SM = require 'vendor.SceneMgr'
 inspect = require 'vendor.inspect'
 
@@ -60,7 +60,7 @@ function love.load()
     SM.setPath("scenes/")
     SM.load("splash")
 
-    love.window.updateMode(200, 200, { fullscreen = false })
+    --love.window.updateMode(200, 200, { fullscreen = false })
 end
 
 function love.update(dt)
@@ -109,6 +109,7 @@ grabbingScreenshots = {
         local url = 'puppetmaker-marketing-' ..
             grabbingScreenshots.name .. '-' .. type .. '-' .. os.date("%Y%m%d%H%M%S") .. '.png'
         local success = love.window.updateMode(w / 2, h / 2, { fullscreen = false })
+        if love.resize then love.resize(w, h) end
         print('making marketing screenhsot', index, w, h, url)
         SM.draw()
         love.graphics.captureScreenshot(url)
