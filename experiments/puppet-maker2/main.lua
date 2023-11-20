@@ -6,8 +6,12 @@ local manual_gc = require 'vendor.batteries.manual_gc'
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
+
 jit.off()
 require 'lib.printC'
+
+local text = require 'lib.text'
+
 SM = require 'vendor.SceneMgr'
 inspect = require 'vendor.inspect'
 
@@ -28,6 +32,26 @@ local audioHelper = require 'lib.audio-helper'
 
 audioHelper.startAudioThread()
 
+creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
+blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
+
+function loadSong(filename)
+    if text.ends_with(filename, 'melodypaint.txt') then
+        local contents = love.filesystem.read(filename)
+        local tab = (loadstring("return " .. contents)())
+        local result = audioHelper.loadMelodyPaintTab(tab, samples)
+
+        if result then
+            song = result
+            song.page = song.pages[1]
+            audioHelper.sendMessageToAudioThread({ type = 'song', data = song })
+        else
+            print('no success loading meloypaint file')
+        end
+    else
+        print('i only load files ending in .melodypaint.txt')
+    end
+end
 
 function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
@@ -50,6 +74,32 @@ function love.keypressed(key)
 end
 
 function love.load()
+    local sample_data = {
+        'cr78/Conga Low',
+        'cr78/Bongo Low',
+        'cr78/Tamb 1',
+        'cr78/Bongo High',
+        'cr78/Guiro 1',
+        'Triangles 101',
+        'Triangles 103',
+        'babirhodes/rhodes2',
+        'babirhodes/ba',
+        'babirhodes/bi',
+        'babirhodes/biep2',
+        'babirhodes/biep3',
+        'mipo/pi',
+        'mipo/po3',
+        'mp7/Quijada' }
+
+    samples = {}
+    for i = 1, #sample_data do
+        --table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
+        local data = love.sound.newSoundData('assets/instruments/' .. sample_data[i] .. '.wav')
+        table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i] })
+    end
+    loadSong('assets/mipo4.melodypaint.txt')
+
+
     splashSound = love.audio.newSource("assets/sounds/music/mipolailoop.mp3", "static")
     introSound = love.audio.newSource("assets/sounds/music/introloop.mp3", "static")
     miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
@@ -57,9 +107,14 @@ function love.load()
     miSound1 = love.audio.newSource("assets/sounds/mi.wav", "static")
     poSound1 = love.audio.newSource("assets/sounds/po.wav", "static")
 
+
+
     SM.setPath("scenes/")
     SM.load("splash")
 
+    audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
+    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
+    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
     --love.window.updateMode(200, 200, { fullscreen = false })
 end
 

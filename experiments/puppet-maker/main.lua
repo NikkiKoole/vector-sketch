@@ -52,7 +52,8 @@ lurker.postswap = function(f)
    focussed = true
 end
 
-
+creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
+blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
 
 
 local audioHelper = require 'lib.audio-helper'

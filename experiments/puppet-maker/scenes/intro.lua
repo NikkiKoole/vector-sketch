@@ -48,9 +48,7 @@ Concord.utils.loadNamespace("src/systems", Systems)
 myWorld:addSystems(Systems.BipedSystem, Systems.PotatoHeadSystem, Systems.MouthSystem)
 
 function scene.load()
-   creamColor = { 238 / 255, 226 / 255, 188 / 255 }
-   blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff }
-   bgColor = creamColor
+   bgColor = { unpack(creamColor) }
    introSound:setVolume(.5)
    introSound:setLooping(true)
    introSound:play()
@@ -407,11 +405,9 @@ function scene.update(dt)
          myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
       end
 
-         if key== 'm' then
-            makeMarketingScreenshots('intro')
-         end
-
-      
+      if key == 'm' then
+         makeMarketingScreenshots('intro')
+      end
    end
 
    function love.touchpressed(key, unicode)

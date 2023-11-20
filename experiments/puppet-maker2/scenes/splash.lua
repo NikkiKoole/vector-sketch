@@ -66,7 +66,8 @@ function scene.update(dt)
 end
 
 function scene.draw()
-    love.graphics.clear(238 / 255, 226 / 255, 188 / 255)
+    print(unpack(creamColor))
+    love.graphics.clear(creamColor)
 
     local screenWidth, screenHeight = love.graphics.getDimensions()
     local blobWidth, blobHeight = blob:getDimensions()

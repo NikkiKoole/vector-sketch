@@ -23,9 +23,7 @@ local audioHelper   = require 'lib.audio-helper'
 
 
 function scene.load()
-    creamColor = { 238 / 255, 226 / 255, 188 / 255 }
-    blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff }
-    bgColor = creamColor
+    bgColor = { unpack(creamColor) }
     introSound:setVolume(.5)
     introSound:setLooping(true)
     introSound:play()
@@ -225,6 +223,8 @@ function scene.handleAudioMessage()
 end
 
 function scene.unload()
+    print('asdasd')
+
     Timer.clear()
 end
 
@@ -275,7 +275,11 @@ end
 
 function scene.draw()
     --love.graphics.clear(238 / 255, 226 / 255, 188 / 255)
-    love.graphics.clear(bgColor)
+    love.graphics.clear(1, 1, 1)
+    local w, h = love.graphics.getDimensions()
+    print(unpack(creamColor))
+    love.graphics.setColor(bgColor)
+    love.graphics.rectangle('fill', 0, 0, w, h)
 
     local screenWidth, screenHeight = love.graphics.getDimensions()
     local darkWidth, darkHeight = darkness:getDimensions()
