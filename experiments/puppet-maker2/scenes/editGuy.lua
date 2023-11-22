@@ -1,6 +1,6 @@
 local audioHelper = require 'lib.audio-helper'
 local gradient    = require 'lib.gradient'
-
+local Timer       = require 'vendor.timer'
 local scene       = {}
 
 
@@ -276,6 +276,7 @@ function loadUIImages()
         eyes2Mask = love.graphics.newImage('assets/ui/icons/eyes-mask.png'),
     }
     headz       = {}
+
     for i = 1, 8 do
         headz[i] = {
             img = love.graphics.newImage('assets/ui/blups/headz' .. i .. '.png'),
@@ -308,21 +309,31 @@ function scene.unload()
 end
 
 function scene.update(dt)
+    if introSound:isPlaying() then
+        local volume = introSound:getVolume()
+        introSound:setVolume(volume * .90)
+        if (volume < 0.01) then
+            introSound:stop()
+        end
+    end
+    if splashSound:isPlaying() then
+        local volume = splashSound:getVolume()
+        splashSound:setVolume(volume * .90)
+        if volume < 0.01 then
+            splashSound:stop()
+        end
+    end
 
+
+    function love.mousepressed(key, unicode)
+        -- gotoNext()
+    end
+
+    --delta = delta + dt
+    Timer.update(dt)
 end
 
 function scene.draw()
-    print('yes what ?!')
-
-    --love.graphics.clear(1, 1, 1)
-    --local w, h = love.graphics.getDimensions()
-    --print(unpack(creamColor))
-    --love.graphics.setColor(creamColor)
-    --love.graphics.rectangle('fill', 0, 0, w, h)
-
-
-    --love.graphics.clear(creamColor)
-    --  love.graphics.clear(1, 1, 1)
     local w, h = love.graphics.getDimensions()
     if true then
         love.graphics.setColor(1, 1, 1, 1)

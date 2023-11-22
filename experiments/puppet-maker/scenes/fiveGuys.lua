@@ -4,7 +4,6 @@ local hit         = require 'lib.hit'
 local skygradient = gradient.makeSkyGradient(6)
 local Timer       = require 'vendor.timer'
 
-
 local parentize   = require 'lib.parentize'
 local render      = require 'lib.render'
 local mesh        = require 'lib.mesh'
@@ -23,7 +22,6 @@ require 'src.reuse'
 require 'src.screen-transitions'
 
 local pointerInteractees = {}
-
 
 local function pointerReleased(x, y, id)
     for i = #pointerInteractees, 1, -1 do
@@ -452,16 +450,16 @@ function scene.draw()
         local y = 0
 
         love.graphics.setColor(0, 0, 0, 0.5)
-        local sx, sy = createFittingScale(circles[1], size, size)
-        love.graphics.draw(circles[1], x, y, 0, sx, sy)
+        local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
         --love.graphics.rectangle('fill', w - size, 0, size, size)
         --love.graphics.setColor(1, 0, 1)
-        local sx, sy = createFittingScale(bigbuttons.editguys, size, size)
+        local sx, sy = createFittingScale(ui2.bigbuttons.editguys, size, size)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(bigbuttons.editguysmask, x, y, 0, sx, sy)
+        love.graphics.draw(ui2.bigbuttons.editguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
-        love.graphics.draw(bigbuttons.editguys, x, y, 0, sx, sy)
+        love.graphics.draw(ui2.bigbuttons.editguys, x, y, 0, sx, sy)
     end
 
     love.graphics.setColor(1, 1, 1, .6)

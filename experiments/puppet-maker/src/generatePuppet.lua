@@ -274,7 +274,7 @@ function attachAllFaceParts(guy)
 
 
    attachAllMouthParts(guy)
-   changePart('hair', guy.values)
+   changePart('hair')
 end
 
 function arrangeBrows()

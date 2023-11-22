@@ -146,24 +146,25 @@ local function pointerMoved(x, y, dx, dy, id)
    end
 
    -- only do this when the scroll ui is visible (always currently)
-   if scrollerIsDragging and not somethingWasDragged then
+   if scroller.isDragging and not somethingWasDragged then
       local w, h = love.graphics.getDimensions()
       local oldScrollPos = scroller.position
-      scroller.position = scroller.position + dy / (h / scrollItemsOnScreen)
+      scroller.position = scroller.position + dy / (h / scroller.visibleOnScreen)
       local newScrollPos = scroller.position
       if (math.floor(oldScrollPos) ~= math.floor(newScrollPos)) then
          -- play sound
-         playSound(scrollTickSample)
+         playSound(uiTickSound)
       end
    end
 
-   if settingsScrollAreaIsDragging and not somethingWasDragged then
-      local old = settingsScrollPosition
-      settingsScrollPosition = settingsScrollPosition + dy / settingsScrollArea[5]
+   if grid.isDragging and not somethingWasDragged then
+      local old = grid.position
 
-      if math.floor(old) ~= math.floor(settingsScrollPosition) then
-         if not settingsScrollArea[8] then
-            playSound(scrollTickSample)
+      grid.position = grid.position + dy / grid.data.cellsize
+
+      if math.floor(old) ~= math.floor(grid.position) then
+         if not grid.data.noScroll then
+            playSound(uiTickSound)
          end
       end
    end
@@ -196,8 +197,8 @@ function pointerReleased(x, y, id)
       end
    end
 
-   scrollerIsDragging = false
-   settingsScrollAreaIsDragging = false
+   scroller.isDragging = false
+   grid.isDragging = false
 
    gesture.maybeTrigger(id, x, y)
    -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
@@ -281,22 +282,23 @@ local function pointerPressed(x, y, id)
    local w, h = love.graphics.getDimensions()
    -- local x, y = love.mouse.getPosition()
 
-   if x >= 0 and x <= scrollListXPosition then
-      -- this could be clicking in the head or body buttons
-      --  headOrBody(false, x, y)
-   end
+   -- if x >= 0 and x <= scrollListXPosition then
+   -- this could be clicking in the head or body buttons
+   --  headOrBody(false, x, y)
+   --end
 
-   if x >= scrollListXPosition and x < scrollListXPosition + (h / scrollItemsOnScreen) then
-      scrollerIsDragging = true
-      scrollListIsThrown = nil
+
+   local scrollItemWidth = (h / scroller.visibleOnScreen)
+   if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
+      scroller.isDragging = true
+      scroller.isThrown = nil
+      -- scrollListIsThrown = nil
       gesture.add('scroll-list', id, love.timer.getTime(), x, y)
    end
-   if (settingsScrollArea) then
-      if (hit.pointInRect(x, y,
-              settingsScrollArea[1], settingsScrollArea[2], settingsScrollArea[3], settingsScrollArea[4])
-          ) then
-         settingsScrollAreaIsDragging = true
-         settingsScrollAreaIsThrown = nil
+   if (grid.data) then
+      if (hit.pointInRect(x, y, grid.data.x, grid.data.y, grid.data.w, grid.data.h)) then
+         grid.isDragging = true
+         grid.isThrown = nil
          gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
       end
    end
@@ -367,11 +369,13 @@ function scene.unload()
 end
 
 function loadUIImages()
-   tiles = love.graphics.newImage('assets/img/tiles/tiles.png')
-   tiles2 = love.graphics.newImage('assets/img/tiles/tiles2.png')
+   ui2 = {}
+
+   ui2.tiles = love.graphics.newImage('assets/img/tiles/tiles.png')
+   ui2.tiles2 = love.graphics.newImage('assets/img/tiles/tiles2.png')
 
 
-   whiterects = {
+   ui2.whiterects = {
        love.graphics.newImage('assets/ui/panels/whiterect1.png'),
        love.graphics.newImage('assets/ui/panels/whiterect2.png'),
        love.graphics.newImage('assets/ui/panels/whiterect3.png'),
@@ -382,7 +386,7 @@ function loadUIImages()
    }
 
 
-   bigbuttons        = {
+   ui2.bigbuttons        = {
        fiveguys = love.graphics.newImage('assets/ui/big-button-fiveguys.png'),
        fiveguysmask = love.graphics.newImage('assets/ui/big-button-fiveguys-mask.png'),
        editguys = love.graphics.newImage('assets/ui/big-button-editguys.png'),
@@ -390,7 +394,7 @@ function loadUIImages()
        dice = love.graphics.newImage('assets/ui/big-button-dice.png'),
        dicemask = love.graphics.newImage('assets/ui/big-button-dice-mask.png'),
    }
-   dots              = {
+   ui2.dots              = {
        love.graphics.newImage('assets/ui/colorpick/c1.png'),
        love.graphics.newImage('assets/ui/colorpick/c2.png'),
        love.graphics.newImage('assets/ui/colorpick/c3.png'),
@@ -400,52 +404,48 @@ function loadUIImages()
        love.graphics.newImage('assets/ui/colorpick/c7.png'),
    }
 
-   uiheaders         = {
+   ui2.uiheaders         = {
        love.graphics.newImage('assets/ui/panels/ui-header2.png', { linear = true }),
        love.graphics.newImage('assets/ui/panels/ui-header3.png', { linear = true }),
        love.graphics.newImage('assets/ui/panels/ui-header4.png', { linear = true })
    }
-   tabui             = {
+   ui2.tabui             = {
        love.graphics.newImage('assets/ui/panels/tab1.png'),
        love.graphics.newImage('assets/ui/panels/tab2.png'),
        love.graphics.newImage('assets/ui/panels/tab3.png'),
    }
-   tabuimask         = {
+   ui2.tabuimask         = {
        love.graphics.newImage('assets/ui/panels/tab1-mask.png'),
        love.graphics.newImage('assets/ui/panels/tab2-mask.png'),
        love.graphics.newImage('assets/ui/panels/tab3-mask.png'),
    }
-   tabuilogo         = {
+   ui2.tabuilogo         = {
        love.graphics.newImage('assets/ui/panels/tab1-logo.png'),
        love.graphics.newImage('assets/ui/panels/tab2-logoC2.png'),
        love.graphics.newImage('assets/ui/panels/tab3-logo.png'),
    }
-   colorpickerui     = {
+   ui2.colorpickerui     = {
        love.graphics.newImage('assets/ui/colorpick/uifill.png', { linear = true }),
        love.graphics.newImage('assets/ui/colorpick/uipattern.png', { linear = true }),
        love.graphics.newImage('assets/ui/colorpick/uiline.png', { linear = true }),
    }
-   colorpickeruimask = {
+   ui2.colorpickeruimask = {
        love.graphics.newImage('assets/ui/colorpick/uifill-mask.png', { linear = true }),
        love.graphics.newImage('assets/ui/colorpick/uipattern-mask.png', { linear = true }),
        love.graphics.newImage('assets/ui/colorpick/uiline-mask.png', { linear = true }),
    }
-   circles           = {
+   ui2.circles           = {
        love.graphics.newImage('assets/ui/circle1.png'),
        love.graphics.newImage('assets/ui/circle2.png'),
        love.graphics.newImage('assets/ui/circle3.png'),
        love.graphics.newImage('assets/ui/circle4.png'),
-
    }
-   rects             = {
+   ui2.rects             = {
        love.graphics.newImage('assets/ui/rect1.png'),
        love.graphics.newImage('assets/ui/rect2.png'),
-
    }
 
-
-
-   sliderimg = {
+   ui2.sliderimg         = {
        track1 = love.graphics.newImage('assets/ui/interfaceparts/slider-track1.png'),
        thumb1 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb1.png'),
        thumb1Mask = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb1-mask.png'),
@@ -456,7 +456,7 @@ function loadUIImages()
        thumb4 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb4.png'),
        thumb5 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb5.png'),
    }
-   toggle    = {
+   ui2.toggle            = {
        body1 = love.graphics.newImage('assets/ui/interfaceparts/togglebody1.png'),
        body2 = love.graphics.newImage('assets/ui/interfaceparts/togglebody2.png'),
        body3 = love.graphics.newImage('assets/ui/interfaceparts/togglebody3.png'),
@@ -465,8 +465,7 @@ function loadUIImages()
        thumb3 = love.graphics.newImage('assets/ui/interfaceparts/togglethumb3.png'),
    }
 
-
-   icons       = {
+   ui2.icons             = {
        handspinned = love.graphics.newImage('assets/ui/icons/hands-pinned.png'),
        handsfree = love.graphics.newImage('assets/ui/icons/hands-free.png'),
        feetpinned = love.graphics.newImage('assets/ui/icons/feet-pinned.png'),
@@ -581,7 +580,7 @@ function loadUIImages()
        ['patchPV.symore'] = love.graphics.newImage('assets/ui/icons/patch-ScaleYmore.png'),
    }
 
-   scrollIcons = {
+   ui2.scrollIcons       = {
        body = love.graphics.newImage('assets/ui/icons/body.png'),
        bodyMask = love.graphics.newImage('assets/ui/icons/body-mask.png'),
        neck = love.graphics.newImage('assets/ui/icons/neck.png'),
@@ -635,9 +634,9 @@ function loadUIImages()
        eyes2 = love.graphics.newImage('assets/ui/icons/eyes.png'),
        eyes2Mask = love.graphics.newImage('assets/ui/icons/eyes-mask.png'),
    }
-   headz       = {}
+   ui2.headz             = {}
    for i = 1, 8 do
-      headz[i] = {
+      ui2.headz[i] = {
           img = love.graphics.newImage('assets/ui/blups/headz' .. i .. '.png'),
           x = love.math.random(),
           y = love.math.random(),
@@ -655,26 +654,30 @@ function scene.load()
 
    loadUIImages()
 
-   scroller            = {
-       position = 5
+   scroller = {
+       xPos = 0,
+       position = 5,
+       isDragging = false,
+       isThrown = nil,
+       visibleOnScreen = 5
    }
 
-   --scrollPosition      = 7.5
-   scrollItemsOnScreen = 5
-   scrollListXPosition = 0
+   grid = {
+       position = 0,
+       isDragging = false,
+       isThrown = nil,
+       data = nil -- extra data about scissor area min max and scrolling yes/no
+   }
 
+   uiState = {
+       rootButton = 'body', -- i this used?
+       selectedTab = 'part',
+       selectedCategory = 'body',
+       selectedColoringLayer = 'bgPal'
+   }
 
-   settingsScrollAreaIsDragging = false
-   settingsScrollArea = nil
-   settingsScrollPosition = 0
-
-   scrollTickSample = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
-   scrollItemClickSample = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
-   selectedRootButton = 'body' -- could be head or body or nil
-   selectedTab = 'part'
-   selectedCategory = 'body'
-   selectedColoringLayer = 'bgPal' --- bg fg, line
-
+   uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
+   uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
 
    hum = {
        love.audio.newSource('assets/sounds/fx/humup1.wav', 'static'),
@@ -697,8 +700,6 @@ function scene.load()
        love.audio.newSource('assets/instruments/babirhodes/biep3.wav', 'static'),
    }
 
-
-
    delta = 0
 
    root = {
@@ -708,12 +709,7 @@ function scene.load()
        children = {}
    }
 
-
-
-
    parts = generateParts()
-
-
    biped = Concord.entity()
    potato = Concord.entity()
    mouth = Concord.entity()
@@ -727,6 +723,7 @@ function scene.load()
    mouth:give('mouth', mouthArguments(editingGuy))
 
    root.children = { editingGuy.guy }
+
 
    attachAllFaceParts(editingGuy)
    --  changePart('hair')
@@ -772,7 +769,7 @@ function scene.load()
 
    attachCallbacks()
    categories = {}
-   setCategories(selectedRootButton)
+   setCategories(uiState.rootButton)
 
    --local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
@@ -795,6 +792,14 @@ function scene.load()
 
    audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
+
+   function tellme()
+      for n, v in pairs(_G) do
+         print(n, v)
+      end
+   end
+
+   --tellme()
 end
 
 function getPointToCenterTransitionOn()
@@ -822,7 +827,7 @@ function skinColorize(bgPal, values)
 
       else
          values[parts[i]].bgPal = bgPal
-         changePart(parts[i], values)
+         changePart(parts[i])
       end
    end
 end
@@ -832,7 +837,7 @@ function hairColorize(fgPal, values)
    for i = 1, #parts do
       values[parts[i]].fgPal = fgPal
       values[parts[i]].linePal = fgPal
-      changePart(parts[i], values)
+      changePart(parts[i])
    end
 end
 
@@ -931,13 +936,13 @@ function attachCallbacks()
 
    Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
       if (math.abs(dyn) > math.abs(dxn)) then
-         settingsScrollAreaIsThrown = { velocity = speed / 10, direction = sign(dyn) }
+         grid.isThrown = { velocity = speed / 10, direction = sign(dyn) }
       end
    end)
 
    Signal.register('throw-scroll-list', function(dxn, dyn, speed)
       if (math.abs(dyn) > math.abs(dxn)) then
-         scrollListIsThrown = { velocity = speed / 10, direction = sign(dyn) }
+         scroller.isThrown = { velocity = speed / 10, direction = sign(dyn) }
       end
    end)
    --Signal.clearPattern('.*') -- clear all signals
@@ -1113,8 +1118,8 @@ local function updateTheScrolling(dt, thrown, pos)
       pos = pos + ((thrown.velocity * thrown.direction) * .1 * dt)
 
       if (math.floor(oldPos) ~= math.floor(pos)) then
-         if not settingsScrollArea[8] then
-            playSound(scrollTickSample)
+         if not grid.data.noScroll then
+            playSound(uiTickSound)
          end
       end
       if (thrown.velocity < 0.01) then
@@ -1160,20 +1165,17 @@ function scene.update(dt)
    Timer.update(dt)
 
 
-   if settingsScrollArea and settingsScrollArea[6] then
-      if settingsScrollPosition > settingsScrollArea[6] then
-         settingsScrollPosition = settingsScrollArea[6]
+   if grid.data and grid.data.min then
+      if grid.position > grid.data.min then
+         grid.position = grid.data.min
       end
-      if settingsScrollPosition < settingsScrollArea[7] then
-         settingsScrollPosition = settingsScrollArea[7]
+      if grid.position < grid.data.max then
+         grid.position = grid.data.max
       end
    end
 
-
-
-   scroller.position = updateTheScrolling(dt, scrollListIsThrown, scroller.position)
-   settingsScrollPosition = updateTheScrolling(dt, settingsScrollAreaIsThrown, settingsScrollPosition)
-
+   scroller.position = updateTheScrolling(dt, scroller.isThrown, scroller.position)
+   grid.position = updateTheScrolling(dt, grid.isThrown, grid.position)
 
 
    --myWorld:emit("update", dt) -- this one is leaking the most actually
@@ -1198,13 +1200,13 @@ function scene.draw()
 
          -- do these via vector sketch snf the scene graph
          love.graphics.setColor(0, 0, 0, 0.05)
-         love.graphics.draw(tiles, 400, 0, .1)
+         love.graphics.draw(ui2.tiles, 400, 0, .1)
          love.graphics.setColor(1, 0, 0, 0.05)
-         love.graphics.draw(tiles2, 1000, 300, math.pi / 2, 2, 2)
+         love.graphics.draw(ui2.tiles2, 1000, 300, math.pi / 2, 2, 2)
 
-         for i = 1, #headz do
+         for i = 1, #ui2.headz do
             love.graphics.setColor(0, 0, 0, 0.05)
-            love.graphics.draw(headz[i].img, headz[i].x * w, headz[i].y * h, headz[i].r)
+            love.graphics.draw(ui2.headz[i].img, ui2.headz[i].x * w, ui2.headz[i].y * h, ui2.headz[i].r)
          end
 
          love.graphics.setColor(1, 1, 1)
@@ -1280,16 +1282,16 @@ function scene.draw()
          local y = 0
 
          love.graphics.setColor(0, 0, 0, 0.5)
-         local sx, sy = createFittingScale(circles[1], size, size)
-         love.graphics.draw(circles[1], x, y, 0, sx, sy)
+         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
          --love.graphics.rectangle('fill', w - size, 0, size, size)
          --love.graphics.setColor(1, 0, 1)
-         local sx, sy = createFittingScale(bigbuttons.fiveguys, size, size)
+         local sx, sy = createFittingScale(ui2.bigbuttons.fiveguys, size, size)
          love.graphics.setColor(1, 1, 1)
-         love.graphics.draw(bigbuttons.fiveguysmask, x, y, 0, sx, sy)
+         love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
          love.graphics.setColor(0, 0, 0)
-         love.graphics.draw(bigbuttons.fiveguys, x, y, 0, sx, sy)
+         love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
       end
 
 
@@ -1299,16 +1301,16 @@ function scene.draw()
          local y = h - size
 
          love.graphics.setColor(0, 0, 0, 0.5)
-         local sx, sy = createFittingScale(circles[1], size, size)
-         love.graphics.draw(circles[1], x, y, 0, sx, sy)
+         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
          --love.graphics.rectangle('fill', w - size, 0, size, size)
          --love.graphics.setColor(1, 0, 1)
-         local sx, sy = createFittingScale(bigbuttons.dice, size, size)
+         local sx, sy = createFittingScale(ui2.bigbuttons.dice, size, size)
          love.graphics.setColor(1, 1, 1)
-         love.graphics.draw(bigbuttons.dicemask, x, y, 0, sx, sy)
+         love.graphics.draw(ui2.bigbuttons.dicemask, x, y, 0, sx, sy)
          love.graphics.setColor(0, 0, 0)
-         love.graphics.draw(bigbuttons.dice, x, y, 0, sx, sy)
+         love.graphics.draw(ui2.bigbuttons.dice, x, y, 0, sx, sy)
       end
 
       if transition then
