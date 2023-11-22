@@ -103,16 +103,6 @@ function scene.load()
     Timer.after(1.5, doTheMipoAnimation)
 end
 
-function playSound(sound, p, volumeMultiplier)
-    local s = sound:clone()
-
-
-    s:setPitch(p)
-
-    love.audio.play(s)
-    return s
-end
-
 function doTheMipoAnimation()
     -- show mipo letters
 

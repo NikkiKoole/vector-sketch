@@ -69,7 +69,6 @@ end
 -- this function will be a called from draw
 function partSettingsPanel()
    partSettingsSurroundings(true)
-
    partSettingsScrollable(true)
 end
 
@@ -399,7 +398,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                changePart('head')
                changePart('body')
                myWorld:emit('rescaleFaceparts', potato)
-               setCategories(uiState.rootButton)
+               setCategories()
                update()
             end
             draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY, buttonSize,
@@ -970,7 +969,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                update()
             end
 
-
             draw_slider_with_2_buttons('headWidthMultiplier', startX + (runningElem * elementWidth), currentY,
                 buttonSize,
                 sliderWidth, propupdate,
@@ -1076,7 +1074,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
 
    if uiState.selectedTab == 'colors' then
-      -- category == 'patches' or category == 'mouth' or category == 'eyes2' or category == 'arms2' or category == 'legs2'
       if findPart(category).children then
          currentHeight = 0
       else
@@ -1466,7 +1463,6 @@ function partSettingsScrollable(draw, clickX, clickY)
 
    if uiState.selectedTab == "part" then
       amount = p.imgs and #p.imgs or 0
-
       renderType = "img"
       renderContainer = p.imgs
    end
@@ -1494,19 +1490,12 @@ function partSettingsScrollable(draw, clickX, clickY)
    currentY = currentY + minimumHeight + cellMargin
    local scrollAreaHeight = (height - minimumHeight - otherHeight - tabHeight - childrenTabHeight)
 
-   -- todo weird use of a 'global'
-   -- the 5th is the cellsize/rowheight
    grid.data = {
        x = startX,
        y = currentY - cellMargin,
        w = width,
        h = scrollAreaHeight,
        cellsize = cellSize,
-       startX,
-       currentY - cellMargin,
-       width,
-       scrollAreaHeight,
-       cellSize
    }
 
    if draw then
@@ -1578,7 +1567,6 @@ function partSettingsScrollable(draw, clickX, clickY)
       else
          local mx = (((rows * (cellHeight + (cellMargin))) - (scrollAreaHeight - cellMargin)) / (cellSize))
 
-         --h ere i'm saving the min and max for scrolling behaviour, so i can use those in love.update
          grid.data.min = 0
          grid.data.max = -mx
 
@@ -1591,7 +1579,6 @@ function partSettingsScrollable(draw, clickX, clickY)
 
                if (index >= 0 and index <= rows - 1) then
                   local value = ((index % rows) * columns) + i
-                  --print(inspect(renderContainer[value]))
                   if true or renderContainer[value] ~= 'assets/parts/null.png' then
                      if draw then
                         renderFunc(xPosition, yPosition, value)

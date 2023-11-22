@@ -12,6 +12,8 @@ require 'lib.printC'
 
 local text = require 'lib.text'
 
+gesture = require 'lib.gesture'
+
 SM = require 'vendor.SceneMgr'
 inspect = require 'vendor.inspect'
 
@@ -34,6 +36,16 @@ audioHelper.startAudioThread()
 
 creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
+
+function playSound(sound, optionalPitch, volumeMultiplier)
+    local s = sound:clone()
+
+    local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
+    s:setPitch(p)
+    s:setVolume(.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
+    love.audio.play(s)
+    return s
+end
 
 function loadSong(filename)
     if text.ends_with(filename, 'melodypaint.txt') then
@@ -107,14 +119,14 @@ function love.load()
     miSound1 = love.audio.newSource("assets/sounds/mi.wav", "static")
     poSound1 = love.audio.newSource("assets/sounds/po.wav", "static")
 
-
-
-    SM.setPath("scenes/")
-    SM.load("splash")
-
+    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
     audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
-    audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
+
+    SM.setPath("scenes/")
+    SM.load("editGuy")
+
+
     --love.window.updateMode(200, 200, { fullscreen = false })
 end
 
@@ -141,7 +153,8 @@ function love.update(dt)
     end
 
     if focussed and not grabbingScreenshots.doing then
-        --   gesture.update(dt)
+        --print('hello!')
+        gesture.update(dt)
         SM.update(dt)
     else
         print('not updating the timer')

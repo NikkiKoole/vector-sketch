@@ -670,7 +670,6 @@ function scene.load()
    }
 
    uiState = {
-       rootButton = 'body', -- i this used?
        selectedTab = 'part',
        selectedCategory = 'body',
        selectedColoringLayer = 'bgPal'
@@ -686,7 +685,6 @@ function scene.load()
        love.audio.newSource('assets/sounds/fx/blah1.wav', 'static'),
        love.audio.newSource('assets/sounds/fx/blah2.wav', 'static'),
        love.audio.newSource('assets/sounds/fx/blah3.wav', 'static'),
-       -- love.audio.newSource('assets/sounds/blah4.wav', 'static'),
        love.audio.newSource('assets/sounds/fx/huh.wav', 'static'),
        love.audio.newSource('assets/sounds/fx/huh2.wav', 'static'),
        love.audio.newSource('assets/sounds/fx/tsk.wav', 'static'),
@@ -700,7 +698,7 @@ function scene.load()
        love.audio.newSource('assets/instruments/babirhodes/biep3.wav', 'static'),
    }
 
-   delta = 0
+   --delta = 0
 
    root = {
        folder = true,
@@ -769,7 +767,7 @@ function scene.load()
 
    attachCallbacks()
    categories = {}
-   setCategories(uiState.rootButton)
+   setCategories()
 
    --local bx, by = editingGuy.body.transforms._g:transformPoint(0, 0)
    local w, h = love.graphics.getDimensions()
@@ -849,20 +847,20 @@ local function findPart(name)
    end
 end
 
-function setCategories(rootButton)
+function setCategories()
    categories = {}
-   if rootButton ~= nil then
-      for i = 1, #parts do
-         if editingGuy.values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
-            -- we dont want these categories when we are a potatohead!
-         else
-            if parts[i].child ~= true then
-               -- if rootButton == parts[i].kind and parts[i].child ~= true then
-               table.insert(categories, parts[i].name)
-            end
+   --if rootButton ~= nil then
+   for i = 1, #parts do
+      if editingGuy.values.potatoHead and (parts[i].name == 'head' or parts[i].name == 'neck') then
+         -- we dont want these categories when we are a potatohead!
+      else
+         if parts[i].child ~= true then
+            -- if rootButton == parts[i].kind and parts[i].child ~= true then
+            table.insert(categories, parts[i].name)
          end
       end
    end
+   --end
 end
 
 function getCameraDataZoomOnJustHead()
@@ -1161,7 +1159,7 @@ function scene.update(dt)
    end
 
 
-   delta = delta + dt
+   --delta = delta + dt
    Timer.update(dt)
 
 
@@ -1215,7 +1213,6 @@ function scene.draw()
       -- return
       if true then
          love.graphics.setColor(0, 0, 0)
-         --headOrBody(true)
          scrollList(true)
 
          partSettingsPanel()
