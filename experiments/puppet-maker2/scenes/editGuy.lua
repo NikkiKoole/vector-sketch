@@ -224,7 +224,7 @@ end
 
 function pointerReleased(x, y, id)
     scroller.isDragging = false
-    --grid.isDragging = false
+    grid.isDragging = false
 
     gesture.maybeTrigger(id, x, y)
     -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen

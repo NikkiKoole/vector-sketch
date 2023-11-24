@@ -8,6 +8,11 @@ local tabs   = { "part", "colors", "pattern" }
 
 imageCache   = {} -- tjo save all the parts inages in
 
+local text   = require 'lib.text'
+
+local function getPNGMaskUrl(url)
+    return text.replace(url, '.png', '-mask.png')
+end
 function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
     local childrenTabHeight = 0
 
@@ -266,17 +271,18 @@ local function renderElement(category, type, value, container, x, y, w, h)
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
             local maskUrl = getPNGMaskUrl(url)
             local info = love.filesystem.getInfo(maskUrl)
-            local picked = editingGuy.values[category].shape == dotindex
+            local picked = false --editingGuy.values[category].shape == dotindex
             if picked then
                 scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
             end
 
             if info then
+                print('joj!')
                 local mask = imageCache[maskUrl] or love.graphics.newImage(maskUrl)
                 imageCache[maskUrl] = mask
 
                 love.graphics.setBlendMode('subtract')
-                local pal = (palettes[editingGuy.values[category].bgPal])
+                local pal = { 0, 1, 1 } --(palettes[editingGuy.values[category].bgPal])
 
                 if picked then
                     love.graphics.setColor(1 - pal[1], 1 - pal[2], 1 - pal[3], 1)
