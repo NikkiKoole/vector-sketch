@@ -1215,7 +1215,7 @@ function scene.draw()
          love.graphics.setColor(0, 0, 0)
          scrollList(true)
 
-         partSettingsPanel()
+         tabbedGridScroller()
 
          prof.push("cam-render")
          cam:push()

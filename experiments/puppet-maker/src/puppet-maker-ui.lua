@@ -67,7 +67,7 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
 end
 
 -- this function will be a called from draw
-function partSettingsPanel()
+function tabbedGridScroller()
    partSettingsSurroundings(true)
    partSettingsScrollable(true)
 end
