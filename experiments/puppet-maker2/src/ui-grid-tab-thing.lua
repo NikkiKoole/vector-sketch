@@ -20,6 +20,10 @@ function tweenCameraToHeadAndBody()
 
 end
 
+function tweenCameraToHead()
+
+end
+
 function growl()
 
 end
@@ -1306,6 +1310,10 @@ local function renderElement(category, type, value, container, x, y, w, h)
             local picked = editingGuy.values[category].shape == dotindex
             if picked then
                 scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
+
+                local sx, sy = createFittingScale(ui2.whiterects[1], w, h)
+                love.graphics.setColor(1, 1, 1, .3)
+                love.graphics.draw(ui2.whiterects[1], -2 + x + (xoff + w / 2), -2 + y + (yoff + h / 2), 0, sx, sy, 0, 0)
             end
 
             if info then
