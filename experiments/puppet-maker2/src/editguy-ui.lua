@@ -3,13 +3,12 @@ local yellow  = { 239 / 255, 219 / 255, 145 / 255 }
 local green   = { 192 / 255, 212 / 255, 171 / 255 }
 local colors  = { pink, yellow, green }
 local tabs    = { "part", "colors", "pattern" }
-
 local hit     = require 'lib.hit'
 local numbers = require 'lib.numbers'
 local ui      = require "lib.ui"
-imageCache    = {}
-
 local text    = require 'lib.text'
+
+local imageCache    = {}
 
 
 function changePart(name)
@@ -28,7 +27,7 @@ function growl()
 
 end
 
-function findPart(name)
+local function findPart(name)
     for i = 1, #parts do
         if parts[i].name == name then
             return parts[i]
@@ -36,7 +35,7 @@ function findPart(name)
     end
 end
 
-function setSecondaryColor(alpha)
+local function setSecondaryColor(alpha)
     --0xf8 / 255, 0xa0 / 255, 0x67 / 255,
     love.graphics.setColor(pink[1], pink[2], pink[3], alpha)
 end
@@ -379,13 +378,13 @@ local function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
     return childrenTabHeight * 1.2
 end
 
-function partSettingsSurroundings(draw, clickX, clickY)
+function configPanelSurroundings(draw, clickX, clickY)
     -- this thing will render the panel where the big scrollable area is in
     -- also the tabs on top and the sliders/other settngs in the header.
     --   basically everything except the scrollable thing itself..
 
-    local startX, startY, width, height = partSettingsPanelDimensions()
-    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
+    local startX, startY, width, height = configPanelPanelDimensions()
+    local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
 
     local currentY = startY + tabHeight
     local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
@@ -483,7 +482,7 @@ function partSettingsSurroundings(draw, clickX, clickY)
     end
 end
 
-function changeValue(name, step, min, max)
+local function changeValue(name, step, min, max)
     local values = editingGuy.values
     local splitted = text.stringSplit(name, '.')
     if #splitted == 1 then
@@ -504,7 +503,7 @@ function changeValue(name, step, min, max)
     end
 end
 
-function getValueMaybeNested(prop)
+local function getValueMaybeNested(prop)
     local values = editingGuy.values
     local splitted = text.stringSplit(prop, '.')
     if #splitted == 1 then
@@ -515,7 +514,7 @@ function getValueMaybeNested(prop)
     end
 end
 
-function setValueMaybeNested(prop, v)
+local function setValueMaybeNested(prop, v)
     local values = editingGuy.values
     local splitted = text.stringSplit(prop, '.')
     if #splitted == 1 then
@@ -526,7 +525,7 @@ function setValueMaybeNested(prop, v)
     end
 end
 
-function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc, img1, img2)
+local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc, img1, img2)
     local sx, sy = createFittingScale(ui2.rects[1], buttonSize, buttonSize)
 
     love.graphics.setColor(0, 0, 0, .1)
@@ -598,7 +597,7 @@ function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWi
     end
 end
 
-function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, propupdate, update,
+local function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, propupdate, update,
                                     valmin, valmax, valstep, img1, img2)
     local values = editingGuy.values
     local sx, sy = createFittingScale(ui2.rects[1], buttonSize, buttonSize)
@@ -1300,8 +1299,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 for i = 1, #posts do
                     local p = posts[i]
                     local vv = category .. p
-                    print(vv)
-                    --   vv = 'skinPatchSnoutPV.sx'
                     draw_slider_with_2_buttons(vv, startX + (runningElem * elementWidth), currentY,
                         buttonSize,
                         sliderWidth, propupdate,
@@ -1490,7 +1487,7 @@ function drawTapesForBackground(x, y, w, h)
     love.graphics.draw(ui2.uiheaders[index], x, y, 0, sx, sy, 0, 0)
 end
 
-function partSettingsPanelDimensions()
+function configPanelPanelDimensions()
     local w, h = love.graphics.getDimensions()
     local margin = (h / 16)         -- margin around panel
     local width = (w / 3)           -- width of panel
@@ -1503,7 +1500,7 @@ function partSettingsPanelDimensions()
     return startX, startY, width, height
 end
 
-function partSettingsTabsDimensions(tabs, width)
+function configPanelTabsDimensions(tabs, width)
     local tabWidth = (width / #tabs)
     local tabHeight = math.max((tabWidth / 2.5), 32)
     local marginBetweenTabs = tabWidth / 16
@@ -1530,7 +1527,7 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
     return scale, xOffset, yOffset
 end
 
-function partSettingCellDimensions(amount, columns, width)
+local function configPanelCellDimensions(amount, columns, width)
     local rows = math.ceil(amount / columns)
     local cellMargin = width / 48
     local useWidth = width - (2 * cellMargin) - (columns - 1) * cellMargin
@@ -1691,7 +1688,7 @@ local function buttonClickHelper(category, value)
     end
 end
 
-function childPickerDimensions(width)
+local function childPickerDimensions(width)
     local p = findPart(uiState.selectedCategory)
     local childrenTabHeight = 0
     if p.children then
@@ -1700,9 +1697,9 @@ function childPickerDimensions(width)
     return childrenTabHeight * 1.2
 end
 
-function partSettingsScrollable(draw, clickX, clickY)
-    local startX, startY, width, height = partSettingsPanelDimensions()
-    local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
+function configPanelScrollGrid(draw, clickX, clickY)
+    local startX, startY, width, height = configPanelPanelDimensions()
+    local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
     local currentY = startY + tabHeight
     local amount = #palettes
     local renderType = "dot"
@@ -1735,7 +1732,7 @@ function partSettingsScrollable(draw, clickX, clickY)
         renderContainer = textures
     end
 
-    local rows, cellWidth, cellMargin, cellSize = partSettingCellDimensions(amount, columns, width)
+    local rows, cellWidth, cellMargin, cellSize = configPanelCellDimensions(amount, columns, width)
     local cellHeight = cellWidth
     local currentX = startX + cellMargin
     local minimumHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, uiState.selectedCategory)
@@ -1860,9 +1857,9 @@ function partSettingsScrollable(draw, clickX, clickY)
     end
 end
 
-function tabbedGridScroller()
-    partSettingsSurroundings(true)
-    partSettingsScrollable(true)
+function configPanel()
+    configPanelSurroundings(true)
+    configPanelScrollGrid(true)
 end
 
 function scrollList(draw, clickX, clickY)

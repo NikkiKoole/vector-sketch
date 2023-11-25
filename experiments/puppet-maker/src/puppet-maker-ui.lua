@@ -67,12 +67,12 @@ local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
 end
 
 -- this function will be a called from draw
-function tabbedGridScroller()
-   partSettingsSurroundings(true)
-   partSettingsScrollable(true)
+function configPanel()
+   configPanelSurroundings(true)
+   configPanelScrollGrid(true)
 end
 
-function partSettingsPanelDimensions()
+function configPanelPanelDimensions()
    -- thise returns the basic dimensions valeus of the panel (x,y,w,h)
    local w, h = love.graphics.getDimensions()
    local margin = (h / 16) -- margin around panel
@@ -86,7 +86,7 @@ function partSettingsPanelDimensions()
    return startX, startY, width, height
 end
 
-function partSettingsTabsDimensions(tabs, width)
+function configPanelTabsDimensions(tabs, width)
    local tabWidth = (width / #tabs)
    local tabHeight = math.max((tabWidth / 2.5), 32)
    local marginBetweenTabs = tabWidth / 16
@@ -1121,13 +1121,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
    return currentHeight
 end
 
-function partSettingsSurroundings(draw, clickX, clickY)
+function configPanelSurroundings(draw, clickX, clickY)
    -- this thing will render the panel where the big scrollable area is in
    -- also the tabs on top and the sliders/other settngs in the header.
    --   basically everything except the scrollable thing itself..
 
-   local startX, startY, width, height = partSettingsPanelDimensions()
-   local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
+   local startX, startY, width, height = configPanelPanelDimensions()
+   local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
 
    local currentY = startY + tabHeight
    local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
@@ -1439,9 +1439,9 @@ function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
    return childrenTabHeight * 1.2
 end
 
-function partSettingsScrollable(draw, clickX, clickY)
-   local startX, startY, width, height = partSettingsPanelDimensions()
-   local tabWidth, tabHeight, marginBetweenTabs = partSettingsTabsDimensions(tabs, width)
+function configPanelScrollGrid(draw, clickX, clickY)
+   local startX, startY, width, height = configPanelPanelDimensions()
+   local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
    local currentY = startY + tabHeight
    local amount = #palettes
    local renderType = "dot"

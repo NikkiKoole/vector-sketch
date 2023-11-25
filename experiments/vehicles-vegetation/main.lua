@@ -2559,7 +2559,6 @@ function love.keypressed(k)
     if k == '-' then
         print('rest hard!')
         for i = 1, #box2dGuys do
-            --print(box2dGuys[i].neck:getAngle(), box2dGuys[i].neck1:getAngle())
 
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle(0) end
             if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
@@ -2723,13 +2722,14 @@ function love.keypressed(k)
     if k == 'f' then
         local footIndex = math.ceil(math.random() * #feetdata)
 
+        local multiplier = 1
         changeMetaTexture('lfoot', feetdata[footIndex])
-        creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
-        creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
+        creation.lfoot.w = multiplier * mesh.getImage(creation.lfoot.metaURL):getHeight() / 2
+        creation.lfoot.h = multiplier * mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
 
         changeMetaTexture('rfoot', feetdata[footIndex])
-        creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
-        creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
+        creation.rfoot.w = multiplier *  mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
+        creation.rfoot.h = multiplier * mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
         footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
 
 

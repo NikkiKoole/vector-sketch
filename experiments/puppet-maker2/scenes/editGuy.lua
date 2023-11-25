@@ -18,7 +18,7 @@ end
 
 function attachCallbacks()
     Signal.register('click-settings-scroll-area-item', function(x, y)
-        partSettingsScrollable(false, x, y)
+        configPanelScrollGrid(false, x, y)
     end)
 
     Signal.register('click-scroll-list-item', function(x, y)
@@ -229,7 +229,7 @@ function pointerReleased(x, y, id)
     gesture.maybeTrigger(id, x, y)
     -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
 
-    partSettingsSurroundings(false, x, y)
+    configPanelSurroundings(false, x, y)
     --collectgarbage()
 end
 
@@ -295,7 +295,7 @@ function scene.draw()
     end
 
     scrollList(true)
-    tabbedGridScroller()
+    configPanel()
 end
 
 return scene
