@@ -514,13 +514,11 @@ end
 
 function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value, min, max)
    local trw, trh = trackimg:getDimensions()
-   local scale = width / trw
-
    local tbw, tbh = thumbimg:getDimensions()
+   local scale = width / trw
 
    love.graphics.setColor(0, 0, 0)
    love.graphics.draw(trackimg, x, y, 0, scale, scale)
-
 
    local xOffset = numbers.mapInto(value, min, max, 0, width - (tbw * scale))
 
@@ -530,7 +528,6 @@ function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value
    local yOffset = ((trh - tbh) / 2) * scale
    if thumbmask then
       love.graphics.setColor(1, 1, 1, 0.8)
-
       love.graphics.draw(thumbmask, x + xOffset + (tbw / 2) * scale, y + yOffset + (tbh / 2) * scale, a, scale, scale,
           tbw / 2, tbh / 2)
    end
@@ -543,7 +540,9 @@ function h_slider_textured(id, x, y, width, trackimg, thumbimg, thumbmask, value
    local draggedResult = false
    local mx, my = love.mouse.getPosition()
    local hover = false
-   if hit.pointInRect(mx, my, xOffset + x, y, (tbw * scale), (tbh * scale)) then
+
+   love.graphics.rectangle('line', xOffset + x, y + yOffset, (tbw * scale), (tbh * scale))
+   if hit.pointInRect(mx, my, xOffset + x, y + yOffset, (tbw * scale), (tbh * scale)) then
       hover = true
    end
    if hover then

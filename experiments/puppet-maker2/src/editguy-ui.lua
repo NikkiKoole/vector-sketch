@@ -121,6 +121,7 @@ function loadUIImages()
         thumb3 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb3.png'),
         thumb4 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb4.png'),
         thumb5 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb5.png'),
+        thumb6 = love.graphics.newImage('assets/ui/interfaceparts/slider-thumb6.png'),
     }
     ui2.toggle            = {
         body1 = love.graphics.newImage('assets/ui/interfaceparts/togglebody1.png'),

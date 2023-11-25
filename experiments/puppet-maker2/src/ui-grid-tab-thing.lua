@@ -1,15 +1,28 @@
-local hit    = require 'lib.hit'
+local hit     = require 'lib.hit'
 
-local pink   = { 201 / 255, 135 / 255, 155 / 255 }
-local yellow = { 239 / 255, 219 / 255, 145 / 255 }
-local green  = { 192 / 255, 212 / 255, 171 / 255 }
-local colors = { pink, yellow, green }
-local tabs   = { "part", "colors", "pattern" }
+local pink    = { 201 / 255, 135 / 255, 155 / 255 }
+local yellow  = { 239 / 255, 219 / 255, 145 / 255 }
+local green   = { 192 / 255, 212 / 255, 171 / 255 }
+local colors  = { pink, yellow, green }
+local tabs    = { "part", "colors", "pattern" }
+local numbers = require 'lib.numbers'
+local ui      = require "lib.ui"
+imageCache    = {} -- tjo save all the parts inages in
 
-local ui     = require "lib.ui"
-imageCache   = {} -- tjo save all the parts inages in
+local text    = require 'lib.text'
 
-local text   = require 'lib.text'
+
+function changePart(name)
+    print(name)
+end
+
+function tweenCameraToHeadAndBody()
+
+end
+
+function growl()
+
+end
 
 local function getPNGMaskUrl(url)
     return text.replace(url, '.png', '-mask.png')
@@ -162,6 +175,27 @@ function partSettingsSurroundings(draw, clickX, clickY)
     if findPart(uiState.selectedCategory).children then
         local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedChildCategory)
         currentY = currentY + minimumHeight
+    end
+end
+
+function changeValue(name, step, min, max)
+    local values = editingGuy.values
+    local splitted = text.stringSplit(name, '.')
+    if #splitted == 1 then
+        values[name] = values[name] + step
+        local m = math.ceil(1 / math.abs(step))
+        values[name] = math.floor(values[name] * m) / m
+        values[name] = math.max(values[name], min)
+        values[name] = math.min(values[name], max)
+    end
+    if #splitted == 2 then
+        local cat = splitted[1]
+        local prop = splitted[2]
+        values[cat][prop] = values[cat][prop] + step
+        local m = math.ceil(1 / math.abs(step))
+        values[cat][prop] = math.floor(values[cat][prop] * m) / m
+        values[cat][prop] = math.max(values[cat][prop], min)
+        values[cat][prop] = math.min(values[cat][prop], max)
     end
 end
 
@@ -346,7 +380,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
     startX = startX + buttonSize / 2
 
     local rowMultiplier = 1.3
-    print(draw)
+    -- print(draw)
     function updateRowStuff()
         runningElem = runningElem + 1
         if runningElem >= elementsInRow then
@@ -760,8 +794,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
                 local propupdate = function(v)
                     changePart('legs')
-                    myWorld:emit("bipedAttachLegs", biped)
-                    myWorld:emit("tweenIntoDefaultStance", biped, true)
+                    --myWorld:emit("bipedAttachLegs", biped)
+                    --myWorld:emit("tweenIntoDefaultStance", biped, true)
                 end
 
                 draw_slider_with_2_buttons('legXAxis', startX + (runningElem * elementWidth), currentY,
