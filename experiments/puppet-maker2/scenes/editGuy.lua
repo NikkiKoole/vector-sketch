@@ -2,15 +2,10 @@ local audioHelper = require 'lib.audio-helper'
 local gradient    = require 'lib.gradient'
 local Timer       = require 'vendor.timer'
 local scene       = {}
-
-
 local skygradient = gradient.makeSkyGradient(16)
-
 local hit         = require 'lib.hit'
-
-
-local ui     = require 'lib.ui'
-local Signal = require 'vendor.signal'
+local ui          = require 'lib.ui'
+local Signal      = require 'vendor.signal'
 
 require 'src.editguy-ui'
 require 'src.dna'
@@ -95,6 +90,11 @@ function scene.load()
 
     uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
+
+
+    editingGuy = {
+        values = generateValues()
+    }
 
     parts = generateParts()
     categories = {}
@@ -270,6 +270,7 @@ end
 
 function scene.draw()
     local w, h = love.graphics.getDimensions()
+    ui.handleMouseClickStart()
     if true then
         love.graphics.setColor(1, 1, 1, 1)
         --ui.handleMouseClickStart()

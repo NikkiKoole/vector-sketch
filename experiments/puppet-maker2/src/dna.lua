@@ -1,6 +1,10 @@
 local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
 
+texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
+leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
+necklengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 }
+
 local function TableConcat(t1, t2)
     for i = 1, #t2 do
         t1[#t1 + 1] = t2[i]
@@ -35,6 +39,117 @@ local function zeroTransform(arr)
             arr[i].transforms.l[2] = 0
         end
     end
+end
+
+function createDefaultTextureValues()
+    return {
+        shape     = 1,
+        bgPal     = 4,
+        fgPal     = 1,
+        bgTex     = 1,
+        fgTex     = 2,
+        linePal   = 1,
+        bgAlpha   = 5,
+        fgAlpha   = 5,
+        lineAlpha = 5,
+        texRot    = 0,
+        texScale  = 1,
+    }
+end
+
+function createDefaultPatchValues()
+    return {
+        sx = 1,
+        sy = 1,
+        r = 1,
+        tx = 0,
+        ty = 3
+    }
+end
+
+function generateValues()
+    local values = {
+        handsPinned             = false,
+        feetPinned              = true,
+        faceScale               = 1,
+        faceScaleX              = 1,
+        faceScaleY              = 1,
+        mouthScaleX             = 1,
+        mouthScaleY             = 1,
+        potatoHead              = false,
+        skinPatchSnout          = createDefaultTextureValues(),
+        skinPatchSnoutPV        = createDefaultPatchValues(),
+        skinPatchEye1           = createDefaultTextureValues(),
+        skinPatchEye1PV         = createDefaultPatchValues(),
+        skinPatchEye2           = createDefaultTextureValues(),
+        skinPatchEye2PV         = createDefaultPatchValues(),
+        upperlip                = createDefaultTextureValues(),
+        upperlipWidthMultiplier = 1,
+        lowerlip                = createDefaultTextureValues(),
+        lowerlipWidthMultiplier = 1,
+        mouthXAxis              = 0,
+        mouthYAxis              = 2,
+        eyes                    = createDefaultTextureValues(),
+        eyeWidthMultiplier      = 1,
+        eyeHeightMultiplier     = 1,
+        eyeRotation             = 0,
+        eyeYAxis                = 0,
+        eyeXAxisBetween         = 0,
+        pupils                  = createDefaultTextureValues(),
+        pupilSizeMultiplier     = 1,
+        ears                    = createDefaultTextureValues(),
+        earUnderHead            = true,
+        earWidthMultiplier      = 1,
+        earHeightMultiplier     = 1,
+        earRotation             = 0,
+        earYAxis                = 0, -- -2,-1,0,1,2
+        brows                   = createDefaultTextureValues(),
+        browsWidthMultiplier    = .5,
+        browsWideMultiplier     = 1,
+        browsDefaultBend        = 1,
+        browYAxis               = 1,
+        nose                    = createDefaultTextureValues(),
+        noseXAxis               = 0, --  -2,-1,0,1,2
+        noseYAxis               = 0, --  -3, -2,-1,0,1,2, 3
+        noseWidthMultiplier     = 1,
+        noseHeightMultiplier    = 1,
+        leghair                 = createDefaultTextureValues(),
+        legs                    = createDefaultTextureValues(),
+        legDefaultStance        = .5,
+        legLength               = 5,
+        legWidthMultiplier      = 1,
+        leg1flop                = -1,
+        leg2flop                = 1,
+        legXAxis                = 0,
+        armhair                 = createDefaultTextureValues(),
+        arms                    = createDefaultTextureValues(),
+        armLength               = 2,
+        armWidthMultiplier      = 1,
+        arm1flop                = -1,
+        arm2flop                = 1,
+        hands                   = createDefaultTextureValues(),
+        handLengthMultiplier    = 1,
+        handWidthMultiplier     = 1,
+        overBite                = true,
+        teethHeightMultiplier   = 1,
+        teeth                   = createDefaultTextureValues(),
+        body                    = createDefaultTextureValues(),
+        bodyWidthMultiplier     = 1,
+        bodyHeightMultiplier    = 1,
+        head                    = createDefaultTextureValues(),
+        headWidthMultiplier     = 1,
+        headHeightMultiplier    = 1,
+        hair                    = createDefaultTextureValues(),
+        hairWidthMultiplier     = 1,
+        hairTension             = 0.001,
+        neck                    = createDefaultTextureValues(),
+        neckLength              = 1,
+        neckWidthMultiplier     = 1,
+        feet                    = createDefaultTextureValues(),
+        feetLengthMultiplier    = 1,
+        feetWidthMultiplier     = 1,
+    }
+    return values
 end
 
 function generateParts()

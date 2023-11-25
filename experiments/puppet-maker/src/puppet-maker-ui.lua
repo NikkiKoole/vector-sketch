@@ -1268,6 +1268,7 @@ local function renderElement(category, type, value, container, x, y, w, h)
          end
       end
    end
+
    if (type == "img") then
       if (value <= #container) then
          local dotindex = (value % #container)
