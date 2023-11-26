@@ -204,8 +204,9 @@ local function pointerPressed(x, y, id)
     -- this could be clicking in the head or body buttons
     --  headOrBody(false, x, y)
     --end
+    local interacted = handlePointerPressed(x, y, id, cam)
 
-
+    if not interacted then
     local scrollItemWidth = (h / scroller.visibleOnScreen)
     if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
         scroller.isDragging = true
@@ -221,8 +222,8 @@ local function pointerPressed(x, y, id)
             gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
         end
     end
-
-    handlePointerPressed(x, y, id, cam)
+    end
+   
 end
 
 
@@ -301,6 +302,15 @@ end
 function love.touchreleased(id, x, y, dx, dy, pressure)
     pointerReleased(x, y, id)
     ui.removeFromPressedPointers(id)
+end
+
+function love.wheelmoved(dx, dy)
+    if true then
+        local newScale = cam.scale * (1 + dy / 10)
+        if (newScale > 0.01 and newScale < 50) then
+            cam:scaleToPoint(1 + dy / 10)
+        end
+    end
 end
 
 function scene.draw()

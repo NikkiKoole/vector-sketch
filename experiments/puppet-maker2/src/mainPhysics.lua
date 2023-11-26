@@ -109,7 +109,7 @@ function handlePointerPressed(x,y,id, cam)
     
         if #temp == 0 then killMouseJointIfPossible(id) end
   
-        print(inspect(temp))
+        return #temp > 0 
 end
 
 
@@ -118,7 +118,7 @@ function handlePointerReleased(x, y, id)
         local mj = pointerJoints[i]
         -- if false then
         if mj.id == id then
-            if (mj.joint) then
+            if (mj.joint) then   --- UNUSED 
                 if false then   -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
                 if (mj.jointBody and objects.ground) then
                     local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
@@ -185,7 +185,7 @@ function drawWorld(world)
     -- Colliders debug
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
-    love.graphics.setLineWidth(3)
+    love.graphics.setLineWidth(10)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
         for _, fixture in ipairs(fixtures) do
