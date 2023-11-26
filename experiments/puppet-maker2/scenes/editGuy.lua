@@ -7,6 +7,10 @@ local hit         = require 'lib.hit'
 local ui          = require 'lib.ui'
 local Signal      = require 'vendor.signal'
 
+
+local cam             = require('lib.cameraBase').getInstance()
+local camera          = require 'lib.camera'
+
 require 'src.editguy-ui'
 require 'src.dna'
 
@@ -65,6 +69,26 @@ function scene.handleAudioMessage(msg)
     --print('handling audio message from editGuy')
 end
 
+
+function setupBox2dScene() 
+    -- clear
+    -- add new
+    local w, h = love.graphics.getDimensions()
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+
+
+    local top = love.physics.newBody(world, w / 2, 1000, "static")
+    local topshape = love.physics.newRectangleShape(4000, 1000)
+    local topfixture = love.physics.newFixture(top, topshape, 1)
+
+    for i = 1, 100 do
+        local body = love.physics.newBody(world, i * 10, -2000, "dynamic")
+        local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
+        local fixture = love.physics.newFixture(body, shape, 2)
+    end
+end 
+
 function scene.load()
     bgColor = creamColor
     loadUIImages()
@@ -102,6 +126,11 @@ function scene.load()
 
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
+
+    setupBox2dScene() 
+
+
+
 end
 
 function scene.unload()
@@ -163,6 +192,8 @@ function scene.update(dt)
     if grid then
         grid.position = updateTheScrolling(dt, grid.isThrown, grid.position)
     end
+
+    handleUpdate(dt, cam)
 end
 
 local function pointerPressed(x, y, id)
@@ -190,6 +221,8 @@ local function pointerPressed(x, y, id)
             gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
         end
     end
+
+    handlePointerPressed(x, y, id, cam)
 end
 
 
@@ -230,6 +263,8 @@ function pointerReleased(x, y, id)
     -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
 
     configPanelSurroundings(false, x, y)
+
+    handlePointerReleased(x, y, id)
     --collectgarbage()
 end
 
@@ -296,6 +331,10 @@ function scene.draw()
 
     scrollList(true)
     configPanel()
+
+    cam:push()
+    drawWorld(world)
+    cam:pop()
 end
 
 return scene

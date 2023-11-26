@@ -25,6 +25,9 @@ focussed = true
 
 lurker = require 'vendor.lurker'
 lurker.quiet = true
+
+require 'src.mainPhysics'
+
 lurker.postswap = function(f)
     print("File " .. f .. " was swapped")
     focussed = true
@@ -39,7 +42,6 @@ blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
 
 function playSound(sound, optionalPitch, volumeMultiplier)
     local s = sound:clone()
-
     local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
     s:setPitch(p)
     s:setVolume(.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
@@ -85,7 +87,15 @@ function love.keypressed(key)
     if key == "escape" then love.event.quit() end
 end
 
+
+
+
 function love.load()
+    
+   
+    setupWorld() 
+
+
     local sample_data = {
         'cr78/Conga Low',
         'cr78/Bongo Low',
@@ -227,6 +237,8 @@ function love.update(dt)
     else
         print('not updating the timer')
     end
+
+    world:update(dt)
     --collectgarbage()
     manual_gc(0.002, 2)
     prof.pop('frame')
