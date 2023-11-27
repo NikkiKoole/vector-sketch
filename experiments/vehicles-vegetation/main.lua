@@ -448,6 +448,10 @@ function makeShape(shapeType, w, h)
         -- ipv hardcoded 10 i use w/5
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
                 0))
+    elseif (shapeType == 'capsule3') then
+        -- ipv hardcoded 10 i use w/5
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
+                -h / 2))
     elseif (shapeType == 'trapezium') then
         return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
     elseif (shapeType == 'trapezium2') then
@@ -2004,10 +2008,10 @@ function love.draw()
         local img = mesh.getImage('assets/world/stoelR.png')
         love.graphics.draw(img, 800, -100, 0, 1, 1, 0, img:getHeight())
 
-        --  drawWorld(world)
+        drawWorld(world)
 
         for i = 1, #box2dGuys do
-            drawSkinOver(box2dGuys[i], creation, cam)
+            --    drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do
@@ -2559,7 +2563,6 @@ function love.keypressed(k)
     if k == '-' then
         print('rest hard!')
         for i = 1, #box2dGuys do
-
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle(0) end
             if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
             if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
@@ -2728,7 +2731,7 @@ function love.keypressed(k)
         creation.lfoot.h = multiplier * mesh.getImage(creation.lfoot.metaURL):getWidth() / 2
 
         changeMetaTexture('rfoot', feetdata[footIndex])
-        creation.rfoot.w = multiplier *  mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
+        creation.rfoot.w = multiplier * mesh.getImage(creation.rfoot.metaURL):getHeight() / 2
         creation.rfoot.h = multiplier * mesh.getImage(creation.rfoot.metaURL):getWidth() / 2
         footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
 

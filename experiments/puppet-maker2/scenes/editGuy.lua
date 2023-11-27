@@ -8,12 +8,12 @@ local ui          = require 'lib.ui'
 local Signal      = require 'vendor.signal'
 
 
-local cam             = require('lib.cameraBase').getInstance()
-local camera          = require 'lib.camera'
+local cam    = require('lib.cameraBase').getInstance()
+local camera = require 'lib.camera'
 
 require 'src.editguy-ui'
 require 'src.dna'
-
+require 'src.box2dGuyCreation'
 
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
@@ -69,15 +69,14 @@ function scene.handleAudioMessage(msg)
     --print('handling audio message from editGuy')
 end
 
-
-function setupBox2dScene() 
+function setupBox2dScene()
     -- clear
     -- add new
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
-
+    box2dGuys = {}
     local top = love.physics.newBody(world, w / 2, 1000, "static")
     local topshape = love.physics.newRectangleShape(4000, 1000)
     local topfixture = love.physics.newFixture(top, topshape, 1)
@@ -87,7 +86,11 @@ function setupBox2dScene()
         local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
         local fixture = love.physics.newFixture(body, shape, 2)
     end
-end 
+
+    for i = 1, 50 do
+        table.insert(box2dGuys, makeGuy(i * 800, -1300, i))
+    end
+end
 
 function scene.load()
     bgColor = creamColor
@@ -127,10 +130,7 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    setupBox2dScene() 
-
-
-
+    setupBox2dScene()
 end
 
 function scene.unload()
@@ -207,23 +207,22 @@ local function pointerPressed(x, y, id)
     local interacted = handlePointerPressed(x, y, id, cam)
 
     if not interacted then
-    local scrollItemWidth = (h / scroller.visibleOnScreen)
-    if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
-        scroller.isDragging = true
-        scroller.isThrown = nil
-        -- scrollListIsThrown = nil
-        --print('hello!')
-        gesture.add('scroll-list', id, love.timer.getTime(), x, y)
-    end
-    if (grid and grid.data) then
-        if (hit.pointInRect(x, y, grid.data.x, grid.data.y, grid.data.w, grid.data.h)) then
-            grid.isDragging = true
-            grid.isThrown = nil
-            gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
+        local scrollItemWidth = (h / scroller.visibleOnScreen)
+        if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
+            scroller.isDragging = true
+            scroller.isThrown = nil
+            -- scrollListIsThrown = nil
+            --print('hello!')
+            gesture.add('scroll-list', id, love.timer.getTime(), x, y)
+        end
+        if (grid and grid.data) then
+            if (hit.pointInRect(x, y, grid.data.x, grid.data.y, grid.data.w, grid.data.h)) then
+                grid.isDragging = true
+                grid.isThrown = nil
+                gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
+            end
         end
     end
-    end
-   
 end
 
 

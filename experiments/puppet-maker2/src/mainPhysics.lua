@@ -1,7 +1,134 @@
+local bbox = require 'lib.bbox'
+
+
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+function makeAndAddConnector(parent, x, y, data, size, size2)
+    size = size or 10
+    size2 = size2 or size
+    local bandshape2 = makeRectPoly2(size, size2, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 0)
+    fixture:setUserData(makeUserData('connector', data))
+    fixture:setSensor(true)
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
+end
+
+function makeRectPoly(w, h, x, y)
+    return love.physics.newPolygonShape(
+            x, y,
+            x + w, y,
+            x + w, y + h,
+            x, y + h
+        )
+end
+
+function makeRectPoly2(w, h, x, y)
+    local cx = x
+    local cy = y
+    return love.physics.newPolygonShape(
+            cx - w / 2, cy - h / 2,
+            cx + w / 2, cy - h / 2,
+            cx + w / 2, cy + h / 2,
+            cx - w / 2, cy + h / 2
+        )
+end
+
+function capsuleXY(w, h, cs, x, y)
+    -- cs == cornerSize
+    local w2 = w / 2
+    local h2 = h / 2
+
+    local bt = -h2 + cs
+    local bb = h2 - cs
+    local bl = -w2 + cs
+    local br = w2 - cs
+
+    local result = {
+        x + -w2, y + bt,
+        x + bl, y + -h2,
+        x + br, y + -h2,
+        x + w2, y + bt,
+        x + w2, y + bb,
+        x + br, y + h2,
+        x + bl, y + h2,
+        x + -w2, y + bb
+    }
+    return result
+end
+
+local function makeTrapeziumPoly(w, w2, h, x, y)
+    local cx = x
+    local cy = y
+    return love.physics.newPolygonShape(
+            cx - w / 2, cy - h / 2,
+            cx + w / 2, cy - h / 2,
+            cx + w2 / 2, cy + h / 2,
+            cx - w2 / 2, cy + h / 2
+        )
+end
+function makeShapeFromCreationPart(part)
+    --print(inspect(part))
+    if part.metaPoints then
+        local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
+        local bbw = (brx - tlx)
+        local bbh = (bry - tly)
+        local wscale = part.w / bbw
+        local hscale = part.h / bbh
+        local flatted = {}
+
+        local offsetX = 0
+        local offsetY = 0
+        if part.metaOffsetX or part.metaOfsetY then
+            --print('dcwjicojie')
+            offsetX = part.metaOffsetX
+            offsetY = part.metaOffsetY
+        end
+
+        for i = 1, #part.metaPoints do
+            table.insert(flatted, (offsetX + part.metaPoints[i][1]) * wscale)
+            table.insert(flatted, (offsetY + part.metaPoints[i][2]) * hscale)
+        end
+        return love.physics.newPolygonShape(flatted)
+    else
+        --  print(inspect(part))
+        return makeShape(part.shape, part.w, part.h)
+    end
+end
+
+function makeShape(shapeType, w, h)
+    if (shapeType == 'rect2') then
+        return makeRectPoly2(w, h, 0, h / 2)
+    elseif (shapeType == 'rect1') then
+        return makeRectPoly(w, h, -w / 2, -h / 8)
+    elseif (shapeType == 'capsule') then
+        -- ipv hardcoded 10 i use w/5
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
+                h / 2))
+    elseif (shapeType == 'capsule2') then
+        -- ipv hardcoded 10 i use w/5
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
+                0))
+    elseif (shapeType == 'capsule3') then
+        -- ipv hardcoded 10 i use w/5
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
+                -h / 2))
+    elseif (shapeType == 'trapezium') then
+        return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
+    elseif (shapeType == 'trapezium2') then
+        return makeTrapeziumPoly(w, w * 1.2, h, 0, h / 2)
+    end
+end
 
 local generatePolygon = require('lib.generate-polygon').generatePolygon
-
-
+-------------
 function killMouseJointIfPossible(id)
     local index = -1
     for i = 1, #pointerJoints do
@@ -16,7 +143,6 @@ function killMouseJointIfPossible(id)
     end
     table.remove(pointerJoints, index)
 end
-
 
 local function makePointerJoint(id, bodyToAttachTo, wx, wy)
     local pointerJoint = {}
@@ -53,7 +179,7 @@ local function getPointerPosition(id)
     end
 end
 
-function handleUpdate(dt, cam) 
+function handleUpdate(dt, cam)
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
         if (mj.joint) then
@@ -84,78 +210,74 @@ function handleUpdate(dt, cam)
     end
 end
 
-function handlePointerPressed(x,y,id, cam) 
-    
-        local wx, wy = cam:getWorldCoordinates(x, y)
-        local bodies = world:getBodies()
-        local temp = {}
-        for _, body in ipairs(bodies) do
-            if body:getType() ~= 'kinematic' then
-                local fixtures = body:getFixtures()
-                for _, fixture in ipairs(fixtures) do
-                    local hitThisOne = fixture:testPoint(wx, wy)
-                    local isSensor = fixture:isSensor()
-                    if (hitThisOne and not isSensor) then
-                        table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
-                    end
+function handlePointerPressed(x, y, id, cam)
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local bodies = world:getBodies()
+    local temp = {}
+    for _, body in ipairs(bodies) do
+        if body:getType() ~= 'kinematic' then
+            local fixtures = body:getFixtures()
+            for _, fixture in ipairs(fixtures) do
+                local hitThisOne = fixture:testPoint(wx, wy)
+                local isSensor = fixture:isSensor()
+                if (hitThisOne and not isSensor) then
+                    table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
                 end
             end
         end
-        if #temp > 0 then
-            table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
-            killMouseJointIfPossible(id)
-            table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy))
-        end
-    
-        if #temp == 0 then killMouseJointIfPossible(id) end
-  
-        return #temp > 0 
-end
+    end
+    if #temp > 0 then
+        table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
+        killMouseJointIfPossible(id)
+        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy))
+    end
 
+    if #temp == 0 then killMouseJointIfPossible(id) end
+
+    return #temp > 0
+end
 
 function handlePointerReleased(x, y, id)
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
         -- if false then
         if mj.id == id then
-            if (mj.joint) then   --- UNUSED 
-                if false then   -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
-                if (mj.jointBody and objects.ground) then
-                    local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
-                    local tl = { points[1], points[2] }
-                    local tr = { points[3], points[4] }
-                    -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
-                    -- oh wait, this is actually kinda good enough-ish (tm)
-                    if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
-                        local x1, y1 = mj.jointBody:getPosition()
-                        if (#mj.positionOfLastDisabledContact > 0) then
-                            local x2 = mj.positionOfLastDisabledContact[1]
-                            local y2 = mj.positionOfLastDisabledContact[2]
+            if (mj.joint) then --- UNUSED
+                if false then -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
+                    if (mj.jointBody and objects.ground) then
+                        local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
+                        local tl = { points[1], points[2] }
+                        local tr = { points[3], points[4] }
+                        -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
+                        -- oh wait, this is actually kinda good enough-ish (tm)
+                        if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
+                            local x1, y1 = mj.jointBody:getPosition()
+                            if (#mj.positionOfLastDisabledContact > 0) then
+                                local x2 = mj.positionOfLastDisabledContact[1]
+                                local y2 = mj.positionOfLastDisabledContact[2]
 
-                            local delta = Vector(x1 - x2, y1 - y2)
-                            local l = delta:getLength()
+                                local delta = Vector(x1 - x2, y1 - y2)
+                                local l = delta:getLength()
 
-                            local v = delta:getNormalized() * l * -2
-                            if v.y > 0 then
-                                v.y = 0
-                                v.x = 0
-                            end -- i odnt want  you shoooting downward!
-                            mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                                local v = delta:getNormalized() * l * -2
+                                if v.y > 0 then
+                                    v.y = 0
+                                    v.x = 0
+                                end -- i odnt want  you shoooting downward!
+                                mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                            end
+                            mj.bodyLastDisabledContact = nil
+                            mj.positionOfLastDisabledContact = nil
+                            --
                         end
-                        mj.bodyLastDisabledContact = nil
-                        mj.positionOfLastDisabledContact = nil
-                        --
                     end
-                end end
+                end
             end
             --   end
         end
     end
     killMouseJointIfPossible(id)
 end
-
-
-
 
 function getRandomConvexPoly(radius, numVerts)
     local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
@@ -167,13 +289,13 @@ end
 
 local function getBodyColor(body)
     if body:getType() == 'kinematic' then
-        return {1,0,0,1}--palette[colors.peach]
+        return { 1, 0, 0, 1 } --palette[colors.peach]
     end
     if body:getType() == 'dynamic' then
-        return {0,1,0,1}--palette[colors.blue]
+        return { 0, 1, 0, 1 } --palette[colors.blue]
     end
     if body:getType() == 'static' then
-        return {1,1,0,1}--palette[colors.green]
+        return { 1, 1, 0, 1 } --palette[colors.green]
     end
 end
 
@@ -305,9 +427,9 @@ local function endContact(a, b, contact)
             table.remove(disabledContacts, i)
         end
     end
-   -- if isContactBetweenGroundAndCarGroundSensor(contact) then
-   --     carIsTouching = carIsTouching - 1
-   -- end
+    -- if isContactBetweenGroundAndCarGroundSensor(contact) then
+    --     carIsTouching = carIsTouching - 1
+    -- end
 end
 
 local function preSolve(a, b, contact)
@@ -324,12 +446,12 @@ end
 
 
 
-function setupWorld() 
+function setupWorld()
     love.physics.setMeter(500)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
     disabledContacts = {}
     pointerJoints = {}
     connectorCooldownList = {}
-
+    connectors = {}
 end
