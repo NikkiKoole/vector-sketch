@@ -69,6 +69,55 @@ function scene.handleAudioMessage(msg)
     --print('handling audio message from editGuy')
 end
 
+function updatePart(name)
+    if name == 'body' then
+        local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+        local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
+        --bodyRndIndex = math.ceil(love.math.random() * #data)
+        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                data[bodyRndIndex]
+                .points)
+        changeMetaPoints('torso', flippedFloppedBodyPoints)
+        changeMetaTexture('torso', data[bodyRndIndex])
+        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+
+        local body = box2dGuys[1].torso
+        local longestLeg = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
+        local oldLegLength = longestLeg + creation.torso.h
+
+        --creation.hasPhysicsHair = not creation.hasPhysicsHair
+        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
+
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
+
+        local newLegLength = longestLeg + creation.torso.h
+        local bx, by = body:getPosition()
+        if (newLegLength > oldLegLength) then
+            body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
+        end
+
+        creation.luarm.h = 150 + love.math.random() * 100
+        creation.llarm.h = 150 + love.math.random() * 100
+        creation.ruarm.h = creation.luarm.h
+        creation.rlarm.h = creation.llarm.h
+
+        for i = 1, #box2dGuys do
+            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+            handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+
+            if (not creation.isPotatoHead) then
+                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+            end
+        end
+    end
+end
+
 function setupBox2dScene()
     -- clear
     -- add new
@@ -93,8 +142,8 @@ function setupBox2dScene()
     --
 
 
-    data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
-    bodyRndIndex = math.ceil(editingGuy.values.body.shape)
+    local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+    local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
 
     local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
             data[bodyRndIndex]
@@ -102,13 +151,18 @@ function setupBox2dScene()
     changeMetaPoints('torso', flippedFloppedBodyPoints)
     changeMetaTexture('torso', data[bodyRndIndex])
 
-    torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+    local torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
     creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
     creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
 
 
     for i = 1, 5 do
         table.insert(box2dGuys, makeGuy( -1000 + i * 500, -1300, i))
+    end
+
+    local k = 'b'
+    if (k == 'b') then
+
     end
 end
 

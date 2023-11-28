@@ -12,9 +12,8 @@ local imageCache = {}
 
 
 function changePart(name)
-    print(name)
     if name == 'body' then
-
+        updatePart(name)
     end
 end
 
