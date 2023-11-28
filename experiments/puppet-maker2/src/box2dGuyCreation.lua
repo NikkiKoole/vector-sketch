@@ -202,18 +202,20 @@ function getOffsetFromParent(partName)
         end
     elseif partName == 'lear' then
         if creation.isPotatoHead then
-            if creation.head.metaPoints then
+            if creation.torso.metaPoints then
                 return getScaledTorsoMetaPoint(8)
             end
         else
             if creation.head.metaPoints then
+                print('get scaled head 8')
                 return getScaledHeadMetaPoint(7)
             end
         end
+
         return -creation.head.w / 2, -creation.head.h / 2
     elseif partName == 'rear' then
         if creation.isPotatoHead then
-            if creation.head.metaPoints then
+            if creation.torso.metaPoints then
                 return getScaledTorsoMetaPoint(2)
             end
         else

@@ -10,19 +10,23 @@ end
 jit.off()
 require 'lib.printC'
 
+
+if true then
+    local a, b, c, d, e
+    repeat
+        a, b, c, d, e = love.event.wait()
+        --print(a, b, c, d, e)
+    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
+end
+
 local text = require 'lib.text'
-
 gesture = require 'lib.gesture'
-
 SM = require 'vendor.SceneMgr'
 inspect = require 'vendor.inspect'
-
 PROF_CAPTURE = true
 prof = require 'vendor.jprof'
 ProFi = require 'vendor.ProFi'
-
 focussed = true
-
 lurker = require 'vendor.lurker'
 lurker.quiet = true
 
@@ -34,9 +38,7 @@ lurker.postswap = function(f)
 end
 
 local audioHelper = require 'lib.audio-helper'
-
 audioHelper.startAudioThread()
-
 creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
 
@@ -87,13 +89,8 @@ function love.keypressed(key)
     if key == "escape" then love.event.quit() end
 end
 
-
-
-
 function love.load()
-    
-   
-    setupWorld() 
+    setupWorld()
 
 
     local sample_data = {
@@ -133,6 +130,8 @@ function love.load()
     audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
+
+
     textures = {
         love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
         love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
@@ -144,6 +143,7 @@ function love.load()
         love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
         love.graphics.newImage('assets/img/tiles/tiles2.png'),
         love.graphics.newImage('assets/img/tiles/tiles.png'),
+
     }
 
     rubberplonks = {

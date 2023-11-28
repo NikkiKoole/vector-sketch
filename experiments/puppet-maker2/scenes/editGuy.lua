@@ -70,6 +70,13 @@ function scene.handleAudioMessage(msg)
 end
 
 function updatePart(name)
+    if name == 'potato' then
+        for i = 1, #box2dGuys do
+            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
+            handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
+            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+        end
+    end
     if name == 'body' then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
@@ -79,7 +86,7 @@ function updatePart(name)
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
-        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+        -- torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
 
         local body = box2dGuys[1].torso
         local longestLeg = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
@@ -87,7 +94,6 @@ function updatePart(name)
 
         --creation.hasPhysicsHair = not creation.hasPhysicsHair
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
-
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
 
         local newLegLength = longestLeg + creation.torso.h
@@ -96,8 +102,8 @@ function updatePart(name)
             body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
         end
 
-        creation.luarm.h = 150 + love.math.random() * 100
-        creation.llarm.h = 150 + love.math.random() * 100
+        creation.luarm.h = 250
+        creation.llarm.h = 250
         creation.ruarm.h = creation.luarm.h
         creation.rlarm.h = creation.llarm.h
 
@@ -151,7 +157,7 @@ function setupBox2dScene()
     changeMetaPoints('torso', flippedFloppedBodyPoints)
     changeMetaTexture('torso', data[bodyRndIndex])
 
-    local torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+    --  local torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
     creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
     creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
 
@@ -205,6 +211,7 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
     setupBox2dScene()
+    Timer.tween(.5, scroller, { position = 7 })
 end
 
 function scene.unload()

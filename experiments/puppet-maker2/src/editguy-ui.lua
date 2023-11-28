@@ -9,8 +9,8 @@ local ui         = require "lib.ui"
 local text       = require 'lib.text'
 
 local imageCache = {}
-
-
+require 'src.box2dGuyCreation'
+local creation = getCreation()
 function changePart(name)
     if name == 'body' then
         updatePart(name)
@@ -696,41 +696,47 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
         if category == 'body' then
             -- we have 5 ui elements, how many will fit on 1 row ?
             local update = function()
-                editingGuy.body.dirty = true
-                transforms.setTransforms(editingGuy.body)
-                if values.potatoHead then
-                    myWorld:emit('rescaleFaceparts', potato)
-                end
+                --  editingGuy.body.dirty = true
+                --  transforms.setTransforms(editingGuy.body)
+                --  if values.potatoHead then
+                --      myWorld:emit('rescaleFaceparts', potato)
+                --  end
                 changePart('body')
 
-                myWorld:emit('potatoInit', potato)
-                myWorld:emit("bipedAttachHead", biped)
-                myWorld:emit("bipedAttachLegs", biped)
-                myWorld:emit("bipedAttachArms", biped)
-                myWorld:emit("bipedAttachHands", biped)
+                --  myWorld:emit('potatoInit', potato)
+                --  myWorld:emit("bipedAttachHead", biped)
+                --  myWorld:emit("bipedAttachLegs", biped)
+                --  myWorld:emit("bipedAttachArms", biped)
+                --  myWorld:emit("bipedAttachHands", biped)
             end
 
-            currentHeight = calcCurrentHeight(values.potatoHead and 6 or 5)
+            currentHeight = calcCurrentHeight(creation.isPotatoHead and 6 or 5)
 
             if draw then
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
                 local propupdate = function(v)
-                    editingGuy.body.transforms.l[4] = v
+                    if v then
+                        multipliers.torso.wMultiplier = v
+                    end
+                    changePart('body')
                 end
                 runningElem = 0
 
                 draw_slider_with_2_buttons('bodyWidthMultiplier', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    update, .5, 3, .5, ui2.icons.bodynarrow, ui2.icons.bodywide)
+                    propupdate, .5, 3, .5, ui2.icons.bodynarrow, ui2.icons.bodywide)
 
                 runningElem, currentY = updateRowStuff()
 
-
                 local propupdate = function(v)
-                    editingGuy.body.transforms.l[5] = v
+                    if v then
+                        multipliers.torso.hMultiplier = v
+                    end
+                    changePart('body')
                 end
+
 
                 draw_slider_with_2_buttons('bodyHeightMultiplier', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
@@ -740,46 +746,39 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 runningElem, currentY = updateRowStuff()
 
                 local f = function(v)
-                    values.body.flipy = v and -1 or 1
-                    update()
+                    creation.torso.flipy = v and -1 or 1
+                    changePart('body')
                 end
+
                 draw_toggle_with_2_buttons('bodyflipy', startX + (runningElem * elementWidth), currentY, buttonSize,
-                    sliderWidth, (values.body.flipy == 1),
+                    sliderWidth, (creation.torso.flipy == 1),
                     f, ui2.icons.bodyflipv1, ui2.icons.bodyflipv2)
                 runningElem, currentY = updateRowStuff()
 
                 local f = function(v)
-                    values.body.flipx = v and -1 or 1
-                    update()
+                    creation.torso.flipx = v and -1 or 1
+                    changePart('body')
                 end
                 draw_toggle_with_2_buttons('bodyflipx', startX + (runningElem * elementWidth), currentY, buttonSize,
-                    sliderWidth, (values.body.flipx == 1),
+                    sliderWidth, (creation.torso.flipx == 1),
                     f, ui2.icons.bodyfliph1, ui2.icons.bodyfliph2)
                 runningElem, currentY = updateRowStuff()
 
                 local f = function(v)
-                    values.potatoHead = v
-                    myWorld:emit('bipedUsePotatoHead', biped, values.potatoHead)
-                    editingGuy.body.transforms.l[4] = values.bodyWidthMultiplier
-                    editingGuy.body.transforms.l[5] = values.bodyHeightMultiplier
-
-                    attachAllFaceParts(editingGuy)
-                    changePart('head')
-                    changePart('body')
-                    myWorld:emit('rescaleFaceparts', potato)
-                    setCategories()
-                    update()
+                    creation.isPotatoHead = v
+                    creation.hasNeck = not creation.isPotatoHead
+                    changePart('potato')
                 end
                 draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth,
-                    not (values.potatoHead),
+                    not creation.isPotatoHead,
                     f, ui2.icons.bodynonpotato, ui2.icons.bodypotato)
 
                 runningElem, currentY = updateRowStuff()
 
 
-                if values.potatoHead then
+                if creation.isPotatoHead then
                     local propupdate = function(v)
                         --editingGuy.body.transforms.l[5] = v
                     end

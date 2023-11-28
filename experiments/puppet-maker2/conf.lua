@@ -1,11 +1,9 @@
 local debug = true
 
+
 function love.conf(t)
     t.window.width = 1024
     t.window.height = 768
-    --t.window.width = 2388
-    --t.window.height= 1668
-
     t.window.title = "Mipo pupppetmaker 2"
     --   t.window.icon = "icoon.png"
 
@@ -14,8 +12,8 @@ function love.conf(t)
     t.window.highdpi = true
     t.window.vsync = 1
     t.window.msaa = 2
-    t.window.highdpi = true
-    t.window.vsync = true
+    -- t.window.highdpi = true
+    -- t.window.vsync = true
     if debug then
         --t.window.resizable = true
         t.window.resizable = true
