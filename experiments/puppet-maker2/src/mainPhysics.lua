@@ -109,17 +109,11 @@ function makeShape(shapeType, w, h)
     elseif (shapeType == 'rect1') then
         return makeRectPoly(w, h, -w / 2, -h / 8)
     elseif (shapeType == 'capsule') then
-        -- ipv hardcoded 10 i use w/5
-        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
-                h / 2))
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, h / 2))
     elseif (shapeType == 'capsule2') then
-        -- ipv hardcoded 10 i use w/5
-        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
-                0))
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, 0))
     elseif (shapeType == 'capsule3') then
-        -- ipv hardcoded 10 i use w/5
-        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0,
-                -h / 2))
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, -h / 2))
     elseif (shapeType == 'trapezium') then
         return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
     elseif (shapeType == 'trapezium2') then
@@ -179,6 +173,90 @@ local function getPointerPosition(id)
     end
 end
 
+local function getCenterOfPoints(points)
+    local tlx = math.huge
+    local tly = math.huge
+    local brx = -math.huge
+    local bry = -math.huge
+    for ip = 1, #points, 2 do
+        if points[ip + 0] < tlx then tlx = points[ip + 0] end
+        if points[ip + 1] < tly then tly = points[ip + 1] end
+        if points[ip + 0] > brx then brx = points[ip + 0] end
+        if points[ip + 1] > bry then bry = points[ip + 1] end
+    end
+    --return tlx, tly, brx, bry
+    local w = brx - tlx
+    local h = bry - tly
+    return tlx + w / 2, tly + h / 2
+end
+
+local function getCentroidOfFixture(body, fixture)
+    return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
+end
+
+
+function maybeConnectThisConnector(f, mj)
+    local found = false
+
+
+    for j = 1, #connectors do
+        if connectors[j].to and connectors[j].to == f then
+            found = true
+        end
+    end
+
+    if found == false then
+        local pos1 = getCentroidOfFixture(f:getBody(), f)
+        local done = false
+
+        for j = 1, #connectors do
+            if (connectors[j].at:isDestroyed()) then
+                print('THIS IS A DESTROYED CONNECTOR, WHY IS IT  STILL HEREE??')
+            end
+            local theOtherBody = connectors[j].at:getBody()
+
+            -- maybe verify that both connector dont point to the same agent (as in are both part of the same character)
+            local skipCausePointingToSameAgent = false
+            if (f:getUserData().data and connectors[j].at:getUserData() and connectors[j].at:getUserData().data) then
+                if f:getUserData().data.id and connectors[j].at:getUserData().data.id then
+                    if f:getUserData().data.id == connectors[j].at:getUserData().data.id then
+                        skipCausePointingToSameAgent = true
+                    end
+                end
+            end
+
+            if not skipCausePointingToSameAgent and theOtherBody ~= f:getBody() and connectors[j].to == nil then
+                local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
+
+                local a = pos1[1] - pos2[1]
+                local b = pos1[2] - pos2[2]
+                local d = math.sqrt(a * a + b * b)
+
+                local isOnCooldown = false
+
+                for p = 1, #connectorCooldownList do
+                    if connectorCooldownList[p].index == j then
+                        isOnCooldown = true
+                    end
+                end
+
+                local topLeftX, topLeftY, bottomRightX, bottomRightY = f:getBoundingBox(1)
+                local w1 = bottomRightX - topLeftX
+                local topLeftX, topLeftY, bottomRightX, bottomRightY = theOtherBody:getFixtures()[1]
+                    :getBoundingBox(1)
+                local w2 = bottomRightX - topLeftX
+                local maxD = (w1 + w2) / 2
+
+                if d < maxD and not isOnCooldown then
+                    connectors[j].to = f --mj.jointBody
+                    local joint = getJointBetween2Connectors(connectors[j].to, connectors[j].at)
+                    connectors[j].joint = joint
+                end
+            end
+        end
+    end
+end
+
 function handleUpdate(dt, cam)
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
@@ -187,7 +265,7 @@ function handleUpdate(dt, cam)
             local wx, wy = cam:getWorldCoordinates(mx, my)
             mj.joint:setTarget(wx, wy)
 
-            local fixtures = mj.jointBody:getFixtures();
+            local fixtures = mj.jointBody:getFixtures()
             for k = 1, #fixtures do
                 local f = fixtures[k]
                 if f:getUserData() and f:getUserData().bodyType then
@@ -347,6 +425,8 @@ function drawWorld(world)
     love.graphics.setColor(r, g, b, a)
 end
 
+---- physics contacs
+
 local function contactShouldBeDisabled(a, b, contact)
     local ab = a:getBody()
     local bb = b:getBody()
@@ -378,25 +458,12 @@ local function contactShouldBeDisabled(a, b, contact)
     return false
 end
 
-local function isContactThatShouldJustAffectOneParty(contact)
-    local fixtureA, fixtureB = contact:getFixtures()
-    if fixtureA:getUserData() and fixtureB:getUserData() then
-        if fixtureA:getUserData().bodyType == 'no-effect' then
-            --print('jo!')
-            return true
-        end
-        --print(fixtureA:getUserData().bodyType, fixtureB:getUserData().bodyType)
-    else
-    end
-end
-
 local function beginContact(a, b, contact)
-    isContactThatShouldJustAffectOneParty(contact)
     if contactShouldBeDisabled(a, b, contact) then
         contact:setEnabled(false)
         local point = { contact:getPositions() }
         -- i also should keep around what body (cirlcle) this is about,
-        -- and also eventually probably also waht touch id or mouse this is..
+        -- and also eventually probably also what touch id or mouse this is..
 
         for i = 1, #pointerJoints do
             local mj = pointerJoints[i]
@@ -442,9 +509,6 @@ end
 local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
 
 end
-
-
-
 
 function setupWorld()
     love.physics.setMeter(500)

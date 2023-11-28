@@ -81,14 +81,16 @@ function setupBox2dScene()
     local topshape = love.physics.newRectangleShape(4000, 1000)
     local topfixture = love.physics.newFixture(top, topshape, 1)
 
-    for i = 1, 100 do
-        local body = love.physics.newBody(world, i * 10, -2000, "dynamic")
-        local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
-        local fixture = love.physics.newFixture(body, shape, 2)
+    if false then
+        for i = 1, 100 do
+            local body = love.physics.newBody(world, i * 10, -2000, "dynamic")
+            local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
+            local fixture = love.physics.newFixture(body, shape, 2)
+        end
     end
 
-    for i = 1, 50 do
-        table.insert(box2dGuys, makeGuy(i * 800, -1300, i))
+    for i = 1, 5 do
+        table.insert(box2dGuys, makeGuy( -1000 + i * 500, -1300, i))
     end
 end
 
