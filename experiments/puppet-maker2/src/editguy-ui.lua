@@ -1,18 +1,21 @@
-local pink    = { 201 / 255, 135 / 255, 155 / 255 }
-local yellow  = { 239 / 255, 219 / 255, 145 / 255 }
-local green   = { 192 / 255, 212 / 255, 171 / 255 }
-local colors  = { pink, yellow, green }
-local tabs    = { "part", "colors", "pattern" }
-local hit     = require 'lib.hit'
-local numbers = require 'lib.numbers'
-local ui      = require "lib.ui"
-local text    = require 'lib.text'
+local pink       = { 201 / 255, 135 / 255, 155 / 255 }
+local yellow     = { 239 / 255, 219 / 255, 145 / 255 }
+local green      = { 192 / 255, 212 / 255, 171 / 255 }
+local colors     = { pink, yellow, green }
+local tabs       = { "part", "colors", "pattern" }
+local hit        = require 'lib.hit'
+local numbers    = require 'lib.numbers'
+local ui         = require "lib.ui"
+local text       = require 'lib.text'
 
-local imageCache    = {}
+local imageCache = {}
 
 
 function changePart(name)
     print(name)
+    if name == 'body' then
+
+    end
 end
 
 function tweenCameraToHeadAndBody()
@@ -525,7 +528,8 @@ local function setValueMaybeNested(prop, v)
     end
 end
 
-local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc, img1, img2)
+local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, toggleValue, toggleFunc, img1,
+                                          img2)
     local sx, sy = createFittingScale(ui2.rects[1], buttonSize, buttonSize)
 
     love.graphics.setColor(0, 0, 0, .1)
@@ -583,7 +587,7 @@ local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sl
         love.graphics.draw(img2, offset + startX + sliderWidth, currentY, 0, imgsx, imgsy)
     end
     local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
-        buttonSize, buttonSize)
+            buttonSize, buttonSize)
     if more then
         growl(1 + love.math.random() * 2)
 
@@ -598,7 +602,7 @@ local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sl
 end
 
 local function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sliderWidth, propupdate, update,
-                                    valmin, valmax, valstep, img1, img2)
+                                          valmin, valmax, valstep, img1, img2)
     local values = editingGuy.values
     local sx, sy = createFittingScale(ui2.rects[1], buttonSize, buttonSize)
     love.graphics.setColor(0, 0, 0, .1)
@@ -628,7 +632,7 @@ local function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sl
         love.graphics.draw(img2, startX + buttonSize + sliderWidth, currentY, 0, imgsx, imgsy)
     end
     local more = ui.getUIRect('more-' .. prop, startX + buttonSize + sliderWidth, currentY, buttonSize,
-        buttonSize)
+            buttonSize)
     if more then
         changeValue(prop, valstep, valmin, valmax)
         propupdate(getValueMaybeNested(prop))
@@ -640,9 +644,9 @@ local function draw_slider_with_2_buttons(prop, startX, currentY, buttonSize, sl
     end
 
     local v = h_slider_textured("slider-" .. prop, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
-        ui2.sliderimg.track2,
-        ui2.sliderimg.thumb5,
-        nil, getValueMaybeNested(prop), valmin, valmax)
+            ui2.sliderimg.track2,
+            ui2.sliderimg.thumb5,
+            nil, getValueMaybeNested(prop), valmin, valmax)
     if v.value then
         local m = math.ceil(1 / math.abs(valstep))
         v.value = math.floor(v.value * m) / m -- round to .5
@@ -871,7 +875,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 runningElem, currentY = updateRowStuff()
             end
         end
-        
+
         if category == 'brows' then
             currentHeight = calcCurrentHeight(4)
             if draw then
@@ -1489,8 +1493,8 @@ end
 
 function configPanelPanelDimensions()
     local w, h = love.graphics.getDimensions()
-    local margin = (h / 16)         -- margin around panel
-    local width = (w / 3)           -- width of panel
+    local margin = (h / 16) -- margin around panel
+    local width = (w / 3) -- width of panel
     local height = (h - margin * 2) -- height of panel
     local beginX = 0
     local beginY = 0
@@ -1808,7 +1812,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
                     local newScroll = j + offset
                     local yPosition = currentY + (newScroll * (cellSize))
                     local xPosition = currentX + (i - 1) * (cellSize)
-                    local index = math.ceil(-grid.position) + j
+                    local index = math.ceil( -grid.position) + j
                     local value = ((index % rows) * columns) + i
 
                     if true or renderContainer[value] ~= 'assets/parts/null.png' then
@@ -1833,7 +1837,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
                     local newScroll = j + offset
                     local yPosition = currentY + (newScroll * (cellSize))
                     local xPosition = currentX + (i - 1) * (cellSize)
-                    local index = math.ceil(-grid.position) + j
+                    local index = math.ceil( -grid.position) + j
 
                     if (index >= 0 and index <= rows - 1) then
                         local value = ((index % rows) * columns) + i
@@ -1878,7 +1882,7 @@ function scrollList(draw, clickX, clickY)
         for i = -1, (scroller.visibleOnScreen - 1) do
             local newScroll = i + offset
             local yPosition = marginHeight + (newScroll * (h / scroller.visibleOnScreen))
-            local index = math.ceil(-scroller.position) + i
+            local index = math.ceil( -scroller.position) + i
 
             index = (index % #categories) + 1
             if index < 1 then
@@ -1889,7 +1893,7 @@ function scrollList(draw, clickX, clickY)
             end
             local alpha = 0.8
 
-            local whiterectIndex = math.ceil(-scroller.position) + i
+            local whiterectIndex = math.ceil( -scroller.position) + i
             whiterectIndex = (whiterectIndex % #ui2.whiterects) + 1
             local marginb = size / 10
             local scaleX, scaleY = createFittingScale(ui2.whiterects[whiterectIndex], size, size)

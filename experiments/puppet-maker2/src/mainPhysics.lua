@@ -423,6 +423,7 @@ function drawWorld(world)
     end
 
     love.graphics.setColor(r, g, b, a)
+    love.graphics.setLineWidth(1)
 end
 
 ---- physics contacs

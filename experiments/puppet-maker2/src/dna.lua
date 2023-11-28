@@ -1,5 +1,6 @@
 local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
+local mesh  = require 'lib.mesh'
 
 texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
@@ -247,4 +248,32 @@ function generateParts()
     urls = TableConcat(urls, eyeImgUrls)
     urls = TableConcat(urls, pupilImgUrls)
     return parts, urls
+end
+
+function loadVectorSketch(path, groupName)
+    local _, bodyParts = loadGroupFromFile(path, groupName)
+    zeroTransform(bodyParts)
+
+    local result = {}
+    for i = 1, #bodyParts do
+        local me = {
+            pivotX = bodyParts[i].transforms.l[6] - bodyParts[i].transforms.l[1],
+            pivotY = bodyParts[i].transforms.l[7] - bodyParts[i].transforms.l[2]
+        }
+        for j = 1, #bodyParts[i].children do
+            local child = bodyParts[i].children[j]
+            if child.texture and child.texture.url then
+                local img = mesh.getImage(child.texture.url)
+                me.url = child.texture.url
+                me.texturePoints = child.points
+            end
+            if child.type == 'meta' then
+                --print(inspect(child.points))
+                me.points = child.points
+            end
+        end
+        table.insert(result, me)
+    end
+
+    return result
 end

@@ -833,3 +833,44 @@ function makeGuy(x, y, groupId)
     }
     return data
 end
+
+---
+
+-- this needs its own file !!!
+
+
+
+local mesh = require 'lib.mesh'
+local text = require 'lib.text'
+
+local function getPNGMaskUrl(url)
+    return text.replace(url, '.png', '-mask.png')
+end
+
+function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
+                              renderPatch)
+    --print(url)
+    local img = mesh.getImage(url, optionalSettings)
+    local maskUrl = getPNGMaskUrl(url)
+    local mask = mesh.getImage(maskUrl)
+    -- print(url)
+    -- print(love.graphics.getDPIScale())
+    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
+            renderPatch)
+
+    return cnv
+end
+
+function createRandomColoredBlackOutlineTexture(url)
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[math.ceil(math.random() * #palettes)]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[math.ceil(math.random() * #palettes)]
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end

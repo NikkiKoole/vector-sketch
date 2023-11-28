@@ -6,14 +6,14 @@ local skygradient = gradient.makeSkyGradient(16)
 local hit         = require 'lib.hit'
 local ui          = require 'lib.ui'
 local Signal      = require 'vendor.signal'
-
-
-local cam    = require('lib.cameraBase').getInstance()
-local camera = require 'lib.camera'
+local cam         = require('lib.cameraBase').getInstance()
+local camera      = require 'lib.camera'
+local mesh        = require 'lib.mesh'
 
 require 'src.editguy-ui'
 require 'src.dna'
 require 'src.box2dGuyCreation'
+local creation = getCreation()
 
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
@@ -88,6 +88,24 @@ function setupBox2dScene()
             local fixture = love.physics.newFixture(body, shape, 2)
         end
     end
+
+
+    --
+
+
+    data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+    bodyRndIndex = math.ceil(editingGuy.values.body.shape)
+
+    local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+            data[bodyRndIndex]
+            .points)
+    changeMetaPoints('torso', flippedFloppedBodyPoints)
+    changeMetaTexture('torso', data[bodyRndIndex])
+
+    torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+    creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
+    creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
+
 
     for i = 1, 5 do
         table.insert(box2dGuys, makeGuy( -1000 + i * 500, -1300, i))
@@ -341,6 +359,7 @@ function scene.draw()
     end
 
     scrollList(true)
+
     configPanel()
 
     cam:push()
