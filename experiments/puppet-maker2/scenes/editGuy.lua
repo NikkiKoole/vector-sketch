@@ -69,7 +69,96 @@ function scene.handleAudioMessage(msg)
     --print('handling audio message from editGuy')
 end
 
+local function findPart(name)
+    for i = 1, #parts do
+        if parts[i].name == name then
+            return parts[i]
+        end
+    end
+end
 function updatePart(name)
+    local multipliers = editingGuy.multipliers
+
+    if name == 'ears' then
+        local eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
+        local earIndex = editingGuy.values.ears.shape
+        changeMetaTexture('lear', eardata[earIndex])
+        creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
+        creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
+        earCanvas = createRandomColoredBlackOutlineTexture(creation.lear.metaURL)
+
+        changeMetaTexture('rear', eardata[earIndex])
+        creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
+        creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+        end
+    end
+
+    if name == 'feet' then
+        local feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+        local footIndex = editingGuy.values.feet.shape
+
+
+        changeMetaTexture('lfoot', feetdata[footIndex])
+        creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
+        creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
+
+        changeMetaTexture('rfoot', feetdata[footIndex])
+        creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
+        creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
+        footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
+
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
+        end
+    end
+
+    if name == 'hands' then
+        local feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+        local handIndex = editingGuy.values.hands.shape
+        changeMetaTexture('lhand', feetdata[handIndex])
+        changeMetaTexture('rhand', feetdata[handIndex])
+        creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
+        creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
+
+        creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
+        creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
+        handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
+        end
+    end
+
+    if name == 'head' then
+        -- if not creation.isPotatoHead then
+        local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+        local headRndIndex = math.ceil(editingGuy.values.head.shape)
+        local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                data[headRndIndex]
+                .points)
+
+        changeMetaPoints('head', flippedFloppedHeadPoints)
+        changeMetaTexture('head', data[headRndIndex])
+        headCanvas = createRandomColoredBlackOutlineTexture(creation.head.metaURL)
+
+        creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() * multipliers.head.wMultiplier / 2
+        creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() * multipliers.head.hMultiplier / 2
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'head')
+            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+        end
+        -- end
+    end
+
     if name == 'potato' then
         for i = 1, #box2dGuys do
             handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
@@ -77,6 +166,82 @@ function updatePart(name)
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
     end
+
+    if name == 'neck' then
+        local neckIndex = math.ceil(editingGuy.values.neck.shape)
+        local part = findPart('neck')
+        local img = part.imgs[neckIndex]
+        local neckW = mesh.getImage(img):getWidth() * multipliers.neck.wMultiplier / 2
+        local neckH = mesh.getImage(img):getHeight() * multipliers.neck.hMultiplier / 2
+
+
+        creation.neck.w = neckW
+        creation.neck.h = neckH / 2
+        creation.neck1.w = neckW
+        creation.neck1.h = neckH / 2
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck')
+            genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        end
+    end
+
+    if name == 'legs' then
+        local legIndex = math.ceil(editingGuy.values.legs.shape)
+        local part = findPart('legs')
+        local img = part.imgs[legIndex]
+        local legW = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
+        local legH = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
+
+        creation.luleg.w = legW
+        creation.ruleg.w = legW
+
+        creation.luleg.h = legH / 2
+        creation.ruleg.h = legH / 2
+
+        creation.llleg.w = legW / 2
+        creation.rlleg.w = legW / 2
+
+        creation.llleg.h = legH / 2
+        creation.rlleg.h = legH / 2
+        --print(part)
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlleg')
+        end
+    end
+
+    if name == 'arms' then
+        local armIndex = math.ceil(editingGuy.values.arms.shape)
+        local part = findPart('arms')
+        local img = part.imgs[armIndex]
+        local legW = mesh.getImage(img):getWidth() * multipliers.arm.wMultiplier / 2
+        local legH = mesh.getImage(img):getHeight() * multipliers.arm.lMultiplier / 2
+
+        creation.luarm.w = legW
+        creation.ruarm.w = legW
+
+        creation.luarm.h = legH / 2
+        creation.ruarm.h = legH / 2
+
+        creation.llarm.w = legW / 2
+        creation.rlarm.w = legW / 2
+
+        creation.llarm.h = legH / 2
+        creation.rlarm.h = legH / 2
+        --print(part)
+
+        for i = 1, #box2dGuys do
+            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
+            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        end
+    end
+
     if name == 'body' then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
@@ -86,7 +251,7 @@ function updatePart(name)
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
-        -- torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
 
         local body = box2dGuys[1].torso
         local longestLeg = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
@@ -147,21 +312,20 @@ function setupBox2dScene()
 
     --
 
+    if false then
+        local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+        local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
 
-    local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
-    local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
+        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
+                data[bodyRndIndex]
+                .points)
+        changeMetaPoints('torso', flippedFloppedBodyPoints)
+        changeMetaTexture('torso', data[bodyRndIndex])
 
-    local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-            data[bodyRndIndex]
-            .points)
-    changeMetaPoints('torso', flippedFloppedBodyPoints)
-    changeMetaTexture('torso', data[bodyRndIndex])
-
-    --  local torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
-    creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
-    creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
-
-
+        --  local torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
+        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
+    end
     for i = 1, 5 do
         table.insert(box2dGuys, makeGuy( -1000 + i * 500, -1300, i))
     end
@@ -176,31 +340,36 @@ function scene.load()
     bgColor = creamColor
     loadUIImages()
     attachCallbacks()
+
     scroller = {
         xPos = 0,
-        position = 5,
+        position = 1,
         isDragging = false,
         isThrown = nil,
         visibleOnScreen = 5
     }
+
     grid = {
         position = 0,
         isDragging = false,
         isThrown = nil,
         data = nil -- extra data about scissor area min max and scrolling yes/no
     }
+
     uiState = {
         selectedTab = 'part',
-        selectedCategory = 'body',
+        selectedCategory = 'feet',
         selectedColoringLayer = 'bgPal'
     }
 
     uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
 
-
     editingGuy = {
-        values = generateValues()
+        multipliers = getMultipliers(),
+        creation = getCreation(),
+        values = generateValues(),
+        positioners = getPositioners()
     }
 
     parts = generateParts()
@@ -211,7 +380,7 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
     setupBox2dScene()
-    Timer.tween(.5, scroller, { position = 7 })
+    Timer.tween(.5, scroller, { position = 4 })
 end
 
 function scene.unload()

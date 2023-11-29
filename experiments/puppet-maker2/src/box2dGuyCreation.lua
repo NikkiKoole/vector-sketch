@@ -1,9 +1,9 @@
-package.path   = package.path .. ";../../?.lua"
-local bbox     = require 'lib.bbox'
-local inspect  = require 'vendor.inspect'
-local canvas   = require 'lib.canvas'
+package.path      = package.path .. ";../../?.lua"
+local bbox        = require 'lib.bbox'
+local inspect     = require 'vendor.inspect'
+local canvas      = require 'lib.canvas'
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
-local creation = {
+local creation    = {
     isPotatoHead = false, -- if true then in dont have a neck or head
     hasPhysicsHair = false,
     hasNeck = true,
@@ -38,7 +38,7 @@ local creation = {
     lowerlip = { w = 10, h = 10 },
     teeth = { w = 10, h = 10 },
 }
-multipliers    = {
+local multipliers = {
     torso = { hMultiplier = 1, wMultiplier = 1 },
     leg = { lMultiplier = 1, wMultiplier = 1 },
     feet = { wMultiplier = 1, hMultiplier = 1 },
@@ -51,12 +51,20 @@ multipliers    = {
     nose = { wMultiplier = 1, hMultiplier = 1 },
     eye = { wMultiplier = 1, hMultiplier = 1 }
 }
-positioners    = {
+local positioners = {
     leg = { x = 0.5 }
 
 }
 function getCreation()
     return creation
+end
+
+function getMultipliers()
+    return multipliers
+end
+
+function getPositioners()
+    return positioners
 end
 
 function getParentAndChildrenFromPartName(partName, creation)
@@ -160,18 +168,20 @@ function getOffsetFromParent(partName)
         end
         return creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'luleg' then
+        --print(positioners.leg.x)
+        local t = positioners.leg.x
         if creation.torso.metaPoints then
             -- lerp between 6 and 5
-            local t = positioners.leg.x
+
             local ax, ay = getScaledTorsoMetaPoint(6)
             local bx, by = getScaledTorsoMetaPoint(5)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
             return rx, ry --getScaledTorsoMetaPoint(6)
         end
-        return -creation.torso.w / 2, creation.torso.h / 2
+        return ( -creation.torso.w / 2) * (1 - t), creation.torso.h / 2
     elseif partName == 'ruleg' then
+        local t = positioners.leg.x
         if creation.torso.metaPoints then
-            local t = positioners.leg.x
             local ax, ay = getScaledTorsoMetaPoint(4)
             local bx, by = getScaledTorsoMetaPoint(5)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
@@ -179,7 +189,7 @@ function getOffsetFromParent(partName)
 
             --return getScaledTorsoMetaPoint(4)
         end
-        return creation.torso.w / 2, creation.torso.h / 2
+        return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
     elseif partName == 'hair1' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(3)
@@ -207,7 +217,6 @@ function getOffsetFromParent(partName)
             end
         else
             if creation.head.metaPoints then
-                print('get scaled head 8')
                 return getScaledHeadMetaPoint(7)
             end
         end
