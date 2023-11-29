@@ -13,7 +13,10 @@ local mesh        = require 'lib.mesh'
 require 'src.editguy-ui'
 require 'src.dna'
 require 'src.box2dGuyCreation'
+
 local creation = getCreation()
+
+require 'src.texturedBox2d'
 
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
@@ -174,6 +177,8 @@ function updatePart(name)
         local neckW = mesh.getImage(img):getWidth() * multipliers.neck.wMultiplier / 2
         local neckH = mesh.getImage(img):getHeight() * multipliers.neck.hMultiplier / 2
 
+        neckCanvas = createRandomColoredBlackOutlineTexture(img)
+        neckmesh = createTexturedTriangleStrip(neckCanvas)
 
         creation.neck.w = neckW
         creation.neck.h = neckH / 2
@@ -594,6 +599,11 @@ function scene.draw()
 
     cam:push()
     drawWorld(world)
+
+    for i = 1, #box2dGuys do
+        drawSkinOver(box2dGuys[i], editingGuy.creation, editingGuy.multipliers)
+    end
+
     cam:pop()
 end
 
