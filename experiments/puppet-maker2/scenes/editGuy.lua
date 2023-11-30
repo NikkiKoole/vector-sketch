@@ -94,6 +94,8 @@ function updatePart(name)
         creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
         creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
 
+        earCanvas = createRandomColoredBlackOutlineTexture(creation.lear.metaURL)
+        earmesh = createTexturedTriangleStrip(earCanvas)
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
@@ -113,7 +115,7 @@ function updatePart(name)
         creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
         footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
-
+        footmesh = createTexturedTriangleStrip(footCanvas)
 
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
@@ -132,6 +134,7 @@ function updatePart(name)
         creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
         creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
         handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
+        handmesh = createTexturedTriangleStrip(handCanvas)
 
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
@@ -198,14 +201,18 @@ function updatePart(name)
         local legW = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
         local legH = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
 
+        legCanvas = createRandomColoredBlackOutlineTexture(img)
+        legmesh = createTexturedTriangleStrip(legCanvas)
+
+
         creation.luleg.w = legW
         creation.ruleg.w = legW
 
         creation.luleg.h = legH / 2
         creation.ruleg.h = legH / 2
 
-        creation.llleg.w = legW / 2
-        creation.rlleg.w = legW / 2
+        creation.llleg.w = legW
+        creation.rlleg.w = legW
 
         creation.llleg.h = legH / 2
         creation.rlleg.h = legH / 2
@@ -226,8 +233,11 @@ function updatePart(name)
         local legW = mesh.getImage(img):getWidth() * multipliers.arm.wMultiplier / 2
         local legH = mesh.getImage(img):getHeight() * multipliers.arm.lMultiplier / 2
 
-        creation.luarm.w = legW
-        creation.ruarm.w = legW
+        armCanvas = createRandomColoredBlackOutlineTexture(img)
+        armmesh = createTexturedTriangleStrip(armCanvas)
+
+        creation.luarm.w = legW / 2
+        creation.ruarm.w = legW / 2
 
         creation.luarm.h = legH / 2
         creation.ruarm.h = legH / 2
@@ -346,6 +356,10 @@ function scene.load()
     loadUIImages()
     attachCallbacks()
 
+    image11 = love.graphics.newImage('assets/parts/hair9.png')
+    mesh11 = createTexturedTriangleStrip(image11)
+
+
     scroller = {
         xPos = 0,
         position = 1,
@@ -384,7 +398,16 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
+
     setupBox2dScene()
+    updatePart('ears')
+    updatePart('hands')
+    updatePart('feet')
+    updatePart('head')
+    updatePart('body')
+    updatePart('arms')
+    updatePart('legs')
+    updatePart('neck')
     Timer.tween(.5, scroller, { position = 4 })
 end
 

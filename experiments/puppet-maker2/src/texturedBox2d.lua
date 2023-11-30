@@ -230,8 +230,9 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
     local hscale = creation[nameP].w / h
     local ox = creation[nameP].metaPivotX - creation[nameP].metaTexturePoints[1][1]
     local oy = creation[nameP].metaPivotY - creation[nameP].metaTexturePoints[1][2]
-
-    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox, oy)
+    --print(name, ox, oy, w, h, creation[nameP].metaPivotX, creation[nameP].metaPivotY)
+    -- this (ox , oy) is times 2 because i dunno (TODO FIGURE IT OUT)
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * 2, oy * 2)
 end
 
 function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
@@ -429,7 +430,7 @@ function drawSkinOver(box2dGuy, creation, multipliers)
     love.graphics.setColor(1, 1, 1, 1)
 
     if creation.torso.metaURL and not creation.isPotatoHead then
-        print('getting in here!')
+        --print('getting in here!')
         local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
         love.graphics.setColor(.4, 0, 0, 1)
         -- this is times 2 because i dunno (TODO FIGURE IT OUT)
@@ -444,29 +445,31 @@ function drawSkinOver(box2dGuy, creation, multipliers)
         love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
     end
 
-    if false then
+    if earCanvas then
         if creation.lear.metaURL then
             renderAtachedObject(earCanvas, 'lear', 'lear', -math.pi / 2, -1 * 2, 2, box2dGuy, creation)
             renderAtachedObject(earCanvas, 'rear', 'rear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
         end
+    end
 
-        love.graphics.setColor(0, 0, 0, 1)
 
-        local facePart = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
-        local faceCanvas = creation.isPotatoHead and torsoCanvas or headCanvas
-        local face = creation.isPotatoHead and 'torso' or 'head'
-        local faceData = creation.isPotatoHead and creation.torso or creation.head
+    love.graphics.setColor(0, 0, 0, 1)
 
+    local facePart = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
+    local faceCanvas = creation.isPotatoHead and torsoCanvas or headCanvas
+    local face = creation.isPotatoHead and 'torso' or 'head'
+    local faceData = creation.isPotatoHead and creation.torso or creation.head
+
+    love.graphics.setColor(1, 1, 1, 1)
+    local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
+
+    if creation.isPotatoHead then
+        love.graphics.setColor(.4, 0, 0, .8)
+        drawSquishableHairOver(x, y, r, sx, sy, creation)
         love.graphics.setColor(1, 1, 1, 1)
-        local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
-
-        if creation.isPotatoHead then
-            love.graphics.setColor(.4, 0, 0, .8)
-            drawSquishableHairOver(x, y, r, sx, sy, creation)
-            love.graphics.setColor(1, 1, 1, 1)
-        end
-        r = r + math.pi
-
+    end
+    r = r + math.pi
+    if false then
         if false then
             --box2dGuy.eye
             local mx, my = love.mouse.getPosition()
@@ -568,28 +571,33 @@ function drawSkinOver(box2dGuy, creation, multipliers)
                 'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5 * multipliers.nose.hMultiplier,
                 box2dGuy, creation)
         end
+    end
 
-
+    if legCanvas then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier)
+        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / 8)
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier)
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / 8)
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
+    end
 
-        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
+    if armCanvas then
+        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 8)
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
-        love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
-        love.graphics.setColor(1, 1, 1, 1)
-
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 8)
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 2)
-        love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
-        love.graphics.setColor(1, 1, 1, 1)
+    end
 
+    if mesh11 and armCanvas then
+        love.graphics.setColor(.4, 0, 0, .8)
+        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 4)
+        love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
+
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 4)
+        love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
+    end
+
+    if handCanvas then
         love.graphics.setColor(1, 1, 1, 1)
         if creation.lhand.metaURL then
             renderAtachedObject(handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
@@ -598,7 +606,8 @@ function drawSkinOver(box2dGuy, creation, multipliers)
             renderAtachedObject(handCanvas, 'rhand', 'rhand', -math.pi / 2, 1, -1, box2dGuy, creation)
         end
         love.graphics.setColor(0, 0, 0, 1)
-
+    end
+    if footCanvas then
         -- left foot
         if creation.lfoot.metaURL then
             love.graphics.setColor(1, 1, 1, 1)
