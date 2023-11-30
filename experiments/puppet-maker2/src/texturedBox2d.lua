@@ -232,7 +232,9 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
     local oy = creation[nameP].metaPivotY - creation[nameP].metaTexturePoints[1][2]
     --print(name, ox, oy, w, h, creation[nameP].metaPivotX, creation[nameP].metaPivotY)
     -- this (ox , oy) is times 2 because i dunno (TODO FIGURE IT OUT)
-    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * 2, oy * 2)
+
+    local m = love.graphics.getDPIScale( )
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * m, oy * m)
 end
 
 function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
@@ -288,6 +290,7 @@ function drawSquishableHairOver(x, y, r, sx, sy, creation)
     local msh = love.graphics.newMesh(v, 'fan')
     local img = mesh.getImage('assets/parts/borsthaar7.png')
     msh:setTexture(img)
+
     love.graphics.draw(msh, x, y, r, sx, sy)
 end
 
@@ -428,13 +431,14 @@ end
 
 function drawSkinOver(box2dGuy, creation, multipliers)
     love.graphics.setColor(1, 1, 1, 1)
-
+local m = love.graphics.getDPIScale( )
     if creation.torso.metaURL and not creation.isPotatoHead then
         --print('getting in here!')
         local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
         love.graphics.setColor(.4, 0, 0, 1)
         -- this is times 2 because i dunno (TODO FIGURE IT OUT)
-        drawSquishableHairOver(x, y, r, sx * 2, sy * 2, creation)
+	 
+        drawSquishableHairOver(x, y, r, sx * m, sy * m, creation)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
@@ -575,25 +579,25 @@ function drawSkinOver(box2dGuy, creation, multipliers)
 
     if legCanvas then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / 8)
+        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / (4*m))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / 8)
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / (4*m))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
     end
 
     if armCanvas then
-        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 8)
+       renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / (4*m))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / 8)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / (4*m))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
     end
 
     if mesh11 and armCanvas then
         love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 4)
+        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / (2*m))
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
 
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / 4)
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / (2*m))
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
     end
 
