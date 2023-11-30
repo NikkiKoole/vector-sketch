@@ -7,6 +7,7 @@ local numbers  = require 'lib.numbers'
 local border   = require 'lib.border-mesh'
 local cam      = require('lib.cameraBase').getInstance()
 local canvas   = require 'lib.canvas'
+
 local function stripPath(root, path)
     if root and root.texture and root.texture.url and #root.texture.url > 0 then
         local str = root.texture.url
@@ -234,7 +235,8 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
     -- this (ox , oy) is times 2 because i dunno (TODO FIGURE IT OUT)
 
     local m = love.graphics.getDPIScale( )
-    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * m, oy * m)
+    local shrink =  canvas:getShrinkFactor()
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * m / shrink, oy * m / shrink)
 end
 
 function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
@@ -431,14 +433,15 @@ end
 
 function drawSkinOver(box2dGuy, creation, multipliers)
     love.graphics.setColor(1, 1, 1, 1)
-local m = love.graphics.getDPIScale( )
+    local m = love.graphics.getDPIScale( )
+    local shrink = canvas.getShrinkFactor()
     if creation.torso.metaURL and not creation.isPotatoHead then
         --print('getting in here!')
         local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
         love.graphics.setColor(.4, 0, 0, 1)
         -- this is times 2 because i dunno (TODO FIGURE IT OUT)
 	 
-        drawSquishableHairOver(x, y, r, sx * m, sy * m, creation)
+        drawSquishableHairOver(x, y, r, sx * m / shrink, sy * m / shrink, creation)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
@@ -491,8 +494,6 @@ local m = love.graphics.getDPIScale( )
             local f = faceData.metaPoints
             local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
             local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
-
-
 
             local eyelx, eyely = facePart:getWorldPoint(
                     (leftEyeX + faceData.metaOffsetX) * sx,
@@ -579,25 +580,25 @@ local m = love.graphics.getDPIScale( )
 
     if legCanvas then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / (4*m))
+        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, shrink * multipliers.leg.wMultiplier / (4*m) )
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, multipliers.leg.wMultiplier / (4*m))
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, shrink * multipliers.leg.wMultiplier / (4*m))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
     end
 
     if armCanvas then
-       renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / (4*m))
+       renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, shrink *  multipliers.arm.wMultiplier / (4*m))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, multipliers.arm.wMultiplier / (4*m))
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, shrink * multipliers.arm.wMultiplier / (4*m))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
     end
 
     if mesh11 and armCanvas then
         love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / (2*m))
+        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1,  multipliers.arm.wMultiplier / (2*m))
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
 
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1, multipliers.arm.wMultiplier / (2*m))
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1,   multipliers.arm.wMultiplier / (2*m))
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
     end
 

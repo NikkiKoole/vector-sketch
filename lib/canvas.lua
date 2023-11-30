@@ -4,6 +4,10 @@ local geom = require 'lib.geom'
 
 
 local shrinkFactor = 1
+
+lib.getShrinkFactor = function()
+   return shrinkFactor
+end
 --lib.getShrinkFactor = function() return shrinkFactor end
 local mask_effect = love.graphics.newShader [[
    vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
