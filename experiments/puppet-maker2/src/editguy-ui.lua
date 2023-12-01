@@ -1158,6 +1158,81 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
         end
 
 
+        if category == 'pupils' then
+            currentHeight = calcCurrentHeight(1)
+            if draw then
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+                runningElem = 0
+
+                local propupdate = function(v)
+                    myWorld:emit('rescaleFaceparts', potato)
+                end
+
+                draw_slider_with_2_buttons('pupilSizeMultiplier', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .125, 2, .125, ui2.icons.pupilsmall, ui2.icons.pupilbig)
+            end
+        end
+
+
+        if category == 'eyes' then
+            currentHeight = calcCurrentHeight(5)
+            if draw then
+                runningElem = 0
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+                local propupdate = function(v)
+                    changePart('eyes')
+                    -- myWorld:emit('rescaleFaceparts', potato)
+                    -- myWorld:emit('potatoInit', potato)
+                end
+
+                draw_slider_with_2_buttons('multipliers.eye.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .125, 3, .125, ui2.icons.eyesmall1, ui2.icons.eyewide)
+
+                runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('multipliers.eye.hMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .125, 3, .125, ui2.icons.eyesmall2, ui2.icons.eyetall)
+
+                runningElem, currentY = updateRowStuff()
+
+                if false then
+                    local rotUpdate = function(v)
+                        editingGuy.eye1.transforms.l[3] = v
+                        editingGuy.eye2.transforms.l[3] = -v
+                    end
+                    draw_slider_with_2_buttons('eyeRotation', startX + (runningElem * elementWidth), currentY,
+                        buttonSize,
+                        sliderWidth, rotUpdate,
+                        nil, -.5, .5, .25, ui2.icons.eyeccw, ui2.icons.eyecw)
+
+                    runningElem, currentY = updateRowStuff()
+
+                    draw_slider_with_2_buttons('eyeYAxis', startX + (runningElem * elementWidth), currentY,
+                        buttonSize,
+                        sliderWidth, propupdate,
+                        nil, -3, 3, 1, ui2.icons.eyedown, ui2.icons.eyeup)
+
+                    runningElem, currentY = updateRowStuff()
+
+                    draw_slider_with_2_buttons('eyeXAxisBetween', startX + (runningElem * elementWidth), currentY,
+                        buttonSize,
+                        sliderWidth, propupdate,
+                        nil, -3, 3, 1, ui2.icons.eyefar, ui2.icons.eyeclose)
+
+                    runningElem, currentY = updateRowStuff()
+                end
+            end
+        end
+
+
         if category == 'teeth' then
             currentHeight = calcCurrentHeight(1)
 
@@ -1317,75 +1392,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
 
 
-        if category == 'pupils' then
-            currentHeight = calcCurrentHeight(1)
-            if draw then
-                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
-                runningElem = 0
-
-                local propupdate = function(v)
-                    myWorld:emit('rescaleFaceparts', potato)
-                end
-
-                draw_slider_with_2_buttons('pupilSizeMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .125, 2, .125, ui2.icons.pupilsmall, ui2.icons.pupilbig)
-            end
-        end
-
-
-        if category == 'eyes' then
-            currentHeight = calcCurrentHeight(5)
-            if draw then
-                runningElem = 0
-                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
-                local propupdate = function(v)
-                    myWorld:emit('rescaleFaceparts', potato)
-                    myWorld:emit('potatoInit', potato)
-                end
-
-                draw_slider_with_2_buttons('eyeWidthMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .125, 3, .125, ui2.icons.eyesmall1, ui2.icons.eyewide)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('eyeHeightMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .125, 3, .125, ui2.icons.eyesmall2, ui2.icons.eyetall)
-
-                runningElem, currentY = updateRowStuff()
-
-
-                local rotUpdate = function(v)
-                    editingGuy.eye1.transforms.l[3] = v
-                    editingGuy.eye2.transforms.l[3] = -v
-                end
-                draw_slider_with_2_buttons('eyeRotation', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, rotUpdate,
-                    nil, -.5, .5, .25, ui2.icons.eyeccw, ui2.icons.eyecw)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('eyeYAxis', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, -3, 3, 1, ui2.icons.eyedown, ui2.icons.eyeup)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('eyeXAxisBetween', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, -3, 3, 1, ui2.icons.eyefar, ui2.icons.eyeclose)
-
-                runningElem, currentY = updateRowStuff()
-            end
-        end
 
 
         if category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2' then

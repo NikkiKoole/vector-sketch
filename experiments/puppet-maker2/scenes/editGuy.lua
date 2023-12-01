@@ -79,8 +79,86 @@ local function findPart(name)
         end
     end
 end
+
+
+
+function randomFaceParts()
+    eyeIndex = math.ceil(love.math.random() * #eyedata)
+    changeMetaTexture('eye', eyedata[eyeIndex])
+    --  print(#eyedata, eyeIndex)
+    creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+    creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+    eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
+
+    pupilIndex = math.ceil(love.math.random() * #pupildata)
+    changeMetaTexture('pupil', pupildata[pupilIndex])
+
+    creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
+    creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
+    pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)
+
+
+    noseIndex = math.ceil(love.math.random() * #pupildata)
+    changeMetaTexture('nose', nosedata[noseIndex])
+    creation.nose.w = mesh.getImage(creation.nose.metaURL):getHeight()
+    creation.nose.h = mesh.getImage(creation.nose.metaURL):getWidth()
+    noseCanvas = createRandomColoredBlackOutlineTexture(creation.nose.metaURL)
+
+
+    upperlipIndex = math.ceil(love.math.random() * #upperlipdata)
+    changeMetaTexture('upperlip', upperlipdata[upperlipIndex])
+    creation.upperlip.w = mesh.getImage(creation.upperlip.metaURL):getHeight()
+    creation.upperlip.h = mesh.getImage(creation.upperlip.metaURL):getWidth()
+    upperlipCanvas = createRandomColoredBlackOutlineTexture(creation.upperlip.metaURL)
+
+
+    lowerlipIndex = math.ceil(love.math.random() * #lowerlipdata)
+    changeMetaTexture('lowerlip', lowerlipdata[lowerlipIndex])
+    creation.lowerlip.w = mesh.getImage(creation.lowerlip.metaURL):getHeight()
+    creation.lowerlip.h = mesh.getImage(creation.lowerlip.metaURL):getWidth()
+    lowerlipCanvas = createRandomColoredBlackOutlineTexture(creation.lowerlip.metaURL)
+
+    teethIndex = math.ceil(love.math.random() * #teethdata)
+    changeMetaTexture('teeth', teethdata[teethIndex])
+    -- print(creation.teeth.metaURL)
+    creation.teeth.w = mesh.getImage(creation.teeth.metaURL):getHeight()
+    creation.teeth.h = mesh.getImage(creation.teeth.metaURL):getWidth()
+    teethCanvas = createWhiteColoredBlackOutlineTexture(creation.teeth.metaURL)
+
+    browIndex = math.ceil(love.math.random() * #eyebrowsdata)
+    changeMetaTexture('brow', eyebrowsdata[browIndex])
+    --print(inspect(eyebrowsdata[browIndex]))
+    -- print(creation.brow.metaURL)
+    creation.brow.w = mesh.getImage(creation.brow.metaURL):getHeight()
+    creation.brow.h = mesh.getImage(creation.brow.metaURL):getWidth()
+    browCanvas = createNonColoredRandomOutlineTexture(creation.brow.metaURL)
+    --browCanvas = createWhiteColoredBlackOutlineTexture(creation.brow.metaURL)
+end
+
 function updatePart(name)
     local multipliers = editingGuy.multipliers
+
+    if name == 'eyes' then
+        local eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+        local eyeIndex = editingGuy.values.eyes.shape
+        changeMetaTexture('eye', eyedata[eyeIndex])
+        --  print(#eyedata, eyeIndex)
+        creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+        creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+        eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
+    end
+
+
+    if name == 'pupils' then
+        local pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
+        local pupilIndex = math.ceil(love.math.random() * #pupildata)
+        changeMetaTexture('pupil', pupildata[pupilIndex])
+
+        creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
+        creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
+        pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)
+    end
+
 
     if name == 'ears' then
         local eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
@@ -408,6 +486,7 @@ function scene.load()
     updatePart('arms')
     updatePart('legs')
     updatePart('neck')
+    updatePart('eyes')
     Timer.tween(.5, scroller, { position = 4 })
 end
 

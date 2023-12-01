@@ -234,8 +234,8 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
     --print(name, ox, oy, w, h, creation[nameP].metaPivotX, creation[nameP].metaPivotY)
     -- this (ox , oy) is times 2 because i dunno (TODO FIGURE IT OUT)
 
-    local m = love.graphics.getDPIScale( )
-    local shrink =  canvas:getShrinkFactor()
+    local m = love.graphics.getDPIScale()
+    local shrink = canvas:getShrinkFactor()
     love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * m / shrink, oy * m / shrink)
 end
 
@@ -311,7 +311,9 @@ function drawNumbersOver(box2dGuy)
     end
 end
 
-function renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
+function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+    local dpi = love.graphics.getDPIScale()
+    local shrink = canvas.getShrinkFactor()
     if true then
         if true or box2dGuy.hairNeedsRedo then
             --print('jojo')
@@ -347,7 +349,7 @@ function renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
             local vertices = vertsWithUVs
             local m = love.graphics.newMesh(vertices, "strip")
             m:setTexture(img)
-            love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx, sy)
+            love.graphics.draw(m, x, y, r - math.pi, sx * creation.head.flipx * (dpi / shrink), sy * (dpi / shrink))
         end
     end
 end
@@ -433,22 +435,20 @@ end
 
 function drawSkinOver(box2dGuy, creation, multipliers)
     love.graphics.setColor(1, 1, 1, 1)
-    local m = love.graphics.getDPIScale( )
+    local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
+
     if creation.torso.metaURL and not creation.isPotatoHead then
-        --print('getting in here!')
         local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
         love.graphics.setColor(.4, 0, 0, 1)
-        -- this is times 2 because i dunno (TODO FIGURE IT OUT)
-	 
-        drawSquishableHairOver(x, y, r, sx * m / shrink, sy * m / shrink, creation)
+        drawSquishableHairOver(x, y, r, sx * dpi / shrink, sy * dpi / shrink, creation)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
     if neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
         love.graphics.setColor(1, 1, 1, 1)
-        -- this is divide by 8 because i dunno (TODO FIGURE IT OUT)
-        renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy, 1, multipliers.neck.wMultiplier / 8)
+        renderCurvedObject('neck', 'neck1', 'head', neckCanvas, neckmesh, box2dGuy, 1,
+            multipliers.neck.wMultiplier / (4 * dpi / shrink))
         love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
     end
 
@@ -458,7 +458,6 @@ function drawSkinOver(box2dGuy, creation, multipliers)
             renderAtachedObject(earCanvas, 'rear', 'rear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
         end
     end
-
 
     love.graphics.setColor(0, 0, 0, 1)
 
@@ -471,72 +470,88 @@ function drawSkinOver(box2dGuy, creation, multipliers)
     local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
 
     if creation.isPotatoHead then
-        love.graphics.setColor(.4, 0, 0, .8)
-        drawSquishableHairOver(x, y, r, sx, sy, creation)
+        love.graphics.setColor(.4, 0, 0, 1)
+        drawSquishableHairOver(x, y, r, sx * dpi / shrink, sy * dpi / shrink, creation)
         love.graphics.setColor(1, 1, 1, 1)
     end
     r = r + math.pi
+
+
+    --box2dGuy.eye
+    local mx, my = love.mouse.getPosition()
+
+    -- do my mouse relative to the pupils
+
+    local eyeMultiplierFix = 0.5
+    local pupilMultiplierFix = 0.25
+
+    local eyeCanvasWith = eyeCanvas:getWidth()
+    local eyeCanvasHeight = eyeCanvas:getHeight()
+    local maxPupilOffsetW = eyeCanvasWith * (pupilMultiplierFix)
+    local maxPupilOffsetH = eyeCanvasHeight * (pupilMultiplierFix)
+
+    local f = faceData.metaPoints
+    local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
+    local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
+
+
     if false then
-        if false then
-            --box2dGuy.eye
-            local mx, my = love.mouse.getPosition()
+        local eyelx, eyely = facePart:getWorldPoint(
+                (leftEyeX + faceData.metaOffsetX) * sx,
+                (f[3][2] + faceData.metaOffsetY) * sy)
 
-            -- do my mouse relative to the pupils
+        local eyerx, eyery = facePart:getWorldPoint(
+                (rightEyeX + faceData.metaOffsetX) * sx,
+                (f[3][2] + faceData.metaOffsetY) * sy)
+    end
 
-            local eyeMultiplierFix = 0.5
-            local pupilMultiplierFix = 0.25
 
-            local eyeCanvasWith = eyeCanvas:getWidth()
-            local eyeCanvasHeight = eyeCanvas:getHeight()
-            local maxPupilOffsetW = eyeCanvasWith * (pupilMultiplierFix)
-            local maxPupilOffsetH = eyeCanvasHeight * (pupilMultiplierFix)
+    local eyelx, eyely = facePart:getWorldPoint(
+            (leftEyeX + faceData.metaOffsetX) * sx,
+            (f[3][2] + faceData.metaOffsetY) * sy)
 
-            local f = faceData.metaPoints
-            local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
-            local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
+    local eyerx, eyery = facePart:getWorldPoint(
+            (rightEyeX + faceData.metaOffsetX) * sx,
+            (f[3][2] + faceData.metaOffsetY) * sy)
 
-            local eyelx, eyely = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX) * sx,
-                    (f[3][2] + faceData.metaOffsetY) * sy)
 
-            local eyerx, eyery = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX) * sx,
-                    (f[3][2] + faceData.metaOffsetY) * sy)
+    love.graphics.circle('fill', eyelx, eyely, 20)
+    love.graphics.circle('fill', eyerx, eyery, 20)
 
-            local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
-            local angle, dist = getAngleAndDistance(cx, cy, mx, my)
-            local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
+    if false then
+        local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
+        local angle, dist = getAngleAndDistance(cx, cy, mx, my)
+        local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
 
-            local pupillx, pupilly = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX + px1) * sx,
-                    (f[3][2] + faceData.metaOffsetY + py1) * sy)
+        local pupillx, pupilly = facePart:getWorldPoint(
+                (leftEyeX + faceData.metaOffsetX + px1) * sx,
+                (f[3][2] + faceData.metaOffsetY + py1) * sy)
 
-            local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
-            local angle, dist = getAngleAndDistance(cx, cy, mx, my)
-            local px2, py2 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
+        local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
+        local angle, dist = getAngleAndDistance(cx, cy, mx, my)
+        local px2, py2 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
 
-            local pupilrx, pupilry = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX + px2) * sx,
-                    (f[3][2] + faceData.metaOffsetY + py2) * sy)
+        local pupilrx, pupilry = facePart:getWorldPoint(
+                (rightEyeX + faceData.metaOffsetX + px2) * sx,
+                (f[3][2] + faceData.metaOffsetY + py2) * sy)
 
 
 
-            local browlx, browly = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX) * sx,
-                    (f[3][2] + faceData.metaOffsetY - 100) * sy)
+        local browlx, browly = facePart:getWorldPoint(
+                (leftEyeX + faceData.metaOffsetX) * sx,
+                (f[3][2] + faceData.metaOffsetY - 100) * sy)
 
-            local browrx, browry = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX) * sx,
-                    (f[3][2] + faceData.metaOffsetY - 100) * sy)
+        local browrx, browry = facePart:getWorldPoint(
+                (rightEyeX + faceData.metaOffsetX) * sx,
+                (f[3][2] + faceData.metaOffsetY - 100) * sy)
 
-            local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
-            local noseY = f[3][2]
-            local nx, ny = facePart:getWorldPoint(
-                    (noseX + faceData.metaOffsetX) * sx,
-                    (noseY + faceData.metaOffsetY) * sy)
+        local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
+        local noseY = f[3][2]
+        local nx, ny = facePart:getWorldPoint(
+                (noseX + faceData.metaOffsetX) * sx,
+                (noseY + faceData.metaOffsetY) * sy)
 
-            drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
-
+        if eyeCanvas then
             renderNonAttachedObject(eyeCanvas,
                 'eye', r, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier,
                 eyeMultiplierFix * multipliers.eye.hMultiplier,
@@ -546,59 +561,69 @@ function drawSkinOver(box2dGuy, creation, multipliers)
                 'eye', r, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier,
                 eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
-
-
-            local rnd = love.math.random() * 0.01 - 0.005
-            renderNonAttachedObject(pupilCanvas,
-                'pupil', 0, pupillx, pupilly, -pupilMultiplierFix + rnd, pupilMultiplierFix + rnd,
-                box2dGuy, creation)
-            renderNonAttachedObject(pupilCanvas,
-                'pupil', 0, pupilrx, pupilry, pupilMultiplierFix + rnd, pupilMultiplierFix,
-                box2dGuy, creation)
-
-            love.graphics.setColor(0, 1, 0, 1)
-
-            renderHair(box2dGuy, faceData, creation, x, y, r, sx, sy)
-
-            love.graphics.setColor(1, 1, 1, 1)
-            local browmesh = createTexturedTriangleStrip(browCanvas)
-            local faceWidth = (f[3][1] - f[7][1]) / 2
-            renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
-                browmesh, box2dGuy)
-            love.graphics.draw(browmesh, browlx, browly, r, 1, 1)
-
-            local browmesh = createTexturedTriangleStrip(browCanvas)
-            renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
-                browmesh, box2dGuy)
-            love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
-
-            renderNonAttachedObject(noseCanvas,
-                'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5 * multipliers.nose.hMultiplier,
-                box2dGuy, creation)
         end
+    end
+    if false then
+        drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
+
+        local rnd = love.math.random() * 0.01 - 0.005
+        renderNonAttachedObject(pupilCanvas,
+            'pupil', 0, pupillx, pupilly, -pupilMultiplierFix + rnd, pupilMultiplierFix + rnd,
+            box2dGuy, creation)
+        renderNonAttachedObject(pupilCanvas,
+            'pupil', 0, pupilrx, pupilry, pupilMultiplierFix + rnd, pupilMultiplierFix,
+            box2dGuy, creation)
+
+
+
+        love.graphics.setColor(0, 1, 0, 1)
+        renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+
+
+        love.graphics.setColor(1, 1, 1, 1)
+        local browmesh = createTexturedTriangleStrip(browCanvas)
+        local faceWidth = (f[3][1] - f[7][1]) / 2
+        renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
+            browmesh, box2dGuy)
+        love.graphics.draw(browmesh, browlx, browly, r, 1, 1)
+
+        local browmesh = createTexturedTriangleStrip(browCanvas)
+        renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
+            browmesh, box2dGuy)
+        love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
+
+        renderNonAttachedObject(noseCanvas,
+            'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5 * multipliers.nose.hMultiplier,
+            box2dGuy, creation)
     end
 
     if legCanvas then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1, shrink * multipliers.leg.wMultiplier / (4*m) )
+        renderCurvedObject('luleg', 'llleg', 'lfoot', legCanvas, legmesh, box2dGuy, 1,
+            shrink * multipliers.leg.wMultiplier / (4 * dpi))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1, shrink * multipliers.leg.wMultiplier / (4*m))
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', legCanvas, legmesh, box2dGuy, 1,
+            shrink * multipliers.leg.wMultiplier / (4 * dpi))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
     end
 
     if armCanvas then
-       renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1, shrink *  multipliers.arm.wMultiplier / (4*m))
+        renderCurvedObject('luarm', 'llarm', 'lhand', armCanvas, armmesh, box2dGuy, 1,
+            shrink * multipliers.arm.wMultiplier / (4 * dpi))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1, shrink * multipliers.arm.wMultiplier / (4*m))
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', armCanvas, armmesh, box2dGuy, 1,
+            shrink * multipliers.arm.wMultiplier / (4 * dpi))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
     end
 
     if mesh11 and armCanvas then
         love.graphics.setColor(.4, 0, 0, .8)
-        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1,  multipliers.arm.wMultiplier / (2*m))
+        renderCurvedObject('luarm', 'llarm', 'lhand', image11, mesh11, box2dGuy, 1,
+            multipliers.arm.wMultiplier / (2 * dpi))
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
 
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1,   multipliers.arm.wMultiplier / (2*m))
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', image11, mesh11, box2dGuy, 1,
+            multipliers.arm.wMultiplier / (2 * dpi))
         love.graphics.draw(mesh11, 0, 0, 0, 1, 1)
     end
 

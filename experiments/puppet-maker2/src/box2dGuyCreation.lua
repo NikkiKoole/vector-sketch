@@ -872,6 +872,21 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
     return cnv
 end
 
+function createWhiteColoredBlackOutlineTexture(url)
+    -- todo make this more optimal and readable, 5 is white in any case
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[5]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[5]
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end
+
 function createRandomColoredBlackOutlineTexture(url)
     local tex1 = textures[math.ceil(math.random() * #textures)]
     local pal1 = palettes[math.ceil(math.random() * #palettes)]
