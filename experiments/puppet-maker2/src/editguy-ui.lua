@@ -624,7 +624,7 @@ local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sl
         love.graphics.draw(img2, offset + startX + sliderWidth, currentY, 0, imgsx, imgsy)
     end
     local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
-            buttonSize, buttonSize)
+        buttonSize, buttonSize)
     if more then
         growl(1 + love.math.random() * 2)
 
@@ -673,7 +673,7 @@ local function draw_slider_with_2_buttons(path, startX, currentY, buttonSize, sl
         love.graphics.draw(img2, startX + buttonSize + sliderWidth, currentY, 0, imgsx, imgsy)
     end
     local more = ui.getUIRect('more-' .. path, startX + buttonSize + sliderWidth, currentY, buttonSize,
-            buttonSize)
+        buttonSize)
     if more then
         -- local current = getValueByPath()
         local newValue = math.min(val + valstep, valmax)
@@ -691,9 +691,9 @@ local function draw_slider_with_2_buttons(path, startX, currentY, buttonSize, sl
     -- getValueMaybeNested(prop)
     -- print(val, path)
     local v = h_slider_textured("slider-" .. path, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
-            ui2.sliderimg.track2,
-            ui2.sliderimg.thumb5,
-            nil, val, valmin, valmax)
+        ui2.sliderimg.track2,
+        ui2.sliderimg.thumb5,
+        nil, val, valmin, valmax)
     if v.value then
         local m = math.ceil(1 / math.abs(valstep))
         v.value = math.floor(v.value * m) / m -- round to .5
@@ -1430,7 +1430,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             currentHeight = 0
         else
             currentHeight = isPatch and calcCurrentHeight(5) or calcCurrentHeight(3)
-            print(category..'.texRot')
             if draw then
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
@@ -1439,21 +1438,24 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 end
                 runningElem = 0
 
-                draw_slider_with_2_buttons('values.'..category .. '.texScale', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('values.' .. category .. '.texScale', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 1, 9, 1, ui2.icons.patterncoarse, ui2.icons.patternfine)
 
                 runningElem, currentY = updateRowStuff()
 
-                draw_slider_with_2_buttons('values.'..category .. '.texRot', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('values.' .. category .. '.texRot', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0, 15, 1, ui2.icons.patternccw, ui2.icons.patterncw)
 
                 runningElem, currentY = updateRowStuff()
 
-                draw_slider_with_2_buttons('values.'..category .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('values.' .. category .. '.fgAlpha', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0, 5, 1, ui2.icons.patterntransparent, ui2.icons.patternopaque)
@@ -1461,14 +1463,16 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 runningElem, currentY = updateRowStuff()
 
                 if isPatch then
-                    draw_slider_with_2_buttons(category .. '.bgAlpha', startX + (runningElem * elementWidth), currentY,
+                    draw_slider_with_2_buttons('values.' .. category .. '.bgAlpha', startX + (runningElem * elementWidth),
+                        currentY,
                         buttonSize,
                         sliderWidth, propupdate,
                         nil, 0, 5, 1, ui2.icons.patterntransparent, ui2.icons.patternopaque)
 
                     runningElem, currentY = updateRowStuff()
 
-                    draw_slider_with_2_buttons(category .. '.lineAlpha', startX + (runningElem * elementWidth), currentY,
+                    draw_slider_with_2_buttons('values.' .. category .. '.lineAlpha',
+                        startX + (runningElem * elementWidth), currentY,
                         buttonSize,
                         sliderWidth, propupdate,
                         nil, 0, 5, 1, ui2.icons.patterntransparent, ui2.icons.patternopaque)
@@ -1536,8 +1540,8 @@ end
 
 function configPanelPanelDimensions()
     local w, h = love.graphics.getDimensions()
-    local margin = (h / 16) -- margin around panel
-    local width = (w / 3) -- width of panel
+    local margin = (h / 16)         -- margin around panel
+    local width = (w / 3)           -- width of panel
     local height = (h - margin * 2) -- height of panel
     local beginX = 0
     local beginY = 0
@@ -1856,7 +1860,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
                     local newScroll = j + offset
                     local yPosition = currentY + (newScroll * (cellSize))
                     local xPosition = currentX + (i - 1) * (cellSize)
-                    local index = math.ceil( -grid.position) + j
+                    local index = math.ceil(-grid.position) + j
                     local value = ((index % rows) * columns) + i
 
                     if true or renderContainer[value] ~= 'assets/parts/null.png' then
@@ -1881,7 +1885,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
                     local newScroll = j + offset
                     local yPosition = currentY + (newScroll * (cellSize))
                     local xPosition = currentX + (i - 1) * (cellSize)
-                    local index = math.ceil( -grid.position) + j
+                    local index = math.ceil(-grid.position) + j
 
                     if (index >= 0 and index <= rows - 1) then
                         local value = ((index % rows) * columns) + i
@@ -1926,7 +1930,7 @@ function scrollList(draw, clickX, clickY)
         for i = -1, (scroller.visibleOnScreen - 1) do
             local newScroll = i + offset
             local yPosition = marginHeight + (newScroll * (h / scroller.visibleOnScreen))
-            local index = math.ceil( -scroller.position) + i
+            local index = math.ceil(-scroller.position) + i
 
             index = (index % #categories) + 1
             if index < 1 then
@@ -1937,7 +1941,7 @@ function scrollList(draw, clickX, clickY)
             end
             local alpha = 0.8
 
-            local whiterectIndex = math.ceil( -scroller.position) + i
+            local whiterectIndex = math.ceil(-scroller.position) + i
             whiterectIndex = (whiterectIndex % #ui2.whiterects) + 1
             local marginb = size / 10
             local scaleX, scaleY = createFittingScale(ui2.whiterects[whiterectIndex], size, size)
