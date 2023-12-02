@@ -345,7 +345,7 @@ function updatePart(name)
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
-        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
+        torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL, editingGuy.values.body)
 
         local body = box2dGuys[1].torso
         local longestLeg = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)

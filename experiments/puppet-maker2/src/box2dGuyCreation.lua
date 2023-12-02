@@ -874,6 +874,23 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
     return cnv
 end
 
+
+function getColorsFromValues(part) 
+   -- shape     = 1,
+   -- bgPal     = 4,
+   -- fgPal     = 1,
+   -- bgTex     = 1,
+   -- fgTex     = 2,
+   -- linePal   = 1,
+   -- bgAlpha   = 5,
+   -- fgAlpha   = 5,
+   -- lineAlpha = 5,
+   -- texRot    = 0,
+   -- texScale  = 1,
+
+   -- textures[part.bgTex], palettes[part.bgPal], part.bgAlpha    
+end
+
 function createWhiteColoredBlackOutlineTexture(url)
     -- todo make this more optimal and readable, 5 is white in any case
     local tex1 = textures[math.ceil(math.random() * #textures)]
@@ -889,16 +906,36 @@ function createWhiteColoredBlackOutlineTexture(url)
             1, 1, nil, nil))
 end
 
-function createRandomColoredBlackOutlineTexture(url)
+function createRandomColoredBlackOutlineTexture(url, optionalPart)
     local tex1 = textures[math.ceil(math.random() * #textures)]
     local pal1 = palettes[math.ceil(math.random() * #palettes)]
+    local al1 = 5
     local tex2 = textures[math.ceil(math.random() * #textures)]
     local pal2 = palettes[math.ceil(math.random() * #palettes)]
+    local al2 = 2
+
+    local lineP = palettes[1]
+    local lineA = 5
+
+    local tr = 0
+    local ts =1
+    if optionalPart then 
+        tex1 = textures[optionalPart.bgTex]
+        pal1 = palettes[optionalPart.bgPal]
+        al1 = optionalPart.bgAlpha
+        tex2 = textures[optionalPart.fgTex]
+        pal2 = palettes[optionalPart.fgPal]
+        al2 = optionalPart.fgAlpha
+        lineP = palettes[optionalPart.linePal]
+        lineA = optionalPart.lineAlpha
+        tr = optionalPart.texRot
+        ts = optionalPart.texScale
+    end
 
     return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1, pal1, 5,
-            tex2, pal2, 2,
-            0, 1,
-            palettes[1], 5,
+            tex1,pal1, al1,
+            tex2, pal2, al2,
+            tr, ts,
+            lineP, lineA,
             1, 1, nil, nil))
 end
