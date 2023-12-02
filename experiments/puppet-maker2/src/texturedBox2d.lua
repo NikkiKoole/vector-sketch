@@ -234,9 +234,9 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
     --print(name, ox, oy, w, h, creation[nameP].metaPivotX, creation[nameP].metaPivotY)
     -- this (ox , oy) is times 2 because i dunno (TODO FIGURE IT OUT)
 
-    local m = love.graphics.getDPIScale()
+    local dpi = love.graphics.getDPIScale()
     local shrink = canvas:getShrinkFactor()
-    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * m / shrink, oy * m / shrink)
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * dpi / shrink, oy * dpi / shrink)
 end
 
 function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
@@ -246,8 +246,9 @@ function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier,
     local hscale = creation[name].w / h --* 2 --creation.lfoot.metaPointsH
     local ox = creation[name].metaPivotX - creation[name].metaTexturePoints[1][1]
     local oy = creation[name].metaPivotY - creation[name].metaTexturePoints[1][2]
-
-    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox, oy)
+    local dpi = love.graphics.getDPIScale()
+    local shrink = canvas:getShrinkFactor()
+    love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * dpi / shrink, oy * dpi / shrink)
 end
 
 function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
@@ -507,18 +508,18 @@ function drawSkinOver(box2dGuy, creation, multipliers)
 
 
     local eyelx, eyely = facePart:getWorldPoint(
-            (leftEyeX + faceData.metaOffsetX) * sx,
-            (f[3][2] + faceData.metaOffsetY) * sy)
+            (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+            (f[3][2] + faceData.metaOffsetY) * sy * dpi / shrink)
 
     local eyerx, eyery = facePart:getWorldPoint(
-            (rightEyeX + faceData.metaOffsetX) * sx,
-            (f[3][2] + faceData.metaOffsetY) * sy)
+            (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+            (f[3][2] + faceData.metaOffsetY) * sy * dpi / shrink)
 
 
     love.graphics.circle('fill', eyelx, eyely, 20)
     love.graphics.circle('fill', eyerx, eyery, 20)
 
-    if false then
+    if true then
         local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
         local angle, dist = getAngleAndDistance(cx, cy, mx, my)
         local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
@@ -553,12 +554,12 @@ function drawSkinOver(box2dGuy, creation, multipliers)
 
         if eyeCanvas then
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier,
+                'eye', r - 0.5, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier,
                 eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier,
+                'eye', r + 0.5, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier,
                 eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
         end

@@ -51,10 +51,12 @@ local multipliers = {
     nose = { wMultiplier = 1, hMultiplier = 1 },
     eye = { wMultiplier = 1, hMultiplier = 1 }
 }
-local positioners = {
-    leg = { x = 0.5 }
 
+local positioners = {
+    leg = { x = 0.5 },
+    eye = { x = 0.5, y = 0.5, r = 0 }
 }
+
 function getCreation()
     return creation
 end

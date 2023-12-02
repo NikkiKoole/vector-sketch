@@ -10,6 +10,7 @@ local time         = 0
 local lastTick     = 0
 local lastBeat     = -1
 local bpm          = 0
+local volume       = 1
 local scale        = {}
 local voices       = {}
 local tuning       = 0
@@ -235,6 +236,8 @@ while (true) do
                table.remove(queue, i)
                table.insert(sources, { source = q.source, index = q.index })
                --print(samples[q.index].p)
+               -- love.audio.setVolume(volume)
+               q.source:setVolume(volume)
                love.audio.play(q.source)
                channel.audio2main:push({
                    type = "played",
@@ -252,8 +255,8 @@ while (true) do
             table.insert(sources, { source = q.source, index = q.index })
             -- todo parametrize
             --chokeGroup(q.index)
-
-
+            --print(volume)
+            q.source:setVolume(volume)
             love.audio.play(q.source)
             channel.audio2main:push({
                 type = "played",
@@ -294,7 +297,10 @@ while (true) do
       if (v.type == 'scale') then
          scale = v.data
       end
-
+      if (v.type == 'volume') then
+         volume = v.data
+         print(volume)
+      end
       if v.type == 'song' then
          local song = v.data
          pattern = song.page

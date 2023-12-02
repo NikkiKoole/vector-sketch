@@ -18,6 +18,7 @@ local creation = getCreation()
 
 require 'src.texturedBox2d'
 
+
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
 end
@@ -707,6 +708,15 @@ function scene.draw()
     end
 
     cam:pop()
+
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print(inspect(love.graphics.getStats()), 10, 10)
+
+    local a = h_slider('mainVolume', 0, 0, 100, mainVolume, 0, 1)
+    if a.value then
+        mainVolume = a.value
+        audioHelper.sendMessageToAudioThread({ type = "volume", data = mainVolume });
+    end
 end
 
 return scene

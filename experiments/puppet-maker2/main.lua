@@ -46,7 +46,9 @@ function playSound(sound, optionalPitch, volumeMultiplier)
     local s = sound:clone()
     local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
     s:setPitch(p)
-    s:setVolume(.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
+    local volume = (.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
+    --print(volume * mainVolume)
+    s:setVolume(volume * mainVolume)
     love.audio.play(s)
     return s
 end
@@ -92,7 +94,7 @@ end
 function love.load()
     setupWorld()
 
-
+    mainVolume = 1
     local sample_data = {
         'cr78/Conga Low',
         'cr78/Bongo Low',
@@ -126,6 +128,7 @@ function love.load()
     miSound1 = love.audio.newSource("assets/sounds/mi.wav", "static")
     poSound1 = love.audio.newSource("assets/sounds/po.wav", "static")
 
+    audioHelper.sendMessageToAudioThread({ type = "volume", data = 0.2 });
     audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
     audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
