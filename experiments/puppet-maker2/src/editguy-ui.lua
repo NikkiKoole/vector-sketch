@@ -1430,7 +1430,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             currentHeight = 0
         else
             currentHeight = isPatch and calcCurrentHeight(5) or calcCurrentHeight(3)
-
+            print(category..'.texRot')
             if draw then
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
@@ -1439,21 +1439,21 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 end
                 runningElem = 0
 
-                draw_slider_with_2_buttons(category .. '.texScale', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('values.'..category .. '.texScale', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 1, 9, 1, ui2.icons.patterncoarse, ui2.icons.patternfine)
 
                 runningElem, currentY = updateRowStuff()
 
-                draw_slider_with_2_buttons(category .. '.texRot', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('values.'..category .. '.texRot', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0, 15, 1, ui2.icons.patternccw, ui2.icons.patterncw)
 
                 runningElem, currentY = updateRowStuff()
 
-                draw_slider_with_2_buttons(category .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('values.'..category .. '.fgAlpha', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0, 5, 1, ui2.icons.patterntransparent, ui2.icons.patternopaque)
