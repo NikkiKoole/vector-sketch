@@ -176,7 +176,8 @@ function updatePart(name)
         changeMetaTexture('pupil', pupildata[pupilIndex])
         creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
         creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
-        pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)
+        --pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)
+        pupilCanvas      = partToTexturedCanvasWrap('pupils', editingGuy.values)
     end
 
     if name == 'ears' then
@@ -241,7 +242,7 @@ function updatePart(name)
         end
     end
 
-    if name == 'head' then
+    if name == 'head' or name == 'skinPatchEye1' or name == 'skinPatchEye2' or name == 'skinPatchSnout' then
         -- if not creation.isPotatoHead then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         local headRndIndex = math.ceil(editingGuy.values.head.shape)
@@ -332,6 +333,15 @@ function updatePart(name)
         end
     end
 
+    if name == 'armhair' then
+        local index   = math.ceil(editingGuy.values.armhair.shape)
+        local part    = findPart('armhair')
+        local img     = part.imgs[index]
+        armhairCanvas = partToTexturedCanvasWrap('armhair', editingGuy.values)
+        armhairMesh   = createTexturedTriangleStrip(armhairCanvas)
+        print(armhairCanvas)
+    end
+
     if name == 'arms' then
         local armIndex   = math.ceil(editingGuy.values.arms.shape)
         local part       = findPart('arms')
@@ -354,7 +364,6 @@ function updatePart(name)
 
         creation.llarm.h = legH / 2
         creation.rlarm.h = legH / 2
-        --print(part)
 
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
@@ -522,6 +531,7 @@ function scene.load()
     updatePart('pupils')
     updatePart('nose')
     updatePart('hair')
+    updatePart('armhair')
     Timer.tween(.5, scroller, { position = 4 })
 end
 

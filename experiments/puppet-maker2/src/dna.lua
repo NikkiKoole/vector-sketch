@@ -155,32 +155,33 @@ end
 
 function generateParts()
     --print('generatre!')
-    local legUrls = { 'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-        'assets/parts/leg5.png', 'assets/parts/leg7.png', 'assets/parts/legp2.png',
-        'assets/parts/leg1x.png', 'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png',
-        'assets/parts/leg5x.png', 'assets/parts/neck8.png', }
+    local legUrls = {
+        'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
+        'assets/parts/leg5.png', 'assets/parts/leg7.png', 'assets/parts/legp2.png', 'assets/parts/leg1x.png',
+        'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png', 'assets/parts/leg5x.png',
+        'assets/parts/neck8.png',
+    }
 
     local neckUrls = {
-
         'assets/parts/neck1.png', 'assets/parts/neck2.png', 'assets/parts/neck3.png', 'assets/parts/neck4.png',
         'assets/parts/neck5.png', 'assets/parts/neck6.png', 'assets/parts/neck7.png', 'assets/parts/neck8.png',
-        'assets/parts/neck9.png', 'assets/parts/neck10.png',
-        'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
-        'assets/parts/leg5.png',
-        'assets/parts/leg1x.png', 'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png',
-        'assets/parts/leg5x.png' }
+        'assets/parts/neck9.png', 'assets/parts/neck10.png', 'assets/parts/leg1.png', 'assets/parts/leg2.png',
+        'assets/parts/leg3.png', 'assets/parts/leg4.png', 'assets/parts/leg5.png', 'assets/parts/leg1x.png',
+        'assets/parts/leg2x.png', 'assets/parts/leg3x.png', 'assets/parts/leg4x.png', 'assets/parts/leg5x.png',
+    }
 
-    local patchUrls = { 'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png',
-        'assets/parts/patch4.png' }
+    local patchUrls = {
+        'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png', 'assets/parts/patch4.png',
+    }
 
 
-    local hairUrls = { 'assets/parts/hair1.png', 'assets/parts/hair2.png',
-        'assets/parts/hair3.png',
-        'assets/parts/hair4.png',
+    local hairUrls = {
+        'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
         'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
         'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png', 'assets/parts/hair1x.png',
         'assets/parts/hair2x.png', 'assets/parts/haarnew1.png', 'assets/parts/haarnew2.png', 'assets/parts/haarnew3.png',
-        'assets/parts/haarnew4.png' }
+        'assets/parts/haarnew4.png',
+    }
 
     table.insert(patchUrls, 'assets/parts/null.png')
     table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice

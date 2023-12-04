@@ -1395,8 +1395,8 @@ function love.load()
     image9 = love.graphics.newImage('assets/parts/hair6.png')
     mesh9 = createTexturedTriangleStrip(image9)
 
-    image11 = love.graphics.newImage('assets/parts/hair9.png')
-    mesh11 = createTexturedTriangleStrip(image11)
+    --image11 = love.graphics.newImage('assets/parts/hair9.png')
+    -- mesh11 = createTexturedTriangleStrip(image11)
 
     cloud = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
 
