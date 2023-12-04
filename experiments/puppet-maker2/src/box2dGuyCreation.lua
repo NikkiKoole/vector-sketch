@@ -1,7 +1,25 @@
-package.path      = package.path .. ";../../?.lua"
-local bbox        = require 'lib.bbox'
-local inspect     = require 'vendor.inspect'
-local canvas      = require 'lib.canvas'
+package.path  = package.path .. ";../../?.lua"
+local bbox    = require 'lib.bbox'
+local inspect = require 'vendor.inspect'
+local canvas  = require 'lib.canvas'
+
+
+function findPart(name)
+    for i = 1, #parts do
+        --print(parts[i].name)
+        if parts[i].name == name then
+            return parts[i]
+        end
+    end
+end
+
+function isNullObject(partName, values)
+    local p = findPart(partName)
+    local url = p.imgs[values[partName].shape]
+
+    return url == 'assets/parts/null.png'
+end
+
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 local creation    = {
     isPotatoHead = false, -- if true then in dont have a neck or head
@@ -47,14 +65,15 @@ local multipliers = {
     neck = { wMultiplier = 1, hMultiplier = 1 },
     head = { wMultiplier = 1, hMultiplier = 1 },
     ear = { wMultiplier = 1, hMultiplier = 1 },
-    hair = { wMultiplier = 1, sMultiplier = 1 },
+    hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
     nose = { wMultiplier = 1, hMultiplier = 1 },
-    eye = { wMultiplier = 1, hMultiplier = 1 }
+    eye = { wMultiplier = 1, hMultiplier = 1 },
 }
 
 local positioners = {
     leg = { x = 0.5 },
-    eye = { x = 0.5, y = 0.5, r = 0 }
+    eye = { x = 0.2, y = 0.5, r = 0 },
+    nose = { y = 0.5 },
 }
 
 function getCreation()
@@ -874,21 +893,20 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
     return cnv
 end
 
+function getColorsFromValues(part)
+    -- shape     = 1,
+    -- bgPal     = 4,
+    -- fgPal     = 1,
+    -- bgTex     = 1,
+    -- fgTex     = 2,
+    -- linePal   = 1,
+    -- bgAlpha   = 5,
+    -- fgAlpha   = 5,
+    -- lineAlpha = 5,
+    -- texRot    = 0,
+    -- texScale  = 1,
 
-function getColorsFromValues(part) 
-   -- shape     = 1,
-   -- bgPal     = 4,
-   -- fgPal     = 1,
-   -- bgTex     = 1,
-   -- fgTex     = 2,
-   -- linePal   = 1,
-   -- bgAlpha   = 5,
-   -- fgAlpha   = 5,
-   -- lineAlpha = 5,
-   -- texRot    = 0,
-   -- texScale  = 1,
-
-   -- textures[part.bgTex], palettes[part.bgPal], part.bgAlpha    
+    -- textures[part.bgTex], palettes[part.bgPal], part.bgAlpha
 end
 
 function createWhiteColoredBlackOutlineTexture(url)
@@ -906,7 +924,87 @@ function createWhiteColoredBlackOutlineTexture(url)
             1, 1, nil, nil))
 end
 
-function createRandomColoredBlackOutlineTexture(url, optionalPart)
+function createBlackColoredBlackOutlineTexture(url)
+    -- todo make this more optimal and readable, 5 is white in any case
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[1]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[1]
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end
+
+function partToTexturedCanvasWrap(partName, values, optionalImageSettings)
+    local a, b = partToTexturedCanvas(partName, values, optionalImageSettings)
+    return love.graphics.newImage(a)
+end
+
+function partToTexturedCanvas(partName, values, optionalImageSettings)
+    local p = findPart(partName)
+    local url = p.imgs[values[partName].shape]
+    local flipX = values[partName].flipx or 1
+    local flipY = values[partName].flipy or 1
+    local renderPatch = {}
+
+    if (partName == 'head') then
+        if not isNullObject('skinPatchSnout', values) then
+            local p = {}
+
+            p.imageData = partToTexturedCanvas('skinPatchSnout', values)
+            p.sx = values.skinPatchSnoutPV.sx
+            p.sy = values.skinPatchSnoutPV.sy
+            p.r = values.skinPatchSnoutPV.r
+            p.tx = values.skinPatchSnoutPV.tx
+            p.ty = values.skinPatchSnoutPV.ty
+            table.insert(renderPatch, p)
+        end
+        if not isNullObject('skinPatchEye1', values) then
+            local p     = {}
+            p.imageData = partToTexturedCanvas('skinPatchEye1', values)
+            p.sx        = values.skinPatchEye1PV.sx
+            p.sy        = values.skinPatchEye1PV.sy
+            p.r         = values.skinPatchEye1PV.r
+            p.tx        = values.skinPatchEye1PV.tx
+            p.ty        = values.skinPatchEye1PV.ty
+            table.insert(renderPatch, p)
+        end
+        if not isNullObject('skinPatchEye2', values) then
+            local p     = {}
+            p.imageData = partToTexturedCanvas('skinPatchEye2', values)
+            p.sx        = values.skinPatchEye2PV.sx
+            p.sy        = values.skinPatchEye2PV.sy
+            p.r         = values.skinPatchEye2PV.r
+            p.tx        = values.skinPatchEye2PV.tx
+            p.ty        = values.skinPatchEye2PV.ty
+            table.insert(renderPatch, p)
+        end
+    end
+
+    local texturedcanvas = helperTexturedCanvas(
+            url,
+            textures[values[partName].bgTex],
+            palettes[values[partName].bgPal],
+            values[partName].bgAlpha,
+            textures[values[partName].fgTex],
+            palettes[values[partName].fgPal],
+            values[partName].fgAlpha,
+            values[partName].texRot,
+            texscales[values[partName].texScale],
+            palettes[values[partName].linePal],
+            values[partName].lineAlpha,
+            flipX, flipY,
+            optionalImageSettings,
+            renderPatch
+        )
+    return texturedcanvas, url
+end
+
+function createRandomColoredBlackOutlineTexture(url, optionalPart, editingGuy)
     local tex1 = textures[math.ceil(math.random() * #textures)]
     local pal1 = palettes[math.ceil(math.random() * #palettes)]
     local al1 = 5
@@ -918,8 +1016,8 @@ function createRandomColoredBlackOutlineTexture(url, optionalPart)
     local lineA = 5
 
     local tr = 0
-    local ts =1
-    if optionalPart then 
+    local ts = 1
+    if optionalPart then
         tex1 = textures[optionalPart.bgTex]
         pal1 = palettes[optionalPart.bgPal]
         al1 = optionalPart.bgAlpha
@@ -932,10 +1030,12 @@ function createRandomColoredBlackOutlineTexture(url, optionalPart)
         ts = optionalPart.texScale
     end
 
+    local renderPatch = {}
+
     return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1,pal1, al1,
+            tex1, pal1, al1,
             tex2, pal2, al2,
             tr, ts,
             lineP, lineA,
-            1, 1, nil, nil))
+            1, 1, nil, renderPatch))
 end

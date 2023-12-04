@@ -319,16 +319,16 @@ function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
         if true or box2dGuy.hairNeedsRedo then
             --print('jojo')
             --local img = mesh.getImage('assets/parts/hair1x.png')
-            local img = mesh.getImage('assets/parts/haarnew2.png')
+            local img = hairCanvas -- mesh.getImage('assets/parts/haarnew2.png')
             local w, h = img:getDimensions()
             local f = faceData.metaPoints
 
 
             --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
             local hairLine = { f[7], f[8], f[1], f[2], f[3] }
-
+            --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
             local points = hairLine
-            local hairTension = .02
+            local hairTension = .02 --* multipliers.hair.tension
             local spacing = 10 * multipliers.hair.sMultiplier
             local coords
 
@@ -434,7 +434,7 @@ local function setAngleAndDistance(sx, sy, angle, distance, scaleX, scaleY)
     return newx, newy
 end
 
-function drawSkinOver(box2dGuy, creation, multipliers)
+function drawSkinOver(box2dGuy, creation, multipliers, positioners)
     love.graphics.setColor(1, 1, 1, 1)
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
@@ -492,32 +492,20 @@ function drawSkinOver(box2dGuy, creation, multipliers)
     local maxPupilOffsetH = eyeCanvasHeight * (pupilMultiplierFix)
 
     local f = faceData.metaPoints
-    local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.2)
-    local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.8)
+    local leftEyeX = numbers.lerp(f[7][1], f[3][1], 0.5 - positioners.eye.x)
+    local rightEyeX = numbers.lerp(f[7][1], f[3][1], 0.5 + positioners.eye.x)
 
-
-    if false then
-        local eyelx, eyely = facePart:getWorldPoint(
-                (leftEyeX + faceData.metaOffsetX) * sx,
-                (f[3][2] + faceData.metaOffsetY) * sy)
-
-        local eyerx, eyery = facePart:getWorldPoint(
-                (rightEyeX + faceData.metaOffsetX) * sx,
-                (f[3][2] + faceData.metaOffsetY) * sy)
-    end
-
+    local eyeY = numbers.lerp(f[1][2], f[5][2], positioners.eye.y)
 
     local eyelx, eyely = facePart:getWorldPoint(
             (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (f[3][2] + faceData.metaOffsetY) * sy * dpi / shrink)
+            (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
     local eyerx, eyery = facePart:getWorldPoint(
             (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (f[3][2] + faceData.metaOffsetY) * sy * dpi / shrink)
+            (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
 
-    love.graphics.circle('fill', eyelx, eyely, 20)
-    love.graphics.circle('fill', eyerx, eyery, 20)
 
     if true then
         local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
@@ -537,7 +525,6 @@ function drawSkinOver(box2dGuy, creation, multipliers)
                 (f[3][2] + faceData.metaOffsetY + py2) * sy)
 
 
-
         local browlx, browly = facePart:getWorldPoint(
                 (leftEyeX + faceData.metaOffsetX) * sx,
                 (f[3][2] + faceData.metaOffsetY - 100) * sy)
@@ -546,24 +533,25 @@ function drawSkinOver(box2dGuy, creation, multipliers)
                 (rightEyeX + faceData.metaOffsetX) * sx,
                 (f[3][2] + faceData.metaOffsetY - 100) * sy)
 
-        local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
-        local noseY = f[3][2]
-        local nx, ny = facePart:getWorldPoint(
-                (noseX + faceData.metaOffsetX) * sx,
-                (noseY + faceData.metaOffsetY) * sy)
+
 
         if eyeCanvas then
             renderNonAttachedObject(eyeCanvas,
-                'eye', r - 0.5, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier,
+                'eye', r - positioners.eye.r, eyelx, eyely, -eyeMultiplierFix * multipliers.eye.wMultiplier,
                 eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
 
             renderNonAttachedObject(eyeCanvas,
-                'eye', r + 0.5, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier,
+                'eye', r + positioners.eye.r, eyerx, eyery, eyeMultiplierFix * multipliers.eye.wMultiplier,
                 eyeMultiplierFix * multipliers.eye.hMultiplier,
                 box2dGuy, creation)
         end
     end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+
+
     if false then
         drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
 
@@ -577,8 +565,6 @@ function drawSkinOver(box2dGuy, creation, multipliers)
 
 
 
-        love.graphics.setColor(0, 1, 0, 1)
-        renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
 
 
         love.graphics.setColor(1, 1, 1, 1)
@@ -592,6 +578,14 @@ function drawSkinOver(box2dGuy, creation, multipliers)
         renderCurvedObjectFromSimplePoints({ -faceWidth / 2, -10 }, { 0, 0 }, { faceWidth / 2, 0 }, browCanvas,
             browmesh, box2dGuy)
         love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
+    end
+
+    if noseCanvas then
+        local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
+        local noseY = numbers.lerp(f[1][2], f[5][2], positioners.nose.y)
+        local nx, ny = facePart:getWorldPoint(
+                (noseX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (noseY + faceData.metaOffsetY) * sy * dpi / shrink)
 
         renderNonAttachedObject(noseCanvas,
             'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier, -0.5 * multipliers.nose.hMultiplier,

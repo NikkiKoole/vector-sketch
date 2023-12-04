@@ -624,7 +624,7 @@ local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sl
         love.graphics.draw(img2, offset + startX + sliderWidth, currentY, 0, imgsx, imgsy)
     end
     local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
-        buttonSize, buttonSize)
+            buttonSize, buttonSize)
     if more then
         growl(1 + love.math.random() * 2)
 
@@ -673,7 +673,7 @@ local function draw_slider_with_2_buttons(path, startX, currentY, buttonSize, sl
         love.graphics.draw(img2, startX + buttonSize + sliderWidth, currentY, 0, imgsx, imgsy)
     end
     local more = ui.getUIRect('more-' .. path, startX + buttonSize + sliderWidth, currentY, buttonSize,
-        buttonSize)
+            buttonSize)
     if more then
         -- local current = getValueByPath()
         local newValue = math.min(val + valstep, valmax)
@@ -691,9 +691,9 @@ local function draw_slider_with_2_buttons(path, startX, currentY, buttonSize, sl
     -- getValueMaybeNested(prop)
     -- print(val, path)
     local v = h_slider_textured("slider-" .. path, startX + buttonSize, currentY + (buttonSize / 4), sliderWidth,
-        ui2.sliderimg.track2,
-        ui2.sliderimg.thumb5,
-        nil, val, valmin, valmax)
+            ui2.sliderimg.track2,
+            ui2.sliderimg.thumb5,
+            nil, val, valmin, valmax)
     if v.value then
         local m = math.ceil(1 / math.abs(valstep))
         v.value = math.floor(v.value * m) / m -- round to .5
@@ -1203,35 +1203,61 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
                 runningElem, currentY = updateRowStuff()
 
-                if false then
-                    local rotUpdate = function(v)
-                        editingGuy.eye1.transforms.l[3] = v
-                        editingGuy.eye2.transforms.l[3] = -v
-                    end
-                    draw_slider_with_2_buttons('eyeRotation', startX + (runningElem * elementWidth), currentY,
-                        buttonSize,
-                        sliderWidth, rotUpdate,
-                        nil, -.5, .5, .25, ui2.icons.eyeccw, ui2.icons.eyecw)
+                draw_slider_with_2_buttons('positioners.eye.r', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, -2, 2, .25, ui2.icons.eyeccw, ui2.icons.eyecw)
 
-                    runningElem, currentY = updateRowStuff()
+                runningElem, currentY = updateRowStuff()
 
-                    draw_slider_with_2_buttons('eyeYAxis', startX + (runningElem * elementWidth), currentY,
-                        buttonSize,
-                        sliderWidth, propupdate,
-                        nil, -3, 3, 1, ui2.icons.eyedown, ui2.icons.eyeup)
+                draw_slider_with_2_buttons('positioners.eye.y', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0, 1, 0.1, ui2.icons.eyedown, ui2.icons.eyeup)
 
-                    runningElem, currentY = updateRowStuff()
+                runningElem, currentY = updateRowStuff()
 
-                    draw_slider_with_2_buttons('eyeXAxisBetween', startX + (runningElem * elementWidth), currentY,
-                        buttonSize,
-                        sliderWidth, propupdate,
-                        nil, -3, 3, 1, ui2.icons.eyefar, ui2.icons.eyeclose)
+                draw_slider_with_2_buttons('positioners.eye.x', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0, 0.5, 0.1, ui2.icons.eyefar, ui2.icons.eyeclose)
 
-                    runningElem, currentY = updateRowStuff()
-                end
+                runningElem, currentY = updateRowStuff()
             end
         end
 
+        if category == 'nose' then
+            currentHeight = calcCurrentHeight(3)
+            if draw then
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+                runningElem = 0
+
+                local propupdate = function(v)
+                    changePart('nose')
+                end
+
+                draw_slider_with_2_buttons('multipliers.nose.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .5, 3, .5, ui2.icons.nosenarrow, ui2.icons.nosewide)
+
+                runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('multipliers.nose.hMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .5, 3, .5, ui2.icons.nosesmall, ui2.icons.nosetall)
+
+                runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('positioners.nose.y', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0, 1, .1, ui2.icons.noseup, ui2.icons.nosedown)
+            end
+        end
 
         if category == 'teeth' then
             currentHeight = calcCurrentHeight(1)
@@ -1299,19 +1325,22 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 end
 
 
-                draw_slider_with_2_buttons('hairWidthMultiplier', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('multipliers.hair.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, .00001, 2, .25, ui2.icons.hairthin, ui2.icons.hairthick)
 
                 runningElem, currentY = updateRowStuff()
+                if false then
+                    draw_slider_with_2_buttons('multipliers.hair.sMultiplier', startX + (runningElem * elementWidth),
+                        currentY,
+                        buttonSize,
+                        sliderWidth, propupdate,
+                        nil, .00001, 1, .25, ui2.icons.hairtloose, ui2.icons.hairthight)
 
-                draw_slider_with_2_buttons('hairTension', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .00001, 1, .25, ui2.icons.hairtloose, ui2.icons.hairthight)
-
-                runningElem, currentY = updateRowStuff()
+                    runningElem, currentY = updateRowStuff()
+                end
             end
         end
 
@@ -1358,42 +1387,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
         end
 
-        if category == 'nose' then
-            currentHeight = calcCurrentHeight(3)
-            if draw then
-                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
-                runningElem = 0
-
-                local propupdate = function(v)
-                    myWorld:emit('rescaleFaceparts', potato)
-                    myWorld:emit('potatoInit', potato)
-                end
-
-                draw_slider_with_2_buttons('noseWidthMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .5, 3, .5, ui2.icons.nosenarrow, ui2.icons.nosewide)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('noseHeightMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .5, 3, .5, ui2.icons.nosesmall, ui2.icons.nosetall)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('noseYAxis', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, -1, 1, .25, ui2.icons.noseup, ui2.icons.nosedown)
-            end
-        end
-
-
-
-
-
         if category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2' then
             local posts = { 'PV.sx', 'PV.sy', 'PV.r', 'PV.tx', 'PV.ty' }
             local mins = { .25, .25, 0, -6, -6 }
@@ -1411,7 +1404,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
                 for i = 1, #posts do
                     local p = posts[i]
-                    local vv = category .. p
+                    local vv = 'values.' .. category .. p
                     draw_slider_with_2_buttons(vv, startX + (runningElem * elementWidth), currentY,
                         buttonSize,
                         sliderWidth, propupdate,
@@ -1483,7 +1476,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
         end
     end
 
-
     if uiState.selectedTab == 'colors' then
         if findPart(category).children then
             currentHeight = 0
@@ -1540,8 +1532,8 @@ end
 
 function configPanelPanelDimensions()
     local w, h = love.graphics.getDimensions()
-    local margin = (h / 16)         -- margin around panel
-    local width = (w / 3)           -- width of panel
+    local margin = (h / 16) -- margin around panel
+    local width = (w / 3) -- width of panel
     local height = (h - margin * 2) -- height of panel
     local beginX = 0
     local beginY = 0
@@ -1860,7 +1852,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
                     local newScroll = j + offset
                     local yPosition = currentY + (newScroll * (cellSize))
                     local xPosition = currentX + (i - 1) * (cellSize)
-                    local index = math.ceil(-grid.position) + j
+                    local index = math.ceil( -grid.position) + j
                     local value = ((index % rows) * columns) + i
 
                     if true or renderContainer[value] ~= 'assets/parts/null.png' then
@@ -1885,7 +1877,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
                     local newScroll = j + offset
                     local yPosition = currentY + (newScroll * (cellSize))
                     local xPosition = currentX + (i - 1) * (cellSize)
-                    local index = math.ceil(-grid.position) + j
+                    local index = math.ceil( -grid.position) + j
 
                     if (index >= 0 and index <= rows - 1) then
                         local value = ((index % rows) * columns) + i
@@ -1930,7 +1922,7 @@ function scrollList(draw, clickX, clickY)
         for i = -1, (scroller.visibleOnScreen - 1) do
             local newScroll = i + offset
             local yPosition = marginHeight + (newScroll * (h / scroller.visibleOnScreen))
-            local index = math.ceil(-scroller.position) + i
+            local index = math.ceil( -scroller.position) + i
 
             index = (index % #categories) + 1
             if index < 1 then
@@ -1941,7 +1933,7 @@ function scrollList(draw, clickX, clickY)
             end
             local alpha = 0.8
 
-            local whiterectIndex = math.ceil(-scroller.position) + i
+            local whiterectIndex = math.ceil( -scroller.position) + i
             whiterectIndex = (whiterectIndex % #ui2.whiterects) + 1
             local marginb = size / 10
             local scaleX, scaleY = createFittingScale(ui2.whiterects[whiterectIndex], size, size)
