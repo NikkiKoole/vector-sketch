@@ -150,6 +150,12 @@ function generateValues()
         feetLengthMultiplier    = 1,
         feetWidthMultiplier     = 1,
     }
+    values.skinPatchSnoutPV.ty = 5
+    values.skinPatchSnoutPV.sx = 2
+    values.skinPatchEye1PV.ty = 0
+    values.skinPatchEye1PV.tx = -2
+    values.skinPatchEye2PV.ty = 0
+    values.skinPatchEye2PV.tx = 2
     return values
 end
 

@@ -743,6 +743,85 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
     end
 
     if uiState.selectedTab == 'part' then
+        if category == 'teeth' then
+            currentHeight = calcCurrentHeight(1)
+
+            if draw then
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+                local propupdate = function(v)
+                    values.teethHeightMultiplier = v
+                    myWorld:emit('mouthInit', mouth)
+                end
+                draw_slider_with_2_buttons('teethHeightMultiplier', startX, currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .5, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
+            end
+        end
+
+        if category == 'upperlip' or category == 'lowerlip' then
+            currentHeight = calcCurrentHeight(1)
+
+            if draw then
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+                local propupdate = function(v)
+                    values.mouthYAxis = v
+                    myWorld:emit('potatoInit', potato)
+                end
+                draw_slider_with_2_buttons('mouthYAxis', startX, currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, -1, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
+            end
+        end
+
+        if category == 'brows' then
+            currentHeight = calcCurrentHeight(4)
+            if draw then
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+                local propupdate = function(v)
+                    --arrangeBrows()
+                    changePart('brows')
+                end
+
+                runningElem = 0
+
+                draw_slider_with_2_buttons('multipliers.brow.hMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .25, 2, .25, ui2.icons.browthin, ui2.icons.browthick)
+
+                runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('multipliers.brow.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .25, 2, .25, ui2.icons.brownarrow, ui2.icons.browwide)
+
+                runningElem, currentY = updateRowStuff()
+
+
+                draw_slider_with_2_buttons('positioners.brow.bend', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 1, 10, 1, ui2.icons.brow1, ui2.icons.brow10)
+
+                runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('positioners.brow.y', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0, 1, .1, ui2.icons.browsdown, ui2.icons.browsup)
+
+                runningElem, currentY = updateRowStuff()
+            end
+        end
+
         if category == 'head' then
             local update = function()
                 changePart('head')
@@ -775,14 +854,15 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
                 runningElem, currentY = updateRowStuff()
                 -- TODO
-                if false then
-                    draw_slider_with_2_buttons('faceScale', startX + (runningElem * elementWidth), currentY,
-                        buttonSize,
-                        sliderWidth, propupdate,
-                        nil, 0.25, 2, .25, ui2.icons.facesmall, ui2.icons.facebig)
 
-                    runningElem, currentY = updateRowStuff()
-                end
+                draw_slider_with_2_buttons('multipliers.face.mMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0.25, 2, .25, ui2.icons.facesmall, ui2.icons.facebig)
+
+                runningElem, currentY = updateRowStuff()
+
                 local f = function(v)
                     creation.head.flipy = v and -1 or 1
                     update()
@@ -1091,6 +1171,46 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
         end
 
+        if category == 'leghair' then
+            currentHeight = calcCurrentHeight(1)
+            if draw then
+                runningElem = 0
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+                local propupdate = function(v)
+                    changePart('leghair')
+                end
+
+                draw_slider_with_2_buttons('multipliers.leghair.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0.5, 4, .5, ui2.icons.hairthin, ui2.icons.hairthick)
+
+                runningElem, currentY = updateRowStuff()
+            end
+        end
+
+        if category == 'armhair' then
+            currentHeight = calcCurrentHeight(1)
+            if draw then
+                runningElem = 0
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+                local propupdate = function(v)
+                    changePart('armhair')
+                end
+
+                draw_slider_with_2_buttons('multipliers.armhair.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0.5, 4, .5, ui2.icons.hairthin, ui2.icons.hairthick)
+
+                runningElem, currentY = updateRowStuff()
+            end
+        end
+
         if category == 'arms' then
             currentHeight = calcCurrentHeight(3)
             if draw then
@@ -1157,24 +1277,30 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
         end
 
-
         if category == 'pupils' then
-            currentHeight = calcCurrentHeight(1)
+            currentHeight = calcCurrentHeight(2)
             if draw then
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
                 runningElem = 0
 
                 local propupdate = function(v)
-                    myWorld:emit('rescaleFaceparts', potato)
+                    changePart('pupils')
                 end
 
-                draw_slider_with_2_buttons('pupilSizeMultiplier', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('multipliers.pupil.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .125, 2, .125, ui2.icons.pupilsmall, ui2.icons.pupilbig)
+                runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('multipliers.pupil.hMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, .125, 2, .125, ui2.icons.pupilsmall, ui2.icons.pupilbig)
             end
         end
-
 
         if category == 'eyes' then
             currentHeight = calcCurrentHeight(5)
@@ -1259,42 +1385,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
         end
 
-        if category == 'teeth' then
-            currentHeight = calcCurrentHeight(1)
-
-            if draw then
-                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
-
-                local propupdate = function(v)
-                    values.teethHeightMultiplier = v
-                    myWorld:emit('mouthInit', mouth)
-                end
-                draw_slider_with_2_buttons('teethHeightMultiplier', startX, currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .5, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
-            end
-        end
-
-
-        if category == 'upperlip' or category == 'lowerlip' then
-            currentHeight = calcCurrentHeight(1)
-
-            if draw then
-                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
-
-                local propupdate = function(v)
-                    values.mouthYAxis = v
-                    myWorld:emit('potatoInit', potato)
-                end
-                draw_slider_with_2_buttons('mouthYAxis', startX, currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, -1, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
-            end
-        end
-
-
         if category == 'hair' then
             currentHeight = calcCurrentHeight(2)
             if draw then
@@ -1344,49 +1434,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
         end
 
-        if category == 'brows' then
-            currentHeight = calcCurrentHeight(4)
-            if draw then
-                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
-
-                local propupdate = function(v)
-                    arrangeBrows()
-                    changePart('brows')
-                end
-
-                runningElem = 0
-
-                draw_slider_with_2_buttons('browsWidthMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .5, 2, .5, ui2.icons.browthin, ui2.icons.browthick)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('browsWideMultiplier', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, .5, 2, .5, ui2.icons.brownarrow, ui2.icons.browwide)
-
-                runningElem, currentY = updateRowStuff()
-
-
-                draw_slider_with_2_buttons('browsDefaultBend', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, 1, 10, 1, ui2.icons.brow1, ui2.icons.brow10)
-
-                runningElem, currentY = updateRowStuff()
-
-                draw_slider_with_2_buttons('browYAxis', startX + (runningElem * elementWidth), currentY,
-                    buttonSize,
-                    sliderWidth, propupdate,
-                    nil, -3, 3, 1, ui2.icons.browsdown, ui2.icons.browsup)
-
-                runningElem, currentY = updateRowStuff()
-            end
-        end
-
         if category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2' then
             local posts = { 'PV.sx', 'PV.sy', 'PV.r', 'PV.tx', 'PV.ty' }
             local mins = { .25, .25, 0, -6, -6 }
@@ -1416,6 +1463,13 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
             end
         end
     end
+
+
+
+    if uiState.selectedTab == 'part' then
+
+    end
+
 
     if uiState.selectedTab == 'pattern' then
         local isPatch = category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2'

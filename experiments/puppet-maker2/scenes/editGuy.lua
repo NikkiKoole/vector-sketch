@@ -139,6 +139,18 @@ end
 function updatePart(name)
     local multipliers = editingGuy.multipliers
 
+    if name == 'brows' then
+        print('scooba')
+
+        local browIndex = math.ceil(editingGuy.values.brows.shape)
+        local part      = findPart('brows')
+        local img       = part.imgs[browIndex]
+        --local legW      = mesh.getImage(img):getWidth() * multipliers.brow.wMultiplier / 2
+        --local legH      = mesh.getImage(img):getHeight() * multipliers.brow.lMultiplier / 2
+
+        -- hairCanvas = createRandomColoredBlackOutlineTexture(img, editingGuy.values.hair)
+        browCanvas      = partToTexturedCanvasWrap('brows', editingGuy.values)
+    end
 
     if name == 'hair' then
         local hairIndex = math.ceil(editingGuy.values.hair.shape)
@@ -172,7 +184,8 @@ function updatePart(name)
 
     if name == 'pupils' then
         local pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
-        local pupilIndex = math.ceil(love.math.random() * #pupildata)
+        --local pupilIndex = math.ceil(love.math.random() * #pupildata)
+        local pupilIndex = editingGuy.values.pupils.shape
         changeMetaTexture('pupil', pupildata[pupilIndex])
         creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
         creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
@@ -333,13 +346,22 @@ function updatePart(name)
         end
     end
 
+    if name == 'leghair' then
+        local index   = math.ceil(editingGuy.values.leghair.shape)
+        local part    = findPart('leghair')
+        local img     = part.imgs[index]
+        leghairCanvas = partToTexturedCanvasWrap('leghair', editingGuy.values)
+        leghairMesh   = createTexturedTriangleStrip(leghairCanvas)
+        --print(armhairCanvas)
+    end
+
     if name == 'armhair' then
         local index   = math.ceil(editingGuy.values.armhair.shape)
         local part    = findPart('armhair')
         local img     = part.imgs[index]
         armhairCanvas = partToTexturedCanvasWrap('armhair', editingGuy.values)
         armhairMesh   = createTexturedTriangleStrip(armhairCanvas)
-        print(armhairCanvas)
+        --print(armhairCanvas)
     end
 
     if name == 'arms' then
@@ -532,6 +554,8 @@ function scene.load()
     updatePart('nose')
     updatePart('hair')
     updatePart('armhair')
+    updatePart('leghair')
+    updatePart('brows')
     Timer.tween(.5, scroller, { position = 4 })
 end
 
@@ -607,7 +631,7 @@ local function pointerPressed(x, y, id)
     --  headOrBody(false, x, y)
     --end
     local interacted = handlePointerPressed(x, y, id, cam)
-    print(x, y, interacted)
+    --print(x, y, interacted)
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)
         if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then

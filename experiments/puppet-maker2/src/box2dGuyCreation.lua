@@ -59,21 +59,27 @@ local creation    = {
 local multipliers = {
     torso = { hMultiplier = 1, wMultiplier = 1 },
     leg = { lMultiplier = 1, wMultiplier = 1 },
+    leghair = { wMultiplier = 1 },
     feet = { wMultiplier = 1, hMultiplier = 1 },
     arm = { lMultiplier = 1, wMultiplier = 1 },
+    armhair = { wMultiplier = 1 },
     hand = { wMultiplier = 1, hMultiplier = 1 },
     neck = { wMultiplier = 1, hMultiplier = 1 },
     head = { wMultiplier = 1, hMultiplier = 1 },
+    face = { mMultiplier = 1 },
     ear = { wMultiplier = 1, hMultiplier = 1 },
     hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
     nose = { wMultiplier = 1, hMultiplier = 1 },
     eye = { wMultiplier = 1, hMultiplier = 1 },
+    pupil = { wMultiplier = .5, hMultiplier = .5 },
+    brow = { wMultiplier = 1, hMultiplier = 1 },
 }
 
 local positioners = {
     leg = { x = 0.5 },
     eye = { x = 0.2, y = 0.5, r = 0 },
     nose = { y = 0.5 },
+    brow = { y = 0.8, bend = 1 }
 }
 
 function getCreation()
