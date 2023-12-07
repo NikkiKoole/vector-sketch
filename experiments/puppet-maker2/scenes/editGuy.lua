@@ -19,6 +19,227 @@ local creation = getCreation()
 require 'src.texturedBox2d'
 
 
+function rotateToHorizontal(body, desiredAngle, divider, pr)
+    local DEGTORAD = 1 / 57.295779513
+    --https://www.iforce2d.net/b2dtut/rotate-to-angle
+    if true then
+        local angle = body:getAngle()
+        local a = angle
+
+
+        local angularVelocity = body:getAngularVelocity()
+        local inertia = body:getInertia()
+        local didSomething = false
+        if false then
+            if false then
+                while a > (2 * math.pi) do
+                    a = a - (2 * math.pi)
+                    body:setAngle(a)
+                    --                    print('getting in first one', a, angle)
+                    didSomething = true
+                end
+                while a < -(2 * math.pi) do
+                    a = a + (2 * math.pi)
+                    body:setAngle(a)
+                    --                    print('getting in second one')
+                    didSomething = true
+                end
+            end
+        end
+        if didSomething then
+            --            print('jo')
+            return
+        end
+        angle = a -- body:getAngle()
+        local nextAngle = angle + angularVelocity / divider
+        local totalRotation = desiredAngle - nextAngle
+
+        while (totalRotation < -180 * DEGTORAD) do
+            totalRotation = totalRotation + 360 * DEGTORAD
+        end
+        while (totalRotation > 180 * DEGTORAD) do
+            totalRotation = totalRotation - 360 * DEGTORAD
+        end
+
+        local desiredAngularVelocity = (totalRotation * divider)
+        --local impulse = body:getInertia() * desiredAngularVelocity
+        -- body:applyAngularImpulse(impulse)
+
+        local torque = inertia * desiredAngularVelocity / (1 / divider)
+        body:applyTorque(torque)
+    end
+end
+
+local function getRidOfBigRotationsInBody(body)
+    --local angle = body:getAngle()
+    --if angle > 0 then
+    --    body:setAngle(angle % (2 * math.pi))
+    --else
+    --    body:setAngle(angle % ( -2 * math.pi))
+    --end
+    local a = body:getAngle()
+    if false then
+        while a > (2 * math.pi) do
+            a = a - (2 * math.pi)
+            body:setAngle(a)
+        end
+        while a < -(2 * math.pi) do
+            a = a + (2 * math.pi)
+            body:setAngle(a)
+        end
+    end
+end
+
+function rotateAllBodies(bodies, dt)
+    --print('hi hello!')
+    --local upsideDown = false
+    lastDt = dt
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
+
+
+        local isBeingPointerJointed = false
+        for j = 1, #pointerJoints do
+            local mj = pointerJoints[j]
+            if mj.jointBody == body then
+                isBeingPointerJointed = true
+            end
+        end
+        for _, fixture in ipairs(fixtures) do
+            if isBeingPointerJointed then
+                --     getRidOfBigRotationsInBody(body)
+            end
+            local userData = fixture:getUserData()
+            if (userData) then
+                -- print(userData.bodyType)
+                if userData.bodyType == 'keep-rotation' then
+                    --  print(inspect(userData))
+                    rotateToHorizontal(body, userData.data.rotation, 50)
+                end
+            end
+
+
+            if (true) and not isBeingPointerJointed then
+                --local userData = fixture:getUserData()
+
+
+
+                if userData then
+                    -- getRidOfBigRotationsInBody(body)
+                    --print(userData.bodyType)
+                    if userData.bodyType == 'balloon' then
+                        --getRidOfBigRotationsInBody(body)
+                        --local desired = upsideDown and -math.pi or 0
+                        --rotateToHorizontal(body, desired, 50)
+                        local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
+
+                        body:applyForce(0, up)
+                    end
+                    --print(userData.bodyType)
+                    --if not upsideDown then
+                    --    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
+                    --        getRidOfBigRotationsInBody(body)
+                    --    end
+                    --end
+
+                    if userData.bodyType == 'hand' then
+                        -- getRidOfBigRotationsInBody(body)
+                    end
+                    if userData.bodyType == 'hand' then
+                        --   getRidOfBigRotationsInBody(body)
+                    end
+                    if userData.bodyType == 'torso' then
+                        getRidOfBigRotationsInBody(body)
+                        local desired = upsideDown and -math.pi or 0
+                        rotateToHorizontal(body, desired, 25)
+                    end
+
+                    if not upsideDown then
+                        if userData.bodyType == 'neck1' then
+                            getRidOfBigRotationsInBody(body)
+                            --  -- rotateToHorizontal(body, -math.pi, 40)
+                            --rotateToHorizontal(body, 0, 10)
+                            rotateToHorizontal(body, -math.pi, 15)
+                        end
+                        if userData.bodyType == 'neck' then
+                            getRidOfBigRotationsInBody(body)
+                            -- rotateToHorizontal(body, -math.pi, 40)
+                            --rotateToHorizontal(body, 0, 10)
+                            rotateToHorizontal(body, -math.pi, 15)
+                        end
+
+                        if userData.bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+                            --rotateToHorizontal(body, -math.pi, 15)
+
+                            --  print(body:getAngle())
+                            rotateToHorizontal(body, 0, 15)
+                        end
+                    end
+
+                    if not upsideDown then
+                        if userData.bodyType == 'luleg' then
+                            local a = creation.luleg.stanceAngle
+                            --  print(a)
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                        if userData.bodyType == 'ruleg' then
+                            local a = creation.ruleg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                        if userData.bodyType == 'llleg' then
+                            local a = creation.llleg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                        if userData.bodyType == 'rlleg' then
+                            local a = creation.rlleg.stanceAngle
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, a, 30)
+                        end
+                    end
+                    if upsideDown then
+                        if userData.bodyType == 'luarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        if userData.bodyType == 'llarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        if userData.bodyType == 'ruarm' then
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        if userData.bodyType == 'rlarm' then
+                            -- print('doing stuff!')
+                            --getRidOfBigRotationsInBody(body)
+                            rotateToHorizontal(body, 0, 30)
+                        end
+                        -- if userData.bodyType == 'legpart' then
+                        --getRidOfBigRotationsInBody(body)
+                        --rotateToHorizontal(body, math.pi, 10)
+                        -- end
+                    end
+
+                    if false then
+                        if userData.bodyType == 'head' then
+                            getRidOfBigRotationsInBody(body)
+
+                            rotateToHorizontal(body, math.pi, 15)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+
+
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
 end
@@ -82,59 +303,6 @@ local function findPart(name)
 end
 
 
-
-function randomFaceParts()
-    eyeIndex = math.ceil(love.math.random() * #eyedata)
-    changeMetaTexture('eye', eyedata[eyeIndex])
-    --  print(#eyedata, eyeIndex)
-    creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
-    creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
-    eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
-
-    pupilIndex = math.ceil(love.math.random() * #pupildata)
-    changeMetaTexture('pupil', pupildata[pupilIndex])
-
-    creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
-    creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
-    pupilCanvas = createBlackColoredBlackOutlineTexture(creation.pupil.metaURL)
-
-
-    noseIndex = math.ceil(love.math.random() * #pupildata)
-    changeMetaTexture('nose', nosedata[noseIndex])
-    creation.nose.w = mesh.getImage(creation.nose.metaURL):getHeight()
-    creation.nose.h = mesh.getImage(creation.nose.metaURL):getWidth()
-    noseCanvas = createRandomColoredBlackOutlineTexture(creation.nose.metaURL)
-
-
-    upperlipIndex = math.ceil(love.math.random() * #upperlipdata)
-    changeMetaTexture('upperlip', upperlipdata[upperlipIndex])
-    creation.upperlip.w = mesh.getImage(creation.upperlip.metaURL):getHeight()
-    creation.upperlip.h = mesh.getImage(creation.upperlip.metaURL):getWidth()
-    upperlipCanvas = createRandomColoredBlackOutlineTexture(creation.upperlip.metaURL)
-
-
-    lowerlipIndex = math.ceil(love.math.random() * #lowerlipdata)
-    changeMetaTexture('lowerlip', lowerlipdata[lowerlipIndex])
-    creation.lowerlip.w = mesh.getImage(creation.lowerlip.metaURL):getHeight()
-    creation.lowerlip.h = mesh.getImage(creation.lowerlip.metaURL):getWidth()
-    lowerlipCanvas = createRandomColoredBlackOutlineTexture(creation.lowerlip.metaURL)
-
-    teethIndex = math.ceil(love.math.random() * #teethdata)
-    changeMetaTexture('teeth', teethdata[teethIndex])
-    -- print(creation.teeth.metaURL)
-    creation.teeth.w = mesh.getImage(creation.teeth.metaURL):getHeight()
-    creation.teeth.h = mesh.getImage(creation.teeth.metaURL):getWidth()
-    teethCanvas = createWhiteColoredBlackOutlineTexture(creation.teeth.metaURL)
-
-    browIndex = math.ceil(love.math.random() * #eyebrowsdata)
-    changeMetaTexture('brow', eyebrowsdata[browIndex])
-    --print(inspect(eyebrowsdata[browIndex]))
-    -- print(creation.brow.metaURL)
-    creation.brow.w = mesh.getImage(creation.brow.metaURL):getHeight()
-    creation.brow.h = mesh.getImage(creation.brow.metaURL):getWidth()
-    browCanvas = createNonColoredRandomOutlineTexture(creation.brow.metaURL)
-    --browCanvas = createWhiteColoredBlackOutlineTexture(creation.brow.metaURL)
-end
 
 function updatePart(name)
     local multipliers = editingGuy.multipliers
@@ -635,6 +803,8 @@ function scene.update(dt)
     end
 
     handleUpdate(dt, cam)
+
+    rotateAllBodies(world:getBodies(), dt)
 end
 
 local function pointerPressed(x, y, id)

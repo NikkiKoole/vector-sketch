@@ -2,9 +2,9 @@ local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
 local mesh  = require 'lib.mesh'
 
-texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
-necklengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 }
+--texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
+local leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
+local necklengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 }
 
 local function TableConcat(t1, t2)
     for i = 1, #t2 do

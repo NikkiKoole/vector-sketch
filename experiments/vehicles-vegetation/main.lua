@@ -1331,7 +1331,8 @@ function startExample(number)
         eyebrowsdata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyebrows')
         print(eyebrowsdata)
         randomFaceParts()
-
+        image11 = love.graphics.newImage('assets/parts/hair9.png')
+        mesh11 = createTexturedTriangleStrip(image11)
         local amt = 5
         for i = 1, amt do
             table.insert(box2dGuys, makeGuy(camtlx + (i * screenWorldWidth / (amt + 1)), camcy + (i % 2) * -1000, i))
@@ -2011,7 +2012,7 @@ function love.draw()
         drawWorld(world)
 
         for i = 1, #box2dGuys do
-            --    drawSkinOver(box2dGuys[i], creation, cam)
+                drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do

@@ -3,7 +3,7 @@ local bbox    = require 'lib.bbox'
 local inspect = require 'vendor.inspect'
 local canvas  = require 'lib.canvas'
 
-
+local texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 function findPart(name)
     for i = 1, #parts do
         --print(parts[i].name)
@@ -16,7 +16,6 @@ end
 function isNullObject(partName, values)
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
-
     return url == 'assets/parts/null.png'
 end
 
