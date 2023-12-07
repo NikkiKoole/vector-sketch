@@ -73,13 +73,16 @@ local multipliers = {
     eye = { wMultiplier = 1, hMultiplier = 1 },
     pupil = { wMultiplier = .5, hMultiplier = .5 },
     brow = { wMultiplier = 1, hMultiplier = 1 },
+    mouth = { wMultiplier = 1, hMultiplier = 1 },
+    teeth = { hMultiplier = 1 }
 }
 
 local positioners = {
     leg = { x = 0.5 },
     eye = { x = 0.2, y = 0.5, r = 0 },
     nose = { y = 0.5 },
-    brow = { y = 0.8, bend = 1 }
+    brow = { y = 0.8, bend = 1 },
+    mouth = { y = 0.25 }
 }
 
 function getCreation()
@@ -953,8 +956,8 @@ end
 function partToTexturedCanvas(partName, values, optionalImageSettings)
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
-    local flipX = values[partName].flipx or 1
-    local flipY = values[partName].flipy or 1
+    local flipX = 1 -- values[partName].flipx or 1
+    local flipY = 1 -- values[partName].flipy or 1
     local renderPatch = {}
 
     if (partName == 'head') then

@@ -45,7 +45,7 @@ end
 function createDefaultTextureValues()
     return {
         shape     = 1,
-        bgPal     = 4,
+        bgPal     = math.ceil(love.math.random() * #palettes),
         fgPal     = 1,
         bgTex     = 1,
         fgTex     = 2,
@@ -156,6 +156,7 @@ function generateValues()
     values.skinPatchEye1PV.tx = -2
     values.skinPatchEye2PV.ty = 0
     values.skinPatchEye2PV.tx = 2
+    values.teeth.bgPal = 5
     return values
 end
 

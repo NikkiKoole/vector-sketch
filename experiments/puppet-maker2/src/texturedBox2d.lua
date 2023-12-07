@@ -361,37 +361,44 @@ function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
     end
 end
 
-function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
+function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, hMult, positioners, r)
     local f = faceData.metaPoints
+    local dpi = love.graphics.getDPIScale()
+    local shrink = canvas.getShrinkFactor()
     local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
-    local mouthY = numbers.lerp(f[1][2], f[5][2], 0.85)
-
+    local mouthY = numbers.lerp(f[1][2], f[5][2], (1 - positioners.mouth.y))
     local mx, my = facePart:getWorldPoint(
-            (mouthX + faceData.metaOffsetX) * sx,
-            (mouthY + faceData.metaOffsetY) * sy)
+            (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
+            (mouthY + faceData.metaOffsetY) * sy * dpi / shrink)
     local tx, ty = facePart:getWorldPoint(
-            (mouthX + faceData.metaOffsetX) * sx,
-            (mouthY + faceData.metaOffsetY - 20) * sy)
-    local mouthWidth = (f[3][1] - f[7][1]) / 2
-    local scaleX = mouthWidth / teethCanvas:getWidth()
+            (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
+            (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
+    local mouthWidth = sx * (f[3][1] - f[7][1]) / 2
+
+    local scaleX = (mouthWidth / sx) / teethCanvas:getWidth()
     local upperlipmesh = createTexturedTriangleStrip(upperlipCanvas)
+
+    if false then
+        local topcurves = { { 0, 0, 0 }, { -1, 0, -1 }, { 0, -1, 0 } }
+        local picked = topcurves[math.ceil(love.math.random() * #topcurves)]
+        local range = love.math.random() * 50 + 10
+        local made = { { -mouthWidth / 2, picked[1] * range }, { 0, picked[2] * range },
+            { mouthWidth / 2,  picked[3] * range } }
+    end
 
     local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
             { 0, -20 },
             { mouthWidth / 2, 0 },
             upperlipCanvas,
-            upperlipmesh, box2dGuy)
-
+            upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
     local lowerlipmesh = createTexturedTriangleStrip(lowerlipCanvas)
-
     local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
             { 0, 20 },
             { mouthWidth / 2, 0 },
             upperlipCanvas,
-            lowerlipmesh, box2dGuy)
+            lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
 
     local holePolygon = {}
-
     for i = 0, 6 do
         local x, y = upperCurve:evaluate(i / 6)
         table.insert(holePolygon, { x, y })
@@ -400,21 +407,22 @@ function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
         local x, y = lowerCurve:evaluate(1 - (i / 6))
         table.insert(holePolygon, { x, y })
     end
-    local mesh = love.graphics.newMesh(holePolygon, "fan")
 
+    local holeMesh = love.graphics.newMesh(holePolygon, "fan")
     local myStencilFunction = function()
-        love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
+        love.graphics.draw(holeMesh, mx, my, r - math.pi, 1, 1)
     end
+
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.draw(mesh, mx, my, r - math.pi, 1, 1)
+    love.graphics.draw(holeMesh, mx, my, r - math.pi, 1, 1)
     love.graphics.setColor(1, 1, 1)
     love.graphics.stencil(myStencilFunction, "replace", 1)
 
     love.graphics.setStencilTest("greater", 0)
-    renderNonAttachedObject(teethCanvas,
-        'teeth', r, tx, ty, scaleX * 2, -1 * scaleX * 2,
-        box2dGuy, creation)
 
+    renderNonAttachedObject(teethCanvas,
+        'teeth', r, tx, ty, 10, -10,
+        box2dGuy, creation)
     love.graphics.setStencilTest()
 
     love.graphics.draw(upperlipmesh, mx, my, r - math.pi, 1, 1)
@@ -574,7 +582,8 @@ function drawSkinOver(box2dGuy, creation, multipliers, positioners)
         love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
     end
 
-    --     drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, r)
+    drawMouth(facePart, faceData, creation, box2dGuy, sx * multipliers.mouth.wMultiplier,
+        sy, multipliers.mouth.hMultiplier, positioners, r)
 
     if noseCanvas then
         local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)

@@ -750,10 +750,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
                 local propupdate = function(v)
-                    values.teethHeightMultiplier = v
-                    myWorld:emit('mouthInit', mouth)
+                    changePart('teeth')
                 end
-                draw_slider_with_2_buttons('teethHeightMultiplier', startX, currentY,
+                draw_slider_with_2_buttons('multipliers.teeth.hMultiplier', startX, currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, .5, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
@@ -761,19 +760,33 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
         end
 
         if category == 'upperlip' or category == 'lowerlip' then
-            currentHeight = calcCurrentHeight(1)
-
+            currentHeight = calcCurrentHeight(3)
             if draw then
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
 
                 local propupdate = function(v)
-                    values.mouthYAxis = v
-                    myWorld:emit('potatoInit', potato)
+                    changePart('upperlip')
+                    changePart('lowerlip')
                 end
-                draw_slider_with_2_buttons('mouthYAxis', startX, currentY,
+                draw_slider_with_2_buttons('multipliers.mouth.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, -1, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
+                    nil, 0.5, 3, .5, ui2.icons.mouthnarrow, ui2.icons.mouthwide)
+
+                runningElem, currentY = updateRowStuff()
+                draw_slider_with_2_buttons('multipliers.mouth.hMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0.5, 3, .5, ui2.icons.mouthsmall, ui2.icons.mouthtall)
+
+                runningElem, currentY = updateRowStuff()
+                draw_slider_with_2_buttons('positioners.mouth.y', startX + (runningElem * elementWidth),
+                    currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0, 1, .1, ui2.icons.mouthup, ui2.icons.mouthdown)
             end
         end
 

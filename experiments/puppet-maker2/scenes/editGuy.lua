@@ -139,16 +139,25 @@ end
 function updatePart(name)
     local multipliers = editingGuy.multipliers
 
-    if name == 'brows' then
-        print('scooba')
 
+    if name == 'lowerlip' then
+        lowerlipCanvas = partToTexturedCanvasWrap('lowerlip', editingGuy.values)
+    end
+    if name == 'upperlip' then
+        upperlipCanvas = partToTexturedCanvasWrap('upperlip', editingGuy.values)
+    end
+    if name == 'teeth' then
+        teethCanvas = partToTexturedCanvasWrap('teeth', editingGuy.values)
+        local teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
+        local teethIndex = editingGuy.values.teeth.shape
+        changeMetaTexture('teeth', teethdata[teethIndex])
+    end
+
+    if name == 'brows' then
         local browIndex = math.ceil(editingGuy.values.brows.shape)
         local part      = findPart('brows')
         local img       = part.imgs[browIndex]
-        --local legW      = mesh.getImage(img):getWidth() * multipliers.brow.wMultiplier / 2
-        --local legH      = mesh.getImage(img):getHeight() * multipliers.brow.lMultiplier / 2
 
-        -- hairCanvas = createRandomColoredBlackOutlineTexture(img, editingGuy.values.hair)
         browCanvas      = partToTexturedCanvasWrap('brows', editingGuy.values)
     end
 
@@ -556,6 +565,9 @@ function scene.load()
     updatePart('armhair')
     updatePart('leghair')
     updatePart('brows')
+    updatePart('teeth')
+    updatePart('upperlip')
+    updatePart('lowerlip')
     Timer.tween(.5, scroller, { position = 4 })
 end
 
