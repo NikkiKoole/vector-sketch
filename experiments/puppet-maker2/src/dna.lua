@@ -78,6 +78,7 @@ function generateValues()
         mouthScaleX             = 1,
         mouthScaleY             = 1,
         potatoHead              = false,
+        chestHair          = createDefaultTextureValues(),
         skinPatchSnout          = createDefaultTextureValues(),
         skinPatchSnoutPV        = createDefaultPatchValues(),
         skinPatchEye1           = createDefaultTextureValues(),
@@ -190,9 +191,19 @@ function generateParts()
         'assets/parts/haarnew4.png',
     }
 
+
+
+
     table.insert(patchUrls, 'assets/parts/null.png')
     table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice
 
+
+    local chestHairUrls  = { 
+        'assets/parts/borsthaar1.png','assets/parts/borsthaar2.png','assets/parts/borsthaar3.png','assets/parts/borsthaar4.png',
+        'assets/parts/borsthaar5.png','assets/parts/borsthaar6.png','assets/parts/borsthaar7.png'
+
+    }
+    table.insert(chestHairUrls, 'assets/parts/null.png')
 
     local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
     zeroTransform(bodyParts)
@@ -220,6 +231,7 @@ function generateParts()
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts,                                                    kind = 'head' },
         { name = 'hair',           imgs = hairUrls,        kind = 'head' },
+        { name = 'chestHair',           imgs = chestHairUrls,        kind = 'body' },
         { name = 'brows',          imgs = browImgUrls,     p = browParts,                                                    kind = 'head' },
         { name = 'eyes2',          kind = 'head',          children = { 'eyes', 'pupils' } },
         { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,                                                   kind = 'head',                   child = true },

@@ -138,7 +138,9 @@ end
 
 function updatePart(name)
     local multipliers = editingGuy.multipliers
-
+    if name == 'chestHair' then
+        chestHairCanvas = partToTexturedCanvasWrap('chestHair', editingGuy.values)
+    end
 
     if name == 'lowerlip' then
         lowerlipCanvas = partToTexturedCanvasWrap('lowerlip', editingGuy.values)
@@ -451,7 +453,7 @@ function updatePart(name)
         end
     end
 
-    print(name)
+    
 end
 
 function setupBox2dScene()
@@ -568,6 +570,7 @@ function scene.load()
     updatePart('teeth')
     updatePart('upperlip')
     updatePart('lowerlip')
+    updatePart('chestHair')
     Timer.tween(.5, scroller, { position = 4 })
 end
 
@@ -781,10 +784,10 @@ function scene.draw()
     configPanel()
 
     cam:push()
-    drawWorld(world)
+    --drawWorld(world)
 
     for i = 1, #box2dGuys do
-        drawSkinOver(box2dGuys[i], editingGuy.creation, editingGuy.multipliers, editingGuy.positioners)
+        drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy.positioners)
     end
 
     cam:pop()

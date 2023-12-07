@@ -956,20 +956,20 @@ end
 function partToTexturedCanvas(partName, values, optionalImageSettings)
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
-    local flipX = 1 -- values[partName].flipx or 1
-    local flipY = 1 -- values[partName].flipy or 1
+  
+
     local renderPatch = {}
 
     if (partName == 'head') then
+      
         if not isNullObject('skinPatchSnout', values) then
             local p = {}
-
             p.imageData = partToTexturedCanvas('skinPatchSnout', values)
             p.sx = values.skinPatchSnoutPV.sx
             p.sy = values.skinPatchSnoutPV.sy
             p.r = values.skinPatchSnoutPV.r
-            p.tx = values.skinPatchSnoutPV.tx
-            p.ty = values.skinPatchSnoutPV.ty
+            p.tx = values.skinPatchSnoutPV.tx * creation.head.flipx
+            p.ty = values.skinPatchSnoutPV.ty * creation.head.flipy
             table.insert(renderPatch, p)
         end
         if not isNullObject('skinPatchEye1', values) then
@@ -978,8 +978,8 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
             p.sx        = values.skinPatchEye1PV.sx
             p.sy        = values.skinPatchEye1PV.sy
             p.r         = values.skinPatchEye1PV.r
-            p.tx        = values.skinPatchEye1PV.tx
-            p.ty        = values.skinPatchEye1PV.ty
+            p.tx        = values.skinPatchEye1PV.tx * creation.head.flipx
+            p.ty        = values.skinPatchEye1PV.ty * creation.head.flipy
             table.insert(renderPatch, p)
         end
         if not isNullObject('skinPatchEye2', values) then
@@ -988,8 +988,8 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
             p.sx        = values.skinPatchEye2PV.sx
             p.sy        = values.skinPatchEye2PV.sy
             p.r         = values.skinPatchEye2PV.r
-            p.tx        = values.skinPatchEye2PV.tx
-            p.ty        = values.skinPatchEye2PV.ty
+            p.tx        = values.skinPatchEye2PV.tx * creation.head.flipx
+            p.ty        = values.skinPatchEye2PV.ty * creation.head.flipy
             table.insert(renderPatch, p)
         end
     end
@@ -1006,7 +1006,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
             texscales[values[partName].texScale],
             palettes[values[partName].linePal],
             values[partName].lineAlpha,
-            flipX, flipY,
+            1, 1,
             optionalImageSettings,
             renderPatch
         )
