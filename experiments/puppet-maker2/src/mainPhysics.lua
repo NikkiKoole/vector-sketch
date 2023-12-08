@@ -138,13 +138,17 @@ function killMouseJointIfPossible(id)
     table.remove(pointerJoints, index)
 end
 
-local function makePointerJoint(id, bodyToAttachTo, wx, wy)
+local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
     local pointerJoint = {}
     pointerJoint.id = id
+
+    local ud = fixture:getUserData()
+    local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
     pointerJoint.joint:setDampingRatio(.5)
-    pointerJoint.joint:setMaxForce(5000000)
+    pointerJoint.joint:setMaxForce(force)
     return pointerJoint
 end
 
@@ -299,7 +303,8 @@ function handlePointerPressed(x, y, id, cam)
                 local hitThisOne = fixture:testPoint(wx, wy)
                 local isSensor = fixture:isSensor()
                 if (hitThisOne and not isSensor) then
-                    table.insert(temp, { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture) })
+                    table.insert(temp,
+                        { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
                 end
             end
         end
@@ -307,7 +312,7 @@ function handlePointerPressed(x, y, id, cam)
     if #temp > 0 then
         table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
         killMouseJointIfPossible(id)
-        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy))
+        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
     end
 
     if #temp == 0 then killMouseJointIfPossible(id) end

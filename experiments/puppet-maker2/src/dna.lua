@@ -1,6 +1,6 @@
-local parse = require 'lib.parse-file'
-local node  = require 'lib.node'
-local mesh  = require 'lib.mesh'
+local parse       = require 'lib.parse-file'
+local node        = require 'lib.node'
+local mesh        = require 'lib.mesh'
 
 --texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 local leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
@@ -78,7 +78,7 @@ function generateValues()
         mouthScaleX             = 1,
         mouthScaleY             = 1,
         potatoHead              = false,
-        chestHair          = createDefaultTextureValues(),
+        chestHair               = createDefaultTextureValues(),
         skinPatchSnout          = createDefaultTextureValues(),
         skinPatchSnoutPV        = createDefaultPatchValues(),
         skinPatchEye1           = createDefaultTextureValues(),
@@ -198,9 +198,10 @@ function generateParts()
     table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice
 
 
-    local chestHairUrls  = { 
-        'assets/parts/borsthaar1.png','assets/parts/borsthaar2.png','assets/parts/borsthaar3.png','assets/parts/borsthaar4.png',
-        'assets/parts/borsthaar5.png','assets/parts/borsthaar6.png','assets/parts/borsthaar7.png'
+    local chestHairUrls = {
+        'assets/parts/borsthaar1.png', 'assets/parts/borsthaar2.png', 'assets/parts/borsthaar3.png',
+        'assets/parts/borsthaar4.png',
+        'assets/parts/borsthaar5.png', 'assets/parts/borsthaar6.png', 'assets/parts/borsthaar7.png'
 
     }
     table.insert(chestHairUrls, 'assets/parts/null.png')
@@ -231,7 +232,6 @@ function generateParts()
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts,                                                    kind = 'head' },
         { name = 'hair',           imgs = hairUrls,        kind = 'head' },
-        { name = 'chestHair',           imgs = chestHairUrls,        kind = 'body' },
         { name = 'brows',          imgs = browImgUrls,     p = browParts,                                                    kind = 'head' },
         { name = 'eyes2',          kind = 'head',          children = { 'eyes', 'pupils' } },
         { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,                                                   kind = 'head',                   child = true },
@@ -248,6 +248,7 @@ function generateParts()
         { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,                                                   kind = 'head',                   child = true },
         { name = 'neck',           imgs = neckUrls,        kind = 'body' },
         { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,                                                    kind = 'body' },
+        { name = 'chestHair',      imgs = chestHairUrls,   kind = 'body' },
         { name = 'arms2',          imgs = legUrls,         kind = 'body',                                                    children = { 'arms', 'armhair' } },
         { name = 'armhair',        imgs = hairUrls,        kind = 'body',                                                    child = true },
         { name = 'arms',           imgs = legUrls,         kind = 'body',                                                    child = true },

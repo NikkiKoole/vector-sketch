@@ -11,10 +11,9 @@ local text       = require 'lib.text'
 local imageCache = {}
 require 'src.box2dGuyCreation'
 local creation = getCreation()
+
 function changePart(name)
-    --if name == 'body' then
     updatePart(name)
-    --end
 end
 
 function tweenCameraToHeadAndBody()
@@ -262,6 +261,10 @@ function loadUIImages()
         ['patchPV.sxmore'] = love.graphics.newImage('assets/ui/icons/patch-ScaleXmore.png'),
         ['patchPV.syless'] = love.graphics.newImage('assets/ui/icons/patch-ScaleYless.png'),
         ['patchPV.symore'] = love.graphics.newImage('assets/ui/icons/patch-ScaleYmore.png'),
+        chestHairInner = love.graphics.newImage('assets/ui/icons/chesthair-inner.png'),
+        chestHairOuter = love.graphics.newImage('assets/ui/icons/chesthair-outer.png'),
+        neckYes = love.graphics.newImage('assets/ui/icons/neck-yes.png'),
+        neckNo = love.graphics.newImage('assets/ui/icons/neck-no.png'),
     }
 
     ui2.scrollIcons       = {
@@ -317,6 +320,8 @@ function loadUIImages()
         mouthMask = love.graphics.newImage('assets/ui/icons/mouth-mask.png'),
         eyes2 = love.graphics.newImage('assets/ui/icons/eyes.png'),
         eyes2Mask = love.graphics.newImage('assets/ui/icons/eyes-mask.png'),
+        chestHair = love.graphics.newImage('assets/ui/icons/chesthair.png'),
+        chestHairMask = love.graphics.newImage('assets/ui/icons/chesthair-mask.png'),
     }
     ui2.headz             = {}
     for i = 1, 8 do
@@ -743,6 +748,24 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
     end
 
     if uiState.selectedTab == 'part' then
+        if category == 'chestHair' then
+            currentHeight = calcCurrentHeight(1)
+
+            if draw then
+                drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
+
+                local propupdate = function(v)
+                    changePart('chestHair')
+                end
+                draw_slider_with_2_buttons('multipliers.chesthair.mMultiplier', startX, currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, .5, 2, .25, ui2.icons.chestHairInner, ui2.icons.chestHairOuter)
+            end
+        end
+
+
+
         if category == 'teeth' then
             currentHeight = calcCurrentHeight(1)
 
@@ -910,7 +933,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 changePart('body')
             end
 
-            currentHeight = calcCurrentHeight(creation.isPotatoHead and 6 or 5)
+            currentHeight = calcCurrentHeight(6)
 
             if draw then
                 drawTapesForBackground(startX - buttonSize / 2, currentY, width, currentHeight)
@@ -959,7 +982,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
                 local f = function(v)
                     creation.isPotatoHead = v
-                    creation.hasNeck = not creation.isPotatoHead
+                    -- creation.hasNeck = not creation.isPotatoHead
                     changePart('potato')
                 end
                 draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY,
@@ -972,15 +995,28 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
 
 
                 if creation.isPotatoHead then
-                    local propupdate = function(v)
-                        --editingGuy.body.transforms.l[5] = v
+                    draw_slider_with_2_buttons('multipliers.face.mMultiplier', startX + (runningElem * elementWidth),
+                        currentY,
+                        buttonSize,
+                        sliderWidth, propupdate,
+                        update, 0.25, 2, .25, ui2.icons.facesmall, ui2.icons.facebig)
+
+                    runningElem, currentY = updateRowStuff()
+                end
+                if not creation.isPotatoHead then
+                    local f = function(v)
+                        print(v)
+                        creation.hasNeck = v
+                        changePart('hasNeck')
                     end
-                    if false then
-                        draw_slider_with_2_buttons('faceScale', startX + (runningElem * elementWidth), currentY,
-                            buttonSize,
-                            sliderWidth, propupdate,
-                            update, 0.25, 2, .25, ui2.icons.facesmall, ui2.icons.facebig)
-                    end
+
+                    draw_toggle_with_2_buttons('creation.hasNeck', startX + (runningElem * elementWidth), currentY,
+                        buttonSize,
+                        sliderWidth,
+                        not creation.hasNeck,
+                        f, ui2.icons.neckNo, ui2.icons.neckYes)
+
+
                     runningElem, currentY = updateRowStuff()
                 end
             end
@@ -1107,14 +1143,14 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                     nil, .5, 3, .5, ui2.icons.earsmall, ui2.icons.earbig)
 
                 runningElem, currentY = updateRowStuff()
+
+                draw_slider_with_2_buttons('positioners.ear.y', startX + (runningElem * elementWidth), currentY,
+                    buttonSize,
+                    sliderWidth, propupdate,
+                    nil, 0, 1, .1, ui2.icons.earup, ui2.icons.eardown)
+
+                runningElem, currentY = updateRowStuff()
                 if false then
-                    draw_slider_with_2_buttons('earYAxis', startX + (runningElem * elementWidth), currentY,
-                        buttonSize,
-                        sliderWidth, propupdate,
-                        nil, -3, 3, 1, ui2.icons.earup, ui2.icons.eardown)
-
-                    runningElem, currentY = updateRowStuff()
-
                     local f = function()
                         values.earUnderHead = not values.earUnderHead
                         attachAllFaceParts(editingGuy)
@@ -1477,12 +1513,9 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
         end
     end
 
-
-
     if uiState.selectedTab == 'part' then
 
     end
-
 
     if uiState.selectedTab == 'pattern' then
         local isPatch = category == 'skinPatchSnout' or category == 'skinPatchEye1' or category == 'skinPatchEye2'

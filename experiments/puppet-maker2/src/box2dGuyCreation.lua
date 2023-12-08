@@ -1,9 +1,9 @@
-package.path  = package.path .. ";../../?.lua"
-local bbox    = require 'lib.bbox'
-local inspect = require 'vendor.inspect'
-local canvas  = require 'lib.canvas'
+package.path    = package.path .. ";../../?.lua"
+local bbox      = require 'lib.bbox'
+local inspect   = require 'vendor.inspect'
+local canvas    = require 'lib.canvas'
 
-local texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
+local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 function findPart(name)
     for i = 1, #parts do
         --print(parts[i].name)
@@ -73,7 +73,8 @@ local multipliers = {
     pupil = { wMultiplier = .5, hMultiplier = .5 },
     brow = { wMultiplier = 1, hMultiplier = 1 },
     mouth = { wMultiplier = 1, hMultiplier = 1 },
-    teeth = { hMultiplier = 1 }
+    teeth = { hMultiplier = 1 },
+    chesthair = { mMultiplier = 1 }
 }
 
 local positioners = {
@@ -81,7 +82,8 @@ local positioners = {
     eye = { x = 0.2, y = 0.5, r = 0 },
     nose = { y = 0.5 },
     brow = { y = 0.8, bend = 1 },
-    mouth = { y = 0.25 }
+    mouth = { y = 0.25 },
+    ear = { y = 0.5 }
 }
 
 function getCreation()
@@ -242,11 +244,21 @@ function getOffsetFromParent(partName)
     elseif partName == 'lear' then
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(8)
+                local t = positioners.ear.y
+                local ax, ay = getScaledTorsoMetaPoint(8)
+                local bx, by = getScaledTorsoMetaPoint(7)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry --getScaledTorsoMetaPoint(8)
             end
         else
             if creation.head.metaPoints then
-                return getScaledHeadMetaPoint(7)
+                local t = positioners.ear.y
+                local ax, ay = getScaledHeadMetaPoint(8)
+                local bx, by = getScaledHeadMetaPoint(6)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry --getScaledHeadMetaPoint(7)
             end
         end
 
@@ -254,11 +266,21 @@ function getOffsetFromParent(partName)
     elseif partName == 'rear' then
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(2)
+                local t = positioners.ear.y
+                local ax, ay = getScaledTorsoMetaPoint(2)
+                local bx, by = getScaledTorsoMetaPoint(3)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry -- getScaledTorsoMetaPoint(2)
             end
         else
             if creation.head.metaPoints then
-                return getScaledHeadMetaPoint(3)
+                local t = positioners.ear.y
+                local ax, ay = getScaledHeadMetaPoint(2)
+                local bx, by = getScaledHeadMetaPoint(4)
+                local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+
+                return rx, ry --getScaledHeadMetaPoint(3)
             end
         end
         return creation.head.w / 2, -creation.head.h / 2
@@ -740,7 +762,7 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
     end
 end
 
-function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
+function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId, hasNeck)
     if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
         return
     end
@@ -776,10 +798,15 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId)
         box2dGuy.rear:destroy()
 
         local torso = box2dGuy.torso
+        local neck
+        local neck1
 
-        local neck = makePart('neck', torso)
-        local neck1 = makePart('neck1', neck)
-        local head = makePart('head', neck1)
+        if hasNeck then
+            neck = makePart('neck', torso)
+            neck1 = makePart('neck1', neck)
+        end
+
+        local head = makePart('head', hasNeck and neck1 or torso)
         local lear = makePart('lear', head)
         local rear = makePart('rear', head)
 
@@ -955,12 +982,11 @@ end
 function partToTexturedCanvas(partName, values, optionalImageSettings)
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
-  
+
 
     local renderPatch = {}
 
     if (partName == 'head') then
-      
         if not isNullObject('skinPatchSnout', values) then
             local p = {}
             p.imageData = partToTexturedCanvas('skinPatchSnout', values)

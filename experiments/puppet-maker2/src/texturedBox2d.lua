@@ -209,7 +209,7 @@ function renderMetaObject(img, name, box2dGuy, creation)
 
     if name == 'head' and (creation.head.metaOffsetX or creation.head.metaOffsetY) then
         x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale,
-            creation.head.metaOffsetY * hscale)
+                creation.head.metaOffsetY * hscale)
     end
 
     love.graphics.draw(img, x, y, r, sx * creation[name].flipx, sy * creation[name].flipy, w / 2, h / 2)
@@ -308,15 +308,15 @@ function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, 
     return curve
 end
 
-function drawSquishableHairOver(img, x, y, r, sx, sy, creation)
+function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, creation)
     -- first get the polygon from the meta object that describes the shape in 8 points
     -- optionally grow that polygon outwards from the middle
     local f = creation.torso.metaPoints
     local p = {}
     for i = 1, #f do
         p[i] = {}
-        p[i][1] = f[i][1] * 1.3
-        p[i][2] = f[i][2] * 1.3
+        p[i][1] = f[i][1] * 1.3 * growFactor
+        p[i][2] = f[i][2] * 1.3 * growFactor
     end
 
     local points = { { 0, 0 }, p[8], p[1], p[2], p[3], p[4], p[5], p[6], p[7] }
@@ -385,21 +385,23 @@ function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
     end
 end
 
-function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, hMult, positioners, r)
+function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipliers, positioners, r)
+    local hMult = multipliers.mouth.hMultiplier
+    local wMult = multipliers.mouth.wMultiplier
     local f = faceData.metaPoints
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
     local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
     local mouthY = numbers.lerp(f[1][2], f[5][2], (1 - positioners.mouth.y))
     local mx, my = facePart:getWorldPoint(
-        (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
-        (mouthY + faceData.metaOffsetY) * sy * dpi / shrink)
+            (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
+            (mouthY + faceData.metaOffsetY) * sy * dpi / shrink)
     local tx, ty = facePart:getWorldPoint(
-        (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
-        (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
-    local mouthWidth = sx * (f[3][1] - f[7][1]) / 2
+            (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
+            (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
 
-    local scaleX = (mouthWidth / sx) / teethCanvas:getWidth()
+    local mouthWidth = wMult * (f[3][1] - f[7][1]) / 2
+    local scaleX = (mouthWidth / wMult) / teethCanvas:getWidth()
     local upperlipmesh = createTexturedTriangleStrip(upperlipCanvas)
 
     if false then
@@ -411,16 +413,16 @@ function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, hMult, positi
     end
 
     local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-        { 0, -20 },
-        { mouthWidth / 2, 0 },
-        upperlipCanvas,
-        upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
+            { 0, -20 },
+            { mouthWidth / 2, 0 },
+            upperlipCanvas,
+            upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
     local lowerlipmesh = createTexturedTriangleStrip(lowerlipCanvas)
     local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-        { 0, 20 },
-        { mouthWidth / 2, 0 },
-        upperlipCanvas,
-        lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
+            { 0, 20 },
+            { mouthWidth / 2, 0 },
+            upperlipCanvas,
+            lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
 
     local holePolygon = {}
     for i = 0, 6 do
@@ -476,8 +478,10 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
     if creation.torso.metaURL and not creation.isPotatoHead then
         local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
         --love.graphics.setColor(.4, 0, 0, 1)
-        if not isNullObject('chestHair', values) then drawSquishableHairOver(chestHairCanvas, x, y, r, sx * dpi / shrink,
-                sy * dpi / shrink, creation) end
+        if not isNullObject('chestHair', values) then
+            drawSquishableHairOver(chestHairCanvas, x, y, r, sx * dpi / shrink,
+                sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)
+        end
         love.graphics.setColor(1, 1, 1, 1)
     end
 
@@ -510,8 +514,10 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
 
     if creation.isPotatoHead then
         -- love.graphics.setColor(.4, 0, 0, 1)
-        if not isNullObject('chestHair', values) then drawSquishableHairOver(chestHairCanvas, x, y, r, sx * dpi / shrink,
-                sy * dpi / shrink, creation) end
+        if not isNullObject('chestHair', values) then
+            drawSquishableHairOver(chestHairCanvas, x, y, r, sx * dpi / shrink,
+                sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)
+        end
         love.graphics.setColor(1, 1, 1, 1)
     end
     r = r + math.pi
@@ -528,26 +534,26 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
         local eyeY = numbers.lerp(f[1][2], f[5][2], positioners.eye.y)
 
         local eyelx, eyely = facePart:getWorldPoint(
-            (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
         local eyerx, eyery = facePart:getWorldPoint(
-            (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
         local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
         local angle, dist = getAngleAndDistance(cx, cy, mx, my)
         local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
         local pupillx, pupilly = facePart:getWorldPoint(
-            (leftEyeX + faceData.metaOffsetX + px1) * sx * dpi / shrink,
-            (eyeY + faceData.metaOffsetY + py1) * sy * dpi / shrink)
+                (leftEyeX + faceData.metaOffsetX + px1) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY + py1) * sy * dpi / shrink)
 
         local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
         local angle, dist = getAngleAndDistance(cx, cy, mx, my)
         local px2, py2 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
         local pupilrx, pupilry = facePart:getWorldPoint(
-            (rightEyeX + faceData.metaOffsetX + px2) * sx * dpi / shrink,
-            (eyeY + faceData.metaOffsetY + py2) * sy * dpi / shrink)
+                (rightEyeX + faceData.metaOffsetX + px2) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY + py2) * sy * dpi / shrink)
 
         if eyeCanvas then
             local eyeW = eyeMultiplierFix * multipliers.eye.wMultiplier * faceMultiplier
@@ -576,12 +582,12 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
         local browY = numbers.lerp(f[5][2], f[1][2], positioners.brow.y)
 
         local browlx, browly = facePart:getWorldPoint(
-            (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (browY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (browY + faceData.metaOffsetY) * sy * dpi / shrink)
 
         local browrx, browry = facePart:getWorldPoint(
-            (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (browY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (browY + faceData.metaOffsetY) * sy * dpi / shrink)
 
         love.graphics.setColor(1, 1, 1, 1)
 
@@ -608,15 +614,15 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
         love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
     end
 
-    drawMouth(facePart, faceData, creation, box2dGuy, sx * multipliers.mouth.wMultiplier,
-        sy, multipliers.mouth.hMultiplier, positioners, r)
+    drawMouth(facePart, faceData, creation, box2dGuy, sx,
+        sy, multipliers, positioners, r)
 
     if noseCanvas then
         local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
         local noseY = numbers.lerp(f[1][2], f[5][2], positioners.nose.y)
         local nx, ny = facePart:getWorldPoint(
-            (noseX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (noseY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (noseX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (noseY + faceData.metaOffsetY) * sy * dpi / shrink)
 
         renderNonAttachedObject(noseCanvas,
             'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier * faceMultiplier,
@@ -626,10 +632,10 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
 
     if legCanvas then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObjectGrow('luleg', 'llleg', 'lfoot',25, legCanvas, legmesh, box2dGuy, 1,
+        renderCurvedObjectGrow('luleg', 'llleg', 'lfoot', 25, legCanvas, legmesh, box2dGuy, 1,
             shrink * multipliers.leg.wMultiplier / (4 * dpi))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObjectGrow('ruleg', 'rlleg', 'rfoot',25, legCanvas, legmesh, box2dGuy, 1,
+        renderCurvedObjectGrow('ruleg', 'rlleg', 'rfoot', 25, legCanvas, legmesh, box2dGuy, 1,
             shrink * multipliers.leg.wMultiplier / (4 * dpi))
         love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
     end
@@ -645,10 +651,10 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
     end
 
     if armCanvas then
-        renderCurvedObjectGrow('luarm', 'llarm', 'lhand',25, armCanvas, armmesh, box2dGuy, 1,
+        renderCurvedObjectGrow('luarm', 'llarm', 'lhand', 25, armCanvas, armmesh, box2dGuy, 1,
             shrink * multipliers.arm.wMultiplier / (4 * dpi))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        renderCurvedObjectGrow('ruarm', 'rlarm', 'rhand',25, armCanvas, armmesh, box2dGuy, 1,
+        renderCurvedObjectGrow('ruarm', 'rlarm', 'rhand', 25, armCanvas, armmesh, box2dGuy, 1,
             shrink * multipliers.arm.wMultiplier / (4 * dpi))
         love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
     end
