@@ -750,7 +750,9 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
         box2dGuy.head = head
     else
         -- if not  box2dGuy.isPotatoHead then
-        box2dGuy.head:destroy()
+        if box2dGuy.head then
+            box2dGuy.head:destroy()
+        end
         local torso = box2dGuy.torso
         local neck = makePart('neck', torso)
         local neck1 = makePart('neck1', neck)

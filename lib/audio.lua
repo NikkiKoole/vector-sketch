@@ -299,7 +299,6 @@ while (true) do
       end
       if (v.type == 'volume') then
          volume = v.data
-         print(volume)
       end
       if v.type == 'song' then
          local song = v.data

@@ -560,7 +560,9 @@ function updatePart(name)
 
     if name == 'body' then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+
         local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
+        print(bodyRndIndex)
         --bodyRndIndex = math.ceil(love.math.random() * #data)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                 data[bodyRndIndex]
@@ -702,14 +704,103 @@ function scene.load()
 
 
     setupBox2dScene()
+    updateAllParts()
+    Timer.tween(.5, scroller, { position = 4 })
+end
+
+function randomizeGuy()
+    function randomizePart(part)
+        local p = findPart(part)
+        editingGuy.values[part].shape = math.ceil(love.math.random() * #p.imgs)
+        editingGuy.values[part].bgPal = math.ceil(love.math.random() * #palettes)
+        editingGuy.values[part].fgPal = math.ceil(love.math.random() * #palettes)
+    end
+
+    function randValue(min, max, step, preferMiddle)
+        -- if prefermiddle is set i try to not get the last and first option..
+        local steps = ((max - min) / step) + 1
+        if preferMiddle then steps = steps - 2 end
+        local index = math.floor(love.math.random() * steps)
+        if preferMiddle then index = index + 1 end
+        local r = min + (index * step)
+
+        return r
+    end
+
+    local hairColor = math.ceil(love.math.random() * #palettes)
+
+
+
+    randomizePart('body')
+    editingGuy.multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
+    editingGuy.multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
+
+    if not editingGuy.creation.isPotatoHead then
+        randomizePart('head')
+        editingGuy.multipliers.head.wMultiplier = randValue(.5, 3, .5, true)
+        editingGuy.multipliers.head.hMultiplier = randValue(.5, 3, .5, true)
+        randomizePart('neck')
+        editingGuy.multipliers.neck.hMultiplier = randValue(0.5, 3, .5, true)
+        editingGuy.multipliers.neck.wMultiplier = randValue(0.5, 3, .5, true)
+    end
+
+
+    local oldHasNeck = creation.hasNeck
+    local oldPotato = creation.isPotatoHead
+    creation.isPotatoHead = love.math.random() < .5 and true or false
+
+    creation.hasNeck = love.math.random() < .5 and true or false
+    if (creation.isPotatoHead) then creation.hasNeck = false end
+
+
+    if creation.hasNeck ~= oldHasNeck then
+        changePart('hasNeck')
+    end
+
+    if creation.isPotatoHead ~= oldPotato then
+        changePart('potato')
+    end
+    --changePart('potato')
+
+    --
+
+    randomizePart('ears')
+    randomizePart('chestHair')
+    editingGuy.values['chestHair'].linePal = hairColor
+    randomizePart('armhair')
+    editingGuy.values['armhair'].linePal = hairColor
+    randomizePart('hair')
+    editingGuy.values['hair'].linePal = hairColor
+    randomizePart('legs')
+    editingGuy.multipliers.leg.lMultiplier = randValue(0.5, 4, .5, true)
+    editingGuy.multipliers.leg.wMultiplier = randValue(0.5, 4, .5, true)
+
+    randomizePart('arms')
+    editingGuy.multipliers.arm.lMultiplier = randValue(0.5, 4, .5, true)
+    editingGuy.multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
+
+    randomizePart('hands')
+    editingGuy.multipliers.hand.hMultiplier = randValue(0.5, 3, .5, true)
+    editingGuy.multipliers.hand.wMultiplier = randValue(0.5, 3, .5, true)
+
+    randomizePart('feet')
+    editingGuy.multipliers.feet.hMultiplier = randValue(0.5, 3, .5, true)
+    editingGuy.multipliers.feet.wMultiplier = randValue(0.5, 3, .5, true)
+    updateAllParts()
+end
+
+function updateAllParts()
     updatePart('ears')
     updatePart('hands')
     updatePart('feet')
-    updatePart('head')
+    if not editingGuy.creation.isPotatoHead then
+        updatePart('head')
+        if editingGuy.creation.hasNeck then updatePart('neck') end
+    end
     updatePart('body')
     updatePart('arms')
     updatePart('legs')
-    updatePart('neck')
+
     updatePart('eyes')
     updatePart('pupils')
     updatePart('nose')
@@ -721,7 +812,6 @@ function scene.load()
     updatePart('upperlip')
     updatePart('lowerlip')
     updatePart('chestHair')
-    Timer.tween(.5, scroller, { position = 4 })
 end
 
 function scene.unload()
@@ -815,6 +905,26 @@ local function pointerPressed(x, y, id)
                 gesture.add('settings-scroll-area', id, love.timer.getTime(), x, y)
             end
         end
+    end
+
+    local size = (h / 8) -- margin around panel
+    if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
+        print('RANDOMIZE!')
+        randomizeGuy()
+        --local s = findSample('mp7/Quijada')
+        --if s then
+        --   playSound(s.s, 1, 1)
+        --end
+        --partRandomize(editingGuy.values, true)
+
+        -- this seems to fi the issue the best, 2 inits and this order of operations, now we
+        -- have an identical stance in 5 guys and in edit!!
+
+        --myWorld:emit('bipedInit', biped)
+        --myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
+        --myWorld:emit('bipedInit', biped)
+        --myWorld:emit("tweenIntoDefaultStance", biped, true)
+        --tweenCameraToHeadAndBody()
     end
 end
 
@@ -952,6 +1062,24 @@ function scene.draw()
     if a.value then
         mainVolume = a.value
         audioHelper.sendMessageToAudioThread({ type = "volume", data = mainVolume });
+    end
+
+    if true then
+        local size = (h / 8) -- margin around panel
+        local x = w - size
+        local y = h - size
+
+        love.graphics.setColor(0, 0, 0, 0.5)
+        local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
+
+        --love.graphics.rectangle('fill', w - size, 0, size, size)
+        --love.graphics.setColor(1, 0, 1)
+        local sx, sy = createFittingScale(ui2.bigbuttons.dice, size, size)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(ui2.bigbuttons.dicemask, x, y, 0, sx, sy)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.draw(ui2.bigbuttons.dice, x, y, 0, sx, sy)
     end
 end
 

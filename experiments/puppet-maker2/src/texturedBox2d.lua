@@ -505,8 +505,6 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
     local faceCanvas = creation.isPotatoHead and torsoCanvas or headCanvas
     local face = creation.isPotatoHead and 'torso' or 'head'
     local faceData = creation.isPotatoHead and creation.torso or creation.head
-
-
     local faceMultiplier = multipliers.face.mMultiplier
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -576,7 +574,9 @@ function drawSkinOver(box2dGuy, values, creation, multipliers, positioners)
     end
 
     love.graphics.setColor(1, 1, 1, 1)
-    renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+    if not isNullObject('hair', values) then
+        renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+    end
 
     if browCanvas then
         local browY = numbers.lerp(f[5][2], f[1][2], positioners.brow.y)

@@ -3,7 +3,7 @@ local vivid = require 'vendor.vivid'
 local geom = require 'lib.geom'
 
 
-local shrinkFactor = 3
+local shrinkFactor = 1
 
 lib.getShrinkFactor = function()
    return shrinkFactor

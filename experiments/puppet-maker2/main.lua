@@ -309,6 +309,4 @@ function makeMarketingScreenshots(name)
     love.system.openURL(openURL)
 end
 
-
-
 ----

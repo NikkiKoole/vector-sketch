@@ -760,7 +760,7 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 draw_slider_with_2_buttons('multipliers.chesthair.mMultiplier', startX, currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, .5, 2, .25, ui2.icons.chestHairInner, ui2.icons.chestHairOuter)
+                    nil, .5, 1.25, .25, ui2.icons.chestHairInner, ui2.icons.chestHairOuter)
             end
         end
 
