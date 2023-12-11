@@ -1,6 +1,9 @@
 local bbox = require 'lib.bbox'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 
+
+local lib = {}
+
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -9,16 +12,6 @@ local function makeUserData(bodyType, moreData)
         result.data = moreData
     end
     return result
-end
-
-function makeAndAddConnector(parent, x, y, data, size, size2)
-    size = size or 10
-    size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size, size2, x, y)
-    local fixture = love.physics.newFixture(parent, bandshape2, 0)
-    fixture:setUserData(makeUserData('connector', data))
-    fixture:setSensor(true)
-    table.insert(connectors, { at = fixture, to = nil, joint = nil })
 end
 
 local function makeRectPoly(w, h, x, y)
@@ -75,67 +68,6 @@ local function makeTrapeziumPoly(w, w2, h, x, y)
         )
 end
 
-function makeShapeFromCreationPart(part)
-    --print(inspect(part))
-    if part.metaPoints then
-        local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
-        local bbw = (brx - tlx)
-        local bbh = (bry - tly)
-        local wscale = part.w / bbw
-        local hscale = part.h / bbh
-        local flatted = {}
-
-        local offsetX = 0
-        local offsetY = 0
-        if part.metaOffsetX or part.metaOfsetY then
-            --print('dcwjicojie')
-            offsetX = part.metaOffsetX
-            offsetY = part.metaOffsetY
-        end
-
-        for i = 1, #part.metaPoints do
-            table.insert(flatted, (offsetX + part.metaPoints[i][1]) * wscale)
-            table.insert(flatted, (offsetY + part.metaPoints[i][2]) * hscale)
-        end
-        return love.physics.newPolygonShape(flatted)
-    else
-        --  print(inspect(part))
-        return makeShape(part.shape, part.w, part.h)
-    end
-end
-
-function makeShape(shapeType, w, h)
-    if (shapeType == 'rect2') then
-        return makeRectPoly2(w, h, 0, h / 2)
-    elseif (shapeType == 'rect1') then
-        return makeRectPoly(w, h, -w / 2, -h / 8)
-    elseif (shapeType == 'capsule') then
-        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, h / 2))
-    elseif (shapeType == 'capsule2') then
-        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, 0))
-    elseif (shapeType == 'capsule3') then
-        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, -h / 2))
-    elseif (shapeType == 'trapezium') then
-        return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
-    elseif (shapeType == 'trapezium2') then
-        return makeTrapeziumPoly(w, w * 1.2, h, 0, h / 2)
-    end
-end
-
-local function killMouseJointIfPossible(id)
-    local index = -1
-    for i = 1, #pointerJoints do
-        if pointerJoints[i].id == id then
-            index = i
-            if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
-                pointerJoints[i].joint:destroy()
-            end
-            pointerJoints[i].joint     = nil
-            pointerJoints[i].jointBody = nil
-        end
-    end
-    table.remove(pointerJoints, index)
-end
 
 local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
     local pointerJoint = {}
@@ -193,7 +125,33 @@ end
 local function getCentroidOfFixture(body, fixture)
     return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
+function handlePointerPressed(x, y, id, cam)
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local bodies = world:getBodies()
+    local temp = {}
+    for _, body in ipairs(bodies) do
+        if body:getType() ~= 'kinematic' then
+            local fixtures = body:getFixtures()
+            for _, fixture in ipairs(fixtures) do
+                local hitThisOne = fixture:testPoint(wx, wy)
+                local isSensor = fixture:isSensor()
+                if (hitThisOne and not isSensor) then
+                    table.insert(temp,
+                        { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
+                end
+            end
+        end
+    end
+    if #temp > 0 then
+        table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
+        lib.killMouseJointIfPossible(id)
+        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
+    end
 
+    if #temp == 0 then lib.killMouseJointIfPossible(id) end
+
+    return #temp > 0
+end
 
 local function maybeConnectThisConnector(f, mj)
     local found = false
@@ -288,34 +246,6 @@ function handleUpdate(dt, cam)
     end
 end
 
-function handlePointerPressed(x, y, id, cam)
-    local wx, wy = cam:getWorldCoordinates(x, y)
-    local bodies = world:getBodies()
-    local temp = {}
-    for _, body in ipairs(bodies) do
-        if body:getType() ~= 'kinematic' then
-            local fixtures = body:getFixtures()
-            for _, fixture in ipairs(fixtures) do
-                local hitThisOne = fixture:testPoint(wx, wy)
-                local isSensor = fixture:isSensor()
-                if (hitThisOne and not isSensor) then
-                    table.insert(temp,
-                        { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
-                end
-            end
-        end
-    end
-    if #temp > 0 then
-        table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
-        killMouseJointIfPossible(id)
-        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
-    end
-
-    if #temp == 0 then killMouseJointIfPossible(id) end
-
-    return #temp > 0
-end
-
 function handlePointerReleased(x, y, id)
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
@@ -355,7 +285,7 @@ function handlePointerReleased(x, y, id)
             --   end
         end
     end
-    killMouseJointIfPossible(id)
+    lib.killMouseJointIfPossible(id)
 end
 
 function getRandomConvexPoly(radius, numVerts)
@@ -376,55 +306,6 @@ local function getBodyColor(body)
     if body:getType() == 'static' then
         return { 1, 1, 0, 1 } --palette[colors.green]
     end
-end
-
-function drawWorld(world)
-    -- get the current color values to reapply
-    local r, g, b, a = love.graphics.getColor()
-    -- alpha value is optional
-    local alpha = .8
-    -- Colliders debug
-    love.graphics.setColor(0, 0, 0, alpha)
-    local bodies = world:getBodies()
-    love.graphics.setLineWidth(10)
-    for _, body in ipairs(bodies) do
-        local fixtures = body:getFixtures()
-        for _, fixture in ipairs(fixtures) do
-            if fixture:getShape():type() == 'PolygonShape' then
-                local color = getBodyColor(body)
-                love.graphics.setColor(color[1], color[2], color[3], alpha)
-                love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
-                love.graphics.setColor(0, 0, 0, alpha)
-                love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
-            elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
-                local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
-                for i = 1, #points, 2 do
-                    if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
-                end
-            elseif fixture:getShape():type() == 'CircleShape' then
-                local body_x, body_y = body:getPosition()
-                local shape_x, shape_y = fixture:getShape():getPoint()
-                local r = fixture:getShape():getRadius()
-                local color = getBodyColor(body)
-                love.graphics.setColor(color[1], color[2], color[3], alpha)
-                love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, 360)
-                love.graphics.setColor(0, 0, 0, alpha)
-                love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360)
-            end
-        end
-    end
-    love.graphics.setColor(255, 255, 255, alpha)
-    -- Joint debug
-    love.graphics.setColor(1, 0, 0, alpha)
-    local joints = world:getJoints()
-    for _, joint in ipairs(joints) do
-        local x1, y1, x2, y2 = joint:getAnchors()
-        if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
-        if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
-    end
-
-    love.graphics.setColor(r, g, b, a)
-    love.graphics.setLineWidth(1)
 end
 
 ---- physics contacs
@@ -512,7 +393,82 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
 
 end
 
-function setupWorld()
+
+lib.killMouseJointIfPossible = function(id)
+    local index = -1
+    for i = 1, #pointerJoints do
+        if pointerJoints[i].id == id then
+            index = i
+            if (pointerJoints[i].joint and not pointerJoints[i].joint:isDestroyed()) then
+                pointerJoints[i].joint:destroy()
+            end
+            pointerJoints[i].joint     = nil
+            pointerJoints[i].jointBody = nil
+        end
+    end
+    table.remove(pointerJoints, index)
+end
+
+lib.makeShapeFromCreationPart = function(part)
+    --print(inspect(part))
+    if part.metaPoints then
+        local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
+        local bbw = (brx - tlx)
+        local bbh = (bry - tly)
+        local wscale = part.w / bbw
+        local hscale = part.h / bbh
+        local flatted = {}
+
+        local offsetX = 0
+        local offsetY = 0
+        if part.metaOffsetX or part.metaOfsetY then
+            --print('dcwjicojie')
+            offsetX = part.metaOffsetX
+            offsetY = part.metaOffsetY
+        end
+
+        for i = 1, #part.metaPoints do
+            table.insert(flatted, (offsetX + part.metaPoints[i][1]) * wscale)
+            table.insert(flatted, (offsetY + part.metaPoints[i][2]) * hscale)
+        end
+        return love.physics.newPolygonShape(flatted)
+    else
+        --  print(inspect(part))
+        return lib.makeShape(part.shape, part.w, part.h)
+    end
+end
+
+lib.makeShape = function(shapeType, w, h)
+    if (shapeType == 'rect2') then
+        return makeRectPoly2(w, h, 0, h / 2)
+    elseif (shapeType == 'rect1') then
+        return makeRectPoly(w, h, -w / 2, -h / 8)
+    elseif (shapeType == 'capsule') then
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, h / 2))
+    elseif (shapeType == 'capsule2') then
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, 0))
+    elseif (shapeType == 'capsule3') then
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, -h / 2))
+    elseif (shapeType == 'trapezium') then
+        return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
+    elseif (shapeType == 'trapezium2') then
+        return makeTrapeziumPoly(w, w * 1.2, h, 0, h / 2)
+    end
+end
+
+
+lib.makeAndAddConnector = function(parent, x, y, data, size, size2)
+    size = size or 10
+    size2 = size2 or size
+    local bandshape2 = makeRectPoly2(size, size2, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 0)
+    fixture:setUserData(makeUserData('connector', data))
+    fixture:setSensor(true)
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
+end
+
+
+lib.setupWorld = function()
     love.physics.setMeter(500)
     world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     world:setCallbacks(beginContact, endContact, preSolve, postSolve)
@@ -521,3 +477,56 @@ function setupWorld()
     connectorCooldownList = {}
     connectors = {}
 end
+
+
+lib.drawWorld = function(world)
+    -- get the current color values to reapply
+    local r, g, b, a = love.graphics.getColor()
+    -- alpha value is optional
+    local alpha = .8
+    -- Colliders debug
+    love.graphics.setColor(0, 0, 0, alpha)
+    local bodies = world:getBodies()
+    love.graphics.setLineWidth(10)
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
+        for _, fixture in ipairs(fixtures) do
+            if fixture:getShape():type() == 'PolygonShape' then
+                local color = getBodyColor(body)
+                love.graphics.setColor(color[1], color[2], color[3], alpha)
+                love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
+            elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
+                local points = { body:getWorldPoints(fixture:getShape():getPoints()) }
+                for i = 1, #points, 2 do
+                    if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
+                end
+            elseif fixture:getShape():type() == 'CircleShape' then
+                local body_x, body_y = body:getPosition()
+                local shape_x, shape_y = fixture:getShape():getPoint()
+                local r = fixture:getShape():getRadius()
+                local color = getBodyColor(body)
+                love.graphics.setColor(color[1], color[2], color[3], alpha)
+                love.graphics.circle('fill', body_x + shape_x, body_y + shape_y, r, 360)
+                love.graphics.setColor(0, 0, 0, alpha)
+                love.graphics.circle('line', body_x + shape_x, body_y + shape_y, r, 360)
+            end
+        end
+    end
+    love.graphics.setColor(255, 255, 255, alpha)
+    -- Joint debug
+    love.graphics.setColor(1, 0, 0, alpha)
+    local joints = world:getJoints()
+    for _, joint in ipairs(joints) do
+        local x1, y1, x2, y2 = joint:getAnchors()
+        if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
+        if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
+    end
+
+    love.graphics.setColor(r, g, b, a)
+    love.graphics.setLineWidth(1)
+end
+
+
+return lib

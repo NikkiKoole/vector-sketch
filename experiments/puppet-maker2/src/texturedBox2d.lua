@@ -6,8 +6,6 @@ local border   = require 'lib.border-mesh'
 local cam      = require('lib.cameraBase').getInstance()
 local canvas   = require 'lib.canvas'
 
-
-
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2

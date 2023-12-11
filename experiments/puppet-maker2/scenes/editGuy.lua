@@ -9,12 +9,11 @@ local Signal      = require 'vendor.signal'
 local cam         = require('lib.cameraBase').getInstance()
 local camera      = require 'lib.camera'
 local mesh        = require 'lib.mesh'
-
+local phys        = require 'src.mainPhysics'
 require 'src.editguy-ui'
 require 'src.dna'
 require 'src.box2dGuyCreation'
 require 'src.texturedBox2d'
-
 
 local findSample = function(path)
     for i = 1, #samples do
@@ -95,7 +94,7 @@ local function getRidOfBigRotationsInBody(body)
     end
 end
 
-function rotateAllBodies(bodies, dt)
+local function rotateAllBodies(bodies, dt)
     --print('hi hello!')
     local creation = editingGuy.creation
     local upsideDown = false
@@ -258,7 +257,7 @@ local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
 end
 
-function attachCallbacks()
+local function attachCallbacks()
     Signal.register('click-settings-scroll-area-item', function(x, y)
         configPanelScrollGrid(false, x, y)
     end)
@@ -1052,7 +1051,7 @@ function scene.draw()
     configPanel()
 
     cam:push()
-    --drawWorld(world)
+    phys.drawWorld(world)
 
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy

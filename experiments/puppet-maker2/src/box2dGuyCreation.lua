@@ -2,11 +2,11 @@ package.path    = package.path .. ";../../?.lua"
 local bbox      = require 'lib.bbox'
 local inspect   = require 'vendor.inspect'
 local canvas    = require 'lib.canvas'
-
+local phys      = require 'src.mainPhysics'
 local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
+
 function findPart(name)
     for i = 1, #parts do
-        --print(parts[i].name)
         if parts[i].name == name then
             return parts[i]
         end
@@ -519,7 +519,7 @@ local function getRecreatePointerJoint(body)
 end
 
 local function useRecreatePointerJoint(recreatePointerJoint, body)
-    killMouseJointIfPossible(recreatePointerJoint.id)
+    phys.killMouseJointIfPossible(recreatePointerJoint.id)
     table.insert(pointerJoints,
         makePointerJoint(recreatePointerJoint.id, body, recreatePointerJoint.targetX,
             recreatePointerJoint.targetY))
@@ -567,7 +567,7 @@ local function makePart_(key, parent, groupId)
 
     local xangle = getAngleOffset(key, creation)
     local body = love.physics.newBody(world, x, y, "dynamic")
-    local shape = makeShapeFromCreationPart(cd)
+    local shape = phys.makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
     body:setAngle(prevA + xangle)
@@ -629,7 +629,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
 
             local createData = creation[partName]
             local body = love.physics.newBody(world, hx, hy, "dynamic")
-            local shape = makeShapeFromCreationPart(createData)
+            local shape = phys.makeShapeFromCreationPart(createData)
             local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
             local xangle = getAngleOffset(partName, creation)
             body:setAngle(prevA + xangle)
@@ -646,7 +646,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         box2dGuy[partName]:destroy()
         local createData = creation[partName]
         local body = love.physics.newBody(world, hx, hy, "dynamic")
-        local shape = makeShapeFromCreationPart(createData)
+        local shape = phys.makeShapeFromCreationPart(createData)
         local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
         box2dGuy[partName] = body
         box2dGuy[partName]:setAngle(aa)
@@ -826,7 +826,7 @@ function makeGuy(x, y, groupId)
     end
 
     local torso = love.physics.newBody(world, x, y, "dynamic")
-    local torsoShape = makeShapeFromCreationPart(creation.torso)
+    local torsoShape = phys.makeShapeFromCreationPart(creation.torso)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
 
     local head, neck, neck1, lear, rear
@@ -866,13 +866,15 @@ function makeGuy(x, y, groupId)
     local rlarm = makePart('rlarm', ruarm)
     local rhand = makePart('rhand', rlarm)
 
-    makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.rhand.w + 10,
+    phys.makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+        creation.rhand.w + 10,
         creation.rhand.h + 10)
 
     local luarm = makePart('luarm', torso)
     local llarm = makePart('llarm', luarm)
     local lhand = makePart('lhand', llarm)
-    makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.lhand.w + 10,
+    phys.makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+        creation.lhand.w + 10,
         creation.lhand.h + 10)
 
     local data = {

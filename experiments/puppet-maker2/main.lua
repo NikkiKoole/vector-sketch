@@ -15,19 +15,19 @@ if true then
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-local mesh   = require 'lib.mesh'
-local parse  = require 'lib.parse-file'
-local node   = require 'lib.node'
-local text   = require 'lib.text'
-gesture      = require 'lib.gesture'
-SM           = require 'vendor.SceneMgr'
-inspect      = require 'vendor.inspect'
-PROF_CAPTURE = true
-prof         = require 'vendor.jprof'
-ProFi        = require 'vendor.ProFi'
-focussed     = true
+local mesh        = require 'lib.mesh'
+local parse       = require 'lib.parse-file'
+local node        = require 'lib.node'
+local text        = require 'lib.text'
+gesture           = require 'lib.gesture'
+SM                = require 'vendor.SceneMgr'
+inspect           = require 'vendor.inspect'
+PROF_CAPTURE      = true
+prof              = require 'vendor.jprof'
+ProFi             = require 'vendor.ProFi'
+focussed          = true
 
-require 'src.mainPhysics'
+local phys        = require 'src.mainPhysics'
 
 local lurker      = require 'vendor.lurker'
 lurker.quiet      = true
@@ -164,7 +164,7 @@ function love.keypressed(key)
 end
 
 function love.load()
-    setupWorld()
+    phys.setupWorld()
 
     mainVolume = 1
     local sample_data = {
