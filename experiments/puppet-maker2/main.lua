@@ -28,7 +28,6 @@ ProFi             = require 'vendor.ProFi'
 focussed          = true
 
 local phys        = require 'src.mainPhysics'
-
 local lurker      = require 'vendor.lurker'
 lurker.quiet      = true
 
@@ -282,46 +281,54 @@ function love.load()
 
 
     SM.setPath("scenes/")
+    --SM.load("intro")
     SM.load("editGuy")
-
-
-    --love.window.updateMode(200, 200, { fullscreen = false })
 end
 
+--love.window.updateMode(200, 200, { fullscreen = false })
+
+
 function love.update(dt)
-    prof.push('frame')
-    --    lurker.update()
+    if true then
+        prof.push('frame')
+        --    lurker.update()
 
-    --require("vendor.lurker").update()
-    if not focussed then
-        -- print('this app is unfocessed!')
-    end
-
-    local msg = audioHelper.getMessageFromAudioThread()
-    if msg then
-        if (msg.type == 'beat') then
-            --print('beat')
+        --require("vendor.lurker").update()
+        if not focussed then
+            -- print('this app is unfocessed!')
         end
-        if (msg.type == 'played') then
-            -- print('played', msg.data.path, msg.data.source, msg.data.pitch)
-        end
-        if SM.handleAudioMessage then
-            SM.handleAudioMessage(msg)
-        end
-    end
 
-    if focussed and not grabbingScreenshots.doing then
-        --print('hello!')
-        gesture.update(dt)
-        SM.update(dt)
-    else
-        print('not updating the timer')
-    end
+        local msg = audioHelper.getMessageFromAudioThread()
+        if msg then
+            if (msg.type == 'beat') then
+                --print('beat')
+            end
+            if (msg.type == 'played') then
+                -- print('played', msg.data.path, msg.data.source, msg.data.pitch)
+            end
+            if SM.handleAudioMessage then
+                SM.handleAudioMessage(msg)
+            end
+        end
 
-    world:update(dt)
-    --collectgarbage()
+        if focussed and not grabbingScreenshots.doing then
+            --print('hello!')
+            gesture.update(dt)
+            prof.push('SM.update')
+            SM.update(dt)
+            prof.pop('SM.update')
+        else
+            print('not updating the timer')
+        end
+        prof.push('world update')
+
+        world:update(dt)
+        prof.pop('world update')
+        --collectgarbage()
+
+        prof.pop('frame')
+    end
     manual_gc(0.002, 2)
-    prof.pop('frame')
 end
 
 grabbingScreenshots = {
@@ -352,18 +359,35 @@ grabbingScreenshots = {
 }
 
 function love.draw()
-    if grabbingScreenshots.doing then
-        grabbingScreenshots.work()
+    if true then
+        prof.push('frame')
+        if grabbingScreenshots.doing then
+            grabbingScreenshots.work()
+        end
+
+        prof.push('SM.draw')
+        SM.draw()
+        prof.pop('SM.draw')
+
+        if grabbingScreenshots.doing then
+            grabbingScreenshots.advance()
+        end
+        prof.pop('frame')
+        local stats = love.graphics.getStats()
+        love.graphics.print(world:getBodyCount() .. '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS(), 180,
+            10)
+        love.graphics.print(inspect(love.graphics.getStats()), 10, 10)
+        --love.graphics.print('#draws: ' .. stats.drawcalls, 10, 140)
     end
+end
 
-    prof.push('frame')
-    SM.draw()
-    prof.pop('frame')
-
-
-    if grabbingScreenshots.doing then
-        grabbingScreenshots.advance()
-    end
+function love.quit()
+    -- this takes annoyingly long
+    time = love.timer.getTime()
+    prof.write("prof.mpack")
+    local openURL = "file://" .. love.filesystem.getSaveDirectory()
+    love.system.openURL(openURL)
+    print('writing [profe.mpack] took', love.timer.getTime() - time, 'seconds')
 end
 
 function makeMarketingScreenshots(name)

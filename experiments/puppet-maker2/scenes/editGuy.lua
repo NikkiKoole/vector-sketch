@@ -1065,8 +1065,12 @@ function love.wheelmoved(dx, dy)
 end
 
 function scene.draw()
+    prof.push('editGuy.draw ')
+    prof.push('editGuy.draw ui')
+
     local w, h = love.graphics.getDimensions()
     ui.handleMouseClickStart()
+
     if true then
         love.graphics.setColor(1, 1, 1, 1)
         --ui.handleMouseClickStart()
@@ -1091,12 +1095,12 @@ function scene.draw()
     end
 
     scrollList(true)
-
     configPanel()
 
+    prof.pop('editGuy.draw ui')
     cam:push()
-    phys.drawWorld(world)
-
+    --  phys.drawWorld(world)
+    prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
         .positioners)
@@ -1105,11 +1109,11 @@ function scene.draw()
         --     drawNumbersOver(box2dGuys[i])
     end
 
+    prof.pop('editGuy.draw drawSkinOver')
     cam:pop()
 
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print(inspect(love.graphics.getStats()), 10, 10)
-
+    --l
     local a = h_slider('mainVolume', 0, 0, 100, mainVolume, 0, 1)
     if a.value then
         mainVolume = a.value
@@ -1133,6 +1137,7 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.dice, x, y, 0, sx, sy)
     end
+    prof.pop('editGuy.draw ')
 end
 
 return scene
