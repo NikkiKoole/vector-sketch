@@ -287,7 +287,8 @@ function setCategories()
             local skip = false
             if editingGuy.creation.isPotatoHead then
                 local name = parts[i].name
-                if name == 'head' or name == 'neck' then
+                print(name)
+                if name == 'head' or name == 'neck' or name == 'patches' then
                     skip = true
                 end
             end
@@ -744,8 +745,8 @@ function randomizeGuy()
     local hairColor = math.ceil(love.math.random() * #palettes)
 
     randomizePart('body')
-    multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
-    multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
+    --multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
+    --multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
 
     if not creation.isPotatoHead then
         randomizePart('head')
@@ -800,7 +801,7 @@ function randomizeGuy()
     updateAllParts()
     setCategories()
 
-    if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' then
+    if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
         setSelectedCategory('body')
         Timer.tween(.5, scroller, { position = 8 })
     end
@@ -1051,7 +1052,7 @@ function scene.draw()
     configPanel()
 
     cam:push()
-    phys.drawWorld(world)
+    -- phys.drawWorld(world)
 
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy

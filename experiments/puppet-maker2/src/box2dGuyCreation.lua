@@ -4,7 +4,7 @@ local inspect   = require 'vendor.inspect'
 local canvas    = require 'lib.canvas'
 local phys      = require 'src.mainPhysics'
 local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-
+require 'src.dna'
 function findPart(name)
     for i = 1, #parts do
         if parts[i].name == name then
@@ -20,86 +20,11 @@ function isNullObject(partName, values)
 end
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
-local creation    = {
-    isPotatoHead = false, -- if true then in dont have a neck or head
-    hasPhysicsHair = false,
-    hasNeck = true,
-    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-    neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule3', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
-    lear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    rear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = -math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    luarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi, enabled = false }, friction = 4000 },
-    ruarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = -math.pi, up = 0, enabled = false }, friction = 4000 },
-    llarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
-    rlarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = (math.pi - 0.5) * -1, up = 0, enabled = false }, friction = 2000 },
-    lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    luleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 2, enabled = true } },
-    ruleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 2, up = 0, enabled = true } },
-    llleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 8, up = 0, enabled = true } },
-    rlleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 8, enabled = true } },
-    lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
-    hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
-    brow = { w = 10, h = 10 },
-    eye = { w = 10, h = 10 },
-    pupil = { w = 10, h = 10 },
-    nose = { w = 10, h = 10 },
-    upperlip = { w = 10, h = 10 },
-    lowerlip = { w = 10, h = 10 },
-    teeth = { w = 10, h = 10 },
-}
-local multipliers = {
-    torso = { hMultiplier = 1, wMultiplier = 1 },
-    leg = { lMultiplier = 1, wMultiplier = 1 },
-    leghair = { wMultiplier = 1 },
-    feet = { wMultiplier = 1, hMultiplier = 1 },
-    arm = { lMultiplier = 1, wMultiplier = 1 },
-    armhair = { wMultiplier = 1 },
-    hand = { wMultiplier = 1, hMultiplier = 1 },
-    neck = { wMultiplier = 1, hMultiplier = 1 },
-    head = { wMultiplier = 1, hMultiplier = 1 },
-    face = { mMultiplier = 1 },
-    ear = { wMultiplier = 1, hMultiplier = 1 },
-    hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
-    nose = { wMultiplier = 1, hMultiplier = 1 },
-    eye = { wMultiplier = 1, hMultiplier = 1 },
-    pupil = { wMultiplier = .5, hMultiplier = .5 },
-    brow = { wMultiplier = 1, hMultiplier = 1 },
-    mouth = { wMultiplier = 1, hMultiplier = 1 },
-    teeth = { hMultiplier = 1 },
-    chesthair = { mMultiplier = 1 }
-}
 
-local positioners = {
-    leg = { x = 0.5 },
-    eye = { x = 0.2, y = 0.5, r = 0 },
-    nose = { y = 0.5 },
-    brow = { y = 0.8, bend = 1 },
-    mouth = { y = 0.25 },
-    ear = { y = 0.5 }
-}
 
-function getCreation()
-    return creation
-end
-
-function getMultipliers()
-    return multipliers
-end
-
-function getPositioners()
-    return positioners
-end
-
-function getParentAndChildrenFromPartName(partName, creation)
-    local map = {
+function getParentAndChildrenFromPartName(partName)
+    local creation = getCreation()
+    local map      = {
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         neck = { p = 'torso', c = 'neck1' },
         neck1 = { p = 'neck', c = 'head' },
@@ -143,6 +68,7 @@ function getParentAndChildrenFromPartName(partName, creation)
 end
 
 function getScaledTorsoMetaPoint(index)
+    local creation = getCreation()
     local wscale = creation.torso.w / creation.torso.metaPointsW
     local hscale = creation.torso.h / creation.torso.metaPointsH
 
@@ -150,6 +76,7 @@ function getScaledTorsoMetaPoint(index)
 end
 
 function getScaledHeadMetaPoint(index)
+    local creation = getCreation()
     local wscale = creation.head.w / creation.head.metaPointsW
     local hscale = creation.head.h / creation.head.metaPointsH
 
@@ -168,7 +95,9 @@ local function lerp(a, b, amount)
 end
 
 function getOffsetFromParent(partName)
-    local data = getParentAndChildrenFromPartName(partName, creation)
+    local creation    = getCreation()
+    local positioners = getPositioners()
+    local data        = getParentAndChildrenFromPartName(partName, creation)
 
     if partName == 'neck' then
         if creation.torso.metaPoints then
@@ -374,6 +303,7 @@ local function makeUserData(bodyType, moreData)
 end
 
 function changeMetaPoints(key, value, data)
+    local creation = getCreation()
     creation[key].metaPoints = value
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(value)
@@ -394,16 +324,17 @@ function changeMetaPoints(key, value, data)
 end
 
 function changeMetaTexture(key, data)
-    local tlx, tly, brx, bry = bbox.getPointsBBox(data.texturePoints)
-    local bbw = (brx - tlx)
-    local bbh = (bry - tly)
+    local creation                   = getCreation()
+    local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
+    local bbw                        = (brx - tlx)
+    local bbh                        = (bry - tly)
 
-    creation[key].metaURL = data.url
-    creation[key].metaTexturePoints = data.texturePoints
+    creation[key].metaURL            = data.url
+    creation[key].metaTexturePoints  = data.texturePoints
     creation[key].metaTexturePointsW = bbw
     creation[key].metaTexturePointsH = bbh
-    creation[key].metaPivotX = data.pivotX
-    creation[key].metaPivotY = data.pivotY
+    creation[key].metaPivotX         = data.pivotX
+    creation[key].metaPivotY         = data.pivotY
 end
 
 function getFlippedMetaObject(flipx, flipy, points)
@@ -560,6 +491,7 @@ end
 
 
 local function makePart_(key, parent, groupId)
+    local creation = getCreation()
     local offsetX, offsetY = getOffsetFromParent(key)
     local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
@@ -608,6 +540,7 @@ local function useRecreateConnectorData(recreateConnectorData, body)
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
+    local creation = getCreation()
     local data = getParentAndChildrenFromPartName(partName, creation)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
@@ -821,6 +754,7 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId, hasNeck)
 end
 
 function makeGuy(x, y, groupId)
+    local creation = getCreation()
     local function makePart(name, parent)
         return makePart_(name, parent, groupId)
     end
@@ -918,8 +852,8 @@ local function getPNGMaskUrl(url)
     return text.replace(url, '.png', '-mask.png')
 end
 
-function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
-                              renderPatch)
+local function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
+                                    renderPatch)
     --print(url)
     local img = mesh.getImage(url, optionalSettings)
     local maskUrl = getPNGMaskUrl(url)
@@ -930,22 +864,6 @@ function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, f
             renderPatch)
 
     return cnv
-end
-
-function getColorsFromValues(part)
-    -- shape     = 1,
-    -- bgPal     = 4,
-    -- fgPal     = 1,
-    -- bgTex     = 1,
-    -- fgTex     = 2,
-    -- linePal   = 1,
-    -- bgAlpha   = 5,
-    -- fgAlpha   = 5,
-    -- lineAlpha = 5,
-    -- texRot    = 0,
-    -- texScale  = 1,
-
-    -- textures[part.bgTex], palettes[part.bgPal], part.bgAlpha
 end
 
 function createWhiteColoredBlackOutlineTexture(url)
@@ -963,27 +881,13 @@ function createWhiteColoredBlackOutlineTexture(url)
             1, 1, nil, nil))
 end
 
-function createBlackColoredBlackOutlineTexture(url)
-    -- todo make this more optimal and readable, 5 is white in any case
-    local tex1 = textures[math.ceil(math.random() * #textures)]
-    local pal1 = palettes[1]
-    local tex2 = textures[math.ceil(math.random() * #textures)]
-    local pal2 = palettes[1]
-
-    return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1, pal1, 5,
-            tex2, pal2, 2,
-            0, 1,
-            palettes[1], 5,
-            1, 1, nil, nil))
-end
-
 function partToTexturedCanvasWrap(partName, values, optionalImageSettings)
     local a, b = partToTexturedCanvas(partName, values, optionalImageSettings)
     return love.graphics.newImage(a)
 end
 
 function partToTexturedCanvas(partName, values, optionalImageSettings)
+    local creation = getCreation()
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
 

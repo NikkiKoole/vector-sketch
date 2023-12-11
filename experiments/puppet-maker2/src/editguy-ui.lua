@@ -9,6 +9,8 @@ local ui         = require "lib.ui"
 local text       = require 'lib.text'
 
 local imageCache = {}
+
+require 'src.dna'
 require 'src.box2dGuyCreation'
 local creation = getCreation()
 
