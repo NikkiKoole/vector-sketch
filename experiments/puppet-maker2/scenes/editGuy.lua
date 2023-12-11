@@ -13,11 +13,16 @@ local mesh        = require 'lib.mesh'
 require 'src.editguy-ui'
 require 'src.dna'
 require 'src.box2dGuyCreation'
-
-local creation = getCreation()
-
 require 'src.texturedBox2d'
 
+
+local findSample = function(path)
+    for i = 1, #samples do
+        if samples[i].p == path then
+            return samples[i]
+        end
+    end
+end
 
 function rotateToHorizontal(body, desiredAngle, divider, pr)
     local DEGTORAD = 1 / 57.295779513
@@ -92,7 +97,8 @@ end
 
 function rotateAllBodies(bodies, dt)
     --print('hi hello!')
-    --local upsideDown = false
+    local creation = editingGuy.creation
+    local upsideDown = false
     lastDt = dt
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -126,7 +132,7 @@ function rotateAllBodies(bodies, dt)
 
                 if userData then
                     -- getRidOfBigRotationsInBody(body)
-                    --print(userData.bodyType)
+                    -- print(userData.bodyType)
                     if userData.bodyType == 'balloon' then
                         --getRidOfBigRotationsInBody(body)
                         --local desired = upsideDown and -math.pi or 0
@@ -141,6 +147,17 @@ function rotateAllBodies(bodies, dt)
                     --        getRidOfBigRotationsInBody(body)
                     --    end
                     --end
+
+
+                    if userData.bodyType == 'lear' then
+                        -- getRidOfBigRotationsInBody(body)
+                        -- rotateToHorizontal(body, math.pi / 2, 25)
+                    end
+                    if userData.bodyType == 'rear' then
+                        -- getRidOfBigRotationsInBody(body)
+                        -- rotateToHorizontal(body, -math.pi / 2, 25)
+                    end
+
 
                     if userData.bodyType == 'hand' then
                         -- getRidOfBigRotationsInBody(body)
@@ -241,7 +258,6 @@ local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
 end
 
-
 function attachCallbacks()
     Signal.register('click-settings-scroll-area-item', function(x, y)
         configPanelScrollGrid(false, x, y)
@@ -269,7 +285,17 @@ function setCategories()
 
     for i = 1, #parts do
         if parts[i].child ~= true then
-            table.insert(categories, parts[i].name)
+            local skip = false
+            if editingGuy.creation.isPotatoHead then
+                local name = parts[i].name
+                if name == 'head' or name == 'neck' then
+                    skip = true
+                end
+            end
+
+            if not skip then
+                table.insert(categories, parts[i].name)
+            end
         end
     end
 end
@@ -277,12 +303,9 @@ end
 function scene.handleAudioMessage(msg)
     if msg.type == 'played' then
         local path = msg.data.path
-
         if path == 'Triangles 101' or path == 'Triangles 103' or path == 'babirhodes/rhodes2' then
-            -- myWorld:emit('breath', biped)
         end
     end
-    --print('handling audio message from editGuy')
 end
 
 local function findPart(name)
@@ -293,49 +316,49 @@ local function findPart(name)
     end
 end
 
-
-
 function updatePart(name)
+    local values = editingGuy.values
+    local creation = editingGuy.creation
     local multipliers = editingGuy.multipliers
 
     if name == 'chestHair' then
-        chestHairCanvas = partToTexturedCanvasWrap('chestHair', editingGuy.values)
+        chestHairCanvas = partToTexturedCanvasWrap('chestHair', values)
     end
 
     if name == 'lowerlip' then
-        lowerlipCanvas = partToTexturedCanvasWrap('lowerlip', editingGuy.values)
+        lowerlipCanvas = partToTexturedCanvasWrap('lowerlip', values)
     end
 
     if name == 'upperlip' then
-        upperlipCanvas = partToTexturedCanvasWrap('upperlip', editingGuy.values)
+        upperlipCanvas = partToTexturedCanvasWrap('upperlip', values)
     end
 
     if name == 'teeth' then
-        teethCanvas = partToTexturedCanvasWrap('teeth', editingGuy.values)
+        teethCanvas = partToTexturedCanvasWrap('teeth', values)
         local teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
-        local teethIndex = editingGuy.values.teeth.shape
+        local teethIndex = values.teeth.shape
         changeMetaTexture('teeth', teethdata[teethIndex])
     end
 
     if name == 'brows' then
-        local browIndex = math.ceil(editingGuy.values.brows.shape)
+        local browIndex = math.ceil(values.brows.shape)
         local part      = findPart('brows')
         local img       = part.imgs[browIndex]
-        browCanvas      = partToTexturedCanvasWrap('brows', editingGuy.values)
+        browCanvas      = partToTexturedCanvasWrap('brows', values)
     end
 
     if name == 'hair' then
-        local hairIndex = math.ceil(editingGuy.values.hair.shape)
+        local hairIndex = math.ceil(values.hair.shape)
         local part      = findPart('hair')
         local img       = part.imgs[hairIndex]
         local legW      = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
         local legH      = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
-        hairCanvas      = partToTexturedCanvasWrap('hair', editingGuy.values)
+        hairCanvas      = partToTexturedCanvasWrap('hair', values)
     end
 
     if name == 'eyes' then
         local eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
-        local eyeIndex = editingGuy.values.eyes.shape
+        local eyeIndex = values.eyes.shape
         changeMetaTexture('eye', eyedata[eyeIndex])
         creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
         creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
@@ -344,27 +367,27 @@ function updatePart(name)
 
     if name == 'nose' then
         local nosedata = loadVectorSketch('assets/faceparts.polygons.txt', 'noses')
-        local noseIndex = editingGuy.values.nose.shape
+        local noseIndex = values.nose.shape
         changeMetaTexture('nose', nosedata[noseIndex])
         creation.nose.w = mesh.getImage(creation.nose.metaURL):getHeight()
         creation.nose.h = mesh.getImage(creation.nose.metaURL):getWidth()
 
-        noseCanvas      = partToTexturedCanvasWrap('nose', editingGuy.values)
+        noseCanvas      = partToTexturedCanvasWrap('nose', values)
     end
 
     if name == 'pupils' then
         local pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
-        local pupilIndex = editingGuy.values.pupils.shape
+        local pupilIndex = values.pupils.shape
         changeMetaTexture('pupil', pupildata[pupilIndex])
         creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
         creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
 
-        pupilCanvas      = partToTexturedCanvasWrap('pupils', editingGuy.values)
+        pupilCanvas      = partToTexturedCanvasWrap('pupils', values)
     end
 
     if name == 'ears' then
         local eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
-        local earIndex = editingGuy.values.ears.shape
+        local earIndex = values.ears.shape
         changeMetaTexture('lear', eardata[earIndex])
         creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
         creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
@@ -374,7 +397,7 @@ function updatePart(name)
         creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
         creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
 
-        earCanvas       = partToTexturedCanvasWrap('ears', editingGuy.values)
+        earCanvas       = partToTexturedCanvasWrap('ears', values)
         earmesh         = createTexturedTriangleStrip(earCanvas)
         for i = 1, #box2dGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
@@ -384,7 +407,7 @@ function updatePart(name)
 
     if name == 'feet' then
         local feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
-        local footIndex = editingGuy.values.feet.shape
+        local footIndex = values.feet.shape
 
         changeMetaTexture('lfoot', feetdata[footIndex])
         creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
@@ -393,7 +416,7 @@ function updatePart(name)
         creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
 
-        footCanvas       = partToTexturedCanvasWrap('feet', editingGuy.values)
+        footCanvas       = partToTexturedCanvasWrap('feet', values)
         footmesh         = createTexturedTriangleStrip(footCanvas)
 
         for i = 1, #box2dGuys do
@@ -404,16 +427,15 @@ function updatePart(name)
 
     if name == 'hands' then
         local feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
-        local handIndex = editingGuy.values.hands.shape
+        local handIndex = values.hands.shape
         changeMetaTexture('lhand', feetdata[handIndex])
         changeMetaTexture('rhand', feetdata[handIndex])
         creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
         creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
-
         creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
         creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
-        handCanvas       = partToTexturedCanvasWrap('hands', editingGuy.values)
-        --handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
+
+        handCanvas       = partToTexturedCanvasWrap('hands', values)
         handmesh         = createTexturedTriangleStrip(handCanvas)
 
         for i = 1, #box2dGuys do
@@ -425,7 +447,7 @@ function updatePart(name)
     if name == 'head' or name == 'skinPatchEye1' or name == 'skinPatchEye2' or name == 'skinPatchSnout' then
         -- if not creation.isPotatoHead then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
-        local headRndIndex = math.ceil(editingGuy.values.head.shape)
+        local headRndIndex = math.ceil(values.head.shape)
         local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
                 data[headRndIndex]
                 .points)
@@ -433,7 +455,7 @@ function updatePart(name)
         changeMetaPoints('head', flippedFloppedHeadPoints)
         changeMetaTexture('head', data[headRndIndex])
 
-        headCanvas      = partToTexturedCanvasWrap('head', editingGuy.values)
+        headCanvas      = partToTexturedCanvasWrap('head', values)
         creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() * multipliers.head.wMultiplier / 2
         creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() * multipliers.head.hMultiplier / 2
 
@@ -442,7 +464,6 @@ function updatePart(name)
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
-        -- end
     end
 
     if name == 'potato' then
@@ -462,13 +483,13 @@ function updatePart(name)
 
 
     if name == 'neck' then
-        local neckIndex  = math.ceil(editingGuy.values.neck.shape)
+        local neckIndex  = math.ceil(values.neck.shape)
         local part       = findPart('neck')
         local img        = part.imgs[neckIndex]
         local neckW      = mesh.getImage(img):getWidth() * multipliers.neck.wMultiplier / 2
         local neckH      = mesh.getImage(img):getHeight() * multipliers.neck.hMultiplier / 2
 
-        neckCanvas       = partToTexturedCanvasWrap('neck', editingGuy.values)
+        neckCanvas       = partToTexturedCanvasWrap('neck', values)
         neckmesh         = createTexturedTriangleStrip(neckCanvas)
 
         creation.neck.w  = neckW
@@ -483,13 +504,13 @@ function updatePart(name)
     end
 
     if name == 'legs' then
-        local legIndex   = math.ceil(editingGuy.values.legs.shape)
+        local legIndex   = math.ceil(values.legs.shape)
         local part       = findPart('legs')
         local img        = part.imgs[legIndex]
         local legW       = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
         local legH       = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
 
-        legCanvas        = partToTexturedCanvasWrap('legs', editingGuy.values)
+        legCanvas        = partToTexturedCanvasWrap('legs', values)
         legmesh          = createTexturedTriangleStrip(legCanvas)
 
         creation.luleg.w = legW
@@ -510,32 +531,30 @@ function updatePart(name)
     end
 
     if name == 'leghair' then
-        local index   = math.ceil(editingGuy.values.leghair.shape)
+        local index   = math.ceil(values.leghair.shape)
         local part    = findPart('leghair')
         local img     = part.imgs[index]
-        leghairCanvas = partToTexturedCanvasWrap('leghair', editingGuy.values)
+        leghairCanvas = partToTexturedCanvasWrap('leghair', values)
         leghairMesh   = createTexturedTriangleStrip(leghairCanvas)
-        --print(armhairCanvas)
     end
 
     if name == 'armhair' then
-        local index   = math.ceil(editingGuy.values.armhair.shape)
+        local index   = math.ceil(values.armhair.shape)
         local part    = findPart('armhair')
         local img     = part.imgs[index]
-        armhairCanvas = partToTexturedCanvasWrap('armhair', editingGuy.values)
+        armhairCanvas = partToTexturedCanvasWrap('armhair', values)
         armhairMesh   = createTexturedTriangleStrip(armhairCanvas)
-        --print(armhairCanvas)
     end
 
     if name == 'arms' then
-        local armIndex   = math.ceil(editingGuy.values.arms.shape)
+        local armIndex   = math.ceil(values.arms.shape)
         local part       = findPart('arms')
         local img        = part.imgs[armIndex]
         local legW       = mesh.getImage(img):getWidth() * multipliers.arm.wMultiplier / 2
         local legH       = mesh.getImage(img):getHeight() * multipliers.arm.lMultiplier / 2
 
         armCanvas        = createRandomColoredBlackOutlineTexture(img)
-        armCanvas        = partToTexturedCanvasWrap('arms', editingGuy.values)
+        armCanvas        = partToTexturedCanvasWrap('arms', values)
         armmesh          = createTexturedTriangleStrip(armCanvas)
 
         creation.luarm.w = legW / 2
@@ -561,7 +580,7 @@ function updatePart(name)
     if name == 'body' then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
 
-        local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
+        local bodyRndIndex = math.ceil(values.body.shape)
         print(bodyRndIndex)
         --bodyRndIndex = math.ceil(love.math.random() * #data)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
@@ -569,9 +588,7 @@ function updatePart(name)
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
-        torsoCanvas        = partToTexturedCanvasWrap('body', editingGuy.values)
-        -- torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL, editingGuy.values.body)
-
+        torsoCanvas        = partToTexturedCanvasWrap('body', values)
         local body         = box2dGuys[1].torso
         local longestLeg   = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
         local oldLegLength = longestLeg + creation.torso.h
@@ -660,10 +677,6 @@ function scene.load()
     loadUIImages()
     attachCallbacks()
 
-    image11 = love.graphics.newImage('assets/parts/hair9.png')
-    mesh11 = createTexturedTriangleStrip(image11)
-
-
     scroller = {
         xPos = 0,
         position = 1,
@@ -682,7 +695,8 @@ function scene.load()
     uiState = {
         selectedTab = 'part',
         selectedCategory = 'feet',
-        selectedColoringLayer = 'bgPal'
+        selectedColoringLayer = 'bgPal',
+        selectedChildCategory = nil,
     }
 
     uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
@@ -702,56 +716,53 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-
     setupBox2dScene()
     updateAllParts()
     Timer.tween(.5, scroller, { position = 4 })
 end
 
 function randomizeGuy()
+    local creation = editingGuy.creation
+    local multipliers = editingGuy.multipliers
+    local values = editingGuy.values
+
     function randomizePart(part)
         local p = findPart(part)
-        editingGuy.values[part].shape = math.ceil(love.math.random() * #p.imgs)
-        editingGuy.values[part].bgPal = math.ceil(love.math.random() * #palettes)
-        editingGuy.values[part].fgPal = math.ceil(love.math.random() * #palettes)
+        values[part].shape = math.ceil(love.math.random() * #p.imgs)
+        values[part].bgPal = math.ceil(love.math.random() * #palettes)
+        values[part].fgPal = math.ceil(love.math.random() * #palettes)
     end
 
     function randValue(min, max, step, preferMiddle)
-        -- if prefermiddle is set i try to not get the last and first option..
         local steps = ((max - min) / step) + 1
         if preferMiddle then steps = steps - 2 end
         local index = math.floor(love.math.random() * steps)
         if preferMiddle then index = index + 1 end
         local r = min + (index * step)
-
         return r
     end
 
     local hairColor = math.ceil(love.math.random() * #palettes)
 
-
-
     randomizePart('body')
-    editingGuy.multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
-    editingGuy.multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
+    multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
+    multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
 
-    if not editingGuy.creation.isPotatoHead then
+    if not creation.isPotatoHead then
         randomizePart('head')
-        editingGuy.multipliers.head.wMultiplier = randValue(.5, 3, .5, true)
-        editingGuy.multipliers.head.hMultiplier = randValue(.5, 3, .5, true)
+        multipliers.head.wMultiplier = randValue(.5, 3, .5, true)
+        multipliers.head.hMultiplier = randValue(.5, 3, .5, true)
         randomizePart('neck')
-        editingGuy.multipliers.neck.hMultiplier = randValue(0.5, 3, .5, true)
-        editingGuy.multipliers.neck.wMultiplier = randValue(0.5, 3, .5, true)
+        multipliers.neck.hMultiplier = randValue(0.5, 3, .5, true)
+        multipliers.neck.wMultiplier = randValue(0.5, 3, .5, true)
     end
-
 
     local oldHasNeck = creation.hasNeck
     local oldPotato = creation.isPotatoHead
     creation.isPotatoHead = love.math.random() < .5 and true or false
-
     creation.hasNeck = love.math.random() < .5 and true or false
-    if (creation.isPotatoHead) then creation.hasNeck = false end
 
+    if (creation.isPotatoHead) then creation.hasNeck = false end
 
     if creation.hasNeck ~= oldHasNeck then
         changePart('hasNeck')
@@ -760,33 +771,40 @@ function randomizeGuy()
     if creation.isPotatoHead ~= oldPotato then
         changePart('potato')
     end
-    --changePart('potato')
-
-    --
 
     randomizePart('ears')
     randomizePart('chestHair')
-    editingGuy.values['chestHair'].linePal = hairColor
+    values['chestHair'].linePal = hairColor
     randomizePart('armhair')
-    editingGuy.values['armhair'].linePal = hairColor
+    values['armhair'].linePal = hairColor
     randomizePart('hair')
-    editingGuy.values['hair'].linePal = hairColor
+    values['hair'].linePal = hairColor
+
+    randomizePart('leghair')
+    values['leghair'].linePal = hairColor
+
     randomizePart('legs')
-    editingGuy.multipliers.leg.lMultiplier = randValue(0.5, 4, .5, true)
-    editingGuy.multipliers.leg.wMultiplier = randValue(0.5, 4, .5, true)
+    multipliers.leg.lMultiplier = randValue(0.5, 4, .5, true)
+    multipliers.leg.wMultiplier = randValue(0.5, 4, .5, true)
 
     randomizePart('arms')
-    editingGuy.multipliers.arm.lMultiplier = randValue(0.5, 4, .5, true)
-    editingGuy.multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
+    multipliers.arm.lMultiplier = randValue(0.5, 4, .5, true)
+    multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
 
     randomizePart('hands')
-    editingGuy.multipliers.hand.hMultiplier = randValue(0.5, 3, .5, true)
-    editingGuy.multipliers.hand.wMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.hand.hMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.hand.wMultiplier = randValue(0.5, 3, .5, true)
 
     randomizePart('feet')
-    editingGuy.multipliers.feet.hMultiplier = randValue(0.5, 3, .5, true)
-    editingGuy.multipliers.feet.wMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.feet.hMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.feet.wMultiplier = randValue(0.5, 3, .5, true)
     updateAllParts()
+    setCategories()
+
+    if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' then
+        setSelectedCategory('body')
+        Timer.tween(.5, scroller, { position = 8 })
+    end
 end
 
 function updateAllParts()
@@ -846,6 +864,7 @@ function scene.update(dt)
             introSound:stop()
         end
     end
+
     if splashSound:isPlaying() then
         local volume = splashSound:getVolume()
         splashSound:setVolume(volume * .90)
@@ -854,9 +873,6 @@ function scene.update(dt)
         end
     end
 
-
-
-    --delta = delta + dt
     Timer.update(dt)
 
     if grid and grid.data and grid.data.min then
@@ -875,27 +891,18 @@ function scene.update(dt)
     end
 
     handleUpdate(dt, cam)
-
     rotateAllBodies(world:getBodies(), dt)
 end
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
-    -- local x, y = love.mouse.getPosition()
-
-    -- if x >= 0 and x <= scrollListXPosition then
-    -- this could be clicking in the head or body buttons
-    --  headOrBody(false, x, y)
-    --end
     local interacted = handlePointerPressed(x, y, id, cam)
-    --print(x, y, interacted)
+
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)
         if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
             scroller.isDragging = true
             scroller.isThrown = nil
-            -- scrollListIsThrown = nil
-            -- print('hello!')
             gesture.add('scroll-list', id, love.timer.getTime(), x, y)
         end
         if (grid and grid.data) then
@@ -911,10 +918,10 @@ local function pointerPressed(x, y, id)
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
         print('RANDOMIZE!')
         randomizeGuy()
-        --local s = findSample('mp7/Quijada')
-        --if s then
-        --   playSound(s.s, 1, 1)
-        --end
+        local s = findSample('mp7/Quijada')
+        if s then
+            playSound(s.s, 1, 1)
+        end
         --partRandomize(editingGuy.values, true)
 
         -- this seems to fi the issue the best, 2 inits and this order of operations, now we
@@ -927,7 +934,6 @@ local function pointerPressed(x, y, id)
         --tweenCameraToHeadAndBody()
     end
 end
-
 
 local function pointerMoved(x, y, dx, dy, id)
     local somethingWasDragged = false
@@ -1051,6 +1057,9 @@ function scene.draw()
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
         .positioners)
+    end
+    for i = 1, #box2dGuys do
+        drawNumbersOver(box2dGuys[i])
     end
 
     cam:pop()

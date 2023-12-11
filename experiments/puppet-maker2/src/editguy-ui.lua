@@ -28,6 +28,16 @@ function growl()
 
 end
 
+function setSelectedCategory(name)
+    uiState.selectedCategory = name
+
+    local result = findPart(uiState.selectedCategory)
+    if result.children then
+        uiState.selectedChildCategory = result.children[1]
+    end
+    return result
+end
+
 local function findPart(name)
     for i = 1, #parts do
         if parts[i].name == name then
@@ -360,7 +370,7 @@ local function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
                 love.graphics.setColor(bgColor[1], bgColor[2], bgColor[3], 1)
                 love.graphics.draw(ui2.whiterects[1], xPosition, yPosition, 0, sx, sy)
 
-                if selectedChildCategory == p.children[i] then
+                if uiState.selectedChildCategory == p.children[i] then
                     love.graphics.setColor(0, 0, 0, .8)
                     local sx, sy = createFittingScale(ui2.rects[1], childrenTabHeight, childrenTabHeight)
                     love.graphics.draw(ui2.rects[1], xPosition, yPosition, 0, sx, sy)
@@ -376,7 +386,7 @@ local function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
                 -- todo this isnt working because the scrollarea is not correct so this will only be called whne i click in the scrollarea
                 -- print(clickX, clickY,  xPosition, yPosition, childrenTabHeight, childrenTabHeight)
                 if (hit.pointInRect(clickX, clickY, xPosition, yPosition, childrenTabHeight, childrenTabHeight)) then
-                    selectedChildCategory = p.children[i]
+                    uiState.selectedChildCategory = p.children[i]
                     playSound(uiClickSound)
                 end
             end
@@ -484,7 +494,7 @@ function configPanelSurroundings(draw, clickX, clickY)
     drawChildPicker(draw, startX, currentY, width, clickX, clickY)
 
     if findPart(uiState.selectedCategory).children then
-        local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, selectedChildCategory)
+        local minimumHeight = drawImmediateSlidersEtc(false, startX, currentY, width, uiState.selectedChildCategory)
         currentY = currentY + minimumHeight
     end
 end
@@ -1680,6 +1690,8 @@ local function configPanelCellDimensions(amount, columns, width)
 end
 
 local function renderElement(category, type, value, container, x, y, w, h)
+    local values = editingGuy.values
+
     if (type == "test") then
         love.graphics.rectangle("line", x, y, w, h)
         love.graphics.print(value, x, y)
@@ -1688,9 +1700,9 @@ local function renderElement(category, type, value, container, x, y, w, h)
         if (value <= #container) then
             local dotindex = (value % #ui2.dots)
 
-            local pickedBG = editingGuy.values[category].bgPal == value
-            local pickedFG = editingGuy.values[category].fgPal == value
-            local pickedLP = editingGuy.values[category].linePal == value
+            local pickedBG = values[category].bgPal == value
+            local pickedFG = values[category].fgPal == value
+            local pickedLP = values[category].linePal == value
             if dotindex == 0 then
                 dotindex = #ui2.dots
             end
@@ -1726,7 +1738,7 @@ local function renderElement(category, type, value, container, x, y, w, h)
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
             local maskUrl = getPNGMaskUrl(url)
             local info = love.filesystem.getInfo(maskUrl)
-            local picked = editingGuy.values[category].shape == dotindex
+            local picked = values[category].shape == dotindex
             if picked then
                 scale = scale + (math.sin(love.timer.getTime() * 5) * (scale / 20))
 
@@ -1740,7 +1752,7 @@ local function renderElement(category, type, value, container, x, y, w, h)
                 imageCache[maskUrl] = mask
 
                 love.graphics.setBlendMode('subtract')
-                local pal = palettes[editingGuy.values[category].bgPal]
+                local pal = palettes[values[category].bgPal]
 
                 if picked then
                     love.graphics.setColor(1 - pal[1], 1 - pal[2], 1 - pal[3], 1)
@@ -1764,10 +1776,10 @@ local function renderElement(category, type, value, container, x, y, w, h)
             end
 
             local circleindex = (value % #ui2.circles) + 1
-            local picked = editingGuy.values[category].fgTex == dotindex
-            local bpal = (palettes[editingGuy.values[category].bgPal])
-            local pal = (palettes[editingGuy.values[category].fgPal])
-            local lpal = (palettes[editingGuy.values[category].linePal])
+            local picked = values[category].fgTex == dotindex
+            local bpal = (palettes[values[category].bgPal])
+            local pal = (palettes[values[category].fgPal])
+            local lpal = (palettes[values[category].linePal])
             local dot = container[dotindex]
             local scale, xoff, yoff = getScaleAndOffsetsForImage(dot, w, h)
 
@@ -1853,8 +1865,8 @@ function configPanelScrollGrid(draw, clickX, clickY)
     local p = findPart(uiState.selectedCategory)
     --print(uiState.selectedCategory, p, inspect(p))
     if p.children then
-        p = findPart(selectedChildCategory)
-        category = selectedChildCategory
+        p = findPart(uiState.selectedChildCategory)
+        category = uiState.selectedChildCategory
     end
 
     if uiState.selectedTab == "fg" or uiState.selectedTab == "bg" or uiState.selectedTab == "line" or uiState.selectedTab == "colors" then
@@ -1885,7 +1897,7 @@ function configPanelScrollGrid(draw, clickX, clickY)
 
     if findPart(uiState.selectedCategory).children then
         currentY = currentY + childrenTabHeight
-        otherHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, selectedChildCategory)
+        otherHeight = drawImmediateSlidersEtc(draw, startX, currentY, width, uiState.selectedChildCategory)
         currentY = currentY + otherHeight
     end
 
@@ -2103,12 +2115,9 @@ function scrollList(draw, clickX, clickY)
                 end
             else
                 if (hit.pointInRect(clickX, clickY, xPos, yPosition, size, size)) then
-                    uiState.selectedCategory = categories[index]
+                    local f = setSelectedCategory(categories[index])
 
-                    local f = findPart(uiState.selectedCategory)
-                    if f.children then
-                        selectedChildCategory = f.children[1]
-                    end
+
                     if f.kind == 'body' then
                         -- tweenCameraToHeadAndBody()
                     end
