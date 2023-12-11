@@ -631,10 +631,14 @@ function setupBox2dScene()
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
     box2dGuys = {}
-    local top = love.physics.newBody(world, w / 2, 2500, "static")
+
+    local top = love.physics.newBody(world, w / 2, 2500 - 30000, "static")
     local topshape = love.physics.newRectangleShape(4000, 4000)
     local topfixture = love.physics.newFixture(top, topshape, 1)
 
+    local bottom = love.physics.newBody(world, w / 2, 2500, "static")
+    local bottomshape = love.physics.newRectangleShape(4000, 4000)
+    local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
 
     local left = love.physics.newBody(world, -3000 + w / 2, 2500 - 15000, "static")
     local leftshape = love.physics.newRectangleShape(2000, 30000)
