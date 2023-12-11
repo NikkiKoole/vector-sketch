@@ -522,7 +522,6 @@ local function changeValue(name, step, min, max)
     end
 end
 
-
 local function getValueByPath(root, path)
     local keys = {}
     for key in string.gmatch(path, '([^%.]+)') do

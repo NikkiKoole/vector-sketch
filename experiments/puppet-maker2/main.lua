@@ -131,8 +131,13 @@ function zeroTransform(arr)
     end
 end
 
-function loadVectorSketch(path, groupName)
-    local _, bodyParts = loadGroupFromFile(path, groupName)
+function loadVectorSketchAndGetImages(path, groupName)
+    local parts, img = loadVectorSketch(path, groupName, true)
+    return img, parts
+end
+
+function loadVectorSketch(path, groupName, getImagesToo)
+    local img, bodyParts = loadGroupFromFile(path, groupName)
     zeroTransform(bodyParts)
 
     local result = {}
@@ -156,7 +161,7 @@ function loadVectorSketch(path, groupName)
         table.insert(result, me)
     end
 
-    return result
+    return result, img
 end
 
 function love.keypressed(key)

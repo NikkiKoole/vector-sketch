@@ -287,7 +287,6 @@ function setCategories()
             local skip = false
             if editingGuy.creation.isPotatoHead then
                 local name = parts[i].name
-                print(name)
                 if name == 'head' or name == 'neck' or name == 'patches' then
                     skip = true
                 end
@@ -308,7 +307,7 @@ function scene.handleAudioMessage(msg)
     end
 end
 
-local function findPart(name)
+function findPart(name)
     for i = 1, #parts do
         if parts[i].name == name then
             return parts[i]
@@ -335,9 +334,11 @@ function updatePart(name)
 
     if name == 'teeth' then
         teethCanvas = partToTexturedCanvasWrap('teeth', values)
-        local teethdata = loadVectorSketch('assets/faceparts.polygons.txt', 'teeths')
+        local teethdata = findPart('teeth').p
         local teethIndex = values.teeth.shape
-        changeMetaTexture('teeth', teethdata[teethIndex])
+        if not isNullObject('teeth', editingGuy.values) then
+            changeMetaTexture('teeth', teethdata[teethIndex])
+        end
     end
 
     if name == 'brows' then
@@ -357,7 +358,7 @@ function updatePart(name)
     end
 
     if name == 'eyes' then
-        local eyedata = loadVectorSketch('assets/faceparts.polygons.txt', 'eyes')
+        local eyedata = findPart('eyes').p
         local eyeIndex = values.eyes.shape
         changeMetaTexture('eye', eyedata[eyeIndex])
         creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
@@ -366,7 +367,7 @@ function updatePart(name)
     end
 
     if name == 'nose' then
-        local nosedata = loadVectorSketch('assets/faceparts.polygons.txt', 'noses')
+        local nosedata = findPart('nose').p
         local noseIndex = values.nose.shape
         changeMetaTexture('nose', nosedata[noseIndex])
         creation.nose.w = mesh.getImage(creation.nose.metaURL):getHeight()
@@ -376,7 +377,7 @@ function updatePart(name)
     end
 
     if name == 'pupils' then
-        local pupildata = loadVectorSketch('assets/faceparts.polygons.txt', 'pupils')
+        local pupildata = findPart('pupils').p
         local pupilIndex = values.pupils.shape
         changeMetaTexture('pupil', pupildata[pupilIndex])
         creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
@@ -386,7 +387,7 @@ function updatePart(name)
     end
 
     if name == 'ears' then
-        local eardata = loadVectorSketch('assets/faceparts.polygons.txt', 'ears')
+        local eardata = findPart('ears').p
         local earIndex = values.ears.shape
         changeMetaTexture('lear', eardata[earIndex])
         creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
@@ -406,7 +407,7 @@ function updatePart(name)
     end
 
     if name == 'feet' then
-        local feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+        local feetdata = findPart('feet').p
         local footIndex = values.feet.shape
 
         changeMetaTexture('lfoot', feetdata[footIndex])
@@ -426,7 +427,7 @@ function updatePart(name)
     end
 
     if name == 'hands' then
-        local feetdata = loadVectorSketch('assets/feet.polygons.txt', 'feet')
+        local feetdata = findPart('hands').p --  loadVectorSketch('assets/feet.polygons.txt', 'feet')
         local handIndex = values.hands.shape
         changeMetaTexture('lhand', feetdata[handIndex])
         changeMetaTexture('rhand', feetdata[handIndex])
@@ -446,7 +447,7 @@ function updatePart(name)
 
     if name == 'head' or name == 'skinPatchEye1' or name == 'skinPatchEye2' or name == 'skinPatchSnout' then
         -- if not creation.isPotatoHead then
-        local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+        local data = findPart('head').p --loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         local headRndIndex = math.ceil(values.head.shape)
         local flippedFloppedHeadPoints = getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
                 data[headRndIndex]
@@ -578,11 +579,8 @@ function updatePart(name)
     end
 
     if name == 'body' then
-        local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
-
+        local data = findPart('body').p
         local bodyRndIndex = math.ceil(values.body.shape)
-        print(bodyRndIndex)
-        --bodyRndIndex = math.ceil(love.math.random() * #data)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                 data[bodyRndIndex]
                 .points)
@@ -633,10 +631,18 @@ function setupBox2dScene()
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
     box2dGuys = {}
-    local top = love.physics.newBody(world, w / 2, 1000, "static")
-    local topshape = love.physics.newRectangleShape(4000, 1000)
+    local top = love.physics.newBody(world, w / 2, 2500, "static")
+    local topshape = love.physics.newRectangleShape(4000, 4000)
     local topfixture = love.physics.newFixture(top, topshape, 1)
 
+
+    local left = love.physics.newBody(world, -3000 + w / 2, 2500 - 15000, "static")
+    local leftshape = love.physics.newRectangleShape(2000, 30000)
+    local leftfixture = love.physics.newFixture(left, leftshape, 1)
+
+    local right = love.physics.newBody(world, 3000 + w / 2, 2500 - 15000, "static")
+    local rightshape = love.physics.newRectangleShape(2000, 30000)
+    local rightfixture = love.physics.newFixture(right, rightshape, 1)
     if false then
         for i = 1, 100 do
             local body = love.physics.newBody(world, i * 10, -2000, "dynamic")
@@ -644,10 +650,6 @@ function setupBox2dScene()
             local fixture = love.physics.newFixture(body, shape, 2)
         end
     end
-
-
-    --
-
     if false then
         local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
@@ -662,6 +664,7 @@ function setupBox2dScene()
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
     end
+
     for i = 1, 5 do
         table.insert(box2dGuys, makeGuy( -1000 + i * 500, -1300, i))
     end
@@ -728,7 +731,8 @@ function randomizeGuy()
 
     function randomizePart(part)
         local p = findPart(part)
-        values[part].shape = math.ceil(love.math.random() * #p.imgs)
+        local maximum = #p.imgs
+        values[part].shape = math.ceil(love.math.random() * maximum)
         values[part].bgPal = math.ceil(love.math.random() * #palettes)
         values[part].fgPal = math.ceil(love.math.random() * #palettes)
     end
@@ -798,6 +802,41 @@ function randomizeGuy()
     randomizePart('feet')
     multipliers.feet.hMultiplier = randValue(0.5, 3, .5, true)
     multipliers.feet.wMultiplier = randValue(0.5, 3, .5, true)
+
+    randomizePart('eyes')
+    randomizePart('pupils')
+    randomizePart('brows')
+    values['brows'].linePal = hairColor
+
+    randomizePart('eyes')
+    randomizePart('nose')
+
+    randomizePart('teeth')
+    values['teeth'].bgPal = 5
+    values['teeth'].fgPal = 5
+
+    randomizePart('upperlip')
+    randomizePart('lowerlip')
+
+    randomizePart('skinPatchSnout')
+    local bgAlpha = randValue(1, 5, 1)
+    local fgAlpha = randValue(1, 5, 1)
+    local lineAlpha = randValue(1, 5, 1)
+    values['skinPatchSnout'].bgAlpha = randValue(1, 5, 1)
+    values['skinPatchSnout'].fgAlpha = randValue(1, 5, 1)
+    values['skinPatchSnout'].lineAlpha = randValue(1, 5, 1)
+
+    randomizePart('skinPatchEye1')
+    values['skinPatchEye1'].bgAlpha = bgAlpha
+    values['skinPatchEye1'].fgAlpha = fgAlpha
+    values['skinPatchEye1'].lineAlpha = lineAlpha
+
+    randomizePart('skinPatchEye2')
+    values['skinPatchEye2'].bgAlpha = bgAlpha
+    values['skinPatchEye2'].fgAlpha = fgAlpha
+    values['skinPatchEye2'].lineAlpha = lineAlpha
+
+
     updateAllParts()
     setCategories()
 
@@ -1052,14 +1091,14 @@ function scene.draw()
     configPanel()
 
     cam:push()
-    -- phys.drawWorld(world)
+    phys.drawWorld(world)
 
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
         .positioners)
     end
     for i = 1, #box2dGuys do
-        drawNumbersOver(box2dGuys[i])
+        --     drawNumbersOver(box2dGuys[i])
     end
 
     cam:pop()

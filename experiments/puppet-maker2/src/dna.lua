@@ -2,11 +2,84 @@ local parse = require 'lib.parse-file'
 local node  = require 'lib.node'
 local mesh  = require 'lib.mesh'
 
-local function TableConcat(t1, t2)
-    for i = 1, #t2 do
-        t1[#t1 + 1] = t2[i]
-    end
-    return t1
+
+local creation    = {
+    isPotatoHead = false,
+    hasPhysicsHair = false,
+    hasNeck = true,
+    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
+    neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule3', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
+    lear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    rear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = -math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
+    luarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi, enabled = false }, friction = 4000 },
+    ruarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = -math.pi, up = 0, enabled = false }, friction = 4000 },
+    llarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
+    rlarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = (math.pi - 0.5) * -1, up = 0, enabled = false }, friction = 2000 },
+    lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    luleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 2, enabled = true } },
+    ruleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 2, up = 0, enabled = true } },
+    llleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 8, up = 0, enabled = true } },
+    rlleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 8, enabled = true } },
+    lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
+    hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+    hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+    hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+    hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
+    hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
+    brow = { w = 10, h = 10 },
+    eye = { w = 10, h = 10 },
+    pupil = { w = 10, h = 10 },
+    nose = { w = 10, h = 10 },
+    upperlip = { w = 10, h = 10 },
+    lowerlip = { w = 10, h = 10 },
+    teeth = { w = 10, h = 10 },
+}
+
+local multipliers = {
+    torso = { hMultiplier = 1, wMultiplier = 1 },
+    leg = { lMultiplier = 1, wMultiplier = 1 },
+    leghair = { wMultiplier = 1 },
+    feet = { wMultiplier = 1, hMultiplier = 1 },
+    arm = { lMultiplier = 1, wMultiplier = 1 },
+    armhair = { wMultiplier = 1 },
+    hand = { wMultiplier = 1, hMultiplier = 1 },
+    neck = { wMultiplier = 1, hMultiplier = 1 },
+    head = { wMultiplier = 1, hMultiplier = 1 },
+    face = { mMultiplier = 1 },
+    ear = { wMultiplier = 1, hMultiplier = 1 },
+    hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
+    nose = { wMultiplier = 1, hMultiplier = 1 },
+    eye = { wMultiplier = 1, hMultiplier = 1 },
+    pupil = { wMultiplier = .5, hMultiplier = .5 },
+    brow = { wMultiplier = 1, hMultiplier = 1 },
+    mouth = { wMultiplier = 1, hMultiplier = 1 },
+    teeth = { hMultiplier = 1 },
+    chesthair = { mMultiplier = 1 }
+}
+
+local positioners = {
+    leg = { x = 0.5 },
+    eye = { x = 0.2, y = 0.5, r = 0 },
+    nose = { y = 0.5 },
+    brow = { y = 0.8, bend = 1 },
+    mouth = { y = 0.25 },
+    ear = { y = 0.5 }
+}
+
+function getCreation()
+    return creation
+end
+
+function getMultipliers()
+    return multipliers
+end
+
+function getPositioners()
+    return positioners
 end
 
 local function createDefaultTextureValues()
@@ -73,8 +146,14 @@ function generateValues()
     return values
 end
 
+local function TableConcat(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
+    end
+    return t1
+end
+
 function generateParts()
-    --print('generatre!')
     local legUrls = {
         'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
         'assets/parts/leg5.png', 'assets/parts/leg7.png', 'assets/parts/legp2.png', 'assets/parts/leg1x.png',
@@ -113,27 +192,22 @@ function generateParts()
     }
     table.insert(chestHairUrls, 'assets/parts/null.png')
 
-    local bodyImgUrls, bodyParts = loadGroupFromFile('assets/bodies.polygons.txt', 'bodies')
-    zeroTransform(bodyParts)
+    local bodyImgUrls, bodyParts = loadVectorSketchAndGetImages('assets/bodies.polygons.txt', 'bodies')
 
-    local feetImgUrls, feetParts = loadGroupFromFile('assets/feet.polygons.txt', 'feet')
+    local feetImgUrls, feetParts = loadVectorSketchAndGetImages('assets/feet.polygons.txt', 'feet')
     local handParts = feetParts
     local headImgUrls = bodyImgUrls
     local headParts = bodyParts
 
-    local eyeImgUrls, eyeParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyes')
-    local pupilImgUrls, pupilParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'pupils')
-    local noseImgUrls, noseParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'noses')
-    local browImgUrls, browParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'eyebrows')
-    local earImgUrls, earParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'ears')
-    local teethImgUrls, teethParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'teeths')
-    local upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
-    local lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
+    local eyeImgUrls, eyeParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyes')
+    local pupilImgUrls, pupilParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'pupils')
+    local noseImgUrls, noseParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'noses')
+    local browImgUrls, browParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyebrows')
+    local earImgUrls, earParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'ears')
+    local teethImgUrls, teethParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'teeths')
+    local upperlipImgUrls, upperlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'upperlips')
+    local lowerlipImgUrls, lowerlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'lowerlips')
 
-    -- ok haha this cause a bug, because the randomizer doenst know how to handle it properly
-    --
-
-    -- but why is this an issue for the nose and not for the patch for example
     table.insert(teethImgUrls, 'assets/parts/null.png')
     local parts = {
         { name = 'head',           imgs = headImgUrls,     p = headParts,                                                    kind = 'head' },
@@ -175,82 +249,4 @@ function generateParts()
     urls = TableConcat(urls, eyeImgUrls)
     urls = TableConcat(urls, pupilImgUrls)
     return parts, urls
-end
-
-local creation    = {
-    isPotatoHead = false, -- if true then in dont have a neck or head
-    hasPhysicsHair = false,
-    hasNeck = true,
-    torso = { flipx = 1, flipy = 1, w = 300, h = 300, d = 2.15, shape = 'trapezium' },
-    neck = { w = 140, h = 150, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    neck1 = { w = 140, h = 110, d = 1, shape = 'capsule', limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    head = { flipx = 1, flipy = 1, w = 100, h = 200, d = 1, shape = 'capsule3', limits = { low = -math.pi / 4, up = math.pi / 4, enabled = true } },
-    lear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    rear = { w = 100, h = 100, d = .1, shape = 'capsule', stanceAngle = -math.pi / 2, limits = { low = -math.pi / 16, up = math.pi / 16, enabled = true } },
-    luarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi, enabled = false }, friction = 4000 },
-    ruarm = { w = 40, h = 280, d = 2.5, shape = 'capsule', limits = { low = -math.pi, up = 0, enabled = false }, friction = 4000 },
-    llarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = 0, up = math.pi - 0.5, enabled = false }, friction = 2000 },
-    rlarm = { w = 40, h = 160, d = 2.5, shape = 'capsule', limits = { low = (math.pi - 0.5) * -1, up = 0, enabled = false }, friction = 2000 },
-    lhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    rhand = { w = 40, h = 40, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    luleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 2, enabled = true } },
-    ruleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 2, up = 0, enabled = true } },
-    llleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = -math.pi / 8, up = 0, enabled = true } },
-    rlleg = { w = 40, h = 200, d = 2.5, shape = 'capsule', stanceAngle = 0, limits = { low = 0, up = math.pi / 8, enabled = true } },
-    lfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    rfoot = { w = 80, h = 150, d = 2, shape = 'rect1', limits = { low = -math.pi / 8, up = math.pi / 8, enabled = true } },
-    hair1 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
-    hair2 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair3 = { w = 150, h = 150, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair4 = { w = 150, h = 100, d = 0.1, shape = 'capsule2', limits = { low = -math.pi / 3, up = math.pi / 3, enabled = true }, friction = 5000 },
-    hair5 = { w = 180, h = 200, d = 0.1, shape = 'capsule', limits = { low = -math.pi / 2, up = math.pi / 2, enabled = true }, friction = 5000 },
-    brow = { w = 10, h = 10 },
-    eye = { w = 10, h = 10 },
-    pupil = { w = 10, h = 10 },
-    nose = { w = 10, h = 10 },
-    upperlip = { w = 10, h = 10 },
-    lowerlip = { w = 10, h = 10 },
-    teeth = { w = 10, h = 10 },
-}
-local multipliers = {
-    torso = { hMultiplier = 1, wMultiplier = 1 },
-    leg = { lMultiplier = 1, wMultiplier = 1 },
-    leghair = { wMultiplier = 1 },
-    feet = { wMultiplier = 1, hMultiplier = 1 },
-    arm = { lMultiplier = 1, wMultiplier = 1 },
-    armhair = { wMultiplier = 1 },
-    hand = { wMultiplier = 1, hMultiplier = 1 },
-    neck = { wMultiplier = 1, hMultiplier = 1 },
-    head = { wMultiplier = 1, hMultiplier = 1 },
-    face = { mMultiplier = 1 },
-    ear = { wMultiplier = 1, hMultiplier = 1 },
-    hair = { wMultiplier = 1, sMultiplier = 1, tension = 0.5 },
-    nose = { wMultiplier = 1, hMultiplier = 1 },
-    eye = { wMultiplier = 1, hMultiplier = 1 },
-    pupil = { wMultiplier = .5, hMultiplier = .5 },
-    brow = { wMultiplier = 1, hMultiplier = 1 },
-    mouth = { wMultiplier = 1, hMultiplier = 1 },
-    teeth = { hMultiplier = 1 },
-    chesthair = { mMultiplier = 1 }
-}
-
-local positioners = {
-    leg = { x = 0.5 },
-    eye = { x = 0.2, y = 0.5, r = 0 },
-    nose = { y = 0.5 },
-    brow = { y = 0.8, bend = 1 },
-    mouth = { y = 0.25 },
-    ear = { y = 0.5 }
-}
-
-function getCreation()
-    return creation
-end
-
-function getMultipliers()
-    return multipliers
-end
-
-function getPositioners()
-    return positioners
 end

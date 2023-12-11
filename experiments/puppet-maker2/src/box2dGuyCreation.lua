@@ -5,13 +5,6 @@ local canvas    = require 'lib.canvas'
 local phys      = require 'src.mainPhysics'
 local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 require 'src.dna'
-function findPart(name)
-    for i = 1, #parts do
-        if parts[i].name == name then
-            return parts[i]
-        end
-    end
-end
 
 function isNullObject(partName, values)
     local p = findPart(partName)
@@ -20,7 +13,6 @@ function isNullObject(partName, values)
 end
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
-
 
 function getParentAndChildrenFromPartName(partName)
     local creation = getCreation()
