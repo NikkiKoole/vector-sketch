@@ -1,5 +1,5 @@
 local bbox = require 'lib.bbox'
-
+local generatePolygon = require('lib.generate-polygon').generatePolygon
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -21,7 +21,7 @@ function makeAndAddConnector(parent, x, y, data, size, size2)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 end
 
-function makeRectPoly(w, h, x, y)
+local function makeRectPoly(w, h, x, y)
     return love.physics.newPolygonShape(
             x, y,
             x + w, y,
@@ -41,7 +41,7 @@ function makeRectPoly2(w, h, x, y)
         )
 end
 
-function capsuleXY(w, h, cs, x, y)
+local function capsuleXY(w, h, cs, x, y)
     -- cs == cornerSize
     local w2 = w / 2
     local h2 = h / 2
@@ -74,6 +74,7 @@ local function makeTrapeziumPoly(w, w2, h, x, y)
             cx - w2 / 2, cy + h / 2
         )
 end
+
 function makeShapeFromCreationPart(part)
     --print(inspect(part))
     if part.metaPoints then
@@ -121,9 +122,7 @@ function makeShape(shapeType, w, h)
     end
 end
 
-local generatePolygon = require('lib.generate-polygon').generatePolygon
--------------
-function killMouseJointIfPossible(id)
+local function killMouseJointIfPossible(id)
     local index = -1
     for i = 1, #pointerJoints do
         if pointerJoints[i].id == id then
@@ -152,7 +151,6 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
     return pointerJoint
 end
 
-
 local function makePrio(fixture)
     local ud = fixture:getUserData()
     if ud then
@@ -166,8 +164,6 @@ local function makePrio(fixture)
     end
     return 1
 end
-
-
 
 local function getPointerPosition(id)
     if id == 'mouse' then
@@ -199,7 +195,7 @@ local function getCentroidOfFixture(body, fixture)
 end
 
 
-function maybeConnectThisConnector(f, mj)
+local function maybeConnectThisConnector(f, mj)
     local found = false
 
 

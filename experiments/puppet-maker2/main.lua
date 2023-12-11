@@ -1,15 +1,11 @@
 package.path = package.path .. ";../../?.lua"
 
-
 local manual_gc = require 'vendor.batteries.manual_gc'
-
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
-
 jit.off()
 require 'lib.printC'
-
 
 if true then
     local a, b, c, d, e
@@ -19,20 +15,24 @@ if true then
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-local text = require 'lib.text'
-gesture = require 'lib.gesture'
-SM = require 'vendor.SceneMgr'
-inspect = require 'vendor.inspect'
+local mesh   = require 'lib.mesh'
+local parse  = require 'lib.parse-file'
+local node   = require 'lib.node'
+local text   = require 'lib.text'
+gesture      = require 'lib.gesture'
+SM           = require 'vendor.SceneMgr'
+inspect      = require 'vendor.inspect'
 PROF_CAPTURE = true
-prof = require 'vendor.jprof'
-ProFi = require 'vendor.ProFi'
-focussed = true
-lurker = require 'vendor.lurker'
-lurker.quiet = true
+prof         = require 'vendor.jprof'
+ProFi        = require 'vendor.ProFi'
+focussed     = true
 
 require 'src.mainPhysics'
 
-lurker.postswap = function(f)
+local lurker      = require 'vendor.lurker'
+lurker.quiet      = true
+
+lurker.postswap   = function(f)
     print("File " .. f .. " was swapped")
     focussed = true
 end
@@ -85,6 +85,78 @@ function stripPath(root, path)
     end
 
     return root
+end
+
+local function stripPath(root, path)
+    if root and root.texture and root.texture.url and #root.texture.url > 0 then
+        local str = root.texture.url
+        local shortened = string.gsub(str, path, '')
+        root.texture.url = shortened
+    end
+
+    if root.children then
+        for i = 1, #root.children do
+            stripPath(root.children[i], path)
+        end
+    end
+
+    return root
+end
+
+function loadGroupFromFile(url, groupName)
+    local imgs = {}
+    local parts = {}
+    local whole = parse.parseFile(url)
+    local group = node.findNodeByName(whole, groupName) or {}
+
+    for i = 1, #group.children do
+        local p = group.children[i]
+        stripPath(p, '/experiments/puppet%-maker/')
+        for j = 1, #p.children do
+            if p.children[j].texture then
+                imgs[i] = p.children[j].texture.url
+                parts[i] = group.children[i]
+            end
+        end
+    end
+    return imgs, parts
+end
+
+function zeroTransform(arr)
+    for i = 1, #arr do
+        if arr[i].transforms then
+            arr[i].transforms.l[1] = 0
+            arr[i].transforms.l[2] = 0
+        end
+    end
+end
+
+function loadVectorSketch(path, groupName)
+    local _, bodyParts = loadGroupFromFile(path, groupName)
+    zeroTransform(bodyParts)
+
+    local result = {}
+    for i = 1, #bodyParts do
+        local me = {
+            pivotX = bodyParts[i].transforms.l[6] - bodyParts[i].transforms.l[1],
+            pivotY = bodyParts[i].transforms.l[7] - bodyParts[i].transforms.l[2]
+        }
+        for j = 1, #bodyParts[i].children do
+            local child = bodyParts[i].children[j]
+            if child.texture and child.texture.url then
+                local img = mesh.getImage(child.texture.url)
+                me.url = child.texture.url
+                me.texturePoints = child.points
+            end
+            if child.type == 'meta' then
+                --print(inspect(child.points))
+                me.points = child.points
+            end
+        end
+        table.insert(result, me)
+    end
+
+    return result
 end
 
 function love.keypressed(key)
@@ -308,5 +380,3 @@ function makeMarketingScreenshots(name)
     local openURL = "file://" .. love.filesystem.getSaveDirectory()
     love.system.openURL(openURL)
 end
-
-----

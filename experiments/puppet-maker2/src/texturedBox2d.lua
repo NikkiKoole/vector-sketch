@@ -1,5 +1,3 @@
-local parse    = require 'lib.parse-file'
-local node     = require 'lib.node'
 local inspect  = require 'vendor.inspect'
 local mesh     = require 'lib.mesh'
 local polyline = require 'lib.polyline'
@@ -8,21 +6,7 @@ local border   = require 'lib.border-mesh'
 local cam      = require('lib.cameraBase').getInstance()
 local canvas   = require 'lib.canvas'
 
-local function stripPath(root, path)
-    if root and root.texture and root.texture.url and #root.texture.url > 0 then
-        local str = root.texture.url
-        local shortened = string.gsub(str, path, '')
-        root.texture.url = shortened
-    end
 
-    if root.children then
-        for i = 1, #root.children do
-            stripPath(root.children[i], path)
-        end
-    end
-
-    return root
-end
 
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
@@ -42,65 +26,6 @@ local function getLengthOfPath(path)
     return result
 end
 
-local function loadGroupFromFile(url, groupName)
-    local imgs = {}
-    local parts = {}
-    local whole = parse.parseFile(url)
-    local group = node.findNodeByName(whole, groupName) or {}
-
-    for i = 1, #group.children do
-        local p = group.children[i]
-        stripPath(p, '/experiments/puppet%-maker/')
-        for j = 1, #p.children do
-            if p.children[j].texture then
-                imgs[i] = p.children[j].texture.url
-                parts[i] = group.children[i]
-            end
-        end
-    end
-    return imgs, parts
-end
-
-local function zeroTransform(arr)
-    for i = 1, #arr do
-        if arr[i].transforms then
-            arr[i].transforms.l[1] = 0
-            arr[i].transforms.l[2] = 0
-        end
-    end
-end
-
-function loadVectorSketch(path, groupName)
-    local _, bodyParts = loadGroupFromFile(path, groupName)
-    zeroTransform(bodyParts)
-
-    local result = {}
-    for i = 1, #bodyParts do
-        local me = {
-            pivotX = bodyParts[i].transforms.l[6] - bodyParts[i].transforms.l[1],
-            pivotY = bodyParts[i].transforms.l[7] - bodyParts[i].transforms.l[2]
-        }
-        for j = 1, #bodyParts[i].children do
-            local child = bodyParts[i].children[j]
-            if child.texture and child.texture.url then
-                local img = mesh.getImage(child.texture.url)
-                me.url = child.texture.url
-                me.texturePoints = child.points
-            end
-            if child.type == 'meta' then
-                --print(inspect(child.points))
-                me.points = child.points
-            end
-        end
-        table.insert(result, me)
-    end
-
-    return result
-end
-
----comment
----@param image love.Image
----@return love.Mesh
 function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     -- this assumes an strip that is oriented vertically
     local w, h = image:getDimensions()
@@ -127,7 +52,7 @@ function createTexturedTriangleStrip(image, optionalWidthMultiplier)
     return mesh
 end
 
-function texturedCurve(curve, image, mesh, dir, scaleW)
+local function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 / 2.5 end
     local dl = curve:getDerivative()
@@ -179,7 +104,7 @@ function drawSpriet(x, y, index, r, sy)
     love.graphics.draw(img, x, y, r, 1, sy, w, h)
 end
 
-function drawPlantOver(data, i)
+local function drawPlantOver(data, i)
     local imgs = plantImages
     local index = (i % #imgs) + 1
     --  print(index)
@@ -193,8 +118,7 @@ function drawPlantOver(data, i)
     end
 end
 
--- torso/head
-function renderMetaObject(img, name, box2dGuy, creation)
+local function renderMetaObject(img, name, box2dGuy, creation)
     local img    = img
     local w, h   = img:getDimensions()
 
@@ -219,7 +143,7 @@ end
 
 -- note : DONT USE THE sx/sy multiplier to support all types of sizes,
 -- just use it for flipping with -1+1 and optionally addsome kind of divider if , for example, all ear images are drawn x2 too big
-function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplier, box2dGuy, creation)
+local function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplier, box2dGuy, creation)
     local img = img
     local w, h = img:getDimensions()
     local x, y = box2dGuy[name]:getWorldPoint(0, 0)
@@ -234,7 +158,7 @@ function renderAtachedObject(img, name, nameP, extraR, sxMultiplier, syMultiplie
     love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * dpi / shrink, oy * dpi / shrink)
 end
 
-function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
+local function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
     local img = img
     local w, h = img:getDimensions()
     local wscale = creation[name].w / h
@@ -247,7 +171,7 @@ function renderNonAttachedObject(img, name, r, x, y, sxMultiplier, syMultiplier,
     love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, ox * dpi / shrink, oy * dpi / shrink)
 end
 
-function renderNonAttachedObject2(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
+local function renderNonAttachedObject2(img, name, r, x, y, sxMultiplier, syMultiplier, box2dGuy, creation)
     local img = img
     local w, h = img:getDimensions()
     local wscale = creation[name].h / h
@@ -260,14 +184,14 @@ function renderNonAttachedObject2(img, name, r, x, y, sxMultiplier, syMultiplier
     love.graphics.draw(img, x, y, r, wscale * sxMultiplier, hscale * syMultiplier, w / 2, h / 2)
 end
 
-function growLine(p1, p2, length)
+local function growLine(p1, p2, length)
     local angle = math.atan2(p1[2] - p2[2], p1[1] - p2[1])
     local new_x = p1[1] + length * math.cos(angle)
     local new_y = p1[2] + length * math.sin(angle)
     return new_x, new_y
 end
 
-function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, dir, wmultiplier)
+local function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, dir, wmultiplier)
     local ax, ay = box2dGuy[p1]:getPosition()
     local bx, by = box2dGuy[p2]:getPosition()
     local cx, cy = box2dGuy[p3]:getPosition()
@@ -284,7 +208,7 @@ function renderCurvedObjectGrow(p1, p2, p3, growLength, canvas, mesh, box2dGuy, 
     end
 end
 
-function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
+local function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
     local ax, ay = box2dGuy[p1]:getPosition()
     local bx, by = box2dGuy[p2]:getPosition()
     local cx, cy = box2dGuy[p3]:getPosition()
@@ -297,7 +221,7 @@ function renderCurvedObject(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier
     end
 end
 
-function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
+local function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, dir, wmultiplier)
     local curve = love.math.newBezierCurve({ p1[1], p1[2], p2[1], p2[2], p2[1], p2[2], p3[1], p3[2] })
     if (dir ~= nil or wmultiplier ~= nil) then
         texturedCurve(curve, canvas, mesh, dir, wmultiplier)
@@ -308,7 +232,7 @@ function renderCurvedObjectFromSimplePoints(p1, p2, p3, canvas, mesh, box2dGuy, 
     return curve
 end
 
-function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, creation)
+local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, creation)
     -- first get the polygon from the meta object that describes the shape in 8 points
     -- optionally grow that polygon outwards from the middle
     local f = creation.torso.metaPoints
@@ -345,7 +269,7 @@ function drawNumbersOver(box2dGuy)
     end
 end
 
-function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+local function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
     if true then
@@ -385,7 +309,7 @@ function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
     end
 end
 
-function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipliers, positioners, r)
+local function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipliers, positioners, r)
     local hMult = multipliers.mouth.hMultiplier
     local wMult = multipliers.mouth.wMultiplier
     local f = faceData.metaPoints

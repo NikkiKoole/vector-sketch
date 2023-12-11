@@ -1,10 +1,6 @@
-local parse       = require 'lib.parse-file'
-local node        = require 'lib.node'
-local mesh        = require 'lib.mesh'
-
---texscales   = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-local leglengths  = { 400, 500, 600, 700, 800, 900, 1000, 1200, 1400 }
-local necklengths = { 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 }
+local parse = require 'lib.parse-file'
+local node  = require 'lib.node'
+local mesh  = require 'lib.mesh'
 
 local function TableConcat(t1, t2)
     for i = 1, #t2 do
@@ -13,36 +9,7 @@ local function TableConcat(t1, t2)
     return t1
 end
 
-local function loadGroupFromFile(url, groupName)
-    local imgs = {}
-    local parts = {}
-
-    local whole = parse.parseFile(url)
-    local group = node.findNodeByName(whole, groupName) or {}
-    for i = 1, #group.children do
-        local p = group.children[i]
-        stripPath(p, '/experiments/puppet%-maker/')
-        for j = 1, #p.children do
-            if p.children[j].texture then
-                imgs[i] = p.children[j].texture.url
-                parts[i] = group.children[i]
-            end
-        end
-    end
-    return imgs, parts
-end
-
-
-local function zeroTransform(arr)
-    for i = 1, #arr do
-        if arr[i].transforms then
-            arr[i].transforms.l[1] = 0
-            arr[i].transforms.l[2] = 0
-        end
-    end
-end
-
-function createDefaultTextureValues()
+local function createDefaultTextureValues()
     return {
         shape     = 1,
         bgPal     = math.ceil(love.math.random() * #palettes),
@@ -58,7 +25,7 @@ function createDefaultTextureValues()
     }
 end
 
-function createDefaultPatchValues()
+local function createDefaultPatchValues()
     return {
         sx = 1,
         sy = 1,
@@ -70,86 +37,31 @@ end
 
 function generateValues()
     local values = {
-        handsPinned             = false,
-        feetPinned              = true,
-        faceScale               = 1,
-        faceScaleX              = 1,
-        faceScaleY              = 1,
-        mouthScaleX             = 1,
-        mouthScaleY             = 1,
-        potatoHead              = false,
-        chestHair               = createDefaultTextureValues(),
-        skinPatchSnout          = createDefaultTextureValues(),
-        skinPatchSnoutPV        = createDefaultPatchValues(),
-        skinPatchEye1           = createDefaultTextureValues(),
-        skinPatchEye1PV         = createDefaultPatchValues(),
-        skinPatchEye2           = createDefaultTextureValues(),
-        skinPatchEye2PV         = createDefaultPatchValues(),
-        upperlip                = createDefaultTextureValues(),
-        upperlipWidthMultiplier = 1,
-        lowerlip                = createDefaultTextureValues(),
-        lowerlipWidthMultiplier = 1,
-        mouthXAxis              = 0,
-        mouthYAxis              = 2,
-        eyes                    = createDefaultTextureValues(),
-        eyeWidthMultiplier      = 1,
-        eyeHeightMultiplier     = 1,
-        eyeRotation             = 0,
-        eyeYAxis                = 0,
-        eyeXAxisBetween         = 0,
-        pupils                  = createDefaultTextureValues(),
-        pupilSizeMultiplier     = 1,
-        ears                    = createDefaultTextureValues(),
-        earUnderHead            = true,
-        earWidthMultiplier      = 1,
-        earHeightMultiplier     = 1,
-        earRotation             = 0,
-        earYAxis                = 0, -- -2,-1,0,1,2
-        brows                   = createDefaultTextureValues(),
-        browsWidthMultiplier    = .5,
-        browsWideMultiplier     = 1,
-        browsDefaultBend        = 1,
-        browYAxis               = 1,
-        nose                    = createDefaultTextureValues(),
-        noseXAxis               = 0, --  -2,-1,0,1,2
-        noseYAxis               = 0, --  -3, -2,-1,0,1,2, 3
-        noseWidthMultiplier     = 1,
-        noseHeightMultiplier    = 1,
-        leghair                 = createDefaultTextureValues(),
-        legs                    = createDefaultTextureValues(),
-        legDefaultStance        = .5,
-        legLength               = 5,
-        legWidthMultiplier      = 1,
-        leg1flop                = -1,
-        leg2flop                = 1,
-        legXAxis                = 0,
-        armhair                 = createDefaultTextureValues(),
-        arms                    = createDefaultTextureValues(),
-        armLength               = 2,
-        armWidthMultiplier      = 1,
-        arm1flop                = -1,
-        arm2flop                = 1,
-        hands                   = createDefaultTextureValues(),
-        handLengthMultiplier    = 1,
-        handWidthMultiplier     = 1,
-        overBite                = true,
-        teethHeightMultiplier   = 1,
-        teeth                   = createDefaultTextureValues(),
-        body                    = createDefaultTextureValues(),
-        bodyWidthMultiplier     = 1,
-        bodyHeightMultiplier    = 1,
-        head                    = createDefaultTextureValues(),
-        headWidthMultiplier     = 1,
-        headHeightMultiplier    = 1,
-        hair                    = createDefaultTextureValues(),
-        hairWidthMultiplier     = 1,
-        hairTension             = 0.001,
-        neck                    = createDefaultTextureValues(),
-        neckLength              = 1,
-        neckWidthMultiplier     = 1,
-        feet                    = createDefaultTextureValues(),
-        feetLengthMultiplier    = 1,
-        feetWidthMultiplier     = 1,
+        chestHair        = createDefaultTextureValues(),
+        skinPatchSnout   = createDefaultTextureValues(),
+        skinPatchSnoutPV = createDefaultPatchValues(),
+        skinPatchEye1    = createDefaultTextureValues(),
+        skinPatchEye1PV  = createDefaultPatchValues(),
+        skinPatchEye2    = createDefaultTextureValues(),
+        skinPatchEye2PV  = createDefaultPatchValues(),
+        upperlip         = createDefaultTextureValues(),
+        lowerlip         = createDefaultTextureValues(),
+        eyes             = createDefaultTextureValues(),
+        pupils           = createDefaultTextureValues(),
+        ears             = createDefaultTextureValues(),
+        brows            = createDefaultTextureValues(),
+        nose             = createDefaultTextureValues(),
+        leghair          = createDefaultTextureValues(),
+        legs             = createDefaultTextureValues(),
+        armhair          = createDefaultTextureValues(),
+        arms             = createDefaultTextureValues(),
+        hands            = createDefaultTextureValues(),
+        teeth            = createDefaultTextureValues(),
+        body             = createDefaultTextureValues(),
+        head             = createDefaultTextureValues(),
+        hair             = createDefaultTextureValues(),
+        neck             = createDefaultTextureValues(),
+        feet             = createDefaultTextureValues(),
     }
     values.skinPatchSnoutPV.ty = 5
     values.skinPatchSnoutPV.sx = 2
@@ -182,7 +94,6 @@ function generateParts()
         'assets/parts/patch1.png', 'assets/parts/patch2.png', 'assets/parts/patch3.png', 'assets/parts/patch4.png',
     }
 
-
     local hairUrls = {
         'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
         'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
@@ -191,12 +102,8 @@ function generateParts()
         'assets/parts/haarnew4.png',
     }
 
-
-
-
     table.insert(patchUrls, 'assets/parts/null.png')
     table.insert(hairUrls, 'assets/parts/null.png') -- i dont have a part array for these things, the url should suffice
-
 
     local chestHairUrls = {
         'assets/parts/borsthaar1.png', 'assets/parts/borsthaar2.png', 'assets/parts/borsthaar3.png',
@@ -222,7 +129,6 @@ function generateParts()
     local teethImgUrls, teethParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'teeths')
     local upperlipImgUrls, upperlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'upperlips')
     local lowerlipImgUrls, lowerlipParts = loadGroupFromFile('assets/faceparts.polygons.txt', 'lowerlips')
-
 
     -- ok haha this cause a bug, because the randomizer doenst know how to handle it properly
     --
@@ -269,32 +175,4 @@ function generateParts()
     urls = TableConcat(urls, eyeImgUrls)
     urls = TableConcat(urls, pupilImgUrls)
     return parts, urls
-end
-
-function loadVectorSketch(path, groupName)
-    local _, bodyParts = loadGroupFromFile(path, groupName)
-    zeroTransform(bodyParts)
-
-    local result = {}
-    for i = 1, #bodyParts do
-        local me = {
-            pivotX = bodyParts[i].transforms.l[6] - bodyParts[i].transforms.l[1],
-            pivotY = bodyParts[i].transforms.l[7] - bodyParts[i].transforms.l[2]
-        }
-        for j = 1, #bodyParts[i].children do
-            local child = bodyParts[i].children[j]
-            if child.texture and child.texture.url then
-                local img = mesh.getImage(child.texture.url)
-                me.url = child.texture.url
-                me.texturePoints = child.points
-            end
-            if child.type == 'meta' then
-                --print(inspect(child.points))
-                me.points = child.points
-            end
-        end
-        table.insert(result, me)
-    end
-
-    return result
 end
