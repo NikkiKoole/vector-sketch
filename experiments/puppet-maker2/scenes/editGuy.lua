@@ -439,7 +439,7 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    setupBox2dScene(5, cam)
+    setupBox2dScene(5)
     updateAllParts()
     Timer.tween(.5, scroller, { position = 4 })
 end
@@ -833,11 +833,11 @@ function scene.draw()
     end
     prof.pop('editGuy.draw ui')
     cam:push()
-    phys.drawWorld(world)
+    --  phys.drawWorld(world)
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
-        --    drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
-        --    .positioners)
+        drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
+        .positioners)
     end
     for i = 1, #box2dGuys do
         --     drawNumbersOver(box2dGuys[i])

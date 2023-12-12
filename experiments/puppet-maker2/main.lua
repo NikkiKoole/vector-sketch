@@ -419,9 +419,9 @@ function love.quit()
     -- this takes annoyingly long
     time = love.timer.getTime()
     prof.write("prof.mpack")
-    local openURL = "file://" .. love.filesystem.getSaveDirectory()
-    love.system.openURL(openURL)
-    print('writing [profe.mpack] took', love.timer.getTime() - time, 'seconds')
+    --local openURL = "file://" .. love.filesystem.getSaveDirectory()
+    --love.system.openURL(openURL)
+    --print('writing [profe.mpack] took', love.timer.getTime() - time, 'seconds')
 end
 
 function makeMarketingScreenshots(name)

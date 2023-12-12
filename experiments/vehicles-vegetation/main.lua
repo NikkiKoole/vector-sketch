@@ -462,7 +462,7 @@ end
 function makeAndAddConnector(parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size, size2, x, y)
+    local bandshape2 = makeRectPoly2(size * 2, size2 * 2, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)

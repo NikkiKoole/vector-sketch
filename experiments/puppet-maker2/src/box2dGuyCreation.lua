@@ -518,31 +518,60 @@ local function getRecreateConnectorData(allAttachedFixtures)
     return result
 end
 
+function makeAndReplaceConnector(recreate, parent, x, y, data, size)
+    size = size or 10
+    local bandshape2 = makeRectPoly2(size, size, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 1)
+
+    fixture:setUserData(makeUserData('connector', data))
+    fixture:setSensor(true)
+
+    -- we are remaking a connector, keep all its connections working here!
+    for i = 1, #connectors do
+        if connectors[i].at and connectors[i].at == recreate.oldFixture then
+            connectors[i].at = fixture
+            if connectors[i].to then
+                local j = getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+                connectors[i].joint = j
+            end
+        end
+
+        if connectors[i].to and connectors[i].to == recreate.oldFixture then
+            connectors[i].to = fixture
+
+            local j = getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+            connectors[i].joint = j
+        end
+    end
+end
 
 -- we want to add a connector
 local function useRecreateConnectorData(recreateConnectorData, body)
+    local creation = getCreation()
+    -- TODO THIS IS BROKEN/ !!!!!! lhand rhand dont exist
     local data = recreateConnectorData.ud.data
     local type = data.type
     assert(type)
+    print(type)
     if type == 'foot' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data, creation.foot.w * 2)
-    elseif type == 'lhand' then
+    elseif type == 'hand' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w * 2)
-    elseif type == 'rhand' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rhand.h / 2, data, creation.rhand.w * 2)
+        -- elseif type == 'rhand' then
+        --     makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rhand.h / 2, data, creation.rhand.w * 2)
     end
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
     local creation = getCreation()
-    local data = getParentAndChildrenFromPartName(partName, creation)
+    local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
+    print(recreateConnectorData)
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()
 
     if parentName then
-        --  print(parentName, partName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
@@ -750,12 +779,12 @@ end
 function makeAndAddConnector(parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size * 10, size2 * 10, x, y)
+    local bandshape2 = makeRectPoly2(size * 2, size2 * 2, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    print('jo hello!', #connectors)
+    --print('jo hello!', #connectors)
 end
 
 function makeGuy(x, y, groupId)
@@ -805,16 +834,30 @@ function makeGuy(x, y, groupId)
     local rlarm = makePart('rlarm', ruarm)
     local rhand = makePart('rhand', rlarm)
 
-    makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
-        creation.rhand.w + 10,
-        creation.rhand.h + 10)
+    local handConnector = false
+    if handConnector then
+        makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+            creation.rhand.w + 10,
+            creation.rhand.h + 10)
+    end
 
     local luarm = makePart('luarm', torso)
     local llarm = makePart('llarm', luarm)
     local lhand = makePart('lhand', llarm)
-    makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
-        creation.lhand.w + 10,
-        creation.lhand.h + 10)
+    if handConnector then
+        makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+            creation.lhand.w + 10,
+            creation.lhand.h + 10)
+    end
+
+    local fixtures = lhand:getFixtures()
+    -- print('lhand has', #fixtures, 'fxitrues')
+    for _, fixture in ipairs(fixtures) do
+        if fixture:getUserData() then
+            -- print(inspect(fixture:getUserData()))
+        end
+    end
+
 
     local data = {
         torso = torso,

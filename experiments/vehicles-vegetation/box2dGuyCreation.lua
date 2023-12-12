@@ -806,6 +806,7 @@ function makeGuy(x, y, groupId)
     makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' }, creation.lhand.w + 10,
         creation.lhand.h + 10)
 
+
     local data = {
         torso = torso,
         neck = neck,

@@ -74,7 +74,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
     pointerJoint.id = id
 
     local ud = fixture:getUserData()
-    local force = ud and ud.bodyType == 'torso' and 5000000 or 500000
+    local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
 
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
@@ -505,7 +505,7 @@ lib.makeAndAddConnector = function(parent, x, y, data, size, size2)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    print('jo hello!', #connectors)
+    print('jo hello from lib!', #connectors)
 end
 
 
@@ -535,7 +535,11 @@ lib.drawWorld = function(world)
     love.graphics.setLineWidth(10)
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
+
         for _, fixture in ipairs(fixtures) do
+            if fixture:getUserData() then
+                --     print(inspect(fixture:getUserData()))
+            end
             if fixture:getShape():type() == 'PolygonShape' then
                 local color = getBodyColor(body)
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
