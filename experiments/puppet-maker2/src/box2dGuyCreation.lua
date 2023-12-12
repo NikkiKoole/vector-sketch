@@ -747,6 +747,17 @@ function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId, hasNeck)
     end
 end
 
+function makeAndAddConnector(parent, x, y, data, size, size2)
+    size = size or 10
+    size2 = size2 or size
+    local bandshape2 = makeRectPoly2(size * 10, size2 * 10, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 0)
+    fixture:setUserData(makeUserData('connector', data))
+    fixture:setSensor(true)
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    print('jo hello!', #connectors)
+end
+
 function makeGuy(x, y, groupId)
     local creation = getCreation()
     local function makePart(name, parent)
@@ -794,14 +805,14 @@ function makeGuy(x, y, groupId)
     local rlarm = makePart('rlarm', ruarm)
     local rhand = makePart('rhand', rlarm)
 
-    phys.makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+    makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
         creation.rhand.w + 10,
         creation.rhand.h + 10)
 
     local luarm = makePart('luarm', torso)
     local llarm = makePart('llarm', luarm)
     local lhand = makePart('lhand', llarm)
-    phys.makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+    makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
         creation.lhand.w + 10,
         creation.lhand.h + 10)
 

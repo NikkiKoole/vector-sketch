@@ -224,6 +224,37 @@ local function maybeConnectThisConnector(f, mj)
     end
 end
 
+if false then
+    function handleConnectors(cam)
+        if false then
+            for j = 1, #connectors do
+                maybeConnectThisConnector(connectors[j].at)
+            end
+        end
+
+        for i = 1, #pointerJoints do
+            local mj = pointerJoints[i]
+            if (mj.joint) then
+                local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
+                local wx, wy = cam:getWorldCoordinates(mx, my)
+                mj.joint:setTarget(wx, wy)
+
+                local fixtures = mj.jointBody:getFixtures();
+                for k = 1, #fixtures do
+                    local f = fixtures[k]
+                    if f:getUserData() and f:getUserData().bodyType then
+                        print(f:getUserData().bodyType)
+                        if f:getUserData().bodyType == 'connector' then
+                            print('well helo1')
+                            maybeConnectThisConnector(f)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 function handleUpdate(dt, cam)
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
@@ -469,11 +500,12 @@ end
 lib.makeAndAddConnector = function(parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size, size2, x, y)
+    local bandshape2 = makeRectPoly2(size * 10, size2 * 10, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
+    print('jo hello!', #connectors)
 end
 
 

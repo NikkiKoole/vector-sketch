@@ -651,7 +651,7 @@ function scene.update(dt)
     if grid then
         grid.position = updateTheScrolling(dt, grid.isThrown, grid.position)
     end
-
+    --handleConnectors(cam)
     handleUpdate(dt, cam)
     rotateAllBodies(world:getBodies(), dt)
 end
@@ -836,8 +836,8 @@ function scene.draw()
     phys.drawWorld(world)
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
-        drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
-        .positioners)
+        --    drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
+        --    .positioners)
     end
     for i = 1, #box2dGuys do
         --     drawNumbersOver(box2dGuys[i])
@@ -873,7 +873,6 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
     end
-
 
     if true then
         local size = (h / 8) -- margin around panel
