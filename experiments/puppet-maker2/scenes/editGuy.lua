@@ -23,235 +23,6 @@ local findSample = function(path)
     end
 end
 
-function rotateToHorizontal(body, desiredAngle, divider, pr)
-    local DEGTORAD = 1 / 57.295779513
-    --https://www.iforce2d.net/b2dtut/rotate-to-angle
-    if true then
-        local angle = body:getAngle()
-        local a = angle
-
-
-        local angularVelocity = body:getAngularVelocity()
-        local inertia = body:getInertia()
-        local didSomething = false
-        if false then
-            if false then
-                while a > (2 * math.pi) do
-                    a = a - (2 * math.pi)
-                    body:setAngle(a)
-                    --                    print('getting in first one', a, angle)
-                    didSomething = true
-                end
-                while a < -(2 * math.pi) do
-                    a = a + (2 * math.pi)
-                    body:setAngle(a)
-                    --                    print('getting in second one')
-                    didSomething = true
-                end
-            end
-        end
-        if didSomething then
-            --            print('jo')
-            return
-        end
-        angle = a -- body:getAngle()
-        local nextAngle = angle + angularVelocity / divider
-        local totalRotation = desiredAngle - nextAngle
-
-        while (totalRotation < -180 * DEGTORAD) do
-            totalRotation = totalRotation + 360 * DEGTORAD
-        end
-        while (totalRotation > 180 * DEGTORAD) do
-            totalRotation = totalRotation - 360 * DEGTORAD
-        end
-
-        local desiredAngularVelocity = (totalRotation * divider)
-        --local impulse = body:getInertia() * desiredAngularVelocity
-        -- body:applyAngularImpulse(impulse)
-
-        local torque = inertia * desiredAngularVelocity / (1 / divider)
-        body:applyTorque(torque)
-    end
-end
-
-local function getRidOfBigRotationsInBody(body)
-    --local angle = body:getAngle()
-    --if angle > 0 then
-    --    body:setAngle(angle % (2 * math.pi))
-    --else
-    --    body:setAngle(angle % ( -2 * math.pi))
-    --end
-    local a = body:getAngle()
-    if false then
-        while a > (2 * math.pi) do
-            a = a - (2 * math.pi)
-            body:setAngle(a)
-        end
-        while a < -(2 * math.pi) do
-            a = a + (2 * math.pi)
-            body:setAngle(a)
-        end
-    end
-end
-
-local function rotateAllBodies(bodies, dt)
-    --print('hi hello!')
-    local creation = editingGuy.creation
-    local upsideDown = false
-    lastDt = dt
-    for _, body in ipairs(bodies) do
-        local fixtures = body:getFixtures()
-
-
-        local isBeingPointerJointed = false
-        for j = 1, #pointerJoints do
-            local mj = pointerJoints[j]
-            if mj.jointBody == body then
-                isBeingPointerJointed = true
-            end
-        end
-        for _, fixture in ipairs(fixtures) do
-            if isBeingPointerJointed then
-                --     getRidOfBigRotationsInBody(body)
-            end
-            local userData = fixture:getUserData()
-            if (userData) then
-                -- print(userData.bodyType)
-                if userData.bodyType == 'keep-rotation' then
-                    --  print(inspect(userData))
-                    rotateToHorizontal(body, userData.data.rotation, 50)
-                end
-            end
-
-
-            if (true) and not isBeingPointerJointed then
-                --local userData = fixture:getUserData()
-
-
-
-                if userData then
-                    -- getRidOfBigRotationsInBody(body)
-                    -- print(userData.bodyType)
-                    if userData.bodyType == 'balloon' then
-                        --getRidOfBigRotationsInBody(body)
-                        --local desired = upsideDown and -math.pi or 0
-                        --rotateToHorizontal(body, desired, 50)
-                        local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
-
-                        body:applyForce(0, up)
-                    end
-                    --print(userData.bodyType)
-                    --if not upsideDown then
-                    --    if userData.bodyType == 'lfoot' or userData.bodyType == 'rfoot' then
-                    --        getRidOfBigRotationsInBody(body)
-                    --    end
-                    --end
-
-
-                    if userData.bodyType == 'lear' then
-                        -- getRidOfBigRotationsInBody(body)
-                        -- rotateToHorizontal(body, math.pi / 2, 25)
-                    end
-                    if userData.bodyType == 'rear' then
-                        -- getRidOfBigRotationsInBody(body)
-                        -- rotateToHorizontal(body, -math.pi / 2, 25)
-                    end
-
-
-                    if userData.bodyType == 'hand' then
-                        -- getRidOfBigRotationsInBody(body)
-                    end
-                    if userData.bodyType == 'hand' then
-                        --   getRidOfBigRotationsInBody(body)
-                    end
-                    if userData.bodyType == 'torso' then
-                        getRidOfBigRotationsInBody(body)
-                        local desired = upsideDown and -math.pi or 0
-                        rotateToHorizontal(body, desired, 25)
-                    end
-
-                    if not upsideDown then
-                        if userData.bodyType == 'neck1' then
-                            getRidOfBigRotationsInBody(body)
-                            --  -- rotateToHorizontal(body, -math.pi, 40)
-                            --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15)
-                        end
-                        if userData.bodyType == 'neck' then
-                            getRidOfBigRotationsInBody(body)
-                            -- rotateToHorizontal(body, -math.pi, 40)
-                            --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15)
-                        end
-
-                        if userData.bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
-                            --rotateToHorizontal(body, -math.pi, 15)
-
-                            --  print(body:getAngle())
-                            rotateToHorizontal(body, 0, 15)
-                        end
-                    end
-
-                    if not upsideDown then
-                        if userData.bodyType == 'luleg' then
-                            local a = creation.luleg.stanceAngle
-                            --  print(a)
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
-                        end
-                        if userData.bodyType == 'ruleg' then
-                            local a = creation.ruleg.stanceAngle
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
-                        end
-                        if userData.bodyType == 'llleg' then
-                            local a = creation.llleg.stanceAngle
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
-                        end
-                        if userData.bodyType == 'rlleg' then
-                            local a = creation.rlleg.stanceAngle
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
-                        end
-                    end
-                    if upsideDown then
-                        if userData.bodyType == 'luarm' then
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
-                        end
-                        if userData.bodyType == 'llarm' then
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
-                        end
-                        if userData.bodyType == 'ruarm' then
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
-                        end
-                        if userData.bodyType == 'rlarm' then
-                            -- print('doing stuff!')
-                            --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
-                        end
-                        -- if userData.bodyType == 'legpart' then
-                        --getRidOfBigRotationsInBody(body)
-                        --rotateToHorizontal(body, math.pi, 10)
-                        -- end
-                    end
-
-                    if false then
-                        if userData.bodyType == 'head' then
-                            getRidOfBigRotationsInBody(body)
-
-                            rotateToHorizontal(body, math.pi, 15)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
 
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
@@ -623,115 +394,8 @@ function updatePart(name)
     end
 end
 
-function rebuildPhysicsBorderForScreen()
-    for i = 1, #borders do
-        borders[i]:destroy()
-    end
-    borders = {}
-    local w, h = love.graphics.getDimensions()
-    -- camera.setCameraViewport(cam, w, h)
-    -- camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
-    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-    local cambrx, cambry = cam:getWorldCoordinates(w, h)
-    local boxWorldWidth = cambrx - camtlx
-    local boxWorldHeight = cambry - camtly
-
-    local wallThick = 4000
-    local sideHigh = 20000
-    local half = wallThick / 2
-
-    local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
-    local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
-    local topfixture = love.physics.newFixture(top, topshape, 1)
-
-    local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
-    local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
-    local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
-
-    local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
-    local leftshape = love.physics.newRectangleShape(wallThick, 30000)
-    local leftfixture = love.physics.newFixture(left, leftshape, 1)
-
-    local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
-    local rightshape = love.physics.newRectangleShape(wallThick, 30000)
-    local rightfixture = love.physics.newFixture(right, rightshape, 1)
-
-    borders = { topfixture, bottomfixture, leftfixture, rightfixture }
-end
-
-function setupBox2dScene()
-    -- clear
-    -- add new
-    local w, h = love.graphics.getDimensions()
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
-
-    box2dGuys = {}
-    rebuildPhysicsBorderForScreen()
-    if false then
-        local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-        local cambrx, cambry = cam:getWorldCoordinates(w, h)
-        local boxWorldWidth = cambrx - camtlx
-        local boxWorldHeight = cambry - camtly
-        -- print(cambrx - camtlx, cambry - camtly)
-
-
-
-
-        local wallThick = 4000
-        local sideHigh = 20000
-        local half = wallThick / 2
-
-        local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
-        local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
-        local topfixture = love.physics.newFixture(top, topshape, 1)
-
-        local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
-        local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
-        local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
-
-        local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
-        local leftshape = love.physics.newRectangleShape(wallThick, 30000)
-        local leftfixture = love.physics.newFixture(left, leftshape, 1)
-
-        local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
-        local rightshape = love.physics.newRectangleShape(wallThick, 30000)
-        local rightfixture = love.physics.newFixture(right, rightshape, 1)
-    end
-
-    if false then
-        for i = 1, 100 do
-            local body = love.physics.newBody(world, i * 10, -2000, "dynamic")
-            local shape = love.physics.newPolygonShape(getRandomConvexPoly(130, 8)) --love.physics.newRectangleShape(width, height / 4)
-            local fixture = love.physics.newFixture(body, shape, 2)
-        end
-    end
-    if false then
-        local data = loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
-        local bodyRndIndex = math.ceil(editingGuy.values.body.shape)
-
-        local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
-                data[bodyRndIndex]
-                .points)
-        changeMetaPoints('torso', flippedFloppedBodyPoints)
-        changeMetaTexture('torso', data[bodyRndIndex])
-
-        --  local torsoCanvas = createRandomColoredBlackOutlineTexture(creation.torso.metaURL)
-        creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
-        creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
-    end
-
-    for i = 1, 5 do
-        table.insert(box2dGuys, makeGuy( -1000 + i * 500, -1300, i))
-    end
-
-    local k = 'b'
-    if (k == 'b') then
-
-    end
-end
-
 function scene.load()
+    phys.resetLists()
     bgColor = creamColor
     loadUIImages()
     attachCallbacks()
@@ -775,7 +439,7 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    setupBox2dScene()
+    setupBox2dScene(5, cam)
     updateAllParts()
     Timer.tween(.5, scroller, { position = 4 })
 end
@@ -928,7 +592,10 @@ function updateAllParts()
 end
 
 function scene.unload()
-
+    local b = world:getBodies()
+    for i = #b, 1, -1 do
+        b[i]:destroy()
+    end
 end
 
 local function updateTheScrolling(dt, thrown, pos)
@@ -1015,11 +682,11 @@ local function pointerPressed(x, y, id)
     if (hit.pointInRect(x, y, w - size, 0, size, size)) then
         print('jo transition baby!')
         --local sx, sy = getPointToCenterTransitionOn()
-        --SM.unload('editGuy')
+        SM.unload('editGuy')
         --Timer.clear()
 
         -- doCircleInTransition(sx, sy, function() if scene then SM.load('fiveGuys') end end)
-
+        SM.load('outside')
         --transitionHead(true, 'fiveGuys')
     end
 
@@ -1131,10 +798,6 @@ function love.wheelmoved(dx, dy)
     end
 end
 
---function love.resize()
--- rebuildPhysicsBorderForScreen()
---end
-
 function scene.draw()
     prof.push('editGuy.draw ')
     prof.push('editGuy.draw ui')
@@ -1170,7 +833,7 @@ function scene.draw()
     end
     prof.pop('editGuy.draw ui')
     cam:push()
-    -- phys.drawWorld(world)
+    phys.drawWorld(world)
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy

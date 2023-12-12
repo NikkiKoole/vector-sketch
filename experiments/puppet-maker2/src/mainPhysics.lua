@@ -153,6 +153,15 @@ function handlePointerPressed(x, y, id, cam)
     return #temp > 0
 end
 
+function getJointBetween2Connectors(to, at)
+    local pos1 = getCentroidOfFixture(to:getBody(), to)
+    local pos2 = getCentroidOfFixture(at:getBody(), at)
+    local j = love.physics.newRevoluteJoint(at:getBody(), to:getBody(),
+            pos2[1],
+            pos2[2], pos1[1], pos1[2])
+    return j
+end
+
 local function maybeConnectThisConnector(f, mj)
     local found = false
 
@@ -478,6 +487,10 @@ lib.setupWorld = function()
     connectors = {}
 end
 
+lib.resetLists = function()
+    connectors = {}
+    pointerJoints = {}
+end
 
 lib.drawWorld = function(world)
     -- get the current color values to reapply
