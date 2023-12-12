@@ -15,29 +15,41 @@ if true then
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-local mesh        = require 'lib.mesh'
-local parse       = require 'lib.parse-file'
-local node        = require 'lib.node'
-local text        = require 'lib.text'
-gesture           = require 'lib.gesture'
-SM                = require 'vendor.SceneMgr'
-inspect           = require 'vendor.inspect'
-PROF_CAPTURE      = true
-prof              = require 'vendor.jprof'
-ProFi             = require 'vendor.ProFi'
-focussed          = true
+local mesh   = require 'lib.mesh'
+local parse  = require 'lib.parse-file'
+local node   = require 'lib.node'
+local text   = require 'lib.text'
+gesture      = require 'lib.gesture'
+SM           = require 'vendor.SceneMgr'
+inspect      = require 'vendor.inspect'
+PROF_CAPTURE = true
+prof         = require 'vendor.jprof'
+ProFi        = require 'vendor.ProFi'
+focussed     = true
 
-local phys        = require 'src.mainPhysics'
-local lurker      = require 'vendor.lurker'
-lurker.quiet      = true
+local phys   = require 'src.mainPhysics'
+local lurker = require 'vendor.lurker'
+lurker.quiet = true
 
-lurker.postswap   = function(f)
+
+local DEBUG_PROFILER = false
+-- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
+if DEBUG_PROFILER == false then
+    prof.push = function()
+    end
+    prof.pop  = function()
+    end
+end
+
+lurker.postswap = function(f)
     print("File " .. f .. " was swapped")
     focussed = true
 end
 
+
 local audioHelper = require 'lib.audio-helper'
 audioHelper.startAudioThread()
+
 creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
 
@@ -165,6 +177,20 @@ end
 
 function love.keypressed(key)
     if key == "escape" then love.event.quit() end
+    if key == 'p' then
+        if true then
+            if (PROF_CAPTURE) then
+                if profiling then
+                    ProFi:stop()
+                    ProFi:writeReport('profilingReport.txt')
+                    profiling = false
+                else
+                    ProFi:start()
+                    profiling = true
+                end
+            end
+        end
+    end
 end
 
 function love.load()
@@ -298,19 +324,20 @@ function love.update(dt)
             -- print('this app is unfocessed!')
         end
 
-        local msg = audioHelper.getMessageFromAudioThread()
-        if msg then
-            if (msg.type == 'beat') then
-                --print('beat')
-            end
-            if (msg.type == 'played') then
-                -- print('played', msg.data.path, msg.data.source, msg.data.pitch)
-            end
-            if SM.handleAudioMessage then
-                SM.handleAudioMessage(msg)
+        if true then
+            local msg = audioHelper.getMessageFromAudioThread()
+            if msg then
+                if (msg.type == 'beat') then
+                    --print('beat')
+                end
+                if (msg.type == 'played') then
+                    -- print('played', msg.data.path, msg.data.source, msg.data.pitch)
+                end
+                if SM.handleAudioMessage then
+                    SM.handleAudioMessage(msg)
+                end
             end
         end
-
         if focussed and not grabbingScreenshots.doing then
             --print('hello!')
             gesture.update(dt)
@@ -326,6 +353,11 @@ function love.update(dt)
         prof.pop('world update')
         --collectgarbage()
 
+
+
+        -- prof.push('gc')
+        -- manual_gc(1, 1)
+        --prof.pop('gc')
         prof.pop('frame')
     end
     manual_gc(0.002, 2)
@@ -364,7 +396,6 @@ function love.draw()
         if grabbingScreenshots.doing then
             grabbingScreenshots.work()
         end
-
         prof.push('SM.draw')
         SM.draw()
         prof.pop('SM.draw')
@@ -372,13 +403,16 @@ function love.draw()
         if grabbingScreenshots.doing then
             grabbingScreenshots.advance()
         end
+        prof.push('gc draw')
+        prof.pop('gc draw')
         prof.pop('frame')
-        local stats = love.graphics.getStats()
-        love.graphics.print(world:getBodyCount() .. '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS(), 180,
-            10)
-        love.graphics.print(inspect(love.graphics.getStats()), 10, 10)
-        --love.graphics.print('#draws: ' .. stats.drawcalls, 10, 140)
     end
+    love.graphics.setColor(1, 1, 1, 1)
+    --local stats = love.graphics.getStats()
+    love.graphics.print(
+        world:getBodyCount() ..
+        '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
+        10)
 end
 
 function love.quit()

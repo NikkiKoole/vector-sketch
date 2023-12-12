@@ -2012,7 +2012,7 @@ function love.draw()
         drawWorld(world)
 
         for i = 1, #box2dGuys do
-                drawSkinOver(box2dGuys[i], creation, cam)
+            drawSkinOver(box2dGuys[i], creation, cam)
         end
 
         for i = 1, #box2dGuys do
@@ -2045,6 +2045,11 @@ function love.draw()
         love.graphics.setColor(.4, .4, .4, 0.9)
         love.graphics.print(love.timer.getFPS(), 0, 0)
         drawTempSiders()
+
+        love.graphics.print(
+            world:getBodyCount() ..
+            '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
+            10)
     end
 
     cam:push()

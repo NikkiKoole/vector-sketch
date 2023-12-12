@@ -37,7 +37,6 @@
 		situation and crash your game. test extensively before you
 		ship a game with this set true.
 ]]
-
 return function(time_budget, memory_ceiling, disable_otherwise)
 	time_budget = time_budget or 1e-3
 	memory_ceiling = memory_ceiling or 64
@@ -49,9 +48,11 @@ return function(time_budget, memory_ceiling, disable_otherwise)
 		collectgarbage("step", 1)
 		steps = steps + 1
 	end
+	--print(steps)
 	--safety net
 	if collectgarbage("count") / 1024 > memory_ceiling then
 		collectgarbage("collect")
+		print('jup')
 	end
 	--don't collect gc outside this margin
 	if disable_otherwise then

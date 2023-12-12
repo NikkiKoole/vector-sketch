@@ -623,6 +623,42 @@ function updatePart(name)
     end
 end
 
+function rebuildPhysicsBorderForScreen()
+    for i = 1, #borders do
+        borders[i]:destroy()
+    end
+    borders = {}
+    local w, h = love.graphics.getDimensions()
+    -- camera.setCameraViewport(cam, w, h)
+    -- camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local boxWorldHeight = cambry - camtly
+
+    local wallThick = 4000
+    local sideHigh = 20000
+    local half = wallThick / 2
+
+    local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
+    local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
+    local topfixture = love.physics.newFixture(top, topshape, 1)
+
+    local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
+    local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
+    local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
+
+    local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
+    local leftshape = love.physics.newRectangleShape(wallThick, 30000)
+    local leftfixture = love.physics.newFixture(left, leftshape, 1)
+
+    local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
+    local rightshape = love.physics.newRectangleShape(wallThick, 30000)
+    local rightfixture = love.physics.newFixture(right, rightshape, 1)
+
+    borders = { topfixture, bottomfixture, leftfixture, rightfixture }
+end
+
 function setupBox2dScene()
     -- clear
     -- add new
@@ -631,22 +667,38 @@ function setupBox2dScene()
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
     box2dGuys = {}
+    rebuildPhysicsBorderForScreen()
+    if false then
+        local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+        local cambrx, cambry = cam:getWorldCoordinates(w, h)
+        local boxWorldWidth = cambrx - camtlx
+        local boxWorldHeight = cambry - camtly
+        -- print(cambrx - camtlx, cambry - camtly)
 
-    local top = love.physics.newBody(world, w / 2, 2500 - 30000, "static")
-    local topshape = love.physics.newRectangleShape(4000, 4000)
-    local topfixture = love.physics.newFixture(top, topshape, 1)
 
-    local bottom = love.physics.newBody(world, w / 2, 2500, "static")
-    local bottomshape = love.physics.newRectangleShape(4000, 4000)
-    local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
 
-    local left = love.physics.newBody(world, -3000 + w / 2, 2500 - 15000, "static")
-    local leftshape = love.physics.newRectangleShape(2000, 30000)
-    local leftfixture = love.physics.newFixture(left, leftshape, 1)
 
-    local right = love.physics.newBody(world, 3000 + w / 2, 2500 - 15000, "static")
-    local rightshape = love.physics.newRectangleShape(2000, 30000)
-    local rightfixture = love.physics.newFixture(right, rightshape, 1)
+        local wallThick = 4000
+        local sideHigh = 20000
+        local half = wallThick / 2
+
+        local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
+        local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
+        local topfixture = love.physics.newFixture(top, topshape, 1)
+
+        local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
+        local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
+        local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
+
+        local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
+        local leftshape = love.physics.newRectangleShape(wallThick, 30000)
+        local leftfixture = love.physics.newFixture(left, leftshape, 1)
+
+        local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
+        local rightshape = love.physics.newRectangleShape(wallThick, 30000)
+        local rightfixture = love.physics.newFixture(right, rightshape, 1)
+    end
+
     if false then
         for i = 1, 100 do
             local body = love.physics.newBody(world, i * 10, -2000, "dynamic")
@@ -715,7 +767,7 @@ function scene.load()
         values = generateValues(),
         positioners = getPositioners()
     }
-
+    borders = {}
     parts = generateParts()
     categories = {}
     setCategories()
@@ -958,6 +1010,20 @@ local function pointerPressed(x, y, id)
     end
 
     local size = (h / 8) -- margin around panel
+
+
+    if (hit.pointInRect(x, y, w - size, 0, size, size)) then
+        print('jo transition baby!')
+        --local sx, sy = getPointToCenterTransitionOn()
+        --SM.unload('editGuy')
+        --Timer.clear()
+
+        -- doCircleInTransition(sx, sy, function() if scene then SM.load('fiveGuys') end end)
+
+        --transitionHead(true, 'fiveGuys')
+    end
+
+
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
         print('RANDOMIZE!')
         randomizeGuy()
@@ -1060,9 +1126,14 @@ function love.wheelmoved(dx, dy)
         local newScale = cam.scale * (1 + dy / 10)
         if (newScale > 0.01 and newScale < 50) then
             cam:scaleToPoint(1 + dy / 10)
+            rebuildPhysicsBorderForScreen()
         end
     end
 end
+
+--function love.resize()
+-- rebuildPhysicsBorderForScreen()
+--end
 
 function scene.draw()
     prof.push('editGuy.draw ')
@@ -1092,14 +1163,14 @@ function scene.draw()
         end
 
         love.graphics.setColor(1, 1, 1)
+
+
+        scrollList(true)
+        configPanel()
     end
-
-    scrollList(true)
-    configPanel()
-
     prof.pop('editGuy.draw ui')
     cam:push()
-    --  phys.drawWorld(world)
+    -- phys.drawWorld(world)
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
@@ -1119,6 +1190,27 @@ function scene.draw()
         mainVolume = a.value
         audioHelper.sendMessageToAudioThread({ type = "volume", data = mainVolume });
     end
+
+
+
+    if true then
+        local size = (h / 8) -- margin around panel
+        local x = w - size
+        local y = 0
+
+        love.graphics.setColor(0, 0, 0, 0.5)
+        local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
+
+        --love.graphics.rectangle('fill', w - size, 0, size, size)
+        --love.graphics.setColor(1, 0, 1)
+        local sx, sy = createFittingScale(ui2.bigbuttons.fiveguys, size, size)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
+    end
+
 
     if true then
         local size = (h / 8) -- margin around panel
