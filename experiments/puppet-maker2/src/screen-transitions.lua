@@ -37,28 +37,32 @@ local function drawRectangleFade(backgroundAlpha)
     love.graphics.rectangle('fill', 0, 0, w, h)
 end
 
+local _transition
 
-function doCircleInTransition(x, y, onAfter)
+function setTransition(t)
+    _transition = t
+end
+
+lib.getTransition = function()
+    return _transition
+end
+
+
+lib.doCircleInTransition = function(x, y, onAfter)
     local w, h = love.graphics.getDimensions()
-    if transition and transition.type == 'circle' then
-        if transition.radius ~= 0 then
-            onAfter();
-            return;
-        end
-    else
-        -- print('another case', inspect(transition))
-    end
-    transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
-
+    local transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
+    setTransition(transition)
     Timer.tween(.3, transition, { alpha = 1 })
-    Timer.tween(.7, transition, { radius = 0 }, 'out-back')
-    Timer.after(1.01, function()
-        --transition = nil;
+    Timer.tween(.5, transition, { radius = 0 }, 'out-back')
+    Timer.after(.81, function()
+        setTransition(nil)
         onAfter();
     end)
 end
 
 lib.renderTransition = function(transition)
+    if transition == nil then transition = _transition end
+    --    print(inspect(transition))
     if transition.type == 'circle' then
         drawCircleMask(transition.alpha, transition.x, transition.y, transition.radius, transition.segments)
     end
@@ -108,13 +112,31 @@ function doRectInTransition(x, y, onAfter)
     end)
 end
 
-function fadeOutTransition(onAfter)
+lib.fadeInTransition = function(duration, onAfter)
+    local dur = duration or .6
     local w, h = love.graphics.getDimensions()
-    transition = { type = 'screenfade', alpha = 0 }
-    Timer.tween(.6, transition, { alpha = 1 })
-    Timer.after(1.2, function()
-        onAfter();
-        transition = nil;
+    local transition = { type = 'screenfade', alpha = 1 }
+    setTransition(transition)
+    Timer.tween(dur, transition, { alpha = 0 })
+    Timer.after(dur + 0.1, function()
+        setTransition(nil)
+        if onAfter then
+            onAfter();
+        end
+    end)
+end
+
+lib.fadeOutTransition = function(duration, onAfter)
+    local dur = duration or .6
+    local w, h = love.graphics.getDimensions()
+    local transition = { type = 'screenfade', alpha = 0 }
+    setTransition(transition)
+    Timer.tween(dur, transition, { alpha = 1 })
+    Timer.after(dur + .1, function()
+        setTransition(nil)
+        if onAfter then
+            onAfter();
+        end
     end)
 end
 

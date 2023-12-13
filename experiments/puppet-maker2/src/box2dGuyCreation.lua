@@ -84,6 +84,7 @@ end
 local function clamp(x, min, max)
     return x < min and min or (x > max and max or x)
 end
+
 local function lerp(a, b, amount)
     return a + (b - a) * clamp(amount, 0, 1)
 end
@@ -518,8 +519,9 @@ local function getRecreateConnectorData(allAttachedFixtures)
     return result
 end
 
-function makeAndReplaceConnector(recreate, parent, x, y, data, size)
+function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
     size = size or 10
+    size2 = size2 or size
     local bandshape2 = makeRectPoly2(size, size, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
 
@@ -545,18 +547,18 @@ function makeAndReplaceConnector(recreate, parent, x, y, data, size)
     end
 end
 
--- we want to add a connector
 local function useRecreateConnectorData(recreateConnectorData, body)
     local creation = getCreation()
-    -- TODO THIS IS BROKEN/ !!!!!! lhand rhand dont exist
     local data = recreateConnectorData.ud.data
     local type = data.type
     assert(type)
-    print(type)
     if type == 'foot' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data, creation.foot.w * 2)
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data,
+            creation.foot.w,
+            creation.foot.h)
     elseif type == 'hand' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w * 2)
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w,
+            creation.lhand.h)
         -- elseif type == 'rhand' then
         --     makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rhand.h / 2, data, creation.rhand.w * 2)
     end
@@ -567,7 +569,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
-    print(recreateConnectorData)
+    --  print(recreateConnectorData)
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()
 
@@ -779,7 +781,7 @@ end
 function makeAndAddConnector(parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size * 2, size2 * 2, x, y)
+    local bandshape2 = makeRectPoly2(size, size2, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
@@ -834,11 +836,11 @@ function makeGuy(x, y, groupId)
     local rlarm = makePart('rlarm', ruarm)
     local rhand = makePart('rhand', rlarm)
 
-    local handConnector = false
+    local handConnector = true
     if handConnector then
         makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
-            creation.rhand.w + 10,
-            creation.rhand.h + 10)
+            creation.rhand.h / 2 + 10,
+            creation.rhand.w / 2 + 10)
     end
 
     local luarm = makePart('luarm', torso)
@@ -846,8 +848,8 @@ function makeGuy(x, y, groupId)
     local lhand = makePart('lhand', llarm)
     if handConnector then
         makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
-            creation.lhand.w + 10,
-            creation.lhand.h + 10)
+            creation.lhand.h + 10,
+            creation.lhand.w + 10)
     end
 
     local fixtures = lhand:getFixtures()
@@ -928,8 +930,6 @@ function rebuildPhysicsBorderForScreen()
 end
 
 function setupBox2dScene(amountOfGuys)
-    -- clear
-    -- add new
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
@@ -940,9 +940,7 @@ function setupBox2dScene(amountOfGuys)
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
     local boxWorldWidth = cambrx - camtlx
-
     local stepSize = boxWorldWidth / (amountOfGuys + 1)
-    -- local boxWorldHeight = cambry - camtly
 
     for i = 1, amountOfGuys do
         table.insert(box2dGuys, makeGuy(camtlx + i * stepSize, -1300, i))

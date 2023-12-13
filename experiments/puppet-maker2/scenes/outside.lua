@@ -5,6 +5,8 @@ local skygradient = gradient.makeSkyGradient(10)
 local hit         = require 'lib.hit'
 local cam         = require('lib.cameraBase').getInstance()
 local phys        = require 'src.mainPhysics'
+local swipes      = require 'src.screen-transitions'
+local Timer       = require 'vendor.timer'
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
@@ -12,20 +14,21 @@ local function pointerPressed(x, y, id)
 
 
     local size = (h / 8) -- margin around panel
-    if (hit.pointInRect(x, y, w - size, 0, size, size)) then
-        print('jo transition baby!')
-        --local sx, sy = getPointToCenterTransitionOn()
-        SM.unload('outside')
-        --Timer.clear()
-
-        -- doCircleInTransition(sx, sy, function() if scene then SM.load('fiveGuys') end end)
-        SM.load('editGuy')
-        --transitionHead(true, 'fiveGuys')
+    if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
+        local sx, sy = 0, 0 --getPointToCenterTransitionOn()
+        Timer.clear()
+        swipes.doCircleInTransition(sx, sy, function()
+            if scene then
+                SM.unload('outside')
+                SM.load('editGuy')
+                swipes.fadeInTransition()
+            end
+        end)
     end
 end
 function love.mousepressed(x, y, button, istouch, presses)
     if not istouch then
-        print('mousepreseed outside')
+        -- print('mousepreseed outside')
         pointerPressed(x, y, 'mouse')
         -- ui.addToPressedPointers(x, y, 'mouse')
     end
@@ -76,6 +79,7 @@ function scene.unload()
 end
 
 function scene.update(dt)
+    Timer.update(dt)
     handleUpdate(dt, cam)
     rotateAllBodies(world:getBodies(), dt)
 end
@@ -127,6 +131,11 @@ function scene.draw()
         love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
+    end
+
+    if swipes.getTransition() then
+        -- print('transition found in outside')
+        swipes.renderTransition()
     end
 end
 

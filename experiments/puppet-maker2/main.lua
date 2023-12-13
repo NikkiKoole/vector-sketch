@@ -298,8 +298,6 @@ function love.load()
             / 255
     end
 
-    -- transition = nil
-
     for i = 1, #base do
         local r, g, b = hex2rgb(base[i])
         table.insert(palettes, { r, g, b })

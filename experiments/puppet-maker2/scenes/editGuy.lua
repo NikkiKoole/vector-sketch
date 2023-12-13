@@ -10,6 +10,8 @@ local cam         = require('lib.cameraBase').getInstance()
 local camera      = require 'lib.camera'
 local mesh        = require 'lib.mesh'
 local phys        = require 'src.mainPhysics'
+
+local swipes      = require 'src.screen-transitions'
 require 'src.editguy-ui'
 require 'src.dna'
 require 'src.box2dGuyCreation'
@@ -425,12 +427,15 @@ function scene.load()
     uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
 
-    editingGuy = {
-        multipliers = getMultipliers(),
-        creation = getCreation(),
-        values = generateValues(),
-        positioners = getPositioners()
-    }
+
+    if not editingGuy then
+        editingGuy = {
+            multipliers = getMultipliers(),
+            creation = getCreation(),
+            values = generateValues(),
+            positioners = getPositioners()
+        }
+    end
     borders = {}
     parts = generateParts()
     categories = {}
@@ -679,15 +684,17 @@ local function pointerPressed(x, y, id)
     local size = (h / 8) -- margin around panel
 
 
-    if (hit.pointInRect(x, y, w - size, 0, size, size)) then
-        print('jo transition baby!')
-        --local sx, sy = getPointToCenterTransitionOn()
-        SM.unload('editGuy')
-        --Timer.clear()
 
-        -- doCircleInTransition(sx, sy, function() if scene then SM.load('fiveGuys') end end)
-        SM.load('outside')
-        --transitionHead(true, 'fiveGuys')
+    if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
+        local sx, sy = 0, 0 --getPointToCenterTransitionOn()
+        Timer.clear()
+        swipes.doCircleInTransition(sx, sy, function()
+            if scene then
+                SM.unload('editGuy')
+                SM.load('outside')
+                swipes.fadeInTransition(.2)
+            end
+        end)
     end
 
 
@@ -833,7 +840,7 @@ function scene.draw()
     end
     prof.pop('editGuy.draw ui')
     cam:push()
-    --  phys.drawWorld(world)
+    phys.drawWorld(world)
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
@@ -890,6 +897,9 @@ function scene.draw()
         love.graphics.draw(ui2.bigbuttons.dicemask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.dice, x, y, 0, sx, sy)
+    end
+    if swipes.getTransition() then
+        swipes.renderTransition()
     end
     prof.pop('editGuy.draw ')
 end

@@ -1,8 +1,8 @@
-local bbox = require 'lib.bbox'
+local bbox            = require 'lib.bbox'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
+Vector                = require 'vendor.brinevector'
 
-
-local lib = {}
+local lib             = {}
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -125,6 +125,7 @@ end
 local function getCentroidOfFixture(body, fixture)
     return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
+
 function handlePointerPressed(x, y, id, cam)
     local wx, wy = cam:getWorldCoordinates(x, y)
     local bodies = world:getBodies()
@@ -256,6 +257,7 @@ if false then
 end
 
 function handleUpdate(dt, cam)
+    -- connect connectors
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]
         if (mj.joint) then
@@ -282,6 +284,57 @@ function handleUpdate(dt, cam)
                     end
                 end
             end
+        end
+    end
+
+    -- diconnect connectors
+    if true then
+        if connectors then
+            for i = #connectors, 1, -1 do
+                -- we can only break a  joint if we have one
+
+                if connectors[i].joint then
+                    local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
+                    local delta = Vector(reaction2[1], reaction2[2])
+                    local l = delta:getLength()
+                    local found = false
+
+                    for j = 1, #pointerJoints do
+                        local mj = pointerJoints[j]
+                        if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
+                            found = true
+                        end
+                    end
+
+                    local b1, b2 = connectors[i].joint:getBodies()
+
+                    local breakForce = 50000 * math.max(1, (b1:getMass() * b2:getMass()))
+
+
+                    local breakForceWhenNotMouseJointed = 2000000 * (b1:getMass() * b2:getMass())
+                    --if (not found) then
+                    --    print(l, )
+                    --end
+
+
+                    if ((found and l > breakForce) or (not found and l > breakForceWhenNotMouseJointed)) then
+                        print('broke when foudn', found)
+                        connectors[i].joint:destroy()
+                        connectors[i].joint = nil
+
+                        connectors[i].to = nil
+                        --print('broke it', i, l, breakForce)
+                        table.insert(connectorCooldownList, { runningFor = 0, index = i })
+                    end
+                end
+            end
+        end
+    end
+    local now = love.timer.getTime()
+    for i = #connectorCooldownList, 1, -1 do
+        connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
+        if (connectorCooldownList[i].runningFor > 0.5) then
+            table.remove(connectorCooldownList, i)
         end
     end
 end
