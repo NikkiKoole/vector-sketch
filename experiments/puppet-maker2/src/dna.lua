@@ -1,9 +1,11 @@
-local parse = require 'lib.parse-file'
-local node  = require 'lib.node'
-local mesh  = require 'lib.mesh'
+local lib = {}
 
 
-local creation    = {
+-- creation and parts are not unque, every mipo shares the same ones
+-- multipliers, values and positioners however are UNIQUE to a MIPO
+
+
+local creation     = {
     isPotatoHead = false,
     hasPhysicsHair = false,
     hasNeck = true,
@@ -39,7 +41,7 @@ local creation    = {
     teeth = { w = 10, h = 10 },
 }
 
-local multipliers = {
+local multipliers  = {
     torso = { hMultiplier = 1, wMultiplier = 1 },
     leg = { lMultiplier = 1, wMultiplier = 1 },
     leghair = { wMultiplier = 1 },
@@ -61,7 +63,7 @@ local multipliers = {
     chesthair = { mMultiplier = 1 }
 }
 
-local positioners = {
+local positioners  = {
     leg = { x = 0.5 },
     eye = { x = 0.2, y = 0.5, r = 0 },
     nose = { y = 0.5 },
@@ -70,15 +72,15 @@ local positioners = {
     ear = { y = 0.5 }
 }
 
-function getCreation()
+lib.getCreation    = function()
     return creation
 end
 
-function getMultipliers()
+lib.getMultipliers = function()
     return multipliers
 end
 
-function getPositioners()
+lib.getPositioners = function()
     return positioners
 end
 
@@ -108,7 +110,7 @@ local function createDefaultPatchValues()
     }
 end
 
-function generateValues()
+lib.generateValues = function()
     local values = {
         chestHair        = createDefaultTextureValues(),
         skinPatchSnout   = createDefaultTextureValues(),
@@ -146,14 +148,7 @@ function generateValues()
     return values
 end
 
-local function TableConcat(t1, t2)
-    for i = 1, #t2 do
-        t1[#t1 + 1] = t2[i]
-    end
-    return t1
-end
-
-function generateParts()
+lib.generateParts = function()
     local legUrls = {
         'assets/parts/leg1.png', 'assets/parts/leg2.png', 'assets/parts/leg3.png', 'assets/parts/leg4.png',
         'assets/parts/leg5.png', 'assets/parts/leg7.png', 'assets/parts/legp2.png', 'assets/parts/leg1x.png',
@@ -209,44 +204,42 @@ function generateParts()
     local lowerlipImgUrls, lowerlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'lowerlips')
 
     table.insert(teethImgUrls, 'assets/parts/null.png')
+
+    local patchChildren = { 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' }
+    local mouthChildren = { 'upperlip', 'lowerlip', 'teeth' }
+
     local parts = {
-        { name = 'head',           imgs = headImgUrls,     p = headParts,                                                    kind = 'head' },
+        { name = 'head',           imgs = headImgUrls,     p = headParts,                   kind = 'head' },
         { name = 'hair',           imgs = hairUrls,        kind = 'head' },
-        { name = 'brows',          imgs = browImgUrls,     p = browParts,                                                    kind = 'head' },
+        { name = 'brows',          imgs = browImgUrls,     p = browParts,                   kind = 'head' },
         { name = 'eyes2',          kind = 'head',          children = { 'eyes', 'pupils' } },
-        { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,                                                   kind = 'head',                   child = true },
-        { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts,                                                     kind = 'head',                   child = true },
-        { name = 'ears',           imgs = earImgUrls,      p = earParts,                                                     kind = 'head' },
-        { name = 'nose',           imgs = noseImgUrls,     p = noseParts,                                                    kind = 'head' },
-        { name = 'patches',        kind = 'head',          children = { 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' } },
-        { name = 'skinPatchSnout', imgs = patchUrls,       kind = 'head',                                                    child = true },
-        { name = 'skinPatchEye1',  imgs = patchUrls,       kind = 'head',                                                    child = true },
-        { name = 'skinPatchEye2',  imgs = patchUrls,       kind = 'head',                                                    child = true },
-        { name = 'mouth',          kind = 'head',          children = { 'upperlip', 'lowerlip', 'teeth' } },
-        { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts,                                                kind = 'head',                   child = true },
-        { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts,                                                kind = 'head',                   child = true },
-        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,                                                   kind = 'head',                   child = true },
+        { name = 'pupils',         imgs = pupilImgUrls,    p = pupilParts,                  kind = 'head',                   child = true },
+        { name = 'eyes',           imgs = eyeImgUrls,      p = eyeParts,                    kind = 'head',                   child = true },
+        { name = 'ears',           imgs = earImgUrls,      p = earParts,                    kind = 'head' },
+        { name = 'nose',           imgs = noseImgUrls,     p = noseParts,                   kind = 'head' },
+        { name = 'patches',        kind = 'head',          children = patchChildren },
+        { name = 'skinPatchSnout', imgs = patchUrls,       kind = 'head',                   child = true },
+        { name = 'skinPatchEye1',  imgs = patchUrls,       kind = 'head',                   child = true },
+        { name = 'skinPatchEye2',  imgs = patchUrls,       kind = 'head',                   child = true },
+        { name = 'mouth',          kind = 'head',          children = mouthChildren },
+        { name = 'upperlip',       imgs = upperlipImgUrls, p = upperlipParts,               kind = 'head',                   child = true },
+        { name = 'lowerlip',       imgs = lowerlipImgUrls, p = lowerlipParts,               kind = 'head',                   child = true },
+        { name = 'teeth',          imgs = teethImgUrls,    p = teethParts,                  kind = 'head',                   child = true },
         { name = 'neck',           imgs = neckUrls,        kind = 'body' },
-        { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,                                                    kind = 'body' },
+        { name = 'body',           imgs = bodyImgUrls,     p = bodyParts,                   kind = 'body' },
         { name = 'chestHair',      imgs = chestHairUrls,   kind = 'body' },
-        { name = 'arms2',          imgs = legUrls,         kind = 'body',                                                    children = { 'arms', 'armhair' } },
-        { name = 'armhair',        imgs = hairUrls,        kind = 'body',                                                    child = true },
-        { name = 'arms',           imgs = legUrls,         kind = 'body',                                                    child = true },
-        { name = 'hands',          imgs = feetImgUrls,     p = handParts,                                                    kind = 'body' },
+        { name = 'arms2',          imgs = legUrls,         kind = 'body',                   children = { 'arms', 'armhair' } },
+        { name = 'armhair',        imgs = hairUrls,        kind = 'body',                   child = true },
+        { name = 'arms',           imgs = legUrls,         kind = 'body',                   child = true },
+        { name = 'hands',          imgs = feetImgUrls,     p = handParts,                   kind = 'body' },
         { name = 'legs2',          kind = 'body',          children = { 'legs', 'leghair' } },
-        { name = 'legs',           imgs = legUrls,         kind = 'body',                                                    child = true },
-        { name = 'leghair',        imgs = hairUrls,        kind = 'body',                                                    child = true },
-        { name = 'feet',           imgs = feetImgUrls,     p = feetParts,                                                    kind = 'body' },
+        { name = 'legs',           imgs = legUrls,         kind = 'body',                   child = true },
+        { name = 'leghair',        imgs = hairUrls,        kind = 'body',                   child = true },
+        { name = 'feet',           imgs = feetImgUrls,     p = feetParts,                   kind = 'body' },
     }
 
-    local urls = {}
-    urls = TableConcat(urls, legUrls)
-    urls = TableConcat(urls, neckUrls)
-    urls = TableConcat(urls, patchUrls)
-    urls = TableConcat(urls, hairUrls)
-    urls = TableConcat(urls, bodyImgUrls)
-    urls = TableConcat(urls, feetImgUrls)
-    urls = TableConcat(urls, eyeImgUrls)
-    urls = TableConcat(urls, pupilImgUrls)
-    return parts, urls
+
+    return parts
 end
+
+return lib

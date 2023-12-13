@@ -79,7 +79,7 @@ local function texturedCurve(curve, image, mesh, dir, scaleW)
     end
 end
 
-function drawTorsoOver(box2dTorso)
+local function drawTorsoOver(box2dTorso)
     local img = mesh.getImage(box2dTorso.textureData.url)
     local w, h = img:getDimensions()
     local x, y = box2dTorso.body:getPosition()

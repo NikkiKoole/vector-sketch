@@ -10,9 +10,9 @@ local text       = require 'lib.text'
 
 local imageCache = {}
 
-require 'src.dna'
+local dna        = require 'src.dna'
 require 'src.box2dGuyCreation'
-local creation = getCreation()
+local creation = dna.getCreation()
 
 function changePart(name)
     updatePart(name)

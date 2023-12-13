@@ -12,8 +12,9 @@ local mesh        = require 'lib.mesh'
 local phys        = require 'src.mainPhysics'
 
 local swipes      = require 'src.screen-transitions'
+local dna         = require 'src.dna'
+
 require 'src.editguy-ui'
-require 'src.dna'
 require 'src.box2dGuyCreation'
 require 'src.texturedBox2d'
 
@@ -24,7 +25,6 @@ local findSample = function(path)
         end
     end
 end
-
 
 local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
@@ -68,14 +68,6 @@ function setCategories()
             if not skip then
                 table.insert(categories, parts[i].name)
             end
-        end
-    end
-end
-
-function scene.handleAudioMessage(msg)
-    if msg.type == 'played' then
-        local path = msg.data.path
-        if path == 'Triangles 101' or path == 'Triangles 103' or path == 'babirhodes/rhodes2' then
         end
     end
 end
@@ -396,59 +388,6 @@ function updatePart(name)
     end
 end
 
-function scene.load()
-    phys.resetLists()
-    bgColor = creamColor
-    loadUIImages()
-    attachCallbacks()
-
-    scroller = {
-        xPos = 0,
-        position = 1,
-        isDragging = false,
-        isThrown = nil,
-        visibleOnScreen = 5
-    }
-
-    grid = {
-        position = 0,
-        isDragging = false,
-        isThrown = nil,
-        data = nil -- extra data about scissor area min max and scrolling yes/no
-    }
-
-    uiState = {
-        selectedTab = 'part',
-        selectedCategory = 'feet',
-        selectedColoringLayer = 'bgPal',
-        selectedChildCategory = nil,
-    }
-
-    uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
-    uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
-
-
-    if not editingGuy then
-        editingGuy = {
-            multipliers = getMultipliers(),
-            creation = getCreation(),
-            values = generateValues(),
-            positioners = getPositioners()
-        }
-    end
-    borders = {}
-    parts = generateParts()
-    categories = {}
-    setCategories()
-
-    audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
-    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
-
-    setupBox2dScene(5)
-    updateAllParts()
-    Timer.tween(.5, scroller, { position = 4 })
-end
-
 function randomizeGuy()
     local creation = editingGuy.creation
     local multipliers = editingGuy.multipliers
@@ -561,7 +500,6 @@ function randomizeGuy()
     values['skinPatchEye2'].fgAlpha = fgAlpha
     values['skinPatchEye2'].lineAlpha = lineAlpha
 
-
     updateAllParts()
     setCategories()
 
@@ -596,13 +534,6 @@ function updateAllParts()
     updatePart('chestHair')
 end
 
-function scene.unload()
-    local b = world:getBodies()
-    for i = #b, 1, -1 do
-        b[i]:destroy()
-    end
-end
-
 local function updateTheScrolling(dt, thrown, pos)
     local oldPos = pos
     if (thrown) then
@@ -623,43 +554,7 @@ local function updateTheScrolling(dt, thrown, pos)
     return pos
 end
 
-function scene.update(dt)
-    if introSound:isPlaying() then
-        local volume = introSound:getVolume()
-        introSound:setVolume(volume * .90)
-        if (volume < 0.01) then
-            introSound:stop()
-        end
-    end
-
-    if splashSound:isPlaying() then
-        local volume = splashSound:getVolume()
-        splashSound:setVolume(volume * .90)
-        if volume < 0.01 then
-            splashSound:stop()
-        end
-    end
-
-    Timer.update(dt)
-
-    if grid and grid.data and grid.data.min then
-        if grid.position > grid.data.min then
-            grid.position = grid.data.min
-        end
-        if grid.position < grid.data.max then
-            grid.position = grid.data.max
-        end
-    end
-
-    scroller.position = updateTheScrolling(dt, scroller.isThrown, scroller.position)
-
-    if grid then
-        grid.position = updateTheScrolling(dt, grid.isThrown, grid.position)
-    end
-    --handleConnectors(cam)
-    handleUpdate(dt, cam)
-    rotateAllBodies(world:getBodies(), dt)
-end
+-- pointer stuff
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
@@ -697,24 +592,12 @@ local function pointerPressed(x, y, id)
         end)
     end
 
-
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
-        print('RANDOMIZE!')
         randomizeGuy()
         local s = findSample('mp7/Quijada')
         if s then
             playSound(s.s, 1, 1)
         end
-        --partRandomize(editingGuy.values, true)
-
-        -- this seems to fi the issue the best, 2 inits and this order of operations, now we
-        -- have an identical stance in 5 guys and in edit!!
-
-        --myWorld:emit('bipedInit', biped)
-        --myWorld:emit('keepFeetPlantedAndStraightenLegs', biped)
-        --myWorld:emit('bipedInit', biped)
-        --myWorld:emit("tweenIntoDefaultStance", biped, true)
-        --tweenCameraToHeadAndBody()
     end
 end
 
@@ -747,19 +630,18 @@ local function pointerMoved(x, y, dx, dy, id)
     end
 end
 
-function pointerReleased(x, y, id)
+local function pointerReleased(x, y, id)
     scroller.isDragging = false
     grid.isDragging = false
 
     gesture.maybeTrigger(id, x, y)
-    -- I probably need to add the xyoffset too, so this panel can be tweened in and out the screen
 
     configPanelSurroundings(false, x, y)
 
     handlePointerReleased(x, y, id)
-    --collectgarbage()
 end
 
+-- love callbacks
 function love.touchpressed(id, x, y, dx, dy, pressure)
     pointerPressed(x, y, id)
     ui.addToPressedPointers(x, y, id)
@@ -805,6 +687,114 @@ function love.wheelmoved(dx, dy)
     end
 end
 
+-- scene methods
+
+function scene.handleAudioMessage(msg)
+    if msg.type == 'played' then
+        local path = msg.data.path
+        if path == 'Triangles 101' or path == 'Triangles 103' or path == 'babirhodes/rhodes2' then
+        end
+    end
+end
+
+function scene.unload()
+    local b = world:getBodies()
+    for i = #b, 1, -1 do
+        b[i]:destroy()
+    end
+end
+
+function scene.load()
+    phys.resetLists()
+    bgColor = creamColor
+    loadUIImages()
+    attachCallbacks()
+
+    scroller = {
+        xPos = 0,
+        position = 1,
+        isDragging = false,
+        isThrown = nil,
+        visibleOnScreen = 5
+    }
+
+    grid = {
+        position = 0,
+        isDragging = false,
+        isThrown = nil,
+        data = nil -- extra data about scissor area min max and scrolling yes/no
+    }
+
+    uiState = {
+        selectedTab = 'part',
+        selectedCategory = 'feet',
+        selectedColoringLayer = 'bgPal',
+        selectedChildCategory = nil,
+    }
+
+    uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
+    uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
+
+    if not editingGuy then
+        editingGuy = {
+            multipliers = dna.getMultipliers(),
+            creation = dna.getCreation(),
+            values = dna.generateValues(),
+            positioners = dna.getPositioners()
+        }
+    end
+
+    borders = {}
+    parts = dna.generateParts()
+    categories = {}
+    setCategories()
+
+    audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
+    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
+
+    setupBox2dScene(5)
+    updateAllParts()
+    Timer.tween(.5, scroller, { position = 4 })
+end
+
+function scene.update(dt)
+    if introSound:isPlaying() then
+        local volume = introSound:getVolume()
+        introSound:setVolume(volume * .90)
+        if (volume < 0.01) then
+            introSound:stop()
+        end
+    end
+
+    if splashSound:isPlaying() then
+        local volume = splashSound:getVolume()
+        splashSound:setVolume(volume * .90)
+        if volume < 0.01 then
+            splashSound:stop()
+        end
+    end
+
+    Timer.update(dt)
+
+    if grid and grid.data and grid.data.min then
+        if grid.position > grid.data.min then
+            grid.position = grid.data.min
+        end
+        if grid.position < grid.data.max then
+            grid.position = grid.data.max
+        end
+    end
+
+    scroller.position = updateTheScrolling(dt, scroller.isThrown, scroller.position)
+
+    if grid then
+        grid.position = updateTheScrolling(dt, grid.isThrown, grid.position)
+    end
+    --handleConnectors(cam)
+    handleUpdate(dt, cam)
+    rotateAllBodies(world:getBodies(), dt)
+end
+
 function scene.draw()
     prof.push('editGuy.draw ')
     prof.push('editGuy.draw ui')
@@ -840,7 +830,9 @@ function scene.draw()
     end
     prof.pop('editGuy.draw ui')
     cam:push()
-    phys.drawWorld(world)
+
+    -- phys.drawWorld(world)
+
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
         drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
@@ -861,8 +853,6 @@ function scene.draw()
         audioHelper.sendMessageToAudioThread({ type = "volume", data = mainVolume });
     end
 
-
-
     if true then
         local size = (h / 8) -- margin around panel
         local x = w - size
@@ -871,9 +861,6 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
-
-        --love.graphics.rectangle('fill', w - size, 0, size, size)
-        --love.graphics.setColor(1, 0, 1)
         local sx, sy = createFittingScale(ui2.bigbuttons.fiveguys, size, size)
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
@@ -889,18 +876,17 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
-
-        --love.graphics.rectangle('fill', w - size, 0, size, size)
-        --love.graphics.setColor(1, 0, 1)
         local sx, sy = createFittingScale(ui2.bigbuttons.dice, size, size)
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(ui2.bigbuttons.dicemask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.dice, x, y, 0, sx, sy)
     end
+
     if swipes.getTransition() then
         swipes.renderTransition()
     end
+
     prof.pop('editGuy.draw ')
 end
 

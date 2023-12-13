@@ -1,7 +1,8 @@
 local bbox            = require 'lib.bbox'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 Vector                = require 'vendor.brinevector'
-
+local camera          = require 'lib.camera'
+local cam             = require('lib.cameraBase').getInstance()
 local lib             = {}
 
 local function makeUserData(bodyType, moreData)
@@ -486,6 +487,65 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
 
 end
 
+
+
+-- this should be in physicsworld
+function rebuildPhysicsBorderForScreen()
+    for i = 1, #borders do
+        if not borders[i]:isDestroyed() then
+            borders[i]:destroy()
+        end
+    end
+    borders = {}
+    local w, h = love.graphics.getDimensions()
+    -- camera.setCameraViewport(cam, w, h)
+    -- camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local boxWorldHeight = cambry - camtly
+
+    local wallThick = 4000
+    local sideHigh = 20000
+    local half = wallThick / 2
+
+    local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
+    local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
+    local topfixture = love.physics.newFixture(top, topshape, 1)
+
+    local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
+    local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
+    local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
+
+    local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
+    local leftshape = love.physics.newRectangleShape(wallThick, 30000)
+    local leftfixture = love.physics.newFixture(left, leftshape, 1)
+
+    local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
+    local rightshape = love.physics.newRectangleShape(wallThick, 30000)
+    local rightfixture = love.physics.newFixture(right, rightshape, 1)
+
+    borders = { topfixture, bottomfixture, leftfixture, rightfixture }
+end
+
+function setupBox2dScene(amountOfGuys)
+    local w, h = love.graphics.getDimensions()
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+
+    box2dGuys = {}
+    rebuildPhysicsBorderForScreen()
+
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local stepSize = boxWorldWidth / (amountOfGuys + 1)
+
+
+    for i = 1, amountOfGuys do
+        table.insert(box2dGuys, makeGuy(camtlx + i * stepSize, camtly, i))
+    end
+end
 
 lib.killMouseJointIfPossible = function(id)
     local index = -1

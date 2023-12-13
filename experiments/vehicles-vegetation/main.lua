@@ -14,7 +14,7 @@ local mesh            = require 'lib.mesh'
 local ui              = require 'lib.ui'
 require 'box2dGuyCreation'
 require 'texturedBox2d'
-local creation = getCreation()
+local creation = dna.getCreation()
 local canvas   = require 'lib.canvas'
 local text     = require 'lib.text'
 require 'palette'

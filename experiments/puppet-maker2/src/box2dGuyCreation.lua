@@ -6,7 +6,7 @@ local phys      = require 'src.mainPhysics'
 local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 local camera    = require 'lib.camera'
 local cam       = require('lib.cameraBase').getInstance()
-require 'src.dna'
+local dna       = require 'src.dna'
 
 function isNullObject(partName, values)
     local p = findPart(partName)
@@ -17,7 +17,7 @@ end
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 
 function getParentAndChildrenFromPartName(partName)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local map      = {
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         neck = { p = 'torso', c = 'neck1' },
@@ -62,7 +62,7 @@ function getParentAndChildrenFromPartName(partName)
 end
 
 function getScaledTorsoMetaPoint(index)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local wscale = creation.torso.w / creation.torso.metaPointsW
     local hscale = creation.torso.h / creation.torso.metaPointsH
 
@@ -70,7 +70,7 @@ function getScaledTorsoMetaPoint(index)
 end
 
 function getScaledHeadMetaPoint(index)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local wscale = creation.head.w / creation.head.metaPointsW
     local hscale = creation.head.h / creation.head.metaPointsH
 
@@ -90,8 +90,8 @@ local function lerp(a, b, amount)
 end
 
 function getOffsetFromParent(partName)
-    local creation    = getCreation()
-    local positioners = getPositioners()
+    local creation    = dna.getCreation()
+    local positioners = dna.getPositioners()
     local data        = getParentAndChildrenFromPartName(partName, creation)
 
     if partName == 'neck' then
@@ -298,7 +298,7 @@ local function makeUserData(bodyType, moreData)
 end
 
 function changeMetaPoints(key, value, data)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     creation[key].metaPoints = value
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(value)
@@ -319,7 +319,7 @@ function changeMetaPoints(key, value, data)
 end
 
 function changeMetaTexture(key, data)
-    local creation                   = getCreation()
+    local creation                   = dna.getCreation()
     local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
     local bbw                        = (brx - tlx)
     local bbh                        = (bry - tly)
@@ -486,7 +486,7 @@ end
 
 
 local function makePart_(key, parent, groupId)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local offsetX, offsetY = getOffsetFromParent(key)
     local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
@@ -548,7 +548,7 @@ function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
 end
 
 local function useRecreateConnectorData(recreateConnectorData, body)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local data = recreateConnectorData.ud.data
     local type = data.type
     assert(type)
@@ -565,7 +565,7 @@ local function useRecreateConnectorData(recreateConnectorData, body)
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
@@ -790,7 +790,7 @@ function makeAndAddConnector(parent, x, y, data, size, size2)
 end
 
 function makeGuy(x, y, groupId)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local function makePart(name, parent)
         return makePart_(name, parent, groupId)
     end
@@ -891,61 +891,8 @@ end
 
 ---
 
-function rebuildPhysicsBorderForScreen()
-    for i = 1, #borders do
-        if not borders[i]:isDestroyed() then
-            borders[i]:destroy()
-        end
-    end
-    borders = {}
-    local w, h = love.graphics.getDimensions()
-    -- camera.setCameraViewport(cam, w, h)
-    -- camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
-    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-    local cambrx, cambry = cam:getWorldCoordinates(w, h)
-    local boxWorldWidth = cambrx - camtlx
-    local boxWorldHeight = cambry - camtly
 
-    local wallThick = 4000
-    local sideHigh = 20000
-    local half = wallThick / 2
 
-    local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
-    local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
-    local topfixture = love.physics.newFixture(top, topshape, 1)
-
-    local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
-    local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
-    local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
-
-    local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
-    local leftshape = love.physics.newRectangleShape(wallThick, 30000)
-    local leftfixture = love.physics.newFixture(left, leftshape, 1)
-
-    local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
-    local rightshape = love.physics.newRectangleShape(wallThick, 30000)
-    local rightfixture = love.physics.newFixture(right, rightshape, 1)
-
-    borders = { topfixture, bottomfixture, leftfixture, rightfixture }
-end
-
-function setupBox2dScene(amountOfGuys)
-    local w, h = love.graphics.getDimensions()
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
-
-    box2dGuys = {}
-    rebuildPhysicsBorderForScreen()
-
-    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-    local cambrx, cambry = cam:getWorldCoordinates(w, h)
-    local boxWorldWidth = cambrx - camtlx
-    local stepSize = boxWorldWidth / (amountOfGuys + 1)
-
-    for i = 1, amountOfGuys do
-        table.insert(box2dGuys, makeGuy(camtlx + i * stepSize, -1300, i))
-    end
-end
 
 function rotateToHorizontal(body, desiredAngle, divider, pr)
     local DEGTORAD = 1 / 57.295779513
@@ -1225,7 +1172,7 @@ function partToTexturedCanvasWrap(partName, values, optionalImageSettings)
 end
 
 function partToTexturedCanvas(partName, values, optionalImageSettings)
-    local creation = getCreation()
+    local creation = dna.getCreation()
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
 

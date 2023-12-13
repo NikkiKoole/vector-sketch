@@ -197,6 +197,7 @@ function love.load()
     phys.setupWorld()
 
     mainVolume = 1
+
     local sample_data = {
         'cr78/Conga Low',
         'cr78/Bongo Low',
@@ -216,10 +217,10 @@ function love.load()
 
     samples = {}
     for i = 1, #sample_data do
-        --table.insert(sprites, love.graphics.newImage('resources/' .. sample_data[i][1] .. '.png'))
         local data = love.sound.newSoundData('assets/instruments/' .. sample_data[i] .. '.wav')
         table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i] })
     end
+
     loadSong('assets/mipo4.melodypaint.txt')
 
 
@@ -235,8 +236,6 @@ function love.load()
     audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-
-
     textures = {
         love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
         love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
@@ -248,7 +247,6 @@ function love.load()
         love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
         love.graphics.newImage('assets/img/tiles/tiles2.png'),
         love.graphics.newImage('assets/img/tiles/tiles.png'),
-
     }
 
     rubberplonks = {
@@ -256,6 +254,7 @@ function love.load()
         love.audio.newSource("assets/sounds/fx/rubber-plonk2.wav", "static"),
         love.audio.newSource("assets/sounds/fx/rubber-plonk3.wav", "static")
     }
+
     rubberstretches = {
         love.audio.newSource("assets/sounds/fx/rubber-stretch1.wav", "static"),
         love.audio.newSource("assets/sounds/fx/rubber-stretch2.wav", "static"),
@@ -291,6 +290,7 @@ function love.load()
         'EEC488', 'C77D52', 'C2997A', '9C5F43', '9C8D81',
         '965D64', '798091', '4C5575', '6E4431', '626964',
     }
+
     function hex2rgb(hex)
         hex = hex:gsub("#", "")
         return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
@@ -303,14 +303,10 @@ function love.load()
         table.insert(palettes, { r, g, b })
     end
 
-
     SM.setPath("scenes/")
     --SM.load("intro")
     SM.load("editGuy")
 end
-
---love.window.updateMode(200, 200, { fullscreen = false })
-
 
 function love.update(dt)
     if true then
