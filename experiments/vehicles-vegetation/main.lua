@@ -1671,7 +1671,7 @@ function drawTempSiders()
     if s.value then
         multipliers.torso.hMultiplier = s.value
         creation.torso.h = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
     end
@@ -1679,7 +1679,7 @@ function drawTempSiders()
     if s.value then
         multipliers.torso.wMultiplier = s.value
         creation.torso.w = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
     end
@@ -1691,7 +1691,7 @@ function drawTempSiders()
         creation.llleg.h            = l * s.value / 2
         creation.rlleg.h            = l * s.value / 2
         multipliers.leg.lMultiplier = s.value
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
@@ -1706,7 +1706,7 @@ function drawTempSiders()
         creation.llleg.w            = l * s.value
         creation.rlleg.w            = l * s.value
         multipliers.leg.wMultiplier = s.value
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
@@ -1719,7 +1719,7 @@ function drawTempSiders()
         creation.lfoot.h             = mesh.getImage(creation.lfoot.metaURL):getWidth() / 2 *
             multipliers.feet.hMultiplier
         creation.rfoot.h             = creation.lfoot.h
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
             genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
         end
@@ -1730,7 +1730,7 @@ function drawTempSiders()
         creation.lfoot.w             = mesh.getImage(creation.lfoot.metaURL):getHeight() / 2 *
             multipliers.feet.wMultiplier
         creation.rfoot.w             = creation.lfoot.w
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
             genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
         end
@@ -1743,7 +1743,7 @@ function drawTempSiders()
         creation.llarm.h            = l * s.value / 2
         creation.rlarm.h            = l * s.value / 2
         multipliers.arm.lMultiplier = s.value
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
@@ -1758,7 +1758,7 @@ function drawTempSiders()
         creation.llarm.w            = l * s.value / 2
         creation.rlarm.w            = l * s.value / 2
         multipliers.arm.wMultiplier = s.value
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
             genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
@@ -1772,7 +1772,7 @@ function drawTempSiders()
         creation.lhand.h             = mesh.getImage(creation.lhand.metaURL):getWidth() / 2 *
             multipliers.hand.hMultiplier
         creation.rhand.h             = creation.lhand.h
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
             genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
         end
@@ -1784,7 +1784,7 @@ function drawTempSiders()
         creation.lhand.w             = mesh.getImage(creation.lhand.metaURL):getHeight() / 2 *
             multipliers.hand.wMultiplier
         creation.rhand.w             = creation.lhand.w
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
             genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
         end
@@ -1799,7 +1799,7 @@ function drawTempSiders()
         creation.neck.w              = neckCanvas:getWidth() / 2 *
             multipliers.neck.wMultiplier
         creation.neck1.w             = creation.neck.w
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'neck')
             genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
@@ -1810,7 +1810,7 @@ function drawTempSiders()
         creation.neck.h              = neckCanvas:getHeight() / 2 *
             multipliers.neck.hMultiplier
         creation.neck1.h             = creation.neck.h
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'neck')
             genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
         end
@@ -1822,7 +1822,7 @@ function drawTempSiders()
         creation.head.w              = mesh.getImage(creation.head.metaURL):getWidth() *
             multipliers.head.wMultiplier
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
         end
     end
@@ -1832,7 +1832,7 @@ function drawTempSiders()
         creation.head.h              = mesh.getImage(creation.head.metaURL):getHeight() *
             multipliers.head.hMultiplier
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'head')
         end
     end
@@ -1843,7 +1843,7 @@ function drawTempSiders()
         creation.lear.w             = mesh.getImage(creation.lear.metaURL):getWidth() / 2 *
             multipliers.ear.wMultiplier
         creation.rear.w             = creation.lear.w
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
@@ -1854,7 +1854,7 @@ function drawTempSiders()
         creation.lear.h             = mesh.getImage(creation.lear.metaURL):getHeight() / 2 *
             multipliers.ear.hMultiplier
         creation.rear.h             = creation.lear.h
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
@@ -1865,7 +1865,7 @@ function drawTempSiders()
         creation.lear.stanceAngle = s.value
         creation.rear.stanceAngle = -1 * s.value
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
@@ -1905,7 +1905,7 @@ function drawTempSiders()
 
     if s.value then
         positioners.leg.x = s.value
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
@@ -1949,7 +1949,7 @@ function love.draw()
         drawWorld(world)
         local tlx, tly = cam:getWorldCoordinates( -1000, 0)
         local brx, bry = cam:getWorldCoordinates(width + 1000, height)
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             local x, y = box2dGuys[i].torso:getPosition()
 
             if x >= tlx and x <= brx then
@@ -2011,11 +2011,11 @@ function love.draw()
 
         drawWorld(world)
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             drawSkinOver(box2dGuys[i], creation, cam)
         end
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             --       drawNumbersOver(box2dGuys[i])
         end
         for i = 1, #grass do
@@ -2508,7 +2508,7 @@ function love.keypressed(k)
         upsideDown = not upsideDown
         if false then
             if not upsideDown then
-                for i = 1, #box2dGuys do
+                for i = 1, #fiveGuys do
                     if box2dGuys[i].head then
                         box2dGuys[i].head:setAngle( -math.pi)
                     end
@@ -2526,7 +2526,7 @@ function love.keypressed(k)
                 end
             end
             if upsideDown then
-                for i = 1, #box2dGuys do
+                for i = 1, #fiveGuys do
                     box2dGuys[i].luleg:setAngle(math.pi * 2)
                     box2dGuys[i].llleg:setAngle(math.pi * 2)
                     box2dGuys[i].lfoot:setAngle(math.pi / 2)
@@ -2544,7 +2544,7 @@ function love.keypressed(k)
     if (k == 'p') then
         creation.isPotatoHead = not creation.isPotatoHead
         creation.hasNeck = not creation.isPotatoHead
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
             handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
@@ -2562,13 +2562,13 @@ function love.keypressed(k)
     --if example == 3 then
     if k == 'j' then
         jointsEnabled = not jointsEnabled
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             toggleAllJointLimits(box2dGuys[i], jointsEnabled)
         end
     end
     if k == '-' then
         print('rest hard!')
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             if (box2dGuys[i].head) then box2dGuys[i].head:setAngle(0) end
             if (box2dGuys[i].neck1) then box2dGuys[i].neck1:setAngle( -math.pi) end
             if (box2dGuys[i].neck) then box2dGuys[i].neck:setAngle( -math.pi) end
@@ -2593,7 +2593,7 @@ function love.keypressed(k)
     if k == 'n' then
         if not creation.isPotatoHead then
             creation.hasNeck = not creation.hasNeck
-            for i = 1, #box2dGuys do
+            for i = 1, #fiveGuys do
                 handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
                 genericBodyPartUpdate(box2dGuys[i], i, 'head')
             end
@@ -2606,7 +2606,7 @@ function love.keypressed(k)
                 data[bodyRndIndex]
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
     end
@@ -2617,7 +2617,7 @@ function love.keypressed(k)
                 data[bodyRndIndex]
                 .points)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')
         end
     end
@@ -2634,7 +2634,7 @@ function love.keypressed(k)
         creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() / 4
 
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lear')
             genericBodyPartUpdate(box2dGuys[i], i, 'rear')
         end
@@ -2646,7 +2646,7 @@ function love.keypressed(k)
         creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
         creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
         eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             --    genericBodyPartUpdate(box2dGuys[i], i, 'eye')
         end
     end
@@ -2669,7 +2669,7 @@ function love.keypressed(k)
             creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() / 2
             creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() / 2
 
-            for i = 1, #box2dGuys do
+            for i = 1, #fiveGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'head')
                 genericBodyPartUpdate(box2dGuys[i], i, 'lear')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
@@ -2689,7 +2689,7 @@ function love.keypressed(k)
         handCanvas = createRandomColoredBlackOutlineTexture(creation.lhand.metaURL)
 
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
             genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
         end
@@ -2704,7 +2704,7 @@ function love.keypressed(k)
 
             changeMetaPoints('head', flippedFloppedHeadPoints)
             changeMetaTexture('head', data[headRndIndex])
-            for i = 1, #box2dGuys do
+            for i = 1, #fiveGuys do
                 genericBodyPartUpdate(box2dGuys[i], i, 'head')
                 genericBodyPartUpdate(box2dGuys[i], i, 'lear')
                 genericBodyPartUpdate(box2dGuys[i], i, 'rear')
@@ -2719,7 +2719,7 @@ function love.keypressed(k)
         creation.llleg.h = 100 + love.math.random() * 700
         creation.rlleg.h = creation.llleg.h
         --  print(creation.upLeg.stanceAngle)
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
             genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
@@ -2742,7 +2742,7 @@ function love.keypressed(k)
         footCanvas = createRandomColoredBlackOutlineTexture(creation.lfoot.metaURL)
 
 
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
             genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
         end
@@ -2775,7 +2775,7 @@ function love.keypressed(k)
         creation.llarm.h = 150 + love.math.random() * 100
         creation.ruarm.h = creation.luarm.h
         creation.rlarm.h = creation.llarm.h
-        for i = 1, #box2dGuys do
+        for i = 1, #fiveGuys do
             handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
             handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
             genericBodyPartUpdate(box2dGuys[i], i, 'torso')

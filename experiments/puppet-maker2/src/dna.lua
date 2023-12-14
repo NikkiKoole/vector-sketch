@@ -88,7 +88,7 @@ local function createDefaultTextureValues()
     return {
         shape     = 1,
         bgPal     = math.ceil(love.math.random() * #palettes),
-        fgPal     = 1,
+        fgPal     = math.ceil(love.math.random() * #palettes),
         bgTex     = 1,
         fgTex     = 2,
         linePal   = 1,

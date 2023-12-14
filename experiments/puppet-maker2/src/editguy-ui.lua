@@ -10,9 +10,10 @@ local text       = require 'lib.text'
 
 local imageCache = {}
 
-local dna        = require 'src.dna'
+--local dna        = require 'src.dna'
 require 'src.box2dGuyCreation'
-local creation = dna.getCreation()
+
+--local creation = editingGuy.dna.creation 
 
 function changePart(name)
     updatePart(name)
@@ -689,6 +690,7 @@ end
 
 function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
     local values = editingGuy.dna.values
+    local creation = editingGuy.dna.creation
     local currentHeight = 0
     local buttonSize = width < 320 and 24 or 48
 

@@ -6,7 +6,7 @@ local phys      = require 'src.mainPhysics'
 local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 local camera    = require 'lib.camera'
 local cam       = require('lib.cameraBase').getInstance()
-local dna       = require 'src.dna'
+--local dna       = require 'src.dna'
 
 function isNullObject(partName, values)
     local p = findPart(partName)
@@ -17,7 +17,7 @@ end
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 
 function getParentAndChildrenFromPartName(partName)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation
     local map      = {
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         neck = { p = 'torso', c = 'neck1' },
@@ -62,7 +62,7 @@ function getParentAndChildrenFromPartName(partName)
 end
 
 function getScaledTorsoMetaPoint(index)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation 
     local wscale = creation.torso.w / creation.torso.metaPointsW
     local hscale = creation.torso.h / creation.torso.metaPointsH
 
@@ -70,7 +70,7 @@ function getScaledTorsoMetaPoint(index)
 end
 
 function getScaledHeadMetaPoint(index)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation 
     local wscale = creation.head.w / creation.head.metaPointsW
     local hscale = creation.head.h / creation.head.metaPointsH
 
@@ -298,7 +298,7 @@ local function makeUserData(bodyType, moreData)
 end
 
 function changeMetaPoints(key, value, data)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation
     creation[key].metaPoints = value
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(value)
@@ -319,7 +319,7 @@ function changeMetaPoints(key, value, data)
 end
 
 function changeMetaTexture(key, data)
-    local creation                   = dna.getCreation()
+    local creation                   = editingGuy.dna.creation
     local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
     local bbw                        = (brx - tlx)
     local bbh                        = (bry - tly)
@@ -548,7 +548,7 @@ function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
 end
 
 local function useRecreateConnectorData(recreateConnectorData, body)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation 
     local data = recreateConnectorData.ud.data
     local type = data.type
     assert(type)
@@ -565,7 +565,7 @@ local function useRecreateConnectorData(recreateConnectorData, body)
 end
 
 function genericBodyPartUpdate(box2dGuy, groupId, partName)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation
     local data = getParentAndChildrenFromPartName(partName)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
@@ -790,11 +790,13 @@ function makeAndAddConnector(parent, x, y, data, size, size2)
 end
 
 function makeGuy(x, y, groupId)
-    local creation = dna.getCreation()
+    --print(inspect(fiveGuys[groupId].dna))
+  --  local creation = fiveGuys[groupId].dna.creation 
     local function makePart(name, parent)
         return makePart_(name, parent, groupId)
     end
-
+    local creation = editingGuy.dna.creation
+    --print(editingGuy.dna.creation)
     local torso = love.physics.newBody(world, x, y, "dynamic")
     local torsoShape = phys.makeShapeFromCreationPart(creation.torso)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
@@ -1166,7 +1168,7 @@ function partToTexturedCanvasWrap(partName, values, optionalImageSettings)
 end
 
 function partToTexturedCanvas(partName, values, optionalImageSettings)
-    local creation = dna.getCreation()
+    local creation = editingGuy.dna.creation
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
 

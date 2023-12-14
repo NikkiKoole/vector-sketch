@@ -85,6 +85,7 @@ function updatePart(name)
     local values = editingGuy.dna.values
     local creation = editingGuy.dna.creation
     local multipliers = editingGuy.dna.multipliers
+    
 
     if name == 'chestHair' then
         chestHairCanvas = partToTexturedCanvasWrap('chestHair', values)
@@ -166,9 +167,11 @@ function updatePart(name)
 
         earCanvas       = partToTexturedCanvasWrap('ears', values)
         earmesh         = createTexturedTriangleStrip(earCanvas)
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+
+
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lear')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rear')
         end
     end
 
@@ -185,11 +188,12 @@ function updatePart(name)
 
         footCanvas       = partToTexturedCanvasWrap('feet', values)
         footmesh         = createTexturedTriangleStrip(footCanvas)
-
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'lfoot')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rfoot')
-        end
+        print('change feet')
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lfoot')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rfoot')
+        end 
+        
     end
 
     if name == 'hands' then
@@ -205,9 +209,9 @@ function updatePart(name)
         handCanvas       = partToTexturedCanvasWrap('hands', values)
         handmesh         = createTexturedTriangleStrip(handCanvas)
 
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'lhand')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rhand')
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lhand')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rhand')
         end
     end
 
@@ -226,25 +230,25 @@ function updatePart(name)
         creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() * multipliers.head.wMultiplier / 2
         creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() * multipliers.head.hMultiplier / 2
 
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'head')
-            genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'head')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lear')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rear')
         end
     end
 
     if name == 'potato' then
-        for i = 1, #box2dGuys do
-            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i, creation.hasNeck)
-            handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
-            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
+        for i = 1, #fiveGuys do
+            handleNeckAndHeadForPotato(creation.isPotatoHead, fiveGuys[i].b2d, i, creation.hasNeck)
+            handlePhysicsHairOrNo(creation.hasPhysicsHair, fiveGuys[i].b2d, i)
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'torso')
         end
     end
 
     if name == 'hasNeck' then
-        for i = 1, #box2dGuys do
-            handleNeckAndHeadForHasNeck(creation.hasNeck, box2dGuys[i], i)
-            genericBodyPartUpdate(box2dGuys[i], i, 'head')
+        for i = 1, #fiveGuys do
+            handleNeckAndHeadForHasNeck(creation.hasNeck, fiveGuys[i].b2d, i)
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'head')
         end
     end
 
@@ -264,9 +268,9 @@ function updatePart(name)
         creation.neck1.w = neckW
         creation.neck1.h = neckH / 2
 
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'neck')
-            genericBodyPartUpdate(box2dGuys[i], i, 'neck1')
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'neck')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'neck1')
         end
     end
 
@@ -289,11 +293,11 @@ function updatePart(name)
         creation.llleg.h = legH / 2
         creation.rlleg.h = legH / 2
 
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'luleg')
-            genericBodyPartUpdate(box2dGuys[i], i, 'ruleg')
-            genericBodyPartUpdate(box2dGuys[i], i, 'llleg')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rlleg')
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'luleg')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'ruleg')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'llleg')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rlleg')
         end
     end
 
@@ -336,11 +340,11 @@ function updatePart(name)
         creation.llarm.h = legH / 2
         creation.rlarm.h = legH / 2
 
-        for i = 1, #box2dGuys do
-            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        for i = 1, #fiveGuys do
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'luarm')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'ruarm')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'llarm')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rlarm')
         end
     end
 
@@ -353,7 +357,7 @@ function updatePart(name)
         changeMetaPoints('torso', flippedFloppedBodyPoints)
         changeMetaTexture('torso', data[bodyRndIndex])
         torsoCanvas        = partToTexturedCanvasWrap('body', values)
-        local body         = box2dGuys[1].torso
+        local body         = editingGuy.b2d.torso
         local longestLeg   = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
         local oldLegLength = longestLeg + creation.torso.h
 
@@ -372,18 +376,18 @@ function updatePart(name)
         creation.ruarm.h = creation.luarm.h
         creation.rlarm.h = creation.llarm.h
 
-        for i = 1, #box2dGuys do
-            handleNeckAndHeadForPotato(creation.isPotatoHead, box2dGuys[i], i)
-            handlePhysicsHairOrNo(creation.hasPhysicsHair, box2dGuys[i], i)
-            genericBodyPartUpdate(box2dGuys[i], i, 'torso')
-            genericBodyPartUpdate(box2dGuys[i], i, 'luarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'llarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'ruarm')
-            genericBodyPartUpdate(box2dGuys[i], i, 'rlarm')
+        for i = 1, #fiveGuys do
+            handleNeckAndHeadForPotato(creation.isPotatoHead, fiveGuys[i].b2d, i)
+            handlePhysicsHairOrNo(creation.hasPhysicsHair, fiveGuys[i].b2d, i)
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'torso')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'luarm')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'llarm')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'ruarm')
+            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rlarm')
 
             if (not creation.isPotatoHead) then
-                genericBodyPartUpdate(box2dGuys[i], i, 'lear')
-                genericBodyPartUpdate(box2dGuys[i], i, 'rear')
+                genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lear')
+                genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rear')
             end
         end
     end
@@ -461,12 +465,12 @@ function randomizeGuy()
     multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
 
     randomizePart('hands')
-    multipliers.hand.hMultiplier = randValue(0.5, 3, .5, true)
-    multipliers.hand.wMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.hand.hMultiplier = randValue(0.5, 2, .5, true)  
+    multipliers.hand.wMultiplier = randValue(0.5, 2, .5, true)
 
     randomizePart('feet')
-    multipliers.feet.hMultiplier = randValue(0.5, 3, .5, true)
-    multipliers.feet.wMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.feet.hMultiplier = randValue(0.5, 2, .5, true)
+    multipliers.feet.wMultiplier = randValue(0.5, 2, .5, true)
 
     randomizePart('eyes')
     randomizePart('pupils')
@@ -739,9 +743,11 @@ function scene.load()
     uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
 
-    if not editingGuy then
+
+    print('fiveguys..', #fiveGuys, fiveGuys)
+    --if not editingGuy then
         editingGuy = fiveGuys[pickedFiveGuyIndex]
-    end
+    --end
 
     borders = {}
     parts = dna.generateParts()
@@ -830,14 +836,14 @@ function scene.draw()
     prof.pop('editGuy.draw ui')
     cam:push()
 
-    phys.drawWorld(world)
+    --phys.drawWorld(world)
 
     prof.push('editGuy.draw drawSkinOver')
-    for i = 1, #box2dGuys do
-        drawSkinOver(box2dGuys[i], editingGuy)
+    for i = 1, #fiveGuys do
+        drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
     end
-    for i = 1, #box2dGuys do
-        --     drawNumbersOver(box2dGuys[i])
+    for i = 1, #fiveGuys do
+        --     drawNumbersOver(fiveGuys[i].b2d)
     end
 
     prof.pop('editGuy.draw drawSkinOver')

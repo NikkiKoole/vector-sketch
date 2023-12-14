@@ -528,22 +528,27 @@ function rebuildPhysicsBorderForScreen()
     borders = { topfixture, bottomfixture, leftfixture, rightfixture }
 end
 
-function setupBox2dScene(amountOfGuys)
+function setupBox2dScene()
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
-    box2dGuys = {}
+
+    for i =1, #fiveGuys do 
+        fiveGuys[i].b2d = nil
+    end
+   -- box2dGuys = {}
+
     rebuildPhysicsBorderForScreen()
 
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
     local boxWorldWidth = cambrx - camtlx
-    local stepSize = boxWorldWidth / (amountOfGuys + 1)
+    local stepSize = boxWorldWidth / (#fiveGuys + 1)
 
 
-    for i = 1, amountOfGuys do
-        table.insert(box2dGuys, makeGuy(camtlx + i * stepSize, camtly, i))
+    for i = 1, #fiveGuys do
+        fiveGuys[i].b2d = makeGuy(camtlx + i * stepSize, camtly, i)
     end
 end
 

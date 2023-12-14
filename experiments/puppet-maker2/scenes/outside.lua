@@ -154,12 +154,12 @@ function scene.draw()
         drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
     end
 
-
-
-    for i = 1, #box2dGuys do
-        drawSkinOver(box2dGuys[i], editingGuy)
+    for i = 1, #fiveGuys do
+        drawSkinOver(fiveGuys[i].b2d, editingGuy)
     end
-    for i = 1, #box2dGuys do
+
+    
+    for i = 1, #fiveGuys do
         --     drawNumbersOver(box2dGuys[i])
     end
 
