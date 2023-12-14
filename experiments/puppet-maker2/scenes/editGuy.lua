@@ -736,12 +736,7 @@ function scene.load()
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
 
     if not editingGuy then
-        editingGuy = {
-            multipliers = dna.getMultipliers(),
-            creation = dna.getCreation(),
-            values = dna.generateValues(),
-            positioners = dna.getPositioners()
-        }
+        editingGuy = fiveGuys[pickedFiveGuyIndex]
     end
 
     borders = {}

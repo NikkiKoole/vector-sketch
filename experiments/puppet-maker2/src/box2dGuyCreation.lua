@@ -486,7 +486,7 @@ end
 
 
 local function makePart_(key, parent, groupId)
-    local creation = dna.getCreation()
+    local creation = editingGuy.creation -- dna.getCreation()
     local offsetX, offsetY = getOffsetFromParent(key)
     local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
@@ -891,9 +891,6 @@ end
 
 ---
 
-
-
-
 function rotateToHorizontal(body, desiredAngle, divider, pr)
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
@@ -1125,10 +1122,7 @@ function rotateAllBodies(bodies, dt)
 end
 
 ---
-
 -- this needs its own file !!!
-
-
 
 local mesh = require 'lib.mesh'
 local text = require 'lib.text'

@@ -27,6 +27,7 @@ prof         = require 'vendor.jprof'
 ProFi        = require 'vendor.ProFi'
 focussed     = true
 
+local dna    = require 'src.dna'
 local phys   = require 'src.mainPhysics'
 local lurker = require 'vendor.lurker'
 lurker.quiet = true
@@ -302,6 +303,18 @@ function love.load()
         local r, g, b = hex2rgb(base[i])
         table.insert(palettes, { r, g, b })
     end
+
+    fiveGuys = {}
+    for i = 1, 5 do
+        local guy   = {
+            multipliers = dna.getMultipliers(),
+            creation = dna.getCreation(),
+            values = dna.generateValues(),
+            positioners = dna.getPositioners()
+        }
+        fiveGuys[i] = guy
+    end
+    pickedFiveGuyIndex = 2
 
     SM.setPath("scenes/")
     --SM.load("intro")

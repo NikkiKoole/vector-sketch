@@ -563,7 +563,6 @@ lib.killMouseJointIfPossible = function(id)
 end
 
 lib.makeShapeFromCreationPart = function(part)
-    --print(inspect(part))
     if part.metaPoints then
         local tlx, tly, brx, bry = bbox.getPointsBBox(part.metaPoints)
         local bbw = (brx - tlx)
@@ -574,8 +573,8 @@ lib.makeShapeFromCreationPart = function(part)
 
         local offsetX = 0
         local offsetY = 0
+
         if part.metaOffsetX or part.metaOfsetY then
-            --print('dcwjicojie')
             offsetX = part.metaOffsetX
             offsetY = part.metaOffsetY
         end
@@ -586,7 +585,6 @@ lib.makeShapeFromCreationPart = function(part)
         end
         return love.physics.newPolygonShape(flatted)
     else
-        --  print(inspect(part))
         return lib.makeShape(part.shape, part.w, part.h)
     end
 end
@@ -638,11 +636,9 @@ lib.resetLists = function()
 end
 
 lib.drawWorld = function(world)
-    -- get the current color values to reapply
     local r, g, b, a = love.graphics.getColor()
-    -- alpha value is optional
     local alpha = .8
-    -- Colliders debug
+
     love.graphics.setColor(0, 0, 0, alpha)
     local bodies = world:getBodies()
     love.graphics.setLineWidth(10)
@@ -650,9 +646,9 @@ lib.drawWorld = function(world)
         local fixtures = body:getFixtures()
 
         for _, fixture in ipairs(fixtures) do
-            if fixture:getUserData() then
-                --     print(inspect(fixture:getUserData()))
-            end
+            --if fixture:getUserData() then
+            --     print(inspect(fixture:getUserData()))
+            --end
             if fixture:getShape():type() == 'PolygonShape' then
                 local color = getBodyColor(body)
                 love.graphics.setColor(color[1], color[2], color[3], alpha)

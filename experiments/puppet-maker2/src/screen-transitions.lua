@@ -47,7 +47,6 @@ lib.getTransition = function()
     return _transition
 end
 
-
 lib.doCircleInTransition = function(x, y, onAfter)
     local w, h = love.graphics.getDimensions()
     local transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }

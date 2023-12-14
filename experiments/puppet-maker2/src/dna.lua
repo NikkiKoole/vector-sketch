@@ -1,9 +1,9 @@
 local lib = {}
 
 
--- creation and parts are not unque, every mipo shares the same ones
--- multipliers, values and positioners however are UNIQUE to a MIPO
-
+-- the parts array is not unique, every mipo shares the same ones
+-- creation, multipliers, values and positioners however are UNIQUE to a MIPO
+-- from creation we have the 'limits array' which more or less are shared, but the details describe the picked texture shapes and dimensions etc.
 
 local creation     = {
     isPotatoHead = false,
