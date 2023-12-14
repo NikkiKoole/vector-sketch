@@ -90,9 +90,9 @@ local function lerp(a, b, amount)
 end
 
 function getOffsetFromParent(partName)
-    local creation    = dna.getCreation()
-    local positioners = dna.getPositioners()
-    local data        = getParentAndChildrenFromPartName(partName, creation)
+    local creation    = editingGuy.dna.creation
+    local positioners =  editingGuy.dna.positioners
+    local data        = getParentAndChildrenFromPartName(partName)
 
     if partName == 'neck' then
         if creation.torso.metaPoints then
@@ -486,7 +486,7 @@ end
 
 
 local function makePart_(key, parent, groupId)
-    local creation = editingGuy.creation -- dna.getCreation()
+    local creation = editingGuy.dna.creation -- dna.getCreation()
     local offsetX, offsetY = getOffsetFromParent(key)
     local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
@@ -554,8 +554,8 @@ local function useRecreateConnectorData(recreateConnectorData, body)
     assert(type)
     if type == 'foot' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data,
-            creation.foot.w,
-            creation.foot.h)
+            creation.foot.w + 10,
+            creation.foot.h + 10)
     elseif type == 'hand' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w,
             creation.lhand.h)
@@ -964,7 +964,7 @@ end
 
 function rotateAllBodies(bodies, dt)
     --print('hi hello!')
-    local creation = editingGuy.creation
+    local creation = editingGuy.dna.creation
     local upsideDown = false
     lastDt = dt
     for _, body in ipairs(bodies) do
@@ -1225,7 +1225,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
     return texturedcanvas, url
 end
 
-function createRandomColoredBlackOutlineTexture(url, optionalPart, editingGuy)
+function createRandomColoredBlackOutlineTexture(url, optionalPart)
     local tex1 = textures[math.ceil(math.random() * #textures)]
     local pal1 = palettes[math.ceil(math.random() * #palettes)]
     local al1 = 5

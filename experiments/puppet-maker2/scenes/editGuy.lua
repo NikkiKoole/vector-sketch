@@ -53,12 +53,13 @@ local function attachCallbacks()
 end
 
 function setCategories()
+    local creation = editingGuy.dna.creation
     categories = {}
 
     for i = 1, #parts do
         if parts[i].child ~= true then
             local skip = false
-            if editingGuy.creation.isPotatoHead then
+            if creation.isPotatoHead then
                 local name = parts[i].name
                 if name == 'head' or name == 'neck' or name == 'patches' then
                     skip = true
@@ -81,9 +82,9 @@ function findPart(name)
 end
 
 function updatePart(name)
-    local values = editingGuy.values
-    local creation = editingGuy.creation
-    local multipliers = editingGuy.multipliers
+    local values = editingGuy.dna.values
+    local creation = editingGuy.dna.creation
+    local multipliers = editingGuy.dna.multipliers
 
     if name == 'chestHair' then
         chestHairCanvas = partToTexturedCanvasWrap('chestHair', values)
@@ -101,7 +102,7 @@ function updatePart(name)
         teethCanvas = partToTexturedCanvasWrap('teeth', values)
         local teethdata = findPart('teeth').p
         local teethIndex = values.teeth.shape
-        if not isNullObject('teeth', editingGuy.values) then
+        if not isNullObject('teeth', values) then
             changeMetaTexture('teeth', teethdata[teethIndex])
         end
     end
@@ -389,9 +390,9 @@ function updatePart(name)
 end
 
 function randomizeGuy()
-    local creation = editingGuy.creation
-    local multipliers = editingGuy.multipliers
-    local values = editingGuy.values
+    local creation = editingGuy.dna.creation
+    local multipliers = editingGuy.dna.multipliers
+    local values = editingGuy.dna.values
 
     function randomizePart(part)
         local p = findPart(part)
@@ -510,12 +511,15 @@ function randomizeGuy()
 end
 
 function updateAllParts()
+    local creation = editingGuy.dna.creation
+
+
     updatePart('ears')
     updatePart('hands')
     updatePart('feet')
-    if not editingGuy.creation.isPotatoHead then
+    if not creation.isPotatoHead then
         updatePart('head')
-        if editingGuy.creation.hasNeck then updatePart('neck') end
+        if creation.hasNeck then updatePart('neck') end
     end
     updatePart('body')
     updatePart('arms')
@@ -826,12 +830,11 @@ function scene.draw()
     prof.pop('editGuy.draw ui')
     cam:push()
 
-    -- phys.drawWorld(world)
+    phys.drawWorld(world)
 
     prof.push('editGuy.draw drawSkinOver')
     for i = 1, #box2dGuys do
-        drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
-        .positioners)
+        drawSkinOver(box2dGuys[i], editingGuy)
     end
     for i = 1, #box2dGuys do
         --     drawNumbersOver(box2dGuys[i])

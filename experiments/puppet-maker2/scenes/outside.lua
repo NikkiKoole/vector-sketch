@@ -157,8 +157,7 @@ function scene.draw()
 
 
     for i = 1, #box2dGuys do
-        drawSkinOver(box2dGuys[i], editingGuy.values, editingGuy.creation, editingGuy.multipliers, editingGuy
-        .positioners)
+        drawSkinOver(box2dGuys[i], editingGuy)
     end
     for i = 1, #box2dGuys do
         --     drawNumbersOver(box2dGuys[i])

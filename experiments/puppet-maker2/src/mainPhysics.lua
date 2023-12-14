@@ -309,7 +309,7 @@ function handleUpdate(dt, cam)
 
                     local b1, b2 = connectors[i].joint:getBodies()
 
-                    local breakForce = 50000 * math.max(1, (b1:getMass() * b2:getMass()))
+                    local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
 
 
                     local breakForceWhenNotMouseJointed = 2000000 * (b1:getMass() * b2:getMass())

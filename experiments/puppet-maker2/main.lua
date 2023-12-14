@@ -306,13 +306,16 @@ function love.load()
 
     fiveGuys = {}
     for i = 1, 5 do
-        local guy   = {
+        local dna   = {
             multipliers = dna.getMultipliers(),
             creation = dna.getCreation(),
             values = dna.generateValues(),
             positioners = dna.getPositioners()
         }
-        fiveGuys[i] = guy
+        fiveGuys[i] = {
+            dna = dna,
+            b2d = nil
+        }
     end
     pickedFiveGuyIndex = 2
 
