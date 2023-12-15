@@ -52,8 +52,8 @@ local function attachCallbacks()
     end)
 end
 
-function setCategories()
-    local creation = editingGuy.dna.creation
+function setCategories(guy)
+    local creation = guy.dna.creation
     categories = {}
 
     for i = 1, #parts do
@@ -81,30 +81,29 @@ function findPart(name)
     end
 end
 
-function updatePart(name)
-    local values = editingGuy.dna.values
-    local creation = editingGuy.dna.creation
-    local multipliers = editingGuy.dna.multipliers
-    
+function updatePart(name, guy)
+    local values = guy.dna.values
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
 
     if name == 'chestHair' then
-        chestHairCanvas = partToTexturedCanvasWrap('chestHair', values)
+        chestHairCanvas = partToTexturedCanvasWrap('chestHair', guy)
     end
 
     if name == 'lowerlip' then
-        lowerlipCanvas = partToTexturedCanvasWrap('lowerlip', values)
+        lowerlipCanvas = partToTexturedCanvasWrap('lowerlip', guy)
     end
 
     if name == 'upperlip' then
-        upperlipCanvas = partToTexturedCanvasWrap('upperlip', values)
+        upperlipCanvas = partToTexturedCanvasWrap('upperlip', guy)
     end
 
     if name == 'teeth' then
-        teethCanvas = partToTexturedCanvasWrap('teeth', values)
+        teethCanvas = partToTexturedCanvasWrap('teeth', guy)
         local teethdata = findPart('teeth').p
         local teethIndex = values.teeth.shape
         if not isNullObject('teeth', values) then
-            changeMetaTexture('teeth', teethdata[teethIndex])
+            changeMetaTexture('teeth', guy, teethdata[teethIndex])
         end
     end
 
@@ -112,7 +111,7 @@ function updatePart(name)
         local browIndex = math.ceil(values.brows.shape)
         local part      = findPart('brows')
         local img       = part.imgs[browIndex]
-        browCanvas      = partToTexturedCanvasWrap('brows', values)
+        browCanvas      = partToTexturedCanvasWrap('brows', guy)
     end
 
     if name == 'hair' then
@@ -121,13 +120,13 @@ function updatePart(name)
         local img       = part.imgs[hairIndex]
         local legW      = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
         local legH      = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
-        hairCanvas      = partToTexturedCanvasWrap('hair', values)
+        hairCanvas      = partToTexturedCanvasWrap('hair', guy)
     end
 
     if name == 'eyes' then
         local eyedata = findPart('eyes').p
         local eyeIndex = values.eyes.shape
-        changeMetaTexture('eye', eyedata[eyeIndex])
+        changeMetaTexture('eye', guy, eyedata[eyeIndex])
         creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
         creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
         eyeCanvas = createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
@@ -136,42 +135,42 @@ function updatePart(name)
     if name == 'nose' then
         local nosedata = findPart('nose').p
         local noseIndex = values.nose.shape
-        changeMetaTexture('nose', nosedata[noseIndex])
+        changeMetaTexture('nose', guy, nosedata[noseIndex])
         creation.nose.w = mesh.getImage(creation.nose.metaURL):getHeight()
         creation.nose.h = mesh.getImage(creation.nose.metaURL):getWidth()
 
-        noseCanvas      = partToTexturedCanvasWrap('nose', values)
+        noseCanvas      = partToTexturedCanvasWrap('nose', guy)
     end
 
     if name == 'pupils' then
         local pupildata = findPart('pupils').p
         local pupilIndex = values.pupils.shape
-        changeMetaTexture('pupil', pupildata[pupilIndex])
+        changeMetaTexture('pupil', guy, pupildata[pupilIndex])
         creation.pupil.w = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
         creation.pupil.h = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
 
-        pupilCanvas      = partToTexturedCanvasWrap('pupils', values)
+        pupilCanvas      = partToTexturedCanvasWrap('pupils', guy)
     end
 
     if name == 'ears' then
         local eardata = findPart('ears').p
         local earIndex = values.ears.shape
-        changeMetaTexture('lear', eardata[earIndex])
+        changeMetaTexture('lear', guy, eardata[earIndex])
         creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
         creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
         earCanvas = createRandomColoredBlackOutlineTexture(creation.lear.metaURL)
 
-        changeMetaTexture('rear', eardata[earIndex])
+        changeMetaTexture('rear', guy, eardata[earIndex])
         creation.rear.w = mesh.getImage(creation.rear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
         creation.rear.h = mesh.getImage(creation.rear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
 
-        earCanvas       = partToTexturedCanvasWrap('ears', values)
+        earCanvas       = partToTexturedCanvasWrap('ears', guy)
         earmesh         = createTexturedTriangleStrip(earCanvas)
 
 
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lear')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rear')
+            genericBodyPartUpdate(fiveGuys[i], 'lear')
+            genericBodyPartUpdate(fiveGuys[i], 'rear')
         end
     end
 
@@ -179,39 +178,38 @@ function updatePart(name)
         local feetdata = findPart('feet').p
         local footIndex = values.feet.shape
 
-        changeMetaTexture('lfoot', feetdata[footIndex])
+        changeMetaTexture('lfoot', guy, feetdata[footIndex])
         creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
         creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
-        changeMetaTexture('rfoot', feetdata[footIndex])
+        changeMetaTexture('rfoot', guy, feetdata[footIndex])
         creation.rfoot.w = mesh.getImage(creation.rfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
         creation.rfoot.h = mesh.getImage(creation.rfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
 
-        footCanvas       = partToTexturedCanvasWrap('feet', values)
+        footCanvas       = partToTexturedCanvasWrap('feet', guy)
         footmesh         = createTexturedTriangleStrip(footCanvas)
         print('change feet')
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lfoot')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rfoot')
-        end 
-        
+            genericBodyPartUpdate(fiveGuys[i], 'lfoot')
+            genericBodyPartUpdate(fiveGuys[i], 'rfoot')
+        end
     end
 
     if name == 'hands' then
         local feetdata = findPart('hands').p --  loadVectorSketch('assets/feet.polygons.txt', 'feet')
         local handIndex = values.hands.shape
-        changeMetaTexture('lhand', feetdata[handIndex])
-        changeMetaTexture('rhand', feetdata[handIndex])
+        changeMetaTexture('lhand', guy, feetdata[handIndex])
+        changeMetaTexture('rhand', guy, feetdata[handIndex])
         creation.lhand.w = mesh.getImage(creation.lhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
         creation.lhand.h = mesh.getImage(creation.lhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
         creation.rhand.w = mesh.getImage(creation.rhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
         creation.rhand.h = mesh.getImage(creation.rhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
 
-        handCanvas       = partToTexturedCanvasWrap('hands', values)
+        handCanvas       = partToTexturedCanvasWrap('hands', guy)
         handmesh         = createTexturedTriangleStrip(handCanvas)
 
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lhand')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rhand')
+            genericBodyPartUpdate(fiveGuys[i], 'lhand')
+            genericBodyPartUpdate(fiveGuys[i], 'rhand')
         end
     end
 
@@ -223,32 +221,32 @@ function updatePart(name)
                 data[headRndIndex]
                 .points)
 
-        changeMetaPoints('head', flippedFloppedHeadPoints)
-        changeMetaTexture('head', data[headRndIndex])
+        changeMetaPoints('head', guy, flippedFloppedHeadPoints)
+        changeMetaTexture('head', guy, data[headRndIndex])
 
-        headCanvas      = partToTexturedCanvasWrap('head', values)
+        headCanvas      = partToTexturedCanvasWrap('head', guy)
         creation.head.w = mesh.getImage(creation.head.metaURL):getWidth() * multipliers.head.wMultiplier / 2
         creation.head.h = mesh.getImage(creation.head.metaURL):getHeight() * multipliers.head.hMultiplier / 2
 
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'head')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lear')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rear')
+            genericBodyPartUpdate(fiveGuys[i], 'head')
+            genericBodyPartUpdate(fiveGuys[i], 'lear')
+            genericBodyPartUpdate(fiveGuys[i], 'rear')
         end
     end
 
     if name == 'potato' then
         for i = 1, #fiveGuys do
-            handleNeckAndHeadForPotato(creation.isPotatoHead, fiveGuys[i].b2d, i, creation.hasNeck)
-            handlePhysicsHairOrNo(creation.hasPhysicsHair, fiveGuys[i].b2d, i)
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'torso')
+            handleNeckAndHeadForPotato(fiveGuys[i].b2d, fiveGuys[i], creation.isPotatoHead, creation.hasNeck)
+            handlePhysicsHairOrNo(fiveGuys[i].b2d, fiveGuys[i], creation.hasPhysicsHair)
+            genericBodyPartUpdate(fiveGuys[i], 'torso')
         end
     end
 
     if name == 'hasNeck' then
         for i = 1, #fiveGuys do
-            handleNeckAndHeadForHasNeck(creation.hasNeck, fiveGuys[i].b2d, i)
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'head')
+            handleNeckAndHeadForHasNeck(fiveGuys[i].b2d, fiveGuys[i], creation.hasNeck)
+            genericBodyPartUpdate(fiveGuys[i], 'head')
         end
     end
 
@@ -260,7 +258,7 @@ function updatePart(name)
         local neckW      = mesh.getImage(img):getWidth() * multipliers.neck.wMultiplier / 2
         local neckH      = mesh.getImage(img):getHeight() * multipliers.neck.hMultiplier / 2
 
-        neckCanvas       = partToTexturedCanvasWrap('neck', values)
+        neckCanvas       = partToTexturedCanvasWrap('neck', guy)
         neckmesh         = createTexturedTriangleStrip(neckCanvas)
 
         creation.neck.w  = neckW
@@ -269,8 +267,8 @@ function updatePart(name)
         creation.neck1.h = neckH / 2
 
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'neck')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'neck1')
+            genericBodyPartUpdate(fiveGuys[i], 'neck')
+            genericBodyPartUpdate(fiveGuys[i], 'neck1')
         end
     end
 
@@ -281,7 +279,7 @@ function updatePart(name)
         local legW       = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
         local legH       = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
 
-        legCanvas        = partToTexturedCanvasWrap('legs', values)
+        legCanvas        = partToTexturedCanvasWrap('legs', guy)
         legmesh          = createTexturedTriangleStrip(legCanvas)
 
         creation.luleg.w = legW
@@ -294,10 +292,10 @@ function updatePart(name)
         creation.rlleg.h = legH / 2
 
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'luleg')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'ruleg')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'llleg')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rlleg')
+            genericBodyPartUpdate(fiveGuys[i], 'luleg')
+            genericBodyPartUpdate(fiveGuys[i], 'ruleg')
+            genericBodyPartUpdate(fiveGuys[i], 'llleg')
+            genericBodyPartUpdate(fiveGuys[i], 'rlleg')
         end
     end
 
@@ -305,7 +303,7 @@ function updatePart(name)
         local index   = math.ceil(values.leghair.shape)
         local part    = findPart('leghair')
         local img     = part.imgs[index]
-        leghairCanvas = partToTexturedCanvasWrap('leghair', values)
+        leghairCanvas = partToTexturedCanvasWrap('leghair', guy)
         leghairMesh   = createTexturedTriangleStrip(leghairCanvas)
     end
 
@@ -313,7 +311,7 @@ function updatePart(name)
         local index   = math.ceil(values.armhair.shape)
         local part    = findPart('armhair')
         local img     = part.imgs[index]
-        armhairCanvas = partToTexturedCanvasWrap('armhair', values)
+        armhairCanvas = partToTexturedCanvasWrap('armhair', guy)
         armhairMesh   = createTexturedTriangleStrip(armhairCanvas)
     end
 
@@ -325,7 +323,7 @@ function updatePart(name)
         local legH       = mesh.getImage(img):getHeight() * multipliers.arm.lMultiplier / 2
 
         armCanvas        = createRandomColoredBlackOutlineTexture(img)
-        armCanvas        = partToTexturedCanvasWrap('arms', values)
+        armCanvas        = partToTexturedCanvasWrap('arms', guy)
         armmesh          = createTexturedTriangleStrip(armCanvas)
 
         creation.luarm.w = legW / 2
@@ -341,10 +339,10 @@ function updatePart(name)
         creation.rlarm.h = legH / 2
 
         for i = 1, #fiveGuys do
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'luarm')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'ruarm')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'llarm')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rlarm')
+            genericBodyPartUpdate(fiveGuys[i], 'luarm')
+            genericBodyPartUpdate(fiveGuys[i], 'ruarm')
+            genericBodyPartUpdate(fiveGuys[i], 'llarm')
+            genericBodyPartUpdate(fiveGuys[i], 'rlarm')
         end
     end
 
@@ -354,10 +352,10 @@ function updatePart(name)
         local flippedFloppedBodyPoints = getFlippedMetaObject(creation.torso.flipx, creation.torso.flipy,
                 data[bodyRndIndex]
                 .points)
-        changeMetaPoints('torso', flippedFloppedBodyPoints)
-        changeMetaTexture('torso', data[bodyRndIndex])
-        torsoCanvas        = partToTexturedCanvasWrap('body', values)
-        local body         = editingGuy.b2d.torso
+        changeMetaPoints('torso', guy, flippedFloppedBodyPoints)
+        changeMetaTexture('torso', guy, data[bodyRndIndex])
+        torsoCanvas        = partToTexturedCanvasWrap('body', guy)
+        local body         = guy.b2d.torso
         local longestLeg   = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
         local oldLegLength = longestLeg + creation.torso.h
 
@@ -377,26 +375,26 @@ function updatePart(name)
         creation.rlarm.h = creation.llarm.h
 
         for i = 1, #fiveGuys do
-            handleNeckAndHeadForPotato(creation.isPotatoHead, fiveGuys[i].b2d, i)
-            handlePhysicsHairOrNo(creation.hasPhysicsHair, fiveGuys[i].b2d, i)
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'torso')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'luarm')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'llarm')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'ruarm')
-            genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rlarm')
+            handleNeckAndHeadForPotato(fiveGuys[i].b2d, fiveGuys[i], creation.isPotatoHead, creation.hasNeck)
+            handlePhysicsHairOrNo(fiveGuys[i].b2d, fiveGuys[i], creation.hasPhysicsHair)
+            genericBodyPartUpdate(fiveGuys[i], 'torso')
+            genericBodyPartUpdate(fiveGuys[i], 'luarm')
+            genericBodyPartUpdate(fiveGuys[i], 'llarm')
+            genericBodyPartUpdate(fiveGuys[i], 'ruarm')
+            genericBodyPartUpdate(fiveGuys[i], 'rlarm')
 
             if (not creation.isPotatoHead) then
-                genericBodyPartUpdate(fiveGuys[i].b2d, i, 'lear')
-                genericBodyPartUpdate(fiveGuys[i].b2d, i, 'rear')
+                genericBodyPartUpdate(fiveGuys[i], 'lear')
+                genericBodyPartUpdate(fiveGuys[i], 'rear')
             end
         end
     end
 end
 
-function randomizeGuy()
-    local creation = editingGuy.dna.creation
-    local multipliers = editingGuy.dna.multipliers
-    local values = editingGuy.dna.values
+function randomizeGuy(guy)
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
+    local values = guy.dna.values
 
     function randomizePart(part)
         local p = findPart(part)
@@ -465,7 +463,7 @@ function randomizeGuy()
     multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
 
     randomizePart('hands')
-    multipliers.hand.hMultiplier = randValue(0.5, 2, .5, true)  
+    multipliers.hand.hMultiplier = randValue(0.5, 2, .5, true)
     multipliers.hand.wMultiplier = randValue(0.5, 2, .5, true)
 
     randomizePart('feet')
@@ -505,41 +503,38 @@ function randomizeGuy()
     values['skinPatchEye2'].fgAlpha = fgAlpha
     values['skinPatchEye2'].lineAlpha = lineAlpha
 
-    updateAllParts()
-    setCategories()
-
-    if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
-        setSelectedCategory('body')
-        Timer.tween(.5, scroller, { position = 8 })
-    end
+    updateAllParts(guy)
 end
 
-function updateAllParts()
-    local creation = editingGuy.dna.creation
+function updateAllParts(guy)
+    local creation = guy.dna.creation
 
-
-    updatePart('ears')
-    updatePart('hands')
-    updatePart('feet')
-    if not creation.isPotatoHead then
-        updatePart('head')
-        if creation.hasNeck then updatePart('neck') end
+    local _updatePart = function(name)
+        updatePart(name, guy)
     end
-    updatePart('body')
-    updatePart('arms')
-    updatePart('legs')
 
-    updatePart('eyes')
-    updatePart('pupils')
-    updatePart('nose')
-    updatePart('hair')
-    updatePart('armhair')
-    updatePart('leghair')
-    updatePart('brows')
-    updatePart('teeth')
-    updatePart('upperlip')
-    updatePart('lowerlip')
-    updatePart('chestHair')
+    _updatePart('ears')
+    _updatePart('hands')
+    _updatePart('feet')
+    if not creation.isPotatoHead then
+        _updatePart('head')
+        if creation.hasNeck then _updatePart('neck') end
+    end
+    _updatePart('body')
+    _updatePart('arms')
+    _updatePart('legs')
+
+    _updatePart('eyes')
+    _updatePart('pupils')
+    _updatePart('nose')
+    _updatePart('hair')
+    _updatePart('armhair')
+    _updatePart('leghair')
+    _updatePart('brows')
+    _updatePart('teeth')
+    _updatePart('upperlip')
+    _updatePart('lowerlip')
+    _updatePart('chestHair')
 end
 
 local function updateTheScrolling(dt, thrown, pos)
@@ -586,8 +581,6 @@ local function pointerPressed(x, y, id)
 
     local size = (h / 8) -- margin around panel
 
-
-
     if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
         local sx, sy = 0, 0 --getPointToCenterTransitionOn()
         Timer.clear()
@@ -601,7 +594,16 @@ local function pointerPressed(x, y, id)
     end
 
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
-        randomizeGuy()
+        randomizeGuy(editingGuy)
+        setCategories(editingGuy)
+
+        local creation = editingGuy.dna.creation
+        if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
+            setSelectedCategory('body')
+            Timer.tween(.5, scroller, { position = 8 })
+        end
+
+
         local s = findSample('mp7/Quijada')
         if s then
             playSound(s.s, 1, 1)
@@ -746,19 +748,19 @@ function scene.load()
 
     print('fiveguys..', #fiveGuys, fiveGuys)
     --if not editingGuy then
-        editingGuy = fiveGuys[pickedFiveGuyIndex]
+    editingGuy = fiveGuys[pickedFiveGuyIndex]
     --end
 
     borders = {}
     parts = dna.generateParts()
     categories = {}
-    setCategories()
+    setCategories(editingGuy)
 
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
     setupBox2dScene(5)
-    updateAllParts()
+    updateAllParts(editingGuy)
     Timer.tween(.5, scroller, { position = 4 })
 end
 

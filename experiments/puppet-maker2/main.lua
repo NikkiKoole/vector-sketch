@@ -4,6 +4,8 @@ local manual_gc = require 'vendor.batteries.manual_gc'
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
+
+
 jit.off()
 require 'lib.printC'
 
@@ -313,6 +315,7 @@ function love.load()
             positioners = dna.getPositioners()
         }
         fiveGuys[i] = {
+            id = i,
             dna = dna,
             b2d = nil
         }

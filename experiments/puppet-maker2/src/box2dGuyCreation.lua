@@ -6,7 +6,7 @@ local phys      = require 'src.mainPhysics'
 local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
 local camera    = require 'lib.camera'
 local cam       = require('lib.cameraBase').getInstance()
---local dna       = require 'src.dna'
+local dna       = require 'src.dna'
 
 function isNullObject(partName, values)
     local p = findPart(partName)
@@ -16,8 +16,9 @@ end
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 
-function getParentAndChildrenFromPartName(partName)
-    local creation = editingGuy.dna.creation
+function getParentAndChildrenFromPartName(partName, guy)
+    local creation = guy.dna.creation
+
     local map      = {
         torso = { c = { 'neck', 'luarm', 'ruarm', 'luleg', 'ruleg' } },
         neck = { p = 'torso', c = 'neck1' },
@@ -54,23 +55,25 @@ function getParentAndChildrenFromPartName(partName)
     if creation and partName == 'torso' and creation.hasNeck == false then
         return { c = { 'head', 'luarm', 'ruarm', 'luleg', 'ruleg' } }
     end
+
     local result = map[partName]
+
     if result.p == 'head' and creation.isPotatoHead then
         result.p = 'torso'
     end
     return map[partName]
 end
 
-function getScaledTorsoMetaPoint(index)
-    local creation = editingGuy.dna.creation 
+function getScaledTorsoMetaPoint(index, guy)
+    local creation = guy.dna.creation
     local wscale = creation.torso.w / creation.torso.metaPointsW
     local hscale = creation.torso.h / creation.torso.metaPointsH
 
     return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
 end
 
-function getScaledHeadMetaPoint(index)
-    local creation = editingGuy.dna.creation 
+function getScaledHeadMetaPoint(index, guy)
+    local creation = guy.dna.creation
     local wscale = creation.head.w / creation.head.metaPointsW
     local hscale = creation.head.h / creation.head.metaPointsH
 
@@ -89,100 +92,97 @@ local function lerp(a, b, amount)
     return a + (b - a) * clamp(amount, 0, 1)
 end
 
-function getOffsetFromParent(partName)
-    local creation    = editingGuy.dna.creation
-    local positioners =  editingGuy.dna.positioners
-    local data        = getParentAndChildrenFromPartName(partName)
+function getOffsetFromParent(partName, guy)
+    local creation    = guy.dna.creation
+    local positioners = guy.dna.positioners
+    local data        = getParentAndChildrenFromPartName(partName, guy)
+
+
 
     if partName == 'neck' then
         if creation.torso.metaPoints then
-            return getScaledTorsoMetaPoint(1)
+            return getScaledTorsoMetaPoint(1, guy)
         end
 
         return 0, -creation.torso.h / 2
     elseif partName == 'luarm' then
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(7)
+                return getScaledTorsoMetaPoint(7, guy)
             end
         else
             if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(8)
+                return getScaledTorsoMetaPoint(8, guy)
             end
         end
         return -creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'ruarm' then
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(3)
+                return getScaledTorsoMetaPoint(3, guy)
             end
         else
             if creation.torso.metaPoints then
-                return getScaledTorsoMetaPoint(2)
+                return getScaledTorsoMetaPoint(2, guy)
             end
         end
         return creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'luleg' then
-        --print(positioners.leg.x)
         local t = positioners.leg.x
         if creation.torso.metaPoints then
-            -- lerp between 6 and 5
-
-            local ax, ay = getScaledTorsoMetaPoint(6)
-            local bx, by = getScaledTorsoMetaPoint(5)
+            local ax, ay = getScaledTorsoMetaPoint(6, guy)
+            local bx, by = getScaledTorsoMetaPoint(5, guy)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry --getScaledTorsoMetaPoint(6)
+            return rx, ry
         end
         return ( -creation.torso.w / 2) * (1 - t), creation.torso.h / 2
     elseif partName == 'ruleg' then
         local t = positioners.leg.x
         if creation.torso.metaPoints then
-            local ax, ay = getScaledTorsoMetaPoint(4)
-            local bx, by = getScaledTorsoMetaPoint(5)
+            local ax, ay = getScaledTorsoMetaPoint(4, guy)
+            local bx, by = getScaledTorsoMetaPoint(5, guy)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-            return rx, ry --getScaledTorsoMetaPoint(6)
-
-            --return getScaledTorsoMetaPoint(4)
+            return rx, ry
         end
         return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
     elseif partName == 'hair1' then
         if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(3)
+            return getScaledHeadMetaPoint(3, guy)
         end
     elseif partName == 'hair2' then
         if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(4)
+            return getScaledHeadMetaPoint(4, guy)
         end
     elseif partName == 'hair3' then
         if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(5)
+            return getScaledHeadMetaPoint(5, guy)
         end
     elseif partName == 'hair4' then
         if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(6)
+            return getScaledHeadMetaPoint(6, guy)
         end
     elseif partName == 'hair5' then
         if creation.head.metaPoints then
-            return getScaledHeadMetaPoint(7)
+            return getScaledHeadMetaPoint(7, guy)
         end
     elseif partName == 'lear' then
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
                 local t = positioners.ear.y
-                local ax, ay = getScaledTorsoMetaPoint(8)
-                local bx, by = getScaledTorsoMetaPoint(7)
+                local ax, ay = getScaledTorsoMetaPoint(8, guy)
+                local bx, by = getScaledTorsoMetaPoint(7, guy)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry --getScaledTorsoMetaPoint(8)
+                return rx, ry
             end
         else
             if creation.head.metaPoints then
                 local t = positioners.ear.y
-                local ax, ay = getScaledHeadMetaPoint(8)
-                local bx, by = getScaledHeadMetaPoint(6)
+                local ax, ay = getScaledHeadMetaPoint(8, guy)
+                local bx, by = getScaledHeadMetaPoint(6, guy)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry --getScaledHeadMetaPoint(7)
+                return rx, ry
             end
         end
 
@@ -191,20 +191,20 @@ function getOffsetFromParent(partName)
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
                 local t = positioners.ear.y
-                local ax, ay = getScaledTorsoMetaPoint(2)
-                local bx, by = getScaledTorsoMetaPoint(3)
+                local ax, ay = getScaledTorsoMetaPoint(2, guy)
+                local bx, by = getScaledTorsoMetaPoint(3, guy)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry -- getScaledTorsoMetaPoint(2)
+                return rx, ry
             end
         else
             if creation.head.metaPoints then
                 local t = positioners.ear.y
-                local ax, ay = getScaledHeadMetaPoint(2)
-                local bx, by = getScaledHeadMetaPoint(4)
+                local ax, ay = getScaledHeadMetaPoint(2, guy)
+                local bx, by = getScaledHeadMetaPoint(4, guy)
                 local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
 
-                return rx, ry --getScaledHeadMetaPoint(3)
+                return rx, ry
             end
         end
         return creation.head.w / 2, -creation.head.h / 2
@@ -214,7 +214,7 @@ function getOffsetFromParent(partName)
                 return 0, creation.neck1.h / (creation.neck1.links or 1)
             else
                 if creation.torso.metaPoints then
-                    return getScaledTorsoMetaPoint(1)
+                    return getScaledTorsoMetaPoint(1, guy)
                 end
 
                 return 0, -creation.torso.h / 2
@@ -223,7 +223,7 @@ function getOffsetFromParent(partName)
 
         local p = data.p
         -- now look for the alias of the parent...
-        local temp = getParentAndChildrenFromPartName(p, creation)
+        local temp = getParentAndChildrenFromPartName(p, guy)
         local part = p
         --  local s = canvas.getShrinkFactor()
         -- wscale = wscale * s
@@ -297,8 +297,8 @@ local function makeUserData(bodyType, moreData)
     return result
 end
 
-function changeMetaPoints(key, value, data)
-    local creation = editingGuy.dna.creation
+function changeMetaPoints(key, guy, value, data)
+    local creation = guy.dna.creation
     creation[key].metaPoints = value
 
     local tlx, tly, brx, bry = bbox.getPointsBBox(value)
@@ -318,8 +318,8 @@ function changeMetaPoints(key, value, data)
     end
 end
 
-function changeMetaTexture(key, data)
-    local creation                   = editingGuy.dna.creation
+function changeMetaTexture(key, guy, data)
+    local creation                   = guy.dna.creation
     local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
     local bbw                        = (brx - tlx)
     local bbh                        = (bry - tly)
@@ -395,6 +395,7 @@ local function tableContains(table, element)
 end
 
 function toggleAllJointLimits(guy, value)
+    local creation = guy.dna.creation
     if not creation.isPotatoHead and creation.hasNeck then
         setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
         setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
@@ -485,9 +486,10 @@ local function makeGuyFixture(data, key, groupId, body, shape)
 end
 
 
-local function makePart_(key, parent, groupId)
-    local creation = editingGuy.dna.creation -- dna.getCreation()
-    local offsetX, offsetY = getOffsetFromParent(key)
+local function makePart_(key, parent, guy)
+    local groupId = guy.id
+    local creation = guy.dna.creation -- dna.getCreation()
+    local offsetX, offsetY = getOffsetFromParent(key, guy)
     local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
     local prevA = parent:getAngle()
@@ -503,21 +505,6 @@ local function makePart_(key, parent, groupId)
     return body
 end
 
-local function getRecreateConnectorData(allAttachedFixtures)
-    local result = nil
-    for i = 1, #allAttachedFixtures do
-        local f = allAttachedFixtures[i]
-        if f:getUserData() and f:getUserData().bodyType == 'connector' then
-            for j = 1, #connectors do
-                if connectors[j].at == f then
-                    result = { oldFixture = f, ud = f:getUserData() }
-                    return result
-                end
-            end
-        end
-    end
-    return result
-end
 
 function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
     size = size or 10
@@ -547,9 +534,25 @@ function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
     end
 end
 
-local function useRecreateConnectorData(recreateConnectorData, body)
-    local creation = editingGuy.dna.creation 
-    local data = recreateConnectorData.ud.data
+local function getRecreateConnectorData(allAttachedFixtures)
+    local result = nil
+    for i = 1, #allAttachedFixtures do
+        local f = allAttachedFixtures[i]
+        if f:getUserData() and f:getUserData().bodyType == 'connector' then
+            for j = 1, #connectors do
+                if connectors[j].at == f then
+                    result = { oldFixture = f, userData = f:getUserData() }
+                    return result
+                end
+            end
+        end
+    end
+    return result
+end
+
+local function useRecreateConnectorData(recreateConnectorData, body, guy)
+    local creation = guy.dna.creation
+    local data = recreateConnectorData.userData.data
     local type = data.type
     assert(type)
     if type == 'foot' then
@@ -564,9 +567,12 @@ local function useRecreateConnectorData(recreateConnectorData, body)
     end
 end
 
-function genericBodyPartUpdate(box2dGuy, groupId, partName)
-    local creation = editingGuy.dna.creation
-    local data = getParentAndChildrenFromPartName(partName)
+
+function genericBodyPartUpdate(guy, partName)
+    local groupId = guy.id
+    local box2dGuy = guy.b2d
+    local creation = guy.dna.creation
+    local data = getParentAndChildrenFromPartName(partName, guy)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
     --  print(recreateConnectorData)
@@ -577,7 +583,7 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
         local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
 
         if jointWithParentToBreak then
-            local offsetX, offsetY = getOffsetFromParent(partName)
+            local offsetX, offsetY = getOffsetFromParent(partName, guy)
             local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
             local prevA = box2dGuy[parentName]:getAngle()
             for i = 1, #jointWithParentToBreak do
@@ -615,13 +621,13 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
 
     if (recreateConnectorData) then
-        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName])
+        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName], guy)
     end
     -- reattach children
 
 
     local function reAttachChild(childName)
-        local offsetX, offsetY = getOffsetFromParent(childName)
+        local offsetX, offsetY = getOffsetFromParent(childName, guy)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
@@ -655,12 +661,14 @@ function genericBodyPartUpdate(box2dGuy, groupId, partName)
     end
 end
 
-function handlePhysicsHairOrNo(hair, box2dGuy, groupId)
+function handlePhysicsHairOrNo(box2dGuy, guy, hair)
+    local creation = guy.dna.creation
+    -- local groupId = guy.id
     -- we need to find out if we can leave early..
     if hair and box2dGuy.hair1 then return end
     if not hair and not box2dGuy.hair1 then return end
     local function makePart(name, parent)
-        return makePart_(name, parent, groupId)
+        return makePart_(name, parent, guy)
     end
 
     if not hair then
@@ -689,12 +697,13 @@ function handlePhysicsHairOrNo(hair, box2dGuy, groupId)
     end
 end
 
-function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
+function handleNeckAndHeadForHasNeck(box2dGuy, guy, willHaveNeck)
+    local groupId = guy.id
     --if not willHaveNeck and box2dGuy.neck == nil
     --if creation.isPotatoHead then return end
     --print(box2dGuy.isPotatoHead)
     local function makePart(name, parent)
-        return makePart_(name, parent, groupId)
+        return makePart_(name, parent, guy)
     end
 
     if not willHaveNeck then
@@ -722,13 +731,14 @@ function handleNeckAndHeadForHasNeck(willHaveNeck, box2dGuy, groupId)
     end
 end
 
-function handleNeckAndHeadForPotato(willBePotato, box2dGuy, groupId, hasNeck)
+function handleNeckAndHeadForPotato(box2dGuy, guy, willBePotato, hasNeck)
+    local groupId = guy.id
     if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
         return
     end
 
     local function makePart(name, parent)
-        return makePart_(name, parent, groupId)
+        return makePart_(name, parent, guy)
     end
 
     if willBePotato then
@@ -789,14 +799,15 @@ function makeAndAddConnector(parent, x, y, data, size, size2)
     --print('jo hello!', #connectors)
 end
 
-function makeGuy(x, y, groupId)
-    --print(inspect(fiveGuys[groupId].dna))
-  --  local creation = fiveGuys[groupId].dna.creation 
+function makeGuy(x, y, guy)
+    local creation = guy.dna.creation
+    local groupId = guy.id
+
     local function makePart(name, parent)
-        return makePart_(name, parent, groupId)
+        return makePart_(name, parent, guy)
     end
-    local creation = editingGuy.dna.creation
-    --print(editingGuy.dna.creation)
+
+
     local torso = love.physics.newBody(world, x, y, "dynamic")
     local torsoShape = phys.makeShapeFromCreationPart(creation.torso)
     local fixture = makeGuyFixture('torso', 'torso', groupId, torso, torsoShape)
@@ -965,8 +976,14 @@ local function getRidOfBigRotationsInBody(body)
 end
 
 function rotateAllBodies(bodies, dt)
-    --print('hi hello!')
-    local creation = editingGuy.dna.creation
+    -- I want to be able to rotate all bodies in one go.
+    -- This means I cannot fetch the guy with its creation here.
+    -- So that means the creation below , which is used for some stance-angles, this needs another solution.
+    -- probably data in userData on thos limbs...
+
+    -- for now i will just assume the same data for all.
+
+    local creation = dna.getCreation()
     local upsideDown = false
     lastDt = dt
     for _, body in ipairs(bodies) do
@@ -1162,13 +1179,15 @@ function createWhiteColoredBlackOutlineTexture(url)
             1, 1, nil, nil))
 end
 
-function partToTexturedCanvasWrap(partName, values, optionalImageSettings)
-    local a, b = partToTexturedCanvas(partName, values, optionalImageSettings)
+function partToTexturedCanvasWrap(partName, guy, optionalImageSettings)
+    local a, b = partToTexturedCanvas(partName, guy, optionalImageSettings)
     return love.graphics.newImage(a)
 end
 
-function partToTexturedCanvas(partName, values, optionalImageSettings)
-    local creation = editingGuy.dna.creation
+function partToTexturedCanvas(partName, guy, optionalImageSettings)
+    local creation = guy.dna.creation
+    local values = guy.dna.values
+
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
 
@@ -1178,7 +1197,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
     if (partName == 'head') then
         if not isNullObject('skinPatchSnout', values) then
             local p = {}
-            p.imageData = partToTexturedCanvas('skinPatchSnout', values)
+            p.imageData = partToTexturedCanvas('skinPatchSnout', guy)
             p.sx = values.skinPatchSnoutPV.sx
             p.sy = values.skinPatchSnoutPV.sy
             p.r = values.skinPatchSnoutPV.r
@@ -1188,7 +1207,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
         end
         if not isNullObject('skinPatchEye1', values) then
             local p     = {}
-            p.imageData = partToTexturedCanvas('skinPatchEye1', values)
+            p.imageData = partToTexturedCanvas('skinPatchEye1', guy)
             p.sx        = values.skinPatchEye1PV.sx
             p.sy        = values.skinPatchEye1PV.sy
             p.r         = values.skinPatchEye1PV.r
@@ -1198,7 +1217,7 @@ function partToTexturedCanvas(partName, values, optionalImageSettings)
         end
         if not isNullObject('skinPatchEye2', values) then
             local p     = {}
-            p.imageData = partToTexturedCanvas('skinPatchEye2', values)
+            p.imageData = partToTexturedCanvas('skinPatchEye2', guy)
             p.sx        = values.skinPatchEye2PV.sx
             p.sy        = values.skinPatchEye2PV.sy
             p.r         = values.skinPatchEye2PV.r

@@ -87,8 +87,8 @@ end
 local function createDefaultTextureValues()
     return {
         shape     = 1,
-        bgPal     = math.ceil(love.math.random() * #palettes),
-        fgPal     = math.ceil(love.math.random() * #palettes),
+        bgPal     = 13, --math.ceil(love.math.random() * #palettes),
+        fgPal     = 1, --math.ceil(love.math.random() * #palettes),
         bgTex     = 1,
         fgTex     = 2,
         linePal   = 1,
@@ -110,41 +110,44 @@ local function createDefaultPatchValues()
     }
 end
 
+
+
+local values = {
+    chestHair        = createDefaultTextureValues(),
+    skinPatchSnout   = createDefaultTextureValues(),
+    skinPatchSnoutPV = createDefaultPatchValues(),
+    skinPatchEye1    = createDefaultTextureValues(),
+    skinPatchEye1PV  = createDefaultPatchValues(),
+    skinPatchEye2    = createDefaultTextureValues(),
+    skinPatchEye2PV  = createDefaultPatchValues(),
+    upperlip         = createDefaultTextureValues(),
+    lowerlip         = createDefaultTextureValues(),
+    eyes             = createDefaultTextureValues(),
+    pupils           = createDefaultTextureValues(),
+    ears             = createDefaultTextureValues(),
+    brows            = createDefaultTextureValues(),
+    nose             = createDefaultTextureValues(),
+    leghair          = createDefaultTextureValues(),
+    legs             = createDefaultTextureValues(),
+    armhair          = createDefaultTextureValues(),
+    arms             = createDefaultTextureValues(),
+    hands            = createDefaultTextureValues(),
+    teeth            = createDefaultTextureValues(),
+    body             = createDefaultTextureValues(),
+    head             = createDefaultTextureValues(),
+    hair             = createDefaultTextureValues(),
+    neck             = createDefaultTextureValues(),
+    feet             = createDefaultTextureValues(),
+}
+values.skinPatchSnoutPV.ty = 5
+values.skinPatchSnoutPV.sx = 2
+values.skinPatchEye1PV.ty = 0
+values.skinPatchEye1PV.tx = -2
+values.skinPatchEye2PV.ty = 0
+values.skinPatchEye2PV.tx = 2
+values.teeth.bgPal = 5
+
 lib.generateValues = function()
-    local values = {
-        chestHair        = createDefaultTextureValues(),
-        skinPatchSnout   = createDefaultTextureValues(),
-        skinPatchSnoutPV = createDefaultPatchValues(),
-        skinPatchEye1    = createDefaultTextureValues(),
-        skinPatchEye1PV  = createDefaultPatchValues(),
-        skinPatchEye2    = createDefaultTextureValues(),
-        skinPatchEye2PV  = createDefaultPatchValues(),
-        upperlip         = createDefaultTextureValues(),
-        lowerlip         = createDefaultTextureValues(),
-        eyes             = createDefaultTextureValues(),
-        pupils           = createDefaultTextureValues(),
-        ears             = createDefaultTextureValues(),
-        brows            = createDefaultTextureValues(),
-        nose             = createDefaultTextureValues(),
-        leghair          = createDefaultTextureValues(),
-        legs             = createDefaultTextureValues(),
-        armhair          = createDefaultTextureValues(),
-        arms             = createDefaultTextureValues(),
-        hands            = createDefaultTextureValues(),
-        teeth            = createDefaultTextureValues(),
-        body             = createDefaultTextureValues(),
-        head             = createDefaultTextureValues(),
-        hair             = createDefaultTextureValues(),
-        neck             = createDefaultTextureValues(),
-        feet             = createDefaultTextureValues(),
-    }
-    values.skinPatchSnoutPV.ty = 5
-    values.skinPatchSnoutPV.sx = 2
-    values.skinPatchEye1PV.ty = 0
-    values.skinPatchEye1PV.tx = -2
-    values.skinPatchEye2PV.ty = 0
-    values.skinPatchEye2PV.tx = 2
-    values.teeth.bgPal = 5
     return values
 end
 

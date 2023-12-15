@@ -534,10 +534,10 @@ function setupBox2dScene()
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
 
-    for i =1, #fiveGuys do 
+    for i = 1, #fiveGuys do
         fiveGuys[i].b2d = nil
     end
-   -- box2dGuys = {}
+    -- box2dGuys = {}
 
     rebuildPhysicsBorderForScreen()
 
@@ -548,7 +548,7 @@ function setupBox2dScene()
 
 
     for i = 1, #fiveGuys do
-        fiveGuys[i].b2d = makeGuy(camtlx + i * stepSize, camtly, i)
+        fiveGuys[i].b2d = makeGuy(camtlx + i * stepSize, camtly, fiveGuys[i])
     end
 end
 

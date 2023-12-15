@@ -392,11 +392,12 @@ local function setAngleAndDistance(sx, sy, angle, distance, scaleX, scaleY)
     return newx, newy
 end
 
-function drawSkinOver(box2dGuy, editingGuy)
-    local values = editingGuy.dna.values
-    local creation = editingGuy.dna.creation
-    local multipliers = editingGuy.dna.multipliers
-    local positioners = editingGuy.dna.positioners
+function drawSkinOver(box2dGuy, guy)
+    local values = guy.dna.values
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
+    local positioners = guy.dna.positioners
+
     love.graphics.setColor(1, 1, 1, 1)
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()

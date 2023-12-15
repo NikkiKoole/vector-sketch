@@ -13,10 +13,8 @@ local imageCache = {}
 --local dna        = require 'src.dna'
 require 'src.box2dGuyCreation'
 
---local creation = editingGuy.dna.creation 
-
 function changePart(name)
-    updatePart(name)
+    updatePart(name, editingGuy)
 end
 
 function tweenCameraToHeadAndBody()
@@ -502,7 +500,6 @@ function configPanelSurroundings(draw, clickX, clickY)
     end
 end
 
-
 local function getValueByPath(root, path)
     local keys = {}
     for key in string.gmatch(path, '([^%.]+)') do
@@ -617,7 +614,7 @@ end
 local function draw_slider_with_2_buttons(path, startX, currentY, buttonSize, sliderWidth, propupdate, update,
                                           valmin, valmax, valstep, img1, img2)
     local val = getValueByPath(editingGuy, path)
- 
+
     local sx, sy = createFittingScale(ui2.rects[1], buttonSize, buttonSize)
     love.graphics.setColor(0, 0, 0, .1)
     love.graphics.draw(ui2.rects[1], startX, currentY, 0, sx, sy)
@@ -1019,8 +1016,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                     sliderWidth, propupdate,
                     nil, 0.5, 3, .5, ui2.icons.handnarrow, ui2.icons.handwide)
                 runningElem, currentY = updateRowStuff()
-
-                
             end
         end
 
@@ -1048,8 +1043,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                     nil, 0.5, 3, .5, ui2.icons.footnarrow, ui2.icons.footwide)
 
                 runningElem, currentY = updateRowStuff()
-
-                
             end
         end
 
@@ -1067,7 +1060,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                     end
                 end
 
-                draw_slider_with_2_buttons('dna.creation.lear.stanceAngle', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('dna.creation.lear.stanceAngle', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, rotupdate,
                     nil, 0, math.pi, .25, ui2.icons.earcw, ui2.icons.earccw)
@@ -1100,7 +1094,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                     nil, 0, 1, .1, ui2.icons.earup, ui2.icons.eardown)
 
                 runningElem, currentY = updateRowStuff()
-               
             end
         end
 
@@ -1115,14 +1108,16 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 end
 
 
-                draw_slider_with_2_buttons('dna.multipliers.leg.lMultiplier', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('dna.multipliers.leg.lMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0.5, 4, .5, ui2.icons.legshort, ui2.icons.leglong)
 
                 runningElem, currentY = updateRowStuff()
 
-                draw_slider_with_2_buttons('dna.multipliers.leg.wMultiplier', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('dna.multipliers.leg.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0.5, 4, .5, ui2.icons.legthin, ui2.icons.legthick)
@@ -1208,7 +1203,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                     changePart('arms')
                 end
 
-                draw_slider_with_2_buttons('dna.multipliers.arm.lMultiplier', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('dna.multipliers.arm.lMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0.5, 3, .5, ui2.icons.armsshort, ui2.icons.armslong)
@@ -1216,7 +1212,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 runningElem, currentY = updateRowStuff()
 
 
-                draw_slider_with_2_buttons('dna.multipliers.arm.wMultiplier', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons('dna.multipliers.arm.wMultiplier', startX + (runningElem * elementWidth),
+                    currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0.5, 3, .5, ui2.icons.armsthin, ui2.icons.armsthick)
@@ -1469,7 +1466,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 end
                 runningElem = 0
 
-                draw_slider_with_2_buttons('dna.values.' .. category .. '.texScale', startX + (runningElem * elementWidth),
+                draw_slider_with_2_buttons('dna.values.' .. category .. '.texScale',
+                    startX + (runningElem * elementWidth),
                     currentY,
                     buttonSize,
                     sliderWidth, propupdate,
@@ -1494,7 +1492,8 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
                 runningElem, currentY = updateRowStuff()
 
                 if isPatch then
-                    draw_slider_with_2_buttons('dna.values.' .. category .. '.bgAlpha', startX + (runningElem * elementWidth),
+                    draw_slider_with_2_buttons('dna.values.' .. category .. '.bgAlpha',
+                        startX + (runningElem * elementWidth),
                         currentY,
                         buttonSize,
                         sliderWidth, propupdate,
@@ -1515,7 +1514,6 @@ function drawImmediateSlidersEtc(draw, startX, currentY, width, category)
     end
 
     if uiState.selectedTab == 'colors' then
-
         if findPart(category).children then
             currentHeight = 0
         else
