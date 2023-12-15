@@ -171,11 +171,6 @@ function updatePart(name, guy)
 
         genericBodyPartUpdate(guy, 'lear')
         genericBodyPartUpdate(guy, 'rear')
-
-        for i = 1, #fiveGuys do
-            --    genericBodyPartUpdate(fiveGuys[i], 'lear')
-            --    genericBodyPartUpdate(fiveGuys[i], 'rear')
-        end
     end
 
     if name == 'feet' then
@@ -191,11 +186,7 @@ function updatePart(name, guy)
 
         canvasCache.footCanvas = partToTexturedCanvasWrap('feet', guy)
         canvasCache.footmesh   = createTexturedTriangleStrip(canvasCache.footCanvas)
-        print('change feet')
-        for i = 1, #fiveGuys do
-            --   genericBodyPartUpdate(fiveGuys[i], 'lfoot')
-            --   genericBodyPartUpdate(fiveGuys[i], 'rfoot')
-        end
+
         genericBodyPartUpdate(guy, 'lfoot')
         genericBodyPartUpdate(guy, 'rfoot')
     end
@@ -216,11 +207,6 @@ function updatePart(name, guy)
 
         genericBodyPartUpdate(guy, 'lhand')
         genericBodyPartUpdate(guy, 'rhand')
-
-        for i = 1, #fiveGuys do
-            --      genericBodyPartUpdate(fiveGuys[i], 'lhand')
-            --      genericBodyPartUpdate(fiveGuys[i], 'rhand')
-        end
     end
 
     if name == 'head' or name == 'skinPatchEye1' or name == 'skinPatchEye2' or name == 'skinPatchSnout' then
@@ -242,33 +228,17 @@ function updatePart(name, guy)
         genericBodyPartUpdate(guy, 'head')
         genericBodyPartUpdate(guy, 'lear')
         genericBodyPartUpdate(guy, 'rear')
-
-        for i = 1, #fiveGuys do
-            --     genericBodyPartUpdate(fiveGuys[i], 'head')
-            --     genericBodyPartUpdate(fiveGuys[i], 'lear')
-            --     genericBodyPartUpdate(fiveGuys[i], 'rear')
-        end
     end
 
     if name == 'potato' then
         handleNeckAndHeadForPotato(guy.b2d, guy, creation.isPotatoHead, creation.hasNeck)
         handlePhysicsHairOrNo(guy.b2d, guy, creation.hasPhysicsHair)
         genericBodyPartUpdate(guy, 'torso')
-        for i = 1, #fiveGuys do
-            --handleNeckAndHeadForPotato(fiveGuys[i].b2d, fiveGuys[i], creation.isPotatoHead, creation.hasNeck)
-            --handlePhysicsHairOrNo(fiveGuys[i].b2d, fiveGuys[i], creation.hasPhysicsHair)
-            --genericBodyPartUpdate(fiveGuys[i], 'torso')
-        end
     end
 
     if name == 'hasNeck' then
         handleNeckAndHeadForHasNeck(guy.b2d, guy, creation.hasNeck)
         genericBodyPartUpdate(guy, 'head')
-
-        for i = 1, #fiveGuys do
-            --  handleNeckAndHeadForHasNeck(fiveGuys[i].b2d, fiveGuys[i], creation.hasNeck)
-            --  genericBodyPartUpdate(fiveGuys[i], 'head')
-        end
     end
 
 
@@ -289,11 +259,6 @@ function updatePart(name, guy)
 
         genericBodyPartUpdate(guy, 'neck')
         genericBodyPartUpdate(guy, 'neck1')
-
-        for i = 1, #fiveGuys do
-            --  genericBodyPartUpdate(fiveGuys[i], 'neck')
-            --  genericBodyPartUpdate(fiveGuys[i], 'neck1')
-        end
     end
 
     if name == 'legs' then
@@ -319,13 +284,6 @@ function updatePart(name, guy)
         genericBodyPartUpdate(guy, 'ruleg')
         genericBodyPartUpdate(guy, 'llleg')
         genericBodyPartUpdate(guy, 'rlleg')
-
-        for i = 1, #fiveGuys do
-            -- genericBodyPartUpdate(fiveGuys[i], 'luleg')
-            -- genericBodyPartUpdate(fiveGuys[i], 'ruleg')
-            -- genericBodyPartUpdate(fiveGuys[i], 'llleg')
-            -- genericBodyPartUpdate(fiveGuys[i], 'rlleg')
-        end
     end
 
     if name == 'leghair' then
@@ -372,12 +330,6 @@ function updatePart(name, guy)
         genericBodyPartUpdate(guy, 'ruarm')
         genericBodyPartUpdate(guy, 'llarm')
         genericBodyPartUpdate(guy, 'rlarm')
-        for i = 1, #fiveGuys do
-            --genericBodyPartUpdate(fiveGuys[i], 'luarm')
-            --genericBodyPartUpdate(fiveGuys[i], 'ruarm')
-            --genericBodyPartUpdate(fiveGuys[i], 'llarm')
-            --genericBodyPartUpdate(fiveGuys[i], 'rlarm')
-        end
     end
 
     if name == 'body' then
@@ -427,11 +379,11 @@ end
 
 function resetPositions(guy)
     local box2dGuy = guy.b2d
-    print('rest hard!')
 
     if (box2dGuy.head) then box2dGuy.head:setAngle(0) end
     if (box2dGuy.neck1) then box2dGuy.neck1:setAngle( -math.pi) end
     if (box2dGuy.neck) then box2dGuy.neck:setAngle( -math.pi) end
+
     box2dGuy.lear:setAngle(math.pi / 2)
     box2dGuy.rear:setAngle( -math.pi / 2)
     box2dGuy.torso:setAngle(0)

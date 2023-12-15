@@ -267,12 +267,13 @@ function drawNumbersOver(box2dGuy)
     end
 end
 
-local function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
+    local canvasCache = guy.canvasCache
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
     if true then
         if true or box2dGuy.hairNeedsRedo then
-            local img = hairCanvas
+            local img = canvasCache.hairCanvas
             local w, h = img:getDimensions()
             local f = faceData.metaPoints
             -- todo parameter hair (beard, only top hair, sidehair)
@@ -307,7 +308,8 @@ local function renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx
     end
 end
 
-local function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipliers, positioners, r)
+local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, multipliers, positioners, r)
+    local canvasCache = guy.canvasCache
     local hMult = multipliers.mouth.hMultiplier
     local wMult = multipliers.mouth.wMultiplier
     local f = faceData.metaPoints
@@ -323,8 +325,8 @@ local function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipl
             (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
 
     local mouthWidth = wMult * (f[3][1] - f[7][1]) / 2
-    local scaleX = (mouthWidth / wMult) / teethCanvas:getWidth()
-    local upperlipmesh = createTexturedTriangleStrip(upperlipCanvas)
+    local scaleX = (mouthWidth / wMult) / canvasCache.teethCanvas:getWidth()
+    local upperlipmesh = createTexturedTriangleStrip(canvasCache.upperlipCanvas)
 
     if false then
         local topcurves = { { 0, 0, 0 }, { -1, 0, -1 }, { 0, -1, 0 } }
@@ -337,13 +339,13 @@ local function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipl
     local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
             { 0, -20 },
             { mouthWidth / 2, 0 },
-            upperlipCanvas,
+            canvasCache.upperlipCanvas,
             upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
-    local lowerlipmesh = createTexturedTriangleStrip(lowerlipCanvas)
+    local lowerlipmesh = createTexturedTriangleStrip(canvasCache.lowerlipCanvas)
     local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
             { 0, 20 },
             { mouthWidth / 2, 0 },
-            upperlipCanvas,
+            canvasCache.upperlipCanvas,
             lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
 
     local holePolygon = {}
@@ -368,7 +370,7 @@ local function drawMouth(facePart, faceData, creation, box2dGuy, sx, sy, multipl
 
     love.graphics.setStencilTest("greater", 0)
 
-    renderNonAttachedObject(teethCanvas,
+    renderNonAttachedObject(canvasCache.teethCanvas,
         'teeth', r, tx, ty, 10, -10,
         box2dGuy, creation)
     love.graphics.setStencilTest()
@@ -504,8 +506,8 @@ function drawSkinOver(box2dGuy, guy)
     end
 
     love.graphics.setColor(1, 1, 1, 1)
-    if false and not isNullObject('hair', values) then
-        renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
+    if not isNullObject('hair', values) then
+        renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
     end
 
     if canvasCache.browCanvas then
@@ -544,10 +546,10 @@ function drawSkinOver(box2dGuy, guy)
         love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
     end
 
-    if false then
-        drawMouth(facePart, faceData, creation, box2dGuy, sx,
-            sy, multipliers, positioners, r)
-    end
+
+    drawMouth(facePart, faceData, creation, guy, box2dGuy, sx,
+        sy, multipliers, positioners, r)
+
     if canvasCache.noseCanvas then
         local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
         local noseY = numbers.lerp(f[1][2], f[5][2], positioners.nose.y)
