@@ -70,7 +70,7 @@ function scene.load()
     sprietUnder    = {}
     sprietOver     = {}
 
-    setupBox2dScene(5)
+    setupBox2dScene()
 
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -158,7 +158,7 @@ function scene.draw()
         drawSkinOver(fiveGuys[i].b2d, editingGuy)
     end
 
-    
+
     for i = 1, #fiveGuys do
         --     drawNumbersOver(box2dGuys[i])
     end

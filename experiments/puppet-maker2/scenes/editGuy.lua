@@ -32,11 +32,11 @@ end
 
 local function attachCallbacks()
     Signal.register('click-settings-scroll-area-item', function(x, y)
-        configPanelScrollGrid(false, x, y)
+        configPanelScrollGrid(editingGuy, false, x, y)
     end)
 
     Signal.register('click-scroll-list-item', function(x, y)
-        scrollList(false, x, y)
+        scrollList(editingGuy, false, x, y)
     end)
 
     Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
@@ -436,11 +436,11 @@ function randomizeGuy(guy)
     if (creation.isPotatoHead) then creation.hasNeck = false end
 
     if creation.hasNeck ~= oldHasNeck then
-        changePart('hasNeck')
+        changePart('hasNeck', guy)
     end
 
     if creation.isPotatoHead ~= oldPotato then
-        changePart('potato')
+        changePart('potato', guy)
     end
 
     randomizePart('ears')
@@ -646,7 +646,7 @@ local function pointerReleased(x, y, id)
 
     gesture.maybeTrigger(id, x, y)
 
-    configPanelSurroundings(false, x, y)
+    configPanelSurroundings(editingGuy, false, x, y)
 
     handlePointerReleased(x, y, id)
 end
@@ -759,7 +759,7 @@ function scene.load()
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    setupBox2dScene(5)
+    setupBox2dScene()
     updateAllParts(editingGuy)
     Timer.tween(.5, scroller, { position = 4 })
 end
@@ -832,8 +832,8 @@ function scene.draw()
         love.graphics.setColor(1, 1, 1)
 
 
-        scrollList(true)
-        configPanel()
+        scrollList(editingGuy, true)
+        configPanel(editingGuy)
     end
     prof.pop('editGuy.draw ui')
     cam:push()

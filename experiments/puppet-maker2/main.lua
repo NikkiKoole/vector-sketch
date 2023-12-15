@@ -38,9 +38,9 @@ lurker.quiet = true
 local DEBUG_PROFILER = false
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
 if DEBUG_PROFILER == false then
-    prof.push = function()
+    prof.push = function(a)
     end
-    prof.pop  = function()
+    prof.pop  = function(a)
     end
 end
 
