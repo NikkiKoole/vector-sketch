@@ -397,39 +397,42 @@ function drawSkinOver(box2dGuy, guy)
     local creation = guy.dna.creation
     local multipliers = guy.dna.multipliers
     local positioners = guy.dna.positioners
+    local canvasCache = guy.canvasCache
 
+    print(inspect(guy.canvasCache))
     love.graphics.setColor(1, 1, 1, 1)
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
 
     if creation.torso.metaURL and not creation.isPotatoHead then
-        local x, y, r, sx, sy = renderMetaObject(torsoCanvas, 'torso', box2dGuy, creation)
+        print(canvasCache.torsoCanvas)
+        local x, y, r, sx, sy = renderMetaObject(canvasCache.torsoCanvas, 'torso', box2dGuy, creation)
         --love.graphics.setColor(.4, 0, 0, 1)
         if not isNullObject('chestHair', values) then
-            drawSquishableHairOver(chestHairCanvas, x, y, r, sx * dpi / shrink,
+            drawSquishableHairOver(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink,
                 sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)
         end
         love.graphics.setColor(1, 1, 1, 1)
     end
 
-    if neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
+    if canvasCache.neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObjectGrow('neck', 'neck1', 'head', 50, neckCanvas, neckmesh, box2dGuy, 1,
+        renderCurvedObjectGrow('neck', 'neck1', 'head', 50, canvasCache.neckCanvas, canvasCache.neckmesh, box2dGuy, 1,
             multipliers.neck.wMultiplier / (4 * dpi / shrink))
-        love.graphics.draw(neckmesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.neckmesh, 0, 0, 0, 1, 1)
     end
 
-    if earCanvas then
+    if canvasCache.earCanvas then
         if creation.lear.metaURL then
-            renderAtachedObject(earCanvas, 'lear', 'lear', -math.pi / 2, -1 * 2, 2, box2dGuy, creation)
-            renderAtachedObject(earCanvas, 'rear', 'rear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
+            renderAtachedObject(canvasCache.earCanvas, 'lear', 'lear', -math.pi / 2, -1 * 2, 2, box2dGuy, creation)
+            renderAtachedObject(canvasCache.earCanvas, 'rear', 'rear', math.pi / 2, 1 * 2, 2, box2dGuy, creation)
         end
     end
 
     love.graphics.setColor(0, 0, 0, 1)
 
     local facePart = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
-    local faceCanvas = creation.isPotatoHead and torsoCanvas or headCanvas
+    local faceCanvas = creation.isPotatoHead and canvasCache.torsoCanvas or canvasCache.headCanvas
     local face = creation.isPotatoHead and 'torso' or 'head'
     local faceData = creation.isPotatoHead and creation.torso or creation.head
     local faceMultiplier = multipliers.face.mMultiplier
@@ -440,7 +443,7 @@ function drawSkinOver(box2dGuy, guy)
     if creation.isPotatoHead then
         -- love.graphics.setColor(.4, 0, 0, 1)
         if not isNullObject('chestHair', values) then
-            drawSquishableHairOver(chestHairCanvas, x, y, r, sx * dpi / shrink,
+            drawSquishableHairOver(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink,
                 sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)
         end
         love.graphics.setColor(1, 1, 1, 1)
@@ -480,32 +483,32 @@ function drawSkinOver(box2dGuy, guy)
                 (rightEyeX + faceData.metaOffsetX + px2) * sx * dpi / shrink,
                 (eyeY + faceData.metaOffsetY + py2) * sy * dpi / shrink)
 
-        if eyeCanvas then
+        if canvasCache.eyeCanvas then
             local eyeW = eyeMultiplierFix * multipliers.eye.wMultiplier * faceMultiplier
             local eyeH = eyeMultiplierFix * multipliers.eye.hMultiplier * faceMultiplier
-            renderNonAttachedObject(eyeCanvas,
+            renderNonAttachedObject(canvasCache.eyeCanvas,
                 'eye', r - positioners.eye.r, eyelx, eyely, -eyeW, eyeH, box2dGuy, creation)
 
-            renderNonAttachedObject(eyeCanvas,
+            renderNonAttachedObject(canvasCache.eyeCanvas,
                 'eye', r + positioners.eye.r, eyerx, eyery, eyeW, eyeH, box2dGuy, creation)
         end
 
-        if pupilCanvas then
+        if canvasCache.pupilCanvas then
             local pupilW = multipliers.pupil.wMultiplier
             local pupilH = multipliers.pupil.hMultiplier
-            renderNonAttachedObject2(pupilCanvas,
+            renderNonAttachedObject2(canvasCache.pupilCanvas,
                 'pupil', r, pupillx, pupilly, pupilW, pupilH, box2dGuy, creation)
-            renderNonAttachedObject2(pupilCanvas,
+            renderNonAttachedObject2(canvasCache.pupilCanvas,
                 'pupil', r, pupilrx, pupilry, pupilW, pupilH, box2dGuy, creation)
         end
     end
 
     love.graphics.setColor(1, 1, 1, 1)
-    if not isNullObject('hair', values) then
+    if false and not isNullObject('hair', values) then
         renderHair(box2dGuy, faceData, creation, multipliers, x, y, r, sx, sy)
     end
 
-    if browCanvas then
+    if canvasCache.browCanvas then
         local browY = numbers.lerp(f[5][2], f[1][2], positioners.brow.y)
 
         local browlx, browly = facePart:getWorldPoint(
@@ -524,98 +527,99 @@ function drawSkinOver(box2dGuy, guy)
         local bend = bends[math.ceil(positioners.brow.bend)]
         local bendMultiplier = 1 * faceWidth / 5
 
-        local browmesh = createTexturedTriangleStrip(browCanvas)
+        local browmesh = createTexturedTriangleStrip(canvasCache.browCanvas)
         renderCurvedObjectFromSimplePoints(
             { -faceWidth / 2, bend[1] * bendMultiplier },
             { 0, bend[2] * bendMultiplier },
             { faceWidth / 2, bend[3] * bendMultiplier },
-            browCanvas, browmesh, box2dGuy, 1, multipliers.brow.hMultiplier * shrink / dpi)
+            canvasCache.browCanvas, browmesh, box2dGuy, 1, multipliers.brow.hMultiplier * shrink / dpi)
         love.graphics.draw(browmesh, browlx, browly, r, 1, 1)
 
-        local browmesh = createTexturedTriangleStrip(browCanvas)
+        local browmesh = createTexturedTriangleStrip(canvasCache.browCanvas)
         renderCurvedObjectFromSimplePoints(
             { -faceWidth / 2, bend[1] * bendMultiplier },
             { 0, bend[2] * bendMultiplier },
             { faceWidth / 2, bend[3] * bendMultiplier },
-            browCanvas, browmesh, box2dGuy, 1, multipliers.brow.hMultiplier * shrink / dpi)
+            canvasCache.browCanvas, browmesh, box2dGuy, 1, multipliers.brow.hMultiplier * shrink / dpi)
         love.graphics.draw(browmesh, browrx, browry, r, -1, 1)
     end
 
-    drawMouth(facePart, faceData, creation, box2dGuy, sx,
-        sy, multipliers, positioners, r)
-
-    if noseCanvas then
+    if false then
+        drawMouth(facePart, faceData, creation, box2dGuy, sx,
+            sy, multipliers, positioners, r)
+    end
+    if canvasCache.noseCanvas then
         local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
         local noseY = numbers.lerp(f[1][2], f[5][2], positioners.nose.y)
         local nx, ny = facePart:getWorldPoint(
                 (noseX + faceData.metaOffsetX) * sx * dpi / shrink,
                 (noseY + faceData.metaOffsetY) * sy * dpi / shrink)
 
-        renderNonAttachedObject(noseCanvas,
+        renderNonAttachedObject(canvasCache.noseCanvas,
             'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier * faceMultiplier,
             -0.5 * multipliers.nose.hMultiplier * faceMultiplier,
             box2dGuy, creation)
     end
 
-    if legCanvas then
+    if canvasCache.legCanvas then
         love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObjectGrow('luleg', 'llleg', 'lfoot', 25, legCanvas, legmesh, box2dGuy, 1,
+        renderCurvedObjectGrow('luleg', 'llleg', 'lfoot', 25, canvasCache.legCanvas, canvasCache.legmesh, box2dGuy, 1,
             shrink * multipliers.leg.wMultiplier / (4 * dpi))
-        love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
-        renderCurvedObjectGrow('ruleg', 'rlleg', 'rfoot', 25, legCanvas, legmesh, box2dGuy, 1,
+        love.graphics.draw(canvasCache.legmesh, 0, 0, 0, 1, 1)
+        renderCurvedObjectGrow('ruleg', 'rlleg', 'rfoot', 25, canvasCache.legCanvas, canvasCache.legmesh, box2dGuy, 1,
             shrink * multipliers.leg.wMultiplier / (4 * dpi))
-        love.graphics.draw(legmesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.legmesh, 0, 0, 0, 1, 1)
     end
 
-    if not isNullObject('leghair', values) and leghairCanvas then
-        renderCurvedObject('luleg', 'llleg', 'lfoot', leghairCanvas, leghairMesh, box2dGuy, -1,
+    if not isNullObject('leghair', values) and canvasCache.leghairCanvas then
+        renderCurvedObject('luleg', 'llleg', 'lfoot', canvasCache.leghairCanvas, canvasCache.leghairMesh, box2dGuy, -1,
             (multipliers.leg.wMultiplier * multipliers.leghair.wMultiplier) / (4 * dpi))
-        love.graphics.draw(leghairMesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.leghairMesh, 0, 0, 0, 1, 1)
 
-        renderCurvedObject('ruleg', 'rlleg', 'rfoot', leghairCanvas, leghairMesh, box2dGuy, 1,
+        renderCurvedObject('ruleg', 'rlleg', 'rfoot', canvasCache.leghairCanvas, canvasCache.leghairMesh, box2dGuy, 1,
             (multipliers.leg.wMultiplier * multipliers.leghair.wMultiplier) / (4 * dpi))
-        love.graphics.draw(leghairMesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.leghairMesh, 0, 0, 0, 1, 1)
     end
 
-    if armCanvas then
-        renderCurvedObjectGrow('luarm', 'llarm', 'lhand', 25, armCanvas, armmesh, box2dGuy, 1,
+    if canvasCache.armCanvas then
+        renderCurvedObjectGrow('luarm', 'llarm', 'lhand', 25, canvasCache.armCanvas, canvasCache.armmesh, box2dGuy, 1,
             shrink * multipliers.arm.wMultiplier / (4 * dpi))
-        love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
-        renderCurvedObjectGrow('ruarm', 'rlarm', 'rhand', 25, armCanvas, armmesh, box2dGuy, 1,
+        love.graphics.draw(canvasCache.armmesh, 0, 0, 0, 1, 1)
+        renderCurvedObjectGrow('ruarm', 'rlarm', 'rhand', 25, canvasCache.armCanvas, canvasCache.armmesh, box2dGuy, 1,
             shrink * multipliers.arm.wMultiplier / (4 * dpi))
-        love.graphics.draw(armmesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.armmesh, 0, 0, 0, 1, 1)
     end
 
-    if not isNullObject('armhair', values) and armhairCanvas then
-        renderCurvedObject('luarm', 'llarm', 'lhand', armhairCanvas, armhairMesh, box2dGuy, -1,
+    if not isNullObject('armhair', values) and canvasCache.armhairCanvas then
+        renderCurvedObject('luarm', 'llarm', 'lhand', canvasCache.armhairCanvas, canvasCache.armhairMesh, box2dGuy, -1,
             (multipliers.arm.wMultiplier * multipliers.armhair.wMultiplier) / (4 * dpi))
-        love.graphics.draw(armhairMesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.armhairMesh, 0, 0, 0, 1, 1)
 
-        renderCurvedObject('ruarm', 'rlarm', 'rhand', armhairCanvas, armhairMesh, box2dGuy, 1,
+        renderCurvedObject('ruarm', 'rlarm', 'rhand', canvasCache.armhairCanvas, canvasCache.armhairMesh, box2dGuy, 1,
             (multipliers.arm.wMultiplier * multipliers.armhair.wMultiplier) / (4 * dpi))
-        love.graphics.draw(armhairMesh, 0, 0, 0, 1, 1)
+        love.graphics.draw(canvasCache.armhairMesh, 0, 0, 0, 1, 1)
     end
 
-    if handCanvas then
+    if canvasCache.handCanvas then
         love.graphics.setColor(1, 1, 1, 1)
         if creation.lhand.metaURL then
-            renderAtachedObject(handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
+            renderAtachedObject(canvasCache.handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
         end
         if creation.rhand.metaURL then
-            renderAtachedObject(handCanvas, 'rhand', 'rhand', -math.pi / 2, 1, -1, box2dGuy, creation)
+            renderAtachedObject(canvasCache.handCanvas, 'rhand', 'rhand', -math.pi / 2, 1, -1, box2dGuy, creation)
         end
         love.graphics.setColor(0, 0, 0, 1)
     end
 
-    if footCanvas then
+    if canvasCache.footCanvas then
         -- left foot
         if creation.lfoot.metaURL then
             love.graphics.setColor(1, 1, 1, 1)
-            renderAtachedObject(footCanvas, 'lfoot', 'lfoot', -math.pi / 2, 1.1, 1.1, box2dGuy, creation)
+            renderAtachedObject(canvasCache.footCanvas, 'lfoot', 'lfoot', -math.pi / 2, 1.1, 1.1, box2dGuy, creation)
         end
         -- right foot
         if creation.rfoot.metaURL then
-            renderAtachedObject(footCanvas, 'rfoot', 'rfoot', math.pi / 2, -1.1, 1.1, box2dGuy, creation)
+            renderAtachedObject(canvasCache.footCanvas, 'rfoot', 'rfoot', math.pi / 2, -1.1, 1.1, box2dGuy, creation)
         end
     end
 end

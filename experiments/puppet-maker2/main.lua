@@ -317,10 +317,11 @@ function love.load()
         fiveGuys[i] = {
             id = i,
             dna = dna,
-            b2d = nil
+            b2d = nil,
+            canvasCache = {}
         }
     end
-    pickedFiveGuyIndex = 2
+    pickedFiveGuyIndex = 1
 
     SM.setPath("scenes/")
     --SM.load("intro")
