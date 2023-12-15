@@ -399,13 +399,13 @@ function drawSkinOver(box2dGuy, guy)
     local positioners = guy.dna.positioners
     local canvasCache = guy.canvasCache
 
-    print(inspect(guy.canvasCache))
+    -- print(inspect(guy.canvasCache))
     love.graphics.setColor(1, 1, 1, 1)
     local dpi = love.graphics.getDPIScale()
     local shrink = canvas.getShrinkFactor()
 
     if creation.torso.metaURL and not creation.isPotatoHead then
-        print(canvasCache.torsoCanvas)
+        --  print(canvasCache.torsoCanvas)
         local x, y, r, sx, sy = renderMetaObject(canvasCache.torsoCanvas, 'torso', box2dGuy, creation)
         --love.graphics.setColor(.4, 0, 0, 1)
         if not isNullObject('chestHair', values) then

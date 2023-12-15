@@ -155,7 +155,7 @@ function scene.draw()
     end
 
     for i = 1, #fiveGuys do
-        drawSkinOver(fiveGuys[i].b2d, editingGuy)
+        drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
     end
 
 

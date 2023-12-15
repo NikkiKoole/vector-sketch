@@ -5,13 +5,13 @@ local lib = {}
 -- creation, multipliers, values and positioners however are UNIQUE to a MIPO
 -- from creation we have the 'limits array' which more or less are shared, but the details describe the picked texture shapes and dimensions etc.
 
---local creation     =
---local multipliers  =
+--
+--
 
 --local positioners  =
 
 lib.getCreation    = function()
-    return {
+    local creation = {
         isPotatoHead = false,
         hasPhysicsHair = false,
         hasNeck = true,
@@ -46,10 +46,12 @@ lib.getCreation    = function()
         lowerlip = { w = 10, h = 10 },
         teeth = { w = 10, h = 10 },
     }
+    return creation
 end
 
 lib.getMultipliers = function()
-    return {
+    local multipliers =
+    {
         torso = { hMultiplier = 1, wMultiplier = 1 },
         leg = { lMultiplier = 1, wMultiplier = 1 },
         leghair = { wMultiplier = 1 },
@@ -70,10 +72,11 @@ lib.getMultipliers = function()
         teeth = { hMultiplier = 1 },
         chesthair = { mMultiplier = 1 }
     }
+    return multipliers
 end
 
 lib.getPositioners = function()
-    return {
+    local positioners = {
         leg = { x = 0.5 },
         eye = { x = 0.2, y = 0.5, r = 0 },
         nose = { y = 0.5 },
@@ -81,6 +84,7 @@ lib.getPositioners = function()
         mouth = { y = 0.25 },
         ear = { y = 0.5 }
     }
+    return positioners
 end
 
 local function createDefaultTextureValues()
@@ -109,44 +113,41 @@ local function createDefaultPatchValues()
     }
 end
 
-
-
-local values = {
-    chestHair        = createDefaultTextureValues(),
-    skinPatchSnout   = createDefaultTextureValues(),
-    skinPatchSnoutPV = createDefaultPatchValues(),
-    skinPatchEye1    = createDefaultTextureValues(),
-    skinPatchEye1PV  = createDefaultPatchValues(),
-    skinPatchEye2    = createDefaultTextureValues(),
-    skinPatchEye2PV  = createDefaultPatchValues(),
-    upperlip         = createDefaultTextureValues(),
-    lowerlip         = createDefaultTextureValues(),
-    eyes             = createDefaultTextureValues(),
-    pupils           = createDefaultTextureValues(),
-    ears             = createDefaultTextureValues(),
-    brows            = createDefaultTextureValues(),
-    nose             = createDefaultTextureValues(),
-    leghair          = createDefaultTextureValues(),
-    legs             = createDefaultTextureValues(),
-    armhair          = createDefaultTextureValues(),
-    arms             = createDefaultTextureValues(),
-    hands            = createDefaultTextureValues(),
-    teeth            = createDefaultTextureValues(),
-    body             = createDefaultTextureValues(),
-    head             = createDefaultTextureValues(),
-    hair             = createDefaultTextureValues(),
-    neck             = createDefaultTextureValues(),
-    feet             = createDefaultTextureValues(),
-}
-values.skinPatchSnoutPV.ty = 5
-values.skinPatchSnoutPV.sx = 2
-values.skinPatchEye1PV.ty = 0
-values.skinPatchEye1PV.tx = -2
-values.skinPatchEye2PV.ty = 0
-values.skinPatchEye2PV.tx = 2
-values.teeth.bgPal = 5
-
 lib.generateValues = function()
+    local values = {
+        chestHair        = createDefaultTextureValues(),
+        skinPatchSnout   = createDefaultTextureValues(),
+        skinPatchSnoutPV = createDefaultPatchValues(),
+        skinPatchEye1    = createDefaultTextureValues(),
+        skinPatchEye1PV  = createDefaultPatchValues(),
+        skinPatchEye2    = createDefaultTextureValues(),
+        skinPatchEye2PV  = createDefaultPatchValues(),
+        upperlip         = createDefaultTextureValues(),
+        lowerlip         = createDefaultTextureValues(),
+        eyes             = createDefaultTextureValues(),
+        pupils           = createDefaultTextureValues(),
+        ears             = createDefaultTextureValues(),
+        brows            = createDefaultTextureValues(),
+        nose             = createDefaultTextureValues(),
+        leghair          = createDefaultTextureValues(),
+        legs             = createDefaultTextureValues(),
+        armhair          = createDefaultTextureValues(),
+        arms             = createDefaultTextureValues(),
+        hands            = createDefaultTextureValues(),
+        teeth            = createDefaultTextureValues(),
+        body             = createDefaultTextureValues(),
+        head             = createDefaultTextureValues(),
+        hair             = createDefaultTextureValues(),
+        neck             = createDefaultTextureValues(),
+        feet             = createDefaultTextureValues(),
+    }
+    values.skinPatchSnoutPV.ty = 5
+    values.skinPatchSnoutPV.sx = 2
+    values.skinPatchEye1PV.ty = 0
+    values.skinPatchEye1PV.tx = -2
+    values.skinPatchEye2PV.ty = 0
+    values.skinPatchEye2PV.tx = 2
+    values.teeth.bgPal = 5
     return values
 end
 
