@@ -29,6 +29,7 @@ prof         = require 'vendor.jprof'
 ProFi        = require 'vendor.ProFi'
 focussed     = true
 
+local Timer  = require 'vendor.timer'
 local dna    = require 'src.dna'
 local phys   = require 'src.mainPhysics'
 local lurker = require 'vendor.lurker'
@@ -61,7 +62,7 @@ function playSound(sound, optionalPitch, volumeMultiplier)
     local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
     s:setPitch(p)
     local volume = (.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
-    --print(volume * mainVolume)
+
     s:setVolume(volume * mainVolume)
     love.audio.play(s)
     return s
@@ -83,6 +84,32 @@ function loadSong(filename)
     else
         print('i only load files ending in .melodypaint.txt')
     end
+end
+
+function doinkBody(guy)
+    guy.b2d.torso:applyLinearImpulse(0, 10000)
+end
+
+function breathBody(guy)
+    guy.b2d.torso:applyLinearImpulse(0, -1000)
+end
+
+function eyeBlink(guy)
+    Timer.tween(.1, guy.tweenVars, { eyesOpen = 0 }, 'out-quad')
+    Timer.after(.1 + 0.001, function()
+        Timer.tween(.15, guy.tweenVars, { eyesOpen = 1 }, 'out-quad')
+    end)
+end
+
+function mouthSay(guy, length)
+    local maxOpen = 1.25 + love.math.random() * 0.5
+    local minWide = .5 + love.math.random() * 0.8
+
+    local totalDur = length + 0.1
+    Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
+    Timer.after(totalDur / 3 + 0.001, function()
+        Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
+    end)
 end
 
 function stripPath(root, path)
@@ -251,6 +278,19 @@ function love.load()
         love.graphics.newImage('assets/img/tiles/tiles2.png'),
         love.graphics.newImage('assets/img/tiles/tiles.png'),
     }
+    hum = {
+        love.audio.newSource('assets/sounds/fx/humup1.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/humup2.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/humup3.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/blah1.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/blah2.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/blah3.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/huh.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/huh2.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/tsk.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/tsk2.wav', 'static'),
+
+    }
 
     rubberplonks = {
         love.audio.newSource("assets/sounds/fx/rubber-plonk1.wav", "static"),
@@ -318,7 +358,12 @@ function love.load()
             id = i,
             dna = dna,
             b2d = nil,
-            canvasCache = {}
+            canvasCache = {},
+            tweenVars = {
+                eyesOpen = 1,
+                mouthWide = 1,
+                mouthOpen = 0
+            }
         }
     end
     pickedFiveGuyIndex = 1
@@ -354,9 +399,11 @@ function love.update(dt)
         end
         if focussed and not grabbingScreenshots.doing then
             --print('hello!')
+            Timer.update(dt)
             gesture.update(dt)
             prof.push('SM.update')
             SM.update(dt)
+
             prof.pop('SM.update')
         else
             print('not updating the timer')

@@ -25,8 +25,12 @@ function tweenCameraToHead()
 
 end
 
-function growl(a)
-
+function growl(pitch)
+    local index = math.ceil(love.math.random() * #hum)
+    local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+    playingSound = playSound(hum[math.ceil(index)], pitch, 2)
+    mouthSay(fiveGuys[pickedFiveGuyIndex], sndLength)
+    --myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
 end
 
 function setSelectedCategory(name)
@@ -552,7 +556,7 @@ local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sl
     love.graphics.setColor(0, 0, 0, 1)
     local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
     if less then
-        growl(1 + love.math.random() * 2)
+        growl(1 + love.math.random() * .2)
 
         toggleFunc(false)
     end
@@ -599,14 +603,14 @@ local function draw_toggle_with_2_buttons(prop, startX, currentY, buttonSize, sl
     local more = ui.getUIRect('more-' .. prop, offset + startX + sliderWidth, currentY,
             buttonSize, buttonSize)
     if more then
-        growl(1 + love.math.random() * 2)
+        growl(1 + love.math.random() * .2)
 
         toggleFunc(true)
     end
     local w, h = ui2.toggle.body3:getDimensions()
     local t = ui.getUIRect('t-' .. prop, offset + startX, yOff + currentY, w * scale, h * scale)
     if t then
-        growl(1 + love.math.random() * 2)
+        growl(1 + love.math.random() * .2)
         toggleFunc(toggleValue)
     end
 end
@@ -678,7 +682,7 @@ local function draw_slider_with_2_buttons(guy, path, startX, currentY, buttonSiz
         propupdate(v.value)
         if (changed) then
             if playingSound then playingSound:stop() end
-            growl(1 + love.math.random() * 2)
+            growl(1 + love.math.random() * .2)
         end
         if update then update() end
     end
@@ -1771,7 +1775,7 @@ local function buttonClickHelper(category, guy, value)
             tweenCameraToHead()
         end
 
-        growl(1 + love.math.random() * 2)
+        growl(1 + love.math.random() * .2)
     end
     if uiState.selectedTab == 'colors' then
         values[category][uiState.selectedColoringLayer] = value

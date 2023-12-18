@@ -249,7 +249,7 @@ function scene.update(dt)
     end
 
     time = time + dt
-    Timer.update(dt)
+
 
     function love.resize(w, h)
         local w, h = love.graphics.getDimensions()

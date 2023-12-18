@@ -7,7 +7,7 @@ local cam         = require('lib.cameraBase').getInstance()
 local phys        = require 'src.mainPhysics'
 local swipes      = require 'src.screen-transitions'
 local Timer       = require 'vendor.timer'
-
+local audioHelper = require 'lib.audio-helper'
 
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
@@ -72,6 +72,8 @@ function scene.load()
 
     setupBox2dScene()
 
+    audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
+
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
@@ -118,8 +120,22 @@ end
 function scene.handleAudioMessage(msg)
     if msg.type == 'played' then
         local path = msg.data.path
-        if path == 'Triangles 101' or path == 'Triangles 103' or path == 'babirhodes/rhodes2' then
+        local index = math.ceil(math.random() * #fiveGuys)
+        if path == "mipo/po3" or path == 'mipo/pi' then
+            local sndLength = msg.data.source:getDuration() / msg.data.pitch
+            print('gonna say something', index, sndLength)
+            mouthSay(fiveGuys[index], sndLength)
+        elseif (path == 'Triangles 101' or path == 'Triangles 103') then
+            print('gonna breath', index)
+            breathBody(fiveGuys[index])
+        elseif (path == 'babirhodes/rhodes2') then
+            doinkBody(fiveGuys[index])
+            print('gonna doink something', index)
+        else
+            eyeBlink(fiveGuys[index])
         end
+        --print(path)
+        --print('handling audio message from fiveGuy')
     end
 end
 

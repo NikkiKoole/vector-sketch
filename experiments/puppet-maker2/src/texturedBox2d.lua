@@ -324,26 +324,22 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
             (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
             (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
 
-    local mouthWidth = wMult * (f[3][1] - f[7][1]) / 2
+    local mouthWidth = (wMult * (f[3][1] - f[7][1]) / 2)
     local scaleX = (mouthWidth / wMult) / canvasCache.teethCanvas:getWidth()
     local upperlipmesh = createTexturedTriangleStrip(canvasCache.upperlipCanvas)
 
-    if false then
-        local topcurves = { { 0, 0, 0 }, { -1, 0, -1 }, { 0, -1, 0 } }
-        local picked = topcurves[math.ceil(love.math.random() * #topcurves)]
-        local range = love.math.random() * 50 + 10
-        local made = { { -mouthWidth / 2, picked[1] * range }, { 0, picked[2] * range },
-            { mouthWidth / 2,  picked[3] * range } }
-    end
+    mouthWidth = mouthWidth * (guy.tweenVars.mouthWide) --- do the mouth anim wideness here
+    local mouthOpen = 20 * (guy.tweenVars.mouthOpen)
+
 
     local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-            { 0, -20 },
+            { 0, -mouthOpen },
             { mouthWidth / 2, 0 },
             canvasCache.upperlipCanvas,
             upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
     local lowerlipmesh = createTexturedTriangleStrip(canvasCache.lowerlipCanvas)
     local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-            { 0, 20 },
+            { 0, mouthOpen },
             { mouthWidth / 2, 0 },
             canvasCache.upperlipCanvas,
             lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
@@ -487,7 +483,7 @@ function drawSkinOver(box2dGuy, guy)
 
         if canvasCache.eyeCanvas then
             local eyeW = eyeMultiplierFix * multipliers.eye.wMultiplier * faceMultiplier
-            local eyeH = eyeMultiplierFix * multipliers.eye.hMultiplier * faceMultiplier
+            local eyeH = eyeMultiplierFix * multipliers.eye.hMultiplier * faceMultiplier * guy.tweenVars.eyesOpen
             renderNonAttachedObject(canvasCache.eyeCanvas,
                 'eye', r - positioners.eye.r, eyelx, eyely, -eyeW, eyeH, box2dGuy, creation)
 
