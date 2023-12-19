@@ -366,9 +366,12 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
 
     love.graphics.setStencilTest("greater", 0)
 
-    renderNonAttachedObject(canvasCache.teethCanvas,
-        'teeth', r, tx, ty, 10, -10,
-        box2dGuy, creation)
+    if canvasCache.teethCanvas then
+        renderNonAttachedObject(canvasCache.teethCanvas,
+            'teeth', r, tx, ty, 10, -10,
+            box2dGuy, creation)
+    end
+
     love.graphics.setStencilTest()
 
     love.graphics.draw(upperlipmesh, mx, my, r - math.pi, 1, 1)

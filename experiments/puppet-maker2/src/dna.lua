@@ -206,7 +206,7 @@ lib.generateParts = function()
     local upperlipImgUrls, upperlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'upperlips')
     local lowerlipImgUrls, lowerlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'lowerlips')
 
-    table.insert(teethImgUrls, 'assets/parts/null.png')
+    --  table.insert(teethImgUrls, 'assets/parts/null.png')
 
     local patchChildren = { 'skinPatchSnout', 'skinPatchEye1', 'skinPatchEye2' }
     local mouthChildren = { 'upperlip', 'lowerlip', 'teeth' }

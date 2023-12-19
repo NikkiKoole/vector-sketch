@@ -18,6 +18,7 @@ require 'src.editguy-ui'
 require 'src.box2dGuyCreation'
 require 'src.texturedBox2d'
 
+
 local findSample = function(path)
     for i = 1, #samples do
         if samples[i].p == path then
@@ -438,9 +439,11 @@ function randomizeGuy(guy)
         multipliers.neck.wMultiplier = randValue(0.5, 3, .5, true)
     end
 
+    --if not skipUpdate then
     local oldHasNeck = creation.hasNeck
     local oldPotato = creation.isPotatoHead
     -- if false then
+
     creation.isPotatoHead = love.math.random() < .5 and true or false
     creation.hasNeck = love.math.random() < .5 and true or false
     -- end
@@ -448,12 +451,14 @@ function randomizeGuy(guy)
 
     if creation.hasNeck ~= oldHasNeck then
         changePart('hasNeck', guy)
+        print('complex I thik 1')
     end
 
     if creation.isPotatoHead ~= oldPotato then
         changePart('potato', guy)
+        print('complex I thik 2')
     end
-
+    --end
     randomizePart('ears')
     randomizePart('chestHair')
     values['chestHair'].linePal = hairColor
@@ -513,6 +518,7 @@ function randomizeGuy(guy)
     values['skinPatchEye2'].bgAlpha = bgAlpha
     values['skinPatchEye2'].fgAlpha = fgAlpha
     values['skinPatchEye2'].lineAlpha = lineAlpha
+
 
     updateAllParts(guy)
     resetPositions(guy)
@@ -594,7 +600,7 @@ local function pointerPressed(x, y, id)
     local size = (h / 8) -- margin around panel
 
     if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
-        local sx, sy = 0, 0 --getPointToCenterTransitionOn()
+        local sx, sy = getPointToCenterTransitionOn()
         Timer.clear()
         swipes.doCircleInTransition(sx, sy, function()
             if scene then
@@ -606,9 +612,10 @@ local function pointerPressed(x, y, id)
     end
 
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
-        for i = 1, #fiveGuys do
-            randomizeGuy(fiveGuys[i])
-        end
+        --for i = 1, #fiveGuys do
+        ---    randomizeGuy(fiveGuys[i])
+        --nd
+        randomizeGuy(editingGuy)
         setCategories(editingGuy)
 
         local creation = editingGuy.dna.creation
@@ -705,12 +712,14 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
     ui.removeFromPressedPointers(id)
 end
 
-function love.wheelmoved(dx, dy)
-    if true then
-        local newScale = cam.scale * (1 + dy / 10)
-        if (newScale > 0.01 and newScale < 50) then
-            cam:scaleToPoint(1 + dy / 10)
-            rebuildPhysicsBorderForScreen()
+if false then
+    function love.wheelmoved(dx, dy)
+        if true then
+            local newScale = cam.scale * (1 + dy / 10)
+            if (newScale > 0.01 and newScale < 50) then
+                cam:scaleToPoint(1 + dy / 10)
+                rebuildPhysicsBorderForScreen()
+            end
         end
     end
 end
@@ -726,7 +735,7 @@ function scene.handleAudioMessage(msg)
 end
 
 function scene.unload()
-    Timer.clear()
+    --Timer.clear()
     local b = world:getBodies()
     for i = #b, 1, -1 do
         b[i]:destroy()
@@ -756,7 +765,7 @@ function scene.load()
 
     uiState = {
         selectedTab = 'part',
-        selectedCategory = 'feet',
+        selectedCategory = 'body',
         selectedColoringLayer = 'bgPal',
         selectedChildCategory = nil,
     }
@@ -765,7 +774,7 @@ function scene.load()
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
 
 
-    print('fiveguys..', #fiveGuys, fiveGuys)
+    -- print('fiveguys..', #fiveGuys, fiveGuys)
     --if not editingGuy then
     editingGuy = fiveGuys[pickedFiveGuyIndex]
     --end
@@ -775,14 +784,23 @@ function scene.load()
     categories = {}
     setCategories(editingGuy)
 
+
+
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    setupBox2dScene()
     for i = 1, #fiveGuys do
-        updateAllParts(fiveGuys[i])
+        --     updateAllParts(fiveGuys[i])
     end
-    Timer.tween(.5, scroller, { position = 4 })
+
+    setupBox2dScene()
+    -- updateAllParts(editingGuy)
+
+    if editingGuy.init == false then
+        randomizeGuy(editingGuy)
+        editingGuy.init = true
+    end
+    Timer.tween(.5, scroller, { position = 8 })
 end
 
 function scene.update(dt)
@@ -860,9 +878,10 @@ function scene.draw()
     --phys.drawWorld(world)
 
     prof.push('editGuy.draw drawSkinOver')
-    for i = 1, #fiveGuys do
-        drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
-    end
+    drawSkinOver(editingGuy.b2d, editingGuy)
+    --for i = 1, #fiveGuys do
+    --    drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+    --end
     for i = 1, #fiveGuys do
         --     drawNumbersOver(fiveGuys[i].b2d)
     end

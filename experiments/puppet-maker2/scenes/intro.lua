@@ -213,7 +213,7 @@ function scene.handleAudioMessage()
 end
 
 function scene.unload()
-    Timer.clear()
+    -- Timer.clear()
 end
 
 function gotoNext()

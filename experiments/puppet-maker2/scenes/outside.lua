@@ -9,6 +9,8 @@ local swipes      = require 'src.screen-transitions'
 local Timer       = require 'vendor.timer'
 local audioHelper = require 'lib.audio-helper'
 
+require 'src.box2dGuyCreation'
+
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
     local sx, sy = desired_w / w, desired_h / h
@@ -22,7 +24,7 @@ local function pointerPressed(x, y, id)
 
     local size = (h / 8) -- margin around panel
     if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
-        local sx, sy = 0, 0 --getPointToCenterTransitionOn()
+        local sx, sy = getPointToCenterTransitionOn()
         Timer.clear()
         swipes.doCircleInTransition(sx, sy, function()
             if scene then
@@ -76,6 +78,19 @@ function scene.load()
 
     setupBox2dScene()
 
+
+
+    for i = 1, #fiveGuys do
+        if fiveGuys[i].init == false then
+            randomizeGuy(fiveGuys[i])
+            fiveGuys[i].init = true
+        end
+        if fiveGuys[i].b2d then
+            updateAllParts(fiveGuys[i])
+        end
+    end
+
+    --updateAllParts(editingGuy)
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
 
     local w, h = love.graphics.getDimensions()
@@ -120,7 +135,7 @@ function scene.update(dt)
     Timer.update(dt)
     handleUpdate(dt, cam)
     rotateAllBodies(world:getBodies(), dt)
-    print(love.audio.getActiveSourceCount())
+    --   print(love.audio.getActiveSourceCount())
 end
 
 function scene.handleAudioMessage(msg)

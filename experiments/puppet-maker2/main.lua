@@ -17,24 +17,24 @@ if true then
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-local mesh   = require 'lib.mesh'
-local parse  = require 'lib.parse-file'
-local node   = require 'lib.node'
-local text   = require 'lib.text'
-gesture      = require 'lib.gesture'
-SM           = require 'vendor.SceneMgr'
-inspect      = require 'vendor.inspect'
-PROF_CAPTURE = true
-prof         = require 'vendor.jprof'
-ProFi        = require 'vendor.ProFi'
-focussed     = true
+local mesh           = require 'lib.mesh'
+local parse          = require 'lib.parse-file'
+local node           = require 'lib.node'
+local text           = require 'lib.text'
+gesture              = require 'lib.gesture'
+SM                   = require 'vendor.SceneMgr'
+inspect              = require 'vendor.inspect'
+PROF_CAPTURE         = true
+prof                 = require 'vendor.jprof'
+ProFi                = require 'vendor.ProFi'
+focussed             = true
 
-local Timer  = require 'vendor.timer'
-local dna    = require 'src.dna'
-local phys   = require 'src.mainPhysics'
-local lurker = require 'vendor.lurker'
-lurker.quiet = true
-
+local Timer          = require 'vendor.timer'
+local dna            = require 'src.dna'
+local phys           = require 'src.mainPhysics'
+local lurker         = require 'vendor.lurker'
+lurker.quiet         = true
+local cam            = require('lib.cameraBase').getInstance()
 
 local DEBUG_PROFILER = false
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
@@ -66,6 +66,14 @@ function playSound(sound, optionalPitch, volumeMultiplier)
     s:setVolume(volume * mainVolume)
     love.audio.play(s)
     return s
+end
+
+function getPointToCenterTransitionOn()
+    local bodyPart = fiveGuys[pickedFiveGuyIndex].b2d.head or fiveGuys[pickedFiveGuyIndex].b2d.torso
+    local x, y = bodyPart:getWorldCenter()
+    local bx, by = cam:getScreenCoordinates(x, y)
+    print(x, y)
+    return bx, by
 end
 
 function loadSong(filename)
@@ -106,6 +114,7 @@ function mouthSay(guy, length)
     local minWide = .5 + love.math.random() * 1.8
 
     local totalDur = length * 1.3
+
     Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
     Timer.after(totalDur / 3 + 0.1, function()
         Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
@@ -361,6 +370,7 @@ function love.load()
             positioners = dna.getPositioners()
         }
         fiveGuys[i] = {
+            init = false,
             id = i,
             dna = dna,
             b2d = nil,
@@ -376,11 +386,13 @@ function love.load()
             }
         }
     end
+
+
     pickedFiveGuyIndex = 1
 
     SM.setPath("scenes/")
-    SM.load("splash")
-    --SM.load("editGuy")
+    --SM.load("splash")
+    SM.load("editGuy")
 end
 
 function love.update(dt)

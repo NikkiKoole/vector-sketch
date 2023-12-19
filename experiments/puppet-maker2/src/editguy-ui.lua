@@ -1345,7 +1345,7 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
 
                 runningElem, currentY = updateRowStuff()
 
-                draw_slider_with_2_buttons(guy, 'dna.ositioners.eye.x', startX + (runningElem * elementWidth), currentY,
+                draw_slider_with_2_buttons(guy, 'dna.positioners.eye.x', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth, propupdate,
                     nil, 0, 0.5, 0.1, ui2.icons.eyefar, ui2.icons.eyeclose)

@@ -141,6 +141,18 @@ function handlePointerPressed(x, y, id, cam)
                 if (hitThisOne and not isSensor) then
                     table.insert(temp,
                         { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
+
+                    for i = 1, #fiveGuys do
+                        local g = fiveGuys[i]
+                        if (g.b2d) then
+                            for k, v in pairs(g.b2d) do
+                                if body == v then
+                                    pickedFiveGuyIndex = i
+                                    editingGuy = fiveGuys[pickedFiveGuyIndex]
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -487,7 +499,7 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
     local bud = fixtureB:getUserData()
     if aud and bud then
         -- print(aud.bodyType, bud.bodyType)
-        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso'))
+        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot' or bud.bodyType == 'rfoot'))
             or (bud.bodyType == 'body' and aud.bodyType == 'body')
             or (bud.bodyType == 'head' and aud.bodyType == 'head')
             or (bud.bodyType == 'head' and aud.bodyType == 'lhand')
@@ -514,9 +526,11 @@ end
 
 -- this should be in physicsworld
 function rebuildPhysicsBorderForScreen()
-    for i = 1, #borders do
-        if not borders[i]:isDestroyed() then
-            borders[i]:destroy()
+    if borders then
+        for i = 1, #borders do
+            if not borders[i]:isDestroyed() then
+                borders[i]:destroy()
+            end
         end
     end
     borders = {}
@@ -541,6 +555,7 @@ function rebuildPhysicsBorderForScreen()
     local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
     local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
     local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
+    bottomfixture:setUserData(makeUserData('border', {}))
 
     local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
     local leftshape = love.physics.newRectangleShape(wallThick, 30000)
@@ -555,7 +570,7 @@ function rebuildPhysicsBorderForScreen()
     borders = { topfixture, bottomfixture, leftfixture, rightfixture }
 end
 
-function setupBox2dScene()
+function setupBox2dScene(onlyThisGuyIndex)
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
@@ -575,7 +590,10 @@ function setupBox2dScene()
 
 
     for i = 1, #fiveGuys do
-        fiveGuys[i].b2d = makeGuy(camtlx + i * stepSize, camtly, fiveGuys[i])
+        local xPos = onlyThisGuyIndex and (camtlx + 3 * stepSize) or (camtlx + i * stepSize)
+        if onlyThisGuyIndex and i == onlyThisGuyIndex or not onlyThisGuyIndex then
+            fiveGuys[i].b2d = makeGuy(xPos, camtly, fiveGuys[i])
+        end
     end
 end
 
