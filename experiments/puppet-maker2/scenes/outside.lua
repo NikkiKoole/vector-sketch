@@ -78,19 +78,9 @@ function scene.load()
 
     setupBox2dScene()
 
-
-
     for i = 1, #fiveGuys do
-        if fiveGuys[i].init == false then
-            randomizeGuy(fiveGuys[i])
-            fiveGuys[i].init = true
-        end
-        if fiveGuys[i].b2d then
-            updateAllParts(fiveGuys[i])
-        end
+        updateAllParts(fiveGuys[i])
     end
-
-    --updateAllParts(editingGuy)
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
 
     local w, h = love.graphics.getDimensions()

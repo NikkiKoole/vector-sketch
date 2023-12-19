@@ -707,9 +707,15 @@ function handleNeckAndHeadForHasNeck(box2dGuy, guy, willHaveNeck)
     end
 
     if not willHaveNeck then
-        box2dGuy.neck:destroy()
-        box2dGuy.neck1:destroy()
-        box2dGuy.head:destroy()
+        if (box2dGuy.neck) then
+            box2dGuy.neck:destroy()
+        end
+        if (box2dGuy.neck1) then
+            box2dGuy.neck1:destroy()
+        end
+        if (box2dGuy.head) then
+            box2dGuy.head:destroy()
+        end
         box2dGuy.neck = nil
         box2dGuy.neck1 = nil
         local torso = box2dGuy.torso

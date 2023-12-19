@@ -110,11 +110,12 @@ function eyeBlink(guy)
 end
 
 function mouthSay(guy, length)
+    print('mouthsay triggered')
     local maxOpen = 1.25 + love.math.random() * 0.5
     local minWide = .5 + love.math.random() * 1.8
 
     local totalDur = length * 1.3
-
+    --print(inspect(guy.tweenVars))
     Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
     Timer.after(totalDur / 3 + 0.1, function()
         Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
@@ -268,7 +269,6 @@ function love.load()
 
     loadSong('assets/mipo4.melodypaint.txt')
 
-
     splashSound = love.audio.newSource("assets/sounds/music/mipolailoop.mp3", "static")
     introSound = love.audio.newSource("assets/sounds/music/introloop.mp3", "static")
     miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
@@ -293,6 +293,7 @@ function love.load()
         love.graphics.newImage('assets/img/tiles/tiles2.png'),
         love.graphics.newImage('assets/img/tiles/tiles.png'),
     }
+
     hum = {
         love.audio.newSource('assets/sounds/fx/humup1.wav', 'static'),
         love.audio.newSource('assets/sounds/fx/humup2.wav', 'static'),
@@ -304,7 +305,6 @@ function love.load()
         love.audio.newSource('assets/sounds/fx/huh2.wav', 'static'),
         love.audio.newSource('assets/sounds/fx/tsk.wav', 'static'),
         love.audio.newSource('assets/sounds/fx/tsk2.wav', 'static'),
-
     }
 
     rubberplonks = {
@@ -362,6 +362,8 @@ function love.load()
     end
 
     fiveGuys = {}
+    parts = dna.generateParts()
+
     for i = 1, 5 do
         local dna   = {
             multipliers = dna.getMultipliers(),
@@ -387,9 +389,14 @@ function love.load()
         }
     end
 
+    DEBUG_FIVE_GUYS_IN_EDIT = false
+
 
     pickedFiveGuyIndex = 1
 
+    for i = 1, #fiveGuys do
+        randomizeGuy(fiveGuys[i], true)
+    end
     SM.setPath("scenes/")
     --SM.load("splash")
     SM.load("editGuy")
@@ -537,4 +544,171 @@ function makeMarketingScreenshots(name)
     grabbingScreenshots.resolutions = resolutions
     local openURL = "file://" .. love.filesystem.getSaveDirectory()
     love.system.openURL(openURL)
+end
+
+function findPart(name)
+    for i = 1, #parts do
+        if parts[i].name == name then
+            return parts[i]
+        end
+    end
+end
+
+-- noPhysicsUpdate can only be turned on when you know a real object is there
+-- ist off by default and that is usefull to essentialy just change
+-- values in the dna.values / creation etc.
+function randomizeGuy(guy, noPhysicsUpdate)
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
+    local values = guy.dna.values
+
+    function randomizePart(part)
+        local p = findPart(part)
+        local maximum = #p.imgs
+        values[part].shape = math.ceil(maximum / 3) -- math.ceil(love.math.random() * maximum)
+        values[part].bgPal = math.ceil(love.math.random() * #palettes)
+        values[part].fgPal = math.ceil(love.math.random() * #palettes)
+    end
+
+    function randValue(min, max, step, preferMiddle)
+        local steps = ((max - min) / step) + 1
+        if preferMiddle then steps = steps - 2 end
+        local index = math.floor(love.math.random() * steps)
+        if preferMiddle then index = index + 1 end
+        local r = min + (index * step)
+        return r
+    end
+
+    local hairColor = math.ceil(love.math.random() * #palettes)
+
+    randomizePart('body')
+    --multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
+    --multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
+
+    --if not creation.isPotatoHead then
+    randomizePart('head')
+    multipliers.head.wMultiplier = randValue(.5, 3, .5, true)
+    multipliers.head.hMultiplier = randValue(.5, 3, .5, true)
+    randomizePart('neck')
+    multipliers.neck.hMultiplier = randValue(0.5, 3, .5, true)
+    multipliers.neck.wMultiplier = randValue(0.5, 3, .5, true)
+    --end
+
+    --if not skipUpdate then
+    local oldHasNeck = creation.hasNeck
+    local oldPotato = creation.isPotatoHead
+    -- if false then
+
+    creation.isPotatoHead = love.math.random() < .5 and true or false
+    creation.hasNeck = love.math.random() < .5 and true or false
+    -- end
+    if (creation.isPotatoHead) then creation.hasNeck = false end
+
+    if not noPhysicsUpdate then
+        if creation.hasNeck ~= oldHasNeck then
+            changePart('hasNeck', guy)
+            print('complex I thik 2')
+        end
+
+        if creation.isPotatoHead ~= oldPotato then
+            changePart('potato', guy)
+            print('complex I thik 2')
+        end
+    end
+    --end
+    randomizePart('ears')
+    randomizePart('chestHair')
+    values['chestHair'].linePal = hairColor
+    randomizePart('armhair')
+    values['armhair'].linePal = hairColor
+    randomizePart('hair')
+    values['hair'].linePal = hairColor
+
+    randomizePart('leghair')
+    values['leghair'].linePal = hairColor
+
+    randomizePart('legs')
+    multipliers.leg.lMultiplier = randValue(0.5, 4, .5, true)
+    multipliers.leg.wMultiplier = randValue(0.5, 4, .5, true)
+
+    randomizePart('arms')
+    multipliers.arm.lMultiplier = randValue(0.5, 4, .5, true)
+    multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
+
+    randomizePart('hands')
+    multipliers.hand.hMultiplier = randValue(0.5, 2, .5, true)
+    multipliers.hand.wMultiplier = randValue(0.5, 2, .5, true)
+
+    randomizePart('feet')
+    multipliers.feet.hMultiplier = randValue(0.5, 2, .5, true)
+    multipliers.feet.wMultiplier = randValue(0.5, 2, .5, true)
+
+    randomizePart('eyes')
+    randomizePart('pupils')
+    randomizePart('brows')
+    values['brows'].linePal = hairColor
+
+    randomizePart('eyes')
+    randomizePart('nose')
+
+    randomizePart('teeth')
+    values['teeth'].bgPal = 5
+    values['teeth'].fgPal = 5
+
+    randomizePart('upperlip')
+    randomizePart('lowerlip')
+
+    randomizePart('skinPatchSnout')
+    local bgAlpha = randValue(1, 5, 1)
+    local fgAlpha = randValue(1, 5, 1)
+    local lineAlpha = randValue(1, 5, 1)
+    values['skinPatchSnout'].bgAlpha = randValue(1, 5, 1)
+    values['skinPatchSnout'].fgAlpha = randValue(1, 5, 1)
+    values['skinPatchSnout'].lineAlpha = randValue(1, 5, 1)
+
+    randomizePart('skinPatchEye1')
+    values['skinPatchEye1'].bgAlpha = bgAlpha
+    values['skinPatchEye1'].fgAlpha = fgAlpha
+    values['skinPatchEye1'].lineAlpha = lineAlpha
+
+    randomizePart('skinPatchEye2')
+    values['skinPatchEye2'].bgAlpha = bgAlpha
+    values['skinPatchEye2'].fgAlpha = fgAlpha
+    values['skinPatchEye2'].lineAlpha = lineAlpha
+
+    if not noPhysicsUpdate then
+        updateAllParts(guy)
+        resetPositions(guy)
+    end
+end
+
+function updateAllParts(guy)
+    local creation = guy.dna.creation
+
+    local _updatePart = function(name)
+        updatePart(name, guy)
+    end
+
+    _updatePart('ears')
+    _updatePart('hands')
+    _updatePart('feet')
+    if not creation.isPotatoHead then
+        _updatePart('head')
+        if creation.hasNeck then _updatePart('neck') end
+    end
+    _updatePart('body')
+    _updatePart('arms')
+    _updatePart('legs')
+
+    _updatePart('eyes')
+    _updatePart('pupils')
+    _updatePart('nose')
+    _updatePart('hair')
+    _updatePart('armhair')
+    _updatePart('leghair')
+    _updatePart('brows')
+    _updatePart('teeth')
+    _updatePart('upperlip')
+    _updatePart('lowerlip')
+    _updatePart('chestHair')
 end

@@ -462,7 +462,7 @@ mesh.getImage = function(url, settings)
       if love.filesystem.getInfo(url) then
          addToImageCache(url, settings)
       else
-         print('couldnt find image ', url)
+         --     print('couldnt find image ', url)
       end
    end
    return _imageCache[url]

@@ -330,7 +330,7 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
 
     mouthWidth = mouthWidth * (guy.tweenVars.mouthWide) --- do the mouth anim wideness here
     local mouthOpen = 20 * (guy.tweenVars.mouthOpen)
-
+    --print(mouthOpen, guy.tweenVars.mouthOpen)
 
     local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
             { 0, -mouthOpen },
@@ -366,10 +366,12 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
 
     love.graphics.setStencilTest("greater", 0)
 
-    if canvasCache.teethCanvas then
-        renderNonAttachedObject(canvasCache.teethCanvas,
-            'teeth', r, tx, ty, 10, -10,
-            box2dGuy, creation)
+    if not isNullObject('teeth', guy.dna.values) then
+        if canvasCache.teethCanvas then
+            renderNonAttachedObject(canvasCache.teethCanvas,
+                'teeth', r, tx, ty, 10, -10,
+                box2dGuy, creation)
+        end
     end
 
     love.graphics.setStencilTest()

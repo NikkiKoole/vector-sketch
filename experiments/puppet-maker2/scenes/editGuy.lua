@@ -18,7 +18,6 @@ require 'src.editguy-ui'
 require 'src.box2dGuyCreation'
 require 'src.texturedBox2d'
 
-
 local findSample = function(path)
     for i = 1, #samples do
         if samples[i].p == path then
@@ -70,14 +69,6 @@ function setCategories(guy)
             if not skip then
                 table.insert(categories, parts[i].name)
             end
-        end
-    end
-end
-
-function findPart(name)
-    for i = 1, #parts do
-        if parts[i].name == name then
-            return parts[i]
         end
     end
 end
@@ -402,159 +393,6 @@ function resetPositions(guy)
     box2dGuy.rhand:setAngle(0)
 end
 
-function randomizeGuy(guy)
-    local creation = guy.dna.creation
-    local multipliers = guy.dna.multipliers
-    local values = guy.dna.values
-
-    function randomizePart(part)
-        local p = findPart(part)
-        local maximum = #p.imgs
-        values[part].shape = math.ceil(love.math.random() * maximum)
-        values[part].bgPal = math.ceil(love.math.random() * #palettes)
-        values[part].fgPal = math.ceil(love.math.random() * #palettes)
-    end
-
-    function randValue(min, max, step, preferMiddle)
-        local steps = ((max - min) / step) + 1
-        if preferMiddle then steps = steps - 2 end
-        local index = math.floor(love.math.random() * steps)
-        if preferMiddle then index = index + 1 end
-        local r = min + (index * step)
-        return r
-    end
-
-    local hairColor = math.ceil(love.math.random() * #palettes)
-
-    randomizePart('body')
-    --multipliers.torso.wMultiplier = randValue(.5, 3, .5, true)
-    --multipliers.torso.hMultiplier = randValue(.5, 3, .5, true)
-
-    if not creation.isPotatoHead then
-        randomizePart('head')
-        multipliers.head.wMultiplier = randValue(.5, 3, .5, true)
-        multipliers.head.hMultiplier = randValue(.5, 3, .5, true)
-        randomizePart('neck')
-        multipliers.neck.hMultiplier = randValue(0.5, 3, .5, true)
-        multipliers.neck.wMultiplier = randValue(0.5, 3, .5, true)
-    end
-
-    --if not skipUpdate then
-    local oldHasNeck = creation.hasNeck
-    local oldPotato = creation.isPotatoHead
-    -- if false then
-
-    creation.isPotatoHead = love.math.random() < .5 and true or false
-    creation.hasNeck = love.math.random() < .5 and true or false
-    -- end
-    if (creation.isPotatoHead) then creation.hasNeck = false end
-
-    if creation.hasNeck ~= oldHasNeck then
-        changePart('hasNeck', guy)
-        print('complex I thik 1')
-    end
-
-    if creation.isPotatoHead ~= oldPotato then
-        changePart('potato', guy)
-        print('complex I thik 2')
-    end
-    --end
-    randomizePart('ears')
-    randomizePart('chestHair')
-    values['chestHair'].linePal = hairColor
-    randomizePart('armhair')
-    values['armhair'].linePal = hairColor
-    randomizePart('hair')
-    values['hair'].linePal = hairColor
-
-    randomizePart('leghair')
-    values['leghair'].linePal = hairColor
-
-    randomizePart('legs')
-    multipliers.leg.lMultiplier = randValue(0.5, 4, .5, true)
-    multipliers.leg.wMultiplier = randValue(0.5, 4, .5, true)
-
-    randomizePart('arms')
-    multipliers.arm.lMultiplier = randValue(0.5, 4, .5, true)
-    multipliers.arm.wMultiplier = randValue(0.5, 4, .5, true)
-
-    randomizePart('hands')
-    multipliers.hand.hMultiplier = randValue(0.5, 2, .5, true)
-    multipliers.hand.wMultiplier = randValue(0.5, 2, .5, true)
-
-    randomizePart('feet')
-    multipliers.feet.hMultiplier = randValue(0.5, 2, .5, true)
-    multipliers.feet.wMultiplier = randValue(0.5, 2, .5, true)
-
-    randomizePart('eyes')
-    randomizePart('pupils')
-    randomizePart('brows')
-    values['brows'].linePal = hairColor
-
-    randomizePart('eyes')
-    randomizePart('nose')
-
-    randomizePart('teeth')
-    values['teeth'].bgPal = 5
-    values['teeth'].fgPal = 5
-
-    randomizePart('upperlip')
-    randomizePart('lowerlip')
-
-    randomizePart('skinPatchSnout')
-    local bgAlpha = randValue(1, 5, 1)
-    local fgAlpha = randValue(1, 5, 1)
-    local lineAlpha = randValue(1, 5, 1)
-    values['skinPatchSnout'].bgAlpha = randValue(1, 5, 1)
-    values['skinPatchSnout'].fgAlpha = randValue(1, 5, 1)
-    values['skinPatchSnout'].lineAlpha = randValue(1, 5, 1)
-
-    randomizePart('skinPatchEye1')
-    values['skinPatchEye1'].bgAlpha = bgAlpha
-    values['skinPatchEye1'].fgAlpha = fgAlpha
-    values['skinPatchEye1'].lineAlpha = lineAlpha
-
-    randomizePart('skinPatchEye2')
-    values['skinPatchEye2'].bgAlpha = bgAlpha
-    values['skinPatchEye2'].fgAlpha = fgAlpha
-    values['skinPatchEye2'].lineAlpha = lineAlpha
-
-
-    updateAllParts(guy)
-    resetPositions(guy)
-end
-
-function updateAllParts(guy)
-    local creation = guy.dna.creation
-
-    local _updatePart = function(name)
-        updatePart(name, guy)
-    end
-
-    _updatePart('ears')
-    _updatePart('hands')
-    _updatePart('feet')
-    if not creation.isPotatoHead then
-        _updatePart('head')
-        if creation.hasNeck then _updatePart('neck') end
-    end
-    _updatePart('body')
-    _updatePart('arms')
-    _updatePart('legs')
-
-    _updatePart('eyes')
-    _updatePart('pupils')
-    _updatePart('nose')
-    _updatePart('hair')
-    _updatePart('armhair')
-    _updatePart('leghair')
-    _updatePart('brows')
-    _updatePart('teeth')
-    _updatePart('upperlip')
-    _updatePart('lowerlip')
-    _updatePart('chestHair')
-end
-
 local function updateTheScrolling(dt, thrown, pos)
     local oldPos = pos
     if (thrown) then
@@ -612,10 +450,13 @@ local function pointerPressed(x, y, id)
     end
 
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
-        --for i = 1, #fiveGuys do
-        ---    randomizeGuy(fiveGuys[i])
-        --nd
-        randomizeGuy(editingGuy)
+        if DEBUG_FIVE_GUYS_IN_EDIT then
+            for i = 1, #fiveGuys do
+                randomizeGuy(fiveGuys[i])
+            end
+        else
+            randomizeGuy(editingGuy)
+        end
         setCategories(editingGuy)
 
         local creation = editingGuy.dna.creation
@@ -735,6 +576,11 @@ function scene.handleAudioMessage(msg)
 end
 
 function scene.unload()
+    Signal.clear('click-settings-scroll-area-item')
+    Signal.clear('click-scroll-list-item')
+    Signal.clear('throw-settings-scroll-area')
+    Signal.clear('throw-scroll-list')
+    Signal.clearPattern('.*') -- clear all signals
     --Timer.clear()
     local b = world:getBodies()
     for i = #b, 1, -1 do
@@ -780,26 +626,31 @@ function scene.load()
     --end
 
     borders = {}
-    parts = dna.generateParts()
+
     categories = {}
     setCategories(editingGuy)
-
-
 
     audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    for i = 1, #fiveGuys do
-        --     updateAllParts(fiveGuys[i])
+
+
+
+
+    if DEBUG_FIVE_GUYS_IN_EDIT then
+        setupBox2dScene()
+        for i = 1, #fiveGuys do
+            updateAllParts(fiveGuys[i])
+        end
+    else
+        setupBox2dScene(pickedFiveGuyIndex)
+        updateAllParts(editingGuy)
     end
 
-    setupBox2dScene()
-    -- updateAllParts(editingGuy)
 
-    if editingGuy.init == false then
-        randomizeGuy(editingGuy)
-        editingGuy.init = true
-    end
+
+
+
     Timer.tween(.5, scroller, { position = 8 })
 end
 
@@ -878,10 +729,15 @@ function scene.draw()
     --phys.drawWorld(world)
 
     prof.push('editGuy.draw drawSkinOver')
-    drawSkinOver(editingGuy.b2d, editingGuy)
-    --for i = 1, #fiveGuys do
-    --    drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
-    --end
+    if DEBUG_FIVE_GUYS_IN_EDIT then
+        for i = 1, #fiveGuys do
+            drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+        end
+    else
+        drawSkinOver(editingGuy.b2d, editingGuy)
+    end
+
+
     for i = 1, #fiveGuys do
         --     drawNumbersOver(fiveGuys[i].b2d)
     end
