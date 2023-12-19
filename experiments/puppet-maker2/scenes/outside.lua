@@ -120,6 +120,7 @@ function scene.update(dt)
     Timer.update(dt)
     handleUpdate(dt, cam)
     rotateAllBodies(world:getBodies(), dt)
+    print(love.audio.getActiveSourceCount())
 end
 
 function scene.handleAudioMessage(msg)

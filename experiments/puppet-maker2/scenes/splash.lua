@@ -61,12 +61,10 @@ function scene.update(dt)
     function love.mousepressed(key, unicode)
         gotoNext()
     end
-
-    Timer.update(dt)
 end
 
 function scene.draw()
-    print(unpack(creamColor))
+    --print(unpack(creamColor))
     love.graphics.clear(creamColor)
 
     local screenWidth, screenHeight = love.graphics.getDimensions()

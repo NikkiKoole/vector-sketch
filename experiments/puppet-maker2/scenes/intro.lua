@@ -213,8 +213,6 @@ function scene.handleAudioMessage()
 end
 
 function scene.unload()
-    print('asdasd')
-
     Timer.clear()
 end
 
@@ -267,7 +265,7 @@ function scene.draw()
     --love.graphics.clear(238 / 255, 226 / 255, 188 / 255)
     love.graphics.clear(1, 1, 1)
     local w, h = love.graphics.getDimensions()
-    print(unpack(creamColor))
+    -- print(unpack(creamColor))
     love.graphics.setColor(bgColor)
     love.graphics.rectangle('fill', 0, 0, w, h)
 

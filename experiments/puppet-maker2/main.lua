@@ -379,8 +379,8 @@ function love.load()
     pickedFiveGuyIndex = 1
 
     SM.setPath("scenes/")
-    --SM.load("intro")
-    SM.load("editGuy")
+    SM.load("splash")
+    --SM.load("editGuy")
 end
 
 function love.update(dt)
