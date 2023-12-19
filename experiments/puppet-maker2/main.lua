@@ -96,20 +96,26 @@ end
 
 function eyeBlink(guy)
     Timer.tween(.1, guy.tweenVars, { eyesOpen = 0 }, 'out-quad')
-    Timer.after(.1 + 0.001, function()
+    Timer.after(.1 + 0.1, function()
         Timer.tween(.15, guy.tweenVars, { eyesOpen = 1 }, 'out-quad')
     end)
 end
 
 function mouthSay(guy, length)
     local maxOpen = 1.25 + love.math.random() * 0.5
-    local minWide = .5 + love.math.random() * 0.8
+    local minWide = .5 + love.math.random() * 1.8
 
-    local totalDur = length + 0.1
+    local totalDur = length * 1.3
     Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
-    Timer.after(totalDur / 3 + 0.001, function()
+    Timer.after(totalDur / 3 + 0.1, function()
         Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
     end)
+end
+
+function lookAt(guy, x, y)
+    guy.tweenVars.lookAtCounter = 1 + love.math.random() * 4
+    guy.tweenVars.lookAtPosX = x
+    guy.tweenVars.lookAtPosY = y
 end
 
 function stripPath(root, path)
@@ -360,6 +366,10 @@ function love.load()
             b2d = nil,
             canvasCache = {},
             tweenVars = {
+                lookAtPosX = 0,
+                lookAtPosY = 0,
+                lookAtCounter = 0,
+                blinkCounter = love.math.random() * 5,
                 eyesOpen = 1,
                 mouthWide = 1,
                 mouthOpen = 0
@@ -398,7 +408,19 @@ function love.update(dt)
             end
         end
         if focussed and not grabbingScreenshots.doing then
-            --print('hello!')
+            for i = 1, #fiveGuys do
+                fiveGuys[i].tweenVars.blinkCounter = fiveGuys[i].tweenVars.blinkCounter - dt
+                if fiveGuys[i].tweenVars.blinkCounter < 0 then
+                    eyeBlink(fiveGuys[i])
+                    fiveGuys[i].tweenVars.blinkCounter = love.math.random() * 5
+                end
+                if (fiveGuys[i].tweenVars.lookAtCounter > 0) then
+                    fiveGuys[i].tweenVars.lookAtCounter = fiveGuys[i].tweenVars.lookAtCounter - dt
+                    if fiveGuys[i].tweenVars.lookAtCounter <= 0 then
+                        fiveGuys[i].tweenVars.lookAtCounter = 0
+                    end
+                end
+            end
             Timer.update(dt)
             gesture.update(dt)
             prof.push('SM.update')
@@ -470,10 +492,10 @@ function love.draw()
     end
     love.graphics.setColor(1, 1, 1, 1)
     --local stats = love.graphics.getStats()
-    love.graphics.print(
-        world:getBodyCount() ..
-        '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
-        10)
+    -- love.graphics.print(
+    --     world:getBodyCount() ..
+    --     '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
+    --     10)
 end
 
 function love.quit()

@@ -32,6 +32,10 @@ local function pointerPressed(x, y, id)
             end
         end)
     end
+
+    for i = 1, #fiveGuys do
+        lookAt(fiveGuys[i], x, y)
+    end
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -103,6 +107,7 @@ function scene.load()
 end
 
 function scene.unload()
+    Timer.clear()
     local b = world:getBodies()
     for i = #b, 1, -1 do
         b[i]:destroy()
@@ -123,16 +128,16 @@ function scene.handleAudioMessage(msg)
         local index = math.ceil(math.random() * #fiveGuys)
         if path == "mipo/po3" or path == 'mipo/pi' then
             local sndLength = msg.data.source:getDuration() / msg.data.pitch
-            print('gonna say something', index, sndLength)
+            --print('gonna say something', index, sndLength)
             mouthSay(fiveGuys[index], sndLength)
         elseif (path == 'Triangles 101' or path == 'Triangles 103') then
-            print('gonna breath', index)
+            --print('gonna breath', index)
             breathBody(fiveGuys[index])
         elseif (path == 'babirhodes/rhodes2') then
-            doinkBody(fiveGuys[index])
+            ---doinkBody(fiveGuys[index])
             print('gonna doink something', index)
         else
-            eyeBlink(fiveGuys[index])
+            -- eyeBlink(fiveGuys[index])
         end
         --print(path)
         --print('handling audio message from fiveGuy')

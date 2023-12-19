@@ -623,6 +623,10 @@ local function pointerPressed(x, y, id)
             playSound(s.s, 1, 1)
         end
     end
+
+    for i = 1, #fiveGuys do
+        lookAt(fiveGuys[i], x, y)
+    end
 end
 
 local function pointerMoved(x, y, dx, dy, id)
@@ -722,6 +726,7 @@ function scene.handleAudioMessage(msg)
 end
 
 function scene.unload()
+    Timer.clear()
     local b = world:getBodies()
     for i = #b, 1, -1 do
         b[i]:destroy()
@@ -796,8 +801,6 @@ function scene.update(dt)
             splashSound:stop()
         end
     end
-
-    Timer.update(dt)
 
     if grid and grid.data and grid.data.min then
         if grid.position > grid.data.min then

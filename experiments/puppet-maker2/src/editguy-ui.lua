@@ -26,6 +26,7 @@ function tweenCameraToHead()
 end
 
 function growl(pitch)
+    if (playingSound) then playingSound:stop() end
     local index = math.ceil(love.math.random() * #hum)
     local sndLength = hum[math.ceil(index)]:getDuration() / pitch
     playingSound = playSound(hum[math.ceil(index)], pitch, 2)

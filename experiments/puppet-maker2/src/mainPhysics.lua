@@ -2,6 +2,7 @@ local bbox            = require 'lib.bbox'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
 Vector                = require 'vendor.brinevector'
 local camera          = require 'lib.camera'
+local numbers         = require 'lib.numbers'
 local cam             = require('lib.cameraBase').getInstance()
 local lib             = {}
 
@@ -471,9 +472,6 @@ local function endContact(a, b, contact)
             table.remove(disabledContacts, i)
         end
     end
-    -- if isContactBetweenGroundAndCarGroundSensor(contact) then
-    --     carIsTouching = carIsTouching - 1
-    -- end
 end
 
 local function preSolve(a, b, contact)
@@ -484,7 +482,31 @@ local function preSolve(a, b, contact)
 end
 
 local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
+    local fixtureA, fixtureB = contact:getFixtures()
+    local aud = fixtureA:getUserData()
+    local bud = fixtureB:getUserData()
+    if aud and bud then
+        -- print(aud.bodyType, bud.bodyType)
+        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso'))
+            or (bud.bodyType == 'body' and aud.bodyType == 'body')
+            or (bud.bodyType == 'head' and aud.bodyType == 'lhand')
+            or (bud.bodyType == 'head' and aud.bodyType == 'rhand')
+            or (bud.bodyType == 'body' and aud.bodyType == 'lhand')
+            or (bud.bodyType == 'body' and aud.bodyType == 'rhand')
+        then
+            if normalimpulse > 1000 then
+                local index = math.ceil(love.math.random() * #rubberplonks)
 
+                local pitch = numbers.mapInto(normalimpulse, 1000, 10000, 2, 1)
+                local volume = numbers.mapInto(normalimpulse, 1000, 10000, .2, 1)
+                if pitch < .5 then pitch = .5 end
+                if volume < .2 then volume = .2 end
+
+                -- print(normalimpulse, pitch, volume)
+                playSound(rubberplonks[index], pitch, volume)
+            end
+        end
+    end
 end
 
 
@@ -512,6 +534,8 @@ function rebuildPhysicsBorderForScreen()
     local top = love.physics.newBody(world, w / 2, camtly - sideHigh, "static")
     local topshape = love.physics.newRectangleShape(boxWorldWidth, 3000)
     local topfixture = love.physics.newFixture(top, topshape, 1)
+    topfixture:setUserData(makeUserData('border', {}))
+
 
     local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
     local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
@@ -520,10 +544,12 @@ function rebuildPhysicsBorderForScreen()
     local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
     local leftshape = love.physics.newRectangleShape(wallThick, 30000)
     local leftfixture = love.physics.newFixture(left, leftshape, 1)
+    leftfixture:setUserData(makeUserData('border', {}))
 
     local right = love.physics.newBody(world, cambrx + half, 2500 - 15000, "static")
     local rightshape = love.physics.newRectangleShape(wallThick, 30000)
     local rightfixture = love.physics.newFixture(right, rightshape, 1)
+    rightfixture:setUserData(makeUserData('border', {}))
 
     borders = { topfixture, bottomfixture, leftfixture, rightfixture }
 end
