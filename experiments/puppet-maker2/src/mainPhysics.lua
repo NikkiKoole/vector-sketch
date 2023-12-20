@@ -149,6 +149,8 @@ function handlePointerPressed(x, y, id, cam)
                                 if body == v then
                                     pickedFiveGuyIndex = i
                                     editingGuy = fiveGuys[pickedFiveGuyIndex]
+
+                                    editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
                                 end
                             end
                         end

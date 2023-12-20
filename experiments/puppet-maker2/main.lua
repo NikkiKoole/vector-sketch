@@ -398,6 +398,7 @@ function love.load()
     SM.setPath("scenes/")
     --SM.load("splash")
     SM.load("editGuy")
+    -- SM.load("outside")
 end
 
 function love.update(dt)
@@ -509,10 +510,10 @@ function love.draw()
     end
     love.graphics.setColor(1, 1, 1, 1)
     --local stats = love.graphics.getStats()
-    -- love.graphics.print(
-    --     world:getBodyCount() ..
-    --     '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
-    --     10)
+    love.graphics.print(
+        world:getBodyCount() ..
+        '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
+        10)
 end
 
 function love.quit()
@@ -555,6 +556,7 @@ end
 -- noPhysicsUpdate can only be turned on when you know a real object is there
 -- ist off by default and that is usefull to essentialy just change
 -- values in the dna.values / creation etc.
+
 function randomizeGuy(guy, noPhysicsUpdate)
     local creation = guy.dna.creation
     local multipliers = guy.dna.multipliers
@@ -563,7 +565,7 @@ function randomizeGuy(guy, noPhysicsUpdate)
     function randomizePart(part)
         local p = findPart(part)
         local maximum = #p.imgs
-        values[part].shape = maximum --math.ceil(maximum / 5) -- math.ceil(love.math.random() * maximum)
+        values[part].shape = math.ceil(love.math.random() * maximum) -- maximum --math.ceil(maximum / 5)
         values[part].bgPal = math.ceil(love.math.random() * #palettes)
         values[part].fgPal = math.ceil(love.math.random() * #palettes)
     end
@@ -605,12 +607,12 @@ function randomizeGuy(guy, noPhysicsUpdate)
     if not noPhysicsUpdate then
         if creation.hasNeck ~= oldHasNeck then
             changePart('hasNeck', guy)
-            print('complex I thik 2')
+            --print('complex I thik 2')
         end
 
         if creation.isPotatoHead ~= oldPotato then
             changePart('potato', guy)
-            print('complex I thik 2')
+            --print('complex I thik 2')
         end
     end
     --end

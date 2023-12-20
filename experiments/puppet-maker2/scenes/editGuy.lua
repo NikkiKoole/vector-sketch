@@ -220,7 +220,6 @@ function updatePart(name, guy)
         genericBodyPartUpdate(guy, 'head')
         genericBodyPartUpdate(guy, 'lear')
         genericBodyPartUpdate(guy, 'rear')
-        print('git in head')
     end
 
     if name == 'potato' then

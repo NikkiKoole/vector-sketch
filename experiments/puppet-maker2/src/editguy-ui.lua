@@ -1319,7 +1319,7 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
                     currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, .125, 3, .125, ui2.icons.eyesmall1, ui2.icons.eyewide)
+                    nil, .125, 4, .125, ui2.icons.eyesmall1, ui2.icons.eyewide)
 
                 runningElem, currentY = updateRowStuff()
 
@@ -1327,7 +1327,7 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
                     currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, .125, 3, .125, ui2.icons.eyesmall2, ui2.icons.eyetall)
+                    nil, .125, 4, .125, ui2.icons.eyesmall2, ui2.icons.eyetall)
 
                 runningElem, currentY = updateRowStuff()
 

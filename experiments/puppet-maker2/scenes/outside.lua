@@ -140,8 +140,7 @@ function scene.handleAudioMessage(msg)
             --print('gonna breath', index)
             breathBody(fiveGuys[index])
         elseif (path == 'babirhodes/rhodes2') then
-            ---doinkBody(fiveGuys[index])
-            print('gonna doink something', index)
+            doinkBody(fiveGuys[index])
         else
             -- eyeBlink(fiveGuys[index])
         end
