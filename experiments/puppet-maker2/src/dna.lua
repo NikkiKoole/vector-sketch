@@ -1,3 +1,5 @@
+local readAndParse = require 'src.readAndParse'
+
 local lib = {}
 
 
@@ -190,21 +192,23 @@ lib.generateParts = function()
     }
     table.insert(chestHairUrls, 'assets/parts/null.png')
 
-    local bodyImgUrls, bodyParts = loadVectorSketchAndGetImages('assets/bodies.polygons.txt', 'bodies')
+    local bodyImgUrls, bodyParts = readAndParse.loadVectorSketchAndGetImages('assets/bodies.polygons.txt', 'bodies')
 
-    local feetImgUrls, feetParts = loadVectorSketchAndGetImages('assets/feet.polygons.txt', 'feet')
+    local feetImgUrls, feetParts = readAndParse.loadVectorSketchAndGetImages('assets/feet.polygons.txt', 'feet')
     local handParts = feetParts
     local headImgUrls = bodyImgUrls
     local headParts = bodyParts
 
-    local eyeImgUrls, eyeParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyes')
-    local pupilImgUrls, pupilParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'pupils')
-    local noseImgUrls, noseParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'noses')
-    local browImgUrls, browParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyebrows')
-    local earImgUrls, earParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'ears')
-    local teethImgUrls, teethParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'teeths')
-    local upperlipImgUrls, upperlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'upperlips')
-    local lowerlipImgUrls, lowerlipParts = loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'lowerlips')
+    local eyeImgUrls, eyeParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyes')
+    local pupilImgUrls, pupilParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'pupils')
+    local noseImgUrls, noseParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'noses')
+    local browImgUrls, browParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyebrows')
+    local earImgUrls, earParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'ears')
+    local teethImgUrls, teethParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'teeths')
+    local upperlipImgUrls, upperlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
+            'upperlips')
+    local lowerlipImgUrls, lowerlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
+            'lowerlips')
 
     table.insert(teethImgUrls, 'assets/parts/null.png')
 

@@ -19,7 +19,7 @@ local wipes         = require 'src.screen-transitions'
 
 local audioHelper   = require 'lib.audio-helper'
 
-
+local readAndParse  = require 'src.readAndParse'
 function scene.load()
     bgColor = { unpack(creamColor) }
     introSound:setVolume(.5)
@@ -62,7 +62,7 @@ function scene.load()
 
     root.children = { mipo }
 
-    stripPath(root, '/experiments/puppet%-maker2/')
+    readAndParse.stripPath(root, '/experiments/puppet%-maker2/')
     parentize.parentize(root)
     mesh.meshAll(root)
     render.renderThings(root)

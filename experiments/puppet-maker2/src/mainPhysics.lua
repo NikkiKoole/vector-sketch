@@ -25,17 +25,6 @@ local function makeRectPoly(w, h, x, y)
         )
 end
 
-function makeRectPoly2(w, h, x, y)
-    local cx = x
-    local cy = y
-    return love.physics.newPolygonShape(
-            cx - w / 2, cy - h / 2,
-            cx + w / 2, cy - h / 2,
-            cx + w / 2, cy + h / 2,
-            cx - w / 2, cy + h / 2
-        )
-end
-
 local function capsuleXY(w, h, cs, x, y)
     -- cs == cornerSize
     local w2 = w / 2
@@ -69,7 +58,6 @@ local function makeTrapeziumPoly(w, w2, h, x, y)
             cx - w2 / 2, cy + h / 2
         )
 end
-
 
 local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
     local pointerJoint = {}
@@ -128,58 +116,6 @@ local function getCentroidOfFixture(body, fixture)
     return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
 
-function handlePointerPressed(x, y, id, cam)
-    local wx, wy = cam:getWorldCoordinates(x, y)
-    local bodies = world:getBodies()
-    local temp = {}
-    for _, body in ipairs(bodies) do
-        if body:getType() ~= 'kinematic' then
-            local fixtures = body:getFixtures()
-            for _, fixture in ipairs(fixtures) do
-                local hitThisOne = fixture:testPoint(wx, wy)
-                local isSensor = fixture:isSensor()
-                if (hitThisOne and not isSensor) then
-                    table.insert(temp,
-                        { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
-
-                    for i = 1, #fiveGuys do
-                        local g = fiveGuys[i]
-                        if (g.b2d) then
-                            for k, v in pairs(g.b2d) do
-                                if body == v then
-                                    pickedFiveGuyIndex = i
-                                    editingGuy = fiveGuys[pickedFiveGuyIndex]
-                                    if SM.cName == 'outside' then
-                                        editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    if #temp > 0 then
-        table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
-        lib.killMouseJointIfPossible(id)
-        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
-    end
-
-    if #temp == 0 then lib.killMouseJointIfPossible(id) end
-
-    return #temp > 0
-end
-
-function getJointBetween2Connectors(to, at)
-    local pos1 = getCentroidOfFixture(to:getBody(), to)
-    local pos2 = getCentroidOfFixture(at:getBody(), at)
-    local j = love.physics.newRevoluteJoint(at:getBody(), to:getBody(),
-            pos2[1],
-            pos2[2], pos1[1], pos1[2])
-    return j
-end
-
 local function maybeConnectThisConnector(f, mj)
     local found = false
 
@@ -234,7 +170,7 @@ local function maybeConnectThisConnector(f, mj)
 
                 if d < maxD and not isOnCooldown then
                     connectors[j].to = f --mj.jointBody
-                    local joint = getJointBetween2Connectors(connectors[j].to, connectors[j].at)
+                    local joint = lib.getJointBetween2Connectors(connectors[j].to, connectors[j].at)
                     connectors[j].joint = joint
                 end
             end
@@ -273,122 +209,7 @@ if false then
     end
 end
 
-function handleUpdate(dt, cam)
-    -- connect connectors
-    for i = 1, #pointerJoints do
-        local mj = pointerJoints[i]
-        if (mj.joint) then
-            local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
-            mj.joint:setTarget(wx, wy)
-
-            local fixtures = mj.jointBody:getFixtures()
-            for k = 1, #fixtures do
-                local f = fixtures[k]
-                if f:getUserData() and f:getUserData().bodyType then
-                    if f:getUserData().bodyType == 'connector' then
-                        maybeConnectThisConnector(f)
-                    end
-                end
-            end
-        end
-    end
-
-    -- diconnect connectors
-    if true then
-        if connectors then
-            for i = #connectors, 1, -1 do
-                -- we can only break a  joint if we have one
-
-                if connectors[i].joint then
-                    local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
-                    local delta = Vector(reaction2[1], reaction2[2])
-                    local l = delta:getLength()
-                    local found = false
-
-                    for j = 1, #pointerJoints do
-                        local mj = pointerJoints[j]
-                        if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
-                            found = true
-                        end
-                    end
-
-                    local b1, b2 = connectors[i].joint:getBodies()
-
-                    local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
-
-
-                    local breakForceWhenNotMouseJointed = 2000000 * (b1:getMass() * b2:getMass())
-                    --if (not found) then
-                    --    print(l, )
-                    --end
-
-
-                    if ((found and l > breakForce) or (not found and l > breakForceWhenNotMouseJointed)) then
-                        print('broke when foudn', found)
-                        connectors[i].joint:destroy()
-                        connectors[i].joint = nil
-
-                        connectors[i].to = nil
-                        --print('broke it', i, l, breakForce)
-                        table.insert(connectorCooldownList, { runningFor = 0, index = i })
-                    end
-                end
-            end
-        end
-    end
-    local now = love.timer.getTime()
-    for i = #connectorCooldownList, 1, -1 do
-        connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
-        if (connectorCooldownList[i].runningFor > 0.5) then
-            table.remove(connectorCooldownList, i)
-        end
-    end
-end
-
-function handlePointerReleased(x, y, id)
-    for i = 1, #pointerJoints do
-        local mj = pointerJoints[i]
-        -- if false then
-        if mj.id == id then
-            if (mj.joint) then --- UNUSED
-                if false then -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
-                    if (mj.jointBody and objects.ground) then
-                        local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
-                        local tl = { points[1], points[2] }
-                        local tr = { points[3], points[4] }
-                        -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
-                        -- oh wait, this is actually kinda good enough-ish (tm)
-                        if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
-                            local x1, y1 = mj.jointBody:getPosition()
-                            if (#mj.positionOfLastDisabledContact > 0) then
-                                local x2 = mj.positionOfLastDisabledContact[1]
-                                local y2 = mj.positionOfLastDisabledContact[2]
-
-                                local delta = Vector(x1 - x2, y1 - y2)
-                                local l = delta:getLength()
-
-                                local v = delta:getNormalized() * l * -2
-                                if v.y > 0 then
-                                    v.y = 0
-                                    v.x = 0
-                                end -- i odnt want  you shoooting downward!
-                                mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
-                            end
-                            mj.bodyLastDisabledContact = nil
-                            mj.positionOfLastDisabledContact = nil
-                            --
-                        end
-                    end
-                end
-            end
-            --   end
-        end
-    end
-    lib.killMouseJointIfPossible(id)
-end
-
-function getRandomConvexPoly(radius, numVerts)
+local function getRandomConvexPoly(radius, numVerts)
     local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
     while not love.math.isConvex(vertices) do
         vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
@@ -517,8 +338,35 @@ end
 
 
 
--- this should be in physicsworld
-function rebuildPhysicsBorderForScreen()
+
+lib.setupBox2dScene = function(onlyThisGuyIndex, makeFunc)
+    local w, h = love.graphics.getDimensions()
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+
+
+    for i = 1, #fiveGuys do
+        fiveGuys[i].b2d = nil
+    end
+    -- box2dGuys = {}
+
+    lib.rebuildPhysicsBorderForScreen()
+
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local stepSize = boxWorldWidth / (#fiveGuys + 1)
+
+
+    for i = 1, #fiveGuys do
+        local xPos = onlyThisGuyIndex and (camtlx + 3 * stepSize) or (camtlx + i * stepSize)
+        if onlyThisGuyIndex and i == onlyThisGuyIndex or not onlyThisGuyIndex then
+            fiveGuys[i].b2d = makeFunc(xPos, camtly, fiveGuys[i])
+        end
+    end
+end
+
+lib.rebuildPhysicsBorderForScreen = function()
     if borders then
         for i = 1, #borders do
             if not borders[i]:isDestroyed() then
@@ -563,31 +411,24 @@ function rebuildPhysicsBorderForScreen()
     borders = { topfixture, bottomfixture, leftfixture, rightfixture }
 end
 
-function setupBox2dScene(onlyThisGuyIndex, makeFunc)
-    local w, h = love.graphics.getDimensions()
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+lib.getJointBetween2Connectors = function(to, at)
+    local pos1 = getCentroidOfFixture(to:getBody(), to)
+    local pos2 = getCentroidOfFixture(at:getBody(), at)
+    local j = love.physics.newRevoluteJoint(at:getBody(), to:getBody(),
+            pos2[1],
+            pos2[2], pos1[1], pos1[2])
+    return j
+end
 
-
-    for i = 1, #fiveGuys do
-        fiveGuys[i].b2d = nil
-    end
-    -- box2dGuys = {}
-
-    rebuildPhysicsBorderForScreen()
-
-    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-    local cambrx, cambry = cam:getWorldCoordinates(w, h)
-    local boxWorldWidth = cambrx - camtlx
-    local stepSize = boxWorldWidth / (#fiveGuys + 1)
-
-
-    for i = 1, #fiveGuys do
-        local xPos = onlyThisGuyIndex and (camtlx + 3 * stepSize) or (camtlx + i * stepSize)
-        if onlyThisGuyIndex and i == onlyThisGuyIndex or not onlyThisGuyIndex then
-            fiveGuys[i].b2d = makeFunc(xPos, camtly, fiveGuys[i])
-        end
-    end
+lib.makeRectPoly2 = function(w, h, x, y)
+    local cx = x
+    local cy = y
+    return love.physics.newPolygonShape(
+            cx - w / 2, cy - h / 2,
+            cx + w / 2, cy - h / 2,
+            cx + w / 2, cy + h / 2,
+            cx - w / 2, cy + h / 2
+        )
 end
 
 lib.killMouseJointIfPossible = function(id)
@@ -715,6 +556,165 @@ lib.drawWorld = function(world)
     love.graphics.setColor(r, g, b, a)
     love.graphics.setLineWidth(1)
 end
+
+lib.handleUpdate = function(dt, cam)
+    -- connect connectors
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        if (mj.joint) then
+            local mx, my = getPointerPosition(mj.id) --love.mouse.getPosition()
+            local wx, wy = cam:getWorldCoordinates(mx, my)
+            mj.joint:setTarget(wx, wy)
+
+            local fixtures = mj.jointBody:getFixtures()
+            for k = 1, #fixtures do
+                local f = fixtures[k]
+                if f:getUserData() and f:getUserData().bodyType then
+                    if f:getUserData().bodyType == 'connector' then
+                        maybeConnectThisConnector(f)
+                    end
+                end
+            end
+        end
+    end
+
+    -- diconnect connectors
+    if true then
+        if connectors then
+            for i = #connectors, 1, -1 do
+                -- we can only break a  joint if we have one
+
+                if connectors[i].joint then
+                    local reaction2 = { connectors[i].joint:getReactionForce(1 / dt) }
+                    local delta = Vector(reaction2[1], reaction2[2])
+                    local l = delta:getLength()
+                    local found = false
+
+                    for j = 1, #pointerJoints do
+                        local mj = pointerJoints[j]
+                        if mj.jointBody == connectors[i].to:getBody() or mj.jointBody == connectors[i].at:getBody() then
+                            found = true
+                        end
+                    end
+
+                    local b1, b2 = connectors[i].joint:getBodies()
+
+                    local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
+
+
+                    local breakForceWhenNotMouseJointed = 2000000 * (b1:getMass() * b2:getMass())
+                    --if (not found) then
+                    --    print(l, )
+                    --end
+
+
+                    if ((found and l > breakForce) or (not found and l > breakForceWhenNotMouseJointed)) then
+                        print('broke when foudn', found)
+                        connectors[i].joint:destroy()
+                        connectors[i].joint = nil
+
+                        connectors[i].to = nil
+                        --print('broke it', i, l, breakForce)
+                        table.insert(connectorCooldownList, { runningFor = 0, index = i })
+                    end
+                end
+            end
+        end
+    end
+    local now = love.timer.getTime()
+    for i = #connectorCooldownList, 1, -1 do
+        connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt
+        if (connectorCooldownList[i].runningFor > 0.5) then
+            table.remove(connectorCooldownList, i)
+        end
+    end
+end
+
+lib.handlePointerReleased = function(x, y, id)
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        -- if false then
+        if mj.id == id then
+            if (mj.joint) then --- UNUSED
+                if false then -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
+                    if (mj.jointBody and objects.ground) then
+                        local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
+                        local tl = { points[1], points[2] }
+                        local tr = { points[3], points[4] }
+                        -- fogure out if we are below the ground, and if so whatthe ange is we want to be shot at.
+                        -- oh wait, this is actually kinda good enough-ish (tm)
+                        if (mj.bodyLastDisabledContact and mj.bodyLastDisabledContact:getBody() == mj.jointBody) then
+                            local x1, y1 = mj.jointBody:getPosition()
+                            if (#mj.positionOfLastDisabledContact > 0) then
+                                local x2 = mj.positionOfLastDisabledContact[1]
+                                local y2 = mj.positionOfLastDisabledContact[2]
+
+                                local delta = Vector(x1 - x2, y1 - y2)
+                                local l = delta:getLength()
+
+                                local v = delta:getNormalized() * l * -2
+                                if v.y > 0 then
+                                    v.y = 0
+                                    v.x = 0
+                                end -- i odnt want  you shoooting downward!
+                                mj.bodyLastDisabledContact:getBody():applyLinearImpulse(v.x, v.y)
+                            end
+                            mj.bodyLastDisabledContact = nil
+                            mj.positionOfLastDisabledContact = nil
+                            --
+                        end
+                    end
+                end
+            end
+            --   end
+        end
+    end
+    lib.killMouseJointIfPossible(id)
+end
+
+lib.handlePointerPressed = function(x, y, id, cam)
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local bodies = world:getBodies()
+    local temp = {}
+    for _, body in ipairs(bodies) do
+        if body:getType() ~= 'kinematic' then
+            local fixtures = body:getFixtures()
+            for _, fixture in ipairs(fixtures) do
+                local hitThisOne = fixture:testPoint(wx, wy)
+                local isSensor = fixture:isSensor()
+                if (hitThisOne and not isSensor) then
+                    table.insert(temp,
+                        { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
+
+                    for i = 1, #fiveGuys do
+                        local g = fiveGuys[i]
+                        if (g.b2d) then
+                            for k, v in pairs(g.b2d) do
+                                if body == v then
+                                    pickedFiveGuyIndex = i
+                                    editingGuy = fiveGuys[pickedFiveGuyIndex]
+                                    if SM.cName == 'outside' then
+                                        editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if #temp > 0 then
+        table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
+        lib.killMouseJointIfPossible(id)
+        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
+    end
+
+    if #temp == 0 then lib.killMouseJointIfPossible(id) end
+
+    return #temp > 0
+end
+
 
 
 return lib

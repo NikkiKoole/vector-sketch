@@ -10,7 +10,7 @@ local Timer            = require 'vendor.timer'
 local audioHelper      = require 'lib.audio-helper'
 local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
-
+local updatePart       = require 'src.updatePart'
 
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
@@ -20,7 +20,7 @@ end
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
-    local interacted = handlePointerPressed(x, y, id, cam)
+    local interacted = phys.handlePointerPressed(x, y, id, cam)
 
 
     local size = (h / 8) -- margin around panel
@@ -77,10 +77,10 @@ function scene.load()
     sprietUnder    = {}
     sprietOver     = {}
 
-    setupBox2dScene(nil, box2dGuyCreation.makeGuy)
+    phys.setupBox2dScene(nil, box2dGuyCreation.makeGuy)
 
     for i = 1, #fiveGuys do
-        updateAllParts(fiveGuys[i])
+        updatePart.updateAllParts(fiveGuys[i])
     end
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
 
@@ -124,7 +124,7 @@ local delta = 0
 function scene.update(dt)
     delta = delta + dt
     Timer.update(dt)
-    handleUpdate(dt, cam)
+    phys.handleUpdate(dt, cam)
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
     --   print(love.audio.getActiveSourceCount())
 end

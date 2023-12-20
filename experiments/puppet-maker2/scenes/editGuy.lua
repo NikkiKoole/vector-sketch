@@ -7,13 +7,13 @@ local hit              = require 'lib.hit'
 local ui               = require 'lib.ui'
 local Signal           = require 'vendor.signal'
 local cam              = require('lib.cameraBase').getInstance()
-local mesh             = require 'lib.mesh'
 local phys             = require 'src.mainPhysics'
 local swipes           = require 'src.screen-transitions'
 local editGuyUI        = require 'src.editguy-ui'
 local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
 
+local updatePart       = require 'src.updatePart'
 local findSample       = function(path)
     for i = 1, #samples do
         if samples[i].p == path then
@@ -93,7 +93,7 @@ end
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
-    local interacted = handlePointerPressed(x, y, id, cam)
+    local interacted = phys.handlePointerPressed(x, y, id, cam)
 
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)
@@ -128,10 +128,10 @@ local function pointerPressed(x, y, id)
     if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
         if DEBUG_FIVE_GUYS_IN_EDIT then
             for i = 1, #fiveGuys do
-                randomizeGuy(fiveGuys[i])
+                updatePart.randomizeGuy(fiveGuys[i])
             end
         else
-            randomizeGuy(editingGuy)
+            updatePart.randomizeGuy(editingGuy)
         end
         setCategories(editingGuy)
 
@@ -190,7 +190,7 @@ local function pointerReleased(x, y, id)
 
     editGuyUI.configPanelSurroundings(editingGuy, false, x, y)
 
-    handlePointerReleased(x, y, id)
+    phys.handlePointerReleased(x, y, id)
 end
 
 -- love callbacks
@@ -235,7 +235,7 @@ if false then
             local newScale = cam.scale * (1 + dy / 10)
             if (newScale > 0.01 and newScale < 50) then
                 cam:scaleToPoint(1 + dy / 10)
-                rebuildPhysicsBorderForScreen()
+                phys.rebuildPhysicsBorderForScreen()
             end
         end
     end
@@ -314,13 +314,13 @@ function scene.load()
 
 
     if DEBUG_FIVE_GUYS_IN_EDIT then
-        setupBox2dScene(nil, box2dGuyCreation.makeGuy)
+        phys.setupBox2dScene(nil, box2dGuyCreation.makeGuy)
         for i = 1, #fiveGuys do
-            updateAllParts(fiveGuys[i])
+            updatePart.updateAllParts(fiveGuys[i])
         end
     else
-        setupBox2dScene(pickedFiveGuyIndex, box2dGuyCreation.makeGuy)
-        updateAllParts(editingGuy)
+        phys.setupBox2dScene(pickedFiveGuyIndex, box2dGuyCreation.makeGuy)
+        updatePart.updateAllParts(editingGuy)
     end
 
 
@@ -362,7 +362,7 @@ function scene.update(dt)
         grid.position = updateTheScrolling(dt, grid.isThrown, grid.position)
     end
     --handleConnectors(cam)
-    handleUpdate(dt, cam)
+    phys.handleUpdate(dt, cam)
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
 end
 

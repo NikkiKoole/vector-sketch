@@ -8,6 +8,7 @@ local lib     = {}
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 
+
 local function getParentAndChildrenFromPartName(partName, guy)
     local creation = guy.dna.creation
 
@@ -398,7 +399,7 @@ end
 local function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size, size, x, y)
+    local bandshape2 = phys.makeRectPoly2(size, size, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 1)
 
     fixture:setUserData(makeUserData('connector', data))
@@ -460,7 +461,7 @@ end
 local function makeAndAddConnector(parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size, size2, x, y)
+    local bandshape2 = phys.makeRectPoly2(size, size2, x, y)
     local fixture = love.physics.newFixture(parent, bandshape2, 0)
     fixture:setUserData(makeUserData('connector', data))
     fixture:setSensor(true)
@@ -1140,6 +1141,8 @@ lib.getFlippedMetaObject = function(flipx, flipy, points)
     end
     return newPoints
 end
+
+
 
 
 return lib

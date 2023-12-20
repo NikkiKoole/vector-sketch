@@ -9,12 +9,12 @@ local ui         = require "lib.ui"
 local text       = require 'lib.text'
 
 local imageCache = {}
-
+local updatePart = require 'src.updatePart'
 
 
 local lib = {}
 --local dna        = require 'src.dna'
-require 'src.box2dGuyCreation'
+--require 'src.box2dGuyCreation'
 
 local function drawTapesForBackground(x, y, w, h)
     local ratio = h / w
@@ -46,7 +46,7 @@ local function configPanelTabsDimensions(tabs, width)
 end
 
 local function changePart(name, guy)
-    updatePart(name, guy)
+    updatePart.updatePart(name, guy)
 end
 
 local function tweenCameraToHeadAndBody()
