@@ -755,7 +755,7 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
                 draw_slider_with_2_buttons(guy, 'dna.multipliers.teeth.hMultiplier', startX, currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, .5, 3, .5, ui2.icons.mouthup, ui2.icons.mouthdown)
+                    nil, .5, 3, .5, ui2.icons.mouthdown, ui2.icons.mouthup)
             end
         end
 
@@ -788,7 +788,7 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
                     currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, 0, 1, .1, ui2.icons.mouthup, ui2.icons.mouthdown)
+                    nil, 0, 1, .1, ui2.icons.mouthdown, ui2.icons.mouthup)
             end
         end
 
@@ -963,11 +963,11 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
                 runningElem, currentY = updateRowStuff()
 
                 local f = function(v)
-                    creation.isPotatoHead = v
                     -- creation.hasNeck = not creation.isPotatoHead
+                    creation.isPotatoHead = v
                     _changePart('potato')
                 end
-                draw_toggle_with_2_buttons('bipedUsePotatoHead', startX + (runningElem * elementWidth), currentY,
+                draw_toggle_with_2_buttons('dna.creation.isPotatoHead', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth,
                     not creation.isPotatoHead,
@@ -1341,7 +1341,7 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
                 draw_slider_with_2_buttons(guy, 'dna.positioners.eye.y', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
                     sliderWidth, propupdate,
-                    nil, 0, 1, 0.1, ui2.icons.eyedown, ui2.icons.eyeup)
+                    nil, 0, 1, 0.1, ui2.icons.eyeup, ui2.icons.eyedown)
 
                 runningElem, currentY = updateRowStuff()
 

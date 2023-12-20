@@ -220,16 +220,24 @@ function updatePart(name, guy)
         genericBodyPartUpdate(guy, 'head')
         genericBodyPartUpdate(guy, 'lear')
         genericBodyPartUpdate(guy, 'rear')
+        print('git in head')
     end
 
     if name == 'potato' then
         handleNeckAndHeadForPotato(guy.b2d, guy, creation.isPotatoHead, creation.hasNeck)
+        if not creation.isPotatoHead then
+            updatePart('head', guy)
+        end
         handlePhysicsHairOrNo(guy.b2d, guy, creation.hasPhysicsHair)
         genericBodyPartUpdate(guy, 'torso')
     end
 
     if name == 'hasNeck' then
         handleNeckAndHeadForHasNeck(guy.b2d, guy, creation.hasNeck)
+        if creation.hasNeck then
+            updatePart('neck', guy)
+        end
+
         genericBodyPartUpdate(guy, 'head')
     end
 

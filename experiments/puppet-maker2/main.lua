@@ -110,12 +110,10 @@ function eyeBlink(guy)
 end
 
 function mouthSay(guy, length)
-    print('mouthsay triggered')
     local maxOpen = 1.25 + love.math.random() * 0.5
     local minWide = .5 + love.math.random() * 1.8
 
     local totalDur = length * 1.3
-    --print(inspect(guy.tweenVars))
     Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = maxOpen, mouthWide = minWide }, 'out-quad')
     Timer.after(totalDur / 3 + 0.1, function()
         Timer.tween(totalDur / 3, guy.tweenVars, { mouthOpen = 0, mouthWide = 1 }, 'out-quad')
@@ -565,7 +563,7 @@ function randomizeGuy(guy, noPhysicsUpdate)
     function randomizePart(part)
         local p = findPart(part)
         local maximum = #p.imgs
-        values[part].shape = math.ceil(maximum / 3) -- math.ceil(love.math.random() * maximum)
+        values[part].shape = maximum --math.ceil(maximum / 5) -- math.ceil(love.math.random() * maximum)
         values[part].bgPal = math.ceil(love.math.random() * #palettes)
         values[part].fgPal = math.ceil(love.math.random() * #palettes)
     end

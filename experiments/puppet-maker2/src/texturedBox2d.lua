@@ -369,7 +369,7 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
     if not isNullObject('teeth', guy.dna.values) then
         if canvasCache.teethCanvas then
             renderNonAttachedObject(canvasCache.teethCanvas,
-                'teeth', r, tx, ty, 10, -10,
+                'teeth', r, tx, ty, 10, -10 * multipliers.teeth.hMultiplier,
                 box2dGuy, creation)
         end
     end
