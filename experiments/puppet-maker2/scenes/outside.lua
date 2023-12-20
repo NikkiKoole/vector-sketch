@@ -1,15 +1,16 @@
-local scene       = {}
+local scene            = {}
 
-local gradient    = require 'lib.gradient'
-local skygradient = gradient.makeSkyGradient(10)
-local hit         = require 'lib.hit'
-local cam         = require('lib.cameraBase').getInstance()
-local phys        = require 'src.mainPhysics'
-local swipes      = require 'src.screen-transitions'
-local Timer       = require 'vendor.timer'
-local audioHelper = require 'lib.audio-helper'
+local gradient         = require 'lib.gradient'
+local skygradient      = gradient.makeSkyGradient(10)
+local hit              = require 'lib.hit'
+local cam              = require('lib.cameraBase').getInstance()
+local phys             = require 'src.mainPhysics'
+local swipes           = require 'src.screen-transitions'
+local Timer            = require 'vendor.timer'
+local audioHelper      = require 'lib.audio-helper'
+local texturedBox2d    = require 'src.texturedBox2d'
+local box2dGuyCreation = require 'src.box2dGuyCreation'
 
-require 'src.box2dGuyCreation'
 
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
@@ -76,7 +77,7 @@ function scene.load()
     sprietUnder    = {}
     sprietOver     = {}
 
-    setupBox2dScene()
+    setupBox2dScene(nil, box2dGuyCreation.makeGuy)
 
     for i = 1, #fiveGuys do
         updateAllParts(fiveGuys[i])
@@ -124,7 +125,7 @@ function scene.update(dt)
     delta = delta + dt
     Timer.update(dt)
     handleUpdate(dt, cam)
-    rotateAllBodies(world:getBodies(), dt)
+    box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
     --   print(love.audio.getActiveSourceCount())
 end
 
@@ -175,18 +176,18 @@ function scene.draw()
     for i = 1, sprietWidthAmt do
         local s = sprietUnder[i]
         s = sprietUnder[(sprietWidthAmt * 2) + i]
-        drawSpriet(s[1], s[2], s[3], s[4] + (a2), s[5])
+        texturedBox2d.drawSpriet(s[1], s[2], s[3], s[4] + (a2), s[5])
         s = sprietUnder[(sprietWidthAmt * 3) + i]
-        drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
+        texturedBox2d.drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
     end
 
     for i = 1, #fiveGuys do
-        drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
     end
 
 
     for i = 1, #fiveGuys do
-        --     drawNumbersOver(box2dGuys[i])
+        --     texturedBox2d.drawNumbersOver(box2dGuys[i])
     end
 
 
@@ -194,7 +195,7 @@ function scene.draw()
     local a = math.sin((delta or 0) * freq) / amplitude
     for i = 1, sprietWidthAmt do
         local s = sprietOver[i]
-        drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
+        texturedBox2d.drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
         s = sprietOver[sprietWidthAmt + i]
         --drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
     end

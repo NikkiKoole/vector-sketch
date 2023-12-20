@@ -1,6 +1,6 @@
 local bbox            = require 'lib.bbox'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
-Vector                = require 'vendor.brinevector'
+local Vector          = require 'vendor.brinevector'
 local camera          = require 'lib.camera'
 local numbers         = require 'lib.numbers'
 local cam             = require('lib.cameraBase').getInstance()
@@ -149,8 +149,9 @@ function handlePointerPressed(x, y, id, cam)
                                 if body == v then
                                     pickedFiveGuyIndex = i
                                     editingGuy = fiveGuys[pickedFiveGuyIndex]
-
-                                    editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
+                                    if SM.cName == 'outside' then
+                                        editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
+                                    end
                                 end
                             end
                         end
@@ -287,16 +288,6 @@ function handleUpdate(dt, cam)
                 if f:getUserData() and f:getUserData().bodyType then
                     if f:getUserData().bodyType == 'connector' then
                         maybeConnectThisConnector(f)
-                    end
-
-                    if f:getUserData().bodyType == 'carbody' then
-                        local body = mj.jointBody
-                        if body then
-                            -- i dont have a cartouching per car, its global so wont work for all
-                            --if (carIsTouching < 1) then
-                            rotateToHorizontal(body, 0, 30)
-                            --end
-                        end
                     end
                 end
             end
@@ -572,7 +563,7 @@ function rebuildPhysicsBorderForScreen()
     borders = { topfixture, bottomfixture, leftfixture, rightfixture }
 end
 
-function setupBox2dScene(onlyThisGuyIndex)
+function setupBox2dScene(onlyThisGuyIndex, makeFunc)
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
@@ -594,7 +585,7 @@ function setupBox2dScene(onlyThisGuyIndex)
     for i = 1, #fiveGuys do
         local xPos = onlyThisGuyIndex and (camtlx + 3 * stepSize) or (camtlx + i * stepSize)
         if onlyThisGuyIndex and i == onlyThisGuyIndex or not onlyThisGuyIndex then
-            fiveGuys[i].b2d = makeGuy(xPos, camtly, fiveGuys[i])
+            fiveGuys[i].b2d = makeFunc(xPos, camtly, fiveGuys[i])
         end
     end
 end
@@ -658,19 +649,6 @@ lib.makeShape = function(shapeType, w, h)
         return makeTrapeziumPoly(w, w * 1.2, h, 0, h / 2)
     end
 end
-
-
-lib.makeAndAddConnector = function(parent, x, y, data, size, size2)
-    size = size or 10
-    size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size * 10, size2 * 10, x, y)
-    local fixture = love.physics.newFixture(parent, bandshape2, 0)
-    fixture:setUserData(makeUserData('connector', data))
-    fixture:setSensor(true)
-    table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    print('jo hello from lib!', #connectors)
-end
-
 
 lib.setupWorld = function()
     love.physics.setMeter(500)

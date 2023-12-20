@@ -1,22 +1,14 @@
-package.path    = package.path .. ";../../?.lua"
-local bbox      = require 'lib.bbox'
-local inspect   = require 'vendor.inspect'
-local canvas    = require 'lib.canvas'
-local phys      = require 'src.mainPhysics'
-local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
-local camera    = require 'lib.camera'
-local cam       = require('lib.cameraBase').getInstance()
-local dna       = require 'src.dna'
+package.path  = package.path .. ";../../?.lua"
+local bbox    = require 'lib.bbox'
+local inspect = require 'vendor.inspect'
+local phys    = require 'src.mainPhysics'
+local dna     = require 'src.dna'
 
-function isNullObject(partName, values)
-    local p = findPart(partName)
-    local url = p.imgs[values[partName].shape]
-    return url == 'assets/parts/null.png'
-end
+local lib     = {}
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
 
-function getParentAndChildrenFromPartName(partName, guy)
+local function getParentAndChildrenFromPartName(partName, guy)
     local creation = guy.dna.creation
 
     local map      = {
@@ -64,7 +56,7 @@ function getParentAndChildrenFromPartName(partName, guy)
     return map[partName]
 end
 
-function getScaledTorsoMetaPoint(index, guy)
+local function getScaledTorsoMetaPoint(index, guy)
     local creation = guy.dna.creation
     local wscale = creation.torso.w / creation.torso.metaPointsW
     local hscale = creation.torso.h / creation.torso.metaPointsH
@@ -72,7 +64,7 @@ function getScaledTorsoMetaPoint(index, guy)
     return creation.torso.metaPoints[index][1] * wscale, creation.torso.metaPoints[index][2] * hscale
 end
 
-function getScaledHeadMetaPoint(index, guy)
+local function getScaledHeadMetaPoint(index, guy)
     local creation = guy.dna.creation
     local wscale = creation.head.w / creation.head.metaPointsW
     local hscale = creation.head.h / creation.head.metaPointsH
@@ -92,7 +84,7 @@ local function lerp(a, b, amount)
     return a + (b - a) * clamp(amount, 0, 1)
 end
 
-function getOffsetFromParent(partName, guy)
+local function getOffsetFromParent(partName, guy)
     local creation    = guy.dna.creation
     local positioners = guy.dna.positioners
     local data        = getParentAndChildrenFromPartName(partName, guy)
@@ -297,94 +289,6 @@ local function makeUserData(bodyType, moreData)
     return result
 end
 
-function changeMetaPoints(key, guy, value, data)
-    local creation = guy.dna.creation
-    creation[key].metaPoints = value
-
-    local tlx, tly, brx, bry = bbox.getPointsBBox(value)
-    local bbw = (brx - tlx)
-    local bbh = (bry - tly)
-
-    creation[key].metaPointsW = bbw
-    creation[key].metaPointsH = bbh
-
-    if key == 'head' then
-        creation[key].metaOffsetX = value[1][1]
-        creation[key].metaOffsetY = value[1][2]
-    end
-    if key == 'torso' then
-        creation[key].metaOffsetX = 0
-        creation[key].metaOffsetY = 0
-    end
-end
-
-function changeMetaTexture(key, guy, data)
-    local creation                   = guy.dna.creation
-    local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
-    local bbw                        = (brx - tlx)
-    local bbh                        = (bry - tly)
-
-    creation[key].metaURL            = data.url
-    creation[key].metaTexturePoints  = data.texturePoints
-    creation[key].metaTexturePointsW = bbw
-    creation[key].metaTexturePointsH = bbh
-    creation[key].metaPivotX         = data.pivotX
-    creation[key].metaPivotY         = data.pivotY
-end
-
-function getFlippedMetaObject(flipx, flipy, points)
-    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
-    local mx = tlx + (brx - tlx) / 2
-    local my = tly + (bry - tly) / 2
-    local newPoints = {}
-
-    for i = 1, #points do
-        local newY = points[i][2]
-        if flipy == -1 then
-            local dy = my - points[i][2]
-            newY = my + dy
-        end
-        local newX = points[i][1]
-        if flipx == -1 then
-            local dx = mx - points[i][1]
-            newX = mx + dx
-        end
-        newPoints[i] = { newX, newY }
-    end
-    local temp = copy3(newPoints)
-    if flipy == -1 and flipx == 1 then
-        newPoints[1] = temp[5]
-        newPoints[2] = temp[4]
-        newPoints[3] = temp[3]
-        newPoints[4] = temp[2]
-        newPoints[5] = temp[1]
-        newPoints[6] = temp[8]
-        newPoints[7] = temp[7]
-        newPoints[8] = temp[6]
-    end
-    if flipx == -1 and flipy == 1 then
-        newPoints[1] = temp[1]
-        newPoints[2] = temp[8]
-        newPoints[3] = temp[7]
-        newPoints[4] = temp[6]
-        newPoints[5] = temp[5]
-        newPoints[6] = temp[4]
-        newPoints[7] = temp[3]
-        newPoints[8] = temp[2]
-    end
-    if flipx == -1 and flipy == -1 then
-        newPoints[1] = temp[5]
-        newPoints[2] = temp[6]
-        newPoints[3] = temp[7]
-        newPoints[4] = temp[8]
-        newPoints[5] = temp[1]
-        newPoints[6] = temp[2]
-        newPoints[7] = temp[3]
-        newPoints[8] = temp[4]
-    end
-    return newPoints
-end
-
 local function tableContains(table, element)
     for _, value in pairs(table) do
         if value == element then
@@ -392,19 +296,6 @@ local function tableContains(table, element)
         end
     end
     return false
-end
-
-function toggleAllJointLimits(guy, value)
-    local creation = guy.dna.creation
-    if not creation.isPotatoHead and creation.hasNeck then
-        setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
-        setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
-        setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
-    end
-    setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
-    setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
-    setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
-    setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
 end
 
 local function findJointBetween2Bodies(body1, body2)
@@ -421,7 +312,7 @@ local function findJointBetween2Bodies(body1, body2)
     return result
 end
 
-function setJointLimitBetweenBodies(body1, body2, state, ofType)
+local function setJointLimitBetweenBodies(body1, body2, state, ofType)
     local joints = findJointBetween2Bodies(body1, body2)
     if joints then
         for i = 1, #joints do
@@ -485,7 +376,6 @@ local function makeGuyFixture(data, key, groupId, body, shape)
     return fixture
 end
 
-
 local function makePart_(key, parent, guy)
     local groupId = guy.id
     local creation = guy.dna.creation -- dna.getCreation()
@@ -505,8 +395,7 @@ local function makePart_(key, parent, guy)
     return body
 end
 
-
-function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
+local function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
     local bandshape2 = makeRectPoly2(size, size, x, y)
@@ -568,233 +457,7 @@ local function useRecreateConnectorData(recreateConnectorData, body, guy)
 end
 
 
-function genericBodyPartUpdate(guy, partName)
-    local groupId = guy.id
-    local box2dGuy = guy.b2d
-    local creation = guy.dna.creation
-    local data = getParentAndChildrenFromPartName(partName, guy)
-    local parentName = data.p
-    local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
-    --  print(recreateConnectorData)
-    local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
-    local thisA = box2dGuy[partName]:getAngle()
-
-    if parentName then
-        local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
-
-        if jointWithParentToBreak then
-            local offsetX, offsetY = getOffsetFromParent(partName, guy)
-            local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
-            local prevA = box2dGuy[parentName]:getAngle()
-            for i = 1, #jointWithParentToBreak do
-                jointWithParentToBreak[i]:destroy()
-            end
-            box2dGuy[partName]:destroy()
-
-            local createData = creation[partName]
-            local body = love.physics.newBody(world, hx, hy, "dynamic")
-            local shape = phys.makeShapeFromCreationPart(createData)
-            local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-            local xangle = getAngleOffset(partName, creation)
-            body:setAngle(prevA + xangle)
-            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName])
-
-            box2dGuy[partName] = body
-            body:setAngle(thisA)
-        end
-    end
-
-    if not parentName or partName == 'torso' then
-        local aa = box2dGuy[partName]:getAngle()
-        local hx, hy = box2dGuy[partName]:getWorldPoint(0, 0)
-        box2dGuy[partName]:destroy()
-        local createData = creation[partName]
-        local body = love.physics.newBody(world, hx, hy, "dynamic")
-        local shape = phys.makeShapeFromCreationPart(createData)
-        local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-        box2dGuy[partName] = body
-        box2dGuy[partName]:setAngle(aa)
-    end
-
-    if (recreatePointerJoint) then
-        useRecreatePointerJoint(recreatePointerJoint, box2dGuy[partName])
-    end
-
-    if (recreateConnectorData) then
-        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName], guy)
-    end
-    -- reattach children
-
-
-    local function reAttachChild(childName)
-        local offsetX, offsetY = getOffsetFromParent(childName, guy)
-        local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
-        box2dGuy[childName]:setPosition(nx, ny)
-        local aa = box2dGuy[childName]:getAngle()
-        local xangle = getAngleOffset(childName, creation) -- what LEFT!
-
-        box2dGuy[childName]:setAngle(thisA + xangle)
-        local joint = makeConnectingRevoluteJoint(creation[childName], box2dGuy[childName],
-                box2dGuy[partName])
-        box2dGuy[childName]:setAngle(aa)
-    end
-
-
-    local childName = data.c
-    if childName and (type(childName) == 'string') then
-        reAttachChild(childName)
-    end
-    if childName and (type(childName) == 'table') then
-        for i = 1, #childName do
-            local skip = false
-            if creation.isPotatoHead and childName[i] == 'neck' then
-                skip = true
-            end
-            if not creation.hasPhysicsHair and string.match(childName[i], 'hair') then
-                skip = true
-            end
-
-            if not skip then
-                reAttachChild(childName[i])
-            end
-        end
-    end
-end
-
-function handlePhysicsHairOrNo(box2dGuy, guy, hair)
-    local creation = guy.dna.creation
-    -- local groupId = guy.id
-    -- we need to find out if we can leave early..
-    if hair and box2dGuy.hair1 then return end
-    if not hair and not box2dGuy.hair1 then return end
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-    if not hair then
-        box2dGuy.hair1:destroy()
-        box2dGuy.hair2:destroy()
-        box2dGuy.hair3:destroy()
-        box2dGuy.hair4:destroy()
-        box2dGuy.hair5:destroy()
-        box2dGuy.hair1 = nil
-        box2dGuy.hair2 = nil
-        box2dGuy.hair3 = nil
-        box2dGuy.hair4 = nil
-        box2dGuy.hair5 = nil
-    else
-        local attachTo = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
-        local hair1 = makePart('hair1', attachTo)
-        local hair2 = makePart('hair2', attachTo)
-        local hair3 = makePart('hair3', attachTo)
-        local hair4 = makePart('hair4', attachTo)
-        local hair5 = makePart('hair5', attachTo)
-        box2dGuy.hair1 = hair1
-        box2dGuy.hair2 = hair2
-        box2dGuy.hair3 = hair3
-        box2dGuy.hair4 = hair4
-        box2dGuy.hair5 = hair5
-    end
-end
-
-function handleNeckAndHeadForHasNeck(box2dGuy, guy, willHaveNeck)
-    local groupId = guy.id
-    --if not willHaveNeck and box2dGuy.neck == nil
-    --if creation.isPotatoHead then return end
-    --print(box2dGuy.isPotatoHead)
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-    if not willHaveNeck then
-        if (box2dGuy.neck) then
-            box2dGuy.neck:destroy()
-        end
-        if (box2dGuy.neck1) then
-            box2dGuy.neck1:destroy()
-        end
-        if (box2dGuy.head) then
-            box2dGuy.head:destroy()
-        end
-        box2dGuy.neck = nil
-        box2dGuy.neck1 = nil
-        local torso = box2dGuy.torso
-        local head = makePart('head', torso)
-        box2dGuy.head = head
-    else
-        -- if not  box2dGuy.isPotatoHead then
-        if box2dGuy.head then
-            box2dGuy.head:destroy()
-        end
-        local torso = box2dGuy.torso
-        local neck = makePart('neck', torso)
-        local neck1 = makePart('neck1', neck)
-        local head = makePart('head', neck1)
-        box2dGuy.neck = neck
-        box2dGuy.neck1 = neck1
-        box2dGuy.head = head
-        -- end
-    end
-end
-
-function handleNeckAndHeadForPotato(box2dGuy, guy, willBePotato, hasNeck)
-    local groupId = guy.id
-    if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
-        return
-    end
-
-    local function makePart(name, parent)
-        return makePart_(name, parent, guy)
-    end
-
-    if willBePotato then
-        if (box2dGuy.neck) then
-            box2dGuy.neck:destroy()
-        end
-        if (box2dGuy.neck1) then
-            box2dGuy.neck1:destroy()
-        end
-        box2dGuy.head:destroy()
-        box2dGuy.lear:destroy()
-        box2dGuy.rear:destroy()
-        box2dGuy.lear = nil
-        box2dGuy.rear = nil
-        box2dGuy.neck = nil
-        box2dGuy.neck1 = nil
-        box2dGuy.head = nil
-
-        local torso = box2dGuy.torso
-        local lear = makePart('lear', torso)
-        local rear = makePart('rear', torso)
-        box2dGuy.lear = lear
-        box2dGuy.rear = rear
-    else
-        -- destroy ears from torso
-        box2dGuy.lear:destroy()
-        box2dGuy.rear:destroy()
-
-        local torso = box2dGuy.torso
-        local neck
-        local neck1
-
-        if hasNeck then
-            neck = makePart('neck', torso)
-            neck1 = makePart('neck1', neck)
-        end
-
-        local head = makePart('head', hasNeck and neck1 or torso)
-        local lear = makePart('lear', head)
-        local rear = makePart('rear', head)
-
-        box2dGuy.lear = lear
-        box2dGuy.rear = rear
-        box2dGuy.neck = neck
-        box2dGuy.neck1 = neck1
-        box2dGuy.head = head
-    end
-end
-
-function makeAndAddConnector(parent, x, y, data, size, size2)
+local function makeAndAddConnector(parent, x, y, data, size, size2)
     size = size or 10
     size2 = size2 or size
     local bandshape2 = makeRectPoly2(size, size2, x, y)
@@ -805,7 +468,7 @@ function makeAndAddConnector(parent, x, y, data, size, size2)
     --print('jo hello!', #connectors)
 end
 
-function makeGuy(x, y, guy)
+lib.makeGuy = function(x, y, guy)
     local creation = guy.dna.creation
     local groupId = guy.id
 
@@ -908,9 +571,7 @@ function makeGuy(x, y, guy)
     return data
 end
 
----
-
-function rotateToHorizontal(body, desiredAngle, divider, pr)
+local function rotateToHorizontal(body, desiredAngle, divider, pr)
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     if true then
@@ -981,7 +642,7 @@ local function getRidOfBigRotationsInBody(body)
     end
 end
 
-function rotateAllBodies(bodies, dt)
+lib.rotateAllBodies = function(bodies, dt)
     -- I want to be able to rotate all bodies in one go.
     -- This means I cannot fetch the guy with its creation here.
     -- So that means the creation below , which is used for some stance-angles, this needs another solution.
@@ -1146,144 +807,339 @@ function rotateAllBodies(bodies, dt)
     end
 end
 
----
--- this needs its own file !!!
-
-local mesh = require 'lib.mesh'
-local text = require 'lib.text'
-
-local function getPNGMaskUrl(url)
-    return text.replace(url, '.png', '-mask.png')
-end
-
-local function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
-                                    renderPatch)
-    --print(url)
-    local img = mesh.getImage(url, optionalSettings)
-    local maskUrl = getPNGMaskUrl(url)
-    local mask = mesh.getImage(maskUrl)
-    -- print(url)
-    -- print(love.graphics.getDPIScale())
-    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
-            renderPatch)
-
-    return cnv
-end
-
-function createWhiteColoredBlackOutlineTexture(url)
-    -- todo make this more optimal and readable, 5 is white in any case
-    local tex1 = textures[math.ceil(math.random() * #textures)]
-    local pal1 = palettes[5]
-    local tex2 = textures[math.ceil(math.random() * #textures)]
-    local pal2 = palettes[5]
-
-    return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1, pal1, 5,
-            tex2, pal2, 2,
-            0, 1,
-            palettes[1], 5,
-            1, 1, nil, nil))
-end
-
-function partToTexturedCanvasWrap(partName, guy, optionalImageSettings)
-    local a, b = partToTexturedCanvas(partName, guy, optionalImageSettings)
-    return love.graphics.newImage(a)
-end
-
-function partToTexturedCanvas(partName, guy, optionalImageSettings)
+lib.genericBodyPartUpdate = function(guy, partName)
+    local groupId = guy.id
+    local box2dGuy = guy.b2d
     local creation = guy.dna.creation
-    local values = guy.dna.values
+    local data = getParentAndChildrenFromPartName(partName, guy)
+    local parentName = data.p
+    local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
+    --  print(recreateConnectorData)
+    local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
+    local thisA = box2dGuy[partName]:getAngle()
 
+    if parentName then
+        local jointWithParentToBreak = findJointBetween2Bodies(box2dGuy[parentName], box2dGuy[partName])
+
+        if jointWithParentToBreak then
+            local offsetX, offsetY = getOffsetFromParent(partName, guy)
+            local hx, hy = box2dGuy[parentName]:getWorldPoint(offsetX, offsetY)
+            local prevA = box2dGuy[parentName]:getAngle()
+            for i = 1, #jointWithParentToBreak do
+                jointWithParentToBreak[i]:destroy()
+            end
+            box2dGuy[partName]:destroy()
+
+            local createData = creation[partName]
+            local body = love.physics.newBody(world, hx, hy, "dynamic")
+            local shape = phys.makeShapeFromCreationPart(createData)
+            local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
+            local xangle = getAngleOffset(partName, creation)
+            body:setAngle(prevA + xangle)
+            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName])
+
+            box2dGuy[partName] = body
+            body:setAngle(thisA)
+        end
+    end
+
+    if not parentName or partName == 'torso' then
+        local aa = box2dGuy[partName]:getAngle()
+        local hx, hy = box2dGuy[partName]:getWorldPoint(0, 0)
+        box2dGuy[partName]:destroy()
+        local createData = creation[partName]
+        local body = love.physics.newBody(world, hx, hy, "dynamic")
+        local shape = phys.makeShapeFromCreationPart(createData)
+        local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
+        box2dGuy[partName] = body
+        box2dGuy[partName]:setAngle(aa)
+    end
+
+    if (recreatePointerJoint) then
+        useRecreatePointerJoint(recreatePointerJoint, box2dGuy[partName])
+    end
+
+    if (recreateConnectorData) then
+        useRecreateConnectorData(recreateConnectorData, box2dGuy[partName], guy)
+    end
+    -- reattach children
+
+
+    local function reAttachChild(childName)
+        local offsetX, offsetY = getOffsetFromParent(childName, guy)
+        local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
+        box2dGuy[childName]:setPosition(nx, ny)
+        local aa = box2dGuy[childName]:getAngle()
+        local xangle = getAngleOffset(childName, creation) -- what LEFT!
+
+        box2dGuy[childName]:setAngle(thisA + xangle)
+        local joint = makeConnectingRevoluteJoint(creation[childName], box2dGuy[childName],
+                box2dGuy[partName])
+        box2dGuy[childName]:setAngle(aa)
+    end
+
+
+    local childName = data.c
+    if childName and (type(childName) == 'string') then
+        reAttachChild(childName)
+    end
+    if childName and (type(childName) == 'table') then
+        for i = 1, #childName do
+            local skip = false
+            if creation.isPotatoHead and childName[i] == 'neck' then
+                skip = true
+            end
+            if not creation.hasPhysicsHair and string.match(childName[i], 'hair') then
+                skip = true
+            end
+
+            if not skip then
+                reAttachChild(childName[i])
+            end
+        end
+    end
+end
+
+lib.handlePhysicsHairOrNo = function(box2dGuy, guy, hair)
+    local creation = guy.dna.creation
+    -- local groupId = guy.id
+    -- we need to find out if we can leave early..
+    if hair and box2dGuy.hair1 then return end
+    if not hair and not box2dGuy.hair1 then return end
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+    if not hair then
+        box2dGuy.hair1:destroy()
+        box2dGuy.hair2:destroy()
+        box2dGuy.hair3:destroy()
+        box2dGuy.hair4:destroy()
+        box2dGuy.hair5:destroy()
+        box2dGuy.hair1 = nil
+        box2dGuy.hair2 = nil
+        box2dGuy.hair3 = nil
+        box2dGuy.hair4 = nil
+        box2dGuy.hair5 = nil
+    else
+        local attachTo = creation.isPotatoHead and box2dGuy.torso or box2dGuy.head
+        local hair1 = makePart('hair1', attachTo)
+        local hair2 = makePart('hair2', attachTo)
+        local hair3 = makePart('hair3', attachTo)
+        local hair4 = makePart('hair4', attachTo)
+        local hair5 = makePart('hair5', attachTo)
+        box2dGuy.hair1 = hair1
+        box2dGuy.hair2 = hair2
+        box2dGuy.hair3 = hair3
+        box2dGuy.hair4 = hair4
+        box2dGuy.hair5 = hair5
+    end
+end
+
+lib.handleNeckAndHeadForHasNeck = function(box2dGuy, guy, willHaveNeck)
+    local groupId = guy.id
+    --if not willHaveNeck and box2dGuy.neck == nil
+    --if creation.isPotatoHead then return end
+    --print(box2dGuy.isPotatoHead)
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+    if not willHaveNeck then
+        if (box2dGuy.neck) then
+            box2dGuy.neck:destroy()
+        end
+        if (box2dGuy.neck1) then
+            box2dGuy.neck1:destroy()
+        end
+        if (box2dGuy.head) then
+            box2dGuy.head:destroy()
+        end
+        box2dGuy.neck = nil
+        box2dGuy.neck1 = nil
+        local torso = box2dGuy.torso
+        local head = makePart('head', torso)
+        box2dGuy.head = head
+    else
+        -- if not  box2dGuy.isPotatoHead then
+        if box2dGuy.head then
+            box2dGuy.head:destroy()
+        end
+        local torso = box2dGuy.torso
+        local neck = makePart('neck', torso)
+        local neck1 = makePart('neck1', neck)
+        local head = makePart('head', neck1)
+        box2dGuy.neck = neck
+        box2dGuy.neck1 = neck1
+        box2dGuy.head = head
+        -- end
+    end
+end
+
+lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
+    local groupId = guy.id
+    if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
+        return
+    end
+
+    local function makePart(name, parent)
+        return makePart_(name, parent, guy)
+    end
+
+    if willBePotato then
+        if (box2dGuy.neck) then
+            box2dGuy.neck:destroy()
+        end
+        if (box2dGuy.neck1) then
+            box2dGuy.neck1:destroy()
+        end
+        box2dGuy.head:destroy()
+        box2dGuy.lear:destroy()
+        box2dGuy.rear:destroy()
+        box2dGuy.lear = nil
+        box2dGuy.rear = nil
+        box2dGuy.neck = nil
+        box2dGuy.neck1 = nil
+        box2dGuy.head = nil
+
+        local torso = box2dGuy.torso
+        local lear = makePart('lear', torso)
+        local rear = makePart('rear', torso)
+        box2dGuy.lear = lear
+        box2dGuy.rear = rear
+    else
+        -- destroy ears from torso
+        box2dGuy.lear:destroy()
+        box2dGuy.rear:destroy()
+
+        local torso = box2dGuy.torso
+        local neck
+        local neck1
+
+        if hasNeck then
+            neck = makePart('neck', torso)
+            neck1 = makePart('neck1', neck)
+        end
+
+        local head = makePart('head', hasNeck and neck1 or torso)
+        local lear = makePart('lear', head)
+        local rear = makePart('rear', head)
+
+        box2dGuy.lear = lear
+        box2dGuy.rear = rear
+        box2dGuy.neck = neck
+        box2dGuy.neck1 = neck1
+        box2dGuy.head = head
+    end
+end
+
+lib.toggleAllJointLimits = function(guy, value)
+    local creation = guy.dna.creation
+    if not creation.isPotatoHead and creation.hasNeck then
+        setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
+        setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
+        setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
+    end
+    setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
+    setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
+    setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
+    setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
+end
+
+lib.isNullObject = function(partName, values)
     local p = findPart(partName)
     local url = p.imgs[values[partName].shape]
-
-
-    local renderPatch = {}
-
-    if (partName == 'head') then
-        if not isNullObject('skinPatchSnout', values) then
-            local p = {}
-            p.imageData = partToTexturedCanvas('skinPatchSnout', guy)
-            p.sx = values.skinPatchSnoutPV.sx
-            p.sy = values.skinPatchSnoutPV.sy
-            p.r = values.skinPatchSnoutPV.r
-            p.tx = values.skinPatchSnoutPV.tx * creation.head.flipx
-            p.ty = values.skinPatchSnoutPV.ty * creation.head.flipy
-            table.insert(renderPatch, p)
-        end
-        if not isNullObject('skinPatchEye1', values) then
-            local p     = {}
-            p.imageData = partToTexturedCanvas('skinPatchEye1', guy)
-            p.sx        = values.skinPatchEye1PV.sx
-            p.sy        = values.skinPatchEye1PV.sy
-            p.r         = values.skinPatchEye1PV.r
-            p.tx        = values.skinPatchEye1PV.tx * creation.head.flipx
-            p.ty        = values.skinPatchEye1PV.ty * creation.head.flipy
-            table.insert(renderPatch, p)
-        end
-        if not isNullObject('skinPatchEye2', values) then
-            local p     = {}
-            p.imageData = partToTexturedCanvas('skinPatchEye2', guy)
-            p.sx        = values.skinPatchEye2PV.sx
-            p.sy        = values.skinPatchEye2PV.sy
-            p.r         = values.skinPatchEye2PV.r
-            p.tx        = values.skinPatchEye2PV.tx * creation.head.flipx
-            p.ty        = values.skinPatchEye2PV.ty * creation.head.flipy
-            table.insert(renderPatch, p)
-        end
-    end
-
-    local texturedcanvas = helperTexturedCanvas(
-            url,
-            textures[values[partName].bgTex],
-            palettes[values[partName].bgPal],
-            values[partName].bgAlpha,
-            textures[values[partName].fgTex],
-            palettes[values[partName].fgPal],
-            values[partName].fgAlpha,
-            values[partName].texRot,
-            texscales[values[partName].texScale],
-            palettes[values[partName].linePal],
-            values[partName].lineAlpha,
-            1, 1,
-            optionalImageSettings,
-            renderPatch
-        )
-    return texturedcanvas, url
+    return url == 'assets/parts/null.png'
 end
 
-function createRandomColoredBlackOutlineTexture(url, optionalPart)
-    local tex1 = textures[math.ceil(math.random() * #textures)]
-    local pal1 = palettes[math.ceil(math.random() * #palettes)]
-    local al1 = 5
-    local tex2 = textures[math.ceil(math.random() * #textures)]
-    local pal2 = palettes[math.ceil(math.random() * #palettes)]
-    local al2 = 2
 
-    local lineP = palettes[1]
-    local lineA = 5
+lib.changeMetaPoints = function(key, guy, value, data)
+    local creation = guy.dna.creation
+    creation[key].metaPoints = value
 
-    local tr = 0
-    local ts = 1
-    if optionalPart then
-        tex1 = textures[optionalPart.bgTex]
-        pal1 = palettes[optionalPart.bgPal]
-        al1 = optionalPart.bgAlpha
-        tex2 = textures[optionalPart.fgTex]
-        pal2 = palettes[optionalPart.fgPal]
-        al2 = optionalPart.fgAlpha
-        lineP = palettes[optionalPart.linePal]
-        lineA = optionalPart.lineAlpha
-        tr = optionalPart.texRot
-        ts = optionalPart.texScale
+    local tlx, tly, brx, bry = bbox.getPointsBBox(value)
+    local bbw = (brx - tlx)
+    local bbh = (bry - tly)
+
+    creation[key].metaPointsW = bbw
+    creation[key].metaPointsH = bbh
+
+    if key == 'head' then
+        creation[key].metaOffsetX = value[1][1]
+        creation[key].metaOffsetY = value[1][2]
     end
-
-    local renderPatch = {}
-
-    return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1, pal1, al1,
-            tex2, pal2, al2,
-            tr, ts,
-            lineP, lineA,
-            1, 1, nil, renderPatch))
+    if key == 'torso' then
+        creation[key].metaOffsetX = 0
+        creation[key].metaOffsetY = 0
+    end
 end
+
+lib.changeMetaTexture = function(key, guy, data)
+    local creation                   = guy.dna.creation
+    local tlx, tly, brx, bry         = bbox.getPointsBBox(data.texturePoints)
+    local bbw                        = (brx - tlx)
+    local bbh                        = (bry - tly)
+
+    creation[key].metaURL            = data.url
+    creation[key].metaTexturePoints  = data.texturePoints
+    creation[key].metaTexturePointsW = bbw
+    creation[key].metaTexturePointsH = bbh
+    creation[key].metaPivotX         = data.pivotX
+    creation[key].metaPivotY         = data.pivotY
+end
+
+lib.getFlippedMetaObject = function(flipx, flipy, points)
+    local tlx, tly, brx, bry = bbox.getPointsBBox(points)
+    local mx = tlx + (brx - tlx) / 2
+    local my = tly + (bry - tly) / 2
+    local newPoints = {}
+
+    for i = 1, #points do
+        local newY = points[i][2]
+        if flipy == -1 then
+            local dy = my - points[i][2]
+            newY = my + dy
+        end
+        local newX = points[i][1]
+        if flipx == -1 then
+            local dx = mx - points[i][1]
+            newX = mx + dx
+        end
+        newPoints[i] = { newX, newY }
+    end
+    local temp = copy3(newPoints)
+    if flipy == -1 and flipx == 1 then
+        newPoints[1] = temp[5]
+        newPoints[2] = temp[4]
+        newPoints[3] = temp[3]
+        newPoints[4] = temp[2]
+        newPoints[5] = temp[1]
+        newPoints[6] = temp[8]
+        newPoints[7] = temp[7]
+        newPoints[8] = temp[6]
+    end
+    if flipx == -1 and flipy == 1 then
+        newPoints[1] = temp[1]
+        newPoints[2] = temp[8]
+        newPoints[3] = temp[7]
+        newPoints[4] = temp[6]
+        newPoints[5] = temp[5]
+        newPoints[6] = temp[4]
+        newPoints[7] = temp[3]
+        newPoints[8] = temp[2]
+    end
+    if flipx == -1 and flipy == -1 then
+        newPoints[1] = temp[5]
+        newPoints[2] = temp[6]
+        newPoints[3] = temp[7]
+        newPoints[4] = temp[8]
+        newPoints[5] = temp[1]
+        newPoints[6] = temp[2]
+        newPoints[7] = temp[3]
+        newPoints[8] = temp[4]
+    end
+    return newPoints
+end
+
+
+return lib

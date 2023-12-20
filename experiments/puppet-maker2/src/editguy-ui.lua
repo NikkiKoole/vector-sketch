@@ -10,22 +10,54 @@ local text       = require 'lib.text'
 
 local imageCache = {}
 
+
+
+local lib = {}
 --local dna        = require 'src.dna'
 require 'src.box2dGuyCreation'
 
-function changePart(name, guy)
+local function drawTapesForBackground(x, y, w, h)
+    local ratio = h / w
+    local index = ratio < 0.3 and 1 or 2
+    local sx, sy = createFittingScale(ui2.uiheaders[index], w, h)
+    love.graphics.setColor(1, 1, 1, .4)
+    love.graphics.draw(ui2.uiheaders[index], x, y, 0, sx, sy, 0, 0)
+end
+
+local function configPanelPanelDimensions()
+    local w, h = love.graphics.getDimensions()
+    local margin = (h / 16) -- margin around panel
+    local width = (w / 3) -- width of panel
+    local height = (h - margin * 2) -- height of panel
+    local beginX = 0
+    local beginY = 0
+    local startX = beginX + w - width - margin
+    local startY = beginY + margin
+
+    return startX, startY, width, height
+end
+
+local function configPanelTabsDimensions(tabs, width)
+    local tabWidth = (width / #tabs)
+    local tabHeight = math.max((tabWidth / 2.5), 32)
+    local marginBetweenTabs = tabWidth / 16
+
+    return tabWidth, tabHeight, marginBetweenTabs
+end
+
+local function changePart(name, guy)
     updatePart(name, guy)
 end
 
-function tweenCameraToHeadAndBody()
+local function tweenCameraToHeadAndBody()
 
 end
 
-function tweenCameraToHead()
+local function tweenCameraToHead()
 
 end
 
-function growl(pitch)
+local function growl(pitch)
     if (playingSound) then playingSound:stop() end
     local index = math.ceil(love.math.random() * #hum)
     local sndLength = hum[math.ceil(index)]:getDuration() / pitch
@@ -34,7 +66,7 @@ function growl(pitch)
     --myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
 end
 
-function setSelectedCategory(name)
+lib.setSelectedCategory = function(name)
     uiState.selectedCategory = name
 
     local result = findPart(uiState.selectedCategory)
@@ -67,7 +99,7 @@ local function createFittingScale(img, desired_w, desired_h)
     return sx, sy
 end
 
-function loadUIImages()
+lib.loadUIImages = function()
     ui2 = {}
 
     ui2.tiles = love.graphics.newImage('assets/img/tiles/tiles.png')
@@ -401,109 +433,6 @@ local function drawChildPicker(draw, startX, currentY, width, clickX, clickY)
     return childrenTabHeight * 1.2
 end
 
-function configPanelSurroundings(guy, draw, clickX, clickY)
-    -- this thing will render the panel where the big scrollable area is in
-    -- also the tabs on top and the sliders/other settngs in the header.
-    --   basically everything except the scrollable thing itself..
-
-    local startX, startY, width, height = configPanelPanelDimensions()
-    local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
-
-    local currentY = startY + tabHeight
-    local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
-
-    if draw then
-        -- these dimensions come from the tab images, don't know which precisely
-        local iw = 650
-        local ih = 1240
-
-        local scaleX = width / iw
-        local scaleY = height / ih
-
-        local uiOffX = 18 * scaleX
-        local uiOffY = 40 * scaleY
-
-        local drawunder = { { 2, 3, 1 }, { 1, 3, 2 }, { 1, 2, 3 } }
-
-        local selectedTabIndex = -1
-        for i = 1, #tabs do
-            if uiState.selectedTab == tabs[i] then
-                selectedTabIndex = i
-            end
-        end
-
-        for i = 1, #drawunder[selectedTabIndex] do
-            local index = drawunder[selectedTabIndex][i]
-            love.graphics.setColor(colors[index][1], colors[index][2], colors[index][3], 1)
-            love.graphics.draw(ui2.tabuimask[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
-            love.graphics.setColor(0, 0, 0)
-            love.graphics.draw(ui2.tabui[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
-
-            if true then
-                local w1 = (tabWidth) - marginBetweenTabs
-                local h1 = tabHeight
-
-                local x = nil
-                if (index == 1) then
-                    x = startX
-                elseif (index == 2) then
-                    x = startX + tabWidthMultipliers[1] * tabWidth
-                elseif (index == 3) then
-                    x = startX + (tabWidthMultipliers[1] + tabWidthMultipliers[2]) * tabWidth
-                end
-
-                local sx, sy = createFittingScale(ui2.tabuilogo[index], w1 * 0.9, h1 * 0.9)
-                if index == 2 then
-                    if selectedTabIndex == index then
-                        love.graphics.setColor(1, 1, 1, 0.9)
-                    else
-                        love.graphics.setColor(1, 1, 1, 0.3)
-                    end
-                else
-                    if selectedTabIndex == index then
-                        love.graphics.setColor(0, 0, 0, 0.9)
-                    else
-                        love.graphics.setColor(0, 0, 0, 0.3)
-                    end
-                end
-                love.graphics.draw(ui2.tabuilogo[index], x + w1 * 0.05, startY + h1 * 0.05, 0, sx, sy)
-            end
-        end
-    end
-
-    for i = 1, #tabs do
-        local x = nil
-        if (i == 1) then
-            x = startX
-        elseif (i == 2) then
-            x = startX + tabWidthMultipliers[1] * tabWidth
-        elseif (i == 3) then
-            x = startX + (tabWidthMultipliers[1] + tabWidthMultipliers[2]) * tabWidth
-        end
-
-        local y = startY
-        local w1 = (tabWidth * tabWidthMultipliers[i]) - marginBetweenTabs
-        local h1 = tabHeight
-
-        if draw then
-
-        else
-            if (hit.pointInRect(clickX, clickY, x, y, w1, h1)) then
-                uiState.selectedTab = tabs[i]
-                playSound(uiClickSound)
-            end
-        end
-    end
-
-    local minimumHeight = drawImmediateSlidersEtc(false, guy, startX, currentY, width, uiState.selectedCategory)
-    currentY = currentY + minimumHeight
-    drawChildPicker(draw, startX, currentY, width, clickX, clickY)
-
-    if findPart(uiState.selectedCategory).children then
-        local minimumHeight = drawImmediateSlidersEtc(false, guy, startX, currentY, width, uiState.selectedChildCategory)
-        currentY = currentY + minimumHeight
-    end
-end
 
 local function getValueByPath(root, path)
     local keys = {}
@@ -689,7 +618,7 @@ local function draw_slider_with_2_buttons(guy, path, startX, currentY, buttonSiz
     end
 end
 
-function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
+local function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
     local values = guy.dna.values
     local creation = guy.dna.creation
     local currentHeight = 0
@@ -1580,33 +1509,108 @@ function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, category)
     return currentHeight
 end
 
-function drawTapesForBackground(x, y, w, h)
-    local ratio = h / w
-    local index = ratio < 0.3 and 1 or 2
-    local sx, sy = createFittingScale(ui2.uiheaders[index], w, h)
-    love.graphics.setColor(1, 1, 1, .4)
-    love.graphics.draw(ui2.uiheaders[index], x, y, 0, sx, sy, 0, 0)
-end
+lib.configPanelSurroundings = function(guy, draw, clickX, clickY)
+    -- this thing will render the panel where the big scrollable area is in
+    -- also the tabs on top and the sliders/other settngs in the header.
+    --   basically everything except the scrollable thing itself..
 
-function configPanelPanelDimensions()
-    local w, h = love.graphics.getDimensions()
-    local margin = (h / 16) -- margin around panel
-    local width = (w / 3) -- width of panel
-    local height = (h - margin * 2) -- height of panel
-    local beginX = 0
-    local beginY = 0
-    local startX = beginX + w - width - margin
-    local startY = beginY + margin
+    local startX, startY, width, height = configPanelPanelDimensions()
+    local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
 
-    return startX, startY, width, height
-end
+    local currentY = startY + tabHeight
+    local tabWidthMultipliers = { 0.85, 1.05, 1.10 }
 
-function configPanelTabsDimensions(tabs, width)
-    local tabWidth = (width / #tabs)
-    local tabHeight = math.max((tabWidth / 2.5), 32)
-    local marginBetweenTabs = tabWidth / 16
+    if draw then
+        -- these dimensions come from the tab images, don't know which precisely
+        local iw = 650
+        local ih = 1240
 
-    return tabWidth, tabHeight, marginBetweenTabs
+        local scaleX = width / iw
+        local scaleY = height / ih
+
+        local uiOffX = 18 * scaleX
+        local uiOffY = 40 * scaleY
+
+        local drawunder = { { 2, 3, 1 }, { 1, 3, 2 }, { 1, 2, 3 } }
+
+        local selectedTabIndex = -1
+        for i = 1, #tabs do
+            if uiState.selectedTab == tabs[i] then
+                selectedTabIndex = i
+            end
+        end
+
+        for i = 1, #drawunder[selectedTabIndex] do
+            local index = drawunder[selectedTabIndex][i]
+            love.graphics.setColor(colors[index][1], colors[index][2], colors[index][3], 1)
+            love.graphics.draw(ui2.tabuimask[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(ui2.tabui[index], startX - uiOffX, startY - uiOffY, 0, scaleX, scaleY)
+
+            if true then
+                local w1 = (tabWidth) - marginBetweenTabs
+                local h1 = tabHeight
+
+                local x = nil
+                if (index == 1) then
+                    x = startX
+                elseif (index == 2) then
+                    x = startX + tabWidthMultipliers[1] * tabWidth
+                elseif (index == 3) then
+                    x = startX + (tabWidthMultipliers[1] + tabWidthMultipliers[2]) * tabWidth
+                end
+
+                local sx, sy = createFittingScale(ui2.tabuilogo[index], w1 * 0.9, h1 * 0.9)
+                if index == 2 then
+                    if selectedTabIndex == index then
+                        love.graphics.setColor(1, 1, 1, 0.9)
+                    else
+                        love.graphics.setColor(1, 1, 1, 0.3)
+                    end
+                else
+                    if selectedTabIndex == index then
+                        love.graphics.setColor(0, 0, 0, 0.9)
+                    else
+                        love.graphics.setColor(0, 0, 0, 0.3)
+                    end
+                end
+                love.graphics.draw(ui2.tabuilogo[index], x + w1 * 0.05, startY + h1 * 0.05, 0, sx, sy)
+            end
+        end
+    end
+
+    for i = 1, #tabs do
+        local x = nil
+        if (i == 1) then
+            x = startX
+        elseif (i == 2) then
+            x = startX + tabWidthMultipliers[1] * tabWidth
+        elseif (i == 3) then
+            x = startX + (tabWidthMultipliers[1] + tabWidthMultipliers[2]) * tabWidth
+        end
+
+        local y = startY
+        local w1 = (tabWidth * tabWidthMultipliers[i]) - marginBetweenTabs
+        local h1 = tabHeight
+
+        if draw then
+
+        else
+            if (hit.pointInRect(clickX, clickY, x, y, w1, h1)) then
+                uiState.selectedTab = tabs[i]
+                playSound(uiClickSound)
+            end
+        end
+    end
+
+    local minimumHeight = drawImmediateSlidersEtc(false, guy, startX, currentY, width, uiState.selectedCategory)
+    currentY = currentY + minimumHeight
+    drawChildPicker(draw, startX, currentY, width, clickX, clickY)
+
+    if findPart(uiState.selectedCategory).children then
+        local minimumHeight = drawImmediateSlidersEtc(false, guy, startX, currentY, width, uiState.selectedChildCategory)
+        currentY = currentY + minimumHeight
+    end
 end
 
 local function getScaleAndOffsetsForImage(img, desiredW, desiredH)
@@ -1800,7 +1804,7 @@ local function childPickerDimensions(width)
     return childrenTabHeight * 1.2
 end
 
-function configPanelScrollGrid(guy, draw, clickX, clickY)
+lib.configPanelScrollGrid = function(guy, draw, clickX, clickY)
     local startX, startY, width, height = configPanelPanelDimensions()
     local tabWidth, tabHeight, marginBetweenTabs = configPanelTabsDimensions(tabs, width)
     local currentY = startY + tabHeight
@@ -1962,12 +1966,12 @@ function configPanelScrollGrid(guy, draw, clickX, clickY)
     end
 end
 
-function configPanel(guy)
-    configPanelSurroundings(guy, true)
-    configPanelScrollGrid(guy, true)
+lib.configPanel = function(guy)
+    lib.configPanelSurroundings(guy, true)
+    lib.configPanelScrollGrid(guy, true)
 end
 
-function scrollList(guy, draw, clickX, clickY)
+lib.scrollList = function(guy, draw, clickX, clickY)
     local w, h = love.graphics.getDimensions()
     local margin = w / 80
 
@@ -2064,7 +2068,7 @@ function scrollList(guy, draw, clickX, clickY)
                 end
             else
                 if (hit.pointInRect(clickX, clickY, xPos, yPosition, size, size)) then
-                    local f = setSelectedCategory(categories[index])
+                    local f = lib.setSelectedCategory(categories[index])
 
 
                     if f.kind == 'body' then
@@ -2079,3 +2083,5 @@ function scrollList(guy, draw, clickX, clickY)
         end
     end
 end
+
+return lib

@@ -1,10 +1,14 @@
-local inspect  = require 'vendor.inspect'
-local mesh     = require 'lib.mesh'
-local polyline = require 'lib.polyline'
-local numbers  = require 'lib.numbers'
-local border   = require 'lib.border-mesh'
-local cam      = require('lib.cameraBase').getInstance()
-local canvas   = require 'lib.canvas'
+local inspect          = require 'vendor.inspect'
+local mesh             = require 'lib.mesh'
+local polyline         = require 'lib.polyline'
+local numbers          = require 'lib.numbers'
+local border           = require 'lib.border-mesh'
+local cam              = require('lib.cameraBase').getInstance()
+local canvas           = require 'lib.canvas'
+local text             = require 'lib.text'
+local box2dGuyCreation = require 'src.box2dGuyCreation'
+
+local lib              = {}
 
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
@@ -22,32 +26,6 @@ local function getLengthOfPath(path)
         result = result + getDistance(a[1], a[2], b[1], b[2])
     end
     return result
-end
-
-function createTexturedTriangleStrip(image, optionalWidthMultiplier)
-    -- this assumes an strip that is oriented vertically
-    local w, h = image:getDimensions()
-    w = w * (optionalWidthMultiplier or 1)
-
-    local vertices = {}
-    local segments = 11
-    local hPart = h / (segments - 1)
-    local hv = 1 / (segments - 1)
-    local runningHV = 0
-    local runningHP = 0
-    local index = 0
-
-    for i = 1, segments do
-        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
-        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
-        runningHV = runningHV + hv
-        runningHP = runningHP + hPart
-        index = index + 2
-    end
-
-    local mesh = love.graphics.newMesh(vertices, "strip")
-    mesh:setTexture(image)
-    return mesh
 end
 
 local function texturedCurve(curve, image, mesh, dir, scaleW)
@@ -94,12 +72,6 @@ local function drawTorsoOver(box2dTorso)
 
     love.graphics.setColor(0, 0, 0)
     love.graphics.draw(img, x, y, r, sx, sy, w / 2, h / 2)
-end
-
-function drawSpriet(x, y, index, r, sy)
-    local img = spriet[index]
-    local w, h = img:getDimensions()
-    love.graphics.draw(img, x, y, r, 1, sy, w, h)
 end
 
 local function drawPlantOver(data, i)
@@ -250,23 +222,6 @@ local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, creation
     love.graphics.draw(_mesh, x, y, r, sx, sy)
 end
 
-function drawNumbersOver(box2dGuy)
-    local parts = {
-        'torso', 'head', 'neck', 'neck1',
-        'lear', 'rear', 'luleg', 'ruleg',
-        'llleg', 'rlleg', 'lfoot', 'rfoot',
-    }
-
-    for i = 1, #parts do
-        local p = parts[i]
-        if box2dGuy[p] then
-            local x, y = box2dGuy[p]:getPosition()
-            local a = box2dGuy[p]:getAngle()
-            love.graphics.print(string.format("%.2f ", a), x, y)
-        end
-    end
-end
-
 local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
     local canvasCache = guy.canvasCache
     local dpi = love.graphics.getDPIScale()
@@ -326,7 +281,7 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
 
     local mouthWidth = (wMult * (f[3][1] - f[7][1]) / 2)
     local scaleX = (mouthWidth / wMult) / canvasCache.teethCanvas:getWidth()
-    local upperlipmesh = createTexturedTriangleStrip(canvasCache.upperlipCanvas)
+    local upperlipmesh = lib.createTexturedTriangleStrip(canvasCache.upperlipCanvas)
 
     mouthWidth = mouthWidth * (guy.tweenVars.mouthWide) --- do the mouth anim wideness here
     local mouthOpen = 20 * (guy.tweenVars.mouthOpen)
@@ -337,7 +292,7 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
             { mouthWidth / 2, 0 },
             canvasCache.upperlipCanvas,
             upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
-    local lowerlipmesh = createTexturedTriangleStrip(canvasCache.lowerlipCanvas)
+    local lowerlipmesh = lib.createTexturedTriangleStrip(canvasCache.lowerlipCanvas)
     local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
             { 0, mouthOpen },
             { mouthWidth / 2, 0 },
@@ -366,7 +321,7 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
 
     love.graphics.setStencilTest("greater", 0)
 
-    if not isNullObject('teeth', guy.dna.values) then
+    if not box2dGuyCreation.isNullObject('teeth', guy.dna.values) then
         if canvasCache.teethCanvas then
             renderNonAttachedObject(canvasCache.teethCanvas,
                 'teeth', r, tx, ty, 10, -10 * multipliers.teeth.hMultiplier,
@@ -395,7 +350,198 @@ local function setAngleAndDistance(sx, sy, angle, distance, scaleX, scaleY)
     return newx, newy
 end
 
-function drawSkinOver(box2dGuy, guy)
+
+
+local function getPNGMaskUrl(url)
+    return text.replace(url, '.png', '-mask.png')
+end
+
+local function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy, optionalSettings,
+                                    renderPatch)
+    --print(url)
+    local img = mesh.getImage(url, optionalSettings)
+    local maskUrl = getPNGMaskUrl(url)
+    local mask = mesh.getImage(maskUrl)
+    -- print(url)
+    -- print(love.graphics.getDPIScale())
+    local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
+            renderPatch)
+
+    return cnv
+end
+
+local function createRandomColoredBlackOutlineTexture(url, optionalPart)
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[math.ceil(math.random() * #palettes)]
+    local al1 = 5
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[math.ceil(math.random() * #palettes)]
+    local al2 = 2
+
+    local lineP = palettes[1]
+    local lineA = 5
+
+    local tr = 0
+    local ts = 1
+    if optionalPart then
+        tex1 = textures[optionalPart.bgTex]
+        pal1 = palettes[optionalPart.bgPal]
+        al1 = optionalPart.bgAlpha
+        tex2 = textures[optionalPart.fgTex]
+        pal2 = palettes[optionalPart.fgPal]
+        al2 = optionalPart.fgAlpha
+        lineP = palettes[optionalPart.linePal]
+        lineA = optionalPart.lineAlpha
+        tr = optionalPart.texRot
+        ts = optionalPart.texScale
+    end
+
+    local renderPatch = {}
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, al1,
+            tex2, pal2, al2,
+            tr, ts,
+            lineP, lineA,
+            1, 1, nil, renderPatch))
+end
+
+
+local texscales = { 0.06, 0.12, 0.24, 0.48, 0.64, 0.96, 1.28, 1.64, 2.56 }
+local function partToTexturedCanvas(partName, guy, optionalImageSettings)
+    local creation = guy.dna.creation
+    local values = guy.dna.values
+
+    local p = findPart(partName)
+    local url = p.imgs[values[partName].shape]
+
+
+    local renderPatch = {}
+
+    if (partName == 'head') then
+        if not box2dGuyCreation.isNullObject('skinPatchSnout', values) then
+            local p = {}
+            p.imageData = partToTexturedCanvas('skinPatchSnout', guy)
+            p.sx = values.skinPatchSnoutPV.sx
+            p.sy = values.skinPatchSnoutPV.sy
+            p.r = values.skinPatchSnoutPV.r
+            p.tx = values.skinPatchSnoutPV.tx * creation.head.flipx
+            p.ty = values.skinPatchSnoutPV.ty * creation.head.flipy
+            table.insert(renderPatch, p)
+        end
+        if not box2dGuyCreation.isNullObject('skinPatchEye1', values) then
+            local p     = {}
+            p.imageData = partToTexturedCanvas('skinPatchEye1', guy)
+            p.sx        = values.skinPatchEye1PV.sx
+            p.sy        = values.skinPatchEye1PV.sy
+            p.r         = values.skinPatchEye1PV.r
+            p.tx        = values.skinPatchEye1PV.tx * creation.head.flipx
+            p.ty        = values.skinPatchEye1PV.ty * creation.head.flipy
+            table.insert(renderPatch, p)
+        end
+        if not box2dGuyCreation.isNullObject('skinPatchEye2', values) then
+            local p     = {}
+            p.imageData = partToTexturedCanvas('skinPatchEye2', guy)
+            p.sx        = values.skinPatchEye2PV.sx
+            p.sy        = values.skinPatchEye2PV.sy
+            p.r         = values.skinPatchEye2PV.r
+            p.tx        = values.skinPatchEye2PV.tx * creation.head.flipx
+            p.ty        = values.skinPatchEye2PV.ty * creation.head.flipy
+            table.insert(renderPatch, p)
+        end
+    end
+
+    local texturedcanvas = helperTexturedCanvas(
+            url,
+            textures[values[partName].bgTex],
+            palettes[values[partName].bgPal],
+            values[partName].bgAlpha,
+            textures[values[partName].fgTex],
+            palettes[values[partName].fgPal],
+            values[partName].fgAlpha,
+            values[partName].texRot,
+            texscales[values[partName].texScale],
+            palettes[values[partName].linePal],
+            values[partName].lineAlpha,
+            1, 1,
+            optionalImageSettings,
+            renderPatch
+        )
+    return texturedcanvas, url
+end
+
+lib.partToTexturedCanvasWrap = function(partName, guy, optionalImageSettings)
+    local a, b = partToTexturedCanvas(partName, guy, optionalImageSettings)
+    return love.graphics.newImage(a)
+end
+
+
+lib.createWhiteColoredBlackOutlineTexture = function(url)
+    -- todo make this more optimal and readable, 5 is white in any case
+    local tex1 = textures[math.ceil(math.random() * #textures)]
+    local pal1 = palettes[5]
+    local tex2 = textures[math.ceil(math.random() * #textures)]
+    local pal2 = palettes[5]
+
+    return love.graphics.newImage(helperTexturedCanvas(url,
+            tex1, pal1, 5,
+            tex2, pal2, 2,
+            0, 1,
+            palettes[1], 5,
+            1, 1, nil, nil))
+end
+
+
+lib.createTexturedTriangleStrip = function(image, optionalWidthMultiplier)
+    -- this assumes an strip that is oriented vertically
+    local w, h = image:getDimensions()
+    w = w * (optionalWidthMultiplier or 1)
+
+    local vertices = {}
+    local segments = 11
+    local hPart = h / (segments - 1)
+    local hv = 1 / (segments - 1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+
+    for i = 1, segments do
+        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
+        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
+    end
+
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+    return mesh
+end
+
+lib.drawSpriet = function(x, y, index, r, sy)
+    local img = spriet[index]
+    local w, h = img:getDimensions()
+    love.graphics.draw(img, x, y, r, 1, sy, w, h)
+end
+
+lib.drawNumbersOver = function(box2dGuy)
+    local parts = {
+        'torso', 'head', 'neck', 'neck1',
+        'lear', 'rear', 'luleg', 'ruleg',
+        'llleg', 'rlleg', 'lfoot', 'rfoot',
+    }
+
+    for i = 1, #parts do
+        local p = parts[i]
+        if box2dGuy[p] then
+            local x, y = box2dGuy[p]:getPosition()
+            local a = box2dGuy[p]:getAngle()
+            love.graphics.print(string.format("%.2f ", a), x, y)
+        end
+    end
+end
+
+lib.drawSkinOver = function(box2dGuy, guy)
     local values = guy.dna.values
     local creation = guy.dna.creation
     local multipliers = guy.dna.multipliers
@@ -411,7 +557,7 @@ function drawSkinOver(box2dGuy, guy)
         --  print(canvasCache.torsoCanvas)
         local x, y, r, sx, sy = renderMetaObject(canvasCache.torsoCanvas, 'torso', box2dGuy, creation)
         --love.graphics.setColor(.4, 0, 0, 1)
-        if not isNullObject('chestHair', values) then
+        if not box2dGuyCreation.isNullObject('chestHair', values) then
             drawSquishableHairOver(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink,
                 sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)
         end
@@ -448,7 +594,7 @@ function drawSkinOver(box2dGuy, guy)
 
     if creation.isPotatoHead then
         -- love.graphics.setColor(.4, 0, 0, 1)
-        if not isNullObject('chestHair', values) then
+        if not box2dGuyCreation.isNullObject('chestHair', values) then
             drawSquishableHairOver(canvasCache.chestHairCanvas, x, y, r, sx * dpi / shrink,
                 sy * dpi / shrink, multipliers.chesthair.mMultiplier, creation)
         end
@@ -518,7 +664,7 @@ function drawSkinOver(box2dGuy, guy)
     end
 
     love.graphics.setColor(1, 1, 1, 1)
-    if not isNullObject('hair', values) then
+    if not box2dGuyCreation.isNullObject('hair', values) then
         renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, r, sx, sy)
     end
 
@@ -541,7 +687,7 @@ function drawSkinOver(box2dGuy, guy)
         local bend = bends[math.ceil(positioners.brow.bend)]
         local bendMultiplier = 1 * faceWidth / 5
 
-        local browmesh = createTexturedTriangleStrip(canvasCache.browCanvas)
+        local browmesh = lib.createTexturedTriangleStrip(canvasCache.browCanvas)
         renderCurvedObjectFromSimplePoints(
             { -faceWidth / 2, bend[1] * bendMultiplier },
             { 0, bend[2] * bendMultiplier },
@@ -549,7 +695,7 @@ function drawSkinOver(box2dGuy, guy)
             canvasCache.browCanvas, browmesh, box2dGuy, 1, multipliers.brow.hMultiplier * shrink / dpi)
         love.graphics.draw(browmesh, browlx, browly, r, 1, 1)
 
-        local browmesh = createTexturedTriangleStrip(canvasCache.browCanvas)
+        local browmesh = lib.createTexturedTriangleStrip(canvasCache.browCanvas)
         renderCurvedObjectFromSimplePoints(
             { -faceWidth / 2, bend[1] * bendMultiplier },
             { 0, bend[2] * bendMultiplier },
@@ -585,7 +731,7 @@ function drawSkinOver(box2dGuy, guy)
         love.graphics.draw(canvasCache.legmesh, 0, 0, 0, 1, 1)
     end
 
-    if not isNullObject('leghair', values) and canvasCache.leghairCanvas then
+    if not box2dGuyCreation.isNullObject('leghair', values) and canvasCache.leghairCanvas then
         renderCurvedObject('luleg', 'llleg', 'lfoot', canvasCache.leghairCanvas, canvasCache.leghairMesh, box2dGuy, -1,
             (multipliers.leg.wMultiplier * multipliers.leghair.wMultiplier) / (4 * dpi))
         love.graphics.draw(canvasCache.leghairMesh, 0, 0, 0, 1, 1)
@@ -604,7 +750,7 @@ function drawSkinOver(box2dGuy, guy)
         love.graphics.draw(canvasCache.armmesh, 0, 0, 0, 1, 1)
     end
 
-    if not isNullObject('armhair', values) and canvasCache.armhairCanvas then
+    if not box2dGuyCreation.isNullObject('armhair', values) and canvasCache.armhairCanvas then
         renderCurvedObject('luarm', 'llarm', 'lhand', canvasCache.armhairCanvas, canvasCache.armhairMesh, box2dGuy, -1,
             (multipliers.arm.wMultiplier * multipliers.armhair.wMultiplier) / (4 * dpi))
         love.graphics.draw(canvasCache.armhairMesh, 0, 0, 0, 1, 1)
@@ -637,3 +783,5 @@ function drawSkinOver(box2dGuy, guy)
         end
     end
 end
+
+return lib

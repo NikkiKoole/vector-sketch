@@ -1,42 +1,46 @@
 package.path = package.path .. ";../../?.lua"
 
-local manual_gc = require 'vendor.batteries.manual_gc'
+
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 
-
 jit.off()
 require 'lib.printC'
 
-if true then
+function waitForEvent()
     local a, b, c, d, e
     repeat
         a, b, c, d, e = love.event.wait()
-        --print(a, b, c, d, e)
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-local mesh           = require 'lib.mesh'
-local parse          = require 'lib.parse-file'
-local node           = require 'lib.node'
-local text           = require 'lib.text'
-gesture              = require 'lib.gesture'
-SM                   = require 'vendor.SceneMgr'
-inspect              = require 'vendor.inspect'
-PROF_CAPTURE         = true
-prof                 = require 'vendor.jprof'
-ProFi                = require 'vendor.ProFi'
-focussed             = true
+waitForEvent()
 
-local Timer          = require 'vendor.timer'
-local dna            = require 'src.dna'
-local phys           = require 'src.mainPhysics'
-local lurker         = require 'vendor.lurker'
-lurker.quiet         = true
-local cam            = require('lib.cameraBase').getInstance()
 
-local DEBUG_PROFILER = false
+local mesh             = require 'lib.mesh'
+local parse            = require 'lib.parse-file'
+local node             = require 'lib.node'
+local text             = require 'lib.text'
+gesture                = require 'lib.gesture'
+SM                     = require 'vendor.SceneMgr'
+inspect                = require 'vendor.inspect'
+PROF_CAPTURE           = true
+prof                   = require 'vendor.jprof'
+ProFi                  = require 'vendor.ProFi'
+focussed               = true
+
+local Timer            = require 'vendor.timer'
+local dna              = require 'src.dna'
+local phys             = require 'src.mainPhysics'
+local lurker           = require 'vendor.lurker'
+lurker.quiet           = true
+local cam              = require('lib.cameraBase').getInstance()
+local manual_gc        = require 'vendor.batteries.manual_gc'
+local texturedBox2d    = require 'src.texturedBox2d'
+local box2dGuyCreation = require 'src.box2dGuyCreation'
+
+local DEBUG_PROFILER   = false
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
 if DEBUG_PROFILER == false then
     prof.push = function(a)
@@ -56,6 +60,9 @@ audioHelper.startAudioThread()
 
 creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
+
+
+
 
 function playSound(sound, optionalPitch, volumeMultiplier)
     local s = sound:clone()
@@ -396,9 +403,10 @@ function love.load()
         randomizeGuy(fiveGuys[i], true)
     end
     SM.setPath("scenes/")
-    --SM.load("splash")
-    SM.load("editGuy")
-    -- SM.load("outside")
+    SM.load("splash")
+    --SM.load("editGuy")
+
+    --SM.load("outside")
 end
 
 function love.update(dt)
@@ -553,6 +561,333 @@ function findPart(name)
     end
 end
 
+function updatePart(name, guy)
+    local values = guy.dna.values
+    local creation = guy.dna.creation
+    local multipliers = guy.dna.multipliers
+    local canvasCache = guy.canvasCache
+
+    if name == 'chestHair' then
+        canvasCache.chestHairCanvas = texturedBox2d.partToTexturedCanvasWrap('chestHair', guy)
+    end
+
+    if name == 'lowerlip' then
+        canvasCache.lowerlipCanvas = texturedBox2d.partToTexturedCanvasWrap('lowerlip', guy)
+    end
+
+    if name == 'upperlip' then
+        canvasCache.upperlipCanvas = texturedBox2d.partToTexturedCanvasWrap('upperlip', guy)
+    end
+
+    if name == 'teeth' then
+        canvasCache.teethCanvas = texturedBox2d.partToTexturedCanvasWrap('teeth', guy)
+        local teethdata = findPart('teeth').p
+        local teethIndex = values.teeth.shape
+        if not box2dGuyCreation.isNullObject('teeth', values) then
+            box2dGuyCreation.changeMetaTexture('teeth', guy, teethdata[teethIndex])
+        end
+    end
+
+    if name == 'brows' then
+        local browIndex        = math.ceil(values.brows.shape)
+        local part             = findPart('brows')
+        local img              = part.imgs[browIndex]
+        canvasCache.browCanvas = texturedBox2d.partToTexturedCanvasWrap('brows', guy)
+    end
+
+    if name == 'hair' then
+        local hairIndex        = math.ceil(values.hair.shape)
+        local part             = findPart('hair')
+        local img              = part.imgs[hairIndex]
+        local legW             = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
+        local legH             = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
+        canvasCache.hairCanvas = texturedBox2d.partToTexturedCanvasWrap('hair', guy)
+    end
+
+    if name == 'eyes' then
+        local eyedata = findPart('eyes').p
+        local eyeIndex = values.eyes.shape
+        box2dGuyCreation.changeMetaTexture('eye', guy, eyedata[eyeIndex])
+        creation.eye.w = mesh.getImage(creation.eye.metaURL):getHeight()
+        creation.eye.h = mesh.getImage(creation.eye.metaURL):getWidth()
+        canvasCache.eyeCanvas = texturedBox2d.createWhiteColoredBlackOutlineTexture(creation.eye.metaURL)
+    end
+
+    if name == 'nose' then
+        local nosedata = findPart('nose').p
+        local noseIndex = values.nose.shape
+        box2dGuyCreation.changeMetaTexture('nose', guy, nosedata[noseIndex])
+        creation.nose.w        = mesh.getImage(creation.nose.metaURL):getHeight()
+        creation.nose.h        = mesh.getImage(creation.nose.metaURL):getWidth()
+
+        canvasCache.noseCanvas = texturedBox2d.partToTexturedCanvasWrap('nose', guy)
+    end
+
+    if name == 'pupils' then
+        local pupildata = findPart('pupils').p
+        local pupilIndex = values.pupils.shape
+        box2dGuyCreation.changeMetaTexture('pupil', guy, pupildata[pupilIndex])
+        creation.pupil.w        = mesh.getImage(creation.pupil.metaURL):getHeight() / 2
+        creation.pupil.h        = mesh.getImage(creation.pupil.metaURL):getWidth() / 2
+
+        canvasCache.pupilCanvas = texturedBox2d.partToTexturedCanvasWrap('pupils', guy)
+    end
+
+    if name == 'ears' then
+        local eardata = findPart('ears').p
+        local earIndex = values.ears.shape
+        box2dGuyCreation.changeMetaTexture('lear', guy, eardata[earIndex])
+        creation.lear.w = mesh.getImage(creation.lear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
+        creation.lear.h = mesh.getImage(creation.lear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
+
+        box2dGuyCreation.changeMetaTexture('rear', guy, eardata[earIndex])
+        creation.rear.w       = mesh.getImage(creation.rear.metaURL):getHeight() * multipliers.ear.wMultiplier / 4
+        creation.rear.h       = mesh.getImage(creation.rear.metaURL):getWidth() * multipliers.ear.hMultiplier / 4
+
+        canvasCache.earCanvas = texturedBox2d.partToTexturedCanvasWrap('ears', guy)
+        canvasCache.earmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.earCanvas)
+
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'lear')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rear')
+    end
+
+    if name == 'feet' then
+        local feetdata = findPart('feet').p
+        local footIndex = values.feet.shape
+
+        box2dGuyCreation.changeMetaTexture('lfoot', guy, feetdata[footIndex])
+        creation.lfoot.w = mesh.getImage(creation.lfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
+        creation.lfoot.h = mesh.getImage(creation.lfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
+        box2dGuyCreation.changeMetaTexture('rfoot', guy, feetdata[footIndex])
+        creation.rfoot.w       = mesh.getImage(creation.rfoot.metaURL):getHeight() * multipliers.feet.wMultiplier / 2
+        creation.rfoot.h       = mesh.getImage(creation.rfoot.metaURL):getWidth() * multipliers.feet.hMultiplier / 2
+
+        canvasCache.footCanvas = texturedBox2d.partToTexturedCanvasWrap('feet', guy)
+        canvasCache.footmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.footCanvas)
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'lfoot')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rfoot')
+    end
+
+    if name == 'hands' then
+        local feetdata = findPart('hands').p --  loadVectorSketch('assets/feet.polygons.txt', 'feet')
+        local handIndex = values.hands.shape
+        box2dGuyCreation.changeMetaTexture('lhand', guy, feetdata[handIndex])
+        box2dGuyCreation.changeMetaTexture('rhand', guy, feetdata[handIndex])
+        creation.lhand.w       = mesh.getImage(creation.lhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
+        creation.lhand.h       = mesh.getImage(creation.lhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
+        creation.rhand.w       = mesh.getImage(creation.rhand.metaURL):getHeight() * multipliers.hand.wMultiplier / 2
+        creation.rhand.h       = mesh.getImage(creation.rhand.metaURL):getWidth() * multipliers.hand.hMultiplier / 2
+
+        canvasCache.handCanvas = texturedBox2d.partToTexturedCanvasWrap('hands', guy)
+        canvasCache.handmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.handCanvas)
+
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'lhand')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rhand')
+    end
+
+    if name == 'head' or name == 'skinPatchEye1' or name == 'skinPatchEye2' or name == 'skinPatchSnout' then
+        -- if not creation.isPotatoHead then
+        local data = findPart('head').p --loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
+        local headRndIndex = math.ceil(values.head.shape)
+        local flippedFloppedHeadPoints = box2dGuyCreation.getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
+                data[headRndIndex]
+                .points)
+
+        box2dGuyCreation.changeMetaPoints('head', guy, flippedFloppedHeadPoints)
+        box2dGuyCreation.changeMetaTexture('head', guy, data[headRndIndex])
+
+        canvasCache.headCanvas = texturedBox2d.partToTexturedCanvasWrap('head', guy)
+        creation.head.w        = mesh.getImage(creation.head.metaURL):getWidth() * multipliers.head.wMultiplier / 2
+        creation.head.h        = mesh.getImage(creation.head.metaURL):getHeight() * multipliers.head.hMultiplier / 2
+
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'head')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'lear')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rear')
+    end
+
+    if name == 'potato' then
+        box2dGuyCreation.handleNeckAndHeadForPotato(guy.b2d, guy, creation.isPotatoHead, creation.hasNeck)
+        if not creation.isPotatoHead then
+            updatePart('head', guy)
+        end
+        box2dGuyCreation.handlePhysicsHairOrNo(guy.b2d, guy, creation.hasPhysicsHair)
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'torso')
+    end
+
+    if name == 'hasNeck' then
+        box2dGuyCreation.handleNeckAndHeadForHasNeck(guy.b2d, guy, creation.hasNeck)
+        if creation.hasNeck then
+            updatePart('neck', guy)
+        end
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'head')
+    end
+
+
+    if name == 'neck' then
+        local neckIndex        = math.ceil(values.neck.shape)
+        local part             = findPart('neck')
+        local img              = part.imgs[neckIndex]
+        local neckW            = mesh.getImage(img):getWidth() * multipliers.neck.wMultiplier / 2
+        local neckH            = mesh.getImage(img):getHeight() * multipliers.neck.hMultiplier / 2
+
+        canvasCache.neckCanvas = texturedBox2d.partToTexturedCanvasWrap('neck', guy)
+        canvasCache.neckmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.neckCanvas)
+
+        creation.neck.w        = neckW
+        creation.neck.h        = neckH / 2
+        creation.neck1.w       = neckW
+        creation.neck1.h       = neckH / 2
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'neck')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'neck1')
+    end
+
+    if name == 'legs' then
+        local legIndex        = math.ceil(values.legs.shape)
+        local part            = findPart('legs')
+        local img             = part.imgs[legIndex]
+        local legW            = mesh.getImage(img):getWidth() * multipliers.leg.wMultiplier / 2
+        local legH            = mesh.getImage(img):getHeight() * multipliers.leg.lMultiplier / 2
+
+        canvasCache.legCanvas = texturedBox2d.partToTexturedCanvasWrap('legs', guy)
+        canvasCache.legmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.legCanvas)
+
+        creation.luleg.w      = legW
+        creation.ruleg.w      = legW
+        creation.luleg.h      = legH / 2
+        creation.ruleg.h      = legH / 2
+        creation.llleg.w      = legW
+        creation.rlleg.w      = legW
+        creation.llleg.h      = legH / 2
+        creation.rlleg.h      = legH / 2
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'luleg')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'ruleg')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'llleg')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rlleg')
+    end
+
+    if name == 'leghair' then
+        local index               = math.ceil(values.leghair.shape)
+        local part                = findPart('leghair')
+        local img                 = part.imgs[index]
+        canvasCache.leghairCanvas = texturedBox2d.partToTexturedCanvasWrap('leghair', guy)
+        canvasCache.leghairMesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.leghairCanvas)
+    end
+
+    if name == 'armhair' then
+        local index               = math.ceil(values.armhair.shape)
+        local part                = findPart('armhair')
+        local img                 = part.imgs[index]
+        canvasCache.armhairCanvas = texturedBox2d.partToTexturedCanvasWrap('armhair', guy)
+        canvasCache.armhairMesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.armhairCanvas)
+    end
+
+    if name == 'arms' then
+        local armIndex = math.ceil(values.arms.shape)
+        local part     = findPart('arms')
+        local img      = part.imgs[armIndex]
+        local legW     = mesh.getImage(img):getWidth() * multipliers.arm.wMultiplier / 2
+        local legH     = mesh.getImage(img):getHeight() * multipliers.arm.lMultiplier / 2
+
+
+        canvasCache.armCanvas = texturedBox2d.partToTexturedCanvasWrap('arms', guy)
+        canvasCache.armmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.armCanvas)
+
+        creation.luarm.w      = legW / 2
+        creation.ruarm.w      = legW / 2
+
+        creation.luarm.h      = legH / 2
+        creation.ruarm.h      = legH / 2
+
+        creation.llarm.w      = legW / 2
+        creation.rlarm.w      = legW / 2
+
+        creation.llarm.h      = legH / 2
+        creation.rlarm.h      = legH / 2
+
+
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'luarm')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'ruarm')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'llarm')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rlarm')
+    end
+
+    if name == 'body' then
+        local data = findPart('body').p
+        local bodyRndIndex = math.ceil(values.body.shape)
+        local flippedFloppedBodyPoints = box2dGuyCreation.getFlippedMetaObject(creation.torso.flipx, creation.torso
+            .flipy,
+                data[bodyRndIndex]
+                .points)
+        box2dGuyCreation.changeMetaPoints('torso', guy, flippedFloppedBodyPoints)
+        box2dGuyCreation.changeMetaTexture('torso', guy, data[bodyRndIndex])
+        canvasCache.torsoCanvas = texturedBox2d.partToTexturedCanvasWrap('body', guy)
+        local body              = guy.b2d.torso
+        local longestLeg        = math.max(creation.luleg.h + creation.llleg.h, creation.ruleg.h + creation.rlleg.h)
+        local oldLegLength      = longestLeg + creation.torso.h
+
+        --creation.hasPhysicsHair = not creation.hasPhysicsHair
+        creation.torso.w        = mesh.getImage(creation.torso.metaURL):getWidth() * multipliers.torso.wMultiplier
+        creation.torso.h        = mesh.getImage(creation.torso.metaURL):getHeight() * multipliers.torso.hMultiplier
+
+        local newLegLength      = longestLeg + creation.torso.h
+        local bx, by            = body:getPosition()
+        if (newLegLength > oldLegLength) then
+            body:setPosition(bx, by - (newLegLength - oldLegLength) * 1.2)
+        end
+
+        creation.luarm.h = 250
+        creation.llarm.h = 250
+        creation.ruarm.h = creation.luarm.h
+        creation.rlarm.h = creation.llarm.h
+
+        -- for i = 1, #fiveGuys do
+        box2dGuyCreation.handleNeckAndHeadForPotato(guy.b2d, guy, creation.isPotatoHead, creation.hasNeck)
+        box2dGuyCreation.handlePhysicsHairOrNo(guy.b2d, guy, creation.hasPhysicsHair)
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'torso')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'luarm')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'llarm')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'ruarm')
+        box2dGuyCreation.genericBodyPartUpdate(guy, 'rlarm')
+
+        if (not creation.isPotatoHead) then
+            box2dGuyCreation.genericBodyPartUpdate(guy, 'lear')
+            box2dGuyCreation.genericBodyPartUpdate(guy, 'rear')
+        end
+        --end
+    end
+end
+
+function resetPositions(guy)
+    local box2dGuy = guy.b2d
+
+    if (box2dGuy.head) then box2dGuy.head:setAngle(0) end
+    if (box2dGuy.neck1) then box2dGuy.neck1:setAngle( -math.pi) end
+    if (box2dGuy.neck) then box2dGuy.neck:setAngle( -math.pi) end
+
+    box2dGuy.lear:setAngle(math.pi / 2)
+    box2dGuy.rear:setAngle( -math.pi / 2)
+    box2dGuy.torso:setAngle(0)
+    box2dGuy.luleg:setAngle(0)
+    box2dGuy.llleg:setAngle(0)
+    box2dGuy.lfoot:setAngle(math.pi / 2)
+    box2dGuy.ruleg:setAngle(0)
+    box2dGuy.rlleg:setAngle(0)
+    box2dGuy.rfoot:setAngle( -math.pi / 2)
+    box2dGuy.luarm:setAngle(0)
+    box2dGuy.llarm:setAngle(0)
+    box2dGuy.lhand:setAngle(0)
+    box2dGuy.ruarm:setAngle(0)
+    box2dGuy.rlarm:setAngle(0)
+    box2dGuy.rhand:setAngle(0)
+end
+
 -- noPhysicsUpdate can only be turned on when you know a real object is there
 -- ist off by default and that is usefull to essentialy just change
 -- values in the dna.values / creation etc.
@@ -606,12 +941,12 @@ function randomizeGuy(guy, noPhysicsUpdate)
 
     if not noPhysicsUpdate then
         if creation.hasNeck ~= oldHasNeck then
-            changePart('hasNeck', guy)
+            updatePart('hasNeck', guy)
             --print('complex I thik 2')
         end
 
         if creation.isPotatoHead ~= oldPotato then
-            changePart('potato', guy)
+            updatePart('potato', guy)
             --print('complex I thik 2')
         end
     end

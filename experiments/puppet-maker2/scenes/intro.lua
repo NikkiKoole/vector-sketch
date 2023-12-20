@@ -1,12 +1,10 @@
 local scene         = {}
 local poppetjeMaker = love.graphics.newImage('assets/intro/puppetmaker2.png')
-local doggie        = love.graphics.newImage('assets/intro/doggie.png')
 local darkness      = love.graphics.newImage('assets/img/worldparts/darkness.png')
 local time          = 0
 
 local Timer         = require 'vendor.timer'
 local fluxObject    = { headerOffset = 0, guyY = 0, darknessAlpha = 0, puppetMakerAlpha = 0 }
-local numbers       = require 'lib.numbers'
 
 --require 'lib.printC'
 local parentize     = require 'lib.parentize'
@@ -201,7 +199,7 @@ function doTheMipoAnimation()
 
     Timer.after(15, function()
         local w, h = love.graphics.getDimensions()
-        fadeOutTransition(function()
+        wipes.fadeOutTransition(.6, function()
             gotoNext()
         end)
         -- gotoNext()
