@@ -60,7 +60,7 @@ function playSound(sound, optionalPitch, volumeMultiplier)
     local s = sound:clone()
     local p = optionalPitch == nil and (.99 + .02 * love.math.random()) or optionalPitch
     s:setPitch(p)
-    local volume = (.25 * (volumeMultiplier == nil and 1 or volumeMultiplier))
+    local volume = (1 * (volumeMultiplier == nil and 1 or volumeMultiplier))
 
     s:setVolume(volume * mainVolume)
     love.audio.play(s)
@@ -216,6 +216,8 @@ function love.load()
         love.audio.newSource("assets/sounds/fx/rubber-plonk3.wav", "static")
     }
 
+    playedPlonkSounds = {}
+
     rubberstretches = {
         love.audio.newSource("assets/sounds/fx/rubber-stretch1.wav", "static"),
         love.audio.newSource("assets/sounds/fx/rubber-stretch2.wav", "static"),
@@ -358,6 +360,13 @@ function love.update(dt)
         end
         prof.push('world update')
 
+        
+        for i = #playedPlonkSounds, 1, -1 do 
+            playedPlonkSounds[i].timeAgo = playedPlonkSounds[i].timeAgo + dt
+            if  playedPlonkSounds[i].timeAgo >= .5 then
+                table.remove(playedPlonkSounds, i)
+            end
+        end
         world:update(dt)
         prof.pop('world update')
         --collectgarbage()

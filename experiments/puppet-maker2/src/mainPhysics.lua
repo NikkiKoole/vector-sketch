@@ -323,14 +323,25 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
         then
             if normalimpulse > 1000 then
                 local index = math.ceil(love.math.random() * #rubberplonks)
-
                 local pitch = numbers.mapInto(normalimpulse, 1000, 10000, 2, 1)
                 local volume = numbers.mapInto(normalimpulse, 1000, 10000, .2, 1)
                 if pitch < .5 then pitch = .5 end
                 if volume < .2 then volume = .2 end
 
+                -- check if these 2 bodies have had a collision in the last second or so
                 -- print(normalimpulse, pitch, volume)
-                playSound(rubberplonks[index], pitch, volume)
+                
+                local stillPlayingPlonkForSimilarCollision = false
+                for i =1 , #playedPlonkSounds do 
+                    if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud then
+                        stillPlayingPlonkForSimilarCollision = true
+                    end 
+                end
+                if stillPlayingPlonkForSimilarCollision == false then
+
+                    table.insert(playedPlonkSounds, {aud=aud, bud=bud, timeAgo=0})
+                    playSound(rubberplonks[index], pitch, volume) 
+                end
             end
         end
     end
