@@ -304,7 +304,8 @@ function love.load()
     --SM.load("splash")
     SM.load("editGuy")
 
-    --print('hello good')
+
+    print('hello good')
     --SM.load("outside")
 end
 

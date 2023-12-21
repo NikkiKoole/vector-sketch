@@ -48,7 +48,7 @@ local function attachCallbacks()
     end)
 end
 
-function setCategories(guy)
+local function setCategories(guy)
     local creation = guy.dna.creation
     categories = {}
 
@@ -114,9 +114,8 @@ local function pointerPressed(x, y, id)
     local size = (h / 8) -- margin around panel
 
     if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
-        local sx, sy = getPointToCenterTransitionOn()
         Timer.clear()
-        swipes.doCircleInTransition(sx, sy, function()
+        swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
             if scene then
                 SM.unload('editGuy')
                 SM.load('outside')

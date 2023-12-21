@@ -410,7 +410,7 @@ local function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2
         if connectors[i].at and connectors[i].at == recreate.oldFixture then
             connectors[i].at = fixture
             if connectors[i].to then
-                local j = getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+                local j = phys.getJointBetween2Connectors(connectors[i].to, connectors[i].at)
                 connectors[i].joint = j
             end
         end
@@ -418,7 +418,7 @@ local function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2
         if connectors[i].to and connectors[i].to == recreate.oldFixture then
             connectors[i].to = fixture
 
-            local j = getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+            local j = phys.getJointBetween2Connectors(connectors[i].to, connectors[i].at)
             connectors[i].joint = j
         end
     end

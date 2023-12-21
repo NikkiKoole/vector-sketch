@@ -337,8 +337,6 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
 end
 
 
-
-
 lib.setupBox2dScene = function(onlyThisGuyIndex, makeFunc)
     local w, h = love.graphics.getDimensions()
     camera.setCameraViewport(cam, w, h)
