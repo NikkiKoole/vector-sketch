@@ -20,35 +20,187 @@ local wipes         = require 'src.screen-transitions'
 local audioHelper   = require 'lib.audio-helper'
 
 local readAndParse  = require 'src.readAndParse'
+
+-- cream -> blauw
+-- achtergrond pencil lines ding
+-- mipo showing tween in 
+-- mipo done, puppetmaker shown 
+-- 5 circles 
+-- next state
+
+local function randomTweenLetterPoints(letters, origins)
+    for k = 1, #letters do
+        local l           = letters[k]
+        local originIndex = 1
+        for i = 1, #l.children do
+            for j = 1, #l.children[i].points do
+                Timer.tween(0.4, l.children[i].points[j],
+                    {
+                        [1] = origins[k][originIndex][1] + love.math.random() * 10 - 5,
+                        [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
+                    })
+
+                originIndex = originIndex + 1
+            end
+        end
+    end
+end
+
+local function nextState() 
+
+    if (statePointer < #states) then
+        statePointer = statePointer + 1
+        states[statePointer]() 
+    else 
+    print('next!')
+    end
+end
+
+local function backgroundCreamToBlue() 
+    Timer.clear()
+    bgColor = { unpack(creamColor) }
+    Timer.after(.1, function()
+        Timer.tween(1, bgColor, { [1] = blueColor[1],[2] = blueColor[2],[3] = blueColor[3] }, 'out-cubic')
+    end)
+    Timer.after(1.2, function() 
+        nextState()
+    end)
+end
+
+local function fadeInPencilBackground() 
+Timer.clear()
+    bgColor = { unpack(blueColor) }
+    Timer.after(.1, function()
+        Timer.tween(1, fluxObject, { darknessAlpha = .25 }, 'out-cubic')
+    end)
+    Timer.after(1.2, function() 
+        nextState()
+    end)
+end
+
+local function tweenInMipoHeader() 
+    Timer.clear()
+    bgColor = { unpack(blueColor) }
+    fluxObject.darknessAlpha = .25
+
+
+      -- MI
+      Timer.after(0.5, function()
+        for i = 1, #M.children do
+            Timer.tween(0.5, M.children[i].color, { [4] = 1 })
+        end
+        Timer.after(0.1, function()
+            for i = 1, #I.children do
+                Timer.tween(0.5, I.children[i].color, { [4] = 1 })
+            end
+        end)
+        local sound = miSound1
+        if love.math.random() < 0.2 then
+            sound = miSound2
+        end
+        playSound(sound, .7 + love.math.random() * 0.5)
+
+        Timer.every(.5, function()
+            local letters = { M, I }
+            local origins = { originM, originI }
+
+            randomTweenLetterPoints(letters, origins)
+            mesh.meshAll(mipo)
+        end)
+    end)
+
+      -- PO
+      Timer.after(1, function()
+        for i = 1, #P.children do
+            Timer.tween(0.5, P.children[i].color, { [4] = 1 })
+        end
+        Timer.after(0.1, function()
+            for i = 1, #O.children do
+                Timer.tween(0.5, O.children[i].color, { [4] = 1 })
+            end
+        end)
+
+        local sound = poSound1
+        if love.math.random() < 0.2 then
+            sound = poSound2
+        end
+        playSound(sound, .7 + love.math.random() * 0.5)
+
+        Timer.every(.5, function()
+            local letters = { P, O }
+            local origins = { originP, originO }
+            randomTweenLetterPoints(letters, origins)
+
+            mesh.meshAll(mipo)
+        end)
+    end)
+
+    Timer.after(2, function() 
+        nextState()
+    end)
+end
+
+local function moveMipoAround() 
+    local letters = { M, I, P, O }
+    local origins = { originM, originI, originP, originO }
+    randomTweenLetterPoints(letters, origins)
+    mesh.meshAll(mipo)
+    
+    Timer.every(.5, function()
+        randomTweenLetterPoints(letters, origins)
+        mesh.meshAll(mipo)
+    end)
+end
+
+local function setAllMipoLettersAlpha(v) 
+    for i = 1, #mipo.children do
+        local letter = mipo.children[i]
+        if letter.children then
+            for j = 1, #letter.children do
+                letter.children[j].color[4] = v
+            end
+        end
+    end
+end
+
+local function tweenInMipoPuppetMakerHeader() 
+    Timer.clear()
+    bgColor = { unpack(blueColor) }
+    fluxObject.darknessAlpha = .25
+
+    setAllMipoLettersAlpha(1)
+
+    moveMipoAround() 
+
+
+end
+
+local function tweenIn5Circles() 
+    Timer.clear()
+    setAllMipoLettersAlpha(1)
+    moveMipoAround() 
+end 
+
+
+
+
 function scene.load()
+    --backgroundCreamToBlue() 
+
+    states = {
+        backgroundCreamToBlue, 
+        fadeInPencilBackground,
+        tweenInMipoHeader,
+        tweenInMipoPuppetMakerHeader,
+        tweenIn5Circles
+    }
+    statePointer = 1
+
+
     bgColor = { unpack(creamColor) }
     introSound:setVolume(.5)
     introSound:setLooping(true)
     introSound:play()
-
-
-    Timer.after(.1, function()
-        Timer.tween(1, bgColor, { [1] = blueColor[1],[2] = blueColor[2],[3] = blueColor[3] }, 'out-cubic')
-    end)
-
-    Timer.after(1, function()
-        Timer.tween(1, fluxObject, { darknessAlpha = .25 }, 'out-cubic')
-    end)
-    Timer.after(3, function()
-        Timer.tween(3, fluxObject, { puppetMakerAlpha = 1 }, 'out-cubic')
-    end)
-    Timer.after(
-        .1,
-        function()
-            Timer.tween(3, fluxObject, { headerOffset = 1 }, 'out-elastic')
-        end
-    )
-    Timer.after(
-        1,
-        function()
-            Timer.tween(2, fluxObject, { guyY = 1 }, 'out-elastic')
-        end
-    )
 
     root = {
         folder = true,
@@ -86,33 +238,16 @@ function scene.load()
 
     cam:update(w, h)
 
-    for i = 1, #mipo.children do
-        local letter = mipo.children[i]
-        if letter.children then
-            for j = 1, #letter.children do
-                letter.children[j].color[4] = 0
-            end
-        end
-    end
 
-    Timer.after(15, function()
-        Timer.tween(1, fluxObject, { darknessAlpha = 0, puppetMakerAlpha = 0 })
-    end)
-    Timer.after(1.5, doTheMipoAnimation)
-end
+    M = mipo.children[2]
+    I = mipo.children[3]
+    P = mipo.children[4]
+    O = mipo.children[5]
 
-function doTheMipoAnimation()
-    -- show mipo letters
-
-    local M = mipo.children[2]
-    local I = mipo.children[3]
-    local P = mipo.children[4]
-    local O = mipo.children[5]
-
-    local originM = {}
-    local originI = {}
-    local originP = {}
-    local originO = {}
+    originM = {}
+    originI = {}
+    originP = {}
+    originO = {}
 
     local function cachePoints(letter, cacheHere)
         for i = 1, #letter.children do
@@ -127,83 +262,14 @@ function doTheMipoAnimation()
     cachePoints(P, originP)
     cachePoints(O, originO)
 
-    local function randomTweenLetterPoints(letters, origins)
-        for k = 1, #letters do
-            local l           = letters[k]
-            local originIndex = 1
-            for i = 1, #l.children do
-                for j = 1, #l.children[i].points do
-                    Timer.tween(0.4, l.children[i].points[j],
-                        {
-                            [1] = origins[k][originIndex][1] + love.math.random() * 100 - 5,
-                            [2] = origins[k][originIndex][2] + love.math.random() * 40 - 20
-                        })
 
-                    originIndex = originIndex + 1
-                end
-            end
-        end
-    end
+    setAllMipoLettersAlpha(0)
 
-    -- MI
-    Timer.after(0.5, function()
-        for i = 1, #M.children do
-            Timer.tween(0.5, M.children[i].color, { [4] = 1 })
-        end
-        Timer.after(0.1, function()
-            for i = 1, #I.children do
-                Timer.tween(0.5, I.children[i].color, { [4] = 1 })
-            end
-        end)
-        local sound = miSound1
-        if love.math.random() < 0.2 then
-            sound = miSound2
-        end
-        playSound(sound, .7 + love.math.random() * 0.5)
-
-        Timer.every(.5, function()
-            local letters = { M, I }
-            local origins = { originM, originI }
-
-            randomTweenLetterPoints(letters, origins)
-            mesh.meshAll(mipo)
-        end)
-    end)
+    --states[statePointer]()
+    nextState() 
 
 
-    -- PO
-    Timer.after(1, function()
-        for i = 1, #P.children do
-            Timer.tween(0.5, P.children[i].color, { [4] = 1 })
-        end
-        Timer.after(0.1, function()
-            for i = 1, #O.children do
-                Timer.tween(0.5, O.children[i].color, { [4] = 1 })
-            end
-        end)
-
-        local sound = poSound1
-        if love.math.random() < 0.2 then
-            sound = poSound2
-        end
-        playSound(sound, .7 + love.math.random() * 0.5)
-
-        Timer.every(.5, function()
-            local letters = { P, O }
-            local origins = { originP, originO }
-            randomTweenLetterPoints(letters, origins)
-
-            mesh.meshAll(mipo)
-        end)
-    end)
-
-    Timer.after(15, function()
-        local w, h = love.graphics.getDimensions()
-        wipes.fadeOutTransition(.6, function()
-            gotoNext()
-        end)
-        -- gotoNext()
-    end)
+  
 end
 
 function scene.handleAudioMessage()
@@ -215,10 +281,17 @@ function scene.unload()
 end
 
 function gotoNext()
-    audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
-    Timer.clear()
-    SM.unload('intro')
-    SM.load("editGuy")
+    nextState() 
+    --if not alreadyMovingTheMipoText then
+        --Timer.clear()
+       -- justMoveTheMipoText() 
+    --end
+   -- Timer.update(1)
+--    Timer.clear()
+    --audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
+    --Timer.clear()
+    --SM.unload('intro')
+    --SM.load("editGuy")
 end
 
 function scene.update(dt)

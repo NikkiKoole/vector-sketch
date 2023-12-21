@@ -304,7 +304,7 @@ function love.load()
     end
     SM.setPath("scenes/")
     --SM.load("splash")
-    SM.load("editGuy")
+    SM.load("splash")
 
 
     print('hello good')
@@ -360,7 +360,7 @@ function love.update(dt)
         end
         prof.push('world update')
 
-        
+
         for i = #playedPlonkSounds, 1, -1 do 
             playedPlonkSounds[i].timeAgo = playedPlonkSounds[i].timeAgo + dt
             if  playedPlonkSounds[i].timeAgo >= .5 then

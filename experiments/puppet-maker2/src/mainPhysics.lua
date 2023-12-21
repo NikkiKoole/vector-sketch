@@ -321,10 +321,11 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
             or (bud.bodyType == 'body' and aud.bodyType == 'lhand')
             or (bud.bodyType == 'body' and aud.bodyType == 'rhand')
         then
-            if normalimpulse > 1000 then
+           --- print(normalimpulse)
+            if normalimpulse > 300 then
                 local index = math.ceil(love.math.random() * #rubberplonks)
-                local pitch = numbers.mapInto(normalimpulse, 1000, 10000, 2, 1)
-                local volume = numbers.mapInto(normalimpulse, 1000, 10000, .2, 1)
+                local pitch = numbers.mapInto(normalimpulse, 300, 10000, 2, 1)
+                local volume = numbers.mapInto(normalimpulse, 300, 10000, .2, 1)
                 if pitch < .5 then pitch = .5 end
                 if volume < .2 then volume = .2 end
 
@@ -333,12 +334,12 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
                 
                 local stillPlayingPlonkForSimilarCollision = false
                 for i =1 , #playedPlonkSounds do 
-                    if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud then
+                    if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud and playedPlonkSounds[i].timeAgo > 0 then
                         stillPlayingPlonkForSimilarCollision = true
                     end 
                 end
                 if stillPlayingPlonkForSimilarCollision == false then
-
+                    print('tryna play sound')
                     table.insert(playedPlonkSounds, {aud=aud, bud=bud, timeAgo=0})
                     playSound(rubberplonks[index], pitch, volume) 
                 end
