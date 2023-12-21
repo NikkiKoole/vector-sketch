@@ -398,16 +398,7 @@ function scene.draw()
     local scale = math.min(bx, by)
     scale = scale * (0.9 + (math.sin(time*3) + 1)*0.05)
     local r = (0.7 + math.sin(time)*0.3) * 0.1
-    --scaleX = screenWidth / blobWidth
-    --scaleY = screenHeight / blobHeight
-    --scale = math.min(scaleX, scaleY)
-    --scale = scale * 0.5
-    --scale = scale + (math.sin(time) * 0.01)
-
-   -- love.graphics.setColor(1, 1, 1, 0.5 * (fluxObject.headerOffset) * fluxObject.puppetMakerAlpha)
-   -- love.graphics.draw(poppetjeMaker, 1 + (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
-   --      screenHeight - (blobHeight * scale), 0, scale, scale, blobWidth / 2, blobHeight / 2)
-
+   
     love.graphics.setColor(1, 0.945, 0.91, 1)
 
     love.graphics.draw(poppetjeMaker, (screenWidth * 2/3) , (screenHeight * 2/3) , r, scale, scale, blobWidth / 2, blobHeight / 2)
