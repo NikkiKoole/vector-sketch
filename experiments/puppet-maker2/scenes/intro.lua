@@ -18,7 +18,7 @@ local bbox          = require 'lib.bbox'
 local wipes         = require 'src.screen-transitions'
 
 local audioHelper   = require 'lib.audio-helper'
-
+local ui               = require 'lib.ui'
 local readAndParse  = require 'src.readAndParse'
 
 -- cream -> blauw
@@ -172,6 +172,15 @@ local function tweenInMipoPuppetMakerHeader()
 
     moveMipoAround() 
 
+    Timer.after(.3, function()
+        Timer.tween(3, fluxObject, { puppetMakerAlpha = 1 }, 'out-cubic')
+    end)
+    Timer.after(
+        3.1,
+        function()
+            Timer.tween(3, fluxObject, { headerOffset = 1 }, 'out-elastic')
+        end
+    )
 
 end
 
@@ -179,13 +188,33 @@ local function tweenIn5Circles()
     Timer.clear()
     setAllMipoLettersAlpha(1)
     moveMipoAround() 
+    puppetMakerAlpha = 1
+    headerOffset = 1
+
+    setAllMipoLettersAlpha(0.5)
+    for i =1, #circles do 
+        circles[i].opacity = 1
+    end
+
+    
 end 
-
-
-
 
 function scene.load()
     --backgroundCreamToBlue() 
+
+
+    if not ui2 then
+        ui2 = {}
+    end
+    ui2.circles           = {
+        love.graphics.newImage('assets/ui/circle1.png'),
+        love.graphics.newImage('assets/ui/circle2.png'),
+        love.graphics.newImage('assets/ui/circle3.png'),
+        love.graphics.newImage('assets/ui/circle4.png'),
+    }
+
+
+
 
     states = {
         backgroundCreamToBlue, 
@@ -239,6 +268,8 @@ function scene.load()
     cam:update(w, h)
 
 
+   -- print(inspect(cam))
+
     M = mipo.children[2]
     I = mipo.children[3]
     P = mipo.children[4]
@@ -264,6 +295,15 @@ function scene.load()
 
 
     setAllMipoLettersAlpha(0)
+
+
+    circles = {}
+    local size = w/5
+    for i =1, 5 do 
+        local index = math.ceil(love.math.random()* #ui2.circles)
+        local sx, sy = createFittingScale(ui2.circles[index], size, size)
+        circles[i] = {index=index, x=(i-1)*size, y=(h ) -size, sx=sx, sy=sy, opacity=0}
+    end
 
     --states[statePointer]()
     nextState() 
@@ -353,20 +393,32 @@ function scene.draw()
     cam:pop()
 
     local blobWidth, blobHeight = poppetjeMaker:getDimensions()
-    scaleX = screenWidth / blobWidth
-    scaleY = screenHeight / blobHeight
-    scale = math.min(scaleX, scaleY)
-    scale = scale * 0.5
-    scale = scale + (math.sin(time) * 0.01)
 
-    love.graphics.setColor(1, 1, 1, 0.5 * (fluxObject.headerOffset) * fluxObject.puppetMakerAlpha)
-    love.graphics.draw(poppetjeMaker, 1 + (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
-        screenHeight - (blobHeight * scale), 0, scale, scale, blobWidth / 2, blobHeight / 2)
+    local bx, by = createFittingScale(poppetjeMaker, w/2, w/2)  
+    local scale = math.min(bx, by)
+    scale = scale * (0.9 + (math.sin(time*3) + 1)*0.05)
+    local r = (0.7 + math.sin(time)*0.3) * 0.1
+    --scaleX = screenWidth / blobWidth
+    --scaleY = screenHeight / blobHeight
+    --scale = math.min(scaleX, scaleY)
+    --scale = scale * 0.5
+    --scale = scale + (math.sin(time) * 0.01)
 
-    love.graphics.setColor(1, 1, 1, fluxObject.puppetMakerAlpha)
+   -- love.graphics.setColor(1, 1, 1, 0.5 * (fluxObject.headerOffset) * fluxObject.puppetMakerAlpha)
+   -- love.graphics.draw(poppetjeMaker, 1 + (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
+   --      screenHeight - (blobHeight * scale), 0, scale, scale, blobWidth / 2, blobHeight / 2)
 
-    love.graphics.draw(poppetjeMaker, (screenWidth / 2) - ((1 - fluxObject.headerOffset) * screenWidth / 2),
-        screenHeight - (blobHeight * scale), 0, scale, scale, blobWidth / 2, blobHeight / 2)
+    love.graphics.setColor(1, 0.945, 0.91, 1)
+
+    love.graphics.draw(poppetjeMaker, (screenWidth * 2/3) , (screenHeight * 2/3) , r, scale, scale, blobWidth / 2, blobHeight / 2)
+
+
+    for i = 1, #circles do 
+        local c = circles[i]
+        love.graphics.setColor(1, 0.945, 0.91, c.opacity)
+        love.graphics.draw(ui2.circles[c.index], c.x, c.y, 0, c.sx, c.sy)
+        --circles[i] = {index=index, x=i*size, y=h-size, sx=sx, sy=sy, opacity=0}
+    end
 
     if transition then
         wipes.renderTransition(transition)

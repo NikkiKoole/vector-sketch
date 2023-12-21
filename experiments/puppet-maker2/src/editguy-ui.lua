@@ -100,8 +100,10 @@ local function createFittingScale(img, desired_w, desired_h)
 end
 
 lib.loadUIImages = function()
-    ui2 = {}
-
+    if not ui2 then
+        ui2 = {}
+    end
+    
     ui2.tiles = love.graphics.newImage('assets/img/tiles/tiles.png')
     ui2.tiles2 = love.graphics.newImage('assets/img/tiles/tiles2.png')
 
