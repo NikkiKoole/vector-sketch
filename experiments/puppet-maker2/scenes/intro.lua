@@ -36,7 +36,7 @@ local readAndParse     = require 'src.readAndParse'
 local updatePart       = require 'src.updatePart'
 local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
-
+local cam              = require('lib.cameraBase').getInstance()
 -- cream -> blauw
 -- achtergrond pencil lines ding
 -- mipo showing tween in
@@ -329,6 +329,8 @@ function scene.load()
     mipo.transforms.l[4] = math.max(sx, sy)
     mipo.transforms.l[5] = math.max(sx, sy)
 
+
+    camera.centerCameraOnPosition(0, 0, w, h)
     cam:update(w, h)
 
     M = mipo.children[2]
@@ -366,7 +368,7 @@ function scene.load()
     nextState()
 
     for i = 1, #fiveGuys do
-        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, 0, fiveGuys[i])
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(0, 0, fiveGuys[i])
     end
     for i = 1, #fiveGuys do
         updatePart.updateAllParts(fiveGuys[i])
@@ -526,6 +528,32 @@ function scene.draw()
 
 
         --love.graphics.circle('fill', x + size / 2, y + size / 2, (size / 2) - (size / 10))
+    end
+
+
+
+
+
+
+    for i = 1, #fiveGuys do
+        love.graphics.push()
+        love.graphics.scale(0.25, 0.25) -- reduce everything by 50% in both X and Y coordinates
+
+        local part = fiveGuys[i].b2d.head or fiveGuys[i].b2d.torso
+
+        local dimW = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.w or fiveGuys[i].dna.creation.torso.w
+        local dimH = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.h or fiveGuys[i].dna.creation.torso.h
+
+        print(i, size, dimW, dimH)
+        local x = (i - 1) * size * 4
+        local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+            fluxObject.circlesY5 }
+        local y = (h - size) * ys[i] * 4
+
+
+        part:setPosition(x + (size / 2) * 4, y + (size / 2) * 4)
+        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+        love.graphics.pop()
     end
 
 

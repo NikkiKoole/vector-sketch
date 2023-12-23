@@ -396,7 +396,12 @@ function love.update(dt)
                 table.remove(playedPlonkSounds, i)
             end
         end
-        world:update(dt)
+        if SM.cName ~= 'intro' then
+            world:update(dt)
+        end
+        -- if SM.cName == 'intro' then
+        --     world:update(dt / 1000)
+        -- end
         prof.pop('world update')
         --collectgarbage()
 
