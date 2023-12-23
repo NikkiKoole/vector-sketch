@@ -321,7 +321,7 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
             or (bud.bodyType == 'body' and aud.bodyType == 'lhand')
             or (bud.bodyType == 'body' and aud.bodyType == 'rhand')
         then
-           --- print(normalimpulse)
+            --- print(normalimpulse)
             if normalimpulse > 300 then
                 local index = math.ceil(love.math.random() * #rubberplonks)
                 local pitch = numbers.mapInto(normalimpulse, 300, 10000, 2, 1)
@@ -331,17 +331,17 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
 
                 -- check if these 2 bodies have had a collision in the last second or so
                 -- print(normalimpulse, pitch, volume)
-                
+
                 local stillPlayingPlonkForSimilarCollision = false
-                for i =1 , #playedPlonkSounds do 
+                for i = 1, #playedPlonkSounds do
                     if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud and playedPlonkSounds[i].timeAgo > 0 then
                         stillPlayingPlonkForSimilarCollision = true
-                    end 
+                    end
                 end
                 if stillPlayingPlonkForSimilarCollision == false then
                     print('tryna play sound')
-                    table.insert(playedPlonkSounds, {aud=aud, bud=bud, timeAgo=0})
-                    playSound(rubberplonks[index], pitch, volume) 
+                    table.insert(playedPlonkSounds, { aud = aud, bud = bud, timeAgo = 0 })
+                    playSound(rubberplonks[index], pitch, volume)
                 end
             end
         end
@@ -406,7 +406,7 @@ lib.rebuildPhysicsBorderForScreen = function()
     local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
     local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
     local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
-    bottomfixture:setUserData(makeUserData('border', {}))
+    --    bottomfixture:setUserData(makeUserData('border', {}))
 
     local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
     local leftshape = love.physics.newRectangleShape(wallThick, 30000)

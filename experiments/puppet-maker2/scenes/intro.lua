@@ -1,31 +1,47 @@
-local scene         = {}
-local poppetjeMaker = love.graphics.newImage('assets/intro/puppetmaker2.png')
-local darkness      = love.graphics.newImage('assets/img/worldparts/darkness.png')
-local time          = 0
+local scene            = {}
+local poppetjeMaker    = love.graphics.newImage('assets/intro/puppetmaker2.png')
+local darkness         = love.graphics.newImage('assets/img/worldparts/darkness.png')
+local time             = 0
 
-local Timer         = require 'vendor.timer'
-local fluxObject    = { headerOffset = 0, guyY = 0, darknessAlpha = 0, puppetMakerAlpha = 0 }
+local Timer            = require 'vendor.timer'
+local fluxObject       = {
+    headerOffset = 0,
+    guyY = 0,
+    darknessAlpha = 0,
+    puppetMakerAlpha = 0,
+    circlesOpacity = 0,
+    circlesY1 = 1.5,
+    circlesY2 = 1.5,
+    circlesY3 = 1.5,
+    circlesY4 = 1.5,
+    circlesY5 = 1.5,
+    mipoAlpha = 0,
+}
 
 --require 'lib.printC'
-local parentize     = require 'lib.parentize'
-local mesh          = require 'lib.mesh'
-local render        = require 'lib.render'
-local camera        = require 'lib.camera'
-local cam           = require('lib.cameraBase').getInstance()
-local bbox          = require 'lib.bbox'
-local parse         = require 'lib.parse-file'
-local bbox          = require 'lib.bbox'
-local wipes         = require 'src.screen-transitions'
+local parentize        = require 'lib.parentize'
+local mesh             = require 'lib.mesh'
+local render           = require 'lib.render'
+local camera           = require 'lib.camera'
+local cam              = require('lib.cameraBase').getInstance()
+local bbox             = require 'lib.bbox'
+local parse            = require 'lib.parse-file'
+local bbox             = require 'lib.bbox'
+local wipes            = require 'src.screen-transitions'
 
-local audioHelper   = require 'lib.audio-helper'
+local audioHelper      = require 'lib.audio-helper'
 local ui               = require 'lib.ui'
-local readAndParse  = require 'src.readAndParse'
+local readAndParse     = require 'src.readAndParse'
+
+local updatePart       = require 'src.updatePart'
+local texturedBox2d    = require 'src.texturedBox2d'
+local box2dGuyCreation = require 'src.box2dGuyCreation'
 
 -- cream -> blauw
 -- achtergrond pencil lines ding
--- mipo showing tween in 
--- mipo done, puppetmaker shown 
--- 5 circles 
+-- mipo showing tween in
+-- mipo done, puppetmaker shown
+-- 5 circles
 -- next state
 
 local function randomTweenLetterPoints(letters, origins)
@@ -46,46 +62,45 @@ local function randomTweenLetterPoints(letters, origins)
     end
 end
 
-local function nextState() 
-
+local function nextState()
     if (statePointer < #states) then
         statePointer = statePointer + 1
-        states[statePointer]() 
-    else 
-    print('next!')
+        states[statePointer]()
+    else
+        print('next!')
     end
 end
 
-local function backgroundCreamToBlue() 
+local function backgroundCreamToBlue()
     Timer.clear()
     bgColor = { unpack(creamColor) }
     Timer.after(.1, function()
         Timer.tween(1, bgColor, { [1] = blueColor[1],[2] = blueColor[2],[3] = blueColor[3] }, 'out-cubic')
     end)
-    Timer.after(1.2, function() 
+    Timer.after(1.2, function()
         nextState()
     end)
 end
 
-local function fadeInPencilBackground() 
-Timer.clear()
+local function fadeInPencilBackground()
+    Timer.clear()
     bgColor = { unpack(blueColor) }
     Timer.after(.1, function()
-        Timer.tween(1, fluxObject, { darknessAlpha = .25 }, 'out-cubic')
+        Timer.tween(.5, fluxObject, { darknessAlpha = .25 }, 'out-cubic')
     end)
-    Timer.after(1.2, function() 
+    Timer.after(.8, function()
         nextState()
     end)
 end
 
-local function tweenInMipoHeader() 
+local function tweenInMipoHeader()
     Timer.clear()
     bgColor = { unpack(blueColor) }
     fluxObject.darknessAlpha = .25
 
 
-      -- MI
-      Timer.after(0.5, function()
+    -- MI
+    Timer.after(0.25, function()
         for i = 1, #M.children do
             Timer.tween(0.5, M.children[i].color, { [4] = 1 })
         end
@@ -109,8 +124,8 @@ local function tweenInMipoHeader()
         end)
     end)
 
-      -- PO
-      Timer.after(1, function()
+    -- PO
+    Timer.after(.75, function()
         for i = 1, #P.children do
             Timer.tween(0.5, P.children[i].color, { [4] = 1 })
         end
@@ -135,24 +150,24 @@ local function tweenInMipoHeader()
         end)
     end)
 
-    Timer.after(2, function() 
+    Timer.after(1.5, function()
         nextState()
     end)
 end
 
-local function moveMipoAround() 
+local function moveMipoAround()
     local letters = { M, I, P, O }
     local origins = { originM, originI, originP, originO }
     randomTweenLetterPoints(letters, origins)
     mesh.meshAll(mipo)
-    
+
     Timer.every(.5, function()
         randomTweenLetterPoints(letters, origins)
         mesh.meshAll(mipo)
     end)
 end
 
-local function setAllMipoLettersAlpha(v) 
+local function setAllMipoLettersAlpha(v)
     for i = 1, #mipo.children do
         local letter = mipo.children[i]
         if letter.children then
@@ -163,66 +178,115 @@ local function setAllMipoLettersAlpha(v)
     end
 end
 
-local function tweenInMipoPuppetMakerHeader() 
+local function tweenInMipoPuppetMakerHeader()
     Timer.clear()
     bgColor = { unpack(blueColor) }
     fluxObject.darknessAlpha = .25
 
     setAllMipoLettersAlpha(1)
 
-    moveMipoAround() 
+    moveMipoAround()
 
-    Timer.after(.3, function()
-        Timer.tween(3, fluxObject, { puppetMakerAlpha = 1 }, 'out-cubic')
+    --Timer.after(.3, function()
+    Timer.tween(.3, fluxObject, { puppetMakerAlpha = 1 }, 'out-cubic')
+    --end)
+
+    Timer.after(1, function()
+        nextState()
     end)
-    Timer.after(
-        3.1,
-        function()
-            Timer.tween(3, fluxObject, { headerOffset = 1 }, 'out-elastic')
-        end
-    )
-
 end
 
-local function tweenIn5Circles() 
+local function tweenIn5Circles()
     Timer.clear()
     setAllMipoLettersAlpha(1)
-    moveMipoAround() 
-    puppetMakerAlpha = 1
-    headerOffset = 1
+    moveMipoAround()
+    fluxObject.puppetMakerAlpha = 1
+    fluxObject.circlesOpacity = 1
+    Timer.after(.2, function()
+        nextState()
+    end)
+end
 
-    setAllMipoLettersAlpha(0.5)
-    for i =1, #circles do 
-        circles[i].opacity = 1
-    end
+local function hideBigMipo()
+    Timer.clear()
+    --setAllMipoLettersAlpha(1)
+    moveMipoAround()
+    fluxObject.puppetMakerAlpha = 1
+    fluxObject.circlesOpacity = 1
+    fluxObject.mipoAlpha = 1
 
-    
-end 
+    Timer.after(.1, function()
+        nextState()
+    end)
+end
+
+local function moveHeaderAndCircles()
+    Timer.clear()
+    moveMipoAround()
+    fluxObject.puppetMakerAlpha = 1
+    fluxObject.circlesOpacity = 1
+
+    Timer.tween(.4, fluxObject, { puppetMakerAlpha = 0.5 })
+
+    Timer.after(.1, function()
+        Timer.tween(1, fluxObject, { circlesY1 = 0.70 }, 'bounce')
+    end)
+    Timer.after(.2, function()
+        Timer.tween(1, fluxObject, { circlesY2 = 0.72 }, 'out-elastic')
+    end)
+    Timer.after(.3, function()
+        Timer.tween(.55, fluxObject, { circlesY3 = 0.74 }, 'in-out-quad')
+    end)
+    Timer.after(.4, function()
+        Timer.tween(1, fluxObject, { circlesY4 = 0.74 }, 'bounce')
+    end)
+    Timer.after(.5, function()
+        Timer.tween(.65, fluxObject, { circlesY5 = 0.65 })
+    end)
+    Timer.after(1.5, function()
+        nextState()
+    end)
+end
+
+local function last()
+    Timer.clear()
+    moveMipoAround()
+    fluxObject.puppetMakerAlpha = 0.5
+    fluxObject.circlesOpacity = 1
+    fluxObject.circlesY1 = 0.7
+    fluxObject.circlesY2 = 0.72
+    fluxObject.circlesY3 = 0.74
+    fluxObject.circlesY4 = 0.74
+    fluxObject.circlesY5 = 0.65
+
+    Timer.tween(.4, fluxObject, { puppetMakerAlpha = 0.15 })
+end
 
 function scene.load()
-    --backgroundCreamToBlue() 
+    --backgroundCreamToBlue()
 
 
     if not ui2 then
         ui2 = {}
     end
-    ui2.circles           = {
+    ui2.circles = {
         love.graphics.newImage('assets/ui/circle1.png'),
         love.graphics.newImage('assets/ui/circle2.png'),
         love.graphics.newImage('assets/ui/circle3.png'),
         love.graphics.newImage('assets/ui/circle4.png'),
     }
 
-
-
-
     states = {
-        backgroundCreamToBlue, 
+        backgroundCreamToBlue,
         fadeInPencilBackground,
         tweenInMipoHeader,
         tweenInMipoPuppetMakerHeader,
-        tweenIn5Circles
+        tweenIn5Circles,
+        hideBigMipo,
+        moveHeaderAndCircles,
+        last
     }
+
     statePointer = 1
 
 
@@ -267,9 +331,6 @@ function scene.load()
 
     cam:update(w, h)
 
-
-   -- print(inspect(cam))
-
     M = mipo.children[2]
     I = mipo.children[3]
     P = mipo.children[4]
@@ -296,20 +357,23 @@ function scene.load()
 
     setAllMipoLettersAlpha(0)
 
-
     circles = {}
-    local size = w/5
-    for i =1, 5 do 
-        local index = math.ceil(love.math.random()* #ui2.circles)
-        local sx, sy = createFittingScale(ui2.circles[index], size, size)
-        circles[i] = {index=index, x=(i-1)*size, y=(h ) -size, sx=sx, sy=sy, opacity=0}
+    for i = 1, 5 do
+        local index = math.ceil(love.math.random() * #ui2.circles)
+        circles[i] = { index = index }
     end
 
-    --states[statePointer]()
-    nextState() 
+    nextState()
 
-
-  
+    for i = 1, #fiveGuys do
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, 0, fiveGuys[i])
+    end
+    for i = 1, #fiveGuys do
+        updatePart.updateAllParts(fiveGuys[i])
+    end
+    for i = 1, #fiveGuys do
+        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+    end
 end
 
 function scene.handleAudioMessage()
@@ -318,20 +382,55 @@ end
 
 function scene.unload()
     -- Timer.clear()
+
+    local b = world:getBodies()
+
+    for i = #b, 1, -1 do
+        b[i]:destroy()
+    end
 end
 
 function gotoNext()
-    nextState() 
+    nextState()
     --if not alreadyMovingTheMipoText then
-        --Timer.clear()
-       -- justMoveTheMipoText() 
+    --Timer.clear()
+    -- justMoveTheMipoText()
     --end
-   -- Timer.update(1)
---    Timer.clear()
+    -- Timer.update(1)
+    --    Timer.clear()
     --audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
     --Timer.clear()
     --SM.unload('intro')
     --SM.load("editGuy")
+end
+
+local function getDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+
+    return distance
+end
+
+
+function pointerPressed(x, y, id)
+    --
+    local w, h = love.graphics.getDimensions()
+    local size = w / 5
+
+    for i = 1, #circles do
+        local x2 = (i - 1) * size
+        local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+            fluxObject.circlesY5, }
+        local y2 = (h - size) * ys[i]
+        if getDistance(x, y, x2 + size / 2, y2 + size / 2) < ((size / 2) - (size / 10)) then
+            ---print('hit circle ', i)
+            pickedFiveGuyIndex = i
+            Timer.clear()
+            SM.unload('intro')
+            SM.load('editGuy')
+        end
+    end
 end
 
 function scene.update(dt)
@@ -349,11 +448,13 @@ function scene.update(dt)
         end
     end
 
-    function love.touchpressed(key, unicode)
+    function love.touchpressed(id, x, y)
+        pointerPressed(x, y, id)
         gotoNext()
     end
 
-    function love.mousepressed(key, unicode)
+    function love.mousepressed(x, y)
+        pointerPressed(x, y, 'mouse')
         gotoNext()
     end
 
@@ -362,6 +463,10 @@ function scene.update(dt)
 
     function love.resize(w, h)
         local w, h = love.graphics.getDimensions()
+
+
+
+
 
         -- local x1, y1, w1, h1 = getCameraDataZoomOnHeadAndBody()
         -- tweenCameraData = { x = x1, y = y1, w = w1, h = h1 }
@@ -394,22 +499,42 @@ function scene.draw()
 
     local blobWidth, blobHeight = poppetjeMaker:getDimensions()
 
-    local bx, by = createFittingScale(poppetjeMaker, w/2, w/2)  
+    local bx, by = createFittingScale(poppetjeMaker, w / 2, w / 2)
     local scale = math.min(bx, by)
-    scale = scale * (0.9 + (math.sin(time*3) + 1)*0.05)
-    local r = (0.7 + math.sin(time)*0.3) * 0.1
-   
-    love.graphics.setColor(1, 0.945, 0.91, 1)
+    scale = scale * (0.9 + (math.sin(time * 3) + 1) * 0.05)
+    local r = (0.7 + math.sin(time) * 0.3) * 0.2
 
-    love.graphics.draw(poppetjeMaker, (screenWidth * 2/3) , (screenHeight * 2/3) , r, scale, scale, blobWidth / 2, blobHeight / 2)
+    love.graphics.setColor(1, 0.945, 0.91, fluxObject.puppetMakerAlpha)
+
+    love.graphics.draw(poppetjeMaker, (screenWidth * 3 / 4), (screenHeight * 5 / 6), r, scale, scale, blobWidth / 2,
+        blobHeight / 2)
 
 
-    for i = 1, #circles do 
+
+
+
+    local size = w / 5
+    for i = 1, #circles do
         local c = circles[i]
-        love.graphics.setColor(1, 0.945, 0.91, c.opacity)
-        love.graphics.draw(ui2.circles[c.index], c.x, c.y, 0, c.sx, c.sy)
-        --circles[i] = {index=index, x=i*size, y=h-size, sx=sx, sy=sy, opacity=0}
+        local sx, sy = createFittingScale(ui2.circles[c.index], size, size)
+        love.graphics.setColor(1, 0.945, 0.91, fluxObject.circlesOpacity)
+        local x = (i - 1) * size
+        local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+            fluxObject.circlesY5 }
+        local y = (h - size) * ys[i]
+        love.graphics.draw(ui2.circles[c.index], x, y, 0, sx, sy)
+
+
+        --love.graphics.circle('fill', x + size / 2, y + size / 2, (size / 2) - (size / 10))
     end
+
+
+    --for i = 1, #circles do
+    --  local c = circles[i]
+    --  love.graphics.setColor(1, 0.945, 0.91, c.opacity)
+    -- love.graphics.draw(ui2.circles[c.index], c.x, c.y, 0, c.sx, c.sy)
+    --circles[i] = {index=index, x=i*size, y=h-size, sx=sx, sy=sy, opacity=0}
+    --end
 
     if transition then
         wipes.renderTransition(transition)

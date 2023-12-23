@@ -18,25 +18,26 @@ end
 waitForEvent()
 
 
-local text           = require 'lib.text'
-gesture              = require 'lib.gesture'
-SM                   = require 'vendor.SceneMgr'
-inspect              = require 'vendor.inspect'
-PROF_CAPTURE         = true
-prof                 = require 'vendor.jprof'
-ProFi                = require 'vendor.ProFi'
-focussed             = true
+local text             = require 'lib.text'
+gesture                = require 'lib.gesture'
+SM                     = require 'vendor.SceneMgr'
+inspect                = require 'vendor.inspect'
+PROF_CAPTURE           = true
+prof                   = require 'vendor.jprof'
+ProFi                  = require 'vendor.ProFi'
+focussed               = true
 
-local Timer          = require 'vendor.timer'
-local dna            = require 'src.dna'
-local phys           = require 'src.mainPhysics'
-local lurker         = require 'vendor.lurker'
-lurker.quiet         = true
-local cam            = require('lib.cameraBase').getInstance()
-local manual_gc      = require 'vendor.batteries.manual_gc'
-local updatePart     = require 'src.updatePart'
-
-local DEBUG_PROFILER = false
+local Timer            = require 'vendor.timer'
+local dna              = require 'src.dna'
+local phys             = require 'src.mainPhysics'
+local lurker           = require 'vendor.lurker'
+lurker.quiet           = true
+local cam              = require('lib.cameraBase').getInstance()
+local manual_gc        = require 'vendor.batteries.manual_gc'
+local updatePart       = require 'src.updatePart'
+local texturedBox2d    = require 'src.texturedBox2d'
+local box2dGuyCreation = require 'src.box2dGuyCreation'
+local DEBUG_PROFILER   = false
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
 if DEBUG_PROFILER == false then
     prof.push = function(a)
@@ -55,6 +56,29 @@ audioHelper.startAudioThread()
 
 creamColor = { 238 / 255, 226 / 255, 188 / 255, 1 }
 blueColor = { 0x0a / 0xff, 0, 0x4b / 0xff, 1 }
+
+
+
+function setCategories(guy)
+    local creation = guy.dna.creation
+    categories = {}
+
+    for i = 1, #parts do
+        if parts[i].child ~= true then
+            local skip = false
+            if creation.isPotatoHead then
+                local name = parts[i].name
+                if name == 'head' or name == 'neck' or name == 'patches' then
+                    skip = true
+                end
+            end
+
+            if not skip then
+                table.insert(categories, parts[i].name)
+            end
+        end
+    end
+end
 
 function playSound(sound, optionalPitch, volumeMultiplier)
     local s = sound:clone()
@@ -302,6 +326,11 @@ function love.load()
     for i = 1, #fiveGuys do
         updatePart.randomizeGuy(fiveGuys[i], true)
     end
+
+    -- trying to render portraits of the five guys!
+
+
+
     SM.setPath("scenes/")
     --SM.load("splash")
     SM.load("splash")
@@ -361,9 +390,9 @@ function love.update(dt)
         prof.push('world update')
 
 
-        for i = #playedPlonkSounds, 1, -1 do 
+        for i = #playedPlonkSounds, 1, -1 do
             playedPlonkSounds[i].timeAgo = playedPlonkSounds[i].timeAgo + dt
-            if  playedPlonkSounds[i].timeAgo >= .5 then
+            if playedPlonkSounds[i].timeAgo >= .5 then
                 table.remove(playedPlonkSounds, i)
             end
         end

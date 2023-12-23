@@ -159,6 +159,7 @@ lib.updatePart         = function(name, guy)
         end
         box2dGuyCreation.handlePhysicsHairOrNo(guy.b2d, guy, creation.hasPhysicsHair)
         box2dGuyCreation.genericBodyPartUpdate(guy, 'torso')
+        setCategories(guy)
     end
 
     if name == 'hasNeck' then

@@ -48,26 +48,6 @@ local function attachCallbacks()
     end)
 end
 
-local function setCategories(guy)
-    local creation = guy.dna.creation
-    categories = {}
-
-    for i = 1, #parts do
-        if parts[i].child ~= true then
-            local skip = false
-            if creation.isPotatoHead then
-                local name = parts[i].name
-                if name == 'head' or name == 'neck' or name == 'patches' then
-                    skip = true
-                end
-            end
-
-            if not skip then
-                table.insert(categories, parts[i].name)
-            end
-        end
-    end
-end
 
 local function updateTheScrolling(dt, thrown, pos)
     local oldPos = pos
