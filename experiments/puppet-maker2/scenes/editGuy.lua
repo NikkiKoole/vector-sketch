@@ -403,11 +403,11 @@ function scene.draw()
 
     love.graphics.setColor(0, 0, 0)
     --l
-    local a = h_slider('mainVolume', 0, 0, 100, mainVolume, 0, 1)
-    if a.value then
-        mainVolume = a.value
-        audioHelper.sendMessageToAudioThread({ type = "volume", data = mainVolume });
-    end
+    --local a = h_slider('mainVolume', 0, 0, 100, mainVolume, 0, 1)
+    --if a.value then
+    --mainVolume = a.value
+    --audioHelper.sendMessageToAudioThread({ type = "volume", data = mainVolume });
+    --end
 
     if true then
         local size = (h / 8) -- margin around panel

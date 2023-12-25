@@ -22,7 +22,7 @@ local text                = require 'lib.text'
 gesture                   = require 'lib.gesture'
 SM                        = require 'vendor.SceneMgr'
 inspect                   = require 'vendor.inspect'
-PROF_CAPTURE              = true
+PROF_CAPTURE              = false
 prof                      = require 'vendor.jprof'
 ProFi                     = require 'vendor.ProFi'
 focussed                  = true
@@ -159,10 +159,10 @@ end
 
 function loadDNA5File()
     local contents, size = love.filesystem.read('dna5.txt')
-    print('wants to load an earlier saved file')
-    print(inspect(contents))
+    --print('wants to load an earlier saved file')
+    --print(inspect(contents))
     local parsed = (loadstring("return " .. contents)())
-    print(inspect(parsed))
+    --print(inspect(parsed))
 
     local result = {}
     for i = 1, 5 do
@@ -186,20 +186,34 @@ function loadDNA5File()
     return result
 end
 
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
 function saveDNA5File()
     local saveData = {}
 
-    --
+    -- not writing the real creation parts, we let that regenerate
     for i = 1, #fiveGuys do
-        saveData[i] = fiveGuys[i].dna
-        --saveData.creation = dna.getCreation()
-        --print(inspect(fiveGuys[i].dna))
+        saveData[i] = deepcopy(fiveGuys[i].dna)
+        saveData[i].creation = deepcopy(dna.getCreation())
     end
     love.filesystem.write('dna5.txt', inspect(saveData, { indent = "" }))
     --print(inspect(fiveGuys))
-    print('wants to save a file')
+    --print('wants to save a file')
     local openURL = "file://" .. love.filesystem.getSaveDirectory() .. '/'
-    --love.system.openURL(openURL)
+    love.system.openURL(openURL)
 end
 
 function love.keypressed(key)
@@ -252,10 +266,11 @@ function love.load()
 
     splashSound = love.audio.newSource("assets/sounds/music/mipolailoop.mp3", "static")
     introSound = love.audio.newSource("assets/sounds/music/introloop.mp3", "static")
-    miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
-    poSound2 = love.audio.newSource("assets/sounds/po2.wav", "static")
+
     miSound1 = love.audio.newSource("assets/sounds/mi.wav", "static")
+    miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
     poSound1 = love.audio.newSource("assets/sounds/po.wav", "static")
+    poSound2 = love.audio.newSource("assets/sounds/po2.wav", "static")
 
     audioHelper.sendMessageToAudioThread({ type = "volume", data = 0.2 });
     audioHelper.sendMessageToAudioThread({ type = "paused", data = true });
@@ -397,7 +412,7 @@ function love.load()
     SM.load("splash")
 
 
-    print('hello good')
+    -- print('hello good')
     --SM.load("outside")
 end
 
@@ -520,12 +535,12 @@ function love.draw()
         prof.pop('gc draw')
         prof.pop('frame')
     end
-    love.graphics.setColor(1, 1, 1, 1)
+    --  love.graphics.setColor(1, 1, 1, 1)
     --local stats = love.graphics.getStats()
-    love.graphics.print(
-        world:getBodyCount() ..
-        '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
-        10)
+    -- love.graphics.print(
+    --     world:getBodyCount() ..
+    --     '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
+    --     10)
 end
 
 function love.quit()

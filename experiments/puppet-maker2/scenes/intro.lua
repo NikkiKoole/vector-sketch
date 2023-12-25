@@ -10,11 +10,11 @@ local fluxObject       = {
     darknessAlpha = 0,
     puppetMakerAlpha = 0,
     circlesOpacity = 0,
-    circlesY1 = 1.5,
-    circlesY2 = 1.5,
-    circlesY3 = 1.5,
-    circlesY4 = 1.5,
-    circlesY5 = 1.5,
+    circlesY1 = 2.5,
+    circlesY2 = 2.5,
+    circlesY3 = 2.5,
+    circlesY4 = 2.5,
+    circlesY5 = 2.5,
     mipoAlpha = 0,
 }
 
@@ -70,7 +70,7 @@ local function nextState()
         statePointer = statePointer + 1
         states[statePointer]()
     else
-        print('next!?')
+        -- print('next!?')
     end
 end
 
@@ -194,7 +194,7 @@ local function tweenInMipoPuppetMakerHeader()
     Timer.tween(.3, fluxObject, { puppetMakerAlpha = 1 }, 'out-cubic')
     --end)
 
-    Timer.after(1, function()
+    Timer.after(.1, function()
         nextState()
     end)
 end
@@ -251,6 +251,45 @@ local function moveHeaderAndCircles()
     end)
 end
 
+
+local function makeRandomMipoSound()
+    local rnd = .2 + love.math.random() * 2
+    local rnd2 = .2 + love.math.random() * 1
+    Timer.after(rnd, function()
+        --say MI
+        -- print('MI')
+        local sound = miSound1
+        if love.math.random() < 0.2 then
+            sound = miSound2
+        end
+
+        local pitch = .7 + love.math.random() * 0.5
+        local sndLength = sound:getDuration() / pitch
+        playSound(sound, pitch)
+        local index1 = math.ceil(love.math.random() * #fiveGuys)
+        mouthSay(fiveGuys[index1], sndLength)
+
+
+        Timer.after(rnd2, function()
+            --say MI
+            --print('PO')
+            local sound = poSound1
+            if love.math.random() < 0.2 then
+                sound = poSound2
+            end
+            local pitch = .7 + love.math.random() * 0.5
+            local sndLength = sound:getDuration() / pitch
+            playSound(sound, pitch)
+            local index2 = math.ceil(love.math.random() * #fiveGuys)
+            if index2 == index2 then
+                index2 = math.ceil(love.math.random() * #fiveGuys)
+            end
+            mouthSay(fiveGuys[index2], sndLength)
+            makeRandomMipoSound()
+        end)
+    end)
+end
+
 local function last()
     Timer.clear()
     moveMipoAround()
@@ -263,6 +302,7 @@ local function last()
     fluxObject.circlesY5 = 0.65
 
     Timer.tween(.4, fluxObject, { puppetMakerAlpha = 0.15 })
+    makeRandomMipoSound()
 end
 
 function scene.load()
@@ -319,21 +359,21 @@ function scene.load()
 
     local w, h = love.graphics.getDimensions()
 
-    local w1 = w / 1.5
-    local h1 = h / 1.5
-    local y1 = 100
+    local w1 = w / 2
+    local h1 = h / 2
+    local y1 = 0
     local mipobb = bbox.getBBoxRecursive(mipo)
 
     local mw = mipobb[4] - mipobb[2]
     local mh = mipobb[3] - mipobb[1]
     local sx = w1 / mw
     local sy = h1 / mh
-    mipo.transforms.l[2] = y1 - 100
+    mipo.transforms.l[2] = y1
     mipo.transforms.l[4] = math.max(sx, sy)
     mipo.transforms.l[5] = math.max(sx, sy)
 
 
-    camera.centerCameraOnPosition(0, 0, w, h)
+    camera.centerCameraOnPosition(0, y1, w, h)
     cam:update(w, h)
 
     M = mipo.children[2]
@@ -386,7 +426,7 @@ function scene.handleAudioMessage()
 end
 
 function scene.unload()
-    -- Timer.clear()
+    Timer.clear()
 
     local b = world:getBodies()
 
@@ -397,16 +437,6 @@ end
 
 function gotoNext()
     nextState()
-    --if not alreadyMovingTheMipoText then
-    --Timer.clear()
-    -- justMoveTheMipoText()
-    --end
-    -- Timer.update(1)
-    --    Timer.clear()
-    --audioHelper.sendMessageToAudioThread({ type = "paused", data = false });
-    --Timer.clear()
-    --SM.unload('intro')
-    --SM.load("editGuy")
 end
 
 local function getDistance(x1, y1, x2, y2)
@@ -433,9 +463,11 @@ function pointerPressed(x, y, id)
                 pickedFiveGuyIndex = i
                 SM.unload('intro')
                 SM.load('editGuy')
-                print('ja hallo?!')
             end)
         end
+    end
+    for i = 1, #fiveGuys do
+        lookAt(fiveGuys[i], x * 4, y * 4)
     end
 end
 
