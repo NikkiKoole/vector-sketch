@@ -99,6 +99,7 @@ local function pointerPressed(x, y, id)
             if scene then
                 SM.unload('editGuy')
                 SM.load('outside')
+                saveDNA5File()
                 swipes.fadeInTransition(.2)
             end
         end)

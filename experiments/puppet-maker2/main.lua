@@ -155,11 +155,14 @@ function hasSavedDNA5File()
     return contents
 end
 
+--t odo get rid of all the meta stuff, it has too much data we cannot parse anymore
+
 function loadDNA5File()
     local contents, size = love.filesystem.read('dna5.txt')
     print('wants to load an earlier saved file')
+    print(inspect(contents))
     local parsed = (loadstring("return " .. contents)())
-    --print(inspect(parsed))
+    print(inspect(parsed))
 
     local result = {}
     for i = 1, 5 do
@@ -189,13 +192,14 @@ function saveDNA5File()
     --
     for i = 1, #fiveGuys do
         saveData[i] = fiveGuys[i].dna
-        print(inspect(fiveGuys[i].dna))
+        --saveData.creation = dna.getCreation()
+        --print(inspect(fiveGuys[i].dna))
     end
     love.filesystem.write('dna5.txt', inspect(saveData, { indent = "" }))
     --print(inspect(fiveGuys))
     print('wants to save a file')
     local openURL = "file://" .. love.filesystem.getSaveDirectory() .. '/'
-    love.system.openURL(openURL)
+    --love.system.openURL(openURL)
 end
 
 function love.keypressed(key)
