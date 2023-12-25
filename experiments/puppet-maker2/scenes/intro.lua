@@ -27,8 +27,8 @@ local cam              = require('lib.cameraBase').getInstance()
 local bbox             = require 'lib.bbox'
 local parse            = require 'lib.parse-file'
 local bbox             = require 'lib.bbox'
-local wipes            = require 'src.screen-transitions'
 
+local swipes           = require 'src.screen-transitions'
 local audioHelper      = require 'lib.audio-helper'
 local ui               = require 'lib.ui'
 local readAndParse     = require 'src.readAndParse'
@@ -37,6 +37,9 @@ local updatePart       = require 'src.updatePart'
 local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
 local cam              = require('lib.cameraBase').getInstance()
+
+local gradient         = require 'lib.gradient'
+local skygradient      = gradient.makeSkyGradient(16)
 -- cream -> blauw
 -- achtergrond pencil lines ding
 -- mipo showing tween in
@@ -67,7 +70,7 @@ local function nextState()
         statePointer = statePointer + 1
         states[statePointer]()
     else
-        print('next!')
+        print('next!?')
     end
 end
 
@@ -368,7 +371,7 @@ function scene.load()
     nextState()
 
     for i = 1, #fiveGuys do
-        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(0, 0, fiveGuys[i])
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy( -10000, 0, fiveGuys[i])
     end
     for i = 1, #fiveGuys do
         updatePart.updateAllParts(fiveGuys[i])
@@ -426,11 +429,12 @@ function pointerPressed(x, y, id)
             fluxObject.circlesY5, }
         local y2 = (h - size) * ys[i]
         if getDistance(x, y, x2 + size / 2, y2 + size / 2) < ((size / 2) - (size / 10)) then
-            ---print('hit circle ', i)
-            pickedFiveGuyIndex = i
-            Timer.clear()
-            SM.unload('intro')
-            SM.load('editGuy')
+            swipes.doCircleInTransition(x2 + size / 2, y2 + size / 2, function()
+                pickedFiveGuyIndex = i
+                SM.unload('intro')
+                SM.load('editGuy')
+                print('ja hallo?!')
+            end)
         end
     end
 end
@@ -515,7 +519,75 @@ function scene.draw()
 
 
 
+
+
     local size = w / 5
+
+
+
+    local function myStencilFunction()
+        --local r = w / 2
+        --if picked then
+        --    r = r + (math.sin(love.timer.getTime() * 5) * (r / 20))
+        --end
+        for i = 1, #fiveGuys do
+            local x2 = (i - 1) * size
+            local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+                fluxObject.circlesY5, }
+            local y2 = (h - size) * ys[i]
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.circle('fill', x2 + size / 2, y2 + size / 2, size / 2 - (size / 10))
+        end
+    end
+
+    love.graphics.stencil(myStencilFunction, "replace", 1)
+    love.graphics.setStencilTest("greater", 0)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
+
+    love.graphics.setStencilTest()
+
+
+    for i = 1, #fiveGuys do
+        love.graphics.push()
+
+        love.graphics.stencil(myStencilFunction, "replace", 1)
+
+        love.graphics.setStencilTest("greater", 0)
+
+        local part = fiveGuys[i].b2d.head or fiveGuys[i].b2d.torso
+        local dimW = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.w or fiveGuys[i].dna.creation.torso.w
+        local dimH = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.h or fiveGuys[i].dna.creation.torso.h
+
+        local myOptimalScale = math.min(size / dimW, size / dimH) * 0.7
+        love.graphics.scale(myOptimalScale, myOptimalScale) -- reduce everything by 50% in both X and Y coordinates
+
+        --print(i, size, dimW, dimH)
+        -- potatohead is position ok, heads are not
+        local extraYOffset = 0
+        if fiveGuys[i].b2d.head then
+            --print(fiveGuys[i].dna.creation.head.metaOffsetY)
+            extraYOffset = fiveGuys[i].dna.creation.head.metaOffsetY
+        end
+
+
+        local x = (i - 1) * size * 1 / myOptimalScale
+        local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+            fluxObject.circlesY5 }
+        local y = (h - size) * ys[i] * (1 / myOptimalScale)
+
+
+        part:setPosition(x + (size / 2) * (1 / myOptimalScale), y + ((size - extraYOffset / 2) / 2) *
+        (1 / myOptimalScale))
+        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i], true)
+        love.graphics.setStencilTest()
+
+        love.graphics.pop()
+    end
+
+
+
     for i = 1, #circles do
         local c = circles[i]
         local sx, sy = createFittingScale(ui2.circles[c.index], size, size)
@@ -530,42 +602,8 @@ function scene.draw()
         --love.graphics.circle('fill', x + size / 2, y + size / 2, (size / 2) - (size / 10))
     end
 
-
-
-
-
-
-    for i = 1, #fiveGuys do
-        love.graphics.push()
-        love.graphics.scale(0.25, 0.25) -- reduce everything by 50% in both X and Y coordinates
-
-        local part = fiveGuys[i].b2d.head or fiveGuys[i].b2d.torso
-
-        local dimW = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.w or fiveGuys[i].dna.creation.torso.w
-        local dimH = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.h or fiveGuys[i].dna.creation.torso.h
-
-        print(i, size, dimW, dimH)
-        local x = (i - 1) * size * 4
-        local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
-            fluxObject.circlesY5 }
-        local y = (h - size) * ys[i] * 4
-
-
-        part:setPosition(x + (size / 2) * 4, y + (size / 2) * 4)
-        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
-        love.graphics.pop()
-    end
-
-
-    --for i = 1, #circles do
-    --  local c = circles[i]
-    --  love.graphics.setColor(1, 0.945, 0.91, c.opacity)
-    -- love.graphics.draw(ui2.circles[c.index], c.x, c.y, 0, c.sx, c.sy)
-    --circles[i] = {index=index, x=i*size, y=h-size, sx=sx, sy=sy, opacity=0}
-    --end
-
-    if transition then
-        wipes.renderTransition(transition)
+    if swipes.getTransition() then
+        swipes.renderTransition(swipes.getTransition())
     end
 end
 

@@ -541,7 +541,7 @@ lib.drawNumbersOver = function(box2dGuy)
     end
 end
 
-lib.drawSkinOver = function(box2dGuy, guy)
+lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
     local values = guy.dna.values
     local creation = guy.dna.creation
     local multipliers = guy.dna.multipliers
@@ -564,11 +564,13 @@ lib.drawSkinOver = function(box2dGuy, guy)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
-    if canvasCache.neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
-        love.graphics.setColor(1, 1, 1, 1)
-        renderCurvedObjectGrow('neck', 'neck1', 'head', 50, canvasCache.neckCanvas, canvasCache.neckmesh, box2dGuy, 1,
-            multipliers.neck.wMultiplier / (4 * dpi / shrink))
-        love.graphics.draw(canvasCache.neckmesh, 0, 0, 0, 1, 1)
+    if not skipNeck then
+        if canvasCache.neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
+            love.graphics.setColor(1, 1, 1, 1)
+            renderCurvedObjectGrow('neck', 'neck1', 'head', 50, canvasCache.neckCanvas, canvasCache.neckmesh, box2dGuy, 1,
+                multipliers.neck.wMultiplier / (4 * dpi / shrink))
+            love.graphics.draw(canvasCache.neckmesh, 0, 0, 0, 1, 1)
+        end
     end
 
     if canvasCache.earCanvas then

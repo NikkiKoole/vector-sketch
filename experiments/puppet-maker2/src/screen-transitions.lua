@@ -64,6 +64,7 @@ lib.doCircleInTransition = function(x, y, onAfter)
     local w, h = love.graphics.getDimensions()
     local transition = { type = 'circle', segments = 17, alpha = 0, x = x, y = y, radius = math.max(w, h) }
     setTransition(transition)
+    print('jo sjabba!', transition)
     Timer.tween(.3, transition, { alpha = 1 })
     Timer.tween(.5, transition, { radius = 0 }, 'out-back')
     Timer.after(.81, function()

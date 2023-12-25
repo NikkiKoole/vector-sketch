@@ -313,7 +313,7 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
     local bud = fixtureB:getUserData()
     if aud and bud then
         -- print(aud.bodyType, bud.bodyType)
-        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot' or bud.bodyType == 'rfoot'))
+        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso'))
             or (bud.bodyType == 'body' and aud.bodyType == 'body')
             or (bud.bodyType == 'head' and aud.bodyType == 'head')
             or (bud.bodyType == 'head' and aud.bodyType == 'lhand')
@@ -338,8 +338,8 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
                         stillPlayingPlonkForSimilarCollision = true
                     end
                 end
+
                 if stillPlayingPlonkForSimilarCollision == false then
-                    print('tryna play sound')
                     table.insert(playedPlonkSounds, { aud = aud, bud = bud, timeAgo = 0 })
                     playSound(rubberplonks[index], pitch, volume)
                 end
@@ -406,7 +406,7 @@ lib.rebuildPhysicsBorderForScreen = function()
     local bottom = love.physics.newBody(world, w / 2, cambry + half, "static")
     local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
     local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
-    --    bottomfixture:setUserData(makeUserData('border', {}))
+    bottomfixture:setUserData(makeUserData('border', {}))
 
     local left = love.physics.newBody(world, camtlx - half, 2500 - 15000, "static")
     local leftshape = love.physics.newRectangleShape(wallThick, 30000)
