@@ -6,5 +6,8 @@
     ],
     "Lua.diagnostics.disable": [
         "lowercase-global"
+    ],
+    "cSpell.enableFiletypes": [
+        "lua"
     ]
 }

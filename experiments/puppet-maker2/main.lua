@@ -18,26 +18,28 @@ end
 waitForEvent()
 
 
-local text             = require 'lib.text'
-gesture                = require 'lib.gesture'
-SM                     = require 'vendor.SceneMgr'
-inspect                = require 'vendor.inspect'
-PROF_CAPTURE           = true
-prof                   = require 'vendor.jprof'
-ProFi                  = require 'vendor.ProFi'
-focussed               = true
+local text                = require 'lib.text'
+gesture                   = require 'lib.gesture'
+SM                        = require 'vendor.SceneMgr'
+inspect                   = require 'vendor.inspect'
+PROF_CAPTURE              = true
+prof                      = require 'vendor.jprof'
+ProFi                     = require 'vendor.ProFi'
+focussed                  = true
 
-local Timer            = require 'vendor.timer'
-local dna              = require 'src.dna'
-local phys             = require 'src.mainPhysics'
-local lurker           = require 'vendor.lurker'
-lurker.quiet           = true
-local cam              = require('lib.cameraBase').getInstance()
-local manual_gc        = require 'vendor.batteries.manual_gc'
-local updatePart       = require 'src.updatePart'
-local texturedBox2d    = require 'src.texturedBox2d'
-local box2dGuyCreation = require 'src.box2dGuyCreation'
-local DEBUG_PROFILER   = false
+local Timer               = require 'vendor.timer'
+local dna                 = require 'src.dna'
+local phys                = require 'src.mainPhysics'
+local lurker              = require 'vendor.lurker'
+lurker.quiet              = true
+local cam                 = require('lib.cameraBase').getInstance()
+local manual_gc           = require 'vendor.batteries.manual_gc'
+local updatePart          = require 'src.updatePart'
+local texturedBox2d       = require 'src.texturedBox2d'
+local box2dGuyCreation    = require 'src.box2dGuyCreation'
+local DEBUG_PROFILER      = false
+local LOAD_AND_SAVE_FILES = true
+
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
 if DEBUG_PROFILER == false then
     prof.push = function(a)
@@ -146,6 +148,54 @@ function lookAt(guy, x, y)
     guy.tweenVars.lookAtCounter = 1 + love.math.random() * 4
     guy.tweenVars.lookAtPosX = x
     guy.tweenVars.lookAtPosY = y
+end
+
+function hasSavedDNA5File()
+    local contents, size = love.filesystem.read('dna5.txt')
+    return contents
+end
+
+function loadDNA5File()
+    local contents, size = love.filesystem.read('dna5.txt')
+    print('wants to load an earlier saved file')
+    local parsed = (loadstring("return " .. contents)())
+    --print(inspect(parsed))
+
+    local result = {}
+    for i = 1, 5 do
+        result[i] = {
+            init = false,
+            id = i,
+            dna = parsed[i],
+            b2d = nil,
+            canvasCache = {},
+            tweenVars = {
+                lookAtPosX = 0,
+                lookAtPosY = 0,
+                lookAtCounter = 0,
+                blinkCounter = love.math.random() * 5,
+                eyesOpen = 1,
+                mouthWide = 1,
+                mouthOpen = 0
+            }
+        }
+    end
+    return result
+end
+
+function saveDNA5File()
+    local saveData = {}
+
+    --
+    for i = 1, #fiveGuys do
+        saveData[i] = fiveGuys[i].dna
+        print(inspect(fiveGuys[i].dna))
+    end
+    love.filesystem.write('dna5.txt', inspect(saveData, { indent = "" }))
+    --print(inspect(fiveGuys))
+    print('wants to save a file')
+    local openURL = "file://" .. love.filesystem.getSaveDirectory() .. '/'
+    love.system.openURL(openURL)
 end
 
 function love.keypressed(key)
@@ -293,39 +343,46 @@ function love.load()
     fiveGuys = {}
     parts = dna.generateParts()
 
-    for i = 1, 5 do
-        local dna   = {
-            multipliers = dna.getMultipliers(),
-            creation = dna.getCreation(),
-            values = dna.generateValues(),
-            positioners = dna.getPositioners()
-        }
-        fiveGuys[i] = {
-            init = false,
-            id = i,
-            dna = dna,
-            b2d = nil,
-            canvasCache = {},
-            tweenVars = {
-                lookAtPosX = 0,
-                lookAtPosY = 0,
-                lookAtCounter = 0,
-                blinkCounter = love.math.random() * 5,
-                eyesOpen = 1,
-                mouthWide = 1,
-                mouthOpen = 0
+    --local foundSaveFile = false
+    if LOAD_AND_SAVE_FILES and hasSavedDNA5File() then
+        fiveGuys = loadDNA5File()
+    else
+        for i = 1, 5 do
+            local dna   = {
+                multipliers = dna.getMultipliers(),
+                creation = dna.getCreation(),
+                values = dna.generateValues(),
+                positioners = dna.getPositioners()
             }
-        }
+            fiveGuys[i] = {
+                init = false,
+                id = i,
+                dna = dna,
+                b2d = nil,
+                canvasCache = {},
+                tweenVars = {
+                    lookAtPosX = 0,
+                    lookAtPosY = 0,
+                    lookAtCounter = 0,
+                    blinkCounter = love.math.random() * 5,
+                    eyesOpen = 1,
+                    mouthWide = 1,
+                    mouthOpen = 0
+                }
+            }
+        end
+        for i = 1, #fiveGuys do
+            updatePart.randomizeGuy(fiveGuys[i], true)
+        end
     end
-
+    if LOAD_AND_SAVE_FILES and not hasSavedDNA5File() then
+        -- this path is only taken the very first time, we want to use save and load functionality
+        -- but nothing is saved (yet), so we immediately save it.
+        saveDNA5File()
+    end
     DEBUG_FIVE_GUYS_IN_EDIT = false
-
-
     pickedFiveGuyIndex = 1
 
-    for i = 1, #fiveGuys do
-        updatePart.randomizeGuy(fiveGuys[i], true)
-    end
 
     -- trying to render portraits of the five guys!
 
@@ -347,7 +404,7 @@ function love.update(dt)
 
         --require("vendor.lurker").update()
         if not focussed then
-            -- print('this app is unfocessed!')
+            -- print('this app is unfocussed!')
         end
 
         if true then
@@ -429,7 +486,7 @@ grabbingScreenshots = {
             grabbingScreenshots.name .. '-' .. type .. '-' .. os.date("%Y%m%d%H%M%S") .. '.png'
         local success = love.window.updateMode(w / 2, h / 2, { fullscreen = false })
         if love.resize then love.resize(w, h) end
-        print('making marketing screenhsot', index, w, h, url)
+        print('making marketing screenshot', index, w, h, url)
         SM.draw()
         love.graphics.captureScreenshot(url)
     end,
