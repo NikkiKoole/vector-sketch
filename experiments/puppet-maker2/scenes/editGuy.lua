@@ -26,27 +26,7 @@ local function sign(x)
     return x > 0 and 1 or x < 0 and -1 or 0
 end
 
-local function attachCallbacks()
-    Signal.register('click-settings-scroll-area-item', function(x, y)
-        editGuyUI.configPanelScrollGrid(editingGuy, false, x, y)
-    end)
 
-    Signal.register('click-scroll-list-item', function(x, y)
-        editGuyUI.scrollList(editingGuy, false, x, y)
-    end)
-
-    Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
-        if (math.abs(dyn) > math.abs(dxn)) then
-            grid.isThrown = { velocity = speed / 10, direction = sign(dyn) }
-        end
-    end)
-
-    Signal.register('throw-scroll-list', function(dxn, dyn, speed)
-        if (math.abs(dyn) > math.abs(dxn)) then
-            scroller.isThrown = { velocity = speed / 10, direction = sign(dyn) }
-        end
-    end)
-end
 
 
 local function updateTheScrolling(dt, thrown, pos)
@@ -173,41 +153,7 @@ local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
 end
 
--- love callbacks
-function love.touchpressed(id, x, y, dx, dy, pressure)
-    pointerPressed(x, y, id)
-    ui.addToPressedPointers(x, y, id)
-end
 
-function love.mousepressed(x, y, button, istouch, presses)
-    if not istouch then
-        pointerPressed(x, y, 'mouse')
-        ui.addToPressedPointers(x, y, 'mouse')
-    end
-end
-
-function love.mousemoved(x, y, dx, dy, istouch)
-    if not istouch then
-        pointerMoved(x, y, dx, dy, 'mouse')
-    end
-end
-
-function love.touchmoved(id, x, y, dx, dy, pressure)
-    pointerMoved(x, y, dx, dy, id)
-end
-
-function love.mousereleased(x, y, button, istouch)
-    lastDraggedElement = nil
-    if not istouch then
-        pointerReleased(x, y, 'mouse')
-        ui.removeFromPressedPointers('mouse')
-    end
-end
-
-function love.touchreleased(id, x, y, dx, dy, pressure)
-    pointerReleased(x, y, id)
-    ui.removeFromPressedPointers(id)
-end
 
 if false then
     function love.wheelmoved(dx, dy)
@@ -218,6 +164,65 @@ if false then
                 phys.rebuildPhysicsBorderForScreen()
             end
         end
+    end
+end
+
+
+local function attachCallbacks()
+    Signal.register('click-settings-scroll-area-item', function(x, y)
+        editGuyUI.configPanelScrollGrid(editingGuy, false, x, y)
+    end)
+
+    Signal.register('click-scroll-list-item', function(x, y)
+        editGuyUI.scrollList(editingGuy, false, x, y)
+    end)
+
+    Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
+        if (math.abs(dyn) > math.abs(dxn)) then
+            grid.isThrown = { velocity = speed / 10, direction = sign(dyn) }
+        end
+    end)
+
+    Signal.register('throw-scroll-list', function(dxn, dyn, speed)
+        if (math.abs(dyn) > math.abs(dxn)) then
+            scroller.isThrown = { velocity = speed / 10, direction = sign(dyn) }
+        end
+    end)
+
+    -- love callbacks
+    function love.touchpressed(id, x, y, dx, dy, pressure)
+        pointerPressed(x, y, id)
+        ui.addToPressedPointers(x, y, id)
+    end
+
+    function love.mousepressed(x, y, button, istouch, presses)
+        if not istouch then
+            pointerPressed(x, y, 'mouse')
+            ui.addToPressedPointers(x, y, 'mouse')
+        end
+    end
+
+    function love.mousemoved(x, y, dx, dy, istouch)
+        if not istouch then
+            pointerMoved(x, y, dx, dy, 'mouse')
+        end
+    end
+
+    function love.touchmoved(id, x, y, dx, dy, pressure)
+        pointerMoved(x, y, dx, dy, id)
+    end
+
+    function love.mousereleased(x, y, button, istouch)
+        lastDraggedElement = nil
+        if not istouch then
+            pointerReleased(x, y, 'mouse')
+            ui.removeFromPressedPointers('mouse')
+        end
+    end
+
+    function love.touchreleased(id, x, y, dx, dy, pressure)
+        pointerReleased(x, y, id)
+        ui.removeFromPressedPointers(id)
     end
 end
 

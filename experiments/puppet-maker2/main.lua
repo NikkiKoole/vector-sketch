@@ -212,8 +212,8 @@ function saveDNA5File()
     love.filesystem.write('dna5.txt', inspect(saveData, { indent = "" }))
     --print(inspect(fiveGuys))
     --print('wants to save a file')
-    local openURL = "file://" .. love.filesystem.getSaveDirectory() .. '/'
-    love.system.openURL(openURL)
+    --local openURL = "file://" .. love.filesystem.getSaveDirectory() .. '/'
+    --love.system.openURL(openURL)
 end
 
 function love.keypressed(key)

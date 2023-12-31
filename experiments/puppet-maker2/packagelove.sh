@@ -5,8 +5,8 @@ cp -r ../../lib ./lib
 #cp -r ../../resources ./resources
 
 cp ../../lib/audio.lua ./
-zip -r puppet-maker1.love . -x "./ignoreDir/*" 
+zip -r puppet-maker2.love . -x "./ignoreDir/*" 
 rm -rf ./vendor
 rm -rf ./lib
 rm -rf ./resources
-mv puppet-maker1.love ~/Desktop
+mv puppet-maker2.love ~/Desktop

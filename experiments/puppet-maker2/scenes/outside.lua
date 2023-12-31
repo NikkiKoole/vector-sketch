@@ -12,6 +12,10 @@ local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
 local updatePart       = require 'src.updatePart'
 
+
+
+
+
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
     local sx, sy = desired_w / w, desired_h / h
@@ -41,15 +45,23 @@ local function pointerPressed(x, y, id)
     end
 end
 
-function love.mousepressed(x, y, button, istouch, presses)
-    if not istouch then
-        -- print('mousepreseed outside')
-        pointerPressed(x, y, 'mouse')
-        -- ui.addToPressedPointers(x, y, 'mouse')
+
+local function attachCallbacks()
+    function love.mousepressed(x, y, button, istouch, presses)
+        if not istouch then
+            -- print('mousepreseed outside')
+            pointerPressed(x, y, 'mouse')
+            -- ui.addToPressedPointers(x, y, 'mouse')
+        end
+    end
+
+    function love.touchpressed(id, x, y, dx, dy, pressure)
+        pointerPressed(x, y, id)
     end
 end
 
 function scene.load()
+    attachCallbacks()
     phys.resetLists()
     cloud          = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
     borderImage    = love.graphics.newImage("assets/ui/border_shaduw.png")
@@ -65,6 +77,10 @@ function scene.load()
     }
     ui2            = {}
     ui2.bigbuttons = {
+        editguys = love.graphics.newImage('assets/ui/big-button-editguys.png'),
+        editguysmask = love.graphics.newImage('assets/ui/big-button-editguys-mask.png'),
+        dice = love.graphics.newImage('assets/ui/big-button-dice.png'),
+        dicemask = love.graphics.newImage('assets/ui/big-button-dice-mask.png'),
         fiveguys = love.graphics.newImage('assets/ui/big-button-fiveguys.png'),
         fiveguysmask = love.graphics.newImage('assets/ui/big-button-fiveguys-mask.png'),
     }
@@ -221,11 +237,13 @@ function scene.draw()
 
         --love.graphics.rectangle('fill', w - size, 0, size, size)
         --love.graphics.setColor(1, 0, 1)
-        local sx, sy = createFittingScale(ui2.bigbuttons.fiveguys, size, size)
+
+
+        local sx, sy = createFittingScale(ui2.bigbuttons.editguys, size, size)
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
+        love.graphics.draw(ui2.bigbuttons.editguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
-        love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
+        love.graphics.draw(ui2.bigbuttons.editguys, x, y, 0, sx, sy)
     end
 
     if swipes.getTransition() then

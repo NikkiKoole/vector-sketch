@@ -610,7 +610,7 @@ function scene.draw()
         local y = (h - size) * ys[i] * (1 / myOptimalScale)
 
 
-        part:setPosition(x + (size / 2) * (1 / myOptimalScale), y + ((size - extraYOffset / 2) / 2) *
+        part:setPosition(x + (size / 2) * (1 / myOptimalScale), y + ((size - extraYOffset) / 2) *
         (1 / myOptimalScale))
         texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i], true)
         love.graphics.setStencilTest()
