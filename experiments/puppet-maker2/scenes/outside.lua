@@ -12,9 +12,19 @@ local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
 local updatePart       = require 'src.updatePart'
 
+local generatePolygon = require('lib.generate-polygon').generatePolygon
 
+local JUST_ONE_GUY = true
 
-
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
 
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
@@ -62,6 +72,7 @@ end
 
 function scene.load()
     attachCallbacks()
+    
     phys.resetLists()
     cloud          = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
     borderImage    = love.graphics.newImage("assets/ui/border_shaduw.png")
@@ -93,11 +104,26 @@ function scene.load()
     sprietUnder    = {}
     sprietOver     = {}
 
-    phys.setupBox2dScene(nil, box2dGuyCreation.makeGuy)
 
-    for i = 1, #fiveGuys do
-        updatePart.updateAllParts(fiveGuys[i])
+    if  JUST_ONE_GUY then 
+        phys.setupBox2dScene(pickedFiveGuyIndex, box2dGuyCreation.makeGuy)
+
+        --for i = 1, #fiveGuys do
+            updatePart.updateAllParts(fiveGuys[pickedFiveGuyIndex])
+    else 
+
+        phys.setupBox2dScene(nil, box2dGuyCreation.makeGuy)
+
+        for i = 1, #fiveGuys do
+            updatePart.updateAllParts(fiveGuys[i])
+        end
+
+
+        
+        --end
     end
+
+  
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
 
     local w, h = love.graphics.getDimensions()
@@ -126,7 +152,27 @@ function scene.load()
     local bottom = love.physics.newBody(world, w / 2, cambry, "static")
     local bottomshape = love.physics.newRectangleShape(boxWorldWidth, wallThick)
     local bottomfixture = love.physics.newFixture(bottom, bottomshape, 1)
+    bottomfixture:setUserData(makeUserData('border', {}))
+
+
+    -- put in a lot of winegums
+    if false then
+    for i = 1, 20 do
+        local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
+        local shape = love.physics.newPolygonShape(getRandomConvexPoly(200, math.ceil(3 + love.math.random()*5) )) --love.physics.newRectangleShape(width, height / 4)
+        local fixture = love.physics.newFixture(body, shape, 2)
+    end end
+
 end
+
+function getRandomConvexPoly(radius, numVerts)
+    local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    while not love.math.isConvex(vertices) do
+        vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    end
+    return vertices
+end
+
 
 function scene.unload()
     Timer.clear()
@@ -149,6 +195,7 @@ function scene.handleAudioMessage(msg)
     if msg.type == 'played' then
         local path = msg.data.path
         local index = math.ceil(math.random() * #fiveGuys)
+        if JUST_ONE_GUY then index =  pickedFiveGuyIndex end
         if path == "mipo/po3" or path == 'mipo/pi' then
             local sndLength = msg.data.source:getDuration() / msg.data.pitch
             --print('gonna say something', index, sndLength)
@@ -178,7 +225,7 @@ function scene.draw()
 
 
     cam:push()
-    -- phys.drawWorld(world)
+  
     -- prof.push('editGuy.draw drawSkinOver')
 
 
@@ -197,10 +244,19 @@ function scene.draw()
         texturedBox2d.drawSpriet(s[1], s[2], s[3], s[4] + a, s[5])
     end
 
-    for i = 1, #fiveGuys do
-        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
-    end
 
+    --phys.drawWorld(world)
+
+    if JUST_ONE_GUY then 
+        texturedBox2d.drawSkinOver(fiveGuys[pickedFiveGuyIndex].b2d, fiveGuys[pickedFiveGuyIndex])
+       
+    else 
+        for i = 1, #fiveGuys do
+            texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+        end
+    
+    end
+    
 
     for i = 1, #fiveGuys do
         --     texturedBox2d.drawNumbersOver(box2dGuys[i])

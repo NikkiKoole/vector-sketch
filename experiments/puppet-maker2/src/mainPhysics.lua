@@ -312,7 +312,9 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
     local aud = fixtureA:getUserData()
     local bud = fixtureB:getUserData()
     if aud and bud then
-        -- print(aud.bodyType, bud.bodyType)
+       
+       -- print(a,b)
+        --print(aud.bodyType, bud.bodyType)
         if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot'  or bud.bodyType == 'rfoot'))
             or (bud.bodyType == 'body' and aud.bodyType == 'body')
             or (bud.bodyType == 'head' and aud.bodyType == 'head')

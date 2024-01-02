@@ -303,6 +303,7 @@ function scene.unload()
 end
 
 function scene.load()
+    
     phys.resetLists()
     bgColor = creamColor
     editGuyUI.loadUIImages()
