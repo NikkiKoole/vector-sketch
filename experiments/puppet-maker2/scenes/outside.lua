@@ -156,11 +156,15 @@ function scene.load()
 
 
     -- put in a lot of winegums
-    if false then
-    for i = 1, 20 do
+    if true then
+    winegums = {}   
+    local subPalettes= {8,9,10,14,15,23,32, 77, 87} 
+    for i = 1, 87 do
         local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
-        local shape = love.physics.newPolygonShape(getRandomConvexPoly(200, math.ceil(3 + love.math.random()*5) )) --love.physics.newRectangleShape(width, height / 4)
+        local shape = love.physics.newPolygonShape(getRandomConvexPoly(150,8) ) --love.physics.newRectangleShape(width, height / 4)
         local fixture = love.physics.newFixture(body, shape, 2)
+        local paletteIndex = subPalettes[ math.ceil(math.random() * #subPalettes)]
+        table.insert(winegums, {body=body, color=palettes[paletteIndex], index=math.ceil(love.math.random() * 7 )})
     end end
 
 end
@@ -177,9 +181,11 @@ end
 function scene.unload()
     Timer.clear()
     local b = world:getBodies()
+    
     for i = #b, 1, -1 do
         b[i]:destroy()
     end
+    winegums = {}
 end
 
 local delta = 0
@@ -245,8 +251,8 @@ function scene.draw()
     end
 
 
-    --phys.drawWorld(world)
-
+   -- phys.drawWorld(world)
+    texturedBox2d.drawWineGums(winegums)
     if JUST_ONE_GUY then 
         texturedBox2d.drawSkinOver(fiveGuys[pickedFiveGuyIndex].b2d, fiveGuys[pickedFiveGuyIndex])
        

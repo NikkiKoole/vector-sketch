@@ -10,6 +10,24 @@ local box2dGuyCreation = require 'src.box2dGuyCreation'
 
 local lib              = {}
 
+
+local dots              = {
+    love.graphics.newImage('assets/ui/colorpick/c1.png'),
+    love.graphics.newImage('assets/ui/colorpick/c2.png'),
+    love.graphics.newImage('assets/ui/colorpick/c3.png'),
+    love.graphics.newImage('assets/ui/colorpick/c4.png'),
+    love.graphics.newImage('assets/ui/colorpick/c5.png'),
+    love.graphics.newImage('assets/ui/colorpick/c6.png'),
+    love.graphics.newImage('assets/ui/colorpick/c7.png'),
+}
+local circles           = {
+    love.graphics.newImage('assets/ui/circle1.png'),
+    love.graphics.newImage('assets/ui/circle2.png'),
+    love.graphics.newImage('assets/ui/circle3.png'),
+    love.graphics.newImage('assets/ui/circle4.png'),
+}
+
+
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -539,6 +557,37 @@ lib.drawNumbersOver = function(box2dGuy)
             love.graphics.print(string.format("%.2f ", a), x, y)
         end
     end
+end
+local function createFittingScale(img, desired_w, desired_h)
+    local w, h = img:getDimensions()
+    local sx, sy = desired_w / w, desired_h / h
+    return sx, sy
+end
+
+
+lib.drawWineGums = function (items) 
+    for i = 1, #items do 
+        local body = items[i].body
+        local img = dots[items[i].index]
+        local color = items[i].color
+
+        local x, y = body:getPosition()
+        
+        love.graphics.setColor(color[1], color[2], color[3])
+        local sx, sy = createFittingScale(img, 400, 400)
+        love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
+
+
+
+      --  love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
+        local imgIndex = (items[i].index % #circles) + 1
+        local img = circles[imgIndex]
+        love.graphics.setColor(0,0,0)
+        local sx, sy = createFittingScale(img, 350, 350)
+        love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
+       -- print(img,  body,color)
+    end
+
 end
 
 lib.drawSkinOver = function(box2dGuy, guy, skipNeck)

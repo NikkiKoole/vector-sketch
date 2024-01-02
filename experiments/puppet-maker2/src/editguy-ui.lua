@@ -166,6 +166,7 @@ lib.loadUIImages = function()
         love.graphics.newImage('assets/ui/colorpick/uipattern-mask.png', { linear = true }),
         love.graphics.newImage('assets/ui/colorpick/uiline-mask.png', { linear = true }),
     }
+    
     ui2.circles           = {
         love.graphics.newImage('assets/ui/circle1.png'),
         love.graphics.newImage('assets/ui/circle2.png'),
