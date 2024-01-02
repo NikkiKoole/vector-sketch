@@ -879,7 +879,7 @@ local function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, categ
                     _changePart('body')
                 end
 
-                draw_toggle_with_2_buttons('bodyflipy', startX + (runningElem * elementWidth), currentY, buttonSize,
+                draw_toggle_with_2_buttons('dna.creation.torso.flipy', startX + (runningElem * elementWidth), currentY, buttonSize,
                     sliderWidth, (creation.torso.flipy == 1),
                     f, ui2.icons.bodyflipv1, ui2.icons.bodyflipv2)
                 runningElem, currentY = updateRowStuff()
@@ -888,7 +888,7 @@ local function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, categ
                     creation.torso.flipx = v and -1 or 1
                     _changePart('body')
                 end
-                draw_toggle_with_2_buttons('bodyflipx', startX + (runningElem * elementWidth), currentY, buttonSize,
+                draw_toggle_with_2_buttons('dna.creation.torso.flipx', startX + (runningElem * elementWidth), currentY, buttonSize,
                     sliderWidth, (creation.torso.flipx == 1),
                     f, ui2.icons.bodyfliph1, ui2.icons.bodyfliph2)
                 runningElem, currentY = updateRowStuff()

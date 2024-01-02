@@ -204,10 +204,24 @@ end
 function saveDNA5File()
     local saveData = {}
 
-    -- not writing the real creation parts, we let that regenerate
+    
     for i = 1, #fiveGuys do
         saveData[i] = deepcopy(fiveGuys[i].dna)
-        saveData[i].creation = deepcopy(dna.getCreation())
+        saveData[i].creation = deepcopy(dna.getCreation()) -- not writing the real creation parts, we let that regenerate
+
+        -- but i do need to save these things....
+        saveData[i].creation.isPotatoHead = fiveGuys[i].dna.creation.isPotatoHead
+        saveData[i].creation.hasPhysicsHair = fiveGuys[i].dna.creation.hasPhysicsHair
+        saveData[i].creation.hasNeck = fiveGuys[i].dna.creation.hasNeck
+
+        saveData[i].creation.lear.stanceAngle = fiveGuys[i].dna.creation.lear.stanceAngle
+        saveData[i].creation.rear.stanceAngle = fiveGuys[i].dna.creation.rear.stanceAngle
+
+        saveData[i].creation.torso.flipx = fiveGuys[i].dna.creation.torso.flipx
+        saveData[i].creation.torso.flipy = fiveGuys[i].dna.creation.torso.flipy
+
+        saveData[i].creation.head.flipx = fiveGuys[i].dna.creation.head.flipx
+        saveData[i].creation.head.flipy = fiveGuys[i].dna.creation.head.flipy
     end
     love.filesystem.write('dna5.txt', inspect(saveData, { indent = "" }))
     --print(inspect(fiveGuys))

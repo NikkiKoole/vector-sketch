@@ -567,7 +567,22 @@ lib.drawWorld = function(world)
     love.graphics.setLineWidth(1)
 end
 
+lib.removeDeadPointerJoints = function()
+    local index = -1
+    for i = #pointerJoints, 1, -1 do
+    
+            if (pointerJoints[i].joint and pointerJoints[i].joint:isDestroyed()) then
+                pointerJoints[i].joint     = nil
+                pointerJoints[i].jointBody = nil
+                table.remove(pointerJoints, i)
+            end
+    end
+   
+end
+
+
 lib.handleUpdate = function(dt, cam)
+    lib.removeDeadPointerJoints()
     -- connect connectors
     for i = 1, #pointerJoints do
         local mj = pointerJoints[i]

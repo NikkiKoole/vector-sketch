@@ -580,38 +580,54 @@ function scene.draw()
 
     love.graphics.setStencilTest()
 
-
+    local dpi = love.graphics.getDPIScale()
     for i = 1, #fiveGuys do
+
+
+        local function myStencilFunctionIndexed()
+            --local r = w / 2
+            --if picked then
+            --    r = r + (math.sin(love.timer.getTime() * 5) * (r / 20))
+            --end
+            --for i = 1, #fiveGuys do
+                local x2 = (i - 1) * size
+                local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+                    fluxObject.circlesY5, }
+                local y2 = (h - size) * ys[i]
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.circle('fill', x2 + size / 2, y2 + size / 2, size / 2 - (size / 10))
+            --end
+        end
+
+
         love.graphics.push()
 
-        love.graphics.stencil(myStencilFunction, "replace", 1)
+        love.graphics.stencil(myStencilFunctionIndexed, "replace", 1)
 
         love.graphics.setStencilTest("greater", 0)
+
+
+--        love.graphics.rectangle('fill', 0,0, w,h)
+
 
         local part = fiveGuys[i].b2d.head or fiveGuys[i].b2d.torso
         local dimW = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.w or fiveGuys[i].dna.creation.torso.w
         local dimH = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.h or fiveGuys[i].dna.creation.torso.h
 
-        local myOptimalScale = math.min(size / dimW, size / dimH) * 0.7
+        local myOptimalScale = math.min(size / dimW, size / dimH)  * 0.7
         love.graphics.scale(myOptimalScale, myOptimalScale) -- reduce everything by 50% in both X and Y coordinates
-
-        --print(i, size, dimW, dimH)
-        -- potatohead is position ok, heads are not
-        local extraYOffset = 0
-        if fiveGuys[i].b2d.head then
-            --print(fiveGuys[i].dna.creation.head.metaOffsetY)
-            extraYOffset = fiveGuys[i].dna.creation.head.metaOffsetY
-        end
 
 
         local x = (i - 1) * size * 1 / myOptimalScale
         local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
             fluxObject.circlesY5 }
         local y = (h - size) * ys[i] * (1 / myOptimalScale)
+        local xPos = x + (size / 2) * (1 / myOptimalScale)
 
+        local extraOffset = fiveGuys[i].b2d.head and (dimH/2) or 0
+        local yPos = y + ((size / 2  )) * (1 / myOptimalScale)   + extraOffset 
 
-        part:setPosition(x + (size / 2) * (1 / myOptimalScale), y + ((size - extraYOffset) / 2) *
-        (1 / myOptimalScale))
+        part:setPosition(xPos, yPos)
         texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i], true)
         love.graphics.setStencilTest()
 
