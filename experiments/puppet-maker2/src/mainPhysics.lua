@@ -313,7 +313,7 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
     local bud = fixtureB:getUserData()
     if aud and bud then
         -- print(aud.bodyType, bud.bodyType)
-        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso'))
+        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot'  or bud.bodyType == 'rfoot'))
             or (bud.bodyType == 'body' and aud.bodyType == 'body')
             or (bud.bodyType == 'head' and aud.bodyType == 'head')
             or (bud.bodyType == 'head' and aud.bodyType == 'lhand')
@@ -322,7 +322,11 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
             or (bud.bodyType == 'body' and aud.bodyType == 'rhand')
         then
             --- print(normalimpulse)
-            if normalimpulse > 300 then
+
+
+            
+           -- print(normalimpulse, tangentimpulse)
+            if normalimpulse > 300 and tangentimpulse > 50 then
                 local index = math.ceil(love.math.random() * #rubberplonks)
                 local pitch = numbers.mapInto(normalimpulse, 300, 10000, 2, 1)
                 local volume = numbers.mapInto(normalimpulse, 300, 10000, .2, 1)
@@ -734,7 +738,7 @@ lib.handlePointerPressed = function(x, y, id, cam)
         lib.killMouseJointIfPossible(id)
         table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
     end
-
+   -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end
 
     return #temp > 0

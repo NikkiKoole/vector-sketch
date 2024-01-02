@@ -96,6 +96,28 @@ local function fadeInPencilBackground()
     end)
 end
 
+
+local function randomMiSound() 
+    local sound = miSound1
+    if love.math.random() < 0.2 then
+        sound = miSound2
+        if love.math.random() < 0.3 then
+            sound = moSound1
+        end
+    end
+    return sound
+end
+local function randomPoSound() 
+    local sound = poSound1
+    if love.math.random() < 0.2 then
+        sound = poSound2
+        if love.math.random() < 0.3 then
+            sound = piSound1
+        end
+    end
+    return sound
+end
+
 local function tweenInMipoHeader()
     Timer.clear()
     bgColor = { unpack(blueColor) }
@@ -112,11 +134,8 @@ local function tweenInMipoHeader()
                 Timer.tween(0.5, I.children[i].color, { [4] = 1 })
             end
         end)
-        local sound = miSound1
-        if love.math.random() < 0.2 then
-            sound = miSound2
-        end
-        playSound(sound, .7 + love.math.random() * 0.5)
+        
+        playSound(randomMiSound(), .7 + love.math.random() * 0.5)
 
         Timer.every(.5, function()
             local letters = { M, I }
@@ -138,11 +157,8 @@ local function tweenInMipoHeader()
             end
         end)
 
-        local sound = poSound1
-        if love.math.random() < 0.2 then
-            sound = poSound2
-        end
-        playSound(sound, .7 + love.math.random() * 0.5)
+       
+        playSound(randomPoSound() , .7 + love.math.random() * 0.5)
 
         Timer.every(.5, function()
             local letters = { P, O }
@@ -258,10 +274,8 @@ local function makeRandomMipoSound()
     Timer.after(rnd, function()
         --say MI
         -- print('MI')
-        local sound = miSound1
-        if love.math.random() < 0.2 then
-            sound = miSound2
-        end
+        local sound = randomMiSound()
+        
 
         local pitch = .7 + love.math.random() * 0.5
         local sndLength = sound:getDuration() / pitch
@@ -273,10 +287,8 @@ local function makeRandomMipoSound()
         Timer.after(rnd2, function()
             --say MI
             --print('PO')
-            local sound = poSound1
-            if love.math.random() < 0.2 then
-                sound = poSound2
-            end
+            local sound = randomPoSound()
+            
             local pitch = .7 + love.math.random() * 0.5
             local sndLength = sound:getDuration() / pitch
             playSound(sound, pitch)

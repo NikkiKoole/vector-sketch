@@ -542,6 +542,7 @@ lib.drawNumbersOver = function(box2dGuy)
 end
 
 lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
+    --print(skipNeck)
     local values = guy.dna.values
     local creation = guy.dna.creation
     local multipliers = guy.dna.multipliers
@@ -564,14 +565,15 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
-    if not skipNeck then
+   -- if not skipNeck then
+  --print(canvasCache.neckCanvas, box2dGuy.neck, box2dGuy.neck1)
         if canvasCache.neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
             love.graphics.setColor(1, 1, 1, 1)
             renderCurvedObjectGrow('neck', 'neck1', 'head', 50, canvasCache.neckCanvas, canvasCache.neckmesh, box2dGuy, 1,
                 multipliers.neck.wMultiplier / (4 * dpi / shrink))
             love.graphics.draw(canvasCache.neckmesh, 0, 0, 0, 1, 1)
         end
-    end
+    --end
 
     if canvasCache.earCanvas then
         if creation.lear.metaURL then
@@ -623,8 +625,8 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
                 (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
                 (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
-        local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
-
+       
+                local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
         local destX = cx
         local destY = cy
         if guy.tweenVars.lookAtCounter > 0 then
@@ -632,13 +634,22 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             destY = guy.tweenVars.lookAtPosY
         end
 
+      
         local angle, dist = getAngleAndDistance(cx, cy, destX, destY)
         local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
         local pupillx, pupilly = facePart:getWorldPoint(
                 (leftEyeX + faceData.metaOffsetX + px1) * sx * dpi / shrink,
                 (eyeY + faceData.metaOffsetY + py1) * sy * dpi / shrink)
 
+
         local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
+       
+        local destX = cx
+        local destY = cy
+        if guy.tweenVars.lookAtCounter > 0 then
+            destX = guy.tweenVars.lookAtPosX
+            destY = guy.tweenVars.lookAtPosY
+        end
         local angle, dist = getAngleAndDistance(cx, cy, destX, destY)
         local px2, py2 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
         local pupilrx, pupilry = facePart:getWorldPoint(

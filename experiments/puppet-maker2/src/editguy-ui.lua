@@ -896,7 +896,9 @@ local function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, categ
                 local f = function(v)
                     -- creation.hasNeck = not creation.isPotatoHead
                     creation.isPotatoHead = v
+                  
                     _changePart('potato')
+                    
                 end
                 draw_toggle_with_2_buttons('dna.creation.isPotatoHead', startX + (runningElem * elementWidth), currentY,
                     buttonSize,
@@ -919,7 +921,7 @@ local function drawImmediateSlidersEtc(draw, guy, startX, currentY, width, categ
                 end
                 if not creation.isPotatoHead then
                     local f = function(v)
-                        print(v)
+
                         creation.hasNeck = v
                         _changePart('hasNeck')
                     end

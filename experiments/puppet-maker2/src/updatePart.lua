@@ -153,7 +153,11 @@ lib.updatePart         = function(name, guy)
     end
 
     if name == 'potato' then
+       
         box2dGuyCreation.handleNeckAndHeadForPotato(guy.b2d, guy, creation.isPotatoHead, creation.hasNeck)
+        if (not creation.isPotatoHead and creation.hasNeck and not canvasCache.neckCanvas) then 
+            lib.updatePart('neck', guy)
+        end
         if not creation.isPotatoHead then
             lib.updatePart('head', guy)
         end
@@ -173,6 +177,7 @@ lib.updatePart         = function(name, guy)
 
 
     if name == 'neck' then
+
         local neckIndex        = math.ceil(values.neck.shape)
         local part             = findPart('neck')
         local img              = part.imgs[neckIndex]

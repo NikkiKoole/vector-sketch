@@ -283,8 +283,10 @@ function love.load()
 
     miSound1 = love.audio.newSource("assets/sounds/mi.wav", "static")
     miSound2 = love.audio.newSource("assets/sounds/mi2.wav", "static")
+    moSound1 = love.audio.newSource("assets/sounds/mo.wav", "static")
     poSound1 = love.audio.newSource("assets/sounds/po.wav", "static")
     poSound2 = love.audio.newSource("assets/sounds/po2.wav", "static")
+    piSound1 = love.audio.newSource("assets/sounds/pi.wav", "static")
 
     audioHelper.sendMessageToAudioThread({ type = "volume", data = 0.2 });
     audioHelper.sendMessageToAudioThread({ type = "paused", data = true });

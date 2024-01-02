@@ -6,6 +6,7 @@ local skygradient      = gradient.makeSkyGradient(16)
 local hit              = require 'lib.hit'
 local ui               = require 'lib.ui'
 local Signal           = require 'vendor.signal'
+local camera           = require 'lib.camera'
 local cam              = require('lib.cameraBase').getInstance()
 local phys             = require 'src.mainPhysics'
 local swipes           = require 'src.screen-transitions'
@@ -54,7 +55,7 @@ end
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local interacted = phys.handlePointerPressed(x, y, id, cam)
-
+   -- print(interacted)
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)
         if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
@@ -94,6 +95,7 @@ local function pointerPressed(x, y, id)
             updatePart.randomizeGuy(editingGuy)
         end
         setCategories(editingGuy)
+        handleCameraAfterCatgeoryChange(true)
 
         local creation = editingGuy.dna.creation
         if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
@@ -174,7 +176,10 @@ local function attachCallbacks()
     end)
 
     Signal.register('click-scroll-list-item', function(x, y)
+        
         editGuyUI.scrollList(editingGuy, false, x, y)
+        handleCameraAfterCatgeoryChange()
+
     end)
 
     Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
@@ -228,6 +233,54 @@ end
 
 -- scene methods
 
+function handleCameraAfterCatgeoryChange(toBody) 
+    --print('maybeTweencamera')
+  
+    local p= findPart(uiState.selectedCategory)
+    local categoryKind =  p.kind
+    --print(inspect(cam))
+
+    local w, h = love.graphics.getDimensions()
+    local vp = math.min(w,h) / cam.scale
+    --print(vp, cam.scale)
+    local camData = {x= cam.translationX, y =cam.translationY, w=vp, h=vp }
+
+    --if categoryKind ~= camCenteredOn then 
+       -- print('need to tween!!')
+        if (categoryKind == 'body'or toBody) then
+            local w, h = love.graphics.getDimensions()
+            camera.setCameraViewport(cam, w, h)
+            camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+    --local camData = {x= cam.translationX, y =cam.translationY }
+            Timer.tween(.25, camData, {x= w / 2, y=h / 2 - 1000, w=3000, h= 3000 })
+        else
+        if (categoryKind == 'head') then
+
+            -- get the head position
+            --print(editingGuy.dna.creation.isPotatoHead)
+
+            local creation =  editingGuy.dna.creation
+            local isPotatoHead = creation.isPotatoHead
+            local partToCenterOn = isPotatoHead and editingGuy.b2d.torso or editingGuy.b2d.head
+            --print(partToCenterOn)
+            local size = isPotatoHead and (math.max(creation.torso.w, creation.torso.h)) 
+            or  (math.max(creation.head.w, creation.head.h)) * 1.5
+            local yOffset = isPotatoHead and 0 or creation.head.h/2 
+            local px, py = partToCenterOn:getPosition()
+            local w, h = love.graphics.getDimensions()
+            camera.setCameraViewport(cam, w, h)
+            camera.centerCameraOnPosition(px, py - yOffset , size, size)
+            Timer.tween(.25, camData, {x= px, y=py- yOffset, w=size, h=size })
+        end end
+        Timer.during(.3, function(dt)  
+            camera.setCameraViewport(cam, camData.w, camData.h)
+            camera.centerCameraOnPosition(camData.x, camData.y , camData.w, camData.h) 
+        end)
+        camCenteredOn = categoryKind
+    --end
+end
+
+
 function scene.handleAudioMessage(msg)
     if msg.type == 'played' then
         local path = msg.data.path
@@ -275,7 +328,10 @@ function scene.load()
         selectedCategory = 'body',
         selectedColoringLayer = 'bgPal',
         selectedChildCategory = nil,
+
     }
+
+    camCenteredOn = 'body'
 
     uiTickSound = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
     uiClickSound = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
@@ -309,11 +365,21 @@ function scene.load()
     end
 
 
+    local w, h = love.graphics.getDimensions()
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
-
+    handleCameraAfterCatgeoryChange() 
+  --  local w, h = love.graphics.getDimensions()
+  --  camera.centerCameraOnPosition(0, 0, w, h)
+  --  cam:update(w, h)
 
     Timer.tween(.5, scroller, { position = 8 })
 end
+
+
+
+
 
 function scene.update(dt)
     if introSound:isPlaying() then

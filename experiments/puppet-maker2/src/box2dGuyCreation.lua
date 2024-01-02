@@ -978,6 +978,7 @@ lib.handleNeckAndHeadForHasNeck = function(box2dGuy, guy, willHaveNeck)
 end
 
 lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
+
     local groupId = guy.id
     if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
         return
@@ -988,6 +989,7 @@ lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
     end
 
     if willBePotato then
+
         if (box2dGuy.neck) then
             box2dGuy.neck:destroy()
         end
@@ -1018,6 +1020,7 @@ lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
         local neck1
 
         if hasNeck then
+
             neck = makePart('neck', torso)
             neck1 = makePart('neck1', neck)
         end
