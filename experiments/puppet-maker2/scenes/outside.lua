@@ -95,6 +95,14 @@ function scene.load()
         dicemask = love.graphics.newImage('assets/ui/big-button-dice-mask.png'),
         fiveguys = love.graphics.newImage('assets/ui/big-button-fiveguys.png'),
         fiveguysmask = love.graphics.newImage('assets/ui/big-button-fiveguys-mask.png'),
+        limp = love.graphics.newImage('assets/ui/big-limp.png'),
+        straight = love.graphics.newImage('assets/ui/big-straight.png'),
+        upside = love.graphics.newImage('assets/ui/big-upside-down.png'),
+        upsidemask = love.graphics.newImage('assets/ui/big-upside-down-mask.png'),
+        downside = love.graphics.newImage('assets/ui/big-downside-down.png'),
+        downsidemask = love.graphics.newImage('assets/ui/big-downside-down-mask.png'),
+        winegum = love.graphics.newImage('assets/ui/big-winegum.png'),
+        winegummask = love.graphics.newImage('assets/ui/big-winegum-mask.png'),
     }
     ui2.circles    = {
         love.graphics.newImage('assets/ui/circle1.png'),
@@ -102,6 +110,7 @@ function scene.load()
         love.graphics.newImage('assets/ui/circle3.png'),
         love.graphics.newImage('assets/ui/circle4.png'),
     }
+
     sprietUnder    = {}
     sprietOver     = {}
 
@@ -359,31 +368,80 @@ function scene.draw()
     --end
 
     if true then
-        local size = h / 20
+        local size = h / 12
         local x = 0
-        local y = h - size
-        love.graphics.rectangle('fill', x, y, size, size)
+        local y = h - size * 2 * 1.2
+        --love.graphics.rectangle('fill', x, y, size, size)
         local a = ui.getUIRect('less-1', x, y, size, size)
-        ---print(inspect(a))
-        if a then
-            upsideDown = not upsideDown
-            -- print('Body:getLocalPoint(worldX (number), worldY (number))')
+
+
+        love.graphics.setColor(0, 0, 0, 0.5)
+        local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
+
+        if not upsideDown then
+            local sx, sy = createFittingScale(ui2.bigbuttons.upside, size, size)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(ui2.bigbuttons.upside, x, y, 0, sx, sy)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(ui2.bigbuttons.upsidemask, x, y, 0, sx, sy)
+        else
+            local sx, sy = createFittingScale(ui2.bigbuttons.downside, size, size)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(ui2.bigbuttons.downside, x, y, 0, sx, sy)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(ui2.bigbuttons.downsidemask, x, y, 0, sx, sy)
         end
 
-        local x = size * 2
-        love.graphics.rectangle('fill', x, y, size, size)
+        if a then
+            upsideDown = not upsideDown
+        end
+
+        local x = 0
+        local y = h - size * 3 * 1.2
+        --love.graphics.rectangle('fill', x, y, size, size)
         local a = ui.getUIRect('less-1', x, y, size, size)
         ---print(inspect(a))
+
+        love.graphics.setColor(0, 0, 0, 0.5)
+        local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
+
+        if not jointsEnabled then
+            local sx, sy = createFittingScale(ui2.bigbuttons.limp, size, size)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(ui2.bigbuttons.limp, x, y, 0, sx, sy)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(ui2.bigbuttons.limp, x + 3, y + 3, 0, sx, sy)
+        else
+            local sx, sy = createFittingScale(ui2.bigbuttons.straight, size, size)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(ui2.bigbuttons.straight, x, y, 0, sx, sy)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.draw(ui2.bigbuttons.straight, x - 3, y + 3, 0, sx, sy)
+        end
+
         if a then
             toggleJoints()
 
             -- print('Body:getLocalPoint(worldX (number), worldY (number))')
         end
 
-        local x = size * 4
-        love.graphics.rectangle('fill', x, y, size, size)
+        local x = 0
+        local y = h - size * 1.2
+        --love.graphics.rectangle('fill', x, y, size, size)
         local a = ui.getUIRect('less-1', x, y, size, size)
         ---print(inspect(a))
+        love.graphics.setColor(0, 0, 0, 0.5)
+        local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
+
+        local sx, sy = createFittingScale(ui2.bigbuttons.winegum, size, size)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(ui2.bigbuttons.winegum, x, y, 0, sx, sy)
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.draw(ui2.bigbuttons.winegummask, x + 3, y + 3, 0, sx, sy)
+
         if a then
             if #winegums < 200 then
                 addWineGums()

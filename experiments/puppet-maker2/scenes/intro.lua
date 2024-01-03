@@ -97,7 +97,7 @@ local function fadeInPencilBackground()
 end
 
 
-local function randomMiSound() 
+local function randomMiSound()
     local sound = miSound1
     if love.math.random() < 0.2 then
         sound = miSound2
@@ -107,7 +107,7 @@ local function randomMiSound()
     end
     return sound
 end
-local function randomPoSound() 
+local function randomPoSound()
     local sound = poSound1
     if love.math.random() < 0.2 then
         sound = poSound2
@@ -134,7 +134,7 @@ local function tweenInMipoHeader()
                 Timer.tween(0.5, I.children[i].color, { [4] = 1 })
             end
         end)
-        
+
         playSound(randomMiSound(), .7 + love.math.random() * 0.5)
 
         Timer.every(.5, function()
@@ -157,8 +157,8 @@ local function tweenInMipoHeader()
             end
         end)
 
-       
-        playSound(randomPoSound() , .7 + love.math.random() * 0.5)
+
+        playSound(randomPoSound(), .7 + love.math.random() * 0.5)
 
         Timer.every(.5, function()
             local letters = { P, O }
@@ -275,7 +275,7 @@ local function makeRandomMipoSound()
         --say MI
         -- print('MI')
         local sound = randomMiSound()
-        
+
 
         local pitch = .7 + love.math.random() * 0.5
         local sndLength = sound:getDuration() / pitch
@@ -288,7 +288,7 @@ local function makeRandomMipoSound()
             --say MI
             --print('PO')
             local sound = randomPoSound()
-            
+
             local pitch = .7 + love.math.random() * 0.5
             local sndLength = sound:getDuration() / pitch
             playSound(sound, pitch)
@@ -594,39 +594,29 @@ function scene.draw()
 
     local dpi = love.graphics.getDPIScale()
     for i = 1, #fiveGuys do
-
-
-        local function myStencilFunctionIndexed()
-            --local r = w / 2
-            --if picked then
-            --    r = r + (math.sin(love.timer.getTime() * 5) * (r / 20))
-            --end
-            --for i = 1, #fiveGuys do
-                local x2 = (i - 1) * size
-                local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
-                    fluxObject.circlesY5, }
-                local y2 = (h - size) * ys[i]
-                love.graphics.setColor(1, 1, 1)
-                love.graphics.circle('fill', x2 + size / 2, y2 + size / 2, size / 2 - (size / 10))
-            --end
-        end
-
-
         love.graphics.push()
+        local function myStencilFunctionIndexed()
+            local x2 = (i - 1) * size
+            local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+                fluxObject.circlesY5, }
+            local y2 = (h - size) * ys[i]
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.circle('fill', x2 + size / 2, y2 + size / 2, size / 2 - (size / 10))
+        end
 
         love.graphics.stencil(myStencilFunctionIndexed, "replace", 1)
 
         love.graphics.setStencilTest("greater", 0)
 
 
---        love.graphics.rectangle('fill', 0,0, w,h)
+        --        love.graphics.rectangle('fill', 0,0, w,h)
 
 
         local part = fiveGuys[i].b2d.head or fiveGuys[i].b2d.torso
         local dimW = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.w or fiveGuys[i].dna.creation.torso.w
         local dimH = fiveGuys[i].b2d.head and fiveGuys[i].dna.creation.head.h or fiveGuys[i].dna.creation.torso.h
 
-        local myOptimalScale = math.min(size / dimW, size / dimH)  * 0.7
+        local myOptimalScale = math.min(size / dimW, size / dimH) * 0.7
         love.graphics.scale(myOptimalScale, myOptimalScale) -- reduce everything by 50% in both X and Y coordinates
 
 
@@ -636,8 +626,8 @@ function scene.draw()
         local y = (h - size) * ys[i] * (1 / myOptimalScale)
         local xPos = x + (size / 2) * (1 / myOptimalScale)
 
-        local extraOffset = fiveGuys[i].b2d.head and (dimH/2) or 0
-        local yPos = y + ((size / 2  )) * (1 / myOptimalScale)   + extraOffset 
+        local extraOffset = fiveGuys[i].b2d.head and (dimH / 2) or 0
+        local yPos = y + ((size / 2)) * (1 / myOptimalScale) + extraOffset
 
         part:setPosition(xPos, yPos)
         texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i], true)

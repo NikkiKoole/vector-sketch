@@ -1,4 +1,4 @@
-local debug = true
+local debug = false
 
 
 function love.conf(t)

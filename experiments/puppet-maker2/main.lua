@@ -463,17 +463,19 @@ function love.update(dt)
                 end
             end
         end
-        if key == 'u' then
-            upsideDown = not upsideDown
-            print('upsidedown', upsideDown)
+        if false then
+            if key == 'u' then
+                upsideDown = not upsideDown
+                print('upsidedown', upsideDown)
+            end
+            if key == 'w' then
+                addWineGums()
+            end
+            if key == 'j' then
+                toggleJoints()
+            end
         end
-        if key == 'w' then
-            addWineGums()
-        end
-        if key == 'j' then
-            toggleJoints()
-        end
-        print(key)
+        --print(key)
     end
 
     if true then
