@@ -11,10 +11,11 @@ local audioHelper      = require 'lib.audio-helper'
 local texturedBox2d    = require 'src.texturedBox2d'
 local box2dGuyCreation = require 'src.box2dGuyCreation'
 local updatePart       = require 'src.updatePart'
+local ui               = require "lib.ui"
 
-local generatePolygon = require('lib.generate-polygon').generatePolygon
+local generatePolygon  = require('lib.generate-polygon').generatePolygon
 
-local JUST_ONE_GUY = true
+local JUST_ONE_GUY     = false
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -72,7 +73,7 @@ end
 
 function scene.load()
     attachCallbacks()
-    
+
     phys.resetLists()
     cloud          = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
     borderImage    = love.graphics.newImage("assets/ui/border_shaduw.png")
@@ -105,25 +106,21 @@ function scene.load()
     sprietOver     = {}
 
 
-    if  JUST_ONE_GUY then 
+    if JUST_ONE_GUY then
         phys.setupBox2dScene(pickedFiveGuyIndex, box2dGuyCreation.makeGuy)
 
         --for i = 1, #fiveGuys do
-            updatePart.updateAllParts(fiveGuys[pickedFiveGuyIndex])
-    else 
-
+        updatePart.updateAllParts(fiveGuys[pickedFiveGuyIndex])
+    else
         phys.setupBox2dScene(nil, box2dGuyCreation.makeGuy)
 
         for i = 1, #fiveGuys do
             updatePart.updateAllParts(fiveGuys[i])
         end
-
-
-        
         --end
     end
 
-  
+
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[1] });
 
     local w, h = love.graphics.getDimensions()
@@ -156,17 +153,60 @@ function scene.load()
 
 
     -- put in a lot of winegums
-    if true then
-    winegums = {}   
-    local subPalettes= {8,9,10,14,15,23,32, 77, 87} 
-    for i = 1, 87 do
-        local body = love.physics.newBody(world, i * 100, -2000, "dynamic")
-        local shape = love.physics.newPolygonShape(getRandomConvexPoly(150,8) ) --love.physics.newRectangleShape(width, height / 4)
-        local fixture = love.physics.newFixture(body, shape, 2)
-        local paletteIndex = subPalettes[ math.ceil(math.random() * #subPalettes)]
-        table.insert(winegums, {body=body, color=palettes[paletteIndex], index=math.ceil(love.math.random() * 7 )})
-    end end
+    -- if true then
 
+    --end
+end
+
+function addWineGums()
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+
+    local subPalettes = { 1, 8, 9, 9, 9, 10, 14, 15, 15, 15, 23, 32, 77, 87 }
+    local amt = 3 + math.ceil(love.math.random() * 23)
+
+    local types = {
+        'capsule2', 'ruit', 'octagon', 'circle', 'rect3'
+    }
+    local dims = {
+        { 350, 150 }, { 300, 200 }, { 200, 200 }, { 100, 100 }, { 200, 150 }
+    }
+
+    for i = 1, amt do
+        local middleX = camtlx + boxWorldWidth / 2
+        local x = middleX - (amt / 2) * 5 + (i * 5)
+        local y = -5000 + love.math.random() * 10
+        local body = love.physics.newBody(world, x, y, "dynamic")
+
+        --local shape = love.physics.newPolygonShape(getRandomConvexPoly(150, 8)) --love.physics.newRectangleShape(width, height / 4)
+        --local shape = phys.makeShape('capsule', 350, 150)
+        --local shape = phys.makeShape('ruit', 300, 200)
+        --local shape = phys.makeShape('octagon', 200, 200)
+        --local shape = phys.makeShape('circle', 100)
+        --local shape = phys.makeShape('rect3', 100, 200)
+
+        local typeIndex = math.ceil(math.random() * #types)
+        local wrnd = dims[typeIndex][1]
+        local hrnd = dims[typeIndex][2]
+        local shape = phys.makeShape(types[typeIndex], wrnd, hrnd)
+        local fixture = love.physics.newFixture(body, shape, .2)
+
+        fixture:setUserData(makeUserData('winegum', {}))
+        -- fixture.
+        local paletteIndex = subPalettes[math.ceil(math.random() * #subPalettes)]
+        table.insert(winegums, {
+            body = body,
+            color = palettes[paletteIndex],
+            index = math.ceil(love.math.random() * 7),
+            --type = 'circle',
+            --type = 'capsule',
+            type = types[typeIndex],
+            w = wrnd,
+            h = hrnd
+        })
+    end
 end
 
 function getRandomConvexPoly(radius, numVerts)
@@ -177,15 +217,16 @@ function getRandomConvexPoly(radius, numVerts)
     return vertices
 end
 
-
 function scene.unload()
     Timer.clear()
     local b = world:getBodies()
-    
+
     for i = #b, 1, -1 do
         b[i]:destroy()
     end
     winegums = {}
+    jointsEnabled = true
+    upsideDown = false
 end
 
 local delta = 0
@@ -201,7 +242,7 @@ function scene.handleAudioMessage(msg)
     if msg.type == 'played' then
         local path = msg.data.path
         local index = math.ceil(math.random() * #fiveGuys)
-        if JUST_ONE_GUY then index =  pickedFiveGuyIndex end
+        if JUST_ONE_GUY then index = pickedFiveGuyIndex end
         if path == "mipo/po3" or path == 'mipo/pi' then
             local sndLength = msg.data.source:getDuration() / msg.data.pitch
             --print('gonna say something', index, sndLength)
@@ -220,6 +261,7 @@ function scene.handleAudioMessage(msg)
 end
 
 function scene.draw()
+    ui.handleMouseClickStart()
     local width, height = love.graphics.getDimensions()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
@@ -231,7 +273,7 @@ function scene.draw()
 
 
     cam:push()
-  
+
     -- prof.push('editGuy.draw drawSkinOver')
 
 
@@ -251,18 +293,16 @@ function scene.draw()
     end
 
 
-   -- phys.drawWorld(world)
+    -- phys.drawWorld(world)
     texturedBox2d.drawWineGums(winegums)
-    if JUST_ONE_GUY then 
+    if JUST_ONE_GUY then
         texturedBox2d.drawSkinOver(fiveGuys[pickedFiveGuyIndex].b2d, fiveGuys[pickedFiveGuyIndex])
-       
-    else 
+    else
         for i = 1, #fiveGuys do
             texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
         end
-    
     end
-    
+
 
     for i = 1, #fiveGuys do
         --     texturedBox2d.drawNumbersOver(box2dGuys[i])
@@ -307,6 +347,53 @@ function scene.draw()
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.editguys, x, y, 0, sx, sy)
     end
+
+
+    -- render buttons on bottom in outside
+
+    --local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
+    --if less then
+    --    growl(1 + love.math.random() * .2)
+
+    --    toggleFunc(false)
+    --end
+
+    if true then
+        local size = h / 20
+        local x = 0
+        local y = h - size
+        love.graphics.rectangle('fill', x, y, size, size)
+        local a = ui.getUIRect('less-1', x, y, size, size)
+        ---print(inspect(a))
+        if a then
+            upsideDown = not upsideDown
+            -- print('Body:getLocalPoint(worldX (number), worldY (number))')
+        end
+
+        local x = size * 2
+        love.graphics.rectangle('fill', x, y, size, size)
+        local a = ui.getUIRect('less-1', x, y, size, size)
+        ---print(inspect(a))
+        if a then
+            toggleJoints()
+
+            -- print('Body:getLocalPoint(worldX (number), worldY (number))')
+        end
+
+        local x = size * 4
+        love.graphics.rectangle('fill', x, y, size, size)
+        local a = ui.getUIRect('less-1', x, y, size, size)
+        ---print(inspect(a))
+        if a then
+            if #winegums < 200 then
+                addWineGums()
+            end
+
+            -- print('Body:getLocalPoint(worldX (number), worldY (number))')
+        end
+    end
+
+
 
     if swipes.getTransition() then
         -- print('transition found in outside')

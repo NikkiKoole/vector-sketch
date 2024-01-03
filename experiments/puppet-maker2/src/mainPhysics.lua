@@ -25,6 +25,23 @@ local function makeRectPoly(w, h, x, y)
         )
 end
 
+local function makeRuitPoly(w, h, x, y)
+    return love.physics.newPolygonShape(
+            x, y - h / 2,
+            x + w / 2, y,
+            x, y + h / 2,
+            x - w / 2, y
+        )
+end
+local function makeRectPoly2(w, h, x, y)
+    return love.physics.newPolygonShape(
+            x - w / 2, y - h / 2,
+            x + w / 2, y - h / 2,
+            x + w / 2, y + h / 2,
+            x - w / 2, y + h / 2
+        )
+end
+
 local function capsuleXY(w, h, cs, x, y)
     -- cs == cornerSize
     local w2 = w / 2
@@ -312,22 +329,48 @@ local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
     local aud = fixtureA:getUserData()
     local bud = fixtureB:getUserData()
     if aud and bud then
-       
-       -- print(a,b)
+        -- print(a,b)
         --print(aud.bodyType, bud.bodyType)
-        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot'  or bud.bodyType == 'rfoot'))
+
+
+        if (aud.bodyType == 'winegum' or bud.bodyType == 'winegum') then
+            --print(normalimpulse, tangentimpulse)
+            if normalimpulse > 60 and tangentimpulse > 3 then
+                local index = math.ceil(love.math.random() * #winegumkisses)
+                local pitch = numbers.mapInto(normalimpulse, 60, 300, 2, .1)
+                local volume = numbers.mapInto(normalimpulse, 60, 300, .2, 1)
+                if pitch < .25 then pitch = .25 end
+                if volume < .2 then volume = .2 end
+
+                -- check if these 2 bodies have had a collision in the last second or so
+                -- print(normalimpulse, pitch, volume)
+
+                local stillPlayingPlonkForSimilarCollision = false
+                for i = 1, #playedPlonkSounds do
+                    if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud and playedPlonkSounds[i].timeAgo > 0 then
+                        stillPlayingPlonkForSimilarCollision = true
+                    end
+                end
+
+                if stillPlayingPlonkForSimilarCollision == false then
+                    table.insert(playedPlonkSounds, { aud = aud, bud = bud, timeAgo = 0 })
+                    playSound(winegumkisses[index], pitch, volume)
+                end
+            end
+        end
+
+
+        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot' or bud.bodyType == 'rfoot'))
             or (bud.bodyType == 'body' and aud.bodyType == 'body')
             or (bud.bodyType == 'head' and aud.bodyType == 'head')
             or (bud.bodyType == 'head' and aud.bodyType == 'lhand')
             or (bud.bodyType == 'head' and aud.bodyType == 'rhand')
             or (bud.bodyType == 'body' and aud.bodyType == 'lhand')
             or (bud.bodyType == 'body' and aud.bodyType == 'rhand')
+
         then
             --- print(normalimpulse)
-
-
-            
-           -- print(normalimpulse, tangentimpulse)
+            -- print(normalimpulse, tangentimpulse)
             if normalimpulse > 300 and tangentimpulse > 50 then
                 local index = math.ceil(love.math.random() * #rubberplonks)
                 local pitch = numbers.mapInto(normalimpulse, 300, 10000, 2, 1)
@@ -491,9 +534,13 @@ end
 
 lib.makeShape = function(shapeType, w, h)
     if (shapeType == 'rect2') then
-        return makeRectPoly2(w, h, 0, h / 2)
+        return makeRectPoly(w, h, 0, h / 2)
     elseif (shapeType == 'rect1') then
         return makeRectPoly(w, h, -w / 2, -h / 8)
+    elseif (shapeType == 'rect3') then
+        return makeRectPoly2(w, h, 0, 0)
+    elseif (shapeType == 'ruit') then
+        return makeRuitPoly(w, h, 0, 0)
     elseif (shapeType == 'capsule') then
         return love.physics.newPolygonShape(capsuleXY(w, h, w / 5, 0, h / 2))
     elseif (shapeType == 'capsule2') then
@@ -504,6 +551,10 @@ lib.makeShape = function(shapeType, w, h)
         return makeTrapeziumPoly(w, w * 1.2, h, 0, 0)
     elseif (shapeType == 'trapezium2') then
         return makeTrapeziumPoly(w, w * 1.2, h, 0, h / 2)
+    elseif (shapeType == 'circle') then
+        return love.physics.newCircleShape(0, 0, w)
+    elseif (shapeType == 'octagon') then
+        return love.physics.newPolygonShape(capsuleXY(w, h, w / 3, 0, 0))
     end
 end
 
@@ -576,14 +627,12 @@ end
 lib.removeDeadPointerJoints = function()
     local index = -1
     for i = #pointerJoints, 1, -1 do
-    
-            if (pointerJoints[i].joint and pointerJoints[i].joint:isDestroyed()) then
-                pointerJoints[i].joint     = nil
-                pointerJoints[i].jointBody = nil
-                table.remove(pointerJoints, i)
-            end
+        if (pointerJoints[i].joint and pointerJoints[i].joint:isDestroyed()) then
+            pointerJoints[i].joint     = nil
+            pointerJoints[i].jointBody = nil
+            table.remove(pointerJoints, i)
+        end
     end
-   
 end
 
 
@@ -740,7 +789,7 @@ lib.handlePointerPressed = function(x, y, id, cam)
         lib.killMouseJointIfPossible(id)
         table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
     end
-   -- print(#pointerJoints)
+    -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end
 
     return #temp > 0

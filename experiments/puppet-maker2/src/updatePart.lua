@@ -4,7 +4,7 @@ local mesh             = require 'lib.mesh'
 
 local lib              = {}
 
-lib.updatePart         = function(name, guy)
+lib.updatePart = function(name, guy)
     local values = guy.dna.values
     local creation = guy.dna.creation
     local multipliers = guy.dna.multipliers
@@ -153,9 +153,8 @@ lib.updatePart         = function(name, guy)
     end
 
     if name == 'potato' then
-       
         box2dGuyCreation.handleNeckAndHeadForPotato(guy.b2d, guy, creation.isPotatoHead, creation.hasNeck)
-        if (not creation.isPotatoHead and creation.hasNeck and not canvasCache.neckCanvas) then 
+        if (not creation.isPotatoHead and creation.hasNeck and not canvasCache.neckCanvas) then
             lib.updatePart('neck', guy)
         end
         if not creation.isPotatoHead then
@@ -173,11 +172,11 @@ lib.updatePart         = function(name, guy)
         end
 
         box2dGuyCreation.genericBodyPartUpdate(guy, 'head')
+        setCategories(guy)
     end
 
 
     if name == 'neck' then
-
         local neckIndex        = math.ceil(values.neck.shape)
         local part             = findPart('neck')
         local img              = part.imgs[neckIndex]
@@ -312,6 +311,7 @@ lib.updatePart         = function(name, guy)
         --end
     end
 end
+
 lib.updateAllParts     = function(guy)
     local creation = guy.dna.creation
 

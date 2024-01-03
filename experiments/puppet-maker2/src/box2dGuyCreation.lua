@@ -652,7 +652,7 @@ lib.rotateAllBodies = function(bodies, dt)
     -- for now i will just assume the same data for all.
 
     local creation = dna.getCreation()
-    local upsideDown = false
+    -- local upsideDown = false
     lastDt = dt
     for _, body in ipairs(bodies) do
         local fixtures = body:getFixtures()
@@ -679,7 +679,7 @@ lib.rotateAllBodies = function(bodies, dt)
             end
 
 
-            if (true) and not isBeingPointerJointed then
+            if (jointsEnabled) and not isBeingPointerJointed then
                 --local userData = fixture:getUserData()
 
 
@@ -978,7 +978,6 @@ lib.handleNeckAndHeadForHasNeck = function(box2dGuy, guy, willHaveNeck)
 end
 
 lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
-
     local groupId = guy.id
     if willBePotato and box2dGuy.head == nil or not willBePotato and box2dGuy.head then
         return
@@ -989,7 +988,6 @@ lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
     end
 
     if willBePotato then
-
         if (box2dGuy.neck) then
             box2dGuy.neck:destroy()
         end
@@ -1020,7 +1018,6 @@ lib.handleNeckAndHeadForPotato = function(box2dGuy, guy, willBePotato, hasNeck)
         local neck1
 
         if hasNeck then
-
             neck = makePart('neck', torso)
             neck1 = makePart('neck1', neck)
         end
@@ -1039,15 +1036,16 @@ end
 
 lib.toggleAllJointLimits = function(guy, value)
     local creation = guy.dna.creation
+    local b2d = guy.b2d
     if not creation.isPotatoHead and creation.hasNeck then
-        setJointLimitBetweenBodies(guy.head, guy.neck1, value, 'revolute')
-        setJointLimitBetweenBodies(guy.neck1, guy.neck, value, 'revolute')
-        setJointLimitBetweenBodies(guy.neck, guy.torso, value, 'revolute')
+        setJointLimitBetweenBodies(b2d.head, b2d.neck1, value, 'revolute')
+        setJointLimitBetweenBodies(b2d.neck1, b2d.neck, value, 'revolute')
+        setJointLimitBetweenBodies(b2d.neck, b2d.torso, value, 'revolute')
     end
-    setJointLimitBetweenBodies(guy.torso, guy.luleg, value, 'revolute')
-    setJointLimitBetweenBodies(guy.luleg, guy.llleg, value, 'revolute')
-    setJointLimitBetweenBodies(guy.torso, guy.ruleg, value, 'revolute')
-    setJointLimitBetweenBodies(guy.ruleg, guy.rlleg, value, 'revolute')
+    setJointLimitBetweenBodies(b2d.torso, b2d.luleg, value, 'revolute')
+    setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, value, 'revolute')
+    setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, value, 'revolute')
+    setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, value, 'revolute')
 end
 
 lib.isNullObject = function(partName, values)

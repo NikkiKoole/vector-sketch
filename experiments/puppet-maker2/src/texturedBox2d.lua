@@ -11,7 +11,7 @@ local box2dGuyCreation = require 'src.box2dGuyCreation'
 local lib              = {}
 
 
-local dots              = {
+local dots    = {
     love.graphics.newImage('assets/ui/colorpick/c1.png'),
     love.graphics.newImage('assets/ui/colorpick/c2.png'),
     love.graphics.newImage('assets/ui/colorpick/c3.png'),
@@ -20,11 +20,48 @@ local dots              = {
     love.graphics.newImage('assets/ui/colorpick/c6.png'),
     love.graphics.newImage('assets/ui/colorpick/c7.png'),
 }
-local circles           = {
+local circles = {
     love.graphics.newImage('assets/ui/circle1.png'),
     love.graphics.newImage('assets/ui/circle2.png'),
     love.graphics.newImage('assets/ui/circle3.png'),
     love.graphics.newImage('assets/ui/circle4.png'),
+}
+
+
+local ruits = {
+    love.graphics.newImage('assets/img/candyparts/ruit1-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/ruit1-line.png'),
+    love.graphics.newImage('assets/img/candyparts/ruit2-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/ruit2-line.png'),
+
+}
+local capsules = {
+    love.graphics.newImage('assets/img/candyparts/capsule1-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/capsule1-line.png'),
+    love.graphics.newImage('assets/img/candyparts/capsule2-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/capsule2-line.png'),
+
+}
+local circs = {
+    love.graphics.newImage('assets/img/candyparts/circle1-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/circle1-line.png'),
+    love.graphics.newImage('assets/img/candyparts/circle2-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/circle2-line.png'),
+}
+
+local octas = {
+    love.graphics.newImage('assets/img/candyparts/octa1-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/octa1-line.png'),
+    love.graphics.newImage('assets/img/candyparts/octa2-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/octa2-line.png'),
+
+}
+local rekts = {
+    love.graphics.newImage('assets/img/candyparts/rect1-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/rect1-line.png'),
+    love.graphics.newImage('assets/img/candyparts/rect2-shape.png'),
+    love.graphics.newImage('assets/img/candyparts/rect2-line.png'),
+
 }
 
 
@@ -565,29 +602,87 @@ local function createFittingScale(img, desired_w, desired_h)
 end
 
 
-lib.drawWineGums = function (items) 
-    for i = 1, #items do 
+lib.drawWineGums = function(items)
+    for i = 1, #items do
         local body = items[i].body
-        local img = dots[items[i].index]
+
         local color = items[i].color
-
+        local type = items[i].type
         local x, y = body:getPosition()
-        
-        love.graphics.setColor(color[1], color[2], color[3])
-        local sx, sy = createFittingScale(img, 400, 400)
-        love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
 
+        local factor = 1.1
+        local shade = 0.8
 
+        if type == 'circle' then
+            local rndIndex = (items[i].index % 2) + 1
+            local size = items[i].w
+            love.graphics.setColor(color[1], color[2], color[3])
+            local img = circs[rndIndex + 0]
+            local sx, sy = createFittingScale(img, size * 2.1, size * 2.1)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
 
-      --  love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
-        local imgIndex = (items[i].index % #circles) + 1
-        local img = circles[imgIndex]
-        love.graphics.setColor(0,0,0)
-        local sx, sy = createFittingScale(img, 350, 350)
-        love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
-       -- print(img,  body,color)
+            --  love.graphics.draw(img, x,y, body:getAngle(), sx, sy, img:getWidth()/2, img:getHeight()/2)
+            --  local imgIndex = (items[i].index % #circles) + 1
+            local img = circs[rndIndex + 1]
+            love.graphics.setColor(color[1] * shade, color[2] * shade, color[3] * shade)
+            local sx, sy = createFittingScale(img, size * 2, size * 2)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+            -- print(img,  body,color) end
+        end
+        if type == 'capsule2' then
+            local rndIndex = (items[i].index % 2) + 1
+            local w = items[i].w
+            local h = items[i].h
+            local img = capsules[rndIndex + 0]
+            love.graphics.setColor(color[1], color[2], color[3])
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+            local img = capsules[rndIndex + 1]
+            love.graphics.setColor(color[1] * shade, color[2] * shade, color[3] * shade)
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+        end
+        if type == 'ruit' then
+            local rndIndex = (items[i].index % 2) + 1
+            local w = items[i].w
+            local h = items[i].h
+            local img = ruits[rndIndex + 0]
+            love.graphics.setColor(color[1], color[2], color[3])
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+            local img = ruits[rndIndex + 1]
+            love.graphics.setColor(color[1] * shade, color[2] * shade, color[3] * shade)
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+        end
+        if type == 'octagon' then
+            local rndIndex = (items[i].index % 2) + 1
+            local w = items[i].w
+            local h = items[i].h
+            local img = octas[rndIndex + 0]
+            love.graphics.setColor(color[1], color[2], color[3])
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+            local img = octas[rndIndex + 1]
+            love.graphics.setColor(color[1] * shade, color[2] * shade, color[3] * shade)
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+        end
+
+        if type == 'rect3' then
+            local rndIndex = (items[i].index % 2) + 1
+            local w = items[i].w
+            local h = items[i].h
+            local img = rekts[rndIndex + 0]
+            love.graphics.setColor(color[1], color[2], color[3])
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+            local img = rekts[rndIndex + 1]
+            love.graphics.setColor(color[1] * shade, color[2] * shade, color[3] * shade)
+            local sx, sy = createFittingScale(img, w * factor, h * factor)
+            love.graphics.draw(img, x, y, body:getAngle(), sx, sy, img:getWidth() / 2, img:getHeight() / 2)
+        end
     end
-
 end
 
 lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
@@ -614,14 +709,14 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
         love.graphics.setColor(1, 1, 1, 1)
     end
 
-   -- if not skipNeck then
-  --print(canvasCache.neckCanvas, box2dGuy.neck, box2dGuy.neck1)
-        if canvasCache.neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
-            love.graphics.setColor(1, 1, 1, 1)
-            renderCurvedObjectGrow('neck', 'neck1', 'head', 50, canvasCache.neckCanvas, canvasCache.neckmesh, box2dGuy, 1,
-                multipliers.neck.wMultiplier / (4 * dpi / shrink))
-            love.graphics.draw(canvasCache.neckmesh, 0, 0, 0, 1, 1)
-        end
+    -- if not skipNeck then
+    --print(canvasCache.neckCanvas, box2dGuy.neck, box2dGuy.neck1)
+    if canvasCache.neckCanvas and box2dGuy.neck and box2dGuy.neck1 then
+        love.graphics.setColor(1, 1, 1, 1)
+        renderCurvedObjectGrow('neck', 'neck1', 'head', 50, canvasCache.neckCanvas, canvasCache.neckmesh, box2dGuy, 1,
+            multipliers.neck.wMultiplier / (4 * dpi / shrink))
+        love.graphics.draw(canvasCache.neckmesh, 0, 0, 0, 1, 1)
+    end
     --end
 
     if canvasCache.earCanvas then
@@ -674,8 +769,8 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
                 (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
                 (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
-       
-                local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
+
+        local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
         local destX = cx
         local destY = cy
         if guy.tweenVars.lookAtCounter > 0 then
@@ -683,7 +778,7 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             destY = guy.tweenVars.lookAtPosY
         end
 
-      
+
         local angle, dist = getAngleAndDistance(cx, cy, destX, destY)
         local px1, py1 = setAngleAndDistance(0, 0, angle - r, math.min(dist, 10), 1, 1)
         local pupillx, pupilly = facePart:getWorldPoint(
@@ -692,7 +787,7 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
 
 
         local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
-       
+
         local destX = cx
         local destY = cy
         if guy.tweenVars.lookAtCounter > 0 then
@@ -794,7 +889,8 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
     end
 
     if not box2dGuyCreation.isNullObject('leghair', values) and canvasCache.leghairCanvas then
-        renderCurvedObject('luleg', 'llleg', 'lfoot', canvasCache.leghairCanvas, canvasCache.leghairMesh, box2dGuy, -1,
+        renderCurvedObject('luleg', 'llleg', 'lfoot', canvasCache.leghairCanvas, canvasCache.leghairMesh, box2dGuy,
+            -1,
             (multipliers.leg.wMultiplier * multipliers.leghair.wMultiplier) / (4 * dpi))
         love.graphics.draw(canvasCache.leghairMesh, 0, 0, 0, 1, 1)
 
@@ -813,7 +909,8 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
     end
 
     if not box2dGuyCreation.isNullObject('armhair', values) and canvasCache.armhairCanvas then
-        renderCurvedObject('luarm', 'llarm', 'lhand', canvasCache.armhairCanvas, canvasCache.armhairMesh, box2dGuy, -1,
+        renderCurvedObject('luarm', 'llarm', 'lhand', canvasCache.armhairCanvas, canvasCache.armhairMesh, box2dGuy,
+            -1,
             (multipliers.arm.wMultiplier * multipliers.armhair.wMultiplier) / (4 * dpi))
         love.graphics.draw(canvasCache.armhairMesh, 0, 0, 0, 1, 1)
 

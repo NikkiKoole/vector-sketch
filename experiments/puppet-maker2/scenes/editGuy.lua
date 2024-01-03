@@ -55,7 +55,7 @@ end
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local interacted = phys.handlePointerPressed(x, y, id, cam)
-   -- print(interacted)
+    -- print(interacted)
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)
         if x >= scroller.xPos and x < scroller.xPos + scrollItemWidth then
@@ -176,10 +176,8 @@ local function attachCallbacks()
     end)
 
     Signal.register('click-scroll-list-item', function(x, y)
-        
         editGuyUI.scrollList(editingGuy, false, x, y)
         handleCameraAfterCatgeoryChange()
-
     end)
 
     Signal.register('throw-settings-scroll-area', function(dxn, dyn, speed)
@@ -233,53 +231,52 @@ end
 
 -- scene methods
 
-function handleCameraAfterCatgeoryChange(toBody) 
+function handleCameraAfterCatgeoryChange(toBody)
     --print('maybeTweencamera')
-  
-    local p= findPart(uiState.selectedCategory)
-    local categoryKind =  p.kind
+
+    local p = findPart(uiState.selectedCategory)
+    local categoryKind = p.kind
     --print(inspect(cam))
 
     local w, h = love.graphics.getDimensions()
-    local vp = math.min(w,h) / cam.scale
+    local vp = math.min(w, h) / cam.scale
     --print(vp, cam.scale)
-    local camData = {x= cam.translationX, y =cam.translationY, w=vp, h=vp }
+    local camData = { x = cam.translationX, y = cam.translationY, w = vp, h = vp }
 
-    --if categoryKind ~= camCenteredOn then 
-       -- print('need to tween!!')
-        if (categoryKind == 'body'or toBody) then
-            local w, h = love.graphics.getDimensions()
-            camera.setCameraViewport(cam, w, h)
-            camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
-    --local camData = {x= cam.translationX, y =cam.translationY }
-            Timer.tween(.25, camData, {x= w / 2, y=h / 2 - 1000, w=3000, h= 3000 })
-        else
+    --if categoryKind ~= camCenteredOn then
+    -- print('need to tween!!')
+    if (categoryKind == 'body' or toBody) then
+        local w, h = love.graphics.getDimensions()
+        camera.setCameraViewport(cam, w, h)
+        camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
+        --local camData = {x= cam.translationX, y =cam.translationY }
+        Timer.tween(.25, camData, { x = w / 2, y = h / 2 - 1000, w = 3000, h = 3000 })
+    else
         if (categoryKind == 'head') then
-
             -- get the head position
             --print(editingGuy.dna.creation.isPotatoHead)
 
-            local creation =  editingGuy.dna.creation
+            local creation = editingGuy.dna.creation
             local isPotatoHead = creation.isPotatoHead
             local partToCenterOn = isPotatoHead and editingGuy.b2d.torso or editingGuy.b2d.head
             --print(partToCenterOn)
-            local size = isPotatoHead and (math.max(creation.torso.w, creation.torso.h)) 
-            or  (math.max(creation.head.w, creation.head.h)) * 1.5
-            local yOffset = isPotatoHead and 0 or creation.head.h/2 
+            local size = isPotatoHead and (math.max(creation.torso.w, creation.torso.h))
+                or (math.max(creation.head.w, creation.head.h)) * 1.5
+            local yOffset = isPotatoHead and 0 or creation.head.h / 2
             local px, py = partToCenterOn:getPosition()
             local w, h = love.graphics.getDimensions()
             camera.setCameraViewport(cam, w, h)
-            camera.centerCameraOnPosition(px, py - yOffset , size, size)
-            Timer.tween(.25, camData, {x= px, y=py- yOffset, w=size, h=size })
-        end end
-        Timer.during(.3, function(dt)  
-            camera.setCameraViewport(cam, camData.w, camData.h)
-            camera.centerCameraOnPosition(camData.x, camData.y , camData.w, camData.h) 
-        end)
-        camCenteredOn = categoryKind
+            camera.centerCameraOnPosition(px, py - yOffset, size, size)
+            Timer.tween(.25, camData, { x = px, y = py - yOffset, w = size, h = size })
+        end
+    end
+    Timer.during(.3, function(dt)
+        camera.setCameraViewport(cam, camData.w, camData.h)
+        camera.centerCameraOnPosition(camData.x, camData.y, camData.w, camData.h)
+    end)
+    camCenteredOn = categoryKind
     --end
 end
-
 
 function scene.handleAudioMessage(msg)
     if msg.type == 'played' then
@@ -300,10 +297,11 @@ function scene.unload()
     for i = #b, 1, -1 do
         b[i]:destroy()
     end
+    upsideDown = false
+    jointsEnabled = true
 end
 
 function scene.load()
-    
     phys.resetLists()
     bgColor = creamColor
     editGuyUI.loadUIImages()
@@ -329,7 +327,6 @@ function scene.load()
         selectedCategory = 'body',
         selectedColoringLayer = 'bgPal',
         selectedChildCategory = nil,
-
     }
 
     camCenteredOn = 'body'
@@ -370,17 +367,13 @@ function scene.load()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
 
-    handleCameraAfterCatgeoryChange() 
-  --  local w, h = love.graphics.getDimensions()
-  --  camera.centerCameraOnPosition(0, 0, w, h)
-  --  cam:update(w, h)
+    handleCameraAfterCatgeoryChange()
+    --  local w, h = love.graphics.getDimensions()
+    --  camera.centerCameraOnPosition(0, 0, w, h)
+    --  cam:update(w, h)
 
     Timer.tween(.5, scroller, { position = 8 })
 end
-
-
-
-
 
 function scene.update(dt)
     if introSound:isPlaying() then

@@ -74,6 +74,12 @@ function setCategories(guy)
                     skip = true
                 end
             end
+            if not creation.hasNeck then
+                local name = parts[i].name
+                if name == 'neck' then
+                    skip = true
+                end
+            end
 
             if not skip then
                 table.insert(categories, parts[i].name)
@@ -204,7 +210,7 @@ end
 function saveDNA5File()
     local saveData = {}
 
-    
+
     for i = 1, #fiveGuys do
         saveData[i] = deepcopy(fiveGuys[i].dna)
         saveData[i].creation = deepcopy(dna.getCreation()) -- not writing the real creation parts, we let that regenerate
@@ -230,25 +236,10 @@ function saveDNA5File()
     --love.system.openURL(openURL)
 end
 
-function love.keypressed(key)
-    if key == "escape" then love.event.quit() end
-    if key == 'p' then
-        if true then
-            if (PROF_CAPTURE) then
-                if profiling then
-                    ProFi:stop()
-                    ProFi:writeReport('profilingReport.txt')
-                    profiling = false
-                else
-                    ProFi:start()
-                    profiling = true
-                end
-            end
-        end
-    end
-end
-
 function love.load()
+    winegums = {}
+    upsideDown = false
+    jointsEnabled = true
     phys.setupWorld()
 
     mainVolume = 1
@@ -304,6 +295,15 @@ function love.load()
         love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
         love.graphics.newImage('assets/img/tiles/tiles2.png'),
         love.graphics.newImage('assets/img/tiles/tiles.png'),
+    }
+
+
+    winegumkisses = {
+        love.audio.newSource('assets/sounds/fx/winegum-kiss1.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/winegum-kiss2.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/winegum-kiss3.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/winegum-kiss4.wav', 'static'),
+        love.audio.newSource('assets/sounds/fx/winegum-kiss5.wav', 'static'),
     }
 
     hum = {
@@ -432,7 +432,50 @@ function love.load()
     --SM.load("outside")
 end
 
+function toggleJoints()
+    jointsEnabled = not jointsEnabled
+    for i = 1, #fiveGuys do
+        if (fiveGuys[i].b2d) then
+            box2dGuyCreation.toggleAllJointLimits(fiveGuys[i], jointsEnabled)
+        end
+    end
+    if jointsEnabled then
+        for i = 1, #fiveGuys do
+            updatePart.resetPositions(fiveGuys[i])
+        end
+    end
+end
+
 function love.update(dt)
+    function love.keypressed(key)
+        if key == "escape" then love.event.quit() end
+        if key == 'p' then
+            if true then
+                if (PROF_CAPTURE) then
+                    if profiling then
+                        ProFi:stop()
+                        ProFi:writeReport('profilingReport.txt')
+                        profiling = false
+                    else
+                        ProFi:start()
+                        profiling = true
+                    end
+                end
+            end
+        end
+        if key == 'u' then
+            upsideDown = not upsideDown
+            print('upsidedown', upsideDown)
+        end
+        if key == 'w' then
+            addWineGums()
+        end
+        if key == 'j' then
+            toggleJoints()
+        end
+        print(key)
+    end
+
     if true then
         prof.push('frame')
         --    lurker.update()
