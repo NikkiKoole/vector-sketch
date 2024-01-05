@@ -8,8 +8,8 @@ function scene.modify(obj)
 end
 
 function gotoNext()
-    Timer.tween(.5, fluxObject, { alpha1 = 0, alpha2 = 0 }, 'out-bounce')
-    Timer.after(.6,
+    Timer.tween(.3, fluxObject, { alpha1 = 0, alpha2 = 0 }, 'out-bounce')
+    Timer.after(.4,
         function()
             Timer.clear()
             SM.load("intro")

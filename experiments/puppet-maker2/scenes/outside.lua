@@ -368,7 +368,7 @@ function scene.draw()
     --end
 
     if true then
-        local size = h / 12
+        local size = h / 8
         local x = 0
         local y = h - size * 2 * 1.2
         --love.graphics.rectangle('fill', x, y, size, size)
@@ -381,16 +381,16 @@ function scene.draw()
 
         if not upsideDown then
             local sx, sy = createFittingScale(ui2.bigbuttons.upside, size, size)
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(ui2.bigbuttons.upside, x, y, 0, sx, sy)
             love.graphics.setColor(0, 0, 0)
             love.graphics.draw(ui2.bigbuttons.upsidemask, x, y, 0, sx, sy)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(ui2.bigbuttons.upside, x, y, 0, sx, sy)
         else
             local sx, sy = createFittingScale(ui2.bigbuttons.downside, size, size)
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(ui2.bigbuttons.downside, x, y, 0, sx, sy)
             love.graphics.setColor(0, 0, 0)
             love.graphics.draw(ui2.bigbuttons.downsidemask, x, y, 0, sx, sy)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(ui2.bigbuttons.downside, x, y, 0, sx, sy)
         end
 
         if a then
@@ -437,10 +437,11 @@ function scene.draw()
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
         local sx, sy = createFittingScale(ui2.bigbuttons.winegum, size, size)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(ui2.bigbuttons.winegum, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.winegummask, x + 3, y + 3, 0, sx, sy)
+
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(ui2.bigbuttons.winegum, x, y, 0, sx, sy)
 
         if a then
             if #winegums < 200 then

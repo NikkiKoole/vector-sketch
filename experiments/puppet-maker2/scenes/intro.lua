@@ -107,6 +107,7 @@ local function randomMiSound()
     end
     return sound
 end
+
 local function randomPoSound()
     local sound = poSound1
     if love.math.random() < 0.2 then
@@ -315,6 +316,7 @@ local function last()
 
     Timer.tween(.4, fluxObject, { puppetMakerAlpha = 0.15 })
     makeRandomMipoSound()
+    Timer.after(10, gotoEditAfterTime)
 end
 
 function scene.load()
@@ -459,6 +461,24 @@ local function getDistance(x1, y1, x2, y2)
     return distance
 end
 
+function gotoEditAfterTime()
+    local w, h = love.graphics.getDimensions()
+    local size = w / 5
+    local i = pickedFiveGuyIndex
+    -- for i = 1, #circles do
+    local x2 = (i - 1) * size
+    local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
+        fluxObject.circlesY5, }
+    local y2 = (h - size) * ys[i]
+    --if getDistance(x, y, x2 + size / 2, y2 + size / 2) < ((size / 2) - (size / 10)) then
+    swipes.doCircleInTransition(x2 + size / 2, y2 + size / 2, function()
+        pickedFiveGuyIndex = i
+        SM.unload('intro')
+        SM.load('editGuy')
+    end)
+    --end
+    --end
+end
 
 function pointerPressed(x, y, id)
     --

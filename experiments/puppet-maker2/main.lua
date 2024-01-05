@@ -416,7 +416,7 @@ function love.load()
         saveDNA5File()
     end
     DEBUG_FIVE_GUYS_IN_EDIT = false
-    pickedFiveGuyIndex = 1
+    pickedFiveGuyIndex = 3
 
 
     -- trying to render portraits of the five guys!
