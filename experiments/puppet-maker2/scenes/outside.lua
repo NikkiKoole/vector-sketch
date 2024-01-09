@@ -241,7 +241,7 @@ end
 local delta = 0
 function scene.update(dt)
     delta = delta + dt
-    Timer.update(dt)
+    -- Timer.update(dt)
     phys.handleUpdate(dt, cam)
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
     --   print(love.audio.getActiveSourceCount())
