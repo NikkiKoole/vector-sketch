@@ -175,7 +175,7 @@ lib.generateParts = function()
 
     local hairUrls = {
         'assets/parts/hair1.png', 'assets/parts/hair2.png', 'assets/parts/hair3.png', 'assets/parts/hair4.png',
-        'assets/parts/hair5.png', 'assets/parts/hair6.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
+        'assets/parts/hair5.png', 'assets/parts/hair6NEW.png', 'assets/parts/hair7.png', 'assets/parts/hair8.png',
         'assets/parts/hair9.png', 'assets/parts/hair10.png', 'assets/parts/hair11.png', 'assets/parts/hair1x.png',
         'assets/parts/hair2x.png', 'assets/parts/haarnew1.png', 'assets/parts/haarnew2.png', 'assets/parts/haarnew3.png',
         'assets/parts/haarnew4.png',

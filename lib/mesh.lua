@@ -449,13 +449,44 @@ local function addToImageCache(url, settings)
          local wrap = settings and settings.wrap or 'clampzero'
          local filter = settings and settings.filter or 'linear'
          --print('making texture', url)
-         local img = love.graphics.newImage(url, { mipmaps = true })
+
+       --  local imgBefore = love.graphics.newImage(url)
+      --   local data = love.image.newImageData( url )
+         --local data = imgBefore:getData()
+      --   print(inspect(data))
+
+
+        -- local newData = ''
+        -- for x =0, imgBefore:getWidth()-1 do 
+         --   for y = 0, imgBefore:getHeight()-1 do 
+              -- local data:getPixel(x,y)
+            --   local r, g, b, a = data:getPixel( x, y )
+           --    newData = newData .. r
+          --  end 
+       --  end
+        
+         --local imageData = love.image.newImageData(imgBefore:getWidth(), imgBefore:getHeight(), 'r8', newData)
+        -- local img =  love.graphics.newImage(imageData)
+
+
+
+
+
+         local img = love.graphics.newImage(url, {dpiscale=1})
          img:setWrap(wrap)
          img:setFilter(filter, filter)
          _imageCache[url] = img
+
+        
       end
    end
 end
+
+function tablelength(T)
+   local count = 0
+   for _ in pairs(T) do count = count + 1 end
+   return count
+ end
 
 mesh.getImage = function(url, settings)
    if not _imageCache[url] then
@@ -465,6 +496,8 @@ mesh.getImage = function(url, settings)
          --     print('couldnt find image ', url)
       end
    end
+ -- print(inspect(_imageCache))
+  print(tablelength(_imageCache))
    return _imageCache[url]
 end
 

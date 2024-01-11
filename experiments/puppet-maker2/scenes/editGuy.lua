@@ -157,7 +157,7 @@ end
 
 
 
-if false then
+if true then
     function love.wheelmoved(dx, dy)
         if true then
             local newScale = cam.scale * (1 + dy / 10)

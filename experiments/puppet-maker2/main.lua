@@ -597,9 +597,9 @@ function love.draw()
         prof.pop('frame')
     end
     --  love.graphics.setColor(1, 1, 1, 1)
-    --  local stats = love.graphics.getStats()
-    --  love.graphics.print(inspect(stats), 10, 10)
-    -- love.graphics.print(
+      local stats = love.graphics.getStats()
+      love.graphics.print(inspect(stats), 10, 10)
+     --love.graphics.print(
     --     world:getBodyCount() ..
     --     '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
     --     10)
