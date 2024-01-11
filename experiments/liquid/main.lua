@@ -24,11 +24,15 @@ end
 function love.load()
    maxMass = 1.0
    maxCompress = 0.02
+    maxCompress = 0.000002
    minMass = 0.0001
    maxSpeed = 1.0
    minFlow = 0.01
    
 
+   autoWater = false
+   loopWater = true
+   
    map = {}
    for x =0, gridWidth+1 do 
       map[x] = {}
@@ -64,7 +68,7 @@ function simulateCompression()
 
    
       for x =1, gridWidth do
-         for y = 1, gridHeight+1 do
+         for y = 1, gridHeight+ (loopWater and 1 or 0) do
          local skip = false
          if map[x][y].type == blocktype.solid then skip = true end
 
@@ -77,8 +81,10 @@ function simulateCompression()
 
          -- block below
          local yBelow = y+1
-         if (y+1 > gridHeight) then
+        
+         if (loopWater and  y+1 > gridHeight ) then
             yBelow = 1 -- make the water go round
+        
          end
           
          if map[x][yBelow] ~= blocktype.air then
@@ -165,6 +171,19 @@ function simulateCompression()
       end
       
    end
+
+  
+   if autoWater then
+      for x =1, gridWidth do
+         local y = 1
+         if map[x][y].type ~= solid then
+            map[x][y].type = blocktype.water
+            map[x][y].mass =  maxMass
+            map[x][y].new_mass = maxMass
+         end
+      end
+   end
+  
 end
 
 
@@ -193,9 +212,10 @@ function love.draw()
    end
 
     love.graphics.setColor(1,0,1)
-   love.graphics.print('click with mouse to draw, press (w)ater, (s)olid',-1, -1)
+    love.graphics.print('click with mouse to draw, press (w)ater, (s)olid, (l)oopWater, (a)utoWater',-1, -1)
    love.graphics.setColor(1,1,1)
-   love.graphics.print('click with mouse to draw, press (w)ater, (s)olid')
+   love.graphics.print('click with mouse to draw, press (w)ater, (s)olid, (l)oopWater, (a)utoWater')
+
 end
 
 function love.mousepressed(x,y, button)
@@ -212,8 +232,8 @@ function love.mousepressed(x,y, button)
        if yi>=1 and yi<=gridHeight then
           map[xi][yi].type = t
           if (t ==blocktype.water ) then
-             map[xi][yi].mass =  maxMass
-             map[xi][yi].new_mass = maxMass
+             map[xi][yi].mass =  maxMass*10
+             map[xi][yi].new_mass = maxMass*10
           else
              map[xi][yi].mass = 0
              map[xi][yi].new_mass = 0
@@ -226,5 +246,14 @@ function love.keypressed(k)
    if k == 'escape' then 
       love.event.quit()
    end
+   if k == 'l' then
+       --autoWater = false
+      loopWater = not loopWater
+   end
+    if k == 'a' then
+       --autoWater = false
+      autoWater = not autoWater
+    end
+    print(autoWater, loopWater)
 end
 
