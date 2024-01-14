@@ -598,6 +598,8 @@ function scene.draw()
             local x2 = (i - 1) * size
             local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
                 fluxObject.circlesY5, }
+            i = (i - 1) % 5 + 1
+
             local y2 = (h - size) * ys[i]
             love.graphics.setColor(1, 1, 1)
             love.graphics.circle('fill', x2 + size / 2, y2 + size / 2, size / 2 - (size / 10))
@@ -619,7 +621,9 @@ function scene.draw()
             local x2 = (i - 1) * size
             local ys = { fluxObject.circlesY1, fluxObject.circlesY2, fluxObject.circlesY3, fluxObject.circlesY4,
                 fluxObject.circlesY5, }
+            i = (i - 1) % 5 + 1
             local y2 = (h - size) * ys[i]
+
             love.graphics.setColor(1, 1, 1)
             love.graphics.circle('fill', x2 + size / 2, y2 + size / 2, size / 2 - (size / 10))
         end

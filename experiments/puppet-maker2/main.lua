@@ -39,7 +39,9 @@ local texturedBox2d       = require 'src.texturedBox2d'
 local box2dGuyCreation    = require 'src.box2dGuyCreation'
 local DEBUG_PROFILER      = false
 local LOAD_AND_SAVE_FILES = true
+local canvas              = require 'lib.canvas'
 
+canvas.setShrinkFactor(4)
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
 if DEBUG_PROFILER == false then
     prof.push = function(a)
@@ -597,9 +599,9 @@ function love.draw()
         prof.pop('frame')
     end
     --  love.graphics.setColor(1, 1, 1, 1)
-      local stats = love.graphics.getStats()
-      love.graphics.print(inspect(stats), 10, 10)
-     --love.graphics.print(
+    local stats = love.graphics.getStats()
+    love.graphics.print(inspect(stats), 10, 10)
+    --love.graphics.print(
     --     world:getBodyCount() ..
     --     '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
     --     10)

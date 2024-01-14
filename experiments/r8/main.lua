@@ -1,117 +1,101 @@
-local lib = {}
-local vivid = require 'vendor.vivid'
-local geom = require 'lib.geom'
+local ffi = require("ffi")
+
+function love.load()
+   local url = 'pupil11.png'
+   defaultImage = love.graphics.newImage(url)
+   r8Image = makeR8Image(url)
 
 
-local shrinkFactor = 4
+   ear1 = love.graphics.newImage('earx1.png')
+   ear1mask = love.graphics.newImage('earx1-maskT2.png')
+    r8Maks = makeR8Image('earx1-maskT2.png')
+   
 
-lib.setShrinkFactor = function(value)
-   shrinkFactor = value
+   
+   --  ear1mask = makeR8Image('earx1-mask.png')
+
+   tex1 =  love.graphics.newImage('texture-type0.png')
+   tex2 =  love.graphics.newImage('texture-type1.png')
+   canvas =  love.graphics.newImage( makeTexturedCanvas(ear1, ear1mask, nil, {1,1,1}, 5, tex2, {0,0,1}, 5, 0, 1,
+                                                        {1,0,0}, 5,
+                                                        1, 1, nil))
+   
+   
 end
-lib.getShrinkFactor = function()
-   return shrinkFactor
-end
---lib.getShrinkFactor = function() return shrinkFactor end
-local mask_effect = love.graphics.newShader [[
-   vec4 effect (vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
-         // a discarded pixel wont be applied as the stencil.
-         discard;
-      }
-      return vec4(1.0);
-   }
-]]
 
-local ShapeShader = love.graphics.newShader [[
-	
-	// Effect that renders the shape of a image
-	vec4 effect(vec4 Color, Image Texture, vec2 textureCoord, vec2 pixelCoord) {
-		
-		// Get the pixel color at the given texture
-		vec4 pixel = Texel(Texture, textureCoord);
-		
-		// If it's alpha is higher than zero
-		if ( pixel.a > 0.0 ) {
-			
-			// If it's not black
-			if ( pixel.r > 0.0 || pixel.g > 0.0 || pixel.b > 0.0 ) {
-				
-				// Return the setColor value
-				return Color;
-				
-			}
-			
-		}
-		
-		// Return invisible color
-		return vec4(0.0, 0.0, 0.0, 0.0);
-		
-	}
-	
-]]
+
+function makeR8Image(url)
+   local imageData     = love.image.newImageData(url)
+   local width, height = imageData:getDimensions()
 
 
 
+   
+   
+   local components = 1
+   local mem = love.data.newByteData(width * height * components )
+   local pointer    = ffi.cast("uint8_t*", imageData:getFFIPointer()) -- imageData has one byte per channel per pixel.
+   local uint8array = ffi.cast('uint8_t*', mem:getFFIPointer()) 
 
--- only used for some ui thing
-lib.renderMaskedTexture = function(maskShape, texture, x, y, sx, sy)
-   if not texture or not maskShape then return end
-   if texture == 1 then return end
 
-   local bw, bh = maskShape:getDimensions()
-   local iw, ih = texture:getDimensions()
-   local s = math.max(bw / iw, bh / ih)
 
-   local function myStencilFunction()
-      love.graphics.setShader(mask_effect)
-      love.graphics.draw(maskShape, x, y, 0, sx, sy)
-      love.graphics.setShader()
+   
+   -- faster!
+   if true then
+      local startTime = love.timer.getTime()
+      local pixelCount = width * height
+      for i = 0, 4*pixelCount-1, 4 do -- Loop through the pixels, four values at a time (RGBA).
+         local a =  255-pointer[i+3] 
+         uint8array[math.floor(i/4)] = a * 255
+      end
+
+      local time1 = love.timer.getTime() - startTime
+      print('pointer into imageData', time1)
+
    end
 
-   love.graphics.stencil(myStencilFunction, "replace", 1)
-   love.graphics.setStencilTest("greater", 0)
-   love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
-   love.graphics.setStencilTest()
-end
-
-
-
-
--- lifted from alpha padder
-local function smoocheCanvas(canvas)
-   local imageData = canvas:newImageData()
-   local width, height = imageData:getDimensions()
-   local format = imageData:getFormat()
-   local result = love.image.newImageData(width, height, format)
-   local count = 0
-
-   for y = 0, height - 1 do
-      for x = 0, width - 1 do
-         local r, g, b, a = imageData:getPixel(x, y)
-         --if a > biggestAlpha then biggestAlpha = a end
-
-         if a == 0 then
-            for x2 = -1, 1 do
-               for y2 = -1, 1 do
-                  if (x + x2) >= 0 and (x + x2) <= width - 1 then
-                     if (y + y2) >= 0 and (y + y2) <= height - 1 then
-                        local r, g, b, a = imageData:getPixel(x + x2, y + y2)
-                        if (a > 0) then
-                           count = count + 1
-                           result:setPixel(x, y, r, g, b, 0)
-                        end
-                     end
-                  end
-               end
-            end
-         else
-            result:setPixel(x, y, r, g, b, a * 1)
+   -- slower
+   if true then
+      local startTime = love.timer.getTime()
+      for y = 0, height-1  do
+         for x = 0, width-1 do
+            local r, g, b, a = imageData:getPixel(x, y)
+            
+            local index = y * width + x
+            uint8array[index + 0] = a * 255
          end
       end
+      local time1 = love.timer.getTime() - startTime
+      print('getPixel', time1)
    end
-   return result
+   
+   local imageData = love.image.newImageData( width, height, 'r8', mem )
+   return  love.graphics.newImage( imageData )
+ 
 end
 
+
+function love.draw()
+   love.graphics.clear(1,1,0)
+   love.graphics.setColor(1,1,1)
+   if defaultImage then 
+      love.graphics.draw(defaultImage)
+   end
+   if (r8Image) then
+      love.graphics.draw(r8Image, r8Image:getWidth())
+   end
+    if (canvas) then
+      love.graphics.draw(canvas, r8Image:getWidth()*2)
+   end
+   --print(love.graphics.getStats().texturememory)
+end
+
+function love.keypressed(key)
+   if (key == 'escape') then love.event.quit() end
+end
+
+
+local shrinkFactor = 1
 local function getDrawParams(flipx, flipy, imgw, imgh)
    local sx = flipx
    local sy = flipy
@@ -121,14 +105,6 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
 
    return sx, sy, ox, oy
 end
-
-local function myStencilFunction(mask, flipx, flipy, imgw, imgh)
-   love.graphics.setShader(mask_effect)
-   local sx, sy, ox, oy = getDrawParams(flipx, flipy, imgw, imgh)
-   love.graphics.draw(mask, 0, 0, 0, sx, sy, ox, oy)
-   love.graphics.setShader()
-end
-
 
 -- only thing thats no longer possible == using an alpha for the background color
 local maskShader = love.graphics.newShader([[
@@ -142,7 +118,8 @@ local maskShader = love.graphics.newShader([[
         vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
       // multiplying here with backgroundCOlor makes everything transparent....
       // not exactly what I'm after, but better then nothing. (I suppose)
-        return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a  );
+// CHANGED here  Texel(mask, uv).r *  --- >   Texel(mask, uv).a *
+        return vec4(patternMix, Texel(mask, uv).a * backgroundColor.a  );
 	}
 ]])
 
@@ -150,14 +127,14 @@ local maskShader = love.graphics.newShader([[
 
 
 
-lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
+makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, texture2, color2, alpha2, texRot, texScale,
                                   lineColor, lineAlpha,
                                   flipx, flipy, renderPatch)
    if true then
       local lineartColor = lineColor or { 0, 0, 0, 1 }
       local lw, lh = lineart:getDimensions()
       --  local dpiScale = 1 --love.graphics.getDPIScale()
-      local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1, format = 'rgba8' })
+      local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
 
       love.graphics.setCanvas({ canvas, stencil = false }) --<<<
       --
@@ -165,6 +142,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       -- the reason for outline ghost stuff is this color
       -- its not a simple fix, you could make it so we use color A if some layer is lpha 0 etc
       love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
+ love.graphics.clear(color1[1], color1[2], color1[3], 0) ---<<<<
+
 
 
       love.graphics.setShader(maskShader)
@@ -221,8 +200,9 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       end
 
 
-      love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
+     
       local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
+       love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
       love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
       love.graphics.setColor(0, 0, 0) --- huh?!
@@ -238,9 +218,10 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
 
 
-      local otherCanvas = love.graphics.newCanvas(lw / shrinkFactor, lh / shrinkFactor, { format = 'rgba8' })
+      local otherCanvas = love.graphics.newCanvas(lw / shrinkFactor, lh / shrinkFactor)
       love.graphics.setCanvas({ otherCanvas, stencil = false }) --<<<
       love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
+       love.graphics.clear(color1[1], color1[2], color1[3], 0) ---<<<<
       love.graphics.setColor(1, 1, 1) --- huh?!
       love.graphics.draw(canvas, 0, 0, 0, 1 / shrinkFactor, 1 / shrinkFactor)
       love.graphics.setCanvas() --- <<<<<
@@ -258,6 +239,3 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
    -- return nil -- love.image.newImageData(mask)
 end
 
-
-
-return lib;
