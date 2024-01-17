@@ -45,9 +45,13 @@ lib.startAudioThread          = function()
    function getFileContents(path)
       print(path, '../..' .. path)
       local f = io.open(path, "rb") or io.open('../../' .. path, "rb")
-      assert(f)
-      local content = f:read("*all")
-      f:close()
+      local content
+      if f then
+         --assert(f)
+         content = f:read("*all")
+         f:close()
+      end
+
       return content
    end
 
@@ -58,7 +62,7 @@ lib.startAudioThread          = function()
       _thread:start()
    else
       local code = getFileContents('lib/audio.lua')
-      _thread = love.thread.newThread(code)
+      _thread = love.thread.newThread(code or 'audio.lua')
       _thread:start()
    end
 

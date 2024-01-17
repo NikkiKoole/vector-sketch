@@ -1,4 +1,4 @@
-local debug = true
+local debug = false
 
 
 function love.conf(t)
@@ -18,7 +18,7 @@ function love.conf(t)
 
     -- t.window.resizable = true
     --t.window.msaa = 4
-    t.window.highdpi = true
+    t.window.highdpi = false
     t.window.vsync = 1
     t.window.msaa = 2
     -- t.window.highdpi = true

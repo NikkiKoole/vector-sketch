@@ -4,18 +4,19 @@ local gradient         = require 'lib.gradient'
 local skygradient      = gradient.makeSkyGradient(10)
 local hit              = require 'lib.hit'
 local cam              = require('lib.cameraBase').getInstance()
-local phys             = require 'src.mainPhysics'
-local swipes           = require 'src.screen-transitions'
+local phys             = require 'lib.mainPhysics'
+local swipes           = require 'lib.screen-transitions'
 local Timer            = require 'vendor.timer'
 local audioHelper      = require 'lib.audio-helper'
-local texturedBox2d    = require 'src.texturedBox2d'
-local box2dGuyCreation = require 'src.box2dGuyCreation'
-local updatePart       = require 'src.updatePart'
+local texturedBox2d    = require 'lib.texturedBox2d'
+local box2dGuyCreation = require 'lib.box2dGuyCreation'
+local updatePart       = require 'lib.updatePart'
 local ui               = require "lib.ui"
 
 local generatePolygon  = require('lib.generate-polygon').generatePolygon
 
 local JUST_ONE_GUY     = false
+
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -35,12 +36,23 @@ end
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
-    local interacted = phys.handlePointerPressed(x, y, id, cam)
+
+    local cx, cy = cam:getWorldCoordinates(x, y)
+    local onPressed = function(i)
+        pickedFiveGuyIndex = i
+        editingGuy = fiveGuys[pickedFiveGuyIndex]
+        if SM.cName == 'outside' then
+            editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
+        end
+        growl(1)
+    end
+    local interacted = phys.handlePointerPressed(cx, cy, id, onPressed)
 
 
     local size = (h / 8) -- margin around panel
     if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
         --local sx, sy = getPointToCenterTransitionOn()
+        ScenePressedButtonScale = 0.5
         Timer.clear()
         swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
             if scene then
@@ -57,24 +69,50 @@ local function pointerPressed(x, y, id)
 end
 
 
+local function pointerReleased(x, y, id)
+    gesture.maybeTrigger(id, x, y)
+    phys.handlePointerReleased(x, y, id)
+end
+
 local function attachCallbacks()
+    -- love callbacks
+    function love.touchpressed(id, x, y, dx, dy, pressure)
+        pointerPressed(x, y, id)
+        ui.addToPressedPointers(x, y, id)
+    end
+
     function love.mousepressed(x, y, button, istouch, presses)
         if not istouch then
-            -- print('mousepreseed outside')
             pointerPressed(x, y, 'mouse')
-            -- ui.addToPressedPointers(x, y, 'mouse')
+            ui.addToPressedPointers(x, y, 'mouse')
         end
     end
 
-    function love.touchpressed(id, x, y, dx, dy, pressure)
-        pointerPressed(x, y, id)
+    function love.mousereleased(x, y, button, istouch)
+        lastDraggedElement = nil
+        if not istouch then
+            pointerReleased(x, y, 'mouse')
+            ui.removeFromPressedPointers('mouse')
+        end
+    end
+
+    function love.touchreleased(id, x, y, dx, dy, pressure)
+        pointerReleased(x, y, id)
+        ui.removeFromPressedPointers(id)
     end
 end
 
+
+
 function scene.load()
     attachCallbacks()
-
+    JointsPressedButtonScale = 1
+    WinePressedButtonScale = 1
+    OrientationPressedButtonScale = 1
+    ScenePressedButtonScale = 1
     phys.resetLists()
+    uiClickSound   = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
+    -- uiTickSound    = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
     cloud          = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
     borderImage    = love.graphics.newImage("assets/ui/border_shaduw.png")
     spriet         = {
@@ -111,8 +149,50 @@ function scene.load()
         love.graphics.newImage('assets/ui/circle4.png'),
     }
 
-    sprietUnder    = {}
-    sprietOver     = {}
+    winegums       = {
+        ruits = {
+            love.graphics.newImage('assets/img/candyparts/ruit1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/ruit1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/ruit2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/ruit2-line.png'),
+
+        },
+        capsules = {
+            love.graphics.newImage('assets/img/candyparts/capsule1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/capsule1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/capsule2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/capsule2-line.png'),
+
+        },
+        circs = {
+            love.graphics.newImage('assets/img/candyparts/circle1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/circle1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/circle2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/circle2-line.png'),
+        },
+        octas = {
+            love.graphics.newImage('assets/img/candyparts/octa1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/octa1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/octa2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/octa2-line.png'),
+
+        },
+        rekts = {
+            love.graphics.newImage('assets/img/candyparts/rect1-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/rect1-line.png'),
+            love.graphics.newImage('assets/img/candyparts/rect2-shape.png'),
+            love.graphics.newImage('assets/img/candyparts/rect2-line.png'),
+
+        }
+    }
+
+
+
+
+
+
+    sprietUnder = {}
+    sprietOver  = {}
 
 
     if JUST_ONE_GUY then
@@ -245,6 +325,16 @@ function scene.update(dt)
     phys.handleUpdate(dt, cam)
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
     --   print(love.audio.getActiveSourceCount())
+
+
+    JointsPressedButtonScale = JointsPressedButtonScale + 0.01
+    if JointsPressedButtonScale > 1 then JointsPressedButtonScale = 1 end
+    WinePressedButtonScale = WinePressedButtonScale + 0.01
+    if WinePressedButtonScale > 1 then WinePressedButtonScale = 1 end
+    OrientationPressedButtonScale = OrientationPressedButtonScale + 0.01
+    if OrientationPressedButtonScale > 1 then OrientationPressedButtonScale = 1 end
+    ScenePressedButtonScale = ScenePressedButtonScale + 0.01
+    if ScenePressedButtonScale > 1 then ScenePressedButtonScale = 1 end
 end
 
 function scene.handleAudioMessage(msg)
@@ -339,54 +429,56 @@ function scene.draw()
 
     if true then
         local size = (h / 8) -- margin around panel
-        local x = w - size
-        local y = 0
+
+        local x = w - size + size / 2 - (size * ScenePressedButtonScale) / 2
+        local y = 0 + size / 2 - (size * ScenePressedButtonScale) / 2
+
+        -- local x = w - size - (size * ScenePressedButtonScale) / 2
+        --  local y = 0
 
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        sx = sx * ScenePressedButtonScale
+        sy = sy * ScenePressedButtonScale
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
-        --love.graphics.rectangle('fill', w - size, 0, size, size)
-        --love.graphics.setColor(1, 0, 1)
-
-
         local sx, sy = createFittingScale(ui2.bigbuttons.editguys, size, size)
+        sx = sx * ScenePressedButtonScale
+        sy = sy * ScenePressedButtonScale
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(ui2.bigbuttons.editguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.editguys, x, y, 0, sx, sy)
     end
 
-
-    -- render buttons on bottom in outside
-
-    --local less = ui.getUIRect('less-' .. prop, startX, currentY, buttonSize, buttonSize)
-    --if less then
-    --    growl(1 + love.math.random() * .2)
-
-    --    toggleFunc(false)
-    --end
-
     if true then
         local size = h / 8
         local x = 0
         local y = h - size * 2 * 1.2
+
+        local x = size / 2 - (size * OrientationPressedButtonScale) / 2
+        local y = h - size * 2 * 1.2 + size / 2 - (size * OrientationPressedButtonScale) / 2
         --love.graphics.rectangle('fill', x, y, size, size)
         local a = ui.getUIRect('less-1', x, y, size, size)
 
-
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        sx = sx * OrientationPressedButtonScale
+        sy = sy * OrientationPressedButtonScale
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
         if not upsideDown then
             local sx, sy = createFittingScale(ui2.bigbuttons.upside, size, size)
+            sx = sx * OrientationPressedButtonScale
+            sy = sy * OrientationPressedButtonScale
             love.graphics.setColor(0, 0, 0)
             love.graphics.draw(ui2.bigbuttons.upsidemask, x, y, 0, sx, sy)
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(ui2.bigbuttons.upside, x, y, 0, sx, sy)
         else
             local sx, sy = createFittingScale(ui2.bigbuttons.downside, size, size)
+            sx = sx * OrientationPressedButtonScale
+            sy = sy * OrientationPressedButtonScale
             love.graphics.setColor(0, 0, 0)
             love.graphics.draw(ui2.bigbuttons.downsidemask, x, y, 0, sx, sy)
             love.graphics.setColor(1, 1, 1)
@@ -395,26 +487,35 @@ function scene.draw()
 
         if a then
             upsideDown = not upsideDown
+            OrientationPressedButtonScale = 0.5
+
+            playSound(uiClickSound)
         end
 
-        local x = 0
-        local y = h - size * 3 * 1.2
+        local x = size / 2 - (size * JointsPressedButtonScale) / 2
+        local y = h - size * 3 * 1.2 + size / 2 - (size * JointsPressedButtonScale) / 2
         --love.graphics.rectangle('fill', x, y, size, size)
         local a = ui.getUIRect('less-1', x, y, size, size)
         ---print(inspect(a))
 
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        sx = sx * JointsPressedButtonScale
+        sy = sy * JointsPressedButtonScale
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
         if not jointsEnabled then
             local sx, sy = createFittingScale(ui2.bigbuttons.limp, size, size)
+            sx = sx * JointsPressedButtonScale
+            sy = sy * JointsPressedButtonScale
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(ui2.bigbuttons.limp, x, y, 0, sx, sy)
             love.graphics.setColor(0, 0, 0)
             love.graphics.draw(ui2.bigbuttons.limp, x + 3, y + 3, 0, sx, sy)
         else
             local sx, sy = createFittingScale(ui2.bigbuttons.straight, size, size)
+            sx = sx * JointsPressedButtonScale
+            sy = sy * JointsPressedButtonScale
             love.graphics.setColor(1, 1, 1)
             love.graphics.draw(ui2.bigbuttons.straight, x, y, 0, sx, sy)
             love.graphics.setColor(0, 0, 0)
@@ -424,19 +525,28 @@ function scene.draw()
         if a then
             toggleJoints()
 
-            -- print('Body:getLocalPoint(worldX (number), worldY (number))')
+            JointsPressedButtonScale = 0.5
+
+            playSound(uiClickSound)
         end
 
-        local x = 0
-        local y = h - size * 1.2
+        local x = size / 2 - (size * WinePressedButtonScale) / 2
+        local y = h - size * 1.2 + size / 2 - (size * WinePressedButtonScale) / 2
+
+        --local x = 0
+        --local y = h - size * 1.2
         --love.graphics.rectangle('fill', x, y, size, size)
         local a = ui.getUIRect('less-1', x, y, size, size)
         ---print(inspect(a))
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        sx = sx * WinePressedButtonScale
+        sy = sy * WinePressedButtonScale
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
 
         local sx, sy = createFittingScale(ui2.bigbuttons.winegum, size, size)
+        sx = sx * WinePressedButtonScale
+        sy = sy * WinePressedButtonScale
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.winegummask, x + 3, y + 3, 0, sx, sy)
 
@@ -446,6 +556,9 @@ function scene.draw()
         if a then
             if #winegums < 200 then
                 addWineGums()
+                WinePressedButtonScale = 0.5
+
+                playSound(uiClickSound)
             end
 
             -- print('Body:getLocalPoint(worldX (number), worldY (number))')

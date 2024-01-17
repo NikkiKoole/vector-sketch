@@ -28,20 +28,20 @@ ProFi                     = require 'vendor.ProFi'
 focussed                  = true
 
 local Timer               = require 'vendor.timer'
-local dna                 = require 'src.dna'
-local phys                = require 'src.mainPhysics'
+local dna                 = require 'lib.dna'
+local phys                = require 'lib.mainPhysics'
 local lurker              = require 'vendor.lurker'
 lurker.quiet              = true
 local cam                 = require('lib.cameraBase').getInstance()
 local manual_gc           = require 'vendor.batteries.manual_gc'
-local updatePart          = require 'src.updatePart'
-local texturedBox2d       = require 'src.texturedBox2d'
-local box2dGuyCreation    = require 'src.box2dGuyCreation'
+local updatePart          = require 'lib.updatePart'
+local texturedBox2d       = require 'lib.texturedBox2d'
+local box2dGuyCreation    = require 'lib.box2dGuyCreation'
 local DEBUG_PROFILER      = false
 local LOAD_AND_SAVE_FILES = true
 local canvas              = require 'lib.canvas'
-
-canvas.setShrinkFactor(4)
+local numbers             = require 'lib.numbers'
+canvas.setShrinkFactor(2)
 -- BEWARE: turning on the debug profiler will cause memory to grow endlessly (its saving profilingdata)...
 if DEBUG_PROFILER == false then
     prof.push = function(a)
@@ -99,6 +99,15 @@ function playSound(sound, optionalPitch, volumeMultiplier)
     s:setVolume(volume * mainVolume)
     love.audio.play(s)
     return s
+end
+
+function growl(pitch)
+    if (playingSound) then playingSound:stop() end
+    local index = math.ceil(love.math.random() * #hum)
+    local sndLength = hum[math.ceil(index)]:getDuration() / pitch
+    playingSound = playSound(hum[math.ceil(index)], pitch, 2)
+    mouthSay(fiveGuys[pickedFiveGuyIndex], sndLength)
+    --myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
 end
 
 function getPointToCenterTransitionOn()
@@ -238,11 +247,164 @@ function saveDNA5File()
     --love.system.openURL(openURL)
 end
 
+local function contactShouldBeDisabled(a, b, contact)
+    local ab = a:getBody()
+    local bb = b:getBody()
+
+    local fixtureA, fixtureB = contact:getFixtures()
+    local result = false
+
+    -- for some reason the other way around doesnt happen so fixtureA is the ground and the other one might be ball
+    -- this disables contact between a dragged item and the ground
+    for i = 1, #pointerJoints do
+        local mj = pointerJoints[i]
+        if (mj.jointBody) then
+            if (bb == mj.jointBody and fixtureA:getUserData() and fixtureA:getUserData().bodyType == 'ground') then
+                result = true
+            end
+        end
+    end
+    -- this disables contact between  balls and the ground if ballcenterY < collisionY (ball below ground)
+    if fixtureA:getUserData() and fixtureB:getUserData() then
+        if fixtureA:getUserData().bodyType == 'ground' and fixtureB:getUserData().bodyType == 'ball' then
+            local x1, y1 = contact:getPositions()
+            if y1 < bb:getY() then
+                result = true
+            end
+        end
+    end
+    --return result
+
+    return false
+end
+
+local function beginContact(a, b, contact)
+    if contactShouldBeDisabled(a, b, contact) then
+        contact:setEnabled(false)
+        local point = { contact:getPositions() }
+        -- i also should keep around what body (cirlcle) this is about,
+        -- and also eventually probably also what touch id or mouse this is..
+
+        for i = 1, #pointerJoints do
+            local mj = pointerJoints[i]
+
+            local bodyLastDisabledContact = nil
+            if mj.jointBody == a:getBody() then
+                bodyLastDisabledContact = a
+            end
+            if mj.jointBody == b:getBody() then
+                bodyLastDisabledContact = b
+            end
+            if bodyLastDisabledContact then
+                pointerJoints[i].bodyLastDisabledContact = bodyLastDisabledContact
+                pointerJoints[i].positionOfLastDisabledContact = point
+                table.insert(disabledContacts, contact)
+            end
+        end
+    end
+    --if isContactBetweenGroundAndCarGroundSensor(contact) then
+    --    carIsTouching = carIsTouching + 1
+    --end
+end
+
+
+local function endContact(a, b, contact)
+    for i = #disabledContacts, 1, -1 do
+        if disabledContacts[i] == contact then
+            table.remove(disabledContacts, i)
+        end
+    end
+end
+
+local function preSolve(a, b, contact)
+    -- this is so contacts keep on being disabled if they are on that list (sadly they are being re-enabled by box2d.... )
+    for i = 1, #disabledContacts do
+        disabledContacts[i]:setEnabled(false)
+    end
+end
+
+local function postSolve(a, b, contact, normalimpulse, tangentimpulse)
+    local fixtureA, fixtureB = contact:getFixtures()
+    local aud = fixtureA:getUserData()
+    local bud = fixtureB:getUserData()
+    if aud and bud then
+        -- print(a,b)
+        --print(aud.bodyType, bud.bodyType)
+
+
+        if (aud.bodyType == 'winegum' or bud.bodyType == 'winegum') then
+            --print(normalimpulse, tangentimpulse)
+            if normalimpulse > 60 and tangentimpulse > 3 then
+                local index = math.ceil(love.math.random() * #winegumkisses)
+                local pitch = numbers.mapInto(normalimpulse, 60, 300, 2, .1)
+                local volume = numbers.mapInto(normalimpulse, 60, 300, .2, 1)
+                if pitch < .25 then pitch = .25 end
+                if volume < .2 then volume = .2 end
+
+                -- check if these 2 bodies have had a collision in the last second or so
+                -- print(normalimpulse, pitch, volume)
+
+                local stillPlayingPlonkForSimilarCollision = false
+                for i = 1, #playedPlonkSounds do
+                    if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud and playedPlonkSounds[i].timeAgo > 0 then
+                        stillPlayingPlonkForSimilarCollision = true
+                    end
+                end
+
+                if stillPlayingPlonkForSimilarCollision == false then
+                    table.insert(playedPlonkSounds, { aud = aud, bud = bud, timeAgo = 0 })
+                    playSound(winegumkisses[index], pitch, volume)
+                end
+            end
+        end
+
+
+        if (aud.bodyType == 'border' and (bud.bodyType == 'head' or bud.bodyType == 'torso' or bud.bodyType == 'lfoot' or bud.bodyType == 'rfoot'))
+            or (bud.bodyType == 'body' and aud.bodyType == 'body')
+            or (bud.bodyType == 'head' and aud.bodyType == 'head')
+            or (bud.bodyType == 'head' and aud.bodyType == 'lhand')
+            or (bud.bodyType == 'head' and aud.bodyType == 'rhand')
+            or (bud.bodyType == 'body' and aud.bodyType == 'lhand')
+            or (bud.bodyType == 'body' and aud.bodyType == 'rhand')
+
+        then
+            --- print(normalimpulse)
+            -- print(normalimpulse, tangentimpulse)
+            if normalimpulse > 300 and tangentimpulse > 50 then
+                local index = math.ceil(love.math.random() * #rubberplonks)
+                local pitch = numbers.mapInto(normalimpulse, 300, 10000, 2, 1)
+                local volume = numbers.mapInto(normalimpulse, 300, 10000, .2, 1)
+                if pitch < .5 then pitch = .5 end
+                if volume < .2 then volume = .2 end
+
+                -- check if these 2 bodies have had a collision in the last second or so
+                -- print(normalimpulse, pitch, volume)
+
+                local stillPlayingPlonkForSimilarCollision = false
+                for i = 1, #playedPlonkSounds do
+                    if playedPlonkSounds[i].aud == aud and playedPlonkSounds[i].bud == bud and playedPlonkSounds[i].timeAgo > 0 then
+                        stillPlayingPlonkForSimilarCollision = true
+                    end
+                end
+
+                if stillPlayingPlonkForSimilarCollision == false then
+                    table.insert(playedPlonkSounds, { aud = aud, bud = bud, timeAgo = 0 })
+                    playSound(rubberplonks[index], pitch, volume)
+                end
+            end
+        end
+    end
+end
+
+
+
+
 function love.load()
     winegums = {}
     upsideDown = false
     jointsEnabled = true
     phys.setupWorld()
+    world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 
     mainVolume = 1
 
@@ -431,7 +593,8 @@ function love.load()
 
 
     -- print('hello good')
-    --SM.load("outside")
+    -- SM.load("editGuy")
+    -- SM.load("outside")
 end
 
 function toggleJoints()
@@ -599,8 +762,8 @@ function love.draw()
         prof.pop('frame')
     end
     --  love.graphics.setColor(1, 1, 1, 1)
-    local stats = love.graphics.getStats()
-    love.graphics.print(inspect(stats), 10, 10)
+    -- local stats = love.graphics.getStats()
+    -- love.graphics.print(inspect(stats), 10, 10)
     --love.graphics.print(
     --     world:getBodyCount() ..
     --     '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,

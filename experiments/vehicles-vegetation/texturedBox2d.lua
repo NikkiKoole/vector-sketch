@@ -455,6 +455,7 @@ function drawSkinOver(box2dGuy, creation)
         local faceData = creation.isPotatoHead and creation.torso or creation.head
 
         love.graphics.setColor(1, 1, 1, 1)
+        print( torsoCanvas, headCanvas)
         local x, y, r, sx, sy = renderMetaObject(faceCanvas, face, box2dGuy, creation)
 
         if creation.isPotatoHead then

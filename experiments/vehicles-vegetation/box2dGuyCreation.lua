@@ -55,7 +55,7 @@ positioners    = {
     leg = { x = 0.5 }
 
 }
-function dna.getCreation()
+function getCreation()
     return creation
 end
 

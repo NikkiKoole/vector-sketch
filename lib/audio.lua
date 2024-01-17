@@ -183,42 +183,43 @@ while (true) do
                      local s
                      if (vi <= #samples) then
                         s = samples[vi].s:clone()
+
+
+
+
+                        local p = getPitch(semi, o)
+                        -- print(semi, o, p)
+                        -- todo parametrize micropicth randomizer
+                        -- p = p + ( -0.0125 + love.math.random() * 0.025)
+
+                        s:setPitch(p)
+
+                        local velocity     = 1
+                        local noteVelocity = pattern[index][i].noteVelocity
+
+                        if noteVelocity ~= nil and noteVelocity ~= 0 then
+                           velocity = noteVelocity
+                        end
+                        --print(vv)
+                        s:setVolume(velocity * vv)
+                        -- i only swing the even beats
+                        local offset = math.floor(beat) % 2 == 0
+
+                        local _swing = ((swing - 50) / 50) * 96
+
+                        local note_repeat_offset = (96 / note_repeat)
+
+                        local tickOffset = (offset and _swing or 0) + ((j - 1) * note_repeat_offset)
+
+                        table.insert(queue,
+                            {
+                                beat = beat,
+                                tick = tick + tickOffset,
+                                source = s,
+                                index = v,
+                                pitch = p
+                            })
                      end
-
-
-
-                     local p = getPitch(semi, o)
-                     -- print(semi, o, p)
-                     -- todo parametrize micropicth randomizer
-                     -- p = p + ( -0.0125 + love.math.random() * 0.025)
-
-                     s:setPitch(p)
-
-                     local velocity     = 1
-                     local noteVelocity = pattern[index][i].noteVelocity
-
-                     if noteVelocity ~= nil and noteVelocity ~= 0 then
-                        velocity = noteVelocity
-                     end
-                     --print(vv)
-                     s:setVolume(velocity * vv)
-                     -- i only swing the even beats
-                     local offset = math.floor(beat) % 2 == 0
-
-                     local _swing = ((swing - 50) / 50) * 96
-
-                     local note_repeat_offset = (96 / note_repeat)
-
-                     local tickOffset = (offset and _swing or 0) + ((j - 1) * note_repeat_offset)
-
-                     table.insert(queue,
-                         {
-                             beat = beat,
-                             tick = tick + tickOffset,
-                             source = s,
-                             index = v,
-                             pitch = p
-                         })
                   end
                end
             end

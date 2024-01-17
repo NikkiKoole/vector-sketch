@@ -28,14 +28,14 @@ local bbox             = require 'lib.bbox'
 local parse            = require 'lib.parse-file'
 local bbox             = require 'lib.bbox'
 
-local swipes           = require 'src.screen-transitions'
+local swipes           = require 'lib.screen-transitions'
 local audioHelper      = require 'lib.audio-helper'
 local ui               = require 'lib.ui'
-local readAndParse     = require 'src.readAndParse'
+local readAndParse     = require 'lib.readAndParse'
 
-local updatePart       = require 'src.updatePart'
-local texturedBox2d    = require 'src.texturedBox2d'
-local box2dGuyCreation = require 'src.box2dGuyCreation'
+local updatePart       = require 'lib.updatePart'
+local texturedBox2d    = require 'lib.texturedBox2d'
+local box2dGuyCreation = require 'lib.box2dGuyCreation'
 local cam              = require('lib.cameraBase').getInstance()
 
 local gradient         = require 'lib.gradient'

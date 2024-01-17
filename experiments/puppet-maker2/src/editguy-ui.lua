@@ -9,7 +9,7 @@ local ui         = require "lib.ui"
 local text       = require 'lib.text'
 
 local imageCache = {}
-local updatePart = require 'src.updatePart'
+local updatePart = require 'lib.updatePart'
 
 
 local lib = {}
@@ -57,14 +57,6 @@ local function tweenCameraToHead()
 
 end
 
-local function growl(pitch)
-    if (playingSound) then playingSound:stop() end
-    local index = math.ceil(love.math.random() * #hum)
-    local sndLength = hum[math.ceil(index)]:getDuration() / pitch
-    playingSound = playSound(hum[math.ceil(index)], pitch, 2)
-    mouthSay(fiveGuys[pickedFiveGuyIndex], sndLength)
-    --myWorld:emit('mouthSaySomething', mouth, editingGuy, sndLength)
-end
 
 lib.setSelectedCategory = function(name)
     uiState.selectedCategory = name

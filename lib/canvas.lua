@@ -3,7 +3,7 @@ local vivid = require 'vendor.vivid'
 local geom = require 'lib.geom'
 
 
-local shrinkFactor = 4
+local shrinkFactor = 1
 
 lib.setShrinkFactor = function(value)
    shrinkFactor = value
@@ -238,7 +238,8 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
 
 
-      local otherCanvas = love.graphics.newCanvas(lw / shrinkFactor, lh / shrinkFactor, { format = 'rgba8' })
+      local otherCanvas = love.graphics.newCanvas(lw / shrinkFactor, lh / shrinkFactor,
+              { format = 'rgba8', dpiscale = 1 })
       love.graphics.setCanvas({ otherCanvas, stencil = false }) --<<<
       love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
       love.graphics.setColor(1, 1, 1) --- huh?!

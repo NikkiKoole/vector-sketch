@@ -12,9 +12,9 @@ local geom            = require 'lib.geom'
 local bbox            = require 'lib.bbox'
 local mesh            = require 'lib.mesh'
 local ui              = require 'lib.ui'
-require 'box2dGuyCreation'
-require 'texturedBox2d'
-local creation = dna.getCreation()
+require 'lib.box2dGuyCreation'
+require 'lib.texturedBox2d'
+local creation = getCreation()
 local canvas   = require 'lib.canvas'
 local text     = require 'lib.text'
 require 'palette'
@@ -1047,6 +1047,7 @@ function startExample(number)
     connectors = {}
     pointerJoints = {}
     grass = {}
+    fiveGuys = box2dGuys
     ----
     ---- VLOOIENSPEL
     -----

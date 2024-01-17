@@ -8,13 +8,13 @@ local ui               = require 'lib.ui'
 local Signal           = require 'vendor.signal'
 local camera           = require 'lib.camera'
 local cam              = require('lib.cameraBase').getInstance()
-local phys             = require 'src.mainPhysics'
-local swipes           = require 'src.screen-transitions'
+local phys             = require 'lib.mainPhysics'
+local swipes           = require 'lib.screen-transitions'
 local editGuyUI        = require 'src.editguy-ui'
-local texturedBox2d    = require 'src.texturedBox2d'
-local box2dGuyCreation = require 'src.box2dGuyCreation'
+local texturedBox2d    = require 'lib.texturedBox2d'
+local box2dGuyCreation = require 'lib.box2dGuyCreation'
 
-local updatePart       = require 'src.updatePart'
+local updatePart       = require 'lib.updatePart'
 local findSample       = function(path)
     for i = 1, #samples do
         if samples[i].p == path then
@@ -54,7 +54,14 @@ end
 
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
-    local interacted = phys.handlePointerPressed(x, y, id, cam)
+
+    local cx, cy = cam:getWorldCoordinates(x, y)
+
+    local onPressed = function(i)
+        growl(1)
+    end
+
+    local interacted = phys.handlePointerPressed(cx, cy, id, onPressed)
     -- print(interacted)
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)
@@ -75,6 +82,7 @@ local function pointerPressed(x, y, id)
     local size = (h / 8) -- margin around panel
 
     if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
+        ScenePressedButtonScale = 0.5
         Timer.clear()
         swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
             if scene then
@@ -94,6 +102,7 @@ local function pointerPressed(x, y, id)
         else
             updatePart.randomizeGuy(editingGuy)
         end
+        DicePressedButtonScale = 0.5
         setCategories(editingGuy)
         handleCameraAfterCatgeoryChange(true)
 
@@ -306,7 +315,8 @@ function scene.load()
     bgColor = creamColor
     editGuyUI.loadUIImages()
     attachCallbacks()
-
+    DicePressedButtonScale = 1
+    ScenePressedButtonScale = 1
     scroller = {
         xPos = 0,
         position = 1,
@@ -409,6 +419,11 @@ function scene.update(dt)
     --handleConnectors(cam)
     phys.handleUpdate(dt, cam)
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
+
+    DicePressedButtonScale = DicePressedButtonScale + 0.01
+    if DicePressedButtonScale > 1 then DicePressedButtonScale = 1 end
+    ScenePressedButtonScale = ScenePressedButtonScale + 0.01
+    if ScenePressedButtonScale > 1 then ScenePressedButtonScale = 1 end
 end
 
 function scene.draw()
@@ -476,13 +491,17 @@ function scene.draw()
 
     if true then
         local size = (h / 8) -- margin around panel
-        local x = w - size
-        local y = 0
+        local x = w - size + size / 2 - (size * ScenePressedButtonScale) / 2
+        local y = 0 + size / 2 - (size * ScenePressedButtonScale) / 2
 
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        sx = sx * ScenePressedButtonScale
+        sy = sy * ScenePressedButtonScale
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
         local sx, sy = createFittingScale(ui2.bigbuttons.fiveguys, size, size)
+        sx = sx * ScenePressedButtonScale
+        sy = sy * ScenePressedButtonScale
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
@@ -491,13 +510,17 @@ function scene.draw()
 
     if true then
         local size = (h / 8) -- margin around panel
-        local x = w - size
-        local y = h - size
+        local x = w - size + size / 2 - (size * DicePressedButtonScale) / 2
+        local y = h - size + size / 2 - (size * DicePressedButtonScale) / 2
 
         love.graphics.setColor(0, 0, 0, 0.5)
         local sx, sy = createFittingScale(ui2.circles[1], size, size)
+        sx = sx * DicePressedButtonScale
+        sy = sy * DicePressedButtonScale
         love.graphics.draw(ui2.circles[1], x, y, 0, sx, sy)
         local sx, sy = createFittingScale(ui2.bigbuttons.dice, size, size)
+        sx = sx * DicePressedButtonScale
+        sy = sy * DicePressedButtonScale
         love.graphics.setColor(1, 1, 1)
         love.graphics.draw(ui2.bigbuttons.dicemask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
