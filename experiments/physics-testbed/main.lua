@@ -159,7 +159,7 @@ function getTargetPos(thing)
     -- this sort of describes how far in front of your vehicle you want to point the camera.
     -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left) 
     -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
-    local bound = (cambrx - camtlx)/2
+    local bound = (cambrx - camtlx)/3
 
     targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
     targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
@@ -183,17 +183,18 @@ function love.update(dt)
     --if velX > 5000 then 
        --ball.body:setLinearDamping(1) 
     --end
-    local damping =  numbers.mapInto(math.abs(velX), 0, 3000, 0.0001, 5)
-    ball.body:setLinearDamping(damping) 
+    local avgVelX = calculateRollingAverage(rollingAverageVelX)
+    local damping =  numbers.mapInto(math.abs(avgVelX), 0, 5000, 0.0001, .5)
+   ball.body:setLinearDamping(damping) 
 
     local curCamX, curCamY = cam:getTranslation()
     local targetX, targetY = getTargetPos(ball) 
     local distance = getDistance(curCamX, curCamY, targetX, targetY)
-    local divider = numbers.mapInto(distance, 0, 5000, 0.0001, 10)
+    local divider = numbers.mapInto(distance, 0, 1000, 0.0001, 5)
     local smoothX = lerp(curCamX, targetX, divider / (1.0/dt))
     local smoothY = lerp(curCamY, targetY, divider / (1.0/dt))
 
-    local viewWidth = 3000 --numbers.mapInto(math.abs(velX), 0, 10000, 3000, 4000)
+    local viewWidth = numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 3000)
 
 
     --print(distance)

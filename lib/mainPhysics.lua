@@ -81,6 +81,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
     pointerJoint.id = id
 
     local ud = fixture:getUserData()
+    -- TODO parametrtize this...!
     local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
 
     pointerJoint.jointBody = bodyToAttachTo
