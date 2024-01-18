@@ -71,7 +71,7 @@ function updateGround(ground)
         y3 = y3 * r
 
         -- the downhill steepness
-        local linear = numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
+        local linear = 0--numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
 
         table.insert(points, x)
@@ -105,9 +105,14 @@ function startExample(number)
 
     ball = makeBall(0, -500, 100)
     rollingAverageVelX = {}
-    for i =1 , 60 do 
+    for i =1 , 10 do 
         rollingAverageVelX[i] = 0
     end
+
+
+
+
+
     -- makeBall(0 + 1000, -200, 200)
     -- makeBall(0, -100, 50)
     -- world:setCallbacks(beginContact, endContact, preSolve, postSolve)
@@ -115,7 +120,14 @@ end
 
 function love.load()
     startExample()
+
+    pointsOfInterest = {}
     local w, h = love.graphics.getDimensions()
+
+    for i =1 , 100 do 
+        table.insert(pointsOfInterest, {x= -200000 +  love.math.random()* 400000, y= -1000 +  love.math.random()* 2000,radius=800})
+    end
+
     -- ground = initGround()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(0, 0, 3000, 3000)
@@ -206,6 +218,12 @@ function love.draw()
     cam:push()
     phys.drawWorld(world)
    
+
+    for i =1, #pointsOfInterest do 
+        local poi= pointsOfInterest[i]
+        love.graphics.circle('line', poi.x, poi.y, poi.radius)
+    end
+
     local targetX, targetY = getTargetPos(ball) 
     love.graphics.rectangle('line', targetX, targetY, 40, 40)
 
