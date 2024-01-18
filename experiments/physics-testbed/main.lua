@@ -183,7 +183,7 @@ function love.update(dt)
     --if velX > 5000 then 
        --ball.body:setLinearDamping(1) 
     --end
-    local damping =  numbers.mapInto(math.abs(velX), 0, 5000, 0.0001, 3)
+    local damping =  numbers.mapInto(math.abs(velX), 0, 3000, 0.0001, 5)
     ball.body:setLinearDamping(damping) 
 
     local curCamX, curCamY = cam:getTranslation()
