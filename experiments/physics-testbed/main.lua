@@ -71,7 +71,7 @@ function updateGround(ground)
         y3 = y3 * r
 
         -- the downhill steepness
-        local linear = 0--numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
+        local linear = numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
 
         table.insert(points, x)
@@ -124,8 +124,8 @@ function love.load()
     pointsOfInterest = {}
     local w, h = love.graphics.getDimensions()
 
-    for i =1 , 100 do 
-        table.insert(pointsOfInterest, {x= -200000 +  love.math.random()* 400000, y= -1000 +  love.math.random()* 2000,radius=800})
+    for i =1 , 1000 do 
+        table.insert(pointsOfInterest, {x= -200000 +  love.math.random()* 400000, y= -20000 +  love.math.random()* 40000,radius=800})
     end
 
     -- ground = initGround()
