@@ -60,9 +60,6 @@ function updateGround(ground)
 
 
         -- the roughness
-
-
-
         local cool = 10.78
         local amplitude = 20 * cool
         local frequency = 3
@@ -73,8 +70,7 @@ function updateGround(ground)
         local r = ((math.sin(index / 30) + 1) / 2)
         y3 = y3 * r
 
-
-        -- the downhiill steepness
+        -- the downhill steepness
         local linear = numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
 
@@ -108,6 +104,10 @@ function startExample(number)
     ground = initGround()
 
     ball = makeBall(0, -500, 100)
+    rollingAverageVelX = {}
+    for i =1 , 60 do 
+        rollingAverageVelX[i] = 0
+    end
     -- makeBall(0 + 1000, -200, 200)
     -- makeBall(0, -100, 50)
     -- world:setCallbacks(beginContact, endContact, preSolve, postSolve)
@@ -125,60 +125,88 @@ local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
+local function getDistance(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local distance = math.sqrt((dx * dx) + (dy * dy))
+
+    return distance
+end
+local function calculateRollingAverage(valueList)
+    local sum = 0
+
+    for _, value in ipairs(valueList) do
+        sum = sum + value
+    end
+
+    return sum / #valueList
+end
+
+
+function getTargetPos(thing) 
+    
+    local avgVelX = calculateRollingAverage(rollingAverageVelX)
+    local worldX, worldY = thing.body:getWorldPoint(0, 0)
+
+
+    local targetX = worldX + avgVelX
+    local targetY = worldY
+
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+    -- this sort of describes how far in front of your vehicle you want to point the camera.
+    -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left) 
+    -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
+    local bound = (cambrx - camtlx)/2
+
+    targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
+    targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
+
+    return targetX, targetY
+end
+
 function love.update(dt)
     updateGround(ground)
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
-    -- center camera on wheel
-    -- do this stuff
     -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
     -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
 
-
-    --print(worldX, targetX, smoothX)
-    local curCamX, curCamY = cam:getTranslation()
-
     local velX, velY = ball.body:getLinearVelocity()
-    local worldX, worldY = ball.body:getWorldPoint(0, 0)
+    table.insert(rollingAverageVelX, velX)
+    table.remove(rollingAverageVelX, 1)
+    
+    --i--f velX > 0 then ball.body:setLinearDamping( 0 ) else ball.body:setLinearDamping(1)  end
+    --if velX > 5000 then 
+       --ball.body:setLinearDamping(1) 
+    --end
+    local damping =  numbers.mapInto(math.abs(velX), 0, 5000, 0.0001, 3)
+    ball.body:setLinearDamping(damping) 
 
-    local viewWidth = numbers.mapInto(math.abs(velX), 0, 10000, 3000, 4000)
+    local curCamX, curCamY = cam:getTranslation()
+    local targetX, targetY = getTargetPos(ball) 
+    local distance = getDistance(curCamX, curCamY, targetX, targetY)
+    local divider = numbers.mapInto(distance, 0, 5000, 0.0001, 10)
+    local smoothX = lerp(curCamX, targetX, divider / (1.0/dt))
+    local smoothY = lerp(curCamY, targetY, divider / (1.0/dt))
 
-    local targetX = worldX + velX
-    local targetY = worldY
-
-    targetX = numbers.clamp(targetX, worldX - 1200, worldX + 1200)
-    targetY = numbers.clamp(targetY, worldY - 1200, worldY + 1200)
-
-    local smoothX = lerp(curCamX, targetX, 1.0 / 30)
-    local smoothY = lerp(curCamY, targetY, 1.0 / 30)
-
-
-    -- camera.centerCameraOnPosition(worldX, worldY, viewWidth, viewWidth)
-
-
-    camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
-
-
+    local viewWidth = 3000 --numbers.mapInto(math.abs(velX), 0, 10000, 3000, 4000)
 
 
-
-
-
-    --    print(velX)
-
-    -- print(worldX, worldY)
-end
+    --print(distance)
+    --if distance > 300 then
+    camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth) end
+    --end
 
 function love.draw()
     cam:push()
     phys.drawWorld(world)
-
-    local bx, by = ball.body:getWorldPoint(0, 0)
-    local velX, velY = ball.body:getLinearVelocity()
-    --love.graphics.circle('line', bx, by, 20)
-    local tx, ty = bx + velX / 5, by + velY / 5
-    love.graphics.rectangle('line', tx, ty, 40, 40)
+   
+    local targetX, targetY = getTargetPos(ball) 
+    love.graphics.rectangle('line', targetX, targetY, 40, 40)
 
     local curCamX, curCamY = cam:getTranslation()
     love.graphics.circle('line', curCamX, curCamY, 20)
