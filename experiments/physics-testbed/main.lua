@@ -106,6 +106,8 @@ function startExample(number)
     --  love.physics.setMeter(500)
     --  world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     ground = initGround()
+    ball = makeBall( -100, -500, 100)
+    ball = makeBall( -299, -500, 100)
     ball = makeBall(0, -500, 100)
     -- makeBall(0 + 1000, -200, 200)
     -- makeBall(0, -100, 50)
@@ -129,6 +131,7 @@ function love.update(dt)
     -- center camera on wheel
     -- do this stuff
     -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
+    -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
     local worldX, worldY = ball.body:getWorldPoint(0, 0)
 
 
