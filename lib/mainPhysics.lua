@@ -82,7 +82,7 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
 
     local ud = fixture:getUserData()
     -- TODO parametrtize this...!
-    local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+    local force = 100 -- ud and ud.bodyType == 'torso' and 5000000 or 50000
 
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)

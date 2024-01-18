@@ -3,7 +3,6 @@ package.path  = package.path .. ";../../?.lua"
 local cam     = require('lib.cameraBase').getInstance()
 local camera  = require 'lib.camera'
 local phys    = require 'lib.mainPhysics'
-
 local numbers = require 'lib.numbers'
 
 
@@ -75,7 +74,7 @@ function updateGround(ground)
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
 
         table.insert(points, x)
-        table.insert(points, y1 + y2 + y3 + linear)
+        table.insert(points, y3 + linear)
     end
 
     ground.shape = love.physics.newChainShape(false, points)
@@ -96,26 +95,42 @@ function makeBall(x, y, radius)
     return ball
 end
 
+function npoly(radius, sides)
+    local angle = 0
+    local angle_increment = (math.pi * 2) / sides
+    local result = {}
+    for i = 1, sides do
+        x = 0 + radius * math.cos(angle)
+        y = 0 + radius * math.sin(angle)
+        angle = angle + angle_increment
+        table.insert(result, x)
+        table.insert(result, y)
+    end
+    return result
+end
+
+function makeNPoly(x, y, radius)
+    local ball = {}
+    ball.body = love.physics.newBody(world, x, y, "dynamic")
+    ball.shape = love.physics.newPolygonShape(npoly(radius, 8)) --love.physics.newRectangleShape(100, 100) --(50)-- love.physics.newCircleShape(50)
+    ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
+    return ball
+end
+
 function startExample(number)
     phys.setupWorld()
-    --  local width, height = love.graphics.getDimensions()
-    --  love.physics.setMeter(500)
-    --  world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     ground = initGround()
-
     ball = makeBall(0, -500, 100)
+
     rollingAverageVelX = {}
-    for i =1 , 10 do 
+    for i = 1, 10 do
         rollingAverageVelX[i] = 0
     end
 
-
-
-
-
-    -- makeBall(0 + 1000, -200, 200)
-    -- makeBall(0, -100, 50)
-    -- world:setCallbacks(beginContact, endContact, preSolve, postSolve)
+    rollingDistance = {}
+    for i = 1, 10 do
+        rollingDistance[i] = 0
+    end
 end
 
 function love.load()
@@ -124,8 +139,9 @@ function love.load()
     pointsOfInterest = {}
     local w, h = love.graphics.getDimensions()
 
-    for i =1 , 1000 do 
-        table.insert(pointsOfInterest, {x= -200000 +  love.math.random()* 400000, y= -20000 +  love.math.random()* 40000,radius=800})
+    for i = 1, 1000 do
+        table.insert(pointsOfInterest,
+            { x = -200000 + love.math.random() * 400000, y = -20000 + love.math.random() * 40000, radius = 800 })
     end
 
     -- ground = initGround()
@@ -144,22 +160,19 @@ local function getDistance(x1, y1, x2, y2)
 
     return distance
 end
+
 local function calculateRollingAverage(valueList)
     local sum = 0
-
     for _, value in ipairs(valueList) do
         sum = sum + value
     end
-
     return sum / #valueList
 end
 
 
-function getTargetPos(thing) 
-    
+function getTargetPos(thing)
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
     local worldX, worldY = thing.body:getWorldPoint(0, 0)
-
 
     local targetX = worldX + avgVelX
     local targetY = worldY
@@ -169,9 +182,9 @@ function getTargetPos(thing)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
 
     -- this sort of describes how far in front of your vehicle you want to point the camera.
-    -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left) 
+    -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left)
     -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
-    local bound = (cambrx - camtlx)/3
+    local bound = (cambrx - camtlx) / 2
 
     targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
     targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
@@ -180,51 +193,62 @@ function getTargetPos(thing)
 end
 
 function love.update(dt)
-    updateGround(ground)
-    world:update(dt)
-    phys.handleUpdate(dt, cam)
-
-    -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
-    -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
-
     local velX, velY = ball.body:getLinearVelocity()
     table.insert(rollingAverageVelX, velX)
     table.remove(rollingAverageVelX, 1)
-    
-    --i--f velX > 0 then ball.body:setLinearDamping( 0 ) else ball.body:setLinearDamping(1)  end
-    --if velX > 5000 then 
-       --ball.body:setLinearDamping(1) 
-    --end
+
+    updateGround(ground)
+
+    world:update(dt)
+    phys.handleUpdate(dt, cam)
+
+
+    local targetX, targetY = getTargetPos(ball)
+
+    --print(targetX, targetX2)
+    -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
+    -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
+
+
+
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
-    local damping =  numbers.mapInto(math.abs(avgVelX), 0, 5000, 0.0001, .5)
-   ball.body:setLinearDamping(damping) 
+    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 2)
+    ball.body:setLinearDamping(damping)
 
     local curCamX, curCamY = cam:getTranslation()
-    local targetX, targetY = getTargetPos(ball) 
-    local distance = getDistance(curCamX, curCamY, targetX, targetY)
-    local divider = numbers.mapInto(distance, 0, 1000, 0.0001, 5)
-    local smoothX = lerp(curCamX, targetX, divider / (1.0/dt))
-    local smoothY = lerp(curCamY, targetY, divider / (1.0/dt))
+    local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    local viewWidth = numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 3000)
+    local divider = numbers.mapInto(newDistance, 0, 1000, 0.0001, 5)
+    local delta = love.timer.getAverageDelta() or dt
+
+    local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
+    local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
+
+    --local distance = getDistance(curCamX, curCamY, targetX, targetY)
+    -- print('distance', newDistance)
+    --print(targetX, targetY)
+    local viewWidth = numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
 
 
     --print(distance)
     --if distance > 300 then
-    camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth) end
-    --end
+    --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
+    camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+end
+
+--end
 
 function love.draw()
     cam:push()
     phys.drawWorld(world)
-   
 
-    for i =1, #pointsOfInterest do 
-        local poi= pointsOfInterest[i]
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    for i = 1, #pointsOfInterest do
+        local poi = pointsOfInterest[i]
         love.graphics.circle('line', poi.x, poi.y, poi.radius)
     end
-
-    local targetX, targetY = getTargetPos(ball) 
+    love.graphics.setColor(1, 1, 1)
+    local targetX, targetY = getTargetPos(ball)
     love.graphics.rectangle('line', targetX, targetY, 40, 40)
 
     local curCamX, curCamY = cam:getTranslation()
