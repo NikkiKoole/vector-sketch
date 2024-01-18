@@ -106,8 +106,7 @@ function startExample(number)
     --  love.physics.setMeter(500)
     --  world = love.physics.newWorld(0, 9.81 * love.physics.getMeter(), true)
     ground = initGround()
-    ball = makeBall( -100, -500, 100)
-    ball = makeBall( -299, -500, 100)
+
     ball = makeBall(0, -500, 100)
     -- makeBall(0 + 1000, -200, 200)
     -- makeBall(0, -100, 50)
@@ -122,22 +121,50 @@ function love.load()
     camera.centerCameraOnPosition(0, 0, 3000, 3000)
 end
 
+local function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
 function love.update(dt)
     updateGround(ground)
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
-
     -- center camera on wheel
     -- do this stuff
     -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
     -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
-    local worldX, worldY = ball.body:getWorldPoint(0, 0)
 
+
+    --print(worldX, targetX, smoothX)
+    local curCamX, curCamY = cam:getTranslation()
 
     local velX, velY = ball.body:getLinearVelocity()
+    local worldX, worldY = ball.body:getWorldPoint(0, 0)
+
     local viewWidth = numbers.mapInto(math.abs(velX), 0, 10000, 3000, 4000)
-    camera.centerCameraOnPosition(worldX, worldY, viewWidth, viewWidth)
+
+    local targetX = worldX + velX
+    local targetY = worldY
+
+    targetX = numbers.clamp(targetX, worldX - 1200, worldX + 1200)
+    targetY = numbers.clamp(targetY, worldY - 1200, worldY + 1200)
+
+    local smoothX = lerp(curCamX, targetX, 1.0 / 30)
+    local smoothY = lerp(curCamY, targetY, 1.0 / 30)
+
+
+    -- camera.centerCameraOnPosition(worldX, worldY, viewWidth, viewWidth)
+
+
+    camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+
+
+
+
+
+
+
     --    print(velX)
 
     -- print(worldX, worldY)
@@ -146,7 +173,18 @@ end
 function love.draw()
     cam:push()
     phys.drawWorld(world)
+
+    local bx, by = ball.body:getWorldPoint(0, 0)
+    local velX, velY = ball.body:getLinearVelocity()
+    --love.graphics.circle('line', bx, by, 20)
+    local tx, ty = bx + velX / 5, by + velY / 5
+    love.graphics.rectangle('line', tx, ty, 40, 40)
+
+    local curCamX, curCamY = cam:getTranslation()
+    love.graphics.circle('line', curCamX, curCamY, 20)
     cam:pop()
+
+
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
     local velX, velY = ball.body:getLinearVelocity()
