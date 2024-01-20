@@ -1,4 +1,5 @@
-package.path          = package.path .. ";../../?.lua"
+package.path = package.path .. ";../../?.lua"
+require 'lib.printC'
 
 local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
@@ -206,9 +207,13 @@ function getTargetPos(thing)
     local avgVelY = calculateRollingAverage(rollingAverageVelY)
     local worldX, worldY = thing.body:getWorldPoint(0, 0)
 
-    local targetX = worldX + avgVelX
-    local targetY = worldY + avgVelY
+    local targetX = worldX + avgVelX / 5
+    local targetY = worldY + avgVelY / 5
 
+
+    local lookAtY = getYAtX(targetX, 100)
+    --targetY = lookAtY
+    --local targetY = lookAtY -- (worldY + lookAtY) / 2
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
@@ -254,22 +259,38 @@ function love.update(dt)
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    local divider = numbers.mapInto(newDistance, 0, 1000, 1, 15)
+    local divider = numbers.mapInto(newDistance, 0, 1000, 3, 15)
+
     local delta = love.timer.getAverageDelta() or dt
-    delta = 1 / 300
+    --delta = 1 / 300
+
+    --print(1 / delta)
+    --5/ (1/0.16)  -- 60 fps
+    -- 5/ (1/0.08)  -- 120 fps
+
+
+    --5/ 60
+    --5/120
+    local distance = getDistance(curCamX, curCamY, targetX, targetY)
+
+
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
     --print((1 / delta), divider)
-    --local distance = getDistance(curCamX, curCamY, targetX, targetY)
+
     -- print('distance', newDistance)
     --print(targetX, targetY)
     local viewWidth = numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
 
 
-    --print(distance)
-    --if distance > 300 then
+    -- if distance > 500 then
+    print('yes')
     --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
     camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+    -- else
+    print('no')
+    -- end
+    --   love.timer.sleep(.005)
 end
 
 --end
@@ -281,7 +302,7 @@ function love.draw()
     love.graphics.setColor(0.3, 0.3, 0.3)
     for i = 1, #pointsOfInterest do
         local poi = pointsOfInterest[i]
-        love.graphics.circle('line', poi.x, poi.y, poi.radius)
+        --      love.graphics.circle('line', poi.x, poi.y, poi.radius)
     end
     love.graphics.setColor(1, 1, 1)
     local targetX, targetY = getTargetPos(ball)
