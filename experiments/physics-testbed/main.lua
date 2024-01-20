@@ -1,10 +1,10 @@
-package.path  = package.path .. ";../../?.lua"
+package.path          = package.path .. ";../../?.lua"
 
-local cam     = require('lib.cameraBase').getInstance()
-local camera  = require 'lib.camera'
-local phys    = require 'lib.mainPhysics'
-local numbers = require 'lib.numbers'
-
+local cam             = require('lib.cameraBase').getInstance()
+local camera          = require 'lib.camera'
+local phys            = require 'lib.mainPhysics'
+local numbers         = require 'lib.numbers'
+local generatePolygon = require('lib.generate-polygon').generatePolygon
 
 function initGround()
     local thing = {}
@@ -13,8 +13,44 @@ function initGround()
     return thing
 end
 
-function getYAtX()
+function getYAtX(x, stepSize)
     -- we need to be able to get the world height at a specific X
+    local index = math.floor(x / stepSize)
+
+    -- smooth waves
+    local cool = 10.78
+    local amplitude = 150 * cool
+    --local f2 = 30
+    local frequency = 30
+    local h = love.math.noise(index / frequency, 1, 1) * amplitude
+    local y1 = h - (amplitude / 2)
+
+
+    --uphills
+    local cool = 10.78
+    local amplitude = 170 * cool
+    local frequency = 17
+    local h = love.math.noise(index / frequency, 1, 1) * amplitude
+    local y2 = h - (amplitude / 2)
+
+
+
+    -- the roughness
+    local cool = 10.78
+    local amplitude = 20 * cool
+    local frequency = 3
+    local h = love.math.noise(index / frequency, 1, 1) * amplitude
+    local y3 = h - (amplitude / 2)
+
+    -- sometimes i want roughness, sometimes i odnt
+    local r = ((math.sin(index / 30) + 1) / 2)
+    y3 = y3 * r
+
+    -- the downhill steepness
+    local linear = numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
+    --local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
+
+    return y1 + y2 + y3 + linear
 end
 
 function updateGround(ground)
@@ -29,7 +65,7 @@ function updateGround(ground)
     -- get the correct steps to calulate values at
     -- think about the end parts..
     --print(camtlx, cambrx)
-    local stepSize = 100
+    local stepSize = 50
     local steps = math.ceil(boxWorldWidth / stepSize)
     --print(math.ceil(steps))
 
@@ -41,44 +77,11 @@ function updateGround(ground)
 
     local extraSteps = 100
     for i = 1 - extraSteps, steps + 2 + extraSteps do
-        local index = math.floor(camtlx / stepSize) + (i - 1)
-
-
-        -- smooth waves
-        local cool = 10.78
-        local amplitude = 150 * cool
-        --local f2 = 30
-        local frequency = 30
-        local h = love.math.noise(index / frequency, 1, 1) * amplitude
-        local y1 = h - (amplitude / 2)
-
-
-        --uphills
-        local cool = 10.78
-        local amplitude = 170 * cool
-        local frequency = 17
-        local h = love.math.noise(index / frequency, 1, 1) * amplitude
-        local y2 = h - (amplitude / 2)
-
-
-
-        -- the roughness
-        local cool = 10.78
-        local amplitude = 20 * cool
-        local frequency = 3
-        local h = love.math.noise(index / frequency, 1, 1) * amplitude
-        local y3 = h - (amplitude / 2)
-
-        -- sometimes i want roughness, sometimes i odnt
-        local r = ((math.sin(index / 30) + 1) / 2)
-        y3 = y3 * r
-
-        -- the downhill steepness
-        local linear = numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
+        local y = getYAtX(x, stepSize)
 
         table.insert(points, x)
-        table.insert(points, y1 + y2 + y3 + linear)
+        table.insert(points, y)
     end
 
     ground.shape = love.physics.newChainShape(false, points)
@@ -93,10 +96,25 @@ function makeBall(x, y, radius)
     ball.body = love.physics.newBody(world, x, y, "dynamic")
     ball.shape = love.physics.newCircleShape(radius)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
-    ball.fixture:setRestitution(.2) -- let the ball bounce
+    ball.fixture:setRestitution(.7) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     ball.fixture:setFriction(1)
     return ball
+end
+
+function getRandomConvexPoly(radius, numVerts)
+    local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    while not love.math.isConvex(vertices) do
+        vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    end
+    return vertices
+end
+
+function makeRandomPoly(x, y, radius)
+    local body = love.physics.newBody(world, x, y, "dynamic")
+    local shape = love.physics.newPolygonShape(getRandomConvexPoly(radius, 8)) --love.physics.newRectangleShape(width, height / 4)
+    local fixture = love.physics.newFixture(body, shape, .1)
+    return body
 end
 
 function npoly(radius, sides)
@@ -126,6 +144,11 @@ function startExample(number)
     ground = initGround()
     ball = makeBall(0, -500, 100)
 
+    obstacles = {}
+    for i = 1, 100 do
+        local o = makeRandomPoly(i * 30, -500, 100)
+        table.insert(obstacles, o)
+    end
     rollingAverageVelX = {}
     for i = 1, 10 do
         rollingAverageVelX[i] = 0
@@ -233,7 +256,7 @@ function love.update(dt)
 
     local divider = numbers.mapInto(newDistance, 0, 1000, 1, 15)
     local delta = love.timer.getAverageDelta() or dt
-    delta = 1/300
+    delta = 1 / 300
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
     --print((1 / delta), divider)
@@ -297,23 +320,23 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local cx, cy = cam:getWorldCoordinates(x, y)
     local onPressedParams = {
-        pointerForceFunc = function() return 100 end
+        pointerForceFunc = function(fixture) return 400 end
     }
-    local interacted = phys.handlePointerPressed(cx, cy, id)
+    local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
 end
 
 function love.mousepressed(x, y, button, istouch)
     if not istouch then
-    if button == 1 then
-        pointerPressed(x, y, 'mouse')
-    end end
+        if button == 1 then
+            pointerPressed(x, y, 'mouse')
+        end
+    end
 end
 
 function love.touchpressed(id, x, y, dx, dy, pressure)
     pointerPressed(x, y, id)
-   -- ui.addToPressedPointers(x, y, id)
+    -- ui.addToPressedPointers(x, y, id)
 end
-
 
 local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
@@ -326,6 +349,7 @@ function love.mousereleased(x, y, button, istouch)
         pointerReleased(x, y, 'mouse')
     end
 end
+
 function love.touchreleased(id, x, y, dx, dy, pressure)
     pointerReleased(x, y, id)
     --ui.removeFromPressedPointers(id)
