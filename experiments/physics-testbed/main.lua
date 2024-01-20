@@ -233,10 +233,10 @@ function love.update(dt)
 
     local divider = numbers.mapInto(newDistance, 0, 1000, 1, 15)
     local delta = love.timer.getAverageDelta() or dt
-
+    delta = 1/300
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
-    print((1 / delta), divider)
+    --print((1 / delta), divider)
     --local distance = getDistance(curCamX, curCamY, targetX, targetY)
     -- print('distance', newDistance)
     --print(targetX, targetY)
@@ -296,14 +296,24 @@ end
 local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local cx, cy = cam:getWorldCoordinates(x, y)
+    local onPressedParams = {
+        pointerForceFunc = function() return 100 end
+    }
     local interacted = phys.handlePointerPressed(cx, cy, id)
 end
 
-function love.mousepressed(x, y, button)
+function love.mousepressed(x, y, button, istouch)
+    if not istouch then
     if button == 1 then
         pointerPressed(x, y, 'mouse')
-    end
+    end end
 end
+
+function love.touchpressed(id, x, y, dx, dy, pressure)
+    pointerPressed(x, y, id)
+   -- ui.addToPressedPointers(x, y, id)
+end
+
 
 local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
@@ -315,4 +325,8 @@ function love.mousereleased(x, y, button, istouch)
     if not istouch then
         pointerReleased(x, y, 'mouse')
     end
+end
+function love.touchreleased(id, x, y, dx, dy, pressure)
+    pointerReleased(x, y, id)
+    --ui.removeFromPressedPointers(id)
 end

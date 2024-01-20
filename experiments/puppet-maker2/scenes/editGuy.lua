@@ -57,11 +57,18 @@ local function pointerPressed(x, y, id)
 
     local cx, cy = cam:getWorldCoordinates(x, y)
 
-    local onPressed = function(i)
-        growl(1)
-    end
+    local onPressedParams = {
+        onPressedFunc= function() growl(1) end,
+        pointerForceFunc = function(fixture)
+            local ud = fixture:getUserData()
+   
+            local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+ 
+            return force 
+        end 
+    }
 
-    local interacted = phys.handlePointerPressed(cx, cy, id, onPressed)
+    local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
     -- print(interacted)
     if not interacted then
         local scrollItemWidth = (h / scroller.visibleOnScreen)

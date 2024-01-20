@@ -76,13 +76,13 @@ local function makeTrapeziumPoly(w, w2, h, x, y)
         )
 end
 
-local function makePointerJoint(id, bodyToAttachTo, wx, wy, fixture)
+local function makePointerJoint(id, bodyToAttachTo, wx, wy, force)
     local pointerJoint = {}
     pointerJoint.id = id
 
-    local ud = fixture:getUserData()
+   -- local ud = fixture:getUserData()
     -- TODO parametrtize this...!
-    local force = 100 -- ud and ud.bodyType == 'torso' and 5000000 or 50000
+   -- local force = 100 -- ud and ud.bodyType == 'torso' and 5000000 or 50000
 
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
@@ -602,7 +602,7 @@ lib.handlePointerReleased = function(x, y, id)
     lib.killMouseJointIfPossible(id)
 end
 
-lib.handlePointerPressed = function(wx, wy, id, onPressedFunc)
+lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
     -- local wx, wy = cam:getWorldCoordinates(x, y)
     local bodies = world:getBodies()
     local temp = {}
@@ -619,23 +619,9 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedFunc)
                     table.insert(temp,
                         { id = id, body = body, wx = wx, wy = wy, prio = makePrio(fixture), fixture = fixture })
 
-                    if (fiveGuys) then -- TODO MOVE THIS OUT, WAY TOO SPECIFIC
-                        for i = 1, #fiveGuys do
-                            local g = fiveGuys[i]
-                            if (g.b2d) then
-                                for k, v in pairs(g.b2d) do
-                                    if body == v then
-                                        if onPressedFunc then
-                                            onPressedFunc(i)
-                                        end
-                                        -- pickedFiveGuyIndex = i
-                                        -- editingGuy = fiveGuys[pickedFiveGuyIndex]
-                                        -- if SM.cName == 'outside' then
-                                        --     editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
-                                        -- end
-                                    end
-                                end
-                            end
+                    if onPressedParams then
+                        if onPressedParams.onPressedFunc then
+                            onPressedParams.onPressedFunc(body)
                         end
                     end
                 end
@@ -645,7 +631,12 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedFunc)
     if #temp > 0 then
         table.sort(temp, function(k1, k2) return k1.prio > k2.prio end)
         lib.killMouseJointIfPossible(id)
-        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, temp[1].fixture))
+        local force = 100
+        if onPressedParams and onPressedParams.pointerForceFunc then
+            force = onPressedParams.pointerForceFunc(temp[1].fixture)
+        end
+    
+        table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force))
     end
     -- print(#pointerJoints)
     if #temp == 0 then lib.killMouseJointIfPossible(id) end

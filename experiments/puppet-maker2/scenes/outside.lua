@@ -38,15 +38,48 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
 
     local cx, cy = cam:getWorldCoordinates(x, y)
-    local onPressed = function(i)
-        pickedFiveGuyIndex = i
+    
+    
+    
+    local check = function(body ) 
+    
+        if (fiveGuys) then -- TODO MOVE THIS OUT, WAY TOO SPECIFIC
+            for i = 1, #fiveGuys do
+                local g = fiveGuys[i]
+                if (g.b2d) then
+                    for k, v in pairs(g.b2d) do
+                        if body == v then
+                            pickedFiveGuyIndex = i
         editingGuy = fiveGuys[pickedFiveGuyIndex]
         if SM.cName == 'outside' then
             editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
         end
         growl(1)
+                            -- pickedFiveGuyIndex = i
+                            -- editingGuy = fiveGuys[pickedFiveGuyIndex]
+                            -- if SM.cName == 'outside' then
+                            --     editingGuy.b2d.torso:applyLinearImpulse(0, -5000)
+                            -- end
+                        end
+                    end
+                end
+            end
+        end
+    
     end
-    local interacted = phys.handlePointerPressed(cx, cy, id, onPressed)
+
+    local onPressedParams = {
+        onPressedFunc = check,
+        pointerForceFunc = function(fixture)
+            local ud = fixture:getUserData()
+    -- TODO parametrtize this...!
+   -- 
+   local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+ 
+            return force 
+        end 
+    }
+    local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
 
 
     local size = (h / 8) -- margin around panel
