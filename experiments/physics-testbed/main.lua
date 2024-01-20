@@ -13,6 +13,10 @@ function initGround()
     return thing
 end
 
+function getYAtX()
+    -- we need to be able to get the world height at a specific X
+end
+
 function updateGround(ground)
     local w, h = love.graphics.getDimensions()
     -- camera.setCameraViewport(cam, w, h)
@@ -38,7 +42,7 @@ function updateGround(ground)
     local extraSteps = 100
     for i = 1 - extraSteps, steps + 2 + extraSteps do
         local index = math.floor(camtlx / stepSize) + (i - 1)
-        --print(i, index)
+
 
         -- smooth waves
         local cool = 10.78
@@ -74,7 +78,7 @@ function updateGround(ground)
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
 
         table.insert(points, x)
-        table.insert(points, y3 + linear)
+        table.insert(points, y1 + y2 + y3 + linear)
     end
 
     ground.shape = love.physics.newChainShape(false, points)
@@ -127,6 +131,11 @@ function startExample(number)
         rollingAverageVelX[i] = 0
     end
 
+    rollingAverageVelY = {}
+    for i = 1, 10 do
+        rollingAverageVelY[i] = 0
+    end
+
     rollingDistance = {}
     for i = 1, 10 do
         rollingDistance[i] = 0
@@ -169,13 +178,13 @@ local function calculateRollingAverage(valueList)
     return sum / #valueList
 end
 
-
 function getTargetPos(thing)
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
+    local avgVelY = calculateRollingAverage(rollingAverageVelY)
     local worldX, worldY = thing.body:getWorldPoint(0, 0)
 
     local targetX = worldX + avgVelX
-    local targetY = worldY
+    local targetY = worldY + avgVelY
 
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -184,7 +193,7 @@ function getTargetPos(thing)
     -- this sort of describes how far in front of your vehicle you want to point the camera.
     -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left)
     -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
-    local bound = (cambrx - camtlx) / 2
+    local bound = (cambrx - camtlx) / 4
 
     targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
     targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
@@ -196,6 +205,9 @@ function love.update(dt)
     local velX, velY = ball.body:getLinearVelocity()
     table.insert(rollingAverageVelX, velX)
     table.remove(rollingAverageVelX, 1)
+
+    table.insert(rollingAverageVelY, velY)
+    table.remove(rollingAverageVelY, 1)
 
     updateGround(ground)
 
@@ -212,18 +224,19 @@ function love.update(dt)
 
 
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
-    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 2)
+    --local avgVelX = calculateRollingAverage(rollingAverageVelY)
+    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 5)
     ball.body:setLinearDamping(damping)
 
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    local divider = numbers.mapInto(newDistance, 0, 1000, 0.0001, 5)
+    local divider = numbers.mapInto(newDistance, 0, 1000, 1, 15)
     local delta = love.timer.getAverageDelta() or dt
 
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
-
+    print((1 / delta), divider)
     --local distance = getDistance(curCamX, curCamY, targetX, targetY)
     -- print('distance', newDistance)
     --print(targetX, targetY)
