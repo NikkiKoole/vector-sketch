@@ -29,7 +29,7 @@ function getYAtX(x, stepSize)
 
     --uphills
     local cool = 10.78
-    local amplitude = 170 * cool
+    local amplitude = 70 * cool
     local frequency = 17
     local h = love.math.noise(index / frequency, 1, 1) * amplitude
     local y2 = h - (amplitude / 2)
@@ -97,9 +97,11 @@ function makeBall(x, y, radius)
     ball.body = love.physics.newBody(world, x, y, "dynamic")
     ball.shape = love.physics.newCircleShape(radius)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
-    ball.fixture:setRestitution(.7) -- let the ball bounce
+    ball.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
-    ball.fixture:setFriction(1)
+    ball.fixture:setFriction(.5)
+
+    ball.body:setAngularVelocity(10000)
     return ball
 end
 
@@ -271,13 +273,14 @@ function love.update(dt)
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    local dividerFar = numbers.mapInto(newDistance, 500, 1000, 3, 15)
+    local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 15)
     --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
     local distance = getDistance(curCamX, curCamY, targetX, targetY)
 
     --local divider = distance < 500 and dividerNear or dividerFar
     --print(divider)
     divider = dividerFar
+--if distance < 500 then divider = 0 end
 
     local delta = love.timer.getAverageDelta() or dt
     --delta = 1 / 300
@@ -343,6 +346,7 @@ end
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
+    if k == 'space' then ball.body:setAngularVelocity(10000) end
 end
 
 function love.mousemoved(x, y, dx, dy)
