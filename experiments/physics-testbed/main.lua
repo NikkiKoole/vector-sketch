@@ -66,7 +66,7 @@ function updateGround(ground)
     -- get the correct steps to calulate values at
     -- think about the end parts..
     --print(camtlx, cambrx)
-    local stepSize = 50
+    --local stepSize = 100
     local steps = math.ceil(boxWorldWidth / stepSize)
     --print(math.ceil(steps))
 
@@ -142,6 +142,7 @@ end
 
 function startExample(number)
     phys.setupWorld()
+    stepSize = 100
     ground = initGround()
     ball = makeBall(0, -500, 100)
 
@@ -202,18 +203,29 @@ local function calculateRollingAverage(valueList)
     return sum / #valueList
 end
 
+
+function lerpYAtX(targetX, stepSize) 
+    local x1 = math.floor(targetX/stepSize) * stepSize
+    local x2 =  math.ceil(targetX/stepSize) * stepSize
+
+    local y1 = getYAtX(x1, stepSize)
+    local y2 = getYAtX(x2, stepSize)
+
+    local y3 = numbers.mapInto(targetX, x1, x2, y1, y2)
+    return y3
+end
+
 function getTargetPos(thing)
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
     local avgVelY = calculateRollingAverage(rollingAverageVelY)
     local worldX, worldY = thing.body:getWorldPoint(0, 0)
 
     local targetX = worldX + avgVelX / 5
-    local targetY = worldY + avgVelY / 5
+    local targetY = worldY --+ avgVelY / 5
+    
+    targetY = lerpYAtX(targetX, stepSize)
+    targetY = (worldY + targetY)/2
 
-
-    local lookAtY = getYAtX(targetX, 100)
-    --targetY = lookAtY
-    --local targetY = lookAtY -- (worldY + lookAtY) / 2
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
@@ -259,7 +271,13 @@ function love.update(dt)
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    local divider = numbers.mapInto(newDistance, 0, 1000, 3, 15)
+    local dividerFar = numbers.mapInto(newDistance, 500, 1000, 3, 15)
+    --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
+    local distance = getDistance(curCamX, curCamY, targetX, targetY)
+
+    --local divider = distance < 500 and dividerNear or dividerFar
+    --print(divider)
+    divider = dividerFar
 
     local delta = love.timer.getAverageDelta() or dt
     --delta = 1 / 300
@@ -271,8 +289,7 @@ function love.update(dt)
 
     --5/ 60
     --5/120
-    local distance = getDistance(curCamX, curCamY, targetX, targetY)
-
+    
 
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
@@ -281,14 +298,14 @@ function love.update(dt)
     -- print('distance', newDistance)
     --print(targetX, targetY)
     local viewWidth = numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
-
+    --if distance < 500 then viewWidth = 2000 end
 
     -- if distance > 500 then
-    print('yes')
+    --print('yes')
     --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
     camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
     -- else
-    print('no')
+    --print('no')
     -- end
     --   love.timer.sleep(.005)
 end
@@ -298,6 +315,11 @@ end
 function love.draw()
     cam:push()
     phys.drawWorld(world)
+
+
+    local wx, wy = ball.body:getPosition()
+    local yy = lerpYAtX(wx, stepSize)
+    love.graphics.circle('fill', wx, yy, 10)
 
     love.graphics.setColor(0.3, 0.3, 0.3)
     for i = 1, #pointsOfInterest do
