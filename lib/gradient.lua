@@ -79,6 +79,12 @@ lib.makeSkyGradient = function(timeIndex)
             gradients[timeIndex].from, gradients[timeIndex].to
         )
 end
+lib.makeSkyGradientList = function(list)
+    return gradientMesh(
+            "vertical",
+            unpack(list)
+        )
+end
 lib.makeBackdropMesh = function()
     local w, h = love.graphics.getDimensions()
 

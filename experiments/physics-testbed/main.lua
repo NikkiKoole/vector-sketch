@@ -1,11 +1,15 @@
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
-
+local inspect         = require 'vendor.inspect'
 local cam             = require('lib.cameraBase').getInstance()
 local camera          = require 'lib.camera'
 local phys            = require 'lib.mainPhysics'
 local numbers         = require 'lib.numbers'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
+
+
+local gradient = require 'lib.gradient'
+--local skygradient = gradient.makeSkyGradient(16)
 
 function initGround()
     local thing = {}
@@ -175,9 +179,11 @@ function love.load()
     pointsOfInterest = {}
     local w, h = love.graphics.getDimensions()
 
-    for i = 1, 1000 do
+    for i = 1, 100 do
+        local x = -200000 + love.math.random() * 400000
+        local y = lerpYAtX(x, stepSize)
         table.insert(pointsOfInterest,
-            { x = -200000 + love.math.random() * 400000, y = -20000 + love.math.random() * 40000, radius = 400 })
+            { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
     end
 
     -- ground = initGround()
@@ -189,6 +195,10 @@ local function lerp(a, b, t)
     return a + (b - a) * t
 end
 
+local function lerpColor(c1, c2, t)
+    return { lerp(c1[1], c2[1], t), lerp(c1[2], c2[2], t), lerp(c1[3], c2[3], t) }
+end
+
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -196,6 +206,7 @@ local function getDistance(x1, y1, x2, y2)
 
     return distance
 end
+
 local function getDistanceSquared(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -228,7 +239,7 @@ function getTargetPositionBeforeMe(me)
     local avgVelY = calculateRollingAverage(rollingAverageVelY)
     local worldX, worldY = me.body:getWorldPoint(0, 0)
 
-    local targetX = worldX + avgVelX / 5
+    local targetX = worldX + avgVelX / 2
     local targetY = worldY --+ avgVelY / 5
 
     -- this will look at the ground at the x iam looking at
@@ -281,6 +292,7 @@ function getTargetPos(thing)
     -- if pos is in smallest radius then completely look at poi
     -- if pos is in outside radius ring (radisu *2) mapinto the blend
     -- else just use tx, ty
+
     local t = 0
     if (distance < poi.radius) then
         t = 1
@@ -329,29 +341,13 @@ function love.update(dt)
     --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
     local distance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    --local divider = distance < 500 and dividerNear or dividerFar
-    --print(divider)
     divider = dividerFar
-    --if distance < 500 then divider = 0 end
 
     local delta = love.timer.getAverageDelta() or dt
-    --delta = 1 / 300
-
-    --print(1 / delta)
-    --5/ (1/0.16)  -- 60 fps
-    -- 5/ (1/0.08)  -- 120 fps
-
-
-    --5/ 60
-    --5/120
-
 
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
-    --print((1 / delta), divider)
 
-    -- print('distance', newDistance)
-    --print(targetX, targetY)
     local viewWidth = 3000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
     --if distance < 500 then viewWidth = 2000 end
 
@@ -365,9 +361,63 @@ function love.update(dt)
     --   love.timer.sleep(.005)
 end
 
---end
+function skyGradient(camYTop, camYBottom)
+    local function safeColor(colors, index, tt)
+        local col1 = index <= 0 and { 54 / 255, 195 / 255, 240 / 255 } or { 0, 0, 0 }
+        local col2 = index <= 0 and { 54 / 255, 195 / 255, 240 / 255 } or { 0, 0, 0 }
+        if index > 0 and index <= #colors then
+            col1 = colors[index]
+        end
+        if index + 1 > 0 and index + 1 <= #colors then
+            col2 = colors[index + 1]
+        end
+        return lerpColor(col1, col2, tt % 1)
+    end
+
+
+    local skyColors = {
+        { 54 / 255, 195 / 255, 240 / 255 },
+        { 0.7,      0.4,       0.9 }, -- Purple Haze
+        { 0.4,      0.6,       0.9 }, -- Gentle Blue
+        { 54 / 255, 195 / 255, 240 / 255 },
+        { 0.95,     0.8,       0.8 }, -- Soft Pink near the horizon
+        { 51 / 255, 63 / 255,  166 / 255 },
+        { 33 / 255, 37 / 255,  78 / 255 },
+
+        { 0,        0,         0 }
+    }
+
+    local range = 15000
+
+    local tTop = numbers.mapInto(camYTop, range, -range, 1, #skyColors)
+    local indexTop = math.floor(tTop)
+    local interpolatedColorTop = safeColor(skyColors, indexTop, tTop)
+
+    local tBottom = numbers.mapInto(camYBottom, range, -range, 1, #skyColors)
+    local indexBottom = math.floor(tBottom)
+    local interpolatedColorBottom = safeColor(skyColors, indexBottom, tBottom)
+
+    local sky = gradient.makeSkyGradientList({ interpolatedColorTop, interpolatedColorBottom })
+    return sky
+end
 
 function love.draw()
+    love.graphics.clear(1, 0, 1)
+    love.graphics.setColor(1, 1, 1)
+
+
+
+
+    local w, h = love.graphics.getDimensions()
+
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+    local sky = skyGradient(camtly, cambry)
+
+    if sky then
+        love.graphics.draw(sky, 0, 0, 0, w, h)
+    end
     cam:push()
     phys.drawWorld(world)
 
