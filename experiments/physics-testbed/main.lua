@@ -11,6 +11,28 @@ local generatePolygon = require('lib.generate-polygon').generatePolygon
 local gradient = require 'lib.gradient'
 --local skygradient = gradient.makeSkyGradient(16)
 
+
+
+
+--[[
+puppet maker
+no adds
+preschool
+monsters
+makeup
+character
+kids
+free
+monster
+play
+customize
+]]
+--
+
+--[[
+nikki, puppetmaker, character, dolls, mipo, mipolai , maker, puppet, customize, doll, kids, children
+]]
+--
 function initGround()
     local thing = {}
     thing.body = love.physics.newBody(world, 0, 0)
@@ -363,8 +385,9 @@ end
 
 function skyGradient(camYTop, camYBottom)
     local function safeColor(colors, index, tt)
-        local col1 = index <= 0 and { 54 / 255, 195 / 255, 240 / 255 } or { 0, 0, 0 }
-        local col2 = index <= 0 and { 54 / 255, 195 / 255, 240 / 255 } or { 0, 0, 0 }
+        local blue = { 173 / 255, 192 / 255, 199 / 255 } -- { 208 / 255, 230 / 255, 239 / 255 }
+        local col1 = index <= 0 and blue or { 0, 0, 0 }
+        local col2 = index <= 0 and blue or { 0, 0, 0 }
         if index > 0 and index <= #colors then
             col1 = colors[index]
         end
@@ -376,18 +399,26 @@ function skyGradient(camYTop, camYBottom)
 
 
     local skyColors = {
-        { 54 / 255, 195 / 255, 240 / 255 },
-        { 0.7,      0.4,       0.9 }, -- Purple Haze
-        { 0.4,      0.6,       0.9 }, -- Gentle Blue
-        { 54 / 255, 195 / 255, 240 / 255 },
-        { 0.95,     0.8,       0.8 }, -- Soft Pink near the horizon
-        { 51 / 255, 63 / 255,  166 / 255 },
-        { 33 / 255, 37 / 255,  78 / 255 },
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 54 / 255,  195 / 255, 240 / 255 },
+        --   { 0.7,       0.4,       0.9 }, -- Purple Haze
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 0.4,       0.6,       0.9 }, -- Gentle Blue
+        { 54 / 255,  195 / 255, 240 / 255 },
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 0.95,      0.8,       0.8 }, -- Soft Pink near the horizon
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 51 / 255,  63 / 255,  166 / 255 },
+        { 33 / 255,  37 / 255,  78 / 255 },
 
-        { 0,        0,         0 }
+        { 0,         0,         0 }
     }
 
-    local range = 15000
+    local range = 50000
 
     local tTop = numbers.mapInto(camYTop, range, -range, 1, #skyColors)
     local indexTop = math.floor(tTop)
