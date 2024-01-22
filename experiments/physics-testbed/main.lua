@@ -177,7 +177,7 @@ function love.load()
 
     for i = 1, 1000 do
         table.insert(pointsOfInterest,
-            { x = -200000 + love.math.random() * 400000, y = -20000 + love.math.random() * 40000, radius = 800 })
+            { x = -200000 + love.math.random() * 400000, y = -20000 + love.math.random() * 40000, radius = 400 })
     end
 
     -- ground = initGround()
@@ -196,6 +196,12 @@ local function getDistance(x1, y1, x2, y2)
 
     return distance
 end
+local function getDistanceSquared(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local result = (dx * dx) + (dy * dy)
+    return result
+end
 
 local function calculateRollingAverage(valueList)
     local sum = 0
@@ -206,9 +212,9 @@ local function calculateRollingAverage(valueList)
 end
 
 
-function lerpYAtX(targetX, stepSize) 
-    local x1 = math.floor(targetX/stepSize) * stepSize
-    local x2 =  math.ceil(targetX/stepSize) * stepSize
+function lerpYAtX(targetX, stepSize)
+    local x1 = math.floor(targetX / stepSize) * stepSize
+    local x2 = math.ceil(targetX / stepSize) * stepSize
 
     local y1 = getYAtX(x1, stepSize)
     local y2 = getYAtX(x2, stepSize)
@@ -217,16 +223,18 @@ function lerpYAtX(targetX, stepSize)
     return y3
 end
 
-function getTargetPos(thing)
+function getTargetPositionBeforeMe(me)
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
     local avgVelY = calculateRollingAverage(rollingAverageVelY)
-    local worldX, worldY = thing.body:getWorldPoint(0, 0)
+    local worldX, worldY = me.body:getWorldPoint(0, 0)
 
     local targetX = worldX + avgVelX / 5
     local targetY = worldY --+ avgVelY / 5
-    
+
+    -- this will look at the ground at the x iam looking at
     targetY = lerpYAtX(targetX, stepSize)
-    targetY = (worldY + targetY)/2
+    -- this will average with my own pos
+    targetY = (worldY + targetY) / 2
 
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -241,6 +249,50 @@ function getTargetPos(thing)
     targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
 
     return targetX, targetY
+end
+
+local function getClosestPointFromList(pos, list)
+    local closestDistance = math.huge
+    local closest = nil
+
+    for i = 1, #list do
+        local val = getDistanceSquared(pos.x, pos.y, list[i].x, list[i].y)
+        --print(val)
+        if val < closestDistance then
+            closestDistance = val
+            closest = list[i]
+        end
+    end
+
+    return closest
+    --local distance = getDistance(pos.x, pos.y, closest.x, closest.y)
+    --print('closest', closestDistance, distance)
+end
+
+function getTargetPos(thing)
+    local tx, ty = getTargetPositionBeforeMe(thing)
+
+    local x, y = thing.body:getPosition()
+
+    local poi = getClosestPointFromList({ x = x, y = y }, pointsOfInterest)
+    local distance = getDistance(x, y, poi.x, poi.y)
+
+    -- how to blend targets ?
+    -- if pos is in smallest radius then completely look at poi
+    -- if pos is in outside radius ring (radisu *2) mapinto the blend
+    -- else just use tx, ty
+    local t = 0
+    if (distance < poi.radius) then
+        t = 1
+    elseif distance < poi.radius * 2 then
+        t = numbers.mapInto(distance, poi.radius * 2, poi.radius, 0, 1)
+    end
+
+
+    local nx = numbers.lerp(tx, poi.x, t)
+    local ny = numbers.lerp(ty, poi.y, t)
+
+    return nx, ny
 end
 
 function love.update(dt)
@@ -280,7 +332,7 @@ function love.update(dt)
     --local divider = distance < 500 and dividerNear or dividerFar
     --print(divider)
     divider = dividerFar
---if distance < 500 then divider = 0 end
+    --if distance < 500 then divider = 0 end
 
     local delta = love.timer.getAverageDelta() or dt
     --delta = 1 / 300
@@ -292,7 +344,7 @@ function love.update(dt)
 
     --5/ 60
     --5/120
-    
+
 
     local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
     local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
@@ -300,7 +352,7 @@ function love.update(dt)
 
     -- print('distance', newDistance)
     --print(targetX, targetY)
-    local viewWidth = numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
+    local viewWidth = 3000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
     --if distance < 500 then viewWidth = 2000 end
 
     -- if distance > 500 then
@@ -327,7 +379,8 @@ function love.draw()
     love.graphics.setColor(0.3, 0.3, 0.3)
     for i = 1, #pointsOfInterest do
         local poi = pointsOfInterest[i]
-        --      love.graphics.circle('line', poi.x, poi.y, poi.radius)
+        love.graphics.circle('line', poi.x, poi.y, poi.radius)
+        love.graphics.circle('line', poi.x, poi.y, poi.radius * 2)
     end
     love.graphics.setColor(1, 1, 1)
     local targetX, targetY = getTargetPos(ball)
