@@ -34,51 +34,36 @@ nikki, puppetmaker, character, dolls, mipo, mipolai , maker, puppet, customize, 
 ]]
 --
 function initGround()
-    local thing = {}
-    thing.body = love.physics.newBody(world, 0, 0)
+    local thing = {
+
+    body = love.physics.newBody(world, 0, 0)
+}
     updateGround(thing)
     return thing
 end
 
+
 function getYAtX(x, stepSize)
-    -- we need to be able to get the world height at a specific X
+    
     local index = math.floor(x / stepSize)
 
-    -- smooth waves
-    local cool = 10.78
-    local amplitude = 150 * cool
-    --local f2 = 30
-    local frequency = 30
-    local h = love.math.noise(index / frequency, 1, 1) * amplitude
-    local y1 = h - (amplitude / 2)
+    local function generateWave(amplitude, frequency)
+        local h = love.math.noise(index / frequency, 1, 1) * amplitude
+        return h - (amplitude / 2)
+    end
 
-
-    --uphills
-    local cool = 10.78
-    local amplitude = 70 * cool
-    local frequency = 17
-    local h = love.math.noise(index / frequency, 1, 1) * amplitude
-    local y2 = h - (amplitude / 2)
-
-
-
-    -- the roughness
-    local cool = 10.78
-    local amplitude = 20 * cool
-    local frequency = 3
-    local h = love.math.noise(index / frequency, 1, 1) * amplitude
-    local y3 = h - (amplitude / 2)
-
-    -- sometimes i want roughness, sometimes i odnt
-    local r = ((math.sin(index / 30) + 1) / 2)
-    y3 = y3 * r
-
-    -- the downhill steepness
-    local linear = numbers.mapInto(index, -20 * stepSize, 20 * stepSize, -500 * stepSize, 500 * stepSize)
-    --local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
-
+    local y1 = generateWave(150 * 10.78, 30)
+    local y2 = generateWave(70 * 10.78, 17)
+    local y3 = generateWave(20 * 10.78, 3)
+    
+    y3 = y3 * ((math.sin(x / 30) + 1) / 2)  -- Apply roughness condition
+    
+    local linear = numbers.mapInto(x / stepSize, -20, 20, -500, 500)
+    
     return y1 + y2 + y3 + linear
 end
+
+
 
 function updateGround(ground)
     local w, h = love.graphics.getDimensions()
@@ -150,7 +135,7 @@ function makeBall2(x, y, radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
-    ball2.fixture:setFriction(.5)
+    ball2.fixture:setFriction(1)
     ball2.body:setAngularVelocity(10000)
 
 
@@ -161,8 +146,8 @@ function makeBall2(x, y, radius)
 
 
     local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
-
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
+
     --   joint1:setMotorEnabled(true)
     --    joint1:setMotorSpeed(motorSpeed)
     --    joint1:setMaxMotorTorque(motorTorque)
@@ -191,14 +176,17 @@ function makeRandomTriangle(x, y, radius)
 
     local w = (radius * 2) + love.math.random() * (radius * 2)
     local h = radius / 2 + love.math.random() * (radius / 2)
+   
+
     local points = {
-        x - w / 2, y,
-        x + w / 2, y - h,
-        x + w / 2, y + h
+         - w / 2, 0,
+         w / 2, - h,
+         w / 2,  h
     }
 
     local shape = love.physics.newPolygonShape(points) --love.physics.newRectangleShape(width, height / 4)
     local fixture = love.physics.newFixture(body, shape, .1)
+    return body
 end
 
 function npoly(radius, sides)
@@ -221,6 +209,49 @@ function makeNPoly(x, y, radius)
     ball.shape = love.physics.newPolygonShape(npoly(radius, 8)) --love.physics.newRectangleShape(100, 100) --(50)-- love.physics.newCircleShape(50)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
     return ball
+end
+
+
+function enableDisableObstacles() 
+    --Body:setGravityScale( scale )
+    local w,h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local boxWorldHeight = cambry - camtly
+
+   
+   -- local steps = math.ceil(boxWorldWidth / stepSize)
+
+    local extraSteps = 100
+
+    local xMinR = camtlx   - extraSteps * stepSize  
+    local xMaxR = cambrx   + extraSteps * stepSize 
+
+   -- print(#obstacles)
+    for i = 1, #obstacles do
+        local  b = obstacles[i]
+        local bx, by =b:getPosition()
+        local scale = b:getGravityScale()
+        --print(scale)
+
+        if bx < xMinR or bx > xMaxR then 
+            b:setActive( false)
+            b:setGravityScale(0)
+            local y = lerpYAtX(bx, stepSize)
+
+            if by > y then
+            b:setPosition(bx, y) 
+        end
+           -- print('setting scale to 0')
+        end
+        
+        if bx >= xMinR and  bx <= xMaxR  then
+            b:setActive( true)
+            b:setGravityScale(1) 
+           -- print('setting scale to 1')
+        end
+    end 
 end
 
 function startExample(number)
@@ -248,19 +279,15 @@ function startExample(number)
 
 
     rollingAverageVelX = {}
-    for i = 1, 10 do
-        rollingAverageVelX[i] = 0
-    end
-
     rollingAverageVelY = {}
-    for i = 1, 10 do
-        rollingAverageVelY[i] = 0
-    end
-
     rollingDistance = {}
     for i = 1, 10 do
+        rollingAverageVelX[i] = 0
+        rollingAverageVelY[i] = 0
         rollingDistance[i] = 0
     end
+
+
 end
 
 function love.load()
@@ -319,7 +346,7 @@ function lerpYAtX(targetX, stepSize)
 
     local y1 = getYAtX(x1, stepSize)
     local y2 = getYAtX(x2, stepSize)
-    --print(targetX, x1, x2, y1, y2)
+
     local y3 = numbers.mapInto(targetX, x1, x2, y1, y2)
     return y3
 end
@@ -335,7 +362,7 @@ function getTargetPositionBeforeMe(me)
     -- this will look at the ground at the   x iam looking at
     targetY = lerpYAtX(targetX, stepSize)
     -- this will average with my own pos
-    print(targetX, (worldY + targetY) / 2)
+
     targetY = (worldY + targetY) / 2
 
     local w, h = love.graphics.getDimensions()
@@ -349,7 +376,7 @@ function getTargetPositionBeforeMe(me)
 
     targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
     targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
-    print(targetX, targetY)
+
     return targetX, targetY
 end
 
@@ -407,7 +434,7 @@ function love.update(dt)
     table.remove(rollingAverageVelY, 1)
 
     updateGround(ground)
-
+    enableDisableObstacles() 
     world:update(dt)
     phys.handleUpdate(dt, cam)
 

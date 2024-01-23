@@ -1,6 +1,10 @@
 local numbers = {}
 
 numbers.mapInto = function(x, in_min, in_max, out_min, out_max)
+   if in_min == in_max then
+      -- Handle the case where in_min and in_max are equal
+      return (x == in_min) and out_min or 0/0 -- Return NaN for any x other than in_min
+   end
    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
 
