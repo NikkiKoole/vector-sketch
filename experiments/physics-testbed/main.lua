@@ -54,11 +54,11 @@ function getYAtX(x, stepSize)
 
     local y1 = generateWave(150 * 10.78, 30)
     local y2 = generateWave(70 * 10.78, 17)
-    local y3 = generateWave(20 * 10.78, 3)
+    local y3 = generateWave(20 * 10.78, 5)
     
     y3 = y3 * ((math.sin(x / 30) + 1) / 2)  -- Apply roughness condition
     
-    local linear = numbers.mapInto(x / stepSize, -20, 20, -500, 500)
+    local linear = numbers.mapInto(x / stepSize, -20, 20, -1000, 1000)
     
     return y1 + y2 + y3 + linear
 end
@@ -119,19 +119,20 @@ function makeBall(x, y, radius)
 end
 
 function makeBall2(x, y, radius)
+
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + 200, y, "dynamic")
-    ball1.shape = love.physics.newCircleShape(radius)
+    ball1.shape = love.physics.newCircleShape(radius )
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
-    ball1.fixture:setFriction(.5)
+    ball1.fixture:setFriction(1)
     ball1.body:setAngularVelocity(10000)
 
 
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - 200, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius / 2)
+    ball2.shape = love.physics.newCircleShape(radius )
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
@@ -148,9 +149,9 @@ function makeBall2(x, y, radius)
     local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
-    --   joint1:setMotorEnabled(true)
-    --    joint1:setMotorSpeed(motorSpeed)
-    --    joint1:setMaxMotorTorque(motorTorque)
+    --joint1:setMotorEnabled(true)
+    --joint1:setMotorSpeed(500000)
+    --joint1:setMaxMotorTorque(20000)
 
 
     return ball1
