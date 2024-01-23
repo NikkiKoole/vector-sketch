@@ -266,7 +266,7 @@ function startExample(number)
 
 
     obstacles = {}
-    for i = 1, 100 do
+    for i = 1, 1000 do
         local o = makeRandomPoly(i * 30, -500, 100)
         table.insert(obstacles, o)
     end
