@@ -17,9 +17,9 @@ local gradient = require 'lib.gradient'
 --[[
 puppet maker
 no adds
-preschool
-monsters
-makeup
+    preschool
+    monsters
+    makeup
 character
 kids
 free
@@ -103,6 +103,7 @@ function updateGround(ground)
     end
 
     local extraSteps = 100
+
     for i = 1 - extraSteps, steps + 2 + extraSteps do
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
         local y = getYAtX(x, stepSize)
@@ -110,6 +111,7 @@ function updateGround(ground)
         table.insert(points, x)
         table.insert(points, y)
     end
+    -- print(inspect(points))
 
     ground.shape = love.physics.newChainShape(false, points)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
@@ -131,6 +133,44 @@ function makeBall(x, y, radius)
     return ball
 end
 
+function makeBall2(x, y, radius)
+    local ball1 = {}
+    ball1.body = love.physics.newBody(world, x + 200, y, "dynamic")
+    ball1.shape = love.physics.newCircleShape(radius)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
+    ball1.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+    ball1.fixture:setFriction(.5)
+    ball1.body:setAngularVelocity(10000)
+
+
+    local ball2 = {}
+    ball2.body = love.physics.newBody(world, x - 200, y, "dynamic")
+    ball2.shape = love.physics.newCircleShape(radius / 2)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
+    ball2.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+    ball2.fixture:setFriction(.5)
+    ball2.body:setAngularVelocity(10000)
+
+
+    local frame = {}
+    frame.body = love.physics.newBody(world, x, y, "dynamic")
+    frame.shape = love.physics.newRectangleShape(500, 100)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, .1)
+
+
+    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
+
+    local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
+    --   joint1:setMotorEnabled(true)
+    --    joint1:setMotorSpeed(motorSpeed)
+    --    joint1:setMaxMotorTorque(motorTorque)
+
+
+    return ball1
+end
+
 function getRandomConvexPoly(radius, numVerts)
     local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
     while not love.math.isConvex(vertices) do
@@ -144,6 +184,21 @@ function makeRandomPoly(x, y, radius)
     local shape = love.physics.newPolygonShape(getRandomConvexPoly(radius, 8)) --love.physics.newRectangleShape(width, height / 4)
     local fixture = love.physics.newFixture(body, shape, .1)
     return body
+end
+
+function makeRandomTriangle(x, y, radius)
+    local body = love.physics.newBody(world, x, y, "dynamic")
+
+    local w = (radius * 2) + love.math.random() * (radius * 2)
+    local h = radius / 2 + love.math.random() * (radius / 2)
+    local points = {
+        x - w / 2, y,
+        x + w / 2, y - h,
+        x + w / 2, y + h
+    }
+
+    local shape = love.physics.newPolygonShape(points) --love.physics.newRectangleShape(width, height / 4)
+    local fixture = love.physics.newFixture(body, shape, .1)
 end
 
 function npoly(radius, sides)
@@ -172,13 +227,26 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 100
     ground = initGround()
-    ball = makeBall(0, -500, 100)
+
+
+
+
+
 
     obstacles = {}
     for i = 1, 100 do
         local o = makeRandomPoly(i * 30, -500, 100)
         table.insert(obstacles, o)
     end
+
+    for i = 1, 100 do
+        local o = makeRandomTriangle(i * 30, -500, 200)
+        table.insert(obstacles, o)
+    end
+
+    ball = makeBall2(0, -1500, 150)
+
+
     rollingAverageVelX = {}
     for i = 1, 10 do
         rollingAverageVelX[i] = 0
@@ -251,7 +319,7 @@ function lerpYAtX(targetX, stepSize)
 
     local y1 = getYAtX(x1, stepSize)
     local y2 = getYAtX(x2, stepSize)
-
+    --print(targetX, x1, x2, y1, y2)
     local y3 = numbers.mapInto(targetX, x1, x2, y1, y2)
     return y3
 end
@@ -264,9 +332,10 @@ function getTargetPositionBeforeMe(me)
     local targetX = worldX + avgVelX / 2
     local targetY = worldY --+ avgVelY / 5
 
-    -- this will look at the ground at the x iam looking at
+    -- this will look at the ground at the   x iam looking at
     targetY = lerpYAtX(targetX, stepSize)
     -- this will average with my own pos
+    print(targetX, (worldY + targetY) / 2)
     targetY = (worldY + targetY) / 2
 
     local w, h = love.graphics.getDimensions()
@@ -280,7 +349,7 @@ function getTargetPositionBeforeMe(me)
 
     targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
     targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
-
+    print(targetX, targetY)
     return targetX, targetY
 end
 
@@ -501,7 +570,7 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local cx, cy = cam:getWorldCoordinates(x, y)
     local onPressedParams = {
-        pointerForceFunc = function(fixture) return 400 end
+        pointerForceFunc = function(fixture) return 1400 end
     }
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
 end
