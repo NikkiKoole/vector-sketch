@@ -51,7 +51,10 @@ function updateGround(ground)
         ground.fixture:destroy()
     end
 
-    local extraSteps = 100
+    local extraSteps = 10
+
+    -- why is this numbers growing so much when i add more mipos ?
+    --print(camtlx / stepSize, cambrx / stepSize)
 
     for i = 1 - extraSteps, steps + 2 + extraSteps do
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
@@ -60,7 +63,7 @@ function updateGround(ground)
         table.insert(points, x)
         table.insert(points, y)
     end
-    --print(inspect(points))
+    -- print(inspect(points))
 
     ground.shape = love.physics.newChainShape(false, points)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
@@ -176,6 +179,50 @@ function makeNPoly(x, y, radius)
     return ball
 end
 
+function enableDisableMipos()
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local boxWorldHeight = cambry - camtly
+
+
+    -- local steps = math.ceil(boxWorldWidth / stepSize)
+
+    local extraSteps = 10
+
+    local xMinR = camtlx - extraSteps * stepSize
+    local xMaxR = cambrx + extraSteps * stepSize
+
+    for i = 1, #mipos do
+        local b = mipos[i]
+        local bx, by = b.b2d.torso:getPosition()
+
+
+
+
+        if bx < xMinR or bx > xMaxR then
+            local y = lerpYAtX(bx, stepSize)
+
+            for k, v in pairs(b.b2d) do
+                --print(k)
+                v:setActive(false)
+                v:setGravityScale(0)
+                v:setPosition(bx, y - 1000)
+            end
+            -- print('want to disable mipo', i)
+        end
+        if bx >= xMinR and bx <= xMaxR then
+            for k, v in pairs(b.b2d) do
+                v:setActive(true)
+                v:setGravityScale(1)
+            end
+            -- print('want to enable mipo', i)
+        end
+        --print(inspect(b.b2d))
+    end
+end
+
 function enableDisableObstacles()
     --Body:setGravityScale( scale )
     local w, h = love.graphics.getDimensions()
@@ -222,7 +269,7 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 100
     ground = initGround()
-    addMipos.make(4)
+    mipos = addMipos.make(10)
     obstacles = {}
     for i = 1, 100 do
         local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 100)
@@ -248,6 +295,15 @@ function startExample(number)
 end
 
 function love.load()
+    local ffont = "WindsorBT-Roman.otf"
+    --local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
+
+    --print("Initializing console")
+
+    --   local otherfont = "/fonts/Monaco.ttf"
+    font = love.graphics.newFont(ffont, 32)
+
+    love.graphics.setFont(font)
     jointsEnabled = true
     followCamera = true
     startExample()
@@ -378,6 +434,7 @@ function getTargetPos(thing)
     local nx = numbers.lerp(tx, poi.x, t)
     local ny = numbers.lerp(ty, poi.y, t)
 
+    -- print(nx, ny)
     return nx, ny
 end
 
@@ -391,10 +448,11 @@ function love.update(dt)
 
     updateGround(ground)
     enableDisableObstacles()
+    enableDisableMipos()
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
-    box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
+    --box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
 
     local targetX, targetY = getTargetPos(ball)
 
@@ -420,8 +478,11 @@ function love.update(dt)
 
     local delta = love.timer.getAverageDelta() or dt
 
-    local smoothX = lerp(curCamX, targetX, divider / (1 / delta))
-    local smoothY = lerp(curCamY, targetY, divider / (1 / delta))
+    local div = math.min(divider / (1 / delta), 1)
+
+
+    local smoothX = lerp(curCamX, targetX, div)
+    local smoothY = lerp(curCamY, targetY, div)
 
     local viewWidth = 3000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
     --if distance < 500 then viewWidth = 2000 end
@@ -430,6 +491,10 @@ function love.update(dt)
     --print('yes')
     --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
     if followCamera then
+        --print('****')
+        --print(curCamX, targetX, divider / (1 / delta))
+        --print(curCamY, targetY, divider / (1 / delta))
+        --print(smoothX, smoothY, viewWidth, viewWidth)
         camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
     end
     -- else
@@ -506,8 +571,8 @@ function love.draw()
     end
     cam:push()
     phys.drawWorld(world)
-    for i = 1, #fiveGuys do
-        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+    for i = 1, #mipos do
+        texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
     end
 
     local wx, wy = ball.body:getPosition()
@@ -529,16 +594,26 @@ function love.draw()
     cam:pop()
 
 
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+    love.graphics.setColor(0, 0, 0, 0.5)
+
+
+    local stats = love.graphics.getStats()
+    local mem = string.format("%.2f", collectgarbage("count") / 1000) .. 'Mb'
+    local vmem = string.format("%.2f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+    local fps = tostring(love.timer.getFPS()) .. 'fps'
+    local draws = stats.drawcalls .. 'draws'
+
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+
+    -- love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
     --local velX, velY = ball.body:getLinearVelocity()
     --love.graphics.print('ball speed: ' .. math.floor(velX), 10, 30)
-    local stats = love.graphics.getStats()
-    love.graphics.print(inspect(stats), 10, 10)
-    love.graphics.print(
-        world:getBodyCount() ..
-        '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
-        10)
+
+    -- love.graphics.print(inspect(stats), 10, 10)
+    --love.graphics.print(
+    --    world:getBodyCount() ..
+    --    '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. str, 180,
+    --    10)
 end
 
 function love.keypressed(k)

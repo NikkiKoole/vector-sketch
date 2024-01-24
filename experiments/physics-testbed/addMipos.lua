@@ -2,7 +2,7 @@ local dna              = require 'lib.dna'
 local updatePart       = require 'lib.updatePart'
 local inspect          = require 'vendor.inspect'
 local box2dGuyCreation = require 'lib.box2dGuyCreation'
-fiveGuys               = {}
+local fiveGuys         = {}
 parts                  = dna.generateParts()
 
 local lib              = {}
@@ -54,7 +54,7 @@ end
 
 lib.make = function(count)
     for i = 1, count do
-        local dna   = {
+        local dna = {
             multipliers = dna.getMultipliers(),
             creation = dna.getCreation(),
             values = dna.generateValues(),
@@ -84,6 +84,7 @@ lib.make = function(count)
         updatePart.updateAllParts(fiveGuys[i])
     end
     --print(inspect(fiveGuys))
+    return fiveGuys
 end
 
 return lib
