@@ -6,47 +6,18 @@ local camera          = require 'lib.camera'
 local phys            = require 'lib.mainPhysics'
 local numbers         = require 'lib.numbers'
 local generatePolygon = require('lib.generate-polygon').generatePolygon
+local gradient        = require 'lib.gradient'
 
-
-local gradient = require 'lib.gradient'
---local skygradient = gradient.makeSkyGradient(16)
-
-
-
-
---[[
-puppet maker
-no adds
-    preschool
-    monsters
-    makeup
-character
-kids
-free
-monster
-play
-customize
-]]
---
-
---[[
-nikki, puppetmaker, character, dolls, mipo, mipolai , maker, puppet, customize, doll, kids, children
-]]
---
 function initGround()
     local thing = {
-
-    body = love.physics.newBody(world, 0, 0)
-}
+        body = love.physics.newBody(world, 0, 0)
+    }
     updateGround(thing)
     return thing
 end
 
-
 function getYAtX(x, stepSize)
-    
     local index = math.floor(x / stepSize)
-
     local function generateWave(amplitude, frequency)
         local h = love.math.noise(index / frequency, 1, 1) * amplitude
         return h - (amplitude / 2)
@@ -55,31 +26,21 @@ function getYAtX(x, stepSize)
     local y1 = generateWave(150 * 10.78, 30)
     local y2 = generateWave(70 * 10.78, 17)
     local y3 = generateWave(20 * 10.78, 5)
-    
-    y3 = y3 * ((math.sin(x / 30) + 1) / 2)  -- Apply roughness condition
-    
+
+    y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
+
     local linear = numbers.mapInto(x / stepSize, -20, 20, -1000, 1000)
-    
+
     return y1 + y2 + y3 + linear
 end
 
-
-
 function updateGround(ground)
     local w, h = love.graphics.getDimensions()
-    -- camera.setCameraViewport(cam, w, h)
-    -- camera.centerCameraOnPosition(w / 2, h / 2 - 1000, 3000, 3000)
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
     local boxWorldWidth = cambrx - camtlx
     local boxWorldHeight = cambry - camtly
-
-    -- get the correct steps to calulate values at
-    -- think about the end parts..
-    --print(camtlx, cambrx)
-    --local stepSize = 100
     local steps = math.ceil(boxWorldWidth / stepSize)
-    --print(math.ceil(steps))
 
     local points = {}
 
@@ -96,13 +57,12 @@ function updateGround(ground)
         table.insert(points, x)
         table.insert(points, y)
     end
-    -- print(inspect(points))
+    --print(inspect(points))
 
     ground.shape = love.physics.newChainShape(false, points)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
     ground.fixture:setUserData("ground")
     ground.fixture:setFriction(1)
-    --print(boxWorldWidth, boxWorldHeight)
 end
 
 function makeBall(x, y, radius)
@@ -118,11 +78,10 @@ function makeBall(x, y, radius)
     return ball
 end
 
-function makeBall2(x, y, radius)
-
+function makeBike(x, y, radius)
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + 200, y, "dynamic")
-    ball1.shape = love.physics.newCircleShape(radius )
+    ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
@@ -132,7 +91,7 @@ function makeBall2(x, y, radius)
 
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - 200, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius )
+    ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
@@ -158,9 +117,11 @@ function makeBall2(x, y, radius)
 end
 
 function getRandomConvexPoly(radius, numVerts)
-    local vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+    local irregularity = 0.1
+    local spikeyness = 0.1
+    local vertices = generatePolygon(0, 0, radius, irregularity, spikeyness, numVerts)
     while not love.math.isConvex(vertices) do
-        vertices = generatePolygon(0, 0, radius, 0.1, 0.1, numVerts)
+        vertices = generatePolygon(0, 0, radius, irregularity, spikeyness, numVerts)
     end
     return vertices
 end
@@ -177,12 +138,12 @@ function makeRandomTriangle(x, y, radius)
 
     local w = (radius * 2) + love.math.random() * (radius * 2)
     local h = radius / 2 + love.math.random() * (radius / 2)
-   
+
 
     local points = {
-         - w / 2, 0,
-         w / 2, - h,
-         w / 2,  h
+        -w / 2, 0,
+        w / 2, -h,
+        w / 2, h
     }
 
     local shape = love.physics.newPolygonShape(points) --love.physics.newRectangleShape(width, height / 4)
@@ -212,47 +173,46 @@ function makeNPoly(x, y, radius)
     return ball
 end
 
-
-function enableDisableObstacles() 
+function enableDisableObstacles()
     --Body:setGravityScale( scale )
-    local w,h = love.graphics.getDimensions()
+    local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
     local boxWorldWidth = cambrx - camtlx
     local boxWorldHeight = cambry - camtly
 
-   
-   -- local steps = math.ceil(boxWorldWidth / stepSize)
+
+    -- local steps = math.ceil(boxWorldWidth / stepSize)
 
     local extraSteps = 100
 
-    local xMinR = camtlx   - extraSteps * stepSize  
-    local xMaxR = cambrx   + extraSteps * stepSize 
+    local xMinR = camtlx - extraSteps * stepSize
+    local xMaxR = cambrx + extraSteps * stepSize
 
-   -- print(#obstacles)
+    -- print(#obstacles)
     for i = 1, #obstacles do
-        local  b = obstacles[i]
-        local bx, by =b:getPosition()
+        local b = obstacles[i]
+        local bx, by = b:getPosition()
         local scale = b:getGravityScale()
         --print(scale)
 
-        if bx < xMinR or bx > xMaxR then 
-            b:setActive( false)
+        if bx < xMinR or bx > xMaxR then
+            b:setActive(false)
             b:setGravityScale(0)
             local y = lerpYAtX(bx, stepSize)
 
             if by > y then
-            b:setPosition(bx, y) 
+                b:setPosition(bx, y)
+            end
+            -- print('setting scale to 0')
         end
-           -- print('setting scale to 0')
+
+        if bx >= xMinR and bx <= xMaxR then
+            b:setActive(true)
+            b:setGravityScale(1)
+            -- print('setting scale to 1')
         end
-        
-        if bx >= xMinR and  bx <= xMaxR  then
-            b:setActive( true)
-            b:setGravityScale(1) 
-           -- print('setting scale to 1')
-        end
-    end 
+    end
 end
 
 function startExample(number)
@@ -260,35 +220,28 @@ function startExample(number)
     stepSize = 100
     ground = initGround()
 
-
-
-
-
-
     obstacles = {}
-    for i = 1, 1000 do
-        local o = makeRandomPoly(i * 30, -500, 100)
+    for i = 1, 100 do
+        local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 100)
         table.insert(obstacles, o)
     end
 
     for i = 1, 100 do
-        local o = makeRandomTriangle(i * 30, -500, 200)
+        local o = makeRandomTriangle(i * 30, -500, 50)
         table.insert(obstacles, o)
     end
 
-    ball = makeBall2(0, -1500, 150)
-
+    ball = makeBike(0, -1500, 150)
 
     rollingAverageVelX = {}
     rollingAverageVelY = {}
     rollingDistance = {}
+
     for i = 1, 10 do
         rollingAverageVelX[i] = 0
         rollingAverageVelY[i] = 0
         rollingDistance[i] = 0
     end
-
-
 end
 
 function love.load()
@@ -304,7 +257,6 @@ function love.load()
             { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
     end
 
-    -- ground = initGround()
     camera.setCameraViewport(cam, w, h)
     camera.centerCameraOnPosition(0, 0, 3000, 3000)
 end
@@ -366,6 +318,9 @@ function getTargetPositionBeforeMe(me)
 
     targetY = (worldY + targetY) / 2
 
+    -- up untill now we assume we alsways are going forwards with the bike.
+    -- what if we are being dragged high up in the air..
+
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
@@ -387,7 +342,6 @@ local function getClosestPointFromList(pos, list)
 
     for i = 1, #list do
         local val = getDistanceSquared(pos.x, pos.y, list[i].x, list[i].y)
-        --print(val)
         if val < closestDistance then
             closestDistance = val
             closest = list[i]
@@ -395,8 +349,6 @@ local function getClosestPointFromList(pos, list)
     end
 
     return closest
-    --local distance = getDistance(pos.x, pos.y, closest.x, closest.y)
-    --print('closest', closestDistance, distance)
 end
 
 function getTargetPos(thing)
@@ -419,7 +371,6 @@ function getTargetPos(thing)
         t = numbers.mapInto(distance, poi.radius * 2, poi.radius, 0, 1)
     end
 
-
     local nx = numbers.lerp(tx, poi.x, t)
     local ny = numbers.lerp(ty, poi.y, t)
 
@@ -435,7 +386,7 @@ function love.update(dt)
     table.remove(rollingAverageVelY, 1)
 
     updateGround(ground)
-    enableDisableObstacles() 
+    enableDisableObstacles()
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
