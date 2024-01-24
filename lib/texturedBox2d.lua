@@ -10,6 +10,19 @@ local box2dGuyCreation = require 'lib.box2dGuyCreation'
 
 local lib              = {}
 
+textures               = {
+    love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type4.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type5.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type6.png'),
+    love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
+    love.graphics.newImage('assets/img/tiles/tiles2.png'),
+    love.graphics.newImage('assets/img/tiles/tiles.png'),
+}
+
 
 local function getDistance(x1, y1, x2, y2)
     local dx = x1 - x2

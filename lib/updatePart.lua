@@ -21,6 +21,14 @@ function getOriginalImageForShape(guy, name)
     return img
 end
 
+function findPart(name)
+    for i = 1, #parts do
+        if parts[i].name == name then
+            return parts[i]
+        end
+    end
+end
+
 lib.updatePart     = function(name, guy)
     local values = guy.dna.values
     local creation = guy.dna.creation

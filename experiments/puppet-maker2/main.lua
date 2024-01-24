@@ -448,20 +448,20 @@ function love.load()
     audioHelper.sendMessageToAudioThread({ type = "samples", data = samples });
     audioHelper.sendMessageToAudioThread({ type = "pattern", data = song.pages[2] });
 
-    textures = {
-        love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type4.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type5.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type6.png'),
-        love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
-        love.graphics.newImage('assets/img/tiles/tiles2.png'),
-        love.graphics.newImage('assets/img/tiles/tiles.png'),
-    }
-
-
+    if false then
+        textures = {
+            love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type3.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type4.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type5.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type6.png'),
+            love.graphics.newImage('assets/img/bodytextures/texture-type7.png'),
+            love.graphics.newImage('assets/img/tiles/tiles2.png'),
+            love.graphics.newImage('assets/img/tiles/tiles.png'),
+        }
+    end
     winegumkisses = {
         love.audio.newSource('assets/sounds/fx/winegum-kiss1.wav', 'static'),
         love.audio.newSource('assets/sounds/fx/winegum-kiss2.wav', 'static'),

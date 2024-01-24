@@ -1,12 +1,15 @@
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
-local inspect         = require 'vendor.inspect'
-local cam             = require('lib.cameraBase').getInstance()
-local camera          = require 'lib.camera'
-local phys            = require 'lib.mainPhysics'
-local numbers         = require 'lib.numbers'
-local generatePolygon = require('lib.generate-polygon').generatePolygon
-local gradient        = require 'lib.gradient'
+local inspect          = require 'vendor.inspect'
+local cam              = require('lib.cameraBase').getInstance()
+local camera           = require 'lib.camera'
+local phys             = require 'lib.mainPhysics'
+local numbers          = require 'lib.numbers'
+local generatePolygon  = require('lib.generate-polygon').generatePolygon
+local gradient         = require 'lib.gradient'
+local box2dGuyCreation = require 'lib.box2dGuyCreation'
+local texturedBox2d    = require 'lib.texturedBox2d'
+local addMipos         = require 'addMipos'
 
 function initGround()
     local thing = {
@@ -80,7 +83,7 @@ end
 
 function makeBike(x, y, radius)
     local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + 200, y, "dynamic")
+    ball1.body = love.physics.newBody(world, x + radius * 1.5, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
@@ -90,7 +93,7 @@ function makeBike(x, y, radius)
 
 
     local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - 200, y, "dynamic")
+    ball2.body = love.physics.newBody(world, x - radius * 1.5, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
@@ -101,7 +104,7 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(500, 100)
+    frame.shape = love.physics.newRectangleShape(radius * 3, 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, .1)
 
 
@@ -219,7 +222,7 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 100
     ground = initGround()
-
+    addMipos.make(4)
     obstacles = {}
     for i = 1, 100 do
         local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 100)
@@ -231,7 +234,7 @@ function startExample(number)
         table.insert(obstacles, o)
     end
 
-    ball = makeBike(0, -1500, 150)
+    ball = makeBike(0, -1500, 450)
 
     rollingAverageVelX = {}
     rollingAverageVelY = {}
@@ -245,6 +248,8 @@ function startExample(number)
 end
 
 function love.load()
+    jointsEnabled = true
+    followCamera = true
     startExample()
 
     pointsOfInterest = {}
@@ -292,7 +297,6 @@ local function calculateRollingAverage(valueList)
     return sum / #valueList
 end
 
-
 function lerpYAtX(targetX, stepSize)
     local x1 = math.floor(targetX / stepSize) * stepSize
     local x2 = math.ceil(targetX / stepSize) * stepSize
@@ -310,7 +314,7 @@ function getTargetPositionBeforeMe(me)
     local worldX, worldY = me.body:getWorldPoint(0, 0)
 
     local targetX = worldX + avgVelX / 2
-    local targetY = worldY --+ avgVelY / 5
+    local targetY = worldY --+ avgVelY / 2
 
     -- this will look at the ground at the   x iam looking at
     targetY = lerpYAtX(targetX, stepSize)
@@ -390,6 +394,7 @@ function love.update(dt)
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
+    box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
 
     local targetX, targetY = getTargetPos(ball)
 
@@ -424,7 +429,9 @@ function love.update(dt)
     -- if distance > 500 then
     --print('yes')
     --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
-    camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+    if followCamera then
+        camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+    end
     -- else
     --print('no')
     -- end
@@ -499,7 +506,9 @@ function love.draw()
     end
     cam:push()
     phys.drawWorld(world)
-
+    for i = 1, #fiveGuys do
+        texturedBox2d.drawSkinOver(fiveGuys[i].b2d, fiveGuys[i])
+    end
 
     local wx, wy = ball.body:getPosition()
     local yy = lerpYAtX(wx, stepSize)
@@ -522,13 +531,22 @@ function love.draw()
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
-    local velX, velY = ball.body:getLinearVelocity()
-    love.graphics.print('ball speed: ' .. math.floor(velX), 10, 30)
+    --local velX, velY = ball.body:getLinearVelocity()
+    --love.graphics.print('ball speed: ' .. math.floor(velX), 10, 30)
+    local stats = love.graphics.getStats()
+    love.graphics.print(inspect(stats), 10, 10)
+    love.graphics.print(
+        world:getBodyCount() ..
+        '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. collectgarbage("count"), 180,
+        10)
 end
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == 'space' then ball.body:setAngularVelocity(10000) end
+    if k == '.' then
+        followCamera = not followCamera
+    end
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -549,7 +567,12 @@ local function pointerPressed(x, y, id)
     local w, h = love.graphics.getDimensions()
     local cx, cy = cam:getWorldCoordinates(x, y)
     local onPressedParams = {
-        pointerForceFunc = function(fixture) return 1400 end
+        pointerForceFunc = function(fixture)
+            local ud = fixture:getUserData()
+            local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+            return force
+        end
+        --pointerForceFunc = function(fixture) return 1400 end
     }
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
 end
@@ -570,7 +593,6 @@ end
 local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
 end
-
 
 function love.mousereleased(x, y, button, istouch)
     lastDraggedElement = nil
