@@ -80,7 +80,7 @@ lib.make = function(count)
 
     for i = 1, #fiveGuys do
         updatePart.randomizeGuy(fiveGuys[i], true)
-        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 300, -10000, fiveGuys[i])
+        fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, -10000, fiveGuys[i])
         updatePart.updateAllParts(fiveGuys[i])
     end
     --print(inspect(fiveGuys))

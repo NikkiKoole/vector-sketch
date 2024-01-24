@@ -69,6 +69,8 @@ function updateGround(ground)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
     ground.fixture:setUserData("ground")
     ground.fixture:setFriction(1)
+
+    ground.points = points
 end
 
 function makeBall(x, y, radius)
@@ -86,7 +88,7 @@ end
 
 function makeBike(x, y, radius)
     local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + radius * 1.5, y, "dynamic")
+    ball1.body = love.physics.newBody(world, x + radius * 2.5, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
@@ -94,9 +96,8 @@ function makeBike(x, y, radius)
     ball1.fixture:setFriction(1)
     ball1.body:setAngularVelocity(10000)
 
-
     local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - radius * 1.5, y, "dynamic")
+    ball2.body = love.physics.newBody(world, x - radius * 2.5, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
@@ -107,7 +108,7 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(radius * 3, 100)
+    frame.shape = love.physics.newRectangleShape(radius * 5, 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, .1)
 
 
@@ -186,11 +187,9 @@ function enableDisableMipos()
     local boxWorldWidth = cambrx - camtlx
     local boxWorldHeight = cambry - camtly
 
-
     -- local steps = math.ceil(boxWorldWidth / stepSize)
 
     local extraSteps = 10
-
     local xMinR = camtlx - extraSteps * stepSize
     local xMaxR = cambrx + extraSteps * stepSize
 
@@ -198,28 +197,21 @@ function enableDisableMipos()
         local b = mipos[i]
         local bx, by = b.b2d.torso:getPosition()
 
-
-
-
         if bx < xMinR or bx > xMaxR then
             local y = lerpYAtX(bx, stepSize)
-
             for k, v in pairs(b.b2d) do
-                --print(k)
                 v:setActive(false)
                 v:setGravityScale(0)
                 v:setPosition(bx, y - 1000)
             end
-            -- print('want to disable mipo', i)
         end
+
         if bx >= xMinR and bx <= xMaxR then
             for k, v in pairs(b.b2d) do
                 v:setActive(true)
                 v:setGravityScale(1)
             end
-            -- print('want to enable mipo', i)
         end
-        --print(inspect(b.b2d))
     end
 end
 
@@ -267,40 +259,40 @@ end
 
 function startExample(number)
     phys.setupWorld()
-    stepSize = 100
+    stepSize = 300
     ground = initGround()
-    mipos = addMipos.make(10)
+    mipos = addMipos.make(50)
     obstacles = {}
-    for i = 1, 100 do
-        local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 100)
-        table.insert(obstacles, o)
-    end
 
-    for i = 1, 100 do
-        local o = makeRandomTriangle(i * 30, -500, 50)
-        table.insert(obstacles, o)
-    end
+    if false then
+        for i = 1, 100 do
+            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 100)
+            table.insert(obstacles, o)
+        end
 
-    ball = makeBike(0, -1500, 450)
+        for i = 1, 100 do
+            local o = makeRandomTriangle(i * 30, -500, 50)
+            table.insert(obstacles, o)
+        end
+    end
+    ball = makeBike( -2000, -1500, 450)
 
     rollingAverageVelX = {}
     rollingAverageVelY = {}
     rollingDistance = {}
+    rollingMemoryUsage = {}
 
     for i = 1, 10 do
         rollingAverageVelX[i] = 0
         rollingAverageVelY[i] = 0
         rollingDistance[i] = 0
+        rollingMemoryUsage[i] = 0
     end
 end
 
 function love.load()
     local ffont = "WindsorBT-Roman.otf"
-    --local otherfont = "resources/fonts/NotoSansMono-Regular.ttf"
 
-    --print("Initializing console")
-
-    --   local otherfont = "/fonts/Monaco.ttf"
     font = love.graphics.newFont(ffont, 32)
 
     love.graphics.setFont(font)
@@ -309,6 +301,8 @@ function love.load()
     startExample()
 
     pointsOfInterest = {}
+
+    grassImage = love.graphics.newImage('world-assets/grass1.png')
     local w, h = love.graphics.getDimensions()
 
     for i = 1, 100 do
@@ -446,13 +440,16 @@ function love.update(dt)
     table.insert(rollingAverageVelY, velY)
     table.remove(rollingAverageVelY, 1)
 
+    table.insert(rollingMemoryUsage, collectgarbage("count") / 1000)
+    table.remove(rollingMemoryUsage, 1)
+
     updateGround(ground)
     enableDisableObstacles()
     enableDisableMipos()
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
-    --box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
+    box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
 
     local targetX, targetY = getTargetPos(ball)
 
@@ -572,9 +569,39 @@ function love.draw()
     cam:push()
     phys.drawWorld(world)
     for i = 1, #mipos do
-        texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
+        local bx = mipos[i].b2d.torso:getX()
+        if (bx > camtlx - 1000 and bx < cambrx + 1000) then
+            texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
+        end
     end
 
+
+    love.graphics.setColor(0, 0, 0)
+    local sx = stepSize / grassImage:getWidth()
+    local imgH = grassImage:getHeight()
+    for i = 1, #ground.points, 2 do
+        if i > 1 and i < #ground.points - 1 then
+            local x = ground.points[i]
+            local y = ground.points[i + 1]
+
+            local x2 = ground.points[i + 2]
+            local y2 = ground.points[i + 3]
+
+            local dx = x2 - x
+            local dy = y2 - y
+            local angle = math.atan2(dy, dx)
+
+
+
+            --love.graphics.draw(grassImage, x, y, angle, sx, sx)
+            love.graphics.draw(grassImage, x, y - imgH, angle, sx, sx)
+        end
+    end
+
+
+
+
+    love.graphics.setColor(1, 1, 1)
     local wx, wy = ball.body:getPosition()
     local yy = lerpYAtX(wx, stepSize)
     love.graphics.circle('fill', wx, yy, 10)
@@ -597,12 +624,14 @@ function love.draw()
     love.graphics.setColor(0, 0, 0, 0.5)
 
 
+
+
     local stats = love.graphics.getStats()
-    local mem = string.format("%.2f", collectgarbage("count") / 1000) .. 'Mb'
-    local vmem = string.format("%.2f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+    local memavg = calculateRollingAverage(rollingMemoryUsage)
+    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = tostring(love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
 
     -- love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)

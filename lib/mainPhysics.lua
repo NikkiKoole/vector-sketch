@@ -80,9 +80,9 @@ local function makePointerJoint(id, bodyToAttachTo, wx, wy, force)
     local pointerJoint = {}
     pointerJoint.id = id
 
-   -- local ud = fixture:getUserData()
+    -- local ud = fixture:getUserData()
     -- TODO parametrtize this...!
-   -- local force = 100 -- ud and ud.bodyType == 'torso' and 5000000 or 50000
+    -- local force = 100 -- ud and ud.bodyType == 'torso' and 5000000 or 50000
 
     pointerJoint.jointBody = bodyToAttachTo
     pointerJoint.joint = love.physics.newMouseJoint(pointerJoint.jointBody, wx, wy)
@@ -163,7 +163,10 @@ local function maybeConnectThisConnector(f, mj)
                     end
                 end
             end
-
+            if theOtherBody:isActive() == false then
+                -- we also want to skip because this will assert and break in box2d
+                skipCausePointingToSameAgent = true
+            end
             if not skipCausePointingToSameAgent and theOtherBody ~= f:getBody() and connectors[j].to == nil then
                 local pos2 = getCentroidOfFixture(theOtherBody, connectors[j].at)
 
@@ -635,7 +638,7 @@ lib.handlePointerPressed = function(wx, wy, id, onPressedParams)
         if onPressedParams and onPressedParams.pointerForceFunc then
             force = onPressedParams.pointerForceFunc(temp[1].fixture)
         end
-    
+
         table.insert(pointerJoints, makePointerJoint(temp[1].id, temp[1].body, temp[1].wx, temp[1].wy, force))
     end
     -- print(#pointerJoints)
