@@ -567,7 +567,7 @@ function love.draw()
         love.graphics.draw(sky, 0, 0, 0, w, h)
     end
     cam:push()
-    phys.drawWorld(world)
+    -- phys.drawWorld(world)
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
