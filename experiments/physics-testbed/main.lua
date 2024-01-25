@@ -32,7 +32,7 @@ function getYAtX(x, stepSize)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
 
-    local linear = numbers.mapInto(x / stepSize, -20, 20, -1000, 1000)
+    local linear = numbers.mapInto(x / stepSize, -20, 20, -1500, 1500)
 
     return y1 + y2 + y3 + linear
 end
@@ -261,17 +261,17 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
-    mipos = addMipos.make(50)
+    mipos = addMipos.make(5)
     obstacles = {}
 
-    if false then
+    if true then
         for i = 1, 100 do
-            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 100)
+            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
             table.insert(obstacles, o)
         end
 
         for i = 1, 100 do
-            local o = makeRandomTriangle(i * 30, -500, 50)
+            local o = makeRandomTriangle(i * 30, -500, 500)
             table.insert(obstacles, o)
         end
     end
@@ -421,8 +421,8 @@ function getTargetPos(thing)
     local t = 0
     if (distance < poi.radius) then
         t = 1
-    elseif distance < poi.radius * 2 then
-        t = numbers.mapInto(distance, poi.radius * 2, poi.radius, 0, 1)
+    elseif distance < poi.radius * 3 then
+        t = numbers.mapInto(distance, poi.radius * 3, poi.radius, 0, 1)
     end
 
     local nx = numbers.lerp(tx, poi.x, t)
@@ -467,7 +467,7 @@ function love.update(dt)
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
 
-    local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 15)
+    local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 5)
     --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
     local distance = getDistance(curCamX, curCamY, targetX, targetY)
 
@@ -477,7 +477,7 @@ function love.update(dt)
 
     local div = math.min(divider / (1 / delta), 1)
 
-
+    --print(newDistance, div, divider)
     local smoothX = lerp(curCamX, targetX, div)
     local smoothY = lerp(curCamY, targetY, div)
 
@@ -567,7 +567,7 @@ function love.draw()
         love.graphics.draw(sky, 0, 0, 0, w, h)
     end
     cam:push()
-    -- phys.drawWorld(world)
+     phys.drawWorld(world)
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
@@ -610,7 +610,7 @@ function love.draw()
     for i = 1, #pointsOfInterest do
         local poi = pointsOfInterest[i]
         love.graphics.circle('line', poi.x, poi.y, poi.radius)
-        love.graphics.circle('line', poi.x, poi.y, poi.radius * 2)
+        love.graphics.circle('line', poi.x, poi.y, poi.radius * 3)
     end
     love.graphics.setColor(1, 1, 1)
     local targetX, targetY = getTargetPos(ball)
