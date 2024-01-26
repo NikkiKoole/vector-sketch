@@ -371,6 +371,11 @@ lib.updateAllParts = function(guy)
 end
 
 lib.resetPositions = function(guy)
+    local legsFacing = 'front'
+    if guy.facingVars and guy.facingVars.legs then
+        legsFacing = guy.facingVars.legs
+    end
+    --print('i need to knwo if my legs are facing someting, so i can fix the feet...')
     local box2dGuy = guy.b2d
 
     if (box2dGuy.head) then box2dGuy.head:setAngle(0) end
@@ -383,9 +388,15 @@ lib.resetPositions = function(guy)
     box2dGuy.luleg:setAngle(0)
     box2dGuy.llleg:setAngle(0)
     box2dGuy.lfoot:setAngle(math.pi / 2)
+    if legsFacing == 'right' then
+        box2dGuy.lfoot:setAngle( -math.pi / 2)
+    end
     box2dGuy.ruleg:setAngle(0)
     box2dGuy.rlleg:setAngle(0)
     box2dGuy.rfoot:setAngle( -math.pi / 2)
+    if legsFacing == 'left' then
+        box2dGuy.rfoot:setAngle(math.pi / 2)
+    end
     box2dGuy.luarm:setAngle(0)
     box2dGuy.llarm:setAngle(0)
     box2dGuy.lhand:setAngle(0)

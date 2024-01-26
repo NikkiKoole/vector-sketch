@@ -225,8 +225,7 @@ local function getOffsetFromParent(partName, guy)
     end
 end
 
-local function getAngleOffset(key, creation)
-    -- print(key, side)
+local function getAngleOffset(key, creation, data)
     if key == 'neck' then
         return -math.pi
     elseif key == 'neck1' then
@@ -236,8 +235,15 @@ local function getAngleOffset(key, creation)
     elseif key == 'rear' then
         return creation.rear.stanceAngle
     elseif key == 'lfoot' then
+        --print('hello', inspect(data.facing))
+        if data.facing.legs == 'right' then
+            return -math.pi / 2
+        end
         return math.pi / 2
     elseif key == 'rfoot' then
+        if data.facing.legs == 'left' then
+            return math.pi / 2
+        end
         return -math.pi / 2
     elseif (key == 'hair1') then
         return -math.pi / 2
@@ -250,12 +256,24 @@ local function getAngleOffset(key, creation)
     elseif (key == 'hair5') then
         return math.pi / 2
     elseif (key == 'luleg') then
+        if data.facing.legs == 'right' then
+            return creation.ruleg.stanceAngle
+        end
         return creation.luleg.stanceAngle
     elseif (key == 'llleg') then
+        if data.facing.legs == 'right' then
+            return creation.rlleg.stanceAngle
+        end
         return creation.llleg.stanceAngle
     elseif (key == 'ruleg') then
+        if data.facing.legs == 'left' then
+            return creation.luleg.stanceAngle
+        end
         return creation.ruleg.stanceAngle
     elseif (key == 'rlleg') then
+        if data.facing.legs == 'left' then
+            return creation.llleg.stanceAngle
+        end
         return creation.rlleg.stanceAngle
     elseif key == 'head' then
         if (not creation.hasNeck) then
@@ -344,17 +362,47 @@ local function useRecreatePointerJoint(recreatePointerJoint, body)
             recreatePointerJoint.targetY))
 end
 
-local function makeConnectingRevoluteJoint(data, this, from, optionalSide)
+local function makeConnectingRevoluteJoint(data, this, from)
     local joint = love.physics.newRevoluteJoint(from, this, this:getX(), this:getY(), false)
-    if data.limits then
-        joint:setLowerLimit(data.limits.low)
-        joint:setUpperLimit(data.limits.up)
-        joint:setLimitsEnabled(data.limits.enabled)
+
+    local n = data.partName
+    local myData = data.creation[data.partName]
+    if (data.facing.legs == 'right') then
+        if n == 'luleg' then
+            myData = data.creation['ruleg']
+        end
+        if n == 'llleg' then
+            myData = data.creation['rlleg']
+        end
+        if n == 'lfoot' then
+            myData = data.creation['rfoot']
+        end
+    end
+    if (data.facing.legs == 'left') then
+        if n == 'ruleg' then
+            myData = data.creation['luleg']
+        end
+        if n == 'rlleg' then
+            myData = data.creation['llleg']
+        end
+        if n == 'rfoot' then
+            myData = data.creation['lfoot']
+        end
     end
 
-    if data.friction then
+
+
+
+
+    if myData.limits then
+        joint:setLowerLimit(myData.limits.low)
+        joint:setUpperLimit(myData.limits.up)
+        joint:setLimitsEnabled(myData.limits.enabled)
+    end
+
+    if myData.friction then
         local fjoint = love.physics.newFrictionJoint(from, this, this:getX(), this:getY(), false)
-        fjoint:setMaxTorque(data.friction)
+        fjoint:setMaxTorque(myData.friction)
     end
     return joint
 end
@@ -380,18 +428,21 @@ end
 local function makePart_(key, parent, guy)
     local groupId = guy.id
     local creation = guy.dna.creation -- dna.getCreation()
+    local facing = guy.facingVars
     local offsetX, offsetY = getOffsetFromParent(key, guy)
     local cd = creation[key]
     local x, y = parent:getWorldPoint(offsetX, offsetY)
     local prevA = parent:getAngle()
 
-    local xangle = getAngleOffset(key, creation)
+    local data = { creation = creation, partName = key, facing = facing }
+    local xangle = getAngleOffset(key, creation, data)
     local body = love.physics.newBody(world, x, y, "dynamic")
     local shape = phys.makeShapeFromCreationPart(cd)
     local fixture = makeGuyFixture(cd, key, groupId, body, shape)
 
     body:setAngle(prevA + xangle)
-    local joint = makeConnectingRevoluteJoint(cd, body, parent)
+
+    local joint = makeConnectingRevoluteJoint(data, body, parent)
 
     return body
 end
@@ -722,6 +773,7 @@ lib.rotateAllBodies = function(bodies, dt)
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
+
                         rotateToHorizontal(body, desired, 25)
                     end
 
@@ -812,6 +864,7 @@ lib.genericBodyPartUpdate = function(guy, partName)
     local groupId = guy.id
     local box2dGuy = guy.b2d
     local creation = guy.dna.creation
+    local facing = guy.facingVars
     local data = getParentAndChildrenFromPartName(partName, guy)
     local parentName = data.p
     local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
@@ -835,9 +888,13 @@ lib.genericBodyPartUpdate = function(guy, partName)
             local body = love.physics.newBody(world, hx, hy, "dynamic")
             local shape = phys.makeShapeFromCreationPart(createData)
             local fixture = makeGuyFixture(createData, partName, groupId, body, shape)
-            local xangle = getAngleOffset(partName, creation)
+            local data = { creation = creation, partName = partName, facing = facing }
+            local xangle = getAngleOffset(partName, creation, data)
             body:setAngle(prevA + xangle)
-            local joint = makeConnectingRevoluteJoint(createData, body, box2dGuy[parentName])
+
+
+
+            local joint = makeConnectingRevoluteJoint(data, body, box2dGuy[parentName])
 
             box2dGuy[partName] = body
             body:setAngle(thisA)
@@ -871,10 +928,13 @@ lib.genericBodyPartUpdate = function(guy, partName)
         local nx, ny = box2dGuy[partName]:getWorldPoint(offsetX, offsetY)
         box2dGuy[childName]:setPosition(nx, ny)
         local aa = box2dGuy[childName]:getAngle()
-        local xangle = getAngleOffset(childName, creation) -- what LEFT!
+        local data = { creation = creation, partName = childName, facing = facing }
+        local xangle = getAngleOffset(childName, creation, data) -- what LEFT!
 
         box2dGuy[childName]:setAngle(thisA + xangle)
-        local joint = makeConnectingRevoluteJoint(creation[childName], box2dGuy[childName],
+
+
+        local joint = makeConnectingRevoluteJoint(data, box2dGuy[childName],
                 box2dGuy[partName])
         box2dGuy[childName]:setAngle(aa)
     end

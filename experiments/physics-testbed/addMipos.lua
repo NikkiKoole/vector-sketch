@@ -51,6 +51,7 @@ for i = 1, #base do
     table.insert(palettes, { r, g, b })
 end
 
+-- todo hae the default coming from a general place too, so i odnt have to update it in  multiple places.
 
 lib.make = function(count)
     for i = 1, count do
@@ -66,6 +67,9 @@ lib.make = function(count)
             dna = dna,
             b2d = nil,
             canvasCache = {},
+            facingVars = {
+                legs = 'front', --'right'/front
+            },
             tweenVars = {
                 lookAtPosX = 0,
                 lookAtPosY = 0,

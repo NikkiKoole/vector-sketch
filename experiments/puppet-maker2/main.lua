@@ -189,6 +189,9 @@ function loadDNA5File()
             dna = parsed[i],
             b2d = nil,
             canvasCache = {},
+            facingVars = {
+                legs = 'front', --'right'/front
+            },
             tweenVars = {
                 lookAtPosX = 0,
                 lookAtPosY = 0,
@@ -559,6 +562,10 @@ function love.load()
                 dna = dna,
                 b2d = nil,
                 canvasCache = {},
+                facingVars = {
+                    legs = 'left', --'right'/front
+
+                },
                 tweenVars = {
                     lookAtPosX = 0,
                     lookAtPosY = 0,
@@ -589,11 +596,11 @@ function love.load()
 
     SM.setPath("scenes/")
     --SM.load("splash")
-    SM.load("splash")
+    --SM.load("splash")
 
 
     -- print('hello good')
-    -- SM.load("editGuy")
+    SM.load("editGuy")
     -- SM.load("outside")
 end
 
