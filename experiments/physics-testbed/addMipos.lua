@@ -68,7 +68,7 @@ lib.make = function(count)
             b2d = nil,
             canvasCache = {},
             facingVars = {
-                legs = 'front', --'right'/front
+                legs = 'right', --'right'/front
             },
             tweenVars = {
                 lookAtPosX = 0,

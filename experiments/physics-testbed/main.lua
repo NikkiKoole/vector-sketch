@@ -88,18 +88,18 @@ end
 
 function makeBike(x, y, radius)
     local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + radius * 2.5, y, "dynamic")
+    ball1.body = love.physics.newBody(world, x + radius * 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     ball1.fixture:setFriction(1)
     ball1.body:setAngularVelocity(10000)
 
     local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - radius * 2.5, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
+    ball2.body = love.physics.newBody(world, x - radius * 2, y, "dynamic")
+    ball2.shape = love.physics.newCircleShape(radius*.7)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     ball2.fixture:setFriction(1)
@@ -108,19 +108,35 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(radius * 5, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, .1)
+    frame.shape = love.physics.newRectangleShape(radius*4 , 100)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 2)
+    --frame.fixture:setSensor(true)
+
+
+    local steer = {}
+    steer.shape =  love.physics.newRectangleShape(radius, -800, 120 , 800)
+    steer.fixture = love.physics.newFixture(frame.body, steer.shape, .1)
+
+
+
+    local pedal = {}
+    pedal.body = love.physics.newBody(world, x+ radius , y-1000, "dynamic")
+    pedal.shape = love.physics.newRectangleShape(300 , 300)
+    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
+    pedal.fixture:setSensor(true)
 
 
     local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
+
 
     --joint1:setMotorEnabled(true)
     --joint1:setMotorSpeed(500000)
     --joint1:setMaxMotorTorque(20000)
 
 
-    return ball1
+    return {frontWheel=ball1, pedalWheel=pedal}
 end
 
 function getRandomConvexPoly(radius, numVerts)
@@ -139,6 +155,8 @@ function makeRandomPoly(x, y, radius)
     local fixture = love.physics.newFixture(body, shape, .1)
     return body
 end
+
+
 
 function makeRandomTriangle(x, y, radius)
     local body = love.physics.newBody(world, x, y, "dynamic")
@@ -264,7 +282,7 @@ function startExample(number)
     mipos = addMipos.make(5)
     obstacles = {}
 
-    if true then
+    if false then
         for i = 1, 100 do
             local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
             table.insert(obstacles, o)
@@ -275,8 +293,8 @@ function startExample(number)
             table.insert(obstacles, o)
         end
     end
-    ball = makeBike( -2000, -1500, 450)
-
+    bike = makeBike( -2000, -1500, 350)
+    ball = bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
     rollingDistance = {}
@@ -446,6 +464,10 @@ function love.update(dt)
     updateGround(ground)
     enableDisableObstacles()
     enableDisableMipos()
+    
+    local a = ball.body:getAngle()
+    bike.pedalWheel.body:setAngle(a/1.2)
+
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
@@ -481,7 +503,7 @@ function love.update(dt)
     local smoothX = lerp(curCamX, targetX, div)
     local smoothY = lerp(curCamY, targetY, div)
 
-    local viewWidth = 3000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
+    local viewWidth = 5000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
     --if distance < 500 then viewWidth = 2000 end
 
     -- if distance > 500 then
