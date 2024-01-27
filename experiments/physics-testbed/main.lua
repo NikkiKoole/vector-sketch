@@ -108,7 +108,7 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(radius * 5, 100)
+    frame.shape = love.physics.newRectangleShape(radius * 5, 300)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, .1)
 
 

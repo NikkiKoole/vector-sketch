@@ -618,6 +618,10 @@ function toggleJoints()
     end
 end
 
+local function pickRandom(array)
+    local index = math.ceil(love.math.random() * #array)
+    return array[index]
+end
 function love.update(dt)
     function love.keypressed(key)
         if key == "escape" then love.event.quit() end
@@ -634,6 +638,46 @@ function love.update(dt)
                     end
                 end
             end
+        end
+        if key == 'b' then
+            local guy = fiveGuys[pickedFiveGuyIndex]
+            guy.facingVars.legs = pickRandom({ 'left', 'right', 'front' })
+            updatePart.updatePart('legs', guy)
+            updatePart.resetPositions(guy)
+            breathBody(guy)
+
+            if false then
+                -- i wanna tween length the body anf legs
+                local guy = fiveGuys[pickedFiveGuyIndex]
+                local initialLMultiplier = guy.dna.multipliers.leg.lMultiplier
+                local newL = initialLMultiplier * 2
+                Timer.tween(1, guy.dna.multipliers.leg, { lMultiplier = newL }, 'out-quad')
+                Timer.after(1.1, function()
+                    Timer.tween(.1, guy.dna.multipliers.leg, { lMultiplier = initialLMultiplier },
+                        'out-quad')
+                end)
+
+                local initialTorsoW = guy.dna.multipliers.torso.wMultiplier
+                local initialTorsoH = guy.dna.multipliers.torso.hMultiplier
+                local newTorsoW = initialTorsoW * 3.2
+                local newTorsoH = initialTorsoH * 3.2
+
+                Timer.tween(1, guy.dna.multipliers.torso,
+                    { wMultiplier = newTorsoW, hMultiplier = newTorsoH }, 'out-quad')
+
+                Timer.after(1.1, function()
+                    Timer.tween(.1, guy.dna.multipliers.torso,
+                        { wMultiplier = initialTorsoW, hMultiplier = initialTorsoH },
+                        'out-quad')
+                end)
+
+                Timer.during(1.3, function(dt)
+                    --changePart('legs')
+                    updatePart.updatePart('body', guy)
+                    updatePart.updatePart('legs', guy)
+                end)
+            end
+            --'dna.multipliers.leg.lMultiplier'
         end
         if false then
             if key == 'u' then

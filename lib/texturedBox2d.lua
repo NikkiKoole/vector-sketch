@@ -559,6 +559,7 @@ lib.drawNumbersOver = function(box2dGuy)
         end
     end
 end
+
 local function createFittingScale(img, desired_w, desired_h)
     local w, h = img:getDimensions()
     local sx, sy = desired_w / w, desired_h / h
@@ -658,9 +659,8 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
     local canvasCache = guy.canvasCache
 
     local facing = guy.facingVars
-    -- print(inspect(guy.canvasCache))
     love.graphics.setColor(1, 1, 1, 1)
-    local dpi = 1 --love.graphics.getDPIScale()
+    local dpi = 1
     local shrink = canvas.getShrinkFactor()
 
 
@@ -731,6 +731,7 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             renderAtachedObject(canvasCache.handCanvas, 'lhand', 'lhand', -math.pi / 2, 1, 1, box2dGuy, creation)
         end
     end
+
     local function renderRightArmAndHair()
         if canvasCache.armCanvas then
             love.graphics.setColor(1, 1, 1, 1)
@@ -755,6 +756,7 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
         renderRightArmAndHair()
         renderRightLegAndHair()
     end
+
     if facing.legs == 'left' then
         renderLeftArmAndHair()
         renderLeftLegAndHair()
@@ -955,12 +957,18 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
         end
     end
 
+
     if facing.legs ~= 'right' then
         renderRightLegAndHair()
-        renderRightArmAndHair()
     end
     if facing.legs ~= 'left' then
         renderLeftLegAndHair()
+    end
+
+    if facing.legs ~= 'right' then
+        renderRightArmAndHair()
+    end
+    if facing.legs ~= 'left' then
         renderLeftArmAndHair()
     end
 end
