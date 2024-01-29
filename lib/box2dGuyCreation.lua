@@ -589,19 +589,11 @@ lib.makeGuy = function(x, y, guy)
 
 
     if buttConnector then
-        --print('jo')
-        local bx, by = 0,0 --getOffsetFromParent('butt', guy)
-        --print(bx, by)
-        --print(0, creation.torso.h)
-        --if creation.torso.metaPoints then 
-        --    print('meta torso points')
-        --end
+        local bx, by = 0,0 
         makeAndAddConnector(torso, bx,by, { id = 'guy' .. groupId, type = 'butt' },
             40,
             40)
     end
-
-
 
     local handConnector = true
     if handConnector then
@@ -617,14 +609,6 @@ lib.makeGuy = function(x, y, guy)
         makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.lhand.h + 10,
             creation.lhand.w + 10)
-    end
-
-    local fixtures = lhand:getFixtures()
-    -- print('lhand has', #fixtures, 'fxitrues')
-    for _, fixture in ipairs(fixtures) do
-        if fixture:getUserData() then
-            -- print(inspect(fixture:getUserData()))
-        end
     end
 
 
