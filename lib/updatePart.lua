@@ -368,7 +368,7 @@ lib.updateAllParts = function(guy)
     _updatePart('upperlip')
     _updatePart('lowerlip')
     _updatePart('chestHair')
-    _updatePart('butt')
+
 end
 
 lib.resetPositions = function(guy)
