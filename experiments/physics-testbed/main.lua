@@ -155,9 +155,9 @@ function makeBike(x, y, radius)
     makeAndAddConnector(frame.body, -100, -600, {}, 205, 205)
 
     local seat2 = {}
-    seat2.shape =  love.physics.newRectangleShape(-800, -600, 200 , 200)
+    seat2.shape =  love.physics.newRectangleShape(-1000, -600, 200 , 200)
     seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
-    makeAndAddConnector(frame.body, -800, -600, {}, 205, 205)
+    makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
 
 
 
@@ -172,6 +172,9 @@ function makeBike(x, y, radius)
     pedal.body = love.physics.newBody(world, x+ radius , y-1000, "dynamic")
     pedal.shape = love.physics.newRectangleShape(300 , 300)
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    makeAndAddConnector(pedal.body, -150, 0, {}, 150, 150)
+    makeAndAddConnector(pedal.body, 150, 0, {}, 150, 150)
+
     local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
     pedal.fixture:setSensor(true)
 
