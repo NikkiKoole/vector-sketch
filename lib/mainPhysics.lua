@@ -6,6 +6,10 @@ local numbers         = require 'lib.numbers'
 local cam             = require('lib.cameraBase').getInstance()
 local lib             = {}
 local inspect = require 'vendor.inspect'
+
+
+local connect = require 'lib.connectors'
+
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -421,12 +425,16 @@ lib.setupWorld = function()
 
     disabledContacts = {}
     pointerJoints = {}
-    connectorCooldownList = {}
-    connectors = {}
+
+    connect.resetConnectors()
+
+    --connectorCooldownList = {}
+    --connectors = {}
 end
 
 lib.resetLists = function()
-    connectors = {}
+    --connectors = {}
+    connect.resetConnectors()
     pointerJoints = {}
 end
 
