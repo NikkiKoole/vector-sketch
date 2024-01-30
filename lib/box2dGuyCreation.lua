@@ -35,7 +35,8 @@ local function getParentAndChildrenFromPartName(partName, guy)
         lfoot = { p = 'llleg' },
         ruleg = { p = 'torso', c = 'rlleg' },
         rlleg = { p = 'ruleg', c = 'rfoot' },
-        rfoot = { p = 'rlleg' }
+        rfoot = { p = 'rlleg' },
+      --  butt = {p = 'torso'}
     }
 
     if creation and partName == 'head' and creation.hasNeck == false then
@@ -110,12 +111,14 @@ local function getOffsetFromParent(partName, guy)
         end
         return -creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'ruarm' then
+        
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
                 return getScaledTorsoMetaPoint(3, guy)
             end
         else
             if creation.torso.metaPoints then
+                print('hi getting meta now')
                 return getScaledTorsoMetaPoint(2, guy)
             end
         end
@@ -138,6 +141,7 @@ local function getOffsetFromParent(partName, guy)
             return rx, ry
         end
         return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
+ 
     elseif partName == 'hair1' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(3, guy)
@@ -495,16 +499,27 @@ local function useRecreateConnectorData(recreateConnectorData, body, guy)
     local creation = guy.dna.creation
     local data = recreateConnectorData.userData.data
     local type = data.type
+
+    print('hello want to recreate connector', type)
     assert(type)
     if type == 'foot' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data,
             creation.foot.w + 10,
             creation.foot.h + 10)
     elseif type == 'hand' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w,
-            creation.lhand.h)
-        -- elseif type == 'rhand' then
-        --     makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rhand.h / 2, data, creation.rhand.w * 2)
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w+4,
+            creation.lhand.h+4)
+        elseif type == 'butt' then
+            local bx,by =  (creation.torso.w / 2), creation.torso.h / 2
+            if creation.torso.metaPoints then
+                --local ax, ay = getScaledTorsoMetaPoint(4, guy)
+                bx, by = getScaledTorsoMetaPoint(5, guy)
+                --local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
+                --return rx, ry
+            end
+            --return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
+            makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100,
+                100)
     end
 end
 
@@ -570,6 +585,16 @@ lib.makeGuy = function(x, y, guy)
     local rlarm = makePart('rlarm', ruarm)
     local rhand = makePart('rhand', rlarm)
 
+    local buttConnector = true
+
+
+    if buttConnector then
+        local bx, by = 0,0 
+        makeAndAddConnector(torso, bx,by, { id = 'guy' .. groupId, type = 'butt' },
+            40,
+            40)
+    end
+
     local handConnector = true
     if handConnector then
         makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
@@ -584,14 +609,6 @@ lib.makeGuy = function(x, y, guy)
         makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.lhand.h + 10,
             creation.lhand.w + 10)
-    end
-
-    local fixtures = lhand:getFixtures()
-    -- print('lhand has', #fixtures, 'fxitrues')
-    for _, fixture in ipairs(fixtures) do
-        if fixture:getUserData() then
-            -- print(inspect(fixture:getUserData()))
-        end
     end
 
 

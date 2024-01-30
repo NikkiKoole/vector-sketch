@@ -5,7 +5,7 @@ local camera          = require 'lib.camera'
 local numbers         = require 'lib.numbers'
 local cam             = require('lib.cameraBase').getInstance()
 local lib             = {}
-
+local inspect = require 'vendor.inspect'
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -442,8 +442,18 @@ lib.drawWorld = function(world)
             if fixture:getShape():type() == 'PolygonShape' then
                 local color = getBodyColor(body)
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
+                if (fixture:getUserData() ) then 
+                if fixture:getUserData().bodyType == "connector" then 
+                    love.graphics.setColor(1, 0, 0, alpha)
+                end end
                 love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
                 love.graphics.setColor(1, 1, 1, alpha)
+                if (fixture:getUserData() ) then 
+                    if fixture:getUserData().bodyType == "connector" then 
+                        love.graphics.setColor(1, 0, 0, alpha)
+                    end
+                  --  print(inspect(fixture:getUserData() ))
+                end
                 love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
             elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
                 love.graphics.setColor(1, 1, 1, alpha)
