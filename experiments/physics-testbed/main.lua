@@ -88,6 +88,7 @@ function makeBall(x, y, radius)
     return ball
 end
 
+
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -97,7 +98,6 @@ local function makeUserData(bodyType, moreData)
     end
     return result
 end
-
 
 function makeRectPoly2(w, h, x, y)
     local cx = x
@@ -152,12 +152,12 @@ function makeBike(x, y, radius)
     local seat = {}
     seat.shape =  love.physics.newRectangleShape(-100, -600, 200 , 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
-    makeAndAddConnector(frame.body, -100, -600, {}, 200, 200)
+    makeAndAddConnector(frame.body, -100, -600, {}, 205, 205)
 
     local seat2 = {}
     seat2.shape =  love.physics.newRectangleShape(-800, -600, 200 , 200)
     seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
-    makeAndAddConnector(frame.body, -800, -600, {}, 200, 200)
+    makeAndAddConnector(frame.body, -800, -600, {}, 205, 205)
 
 
 
@@ -165,6 +165,7 @@ function makeBike(x, y, radius)
     steer.shape =  love.physics.newRectangleShape(radius, -600, 120 , 1200)
     steer.fixture = love.physics.newFixture(frame.body, steer.shape, 1)
 
+    makeAndAddConnector(frame.body, radius, -1200, {}, 125, 125)
 
 
     local pedal = {}

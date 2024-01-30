@@ -137,13 +137,18 @@ end
 local function maybeConnectThisConnector(f, mj)
     local found = false
 
+    -- we dont want to do anything with connectors of sleeping bodies, it crashes when trying to get the bbox
+    if f:getBody():isActive() == false then
+         
+        found = true
+    end
 
     for j = 1, #connectors do
         if connectors[j].to and connectors[j].to == f then
             found = true
         end
     end
-
+   
     if found == false then
         local pos1 = getCentroidOfFixture(f:getBody(), f)
         local done = false
