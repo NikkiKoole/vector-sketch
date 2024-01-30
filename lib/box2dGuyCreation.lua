@@ -503,21 +503,17 @@ local function useRecreateConnectorData(recreateConnectorData, body, guy)
     print('hello want to recreate connector', type)
     assert(type)
     if type == 'foot' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.foot.h / 2, data,
-            creation.foot.w + 10,
-            creation.foot.h + 10)
+        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rfoot.h / 2, data,
+            creation.rfoot.w + 10,
+            creation.rfoot.h + 10)
     elseif type == 'hand' then
         makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w+4,
             creation.lhand.h+4)
         elseif type == 'butt' then
             local bx,by =  (creation.torso.w / 2), creation.torso.h / 2
             if creation.torso.metaPoints then
-                --local ax, ay = getScaledTorsoMetaPoint(4, guy)
                 bx, by = getScaledTorsoMetaPoint(5, guy)
-                --local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-                --return rx, ry
             end
-            --return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
             makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100,
                 100)
     end
@@ -584,10 +580,12 @@ lib.makeGuy = function(x, y, guy)
     local ruarm = makePart('ruarm', torso)
     local rlarm = makePart('rlarm', ruarm)
     local rhand = makePart('rhand', rlarm)
+    local luarm = makePart('luarm', torso)
+    local llarm = makePart('llarm', luarm)
+    local lhand = makePart('lhand', llarm)
+
 
     local buttConnector = true
-
-
     if buttConnector then
         local bx, by = 0,0 
         makeAndAddConnector(torso, bx,by, { id = 'guy' .. groupId, type = 'butt' },
@@ -595,22 +593,28 @@ lib.makeGuy = function(x, y, guy)
             40)
     end
 
+    local footConnector = true
+    if footConnector then
+        makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+            creation.rfoot.h / 2 + 10,
+            creation.rfoot.w / 2 + 10)
+        
+        makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+            creation.lfoot.h / 2 + 10,
+            creation.lfoot.w / 2 + 10)
+    end
+
     local handConnector = true
     if handConnector then
         makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.rhand.h / 2 + 10,
             creation.rhand.w / 2 + 10)
-    end
-
-    local luarm = makePart('luarm', torso)
-    local llarm = makePart('llarm', luarm)
-    local lhand = makePart('lhand', llarm)
-    if handConnector then
+        
         makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.lhand.h + 10,
             creation.lhand.w + 10)
     end
-
+  
 
     local data = {
         torso = torso,
