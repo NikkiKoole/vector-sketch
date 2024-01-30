@@ -88,6 +88,39 @@ function makeBall(x, y, radius)
     return ball
 end
 
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+
+function makeRectPoly2(w, h, x, y)
+    local cx = x
+    local cy = y
+    return love.physics.newPolygonShape(
+            cx - w / 2, cy - h / 2,
+            cx + w / 2, cy - h / 2,
+            cx + w / 2, cy + h / 2,
+            cx - w / 2, cy + h / 2
+        )
+end
+
+function makeAndAddConnector(parent, x, y, data, size, size2)
+    size = size or 10
+    size2 = size2 or size
+    local bandshape2 = makeRectPoly2(size, size2, x, y)
+    local fixture = love.physics.newFixture(parent, bandshape2, 0)
+    fixture:setUserData(makeUserData('connector', data))
+    fixture:setSensor(true)
+    table.insert(connectors, { at = fixture, to = nil, joint = nil })
+end
+
+
 function makeBike(x, y, radius)
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + radius * 2, y, "dynamic")
@@ -113,6 +146,19 @@ function makeBike(x, y, radius)
     frame.shape = love.physics.newRectangleShape(radius*4 , 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
     --frame.fixture:setSensor(true)
+
+
+
+    local seat = {}
+    seat.shape =  love.physics.newRectangleShape(-100, -600, 200 , 200)
+    seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
+    makeAndAddConnector(frame.body, -100, -600, {}, 200, 200)
+
+    local seat2 = {}
+    seat2.shape =  love.physics.newRectangleShape(-800, -600, 200 , 200)
+    seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
+    makeAndAddConnector(frame.body, -800, -600, {}, 200, 200)
+
 
 
     local steer = {}
@@ -316,7 +362,7 @@ function love.load()
     font = love.graphics.newFont(ffont, 32)
 
     love.graphics.setFont(font)
-    jointsEnabled = true
+    jointsEnabled = false
     followCamera = true
     startExample()
 
