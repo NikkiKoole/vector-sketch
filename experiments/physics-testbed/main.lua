@@ -20,6 +20,7 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
+    local STEEPNESS = 2000
     local index = math.floor(x / stepSize)
     local function generateWave(amplitude, frequency)
         local h = love.math.noise(index / frequency, 1, 1) * amplitude
@@ -32,7 +33,8 @@ function getYAtX(x, stepSize)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
 
-    local linear = numbers.mapInto(x / stepSize, -20, 20, -1500, 1500)
+
+        local linear = numbers.mapInto(x / stepSize, -20, 20, -STEEPNESS, STEEPNESS)
 
     return y1 + y2 + y3 + linear
 end
@@ -88,18 +90,18 @@ end
 
 function makeBike(x, y, radius)
     local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + radius * 2.5, y, "dynamic")
+    ball1.body = love.physics.newBody(world, x + radius * 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, .1)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     ball1.fixture:setFriction(1)
     ball1.body:setAngularVelocity(10000)
 
     local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - radius * 2.5, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, .1)
+    ball2.body = love.physics.newBody(world, x - radius * 2, y, "dynamic")
+    ball2.shape = love.physics.newCircleShape(radius*1.3)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     ball2.fixture:setFriction(1)
@@ -108,19 +110,35 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(radius * 5, 300)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, .1)
+    frame.shape = love.physics.newRectangleShape(radius*4 , 100)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
+    --frame.fixture:setSensor(true)
+
+
+    local steer = {}
+    steer.shape =  love.physics.newRectangleShape(radius, -600, 120 , 1200)
+    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 1)
+
+
+
+    local pedal = {}
+    pedal.body = love.physics.newBody(world, x+ radius , y-1000, "dynamic")
+    pedal.shape = love.physics.newRectangleShape(300 , 300)
+    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
+    pedal.fixture:setSensor(true)
 
 
     local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
+
 
     --joint1:setMotorEnabled(true)
     --joint1:setMotorSpeed(500000)
     --joint1:setMaxMotorTorque(20000)
 
 
-    return ball1
+    return {frontWheel=ball1, backWheel=ball2, pedalWheel=pedal}
 end
 
 function getRandomConvexPoly(radius, numVerts)
@@ -139,6 +157,8 @@ function makeRandomPoly(x, y, radius)
     local fixture = love.physics.newFixture(body, shape, .1)
     return body
 end
+
+
 
 function makeRandomTriangle(x, y, radius)
     local body = love.physics.newBody(world, x, y, "dynamic")
@@ -264,7 +284,7 @@ function startExample(number)
     mipos = addMipos.make(5)
     obstacles = {}
 
-    if true then
+    if false then
         for i = 1, 100 do
             local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
             table.insert(obstacles, o)
@@ -275,8 +295,8 @@ function startExample(number)
             table.insert(obstacles, o)
         end
     end
-    ball = makeBike( -2000, -1500, 450)
-
+    bike = makeBike( -2000, -5000, 350)
+    ball = bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
     rollingDistance = {}
@@ -364,13 +384,16 @@ function getTargetPositionBeforeMe(me)
     local worldX, worldY = me.body:getWorldPoint(0, 0)
 
     local targetX = worldX + avgVelX / 2
-    local targetY = worldY --+ avgVelY / 2
+    local targetY = worldY + avgVelY / 2
 
     -- this will look at the ground at the   x iam looking at
     targetY = lerpYAtX(targetX, stepSize)
     -- this will average with my own pos
 
     targetY = (worldY + targetY) / 2
+
+   -- targetX = worldX
+   -- targetY = worldY
 
     -- up untill now we assume we alsways are going forwards with the bike.
     -- what if we are being dragged high up in the air..
@@ -384,8 +407,8 @@ function getTargetPositionBeforeMe(me)
     -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
     local bound = (cambrx - camtlx) / 4
 
-    targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
-    targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
+    --targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
+    --targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
 
     return targetX, targetY
 end
@@ -446,6 +469,10 @@ function love.update(dt)
     updateGround(ground)
     enableDisableObstacles()
     enableDisableMipos()
+    
+    local a = ball.body:getAngle()
+    bike.pedalWheel.body:setAngle(a/1.2)
+
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
@@ -481,7 +508,7 @@ function love.update(dt)
     local smoothX = lerp(curCamX, targetX, div)
     local smoothY = lerp(curCamY, targetY, div)
 
-    local viewWidth = 3000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
+    local viewWidth = 5000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
     --if distance < 500 then viewWidth = 2000 end
 
     -- if distance > 500 then
@@ -652,6 +679,19 @@ function love.keypressed(k)
     if k == '.' then
         followCamera = not followCamera
     end
+    if k == 'x' then 
+        bike.frontWheel.body:setAngularVelocity(-100000)
+       -- bike.backWheel.body:setAngularVelocity(-1000)
+    end
+    if k == 'a' then
+        local f = -100
+    for i =1 , #mipos do 
+        mipos[i].b2d.torso:setAngularVelocity(f)
+        mipos[i].b2d.luleg:setAngularVelocity(f)
+        mipos[i].b2d.ruleg:setAngularVelocity(f)
+        if mipos[i].b2d.head then
+        mipos[i].b2d.head:setAngularVelocity(f) end
+    end end
 end
 
 function love.mousemoved(x, y, dx, dy)
