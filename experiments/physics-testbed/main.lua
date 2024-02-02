@@ -835,11 +835,11 @@ function love.draw()
     local strH = font:getHeight() * countLines(str)
     love.graphics.print(str, x - strW / 2, y - strH / 2)
     if a then 
-        local tx, ty =  bike.frame.body:getPosition()
+        --local tx, ty =  bike.frame.body:getPosition()
        -- print('bike before', tx,ty)
         local tx, ty = mipos[1].b2d.torso:getPosition()
         --print('torso before', tx, ty)
-        bike.frame.body:setPosition(tx, ty - 1000)
+      --  bike.frame.body:setPosition(tx, ty - 1000)
         for k, v in pairs(bike) do
             --v.body:setActive(false)
             --v.body:setGravityScale(0)
@@ -851,7 +851,7 @@ function love.draw()
 
 
 
-        local tx, ty =  bike.frame.body:getPosition()
+       -- local tx, ty =  bike.frame.body:getPosition()
        -- print('bike after', tx,ty)
         -- find posiition of mipo
         -- set posiiton of bike
