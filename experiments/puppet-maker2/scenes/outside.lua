@@ -82,20 +82,6 @@ local function pointerPressed(x, y, id)
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
 
 
-    local size = (h / 8) -- margin around panel
-    if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
-        --local sx, sy = getPointToCenterTransitionOn()
-        ScenePressedButtonScale = 0.5
-        Timer.clear()
-        swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
-            if scene then
-                SM.unload('outside')
-                SM.load('editGuy')
-                swipes.fadeInTransition()
-            end
-        end)
-    end
-
     for i = 1, #fiveGuys do
         lookAt(fiveGuys[i], x, y)
     end
@@ -466,6 +452,7 @@ function scene.draw()
         local x = w - size + size / 2 - (size * ScenePressedButtonScale) / 2
         local y = 0 + size / 2 - (size * ScenePressedButtonScale) / 2
 
+       
         -- local x = w - size - (size * ScenePressedButtonScale) / 2
         --  local y = 0
 
@@ -482,6 +469,19 @@ function scene.draw()
         love.graphics.draw(ui2.bigbuttons.editguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.editguys, x, y, 0, sx, sy)
+        local a = ui.getUIRect('poepscoop', x, y, size, size)
+        if a then 
+            --print('clicked here')
+            ScenePressedButtonScale = 0.5
+            Timer.clear()
+            swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
+                if scene then
+                    SM.unload('outside')
+                    SM.load('editGuy')
+                    swipes.fadeInTransition()
+                end
+            end)
+        end
     end
 
     if true then
@@ -521,7 +521,6 @@ function scene.draw()
         if a then
             upsideDown = not upsideDown
             OrientationPressedButtonScale = 0.5
-
             playSound(uiClickSound)
         end
 
@@ -557,9 +556,7 @@ function scene.draw()
 
         if a then
             toggleJoints()
-
             JointsPressedButtonScale = 0.5
-
             playSound(uiClickSound)
         end
 
@@ -590,12 +587,23 @@ function scene.draw()
             if #winegums < 200 then
                 addWineGums()
                 WinePressedButtonScale = 0.5
-
                 playSound(uiClickSound)
             end
 
             -- print('Body:getLocalPoint(worldX (number), worldY (number))')
         end
+    end
+
+    if false then
+    love.graphics.setColor(0, 0, 0, 0.5)
+
+    local stats = love.graphics.getStats()
+    local memavg = calculateRollingAverage(rollingMemoryUsage)
+    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+    local fps = tostring(love.timer.getFPS()) .. 'fps'
+    local draws = stats.drawcalls .. 'draws'
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
     end
 
 

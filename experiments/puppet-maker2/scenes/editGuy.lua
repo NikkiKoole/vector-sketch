@@ -86,46 +86,6 @@ local function pointerPressed(x, y, id)
         end
     end
 
-    local size = (h / 8) -- margin around panel
-
-    if (hit.pointInRect(x, y, w - size, 0, size, size)) and not swipes.getTransition() then
-        ScenePressedButtonScale = 0.5
-        Timer.clear()
-        swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
-            if scene then
-                SM.unload('editGuy')
-                SM.load('outside')
-                saveDNA5File()
-                swipes.fadeInTransition(.2)
-            end
-        end)
-    end
-
-    if (hit.pointInRect(x, y, w - size, h - size, size, size)) then
-        if DEBUG_FIVE_GUYS_IN_EDIT then
-            for i = 1, #fiveGuys do
-                updatePart.randomizeGuy(fiveGuys[i])
-            end
-        else
-            updatePart.randomizeGuy(editingGuy)
-        end
-        DicePressedButtonScale = 0.5
-        setCategories(editingGuy)
-        handleCameraAfterCatgeoryChange(true)
-
-        local creation = editingGuy.dna.creation
-        if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
-            editGuyUI.setSelectedCategory('body')
-            Timer.tween(.5, scroller, { position = 8 })
-        end
-
-
-        local s = findSample('mp7/Quijada')
-        if s then
-            playSound(s.s, 1, 1)
-        end
-    end
-
     for i = 1, #fiveGuys do
         lookAt(fiveGuys[i], x, y)
     end
@@ -433,6 +393,8 @@ function scene.update(dt)
     if ScenePressedButtonScale > 1 then ScenePressedButtonScale = 1 end
 end
 
+
+
 function scene.draw()
     prof.push('editGuy.draw ')
     prof.push('editGuy.draw ui')
@@ -513,6 +475,20 @@ function scene.draw()
         love.graphics.draw(ui2.bigbuttons.fiveguysmask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.fiveguys, x, y, 0, sx, sy)
+        local a = ui.getUIRect('gotoscene', x, y, size, size)
+        if a and not swipes.getTransition() then 
+            ScenePressedButtonScale = 0.5
+            Timer.clear()
+            swipes.doCircleInTransitionOnPositionFunc(getPointToCenterTransitionOn, function()
+                if scene then
+                    SM.unload('editGuy')
+                    SM.load('outside')
+                    saveDNA5File()
+                    swipes.fadeInTransition(.2)
+                end
+            end)
+           -- print('scene button clicked')
+        end
     end
 
     if true then
@@ -532,7 +508,49 @@ function scene.draw()
         love.graphics.draw(ui2.bigbuttons.dicemask, x, y, 0, sx, sy)
         love.graphics.setColor(0, 0, 0)
         love.graphics.draw(ui2.bigbuttons.dice, x, y, 0, sx, sy)
+
+
+        local a = ui.getUIRect('random', x, y, size, size)
+        if a  then 
+        if DEBUG_FIVE_GUYS_IN_EDIT then
+            for i = 1, #fiveGuys do
+                updatePart.randomizeGuy(fiveGuys[i])
+            end
+        else
+            updatePart.randomizeGuy(editingGuy)
+        end
+        DicePressedButtonScale = 0.5
+        setCategories(editingGuy)
+        handleCameraAfterCatgeoryChange(true)
+
+        local creation = editingGuy.dna.creation
+        if creation.isPotatoHead and uiState.selectedCategory == 'head' or uiState.selectedCategory == 'neck' or uiState.selectedCategory == 'patches' then
+            editGuyUI.setSelectedCategory('body')
+            Timer.tween(.5, scroller, { position = 8 })
+        end
+
+
+        local s = findSample('mp7/Quijada')
+        if s then
+            playSound(s.s, 1, 1)
+        end
     end
+    end
+
+
+    if false then
+    love.graphics.setColor(0, 0, 0, 0.5)
+
+    local stats = love.graphics.getStats()
+    local memavg = calculateRollingAverage(rollingMemoryUsage)
+    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+    local fps = tostring(love.timer.getFPS()) .. 'fps'
+    local draws = stats.drawcalls .. 'draws'
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+    end
+
+
 
     if swipes.getTransition() then
         swipes.renderTransition()

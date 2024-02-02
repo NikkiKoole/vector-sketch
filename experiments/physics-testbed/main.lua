@@ -10,9 +10,37 @@ local gradient         = require 'lib.gradient'
 local box2dGuyCreation = require 'lib.box2dGuyCreation'
 local texturedBox2d    = require 'lib.texturedBox2d'
 local addMipos         = require 'addMipos'
-
 local gradient         = require 'lib.gradient'
 local skygradient      = gradient.makeSkyGradient(10)
+local ui               = require "lib.ui"
+
+
+function prepareMipoAndVehicleForConnection(mipo, vehicle)
+    -- what are the steps that need to be taken?
+
+    -- bikes shouldnt fall from the world but just be disabled.
+
+    -- before everything
+    -- the bike and mipo need to be close to each other.
+    -- the button will 'call' the bike to come over first off.
+
+
+    -- amipo can be connected to something, all those connections (hand/feet/butt) needs to be broken
+    -- the legs possibly (but not always) need to be turned off (both for collsiiosn and for straightening every frame)
+    -- the arms need to be positioned in a way they can be connected to the steer (if needed)
+    -- the connections can be made (hand/feet/butt)
+    --- we need some kind of flag somewhere for rendering, so i can render the mipo and bike in 1 function. (to fix order issue (both behind and over))
+
+    -- .....
+
+
+
+    -- diconnecting is sort of the same stuff but reversed..
+    -- remove flag
+    -- break connections
+    -- turn all body parts back on
+    -- straighten again
+end
 
 function initGround()
     local thing = {
@@ -37,7 +65,7 @@ function getYAtX(x, stepSize)
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
 
 
-        local linear = numbers.mapInto(x / stepSize, -20, 20, -STEEPNESS, STEEPNESS)
+    local linear = numbers.mapInto(x / stepSize, -20, 20, -STEEPNESS, STEEPNESS)
 
     return y1 + y2 + y3 + linear
 end
@@ -91,7 +119,6 @@ function makeBall(x, y, radius)
     return ball
 end
 
-
 local function makeUserData(bodyType, moreData)
     local result = {
         bodyType = bodyType,
@@ -106,11 +133,11 @@ function makeRectPoly2(w, h, x, y)
     local cx = x
     local cy = y
     return love.physics.newPolygonShape(
-            cx - w / 2, cy - h / 2,
-            cx + w / 2, cy - h / 2,
-            cx + w / 2, cy + h / 2,
-            cx - w / 2, cy + h / 2
-        )
+        cx - w / 2, cy - h / 2,
+        cx + w / 2, cy - h / 2,
+        cx + w / 2, cy + h / 2,
+        cx - w / 2, cy + h / 2
+    )
 end
 
 function makeAndAddConnector(parent, x, y, data, size, size2)
@@ -122,7 +149,6 @@ function makeAndAddConnector(parent, x, y, data, size, size2)
     fixture:setSensor(true)
     table.insert(connectors, { at = fixture, to = nil, joint = nil })
 end
-
 
 function makeBike(x, y, radius)
     local ball1 = {}
@@ -136,7 +162,7 @@ function makeBike(x, y, radius)
 
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - radius * 2, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius*1.3)
+    ball2.shape = love.physics.newCircleShape(radius * 1.3)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
@@ -146,32 +172,32 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(radius*4 , 100)
+    frame.shape = love.physics.newRectangleShape(radius * 4, 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
     --frame.fixture:setSensor(true)
 
     local seat = {}
-    seat.shape =  love.physics.newRectangleShape(-200, -600, 200 , 200)
+    seat.shape = love.physics.newRectangleShape(-200, -600, 200, 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
     makeAndAddConnector(frame.body, -200, -600, {}, 205, 205)
 
     local seat2 = {}
-    seat2.shape =  love.physics.newRectangleShape(-1000, -600, 200 , 200)
+    seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
     seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
     makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
 
 
 
     local steer = {}
-    steer.shape =  love.physics.newRectangleShape(radius, -600, 120 , 1200)
+    steer.shape = love.physics.newRectangleShape(radius, -600, 120, 1200)
     steer.fixture = love.physics.newFixture(frame.body, steer.shape, 1)
 
     makeAndAddConnector(frame.body, radius, -1200, {}, 125, 125)
 
 
     local pedal = {}
-    pedal.body = love.physics.newBody(world, x+ radius , y-1000, "dynamic")
-    pedal.shape = love.physics.newRectangleShape(300 , 300)
+    pedal.body = love.physics.newBody(world, x + radius, y - 1000, "dynamic")
+    pedal.shape = love.physics.newRectangleShape(300, 300)
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
     makeAndAddConnector(pedal.body, -150, 0, {}, 150, 150)
     makeAndAddConnector(pedal.body, 150, 0, {}, 150, 150)
@@ -189,7 +215,7 @@ function makeBike(x, y, radius)
     --joint1:setMaxMotorTorque(20000)
 
 
-    return {frontWheel=ball1, backWheel=ball2, pedalWheel=pedal}
+    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame }
 end
 
 function getRandomConvexPoly(radius, numVerts)
@@ -284,6 +310,42 @@ function enableDisableMipos()
     end
 end
 
+function enableDisableBikes()
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+    local boxWorldWidth = cambrx - camtlx
+    local boxWorldHeight = cambry - camtly
+
+    -- local steps = math.ceil(boxWorldWidth / stepSize)
+
+    local extraSteps = 10
+    local xMinR = camtlx - extraSteps * stepSize
+    local xMaxR = cambrx + extraSteps * stepSize
+
+    --    for i = 1, #mipos do
+    local b = bike     --mipos[i]
+    --local bx, by = b.b2d.torso:getPosition()
+    local bx, by = b.frontWheel.body:getPosition()
+
+    --local parts = {b.frontWheel.body, }
+    if bx < xMinR or bx > xMaxR then
+        local y = lerpYAtX(bx, stepSize)
+        for k, v in pairs(b) do
+            v.body:setActive(false)
+            v.body:setGravityScale(0)
+            v.body:setPosition(bx, y - 1000)
+        end
+    end
+
+    if bx >= xMinR and bx <= xMaxR then
+        for k, v in pairs(b) do
+            v.body:setActive(true)
+            v.body:setGravityScale(1)
+        end
+    end
+end
+
 function enableDisableObstacles()
     --Body:setGravityScale( scale )
     local w, h = love.graphics.getDimensions()
@@ -330,7 +392,7 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
-    mipos = addMipos.make(5)
+    mipos = addMipos.make(1)
     obstacles = {}
 
     if false then
@@ -344,8 +406,8 @@ function startExample(number)
             table.insert(obstacles, o)
         end
     end
-    bike = makeBike( -2000, -5000, 350)
-    ball = bike.frontWheel
+    bike = makeBike(-2000, -5000, 350)
+    --bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
     rollingDistance = {}
@@ -362,11 +424,11 @@ end
 function love.load()
     local ffont = "WindsorBT-Roman.otf"
 
-    font = love.graphics.newFont(ffont, 32)
+    font = love.graphics.newFont(ffont, 24)
 
     love.graphics.setFont(font)
     jointsEnabled = false
-    followCamera = true
+    followCamera = 'bike'
     startExample()
 
     pointsOfInterest = {}
@@ -427,10 +489,10 @@ function lerpYAtX(targetX, stepSize)
     return y3
 end
 
-function getTargetPositionBeforeMe(me)
+function getTargetPositionBeforeMe(body)
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
     local avgVelY = calculateRollingAverage(rollingAverageVelY)
-    local worldX, worldY = me.body:getWorldPoint(0, 0)
+    local worldX, worldY = body:getWorldPoint(0, 0)
 
     local targetX = worldX + avgVelX / 2
     local targetY = worldY + avgVelY / 2
@@ -439,10 +501,10 @@ function getTargetPositionBeforeMe(me)
     targetY = lerpYAtX(targetX, stepSize)
     -- this will average with my own pos
 
-    targetY = (worldY + targetY) / 2
+    -- targetY = (worldY + targetY) / 2
 
-   -- targetX = worldX
-   -- targetY = worldY
+    -- targetX = worldX
+    -- targetY = worldY
 
     -- up untill now we assume we alsways are going forwards with the bike.
     -- what if we are being dragged high up in the air..
@@ -456,8 +518,8 @@ function getTargetPositionBeforeMe(me)
     -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
     local bound = (cambrx - camtlx) / 4
 
-    --targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
-    --targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
+    targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
+    targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
 
     return targetX, targetY
 end
@@ -477,35 +539,44 @@ local function getClosestPointFromList(pos, list)
     return closest
 end
 
-function getTargetPos(thing)
-    local tx, ty = getTargetPositionBeforeMe(thing)
+function getTargetPos(body)
+    local tx, ty = getTargetPositionBeforeMe(body)
 
-    local x, y = thing.body:getPosition()
+    local x, y = body:getPosition()
 
     local poi = getClosestPointFromList({ x = x, y = y }, pointsOfInterest)
-    local distance = getDistance(x, y, poi.x, poi.y)
+    if poi then
+        local distance = getDistance(x, y, poi.x, poi.y)
 
-    -- how to blend targets ?
-    -- if pos is in smallest radius then completely look at poi
-    -- if pos is in outside radius ring (radisu *2) mapinto the blend
-    -- else just use tx, ty
+        -- how to blend targets ?
+        -- if pos is in smallest radius then completely look at poi
+        -- if pos is in outside radius ring (radisu *2) mapinto the blend
+        -- else just use tx, ty
 
-    local t = 0
-    if (distance < poi.radius) then
-        t = 1
-    elseif distance < poi.radius * 3 then
-        t = numbers.mapInto(distance, poi.radius * 3, poi.radius, 0, 1)
+        local t = 0
+        if (distance < poi.radius) then
+            t = 1
+        elseif distance < poi.radius * 3 then
+            t = numbers.mapInto(distance, poi.radius * 3, poi.radius, 0, 1)
+        end
+
+        local nx = numbers.lerp(tx, poi.x, t)
+        local ny = numbers.lerp(ty, poi.y, t)
+
+        --print(nx, ny, tx, ty)
+        return nx, ny
+    else
+        print('somethign wrong with POI')
+        return 0, 0
     end
-
-    local nx = numbers.lerp(tx, poi.x, t)
-    local ny = numbers.lerp(ty, poi.y, t)
-
-    -- print(nx, ny)
-    return nx, ny
 end
 
 function love.update(dt)
-    local velX, velY = ball.body:getLinearVelocity()
+    --local thingToFollow = bike.frontWheel.body
+    local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
+
+    local velX, velY = thingToFollow:getLinearVelocity()
+    -- print(velX, velY)
     table.insert(rollingAverageVelX, velX)
     table.remove(rollingAverageVelX, 1)
 
@@ -518,18 +589,23 @@ function love.update(dt)
     updateGround(ground)
     enableDisableObstacles()
     enableDisableMipos()
-    
-    local a = ball.body:getAngle()
-    bike.pedalWheel.body:setAngle(a/1.2)
+    enableDisableBikes()
+
+    local a = bike.frontWheel.body:getAngle()
+    bike.pedalWheel.body:setAngle(a / 1.2)
 
     world:update(dt)
     phys.handleUpdate(dt, cam)
 
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
 
-    local targetX, targetY = getTargetPos(ball)
 
-    --print(targetX, targetX2)
+    --   print(mipos[1].b2d.torso)
+    --   print(bike.frontWheel.body)
+    --mipos[1].b2d.torso
+    local targetX, targetY = getTargetPos(thingToFollow)
+
+    --  print(targetX, targetY)
     -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
     -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
 
@@ -538,7 +614,8 @@ function love.update(dt)
     local avgVelX = calculateRollingAverage(rollingAverageVelX)
     --local avgVelX = calculateRollingAverage(rollingAverageVelY)
     local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 5)
-    ball.body:setLinearDamping(damping)
+    --print('damping', damping)
+    thingToFollow:setLinearDamping(damping)
 
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
@@ -552,7 +629,8 @@ function love.update(dt)
     local delta = love.timer.getAverageDelta() or dt
 
     local div = math.min(divider / (1 / delta), 1)
-
+    -- print('div',div)
+    -- print('newDistance', newDistance)
     --print(newDistance, div, divider)
     local smoothX = lerp(curCamX, targetX, div)
     local smoothY = lerp(curCamY, targetY, div)
@@ -563,13 +641,16 @@ function love.update(dt)
     -- if distance > 500 then
     --print('yes')
     --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
-    if followCamera then
+    if followCamera ~= 'free' then
         --print('****')
         --print(curCamX, targetX, divider / (1 / delta))
         --print(curCamY, targetY, divider / (1 / delta))
         --print(smoothX, smoothY, viewWidth, viewWidth)
         camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+    else
+        -- camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
     end
+    --  camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
     -- else
     --print('no')
     -- end
@@ -625,7 +706,13 @@ function skyGradient(camYTop, camYBottom)
     return sky
 end
 
+function countLines(str)
+    local _, count = str:gsub('\n', '\n')
+    return count + 1 -- Add 1 to account for the last line without a newline
+end
+
 function love.draw()
+    ui.handleMouseClickStart()
     love.graphics.clear(1, 0, 1)
     love.graphics.setColor(1, 1, 1)
 
@@ -649,7 +736,7 @@ function love.draw()
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
-           texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
+            texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
         end
     end
 
@@ -678,7 +765,7 @@ function love.draw()
 
 
     love.graphics.setColor(1, 1, 1)
-    local wx, wy = ball.body:getPosition()
+    local wx, wy = bike.frontWheel.body:getPosition()
     local yy = lerpYAtX(wx, stepSize)
     love.graphics.circle('fill', wx, yy, 10)
     love.graphics.setColor(0.3, 0.3, 0.3)
@@ -689,7 +776,7 @@ function love.draw()
         love.graphics.circle('line', poi.x, poi.y, poi.radius * 3)
     end
     love.graphics.setColor(1, 1, 1)
-    local targetX, targetY = getTargetPos(ball)
+    local targetX, targetY = getTargetPos(bike.frontWheel.body)
     love.graphics.rectangle('line', targetX, targetY, 40, 40)
 
     local curCamX, curCamY = cam:getTranslation()
@@ -707,36 +794,55 @@ function love.draw()
     local draws = stats.drawcalls .. 'draws'
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
 
-    -- love.graphics.print("Current FPS: " .. tostring(love.timer.getFPS()), 10, 10)
-    --local velX, velY = ball.body:getLinearVelocity()
-    --love.graphics.print('ball speed: ' .. math.floor(velX), 10, 30)
 
-    -- love.graphics.print(inspect(stats), 10, 10)
-    --love.graphics.print(
-    --    world:getBodyCount() ..
-    --    '  , ' .. world:getJointCount() .. '  , ' .. love.timer.getFPS() .. ', ' .. str, 180,
-    --    10)
+    local size = 100
+    local x = size / 2
+    local y = h - size + size / 2
+    local a = ui.getUICircle(x, y, size / 2)
+    love.graphics.circle('fill', x, y, size / 2)
+    love.graphics.setColor(1, 1, 1, 1)
+
+    -- local str = 'cam:\nfree'
+    -- local str = 'cam:\nbike'
+    -- local str = 'cam:\nmipo'
+    local str = 'cam:\n' .. followCamera
+    local strW = font:getWidth(str)
+    local strH = font:getHeight() * countLines(str)
+    love.graphics.print(str, x - strW / 2, y - strH / 2)
+
+    if a then
+        if followCamera == 'free' then
+            followCamera = 'bike'
+        elseif followCamera == 'bike' then
+            followCamera = 'mipo'
+        elseif followCamera == 'mipo' then
+            followCamera = 'free'
+        end
+        print('click yo!')
+    end
 end
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
-    if k == 'space' then ball.body:setAngularVelocity(10000) end
-    if k == '.' then
-        followCamera = not followCamera
-    end
-    if k == 'x' then 
+    if k == 'space' then bike.frontWheel.body:setAngularVelocity(10000) end
+    -- if k == '.' then
+    --     followCamera = not followCamera
+    -- end
+    if k == 'x' then
         bike.frontWheel.body:setAngularVelocity(-100000)
-       -- bike.backWheel.body:setAngularVelocity(-1000)
+        -- bike.backWheel.body:setAngularVelocity(-1000)
     end
     if k == 'a' then
         local f = -100
-    for i =1 , #mipos do 
-        mipos[i].b2d.torso:setAngularVelocity(f)
-        mipos[i].b2d.luleg:setAngularVelocity(f)
-        mipos[i].b2d.ruleg:setAngularVelocity(f)
-        if mipos[i].b2d.head then
-        mipos[i].b2d.head:setAngularVelocity(f) end
-    end end
+        for i = 1, #mipos do
+            mipos[i].b2d.torso:setAngularVelocity(f)
+            mipos[i].b2d.luleg:setAngularVelocity(f)
+            mipos[i].b2d.ruleg:setAngularVelocity(f)
+            if mipos[i].b2d.head then
+                mipos[i].b2d.head:setAngularVelocity(f)
+            end
+        end
+    end
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -759,12 +865,13 @@ local function pointerPressed(x, y, id)
     local onPressedParams = {
         pointerForceFunc = function(fixture)
             local ud = fixture:getUserData()
-            local force = ud and ud.bodyType == 'torso' and 5000000 or 50000
+            local force = ud and ud.bodyType == 'torso' and 100000 or 50000
             return force
         end
         --pointerForceFunc = function(fixture) return 1400 end
     }
     local interacted = phys.handlePointerPressed(cx, cy, id, onPressedParams)
+    ui.addToPressedPointers(x, y, id)
 end
 
 function love.mousepressed(x, y, button, istouch)
@@ -782,6 +889,7 @@ end
 
 local function pointerReleased(x, y, id)
     phys.handlePointerReleased(x, y, id)
+    ui.removeFromPressedPointers(id)
 end
 
 function love.mousereleased(x, y, button, istouch)

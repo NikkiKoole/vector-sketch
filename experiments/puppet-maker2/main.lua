@@ -434,6 +434,14 @@ function love.load()
         table.insert(samples, { s = love.audio.newSource(data, 'static'), p = sample_data[i] })
     end
 
+
+    rollingMemoryUsage = {}
+
+    for i = 1, 10 do
+   
+        rollingMemoryUsage[i] = 0
+    end
+
     loadSong('assets/mipo4.melodypaint.txt')
 
     splashSound = love.audio.newSource("assets/sounds/music/mipolailoop.mp3", "static")
@@ -622,6 +630,16 @@ local function pickRandom(array)
     local index = math.ceil(love.math.random() * #array)
     return array[index]
 end
+
+function calculateRollingAverage(valueList)
+    local sum = 0
+    for _, value in ipairs(valueList) do
+        sum = sum + value
+    end
+    return sum / #valueList
+end
+
+
 function love.update(dt)
     function love.keypressed(key)
         if key == "escape" then love.event.quit() end
@@ -765,6 +783,8 @@ function love.update(dt)
         --prof.pop('gc')
         prof.pop('frame')
     end
+    table.insert(rollingMemoryUsage, collectgarbage("count") / 1000)
+    table.remove(rollingMemoryUsage, 1)
     manual_gc(0.002, 2)
 end
 
