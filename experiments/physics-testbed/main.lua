@@ -11,6 +11,9 @@ local box2dGuyCreation = require 'lib.box2dGuyCreation'
 local texturedBox2d    = require 'lib.texturedBox2d'
 local addMipos         = require 'addMipos'
 
+local gradient         = require 'lib.gradient'
+local skygradient      = gradient.makeSkyGradient(10)
+
 function initGround()
     local thing = {
         body = love.physics.newBody(world, 0, 0)
@@ -147,12 +150,10 @@ function makeBike(x, y, radius)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
     --frame.fixture:setSensor(true)
 
-
-
     local seat = {}
-    seat.shape =  love.physics.newRectangleShape(-100, -600, 200 , 200)
+    seat.shape =  love.physics.newRectangleShape(-200, -600, 200 , 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
-    makeAndAddConnector(frame.body, -100, -600, {}, 205, 205)
+    makeAndAddConnector(frame.body, -200, -600, {}, 205, 205)
 
     local seat2 = {}
     seat2.shape =  love.physics.newRectangleShape(-1000, -600, 200 , 200)
@@ -207,8 +208,6 @@ function makeRandomPoly(x, y, radius)
     local fixture = love.physics.newFixture(body, shape, .1)
     return body
 end
-
-
 
 function makeRandomTriangle(x, y, radius)
     local body = love.physics.newBody(world, x, y, "dynamic")
@@ -630,7 +629,8 @@ function love.draw()
     love.graphics.clear(1, 0, 1)
     love.graphics.setColor(1, 1, 1)
 
-
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(skygradient, 0, 0, 0, love.graphics.getDimensions())
 
 
     local w, h = love.graphics.getDimensions()
@@ -638,7 +638,7 @@ function love.draw()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
 
-    local sky = skyGradient(camtly, cambry)
+    local sky = fasle --skyGradient(camtly, cambry)
 
     if sky then
         love.graphics.draw(sky, 0, 0, 0, w, h)
@@ -649,7 +649,7 @@ function love.draw()
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
-       --    texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
+           texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
         end
     end
 
@@ -677,14 +677,12 @@ function love.draw()
     end
 
 
-
-
     love.graphics.setColor(1, 1, 1)
     local wx, wy = ball.body:getPosition()
     local yy = lerpYAtX(wx, stepSize)
     love.graphics.circle('fill', wx, yy, 10)
-
     love.graphics.setColor(0.3, 0.3, 0.3)
+
     for i = 1, #pointsOfInterest do
         local poi = pointsOfInterest[i]
         love.graphics.circle('line', poi.x, poi.y, poi.radius)
@@ -700,9 +698,6 @@ function love.draw()
 
 
     love.graphics.setColor(0, 0, 0, 0.5)
-
-
-
 
     local stats = love.graphics.getStats()
     local memavg = calculateRollingAverage(rollingMemoryUsage)
