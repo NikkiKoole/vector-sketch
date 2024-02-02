@@ -297,7 +297,7 @@ function enableDisableMipos()
             for k, v in pairs(b.b2d) do
                 v:setActive(false)
                 v:setGravityScale(0)
-                v:setPosition(bx, y - 1000)
+                v:setPosition(bx, y - 400)
             end
         end
 
@@ -427,7 +427,7 @@ function love.load()
     font = love.graphics.newFont(ffont, 24)
 
     love.graphics.setFont(font)
-    jointsEnabled = false
+    jointsEnabled = true
     followCamera = 'bike'
     startExample()
 
@@ -795,6 +795,9 @@ function love.draw()
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
 
 
+
+
+    -- CAMREA BUTTON
     local size = 100
     local x = size / 2
     local y = h - size + size / 2
@@ -805,7 +808,7 @@ function love.draw()
     -- local str = 'cam:\nfree'
     -- local str = 'cam:\nbike'
     -- local str = 'cam:\nmipo'
-    local str = 'cam:\n' .. followCamera
+    local str = 'CAM\n' .. followCamera
     local strW = font:getWidth(str)
     local strH = font:getHeight() * countLines(str)
     love.graphics.print(str, x - strW / 2, y - strH / 2)
@@ -818,7 +821,41 @@ function love.draw()
         elseif followCamera == 'mipo' then
             followCamera = 'free'
         end
-        print('click yo!')
+       -- print('click yo!')
+    end
+    -- CALL BIKE BUTTON
+
+  local x = size / 2 + size
+  love.graphics.setColor(0, 0, 0, 0.5)
+  local a = ui.getUICircle(x, y, size / 2)
+  love.graphics.circle('fill', x, y, size / 2)
+  love.graphics.setColor(1, 1, 1, 1)
+  local str = 'CALL\nBike'
+    local strW = font:getWidth(str)
+    local strH = font:getHeight() * countLines(str)
+    love.graphics.print(str, x - strW / 2, y - strH / 2)
+    if a then 
+        local tx, ty =  bike.frame.body:getPosition()
+       -- print('bike before', tx,ty)
+        local tx, ty = mipos[1].b2d.torso:getPosition()
+        --print('torso before', tx, ty)
+        bike.frame.body:setPosition(tx, ty - 1000)
+        for k, v in pairs(bike) do
+            --v.body:setActive(false)
+            --v.body:setGravityScale(0)
+            v.body:setPosition(tx + 700, ty)
+            v.body:setAngle(0)
+            v.body:setLinearVelocity( 0,0 )
+            v.body:setAngularVelocity( 0 )
+        end
+
+
+
+        local tx, ty =  bike.frame.body:getPosition()
+       -- print('bike after', tx,ty)
+        -- find posiition of mipo
+        -- set posiiton of bike
+    
     end
 end
 
