@@ -3,7 +3,7 @@ local bbox    = require 'lib.bbox'
 local inspect = require 'vendor.inspect'
 local phys    = require 'lib.mainPhysics'
 local dna     = require 'lib.dna'
-
+local connect = require 'lib.connectors'
 local lib     = {}
 
 -- todo make helper that creates symmetrical data for legs, arms, hand, feet and ears
@@ -118,7 +118,6 @@ local function getOffsetFromParent(partName, guy)
             end
         else
             if creation.torso.metaPoints then
-                print('hi getting meta now')
                 return getScaledTorsoMetaPoint(2, guy)
             end
         end
@@ -394,10 +393,6 @@ local function makeConnectingRevoluteJoint(data, this, from)
         end
     end
 
-
-
-
-
     if myData.limits then
         joint:setLowerLimit(myData.limits.low)
         joint:setUpperLimit(myData.limits.up)
@@ -451,84 +446,28 @@ local function makePart_(key, parent, guy)
     return body
 end
 
-local function makeAndReplaceConnector(recreate, parent, x, y, data, size, size2)
-    size = size or 10
-    size2 = size2 or size
-    local bandshape2 = phys.makeRectPoly2(size, size, x, y)
-    local fixture = love.physics.newFixture(parent, bandshape2, 1)
-
-    fixture:setUserData(makeUserData('connector', data))
-    fixture:setSensor(true)
-
-    -- we are remaking a connector, keep all its connections working here!
-    for i = 1, #connectors do
-        if connectors[i].at and connectors[i].at == recreate.oldFixture then
-            connectors[i].at = fixture
-            if connectors[i].to then
-                local j = phys.getJointBetween2Connectors(connectors[i].to, connectors[i].at)
-                connectors[i].joint = j
-            end
-        end
-
-        if connectors[i].to and connectors[i].to == recreate.oldFixture then
-            connectors[i].to = fixture
-
-            local j = phys.getJointBetween2Connectors(connectors[i].to, connectors[i].at)
-            connectors[i].joint = j
-        end
-    end
-end
-
-local function getRecreateConnectorData(allAttachedFixtures)
-    local result = nil
-    for i = 1, #allAttachedFixtures do
-        local f = allAttachedFixtures[i]
-        if f:getUserData() and f:getUserData().bodyType == 'connector' then
-            for j = 1, #connectors do
-                if connectors[j].at == f then
-                    result = { oldFixture = f, userData = f:getUserData() }
-                    return result
-                end
-            end
-        end
-    end
-    return result
-end
-
-local function useRecreateConnectorData(recreateConnectorData, body, guy)
+-- cant move this because of the dependance on getScaledTorsoMetaPoint
+function useRecreateConnectorData(recreateConnectorData, body, guy)
     local creation = guy.dna.creation
     local data = recreateConnectorData.userData.data
     local type = data.type
 
-    print('hello want to recreate connector', type)
+    --print('hello want to recreate connector', type)
     assert(type)
     if type == 'foot' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rfoot.h / 2, data,
+        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rfoot.h / 2, data,
             creation.rfoot.w + 10,
             creation.rfoot.h + 10)
     elseif type == 'hand' then
-        makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w+4,
+        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w+4,
             creation.lhand.h+4)
-        elseif type == 'butt' then
+    elseif type == 'butt' then
             local bx,by =  (creation.torso.w / 2), creation.torso.h / 2
             if creation.torso.metaPoints then
                 bx, by = getScaledTorsoMetaPoint(5, guy)
             end
-            makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100,
-                100)
+            connect.makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100, 100)
     end
-end
-
-
-local function makeAndAddConnector(parent, x, y, data, size, size2)
-    size = size or 10
-    size2 = size2 or size
-    local bandshape2 = phys.makeRectPoly2(size, size2, x, y)
-    local fixture = love.physics.newFixture(parent, bandshape2, 0)
-    fixture:setUserData(makeUserData('connector', data))
-    fixture:setSensor(true)
-    table.insert(connectors, { at = fixture, to = nil, joint = nil })
-    --print('jo hello!', #connectors)
 end
 
 lib.makeGuy = function(x, y, guy)
@@ -588,29 +527,29 @@ lib.makeGuy = function(x, y, guy)
     local buttConnector = true
     if buttConnector then
         local bx, by = 0,0 
-        makeAndAddConnector(torso, bx,by, { id = 'guy' .. groupId, type = 'butt' },
+        connect.makeAndAddConnector(torso, bx,by, { id = 'guy' .. groupId, type = 'butt' },
             40,
             40)
     end
 
     local footConnector = true
     if footConnector then
-        makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+        connect.makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
             creation.rfoot.h / 2 + 10,
             creation.rfoot.w / 2 + 10)
         
-        makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+            connect.makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
             creation.lfoot.h / 2 + 10,
             creation.lfoot.w / 2 + 10)
     end
 
     local handConnector = true
     if handConnector then
-        makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+        connect.makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.rhand.h / 2 + 10,
             creation.rhand.w / 2 + 10)
         
-        makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
+        connect.makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.lhand.h + 10,
             creation.lhand.w + 10)
     end
@@ -888,7 +827,7 @@ lib.genericBodyPartUpdate = function(guy, partName)
     local facing = guy.facingVars
     local data = getParentAndChildrenFromPartName(partName, guy)
     local parentName = data.p
-    local recreateConnectorData = getRecreateConnectorData(box2dGuy[partName]:getFixtures())
+    local recreateConnectorData = connect.getRecreateConnectorData(box2dGuy[partName]:getFixtures())
     --  print(recreateConnectorData)
     local recreatePointerJoint = getRecreatePointerJoint(box2dGuy[partName])
     local thisA = box2dGuy[partName]:getAngle()

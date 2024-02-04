@@ -13,19 +13,19 @@ local addMipos         = require 'addMipos'
 local gradient         = require 'lib.gradient'
 local skygradient      = gradient.makeSkyGradient(10)
 local ui               = require "lib.ui"
-
+local connect = require 'lib.connectors'
 
 function prepareMipoAndVehicleForConnection(mipo, vehicle)
     -- what are the steps that need to be taken?
-
     -- bikes shouldnt fall from the world but just be disabled.
-
     -- before everything
     -- the bike and mipo need to be close to each other.
     -- the button will 'call' the bike to come over first off.
 
+    -- factor connections file
 
-    -- amipo can be connected to something, all those connections (hand/feet/butt) needs to be broken
+
+    -- a mipo can be connected to something, all those connections (hand/feet/butt) needs to be broken
     -- the legs possibly (but not always) need to be turned off (both for collsiiosn and for straightening every frame)
     -- the arms need to be positioned in a way they can be connected to the steer (if needed)
     -- the connections can be made (hand/feet/butt)
@@ -51,7 +51,7 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
-    local STEEPNESS = 2000
+    local STEEPNESS = 100
     local index = math.floor(x / stepSize)
     local function generateWave(amplitude, frequency)
         local h = love.math.noise(index / frequency, 1, 1) * amplitude
@@ -140,15 +140,6 @@ function makeRectPoly2(w, h, x, y)
     )
 end
 
-function makeAndAddConnector(parent, x, y, data, size, size2)
-    size = size or 10
-    size2 = size2 or size
-    local bandshape2 = makeRectPoly2(size, size2, x, y)
-    local fixture = love.physics.newFixture(parent, bandshape2, 0)
-    fixture:setUserData(makeUserData('connector', data))
-    fixture:setSensor(true)
-    table.insert(connectors, { at = fixture, to = nil, joint = nil })
-end
 
 function makeBike(x, y, radius)
     local ball1 = {}
@@ -179,12 +170,12 @@ function makeBike(x, y, radius)
     local seat = {}
     seat.shape = love.physics.newRectangleShape(-200, -600, 200, 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
-    makeAndAddConnector(frame.body, -200, -600, {}, 205, 205)
+    connect.makeAndAddConnector(frame.body, -200, -600, {}, 205, 205)
 
     local seat2 = {}
     seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
     seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
-    makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
+    connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
 
 
 
@@ -192,15 +183,15 @@ function makeBike(x, y, radius)
     steer.shape = love.physics.newRectangleShape(radius, -600, 120, 1200)
     steer.fixture = love.physics.newFixture(frame.body, steer.shape, 1)
 
-    makeAndAddConnector(frame.body, radius, -1200, {}, 125, 125)
+    connect.makeAndAddConnector(frame.body, radius, -1200, {}, 125, 125)
 
 
     local pedal = {}
     pedal.body = love.physics.newBody(world, x + radius, y - 1000, "dynamic")
     pedal.shape = love.physics.newRectangleShape(300, 300)
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
-    makeAndAddConnector(pedal.body, -150, 0, {}, 150, 150)
-    makeAndAddConnector(pedal.body, 150, 0, {}, 150, 150)
+    connect.makeAndAddConnector(pedal.body, -150, 0, {}, 150, 150)
+    connect.makeAndAddConnector(pedal.body, 150, 0, {}, 150, 150)
 
     local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
     pedal.fixture:setSensor(true)
@@ -837,18 +828,23 @@ function love.draw()
     if a then 
         --local tx, ty =  bike.frame.body:getPosition()
        -- print('bike before', tx,ty)
+       --mipos[1].b2d.torso:applyLinearImpulse(0, -10000)
+       --mipos[1].b2d.torso:setLinearVelocity(0, -10000)
         local tx, ty = mipos[1].b2d.torso:getPosition()
+        --mipos[1].b2d.torso:setPosition(tx, ty -1000)
         --print('torso before', tx, ty)
       --  bike.frame.body:setPosition(tx, ty - 1000)
         for k, v in pairs(bike) do
             --v.body:setActive(false)
             --v.body:setGravityScale(0)
-            v.body:setPosition(tx + 700, ty)
+            v.body:setPosition(tx-1500 , ty)
             v.body:setAngle(0)
             v.body:setLinearVelocity( 0,0 )
             v.body:setAngularVelocity( 0 )
+           v.body:applyLinearImpulse(0, -1000)
         end
 
+        bike.frontWheel.body:setPosition(tx-1500 , ty+150)
 
 
        -- local tx, ty =  bike.frame.body:getPosition()
