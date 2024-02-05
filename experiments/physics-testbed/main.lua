@@ -136,9 +136,12 @@ function makeRectPoly2(w, h, x, y)
 end
 
 
-function makeBike(x, y, radius)
+function makeBike(x, y, data)
+    local floorWidth = data.floorWidth or data.radius 
+    local radius = data.radius
+
     local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + radius * 2, y, "dynamic")
+    ball1.body = love.physics.newBody(world, x + floorWidth/2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
@@ -147,7 +150,7 @@ function makeBike(x, y, radius)
     ball1.body:setAngularVelocity(10000)
 
     local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - radius * 2, y, "dynamic")
+    ball2.body = love.physics.newBody(world, x - floorWidth/2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius * 1.3)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
@@ -158,7 +161,7 @@ function makeBike(x, y, radius)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(radius * 4, 100)
+    frame.shape = love.physics.newRectangleShape(floorWidth, 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
     --frame.fixture:setSensor(true)
     if false then
@@ -173,12 +176,16 @@ function makeBike(x, y, radius)
     connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
     end
 
+    --local achterWielSpat = {}
+    --achterWielSpat.shape = love.physics.newRectangleShape(-radius/1.4, -500, 20, 500)
+    --achterWielSpat.fixture = love.physics.newFixture(frame.body, achterWielSpat.shape, 1)
 
     local steer = {}
-    steer.shape = love.physics.newRectangleShape(radius, -600, 120, 1200)
-    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 1)
+    local steerHeight =  data.steeringHeight
+    steer.shape = love.physics.newRectangleShape(floorWidth/2, -steerHeight/2, 120, steerHeight)
+    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
     --steer.fixture:setSensor(true)
-    connect.makeAndAddConnector(frame.body, radius, -1200, {}, 125, 125)
+    connect.makeAndAddConnector(frame.body, floorWidth/2, -steerHeight, {}, 125, 125)
 
     if false then
     local pedal = {}
@@ -392,7 +399,18 @@ function startExample(number)
             table.insert(obstacles, o)
         end
     end
-    bike = makeBike(-2000, -5000, 350)
+
+
+    -- get data from the mipos[1] to make a fitted bike 
+    local c= mipos[1].dna.creation
+   
+    local bikeData = {
+        type = 'scooter',
+        steeringHeight = c.luleg.h + c.llleg.h + c.torso.h/2,
+        floorWidth = c.torso.w * 3,
+        radius = 100
+    }
+    bike = makeBike(-2000, -5000, bikeData)
     --bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
