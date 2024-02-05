@@ -1,5 +1,5 @@
 local Vector          = require 'vendor.brinevector'
-
+local inspect = require 'vendor.inspect'
 local lib = {}
 
 
@@ -31,6 +31,30 @@ local makeRectPoly2 = function(w, h, x, y)
             cx - w / 2, cy + h / 2
         )
 end
+
+
+lib.breakAllConnectionsAtBody = function(thing)
+    for i = 1, #connectors do 
+        
+        if (connectors[i].at:getBody() ==  thing) then 
+            if connectors[i].joint then 
+                connectors[i].joint:destroy()
+                connectors[i].joint = nil
+                connectors[i].to = nil
+            end
+        end
+
+        -- connection couldve been made the oher way around..
+        -- those need breaking too
+        if (connectors[i].to and connectors[i].to:getBody() ==  thing) then 
+            if connectors[i].joint then 
+                connectors[i].joint:destroy()
+                connectors[i].joint = nil
+            end
+        end
+    end
+end
+
 
 lib.makeAndAddConnector = function(parent, x, y, data, size, size2)
     size = size or 10
@@ -87,14 +111,10 @@ lib.makeAndReplaceConnector = function(recreate, parent, x, y, data, size, size2
     end
 end
 
-
-
-
 lib.resetConnectors = function() 
     connectors = {}
     connectorCooldownList = {}
 end
-
 
 local function getCenterOfPoints(points)
     local tlx = math.huge
@@ -196,7 +216,9 @@ lib.maybeConnectThisConnector = function(f, mj)
     end
 end
 
-lib.maybeBreakAnyConnector = function(dt) 
+
+
+lib.maybeBreakAnyConnectorBecauseForce = function(dt) 
     if true then
         if connectors then
             for i = #connectors, 1, -1 do
@@ -216,23 +238,16 @@ lib.maybeBreakAnyConnector = function(dt)
                     end
 
                     local b1, b2 = connectors[i].joint:getBodies()
-
                     local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
-
-
                     local breakForceWhenNotMouseJointed = 2000000 * (b1:getMass() * b2:getMass())
-                    --if (not found) then
-                    --    print(l, )
-                    --end
-
 
                     if ((found and l > breakForce) or (not found and l > breakForceWhenNotMouseJointed)) then
-                        print('broke when foudn', found)
+                       -- print('broke when foudn', found, inspect(connectors[i]))
                         connectors[i].joint:destroy()
                         connectors[i].joint = nil
 
                         connectors[i].to = nil
-                        --print('broke it', i, l, breakForce)
+                        print('broke it', i, l, breakForce)
                         table.insert(connectorCooldownList, { runningFor = 0, index = i })
                     end
                 end

@@ -334,7 +334,7 @@ local function findJointBetween2Bodies(body1, body2)
     return result
 end
 
-local function setJointLimitBetweenBodies(body1, body2, state, ofType)
+lib.setJointLimitBetweenBodies = function(body1, body2, state, ofType)
     local joints = findJointBetween2Bodies(body1, body2)
     if joints then
         for i = 1, #joints do
@@ -654,6 +654,37 @@ local function getRidOfBigRotationsInBody(body)
     end
 end
 
+
+
+lib.getUserDataAtBodyPart = function(bodyPart) 
+    print(bodyPart)
+    print(bodyPart:getFixtures())
+    local fixtures = bodyPart:getFixtures()
+    for _, fixture in ipairs(fixtures) do 
+        local userData = fixture:getUserData()
+        print(inspect(userData))
+    end
+end
+
+lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData) 
+  --  print(bodyPart)
+  --  print(bodyPart:getFixtures())
+    local fixtures = bodyPart:getFixtures()
+    for _, fixture in ipairs(fixtures) do 
+        local userData = fixture:getUserData()
+        userData.data = moreData
+        fixture:setUserData(userData)
+        --print(inspect(userData))
+    end
+end
+
+
+local userDataIsSleeping = function(ud) 
+    local result = false
+    if ud.data and ud.data.sleeping then return true 
+    end
+end
+
 lib.rotateAllBodies = function(bodies, dt)
     -- I want to be able to rotate all bodies in one go.
     -- This means I cannot fetch the guy with its creation here.
@@ -761,26 +792,32 @@ lib.rotateAllBodies = function(bodies, dt)
                     end
 
                     if not upsideDown then
-                        if userData.bodyType == 'luleg' then
+                        if userData.bodyType == 'luleg' and not userDataIsSleeping(userData) then
+                          
                             local a = creation.luleg.stanceAngle
                             --  print(a)
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
+                            rotateToHorizontal(body, a, 30) 
+                           
                         end
-                        if userData.bodyType == 'ruleg' then
+                        if userData.bodyType == 'ruleg' and not userDataIsSleeping(userData) then
+                           
                             local a = creation.ruleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
+                            rotateToHorizontal(body, a, 30) 
                         end
-                        if userData.bodyType == 'llleg' then
+                        if userData.bodyType == 'llleg'  and not userDataIsSleeping(userData) then
+                           
+                           
                             local a = creation.llleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
+                            rotateToHorizontal(body, a, 30) 
                         end
-                        if userData.bodyType == 'rlleg' then
+                        if userData.bodyType == 'rlleg' and not userDataIsSleeping(userData) then
+                          
                             local a = creation.rlleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30)
+                            rotateToHorizontal(body, a, 30) 
                         end
                     end
                     if upsideDown then
@@ -1058,14 +1095,14 @@ lib.toggleAllJointLimits = function(guy, value)
     local creation = guy.dna.creation
     local b2d = guy.b2d
     if not creation.isPotatoHead and creation.hasNeck then
-        setJointLimitBetweenBodies(b2d.head, b2d.neck1, value, 'revolute')
-        setJointLimitBetweenBodies(b2d.neck1, b2d.neck, value, 'revolute')
-        setJointLimitBetweenBodies(b2d.neck, b2d.torso, value, 'revolute')
+        lib.setJointLimitBetweenBodies(b2d.head, b2d.neck1, value, 'revolute')
+        lib.setJointLimitBetweenBodies(b2d.neck1, b2d.neck, value, 'revolute')
+        lib.setJointLimitBetweenBodies(b2d.neck, b2d.torso, value, 'revolute')
     end
-    setJointLimitBetweenBodies(b2d.torso, b2d.luleg, value, 'revolute')
-    setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, value, 'revolute')
-    setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, value, 'revolute')
-    setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, value, 'revolute')
+    lib.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, value, 'revolute')
 end
 
 lib.isNullObject = function(partName, values)

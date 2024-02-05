@@ -10,6 +10,9 @@ local box2dGuyCreation = require 'lib.box2dGuyCreation'
 
 local lib              = {}
 
+
+
+-- todo this is annoying, every lib that uses textured Box now neds these images...
 textures               = {
     love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
     love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),

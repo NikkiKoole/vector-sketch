@@ -14,7 +14,8 @@ local mesh            = require 'lib.mesh'
 local ui              = require 'lib.ui'
 require 'lib.box2dGuyCreation'
 require 'lib.texturedBox2d'
-local creation = getCreation()
+local dna = require 'lib.dna'
+local creation = dna.getCreation()
 local canvas   = require 'lib.canvas'
 local text     = require 'lib.text'
 require 'palette'
@@ -1346,6 +1347,34 @@ function startExample(number)
 
     example = number
 end
+
+
+local function createTexturedTriangleStrip(image)
+    -- this assumes an strip that is oriented vertically
+    local w, h = image:getDimensions()
+    local vertices = {}
+    local segments = 11
+    local hPart = h / (segments - 1)
+    local hv = 1 / (segments - 1)
+    local runningHV = 0
+    local runningHP = 0
+    local index = 0
+
+    for i = 1, segments do
+        vertices[index + 1] = { -w / 2, runningHP, 0, runningHV }
+        vertices[index + 2] = { w / 2, runningHP, 1, runningHV }
+        -- print(i, runningHV, runningHP)
+        runningHV = runningHV + hv
+        runningHP = runningHP + hPart
+        index = index + 2
+    end
+    --print(h)
+    local mesh = love.graphics.newMesh(vertices, "strip")
+    mesh:setTexture(image)
+
+    return mesh
+end
+
 
 function love.load()
     stiff = true

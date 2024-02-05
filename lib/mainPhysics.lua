@@ -405,7 +405,7 @@ lib.handleUpdate = function(dt, cam)
     end
 
     -- diconnect connectors
-    connect.maybeBreakAnyConnector(dt)
+    connect.maybeBreakAnyConnectorBecauseForce(dt)
 
     connect.cleanupCoolDownList(dt)
    
