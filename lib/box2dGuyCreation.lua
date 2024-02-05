@@ -583,7 +583,9 @@ lib.makeGuy = function(x, y, guy)
     return data
 end
 
-local function rotateToHorizontal(body, desiredAngle, divider, pr)
+local function rotateToHorizontal(body, desiredAngle, divider, smarter, dt)
+    -- its  abit messy now, but im smarter, or a bit better  about dt
+
     local DEGTORAD = 1 / 57.295779513
     --https://www.iforce2d.net/b2dtut/rotate-to-angle
     if true then
@@ -624,12 +626,28 @@ local function rotateToHorizontal(body, desiredAngle, divider, pr)
         while (totalRotation > 180 * DEGTORAD) do
             totalRotation = totalRotation - 360 * DEGTORAD
         end
+       
 
+       -- print(1/dt, divider, ((1/dt)*smarter) )
         local desiredAngularVelocity = (totalRotation * divider)
+       
+        
+        if smarter then
+            local newer = ((1/dt)*smarter)
+            desiredAngularVelocity = (totalRotation * math.min(divider,newer ))
+            
+          
+        end
         --local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
 
         local torque = inertia * desiredAngularVelocity / (1 / divider)
+       -- print(divider, 1/divider)
+        if smarter then
+            local newer = ((1/dt)*smarter)
+            torque = inertia * desiredAngularVelocity / (1/  math.min(divider, newer))
+            
+        end
         body:applyTorque(torque)
     end
 end
@@ -764,8 +782,8 @@ lib.rotateAllBodies = function(bodies, dt)
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
                         local desired = upsideDown and -math.pi or 0
-
-                        rotateToHorizontal(body, desired, 25)
+                        --print(25, dt)
+                        rotateToHorizontal(body, desired, 25, 0.5, dt)
                     end
 
                     if not upsideDown then
@@ -773,13 +791,13 @@ lib.rotateAllBodies = function(bodies, dt)
                             getRidOfBigRotationsInBody(body)
                             --  -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15)
+                            rotateToHorizontal(body, -math.pi, 15, 0.25, dt)
                         end
                         if userData.bodyType == 'neck' then
                             getRidOfBigRotationsInBody(body)
                             -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15)
+                            rotateToHorizontal(body, -math.pi, 15,0.25, dt)
                         end
 
                         if userData.bodyType == 'head' then
@@ -787,7 +805,7 @@ lib.rotateAllBodies = function(bodies, dt)
                             --rotateToHorizontal(body, -math.pi, 15)
 
                             --  print(body:getAngle())
-                            rotateToHorizontal(body, 0, 15)
+                            rotateToHorizontal(body, 0, 15, 0.20, dt)
                         end
                     end
 
@@ -797,46 +815,46 @@ lib.rotateAllBodies = function(bodies, dt)
                             local a = creation.luleg.stanceAngle
                             --  print(a)
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30) 
+                            rotateToHorizontal(body, a, 30, 0.5, dt) 
                            
                         end
                         if userData.bodyType == 'ruleg' and not userDataIsSleeping(userData) then
                            
                             local a = creation.ruleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30) 
+                            rotateToHorizontal(body, a, 30,0.5, dt) 
                         end
                         if userData.bodyType == 'llleg'  and not userDataIsSleeping(userData) then
                            
                            
                             local a = creation.llleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30) 
+                            rotateToHorizontal(body, a, 30,0.5, dt) 
                         end
                         if userData.bodyType == 'rlleg' and not userDataIsSleeping(userData) then
                           
                             local a = creation.rlleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30) 
+                            rotateToHorizontal(body, a, 30,0.5, dt) 
                         end
                     end
                     if upsideDown then
                         if userData.bodyType == 'luarm' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
+                            rotateToHorizontal(body, 0, 30,0.5, dt)
                         end
                         if userData.bodyType == 'llarm' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
+                            rotateToHorizontal(body, 0, 30,0.5, dt)
                         end
                         if userData.bodyType == 'ruarm' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
+                            rotateToHorizontal(body, 0, 30,0.5, dt)
                         end
                         if userData.bodyType == 'rlarm' then
                             -- print('doing stuff!')
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30)
+                            rotateToHorizontal(body, 0, 30,0.5, dt)
                         end
                         -- if userData.bodyType == 'legpart' then
                         --getRidOfBigRotationsInBody(body)
@@ -848,7 +866,7 @@ lib.rotateAllBodies = function(bodies, dt)
                         if userData.bodyType == 'head' then
                             getRidOfBigRotationsInBody(body)
 
-                            rotateToHorizontal(body, math.pi, 15)
+                            rotateToHorizontal(body, math.pi, 15, 0.20, dt)
                         end
                     end
                 end

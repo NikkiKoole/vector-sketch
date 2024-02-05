@@ -576,6 +576,7 @@ function getTargetPos(body)
 end
 
 function love.update(dt)
+    print(dt)
     --local thingToFollow = bike.frontWheel.body
     local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
 
@@ -631,7 +632,7 @@ function love.update(dt)
 
     divider = dividerFar
 
-    local delta = love.timer.getAverageDelta() or dt
+    local delta = dt --love.timer.getAverageDelta() or dt
 
     local div = math.min(divider / (1 / delta), 1)
     -- print('div',div)
@@ -990,4 +991,48 @@ end
 function love.touchreleased(id, x, y, dx, dy, pressure)
     pointerReleased(x, y, id)
     --ui.removeFromPressedPointers(id)
+end
+
+if true then
+local TICKRATE = 1/50
+function love.run()
+    if love.math then
+        love.math.setRandomSeed(os.time())
+    end
+
+    if love.load then love.load(arg) end
+
+    local previous = love.timer.getTime()
+    local lag = 0.0
+    while true do
+        local current = love.timer.getTime()
+        local elapsed = current - previous
+        previous = current
+        lag = lag + elapsed
+
+        if love.event then
+            love.event.pump()
+            for name, a,b,c,d,e,f in love.event.poll() do
+                if name == "quit" then
+                    if not love.quit or not love.quit() then
+                        return a
+                    end
+                end
+                love.handlers[name](a,b,c,d,e,f)
+            end
+        end
+       
+        while lag >= TICKRATE do
+            if love.update then love.update(TICKRATE) end
+            lag = lag - TICKRATE
+        end
+
+        if love.graphics and love.graphics.isActive() then
+            love.graphics.clear(love.graphics.getBackgroundColor())
+            love.graphics.origin()
+            if love.draw then love.draw(lag / TICKRATE) end
+            love.graphics.present()
+        end
+    end
+end 
 end

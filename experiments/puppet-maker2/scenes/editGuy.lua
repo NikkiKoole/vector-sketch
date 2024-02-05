@@ -538,7 +538,7 @@ function scene.draw()
     end
 
 
-    if false then
+    if true then
     love.graphics.setColor(0, 0, 0, 0.5)
 
     local stats = love.graphics.getStats()

@@ -250,7 +250,9 @@ local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, 
             local f = faceData.metaPoints
             -- todo parameter hair (beard, only top hair, sidehair)
             --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
-            local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+           -- local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+            local hairLine = {  f[8], f[1], f[2] }
+           -- print(inspect(hairLine))
             --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
             local points = hairLine
             local hairTension = .02
@@ -258,6 +260,7 @@ local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, 
             local coords
 
             coords = border.unloosenVanillaline(points, hairTension, spacing)
+
             local length = getLengthOfPath(hairLine)
             local factor = (length / h)
             local hairWidthMultiplier = 1 * multipliers.hair.wMultiplier
