@@ -59,7 +59,6 @@ function getYAtX(x, stepSize)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
 
-
     local linear = numbers.mapInto(x / stepSize, -20, 20, -STEEPNESS, STEEPNESS)
 
     return y1 + y2 + y3 + linear
@@ -136,7 +135,8 @@ function makeRectPoly2(w, h, x, y)
 end
 
 
-function makeBike(x, y, data)
+
+function makePedalBike(x, y, data)
     local floorWidth = data.floorWidth or data.radius 
     local radius = data.radius
 
@@ -146,7 +146,7 @@ function makeBike(x, y, data)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
-    ball1.fixture:setFriction(1)
+    --ball1.fixture:setFriction(1)
     ball1.body:setAngularVelocity(10000)
 
     local ball2 = {}
@@ -155,7 +155,7 @@ function makeBike(x, y, data)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
-    ball2.fixture:setFriction(1)
+   --ball2.fixture:setFriction(1)
     ball2.body:setAngularVelocity(10000)
 
 
@@ -163,6 +163,87 @@ function makeBike(x, y, data)
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = love.physics.newRectangleShape(floorWidth, 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
+    --frame.fixture:setSensor(true)
+   
+    local seat = {}
+    seat.shape = love.physics.newRectangleShape(-floorWidth/4, -data.steeringHeight, 200, 200)
+    seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
+    connect.makeAndAddConnector(frame.body, -floorWidth/4,  -data.steeringHeight, {}, 205, 205)
+    
+    if false then
+    local seat2 = {}
+    seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
+    seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
+    connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
+    end
+
+    --local achterWielSpat = {}
+    --achterWielSpat.shape = love.physics.newRectangleShape(-radius/1.4, -500, 20, 500)
+    --achterWielSpat.fixture = love.physics.newFixture(frame.body, achterWielSpat.shape, 1)
+    local steerHeight =  data.steeringHeight
+    
+    local steer = {}
+  
+   -- steer.shape = love.physics.newRectangleShape(floorWidth/2, -steerHeight/2, 10, steerHeight)
+   -- steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
+    --steer.fixture:setSensor(true)
+    if false then
+    connect.makeAndAddConnector(frame.body, floorWidth/2 - 40, -steerHeight - 40, {}, 125, 125)
+    connect.makeAndAddConnector(frame.body, floorWidth/2, -steerHeight, {}, 125, 125)
+    end
+  
+    local pedal = {}
+    pedal.body = love.physics.newBody(world, x , y-300 , "dynamic")
+    pedal.shape = love.physics.newRectangleShape(200, 200)
+    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    connect.makeAndAddConnector(pedal.body, -150, 0, {}, 110, 110)
+    connect.makeAndAddConnector(pedal.body, 150, 0, {}, 110, 110)
+
+    local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
+    pedal.fixture:setSensor(true)
+  
+
+    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
+    local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
+
+
+    --joint1:setMotorEnabled(true)
+    --joint1:setMotorSpeed(500000)
+    --joint1:setMaxMotorTorque(20000)
+
+
+    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame }
+end
+
+
+
+function makeScooter(x, y, data)
+    local floorWidth = data.floorWidth or data.radius 
+    local radius = data.radius
+
+    local ball1 = {}
+    ball1.body = love.physics.newBody(world, x + floorWidth/2, y, "dynamic")
+    ball1.shape = love.physics.newCircleShape(radius)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 3)
+    ball1.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+    --ball1.fixture:setFriction(1)
+    ball1.body:setAngularVelocity(10000)
+
+    local ball2 = {}
+    ball2.body = love.physics.newBody(world, x - floorWidth/2, y, "dynamic")
+    ball2.shape = love.physics.newCircleShape(radius * 1.3)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 3)
+    ball2.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+   --ball2.fixture:setFriction(1)
+    ball2.body:setAngularVelocity(10000)
+
+
+    local frame = {}
+    frame.body = love.physics.newBody(world, x, y, "dynamic")
+    frame.shape = love.physics.newRectangleShape(floorWidth, 100)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 3)
     --frame.fixture:setSensor(true)
     if false then
     local seat = {}
@@ -182,9 +263,10 @@ function makeBike(x, y, data)
 
     local steer = {}
     local steerHeight =  data.steeringHeight
-    steer.shape = love.physics.newRectangleShape(floorWidth/2, -steerHeight/2, 120, steerHeight)
+    steer.shape = love.physics.newRectangleShape(floorWidth/2, -steerHeight/2, 10, steerHeight)
     steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
     --steer.fixture:setSensor(true)
+    connect.makeAndAddConnector(frame.body, floorWidth/2 - 40, -steerHeight - 40, {}, 125, 125)
     connect.makeAndAddConnector(frame.body, floorWidth/2, -steerHeight, {}, 125, 125)
 
     if false then
@@ -286,11 +368,14 @@ function enableDisableMipos()
         local bx, by = b.b2d.torso:getPosition()
 
         if bx < xMinR or bx > xMaxR then
-            local y = lerpYAtX(bx, stepSize)
+            --local y = lerpYAtX(bx, stepSize)
+            --local dy = y - by
             for k, v in pairs(b.b2d) do
+               -- local b2x, b2y = v:getPosition()
                 v:setActive(false)
                 v:setGravityScale(0)
-                v:setPosition(bx, y - 400)
+              --  print('setting', b2x, b2y)
+                --v:setPosition(b2x, b2y )
             end
         end
 
@@ -327,7 +412,8 @@ function enableDisableBikes()
         for k, v in pairs(b) do
             v.body:setActive(false)
             v.body:setGravityScale(0)
-            v.body:setPosition(bx, y - 1000)
+            local b2x, b2y = v.body:getPosition()
+            v.body:setPosition(b2x, b2y )
         end
     end
 
@@ -403,14 +489,20 @@ function startExample(number)
 
     -- get data from the mipos[1] to make a fitted bike 
     local c= mipos[1].dna.creation
-   
+   --print(inspect(c.lfoot))
     local bikeData = {
         type = 'scooter',
         steeringHeight = c.luleg.h + c.llleg.h + c.torso.h/2,
-        floorWidth = c.torso.w * 3,
+        floorWidth = math.max(c.lfoot.h * 2,  c.torso.w * 1.2),
         radius = 100
     }
-    bike = makeBike(-2000, -5000, bikeData)
+    local bikeData = {
+        type = 'bike',
+        steeringHeight = c.luleg.h + c.llleg.h,
+        floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
+        radius = 200
+    }
+    bike = makePedalBike(-2000, -5000, bikeData)
     --bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
@@ -576,7 +668,7 @@ function getTargetPos(body)
 end
 
 function love.update(dt)
-    print(dt)
+   -- print(dt)
     --local thingToFollow = bike.frontWheel.body
     local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
 
@@ -597,8 +689,11 @@ function love.update(dt)
     enableDisableBikes()
     
     local a = bike.frontWheel.body:getAngle()
+    local v = bike.frontWheel.body:getAngularVelocity()
+
     if bike.pedalWheel then
-    bike.pedalWheel.body:setAngle(a / 1.2)
+    bike.pedalWheel.body:setAngle(a / 10)
+   -- bike.pedalWheel.body:setAngularVelocity(v/100)
     end
     world:update(dt)
     phys.handleUpdate(dt, cam)
@@ -870,7 +965,8 @@ function love.draw()
         connect.breakAllConnectionsAtBody(b2d.lfoot)
         connect.breakAllConnectionsAtBody(b2d.rfoot)
         connect.breakAllConnectionsAtBody(b2d.torso)
-
+        connect.inspectAllConnectors()
+        if true then
 
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, {sleeping=true})
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, {sleeping=true})
@@ -878,11 +974,25 @@ function love.draw()
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, {sleeping=true})
 
 
-        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
-        box2dGuyCreation.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, false, 'revolute')
-        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
-        box2dGuyCreation.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, false, 'revolute')
+        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi, math.pi/2, 'revolute')
+        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi, math.pi/2,  'revolute')
 
+        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi, 'revolute')
+        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi,  'revolute')
+
+
+
+       -- box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, 0, math.pi 'revolute')
+       -- box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, -math.pi, 0, 'revolute')
+       -- box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, 0, math.pi, 'revolute')
+       -- box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi, 'revolute')
+
+
+        --box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
+        --box2dGuyCreation.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, false, 'revolute')
+      --  box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
+       -- box2dGuyCreation.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, false, 'revolute')
+        end
 
         local function setSensorValueBody(body, value) 
             local fixtures = body:getFixtures()
@@ -893,10 +1003,10 @@ function love.draw()
 
         setSensorValueBody(b2d.luleg, true) 
         setSensorValueBody(b2d.llleg, true) 
-        --setSensorValueBody(b2d.lfoot, true) 
+      --  setSensorValueBody(b2d.lfoot, true) 
         setSensorValueBody(b2d.ruleg, true) 
         setSensorValueBody(b2d.rlleg, true) 
-        --setSensorValueBody(b2d.rfoot, true) 
+      --  setSensorValueBody(b2d.rfoot, true) 
        
         -- sensor 
         
@@ -954,7 +1064,7 @@ local function pointerPressed(x, y, id)
     local onPressedParams = {
         pointerForceFunc = function(fixture)
             local ud = fixture:getUserData()
-            local force = ud and ud.bodyType == 'torso' and 100000 or 50000
+            local force = ud and ud.bodyType == 'torso' and 1000000 or 50000
             return force
         end
         --pointerForceFunc = function(fixture) return 1400 end
@@ -993,7 +1103,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
     --ui.removeFromPressedPointers(id)
 end
 
-if true then
+if false then
 local TICKRATE = 1/50
 function love.run()
     if love.math then

@@ -50,6 +50,7 @@ lib.breakAllConnectionsAtBody = function(thing)
             if connectors[i].joint then 
                 connectors[i].joint:destroy()
                 connectors[i].joint = nil
+                connectors[i].to = nil
             end
         end
     end
@@ -114,6 +115,14 @@ end
 lib.resetConnectors = function() 
     connectors = {}
     connectorCooldownList = {}
+end
+
+lib.inspectAllConnectors = function() 
+    for i =1, #connectors do 
+        if connectors[i].joint or connectors[i].to then 
+            print(i, 'joint', connectors[i].joint, 'to', connectors[i].to)
+        end
+    end
 end
 
 local function getCenterOfPoints(points)

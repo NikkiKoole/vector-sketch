@@ -345,6 +345,32 @@ lib.setJointLimitBetweenBodies = function(body1, body2, state, ofType)
         end
     end
 end
+lib.setJointLimitsBetweenBodies = function(body1, body2, lower, upper, ofType)
+    local joints = findJointBetween2Bodies(body1, body2)
+    if joints then
+        for i = 1, #joints do
+            --     print(joints[i]:getType())
+            if ofType == nil or joints[i]:getType() == ofType then
+                joints[i]:setLimits( lower, upper )
+            end
+        end
+    end
+end
+lib.getJointLimitsBetweenBodies = function(body1, body2, ofType)
+    local joints = findJointBetween2Bodies(body1, body2)
+    if joints then
+        for i = 1, #joints do
+            --     print(joints[i]:getType())
+            if ofType == nil or joints[i]:getType() == ofType then
+                local lower, upper = joints[i]:getLimits( )
+                return lower, upper
+            end
+        end
+    end
+end
+
+
+--RevoluteJoint:setLimits( lower, upper )
 
 local function getRecreatePointerJoint(body)
     local recreatePointerJoint = nil
@@ -455,7 +481,7 @@ function useRecreateConnectorData(recreateConnectorData, body, guy)
     --print('hello want to recreate connector', type)
     assert(type)
     if type == 'foot' then
-        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.rfoot.h / 2, data,
+        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, 0, data,
             creation.rfoot.w + 10,
             creation.rfoot.h + 10)
     elseif type == 'hand' then
