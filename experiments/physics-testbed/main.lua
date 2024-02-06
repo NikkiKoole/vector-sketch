@@ -22,6 +22,7 @@ function prepareMipoAndVehicleForConnection(mipo, vehicle)
  
 
     -- the legs possibly (but not always) need to be turned off (both for collsiiosn and for straightening every frame)
+    -- body and feet need to be positioned with their connector over at the right connector at the ibike
     -- the arms need to be positioned in a way they can be connected to the steer (if needed)
     -- the connections can be made (hand/feet/butt)
     --- we need some kind of flag somewhere for rendering, so i can render the mipo and bike in 1 function. (to fix order issue (both behind and over))
@@ -163,12 +164,13 @@ function makePedalBike(x, y, data)
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = love.physics.newRectangleShape(floorWidth, 100)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
-    --frame.fixture:setSensor(true)
+    frame.fixture:setSensor(true)
    
     local seat = {}
-    seat.shape = love.physics.newRectangleShape(-floorWidth/4, -data.steeringHeight, 200, 200)
+    seat.body = love.physics.newBody(world, x, y-data.steeringHeight, "dynamic")
+    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight, 200, 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
-    connect.makeAndAddConnector(frame.body, -floorWidth/4,  -data.steeringHeight, {}, 205, 205)
+    connect.makeAndAddConnector(frame.body, 0,  -data.steeringHeight, {type='seat'}, 205, 205)
     
     if false then
     local seat2 = {}
@@ -193,9 +195,10 @@ function makePedalBike(x, y, data)
     end
   
     local pedal = {}
-    pedal.body = love.physics.newBody(world, x , y-300 , "dynamic")
+    pedal.body = love.physics.newBody(world, x , y-data.steeringHeight/2 , "dynamic")
     pedal.shape = love.physics.newRectangleShape(200, 200)
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    pedal.fixture:setSensor(true)
     connect.makeAndAddConnector(pedal.body, -150, 0, {}, 110, 110)
     connect.makeAndAddConnector(pedal.body, 150, 0, {}, 110, 110)
 
@@ -212,7 +215,7 @@ function makePedalBike(x, y, data)
     --joint1:setMaxMotorTorque(20000)
 
 
-    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame }
+    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, seat= seat }
 end
 
 
@@ -285,9 +288,9 @@ function makeScooter(x, y, data)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
 
-    --joint1:setMotorEnabled(true)
-    --joint1:setMotorSpeed(500000)
-    --joint1:setMaxMotorTorque(20000)
+    joint1:setMotorEnabled(true)
+    joint1:setMotorSpeed(500000)
+    joint1:setMaxMotorTorque(20000)
 
 
     return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame }
@@ -410,17 +413,19 @@ function enableDisableBikes()
     if bx < xMinR or bx > xMaxR then
         local y = lerpYAtX(bx, stepSize)
         for k, v in pairs(b) do
+            if v.body then
             v.body:setActive(false)
             v.body:setGravityScale(0)
             local b2x, b2y = v.body:getPosition()
-            v.body:setPosition(b2x, b2y )
+            v.body:setPosition(b2x, b2y ) end
         end
     end
 
     if bx >= xMinR and bx <= xMaxR then
         for k, v in pairs(b) do
+            if v.body then
             v.body:setActive(true)
-            v.body:setGravityScale(1)
+            v.body:setGravityScale(1) end
         end
     end
 end
@@ -947,14 +952,16 @@ function love.draw()
         for k, v in pairs(bike) do
             --v.body:setActive(false)
             --v.body:setGravityScale(0)
-            v.body:setPosition(tx-1500 , ty)
+            if v.body then
+            v.body:setPosition(tx , ty)
             v.body:setAngle(0)
             v.body:setLinearVelocity( 0,0 )
             v.body:setAngularVelocity( 0 )
-           v.body:applyLinearImpulse(0, -1000)
+           --v.body:applyLinearImpulse(0, -1000) 
+        end
         end
 
-        bike.frontWheel.body:setPosition(tx-1500 , ty+150)
+        bike.frontWheel.body:setPosition(tx , ty)
 
 
 
@@ -1001,11 +1008,54 @@ function love.draw()
             end
         end
 
+        local function getConnectorFixtureAtBodyOfType(body, type) 
+
+            local fixtures = body:getFixtures()
+            for _, fixture in ipairs(fixtures) do 
+                local ud = fixture:getUserData()
+                if ud then
+                    if ud.bodyType == "connector" then 
+                        if ud.data then 
+                            if (ud.data.type == type) then 
+                                return fixture
+                            end
+                        end
+                        
+                    end
+                end
+            end
+           
+        end
+
         setSensorValueBody(b2d.luleg, true) 
         setSensorValueBody(b2d.llleg, true) 
       --  setSensorValueBody(b2d.lfoot, true) 
         setSensorValueBody(b2d.ruleg, true) 
         setSensorValueBody(b2d.rlleg, true) 
+
+        local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')   
+        local bx, by =  buttFixture:getBody():getPosition()
+
+        local localX, localY = b2d.torso:getLocalPoint( bx, by )
+        
+        
+        local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')   
+        local sx, sy =  seatFixture:getBody():getPosition()
+
+
+        b2d.torso:setPosition(sx,sy-1000)
+
+        print(sx,sy)
+
+        
+        --print(localX, localY)
+        -- get butt fixture 
+
+
+
+
+
+
       --  setSensorValueBody(b2d.rfoot, true) 
        
         -- sensor 
