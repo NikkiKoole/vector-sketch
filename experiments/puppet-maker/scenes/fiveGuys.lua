@@ -335,10 +335,10 @@ function scene.load()
     tileSize = 800
     foregroundFar = camera.generateCameraLayer('foregroundFar', 1)
     foregroundNear = camera.generateCameraLayer('foregroundNear', 1)
-    groundimg8 = love.graphics.newImage('assets/img/worldparts/ground3.png', { mipmaps = true })
-    ding = love.graphics.newImage('assets/img/worldparts/ground52.png', { mipmaps = true })
-    cloud = love.graphics.newImage('assets/img/worldparts/clouds1.png', { mipmaps = true })
-    cloud3 = love.graphics.newImage('assets/img/worldparts/clouds3.png', { mipmaps = true })
+    groundimg8 = love.graphics.newImage('assets/img/worldparts/ground3.png')
+    ding = love.graphics.newImage('assets/img/worldparts/ground52.png')
+    cloud = love.graphics.newImage('assets/img/worldparts/clouds1.png')
+    cloud3 = love.graphics.newImage('assets/img/worldparts/clouds3.png')
     --print(groundimg8)
     heights = {}
     minpos = -1000

@@ -49,21 +49,39 @@ end
 function getYAtX(x, stepSize)
     local STEEPNESS = 2000
     local index = math.floor(x / stepSize)
+
     local function generateWave(amplitude, frequency)
         local h = love.math.noise(index / frequency, 1, 1) * amplitude
         return h - (amplitude / 2)
     end
 
-    local y1 = generateWave(150 * 10.78, 30)
+
+    local y1 = generateWave(200 * 10.78, 30)
     local y2 = generateWave(70 * 10.78, 17)
     local y3 = generateWave(20 * 10.78, 5)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
 
-    local linear = numbers.mapInto(x / stepSize, -20, 20, -STEEPNESS, STEEPNESS)
+
+
+    
+
+    local c = x / stepSize
+   -- if ((c) % 100 < 10) then 
+   --     c = math.floor(c / 100) * 100
+   -- end
+
+
+
+    local linear = numbers.mapInto(c, -20, 20, -STEEPNESS, STEEPNESS)
+
+
+
 
     return y1 + y2 + y3 + linear
 end
+
+
 
 function updateGround(ground)
     local w, h = love.graphics.getDimensions()
@@ -144,7 +162,7 @@ function makePedalBike(x, y, data)
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + floorWidth/2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 50)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     --ball1.fixture:setFriction(1)
@@ -153,7 +171,7 @@ function makePedalBike(x, y, data)
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - floorWidth/2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius * 1.3)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 1)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 50)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
    --ball2.fixture:setFriction(1)
@@ -163,14 +181,14 @@ function makePedalBike(x, y, data)
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = love.physics.newRectangleShape(floorWidth, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 5)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 50)
     frame.fixture:setSensor(true)
    
     local seat = {}
-    seat.body = love.physics.newBody(world, x, y-data.steeringHeight*1.5, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight*1.5, 200, 200)
+    seat.body = love.physics.newBody(world, x, y-data.steeringHeight*1.2, "dynamic")
+    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight*1.2, 200, 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
-    connect.makeAndAddConnector(frame.body, 0,  -data.steeringHeight*1.5, {type='seat'}, 205, 205)
+    connect.makeAndAddConnector(frame.body, 0,  -data.steeringHeight*1.2, {type='seat'}, 205, 205)
     
     if false then
     local seat2 = {}
@@ -195,7 +213,7 @@ function makePedalBike(x, y, data)
     end
   
     local pedal = {}
-    pedal.body = love.physics.newBody(world, x , y-data.steeringHeight , "dynamic")
+    pedal.body = love.physics.newBody(world, x , y-data.steeringHeight*0.6 , "dynamic")
     pedal.shape = love.physics.newRectangleShape(200, 200)
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
     pedal.fixture:setSensor(true)
@@ -507,7 +525,11 @@ function startExample(number)
         floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
         radius = 200
     }
-    bike = makeScooter(-2000, -5000, scooterData)
+    --bike = makeScooter(-2000, -5000, scooterData)
+    bike = makePedalBike(-2000, -5000, bikeData)
+
+    isPedalBike = true
+
     --bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
@@ -696,8 +718,8 @@ function love.update(dt)
     local a = bike.frontWheel.body:getAngle()
     local v = bike.frontWheel.body:getAngularVelocity()
 
-    if bike.pedalWheel then
-    bike.pedalWheel.body:setAngle(a / 10)
+    if bike.pedalWheel and bike.pedalWheel.body  then
+        bike.pedalWheel.body:setAngle(a / 10)
    -- bike.pedalWheel.body:setAngularVelocity(v/100)
     end
     world:update(dt)
@@ -960,9 +982,9 @@ function love.draw()
            --v.body:applyLinearImpulse(0, -1000) 
         end
         end
-
+        if bike.seat then
         bike.seat.body:setPosition(tx , ty)
-
+        end
 
 
         local b2d = mipos[1].b2d
@@ -973,8 +995,8 @@ function love.draw()
         connect.breakAllConnectionsAtBody(b2d.rfoot)
         connect.breakAllConnectionsAtBody(b2d.torso)
         connect.inspectAllConnectors()
-        
-        if false then
+
+        if isPedalBike then
 
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, {sleeping=true})
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, {sleeping=true})
@@ -1030,13 +1052,13 @@ function love.draw()
             end
            
         end
-        if false then
+        if isPedalBike then
         setSensorValueBody(b2d.luleg, true) 
         setSensorValueBody(b2d.llleg, true) 
-      --  setSensorValueBody(b2d.lfoot, true) 
+       setSensorValueBody(b2d.lfoot, true) 
         setSensorValueBody(b2d.ruleg, true) 
         setSensorValueBody(b2d.rlleg, true) 
-
+        setSensorValueBody(b2d.rfoot, true) 
         local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')   
         local bx, by =  buttFixture:getBody():getPosition()
 

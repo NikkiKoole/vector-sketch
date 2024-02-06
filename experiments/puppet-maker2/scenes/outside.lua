@@ -132,7 +132,7 @@ function scene.load()
     phys.resetLists()
     uiClickSound   = love.audio.newSource('assets/sounds/fx/CasioMT70-Bassdrum.wav', 'static')
     -- uiTickSound    = love.audio.newSource('assets/sounds/fx/BD-perc.wav', 'static')
-    cloud          = love.graphics.newImage('assets/world/clouds1.png', { mipmaps = true })
+    cloud          = love.graphics.newImage('assets/world/clouds1.png' )
     borderImage    = love.graphics.newImage("assets/ui/border_shaduw.png")
     spriet         = {
         love.graphics.newImage('assets/world/spriet1.png'),

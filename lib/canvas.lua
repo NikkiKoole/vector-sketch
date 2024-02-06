@@ -157,7 +157,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
       local lineartColor = lineColor or { 0, 0, 0, 1 }
       local lw, lh = lineart:getDimensions()
       --  local dpiScale = 1 --love.graphics.getDPIScale()
-      local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1, format = 'rgba8' })
+      local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
 
       love.graphics.setCanvas({ canvas, stencil = false }) --<<<
       --
@@ -239,7 +239,7 @@ lib.makeTexturedCanvas = function(lineart, mask, texture1, color1, alpha1, textu
 
 
       local otherCanvas = love.graphics.newCanvas(lw / shrinkFactor, lh / shrinkFactor,
-              { format = 'rgba8', dpiscale = 1 })
+              {  dpiscale = 1 })
       love.graphics.setCanvas({ otherCanvas, stencil = false }) --<<<
       love.graphics.clear(lineartColor[1], lineartColor[2], lineartColor[3], 0) ---<<<<
       love.graphics.setColor(1, 1, 1) --- huh?!

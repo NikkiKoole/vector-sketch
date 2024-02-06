@@ -189,6 +189,14 @@ lib.maybeConnectThisConnector = function(f, mj)
                     end
                 end
             end
+            --local alreadyConnectedSomehwere = false
+            for k = 1, #connectors do 
+                if connectors[k].to == connectors[j].at then 
+                    --print('found this connection somewhere')
+                    --alreadyConnectedSomehwere = true
+                    skipCausePointingToSameAgent = true
+                end
+            end
             if theOtherBody:isActive() == false then
                 -- we also want to skip because this will assert and break in box2d
                 skipCausePointingToSameAgent = true
@@ -217,10 +225,15 @@ lib.maybeConnectThisConnector = function(f, mj)
 
                 if d < maxD and not isOnCooldown then
                     print('making new connection')
+
+                    -- if at is already one's too 
+                   
+                    
+                    if not skip then
                     -- wondeirng if its already taken somehow in an other way 
                     connectors[j].to = f --mj.jointBody
                     local joint = lib.getJointBetween2Connectors(connectors[j].to, connectors[j].at)
-                    connectors[j].joint = joint
+                    connectors[j].joint = joint end
                 end
             end
         end

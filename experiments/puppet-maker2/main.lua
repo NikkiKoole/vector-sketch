@@ -5,7 +5,9 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 
-jit.off()
+if jit then
+jit.off() 
+end
 require 'lib.printC'
 
 function waitForEvent()
@@ -38,7 +40,7 @@ local updatePart          = require 'lib.updatePart'
 local texturedBox2d       = require 'lib.texturedBox2d'
 local box2dGuyCreation    = require 'lib.box2dGuyCreation'
 local DEBUG_PROFILER      = false
-local LOAD_AND_SAVE_FILES = true
+local LOAD_AND_SAVE_FILES = false
 local canvas              = require 'lib.canvas'
 local numbers             = require 'lib.numbers'
 canvas.setShrinkFactor(2)
