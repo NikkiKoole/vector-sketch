@@ -47,7 +47,7 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
-    local STEEPNESS = 100
+    local STEEPNESS = 2000
     local index = math.floor(x / stepSize)
     local function generateWave(amplitude, frequency)
         local h = love.math.noise(index / frequency, 1, 1) * amplitude
@@ -163,14 +163,14 @@ function makePedalBike(x, y, data)
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = love.physics.newRectangleShape(floorWidth, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 5)
     frame.fixture:setSensor(true)
    
     local seat = {}
-    seat.body = love.physics.newBody(world, x, y-data.steeringHeight, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight, 200, 200)
+    seat.body = love.physics.newBody(world, x, y-data.steeringHeight*1.5, "dynamic")
+    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight*1.5, 200, 200)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
-    connect.makeAndAddConnector(frame.body, 0,  -data.steeringHeight, {type='seat'}, 205, 205)
+    connect.makeAndAddConnector(frame.body, 0,  -data.steeringHeight*1.5, {type='seat'}, 205, 205)
     
     if false then
     local seat2 = {}
@@ -195,12 +195,12 @@ function makePedalBike(x, y, data)
     end
   
     local pedal = {}
-    pedal.body = love.physics.newBody(world, x , y-data.steeringHeight/2 , "dynamic")
+    pedal.body = love.physics.newBody(world, x , y-data.steeringHeight , "dynamic")
     pedal.shape = love.physics.newRectangleShape(200, 200)
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
     pedal.fixture:setSensor(true)
-    connect.makeAndAddConnector(pedal.body, -150, 0, {}, 110, 110)
-    connect.makeAndAddConnector(pedal.body, 150, 0, {}, 110, 110)
+    connect.makeAndAddConnector(pedal.body, -150, 0, {type='lfoot'}, 110, 110)
+    connect.makeAndAddConnector(pedal.body, 150, 0, {type='rfoot'}, 110, 110)
 
     local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
     pedal.fixture:setSensor(true)
@@ -476,7 +476,7 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
-    mipos = addMipos.make(3)
+    mipos = addMipos.make(1)
     obstacles = {}
 
     if false then
@@ -495,7 +495,7 @@ function startExample(number)
     -- get data from the mipos[1] to make a fitted bike 
     local c= mipos[1].dna.creation
    --print(inspect(c.lfoot))
-    local bikeData = {
+    local scooterData = {
         type = 'scooter',
         steeringHeight = c.luleg.h + c.llleg.h + c.torso.h/2,
         floorWidth = math.max(c.lfoot.h * 2,  c.torso.w * 1.2),
@@ -507,7 +507,7 @@ function startExample(number)
         floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
         radius = 200
     }
-    bike = makePedalBike(-2000, -5000, bikeData)
+    bike = makeScooter(-2000, -5000, scooterData)
     --bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
@@ -961,7 +961,7 @@ function love.draw()
         end
         end
 
-        bike.frontWheel.body:setPosition(tx , ty)
+        bike.seat.body:setPosition(tx , ty)
 
 
 
@@ -973,7 +973,8 @@ function love.draw()
         connect.breakAllConnectionsAtBody(b2d.rfoot)
         connect.breakAllConnectionsAtBody(b2d.torso)
         connect.inspectAllConnectors()
-        if true then
+        
+        if false then
 
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, {sleeping=true})
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, {sleeping=true})
@@ -1015,10 +1016,13 @@ function love.draw()
                 local ud = fixture:getUserData()
                 if ud then
                     if ud.bodyType == "connector" then 
+                        --print(inspect(ud))
                         if ud.data then 
                             if (ud.data.type == type) then 
                                 return fixture
                             end
+                        else 
+                            
                         end
                         
                     end
@@ -1026,7 +1030,7 @@ function love.draw()
             end
            
         end
-
+        if false then
         setSensorValueBody(b2d.luleg, true) 
         setSensorValueBody(b2d.llleg, true) 
       --  setSensorValueBody(b2d.lfoot, true) 
@@ -1042,11 +1046,28 @@ function love.draw()
         local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')   
         local sx, sy =  seatFixture:getBody():getPosition()
 
+        local centroid = getCentroidOfFixture(bike.frame.body, seatFixture)
+       -- print(centroid[1], centroid[2], sx, 
 
-        b2d.torso:setPosition(sx,sy-1000)
+       --b2d.torso:setAngle(math.pi/2 )
+        b2d.torso:setPosition(centroid[1], centroid[2]-100)
 
-        print(sx,sy)
 
+        --can we make a connection ?
+            connect.forceConnection(buttFixture, seatFixture)
+
+            local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'lfoot')   
+            local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lfoot, 'foot')   
+            connect.forceConnection(lfootPedalFixture, lfootFixture)
+
+            local rfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'rfoot')   
+            local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')   
+            connect.forceConnection(rfootPedalFixture, rfootFixture)
+
+
+
+        --print(sx,sy)
+        end
         
         --print(localX, localY)
         -- get butt fixture 
@@ -1070,6 +1091,11 @@ function love.draw()
     
     end
 end
+
+
+
+
+
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
@@ -1154,7 +1180,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
 end
 
 if false then
-local TICKRATE = 1/50
+local TICKRATE = 1/60
 function love.run()
     if love.math then
         love.math.setRandomSeed(os.time())

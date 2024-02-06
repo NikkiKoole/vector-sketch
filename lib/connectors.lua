@@ -142,7 +142,7 @@ local function getCenterOfPoints(points)
     return tlx + w / 2, tly + h / 2
 end
 
-local function getCentroidOfFixture(body, fixture)
+function getCentroidOfFixture(body, fixture)
     return { getCenterOfPoints({ body:getWorldPoints(fixture:getShape():getPoints()) }) }
 end
 
@@ -216,6 +216,8 @@ lib.maybeConnectThisConnector = function(f, mj)
                 local maxD = (w1 + w2) / 2
 
                 if d < maxD and not isOnCooldown then
+                    print('making new connection')
+                    -- wondeirng if its already taken somehow in an other way 
                     connectors[j].to = f --mj.jointBody
                     local joint = lib.getJointBetween2Connectors(connectors[j].to, connectors[j].at)
                     connectors[j].joint = joint
@@ -225,6 +227,16 @@ lib.maybeConnectThisConnector = function(f, mj)
     end
 end
 
+lib.forceConnection = function(from , to) 
+    for i =1 , #connectors do 
+        if connectors[i].at == from then 
+            connectors[i].to = to
+            local joint = lib.getJointBetween2Connectors(connectors[i].to, connectors[i].at)
+            connectors[i].joint = joint
+            --print('foun teh connector in list')
+        end
+    end
+end
 
 
 lib.maybeBreakAnyConnectorBecauseForce = function(dt) 
