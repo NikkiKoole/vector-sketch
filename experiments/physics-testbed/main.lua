@@ -28,7 +28,7 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
-    local STEEPNESS = 2000
+    local STEEPNESS = 000
     local index = math.floor(x / stepSize)
 
     local function generateWave(amplitude, frequency)
@@ -99,6 +99,69 @@ function makeBall(x, y, radius)
     ball.body:setAngularVelocity(10000)
     return ball
 end
+
+function makeCarousell(x, y, width, height, angularVelocity)
+    local carousel = {}
+    carousel.body = love.physics.newBody(world, x, y, "kinematic")
+    carousel.shape = love.physics.newRectangleShape(width, height)
+    carousel.fixture = love.physics.newFixture(carousel.body, carousel.shape, 1)
+    carousel.body:setAngularVelocity(angularVelocity)
+--    carousel.fixture:setUserData(makeUserData("caroussel"))
+    return carousel
+end
+
+
+
+function makeChain(x, y, amt)
+    --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
+    local linkHeight = 20*10
+    local linkWidth = 50*10
+    local dir = 1
+    -- local amt = 3
+    local count = 1
+
+    function makeLink(x, y)
+        local body = love.physics.newBody(world, x, y, "dynamic")
+        local shape = love.physics.newRectangleShape(linkWidth + count * 5, linkHeight)
+        local fixture = love.physics.newFixture(body, shape, .3)
+        count = count + 1
+        return body
+    end
+
+    local lastLink = makeLink(x, y)
+    for i = 1, amt do
+        local link = makeLink(x, y + (i * linkHeight) * dir)
+        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
+
+        joint:setLowerLimit( -math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
+        joint:setLimitsEnabled(true)
+
+        local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
+                link:getY())
+        lastLink = link
+    end
+
+    if false then
+        local weight = love.physics.newBody(world, x, y + ((amt + 1) * linkHeight) * dir, "dynamic")
+        local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
+        local fixture = love.physics.newFixture(weight, shape, 1)
+
+
+        local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
+        local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
+                weight:getY())
+        joint:setLowerLimit( -math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
+        joint:setLimitsEnabled(true)
+        table.insert(objects.blocks, weight)
+    end
+end
+
+
+
+
+
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -289,6 +352,10 @@ function getRandomConvexPoly(radius, numVerts)
     return vertices
 end
 
+
+
+
+
 function makeRandomPoly(x, y, radius)
     local body = love.physics.newBody(world, x, y, "dynamic")
     local shape = love.physics.newPolygonShape(getRandomConvexPoly(radius, 8)) --love.physics.newRectangleShape(width, height / 4)
@@ -476,7 +543,10 @@ function startExample(number)
         end
     end
 
-
+   -- makeChain(0,-5000,10)
+    for i = 0, 10 do 
+    --    makeCarousell(i * 5000, 0, 1500, 500, 1)
+    end
     -- get data from the mipos[1] to make a fitted bike
     local c = mipos[1].dna.creation
     --print(inspect(c.lfoot))
@@ -690,16 +760,20 @@ function love.update(dt)
         bike.pedalWheel.body:setAngle(a / 10)
         -- bike.pedalWheel.body:setAngularVelocity(v/100)
     end
+
+   
+
+
     world:update(dt)
     phys.handleUpdate(dt, cam)
     Timer.update(dt)
     box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
 
-
     --   print(mipos[1].b2d.torso)
     --   print(bike.frontWheel.body)
     --mipos[1].b2d.torso
     local targetX, targetY = getTargetPos(thingToFollow)
+    targetY = targetY - 1000
 
     --  print(targetX, targetY)
     -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
@@ -820,7 +894,7 @@ local function getConnectorFixtureAtBodyOfType(body, type)
         local ud = fixture:getUserData()
         if ud then
             if ud.bodyType == "connector" then
-                print(inspect(ud))
+   --             print(inspect(ud))
                 if ud.data then
                     if (ud.data.type == type) then
                         return fixture
@@ -833,6 +907,10 @@ local function getConnectorFixtureAtBodyOfType(body, type)
     end
 end
 
+
+
+-- after connecting disconnecting lfoot and rfoot are colliding
+-- only happens with pedalikes though
 
 function disconnectMipoAndVehicle() 
     print('disconnect')
@@ -853,10 +931,12 @@ function disconnectMipoAndVehicle()
           b2d.torso:setPosition(centroid[1], centroid[2] - 1000)
 
 
-        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = nil })
-        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = nil })
-        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = nil })
-        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = nil })
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = false })
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = false })
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = false })
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = false })
+      --  box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rfoot, { sleeping = nil })
+      --  box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lfoot, { sleeping = nil })
 
 
 
@@ -873,13 +953,27 @@ function disconnectMipoAndVehicle()
         setSensorValueBody(b2d.lfoot, false)
         setSensorValueBody(b2d.ruleg, false)
         setSensorValueBody(b2d.rlleg, false)
-        setSensorValueBody(b2d.rfoot, false) 
+        setSensorValueBody(b2d.rfoot, false)
+        
+        local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lfoot, 'foot')
+        local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
+              
+        print( 'lfoot fixture ', lfootFixture:getFilterData())
+        print( 'rfoot fixture ', rfootFixture:getFilterData())
+    
     end)
         end
 
         
         
     end
+
+    local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lfoot, 'foot')
+    local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
+          
+    print( 'lfoot fixture ', lfootFixture:getFilterData())
+    print( 'rfoot fixture ', rfootFixture:getFilterData())
+
 
     b2d.torso:applyLinearImpulse(-1000, -10000)
    
@@ -930,6 +1024,8 @@ function connectMipoAndVehicle()
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
+     --   box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lfoot, { sleeping = true })
+     --   box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rfoot, { sleeping = true })
 
 
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi, math.pi / 2, 'revolute')
@@ -941,10 +1037,25 @@ function connectMipoAndVehicle()
   
         setSensorValueBody(b2d.luleg, true)
         setSensorValueBody(b2d.llleg, true)
-        setSensorValueBody(b2d.lfoot, true)
+       setSensorValueBody(b2d.lfoot, true)
         setSensorValueBody(b2d.ruleg, true)
         setSensorValueBody(b2d.rlleg, true)
         setSensorValueBody(b2d.rfoot, true)
+
+        -- maybe i can rotate legs in advance so they wont end up like flamingo legs
+
+        b2d.luleg:setAngle(-math.pi/2)
+        b2d.ruleg:setAngle(-math.pi/2)
+
+        b2d.llleg:setAngle(math.pi/2)
+        b2d.rlleg:setAngle(math.pi/2)
+
+
+        -- lets alse put the arms in front of the body
+        --b2d.luarm:setAngle(math.pi)
+       -- b2d.llarm:setAngle(math.pi)
+
+
         local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')
         local bx, by = buttFixture:getBody():getPosition()
 
@@ -968,6 +1079,10 @@ function connectMipoAndVehicle()
         local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
         connect.forceConnection(rfootPedalFixture, rfootFixture)
 
+
+
+       print( 'lfoot fixture ', lfootFixture:getFilterData())
+       print( 'rfoot fixture ', rfootFixture:getFilterData())
 
 
     end
@@ -1074,25 +1189,27 @@ function love.draw()
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
 
 
+    function circleLabelButton(x,y,radius, label)
+        love.graphics.setColor(0, 0, 0, 0.5)
+ 
+        local a = ui.getUICircle(x, y, radius)
+        love.graphics.circle('fill', x, y, radius)
+        love.graphics.setColor(1, 1, 1, 1)
+        local strW = font:getWidth(label)
+        local strH = font:getHeight() * countLines(label)
+        love.graphics.print(label, x - strW / 2, y - strH / 2)
+        return a
+    end
 
 
+
+    
     -- CAMREA BUTTON
     local size = 100
     local x = size / 2
     local y = h - size + size / 2
-    local a = ui.getUICircle(x, y, size / 2)
-    love.graphics.circle('fill', x, y, size / 2)
-    love.graphics.setColor(1, 1, 1, 1)
 
-    -- local str = 'cam:\nfree'
-    -- local str = 'cam:\nbike'
-    -- local str = 'cam:\nmipo'
-    local str = 'CAM\n' .. followCamera
-    local strW = font:getWidth(str)
-    local strH = font:getHeight() * countLines(str)
-    love.graphics.print(str, x - strW / 2, y - strH / 2)
-
-    if a then
+    if circleLabelButton(x,y,size/2,'CAM\n' .. followCamera) then
         if followCamera == 'free' then
             followCamera = 'bike'
         elseif followCamera == 'bike' then
@@ -1100,21 +1217,10 @@ function love.draw()
         elseif followCamera == 'mipo' then
             followCamera = 'free'
         end
-        -- print('click yo!')
     end
-    -- CALL BIKE BUTTON
 
     local x = size / 2 + size
-    love.graphics.setColor(0, 0, 0, 0.5)
-    local a = ui.getUICircle(x, y, size / 2)
-    love.graphics.circle('fill', x, y, size / 2)
-    love.graphics.setColor(1, 1, 1, 1)
-    local str =  mipoOnVehicle and 'UNLINK' or 'LINK'
-    local strW = font:getWidth(str)
-    local strH = font:getHeight() * countLines(str)
-    love.graphics.print(str, x - strW / 2, y - strH / 2)
-
-    if a then
+    if circleLabelButton(x,y,size/2,mipoOnVehicle and 'UNLINK' or 'LINK') then
         if  not mipoOnVehicle then
             connectMipoAndVehicle() 
         else 
@@ -1123,6 +1229,21 @@ function love.draw()
         end 
         mipoOnVehicle = not mipoOnVehicle
     end
+
+    if mipoOnVehicle then
+    
+    local x = size / 2 + size*2
+    if circleLabelButton(x,y,size/2,'PEDAL') then
+        bike.frontWheel.body:setAngularVelocity(10000)
+        bike.backWheel.body:setAngularVelocity(10000)
+        
+    end
+    end
+    
+
+
+   
+
 end
 
 function love.keypressed(k)
