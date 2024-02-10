@@ -128,7 +128,7 @@ function makePedalBike(x, y, data)
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 50)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 5)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     --ball1.fixture:setFriction(1)
@@ -137,7 +137,7 @@ function makePedalBike(x, y, data)
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius * 1.3)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 50)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 5)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     --ball.fixture:setUserData(phys.makeUserData("ball"))
     --ball2.fixture:setFriction(1)
@@ -147,7 +147,7 @@ function makePedalBike(x, y, data)
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = love.physics.newRectangleShape(floorWidth, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 50)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 5)
     frame.fixture:setSensor(true)
 
     local seat = {}
@@ -194,9 +194,9 @@ function makePedalBike(x, y, data)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
 
-    --joint1:setMotorEnabled(true)
-    --joint1:setMotorSpeed(500000)
-    --joint1:setMaxMotorTorque(20000)
+    joint1:setMotorEnabled(true)
+    joint1:setMotorSpeed(-500000)
+    joint1:setMaxMotorTorque(20000)
 
 
     return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, seat = seat }
@@ -910,8 +910,8 @@ function connectMipoAndVehicle()
 
    
 
-    if bike.seat then
-        bike.seat.body:setPosition(tx, ty)
+    if bike.frame then
+    --    bike.frame.body:setPosition(tx, ty)
    
     end
 
@@ -945,6 +945,9 @@ function connectMipoAndVehicle()
         setSensorValueBody(b2d.ruleg, true)
         setSensorValueBody(b2d.rlleg, true)
         setSensorValueBody(b2d.rfoot, true)
+
+  --      setSensorValueBody(b2d.lhand, true)
+  --      setSensorValueBody(b2d.rhand, true)
         local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')
         local bx, by = buttFixture:getBody():getPosition()
 
@@ -956,17 +959,27 @@ function connectMipoAndVehicle()
 
         local centroid = getCentroidOfFixture(bike.frame.body, seatFixture)
 
-        b2d.torso:setPosition(centroid[1], centroid[2] - 100)
+        b2d.torso:setPosition(centroid[1], centroid[2] )
 
         connect.forceConnection(buttFixture, seatFixture)
 
         local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'lfoot')
         local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lfoot, 'foot')
+        local lfcentroid = getCentroidOfFixture(bike.pedalWheel.body, lfootPedalFixture)
+        b2d.lfoot:setPosition(lfcentroid[1], lfcentroid[2])
+
         connect.forceConnection(lfootPedalFixture, lfootFixture)
+        b2d.lfoot:setPosition(lfcentroid[1], lfcentroid[2])
+
 
         local rfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.pedalWheel.body, 'rfoot')
         local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
+        local rfcentroid = getCentroidOfFixture(bike.pedalWheel.body, rfootPedalFixture)
+        b2d.rfoot:setPosition(rfcentroid[1], rfcentroid[2])
+
+
         connect.forceConnection(rfootPedalFixture, rfootFixture)
+        b2d.rfoot:setPosition(rfcentroid[1], rfcentroid[2])
 
 
 
@@ -976,6 +989,8 @@ function connectMipoAndVehicle()
         local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'lhand')
         local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lhand, 'hand')
         --print(lfootPedalFixture, lfootFixture)
+
+
         connect.forceConnection(lfootPedalFixture, lfootFixture)
 
         local rfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'rhand')
@@ -984,6 +999,8 @@ function connectMipoAndVehicle()
 
         --print('doing some forcing I believe?')
     end
+
+    
 
     if (b2d.head) then b2d.head:setAngle(0) end
     if (b2d.neck1) then b2d.neck1:setAngle( -math.pi) end
@@ -1149,17 +1166,19 @@ function love.keypressed(k)
 end
 
 function love.mousemoved(x, y, dx, dy)
+    if   followCamera == 'free' then
     if love.keyboard.isDown('space') or love.mouse.isDown(3) then
         local x, y = cam:getTranslation()
         cam:setTranslation(x - dx / cam.scale, y - dy / cam.scale)
-    end
+    end end
 end
 
 function love.wheelmoved(dx, dy)
+    if   followCamera == 'free' then
     local newScale = cam.scale * (1 + dy / 10)
     if (newScale > 0.01 and newScale < 50) then
         cam:scaleToPoint(1 + dy / 10)
-    end
+    end end
 end
 
 local function pointerPressed(x, y, id)

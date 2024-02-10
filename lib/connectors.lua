@@ -273,10 +273,11 @@ lib.maybeBreakAnyConnectorBecauseForce = function(dt)
 
                     local b1, b2 = connectors[i].joint:getBodies()
                     local breakForce = 100000 * math.max(1, (b1:getMass() * b2:getMass()))
-                    local breakForceWhenNotMouseJointed = 2000000 * (b1:getMass() * b2:getMass())
+                    local breakForceWhenNotMouseJointed = 200000000 * (b1:getMass() * b2:getMass())
 
                     if ((found and l > breakForce) or (not found and l > breakForceWhenNotMouseJointed)) then
                        -- print('broke when foudn', found, inspect(connectors[i]))
+                       print('broke', (found and l > breakForce) , (not found and l > breakForceWhenNotMouseJointed))
                         connectors[i].joint:destroy()
                         connectors[i].joint = nil
 
