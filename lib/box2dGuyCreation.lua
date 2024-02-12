@@ -706,7 +706,7 @@ lib.getUserDataAtBodyPart = function(bodyPart)
     local fixtures = bodyPart:getFixtures()
     for _, fixture in ipairs(fixtures) do 
         local userData = fixture:getUserData()
-        print(inspect(userData))
+     --   print(inspect(userData))
     end
 end
 
@@ -716,7 +716,18 @@ lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData)
     local fixtures = bodyPart:getFixtures()
     for _, fixture in ipairs(fixtures) do 
         local userData = fixture:getUserData()
+        --print(inspect(moreData), inspect(userData))
+        if   userData.data then 
+            --print('THIS WOULD OVERWRITE DATA THAT IS THERE ALREADY')
+            for k,v in pairs(moreData) do 
+            --    print(k, v)
+                userData.data[k] = v
+            end
+        
+        else
+        
         userData.data = moreData
+        end
         fixture:setUserData(userData)
         --print(inspect(userData))
     end
@@ -725,8 +736,10 @@ end
 
 local userDataIsSleeping = function(ud) 
     local result = false
-    if ud.data and ud.data.sleeping then return true 
-    end
+
+    if ud.data and ud.data.sleeping then result = true end 
+   -- print('sleeping: ', result)
+    return result
 end
 
 lib.rotateAllBodies = function(bodies, dt)
