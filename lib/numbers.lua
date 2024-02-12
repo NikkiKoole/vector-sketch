@@ -115,5 +115,44 @@ numbers.transferPoint = function(xI, yI, source, destination)
 end
 
 
+numbers.getDistance = function(x1, y1, x2, y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local distance = math.sqrt((dx * dx) + (dy * dy))
+
+   return distance
+end
+
+numbers.getDistanceSquared = function(x1, y1, x2, y2)
+   local dx = x1 - x2
+   local dy = y1 - y2
+   local result = (dx * dx) + (dy * dy)
+   return result
+end
+
+ numbers.calculateRollingAverage = function (valueList)
+   local sum = 0
+   for _, value in ipairs(valueList) do
+       sum = sum + value
+   end
+   return sum / #valueList
+end
+
+numbers.getClosestPointFromList = function(pos, list)
+   local closestDistance = math.huge
+   local closest = nil
+
+   for i = 1, #list do
+       local val = numbers.getDistanceSquared(pos.x, pos.y, list[i].x, list[i].y)
+       if val < closestDistance then
+           closestDistance = val
+           closest = list[i]
+       end
+   end
+
+   return closest
+end
+
+
 
 return numbers

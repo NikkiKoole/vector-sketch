@@ -1,6 +1,6 @@
-local Vector          = require 'vendor.brinevector'
+local Vector  = require 'vendor.brinevector'
 local inspect = require 'vendor.inspect'
-local lib = {}
+local lib     = {}
 
 
 local connectorCooldownList = {}
@@ -25,19 +25,18 @@ local makeRectPoly2 = function(w, h, x, y)
     local cx = x
     local cy = y
     return love.physics.newPolygonShape(
-            cx - w / 2, cy - h / 2,
-            cx + w / 2, cy - h / 2,
-            cx + w / 2, cy + h / 2,
-            cx - w / 2, cy + h / 2
-        )
+        cx - w / 2, cy - h / 2,
+        cx + w / 2, cy - h / 2,
+        cx + w / 2, cy + h / 2,
+        cx - w / 2, cy + h / 2
+    )
 end
 
 
 lib.breakAllConnectionsAtBody = function(thing)
-    for i = 1, #connectors do 
-        
-        if (connectors[i].at:getBody() ==  thing) then 
-            if connectors[i].joint then 
+    for i = 1, #connectors do
+        if (connectors[i].at:getBody() == thing) then
+            if connectors[i].joint then
                 connectors[i].joint:destroy()
                 connectors[i].joint = nil
                 connectors[i].to = nil
@@ -46,8 +45,8 @@ lib.breakAllConnectionsAtBody = function(thing)
 
         -- connection couldve been made the oher way around..
         -- those need breaking too
-        if (connectors[i].to and connectors[i].to:getBody() ==  thing) then 
-            if connectors[i].joint then 
+        if (connectors[i].to and connectors[i].to:getBody() == thing) then
+            if connectors[i].joint then
                 connectors[i].joint:destroy()
                 connectors[i].joint = nil
                 connectors[i].to = nil
@@ -112,14 +111,14 @@ lib.makeAndReplaceConnector = function(recreate, parent, x, y, data, size, size2
     end
 end
 
-lib.resetConnectors = function() 
+lib.resetConnectors = function()
     connectors = {}
     connectorCooldownList = {}
 end
 
-lib.inspectAllConnectors = function() 
-    for i =1, #connectors do 
-        if connectors[i].joint or connectors[i].to then 
+lib.inspectAllConnectors = function()
+    for i = 1, #connectors do
+        if connectors[i].joint or connectors[i].to then
             print(i, 'joint', connectors[i].joint, 'to', connectors[i].to)
         end
     end
@@ -150,8 +149,8 @@ lib.getJointBetween2Connectors = function(to, at)
     local pos1 = getCentroidOfFixture(to:getBody(), to)
     local pos2 = getCentroidOfFixture(at:getBody(), at)
     local j = love.physics.newRevoluteJoint(at:getBody(), to:getBody(),
-            pos2[1],
-            pos2[2], pos1[1], pos1[2])
+        pos2[1],
+        pos2[2], pos1[1], pos1[2])
     return j
 end
 
@@ -160,7 +159,6 @@ lib.maybeConnectThisConnector = function(f, mj)
 
     -- we dont want to do anything with connectors of sleeping bodies, it crashes when trying to get the bbox
     if f:getBody():isActive() == false then
-         
         found = true
     end
 
@@ -169,7 +167,7 @@ lib.maybeConnectThisConnector = function(f, mj)
             found = true
         end
     end
-   
+
     if found == false then
         local pos1 = getCentroidOfFixture(f:getBody(), f)
         local done = false
@@ -190,8 +188,8 @@ lib.maybeConnectThisConnector = function(f, mj)
                 end
             end
             --local alreadyConnectedSomehwere = false
-            for k = 1, #connectors do 
-                if connectors[k].to == connectors[j].at then 
+            for k = 1, #connectors do
+                if connectors[k].to == connectors[j].at then
                     --print('found this connection somewhere')
                     --alreadyConnectedSomehwere = true
                     skipCausePointingToSameAgent = true
@@ -226,23 +224,23 @@ lib.maybeConnectThisConnector = function(f, mj)
                 if d < maxD and not isOnCooldown then
                     print('making new connection')
 
-                    -- if at is already one's too 
-                   
-                    
-                    if not skip then
-                    -- wondeirng if its already taken somehow in an other way 
+                    -- if at is already one's too
+
+
+
+                    -- wondeirng if its already taken somehow in an other way
                     connectors[j].to = f --mj.jointBody
                     local joint = lib.getJointBetween2Connectors(connectors[j].to, connectors[j].at)
-                    connectors[j].joint = joint end
+                    connectors[j].joint = joint
                 end
             end
         end
     end
 end
 
-lib.forceConnection = function(from , to) 
-    for i =1 , #connectors do 
-        if connectors[i].at == from then 
+lib.forceConnection = function(from, to)
+    for i = 1, #connectors do
+        if connectors[i].at == from then
             connectors[i].to = to
             local joint = lib.getJointBetween2Connectors(connectors[i].to, connectors[i].at)
             connectors[i].joint = joint
@@ -252,7 +250,7 @@ lib.forceConnection = function(from , to)
 end
 
 
-lib.maybeBreakAnyConnectorBecauseForce = function(dt) 
+lib.maybeBreakAnyConnectorBecauseForce = function(dt)
     if true then
         if connectors then
             for i = #connectors, 1, -1 do
@@ -276,8 +274,8 @@ lib.maybeBreakAnyConnectorBecauseForce = function(dt)
                     local breakForceWhenNotMouseJointed = 200000000 * (b1:getMass() * b2:getMass())
 
                     if ((found and l > breakForce) or (not found and l > breakForceWhenNotMouseJointed)) then
-                       -- print('broke when foudn', found, inspect(connectors[i]))
-                       print('broke', (found and l > breakForce) , (not found and l > breakForceWhenNotMouseJointed))
+                        -- print('broke when foudn', found, inspect(connectors[i]))
+                        print('broke', (found and l > breakForce), (not found and l > breakForceWhenNotMouseJointed))
                         connectors[i].joint:destroy()
                         connectors[i].joint = nil
 
@@ -291,7 +289,7 @@ lib.maybeBreakAnyConnectorBecauseForce = function(dt)
     end
 end
 
-lib.cleanupCoolDownList = function(dt) 
+lib.cleanupCoolDownList = function(dt)
     local now = love.timer.getTime()
     for i = #connectorCooldownList, 1, -1 do
         connectorCooldownList[i].runningFor = connectorCooldownList[i].runningFor + dt

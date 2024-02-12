@@ -1,3 +1,4 @@
+
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
 local inspect          = require 'vendor.inspect'
@@ -16,6 +17,9 @@ local ui               = require "lib.ui"
 local connect          = require 'lib.connectors'
 local updatePart       = require 'lib.updatePart'
 local Timer            = require 'vendor.timer'
+local text = require "lib.text"
+
+-- GROUND STUFF
 
 function initGround()
     local thing = {
@@ -41,10 +45,8 @@ function getYAtX(x, stepSize)
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
 
     local c = x / stepSize
-    -- if ((c) % 100 < 10) then
-    --     c = math.floor(c / 100) * 100
-    -- end
     local linear = numbers.mapInto(c, -20, 20, -STEEPNESS, STEEPNESS)
+
     return y1 + y2 + y3 + linear
 end
 
@@ -64,9 +66,6 @@ function updateGround(ground)
 
     local extraSteps = 10
 
-    -- why is this numbers growing so much when i add more mipos ?
-    --print(camtlx / stepSize, cambrx / stepSize)
-
     for i = 1 - extraSteps, steps + 2 + extraSteps do
         local x = (math.floor(camtlx / stepSize) * stepSize) + (i - 1) * stepSize
         local y = getYAtX(x, stepSize)
@@ -74,310 +73,26 @@ function updateGround(ground)
         table.insert(points, x)
         table.insert(points, y)
     end
-    -- print(inspect(points))
 
     ground.shape = love.physics.newChainShape(false, points)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
     ground.fixture:setUserData("ground")
     ground.fixture:setFriction(1)
-
     ground.points = points
+
 end
 
-function makeBall(x, y, radius)
-    local ball = {}
-    ball.body = love.physics.newBody(world, x, y, "dynamic")
-    ball.shape = love.physics.newCircleShape(radius)
-    ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
-    ball.fixture:setRestitution(.2) -- let the ball bounce
-    --ball.fixture:setUserData(phys.makeUserData("ball"))
-    ball.fixture:setFriction(.5)
-    ball.body:setAngularVelocity(10000)
-    return ball
-end
+-- GROUND AND ITS ITEMS STUFF
 
-function makeCarousell(x, y, width, height, angularVelocity)
-    local carousel = {}
-    carousel.body = love.physics.newBody(world, x, y, "kinematic")
-    carousel.shape = love.physics.newRectangleShape(width, height)
-    carousel.fixture = love.physics.newFixture(carousel.body, carousel.shape, 1)
-    carousel.body:setAngularVelocity(angularVelocity)
-    --    carousel.fixture:setUserData(makeUserData("caroussel"))
-    return carousel
-end
+function lerpYAtX(targetX, stepSize)
+    local x1 = math.floor(targetX / stepSize) * stepSize
+    local x2 = math.ceil(targetX / stepSize) * stepSize
 
-function makeChain(x, y, amt)
-    --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
-    local linkHeight = 20 * 10
-    local linkWidth = 50 * 10
-    local dir = 1
-    -- local amt = 3
-    local count = 1
+    local y1 = getYAtX(x1, stepSize)
+    local y2 = getYAtX(x2, stepSize)
 
-    function makeLink(x, y)
-        local body = love.physics.newBody(world, x, y, "dynamic")
-        local shape = love.physics.newRectangleShape(linkWidth + count * 5, linkHeight)
-        local fixture = love.physics.newFixture(body, shape, .3)
-        count = count + 1
-        return body
-    end
-
-    local lastLink = makeLink(x, y)
-    for i = 1, amt do
-        local link = makeLink(x, y + (i * linkHeight) * dir)
-        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
-
-        joint:setLowerLimit(-math.pi / 32)
-        joint:setUpperLimit(math.pi / 32)
-        joint:setLimitsEnabled(true)
-
-        local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
-            link:getY())
-        lastLink = link
-    end
-
-    if false then
-        local weight = love.physics.newBody(world, x, y + ((amt + 1) * linkHeight) * dir, "dynamic")
-        local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
-        local fixture = love.physics.newFixture(weight, shape, 1)
-
-
-        local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
-        local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
-            weight:getY())
-        joint:setLowerLimit(-math.pi / 32)
-        joint:setUpperLimit(math.pi / 32)
-        joint:setLimitsEnabled(true)
-        table.insert(objects.blocks, weight)
-    end
-end
-
-local function makeUserData(bodyType, moreData)
-    local result = {
-        bodyType = bodyType,
-    }
-    if moreData then
-        result.data = moreData
-    end
-    return result
-end
-
-function makeRectPoly2(w, h, x, y)
-    local cx = x
-    local cy = y
-    return love.physics.newPolygonShape(
-        cx - w / 2, cy - h / 2,
-        cx + w / 2, cy - h / 2,
-        cx + w / 2, cy + h / 2,
-        cx - w / 2, cy + h / 2
-    )
-end
-
-function makePedalBike(x, y, data)
-    local floorWidth = data.floorWidth or data.radius
-    local radius = data.radius
-
-    local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
-    ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 10)
-    ball1.fixture:setRestitution(.2) -- let the ball bounce
-    ball1.body:setAngularVelocity(10000)
-
-    local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius * 1.3)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 10)
-    ball2.fixture:setRestitution(.2) -- let the ball bounce
-    ball2.body:setAngularVelocity(10000)
-
-    local frame = {}
-    frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(floorWidth, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 10)
-    frame.fixture:setSensor(true)
-
-    local seat = {}
-    seat.body = love.physics.newBody(world, x, y - data.steeringHeight * 1.2, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight * 1.2, 100, 100)
-    seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
-    connect.makeAndAddConnector(frame.body, 0, -data.steeringHeight * 1.2, { type = 'seat' }, 105, 105)
-
-    if false then
-        local seat2 = {}
-        seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
-        seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
-        connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
-    end
-
-    local steerHeight = data.steeringHeight
-    local steer = {}
-
-    steer.shape = love.physics.newRectangleShape(floorWidth / 2, -steerHeight / 2, 10, steerHeight)
-    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
-    steer.fixture:setSensor(true)
-
-    if true then
-        connect.makeAndAddConnector(frame.body, floorWidth / 2 - 40, -steerHeight - 40, {}, 125, 125)
-        connect.makeAndAddConnector(frame.body, floorWidth / 2, -steerHeight, {}, 125, 125)
-    end
-
-    local pedal = {}
-    pedal.body = love.physics.newBody(world, x, y - data.steeringHeight * 0.6, "dynamic")
-    pedal.shape = love.physics.newRectangleShape(200, 200)
-    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
-    pedal.fixture:setSensor(true)
-    connect.makeAndAddConnector(pedal.body, -150, 0, { type = 'lfoot' }, 110, 110)
-    connect.makeAndAddConnector(pedal.body, 150, 0, { type = 'rfoot' }, 110, 110)
-
-    local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
-    pedal.fixture:setSensor(true)
-
-
-    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
-    local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
-
-
-    joint1:setMotorEnabled(true)
-    joint1:setMotorSpeed(-500000)
-    joint1:setMaxMotorTorque(20000)
-
-
-    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, seat = seat }
-end
-
-function makeScooter(x, y, data)
-    local floorWidth = data.floorWidth or data.radius
-    local radius = data.radius
-
-    local ball1 = {}
-    ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
-    ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 3)
-    ball1.fixture:setRestitution(.2) -- let the ball bounce
-    --ball.fixture:setUserData(phys.makeUserData("ball"))
-    --ball1.fixture:setFriction(1)
-    ball1.body:setAngularVelocity(10000)
-
-    local ball2 = {}
-    ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
-    ball2.shape = love.physics.newCircleShape(radius * 1.3)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 3)
-    ball2.fixture:setRestitution(.2) -- let the ball bounce
-    --ball.fixture:setUserData(phys.makeUserData("ball"))
-    --ball2.fixture:setFriction(1)
-    ball2.body:setAngularVelocity(10000)
-
-
-    local frame = {}
-    frame.body = love.physics.newBody(world, x, y, "dynamic")
-    frame.shape = love.physics.newRectangleShape(floorWidth, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 3)
-    --frame.fixture:setSensor(true)
-    if false then
-        local seat = {}
-        seat.shape = love.physics.newRectangleShape(-200, -600, 200, 200)
-        seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
-        connect.makeAndAddConnector(frame.body, -200, -600, {}, 205, 205)
-
-        local seat2 = {}
-        seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
-        seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
-        connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
-    end
-
-    --local achterWielSpat = {}
-    --achterWielSpat.shape = love.physics.newRectangleShape(-radius/1.4, -500, 20, 500)
-    --achterWielSpat.fixture = love.physics.newFixture(frame.body, achterWielSpat.shape, 1)
-
-    local steer = {}
-    local steerHeight = data.steeringHeight
-    --steer.body = love.physics.newBody(world, x, y, "dynamic")
-    steer.shape = love.physics.newRectangleShape(floorWidth / 2, -steerHeight / 2, 10, steerHeight)
-    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
-    --steer.fixture:setSensor(true)
-    connect.makeAndAddConnector(frame.body, floorWidth / 2 - 40, -steerHeight - 40, { type = 'lhand' }, 125, 125)
-    connect.makeAndAddConnector(frame.body, floorWidth / 2, -steerHeight, { type = 'rhand' }, 125, 125)
-
-    if false then
-        local pedal = {}
-        pedal.body = love.physics.newBody(world, x + radius, y - 500, "dynamic")
-        pedal.shape = love.physics.newRectangleShape(300, 300)
-        pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
-        connect.makeAndAddConnector(pedal.body, -150, 0, {}, 150, 150)
-        connect.makeAndAddConnector(pedal.body, 150, 0, {}, 150, 150)
-
-        local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
-        pedal.fixture:setSensor(true)
-    end
-
-    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
-    local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
-
-
-    joint1:setMotorEnabled(true)
-    joint1:setMotorSpeed(500000)
-    joint1:setMaxMotorTorque(20000)
-
-
-    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, steer = steer }
-end
-
-function getRandomConvexPoly(radius, numVerts)
-    local irregularity = 0.1
-    local spikeyness = 0.1
-    local vertices = generatePolygon(0, 0, radius, irregularity, spikeyness, numVerts)
-    while not love.math.isConvex(vertices) do
-        vertices = generatePolygon(0, 0, radius, irregularity, spikeyness, numVerts)
-    end
-    return vertices
-end
-
-function makeRandomPoly(x, y, radius)
-    local body = love.physics.newBody(world, x, y, "dynamic")
-    local shape = love.physics.newPolygonShape(getRandomConvexPoly(radius, 8)) --love.physics.newRectangleShape(width, height / 4)
-    local fixture = love.physics.newFixture(body, shape, .1)
-    return body
-end
-
-function makeRandomTriangle(x, y, radius)
-    local body = love.physics.newBody(world, x, y, "dynamic")
-
-    local w = (radius * 2) + love.math.random() * (radius * 2)
-    local h = radius / 2 + love.math.random() * (radius / 2)
-
-
-    local points = {
-        -w / 2, 0,
-        w / 2, -h,
-        w / 2, h
-    }
-
-    local shape = love.physics.newPolygonShape(points) --love.physics.newRectangleShape(width, height / 4)
-    local fixture = love.physics.newFixture(body, shape, .1)
-    return body
-end
-
-function npoly(radius, sides)
-    local angle = 0
-    local angle_increment = (math.pi * 2) / sides
-    local result = {}
-    for i = 1, sides do
-        x = 0 + radius * math.cos(angle)
-        y = 0 + radius * math.sin(angle)
-        angle = angle + angle_increment
-        table.insert(result, x)
-        table.insert(result, y)
-    end
-    return result
-end
-
-function makeNPoly(x, y, radius)
-    local ball = {}
-    ball.body = love.physics.newBody(world, x, y, "dynamic")
-    ball.shape = love.physics.newPolygonShape(npoly(radius, 8)) --love.physics.newRectangleShape(100, 100) --(50)-- love.physics.newCircleShape(50)
-    ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
-    return ball
+    local y3 = numbers.mapInto(targetX, x1, x2, y1, y2)
+    return y3
 end
 
 function enableDisableMipos()
@@ -501,362 +216,170 @@ function enableDisableObstacles()
     end
 end
 
-function startExample(number)
-    phys.setupWorld()
-    stepSize = 300
-    ground = initGround()
-    mipos = addMipos.make(1)
-    obstacles = {}
+
+
+
+-- vehicle stuff
+
+
+function makePedalBike(x, y, data)
+    local floorWidth = data.floorWidth or data.radius
+    local radius = data.radius
+
+    local ball1 = {}
+    ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
+    ball1.shape = love.physics.newCircleShape(radius)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 10)
+    ball1.fixture:setRestitution(.2) -- let the ball bounce
+    ball1.body:setAngularVelocity(10000)
+
+    local ball2 = {}
+    ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
+    ball2.shape = love.physics.newCircleShape(radius * 1.3)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 10)
+    ball2.fixture:setRestitution(.2) -- let the ball bounce
+    ball2.body:setAngularVelocity(10000)
+
+    local frame = {}
+    frame.body = love.physics.newBody(world, x, y, "dynamic")
+    frame.shape = love.physics.newRectangleShape(floorWidth, 100)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 10)
+    frame.fixture:setSensor(true)
+
+    local seat = {}
+    seat.body = love.physics.newBody(world, x, y - data.steeringHeight * 1.2, "dynamic")
+    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight * 1.2, 100, 100)
+    seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
+    connect.makeAndAddConnector(frame.body, 0, -data.steeringHeight * 1.2, { type = 'seat' }, 105, 105)
 
     if false then
-        for i = 1, 100 do
-            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
-            table.insert(obstacles, o)
-        end
-
-        for i = 1, 100 do
-            local o = makeRandomTriangle(i * 30, -500, 500)
-            table.insert(obstacles, o)
-        end
+        local seat2 = {}
+        seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
+        seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
+        connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
     end
 
-    -- makeChain(0,-5000,10)
-    for i = 0, 10 do
-        --    makeCarousell(i * 5000, 0, 1500, 500, 1)
-    end
-    -- get data from the mipos[1] to make a fitted bike
-    local c = mipos[1].dna.creation
-    --print(inspect(c.lfoot))
-    local scooterData = {
-        type = 'scooter',
-        steeringHeight = c.luleg.h + c.llleg.h + c.torso.h / 2,
-        floorWidth = math.max(c.lfoot.h * 3, c.torso.w * 1.2),
-        radius = 100
-    }
+    local steerHeight = data.steeringHeight
+    local steer = {}
 
-    local bikeData = {
-        type = 'bike',
-        steeringHeight = c.luleg.h + c.llleg.h,
-        floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
-        radius = 200
-    }
-    --bike = makeScooter(-2000, -5000, scooterData)
-    bike = makePedalBike(-2000, -5000, bikeData)
+    steer.shape = love.physics.newRectangleShape(floorWidth / 2, -steerHeight / 2, 10, steerHeight)
+    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
+    steer.fixture:setSensor(true)
 
-    isPedalBike = true
-
-    --bike.frontWheel
-    rollingAverageVelX = {}
-    rollingAverageVelY = {}
-    rollingDistance = {}
-    rollingMemoryUsage = {}
-
-    for i = 1, 10 do
-        rollingAverageVelX[i] = 0
-        rollingAverageVelY[i] = 0
-        rollingDistance[i] = 0
-        rollingMemoryUsage[i] = 0
-    end
-end
-
-function love.load()
-    local ffont = "WindsorBT-Roman.otf"
-
-    font = love.graphics.newFont(ffont, 24)
-
-    love.graphics.setFont(font)
-    jointsEnabled = true
-    followCamera = 'bike'
-    startExample()
-
-    pointsOfInterest = {}
-
-    grassImage = love.graphics.newImage('world-assets/grass1.png')
-    mipoOnVehicle = false
-    local w, h = love.graphics.getDimensions()
-
-    for i = 1, 1 do
-        local x = -200000 + love.math.random() * 400000
-        local y = lerpYAtX(x, stepSize)
-        table.insert(pointsOfInterest,
-            { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
-    end
-
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(0, 0, 3000, 3000)
-end
-
-local function lerp(a, b, t)
-    return a + (b - a) * t
-end
-
-local function lerpColor(c1, c2, t)
-    return { lerp(c1[1], c2[1], t), lerp(c1[2], c2[2], t), lerp(c1[3], c2[3], t) }
-end
-
-local function getDistance(x1, y1, x2, y2)
-    local dx = x1 - x2
-    local dy = y1 - y2
-    local distance = math.sqrt((dx * dx) + (dy * dy))
-
-    return distance
-end
-
-local function getDistanceSquared(x1, y1, x2, y2)
-    local dx = x1 - x2
-    local dy = y1 - y2
-    local result = (dx * dx) + (dy * dy)
-    return result
-end
-
-local function calculateRollingAverage(valueList)
-    local sum = 0
-    for _, value in ipairs(valueList) do
-        sum = sum + value
-    end
-    return sum / #valueList
-end
-
-function lerpYAtX(targetX, stepSize)
-    local x1 = math.floor(targetX / stepSize) * stepSize
-    local x2 = math.ceil(targetX / stepSize) * stepSize
-
-    local y1 = getYAtX(x1, stepSize)
-    local y2 = getYAtX(x2, stepSize)
-
-    local y3 = numbers.mapInto(targetX, x1, x2, y1, y2)
-    return y3
-end
-
-function getTargetPositionBeforeMe(body)
-    local avgVelX = calculateRollingAverage(rollingAverageVelX)
-    local avgVelY = calculateRollingAverage(rollingAverageVelY)
-    local worldX, worldY = body:getWorldPoint(0, 0)
-
-    local targetX = worldX + avgVelX / 2
-    local targetY = worldY + avgVelY / 2
-
-    -- this will look at the ground at the   x iam looking at
-    targetY = lerpYAtX(targetX, stepSize)
-    -- this will average with my own pos
-
-    -- targetY = (worldY + targetY) / 2
-
-    -- targetX = worldX
-    -- targetY = worldY
-
-    -- up untill now we assume we alsways are going forwards with the bike.
-    -- what if we are being dragged high up in the air..
-
-    local w, h = love.graphics.getDimensions()
-    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
-    local cambrx, cambry = cam:getWorldCoordinates(w, h)
-
-    -- this sort of describes how far in front of your vehicle you want to point the camera.
-    -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left)
-    -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
-    local bound = (cambrx - camtlx) / 4
-
-    targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
-    targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
-
-    return targetX, targetY
-end
-
-local function getClosestPointFromList(pos, list)
-    local closestDistance = math.huge
-    local closest = nil
-
-    for i = 1, #list do
-        local val = getDistanceSquared(pos.x, pos.y, list[i].x, list[i].y)
-        if val < closestDistance then
-            closestDistance = val
-            closest = list[i]
-        end
-    end
-
-    return closest
-end
-
-function getTargetPos(body)
-    local tx, ty = getTargetPositionBeforeMe(body)
-
-    local x, y = body:getPosition()
-
-    local poi = getClosestPointFromList({ x = x, y = y }, pointsOfInterest)
-    if poi then
-        local distance = getDistance(x, y, poi.x, poi.y)
-
-        -- how to blend targets ?
-        -- if pos is in smallest radius then completely look at poi
-        -- if pos is in outside radius ring (radisu *2) mapinto the blend
-        -- else just use tx, ty
-
-        local t = 0
-        if (distance < poi.radius) then
-            t = 1
-        elseif distance < poi.radius * 3 then
-            t = numbers.mapInto(distance, poi.radius * 3, poi.radius, 0, 1)
-        end
-
-        local nx = numbers.lerp(tx, poi.x, t)
-        local ny = numbers.lerp(ty, poi.y, t)
-
-        --print(nx, ny, tx, ty)
-        return nx, ny
-    else
-        print('somethign wrong with POI')
-        return 0, 0
-    end
-end
-
-function love.update(dt)
-    -- print(dt)
-    --local thingToFollow = bike.frontWheel.body
-    local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
-
-    local velX, velY = thingToFollow:getLinearVelocity()
-    -- print(velX, velY)
-    table.insert(rollingAverageVelX, velX)
-    table.remove(rollingAverageVelX, 1)
-
-    table.insert(rollingAverageVelY, velY)
-    table.remove(rollingAverageVelY, 1)
-
-    table.insert(rollingMemoryUsage, collectgarbage("count") / 1000)
-    table.remove(rollingMemoryUsage, 1)
-
-    updateGround(ground)
-    enableDisableObstacles()
-    enableDisableMipos()
-    enableDisableBikes()
-
-    local a = bike.frontWheel.body:getAngle()
-    local v = bike.frontWheel.body:getAngularVelocity()
-
-    if bike.pedalWheel and bike.pedalWheel.body then
-        bike.pedalWheel.body:setAngle(a / 10)
-        -- bike.pedalWheel.body:setAngularVelocity(v/100)
+    if true then
+        connect.makeAndAddConnector(frame.body, floorWidth / 2 - 40, -steerHeight - 40, {}, 125, 125)
+        connect.makeAndAddConnector(frame.body, floorWidth / 2, -steerHeight, {}, 125, 125)
     end
 
 
+    local pedalRadius = 200
+    local connectorRadius = 50
+    local connectorD = connectorRadius*2
+    local pedal = {}
+    pedal.body = love.physics.newBody(world, x, y - data.steeringHeight * 0.6, "dynamic")
+    pedal.shape = love.physics.newRectangleShape(pedalRadius*2, pedalRadius*2)
+
+    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    pedal.fixture:setSensor(true)
+    connect.makeAndAddConnector(pedal.body, -(pedalRadius+connectorRadius), 0, { type = 'lfoot' }, connectorD, connectorD)
+    connect.makeAndAddConnector(pedal.body, (pedalRadius+connectorRadius), 0, { type = 'rfoot' }, connectorD, connectorD)
+
+    local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
+    pedal.fixture:setSensor(true)
 
 
-    world:update(dt)
-    phys.handleUpdate(dt, cam)
-    Timer.update(dt)
-    box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
-
-    --   print(mipos[1].b2d.torso)
-    --   print(bike.frontWheel.body)
-    --mipos[1].b2d.torso
-    local targetX, targetY = getTargetPos(thingToFollow)
-    targetY = targetY - 1000
-
-    --  print(targetX, targetY)
-    -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
-    -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
+    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
+    local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
 
+    joint1:setMotorEnabled(true)
+    joint1:setMotorSpeed(-500000)
+    joint1:setMaxMotorTorque(20000)
 
-    local avgVelX = calculateRollingAverage(rollingAverageVelX)
-    --local avgVelX = calculateRollingAverage(rollingAverageVelY)
-    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 5)
-    --print('damping', damping)
-    thingToFollow:setLinearDamping(damping)
 
-    local curCamX, curCamY = cam:getTranslation()
-    local newDistance = getDistance(curCamX, curCamY, targetX, targetY)
-
-    local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 5)
-    --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
-    local distance = getDistance(curCamX, curCamY, targetX, targetY)
-
-    divider = dividerFar
-
-    local delta = dt --love.timer.getAverageDelta() or dt
-
-    local div = math.min(divider / (1 / delta), 1)
-    -- print('div',div)
-    -- print('newDistance', newDistance)
-    --print(newDistance, div, divider)
-    local smoothX = lerp(curCamX, targetX, div)
-    local smoothY = lerp(curCamY, targetY, div)
-
-    local viewWidth = 5000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
-    --if distance < 500 then viewWidth = 2000 end
-
-    -- if distance > 500 then
-    --print('yes')
-    --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
-    if followCamera ~= 'free' then
-        --print('****')
-        --print(curCamX, targetX, divider / (1 / delta))
-        --print(curCamY, targetY, divider / (1 / delta))
-        --print(smoothX, smoothY, viewWidth, viewWidth)
-        camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
-    else
-        -- camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
-    end
-    --  camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
-    -- else
-    --print('no')
-    -- end
-    --   love.timer.sleep(.005)
+    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, seat = seat }
 end
 
-function skyGradient(camYTop, camYBottom)
-    local function safeColor(colors, index, tt)
-        local blue = { 173 / 255, 192 / 255, 199 / 255 } -- { 208 / 255, 230 / 255, 239 / 255 }
-        local col1 = index <= 0 and blue or { 0, 0, 0 }
-        local col2 = index <= 0 and blue or { 0, 0, 0 }
-        if index > 0 and index <= #colors then
-            col1 = colors[index]
-        end
-        if index + 1 > 0 and index + 1 <= #colors then
-            col2 = colors[index + 1]
-        end
-        return lerpColor(col1, col2, tt % 1)
+function makeScooter(x, y, data)
+    local floorWidth = data.floorWidth or data.radius
+    local radius = data.radius
+
+    local ball1 = {}
+    ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
+    ball1.shape = love.physics.newCircleShape(radius)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 3)
+    ball1.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+    --ball1.fixture:setFriction(1)
+    ball1.body:setAngularVelocity(10000)
+
+    local ball2 = {}
+    ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
+    ball2.shape = love.physics.newCircleShape(radius * 1.3)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 3)
+    ball2.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+    --ball2.fixture:setFriction(1)
+    ball2.body:setAngularVelocity(10000)
+
+
+    local frame = {}
+    frame.body = love.physics.newBody(world, x, y, "dynamic")
+    frame.shape = love.physics.newRectangleShape(floorWidth, 100)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 3)
+    --frame.fixture:setSensor(true)
+    if false then
+        local seat = {}
+        seat.shape = love.physics.newRectangleShape(-200, -600, 200, 200)
+        seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
+        connect.makeAndAddConnector(frame.body, -200, -600, {}, 205, 205)
+
+        local seat2 = {}
+        seat2.shape = love.physics.newRectangleShape(-1000, -600, 200, 200)
+        seat2.fixture = love.physics.newFixture(frame.body, seat2.shape, 1)
+        connect.makeAndAddConnector(frame.body, -1000, -600, {}, 205, 205)
     end
 
+    --local achterWielSpat = {}
+    --achterWielSpat.shape = love.physics.newRectangleShape(-radius/1.4, -500, 20, 500)
+    --achterWielSpat.fixture = love.physics.newFixture(frame.body, achterWielSpat.shape, 1)
 
-    local skyColors = {
-        { 208 / 255, 230 / 255, 239 / 255 },
-        { 173 / 255, 192 / 255, 199 / 255 },
-        { 54 / 255,  195 / 255, 240 / 255 },
-        --   { 0.7,       0.4,       0.9 }, -- Purple Haze
-        { 208 / 255, 230 / 255, 239 / 255 },
-        { 173 / 255, 192 / 255, 199 / 255 },
-        { 0.4,       0.6,       0.9 }, -- Gentle Blue
-        { 54 / 255,  195 / 255, 240 / 255 },
-        { 208 / 255, 230 / 255, 239 / 255 },
-        { 173 / 255, 192 / 255, 199 / 255 },
-        { 0.95,      0.8,       0.8 }, -- Soft Pink near the horizon
-        { 208 / 255, 230 / 255, 239 / 255 },
-        { 173 / 255, 192 / 255, 199 / 255 },
-        { 51 / 255,  63 / 255,  166 / 255 },
-        { 33 / 255,  37 / 255,  78 / 255 },
+    local steer = {}
+    local steerHeight = data.steeringHeight
+    --steer.body = love.physics.newBody(world, x, y, "dynamic")
+    steer.shape = love.physics.newRectangleShape(floorWidth / 2, -steerHeight / 2, 10, steerHeight)
+    steer.fixture = love.physics.newFixture(frame.body, steer.shape, 0)
+    --steer.fixture:setSensor(true)
+    connect.makeAndAddConnector(frame.body, floorWidth / 2 - 40, -steerHeight - 40, { type = 'lhand' }, 125, 125)
+    connect.makeAndAddConnector(frame.body, floorWidth / 2, -steerHeight, { type = 'rhand' }, 125, 125)
 
-        { 0,         0,         0 }
-    }
+    if false then
+        local pedal = {}
+        pedal.body = love.physics.newBody(world, x + radius, y - 500, "dynamic")
+        pedal.shape = love.physics.newRectangleShape(300, 300)
+        pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+        connect.makeAndAddConnector(pedal.body, -150, 0, {}, 150, 150)
+        connect.makeAndAddConnector(pedal.body, 150, 0, {}, 150, 150)
 
-    local range = 50000
+        local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
+        pedal.fixture:setSensor(true)
+    end
 
-    local tTop = numbers.mapInto(camYTop, range, -range, 1, #skyColors)
-    local indexTop = math.floor(tTop)
-    local interpolatedColorTop = safeColor(skyColors, indexTop, tTop)
+    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
+    local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
-    local tBottom = numbers.mapInto(camYBottom, range, -range, 1, #skyColors)
-    local indexBottom = math.floor(tBottom)
-    local interpolatedColorBottom = safeColor(skyColors, indexBottom, tBottom)
 
-    local sky = gradient.makeSkyGradientList({ interpolatedColorTop, interpolatedColorBottom })
-    return sky
+    joint1:setMotorEnabled(true)
+    joint1:setMotorSpeed(500000)
+    joint1:setMaxMotorTorque(20000)
+
+
+    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, steer = steer }
 end
 
-function countLines(str)
-    local _, count = str:gsub('\n', '\n')
-    return count + 1 -- Add 1 to account for the last line without a newline
+function cycleStep() 
+    bike.frontWheel.body:setAngularVelocity(120000)
+    bike.backWheel.body:setAngularVelocity(120000)
 end
 
 local function setSensorValueBody(body, value)
@@ -896,10 +419,6 @@ local function getConnectorFixtureAtBodyOfType(body, type)
     end
 end
 
-
-
--- after connecting disconnecting lfoot and rfoot are colliding
--- only happens with pedalikes though
 
 function disconnectMipoAndVehicle()
     print('disconnect')
@@ -983,7 +502,7 @@ function connectMipoAndVehicle()
     if false then
         local fx, fy = bike.frontWheel.body:getPosition()
         local bx, by = bike.backWheel.body:getPosition()
-        local d = getDistance(fx, fy, bx, by)
+        local d = numbers.getDistance(fx, fy, bx, by)
         bike.frame.body:setAngle(0)
         local yy = getYAtX(tx, stepSize)
         bike.frame.body:setPosition(tx, yy - 300)
@@ -1128,6 +647,480 @@ function connectMipoAndVehicle()
     if (b2d.neck) then b2d.neck:setAngle(-math.pi) end
 end
 
+
+
+
+-- more general physics stuff
+
+function makeBall(x, y, radius)
+    local ball = {}
+    ball.body = love.physics.newBody(world, x, y, "dynamic")
+    ball.shape = love.physics.newCircleShape(radius)
+    ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
+    ball.fixture:setRestitution(.2) -- let the ball bounce
+    --ball.fixture:setUserData(phys.makeUserData("ball"))
+    ball.fixture:setFriction(.5)
+    ball.body:setAngularVelocity(10000)
+    return ball
+end
+
+function makeCarousell(x, y, width, height, angularVelocity)
+    local carousel = {}
+    carousel.body = love.physics.newBody(world, x, y, "kinematic")
+    carousel.shape = love.physics.newRectangleShape(width, height)
+    carousel.fixture = love.physics.newFixture(carousel.body, carousel.shape, 1)
+    carousel.body:setAngularVelocity(angularVelocity)
+    --    carousel.fixture:setUserData(makeUserData("caroussel"))
+    return carousel
+end
+
+function makeChain(x, y, amt)
+    --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
+    local linkHeight = 20 * 10
+    local linkWidth = 50 * 10
+    local dir = 1
+    -- local amt = 3
+    local count = 1
+
+    function makeLink(x, y)
+        local body = love.physics.newBody(world, x, y, "dynamic")
+        local shape = love.physics.newRectangleShape(linkWidth + count * 5, linkHeight)
+        local fixture = love.physics.newFixture(body, shape, .3)
+        count = count + 1
+        return body
+    end
+
+    local lastLink = makeLink(x, y)
+    for i = 1, amt do
+        local link = makeLink(x, y + (i * linkHeight) * dir)
+        local joint = love.physics.newRevoluteJoint(lastLink, link, link:getX(), link:getY(), true)
+
+        joint:setLowerLimit(-math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
+        joint:setLimitsEnabled(true)
+
+        local dj = love.physics.newDistanceJoint(lastLink, link, lastLink:getX(), lastLink:getY(), link:getX(),
+            link:getY())
+        lastLink = link
+    end
+
+    if false then
+        local weight = love.physics.newBody(world, x, y + ((amt + 1) * linkHeight) * dir, "dynamic")
+        local shape = love.physics.newRectangleShape(linkWidth, linkHeight)
+        local fixture = love.physics.newFixture(weight, shape, 1)
+
+
+        local joint = love.physics.newRevoluteJoint(lastLink, weight, weight:getX(), weight:getY(), false)
+        local dj = love.physics.newDistanceJoint(lastLink, weight, lastLink:getX(), lastLink:getY(), weight:getX(),
+            weight:getY())
+        joint:setLowerLimit(-math.pi / 32)
+        joint:setUpperLimit(math.pi / 32)
+        joint:setLimitsEnabled(true)
+        table.insert(objects.blocks, weight)
+    end
+end
+
+local function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+function makeRectPoly2(w, h, x, y)
+    local cx = x
+    local cy = y
+    return love.physics.newPolygonShape(
+        cx - w / 2, cy - h / 2,
+        cx + w / 2, cy - h / 2,
+        cx + w / 2, cy + h / 2,
+        cx - w / 2, cy + h / 2
+    )
+end
+
+
+function getRandomConvexPoly(radius, numVerts)
+    local irregularity = 0.1
+    local spikeyness = 0.1
+    local vertices = generatePolygon(0, 0, radius, irregularity, spikeyness, numVerts)
+    while not love.math.isConvex(vertices) do
+        vertices = generatePolygon(0, 0, radius, irregularity, spikeyness, numVerts)
+    end
+    return vertices
+end
+
+function makeRandomPoly(x, y, radius)
+    local body = love.physics.newBody(world, x, y, "dynamic")
+    local shape = love.physics.newPolygonShape(getRandomConvexPoly(radius, 8)) --love.physics.newRectangleShape(width, height / 4)
+    local fixture = love.physics.newFixture(body, shape, .1)
+    return body
+end
+
+function makeRandomTriangle(x, y, radius)
+    local body = love.physics.newBody(world, x, y, "dynamic")
+
+    local w = (radius * 2) + love.math.random() * (radius * 2)
+    local h = radius / 2 + love.math.random() * (radius / 2)
+
+
+    local points = {
+        -w / 2, 0,
+        w / 2, -h,
+        w / 2, h
+    }
+
+    local shape = love.physics.newPolygonShape(points) --love.physics.newRectangleShape(width, height / 4)
+    local fixture = love.physics.newFixture(body, shape, .1)
+    return body
+end
+
+function npoly(radius, sides)
+    local angle = 0
+    local angle_increment = (math.pi * 2) / sides
+    local result = {}
+    for i = 1, sides do
+        x = 0 + radius * math.cos(angle)
+        y = 0 + radius * math.sin(angle)
+        angle = angle + angle_increment
+        table.insert(result, x)
+        table.insert(result, y)
+    end
+    return result
+end
+
+function makeNPoly(x, y, radius)
+    local ball = {}
+    ball.body = love.physics.newBody(world, x, y, "dynamic")
+    ball.shape = love.physics.newPolygonShape(npoly(radius, 8)) --love.physics.newRectangleShape(100, 100) --(50)-- love.physics.newCircleShape(50)
+    ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
+    return ball
+end
+
+
+-- skygradient 
+local function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+local function lerpColor(c1, c2, t)
+    return { lerp(c1[1], c2[1], t), lerp(c1[2], c2[2], t), lerp(c1[3], c2[3], t) }
+end
+
+function skyGradient(camYTop, camYBottom)
+    local function safeColor(colors, index, tt)
+        local blue = { 173 / 255, 192 / 255, 199 / 255 } -- { 208 / 255, 230 / 255, 239 / 255 }
+        local col1 = index <= 0 and blue or { 0, 0, 0 }
+        local col2 = index <= 0 and blue or { 0, 0, 0 }
+        if index > 0 and index <= #colors then
+            col1 = colors[index]
+        end
+        if index + 1 > 0 and index + 1 <= #colors then
+            col2 = colors[index + 1]
+        end
+        return lerpColor(col1, col2, tt % 1)
+    end
+
+
+    local skyColors = {
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 54 / 255,  195 / 255, 240 / 255 },
+        --   { 0.7,       0.4,       0.9 }, -- Purple Haze
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 0.4,       0.6,       0.9 }, -- Gentle Blue
+        { 54 / 255,  195 / 255, 240 / 255 },
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 0.95,      0.8,       0.8 }, -- Soft Pink near the horizon
+        { 208 / 255, 230 / 255, 239 / 255 },
+        { 173 / 255, 192 / 255, 199 / 255 },
+        { 51 / 255,  63 / 255,  166 / 255 },
+        { 33 / 255,  37 / 255,  78 / 255 },
+
+        { 0,         0,         0 }
+    }
+
+    local range = 50000
+
+    local tTop = numbers.mapInto(camYTop, range, -range, 1, #skyColors)
+    local indexTop = math.floor(tTop)
+    local interpolatedColorTop = safeColor(skyColors, indexTop, tTop)
+
+    local tBottom = numbers.mapInto(camYBottom, range, -range, 1, #skyColors)
+    local indexBottom = math.floor(tBottom)
+    local interpolatedColorBottom = safeColor(skyColors, indexBottom, tBottom)
+
+    local sky = gradient.makeSkyGradientList({ interpolatedColorTop, interpolatedColorBottom })
+    return sky
+end
+
+
+
+-- positioning targetting camera
+
+function getTargetPositionBeforeMe(body)
+    local avgVelX = numbers.calculateRollingAverage(rollingAverageVelX)
+    local avgVelY = numbers.calculateRollingAverage(rollingAverageVelY)
+    local worldX, worldY = body:getWorldPoint(0, 0)
+
+    local targetX = worldX + avgVelX / 2
+    local targetY = worldY + avgVelY / 2
+
+    -- this will look at the ground at the   x iam looking at
+    targetY = lerpYAtX(targetX, stepSize)
+    -- this will average with my own pos
+
+    -- targetY = (worldY + targetY) / 2
+
+    -- targetX = worldX
+    -- targetY = worldY
+
+    -- up untill now we assume we alsways are going forwards with the bike.
+    -- what if we are being dragged high up in the air..
+
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+    -- this sort of describes how far in front of your vehicle you want to point the camera.
+    -- when its at /4  the item will be /4 behind half screen (in other words at /4 from left)
+    -- when its at /2 the item will be /2 behind half screen  (in other words at 0 from left)
+    local bound = (cambrx - camtlx) / 4
+
+    targetX = numbers.clamp(targetX, worldX - bound, worldX + bound)
+    targetY = numbers.clamp(targetY, worldY - bound, worldY + bound)
+
+    return targetX, targetY
+end
+
+function getTargetPos(body)
+    local tx, ty = getTargetPositionBeforeMe(body)
+
+    local x, y = body:getPosition()
+
+    local poi = numbers.getClosestPointFromList({ x = x, y = y }, pointsOfInterest)
+    if poi then
+        local distance = numbers.getDistance(x, y, poi.x, poi.y)
+
+        -- how to blend targets ?
+        -- if pos is in smallest radius then completely look at poi
+        -- if pos is in outside radius ring (radisu *2) mapinto the blend
+        -- else just use tx, ty
+
+        local t = 0
+        if (distance < poi.radius) then
+            t = 1
+        elseif distance < poi.radius * 3 then
+            t = numbers.mapInto(distance, poi.radius * 3, poi.radius, 0, 1)
+        end
+
+        local nx = numbers.lerp(tx, poi.x, t)
+        local ny = numbers.lerp(ty, poi.y, t)
+
+        --print(nx, ny, tx, ty)
+        return nx, ny
+    else
+        print('somethign wrong with POI')
+        return 0, 0
+    end
+end
+
+
+
+----- rest
+
+
+function startExample(number)
+    phys.setupWorld()
+    stepSize = 300
+    ground = initGround()
+    mipos = addMipos.make(1)
+    obstacles = {}
+
+    if false then
+        for i = 1, 100 do
+            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
+            table.insert(obstacles, o)
+        end
+
+        for i = 1, 100 do
+            local o = makeRandomTriangle(i * 30, -500, 500)
+            table.insert(obstacles, o)
+        end
+    end
+
+    -- makeChain(0,-5000,10)
+    for i = 0, 10 do
+        --    makeCarousell(i * 5000, 0, 1500, 500, 1)
+    end
+    -- get data from the mipos[1] to make a fitted bike
+    local c = mipos[1].dna.creation
+    --print(inspect(c.lfoot))
+    local scooterData = {
+        type = 'scooter',
+        steeringHeight = c.luleg.h + c.llleg.h + c.torso.h / 2,
+        floorWidth = math.max(c.lfoot.h * 3, c.torso.w * 1.2),
+        radius = 100
+    }
+
+    local bikeData = {
+        type = 'bike',
+        steeringHeight = c.luleg.h + c.llleg.h,
+        floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
+        radius = 200
+    }
+    --bike = makeScooter(-2000, -5000, scooterData)
+    bike = makePedalBike(-2000, -5000, bikeData)
+
+    isPedalBike = true
+
+    --bike.frontWheel
+    rollingAverageVelX = {}
+    rollingAverageVelY = {}
+    rollingDistance = {}
+    rollingMemoryUsage = {}
+
+    for i = 1, 10 do
+        rollingAverageVelX[i] = 0
+        rollingAverageVelY[i] = 0
+        rollingDistance[i] = 0
+        rollingMemoryUsage[i] = 0
+    end
+end
+
+
+function love.load()
+    local ffont = "WindsorBT-Roman.otf"
+
+    font = love.graphics.newFont(ffont, 24)
+
+    love.graphics.setFont(font)
+    jointsEnabled = true
+    followCamera = 'bike'
+    startExample()
+
+    pointsOfInterest = {}
+
+    grassImage = love.graphics.newImage('world-assets/grass1.png')
+    mipoOnVehicle = false
+    local w, h = love.graphics.getDimensions()
+
+    for i = 1, 1 do
+        local x = -200000 + love.math.random() * 400000
+        local y = lerpYAtX(x, stepSize)
+        table.insert(pointsOfInterest,
+            { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
+    end
+
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(0, 0, 3000, 3000)
+end
+
+function love.update(dt)
+    -- print(dt)
+    --local thingToFollow = bike.frontWheel.body
+    local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
+
+    local velX, velY = thingToFollow:getLinearVelocity()
+    -- print(velX, velY)
+    table.insert(rollingAverageVelX, velX)
+    table.remove(rollingAverageVelX, 1)
+
+    table.insert(rollingAverageVelY, velY)
+    table.remove(rollingAverageVelY, 1)
+
+    table.insert(rollingMemoryUsage, collectgarbage("count") / 1000)
+    table.remove(rollingMemoryUsage, 1)
+
+    updateGround(ground)
+    enableDisableObstacles()
+    enableDisableMipos()
+    enableDisableBikes()
+
+
+    --enableDisableObjects(mipos)
+   -- enableDisableObjects({bike})  -- wrap the single bike in a table to make it consistent
+   -- enableDisableObjects(obstacles)
+
+
+    local a = bike.frontWheel.body:getAngle()
+    local v = bike.frontWheel.body:getAngularVelocity()
+
+    if bike.pedalWheel and bike.pedalWheel.body then
+        bike.pedalWheel.body:setAngle(a / 10)
+        -- bike.pedalWheel.body:setAngularVelocity(v/100)
+    end
+
+
+
+
+    world:update(dt)
+    phys.handleUpdate(dt, cam)
+    Timer.update(dt)
+    box2dGuyCreation.rotateAllBodies(world:getBodies(), dt)
+
+    --   print(mipos[1].b2d.torso)
+    --   print(bike.frontWheel.body)
+    --mipos[1].b2d.torso
+    local targetX, targetY = getTargetPos(thingToFollow)
+    targetY = targetY - 1000
+
+    --  print(targetX, targetY)
+    -- https://www.gamedeveloper.com/design/camera-logic-in-a-2d-platformer
+    -- https://www.youtube.com/watch?v=aAKwZt3aXQM&t=315s
+
+
+
+    local avgVelX = numbers.calculateRollingAverage(rollingAverageVelX)
+    --local avgVelX = numbers.calculateRollingAverage(rollingAverageVelY)
+    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 5)
+    --print('damping', damping)
+    thingToFollow:setLinearDamping(damping)
+
+    local curCamX, curCamY = cam:getTranslation()
+    local newDistance = numbers.getDistance(curCamX, curCamY, targetX, targetY)
+
+    local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 5)
+    --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
+    local distance = numbers.getDistance(curCamX, curCamY, targetX, targetY)
+
+    divider = dividerFar
+
+    local delta = dt --love.timer.getAverageDelta() or dt
+
+    local div = math.min(divider / (1 / delta), 1)
+    -- print('div',div)
+    -- print('newDistance', newDistance)
+    --print(newDistance, div, divider)
+    local smoothX = lerp(curCamX, targetX, div)
+    local smoothY = lerp(curCamY, targetY, div)
+
+    local viewWidth = 5000 ---numbers.mapInto(math.abs(avgVelX), 0, 2000, 2000, 2500)
+    --if distance < 500 then viewWidth = 2000 end
+
+    -- if distance > 500 then
+    --print('yes')
+    --camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
+    if followCamera ~= 'free' then
+        --print('****')
+        --print(curCamX, targetX, divider / (1 / delta))
+        --print(curCamY, targetY, divider / (1 / delta))
+        --print(smoothX, smoothY, viewWidth, viewWidth)
+        camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+    else
+        -- camera.centerCameraOnPosition(smoothX, smoothY, viewWidth, viewWidth)
+    end
+    --  camera.centerCameraOnPosition(targetX, targetY, viewWidth, viewWidth)
+    -- else
+    --print('no')
+    -- end
+    --   love.timer.sleep(.005)
+end
+
 function love.draw()
     ui.handleMouseClickStart()
     love.graphics.clear(1, 0, 1)
@@ -1205,7 +1198,7 @@ function love.draw()
     love.graphics.setColor(0, 0, 0, 0.5)
 
     local stats = love.graphics.getStats()
-    local memavg = calculateRollingAverage(rollingMemoryUsage)
+    local memavg = numbers.calculateRollingAverage(rollingMemoryUsage)
     local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = tostring(love.timer.getFPS()) .. 'fps'
@@ -1220,7 +1213,7 @@ function love.draw()
         love.graphics.circle('fill', x, y, radius)
         love.graphics.setColor(1, 1, 1, 1)
         local strW = font:getWidth(label)
-        local strH = font:getHeight() * countLines(label)
+        local strH = font:getHeight() * text.countLines(label)
         love.graphics.print(label, x - strW / 2, y - strH / 2)
         return a
     end
@@ -1253,15 +1246,14 @@ function love.draw()
     if mipoOnVehicle then
         local x = size / 2 + size * 2
         if circleLabelButton(x, y, size / 2, 'PEDAL') then
-            bike.frontWheel.body:setAngularVelocity(10000)
-            bike.backWheel.body:setAngularVelocity(10000)
+            cycleStep() 
         end
     end
 end
 
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
-    if k == 'space' then bike.frontWheel.body:setAngularVelocity(10000) end
+    if k == 'space' then cycleStep()  end
     -- if k == '.' then
     --     followCamera = not followCamera
     -- end

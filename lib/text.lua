@@ -34,6 +34,13 @@ text.stringFindLastSlash = function(str)
    --index = string.find(your_string, "/[^/]*$")
 end
 
+
+text.countLines = function(str)
+   local _, count = str:gsub('\n', '\n')
+   return count + 1 -- Add 1 to account for the last line without a newline
+end
+
+
 text.stringSplit = function(str, sep)
    local result = {}
    local regex = ("([^%s]+)"):format(sep)
