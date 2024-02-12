@@ -199,9 +199,9 @@ function makePedalBike(x, y, data)
 
     local seat = {}
     seat.body = love.physics.newBody(world, x, y - data.steeringHeight * 1.2, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight * 1.2, 200, 200)
+    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight * 1.2, 100, 100)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
-    connect.makeAndAddConnector(frame.body, 0, -data.steeringHeight * 1.2, { type = 'seat' }, 205, 205)
+    connect.makeAndAddConnector(frame.body, 0, -data.steeringHeight * 1.2, { type = 'seat' }, 105, 105)
 
     if false then
         local seat2 = {}
@@ -533,7 +533,7 @@ function startExample(number)
         floorWidth = math.max(c.lfoot.h * 3, c.torso.w * 1.2),
         radius = 100
     }
-    
+
     local bikeData = {
         type = 'bike',
         steeringHeight = c.luleg.h + c.llleg.h,
@@ -931,6 +931,10 @@ function disconnectMipoAndVehicle()
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi / 2, 0, 'revolute')
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi / 2, 0, 'revolute')
 
+        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, true, 'revolute')
+        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, true, 'revolute')
+
+
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi / 8, 'revolute')
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi / 8, 'revolute')
 
@@ -1030,6 +1034,10 @@ function connectMipoAndVehicle()
 
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi, math.pi / 2, 'revolute')
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi, math.pi / 2, 'revolute')
+
+        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
+        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
+
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi, 'revolute')
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi, 'revolute')
 
@@ -1044,13 +1052,15 @@ function connectMipoAndVehicle()
         end
         -- maybe i can rotate legs in advance so they wont end up like flamingo legs
 
+        if false then
         b2d.luleg:setAngle(-math.pi / 2)
         b2d.ruleg:setAngle(-math.pi / 2)
 
         b2d.llleg:setAngle(math.pi / 2)
         b2d.rlleg:setAngle(math.pi / 2)
 
-
+        b2d.torso:setAngle(0)
+        end
         -- lets alse put the arms in front of the body
         -- b2d.luarm:setAngle(math.pi)
         -- b2d.llarm:setAngle(math.pi)
@@ -1112,6 +1122,7 @@ function connectMipoAndVehicle()
         --print('doing some forcing I believe?')
     end
 
+   
     if (b2d.head) then b2d.head:setAngle(0) end
     if (b2d.neck1) then b2d.neck1:setAngle(-math.pi) end
     if (b2d.neck) then b2d.neck:setAngle(-math.pi) end
@@ -1143,6 +1154,7 @@ function love.draw()
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
             texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
+            texturedBox2d.drawNumbersOver(mipos[i].b2d)
         end
     end
 
