@@ -19,6 +19,162 @@ local updatePart       = require 'lib.updatePart'
 local Timer            = require 'vendor.timer'
 local text = require "lib.text"
 
+
+local function getAngle(x1,y1,x2,y2) 
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local angle = math.atan2(dy, dx)
+    return angle
+end
+local function calculateEndPoint(startPoint, angleRad, distance)
+    -- Convert angle from degrees to radians
+    local angleRadians = angleRad
+    
+    -- Calculate the change in x and y using trigonometry
+    local deltaX = distance * math.cos(angleRadians)
+    local deltaY = distance * math.sin(angleRadians)
+    
+    -- Calculate the end point
+    local endPoint = {
+        x = startPoint.x + deltaX,
+        y = startPoint.y + deltaY
+    }
+    
+    return endPoint.x, endPoint.y
+end
+
+
+
+function locatePeakX(startX, endX, stepSize) 
+    local bestPos = nil
+    local bestValue = math.huge 
+    --local bestDiff = math.huge
+
+    for i = 0, (endX-startX)/stepSize do 
+        local x = startX + i*stepSize
+        local nx = startX + (i+1)*stepSize
+        local nnx = startX + (i+2)*stepSize
+
+        local y = getYAtX(x, stepSize)
+        local ny = getYAtX(nx, stepSize)
+        local nny = getYAtX(nnx, stepSize)
+       --print(nx > x , nx > nnx  , nx > bestValue)
+        --print(ny < y , ny < nny, ny) 
+       if ny < y and ny < nny and bestValue> ny then 
+            bestPos = nx
+            bestValue = ny
+        end
+    end
+    return bestPos-stepSize
+end
+
+function startExample(number)
+    phys.setupWorld()
+    stepSize = 300
+    ground = initGround()
+    mipos = addMipos.make(1)
+    obstacles = {}
+
+    -- try to insert some houses, with jumpy roofs.
+    -- lets start with the roofs.
+    
+
+    -- first try and localte a point where these 2 conditions are met: 
+     -- my next step is higher then me
+     -- the step after that is lower .
+
+    -- locate peak basically
+
+
+    for i = 0, 9 do 
+
+        local rangeSize = 50
+
+        local psx = 0  + (i * rangeSize*stepSize)
+        local pex = rangeSize*stepSize + (i * rangeSize*stepSize)
+
+
+    local x1 = locatePeakX(psx, pex, stepSize)
+
+
+    local y1 = getYAtX(x1, stepSize)
+    local x2 =  x1 + stepSize
+    local y2 = getYAtX(x2, stepSize)
+    local distance = stepSize*10
+    local x3,y3 = calculateEndPoint({x=x1,y=y1}, getAngle(x2,y2,x1,y1), distance ) 
+    -- get the angle between these 2
+    --print(x1,y1,x2,y2)
+
+    local points = {x1,y1,x3,y3}
+    local schansBody = love.physics.newBody(world, 0, 0, "static")
+    local schansShape = love.physics.newChainShape(false, points)
+    local fixture = love.physics.newFixture(schansBody, schansShape)
+    
+
+    local body = love.physics.newBody(world, x1, y1, 'static')
+    local shape = love.physics.newRectangleShape(1, 1)
+    local fixture = love.physics.newFixture(body, shape, .3)
+   
+
+    local body = love.physics.newBody(world, x3, y3, 'static')
+    local shape = love.physics.newRectangleShape(1, 1)
+    local fixture = love.physics.newFixture(body, shape, .3)
+
+
+    end
+
+    if false then
+        for i = 1, 100 do
+            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
+            table.insert(obstacles, o)
+        end
+
+        for i = 1, 100 do
+            local o = makeRandomTriangle(i * 30, -500, 500)
+            table.insert(obstacles, o)
+        end
+    end
+
+    -- makeChain(0,-5000,10)
+    for i = 0, 10 do
+        --    makeCarousell(i * 5000, 0, 1500, 500, 1)
+    end
+    -- get data from the mipos[1] to make a fitted bike
+    local c = mipos[1].dna.creation
+    --print(inspect(c.lfoot))
+    local scooterData = {
+        type = 'scooter',
+        steeringHeight = c.luleg.h + c.llleg.h + c.torso.h / 2,
+        floorWidth = math.max(c.lfoot.h * 3, c.torso.w * 1.2),
+        radius = 100
+    }
+
+    local bikeData = {
+        type = 'bike',
+        steeringHeight = c.luleg.h + c.llleg.h,
+        floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
+        radius = 200
+    }
+    --bike = makeScooter(-2000, -5000, scooterData)
+    bike = makePedalBike(-2000, -5000, bikeData)
+
+    isPedalBike = true
+
+    --bike.frontWheel
+    rollingAverageVelX = {}
+    rollingAverageVelY = {}
+    rollingDistance = {}
+    rollingMemoryUsage = {}
+
+    for i = 1, 10 do
+        rollingAverageVelX[i] = 0
+        rollingAverageVelY[i] = 0
+        rollingDistance[i] = 0
+        rollingMemoryUsage[i] = 0
+    end
+end
+
+
 -- GROUND STUFF
 
 function initGround()
@@ -934,63 +1090,7 @@ end
 ----- rest
 
 
-function startExample(number)
-    phys.setupWorld()
-    stepSize = 300
-    ground = initGround()
-    mipos = addMipos.make(1)
-    obstacles = {}
 
-    if false then
-        for i = 1, 100 do
-            local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
-            table.insert(obstacles, o)
-        end
-
-        for i = 1, 100 do
-            local o = makeRandomTriangle(i * 30, -500, 500)
-            table.insert(obstacles, o)
-        end
-    end
-
-    -- makeChain(0,-5000,10)
-    for i = 0, 10 do
-        --    makeCarousell(i * 5000, 0, 1500, 500, 1)
-    end
-    -- get data from the mipos[1] to make a fitted bike
-    local c = mipos[1].dna.creation
-    --print(inspect(c.lfoot))
-    local scooterData = {
-        type = 'scooter',
-        steeringHeight = c.luleg.h + c.llleg.h + c.torso.h / 2,
-        floorWidth = math.max(c.lfoot.h * 3, c.torso.w * 1.2),
-        radius = 100
-    }
-
-    local bikeData = {
-        type = 'bike',
-        steeringHeight = c.luleg.h + c.llleg.h,
-        floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
-        radius = 200
-    }
-    --bike = makeScooter(-2000, -5000, scooterData)
-    bike = makePedalBike(-2000, -5000, bikeData)
-
-    isPedalBike = true
-
-    --bike.frontWheel
-    rollingAverageVelX = {}
-    rollingAverageVelY = {}
-    rollingDistance = {}
-    rollingMemoryUsage = {}
-
-    for i = 1, 10 do
-        rollingAverageVelX[i] = 0
-        rollingAverageVelY[i] = 0
-        rollingDistance[i] = 0
-        rollingMemoryUsage[i] = 0
-    end
-end
 
 
 function love.load()
