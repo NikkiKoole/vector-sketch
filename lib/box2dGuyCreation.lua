@@ -820,7 +820,7 @@ lib.rotateAllBodies = function(bodies, dt)
                     end
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
-                        local desired = upsideDown and -math.pi or 0
+                        local desired =  -math.pi /2 --upsideDown and -math.pi or 0
                         --print(25, dt)
                         rotateToHorizontal(body, desired, 25, 0.5, dt)
                     end

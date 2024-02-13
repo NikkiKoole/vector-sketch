@@ -60,7 +60,7 @@ function locatePeakX(startX, endX, stepSize)
         local nny = getYAtX(nnx, stepSize)
        --print(nx > x , nx > nnx  , nx > bestValue)
         --print(ny < y , ny < nny, ny) 
-       if ny < y and ny < nny and bestValue> ny then 
+       if  ny < nny and bestValue> ny then 
             bestPos = nx
             bestValue = ny
         end
@@ -105,7 +105,7 @@ function startExample(number)
     -- get the angle between these 2
     --print(x1,y1,x2,y2)
 
-    local points = {x1,y1,x3,y3}
+    local points = {x1,y1,x3,y3-1000}
     local schansBody = love.physics.newBody(world, 0, 0, "static")
     local schansShape = love.physics.newChainShape(false, points)
     local fixture = love.physics.newFixture(schansBody, schansShape)
@@ -153,7 +153,7 @@ function startExample(number)
         type = 'bike',
         steeringHeight = c.luleg.h + c.llleg.h,
         floorWidth = c.luleg.h + c.llleg.h + c.torso.h,
-        radius = 200
+        radius = 300
     }
     --bike = makeScooter(-2000, -5000, scooterData)
     bike = makePedalBike(-2000, -5000, bikeData)
@@ -186,7 +186,7 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
-    local STEEPNESS = 200
+    local STEEPNESS = 1000
     local index = math.floor(x / stepSize)
 
     local function generateWave(amplitude, frequency)
@@ -385,28 +385,30 @@ function makePedalBike(x, y, data)
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
-    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 10)
+    ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 1)
     ball1.fixture:setRestitution(.2) -- let the ball bounce
     ball1.body:setAngularVelocity(10000)
 
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius * 1.3)
-    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 10)
+    ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 3)
     ball2.fixture:setRestitution(.2) -- let the ball bounce
     ball2.body:setAngularVelocity(10000)
 
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = love.physics.newRectangleShape(floorWidth, 100)
-    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 10)
-    frame.fixture:setSensor(true)
+    frame.fixture = love.physics.newFixture(frame.body, frame.shape, 1)
+    --frame.fixture:setSensor(true)
 
     local seat = {}
-    seat.body = love.physics.newBody(world, x, y - data.steeringHeight * 1.2, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -data.steeringHeight * 1.2, 100, 100)
-    seat.fixture = love.physics.newFixture(frame.body, seat.shape, 2)
-    connect.makeAndAddConnector(frame.body, 0, -data.steeringHeight * 1.2, { type = 'seat' }, 105, 105)
+    local seatXOffset = -400
+    local seatYOffset = -400
+    seat.body = love.physics.newBody(world, x+seatXOffset, y - data.steeringHeight / 1.2, "dynamic")
+    seat.shape = love.physics.newRectangleShape(seatXOffset, -data.steeringHeight / 1.2, 100, 100)
+    seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
+    connect.makeAndAddConnector(frame.body, seatXOffset, -data.steeringHeight / 1.2, { type = 'seat' }, 105, 105)
 
     if false then
         local seat2 = {}
@@ -435,7 +437,7 @@ function makePedalBike(x, y, data)
     pedal.body = love.physics.newBody(world, x, y - data.steeringHeight * 0.6, "dynamic")
     pedal.shape = love.physics.newRectangleShape(pedalRadius*2, pedalRadius*2)
 
-    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 1)
+    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, .1)
     pedal.fixture:setSensor(true)
     connect.makeAndAddConnector(pedal.body, -(pedalRadius+connectorRadius), 0, { type = 'lfoot' }, connectorD, connectorD)
     connect.makeAndAddConnector(pedal.body, (pedalRadius+connectorRadius), 0, { type = 'rfoot' }, connectorD, connectorD)
