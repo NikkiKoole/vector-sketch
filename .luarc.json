@@ -5,5 +5,8 @@
     },
     "workspace.library": [
         "${3rd}/love2d/library"
+    ],
+    "diagnostics.disable": [
+        "lowercase-global"
     ]
 }
