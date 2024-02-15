@@ -1,3 +1,4 @@
+local numbers = require "lib.numbers"
 package.path  = package.path .. ";../../?.lua"
 local bbox    = require 'lib.bbox'
 local inspect = require 'vendor.inspect'
@@ -482,8 +483,8 @@ function useRecreateConnectorData(recreateConnectorData, body, guy)
     assert(type)
     if type == 'foot' then
         connect.makeAndReplaceConnector(recreateConnectorData, body, 0, 0, data,
-            creation.rfoot.w + 10,
-            creation.rfoot.h + 10)
+            creation.rfoot.w + 20,
+            creation.rfoot.h + 20)
     elseif type == 'hand' then
         connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w+4,
             creation.lhand.h+4)
@@ -609,7 +610,7 @@ lib.makeGuy = function(x, y, guy)
     return data
 end
 
-local function rotateToHorizontal(body, desiredAngle, divider, smarter, dt)
+function rotateToHorizontal(body, desiredAngle, divider, smarter, dt)
     -- its  abit messy now, but im smarter, or a bit better  about dt
 
     local DEGTORAD = 1 / 57.295779513
@@ -775,6 +776,13 @@ lib.rotateAllBodies = function(bodies, dt)
                     --  print(inspect(userData))
                     rotateToHorizontal(body, userData.data.rotation, 50)
                 end
+
+                if isBeingPointerJointed then
+                    if userData.bodyType == 'frame' then
+                        rotateToHorizontal(body, 0, 10, .5, dt) 
+                    end
+                    --     getRidOfBigRotationsInBody(body)
+                end
             end
 
 
@@ -793,6 +801,27 @@ lib.rotateAllBodies = function(bodies, dt)
                         local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
 
                         body:applyForce(0, up)
+                    end
+
+                    if userData.bodyType == 'frame' then
+                        --getRidOfBigRotationsInBody(body)
+                        --local desired = upsideDown and -math.pi or 0
+                        --rotateToHorizontal(body, desired, 50)
+                        --local up = -9.81 * love.physics.getMeter() * 2.5 --4.5
+
+                        --body:applyForce(0, up)
+                        --print(body:getAngle())
+                       --if body:getAngle()< -.5 or body:getAngle()> .5 then
+                        local ma = math.abs(body:getAngle())
+                          
+                        local rate =  numbers.mapInto(ma, 0, math.pi*2, 0.0001, 1 )
+                        local rate2 = 60/(1/rate)    
+                          
+                        --  local rate3 =  (rate2*100)/60 
+                         -- print(ma, rate, rate2*100)
+
+                         --  rotateToHorizontal(body, 0, 10, .1, dt) 
+                       --end
                     end
                     --print(userData.bodyType)
                     --if not upsideDown then
@@ -820,7 +849,7 @@ lib.rotateAllBodies = function(bodies, dt)
                     end
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
-                        local desired =  -math.pi /2 --upsideDown and -math.pi or 0
+                        local desired =  upsideDown and -math.pi or 0
                         --print(25, dt)
                         rotateToHorizontal(body, desired, 25, 0.5, dt)
                     end
