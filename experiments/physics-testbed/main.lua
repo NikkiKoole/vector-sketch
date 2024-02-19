@@ -77,25 +77,16 @@ function startExample(number)
 
     -- try to insert some houses, with jumpy roofs.
     -- lets start with the roofs.
-
-
     -- first try and localte a point where these 2 conditions are met:
     -- my next step is higher then me
     -- the step after that is lower .
-
     -- locate peak basically
-
 
     for i = 0, 100 do
         local rangeSize = 150
-
         local psx = 0 + (i * rangeSize * stepSize)
         local pex = rangeSize * stepSize + (i * rangeSize * stepSize)
-
-
         local x1 = locatePeakX(psx, pex, stepSize)
-
-
         local y1 = getYAtX(x1, stepSize)
         local x2 = x1 + stepSize
         local y2 = getYAtX(x2, stepSize)
@@ -109,11 +100,9 @@ function startExample(number)
         local schansShape = love.physics.newChainShape(false, points)
         local fixture = love.physics.newFixture(schansBody, schansShape)
 
-
         local body = love.physics.newBody(world, x1, y1, 'static')
         local shape = love.physics.newRectangleShape(1, 1)
         local fixture = love.physics.newFixture(body, shape, .3)
-
 
         local body = love.physics.newBody(world, x3, y3, 'static')
         local shape = love.physics.newRectangleShape(1, 1)
@@ -609,8 +598,15 @@ function makePedalBike(x, y, data)
     joint1:setMaxMotorTorque(20000)
 
 
-    return { frontWheel = ball1, backWheel = ball2, pedalWheel = pedal, frame = frame, seat = seat, groundFeeler =
-    groundFeeler }
+    return {
+        frontWheel = ball1,
+        backWheel = ball2,
+        pedalWheel = pedal,
+        frame = frame,
+        seat = seat,
+        groundFeeler =
+            groundFeeler
+    }
 end
 
 function makeScooter(x, y, data)
