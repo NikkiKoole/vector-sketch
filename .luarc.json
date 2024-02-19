@@ -1,9 +1,8 @@
 {
-    "runtime.version": "LuaJIT",
-    "runtime.special": {
-        "love.filesystem.load": "loadfile"
-    },
-    "workspace.library": [
-        "${3rd}/love2d/library"
-    ]
+  "runtime.version": "LuaJIT",
+  "runtime.special": {
+    "love.filesystem.load": "loadfile"
+  },
+  "workspace.library": ["${3rd}/love2d/library"],
+  "diagnostics.disable": ["lowercase-global"]
 }
