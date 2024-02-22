@@ -10,6 +10,7 @@ local lib              = {}
 --local foundSaveFile = false
 --if LOAD_AND_SAVE_FILES and hasSavedDNA5File() then
 --    fiveGuys = loadDNA5File()
+--
 --else
 
 palettes               = {}

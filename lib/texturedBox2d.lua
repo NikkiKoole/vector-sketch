@@ -13,7 +13,7 @@ local lib              = {}
 
 
 -- todo this is annoying, every lib that uses textured Box now neds these images...
-textures               = {
+textures = {
     love.graphics.newImage('assets/img/bodytextures/texture-type0.png'),
     love.graphics.newImage('assets/img/bodytextures/texture-type2t.png'),
     love.graphics.newImage('assets/img/bodytextures/texture-type1.png'),
@@ -120,7 +120,7 @@ local function renderMetaObject(img, name, box2dGuy, creation)
 
     if name == 'head' and (creation.head.metaOffsetX or creation.head.metaOffsetY) then
         x, y = box2dGuy.head:getWorldPoint(creation.head.metaOffsetX * wscale,
-                creation.head.metaOffsetY * hscale)
+            creation.head.metaOffsetY * hscale)
     end
 
     love.graphics.draw(img, x, y, r, sx * creation[name].flipx, sy * creation[name].flipy, w / 2, h / 2)
@@ -250,9 +250,9 @@ local function renderHair(box2dGuy, guy, faceData, creation, multipliers, x, y, 
             local f = faceData.metaPoints
             -- todo parameter hair (beard, only top hair, sidehair)
             --local hairLine = { f[6], f[7], f[8], f[1], f[2], f[3], f[4] }
-           -- local hairLine = { f[7], f[8], f[1], f[2], f[3] }
-            local hairLine = {  f[8], f[1], f[2] }
-           -- print(inspect(hairLine))
+            local hairLine = { f[7], f[8], f[1], f[2], f[3] }
+            -- local hairLine = { f[8], f[1], f[2] }
+            -- print(inspect(hairLine))
             --local hairLine = { f[3], f[4], f[5], f[6], f[7] }
             local points = hairLine
             local hairTension = .02
@@ -293,11 +293,11 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
     local mouthX = numbers.lerp(f[3][1], f[7][1], 0.5)
     local mouthY = numbers.lerp(f[1][2], f[5][2], (1 - positioners.mouth.y))
     local mx, my = facePart:getWorldPoint(
-            (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (mouthY + faceData.metaOffsetY) * sy * dpi / shrink)
+        (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
+        (mouthY + faceData.metaOffsetY) * sy * dpi / shrink)
     local tx, ty = facePart:getWorldPoint(
-            (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
-            (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
+        (mouthX + faceData.metaOffsetX) * sx * dpi / shrink,
+        (mouthY + faceData.metaOffsetY - 20) * sy * dpi / shrink)
 
     local mouthWidth = (wMult * (f[3][1] - f[7][1]) / 2)
     local scaleX = (mouthWidth / wMult) / canvasCache.teethCanvas:getWidth()
@@ -308,16 +308,16 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
     --print(mouthOpen, guy.tweenVars.mouthOpen)
 
     local upperCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-            { 0, -mouthOpen },
-            { mouthWidth / 2, 0 },
-            canvasCache.upperlipCanvas,
-            upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
+        { 0, -mouthOpen },
+        { mouthWidth / 2, 0 },
+        canvasCache.upperlipCanvas,
+        upperlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
     local lowerlipmesh = lib.createTexturedTriangleStrip(canvasCache.lowerlipCanvas)
     local lowerCurve = renderCurvedObjectFromSimplePoints({ -mouthWidth / 2, 0 },
-            { 0, mouthOpen },
-            { mouthWidth / 2, 0 },
-            canvasCache.upperlipCanvas,
-            lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
+        { 0, mouthOpen },
+        { mouthWidth / 2, 0 },
+        canvasCache.upperlipCanvas,
+        lowerlipmesh, box2dGuy, -1 * hMult, .5 * scaleX)
 
     local holePolygon = {}
     for i = 0, 6 do
@@ -341,6 +341,8 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
 
     love.graphics.setStencilTest("greater", 0)
 
+
+    --if positioners.teeth.z == 0 then
     if not box2dGuyCreation.isNullObject('teeth', guy.dna.values) then
         if canvasCache.teethCanvas then
             renderNonAttachedObject(canvasCache.teethCanvas,
@@ -348,8 +350,11 @@ local function drawMouth(facePart, faceData, creation, guy, box2dGuy, sx, sy, mu
                 box2dGuy, creation)
         end
     end
+    --end
 
     love.graphics.setStencilTest()
+
+
 
     love.graphics.draw(upperlipmesh, mx, my, r - math.pi, 1, 1)
     love.graphics.draw(lowerlipmesh, mx, my, r - math.pi, 1, 1)
@@ -390,7 +395,7 @@ local function helperTexturedCanvas(url, bgt, bg, bga, fgt, fg, fga, tr, ts, lp,
     -- print(url)
     -- print(love.graphics.getDPIScale())
     local cnv = canvas.makeTexturedCanvas(img, mask, bgt, bg, bga, fgt, fg, fga, tr, ts, lp, la, flipx, flipy,
-            renderPatch)
+        renderPatch)
 
     return cnv
 end
@@ -424,11 +429,11 @@ local function createRandomColoredBlackOutlineTexture(url, optionalPart)
     local renderPatch = {}
 
     return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1, pal1, al1,
-            tex2, pal2, al2,
-            tr, ts,
-            lineP, lineA,
-            1, 1, nil, renderPatch))
+        tex1, pal1, al1,
+        tex2, pal2, al2,
+        tr, ts,
+        lineP, lineA,
+        1, 1, nil, renderPatch))
 end
 
 
@@ -477,21 +482,21 @@ local function partToTexturedCanvas(partName, guy, optionalImageSettings)
     end
 
     local texturedcanvas = helperTexturedCanvas(
-            url,
-            textures[values[partName].bgTex],
-            palettes[values[partName].bgPal],
-            values[partName].bgAlpha,
-            textures[values[partName].fgTex],
-            palettes[values[partName].fgPal],
-            values[partName].fgAlpha,
-            values[partName].texRot,
-            texscales[values[partName].texScale],
-            palettes[values[partName].linePal],
-            values[partName].lineAlpha,
-            1, 1,
-            optionalImageSettings,
-            renderPatch
-        )
+        url,
+        textures[values[partName].bgTex],
+        palettes[values[partName].bgPal],
+        values[partName].bgAlpha,
+        textures[values[partName].fgTex],
+        palettes[values[partName].fgPal],
+        values[partName].fgAlpha,
+        values[partName].texRot,
+        texscales[values[partName].texScale],
+        palettes[values[partName].linePal],
+        values[partName].lineAlpha,
+        1, 1,
+        optionalImageSettings,
+        renderPatch
+    )
     return texturedcanvas, url
 end
 
@@ -509,11 +514,11 @@ lib.createWhiteColoredBlackOutlineTexture = function(url)
     local pal2 = palettes[5]
 
     return love.graphics.newImage(helperTexturedCanvas(url,
-            tex1, pal1, 5,
-            tex2, pal2, 2,
-            0, 1,
-            palettes[1], 5,
-            1, 1, nil, nil))
+        tex1, pal1, 5,
+        tex2, pal2, 2,
+        0, 1,
+        palettes[1], 5,
+        1, 1, nil, nil))
 end
 
 
@@ -830,12 +835,12 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             local eyeY = numbers.lerp(f[1][2], f[5][2], positioners.eye.y)
 
             local eyelx, eyely = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-                    (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
             local eyerx, eyery = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-                    (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY) * sy * dpi / shrink)
 
 
             local cx, cy = cam:getScreenCoordinates(eyelx, eyely)
@@ -855,17 +860,17 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
 
             local pupilImgWidth = canvasCache.pupilCanvas:getWidth()
             local pupilImgHeight = canvasCache.pupilCanvas:getHeight()
-            local pupilW = pupilImgWidth * multipliers.pupil.wMultiplier --* faceMultiplier
+            local pupilW = pupilImgWidth * multipliers.pupil.wMultiplier  --* faceMultiplier
             local pupilH = pupilImgHeight * multipliers.pupil.hMultiplier -- * faceMultiplier
             local pupilMaxOffsetW = math.max(((eyeW / 3)), 0)
             local pupilMaxOffsetH = math.max(((eyeH / 3)), 0)
 
             local angle, dist = getAngleAndDistance(cx, cy, destX, destY)
             local px1, py1 = setAngleAndDistanceX2(0, 0, angle - r, math.min(dist, pupilMaxOffsetW),
-                    math.min(dist, pupilMaxOffsetH), 1, 1)
+                math.min(dist, pupilMaxOffsetH), 1, 1)
             local pupillx, pupilly = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX + px1) * sx * dpi / shrink,
-                    (eyeY + faceData.metaOffsetY + py1) * sy * dpi / shrink)
+                (leftEyeX + faceData.metaOffsetX + px1) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY + py1) * sy * dpi / shrink)
 
 
             local cx, cy = cam:getScreenCoordinates(eyerx, eyery)
@@ -878,11 +883,11 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             end
             local angle, dist = getAngleAndDistance(cx, cy, destX, destY)
             local px2, py2 = setAngleAndDistanceX2(0, 0, angle - r, math.min(dist, pupilMaxOffsetW),
-                    math.min(dist, pupilMaxOffsetH), 1,
-                    1)
+                math.min(dist, pupilMaxOffsetH), 1,
+                1)
             local pupilrx, pupilry = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX + px2) * sx * dpi / shrink,
-                    (eyeY + faceData.metaOffsetY + py2) * sy * dpi / shrink)
+                (rightEyeX + faceData.metaOffsetX + px2) * sx * dpi / shrink,
+                (eyeY + faceData.metaOffsetY + py2) * sy * dpi / shrink)
 
             if canvasCache.eyeCanvas then
                 local eyeW = eyeMultiplierFix * multipliers.eye.wMultiplier * faceMultiplier
@@ -913,12 +918,12 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             local browY = numbers.lerp(f[5][2], f[1][2], positioners.brow.y)
 
             local browlx, browly = facePart:getWorldPoint(
-                    (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-                    (browY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (leftEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (browY + faceData.metaOffsetY) * sy * dpi / shrink)
 
             local browrx, browry = facePart:getWorldPoint(
-                    (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
-                    (browY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (rightEyeX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (browY + faceData.metaOffsetY) * sy * dpi / shrink)
 
             love.graphics.setColor(1, 1, 1, 1)
 
@@ -953,8 +958,8 @@ lib.drawSkinOver = function(box2dGuy, guy, skipNeck)
             local noseX = numbers.lerp(f[7][1], f[3][1], 0.5)
             local noseY = numbers.lerp(f[1][2], f[5][2], positioners.nose.y)
             local nx, ny = facePart:getWorldPoint(
-                    (noseX + faceData.metaOffsetX) * sx * dpi / shrink,
-                    (noseY + faceData.metaOffsetY) * sy * dpi / shrink)
+                (noseX + faceData.metaOffsetX) * sx * dpi / shrink,
+                (noseY + faceData.metaOffsetY) * sy * dpi / shrink)
 
             renderNonAttachedObject(canvasCache.noseCanvas,
                 'nose', r, nx, ny, 0.5 * multipliers.nose.wMultiplier * faceMultiplier,

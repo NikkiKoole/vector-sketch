@@ -6,7 +6,7 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
 end
 
 if jit then
-jit.off() 
+    jit.off()
 end
 require 'lib.printC'
 
@@ -40,7 +40,7 @@ local updatePart          = require 'lib.updatePart'
 local texturedBox2d       = require 'lib.texturedBox2d'
 local box2dGuyCreation    = require 'lib.box2dGuyCreation'
 local DEBUG_PROFILER      = false
-local LOAD_AND_SAVE_FILES = false
+local LOAD_AND_SAVE_FILES = true
 local canvas              = require 'lib.canvas'
 local numbers             = require 'lib.numbers'
 canvas.setShrinkFactor(2)
@@ -188,7 +188,7 @@ function loadDNA5File()
         result[i] = {
             init = false,
             id = i,
-            dna = parsed[i],
+            dna = dna.patchDNA(parsed[i]),
             b2d = nil,
             canvasCache = {},
             facingVars = {
@@ -440,7 +440,6 @@ function love.load()
     rollingMemoryUsage = {}
 
     for i = 1, 10 do
-   
         rollingMemoryUsage[i] = 0
     end
 
@@ -640,7 +639,6 @@ function calculateRollingAverage(valueList)
     end
     return sum / #valueList
 end
-
 
 function love.update(dt)
     function love.keypressed(key)
@@ -854,13 +852,13 @@ end
 
 function makeMarketingScreenshots(name)
     local resolutions = {
-        { 2796,     1290,     '6-7' }, --6.7
-        { 2796 / 2, 1290 / 2, '6-7-50%' }, --6.7
-        { 2688,     1242,     '6-5' }, --6.5
-        { 2688 / 2, 1242 / 2, '6-5-50%' }, --6.5
-        { 2208,     1242,     '5-5' }, -- 5.5
-        { 2208 / 2, 1242 / 2, '5-5-50%' }, -- 5.5
-        { 2732,     2048,     '12-9' }, -- 12.9
+        { 2796,     1290,     '6-7' },      --6.7
+        { 2796 / 2, 1290 / 2, '6-7-50%' },  --6.7
+        { 2688,     1242,     '6-5' },      --6.5
+        { 2688 / 2, 1242 / 2, '6-5-50%' },  --6.5
+        { 2208,     1242,     '5-5' },      -- 5.5
+        { 2208 / 2, 1242 / 2, '5-5-50%' },  -- 5.5
+        { 2732,     2048,     '12-9' },     -- 12.9
         { 2732 / 2, 2048 / 2, '12-9-50%' }, -- 12.9
     }
 

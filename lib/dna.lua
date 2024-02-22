@@ -12,6 +12,19 @@ local lib = {}
 
 --local positioners  =
 
+--- After new changes to DNA (addition of properties)we need to patch the already existing DNA out there
+---@param data any
+---@return any
+lib.patchDNA       = function(data)
+    if data.positioners then
+        if not data.positioners.teeth then
+            print('adding teeth positioner data')
+            data.positioners.teeth = { z = 0 }
+        end
+    end
+    return data
+end
+
 lib.getCreation    = function()
     local creation = {
         isPotatoHead = false,
@@ -84,7 +97,8 @@ lib.getPositioners = function()
         nose = { y = 0.5 },
         brow = { y = 0.8, bend = 1 },
         mouth = { y = 0.25 },
-        ear = { y = 0.5 }
+        ear = { y = 0.5 },
+        teeth = { z = 0 },
     }
     return positioners
 end
@@ -93,7 +107,7 @@ local function createDefaultTextureValues()
     return {
         shape     = 1,
         bgPal     = 13, --math.ceil(love.math.random() * #palettes),
-        fgPal     = 1, --math.ceil(love.math.random() * #palettes),
+        fgPal     = 1,  --math.ceil(love.math.random() * #palettes),
         bgTex     = 1,
         fgTex     = 2,
         linePal   = 1,
@@ -200,16 +214,16 @@ lib.generateParts = function()
     local headParts = bodyParts
 
     local eyeImgUrls, eyeParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
-            'eyes')
+        'eyes')
     local pupilImgUrls, pupilParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'pupils')
     local noseImgUrls, noseParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'noses')
     local browImgUrls, browParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'eyebrows')
     local earImgUrls, earParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'ears')
     local teethImgUrls, teethParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt', 'teeths')
     local upperlipImgUrls, upperlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
-            'upperlips')
+        'upperlips')
     local lowerlipImgUrls, lowerlipParts = readAndParse.loadVectorSketchAndGetImages('assets/faceparts.polygons.txt',
-            'lowerlips')
+        'lowerlips')
 
     table.insert(teethImgUrls, 'assets/parts/null.png')
 
