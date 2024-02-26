@@ -19,6 +19,16 @@ local Timer            = require 'vendor.timer'
 local text             = require "lib.text"
 
 
+function waitForEvent()
+    local a, b, c, d, e
+    repeat
+        a, b, c, d, e = love.event.wait()
+    until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
+end
+
+waitForEvent()
+
+
 local function getAngle(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -73,7 +83,7 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
-    mipos = addMipos.make(1)
+    mipos = addMipos.make(5)
     obstacles = {}
 
     -- try to insert some houses, with jumpy roofs.
@@ -1465,33 +1475,6 @@ end
 
 
 
-function love.load()
-    local ffont = "WindsorBT-Roman.otf"
-
-    font = love.graphics.newFont(ffont, 24)
-
-    love.graphics.setFont(font)
-    jointsEnabled = true
-    followCamera = 'bike'
-    startExample()
-
-    pointsOfInterest = {}
-
-    grassImage = love.graphics.newImage('world-assets/grass1.png')
-    mipoOnVehicle = false
-    local w, h = love.graphics.getDimensions()
-
-    for i = 1, 1 do
-        local x = -200000 + love.math.random() * 400000
-        local y = lerpYAtX(x, stepSize)
-        table.insert(pointsOfInterest,
-            { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
-    end
-
-    camera.setCameraViewport(cam, w, h)
-    camera.centerCameraOnPosition(0, 0, 3000, 3000)
-end
-
 function love.update(dt)
     -- print(dt)
     --local thingToFollow = bike.frontWheel.body
@@ -1617,6 +1600,33 @@ function love.update(dt)
     --   love.timer.sleep(.005)
 end
 
+function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier)
+    -- the individual grass leaves...
+    local startX = ground.points[1]
+    local startY = ground.points[2]
+    local eindX = ground.points[#ground.points - 1]
+    local eindY = ground.points[#ground.points]
+
+    --for i = startX, eindX, 50 do
+    --    love.graphics.line(i, startY, i, startY - 100)
+    --end
+
+    for i = 1, #ground.points, 2 do
+        if i > 1 and i < #ground.points - 1 then
+            local x = ground.points[i]
+            local y = ground.points[i + 1]
+            local x2 = ground.points[i + 2]
+            local y2 = ground.points[i + 3]
+
+            for j = 0, stepSize - 1, 50 do
+                local yy = lerpYAtX(x + j, stepSize)
+                local hh = love.math.noise((x + j) / 1000, secondParam, j * 2) * 200 * hMultiplier
+                love.graphics.line(x + j + xOffset, yy + yOffset, x + j + xOffset, yy - hh + yOffset)
+            end
+        end
+    end
+end
+
 function love.draw()
     ui.handleMouseClickStart()
     love.graphics.clear(1, 0, 1)
@@ -1637,7 +1647,9 @@ function love.draw()
         love.graphics.draw(sky, 0, 0, 0, w, h)
     end
     cam:push()
+    drawGrassLeaves(100, -100, 0, 1)
     phys.drawWorld(world)
+    drawGrassLeaves(.3, 200, 25, 2)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
@@ -1681,32 +1693,6 @@ function love.draw()
     end
 
 
-
-    -- the individual grass leaves...
-    local startX = ground.points[1]
-    local startY = ground.points[2]
-    local eindX = ground.points[#ground.points - 1]
-    local eindY = ground.points[#ground.points]
-
-    for i = startX, eindX, 50 do
-        --    love.graphics.line(i, startY, i, startY - 100)
-    end
-
-    for i = 1, #ground.points, 2 do
-        if i > 1 and i < #ground.points - 1 then
-            local x = ground.points[i]
-            local y = ground.points[i + 1]
-            local x2 = ground.points[i + 2]
-            local y2 = ground.points[i + 3]
-
-            for j = 0, stepSize - 1, 50 do
-                local yy = lerpYAtX(x + j, stepSize)
-                local hh = love.math.noise((x + j) / 1000, 100, j * 2) * 200
-
-                love.graphics.line(x + j, yy, x + j, yy - hh)
-            end
-        end
-    end
 
 
     --print(startX, eindX, (eindX - startX) / 50)
@@ -1866,6 +1852,7 @@ local function pointerPressed(x, y, id)
 end
 
 function love.mousepressed(x, y, button, istouch)
+    print('mousepresed')
     if not istouch then
         if button == 1 then
             pointerPressed(x, y, 'mouse')
@@ -1937,4 +1924,32 @@ if false then
             end
         end
     end
+end
+
+
+function love.load()
+    local ffont = "WindsorBT-Roman.otf"
+
+    font = love.graphics.newFont(ffont, 24)
+
+    love.graphics.setFont(font)
+    jointsEnabled = true
+    followCamera = 'bike'
+    startExample()
+
+    pointsOfInterest = {}
+
+    grassImage = love.graphics.newImage('world-assets/grass1.png')
+    mipoOnVehicle = false
+    local w, h = love.graphics.getDimensions()
+
+    for i = 1, 1 do
+        local x = -200000 + love.math.random() * 400000
+        local y = lerpYAtX(x, stepSize)
+        table.insert(pointsOfInterest,
+            { x = x, y = y - 500 + love.math.random() * 1000, radius = 400 })
+    end
+
+    camera.setCameraViewport(cam, w, h)
+    camera.centerCameraOnPosition(0, 0, 3000, 3000)
 end
