@@ -1675,20 +1675,40 @@ function love.draw()
             --    curve = love.math.newBezierCurve( vertices )
 
             --love.graphics.draw(grassImage, x, y, angle, sx, sx)
-            love.graphics.draw(grassImage, x, y - imgH, angle, sx, sx)
+            --   love.graphics.draw(grassImage, x, y - imgH, angle, sx, sx)
             --print(x)
         end
     end
 
 
+
+    -- the individual grass leaves...
     local startX = ground.points[1]
     local startY = ground.points[2]
     local eindX = ground.points[#ground.points - 1]
     local eindY = ground.points[#ground.points]
 
     for i = startX, eindX, 50 do
-        love.graphics.line(i, startY, i, startY - 100)
+        --    love.graphics.line(i, startY, i, startY - 100)
     end
+
+    for i = 1, #ground.points, 2 do
+        if i > 1 and i < #ground.points - 1 then
+            local x = ground.points[i]
+            local y = ground.points[i + 1]
+            local x2 = ground.points[i + 2]
+            local y2 = ground.points[i + 3]
+
+            for j = 0, stepSize - 1, 50 do
+                local yy = lerpYAtX(x + j, stepSize)
+                local hh = love.math.noise((x + j) / 1000, 100, j * 2) * 200
+
+                love.graphics.line(x + j, yy, x + j, yy - hh)
+            end
+        end
+    end
+
+
     --print(startX, eindX, (eindX - startX) / 50)
 
     curve = love.math.newBezierCurve(vertsBackground)
