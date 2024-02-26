@@ -80,6 +80,20 @@ function locatePeakX(startX, endX, stepSize)
 end
 
 function startExample(number)
+    atlasImg = love.graphics.newArrayImage('assets/sprieten.png')
+    --atlasArray = love.graphics.newArrayImage({ 'assets/sprieten.png' })
+    q1 = love.graphics.newQuad(0, 0, 49, 192, atlasImg)
+    q2 = love.graphics.newQuad(51, 164, 40, 197, atlasImg)
+    q3 = love.graphics.newQuad(51, 0, 41, 162, atlasImg)
+    q4 = love.graphics.newQuad(94, 0, 46, 186, atlasImg)
+    q5 = love.graphics.newQuad(0, 194, 47, 231, atlasImg)
+    q6 = love.graphics.newQuad(94, 188, 45, 236, atlasImg)
+    q7 = love.graphics.newQuad(142, 197, 47, 208, atlasImg)
+    q8 = love.graphics.newQuad(142, 0, 52, 195, atlasImg)
+    quads = { q1, q2, q3, q4, q5, q6, q7, q8 }
+    origins = { { 22, 185 }, { 12, 187 }, { 19, 144 }, { 25, 176 }, { 27, 224 }, { 16, 210 }, { 22, 190 }, { 30, 173 } }
+
+
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
@@ -1473,7 +1487,7 @@ end
 
 
 
-
+local timeSpent = 0
 
 function love.update(dt)
     -- print(dt)
@@ -1598,9 +1612,10 @@ function love.update(dt)
     --print('no')
     -- end
     --   love.timer.sleep(.005)
+    timeSpent = timeSpent + dt
 end
 
-function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier)
+function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier, batch)
     -- the individual grass leaves...
     local startX = ground.points[1]
     local startY = ground.points[2]
@@ -1611,6 +1626,24 @@ function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier)
     --    love.graphics.line(i, startY, i, startY - 100)
     --end
 
+
+    --  if true then
+    -- atlasArray = love.graphics.newArrayImage({ 'floweratlas.png' })
+
+    local count = #quads
+    local rand = love.math.random
+    local w, h = love.graphics.getDimensions()
+
+    --  for i = 1, testsize do
+    --      local a = rand() * math.pi / 4 - (math.pi / 8)
+    --      local index = math.ceil(rand() * count)
+    --      local ori = origins[index]
+    --      batch2:addLayer(1, quads[index], rand() * w, h, a, 1, 1, ori[1], ori[2])
+    --  end
+    --end
+
+
+    local ccc = 0
     for i = 1, #ground.points, 2 do
         if i > 1 and i < #ground.points - 1 then
             local x = ground.points[i]
@@ -1618,13 +1651,23 @@ function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier)
             local x2 = ground.points[i + 2]
             local y2 = ground.points[i + 3]
 
-            for j = 0, stepSize - 1, 50 do
+            for j = 0, stepSize - 1, 75 do
                 local yy = lerpYAtX(x + j, stepSize)
                 local hh = love.math.noise((x + j) / 1000, secondParam, j * 2) * 200 * hMultiplier
-                love.graphics.line(x + j + xOffset, yy + yOffset, x + j + xOffset, yy - hh + yOffset)
+                -- love.graphics.line(x + j + xOffset, yy + yOffset, x + j + xOffset, yy - hh + yOffset)
+
+                local index = math.ceil((j % count) + 1)
+                --print(index)
+                local ori = origins[index]
+                local angle = math.sin(hh) / 5
+                angle = angle + math.sin(timeSpent) / 10
+                --print(angle)
+                batch:addLayer(1, quads[index], x + j + xOffset, yy + yOffset, angle, 2, 2 * hh / 200, ori[1], ori[2])
+                ccc = ccc + 1
             end
         end
     end
+    -- print(ccc)
 end
 
 function love.draw()
@@ -1647,17 +1690,29 @@ function love.draw()
         love.graphics.draw(sky, 0, 0, 0, w, h)
     end
     cam:push()
-    drawGrassLeaves(100, -100, 0, 1)
+
+
+
+    local batch1 = love.graphics.newSpriteBatch(atlasImg)
+    local batch2 = love.graphics.newSpriteBatch(atlasImg)
+
+    drawGrassLeaves(100, -100, 0, 1, batch2)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.draw(batch2)
     phys.drawWorld(world)
-    drawGrassLeaves(.3, 200, 25, 2)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
         if (bx > camtlx - 1000 and bx < cambrx + 1000) then
             texturedBox2d.drawSkinOver(mipos[i].b2d, mipos[i])
-            texturedBox2d.drawNumbersOver(mipos[i].b2d)
+            --texturedBox2d.drawNumbersOver(mipos[i].b2d)
         end
     end
+
+    drawGrassLeaves(.3, 200, 25, 2, batch1)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.draw(batch1)
+
 
 
     love.graphics.setColor(0, 0, 0)
