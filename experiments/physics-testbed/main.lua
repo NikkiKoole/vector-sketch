@@ -207,11 +207,11 @@ function startExample(number)
 
     }
 
-    local bikeData2 = {
+    bikeData2 = {
         type = 'bike',
         steeringHeight = c.luleg.h + c.llleg.h,
         floorWidth = c.luleg.h + c.llleg.h + c.torso.h / 1,
-        radius = (c.luleg.h + c.llleg.h) / 2
+        radius = math.max((c.luleg.h + c.llleg.h) / 2, 150)
     }
 
     local connectLessData = {
@@ -892,7 +892,7 @@ function makeBike2(x, y, data)
     local floorWidth = data.floorWidth or data.radius
 
     local frameHeight = 300
-    local radius = math.max(data.radius, frameHeight / 1.5)
+    local radius = data.radius
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
     frame.shape = makeBikeFrameShape(floorWidth, frameHeight, 0, 0)
@@ -910,23 +910,24 @@ function makeBike2(x, y, data)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 2)
 
     local seat = {}
-
-    seat.body = love.physics.newBody(world, x, y - frameHeight, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -frameHeight, 100, 100)
+    local seatYOffset = -radius * .5
+    seat.body = love.physics.newBody(world, x, y - frameHeight + seatYOffset, "dynamic")
+    seat.shape = love.physics.newRectangleShape(0, -frameHeight + seatYOffset, 100, 100)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
-    connect.makeAndAddConnector(frame.body, 0, -frameHeight, { type = 'seat' }, 105, 105)
+    connect.makeAndAddConnector(frame.body, 0, -frameHeight + seatYOffset, { type = 'seat' }, 105, 105)
 
-    local joint1 = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
+    local wheelJoint = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
 
-    local pedalRadius = 100 --radius / 3
+    local pedalRadius = radius / 3
     local connectorRadius = pedalRadius / 3
     local connectorD = connectorRadius * 2
-    local pedalXOffset = radius / 4
+    local pedalXOffset = 0 --radius * .5
+    local pedalYOffset = 0 ---radius * .5
     local pedal = {}
-    pedal.body = love.physics.newBody(world, x + pedalXOffset, y + radius / 4, "dynamic")
-    pedal.shape = love.physics.newRectangleShape(pedalRadius * 2, pedalRadius * 2)
+    pedal.body = love.physics.newBody(world, x + pedalXOffset, y + pedalYOffset, "dynamic")
+    pedal.shape = love.physics.newCircleShape(pedalRadius)
 
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, .1)
     pedal.fixture:setSensor(true)
@@ -936,15 +937,18 @@ function makeBike2(x, y, data)
     connect.makeAndAddConnector(pedal.body, (pedalRadius + connectorRadius), 0, { type = 'rfoot' }, connectorD,
         connectorD)
 
-    local joint1 = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
+    local pedalJoint = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
 
+    joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -3)
 
     return { frontWheel = ball1, backWheel = ball2, frame = frame, seat = seat, pedalWheel = pedal, }
 end
 
 function cycleStep()
     -- bike.frontWheel.body:setAngularVelocity(120000)
-    bike.backWheel.body:setAngularVelocity(120000)
+    --  bike.backWheel.body:setAngularVelocity(120000)
+    bike.frame.body:applyLinearImpulse(10000, -1000)
+    bike.pedalWheel.body:applyAngularImpulse(10000)
 end
 
 local function setSensorValueBody(body, value)
@@ -1150,29 +1154,32 @@ function connectMipoAndVehicle()
     end
 
 
+
+
+
     if isPedalBike then
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
-        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
-        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
+        -- box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
+        -- box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
         --   box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lfoot, { sleeping = true })
         --   box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rfoot, { sleeping = true })
 
         -- b2d.luleg:setAngle(math.pi / 2)
         -- b2d.ruleg:setAngle(math.pi / 2)
+        disableLegs()
+        if false then
+            box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi, math.pi / 2, 'revolute')
+            box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi, math.pi / 2, 'revolute')
 
-        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi, math.pi / 2, 'revolute')
-        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi, math.pi / 2, 'revolute')
+            box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
+            box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
 
-        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
-        box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
-
-        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi, 'revolute')
-        box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi, 'revolute')
-
-
-        --  box2dGuyCreation.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, false, 'revolute')
-        --  box2dGuyCreation.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, false, 'revolute')
+            box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi, 'revolute')
+            box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi, 'revolute')
+        end
+        box2dGuyCreation.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, false, 'revolute')
+        box2dGuyCreation.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, false, 'revolute')
 
         if true then
             setSensorValueBody(b2d.luleg, true)
@@ -1570,8 +1577,8 @@ function love.update(dt)
     -- enableDisableObjects(obstacles)
 
 
-    local a = bike.frontWheel.body:getAngle()
-    local v = bike.frontWheel.body:getAngularVelocity()
+    local a = bike.backWheel.body:getAngle()
+    local v = bike.backWheel.body:getAngularVelocity()
 
 
 
@@ -1585,9 +1592,12 @@ function love.update(dt)
         --mipoBody:applyAngularImpulse(bikeFrameAngle*-1000)
         --bike.frame.body:applyAngularImpulse(bikeFrameAngle*-1000)
         -- print(bikeFrameAngle, mipoBody:getAngle())
+        local b2d = mipos[1].b2d
+        --  b2d.lfoot:setAngle(math.pi + math.pi / 2)
+        --  b2d.rfoot:setAngle(math.pi + math.pi / 2)
         if bike.pedalWheel and bike.pedalWheel.body then
-            bike.pedalWheel.body:setAngle(a / 3)
-            -- bike.pedalWheel.body:setAngularVelocity(v/100)
+            --bike.pedalWheel.body:setAngle(a / 13)
+            --bike.pedalWheel.body:setAngularVelocity(v * 10)
         end
 
         if bike.groundFeeler then
@@ -1669,6 +1679,31 @@ function love.update(dt)
     timeSpent = timeSpent + dt
 end
 
+function drawHillGround()
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+
+    for i = 1, #ground.points - 2, 2 do
+        love.graphics.setColor(1, 0, 0)
+        love.graphics.polygon("fill",
+            ground.points[i + 0], ground.points[i + 1] - 100,
+            ground.points[i + 2], ground.points[i + 3] - 100,
+            ground.points[i + 2], ground.points[i + 3] + 200,
+            ground.points[i + 0], ground.points[i + 1] + 200)
+
+        love.graphics.setColor(1, 1, 0)
+        love.graphics.polygon("fill",
+            ground.points[i + 0], ground.points[i + 1] + 200,
+            ground.points[i + 2], ground.points[i + 3] + 200,
+            ground.points[i + 2], cambry,
+            ground.points[i + 0], cambry)
+    end
+
+    --love.graphics.polygon("fill", ground.points)
+end
+
 function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier, batch)
     -- the individual grass leaves...
     local startX = ground.points[1]
@@ -1724,6 +1759,32 @@ function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier, batch)
     -- print(ccc)
 end
 
+local function createFittingScale(img, desired_w, desired_h)
+    local w, h = img:getDimensions()
+    local sx, sy = desired_w / w, desired_h / h
+    return sx, sy
+end
+
+
+local function textureTheBike(bike, bikeData)
+    local img          = wheelImages[frontWheelImgIndex]
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+
+    local x, y         = bike.frontWheel.body:getPosition()
+    local a            = bike.frontWheel.body:getAngle()
+    love.graphics.draw(img, x, y, a, sx, sy, dimsH / 2, dimsW / 2)
+
+    ----
+    local img          = wheelImages[backWheelImgIndex]
+    local dimsW, dimsH = img:getDimensions()
+    local sx, sy       = createFittingScale(img, bikeData.radius * 2, bikeData.radius * 2)
+
+    local x, y         = bike.backWheel.body:getPosition()
+    local a            = bike.backWheel.body:getAngle()
+    love.graphics.draw(img, x, y, a + math.pi, sx, sy, dimsH / 2, dimsW / 2)
+end
+
 function love.draw()
     ui.handleMouseClickStart()
     love.graphics.clear(1, 0, 1)
@@ -1745,12 +1806,12 @@ function love.draw()
     end
     cam:push()
 
-
+    drawHillGround()
 
     local batch1 = love.graphics.newSpriteBatch(atlasImg)
     local batch2 = love.graphics.newSpriteBatch(atlasImg)
 
-    drawGrassLeaves(100, -100, 0, 1, batch2)
+    drawGrassLeaves(100, -100, 0, .5, batch2)
     love.graphics.setColor(0, 0, 0)
     love.graphics.draw(batch2)
     phys.drawWorld(world)
@@ -1763,7 +1824,12 @@ function love.draw()
         end
     end
 
-    drawGrassLeaves(.3, 200, 25, 2, batch1)
+    -- texture the bike
+    love.graphics.setColor(0, 0, 0)
+    textureTheBike(bike, bikeData2)
+
+
+    drawGrassLeaves(.3, 200, 25, .75, batch1)
     love.graphics.setColor(0, 0, 0)
     love.graphics.draw(batch1)
 
@@ -1806,10 +1872,10 @@ function love.draw()
 
     --print(startX, eindX, (eindX - startX) / 50)
 
-    curve = love.math.newBezierCurve(vertsBackground)
-    love.graphics.line(curve:render())
-    curve = love.math.newBezierCurve(vertsForground)
-    love.graphics.line(curve:render())
+    --curve = love.math.newBezierCurve(vertsBackground)
+    --love.graphics.line(curve:render())
+    --curve = love.math.newBezierCurve(vertsForground)
+    --love.graphics.line(curve:render())
 
 
     love.graphics.setColor(1, 1, 1)
@@ -1841,7 +1907,6 @@ function love.draw()
     local fps = tostring(love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
     love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
-
 
     function circleLabelButton(x, y, radius, label)
         love.graphics.setColor(0, 0, 0, 0.5)
@@ -1902,6 +1967,22 @@ local function getVehicleMass(vehicle)
     return mass
 end
 
+function disableLegs()
+    local b2d = mipos[1].b2d
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
+    box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
+    box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, 0, math.pi / 2, 'revolute')
+    box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, 0, math.pi / 2, 'revolute')
+
+    --   box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
+    --   box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
+
+    box2dGuyCreation.setJointLimitsBetweenBodies(b2d.luleg, b2d.llleg, 0, math.pi / 2, 'revolute')
+    box2dGuyCreation.setJointLimitsBetweenBodies(b2d.ruleg, b2d.rlleg, 0, math.pi / 2, 'revolute')
+end
+
 function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == 'space' then
@@ -1912,6 +1993,9 @@ function love.keypressed(k)
     -- if k == '.' then
     --     followCamera = not followCamera
     -- end
+    if k == 'd' then
+        disableLegs()
+    end
     if k == 'x' then
         bike.frontWheel.body:setAngularVelocity(-100000)
         -- bike.backWheel.body:setAngularVelocity(-1000)
@@ -2070,6 +2154,15 @@ function love.load()
 
     grassImage = love.graphics.newImage('world-assets/grass1.png')
     mipoOnVehicle = false
+
+    wheelImages = { love.graphics.newImage('assets/vehicleparts/wheel1.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel2.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel3.png')
+    , love.graphics.newImage('assets/vehicleparts/wheel4.png') }
+
+    frontWheelImgIndex = math.ceil(#wheelImages * love.math.random())
+    backWheelImgIndex = math.ceil(#wheelImages * love.math.random())
+
     local w, h = love.graphics.getDimensions()
 
     for i = 1, 1 do
