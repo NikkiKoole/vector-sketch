@@ -29,6 +29,13 @@ end
 waitForEvent()
 
 
+function hex2rgb(hex, alpha)
+    hex = hex:gsub("#", "")
+    return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+        tonumber("0x" .. hex:sub(5, 6))
+        / 255, alpha and alpha or 1
+end
+
 local function getAngle(x1, y1, x2, y2)
     local dx = x1 - x2
     local dy = y1 - y2
@@ -97,7 +104,7 @@ function startExample(number)
     phys.setupWorld()
     stepSize = 300
     ground = initGround()
-    mipos = addMipos.make(1)
+    mipos = addMipos.make(10)
     obstacles = {}
 
     -- try to insert some houses, with jumpy roofs.
@@ -259,7 +266,7 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
-    local STEEPNESS = 2000
+    local STEEPNESS = 3000
     local index = math.floor(x / stepSize)
 
     local function generateWave(amplitude, frequency)
@@ -911,16 +918,17 @@ function makeBike2(x, y, data)
 
     local seat = {}
     local seatYOffset = -radius * .5
-    seat.body = love.physics.newBody(world, x, y - frameHeight + seatYOffset, "dynamic")
-    seat.shape = love.physics.newRectangleShape(0, -frameHeight + seatYOffset, 100, 100)
+    local seatXOffset = 0 --radius * .5
+    seat.body = love.physics.newBody(world, x + seatXOffset, y - frameHeight + seatYOffset, "dynamic")
+    seat.shape = love.physics.newRectangleShape(seatXOffset, -frameHeight + seatYOffset, 100, 100)
     seat.fixture = love.physics.newFixture(frame.body, seat.shape, 1)
-    connect.makeAndAddConnector(frame.body, 0, -frameHeight + seatYOffset, { type = 'seat' }, 105, 105)
+    connect.makeAndAddConnector(frame.body, seatXOffset, -frameHeight + seatYOffset, { type = 'seat' }, 105, 105)
 
     local wheelJoint = love.physics.newRevoluteJoint(frame.body, ball1.body, ball1.body:getX(), ball1.body:getY(), false)
     local joint2 = love.physics.newRevoluteJoint(frame.body, ball2.body, ball2.body:getX(), ball2.body:getY(), false)
 
 
-    local pedalRadius = radius / 3
+    local pedalRadius = 100 --== radius / 2
     local connectorRadius = pedalRadius / 3
     local connectorD = connectorRadius * 2
     local pedalXOffset = 0 --radius * .5
@@ -931,7 +939,7 @@ function makeBike2(x, y, data)
 
     pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, .1)
     pedal.fixture:setSensor(true)
-    pedal.fixture:setFriction(0)
+    --pedal.fixture:setFriction(0)
     connect.makeAndAddConnector(pedal.body, -(pedalRadius + connectorRadius), 0, { type = 'lfoot' }, connectorD,
         connectorD)
     connect.makeAndAddConnector(pedal.body, (pedalRadius + connectorRadius), 0, { type = 'rfoot' }, connectorD,
@@ -939,7 +947,7 @@ function makeBike2(x, y, data)
 
     local pedalJoint = love.physics.newRevoluteJoint(frame.body, pedal.body, pedal.body:getX(), pedal.body:getY(), false)
 
-    joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -3)
+    joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -10)
 
     return { frontWheel = ball1, backWheel = ball2, frame = frame, seat = seat, pedalWheel = pedal, }
 end
@@ -1679,28 +1687,102 @@ function love.update(dt)
     timeSpent = timeSpent + dt
 end
 
+darkGrassColor = { hex2rgb('2a5b3e') }
+darkGrassColorTrans = { hex2rgb('2a5b3e', 0.5) }
+lightGrassColor = { hex2rgb('86a542') }
+
 function drawHillGround()
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
 
+    --grassPattern
 
     for i = 1, #ground.points - 2, 2 do
-        love.graphics.setColor(1, 0, 0)
+        -- the 'road' part
+
+
+        love.graphics.setColor(darkGrassColor)
         love.graphics.polygon("fill",
             ground.points[i + 0], ground.points[i + 1] - 100,
             ground.points[i + 2], ground.points[i + 3] - 100,
             ground.points[i + 2], ground.points[i + 3] + 200,
             ground.points[i + 0], ground.points[i + 1] + 200)
 
-        love.graphics.setColor(1, 1, 0)
+        -- the side part
+
+        love.graphics.setColor(lightGrassColor)
         love.graphics.polygon("fill",
             ground.points[i + 0], ground.points[i + 1] + 200,
             ground.points[i + 2], ground.points[i + 3] + 200,
             ground.points[i + 2], cambry,
             ground.points[i + 0], cambry)
     end
+    love.graphics.setColor(0, 0, 0, 0.2)
 
+    local doTextureStuff = true
+    if (doTextureStuff) then
+        local pw, ph = grassPattern:getDimensions()
+        local screenW = cambrx - camtlx
+        local screenH = cambry - camtly
+
+        local function myStencilFunction()
+            for i = 1, #ground.points - 2, 2 do
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.polygon("fill",
+                    ground.points[i + 0], ground.points[i + 1] - 100,
+                    ground.points[i + 2], ground.points[i + 3] - 100,
+                    ground.points[i + 2], ground.points[i + 3] + 200,
+                    ground.points[i + 0], ground.points[i + 1] + 200)
+
+
+                love.graphics.polygon("fill",
+                    ground.points[i + 0], ground.points[i + 1] + 200,
+                    ground.points[i + 2], ground.points[i + 3] + 200,
+                    ground.points[i + 2], cambry,
+                    ground.points[i + 0], cambry)
+            end
+        end
+
+
+        love.graphics.stencil(myStencilFunction, "replace", 1)
+        love.graphics.setStencilTest("greater", 0)
+
+
+        love.graphics.setColor(darkGrassColorTrans)
+        -- love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
+
+
+
+        -- first render....
+        local repeats = (screenW / pw) * 0.15
+        local tileOffsetX = (camtlx / screenW) * repeats
+        local tileOffsetY = (camtly / screenH) * repeats
+        local mesh = love.graphics.newMesh({
+            { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY },
+            { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY },
+            { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
+            { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
+        })
+        mesh:setTexture(grassPattern)
+        love.graphics.draw(mesh, 0, 0)
+
+        -- another render.....
+        local repeats = (screenW / pw) * 0.3
+        local tileOffsetX = (camtlx / screenW) * repeats
+        local tileOffsetY = (camtly / screenH) * repeats
+        local mesh = love.graphics.newMesh({
+            { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY },
+            { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY },
+            { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
+            { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
+        })
+        mesh:setTexture(grassPattern)
+        love.graphics.draw(mesh, 0, 0)
+
+
+        love.graphics.setStencilTest()
+    end
     --love.graphics.polygon("fill", ground.points)
 end
 
@@ -1744,14 +1826,15 @@ function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier, batch)
                 local yy = lerpYAtX(x + j, stepSize)
                 local hh = love.math.noise((x + j) / 1000, secondParam, j * 2) * 200 * hMultiplier
                 -- love.graphics.line(x + j + xOffset, yy + yOffset, x + j + xOffset, yy - hh + yOffset)
-
-                local index = math.ceil((j % count) + 1)
+                local indx2 = math.ceil(love.math.noise((x + j) / .1, yOffset * 0.01, hMultiplier) * count)
+                --print(indx2)
+                --local index = math.ceil((j % count) + 1)
                 --print(index)
-                local ori = origins[index]
+                local ori = origins[indx2]
                 local angle = math.sin(hh) / 10
                 angle = angle + math.sin(timeSpent) / 10
                 --print(angle)
-                batch:addLayer(1, quads[index], x + j + xOffset, yy + yOffset, angle, 2, 2 * hh / 200, ori[1], ori[2])
+                batch:addLayer(1, quads[indx2], x + j + xOffset, yy + yOffset, angle, 2, 2 * hh / 200, ori[1], ori[2])
                 ccc = ccc + 1
             end
         end
@@ -1812,9 +1895,11 @@ function love.draw()
     local batch2 = love.graphics.newSpriteBatch(atlasImg)
 
     drawGrassLeaves(100, -100, 0, .5, batch2)
-    love.graphics.setColor(0, 0, 0)
+
+
+    love.graphics.setColor(darkGrassColor)
     love.graphics.draw(batch2)
-    phys.drawWorld(world)
+    -- phys.drawWorld(world)
 
     for i = 1, #mipos do
         local bx = mipos[i].b2d.torso:getX()
@@ -1829,8 +1914,10 @@ function love.draw()
     textureTheBike(bike, bikeData2)
 
 
-    drawGrassLeaves(.3, 200, 25, .75, batch1)
-    love.graphics.setColor(0, 0, 0)
+    drawGrassLeaves(.3, 250, 25, 1.75, batch1)
+
+
+    love.graphics.setColor(lightGrassColor)
     love.graphics.draw(batch1)
 
 
@@ -2163,6 +2250,8 @@ function love.load()
     frontWheelImgIndex = math.ceil(#wheelImages * love.math.random())
     backWheelImgIndex = math.ceil(#wheelImages * love.math.random())
 
+    grassPattern = love.graphics.newImage('assets/world/grasspattern3.png')
+    grassPattern:setWrap('repeat', 'repeat')
     local w, h = love.graphics.getDimensions()
 
     for i = 1, 1 do

@@ -37,7 +37,7 @@ local function getParentAndChildrenFromPartName(partName, guy)
         ruleg = { p = 'torso', c = 'rlleg' },
         rlleg = { p = 'ruleg', c = 'rfoot' },
         rfoot = { p = 'rlleg' },
-      --  butt = {p = 'torso'}
+        --  butt = {p = 'torso'}
     }
 
     if creation and partName == 'head' and creation.hasNeck == false then
@@ -112,7 +112,6 @@ local function getOffsetFromParent(partName, guy)
         end
         return -creation.torso.w / 2, -creation.torso.h / 2
     elseif partName == 'ruarm' then
-        
         if creation.isPotatoHead then
             if creation.torso.metaPoints then
                 return getScaledTorsoMetaPoint(3, guy)
@@ -131,7 +130,7 @@ local function getOffsetFromParent(partName, guy)
             local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
             return rx, ry
         end
-        return ( -creation.torso.w / 2) * (1 - t), creation.torso.h / 2
+        return (-creation.torso.w / 2) * (1 - t), creation.torso.h / 2
     elseif partName == 'ruleg' then
         local t = positioners.leg.x
         if creation.torso.metaPoints then
@@ -141,7 +140,6 @@ local function getOffsetFromParent(partName, guy)
             return rx, ry
         end
         return (creation.torso.w / 2) * (1 - t), creation.torso.h / 2
- 
     elseif partName == 'hair1' then
         if creation.head.metaPoints then
             return getScaledHeadMetaPoint(3, guy)
@@ -352,7 +350,7 @@ lib.setJointLimitsBetweenBodies = function(body1, body2, lower, upper, ofType)
         for i = 1, #joints do
             --     print(joints[i]:getType())
             if ofType == nil or joints[i]:getType() == ofType then
-                joints[i]:setLimits( lower, upper )
+                joints[i]:setLimits(lower, upper)
             end
         end
     end
@@ -363,7 +361,7 @@ lib.getJointLimitsBetweenBodies = function(body1, body2, ofType)
         for i = 1, #joints do
             --     print(joints[i]:getType())
             if ofType == nil or joints[i]:getType() == ofType then
-                local lower, upper = joints[i]:getLimits( )
+                local lower, upper = joints[i]:getLimits()
                 return lower, upper
             end
         end
@@ -486,14 +484,14 @@ function useRecreateConnectorData(recreateConnectorData, body, guy)
             creation.rfoot.w + 20,
             creation.rfoot.h + 20)
     elseif type == 'hand' then
-        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w+4,
-            creation.lhand.h+4)
+        connect.makeAndReplaceConnector(recreateConnectorData, body, 0, creation.lhand.h / 2, data, creation.lhand.w + 4,
+            creation.lhand.h + 4)
     elseif type == 'butt' then
-            local bx,by =  (creation.torso.w / 2), creation.torso.h / 2
-            if creation.torso.metaPoints then
-                bx, by = getScaledTorsoMetaPoint(5, guy)
-            end
-            connect.makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100, 100)
+        local bx, by = (creation.torso.w / 2), creation.torso.h / 2
+        if creation.torso.metaPoints then
+            bx, by = getScaledTorsoMetaPoint(5, guy)
+        end
+        connect.makeAndReplaceConnector(recreateConnectorData, body, bx, by, data, 100, 100)
     end
 end
 
@@ -553,8 +551,8 @@ lib.makeGuy = function(x, y, guy)
 
     local buttConnector = true
     if buttConnector then
-        local bx, by = 0,0 
-        connect.makeAndAddConnector(torso, bx,by, { id = 'guy' .. groupId, type = 'butt' },
+        local bx, by = 0, 0
+        connect.makeAndAddConnector(torso, bx, by, { id = 'guy' .. groupId, type = 'butt' },
             40,
             40)
     end
@@ -564,8 +562,8 @@ lib.makeGuy = function(x, y, guy)
         connect.makeAndAddConnector(rfoot, 0, creation.rfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
             creation.rfoot.h / 2 + 10,
             creation.rfoot.w / 2 + 10)
-        
-            connect.makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
+
+        connect.makeAndAddConnector(lfoot, 0, creation.lfoot.h / 2, { id = 'guy' .. groupId, type = 'foot' },
             creation.lfoot.h / 2 + 10,
             creation.lfoot.w / 2 + 10)
     end
@@ -575,12 +573,12 @@ lib.makeGuy = function(x, y, guy)
         connect.makeAndAddConnector(rhand, 0, creation.rhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.rhand.h / 2 + 10,
             creation.rhand.w / 2 + 10)
-        
+
         connect.makeAndAddConnector(lhand, 0, creation.lhand.h / 2, { id = 'guy' .. groupId, type = 'hand' },
             creation.lhand.h + 10,
             creation.lhand.w + 10)
     end
-  
+
 
     local data = {
         torso = torso,
@@ -653,27 +651,24 @@ function rotateToHorizontal(body, desiredAngle, divider, smarter, dt)
         while (totalRotation > 180 * DEGTORAD) do
             totalRotation = totalRotation - 360 * DEGTORAD
         end
-       
 
-       -- print(1/dt, divider, ((1/dt)*smarter) )
+
+        -- print(1/dt, divider, ((1/dt)*smarter) )
         local desiredAngularVelocity = (totalRotation * divider)
-       
-        
+
+
         if smarter then
-            local newer = ((1/dt)*smarter)
-            desiredAngularVelocity = (totalRotation * math.min(divider,newer ))
-            
-          
+            local newer = ((1 / dt) * smarter)
+            desiredAngularVelocity = (totalRotation * math.min(divider, newer))
         end
         --local impulse = body:getInertia() * desiredAngularVelocity
         -- body:applyAngularImpulse(impulse)
 
         local torque = inertia * desiredAngularVelocity / (1 / divider)
-       -- print(divider, 1/divider)
+        -- print(divider, 1/divider)
         if smarter then
-            local newer = ((1/dt)*smarter)
-            torque = inertia * desiredAngularVelocity / (1/  math.min(divider, newer))
-            
+            local newer = ((1 / dt) * smarter)
+            torque = inertia * desiredAngularVelocity / (1 / math.min(divider, newer))
         end
         body:applyTorque(torque)
     end
@@ -701,33 +696,31 @@ end
 
 
 
-lib.getUserDataAtBodyPart = function(bodyPart) 
+lib.getUserDataAtBodyPart = function(bodyPart)
     print(bodyPart)
     print(bodyPart:getFixtures())
     local fixtures = bodyPart:getFixtures()
-    for _, fixture in ipairs(fixtures) do 
+    for _, fixture in ipairs(fixtures) do
         local userData = fixture:getUserData()
-     --   print(inspect(userData))
+        --   print(inspect(userData))
     end
 end
 
-lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData) 
-  --  print(bodyPart)
-  --  print(bodyPart:getFixtures())
+lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData)
+    --  print(bodyPart)
+    --  print(bodyPart:getFixtures())
     local fixtures = bodyPart:getFixtures()
-    for _, fixture in ipairs(fixtures) do 
+    for _, fixture in ipairs(fixtures) do
         local userData = fixture:getUserData()
         --print(inspect(moreData), inspect(userData))
-        if   userData.data then 
+        if userData.data then
             --print('THIS WOULD OVERWRITE DATA THAT IS THERE ALREADY')
-            for k,v in pairs(moreData) do 
-            --    print(k, v)
+            for k, v in pairs(moreData) do
+                --    print(k, v)
                 userData.data[k] = v
             end
-        
         else
-        
-        userData.data = moreData
+            userData.data = moreData
         end
         fixture:setUserData(userData)
         --print(inspect(userData))
@@ -735,11 +728,11 @@ lib.updateUserDatasMoreDataAtBodyPart = function(bodyPart, moreData)
 end
 
 
-local userDataIsSleeping = function(ud) 
+local userDataIsSleeping = function(ud)
     local result = false
 
-    if ud.data and ud.data.sleeping then result = true end 
-   -- print('sleeping: ', result)
+    if ud.data and ud.data.sleeping then result = true end
+    -- print('sleeping: ', result)
     return result
 end
 
@@ -779,7 +772,7 @@ lib.rotateAllBodies = function(bodies, dt)
 
                 if isBeingPointerJointed then
                     if userData.bodyType == 'frame' then
-                        rotateToHorizontal(body, 0, 10, .5, dt) 
+                        rotateToHorizontal(body, 0, 10, .5, dt)
                     end
                     --     getRidOfBigRotationsInBody(body)
                 end
@@ -811,17 +804,17 @@ lib.rotateAllBodies = function(bodies, dt)
 
                         --body:applyForce(0, up)
                         --print(body:getAngle())
-                       --if body:getAngle()< -.5 or body:getAngle()> .5 then
+                        --if body:getAngle()< -.5 or body:getAngle()> .5 then
                         local ma = math.abs(body:getAngle())
-                          
-                        local rate =  numbers.mapInto(ma, 0, math.pi*2, 0.0001, 1 )
-                        local rate2 = 60/(1/rate)    
-                          
-                        --  local rate3 =  (rate2*100)/60 
-                         -- print(ma, rate, rate2*100)
 
-                         --  rotateToHorizontal(body, 0, 10, .1, dt) 
-                       --end
+                        local rate = numbers.mapInto(ma, 0, math.pi * 2, 0.0001, 1)
+                        local rate2 = 60 / (1 / rate)
+
+                        --  local rate3 =  (rate2*100)/60
+                        -- print(ma, rate, rate2*100)
+
+                        --  rotateToHorizontal(body, 0, 10, .1, dt)
+                        --end
                     end
                     --print(userData.bodyType)
                     --if not upsideDown then
@@ -849,7 +842,7 @@ lib.rotateAllBodies = function(bodies, dt)
                     end
                     if userData.bodyType == 'torso' then
                         getRidOfBigRotationsInBody(body)
-                        local desired =  upsideDown and -math.pi or 0
+                        local desired = upsideDown and -math.pi or 0
                         --print(25, dt)
                         rotateToHorizontal(body, desired, 25, 0.5, dt)
                     end
@@ -865,7 +858,7 @@ lib.rotateAllBodies = function(bodies, dt)
                             getRidOfBigRotationsInBody(body)
                             -- rotateToHorizontal(body, -math.pi, 40)
                             --rotateToHorizontal(body, 0, 10)
-                            rotateToHorizontal(body, -math.pi, 15,0.25, dt)
+                            rotateToHorizontal(body, -math.pi, 15, 0.25, dt)
                         end
 
                         if userData.bodyType == 'head' then
@@ -879,50 +872,44 @@ lib.rotateAllBodies = function(bodies, dt)
 
                     if not upsideDown then
                         if userData.bodyType == 'luleg' and not userDataIsSleeping(userData) then
-                          
                             local a = creation.luleg.stanceAngle
                             --  print(a)
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30, 0.5, dt) 
-                           
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
                         end
                         if userData.bodyType == 'ruleg' and not userDataIsSleeping(userData) then
-                           
                             local a = creation.ruleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30,0.5, dt) 
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
                         end
-                        if userData.bodyType == 'llleg'  and not userDataIsSleeping(userData) then
-                           
-                           
+                        if userData.bodyType == 'llleg' and not userDataIsSleeping(userData) then
                             local a = creation.llleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30,0.5, dt) 
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
                         end
                         if userData.bodyType == 'rlleg' and not userDataIsSleeping(userData) then
-                          
                             local a = creation.rlleg.stanceAngle
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, a, 30,0.5, dt) 
+                            rotateToHorizontal(body, a, 30, 0.5, dt)
                         end
                     end
                     if upsideDown then
                         if userData.bodyType == 'luarm' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30,0.5, dt)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
                         end
                         if userData.bodyType == 'llarm' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30,0.5, dt)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
                         end
                         if userData.bodyType == 'ruarm' then
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30,0.5, dt)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
                         end
                         if userData.bodyType == 'rlarm' then
                             -- print('doing stuff!')
                             --getRidOfBigRotationsInBody(body)
-                            rotateToHorizontal(body, 0, 30,0.5, dt)
+                            rotateToHorizontal(body, 0, 30, 0.5, dt)
                         end
                         -- if userData.bodyType == 'legpart' then
                         --getRidOfBigRotationsInBody(body)
@@ -1018,7 +1005,7 @@ lib.genericBodyPartUpdate = function(guy, partName)
 
 
         local joint = makeConnectingRevoluteJoint(data, box2dGuy[childName],
-                box2dGuy[partName])
+            box2dGuy[partName])
         box2dGuy[childName]:setAngle(aa)
     end
 
