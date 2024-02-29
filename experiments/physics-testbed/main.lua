@@ -23,12 +23,39 @@ function waitForEvent()
     local a, b, c, d, e
     repeat
         a, b, c, d, e = love.event.wait()
+        print(a)
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
+print('before waiit for event')
 waitForEvent()
+print('after waiit for event')
 
+local function getVehicleMass(vehicle)
+    local mass = 0
+    if vehicle.frame then
+        mass = mass + vehicle.frame.body:getMass()
+    end
+    if vehicle.frontWheel then
+        mass = mass + vehicle.frontWheel.body:getMass()
+    end
+    if vehicle.backWheel then
+        mass = mass + vehicle.backWheel.body:getMass()
+    end
+    return mass
+end
+local function getBodyMass(mipo)
+    local total = 0
+    for k, v in pairs(mipo.b2d) do
+        --print(k,v)
+        --v:setGravityScale(0)
+        if (v) then
+            total = total + v:getMass()
+        end
+    end
 
+    return total
+end
 function hex2rgb(hex, alpha)
     hex = hex:gsub("#", "")
     return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
@@ -117,8 +144,8 @@ function startExample(number)
 
     -- locate peak basically
 
-    if false then
-        for i = 0, 100 do
+    if true then
+        for i = 2, 100 do
             local rangeSize = 150
 
             local psx = 0 + (i * rangeSize * stepSize)
@@ -152,15 +179,15 @@ function startExample(number)
             local fixture = love.physics.newFixture(body, shape, .3)
         end
     end
-    if false then
+    if true then
         for i = 1, 100 do
             local o = makeRandomPoly(i * 30, -500, 10 + love.math.random() * 200)
             table.insert(obstacles, o)
         end
 
         for i = 1, 100 do
-            local o = makeRandomTriangle(i * 30, -500, 500)
-            table.insert(obstacles, o)
+            --  local o = makeRandomTriangle(i * 30, -500, 500)
+            --  table.insert(obstacles, o)
         end
     end
 
@@ -218,7 +245,8 @@ function startExample(number)
         type = 'bike',
         steeringHeight = c.luleg.h + c.llleg.h,
         floorWidth = c.luleg.h + c.llleg.h + c.torso.h / 1,
-        radius = math.max((c.luleg.h + c.llleg.h) / 2, 150)
+        frameHeight = (c.luleg.h + c.llleg.h) / 3,
+        radius = math.max((c.luleg.h + c.llleg.h) / 2)
     }
 
     local connectLessData = {
@@ -232,11 +260,11 @@ function startExample(number)
     ----bike = makeRollerBlade(-2000, -4000, rollerL)
     --bike = makeRollerBlade(-2000, -5000, rollerR)
     --bike = makeSkateBoard(-2000, -5000, skate)
-    bike = makeScooter(-2000, -5000, scooterData)
+    --bike = makeScooter(-2000, -5000, scooterData)
     --bike = makePedalBike(-2000, -5000, bikeData)
     -- bike = makeBusThing(-2000, -5000, busData)
     --bike = makeConnectLess(-2000, -5000, connectLessData)
-    -- bike = makeBike2(-2000, -5000, bikeData2)
+    bike = makeBike2(-2000, -5000, bikeData2)
 
 
     --isPedalBike = false
@@ -266,7 +294,8 @@ function initGround()
 end
 
 function getYAtX(x, stepSize)
-    local STEEPNESS = 3000
+    --local h2 = love.math.noise(x / 10000)
+    local STEEPNESS = 3000 -- * h2
     local index = math.floor(x / stepSize)
 
     local function generateWave(amplitude, frequency)
@@ -276,6 +305,11 @@ function getYAtX(x, stepSize)
 
     local y1 = generateWave(200 * 10.78, 30)
     local y2 = generateWave(70 * 10.78, 17)
+
+
+
+    --
+    --print(h2)
     local y3 = generateWave(20 * 10.78, 5)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
@@ -910,7 +944,7 @@ end
 function makeBike2(x, y, data)
     local floorWidth = data.floorWidth or data.radius
 
-    local frameHeight = 300
+    local frameHeight = data.frameHeight
     local radius = data.radius
     local frame = {}
     frame.body = love.physics.newBody(world, x, y, "dynamic")
@@ -918,16 +952,25 @@ function makeBike2(x, y, data)
     frame.fixture = love.physics.newFixture(frame.body, frame.shape, 2)
     frame.fixture:setUserData(makeUserData("frame"))
 
+
+    local groundFeeler = {}
+    --groundFeeler.body = love.physics.newBody(world, x, y+600, "dynamic")
+    groundFeeler.shape = love.physics.newRectangleShape(0, 750, 10, 10)
+    groundFeeler.fixture = love.physics.newFixture(frame.body, groundFeeler.shape, 1)
+    groundFeeler.fixture:setSensor(true)
+
     local ball1 = {}
     ball1.body = love.physics.newBody(world, x - floorWidth / 2, y, "dynamic")
     ball1.shape = love.physics.newCircleShape(radius)
     ball1.fixture = love.physics.newFixture(ball1.body, ball1.shape, 2)
 
+    --  ball1.fixture:setFriction(100)
+
     local ball2 = {}
     ball2.body = love.physics.newBody(world, x + floorWidth / 2, y, "dynamic")
     ball2.shape = love.physics.newCircleShape(radius)
     ball2.fixture = love.physics.newFixture(ball2.body, ball2.shape, 2)
-
+    --  ball2.fixture:setFriction(100)
     local seat = {}
     local seatYOffset = 0 --radius * .5
     local seatXOffset = 0 --radius --* .5
@@ -944,14 +987,14 @@ function makeBike2(x, y, data)
     local connectorRadius = pedalRadius / 3
     local connectorD = connectorRadius * 2
     local pedalXOffset = floorWidth / 5 --radius * .5
-    local pedalYOffset = 0 - radius * .5
+    local pedalYOffset = 0              -- radius * .5
     local pedal = {}
     pedal.body = love.physics.newBody(world, x + pedalXOffset, y + pedalYOffset, "dynamic")
     pedal.shape = love.physics.newCircleShape(pedalRadius)
 
-    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, .1)
+    pedal.fixture = love.physics.newFixture(pedal.body, pedal.shape, 10)
     pedal.fixture:setSensor(true)
-    --pedal.fixture:setFriction(0)
+    --
     connect.makeAndAddConnector(pedal.body, -(pedalRadius + connectorRadius), 0, { type = 'lfoot' }, connectorD,
         connectorD)
     connect.makeAndAddConnector(pedal.body, (pedalRadius + connectorRadius), 0, { type = 'rfoot' }, connectorD,
@@ -961,15 +1004,22 @@ function makeBike2(x, y, data)
 
     joint = love.physics.newGearJoint(wheelJoint, pedalJoint, -1.0, false)
 
-    return { frontWheel = ball1, backWheel = ball2, frame = frame, seat = seat, pedalWheel = pedal, }
+    return {
+        frontWheel = ball1,
+        backWheel = ball2,
+        frame = frame,
+        seat = seat,
+        pedalWheel = pedal,
+        groundFeeler = groundFeeler
+    }
 end
 
 function cycleStep()
     -- bike.frontWheel.body:setAngularVelocity(120000)
     --  bike.backWheel.body:setAngularVelocity(120000)
-    bike.frame.body:applyLinearImpulse(10000, -1000)
+    --bike.frame.body:applyLinearImpulse(10000, -1000)
     if bike.pedalWheel then
-        bike.pedalWheel.body:applyAngularImpulse(10000)
+        bike.pedalWheel.body:applyAngularImpulse(1000000)
     end
 end
 
@@ -1130,7 +1180,7 @@ function connectMipoAndVehicle()
 
     for k, v in pairs(b2d) do
         --print(k,v)
-        v:setGravityScale(0)
+        --   v:setGravityScale(0)
     end
 
     if bike.frame then
@@ -1152,7 +1202,9 @@ function connectMipoAndVehicle()
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
 
-        --box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.torso, { sleeping = true })
+
+        -- box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
         --box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
         ----box2dGuyCreation.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, false, 'revolute')
         --box2dGuyCreation.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, false, 'revolute')
@@ -1180,6 +1232,8 @@ function connectMipoAndVehicle()
 
 
     if isPedalBike then
+        --  box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.torso, { sleeping = true })
+
         --box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
         --box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
         -- box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
@@ -1215,24 +1269,17 @@ function connectMipoAndVehicle()
 
             setSensorValueBody(b2d.rhand, true)
             setSensorValueBody(b2d.lhand, true)
+            setSensorValueBody(b2d.luarm, true)
+            setSensorValueBody(b2d.llarm, true)
+            setSensorValueBody(b2d.ruarm, true)
+            setSensorValueBody(b2d.rlarm, true)
+
+            setSensorValueBody(b2d.torso, true)
+            if (b2d.neck) then
+                setSensorValueBody(b2d.neck, true)
+                setSensorValueBody(b2d.neck1, true)
+            end
         end
-        -- maybe i can rotate legs in advance so they wont end up like flamingo legs
-
-        if false then
-            b2d.luleg:setAngle(-math.pi / 2)
-            b2d.ruleg:setAngle(-math.pi / 2)
-
-            b2d.llleg:setAngle(math.pi / 2)
-            b2d.rlleg:setAngle(math.pi / 2)
-
-            b2d.torso:setAngle(0)
-        end
-        -- lets alse put the arms in front of the body
-        -- b2d.luarm:setAngle(math.pi)
-        -- b2d.llarm:setAngle(math.pi)
-        -- b2d.ruarm:setAngle(math.pi)
-        -- b2d.rlarm:setAngle(math.pi)
-
 
         local buttFixture = getConnectorFixtureAtBodyOfType(b2d.torso, 'butt')
         local bx, by = buttFixture:getBody():getPosition()
@@ -1571,6 +1618,15 @@ end
 ----- rest
 
 
+function bikeGroundFeelerIsTouchingGround(bike)
+    if bike.groundFeeler then
+        local centroid = getCentroidOfFixture(bike.frame.body, bike.groundFeeler.fixture)
+        local y = getYAtX(centroid[1], stepSize)
+        --print(y, centroid[2])
+        return centroid[2] > y
+    end
+    return true
+end
 
 local timeSpent = 0
 
@@ -1608,6 +1664,21 @@ function love.update(dt)
 
 
     if mipoOnVehicle then
+        if love.keyboard.isDown('q') then
+            local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
+            print(mass)
+            mass = 30
+            --bike.frame.body:applyLinearImpulse(0, -(mass * 1000))
+            bike.frame.body:setAngularVelocity(-mass * .2)
+        end
+
+        if love.keyboard.isDown('e') then
+            local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
+            --bike.frame.body:applyLinearImpulse(0, (mass * 1000))
+            mass = 30
+            bike.frame.body:setAngularVelocity(mass * .2)
+        end
+
         -- try to apply angular velocity in opposite direction
 
         -- local bikeFrameAngle = bike.frame.body:getAngle()
@@ -1633,20 +1704,10 @@ function love.update(dt)
             --bike.pedalWheel.body:setAngle(a / 13)
             --bike.pedalWheel.body:setAngularVelocity(v * 10)
         end
-
-        if bike.groundFeeler then
-            local centroid = getCentroidOfFixture(bike.frame.body, bike.groundFeeler.fixture)
-            local y = getYAtX(centroid[1], stepSize)
-            --print(y, centroid[2])
-            if centroid[2] < y then
-                -- AIRTIME!!!!
-                rotateToHorizontal(bike.frame.body, 0, 15, .3, dt)
-                --   print('airtime')
-            else
-                -- print('ground')
-            end
-        end
     end
+
+
+
 
 
     world:update(dt)
@@ -1783,7 +1844,7 @@ function drawHillGround()
 
 
         -- first render....
-        local repeats = (screenW / pw) * 0.5
+        local repeats = (screenW / pw) * 0.5 / 2
         local tileOffsetX = (camtlx / screenW) * repeats
         local tileOffsetY = (camtly / screenH) * repeats
         local mesh = love.graphics.newMesh({
@@ -1797,7 +1858,7 @@ function drawHillGround()
 
         -- another render.....
         if true then
-            local repeats = (screenW / pw) * 0.7
+            local repeats = (screenW / pw) * 0.7 / 2
             local tileOffsetX = (camtlx / screenW) * repeats
             local tileOffsetY = (camtly / screenH) * repeats
             local mesh = love.graphics.newMesh({
@@ -1854,15 +1915,12 @@ function drawGrassLeaves(secondParam, yOffset, xOffset, hMultiplier, batch)
             for j = 0, stepSize - 1, 75 do
                 local yy = lerpYAtX(x + j, stepSize)
                 local hh = love.math.noise((x + j) / 1000, secondParam, j * 2) * 200 * hMultiplier
-                -- love.graphics.line(x + j + xOffset, yy + yOffset, x + j + xOffset, yy - hh + yOffset)
                 local indx2 = math.ceil(love.math.noise((x + j) / .1, yOffset * 0.01, hMultiplier) * count)
-                --print(indx2)
-                --local index = math.ceil((j % count) + 1)
-                --print(index)
+
                 local ori = origins[indx2]
                 local angle = math.sin(hh) / 10
                 angle = angle + math.sin(timeSpent) / 10
-                --print(angle)
+
                 batch:addLayer(1, quads[indx2], x + j + xOffset, yy + yOffset, angle, 2, 2 * hh / 200, ori[1], ori[2])
                 ccc = ccc + 1
             end
@@ -1961,14 +2019,20 @@ function love.draw()
 
     drawHillGround()
 
-    local batch1 = love.graphics.newSpriteBatch(atlasImg)
-    local batch2 = love.graphics.newSpriteBatch(atlasImg)
-
-    drawGrassLeaves(100, -90, 0, .5, batch2)
+    local batch1 = love.graphics.newSpriteBatch(atlasImg, 2000, 'stream')
+    local batch2 = love.graphics.newSpriteBatch(atlasImg, 2000, 'stream')
 
 
+    -- print('b2', batch2:getCount())
+
+
+    --
+
+    drawGrassLeaves(100, -90, 0, 1.5, batch2)
     love.graphics.setColor(darkGrassColor)
-    love.graphics.draw(batch2)
+    if batch2:getCount() <= 500 then
+        love.graphics.draw(batch2)
+    end
     phys.drawWorld(world)
 
     for i = 1, #mipos do
@@ -1983,12 +2047,15 @@ function love.draw()
     love.graphics.setColor(0, 0, 0)
     textureTheBike(bike, bikeData2)
 
-
-    drawGrassLeaves(.3, 250, 25, 1.05, batch1)
-
-
+    --
+    drawGrassLeaves(.3, 250, 25, 2.05, batch1)
     love.graphics.setColor(lightGrassColor)
-    love.graphics.draw(batch1)
+    if batch1:getCount() <= 500 then
+        love.graphics.draw(batch1)
+    end
+    --print('b1', batch1:getCount())
+
+
 
 
 
@@ -2018,7 +2085,7 @@ function love.draw()
 
             --    curve = love.math.newBezierCurve( vertices )
 
-            --love.graphics.draw(grassImage, x, y, angle, sx, sx)
+            --   love.graphics.draw(grassImage, x, y, angle, sx, sx)
             --   love.graphics.draw(grassImage, x, y - imgH, angle, sx, sx)
             --print(x)
         end
@@ -2110,20 +2177,6 @@ function love.draw()
     end
 end
 
-local function getVehicleMass(vehicle)
-    local mass = 0
-    if vehicle.frame then
-        mass = mass + vehicle.frame.body:getMass()
-    end
-    if vehicle.frontWheel then
-        mass = mass + vehicle.frontWheel.body:getMass()
-    end
-    if vehicle.backWheel then
-        mass = mass + vehicle.backWheel.body:getMass()
-    end
-    return mass
-end
-
 function disableLegs()
     local b2d = mipos[1].b2d
     box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
@@ -2144,12 +2197,29 @@ function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == 'space' then
         cycleStep()
+        if bikeGroundFeelerIsTouchingGround(bike) then
+            print('jo!')
+        end
+
         --local body = bike.frame.body
         --body:applyLinearImpulse(1000,0)
     end
     -- if k == '.' then
     --     followCamera = not followCamera
     -- end
+    --
+    --
+    --
+    if k == 'w' then
+        if bikeGroundFeelerIsTouchingGround(bike) then
+            local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
+
+            mass = 30
+            local body = bike.frame.body
+            body:applyLinearImpulse(0, -(mass * 1000))
+            body:applyAngularImpulse(-10000)
+        end
+    end
     if k == 'd' then
         disableLegs()
     end
@@ -2157,12 +2227,7 @@ function love.keypressed(k)
         bike.frontWheel.body:setAngularVelocity(-100000)
         -- bike.backWheel.body:setAngularVelocity(-1000)
     end
-    if k == 'w' then
-        local mass = getVehicleMass(bike)
-        print(mass)
-        bike.frame.body:applyLinearImpulse(0, -(mass * 1000))
-        bike.frame.body:setAngularVelocity(-mass)
-    end
+
     if k == 'a' then
         local f = -100
         for i = 1, #mipos do
@@ -2173,18 +2238,6 @@ function love.keypressed(k)
                 mipos[i].b2d.head:setAngularVelocity(f)
             end
         end
-    end
-    if k == 'left' then
-        local body = bike.frame.body
-        --  body:applyTorque(-100000)
-        body:applyAngularImpulse(-10000)
-        -- rotateToHorizontal(body, 0, 5, 0.1, dt)
-    end
-    if k == 'right' then
-        local body = bike.frame.body
-        --body:applyTorque(1000000)
-        body:applyAngularImpulse(100000)
-        --  rotateToHorizontal(body, 0, 5, 0.1, dt)
     end
 end
 
@@ -2212,7 +2265,12 @@ local function pointerPressed(x, y, id)
     local onPressedParams = {
         pointerForceFunc = function(fixture)
             local ud = fixture:getUserData()
-            local force = ud and (ud.bodyType == 'torso') and 1000000 or 50000
+            print(inspect(ud))
+            local force =
+                (ud and ud.bodyType == 'torso' and 1000000) or
+                (ud and ud.bodyType == 'frame' and 1000000) or
+                50000
+            print(force)
             return force
         end
         --pointerForceFunc = function(fixture) return 1400 end

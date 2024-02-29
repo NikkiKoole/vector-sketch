@@ -5,8 +5,8 @@ local camera          = require 'lib.camera'
 local numbers         = require 'lib.numbers'
 local cam             = require('lib.cameraBase').getInstance()
 local lib             = {}
-local inspect = require 'vendor.inspect'
-local connect = require 'lib.connectors'
+local inspect         = require 'vendor.inspect'
+local connect         = require 'lib.connectors'
 
 local function makeUserData(bodyType, moreData)
     local result = {
@@ -20,28 +20,28 @@ end
 
 local function makeRectPoly(w, h, x, y)
     return love.physics.newPolygonShape(
-            x, y,
-            x + w, y,
-            x + w, y + h,
-            x, y + h
-        )
+        x, y,
+        x + w, y,
+        x + w, y + h,
+        x, y + h
+    )
 end
 
 local function makeRuitPoly(w, h, x, y)
     return love.physics.newPolygonShape(
-            x, y - h / 2,
-            x + w / 2, y,
-            x, y + h / 2,
-            x - w / 2, y
-        )
+        x, y - h / 2,
+        x + w / 2, y,
+        x, y + h / 2,
+        x - w / 2, y
+    )
 end
 local function makeRectPoly2(w, h, x, y)
     return love.physics.newPolygonShape(
-            x - w / 2, y - h / 2,
-            x + w / 2, y - h / 2,
-            x + w / 2, y + h / 2,
-            x - w / 2, y + h / 2
-        )
+        x - w / 2, y - h / 2,
+        x + w / 2, y - h / 2,
+        x + w / 2, y + h / 2,
+        x - w / 2, y + h / 2
+    )
 end
 
 local function capsuleXY(w, h, cs, x, y)
@@ -71,11 +71,11 @@ local function makeTrapeziumPoly(w, w2, h, x, y)
     local cx = x
     local cy = y
     return love.physics.newPolygonShape(
-            cx - w / 2, cy - h / 2,
-            cx + w / 2, cy - h / 2,
-            cx + w2 / 2, cy + h / 2,
-            cx - w2 / 2, cy + h / 2
-        )
+        cx - w / 2, cy - h / 2,
+        cx + w / 2, cy - h / 2,
+        cx + w2 / 2, cy + h / 2,
+        cx - w2 / 2, cy + h / 2
+    )
 end
 
 local function makePointerJoint(id, bodyToAttachTo, wx, wy, force)
@@ -213,11 +213,11 @@ lib.makeRectPoly2 = function(w, h, x, y)
     local cx = x
     local cy = y
     return love.physics.newPolygonShape(
-            cx - w / 2, cy - h / 2,
-            cx + w / 2, cy - h / 2,
-            cx + w / 2, cy + h / 2,
-            cx - w / 2, cy + h / 2
-        )
+        cx - w / 2, cy - h / 2,
+        cx + w / 2, cy - h / 2,
+        cx + w / 2, cy + h / 2,
+        cx - w / 2, cy + h / 2
+    )
 end
 
 lib.killMouseJointIfPossible = function(id)
@@ -324,17 +324,18 @@ lib.drawWorld = function(world)
             if fixture:getShape():type() == 'PolygonShape' then
                 local color = getBodyColor(body)
                 love.graphics.setColor(color[1], color[2], color[3], alpha)
-                if (fixture:getUserData() ) then 
-                if fixture:getUserData().bodyType == "connector" then 
-                    love.graphics.setColor(1, 0, 0, alpha)
-                end end
-                love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
-                love.graphics.setColor(1, 1, 1, alpha)
-                if (fixture:getUserData() ) then 
-                    if fixture:getUserData().bodyType == "connector" then 
+                if (fixture:getUserData()) then
+                    if fixture:getUserData().bodyType == "connector" then
                         love.graphics.setColor(1, 0, 0, alpha)
                     end
-                  --  print(inspect(fixture:getUserData() ))
+                end
+                love.graphics.polygon("fill", body:getWorldPoints(fixture:getShape():getPoints()))
+                love.graphics.setColor(1, 1, 1, alpha)
+                if (fixture:getUserData()) then
+                    if fixture:getUserData().bodyType == "connector" then
+                        love.graphics.setColor(1, 0, 0, alpha)
+                    end
+                    --  print(inspect(fixture:getUserData() ))
                 end
                 love.graphics.polygon('line', body:getWorldPoints(fixture:getShape():getPoints()))
             elseif fixture:getShape():type() == 'EdgeShape' or fixture:getShape():type() == 'ChainShape' then
@@ -397,7 +398,6 @@ lib.handleUpdate = function(dt, cam)
                 if f:getUserData() and f:getUserData().bodyType then
                     if f:getUserData().bodyType == 'connector' then
                         connect.maybeConnectThisConnector(f)
-                        
                     end
                 end
             end
@@ -408,7 +408,6 @@ lib.handleUpdate = function(dt, cam)
     connect.maybeBreakAnyConnectorBecauseForce(dt)
 
     connect.cleanupCoolDownList(dt)
-   
 end
 
 lib.handlePointerReleased = function(x, y, id)
@@ -417,7 +416,7 @@ lib.handlePointerReleased = function(x, y, id)
         -- if false then
         if mj.id == id then
             if (mj.joint) then --- UNUSED
-                if false then -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
+                if false then  -- this is to shoot objects when you drag then below the groud (pim pam pet effect])
                     if (mj.jointBody and objects.ground) then
                         local points = { objects.ground.body:getWorldPoints(objects.ground.shape:getPoints()) }
                         local tl = { points[1], points[2] }
