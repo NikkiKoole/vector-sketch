@@ -1327,6 +1327,78 @@ function drawHillGround()
     --love.graphics.polygon("fill", ground.points)
 end
 
+
+-- lifted from texturedBox2d.lua
+
+-- where do we get the mesh from ?
+-- I think it would be cool to reuse the ame mesh for every different stengel
+
+--local mesh = love.graphics.newMesh(vertices, "strip")
+--124      mesh:setTexture(image)
+--  canvasCache.neckmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.neckCanvas)
+local function texturedCurve(curve, image, mesh, dir, scaleW)
+    if not dir then dir = 1 end
+    if not scaleW then scaleW = 1 end
+    local dl = curve:getDerivative()
+
+    for i = 1, 1 do
+        local w, h = image:getDimensions()
+        local count = mesh:getVertexCount()
+
+        for j = 1, count, 2 do
+            local index                  = (j - 1) / (count - 2)
+            local xl, yl                 = curve:evaluate(index)
+            local dx, dy                 = dl:evaluate(index)
+            local a                      = math.atan2(dy, dx) + math.pi / 2
+            local a2                     = math.atan2(dy, dx) - math.pi / 2
+            local line                   = (w * dir) * scaleW --- here we can make the texture wider!!, also flip it
+            local x2                     = xl + line * math.cos(a)
+            local y2                     = yl + line * math.sin(a)
+            local x3                     = xl + line * math.cos(a2)
+            local y3                     = yl + line * math.sin(a2)
+
+            local x, y, u, v, r, g, b, a = mesh:getVertex(j)
+            mesh:setVertex(j, { x2, y2, u, v })
+            x, y, u, v, r, g, b, a = mesh:getVertex(j + 1)
+            mesh:setVertex(j + 1, { x3, y3, u, v })
+        end
+    end
+end
+
+-- end lifted
+
+function drawSinglePaardenBloem(x,y, randomNumber) 
+    
+    local stengelScaleY = 1.2 - randomNumber*3 
+    local h = stengelImage:getHeight() * stengelScaleY
+    local x1 = math.sin(timeSpent * .4) * ( h/7)
+    local x2 = 0
+    local c = love.math.newBezierCurve({0,0, x1,0-h/2, x2, 0-h+math.abs(x1)})
+    local m = texturedBox2d.createTexturedTriangleStrip(stengelImage)
+    local eindX, eindY = c:evaluate(1)
+    texturedCurve(c, stengelImage,m,1,.5)
+    love.graphics.setColor(darkGrassColor)
+    
+    love.graphics.draw(m, x, y, 0, 1, stengelScaleY, 0, 0)
+
+
+    love.graphics.setColor(1, 1, 0)
+    love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY*stengelScaleY, math.sin(timeSpent),
+        1, 1,
+        bloemHoofdImage:getWidth() / 2, bloemHoofdImage:getHeight() / 2)
+
+
+
+    love.graphics.setColor(darkGrassColor)
+    love.graphics.draw(bloemBladImage, x, y, -math.pi/2 , 1, 1, bloemBladImage:getWidth()/2,
+        bloemBladImage:getHeight() )
+    love.graphics.draw(bloemBladImage, x, y, math.pi/2 , 1, 1, bloemBladImage:getWidth()/2,
+        bloemBladImage:getHeight() )
+
+
+end
+
+
 function drawPaardenBloemen()
     local startX = ground.points[1]
     local startY = ground.points[2]
@@ -1344,37 +1416,12 @@ function drawPaardenBloemen()
                 love.graphics.setColor(1, 0, 0)
                 --  love.graphics.circle('fill', x, y - 1000, 100)
                 --  love.graphics.print('none', x, y)
-            elseif (hh > .4 and hh < .7) then
+            elseif (hh > .4 and hh < .5) then
                 love.graphics.setColor(1, 1, 0)
                 --   love.graphics.circle('fill', x, y - 1000, 100)
                 --  love.graphics.print('none', x, y)
             else
-                --  print((hh ))
-                --
-
-                -- createFittingScale(stengelImage, desired_w, desired_h)
-                love.graphics.setColor(darkGrassColor)
-                local stengelScaleY = .5
-                love.graphics.draw(stengelImage, x, y, 0, 1, stengelScaleY, stengelImage:getWidth() / 2,
-                    stengelImage:getHeight())
-
-                love.graphics.setColor(1, 1, 0)
-                love.graphics.draw(bloemHoofdImage, x, y - stengelImage:getHeight() * stengelScaleY, math.sin(timeSpent),
-                    1, 1,
-                    bloemHoofdImage:getWidth() / 2, bloemHoofdImage:getHeight() / 2)
-
-                love.graphics.setColor(darkGrassColor)
-                love.graphics.draw(bloemBladImage, x, y, 0, 1, 1, bloemBladImage:getWidth(),
-                    bloemBladImage:getHeight() /
-                    2)
-                love.graphics.draw(bloemBladImage, x, y, math.pi, 1, 1, bloemBladImage:getWidth(),
-                    bloemBladImage:getHeight() /
-                    2)
-
-
-                --love.graphics.setColor(1, 0, 1)
-                --love.graphics.circle('fill', x, y - 1000, 100)
-                --love.graphics.print('none', x, y)
+                drawSinglePaardenBloem(x,y, hh-0.5)
             end
         end
     end
@@ -1874,7 +1921,7 @@ function love.load()
 
     stengelImage = love.graphics.newImage('assets/world/stengel1.png')
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
-    grassImage = love.graphics.newImage('world-assets/grass1.png')
+    grassImage = love.graphics.newImage('assets/world/grass1.png')
     bloemBladImage = love.graphics.newImage('assets/world/bloemBlad1.png')
     mipoOnVehicle = false
 
