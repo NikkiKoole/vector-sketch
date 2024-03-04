@@ -143,8 +143,11 @@ function startExample(number)
     -- my next step is higher then me
     -- the step after that is lower .
 
-    -- locate peak basically
-    --makeCow(0, -16000, 15000, 8000)
+
+    makeCow(0, -0, 15000, 8000)
+    makeCow(20000, -0, 15000, 8000)
+    makeCow(50000, -0, 15000, 8000)
+
     if true then
         for i = 2, 100 do
             local rangeSize = 75
@@ -812,41 +815,32 @@ function makeCow(x, y, bodyWidth, bodyHeight)
     cow.torso.shape = love.physics.newRectangleShape(bodyWidth, bodyHeight)
     cow.torso.fixture = love.physics.newFixture(cow.torso.body, cow.torso.shape, 10)
 
-    function makeLeg(x, y, w, h)
+    function makeLeg(x, y, w, h, j)
         local leg = {}
-        leg.body = love.physics.newBody(world, x, y, "dynamic")
+        leg.body = love.physics.newBody(world, x, y, "static")
         leg.shape = makeRectPoly2(w, h, 0, h / 2)
         leg.fixture = love.physics.newFixture(leg.body, leg.shape, 10)
+        leg.fixture:setSensor(true)
+        if j then
+            local joint = love.physics.newRevoluteJoint(cow.torso.body, leg.body, x, y, false)
+            joint:setLowerLimit(-math.pi / 32)
+            joint:setUpperLimit(math.pi / 32)
+            joint:setLimitsEnabled(true)
+        end
         return leg
     end
 
-    local l1 = makeLeg(x - bodyWidth / 2, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
-    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
+    local legW = bodyWidth / 10
+    local legH = bodyHeight
 
-    joint:setLowerLimit(-math.pi / 32)
-    joint:setUpperLimit(math.pi / 32)
-    joint:setLimitsEnabled(true)
-
-    local l1 = makeLeg(x - bodyWidth / 3, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
-    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
-
-    joint:setLowerLimit(-math.pi / 32)
-    joint:setUpperLimit(math.pi / 32)
-    joint:setLimitsEnabled(true)
-
-    local l1 = makeLeg(x + bodyWidth / 3, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
-    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
-
-    joint:setLowerLimit(-math.pi / 32)
-    joint:setUpperLimit(math.pi / 32)
-    joint:setLimitsEnabled(true)
-
-    local l1 = makeLeg(x + bodyWidth / 2, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
-    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
-
-    joint:setLowerLimit(-math.pi / 32)
-    joint:setUpperLimit(math.pi / 32)
-    joint:setLimitsEnabled(true)
+    local l1 = makeLeg(x - bodyWidth / 3, y + bodyHeight / 2, legW, legH, true)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+    local l1 = makeLeg(x - bodyWidth / 5, y + bodyHeight / 2, legW, legH, false)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+    local l1 = makeLeg(x + bodyWidth / 5, y + bodyHeight / 2, legW, legH, false)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+    local l1 = makeLeg(x + bodyWidth / 3, y + bodyHeight / 2, legW, legH, true)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
 end
 
 function makeChain(x, y, amt)
