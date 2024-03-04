@@ -144,7 +144,7 @@ function startExample(number)
     -- the step after that is lower .
 
     -- locate peak basically
-    makeCow(0, -16000, 15000, 8000)
+    --makeCow(0, -16000, 15000, 8000)
     if true then
         for i = 2, 100 do
             local rangeSize = 75
@@ -1265,10 +1265,46 @@ function love.update(dt)
     timeSpent = timeSpent + dt
 end
 
+sunColor1 = { hex2rgb('e6c800', 0.6) }
+sunColor1b = { hex2rgb('e6c800', 0.8) }
+sunColor2 = { hex2rgb('ddc490', 0.8) }
+
 darkGrassColor = { hex2rgb('2a5b3e') }
 darkGrassColorTrans = { hex2rgb('2a5b3e', 0.5) }
 lightGrassColor = { hex2rgb('86a542') }
 anotherGrassColor = { hex2rgb('45783c') }
+
+
+
+
+function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, repeatScale)
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+    love.graphics.stencil(stencilFunc, "replace", 1)
+    love.graphics.setStencilTest("greater", 0)
+
+
+    local pw, ph = img:getDimensions()
+    local screenW = cambrx - camtlx
+    local screenH = cambry - camtly
+    -- first render....
+    local repeats = (screenW / pw) * repeatScale
+    local tileOffsetX = (camtlx / screenW) * repeats
+    local tileOffsetY = (camtly / screenH) * repeats
+    local mesh = love.graphics.newMesh({
+        { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY,      1, 1, 1 },
+        { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY,      1, 1, 1 },
+        { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
+        { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
+    })
+    mesh:setTexture(img)
+
+    love.graphics.setColor(color)
+    love.graphics.draw(mesh, 0, 0)
+    love.graphics.setStencilTest()
+end
 
 function drawHillGround()
     local w, h = love.graphics.getDimensions()
@@ -1280,8 +1316,8 @@ function drawHillGround()
     for i = 1, #ground.points - 2, 2 do
         -- the 'road' part
 
-
-        love.graphics.setColor({ .5, .5, .5, .5 })
+        love.graphics.setColor(lightGrassColor)
+        -- love.graphics.setColor({ .5, .5, .5, .5 })
         love.graphics.polygon("fill",
             ground.points[i + 0], ground.points[i + 1] - 100,
             ground.points[i + 2], ground.points[i + 3] - 100,
@@ -1289,32 +1325,20 @@ function drawHillGround()
             ground.points[i + 0], ground.points[i + 1] + 200)
 
         -- the side part
-
-        love.graphics.setColor(lightGrassColor)
         love.graphics.polygon("fill",
             ground.points[i + 0], ground.points[i + 1] + 200,
             ground.points[i + 2], ground.points[i + 3] + 200,
             ground.points[i + 2], cambry,
             ground.points[i + 0], cambry)
     end
-    love.graphics.setColor(0, 0, 0, 0.2)
+
 
     local doTextureStuff = true
     if (doTextureStuff) then
-        local pw, ph = grassPattern:getDimensions()
-        local screenW = cambrx - camtlx
-        local screenH = cambry - camtly
-
-        local function myStencilFunction()
+        local sideHillFunc = function()
             for i = 1, #ground.points - 2, 2 do
                 love.graphics.setColor(1, 1, 1)
-                if false then
-                    love.graphics.polygon("fill",
-                        ground.points[i + 0], ground.points[i + 1] - 100,
-                        ground.points[i + 2], ground.points[i + 3] - 100,
-                        ground.points[i + 2], ground.points[i + 3] + 200,
-                        ground.points[i + 0], ground.points[i + 1] + 200)
-                end
+
 
                 love.graphics.polygon("fill",
                     ground.points[i + 0], ground.points[i + 1] + 200,
@@ -1323,58 +1347,24 @@ function drawHillGround()
                     ground.points[i + 0], cambry)
             end
         end
+        local topHillFunc = function()
+            for i = 1, #ground.points - 2, 2 do
+                love.graphics.setColor(1, 1, 1)
 
-
-        love.graphics.stencil(myStencilFunction, "replace", 1)
-        love.graphics.setStencilTest("greater", 0)
-
-
-        love.graphics.setColor(darkGrassColorTrans)
-        -- love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
-
-
-
-        -- first render....
-        local repeats = (screenW / pw) * 0.5 / 2
-        local tileOffsetX = (camtlx / screenW) * repeats
-        local tileOffsetY = (camtly / screenH) * repeats
-        local mesh = love.graphics.newMesh({
-            { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY,      1, 1, 1 },
-            { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY,      1, 1, 1 },
-            { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
-            { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
-        })
-        mesh:setTexture(grassPattern)
-        love.graphics.draw(mesh, 0, 0)
-
-        -- another render.....
-        if true then
-            local repeats = (screenW / pw) * 0.7 / 2
-            local tileOffsetX = (camtlx / screenW) * repeats
-            local tileOffsetY = (camtly / screenH) * repeats
-            local mesh = love.graphics.newMesh({
-                { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY },
-                { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY },
-                { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
-                { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
-            })
-            mesh:setTexture(grassPattern)
-            love.graphics.draw(mesh, 0, 0)
+                love.graphics.polygon("fill",
+                    ground.points[i + 0], ground.points[i + 1] - 100,
+                    ground.points[i + 2], ground.points[i + 3] - 100,
+                    ground.points[i + 2], ground.points[i + 3] + 200,
+                    ground.points[i + 0], ground.points[i + 1] + 200)
+            end
         end
 
-        love.graphics.setStencilTest()
+        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 0.5 / 2)
+        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 0.7 / 2)
+        drawRepeatedPatternUsingStencilFunction(topHillFunc, grassPattern2, darkGrassColor, 10 / 2)
     end
-    --love.graphics.polygon("fill", ground.points)
 end
 
--- lifted from texturedBox2d.lua
-
--- where do we get the mesh from ?
--- I think it would be cool to reuse the ame mesh for every different stengel
-
---local mesh = love.graphics.newMesh(vertices, "strip")
---124      mesh:setTexture(image)
---  canvasCache.neckmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.neckCanvas)
 local function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 end
@@ -1541,9 +1531,7 @@ local function textureTheBike(bike, bikeData)
     love.graphics.draw(img, x, y, a + math.pi, sx, sy, dimsH / 2, dimsW / 2)
 end
 
-sunColor1 = { hex2rgb('e6c800', 0.6) }
-sunColor1b = { hex2rgb('e6c800', 0.8) }
-sunColor2 = { hex2rgb('ddc490', 0.8) }
+
 
 local function drawCelestialBodies()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
@@ -1971,8 +1959,13 @@ function love.load()
     frontWheelImgIndex = math.ceil(#wheelImages * love.math.random())
     backWheelImgIndex = math.ceil(#wheelImages * love.math.random())
 
-    grassPattern = love.graphics.newImage('assets/world/grasspattern4.png')
-    grassPattern:setWrap('repeat', 'repeat')
+    grassPattern1 = love.graphics.newImage('assets/world/grasspattern4.png')
+    grassPattern1:setWrap('repeat', 'repeat')
+
+    grassPattern2 = love.graphics.newImage('assets/world/grasspattern2.png')
+    grassPattern2:setWrap('repeat', 'repeat')
+
+
     local w, h = love.graphics.getDimensions()
 
     for i = 1, 1 do
