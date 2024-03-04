@@ -32,10 +32,6 @@ local text             = require "lib.text"
 local vehicle          = require 'vehicle-creator'
 
 
-
-
-
-
 local function getVehicleMass(vehicle)
     local mass = 0
     if vehicle.frame then
@@ -148,7 +144,7 @@ function startExample(number)
     -- the step after that is lower .
 
     -- locate peak basically
-
+    makeCow(0, -16000, 15000, 8000)
     if true then
         for i = 2, 100 do
             local rangeSize = 75
@@ -809,6 +805,50 @@ function makeCarousell(x, y, width, height, angularVelocity)
     return carousel
 end
 
+function makeCow(x, y, bodyWidth, bodyHeight)
+    local cow = {}
+    cow.torso = {}
+    cow.torso.body = love.physics.newBody(world, x, y, "dynamic")
+    cow.torso.shape = love.physics.newRectangleShape(bodyWidth, bodyHeight)
+    cow.torso.fixture = love.physics.newFixture(cow.torso.body, cow.torso.shape, 10)
+
+    function makeLeg(x, y, w, h)
+        local leg = {}
+        leg.body = love.physics.newBody(world, x, y, "dynamic")
+        leg.shape = makeRectPoly2(w, h, 0, h / 2)
+        leg.fixture = love.physics.newFixture(leg.body, leg.shape, 10)
+        return leg
+    end
+
+    local l1 = makeLeg(x - bodyWidth / 2, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
+    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
+
+    joint:setLowerLimit(-math.pi / 32)
+    joint:setUpperLimit(math.pi / 32)
+    joint:setLimitsEnabled(true)
+
+    local l1 = makeLeg(x - bodyWidth / 3, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
+    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
+
+    joint:setLowerLimit(-math.pi / 32)
+    joint:setUpperLimit(math.pi / 32)
+    joint:setLimitsEnabled(true)
+
+    local l1 = makeLeg(x + bodyWidth / 3, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
+    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
+
+    joint:setLowerLimit(-math.pi / 32)
+    joint:setUpperLimit(math.pi / 32)
+    joint:setLimitsEnabled(true)
+
+    local l1 = makeLeg(x + bodyWidth / 2, y + bodyHeight / 2, bodyWidth / 10, bodyHeight)
+    local joint = love.physics.newRevoluteJoint(cow.torso.body, l1.body, l1.body:getX(), l1.body:getY(), true)
+
+    joint:setLowerLimit(-math.pi / 32)
+    joint:setUpperLimit(math.pi / 32)
+    joint:setLimitsEnabled(true)
+end
+
 function makeChain(x, y, amt)
     --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
     local linkHeight = 20 * 10
@@ -1327,7 +1367,6 @@ function drawHillGround()
     --love.graphics.polygon("fill", ground.points)
 end
 
-
 -- lifted from texturedBox2d.lua
 
 -- where do we get the mesh from ?
@@ -1367,37 +1406,33 @@ end
 
 -- end lifted
 
-function drawSinglePaardenBloem(x,y, randomNumber) 
-    
-    local stengelScaleY = 1.2 - randomNumber*3 
+function drawSinglePaardenBloem(x, y, randomNumber)
+    local stengelScaleY = 1.2 - randomNumber * 3
     local h = stengelImage:getHeight() * stengelScaleY
-    local x1 = math.sin(timeSpent * .4) * ( h/7)
+    local x1 = math.sin(timeSpent * .4) * (h / 7)
     local x2 = 0
-    local c = love.math.newBezierCurve({0,0, x1,0-h/2, x2, 0-h+math.abs(x1)})
+    local c = love.math.newBezierCurve({ 0, 0, x1, 0 - h / 2, x2, 0 - h + math.abs(x1) })
     local m = texturedBox2d.createTexturedTriangleStrip(stengelImage)
     local eindX, eindY = c:evaluate(1)
-    texturedCurve(c, stengelImage,m,1,.5)
+    texturedCurve(c, stengelImage, m, 1, .5)
     love.graphics.setColor(darkGrassColor)
-    
+
     love.graphics.draw(m, x, y, 0, 1, stengelScaleY, 0, 0)
 
 
     love.graphics.setColor(1, 1, 0)
-    love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY*stengelScaleY, math.sin(timeSpent),
+    love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY * stengelScaleY, math.sin(timeSpent),
         1, 1,
         bloemHoofdImage:getWidth() / 2, bloemHoofdImage:getHeight() / 2)
 
 
 
     love.graphics.setColor(darkGrassColor)
-    love.graphics.draw(bloemBladImage, x, y, -math.pi/2 , 1, 1, bloemBladImage:getWidth()/2,
-        bloemBladImage:getHeight() )
-    love.graphics.draw(bloemBladImage, x, y, math.pi/2 , 1, 1, bloemBladImage:getWidth()/2,
-        bloemBladImage:getHeight() )
-
-
+    love.graphics.draw(bloemBladImage, x, y, -math.pi / 2, 1, 1, bloemBladImage:getWidth() / 2,
+        bloemBladImage:getHeight())
+    love.graphics.draw(bloemBladImage, x, y, math.pi / 2, 1, 1, bloemBladImage:getWidth() / 2,
+        bloemBladImage:getHeight())
 end
-
 
 function drawPaardenBloemen()
     local startX = ground.points[1]
@@ -1421,7 +1456,7 @@ function drawPaardenBloemen()
                 --   love.graphics.circle('fill', x, y - 1000, 100)
                 --  love.graphics.print('none', x, y)
             else
-                drawSinglePaardenBloem(x,y, hh-0.5)
+                drawSinglePaardenBloem(x, y, hh - 0.5)
             end
         end
     end
@@ -1509,6 +1544,7 @@ end
 sunColor1 = { hex2rgb('e6c800', 0.6) }
 sunColor1b = { hex2rgb('e6c800', 0.8) }
 sunColor2 = { hex2rgb('ddc490', 0.8) }
+
 local function drawCelestialBodies()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
 
