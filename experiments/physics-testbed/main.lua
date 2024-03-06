@@ -6,9 +6,9 @@ function waitForEvent()
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-print('before waiit for event')
+print('before wait for event')
 waitForEvent()
-print('after waiit for event')
+print('after wait for event')
 
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
@@ -31,6 +31,43 @@ local Timer            = require 'vendor.timer'
 local text             = require "lib.text"
 local vehicle          = require 'vehicle-creator'
 
+function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
+
+local function isDraggingAFrame()
+    --
+    local bodies = world:getBodies()
+    local isBeingPointerJointed = false
+
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
+
+        for j = 1, #pointerJoints do
+            local mj = pointerJoints[j]
+            if mj.jointBody == body then
+                isBeingPointerJointed = true
+            end
+        end
+        for _, fixture in ipairs(fixtures) do
+            local userData = fixture:getUserData()
+            if (userData) then
+                if isBeingPointerJointed then
+                    if userData.bodyType == 'frame' then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
 
 local function getVehicleMass(vehicle)
     local mass = 0
@@ -144,9 +181,14 @@ function startExample(number)
     -- the step after that is lower .
 
 
-    makeCow(0, -0, 15000, 8000)
-    makeCow(20000, -0, 15000, 8000)
-    makeCow(50000, -0, 15000, 8000)
+    --makeCow(0, -0, 15000, 8000)
+    --makeCow(20000, -0, 15000, 8000)
+    --makeCow(50000, -0, 15000, 8000)
+
+    -- makeSlide(0, 0, 15000, 15000)
+    -- makeSlide(25000, 0, 20000, 20000)
+    -- makeSlide(50000, 0, 20000, 20000)
+    -- makeSlide(75000, 0, 20000, 20000)
 
     if true then
         for i = 2, 100 do
@@ -171,7 +213,7 @@ function startExample(number)
             local schansBody = love.physics.newBody(world, 0, 0, "static")
             local schansShape = love.physics.newChainShape(false, points)
             local fixture = love.physics.newFixture(schansBody, schansShape)
-
+            fixture:setUserData(makeUserData('ground'))
 
             local body = love.physics.newBody(world, x1, y1, 'static')
             local shape = love.physics.newRectangleShape(1, 1)
@@ -246,10 +288,6 @@ function getYAtX(x, stepSize)
     local y1 = generateWave(200 * 10.78, 30)
     local y2 = generateWave(70 * 10.78, 17)
 
-
-
-    --
-    --print(h2)
     local y3 = generateWave(20 * 10.78, 5)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
@@ -286,7 +324,7 @@ function updateGround(ground)
 
     ground.shape = love.physics.newChainShape(false, points)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
-    ground.fixture:setUserData("ground")
+    ground.fixture:setUserData(makeUserData("ground"))
     ground.fixture:setFriction(1)
     ground.points = points
 end
@@ -808,6 +846,54 @@ function makeCarousell(x, y, width, height, angularVelocity)
     return carousel
 end
 
+function makeSlide(x, y, w, h)
+    -- this thing has 2 poles it stands on.
+    -- and the slide surface
+
+    function makePole(x, y, w, h)
+        local pole = {}
+        pole.body = love.physics.newBody(world, x, y, "static")
+        pole.shape = makeRectPoly2(w, h, 0, -h / 2)
+        pole.fixture = love.physics.newFixture(pole.body, pole.shape, 10)
+        pole.fixture:setSensor(true)
+        return pole
+    end
+
+    local x1 = x - w / 2
+    local y1 = getYAtX(x1, stepSize)
+    local y1Top = y1 - h
+    local p1 = makePole(x1, y1, w / 25, h)
+
+    local x2 = x + w / 2
+    local y2 = getYAtX(x2, stepSize)
+    local y2Top = y2 - h / 5
+    local p2 = makePole(x2, y2, w / 25, h / 5)
+
+    -- now describe a curve in a few steps
+    local xb = numbers.lerp(x1, x2, 0.5)
+    local yb = numbers.lerp(y1Top, y2Top, 0.75)
+    local xb2 = numbers.lerp(x1, x2, 0.75)
+    local yb2 = numbers.lerp(y1Top, y2Top, 0.95)
+    local xover = numbers.lerp(x1, x2, 1.1)
+    local yover = numbers.lerp(y1Top, y2Top, 0.995)
+    local curve = love.math.newBezierCurve({ x1, y1Top, xb, yb, xb2, yb2, x2, y2Top, xover, yover })
+
+    local points = {}
+    for i = 0, 10, 1 do
+        local t = i / 10
+        local px, py = curve:evaluate(t)
+        table.insert(points, px)
+        table.insert(points, py)
+    end
+
+    local slide = {}
+    slide.body = love.physics.newBody(world, 0, 0, "static")
+    slide.shape = love.physics.newChainShape(false, points)
+    slide.fixture = love.physics.newFixture(slide.body, slide.shape, 1)
+    -- ground.shape = love.physics.newChainShape(false, points)
+    -- ground.fixture = love.physics.newFixture(ground.body, ground.shape)
+end
+
 function makeCow(x, y, bodyWidth, bodyHeight)
     local cow = {}
     cow.torso = {}
@@ -1130,12 +1216,17 @@ function love.update(dt)
     local v = bike.backWheel.body:getAngularVelocity()
 
 
-
+    if (backWheelFromGround >= 0) then
+        backWheelFromGround = backWheelFromGround + dt
+    end
+    if (frontWheelFromGround >= 0) then
+        frontWheelFromGround = frontWheelFromGround + dt
+    end
 
     if mipoOnVehicle then
         if love.keyboard.isDown('q') then
             local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
-            print(mass)
+            -- print(mass)
             mass = 30
             --bike.frame.body:applyLinearImpulse(0, -(mass * 1000))
             bike.frame.body:setAngularVelocity(-mass * .2)
@@ -1214,13 +1305,23 @@ function love.update(dt)
 
     local avgVelX = numbers.calculateRollingAverage(rollingAverageVelX)
     --local avgVelX = numbers.calculateRollingAverage(rollingAverageVelY)
-    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 5)
+
+    -- NOTE change the 5 below into something like 500 to have much slower scrolling
+    -- this is usefull when you are dragging a vehicle, how to figure out if i am dragging a vehicle is the question
+    local isDragging = isDraggingAFrame()
+    local value = isDragging and 500 or 5
+
+    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, value)
     --print('damping', damping)
     thingToFollow:setLinearDamping(damping)
 
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = numbers.getDistance(curCamX, curCamY, targetX, targetY)
 
+
+    -- print(isDragging)
+
+    --print(value)
     local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 5)
     --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
     local distance = numbers.getDistance(curCamX, curCamY, targetX, targetY)
@@ -1699,7 +1800,22 @@ function love.draw()
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = tostring(love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+
+    --print(backWheelFromGround, frontWheelFromGround)
+    local wheelie = ''
+    if (frontWheelFromGround > 1 and backWheelFromGround <= 1) then
+        wheelie = ' wheelie: ' .. string.format("%02.1f", frontWheelFromGround)
+    end
+
+
+    --bikeFrameAngleAtJump
+    local loopings = ''
+    if (bikeFrameAngleAtJump ~= 0) then
+        loopings = ' loops: ' .. getLoopingDegrees() .. '°'
+    end
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. wheelie .. loopings)
+
+
 
     function circleLabelButton(x, y, radius, label)
         love.graphics.setColor(0, 0, 0, 0.5)
@@ -1767,7 +1883,7 @@ function love.keypressed(k)
     if k == 'space' then
         cycleStep()
         if bikeGroundFeelerIsTouchingGround(bike) then
-            print('jo!')
+            --  print('jo!')
         end
 
         --local body = bike.frame.body
@@ -1783,7 +1899,7 @@ function love.keypressed(k)
         if bikeGroundFeelerIsTouchingGround(bike) then
             local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
 
-            mass = 30
+            mass = 130
             local body = bike.frame.body
             body:applyLinearImpulse(0, -(mass * 1000))
             body:applyAngularImpulse(-10000)
@@ -1924,6 +2040,59 @@ if false then
 end
 
 
+function getLoopingDegrees()
+    return math.floor(((bikeFrameAngleAtJump - bike.frame.body:getAngle()) / (math.pi * 2)) * 360)
+end
+
+function beginContact(a, b, contact)
+    -- local fixtureA, fixtureB = contact:getFixtures()
+    if a:getUserData() and b:getUserData() then
+        --   print(a:getUserData().bodyType, b:getUserData().bodyType)
+        if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'backWheel') then
+            backWheelFromGround = -1
+            if (bikeFrameAngleAtJump ~= 0) then
+                local l = getLoopingDegrees()
+                if math.abs(l) > 90 then print(l, l / 360) end
+            end
+            bikeFrameAngleAtJump = 0
+            -- print('beginning contatc back')
+        end
+        if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
+            frontWheelFromGround = -1
+            if (bikeFrameAngleAtJump ~= 0) then
+                local l = getLoopingDegrees()
+                if math.abs(l) > 90 then print(l, l / 360) end
+            end
+
+            bikeFrameAngleAtJump = 0
+            --print('beginning contatc front')
+        end
+    end
+end
+
+function endContact(a, b, contact)
+    local au = a:getUserData()
+    local bu = b:getUserData()
+    if au and bu then
+        if (au.bodyType == 'ground' and bu.bodyType == 'backWheel') then
+            backWheelFromGround = 0
+            -- print('ending contatc back')
+        end
+        if (au.bodyType == 'ground' and bu.bodyType == 'frontWheel') then
+            frontWheelFromGround = 0
+            -- print('ending contatc front')
+        end
+
+        --   print((backWheelFromGround >= 0.0 and frontWheelFromGround >= 0.0), au.bodyType == 'ground',
+        --       (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel'))
+        if (backWheelFromGround >= 0 and frontWheelFromGround >= 0) and au.bodyType == 'ground'
+            and (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel') then
+            --print('start a jump', backWheelFromGround, frontWheelFromGround)
+            bikeFrameAngleAtJump = bike.frame.body:getAngle()
+        end
+    end
+end
+
 function love.load()
     local ffont = "WindsorBT-Roman.otf"
 
@@ -1933,7 +2102,10 @@ function love.load()
     jointsEnabled = true
     followCamera = 'bike'
     startExample()
-
+    backWheelFromGround = 0
+    frontWheelFromGround = 0
+    bikeFrameAngleAtJump = 0
+    world:setCallbacks(beginContact, endContact)
     pointsOfInterest = {}
 
 
