@@ -1513,7 +1513,7 @@ function drawSinglePaardenBloem(x, y, randomNumber)
 
 
     love.graphics.setColor(darkGrassColor)
-    love.graphics.draw(bloemBladImage, x, y, -math.pi / 2, 1, 1, bloemBladImage:getWidth() / 2,
+    love.graphics.draw(bloemBladImage, x, y, -math.pi / 2 + 0.5, 1, 1, bloemBladImage:getWidth() / 2,
         bloemBladImage:getHeight())
     love.graphics.draw(bloemBladImage, x, y, math.pi / 2, 1, 1, bloemBladImage:getWidth() / 2,
         bloemBladImage:getHeight())
@@ -2044,6 +2044,10 @@ function getLoopingDegrees()
     return math.floor(((bikeFrameAngleAtJump - bike.frame.body:getAngle()) / (math.pi * 2)) * 360)
 end
 
+function addScoreMessage(msg)
+    print(msg)
+end
+
 function beginContact(a, b, contact)
     -- local fixtureA, fixtureB = contact:getFixtures()
     if a:getUserData() and b:getUserData() then
@@ -2052,17 +2056,31 @@ function beginContact(a, b, contact)
             backWheelFromGround = -1
             if (bikeFrameAngleAtJump ~= 0) then
                 local l = getLoopingDegrees()
-                if math.abs(l) > 90 then print(l, l / 360) end
+                local loops = ((l / 360))
+                if math.abs(loops) > 0.3 then
+                    addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+                end
             end
+
             bikeFrameAngleAtJump = 0
-            -- print('beginning contatc back')
         end
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
+            if frontWheelFromGround > 1 then
+                addScoreMessage('wheelied: ' .. string.format("%02.1f", frontWheelFromGround) .. 'seconds')
+            end
+
             frontWheelFromGround = -1
             if (bikeFrameAngleAtJump ~= 0) then
                 local l = getLoopingDegrees()
-                if math.abs(l) > 90 then print(l, l / 360) end
+                local loops = ((l / 360))
+                if math.abs(loops) > 0.3 then
+                    addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+                end
             end
+
+            -- figure out if my wheelie has just endedn
+            --
+
 
             bikeFrameAngleAtJump = 0
             --print('beginning contatc front')
@@ -2112,7 +2130,7 @@ function love.load()
     stengelImage = love.graphics.newImage('assets/world/stengel1.png')
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
     grassImage = love.graphics.newImage('assets/world/grass1.png')
-    bloemBladImage = love.graphics.newImage('assets/world/bloemBlad1.png')
+    bloemBladImage = love.graphics.newImage('assets/world/bloemBlad2.png')
     mipoOnVehicle = false
 
     sunImage = love.graphics.newImage('assets/world/zon2.png')
