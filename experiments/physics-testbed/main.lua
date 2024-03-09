@@ -30,6 +30,7 @@ local updatePart       = require 'lib.updatePart'
 local Timer            = require 'vendor.timer'
 local text             = require "lib.text"
 local vehicle          = require 'vehicle-creator'
+local animParticles    = require 'frameAnimParticle'
 
 function makeUserData(bodyType, moreData)
     local result = {
@@ -529,14 +530,14 @@ function disconnectMipoAndVehicle()
     connect.breakAllConnectionsAtBody(b2d.torso)
 
     local isPedalBike = bike.pedalWheel
-    
+
 
     -- dit truukje werkt hier niet omdat als active = fals e je de mipo niet meer kan lanceren,
     for k, v in pairs(b2d) do
         v:setGravityScale(0)
         --v:setActive(false)
     end
-    Timer.after(.2, function() 
+    Timer.after(.2, function()
         for k, v in pairs(b2d) do
             v:setGravityScale(1)
             v:setActive(true)
@@ -616,7 +617,7 @@ function disconnectMipoAndVehicle()
     --  print( 'lfoot fixture ', lfootFixture:getFilterData())
     --  print( 'rfoot fixture ', rfootFixture:getFilterData())
 
-    
+
     local bodyMass = getBodyMass(mipos[1])
     print(bodyMass)
     b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
@@ -626,7 +627,7 @@ function disconnectMipoAndVehicle()
 end
 
 function connectMipoAndVehicle()
-     print('connect')
+    print('connect')
     updatePart.resetPositions(mipos[1])
     local tx, ty = mipos[1].b2d.rfoot:getPosition()
     local yy = getYAtX(tx, stepSize)
@@ -662,20 +663,16 @@ function connectMipoAndVehicle()
 
 
 
-            v:setActive(false)
-        
-
+        v:setActive(false)
     end
     Timer.after(.2, function()
         for k, v in pairs(b2d) do
             --print(k,v)
             v:setGravityScale(0)
-    
-    
-    
-                 v:setActive(true)
-            
-    
+
+
+
+            v:setActive(true)
         end
     end)
 
@@ -1216,6 +1213,7 @@ end
 local timeSpent = 0
 
 function love.update(dt)
+    animParticles.updateAnimParticles(dt)
     -- print(dt)
     --local thingToFollow = bike.frontWheel.body
     local thingToFollow = followCamera == 'mipo' and mipos[1].b2d.torso or bike.frontWheel.body
@@ -1821,7 +1819,7 @@ function love.draw()
     love.graphics.circle('line', curCamX, curCamY, 20)
     cam:pop()
 
-
+    animParticles.drawAnimParticles()
     love.graphics.setColor(0, 0, 0, 0.5)
 
     local stats = love.graphics.getStats()
@@ -2089,6 +2087,19 @@ function beginContact(a, b, contact)
                 local loops = ((l / 360))
                 if math.abs(loops) > 0.3 then
                     addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+
+                    if math.abs(loops) >= 0.9 then
+                        local w, h = love.graphics.getDimensions()
+                        local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
+                        local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
+                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - 100
+                        local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
+                        local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+                        local alphaData = { 1, 0.2, 2.5 }
+                        local scaleData = { 0.3, 1.3, 2 }
+
+                        animParticles.startAnimParticle('looping', 12, 6, posData, colorData, alphaData, scaleData)
+                    end
                 end
             end
 
@@ -2096,6 +2107,21 @@ function beginContact(a, b, contact)
         end
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
             if frontWheelFromGround > 1 then
+                --contact:getPosition()
+                if (frontWheelFromGround > 2) then
+                    local w, h = love.graphics.getDimensions()
+                    local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
+                    local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
+                    local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - 100
+                    local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
+
+                    local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+                    local alphaData = { 1, 0.2, 2.5 }
+                    local scaleData = { 0.3, 1.3, 2 }
+
+                    animParticles.startAnimParticle('wheelie', 12, 6, posData, colorData, alphaData, scaleData)
+                end
+
                 addScoreMessage('wheelied: ' .. string.format("%02.1f", frontWheelFromGround) .. 'seconds')
             end
 
@@ -2104,6 +2130,20 @@ function beginContact(a, b, contact)
                 local l = getLoopingDegrees()
                 local loops = ((l / 360))
                 if math.abs(loops) > 0.3 then
+                    if math.abs(loops) >= 0.9 then
+                        local w, h = love.graphics.getDimensions()
+                        local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
+                        local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
+                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - 100
+                        local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
+
+
+                        local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+                        local alphaData = { 1, 0.2, 2.5 }
+                        local scaleData = { 0.3, 1.3, 2 }
+
+                        animParticles.startAnimParticle('looping', 12, 6, posData, colorData, alphaData, scaleData)
+                    end
                     addScoreMessage('looped: ' .. string.format("%02.1f", loops))
                 end
             end
@@ -2156,7 +2196,28 @@ function love.load()
     world:setCallbacks(beginContact, endContact)
     pointsOfInterest = {}
 
+    animParticles.prepareAnimParticle('wheelie', love.graphics.newImage('assets/anims/wheelie.png'), 110, 110)
+    animParticles.prepareAnimParticle('looping', love.graphics.newImage('assets/anims/looping.png'), 110, 110)
 
+
+    --startPos, endPos, posDuration,
+    -- startColor, endColor, colorDuration,
+    -- startAlpha, endAlpha, alphaDuration)
+
+    if false then
+        local posData = { { x = 0, y = 0 }, { x = 100, y = 100 }, 1.5 }
+        local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+        local alphaData = { 1, 0.2, 2.5 }
+        local scaleData = { 0.8, 1.3, 2 }
+
+        animParticles.startAnimParticle('looping', 12, 8, posData, colorData, alphaData, scaleData)
+
+        local posData2 = { { x = 0, y = 100 }, { x = 100, y = 100 }, 1.5 }
+        local posData3 = { { x = 1000, y = 100 }, { x = 100, y = 100 }, 1.5 }
+        animParticles.startAnimParticle('wheelie', 12, 6, posData2, colorData, alphaData, scaleData)
+
+        animParticles.startAnimParticle('wheelie', 12, 6, posData3, colorData, alphaData, scaleData)
+    end
     stengelImage = love.graphics.newImage('assets/world/stengel1.png')
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
     grassImage = love.graphics.newImage('assets/world/grass1.png')
