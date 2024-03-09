@@ -6,9 +6,9 @@ function waitForEvent()
     until a == "focus" or a == 'mousepressed' or a == 'touchpressed'
 end
 
-print('before waiit for event')
+print('before wait for event')
 waitForEvent()
-print('after waiit for event')
+print('after wait for event')
 
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
@@ -31,10 +31,43 @@ local Timer            = require 'vendor.timer'
 local text             = require "lib.text"
 local vehicle          = require 'vehicle-creator'
 
+function makeUserData(bodyType, moreData)
+    local result = {
+        bodyType = bodyType,
+    }
+    if moreData then
+        result.data = moreData
+    end
+    return result
+end
 
+local function isDraggingAFrame()
+    --
+    local bodies = world:getBodies()
+    local isBeingPointerJointed = false
 
+    for _, body in ipairs(bodies) do
+        local fixtures = body:getFixtures()
 
-
+        for j = 1, #pointerJoints do
+            local mj = pointerJoints[j]
+            if mj.jointBody == body then
+                isBeingPointerJointed = true
+            end
+        end
+        for _, fixture in ipairs(fixtures) do
+            local userData = fixture:getUserData()
+            if (userData) then
+                if isBeingPointerJointed then
+                    if userData.bodyType == 'frame' then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
 
 local function getVehicleMass(vehicle)
     local mass = 0
@@ -147,7 +180,15 @@ function startExample(number)
     -- my next step is higher then me
     -- the step after that is lower .
 
-    -- locate peak basically
+
+    --makeCow(0, -0, 15000, 8000)
+    --makeCow(20000, -0, 15000, 8000)
+    --makeCow(50000, -0, 15000, 8000)
+
+    -- makeSlide(0, 0, 15000, 15000)
+    -- makeSlide(25000, 0, 20000, 20000)
+    -- makeSlide(50000, 0, 20000, 20000)
+    -- makeSlide(75000, 0, 20000, 20000)
 
     if true then
         for i = 2, 100 do
@@ -172,7 +213,7 @@ function startExample(number)
             local schansBody = love.physics.newBody(world, 0, 0, "static")
             local schansShape = love.physics.newChainShape(false, points)
             local fixture = love.physics.newFixture(schansBody, schansShape)
-
+            fixture:setUserData(makeUserData('ground'))
 
             local body = love.physics.newBody(world, x1, y1, 'static')
             local shape = love.physics.newRectangleShape(1, 1)
@@ -247,10 +288,6 @@ function getYAtX(x, stepSize)
     local y1 = generateWave(200 * 10.78, 30)
     local y2 = generateWave(70 * 10.78, 17)
 
-
-
-    --
-    --print(h2)
     local y3 = generateWave(20 * 10.78, 5)
 
     y3 = y3 * ((math.sin(x / 30) + 1) / 2) -- Apply roughness condition
@@ -287,7 +324,7 @@ function updateGround(ground)
 
     ground.shape = love.physics.newChainShape(false, points)
     ground.fixture = love.physics.newFixture(ground.body, ground.shape)
-    ground.fixture:setUserData("ground")
+    ground.fixture:setUserData(makeUserData("ground"))
     ground.fixture:setFriction(1)
     ground.points = points
 end
@@ -839,6 +876,89 @@ function makeCarousell(x, y, width, height, angularVelocity)
     return carousel
 end
 
+function makeSlide(x, y, w, h)
+    -- this thing has 2 poles it stands on.
+    -- and the slide surface
+
+    function makePole(x, y, w, h)
+        local pole = {}
+        pole.body = love.physics.newBody(world, x, y, "static")
+        pole.shape = makeRectPoly2(w, h, 0, -h / 2)
+        pole.fixture = love.physics.newFixture(pole.body, pole.shape, 10)
+        pole.fixture:setSensor(true)
+        return pole
+    end
+
+    local x1 = x - w / 2
+    local y1 = getYAtX(x1, stepSize)
+    local y1Top = y1 - h
+    local p1 = makePole(x1, y1, w / 25, h)
+
+    local x2 = x + w / 2
+    local y2 = getYAtX(x2, stepSize)
+    local y2Top = y2 - h / 5
+    local p2 = makePole(x2, y2, w / 25, h / 5)
+
+    -- now describe a curve in a few steps
+    local xb = numbers.lerp(x1, x2, 0.5)
+    local yb = numbers.lerp(y1Top, y2Top, 0.75)
+    local xb2 = numbers.lerp(x1, x2, 0.75)
+    local yb2 = numbers.lerp(y1Top, y2Top, 0.95)
+    local xover = numbers.lerp(x1, x2, 1.1)
+    local yover = numbers.lerp(y1Top, y2Top, 0.995)
+    local curve = love.math.newBezierCurve({ x1, y1Top, xb, yb, xb2, yb2, x2, y2Top, xover, yover })
+
+    local points = {}
+    for i = 0, 10, 1 do
+        local t = i / 10
+        local px, py = curve:evaluate(t)
+        table.insert(points, px)
+        table.insert(points, py)
+    end
+
+    local slide = {}
+    slide.body = love.physics.newBody(world, 0, 0, "static")
+    slide.shape = love.physics.newChainShape(false, points)
+    slide.fixture = love.physics.newFixture(slide.body, slide.shape, 1)
+    -- ground.shape = love.physics.newChainShape(false, points)
+    -- ground.fixture = love.physics.newFixture(ground.body, ground.shape)
+end
+
+function makeCow(x, y, bodyWidth, bodyHeight)
+    local cow = {}
+    cow.torso = {}
+    cow.torso.body = love.physics.newBody(world, x, y, "dynamic")
+    cow.torso.shape = love.physics.newRectangleShape(bodyWidth, bodyHeight)
+    cow.torso.fixture = love.physics.newFixture(cow.torso.body, cow.torso.shape, 10)
+
+    function makeLeg(x, y, w, h, j)
+        local leg = {}
+        leg.body = love.physics.newBody(world, x, y, "static")
+        leg.shape = makeRectPoly2(w, h, 0, h / 2)
+        leg.fixture = love.physics.newFixture(leg.body, leg.shape, 10)
+        leg.fixture:setSensor(true)
+        if j then
+            local joint = love.physics.newRevoluteJoint(cow.torso.body, leg.body, x, y, false)
+            joint:setLowerLimit(-math.pi / 32)
+            joint:setUpperLimit(math.pi / 32)
+            joint:setLimitsEnabled(true)
+        end
+        return leg
+    end
+
+    local legW = bodyWidth / 10
+    local legH = bodyHeight
+
+    local l1 = makeLeg(x - bodyWidth / 3, y + bodyHeight / 2, legW, legH, true)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+    local l1 = makeLeg(x - bodyWidth / 5, y + bodyHeight / 2, legW, legH, false)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+    local l1 = makeLeg(x + bodyWidth / 5, y + bodyHeight / 2, legW, legH, false)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+    local l1 = makeLeg(x + bodyWidth / 3, y + bodyHeight / 2, legW, legH, true)
+    l1.body:setPosition(l1.body:getX(), getYAtX(l1.body:getX(), stepSize) - legH)
+end
+
 function makeChain(x, y, amt)
     --https://mentalgrain.com/box2d/creating-a-chain-with-box2d/
     local linkHeight = 20 * 10
@@ -1126,12 +1246,17 @@ function love.update(dt)
     local v = bike.backWheel.body:getAngularVelocity()
 
 
-
+    if (backWheelFromGround >= 0) then
+        backWheelFromGround = backWheelFromGround + dt
+    end
+    if (frontWheelFromGround >= 0) then
+        frontWheelFromGround = frontWheelFromGround + dt
+    end
 
     if mipoOnVehicle then
         if love.keyboard.isDown('q') then
             local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
-            print(mass)
+            -- print(mass)
             mass = 30
             --bike.frame.body:applyLinearImpulse(0, -(mass * 1000))
             bike.frame.body:setAngularVelocity(-mass * .2)
@@ -1210,13 +1335,23 @@ function love.update(dt)
 
     local avgVelX = numbers.calculateRollingAverage(rollingAverageVelX)
     --local avgVelX = numbers.calculateRollingAverage(rollingAverageVelY)
-    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, 5)
+
+    -- NOTE change the 5 below into something like 500 to have much slower scrolling
+    -- this is usefull when you are dragging a vehicle, how to figure out if i am dragging a vehicle is the question
+    local isDragging = isDraggingAFrame()
+    local value = isDragging and 500 or 5
+
+    local damping = numbers.mapInto(math.abs(avgVelX), 0, 10000, 0.0001, value)
     --print('damping', damping)
     thingToFollow:setLinearDamping(damping)
 
     local curCamX, curCamY = cam:getTranslation()
     local newDistance = numbers.getDistance(curCamX, curCamY, targetX, targetY)
 
+
+    -- print(isDragging)
+
+    --print(value)
     local dividerFar = numbers.mapInto(newDistance, 500, 2000, 3, 5)
     --local dividerNear = numbers.mapInto(newDistance, 500, 0, 3, 0)
     local distance = numbers.getDistance(curCamX, curCamY, targetX, targetY)
@@ -1255,10 +1390,46 @@ function love.update(dt)
     timeSpent = timeSpent + dt
 end
 
+sunColor1 = { hex2rgb('e6c800', 0.6) }
+sunColor1b = { hex2rgb('e6c800', 0.8) }
+sunColor2 = { hex2rgb('ddc490', 0.8) }
+
 darkGrassColor = { hex2rgb('2a5b3e') }
 darkGrassColorTrans = { hex2rgb('2a5b3e', 0.5) }
 lightGrassColor = { hex2rgb('86a542') }
 anotherGrassColor = { hex2rgb('45783c') }
+
+
+
+
+function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, repeatScale)
+    local w, h = love.graphics.getDimensions()
+    local camtlx, camtly = cam:getWorldCoordinates(0, 0)
+    local cambrx, cambry = cam:getWorldCoordinates(w, h)
+
+    love.graphics.stencil(stencilFunc, "replace", 1)
+    love.graphics.setStencilTest("greater", 0)
+
+
+    local pw, ph = img:getDimensions()
+    local screenW = cambrx - camtlx
+    local screenH = cambry - camtly
+    -- first render....
+    local repeats = (screenW / pw) * repeatScale
+    local tileOffsetX = (camtlx / screenW) * repeats
+    local tileOffsetY = (camtly / screenH) * repeats
+    local mesh = love.graphics.newMesh({
+        { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY,      1, 1, 1 },
+        { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY,      1, 1, 1 },
+        { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
+        { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
+    })
+    mesh:setTexture(img)
+
+    love.graphics.setColor(color)
+    love.graphics.draw(mesh, 0, 0)
+    love.graphics.setStencilTest()
+end
 
 function drawHillGround()
     local w, h = love.graphics.getDimensions()
@@ -1270,8 +1441,8 @@ function drawHillGround()
     for i = 1, #ground.points - 2, 2 do
         -- the 'road' part
 
-
-        love.graphics.setColor({ .5, .5, .5, .5 })
+        love.graphics.setColor(lightGrassColor)
+        -- love.graphics.setColor({ .5, .5, .5, .5 })
         love.graphics.polygon("fill",
             ground.points[i + 0], ground.points[i + 1] - 100,
             ground.points[i + 2], ground.points[i + 3] - 100,
@@ -1279,32 +1450,20 @@ function drawHillGround()
             ground.points[i + 0], ground.points[i + 1] + 200)
 
         -- the side part
-
-        love.graphics.setColor(lightGrassColor)
         love.graphics.polygon("fill",
             ground.points[i + 0], ground.points[i + 1] + 200,
             ground.points[i + 2], ground.points[i + 3] + 200,
             ground.points[i + 2], cambry,
             ground.points[i + 0], cambry)
     end
-    love.graphics.setColor(0, 0, 0, 0.2)
+
 
     local doTextureStuff = true
     if (doTextureStuff) then
-        local pw, ph = grassPattern:getDimensions()
-        local screenW = cambrx - camtlx
-        local screenH = cambry - camtly
-
-        local function myStencilFunction()
+        local sideHillFunc = function()
             for i = 1, #ground.points - 2, 2 do
                 love.graphics.setColor(1, 1, 1)
-                if false then
-                    love.graphics.polygon("fill",
-                        ground.points[i + 0], ground.points[i + 1] - 100,
-                        ground.points[i + 2], ground.points[i + 3] - 100,
-                        ground.points[i + 2], ground.points[i + 3] + 200,
-                        ground.points[i + 0], ground.points[i + 1] + 200)
-                end
+
 
                 love.graphics.polygon("fill",
                     ground.points[i + 0], ground.points[i + 1] + 200,
@@ -1313,59 +1472,24 @@ function drawHillGround()
                     ground.points[i + 0], cambry)
             end
         end
+        local topHillFunc = function()
+            for i = 1, #ground.points - 2, 2 do
+                love.graphics.setColor(1, 1, 1)
 
-
-        love.graphics.stencil(myStencilFunction, "replace", 1)
-        love.graphics.setStencilTest("greater", 0)
-
-
-        love.graphics.setColor(darkGrassColorTrans)
-        -- love.graphics.draw(texture, x, y, 0, s * sx, s * sy)
-
-
-
-        -- first render....
-        local repeats = (screenW / pw) * 0.5 / 2
-        local tileOffsetX = (camtlx / screenW) * repeats
-        local tileOffsetY = (camtly / screenH) * repeats
-        local mesh = love.graphics.newMesh({
-            { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY,      1, 1, 1 },
-            { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY,      1, 1, 1 },
-            { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
-            { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
-        })
-        mesh:setTexture(grassPattern)
-        love.graphics.draw(mesh, 0, 0)
-
-        -- another render.....
-        if true then
-            local repeats = (screenW / pw) * 0.7 / 2
-            local tileOffsetX = (camtlx / screenW) * repeats
-            local tileOffsetY = (camtly / screenH) * repeats
-            local mesh = love.graphics.newMesh({
-                { camtlx, camtly, 0 + tileOffsetX,       0 + tileOffsetY },
-                { cambrx, camtly, repeats + tileOffsetX, 0 + tileOffsetY },
-                { cambrx, cambry, repeats + tileOffsetX, repeats + tileOffsetY },
-                { camtlx, cambry, 0 + tileOffsetX,       repeats + tileOffsetY }
-            })
-            mesh:setTexture(grassPattern)
-            love.graphics.draw(mesh, 0, 0)
+                love.graphics.polygon("fill",
+                    ground.points[i + 0], ground.points[i + 1] - 100,
+                    ground.points[i + 2], ground.points[i + 3] - 100,
+                    ground.points[i + 2], ground.points[i + 3] + 200,
+                    ground.points[i + 0], ground.points[i + 1] + 200)
+            end
         end
 
-        love.graphics.setStencilTest()
+        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 0.5 / 2)
+        drawRepeatedPatternUsingStencilFunction(sideHillFunc, grassPattern1, darkGrassColorTrans, 0.7 / 2)
+        drawRepeatedPatternUsingStencilFunction(topHillFunc, grassPattern2, darkGrassColor, 10 / 2)
     end
-    --love.graphics.polygon("fill", ground.points)
 end
 
-
--- lifted from texturedBox2d.lua
-
--- where do we get the mesh from ?
--- I think it would be cool to reuse the ame mesh for every different stengel
-
---local mesh = love.graphics.newMesh(vertices, "strip")
---124      mesh:setTexture(image)
---  canvasCache.neckmesh   = texturedBox2d.createTexturedTriangleStrip(canvasCache.neckCanvas)
 local function texturedCurve(curve, image, mesh, dir, scaleW)
     if not dir then dir = 1 end
     if not scaleW then scaleW = 1 end
@@ -1397,37 +1521,33 @@ end
 
 -- end lifted
 
-function drawSinglePaardenBloem(x,y, randomNumber) 
-    
-    local stengelScaleY = 1.2 - randomNumber*3 
+function drawSinglePaardenBloem(x, y, randomNumber)
+    local stengelScaleY = 1.2 - randomNumber * 3
     local h = stengelImage:getHeight() * stengelScaleY
-    local x1 = math.sin(timeSpent * .4) * ( h/7)
+    local x1 = math.sin(timeSpent * .4) * (h / 7)
     local x2 = 0
-    local c = love.math.newBezierCurve({0,0, x1,0-h/2, x2, 0-h+math.abs(x1)})
+    local c = love.math.newBezierCurve({ 0, 0, x1, 0 - h / 2, x2, 0 - h + math.abs(x1) })
     local m = texturedBox2d.createTexturedTriangleStrip(stengelImage)
     local eindX, eindY = c:evaluate(1)
-    texturedCurve(c, stengelImage,m,1,.5)
+    texturedCurve(c, stengelImage, m, 1, .5)
     love.graphics.setColor(darkGrassColor)
-    
+
     love.graphics.draw(m, x, y, 0, 1, stengelScaleY, 0, 0)
 
 
     love.graphics.setColor(1, 1, 0)
-    love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY*stengelScaleY, math.sin(timeSpent),
+    love.graphics.draw(bloemHoofdImage, x + eindX, y + eindY * stengelScaleY, math.sin(timeSpent),
         1, 1,
         bloemHoofdImage:getWidth() / 2, bloemHoofdImage:getHeight() / 2)
 
 
 
     love.graphics.setColor(darkGrassColor)
-    love.graphics.draw(bloemBladImage, x, y, -math.pi/2 , 1, 1, bloemBladImage:getWidth()/2,
-        bloemBladImage:getHeight() )
-    love.graphics.draw(bloemBladImage, x, y, math.pi/2 , 1, 1, bloemBladImage:getWidth()/2,
-        bloemBladImage:getHeight() )
-
-
+    love.graphics.draw(bloemBladImage, x, y, -math.pi / 2 + 0.5, 1, 1, bloemBladImage:getWidth() / 2,
+        bloemBladImage:getHeight())
+    love.graphics.draw(bloemBladImage, x, y, math.pi / 2, 1, 1, bloemBladImage:getWidth() / 2,
+        bloemBladImage:getHeight())
 end
-
 
 function drawPaardenBloemen()
     local startX = ground.points[1]
@@ -1451,7 +1571,7 @@ function drawPaardenBloemen()
                 --   love.graphics.circle('fill', x, y - 1000, 100)
                 --  love.graphics.print('none', x, y)
             else
-                drawSinglePaardenBloem(x,y, hh-0.5)
+                drawSinglePaardenBloem(x, y, hh - 0.5)
             end
         end
     end
@@ -1536,9 +1656,8 @@ local function textureTheBike(bike, bikeData)
     love.graphics.draw(img, x, y, a + math.pi, sx, sy, dimsH / 2, dimsW / 2)
 end
 
-sunColor1 = { hex2rgb('e6c800', 0.6) }
-sunColor1b = { hex2rgb('e6c800', 0.8) }
-sunColor2 = { hex2rgb('ddc490', 0.8) }
+
+
 local function drawCelestialBodies()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
 
@@ -1711,7 +1830,22 @@ function love.draw()
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
     local fps = tostring(love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+
+    --print(backWheelFromGround, frontWheelFromGround)
+    local wheelie = ''
+    if (frontWheelFromGround > 1 and backWheelFromGround <= 1) then
+        wheelie = ' wheelie: ' .. string.format("%02.1f", frontWheelFromGround)
+    end
+
+
+    --bikeFrameAngleAtJump
+    local loopings = ''
+    if (bikeFrameAngleAtJump ~= 0) then
+        loopings = ' loops: ' .. getLoopingDegrees() .. '°'
+    end
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. wheelie .. loopings)
+
+
 
     function circleLabelButton(x, y, radius, label)
         love.graphics.setColor(0, 0, 0, 0.5)
@@ -1779,7 +1913,7 @@ function love.keypressed(k)
     if k == 'space' then
         cycleStep()
         if bikeGroundFeelerIsTouchingGround(bike) then
-            print('jo!')
+            --  print('jo!')
         end
 
         --local body = bike.frame.body
@@ -1795,7 +1929,7 @@ function love.keypressed(k)
         if bikeGroundFeelerIsTouchingGround(bike) then
             local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
 
-            mass = 30
+            mass = 130
             local body = bike.frame.body
             body:applyLinearImpulse(0, -(mass * 1000))
             body:applyAngularImpulse(-10000)
@@ -1936,6 +2070,77 @@ if false then
 end
 
 
+function getLoopingDegrees()
+    return math.floor(((bikeFrameAngleAtJump - bike.frame.body:getAngle()) / (math.pi * 2)) * 360)
+end
+
+function addScoreMessage(msg)
+    print(msg)
+end
+
+function beginContact(a, b, contact)
+    -- local fixtureA, fixtureB = contact:getFixtures()
+    if a:getUserData() and b:getUserData() then
+        --   print(a:getUserData().bodyType, b:getUserData().bodyType)
+        if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'backWheel') then
+            backWheelFromGround = -1
+            if (bikeFrameAngleAtJump ~= 0) then
+                local l = getLoopingDegrees()
+                local loops = ((l / 360))
+                if math.abs(loops) > 0.3 then
+                    addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+                end
+            end
+
+            bikeFrameAngleAtJump = 0
+        end
+        if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
+            if frontWheelFromGround > 1 then
+                addScoreMessage('wheelied: ' .. string.format("%02.1f", frontWheelFromGround) .. 'seconds')
+            end
+
+            frontWheelFromGround = -1
+            if (bikeFrameAngleAtJump ~= 0) then
+                local l = getLoopingDegrees()
+                local loops = ((l / 360))
+                if math.abs(loops) > 0.3 then
+                    addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+                end
+            end
+
+            -- figure out if my wheelie has just endedn
+            --
+
+
+            bikeFrameAngleAtJump = 0
+            --print('beginning contatc front')
+        end
+    end
+end
+
+function endContact(a, b, contact)
+    local au = a:getUserData()
+    local bu = b:getUserData()
+    if au and bu then
+        if (au.bodyType == 'ground' and bu.bodyType == 'backWheel') then
+            backWheelFromGround = 0
+            -- print('ending contatc back')
+        end
+        if (au.bodyType == 'ground' and bu.bodyType == 'frontWheel') then
+            frontWheelFromGround = 0
+            -- print('ending contatc front')
+        end
+
+        --   print((backWheelFromGround >= 0.0 and frontWheelFromGround >= 0.0), au.bodyType == 'ground',
+        --       (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel'))
+        if (backWheelFromGround >= 0 and frontWheelFromGround >= 0) and au.bodyType == 'ground'
+            and (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel') then
+            --print('start a jump', backWheelFromGround, frontWheelFromGround)
+            bikeFrameAngleAtJump = bike.frame.body:getAngle()
+        end
+    end
+end
+
 function love.load()
     local ffont = "WindsorBT-Roman.otf"
 
@@ -1945,14 +2150,17 @@ function love.load()
     jointsEnabled = true
     followCamera = 'bike'
     startExample()
-
+    backWheelFromGround = 0
+    frontWheelFromGround = 0
+    bikeFrameAngleAtJump = 0
+    world:setCallbacks(beginContact, endContact)
     pointsOfInterest = {}
 
 
     stengelImage = love.graphics.newImage('assets/world/stengel1.png')
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
     grassImage = love.graphics.newImage('assets/world/grass1.png')
-    bloemBladImage = love.graphics.newImage('assets/world/bloemBlad1.png')
+    bloemBladImage = love.graphics.newImage('assets/world/bloemBlad2.png')
     mipoOnVehicle = false
 
     sunImage = love.graphics.newImage('assets/world/zon2.png')
@@ -1965,8 +2173,13 @@ function love.load()
     frontWheelImgIndex = math.ceil(#wheelImages * love.math.random())
     backWheelImgIndex = math.ceil(#wheelImages * love.math.random())
 
-    grassPattern = love.graphics.newImage('assets/world/grasspattern4.png')
-    grassPattern:setWrap('repeat', 'repeat')
+    grassPattern1 = love.graphics.newImage('assets/world/grasspattern4.png')
+    grassPattern1:setWrap('repeat', 'repeat')
+
+    grassPattern2 = love.graphics.newImage('assets/world/grasspattern2.png')
+    grassPattern2:setWrap('repeat', 'repeat')
+
+
     local w, h = love.graphics.getDimensions()
 
     for i = 1, 1 do
