@@ -492,9 +492,19 @@ function disconnectMipoAndVehicle()
     connect.breakAllConnectionsAtBody(b2d.torso)
 
     local isPedalBike = bike.pedalWheel
+    
+
+    -- dit truukje werkt hier niet omdat als active = fals e je de mipo niet meer kan lanceren,
     for k, v in pairs(b2d) do
-        v:setGravityScale(1)
+        v:setGravityScale(0)
+        --v:setActive(false)
     end
+    Timer.after(.2, function() 
+        for k, v in pairs(b2d) do
+            v:setGravityScale(1)
+            v:setActive(true)
+        end
+    end)
 
     local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')
     if seatFixture then
@@ -569,15 +579,17 @@ function disconnectMipoAndVehicle()
     --  print( 'lfoot fixture ', lfootFixture:getFilterData())
     --  print( 'rfoot fixture ', rfootFixture:getFilterData())
 
-
-    b2d.torso:applyLinearImpulse(-1000, -10000)
+    
+    local bodyMass = getBodyMass(mipos[1])
+    print(bodyMass)
+    b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
 
     updatePart.resetPositions(mipos[1])
-    b2d.torso:applyLinearImpulse(-10000, -10000)
+    b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
 end
 
 function connectMipoAndVehicle()
-    print('connect')
+     print('connect')
     updatePart.resetPositions(mipos[1])
     local tx, ty = mipos[1].b2d.rfoot:getPosition()
     local yy = getYAtX(tx, stepSize)
@@ -610,7 +622,25 @@ function connectMipoAndVehicle()
     for k, v in pairs(b2d) do
         --print(k,v)
         v:setGravityScale(0)
+
+
+
+            v:setActive(false)
+        
+
     end
+    Timer.after(.2, function()
+        for k, v in pairs(b2d) do
+            --print(k,v)
+            v:setGravityScale(0)
+    
+    
+    
+                 v:setActive(true)
+            
+    
+        end
+    end)
 
     if bike.frame then
         --    bike.frame.body:setPosition(tx, ty)
