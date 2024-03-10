@@ -2078,6 +2078,11 @@ function addScoreMessage(msg)
     print(msg)
 end
 
+local function roundToQuarters(value)
+    local result = math.floor(value * 4 + 0.5) / 4
+    print(value, result)
+    return result
+end
 function beginContact(a, b, contact)
     -- local fixtureA, fixtureB = contact:getFixtures()
     if a:getUserData() and b:getUserData() then
@@ -2088,7 +2093,7 @@ function beginContact(a, b, contact)
                 local l = getLoopingDegrees()
                 local loops = ((l / 360))
                 if math.abs(loops) > 0.3 then
-                    addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+                    addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
 
                     if math.abs(loops) >= 0.9 then
                         local w, h = love.graphics.getDimensions()
@@ -2137,7 +2142,9 @@ function beginContact(a, b, contact)
                         rotationData)
                 end
 
-                addScoreMessage('wheelied: ' .. string.format("%02.1f", frontWheelFromGround) .. 'seconds')
+
+                addScoreMessage('wheelied: ' ..
+                    string.format("%02.1f", roundToQuarters(frontWheelFromGround)) .. 'seconds')
             end
 
             frontWheelFromGround = -1
@@ -2163,7 +2170,7 @@ function beginContact(a, b, contact)
                         animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
                             scaleData, rotationData)
                     end
-                    addScoreMessage('looped: ' .. string.format("%02.1f", loops))
+                    addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
                 end
             end
 

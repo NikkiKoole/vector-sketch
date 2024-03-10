@@ -1,5 +1,6 @@
-package.path        = package.path .. ";../../?.lua"
-local inspect       = require 'vendor.inspect'
+--package.path        = package.path .. ";../../?.lua"
+--local inspect       = require 'vendor.inspect'
+
 local lib           = {}
 
 local frameRowCache = {}
