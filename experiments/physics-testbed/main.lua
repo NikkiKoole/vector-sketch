@@ -1830,18 +1830,20 @@ function love.draw()
     local draws = stats.drawcalls .. 'draws'
 
     --print(backWheelFromGround, frontWheelFromGround)
-    local wheelie = ''
-    if (frontWheelFromGround > 1 and backWheelFromGround <= 1) then
-        wheelie = ' wheelie: ' .. string.format("%02.1f", frontWheelFromGround)
-    end
+    if false then
+        local wheelie = ''
+        if (frontWheelFromGround > 1 and backWheelFromGround <= 1) then
+            wheelie = ' wheelie: ' .. string.format("%02.1f", frontWheelFromGround)
+        end
 
 
-    --bikeFrameAngleAtJump
-    local loopings = ''
-    if (bikeFrameAngleAtJump ~= 0) then
-        loopings = ' loops: ' .. getLoopingDegrees() .. '°'
+        --bikeFrameAngleAtJump
+        local loopings = ''
+        if (bikeFrameAngleAtJump ~= 0) then
+            loopings = ' loops: ' .. getLoopingDegrees() .. '°'
+        end
     end
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. wheelie .. loopings)
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
 
 
 
@@ -2092,13 +2094,20 @@ function beginContact(a, b, contact)
                         local w, h = love.graphics.getDimensions()
                         local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
                         local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - 100
+                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
                         local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
                         local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
                         local alphaData = { 1, 0.2, 2.5 }
                         local scaleData = { 0.3, 1.3, 2 }
+                        local rotationData = { 0, 0, 1 }
 
-                        animParticles.startAnimParticle('looping', 12, 6, posData, colorData, alphaData, scaleData)
+                        local frameData = {
+                            startFrame = 0, -- frame where we will start playing
+                            loopBack = 6,   -- frame where we will start looping again (after reaching end)
+                            endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
+                        }
+                        animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
+                            scaleData, rotationData)
                     end
                 end
             end
@@ -2108,18 +2117,24 @@ function beginContact(a, b, contact)
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
             if frontWheelFromGround > 1 then
                 --contact:getPosition()
-                if (frontWheelFromGround > 2) then
+                if (frontWheelFromGround > 1.4) then
                     local w, h = love.graphics.getDimensions()
                     local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
                     local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                    local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - 100
+                    local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
                     local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
 
                     local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
                     local alphaData = { 1, 0.2, 2.5 }
                     local scaleData = { 0.3, 1.3, 2 }
-
-                    animParticles.startAnimParticle('wheelie', 12, 6, posData, colorData, alphaData, scaleData)
+                    local rotationData = { 0, 0, 1 }
+                    local frameData = {
+                        startFrame = 0, -- frame where we will start playing
+                        loopBack = 6,   -- frame where we will start looping again (after reaching end)
+                        endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
+                    }
+                    animParticles.startAnimParticle('wheelie', 12, frameData, posData, colorData, alphaData, scaleData,
+                        rotationData)
                 end
 
                 addScoreMessage('wheelied: ' .. string.format("%02.1f", frontWheelFromGround) .. 'seconds')
@@ -2134,15 +2149,19 @@ function beginContact(a, b, contact)
                         local w, h = love.graphics.getDimensions()
                         local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
                         local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - 100
+                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
                         local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
-
-
                         local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
                         local alphaData = { 1, 0.2, 2.5 }
                         local scaleData = { 0.3, 1.3, 2 }
-
-                        animParticles.startAnimParticle('looping', 12, 6, posData, colorData, alphaData, scaleData)
+                        local rotationData = { 0, 0, 1 }
+                        local frameData = {
+                            startFrame = 0, -- frame where we will start playing
+                            loopBack = 6,   -- frame where we will start looping again (after reaching end)
+                            endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
+                        }
+                        animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
+                            scaleData, rotationData)
                     end
                     addScoreMessage('looped: ' .. string.format("%02.1f", loops))
                 end
@@ -2181,11 +2200,22 @@ function endContact(a, b, contact)
     end
 end
 
+local function startNumberParticle(num, x1, y1, x2, y2)
+    local posData = { { x = x1, y = y1 }, { x = x2, y = y2 }, 2 }
+    local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 2 }
+    local alphaData = { 1, 0.2, 2 }
+    local scaleData = { 0.8, 1.2, 2 }
+    local rotationData = { 0, 0, 2 }
+    local frameData = {
+        startFrame = num * 2,   -- frame where we will start playing
+        loopBack = num * 2,     -- frame where we will start looping again (after reaching end)
+        endFrame = num * 2 + 2, -- frame where we end playing (-1 for defaul behaviour == end)
+    }
+    animParticles.startAnimParticle('numbers', 10, frameData, posData, colorData, alphaData, scaleData, rotationData)
+end
 function love.load()
     local ffont = "WindsorBT-Roman.otf"
-
     font = love.graphics.newFont(ffont, 24)
-
     love.graphics.setFont(font)
     jointsEnabled = true
     followCamera = 'bike'
@@ -2198,26 +2228,11 @@ function love.load()
 
     animParticles.prepareAnimParticle('wheelie', love.graphics.newImage('assets/anims/wheelie.png'), 110, 110)
     animParticles.prepareAnimParticle('looping', love.graphics.newImage('assets/anims/looping.png'), 110, 110)
+    animParticles.prepareAnimParticle('numbers', love.graphics.newImage('assets/anims/numbers.png'), 110, 110)
 
+    startNumberParticle(9, 0, 0, 100, 100)
+    startNumberParticle(11, 70, 0, 170, 100)
 
-    --startPos, endPos, posDuration,
-    -- startColor, endColor, colorDuration,
-    -- startAlpha, endAlpha, alphaDuration)
-
-    if false then
-        local posData = { { x = 0, y = 0 }, { x = 100, y = 100 }, 1.5 }
-        local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
-        local alphaData = { 1, 0.2, 2.5 }
-        local scaleData = { 0.8, 1.3, 2 }
-
-        animParticles.startAnimParticle('looping', 12, 8, posData, colorData, alphaData, scaleData)
-
-        local posData2 = { { x = 0, y = 100 }, { x = 100, y = 100 }, 1.5 }
-        local posData3 = { { x = 1000, y = 100 }, { x = 100, y = 100 }, 1.5 }
-        animParticles.startAnimParticle('wheelie', 12, 6, posData2, colorData, alphaData, scaleData)
-
-        animParticles.startAnimParticle('wheelie', 12, 6, posData3, colorData, alphaData, scaleData)
-    end
     stengelImage = love.graphics.newImage('assets/world/stengel1.png')
     bloemHoofdImage = love.graphics.newImage('assets/world/bloemHoofd1.png')
     grassImage = love.graphics.newImage('assets/world/grass1.png')
