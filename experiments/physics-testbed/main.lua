@@ -621,16 +621,18 @@ function disconnectMipoAndVehicle()
 
     local bodyMass = getBodyMass(mipos[1])
     print(bodyMass)
-    b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
+    b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
 
     updatePart.resetPositions(mipos[1])
-    b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
+    b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
 end
 
 function connectMipoAndVehicle()
     print('connect')
     updatePart.resetPositions(mipos[1])
 
+    print(mipos[1].b2d.lear:getAngle())
+    print(mipos[1].b2d.rear:getAngle())
     local tx, ty = mipos[1].b2d.rfoot:getPosition()
     local yy = getYAtX(tx, stepSize)
     local b2d = mipos[1].b2d
@@ -848,10 +850,13 @@ function connectMipoAndVehicle()
         --print('doing some forcing I believe?')
     end
 
-
+    if (b2d.torso) then b2d.torso:setAngle(0) end
     if (b2d.head) then b2d.head:setAngle(0) end
     if (b2d.neck1) then b2d.neck1:setAngle(-math.pi) end
     if (b2d.neck) then b2d.neck:setAngle(-math.pi) end
+
+    b2d.lear:setAngle(math.pi / 2)
+    b2d.rear:setAngle(-math.pi / 2)
 end
 
 -- more general physics stuff
