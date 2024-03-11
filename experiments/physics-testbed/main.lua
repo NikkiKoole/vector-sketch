@@ -171,6 +171,7 @@ function startExample(number)
     stepSize = 300
     ground = initGround()
     mipos = addMipos.make(1)
+    print(inspect(mipos[1].dna.multipliers))
     obstacles = {}
 
     -- try to insert some houses, with jumpy roofs.
@@ -620,15 +621,18 @@ function disconnectMipoAndVehicle()
 
     local bodyMass = getBodyMass(mipos[1])
     print(bodyMass)
-    b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
+    b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
 
     updatePart.resetPositions(mipos[1])
-    b2d.torso:applyLinearImpulse(0, -1500 * bodyMass)
+    b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
 end
 
 function connectMipoAndVehicle()
     print('connect')
     updatePart.resetPositions(mipos[1])
+
+    print(mipos[1].b2d.lear:getAngle())
+    print(mipos[1].b2d.rear:getAngle())
     local tx, ty = mipos[1].b2d.rfoot:getPosition()
     local yy = getYAtX(tx, stepSize)
     local b2d = mipos[1].b2d
@@ -690,6 +694,9 @@ function connectMipoAndVehicle()
 
     local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')
     if seatFixture then
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lear, { sleeping = true })
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rear, { sleeping = true })
+
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
@@ -843,10 +850,13 @@ function connectMipoAndVehicle()
         --print('doing some forcing I believe?')
     end
 
-
+    if (b2d.torso) then b2d.torso:setAngle(0) end
     if (b2d.head) then b2d.head:setAngle(0) end
     if (b2d.neck1) then b2d.neck1:setAngle(-math.pi) end
     if (b2d.neck) then b2d.neck:setAngle(-math.pi) end
+
+    b2d.lear:setAngle(math.pi / 2)
+    b2d.rear:setAngle(-math.pi / 2)
 end
 
 -- more general physics stuff
