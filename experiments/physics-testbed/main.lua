@@ -10,6 +10,7 @@ print('before wait for event')
 waitForEvent()
 print('after wait for event')
 
+
 package.path = package.path .. ";../../?.lua"
 require 'lib.printC'
 local inspect          = require 'vendor.inspect'
@@ -83,11 +84,10 @@ local function getVehicleMass(vehicle)
     end
     return mass
 end
+
 local function getBodyMass(mipo)
     local total = 0
     for k, v in pairs(mipo.b2d) do
-        --print(k,v)
-        --v:setGravityScale(0)
         if (v) then
             total = total + v:getMass()
         end
@@ -95,6 +95,7 @@ local function getBodyMass(mipo)
 
     return total
 end
+
 function hex2rgb(hex, alpha)
     hex = hex:gsub("#", "")
     return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
@@ -110,15 +111,9 @@ local function getAngle(x1, y1, x2, y2)
 end
 
 local function calculateEndPoint(startPoint, angleRad, distance)
-    -- Convert angle from degrees to radians
     local angleRadians = angleRad
-
-    -- Calculate the change in x and y using trigonometry
     local deltaX = distance * math.cos(angleRadians)
     local deltaY = distance * math.sin(angleRadians)
-
-
-    -- Calculate the end point
     local endPoint = {
         x = startPoint.x + deltaX,
         y = startPoint.y + deltaY
@@ -127,12 +122,9 @@ local function calculateEndPoint(startPoint, angleRad, distance)
     return endPoint.x, endPoint.y
 end
 
-
-
 function locatePeakX(startX, endX, stepSize)
     local bestPos = nil
     local bestValue = math.huge
-    --local bestDiff = math.huge
 
     for i = 0, (endX - startX) / stepSize do
         local x = startX + i * stepSize
@@ -142,8 +134,7 @@ function locatePeakX(startX, endX, stepSize)
         local y = getYAtX(x, stepSize)
         local ny = getYAtX(nx, stepSize)
         local nny = getYAtX(nnx, stepSize)
-        --print(nx > x , nx > nnx  , nx > bestValue)
-        --print(ny < y , ny < nny, ny)
+
         if ny < nny and bestValue > ny then
             bestPos = nx
             bestValue = ny
@@ -171,7 +162,7 @@ function startExample(number)
     stepSize = 300
     ground = initGround()
     mipos = addMipos.make(1)
-    print(inspect(mipos[1].dna.multipliers))
+    --print(inspect(mipos[1].dna.multipliers))
     obstacles = {}
 
     -- try to insert some houses, with jumpy roofs.
@@ -245,15 +236,8 @@ function startExample(number)
     end
     -- get data from the mipos[1] to make a fitted bike
     local c = mipos[1].dna.creation
-    --print(inspect(c.lfoot))
-
-
-    --isPedalBike = false
-
 
     bike, bikeData = vehicle.createVehicleUsingDNACreation('bike', c, -2000, -5000)
-    print(bike, bikeData)
-    --bike.frontWheel
     rollingAverageVelX = {}
     rollingAverageVelY = {}
     rollingDistance = {}
@@ -362,14 +346,9 @@ function enableDisableMipos()
         local bx, by = b.b2d.torso:getPosition()
 
         if bx < xMinR or bx > xMaxR then
-            --local y = lerpYAtX(bx, stepSize)
-            --local dy = y - by
             for k, v in pairs(b.b2d) do
-                -- local b2x, b2y = v:getPosition()
                 v:setActive(false)
                 v:setGravityScale(0)
-                --  print('setting', b2x, b2y)
-                --v:setPosition(b2x, b2y )
             end
         end
 
@@ -389,18 +368,14 @@ function enableDisableBikes()
     local boxWorldWidth = cambrx - camtlx
     local boxWorldHeight = cambry - camtly
 
-    -- local steps = math.ceil(boxWorldWidth / stepSize)
-
     local extraSteps = 10
     local xMinR = camtlx - extraSteps * stepSize
     local xMaxR = cambrx + extraSteps * stepSize
 
-    --    for i = 1, #mipos do
+
     local b = bike --mipos[i]
-    --local bx, by = b.b2d.torso:getPosition()
     local bx, by = b.frontWheel.body:getPosition()
 
-    --local parts = {b.frontWheel.body, }
     if bx < xMinR or bx > xMaxR then
         local y = lerpYAtX(bx, stepSize)
         for k, v in pairs(b) do
@@ -424,27 +399,19 @@ function enableDisableBikes()
 end
 
 function enableDisableObstacles()
-    --Body:setGravityScale( scale )
     local w, h = love.graphics.getDimensions()
     local camtlx, camtly = cam:getWorldCoordinates(0, 0)
     local cambrx, cambry = cam:getWorldCoordinates(w, h)
     local boxWorldWidth = cambrx - camtlx
     local boxWorldHeight = cambry - camtly
-
-
-    -- local steps = math.ceil(boxWorldWidth / stepSize)
-
     local extraSteps = 100
-
     local xMinR = camtlx - extraSteps * stepSize
     local xMaxR = cambrx + extraSteps * stepSize
 
-    -- print(#obstacles)
     for i = 1, #obstacles do
         local b = obstacles[i]
         local bx, by = b:getPosition()
         local scale = b:getGravityScale()
-        --print(scale)
 
         if bx < xMinR or bx > xMaxR then
             b:setActive(false)
@@ -454,21 +421,16 @@ function enableDisableObstacles()
             if by > y then
                 b:setPosition(bx, y)
             end
-            -- print('setting scale to 0')
         end
 
         if bx >= xMinR and bx <= xMaxR then
             b:setActive(true)
             b:setGravityScale(1)
-            -- print('setting scale to 1')
         end
     end
 end
 
 -- vehicle stuff
-
-
-
 
 function cycleStep()
     -- bike.frontWheel.body:setAngularVelocity(120000)
@@ -481,22 +443,35 @@ function cycleStep()
     end
 end
 
+local function isUserDataWithBodyTypeOf(fixture, type)
+    local ud = fixture:getUserData()
+    if ud then
+        return ud.bodyType == type
+    end
+    return false
+end
+
 local function setSensorValueBody(body, value)
     -- not allowed to change sensortype of connectors.
 
     local fixtures = body:getFixtures()
     for _, fixture in ipairs(fixtures) do
-        local skip = false
-        local ud = fixture:getUserData()
-        if ud then
-            if ud.bodyType == "connector" then
-                skip = true
-            end
-        end
-
-        if not skip then
+        if (isUserDataWithBodyTypeOf(fixture, 'connector')) then
+            -- doing nothing
+        else
             fixture:setSensor(value)
         end
+        -- local skip = false
+        -- local ud = fixture:getUserData()
+        -- if ud then
+        --     if ud.bodyType == "connector" then
+        --         skip = true
+        --     end
+        -- end
+
+        -- if not skip then
+        --     fixture:setSensor(value)
+        -- end
     end
 end
 
@@ -504,6 +479,7 @@ local function getConnectorFixtureAtBodyOfType(body, type)
     local fixtures = body:getFixtures()
     for _, fixture in ipairs(fixtures) do
         local ud = fixture:getUserData()
+
         if ud then
             if ud.bodyType == "connector" then
                 if ud.data then
@@ -569,8 +545,6 @@ function disconnectMipoAndVehicle()
         --  box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rfoot, { sleeping = nil })
         --  box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lfoot, { sleeping = nil })
 
-
-
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi / 2, 0, 'revolute')
         box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi / 2, 0, 'revolute')
 
@@ -605,9 +579,6 @@ function disconnectMipoAndVehicle()
 
                 local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lfoot, 'foot')
                 local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
-
-                --  print( 'lfoot fixture ', lfootFixture:getFilterData())
-                --   print( 'rfoot fixture ', rfootFixture:getFilterData())
             end)
         end
     end
@@ -615,12 +586,11 @@ function disconnectMipoAndVehicle()
     local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lfoot, 'foot')
     local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rfoot, 'foot')
 
-    --  print( 'lfoot fixture ', lfootFixture:getFilterData())
-    --  print( 'rfoot fixture ', rfootFixture:getFilterData())
+
 
 
     local bodyMass = getBodyMass(mipos[1])
-    print(bodyMass)
+    --  print(bodyMass)
     b2d.torso:applyLinearImpulse(0, -2000 * bodyMass)
 
     updatePart.resetPositions(mipos[1])
@@ -628,11 +598,9 @@ function disconnectMipoAndVehicle()
 end
 
 function connectMipoAndVehicle()
-    print('connect')
+    -- print('connect')
     updatePart.resetPositions(mipos[1])
 
-    print(mipos[1].b2d.lear:getAngle())
-    print(mipos[1].b2d.rear:getAngle())
     local tx, ty = mipos[1].b2d.rfoot:getPosition()
     local yy = getYAtX(tx, stepSize)
     local b2d = mipos[1].b2d
@@ -642,9 +610,8 @@ function connectMipoAndVehicle()
     -- and lookup a width of bike frame, or well i know position of front and backwheel.
     --
     local isPedalBike = bike.pedalWheel
-    --print(bike.type)
+
     if true then
-        -- print()
         if bike.pedalWheel then
             tx = tx - 300
         end
@@ -664,25 +631,16 @@ function connectMipoAndVehicle()
     for k, v in pairs(b2d) do
         --print(k,v)
         v:setGravityScale(0)
-
-
-
         v:setActive(false)
     end
+
     Timer.after(.2, function()
         for k, v in pairs(b2d) do
             --print(k,v)
             v:setGravityScale(0)
-
-
-
             v:setActive(true)
         end
     end)
-
-    if bike.frame then
-        --    bike.frame.body:setPosition(tx, ty)
-    end
 
 
     connect.breakAllConnectionsAtBody(b2d.lhand)
@@ -706,27 +664,6 @@ function connectMipoAndVehicle()
         if b2d.head then
             box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.head, { sleeping = true })
         end
-        -- box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.ruleg, false, 'revolute')
-        --box2dGuyCreation.setJointLimitBetweenBodies(b2d.torso, b2d.luleg, false, 'revolute')
-        ----box2dGuyCreation.setJointLimitBetweenBodies(b2d.ruleg, b2d.rlleg, false, 'revolute')
-        --box2dGuyCreation.setJointLimitBetweenBodies(b2d.luleg, b2d.llleg, false, 'revolute')
-        if true then
-            --   setSensorValueBody(b2d.luleg, true)
-            --   setSensorValueBody(b2d.llleg, true)
-            --setSensorValueBody(b2d.lfoot, true)
-            --   setSensorValueBody(b2d.ruleg, true)
-            --   setSensorValueBody(b2d.rlleg, true)
-            -- setSensorValueBody(b2d.rfoot, true)
-            -- Timer.after(.2, function()
-            --     setSensorValueBody(b2d.lfoot, false)
-            --   setSensorValueBody(b2d.ruleg, true)
-            --   setSensorValueBody(b2d.rlleg, true)
-            --     setSensorValueBody(b2d.rfoot, false)
-            -- end)
-
-            --     setSensorValueBody(b2d.rhand, true)
-            --     setSensorValueBody(b2d.lhand, true)
-        end
     end
 
 
@@ -734,18 +671,6 @@ function connectMipoAndVehicle()
 
 
     if isPedalBike then
-        --  box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.torso, { sleeping = true })
-
-        --box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
-        --box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
-        -- box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })
-        -- box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rlleg, { sleeping = true })
-        --   box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lfoot, { sleeping = true })
-        --   box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rfoot, { sleeping = true })
-
-        -- b2d.luleg:setAngle(math.pi / 2)
-        -- b2d.ruleg:setAngle(math.pi / 2)
-        -- disableLegs()
         if true then
             box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.luleg, -math.pi, math.pi / 2, 'revolute')
             box2dGuyCreation.setJointLimitsBetweenBodies(b2d.torso, b2d.ruleg, -math.pi, math.pi / 2, 'revolute')
@@ -819,11 +744,6 @@ function connectMipoAndVehicle()
 
         connect.forceConnection(rfootPedalFixture, rfootFixture)
         b2d.rfoot:setPosition(rfcentroid[1], rfcentroid[2])
-
-
-
-        -- print( 'lfoot fixture ', lfootFixture:getFilterData())
-        -- print( 'rfoot fixture ', rfootFixture:getFilterData())
     end
 
     if not isPedalBike then
@@ -837,8 +757,6 @@ function connectMipoAndVehicle()
         Timer.after(.2, function()
             local lfootPedalFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'lhand')
             local lfootFixture = getConnectorFixtureAtBodyOfType(b2d.lhand, 'hand')
-            --print(lfootPedalFixture, lfootFixture)
-
 
             connect.forceConnection(lfootPedalFixture, lfootFixture)
 
@@ -846,8 +764,6 @@ function connectMipoAndVehicle()
             local rfootFixture = getConnectorFixtureAtBodyOfType(b2d.rhand, 'hand')
             connect.forceConnection(rfootPedalFixture, rfootFixture)
         end)
-
-        --print('doing some forcing I believe?')
     end
 
     if (b2d.torso) then b2d.torso:setAngle(0) end
@@ -867,7 +783,7 @@ function makeBall(x, y, radius)
     ball.shape = love.physics.newCircleShape(radius)
     ball.fixture = love.physics.newFixture(ball.body, ball.shape, .1)
     ball.fixture:setRestitution(.2) -- let the ball bounce
-    --ball.fixture:setUserData(phys.makeUserData("ball"))
+
     ball.fixture:setFriction(.5)
     ball.body:setAngularVelocity(10000)
     return ball
@@ -879,7 +795,7 @@ function makeCarousell(x, y, width, height, angularVelocity)
     carousel.shape = love.physics.newRectangleShape(width, height)
     carousel.fixture = love.physics.newFixture(carousel.body, carousel.shape, 1)
     carousel.body:setAngularVelocity(angularVelocity)
-    --    carousel.fixture:setUserData(makeUserData("caroussel"))
+
     return carousel
 end
 
@@ -1806,25 +1722,9 @@ function love.draw()
             table.insert(vertsBackground, y - 100)
             table.insert(vertsForground, x)
             table.insert(vertsForground, y + 200)
-
-
-            --    curve = love.math.newBezierCurve( vertices )
-
-            --   love.graphics.draw(grassImage, x, y, angle, sx, sx)
-            --   love.graphics.draw(grassImage, x, y - imgH, angle, sx, sx)
-            --print(x)
         end
     end
 
-
-
-
-    --print(startX, eindX, (eindX - startX) / 50)
-
-    --curve = love.math.newBezierCurve(vertsBackground)
-    --love.graphics.line(curve:render())
-    --curve = love.math.newBezierCurve(vertsForground)
-    --love.graphics.line(curve:render())
 
 
     love.graphics.setColor(1, 1, 1)
@@ -1939,47 +1839,19 @@ function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
     if k == 'space' then
         cycleStep()
-        if bikeGroundFeelerIsTouchingGround(bike) then
-            --  print('jo!')
-        end
-
-        --local body = bike.frame.body
-        --body:applyLinearImpulse(1000,0)
     end
-    -- if k == '.' then
-    --     followCamera = not followCamera
-    -- end
-    --
-    --
-    --
     if k == 'w' then
         if bikeGroundFeelerIsTouchingGround(bike) then
             local mass = getVehicleMass(bike) + getBodyMass(mipos[1])
 
-            mass = 130
+            mass = mass * 3
             local body = bike.frame.body
             body:applyLinearImpulse(0, -(mass * 1000))
-            body:applyAngularImpulse(-10000)
+            body:applyAngularImpulse(-1000)
         end
     end
     if k == 'd' then
         disableLegs()
-    end
-    if k == 'x' then
-        bike.frontWheel.body:setAngularVelocity(-100000)
-        -- bike.backWheel.body:setAngularVelocity(-1000)
-    end
-
-    if k == 'a' then
-        local f = -100
-        for i = 1, #mipos do
-            mipos[i].b2d.torso:setAngularVelocity(f)
-            mipos[i].b2d.luleg:setAngularVelocity(f)
-            mipos[i].b2d.ruleg:setAngularVelocity(f)
-            if mipos[i].b2d.head then
-                mipos[i].b2d.head:setAngularVelocity(f)
-            end
-        end
     end
 end
 
@@ -2007,12 +1879,12 @@ local function pointerPressed(x, y, id)
     local onPressedParams = {
         pointerForceFunc = function(fixture)
             local ud = fixture:getUserData()
-            print(inspect(ud))
+            --print(inspect(ud))
             local force =
                 (ud and ud.bodyType == 'torso' and 1000000) or
                 (ud and ud.bodyType == 'frame' and 1000000) or
                 50000
-            print(force)
+            -- print(force)
             return force
         end
         --pointerForceFunc = function(fixture) return 1400 end
@@ -2022,7 +1894,7 @@ local function pointerPressed(x, y, id)
 end
 
 function love.mousepressed(x, y, button, istouch)
-    print('mousepresed')
+    -- print('mousepresed')
     if not istouch then
         if button == 1 then
             pointerPressed(x, y, 'mouse')
@@ -2107,33 +1979,50 @@ end
 
 local function roundToQuarters(value)
     local result = math.floor(value * 4 + 0.5) / 4
-    print(value, result)
+
     return result
 end
 
+
+
+local function drawNumbersNicely(num, x, y, x2, y2)
+    local rounded = roundToQuarters(num)
+    local integer = math.floor(rounded)
+    local fraction = rounded % 1
+
+    print(num)
+    if (integer ~= 0) then
+        -- print(integer)
+        startNumberParticle(math.abs(integer), x, y, x2, y2)
+    end
+    if (fraction ~= 0) then
+        -- print(fraction)
+        startNumberParticle(9 + (fraction * 4), x + 100, y, x2 + 100, y2)
+    end
+end
 function displayLoopingData()
     if (bikeFrameAngleAtJump ~= 0) then
         local l = getLoopingDegrees()
         local loops = ((l / 360))
-        if math.abs(loops) > 0.3 then
-            if math.abs(loops) >= 0.9 then
-                local w, h = love.graphics.getDimensions()
-                local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
-                local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
-                local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
-                local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
-                local alphaData = { 1, 0.2, 2.5 }
-                local scaleData = { 0.3, 1.3, 2 }
-                local rotationData = { 0, 0, 1 }
-                local frameData = {
-                    startFrame = 0, -- frame where we will start playing
-                    loopBack = 6,   -- frame where we will start looping again (after reaching end)
-                    endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
-                }
-                animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
-                    scaleData, rotationData)
-            end
+
+        if math.abs(loops) >= 0.5 then
+            local w, h = love.graphics.getDimensions()
+            local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
+            local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
+            local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
+            local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
+            local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+            local alphaData = { 1, 0.2, 2.5 }
+            local scaleData = { 0.3, 1.3, 2 }
+            local rotationData = { 0, 0, 1 }
+            local frameData = {
+                startFrame = 0, -- frame where we will start playing
+                loopBack = 6,   -- frame where we will start looping again (after reaching end)
+                endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
+            }
+            animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
+                scaleData, rotationData)
+            drawNumbersNicely(loops, x1, y1, x1, y2)
             addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
         end
     end
@@ -2157,7 +2046,7 @@ function beginContact(a, b, contact)
                     local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
                     local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
                     local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
-                    local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
+                    local posData = { { x = x1 - 100, y = y1 }, { x = x1 - 100, y = y2 }, 1.5 }
 
                     local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
                     local alphaData = { 1, 0.2, 2.5 }
@@ -2172,19 +2061,9 @@ function beginContact(a, b, contact)
                         rotationData)
 
 
-                    local rounded = roundToQuarters(frontWheelFromGround)
-                    local integer = math.floor(rounded)
-                    local fraction = rounded % 1
-                    print(integer, fraction)
 
-                    if (integer) then
-                        print(integer)
-                        startNumberParticle(integer, x1, y1, x1 - 100, y1 - 100)
-                    end
-                    if (fraction) then
-                        print(fraction)
-                        startNumberParticle(9 + (fraction * 4), x1, y1, x1 + 100, y1 - 100)
-                    end
+
+                    drawNumbersNicely(frontWheelFromGround, x1, y1, x1, y2)
 
                     addScoreMessage('wheelied: ' ..
                         string.format("%02.1f", roundToQuarters(frontWheelFromGround)) .. 'seconds')
