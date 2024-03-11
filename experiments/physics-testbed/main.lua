@@ -1244,12 +1244,17 @@ function love.update(dt)
     local v = bike.backWheel.body:getAngularVelocity()
 
 
+
+    if (frontWheelFromGround >= 0 and backWheelFromGround <= 0) then
+        frontWheelFromGround = frontWheelFromGround + dt
+    end
+
     if (backWheelFromGround >= 0) then
         backWheelFromGround = backWheelFromGround + dt
     end
-    if (frontWheelFromGround >= 0) then
-        frontWheelFromGround = frontWheelFromGround + dt
-    end
+
+
+
 
     if mipoOnVehicle then
         if love.keyboard.isDown('q') then
@@ -1398,7 +1403,19 @@ lightGrassColor = { hex2rgb('86a542') }
 anotherGrassColor = { hex2rgb('45783c') }
 
 
-
+local function startNumberParticle(num, x1, y1, x2, y2)
+    local posData = { { x = x1, y = y1 }, { x = x2, y = y2 }, 2 }
+    local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 2 }
+    local alphaData = { 1, 0.2, 2 }
+    local scaleData = { 0.8, 1.2, 2 }
+    local rotationData = { 0, 0, 2 }
+    local frameData = {
+        startFrame = num * 2,   -- frame where we will start playing
+        loopBack = num * 2,     -- frame where we will start looping again (after reaching end)
+        endFrame = num * 2 + 2, -- frame where we end playing (-1 for defaul behaviour == end)
+    }
+    animParticles.startAnimParticle('numbers', 10, frameData, posData, colorData, alphaData, scaleData, rotationData)
+end
 
 function drawRepeatedPatternUsingStencilFunction(stencilFunc, img, color, repeatScale)
     local w, h = love.graphics.getDimensions()
@@ -1830,20 +1847,20 @@ function love.draw()
     local draws = stats.drawcalls .. 'draws'
 
     --print(backWheelFromGround, frontWheelFromGround)
-    if false then
-        local wheelie = ''
-        if (frontWheelFromGround > 1 and backWheelFromGround <= 1) then
-            wheelie = ' wheelie: ' .. string.format("%02.1f", frontWheelFromGround)
-        end
-
-
-        --bikeFrameAngleAtJump
-        local loopings = ''
-        if (bikeFrameAngleAtJump ~= 0) then
-            loopings = ' loops: ' .. getLoopingDegrees() .. '°'
-        end
+    -- if true then
+    local wheelie = ''
+    if (frontWheelFromGround > 1 and backWheelFromGround <= 1) then
+        wheelie = ' wheelie: ' .. string.format("%02.1f", frontWheelFromGround)
     end
-    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps)
+
+
+    --bikeFrameAngleAtJump
+    local loopings = ''
+    if (bikeFrameAngleAtJump ~= 0) then
+        loopings = ' loops: ' .. getLoopingDegrees() .. '°'
+    end
+    -- end
+    love.graphics.print(mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. wheelie)
 
 
 
@@ -2083,40 +2100,43 @@ local function roundToQuarters(value)
     print(value, result)
     return result
 end
+
+function displayLoopingData()
+    if (bikeFrameAngleAtJump ~= 0) then
+        local l = getLoopingDegrees()
+        local loops = ((l / 360))
+        if math.abs(loops) > 0.3 then
+            if math.abs(loops) >= 0.9 then
+                local w, h = love.graphics.getDimensions()
+                local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
+                local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
+                local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
+                local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
+                local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+                local alphaData = { 1, 0.2, 2.5 }
+                local scaleData = { 0.3, 1.3, 2 }
+                local rotationData = { 0, 0, 1 }
+                local frameData = {
+                    startFrame = 0, -- frame where we will start playing
+                    loopBack = 6,   -- frame where we will start looping again (after reaching end)
+                    endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
+                }
+                animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
+                    scaleData, rotationData)
+            end
+            addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
+        end
+    end
+end
+
 function beginContact(a, b, contact)
     -- local fixtureA, fixtureB = contact:getFixtures()
     if a:getUserData() and b:getUserData() then
         --   print(a:getUserData().bodyType, b:getUserData().bodyType)
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'backWheel') then
             backWheelFromGround = -1
-            if (bikeFrameAngleAtJump ~= 0) then
-                local l = getLoopingDegrees()
-                local loops = ((l / 360))
-                if math.abs(loops) > 0.3 then
-                    addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
 
-                    if math.abs(loops) >= 0.9 then
-                        local w, h = love.graphics.getDimensions()
-                        local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
-                        local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
-                        local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
-                        local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
-                        local alphaData = { 1, 0.2, 2.5 }
-                        local scaleData = { 0.3, 1.3, 2 }
-                        local rotationData = { 0, 0, 1 }
-
-                        local frameData = {
-                            startFrame = 0, -- frame where we will start playing
-                            loopBack = 6,   -- frame where we will start looping again (after reaching end)
-                            endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
-                        }
-                        animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
-                            scaleData, rotationData)
-                    end
-                end
-            end
-
+            displayLoopingData()
             bikeFrameAngleAtJump = 0
         end
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
@@ -2140,39 +2160,32 @@ function beginContact(a, b, contact)
                     }
                     animParticles.startAnimParticle('wheelie', 12, frameData, posData, colorData, alphaData, scaleData,
                         rotationData)
+
+
+                    local rounded = roundToQuarters(frontWheelFromGround)
+                    local integer = math.floor(rounded)
+                    local fraction = rounded % 1
+                    print(integer, fraction)
+
+                    if (integer) then
+                        print(integer)
+                        startNumberParticle(integer, x1, y1, x1 - 100, y1 - 100)
+                    end
+                    if (fraction) then
+                        print(fraction)
+                        startNumberParticle(9 + (fraction * 4), x1, y1, x1 + 100, y1 - 100)
+                    end
+
+                    addScoreMessage('wheelied: ' ..
+                        string.format("%02.1f", roundToQuarters(frontWheelFromGround)) .. 'seconds')
                 end
-
-
-                addScoreMessage('wheelied: ' ..
-                    string.format("%02.1f", roundToQuarters(frontWheelFromGround)) .. 'seconds')
             end
 
             frontWheelFromGround = -1
-            if (bikeFrameAngleAtJump ~= 0) then
-                local l = getLoopingDegrees()
-                local loops = ((l / 360))
-                if math.abs(loops) > 0.3 then
-                    if math.abs(loops) >= 0.9 then
-                        local w, h = love.graphics.getDimensions()
-                        local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
-                        local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                        local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
-                        local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
-                        local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
-                        local alphaData = { 1, 0.2, 2.5 }
-                        local scaleData = { 0.3, 1.3, 2 }
-                        local rotationData = { 0, 0, 1 }
-                        local frameData = {
-                            startFrame = 0, -- frame where we will start playing
-                            loopBack = 6,   -- frame where we will start looping again (after reaching end)
-                            endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
-                        }
-                        animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
-                            scaleData, rotationData)
-                    end
-                    addScoreMessage('looped: ' .. string.format("%02.1f", roundToQuarters(loops)))
-                end
-            end
+
+            displayLoopingData()
+
+
 
             -- figure out if my wheelie has just endedn
             --
@@ -2207,19 +2220,6 @@ function endContact(a, b, contact)
     end
 end
 
-local function startNumberParticle(num, x1, y1, x2, y2)
-    local posData = { { x = x1, y = y1 }, { x = x2, y = y2 }, 2 }
-    local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 2 }
-    local alphaData = { 1, 0.2, 2 }
-    local scaleData = { 0.8, 1.2, 2 }
-    local rotationData = { 0, 0, 2 }
-    local frameData = {
-        startFrame = num * 2,   -- frame where we will start playing
-        loopBack = num * 2,     -- frame where we will start looping again (after reaching end)
-        endFrame = num * 2 + 2, -- frame where we end playing (-1 for defaul behaviour == end)
-    }
-    animParticles.startAnimParticle('numbers', 10, frameData, posData, colorData, alphaData, scaleData, rotationData)
-end
 function love.load()
     local ffont = "WindsorBT-Roman.otf"
     font = love.graphics.newFont(ffont, 24)
