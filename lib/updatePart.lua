@@ -168,8 +168,8 @@ lib.updatePart     = function(name, guy)
         local data = findPart('head').p --loadVectorSketch('assets/bodies.polygons.txt', 'bodies')
         local headRndIndex = math.ceil(values.head.shape)
         local flippedFloppedHeadPoints = box2dGuyCreation.getFlippedMetaObject(creation.head.flipx, creation.head.flipy,
-                data[headRndIndex]
-                .points)
+            data[headRndIndex]
+            .points)
 
         box2dGuyCreation.changeMetaPoints('head', guy, flippedFloppedHeadPoints)
         box2dGuyCreation.changeMetaTexture('head', guy, data[headRndIndex])
@@ -299,8 +299,8 @@ lib.updatePart     = function(name, guy)
         local bodyRndIndex = math.ceil(values.body.shape)
         local flippedFloppedBodyPoints = box2dGuyCreation.getFlippedMetaObject(creation.torso.flipx, creation.torso
             .flipy,
-                data[bodyRndIndex]
-                .points)
+            data[bodyRndIndex]
+            .points)
         box2dGuyCreation.changeMetaPoints('torso', guy, flippedFloppedBodyPoints)
         box2dGuyCreation.changeMetaTexture('torso', guy, data[bodyRndIndex])
         canvasCache.torsoCanvas = texturedBox2d.partToTexturedCanvasWrap('body', guy)
@@ -368,7 +368,6 @@ lib.updateAllParts = function(guy)
     _updatePart('upperlip')
     _updatePart('lowerlip')
     _updatePart('chestHair')
-
 end
 
 lib.resetPositions = function(guy)
@@ -380,21 +379,21 @@ lib.resetPositions = function(guy)
     local box2dGuy = guy.b2d
 
     if (box2dGuy.head) then box2dGuy.head:setAngle(0) end
-    if (box2dGuy.neck1) then box2dGuy.neck1:setAngle( -math.pi) end
-    if (box2dGuy.neck) then box2dGuy.neck:setAngle( -math.pi) end
+    if (box2dGuy.neck1) then box2dGuy.neck1:setAngle(-math.pi) end
+    if (box2dGuy.neck) then box2dGuy.neck:setAngle(-math.pi) end
 
     box2dGuy.lear:setAngle(math.pi / 2)
-    box2dGuy.rear:setAngle( -math.pi / 2)
+    box2dGuy.rear:setAngle(-math.pi / 2)
     box2dGuy.torso:setAngle(0)
     box2dGuy.luleg:setAngle(0)
     box2dGuy.llleg:setAngle(0)
     box2dGuy.lfoot:setAngle(math.pi / 2)
     if legsFacing == 'right' then
-        box2dGuy.lfoot:setAngle( -math.pi / 2)
+        box2dGuy.lfoot:setAngle(-math.pi / 2)
     end
     box2dGuy.ruleg:setAngle(0)
     box2dGuy.rlleg:setAngle(0)
-    box2dGuy.rfoot:setAngle( -math.pi / 2)
+    box2dGuy.rfoot:setAngle(-math.pi / 2)
     if legsFacing == 'left' then
         box2dGuy.rfoot:setAngle(math.pi / 2)
     end

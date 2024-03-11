@@ -171,6 +171,7 @@ function startExample(number)
     stepSize = 300
     ground = initGround()
     mipos = addMipos.make(1)
+    print(inspect(mipos[1].dna.multipliers))
     obstacles = {}
 
     -- try to insert some houses, with jumpy roofs.
@@ -629,6 +630,7 @@ end
 function connectMipoAndVehicle()
     print('connect')
     updatePart.resetPositions(mipos[1])
+
     local tx, ty = mipos[1].b2d.rfoot:getPosition()
     local yy = getYAtX(tx, stepSize)
     local b2d = mipos[1].b2d
@@ -690,6 +692,9 @@ function connectMipoAndVehicle()
 
     local seatFixture = getConnectorFixtureAtBodyOfType(bike.frame.body, 'seat')
     if seatFixture then
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.lear, { sleeping = true })
+        box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.rear, { sleeping = true })
+
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.luleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.llleg, { sleeping = true })
         box2dGuyCreation.updateUserDatasMoreDataAtBodyPart(b2d.ruleg, { sleeping = true })

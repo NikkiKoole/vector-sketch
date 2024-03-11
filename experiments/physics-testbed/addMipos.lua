@@ -85,6 +85,14 @@ lib.make = function(count)
 
     for i = 1, #fiveGuys do
         updatePart.randomizeGuy(fiveGuys[i], true)
+
+
+        -- legs are always long!
+        if (fiveGuys[i].dna.multipliers.leg.lMultiplier < 2) then
+            fiveGuys[i].dna.multipliers.leg.lMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier + 2
+            fiveGuys[i].dna.multipliers.leg.wMultiplier = fiveGuys[i].dna.multipliers.leg.lMultiplier
+        end
+
         fiveGuys[i].b2d = box2dGuyCreation.makeGuy(i * 1000, -10000, fiveGuys[i])
         updatePart.updateAllParts(fiveGuys[i])
     end
