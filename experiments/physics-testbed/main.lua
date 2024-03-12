@@ -1993,11 +1993,11 @@ local function drawNumbersNicely(num, x, y, x2, y2)
     print(num)
     if (integer ~= 0) then
         -- print(integer)
-        startNumberParticle(math.abs(integer), x, y, x2, y2)
+        startNumberParticle(math.abs(integer), x + 0, y, x2 + 100, y2)
     end
     if (fraction ~= 0) then
         -- print(fraction)
-        startNumberParticle(9 + (fraction * 4), x + 100, y, x2 + 100, y2)
+        startNumberParticle(9 + (fraction * 4), x + 0, y, x2 + 200, y2)
     end
 end
 function displayLoopingData()
@@ -2008,12 +2008,12 @@ function displayLoopingData()
         if math.abs(loops) >= 0.5 then
             local w, h = love.graphics.getDimensions()
             local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
-            local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-            local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
-            local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
-            local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
+            local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
+            local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 3)
+            local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 2 }
+            local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 2 }
             local alphaData = { 1, 0.2, 2.5 }
-            local scaleData = { 0.3, 1.3, 2 }
+            local scaleData = { 0.8, 1.3, 2 }
             local rotationData = { 0, 0, 1 }
             local frameData = {
                 startFrame = 0, -- frame where we will start playing
@@ -2044,9 +2044,9 @@ function beginContact(a, b, contact)
                 if (frontWheelFromGround > 1.4) then
                     local w, h = love.graphics.getDimensions()
                     local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
-                    local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12
-                    local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
-                    local posData = { { x = x1 - 100, y = y1 }, { x = x1 - 100, y = y2 }, 1.5 }
+                    local y1 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 6)
+                    local y2 = h / 2 + (love.math.random() * (h / 6)) - h / 12 - (h / 3)
+                    local posData = { { x = x1, y = y1 }, { x = x1, y = y2 }, 1.5 }
 
                     local colorData = { { 1, 1, 1 }, { 1, 1, 0.7 }, 1.5 }
                     local alphaData = { 1, 0.2, 2.5 }
@@ -2060,9 +2060,6 @@ function beginContact(a, b, contact)
                     animParticles.startAnimParticle('wheelie', 12, frameData, posData, colorData, alphaData, scaleData,
                         rotationData)
 
-
-
-
                     drawNumbersNicely(frontWheelFromGround, x1, y1, x1, y2)
 
                     addScoreMessage('wheelied: ' ..
@@ -2073,12 +2070,6 @@ function beginContact(a, b, contact)
             frontWheelFromGround = -1
 
             displayLoopingData()
-
-
-
-            -- figure out if my wheelie has just endedn
-            --
-
 
             bikeFrameAngleAtJump = 0
             --print('beginning contatc front')
@@ -2092,18 +2083,13 @@ function endContact(a, b, contact)
     if au and bu then
         if (au.bodyType == 'ground' and bu.bodyType == 'backWheel') then
             backWheelFromGround = 0
-            -- print('ending contatc back')
         end
         if (au.bodyType == 'ground' and bu.bodyType == 'frontWheel') then
             frontWheelFromGround = 0
-            -- print('ending contatc front')
         end
 
-        --   print((backWheelFromGround >= 0.0 and frontWheelFromGround >= 0.0), au.bodyType == 'ground',
-        --       (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel'))
         if (backWheelFromGround >= 0 and frontWheelFromGround >= 0) and au.bodyType == 'ground'
             and (bu.bodyType == 'backWheel' or bu.bodyType == 'frontWheel') then
-            --print('start a jump', backWheelFromGround, frontWheelFromGround)
             bikeFrameAngleAtJump = bike.frame.body:getAngle()
         end
     end
