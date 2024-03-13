@@ -1,31 +1,56 @@
--- aybe have a play with this:
--- https://github.com/zorggn/love-asl/blob/master/asl-thread.lua
---love.audio.newAdvancedSource = require 'asl'
-
 function love.load()
-    max_octave   = 8
-    octave       = 4
+    -- adsr stuff
+    playingSounds = {}
 
-    samples      = {
+
+    -- measure/beat
+    barsInMeasure   = 4
+    bpm             = 90
+    lastTick        = 0
+    lastBeat        = 0
+    beat            = 0
+    tick            = 0
+
+    -- metronome sounds
+    metronome_click = love.audio.newSource("Kick.wav", "static")
+
+    -- octave stuff
+    max_octave      = 8
+    octave          = 4
+
+    -- sample stuff
+    samples         = {
+        love.audio.newSource("decent-piano-reel1.wav", "static"),
+        love.audio.newSource("chord-organ-decentc2.wav", "static"),
+
+        --love.audio.newSource("A_040__E2_3.wav", "static"),
         love.audio.newSource("VibraphoneMid-MT70.wav", "static"),
-        --  love.audio.newSource("Synth SoftTooter.wav", "static"),
-        --  love.audio.newSource("Synth Microdot1.wav", "static"),
-        --  love.audio.newSource("synth03.wav", "static"),
-        --  love.audio.newSource("piano-clickO1.wav", "static"),
-        --  love.audio.newSource("sf1-015.wav", "static"),
-        --  love.audio.newSource("bass07.wav", "static"),
-        --  love.audio.newSource("Upright Bass F#2.wav", "static"),
-
-        --  love.audio.newSource("bass04.wav", "static"),
+        --    love.audio.newSource("VibraphoneLow-MT70.wav", "static"),
+        --    love.audio.newSource("VibraphoneHi-MT70.wav", "static"),
+        love.audio.newSource("Synth SineFiltered1.wav", "static"),
+        love.audio.newSource("Bass BoringSimple.wav", "static"),
+        love.audio.newSource("Synth SoftTooter.wav", "static"),
+        love.audio.newSource("junopiano.wav", "static"),
+        love.audio.newSource("synth03.wav", "static"),
+        love.audio.newSource("4.wav", "static"),
+        -- love.audio.newSource("Clave.wav", "static"),
+        love.audio.newSource("Kick.wav", "static"),
+        --   love.audio.newSource("hihat.wav", "static"),
+        --   love.audio.newSource("guirojuno10.wav", "static"),
+        love.audio.newSource("sf1-015.wav", "static"),
+        -- love.audio.newSource("bi.wav", "static"),
     }
-    sampleIndex  = 1
-    sample       = samples[sampleIndex]
-    sampleTuning = {
-        0, -1, -1, 0, 0, 0, 0, 0
-    }
+    sampleIndex     = 1
+    sample          = samples[sampleIndex]
 
+    -- tuning
+    sampleTuning    = {}
+    for i = 1, #samples do
+        sampleTuning[i] = 0
+    end
 
-    scales = {
+    -- scales
+    scales                         = {
         ['chromatic'] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
 
         ['major'] = { 0, 2, 4, 5, 7, 9, 11 },                 -- ionian major
@@ -44,7 +69,7 @@ function love.load()
         ['blues_minor'] = { 0, 3, 5, 6, 7, 10 },              -- Minor Blues
 
         ['jazz_minor'] = { 0, 2, 3, 5, 7, 9, 11 },            -- Jazz Minor
-        ['harmonic_minor'] = { 0, 2, 3, 5, 7, 8, 11 },        -- Harmonic Minor
+        ['harmonic_minor'] = { 0, 2, 3, 5, 7, 8, 11 },        -- Harmonic Minor !
         ['melodic_minor'] = { 0, 2, 3, 5, 7, 9, 11 },         -- Melodic Minor
 
         ['enigmatic'] = { 0, 1, 4, 6, 8, 10, 11 },            -- Enigmatic scale
@@ -57,66 +82,9 @@ function love.load()
         ['gypsy'] = { 0, 2, 4, 7, 8, 10 },                    -- Gypsy scale
         ['lydian_augmented'] = { 0, 2, 4, 6, 8, 9, 11 },      -- Lydian Augmented scale
     }
-    scale  = scales.hungarian_minor
-end
+    scale                          = scales.chromatic
 
-function love.update()
-
-end
-
-function love.draw()
-
-end
-
-function getPitchVariationRange(semitone, offsetInSemitones)
-    local oneUp = getPitch(semitone + 1)
-    local oneDown = getPitch(semitone - 1)
-    local range = (oneUp - oneDown) * offsetInSemitones -- Calculate the range directly
-    return range
-end
-
-function semitonePressed(number)
-    --print('pressed', number, getPitch(number))
-    local source = sample:clone()
-    local pitch = getPitch(number)
-
-
-    local range = getPitchVariationRange(number, 1 / 32)
-    local pitchOffset = love.math.random() * range - range / 2
-
-    source:setPitch(pitch + pitchOffset)
-    source:play()
-end
-
-function semitoneReleased(number)
-    -- print('released', number)
-end
-
-function getSemitone(offset)
-    return (octave * 12) + offset
-end
-
-function getPitch(semitone)
-    local sampledAtSemitone = 60 + sampleTuning[sampleIndex]
-    return 2 ^ ((semitone - sampledAtSemitone) / 12)
-end
-
-function fitKeyOffsetInScale(offset, scale)
-    -- this will get a keyboard offset integer (0...17 for all the 'white and black keys')
-    -- and return an offset that fits within the active scale.
-    local result
-    if (offset <= #scale - 1) then
-        result = scale[offset + 1]
-    else
-        local extraChords = math.floor(offset / #scale)
-        local newOffset = (offset % #scale)
-        result = (extraChords * 12) + scale[newOffset + 1]
-    end
-
-    return result
-end
-
-function love.keypressed(k)
+    -- keymapping (black and white or just white)
     local mapToOffsetBlackAndWhite = {
         ['a'] = 0,
         ['w'] = 1,
@@ -139,8 +107,7 @@ function love.keypressed(k)
         [']'] = 18,
         ["\\"] = 19,
     }
-
-    local mapToOffsetJustWhites = {
+    local mapToOffsetJustWhites    = {
         ['a'] = 0,
         ['s'] = 1,
         ['d'] = 2,
@@ -154,48 +121,194 @@ function love.keypressed(k)
         ["'"] = 10,
         ['\\'] = 11,
     }
+    usingMap                       = mapToOffsetBlackAndWhite
+end
 
-    --local chordMappings = {
-    --    ['major'] = { 0, 4, 7 }, -- Major chord
-    --    ['minor'] = { 0, 3, 7 }, -- Minor chord
-    --['d'] = {0, 7},        -- 5th chord
-    -- Define more chord mappings as needed
-    -- }
-    if (mapToOffsetBlackAndWhite[k] ~= nil) then
-        local oneKeyChord = false
-        --local doMajorTriad
-        if not oneKeyChord then
-            semitonePressed(getSemitone(fitKeyOffsetInScale(mapToOffsetBlackAndWhite[k], scale)))
-        else
-            if false then
-                local triads = {
-                    { 1, 3, 5 },
-                    { 2, 4, 6 },
-                    { 3, 5, 7 },
-                    { 1, 3, 5, 7 },
-                }
-                local triad = triads[4]
-                for i = 1, #triad do
-                    local offset0 = scale[triad[i]]
-                    semitonePressed(getSemitone(fitKeyOffsetInScale(mapToOffsetBlackAndWhite[k], scale)) + offset0)
-                end
-            end
-            local offsets = { { 0, 4, 7 }, { 0, 4, 7, 11 }, { 0, 4, 8, 10 }, }
-            local offset = offsets[3]
+function toggleScale()
+    local currentScaleIndex = 1
+    local scaleKeys = {}
 
+    -- Extract scale keys into a separate table
+    for key, _ in pairs(scales) do
+        table.insert(scaleKeys, key)
+    end
 
-            for i = 1, #offset do
-                local offset0 = offset[i]
-                semitonePressed(getSemitone(fitKeyOffsetInScale(mapToOffsetBlackAndWhite[k], scale)) + offset0)
+    -- Function to get the next scale key
+    local function getNextScaleKey()
+        for i = 1, #scaleKeys do
+            if scale == scales[scaleKeys[i]] then
+                currentScaleIndex = i
             end
         end
+
+        currentScaleIndex = currentScaleIndex + 1
+        if currentScaleIndex > #scaleKeys then
+            currentScaleIndex = 1
+        end
+        return scaleKeys[currentScaleIndex]
+    end
+
+    local nextScaleKey = getNextScaleKey()
+    scale = scales[nextScaleKey]
+    print("Current scale:", nextScaleKey)
+end
+
+function getPitchVariationRange(semitone, offsetInSemitones)
+    local oneUp = getPitch(semitone + 1)
+    local oneDown = getPitch(semitone - 1)
+    local range = (oneUp - oneDown) * offsetInSemitones -- Calculate the range directly
+    return range
+end
+
+function semitoneTriggered(number)
+    local source = sample:clone()
+    local pitch = getPitch(number)
+
+    local range = getPitchVariationRange(number, 1 / 7)
+    local pitchOffset = love.math.random() * range - range / 2
+    --print('pitch', pitch)
+    source:setPitch(pitch + pitchOffset)
+    source:play()
+
+    table.insert(playingSounds, {
+        pitch = pitch + pitchOffset,
+        source = source,
+        semitone = number,
+        sampleIndex = sampleIndex,
+        timeNoteOn = love.timer.getTime()
+    })
+end
+
+function semitonePressed(number)
+    semitoneTriggered(number)
+    --   print('pressed', number, getPitch(number))
+end
+
+local function cleanPlayingSounds()
+    local now = love.timer.getTime()
+    for i = #playingSounds, 1, -1 do
+        local it = playingSounds[i]
+        if (it.timeNoteOff and it.timeNoteOff < now and not it.source:isPlaying()) then
+            table.remove(playingSounds, i)
+        end
+    end
+end
+
+
+function generateADSR(it, now)
+    local attackTime = 0.1
+    local decayTime = 0.1
+    local sustainLevel = 0.7
+    local releaseTime = 0.3
+    local startTime = it.timeNoteOn
+    local duration = it.source:getDuration('seconds')
+    local endTime = it.timeNoteOff or startTime + duration
+    local envelopeValue = 1
+
+    if now <= startTime + attackTime then
+        envelopeValue = (now - startTime) / attackTime
+        --  print('A')
+    elseif now <= startTime + attackTime + decayTime then
+        envelopeValue = 1 - (1 - sustainLevel) * ((now - startTime - attackTime) / decayTime)
+        -- print('D')
+    elseif now <= endTime - releaseTime then
+        envelopeValue = sustainLevel
+        -- print('S')
+    else
+        local releaseDuration = now - endTime
+        envelopeValue = sustainLevel * math.exp(-releaseDuration / releaseTime)
+        -- envelopeValue = sustainLevel * (1 - (releaseDuration / releaseTime))
+        --  print('R', releaseDuration, releaseTime)
+    end
+    -- print(envelopeValue)
+    return envelopeValue
+end
+
+local function updateADSREnvelopesForPlayingSounds(dt)
+    local now = love.timer.getTime()
+    for i = 1, #playingSounds do
+        local it = playingSounds[i]
+        local value = generateADSR(it, now)
+        it.source:setVolume(value)
+    end
+end
+
+function generateSineLFO(time, lfoFrequency)
+    --  local lfoFrequency = 2 -- Frequency of the LFO in Hz
+
+
+    return math.sin(2 * math.pi * lfoFrequency * time)
+end
+
+local function updatePlayingSoundsWithLFO()
+    -- local lfoAmplitude = 0.15 -- Amplitude of the LFO (modulation depth)
+    -- print(lfoValue * lfoAmplitude)
+    for i = 1, #playingSounds do
+        local it = playingSounds[i]
+        local time = love.timer.getTime() - it.timeNoteOn --
+        local lfoValue = generateSineLFO(time, .5)
+
+        local range = getPitchVariationRange(it.semitone, 1 / 7)
+
+        local lfoAmplitude = range
+        local lfoPicthDiff = (lfoValue * lfoAmplitude)
+        it.source:setPitch(it.pitch + lfoPicthDiff)
+        --local pitch = it.pitch
+    end
+    -- Generate LFO value
+end
+
+function semitoneReleased(number)
+    for i = 1, #playingSounds do
+        if (playingSounds[i].semitone == number) then
+            playingSounds[i].timeNoteOff = love.timer.getTime()
+        end
+    end
+end
+
+function getSemitone(offset)
+    return (octave * 12) + offset
+end
+
+function getPitch(semitone)
+    local sampledAtSemitone = 60 + sampleTuning[sampleIndex]
+    return 2 ^ ((semitone - sampledAtSemitone) / 12)
+end
+
+function fitKeyOffsetInScale(offset, scale)
+    -- this will get a keyboard offset integer (0...17 for all the 'white and black keys')
+    -- and return an offset that fits within the active scale.
+    local result
+    --print(offset, #scale)
+    if (offset <= #scale - 1) then
+        result = scale[offset + 1]
+    else
+        local extraChords = math.floor(offset / #scale)
+        local newOffset = (offset % #scale)
+        result = (extraChords * 12) + scale[newOffset + 1]
+    end
+
+    return result
+end
+
+function love.keyreleased(k)
+    if (usingMap[k] ~= nil) then
+        semitoneReleased(getSemitone(fitKeyOffsetInScale(usingMap[k], scale)))
+    end
+end
+
+function love.keypressed(k)
+    if (usingMap[k] ~= nil) then
+        semitonePressed(getSemitone(fitKeyOffsetInScale(usingMap[k], scale)))
     end
 
 
     if k == 'z' then
         octave = math.max(octave - 1, 0)
+        print("Current octave:", octave)
     elseif k == 'x' then
         octave = math.min(octave + 1, max_octave)
+        print("Current octave:", octave)
     end
     if k == 'tab' then
         sampleIndex = (sampleIndex % #samples) + 1
@@ -211,6 +324,42 @@ function love.keypressed(k)
         sampleTuning[sampleIndex] = sampleTuning[sampleIndex] + 1
         print('tuning of #', sampleIndex, sampleTuning[sampleIndex])
     end
+    if k == 'b' then
+        toggleScale()
+    end
 
     if k == 'escape' then love.event.quit() end
+end
+
+function playMetronomeSound()
+    local snd = metronome_click:clone()
+    if (math.floor(beat) % barsInMeasure == 1) then
+        snd:setVolume(1)
+    else
+        snd:setVolume(.5)
+    end
+    snd:play()
+end
+
+function love.update(dt)
+    updateBeatsAndTicks(dt)
+    cleanPlayingSounds()
+    updateADSREnvelopesForPlayingSounds(dt)
+    updatePlayingSoundsWithLFO()
+end
+
+function updateBeatsAndTicks(dt)
+    beat = beat + (dt * (bpm / 60))
+    local tick = ((beat % 1) * (96)) -- this 96 is the amount of parts in a single beat, needed for swing and quantize
+
+    if (math.floor(beat) ~= math.floor(lastBeat)) then
+        playMetronomeSound()
+    end
+
+    lastBeat = beat
+    lastTick = tick
+end
+
+function love.draw()
+    love.graphics.print(#playingSounds, 0, 0)
 end
