@@ -12,7 +12,7 @@ function love.load()
     tick            = 0
 
     -- metronome sounds
-    metronome_click = love.audio.newSource("Kick.wav", "static")
+    metronome_click = love.audio.newSource("Clave.wav", "static")
 
     -- octave stuff
     max_octave      = 8
@@ -20,25 +20,22 @@ function love.load()
 
     -- sample stuff
     samples         = {
-        love.audio.newSource("decent-piano-reel1.wav", "static"),
-        love.audio.newSource("chord-organ-decentc2.wav", "static"),
 
-        --love.audio.newSource("A_040__E2_3.wav", "static"),
+        love.audio.newSource("0x13F80A0.wav", 'static'),
+        love.audio.newSource("0x14146A0.wav", 'static'),
+        love.audio.newSource("0x722380.wav", 'static'),
+        love.audio.newSource("0xC3B760.wav", 'static'),
+        love.audio.newSource("ANCR I Mallet 7.wav", 'static'),
         love.audio.newSource("VibraphoneMid-MT70.wav", "static"),
-        --    love.audio.newSource("VibraphoneLow-MT70.wav", "static"),
-        --    love.audio.newSource("VibraphoneHi-MT70.wav", "static"),
         love.audio.newSource("Synth SineFiltered1.wav", "static"),
         love.audio.newSource("Bass BoringSimple.wav", "static"),
         love.audio.newSource("Synth SoftTooter.wav", "static"),
         love.audio.newSource("junopiano.wav", "static"),
         love.audio.newSource("synth03.wav", "static"),
         love.audio.newSource("4.wav", "static"),
-        -- love.audio.newSource("Clave.wav", "static"),
-        love.audio.newSource("Kick.wav", "static"),
-        --   love.audio.newSource("hihat.wav", "static"),
-        --   love.audio.newSource("guirojuno10.wav", "static"),
+        love.audio.newSource("chord-organ-decentc2.wav", "static"),
+        love.audio.newSource("A_040__E2_3.wav", "static"),
         love.audio.newSource("sf1-015.wav", "static"),
-        -- love.audio.newSource("bi.wav", "static"),
     }
     sampleIndex     = 1
     sample          = samples[sampleIndex]
@@ -246,10 +243,8 @@ local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
         local it = playingSounds[i]
         local time = love.timer.getTime() - it.timeNoteOn --
-        local lfoValue = generateSineLFO(time, .5)
-
-        local range = getPitchVariationRange(it.semitone, 1 / 7)
-
+        local lfoValue = generateSineLFO(time, .15)
+        local range = getPitchVariationRange(it.semitone, 1 / 12)
         local lfoAmplitude = range
         local lfoPicthDiff = (lfoValue * lfoAmplitude)
         it.source:setPitch(it.pitch + lfoPicthDiff)
@@ -353,7 +348,7 @@ function updateBeatsAndTicks(dt)
     local tick = ((beat % 1) * (96)) -- this 96 is the amount of parts in a single beat, needed for swing and quantize
 
     if (math.floor(beat) ~= math.floor(lastBeat)) then
-        playMetronomeSound()
+        --splayMetronomeSound()
     end
 
     lastBeat = beat
@@ -361,5 +356,5 @@ function updateBeatsAndTicks(dt)
 end
 
 function love.draw()
-    love.graphics.print(#playingSounds, 0, 0)
+    --  love.graphics.print(#playingSounds, 0, 0)
 end
