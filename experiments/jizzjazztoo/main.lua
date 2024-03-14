@@ -21,9 +21,10 @@ function love.load()
     -- sample stuff
     samples         = {
 
-        love.audio.newSource("0x13F80A0.wav", 'static'),
-        love.audio.newSource("0x14146A0.wav", 'static'),
+        -- love.audio.newSource("0x13F80A0.wav", 'static'),
+
         love.audio.newSource("0x722380.wav", 'static'),
+        love.audio.newSource("0x14146A0.wav", 'static'),
         love.audio.newSource("0xC3B760.wav", 'static'),
         love.audio.newSource("ANCR I Mallet 7.wav", 'static'),
         love.audio.newSource("VibraphoneMid-MT70.wav", "static"),
