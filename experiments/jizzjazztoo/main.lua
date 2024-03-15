@@ -2,25 +2,50 @@ local function prepareSamples(names)
     local result = {}
     for i = 1, #names do
         local name = names[i]
-        result[i] = { name = name, source = love.audio.newSource(name .. ".wav", 'static') }
+        local path = 'samples/' .. name .. ".wav"
+        local info = love.filesystem.getInfo(path)
+        if info then
+            result[i] = { name = name, source = love.audio.newSource(path, 'static') }
+        else
+            print('file not found!', path)
+        end
     end
     return result
 end
+local function resetBeatsAndTicks()
+    lastTick = 0
+    lastBeat = beatInMeasure * -1 * countInMeasures
+    beat = beatInMeasure * -1 * countInMeasures
+    tick = 0
+end
+
 
 function love.load()
+    local bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
+    local smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
+    font = bigfont
+    love.graphics.setFont(font)
+
+    -- livelooping
+    recording = false
+
     -- adsr stuff
     playingSounds = {}
+    defaultAttackTime = 0.1
+    defaultDecayTime = 0.1
+    defaultSustainLevel = 0.7
+    defaultReleaseTime = .03
 
     -- measure/beat
-    barsInMeasure = 4
-    bpm = 190
-    lastTick = 0
-    lastBeat = 0
-    beat = 0
-    tick = 0
+    beatInMeasure = 4
+    countInMeasures = 0
+
+    bpm = 90
+
+    resetBeatsAndTicks()
 
     -- metronome sounds
-    metronome_click = love.audio.newSource("Clave.wav", "static")
+    metronome_click = love.audio.newSource("samples/cr78/Clave.wav", "static")
 
     -- octave stuff
     max_octave = 8
@@ -28,12 +53,14 @@ function love.load()
 
     -- sample stuff
     local sampleFiles = {
-        "0x722380", "0x14146A0", "0xC3B760",
-        "ANCR I Mallet 7", "VibraphoneMid-MT70",
-        "Synth SineFiltered1", "Bass BoringSimple",
-        "Synth SoftTooter", "junopiano",
-        "synth03", "4", "chord-organ-decentc2",
-        "A_040__E2_3", "sf1-015"
+        "ac/0x722380", "ac/0x14146A0", "ac/0xC3B760",
+        "ANCR I Mallet 7", "legow/VibraphoneMid-MT70",
+        "legow/Synth SineFiltered1", "legow/Bass BoringSimple",
+        "legow/Synth SoftTooter", "junopiano",
+        "synth03", "4", "decent/chord-organ-decentc2",
+        "rhodes", "sf1-015", 'wavparty/melodic-tunedC06',
+        'wavparty/bass-tunedC05', 'wavparty/bass-tunedC06', 'wavparty/synth22', 'wavparty/synth36', 'mello/C3-3',
+        'ratchet/downstroke (10)', 'ratchet/downstroke (11)', 'ratchet/downstroke (12)'
     }
     samples = prepareSamples(sampleFiles)
 
@@ -170,6 +197,10 @@ function semitoneTriggered(number)
 end
 
 function semitonePressed(number)
+    if recording then
+        print('should record @', math.floor(lastBeat), math.floor(lastTick))
+    end
+    -- when we are recoring i should probably record it somewhere..
     semitoneTriggered(number)
 end
 
@@ -184,10 +215,10 @@ local function cleanPlayingSounds()
 end
 
 function generateADSR(it, now)
-    local attackTime = 0.1
-    local decayTime = 0.1
-    local sustainLevel = 0.7
-    local releaseTime = .3
+    local attackTime = defaultAttackTime
+    local decayTime = defaultDecayTime
+    local sustainLevel = defaultSustainLevel
+    local releaseTime = defaultReleaseTime
     local startTime = it.timeNoteOn
     local duration = it.source:getDuration('seconds')
     local endTime = it.timeNoteOff or startTime + duration
@@ -302,11 +333,18 @@ function love.keypressed(k)
     end
 
     if k == 'escape' then love.event.quit() end
+
+    if k == 'space' then
+        recording = not recording
+        if not recording then
+            resetBeatsAndTicks()
+        end
+    end
 end
 
 function playMetronomeSound()
     local snd = metronome_click:clone()
-    if (math.floor(beat) % barsInMeasure == 1) then
+    if (math.floor(beat) % beatInMeasure == 1) then
         snd:setVolume(1)
     else
         snd:setVolume(.5)
@@ -315,7 +353,9 @@ function playMetronomeSound()
 end
 
 function love.update(dt)
-    updateBeatsAndTicks(dt)
+    if recording then
+        updateBeatsAndTicks(dt)
+    end
     cleanPlayingSounds()
     updateADSREnvelopesForPlayingSounds(dt)
     updatePlayingSoundsWithLFO()
@@ -326,7 +366,7 @@ function updateBeatsAndTicks(dt)
     local tick = ((beat % 1) * (96))
 
     if (math.floor(beat) ~= math.floor(lastBeat)) then
-        --  playMetronomeSound()
+        playMetronomeSound()
     end
 
     lastBeat = beat
@@ -334,5 +374,17 @@ function updateBeatsAndTicks(dt)
 end
 
 function love.draw()
-    --  love.graphics.print(#playingSounds, 0, 0)
+    if (recording) then
+        love.graphics.setColor(1, 1, 1)
+        local str = string.format("%02d", math.floor(lastBeat / beatInMeasure)) ..
+            '|' .. string.format("%01d", math.floor(lastBeat % beatInMeasure))
+
+        love.graphics.print(str, font:getHeight(), 0)
+        if (math.floor(lastBeat / beatInMeasure) < 0) then
+            love.graphics.setColor(1, 1, 0)
+        else
+            love.graphics.setColor(1, 0, 0)
+        end
+        love.graphics.circle('fill', font:getHeight() / 2, font:getHeight() / 2, font:getHeight() / 3)
+    end
 end
