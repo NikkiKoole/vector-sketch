@@ -12,6 +12,7 @@ local function prepareSamples(names)
     end
     return result
 end
+
 local function resetBeatsAndTicks()
     lastTick = 0
     lastBeat = beatInMeasure * -1 * countInMeasures
@@ -20,17 +21,37 @@ local function resetBeatsAndTicks()
 end
 
 
+
+
 function love.load()
     local bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
     local smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
-    font = bigfont
+    local musicfont = love.graphics.newFont('NotoMusic-Regular.ttf', 48)
+    font = musicfont
     love.graphics.setFont(font)
 
+
+    playingSounds = {}
+    
     -- livelooping
     recording = false
+    playing = false
+
+    -- ok the data structure for recording things:
+    -- we have a limited amount of channels in a song (say 1-9)
+    -- you can view a channel as an instrument: an instrument is a sample + adsr envelope
+    
+    -- when we are recording we are doing that for 1 channel. 
+    -- also recoring a loop means we can maybe record multiple takes.
+    -- yeah a take should be a thing 
+    -- that implies you want to either start with  nothing and play as long as you want
+    -- OR do a predefined set of measures a couple of times/takes until its good enough   
+    -- OR you could also do a predefined set of measures and when you are done you layer on top.
+
+    channel = 1
+    
 
     -- adsr stuff
-    playingSounds = {}
     defaultAttackTime = 0.1
     defaultDecayTime = 0.1
     defaultSustainLevel = 0.7
@@ -39,7 +60,6 @@ function love.load()
     -- measure/beat
     beatInMeasure = 4
     countInMeasures = 0
-
     bpm = 90
 
     resetBeatsAndTicks()
@@ -69,7 +89,7 @@ function love.load()
 
     sampleIndex = 1
     sample = samples[sampleIndex]
-    -- print(sample.name)
+
     -- tuning
     sampleTuning = {}
     for i = 1, #samples do
@@ -154,7 +174,6 @@ function toggleScale()
         table.insert(scaleKeys, key)
     end
 
-    -- Function to get the next scale key
     local function getNextScaleKey()
         for i = 1, #scaleKeys do
             if scale == scales[scaleKeys[i]] then
@@ -184,8 +203,7 @@ end
 function semitoneTriggered(number)
     local source = sample.source:clone()
     local pitch = getPitch(number)
-    -- print(pitch)
-    local range = getPitchVariationRange(number, 1 / 7)
+    local range = getPitchVariationRange(number, 1 / 7)  -- this decides how 'off' notes can be
     local pitchOffset = love.math.random() * range - range / 2
     source:setPitch(pitch + pitchOffset)
     source:play()
@@ -201,11 +219,24 @@ end
 
 function semitonePressed(number)
     if recording then
-        print('should record @', math.floor(lastBeat), math.floor(lastTick))
+        print('should record press @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
     end
-    -- when we are recoring i should probably record it somewhere..
+
     semitoneTriggered(number)
 end
+
+function semitoneReleased(number)
+    -- this probably needs to end up checking if current instrument is the same..
+    if recording then 
+        print('should record release @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
+    end
+    for i = 1, #playingSounds do
+        if (playingSounds[i].semitone == number and not playingSounds[i].timeNoteOff) then
+            playingSounds[i].timeNoteOff = love.timer.getTime()
+        end
+    end
+end
+
 
 local function cleanPlayingSounds()
     local now = love.timer.getTime()
@@ -261,18 +292,11 @@ local function updatePlayingSoundsWithLFO()
         local lfoValue = generateSineLFO(time, .15)
         local range = getPitchVariationRange(it.semitone, 1 / 12)
         local lfoAmplitude = range
-        local lfoPicthDiff = (lfoValue * lfoAmplitude)
-        it.source:setPitch(it.pitch + lfoPicthDiff)
+        local lfoPitchDelta = (lfoValue * lfoAmplitude)
+        it.source:setPitch(it.pitch + lfoPitchDelta)
     end
 end
 
-function semitoneReleased(number)
-    for i = 1, #playingSounds do
-        if (playingSounds[i].semitone == number and not playingSounds[i].timeNoteOff) then
-            playingSounds[i].timeNoteOff = love.timer.getTime()
-        end
-    end
-end
 
 function getSemitone(offset)
     return (octave * 12) + offset
@@ -338,9 +362,22 @@ function love.keypressed(k)
     if k == 'escape' then love.event.quit() end
 
     if k == 'space' then
+        playing = not playing
+        if not playing then
+            resetBeatsAndTicks()
+        end
+        if playing then
+            recording = false
+        end
+    end
+
+    if k == 'return' then
         recording = not recording
         if not recording then
             resetBeatsAndTicks()
+        end
+        if recording then
+            playing = false
         end
     end
 end
@@ -356,7 +393,7 @@ function playMetronomeSound()
 end
 
 function love.update(dt)
-    if recording then
+    if recording or playing then
         updateBeatsAndTicks(dt)
     end
     cleanPlayingSounds()
@@ -377,7 +414,7 @@ function updateBeatsAndTicks(dt)
 end
 
 function love.draw()
-    if (recording) then
+    if (recording or playing) then
         love.graphics.setColor(1, 1, 1)
         local str = string.format("%02d", math.floor(lastBeat / beatInMeasure)) ..
             '|' .. string.format("%01d", math.floor(lastBeat % beatInMeasure))
@@ -386,8 +423,13 @@ function love.draw()
         if (math.floor(lastBeat / beatInMeasure) < 0) then
             love.graphics.setColor(1, 1, 0)
         else
-            love.graphics.setColor(1, 0, 0)
+            if recording then
+                love.graphics.setColor(1, 0, 0)
+            else
+                love.graphics.setColor(0, 1, 0)
+            end
         end
         love.graphics.circle('fill', font:getHeight() / 2, font:getHeight() / 2, font:getHeight() / 3)
     end
+    love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂') 
 end
