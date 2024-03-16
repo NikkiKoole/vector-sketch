@@ -53,6 +53,8 @@ function love.load()
 
     -- sample stuff
     local sampleFiles = {
+        'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi',
+        'lulla/soft sk', 'lulla/rainbows', 'lulla/receiver',
         "ac/0x722380", "ac/0x14146A0", "ac/0xC3B760",
         "ANCR I Mallet 7", "legow/VibraphoneMid-MT70",
         "legow/Synth SineFiltered1", "legow/Bass BoringSimple",
@@ -60,7 +62,8 @@ function love.load()
         "synth03", "4", "decent/chord-organ-decentc2",
         "rhodes", "sf1-015", 'wavparty/melodic-tunedC06',
         'wavparty/bass-tunedC05', 'wavparty/bass-tunedC06', 'wavparty/synth22', 'wavparty/synth36', 'mello/C3-3',
-        'ratchet/downstroke (10)', 'ratchet/downstroke (11)', 'ratchet/downstroke (12)'
+        'ratchet/downstroke (10)', 'ratchet/downstroke (11)', 'ratchet/downstroke (12)',
+        'mt70/top1', 'mt70/top2', 'mt70/top3', 'mt70/Bdrum1'
     }
     samples = prepareSamples(sampleFiles)
 

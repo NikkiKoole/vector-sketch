@@ -13,7 +13,7 @@ local function lerp(a, b, t)
     return a + (b - a) * clamp(t, 0, 1)
 end
 -- scale, rotation
-lib.startAnimParticle   = function(anim, fps, frameData, posData, colorData, alphaData, scaleData, rotationData)
+function lib.startAnimParticle(anim, fps, frameData, posData, colorData, alphaData, scaleData, rotationData)
     if not frameRowCache[anim] then
         print('animation ', anim, 'doesnt exist')
     else
@@ -47,7 +47,7 @@ lib.startAnimParticle   = function(anim, fps, frameData, posData, colorData, alp
     })
 end
 
-lib.prepareAnimParticle = function(name, image, cellWidth, cellHeight)
+function lib.prepareAnimParticle(name, image, cellWidth, cellHeight)
     local imgW, imgH = image:getDimensions()
     if imgW % cellWidth ~= 0 then
         print('this image isnt exactly the right size')
@@ -64,7 +64,7 @@ lib.prepareAnimParticle = function(name, image, cellWidth, cellHeight)
     end
 end
 
-lib.updateAnimParticles = function(dt)
+function lib.updateAnimParticles(dt)
     for i = 1, #animations do
         animations[i].duration = animations[i].duration + dt
         local frame = animations[i].duration / (1.0 / animations[i].fps)
@@ -94,7 +94,7 @@ lib.updateAnimParticles = function(dt)
     end
 end
 
-lib.drawAnimParticles   = function()
+function lib.drawAnimParticles()
     for i = 1, #animations do
         local a = animations[i]
         local quad = frameRowCache[a.name][a.framePointer]
