@@ -5,17 +5,16 @@ channel.main2audio        = love.thread.getChannel("main2audio")
 
 getMessageFromAudioThread = function()
     local v = channel.audio2main:pop();
-
     local error = _thread:getError()
     assert(not error, error)
     return v
 end
+
 sendMessageToAudioThread  = function(msg)
     channel.main2audio:push(msg)
 end
 
 local os                  = love.system.getOS()
---print(os)
 if os == 'iOS' or os == 'Android' then
     _thread = love.thread.newThread('audio-thread-newer.lua')
     _thread:start()
@@ -42,14 +41,11 @@ local function prepareSamples(names)
     return result
 end
 
-local function resetBeatsAndTicks()
-    lastTick = 0
-    lastBeat = beatInMeasure * -1 * countInMeasures
-    beat = beatInMeasure * -1 * countInMeasures
-    tick = 0
-end
 
 function love.load()
+    myBeat = 0
+    myBeatInMeasure = 4
+
     bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
     smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
     musicfont = love.graphics.newFont('NotoMusic-Regular.ttf', 48)
@@ -83,14 +79,12 @@ function love.load()
     defaultReleaseTime = .03
 
     -- measure/beat
-    beatInMeasure = 4
-    countInMeasures = 0
-    bpm = 90
 
-    resetBeatsAndTicks()
+    sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
+    --resetBeatsAndTicks()
 
     -- metronome sounds
-    metronome_click = love.audio.newSource("samples/cr78/Clave.wav", "static")
+
 
     -- octave stuff
     max_octave = 8
@@ -284,36 +278,38 @@ function semitoneReleased(number)
 end
 
 function handlePlayingRecordedData()
-    local beat = math.floor(lastBeat)
-    local tick = math.floor(lastTick)
+    if false then
+        local beat = math.floor(lastBeat)
+        local tick = math.floor(lastTick)
 
-    --missedTicks
-    for j = 1, #missedTicks do
-        local t = missedTicks[j]
-        local b = beat
-        if (t > tick) then
-            --print('oh dear, missed tick over the beat boundary', t, tick)
-            b = beat - 1
+        --missedTicks
+        for j = 1, #missedTicks do
+            local t = missedTicks[j]
+            local b = beat
+            if (t > tick) then
+                --print('oh dear, missed tick over the beat boundary', t, tick)
+                b = beat - 1
+            end
+            for i = 1, #recordedData do
+                if recordedData[i].beatOff == b and recordedData[i].tickOff == t then
+                    print('triggered a missed release')
+                    semitoneReleased(recordedData[i].semitone)
+                end
+                if recordedData[i].beat == b and recordedData[i].tick == t then
+                    print('triggered a missed tick')
+                    semitoneTriggered(recordedData[i].semitone)
+                end
+            end
         end
+        missedTicks = {}
+
         for i = 1, #recordedData do
-            if recordedData[i].beatOff == b and recordedData[i].tickOff == t then
-                print('triggered a missed release')
+            if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
                 semitoneReleased(recordedData[i].semitone)
             end
-            if recordedData[i].beat == b and recordedData[i].tick == t then
-                print('triggered a missed tick')
+            if recordedData[i].beat == beat and recordedData[i].tick == tick then
                 semitoneTriggered(recordedData[i].semitone)
             end
-        end
-    end
-    missedTicks = {}
-
-    for i = 1, #recordedData do
-        if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
-            semitoneReleased(recordedData[i].semitone)
-        end
-        if recordedData[i].beat == beat and recordedData[i].tick == tick then
-            semitoneTriggered(recordedData[i].semitone)
         end
     end
 end
@@ -412,6 +408,7 @@ end
 
 function love.keypressed(k)
     if (usingMap[k] ~= nil) then
+        --sendMessageToAudioThread({ type = "SemitonePressed", data = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) });
         semitonePressed(getSemitone(fitKeyOffsetInScale(usingMap[k], scale)))
     end
 
@@ -440,44 +437,50 @@ function love.keypressed(k)
         toggleScale()
     end
 
+    --  sendMessageToAudioThread({ type = "key", data = k });
+
     if k == 'escape' then love.event.quit() end
 
     if k == 'space' then
         playing = not playing
+
         if not playing then
-            resetBeatsAndTicks()
+            sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
+            sendMessageToAudioThread({ type = "paused", data = true });
+            --resetBeatsAndTicks()
         end
         if playing then
+            sendMessageToAudioThread({ type = "paused", data = false });
             recording = false
         end
     end
 
     if k == 'return' then
-        resetBeatsAndTicks()
+        sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
+        --resetBeatsAndTicks()
         recording = not recording
         if not recording then
-
+            sendMessageToAudioThread({ type = "paused", data = true });
         end
         if recording then
+            sendMessageToAudioThread({ type = "paused", data = false });
             recordedData = {}
             playing = false
         end
     end
 end
 
-function playMetronomeSound()
-    local snd = metronome_click:clone()
-    if (math.floor(beat) % beatInMeasure == 1) then
-        snd:setVolume(1)
-    else
-        snd:setVolume(.5)
-    end
-    snd:play()
-end
-
 function love.update(dt)
+    local msg = getMessageFromAudioThread()
+    if msg then
+        if msg.type == 'beatUpdate' then
+            myBeat = msg.data.beat
+            myBeatInMeasure = msg.data.beatInMeasure
+        end
+        --print(msg.type)
+    end
     if recording or playing then
-        updateBeatsAndTicks(dt)
+        --   updateBeatsAndTicks(dt)
     end
     if playing then
         handlePlayingRecordedData()
@@ -485,32 +488,6 @@ function love.update(dt)
     cleanPlayingSounds()
     updateADSREnvelopesForPlayingSounds(dt)
     updatePlayingSoundsWithLFO()
-end
-
-function updateBeatsAndTicks(dt)
-    beat = beat + (dt * (bpm / 60))
-    local tick = ((beat % 1) * (96))
-
-    if math.floor(tick) - math.floor(lastTick) > 1 then
-        --print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
-        -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
-        --print('miss:')
-        for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
-            --print('missed tick', i)
-            table.insert(missedTicks, i)
-        end
-    end
-
-
-
-    if (math.floor(beat) ~= math.floor(lastBeat)) then
-        if recording then
-            playMetronomeSound()
-        end
-    end
-
-    lastBeat = beat
-    lastTick = tick
 end
 
 function drawDrumMachineGrid()
@@ -558,16 +535,16 @@ end
 
 function love.draw()
     love.graphics.setColor(1, 1, 1)
-    drawDrumMachineGrid()
+    -- drawDrumMachineGrid()
     if (recording or playing) then
         local font = bigfont
         love.graphics.setFont(font)
 
-        local str = string.format("%02d", math.floor(lastBeat / beatInMeasure)) ..
-            '|' .. string.format("%01d", math.floor(lastBeat % beatInMeasure))
+        local str = string.format("%02d", math.floor(myBeat / myBeatInMeasure)) ..
+            '|' .. string.format("%01d", math.floor(myBeat % myBeatInMeasure))
 
         love.graphics.print(str, font:getHeight(), 0)
-        if (math.floor(lastBeat / beatInMeasure) < 0) then
+        if (math.floor(myBeat / myBeatInMeasure) < 0) then
             love.graphics.setColor(1, 1, 0)
         else
             if recording then
