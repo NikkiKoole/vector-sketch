@@ -1,3 +1,32 @@
+local _thread
+local channel             = {};
+channel.audio2main        = love.thread.getChannel("audio2main")
+channel.main2audio        = love.thread.getChannel("main2audio")
+
+getMessageFromAudioThread = function()
+    local v = channel.audio2main:pop();
+
+    local error = _thread:getError()
+    assert(not error, error)
+    return v
+end
+sendMessageToAudioThread  = function(msg)
+    channel.main2audio:push(msg)
+end
+
+local os                  = love.system.getOS()
+--print(os)
+if os == 'iOS' or os == 'Android' then
+    _thread = love.thread.newThread('audio-thread-newer.lua')
+    _thread:start()
+else
+    -- local code = getFileContents('lib/audio.lua')
+    _thread = love.thread.newThread('audio-thread-newer.lua')
+    _thread:start()
+end
+
+
+
 local function prepareSamples(names)
     local result = {}
     for i = 1, #names do
@@ -484,8 +513,52 @@ function updateBeatsAndTicks(dt)
     lastTick = tick
 end
 
+function drawDrumMachineGrid()
+    local columns = 32
+    local rows = 6
+    local w, h = love.graphics.getDimensions()
+
+    local font = smallfont
+    love.graphics.setFont(font)
+    local cellW = font:getWidth('X')
+    local cellH = 32
+    local labels = { 'kick', 'snare ', 'hat', 'ohat', 'tom', 'cym', 'clap', 'perc', 'rim', 'guiro', 'clav', 'shake' }
+    --local label = labels[math.ceil(love.math.random() * #labels)]
+    local fw = font:getWidth('WWWW')
+    local startY = 100
+
+    -- first draw the grid
+    for y = 0, #labels - 1 do
+        love.graphics.setColor(1, 1, 1, .3)
+        for i = 0, columns - 1 do
+            love.graphics.rectangle('line', fw + i * cellW, startY + y * cellH, cellW, cellH)
+        end
+    end
+
+    -- then the labels (also filled in letters)
+    for y = 0, #labels - 1 do
+        love.graphics.setColor(1, 1, 1, .5)
+        for i = 0, columns - 1 do
+            --love.graphics.rectangle('line', fw + i * cellW, startY + y * cellH, cellW, cellH)
+            if (love.math.random() < 0.2) then
+                -- local char = 'k'
+                local chars = { '.', 'k', 'X', 'O', 'b', 'I', ',', '>', '#', '%', '^' }
+                local char = chars[math.ceil(love.math.random() * #chars)]
+                local offX = (cellW - font:getWidth(char)) / 2
+                local offY = (cellH - font:getHeight()) / 2
+                love.graphics.print(char, offX + fw + i * cellW, offY + startY + y * cellH)
+            end
+        end
+        love.graphics.setColor(1, 1, 1, 0.8)
+        love.graphics.print(' ' .. labels[y + 1], 0, startY + y * cellH)
+    end
+
+    --local cellW = w/columns
+end
+
 function love.draw()
     love.graphics.setColor(1, 1, 1)
+    drawDrumMachineGrid()
     if (recording or playing) then
         local font = bigfont
         love.graphics.setFont(font)
