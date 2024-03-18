@@ -20,19 +20,15 @@ local function resetBeatsAndTicks()
     tick = 0
 end
 
-
-
-
 function love.load()
-    local bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
-    local smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
-    local musicfont = love.graphics.newFont('NotoMusic-Regular.ttf', 48)
-    font = musicfont
-    love.graphics.setFont(font)
+    bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
+    smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
+    musicfont = love.graphics.newFont('NotoMusic-Regular.ttf', 48)
 
 
+    missedTicks = {}
     playingSounds = {}
-    
+
     -- livelooping
     recording = false
     playing = false
@@ -40,16 +36,16 @@ function love.load()
     -- ok the data structure for recording things:
     -- we have a limited amount of channels in a song (say 1-9)
     -- you can view a channel as an instrument: an instrument is a sample + adsr envelope
-    
-    -- when we are recording we are doing that for 1 channel. 
+
+    -- when we are recording we are doing that for 1 channel.
     -- also recoring a loop means we can maybe record multiple takes.
-    -- yeah a take should be a thing 
+    -- yeah a take should be a thing
     -- that implies you want to either start with  nothing and play as long as you want
-    -- OR do a predefined set of measures a couple of times/takes until its good enough   
+    -- OR do a predefined set of measures a couple of times/takes until its good enough
     -- OR you could also do a predefined set of measures and when you are done you layer on top.
 
-    channel = 1
-    
+    channelIndex = 1
+    recordedData = {}
 
     -- adsr stuff
     defaultAttackTime = 0.1
@@ -73,8 +69,8 @@ function love.load()
 
     -- sample stuff
     local sampleFiles = {
-        'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi',
-        'lulla/soft sk', 'lulla/rainbows', 'lulla/receiver',
+        'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi', 'lulla/C4-pitchpedal',
+        'lulla/soft sk', 'lulla/rainbows', 'lulla/receiver', 'lulla/C3', 'lulla/lobassy',
         "ac/0x722380", "ac/0x14146A0", "ac/0xC3B760",
         "ANCR I Mallet 7", "legow/VibraphoneMid-MT70",
         "legow/Synth SineFiltered1", "legow/Bass BoringSimple",
@@ -203,7 +199,7 @@ end
 function semitoneTriggered(number)
     local source = sample.source:clone()
     local pitch = getPitch(number)
-    local range = getPitchVariationRange(number, 1 / 7)  -- this decides how 'off' notes can be
+    local range = getPitchVariationRange(number, 0) -- this decides how 'off' notes can be
     local pitchOffset = love.math.random() * range - range / 2
     source:setPitch(pitch + pitchOffset)
     source:play()
@@ -219,7 +215,16 @@ end
 
 function semitonePressed(number)
     if recording then
-        print('should record press @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
+        table.insert(recordedData, {
+            takeIndex = takeIndex or 0,
+            channelIndex = channelIndex,
+            sampleIndex = sampleIndex,
+            beat = math.floor(lastBeat),
+            tick = math.floor(lastTick),
+            semitone = number,
+            duration = 0,
+        })
+        --print('should record press @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
     end
 
     semitoneTriggered(number)
@@ -227,8 +232,20 @@ end
 
 function semitoneReleased(number)
     -- this probably needs to end up checking if current instrument is the same..
-    if recording then 
-        print('should record release @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
+    if recording then
+        -- print('should record release @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
+        for i = 1, #recordedData do
+            if recordedData[i].semitone == number and recordedData[i].duration == 0 then
+                local deltaBeats = (math.floor(lastBeat) - recordedData[i].beat)
+                local deltaTicks = (math.floor(lastTick) - recordedData[i].tick) -- this could end up negtive I think, what does that mean ?
+                local totalDeltaTicks = (deltaBeats * 96) + deltaTicks
+
+                recordedData[i].duration = totalDeltaTicks
+
+                recordedData[i].beatOff = math.floor(lastBeat)
+                recordedData[i].tickOff = math.floor(lastTick)
+            end
+        end
     end
     for i = 1, #playingSounds do
         if (playingSounds[i].semitone == number and not playingSounds[i].timeNoteOff) then
@@ -237,12 +254,47 @@ function semitoneReleased(number)
     end
 end
 
+function handlePlayingRecordedData()
+    local beat = math.floor(lastBeat)
+    local tick = math.floor(lastTick)
+
+    --missedTicks
+    for j = 1, #missedTicks do
+        local t = missedTicks[j]
+        local b = beat
+        if (t > tick) then
+            --print('oh dear, missed tick over the beat boundary', t, tick)
+            b = beat - 1
+        end
+        for i = 1, #recordedData do
+            if recordedData[i].beatOff == b and recordedData[i].tickOff == t then
+                print('triggered a missed release')
+                semitoneReleased(recordedData[i].semitone)
+            end
+            if recordedData[i].beat == b and recordedData[i].tick == t then
+                print('triggered a missed tick')
+                semitoneTriggered(recordedData[i].semitone)
+            end
+        end
+    end
+    missedTicks = {}
+
+    for i = 1, #recordedData do
+        if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
+            semitoneReleased(recordedData[i].semitone)
+        end
+        if recordedData[i].beat == beat and recordedData[i].tick == tick then
+            semitoneTriggered(recordedData[i].semitone)
+        end
+    end
+end
 
 local function cleanPlayingSounds()
     local now = love.timer.getTime()
     for i = #playingSounds, 1, -1 do
         local it = playingSounds[i]
         if (it.timeNoteOff and it.timeNoteOff < now and not it.source:isPlaying()) then
+            it.source:release()
             table.remove(playingSounds, i)
         end
     end
@@ -372,11 +424,13 @@ function love.keypressed(k)
     end
 
     if k == 'return' then
+        resetBeatsAndTicks()
         recording = not recording
         if not recording then
-            resetBeatsAndTicks()
+
         end
         if recording then
+            recordedData = {}
             playing = false
         end
     end
@@ -396,6 +450,9 @@ function love.update(dt)
     if recording or playing then
         updateBeatsAndTicks(dt)
     end
+    if playing then
+        handlePlayingRecordedData()
+    end
     cleanPlayingSounds()
     updateADSREnvelopesForPlayingSounds(dt)
     updatePlayingSoundsWithLFO()
@@ -405,8 +462,22 @@ function updateBeatsAndTicks(dt)
     beat = beat + (dt * (bpm / 60))
     local tick = ((beat % 1) * (96))
 
+    if math.floor(tick) - math.floor(lastTick) > 1 then
+        --print('thread: missed ticks:', math.floor(beat), math.floor(tick), math.floor(lastTick))
+        -- im assuming we never loose a beat (that would mean 96 consequetive ticks missed)
+        --print('miss:')
+        for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
+            --print('missed tick', i)
+            table.insert(missedTicks, i)
+        end
+    end
+
+
+
     if (math.floor(beat) ~= math.floor(lastBeat)) then
-        playMetronomeSound()
+        if recording then
+            playMetronomeSound()
+        end
     end
 
     lastBeat = beat
@@ -414,8 +485,11 @@ function updateBeatsAndTicks(dt)
 end
 
 function love.draw()
+    love.graphics.setColor(1, 1, 1)
     if (recording or playing) then
-        love.graphics.setColor(1, 1, 1)
+        local font = bigfont
+        love.graphics.setFont(font)
+
         local str = string.format("%02d", math.floor(lastBeat / beatInMeasure)) ..
             '|' .. string.format("%01d", math.floor(lastBeat % beatInMeasure))
 
@@ -431,5 +505,26 @@ function love.draw()
         end
         love.graphics.circle('fill', font:getHeight() / 2, font:getHeight() / 2, font:getHeight() / 3)
     end
-    love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂') 
+
+
+    local font = smallfont
+    love.graphics.setFont(font)
+
+    local instrument = samples[sampleIndex].name .. ' ' .. octave
+    local w, h = love.graphics:getDimensions()
+    love.graphics.setColor(1, 1, 1, 0.3)
+    love.graphics.print(instrument, w - font:getWidth(instrument), 0)
+
+
+
+    local stats = love.graphics.getStats()
+    local memavg = collectgarbage("count") / 1000
+    local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
+    local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
+    local fps = tostring(love.timer.getFPS()) .. 'fps'
+    local draws = stats.drawcalls .. 'draws'
+    local debugstring = mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps
+    love.graphics.print(debugstring, 0, h - font:getHeight())
+
+    -- love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂')
 end
