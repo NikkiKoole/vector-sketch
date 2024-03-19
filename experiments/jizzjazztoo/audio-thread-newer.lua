@@ -13,7 +13,7 @@ local beat                = 0
 local tick                = 0
 local beatInMeasure       = 4
 local countInMeasures     = 0
-local bpm                 = 90
+local bpm                 = 100
 
 local metronome_click     = love.audio.newSource("samples/cr78/Clave.wav", "static")
 
@@ -149,7 +149,7 @@ local function semitoneReleased(semitone)
                 recordedData[i].tickOff = math.floor(lastTick)
             end
         end
-        print(#recordedData)
+        --print(#recordedData)
     end
     for i = 1, #playingSounds do
         if (playingSounds[i].semitone == semitone and not playingSounds[i].timeNoteOff) then
