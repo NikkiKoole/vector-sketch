@@ -19,12 +19,9 @@ if os == 'iOS' or os == 'Android' then
     _thread = love.thread.newThread('audio-thread-newer.lua')
     _thread:start()
 else
-    -- local code = getFileContents('lib/audio.lua')
     _thread = love.thread.newThread('audio-thread-newer.lua')
     _thread:start()
 end
-
-
 
 local function prepareSamples(names)
     local result = {}
@@ -45,11 +42,11 @@ end
 function love.load()
     myBeat = 0
     myBeatInMeasure = 4
+    myNumPlayingSounds = 0
 
     bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
     smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
     musicfont = love.graphics.newFont('NotoMusic-Regular.ttf', 48)
-
 
     missedTicks = {}
     playingSounds = {}
@@ -72,11 +69,6 @@ function love.load()
     channelIndex = 1
     recordedData = {}
 
-    -- adsr stuff
-    defaultAttackTime = 0.1
-    defaultDecayTime = 0.1
-    defaultSustainLevel = 0.7
-    defaultReleaseTime = .03
 
     -- measure/beat
 
@@ -212,181 +204,6 @@ function toggleScale()
     print("Scale:", nextScaleKey)
 end
 
-function getPitchVariationRange(semitone, offsetInSemitones)
-    local oneUp = getPitch(semitone + 1)
-    local oneDown = getPitch(semitone - 1)
-    local range = (oneUp - oneDown) * offsetInSemitones
-    return range
-end
-
-function semitoneTriggered(number)
-    local source = sample.source:clone()
-    local pitch = getPitch(number)
-    local range = getPitchVariationRange(number, 0) -- this decides how 'off' notes can be
-    local pitchOffset = love.math.random() * range - range / 2
-    source:setPitch(pitch + pitchOffset)
-    source:play()
-
-    table.insert(playingSounds, {
-        pitch = pitch + pitchOffset,
-        source = source,
-        semitone = number,
-        sampleIndex = sampleIndex,
-        timeNoteOn = love.timer.getTime()
-    })
-end
-
-function semitonePressed(number)
-    if recording then
-        table.insert(recordedData, {
-            takeIndex = takeIndex or 0,
-            channelIndex = channelIndex,
-            sampleIndex = sampleIndex,
-            beat = math.floor(lastBeat),
-            tick = math.floor(lastTick),
-            semitone = number,
-            duration = 0,
-        })
-        --print('should record press @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
-    end
-
-    semitoneTriggered(number)
-end
-
-function semitoneReleased(number)
-    -- this probably needs to end up checking if current instrument is the same..
-    if recording then
-        -- print('should record release @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
-        for i = 1, #recordedData do
-            if recordedData[i].semitone == number and recordedData[i].duration == 0 then
-                local deltaBeats = (math.floor(lastBeat) - recordedData[i].beat)
-                local deltaTicks = (math.floor(lastTick) - recordedData[i].tick) -- this could end up negtive I think, what does that mean ?
-                local totalDeltaTicks = (deltaBeats * 96) + deltaTicks
-
-                recordedData[i].duration = totalDeltaTicks
-
-                recordedData[i].beatOff = math.floor(lastBeat)
-                recordedData[i].tickOff = math.floor(lastTick)
-            end
-        end
-    end
-    for i = 1, #playingSounds do
-        if (playingSounds[i].semitone == number and not playingSounds[i].timeNoteOff) then
-            playingSounds[i].timeNoteOff = love.timer.getTime()
-        end
-    end
-end
-
-function handlePlayingRecordedData()
-    if false then
-        local beat = math.floor(lastBeat)
-        local tick = math.floor(lastTick)
-
-        --missedTicks
-        for j = 1, #missedTicks do
-            local t = missedTicks[j]
-            local b = beat
-            if (t > tick) then
-                --print('oh dear, missed tick over the beat boundary', t, tick)
-                b = beat - 1
-            end
-            for i = 1, #recordedData do
-                if recordedData[i].beatOff == b and recordedData[i].tickOff == t then
-                    print('triggered a missed release')
-                    semitoneReleased(recordedData[i].semitone)
-                end
-                if recordedData[i].beat == b and recordedData[i].tick == t then
-                    print('triggered a missed tick')
-                    semitoneTriggered(recordedData[i].semitone)
-                end
-            end
-        end
-        missedTicks = {}
-
-        for i = 1, #recordedData do
-            if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
-                semitoneReleased(recordedData[i].semitone)
-            end
-            if recordedData[i].beat == beat and recordedData[i].tick == tick then
-                semitoneTriggered(recordedData[i].semitone)
-            end
-        end
-    end
-end
-
-local function cleanPlayingSounds()
-    local now = love.timer.getTime()
-    for i = #playingSounds, 1, -1 do
-        local it = playingSounds[i]
-        if (it.timeNoteOff and it.timeNoteOff < now and not it.source:isPlaying()) then
-            it.source:release()
-            table.remove(playingSounds, i)
-        end
-    end
-end
-
-function generateADSR(it, now)
-    local attackTime = defaultAttackTime
-    local decayTime = defaultDecayTime
-    local sustainLevel = defaultSustainLevel
-    local releaseTime = defaultReleaseTime
-    local startTime = it.timeNoteOn
-    local duration = it.source:getDuration('seconds')
-    local endTime = it.timeNoteOff or startTime + duration
-    local envelopeValue = 1
-
-    if now <= startTime + attackTime then
-        envelopeValue = (now - startTime) / attackTime
-    elseif now <= startTime + attackTime + decayTime then
-        envelopeValue = 1 - (1 - sustainLevel) * ((now - startTime - attackTime) / decayTime)
-    elseif now <= endTime - releaseTime then
-        envelopeValue = sustainLevel
-    else
-        local releaseDuration = now - endTime
-        envelopeValue = sustainLevel * math.exp(-releaseDuration / releaseTime)
-    end
-
-    return envelopeValue
-end
-
-local function updateADSREnvelopesForPlayingSounds(dt)
-    local now = love.timer.getTime()
-    for i = 1, #playingSounds do
-        local it = playingSounds[i]
-        local value = generateADSR(it, now)
-        it.source:setVolume(value)
-    end
-end
-
-function generateSineLFO(time, lfoFrequency)
-    return math.sin(2 * math.pi * lfoFrequency * time)
-end
-
-local function updatePlayingSoundsWithLFO()
-    for i = 1, #playingSounds do
-        local it = playingSounds[i]
-        local time = love.timer.getTime() - it.timeNoteOn
-        local lfoValue = generateSineLFO(time, .15)
-        local range = getPitchVariationRange(it.semitone, 1 / 12)
-        local lfoAmplitude = range
-        local lfoPitchDelta = (lfoValue * lfoAmplitude)
-        it.source:setPitch(it.pitch + lfoPitchDelta)
-    end
-end
-
-
-function getSemitone(offset)
-    return (octave * 12) + offset
-end
-
-function getPitch(semitone)
-    local sampledAtSemitone = 60 + sampleTuning[sampleIndex]
-    local usingSemitone = (semitone - sampledAtSemitone)
-    local result = 2 ^ (usingSemitone / 12)
-
-    return result
-end
-
 function fitKeyOffsetInScale(offset, scale)
     local result
     if (offset <= #scale - 1) then
@@ -400,16 +217,35 @@ function fitKeyOffsetInScale(offset, scale)
     return result
 end
 
+local function getSemitone(offset)
+    return (octave * 12) + offset
+end
 function love.keyreleased(k)
     if (usingMap[k] ~= nil) then
-        semitoneReleased(getSemitone(fitKeyOffsetInScale(usingMap[k], scale)))
+        sendMessageToAudioThread({
+            type = "semitoneReleased",
+            data = {
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)),
+                takeIndex = 0,
+                channelIndex = 1,
+                sampleIndex = sampleIndex
+            }
+        });
     end
 end
 
 function love.keypressed(k)
     if (usingMap[k] ~= nil) then
-        --sendMessageToAudioThread({ type = "SemitonePressed", data = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) });
-        semitonePressed(getSemitone(fitKeyOffsetInScale(usingMap[k], scale)))
+        sendMessageToAudioThread({
+            type = "semitonePressed",
+            data = {
+                sample = sample,
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)),
+                takeIndex = 0,
+                channelIndex = 1,
+                sampleIndex = sampleIndex
+            }
+        });
     end
 
     if k == 'z' then
@@ -450,6 +286,7 @@ function love.keypressed(k)
             --resetBeatsAndTicks()
         end
         if playing then
+            sendMessageToAudioThread({ type = "mode", data = 'play' });
             sendMessageToAudioThread({ type = "paused", data = false });
             recording = false
         end
@@ -463,6 +300,7 @@ function love.keypressed(k)
             sendMessageToAudioThread({ type = "paused", data = true });
         end
         if recording then
+            sendMessageToAudioThread({ type = "mode", data = 'record' });
             sendMessageToAudioThread({ type = "paused", data = false });
             recordedData = {}
             playing = false
@@ -477,17 +315,16 @@ function love.update(dt)
             myBeat = msg.data.beat
             myBeatInMeasure = msg.data.beatInMeasure
         end
+        if msg.type == 'numPlayingSounds' then
+            myNumPlayingSounds = msg.data.numbers
+        end
         --print(msg.type)
     end
-    if recording or playing then
-        --   updateBeatsAndTicks(dt)
-    end
+
     if playing then
-        handlePlayingRecordedData()
+        --   handlePlayingRecordedData()
     end
-    cleanPlayingSounds()
-    updateADSREnvelopesForPlayingSounds(dt)
-    updatePlayingSoundsWithLFO()
+    --cleanPlayingSounds()
 end
 
 function drawDrumMachineGrid()
@@ -523,7 +360,7 @@ function drawDrumMachineGrid()
                 local char = chars[math.ceil(love.math.random() * #chars)]
                 local offX = (cellW - font:getWidth(char)) / 2
                 local offY = (cellH - font:getHeight()) / 2
-                love.graphics.print(char, offX + fw + i * cellW, offY + startY + y * cellH)
+                -- love.graphics.print(char, offX + fw + i * cellW, offY + startY + y * cellH)
             end
         end
         love.graphics.setColor(1, 1, 1, 0.8)
@@ -535,7 +372,7 @@ end
 
 function love.draw()
     love.graphics.setColor(1, 1, 1)
-    -- drawDrumMachineGrid()
+    drawDrumMachineGrid()
     if (recording or playing) then
         local font = bigfont
         love.graphics.setFont(font)
@@ -565,15 +402,14 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 0.3)
     love.graphics.print(instrument, w - font:getWidth(instrument), 0)
 
-
-
     local stats = love.graphics.getStats()
     local memavg = collectgarbage("count") / 1000
     local mem = string.format("%02.1f", memavg) .. 'Mb(mem)'
     local vmem = string.format("%.0f", (stats.texturememory / 1000000)) .. 'Mb(video)'
-    local fps = tostring(love.timer.getFPS()) .. 'fps'
+    local fps = string.format("%03i", love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
-    local debugstring = mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps
+    local countNotes = string.format("%02i", myNumPlayingSounds)
+    local debugstring = mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes
     love.graphics.print(debugstring, 0, h - font:getHeight())
 
     -- love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂')
