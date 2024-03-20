@@ -1,8 +1,8 @@
 package.path       = package.path .. ";../../?.lua"
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
-local json         = require 'vendor.json'
-local data         = require 'data'
+
+
 local _thread
 local channel      = {};
 channel.audio2main = love.thread.getChannel("audio2main")
@@ -154,7 +154,7 @@ function love.load()
     end
 
     drumkitFiles = {
-        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'CB' },
+        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
         AC = 'cr78/Kick Accent',
         BD = 'cr78/Kick',
         SD = 'cr78/Snare',
@@ -165,8 +165,25 @@ function love.load()
         OH = 'cr78/Tamb 2',
         CY = 'cr78/Cymbal',
         RS = 'cr78/Rim Shot',
+        TB = 'cr78/Guiro 1',
         CPS = 'cr78/Guiro 1',
         CB = 'cr78/Cowbell'
+    }
+    drumkitFiles = {
+        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
+        AC = 'Minipops/bd2',
+        BD = 'Minipops/bd1',
+        SD = 'Minipops/sd1',
+        LT = 'cr78/Conga Low',
+        MT = 'Minipops/bd3',
+        HT = 'cr78/Bongo High',
+        CH = 'Minipops/hihat1',
+        OH = 'Minipops/hihat2',
+        CY = 'cr78/Cymbal',
+        RS = 'cr78/Rim Shot',
+        CPS = 'cr78/Guiro 1',
+        TB = 'Minipops/Tambourine',
+        CB = 'Minipops/wood1',
     }
     drumkit = prepareDrumkit(drumkitFiles)
 
