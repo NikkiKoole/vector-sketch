@@ -3,10 +3,13 @@ require('love.sound')
 require('love.audio')
 require('love.math')
 
+
 -- Linn often used a timing resolution of 96 parts per quarter note (PPQN),
 -- meaning that each quarter note is subdivided into 96 equal parts.
 -- This high resolution allows for very precise timing and sequencing of musical events,
-local PPQN            = 96
+local PPQN = 96
+
+
 
 local min, max        = ...
 local paused          = true
@@ -160,7 +163,6 @@ local function semitoneReleased(semitone)
                 recordedData[i].tickOff = math.floor(lastTick)
             end
         end
-        -- print(#recordedData)
     end
     for i = 1, #playingSounds do
         if (playingSounds[i].semitone == semitone and not playingSounds[i].timeNoteOff) then
