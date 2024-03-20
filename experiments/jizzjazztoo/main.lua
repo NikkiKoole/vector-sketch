@@ -1,7 +1,16 @@
+package.path       = package.path .. ";../../?.lua"
+local inspect      = require 'vendor.inspect'
+local drumPatterns = require 'drum-patterns'
+local json         = require 'vendor.json'
+local data         = require 'data'
 local _thread
-local channel             = {};
-channel.audio2main        = love.thread.getChannel("audio2main")
-channel.main2audio        = love.thread.getChannel("main2audio")
+local channel      = {};
+channel.audio2main = love.thread.getChannel("audio2main")
+channel.main2audio = love.thread.getChannel("main2audio")
+
+
+--print(data)
+
 
 getMessageFromAudioThread = function()
     local v = channel.audio2main:pop();
@@ -38,8 +47,45 @@ local function prepareSamples(names)
     return result
 end
 
+local function prepareDrumkit(drumkitFiles)
+    local result = {}
+    for k, v in pairs(drumkitFiles) do
+        if k ~= 'order' then
+            local path = 'samples/' .. v .. ".wav"
+            local info = love.filesystem.getInfo(path)
+            if info then
+                result[k] = { type = k, name = v, source = love.audio.newSource(path, 'static') }
+            else
+                print('drumkit fail: ', k, v)
+            end
+        end
+    end
+    if drumkitFiles.order then
+        for i = 1, #drumkitFiles.order do
+            if drumkitFiles[drumkitFiles.order[i]] then
+            else
+                print('order issue:', drumkitFiles.order[i])
+            end
+        end
+        result.order = drumkitFiles.order
+    else
+        print('drumkitfile need an order to display')
+    end
+    return result
+end
 
+local function updateDrumKitData()
+    sendMessageToAudioThread({
+        type = 'drumkitData',
+        data = {
+            drumgrid = drumgrid,
+            drumkit = drumkit,
+            beatInMeasure = grid.columns / 4
+        }
+    })
+end
 function love.load()
+    myTick = 0
     myBeat = 0
     myBeatInMeasure = 4
     myNumPlayingSounds = 0
@@ -107,6 +153,42 @@ function love.load()
         sampleTuning[i] = 0
     end
 
+    drumkitFiles = {
+        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'CB' },
+        AC = 'cr78/Kick Accent',
+        BD = 'cr78/Kick',
+        SD = 'cr78/Snare',
+        LT = 'cr78/Conga Low',
+        MT = 'cr78/Bongo Low',
+        HT = 'cr78/Bongo High',
+        CH = 'cr78/HiHat',
+        OH = 'cr78/Tamb 2',
+        CY = 'cr78/Cymbal',
+        RS = 'cr78/Rim Shot',
+        CPS = 'cr78/Guiro 1',
+        CB = 'cr78/Cowbell'
+    }
+    drumkit = prepareDrumkit(drumkitFiles)
+
+    grid = {
+        startX = 100, -- smallfont:getWidth('WWWW')
+        startY = 100,
+        cellW = 20,   --smallfont:getWidth('X')
+        cellH = 32,
+        columns = 16,
+        labels = drumkitFiles.order
+    }
+
+    drumgrid = {}
+    for x = 1, grid.columns do
+        drumgrid[x] = {}
+        for y = 1, #drumkitFiles.order do
+            drumgrid[x][y] = { on = false }
+        end
+    end
+    drumPatternName = ''
+
+    updateDrumKitData()
     -- scales
     scales = {
         ['chromatic'] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
@@ -235,6 +317,11 @@ function love.keyreleased(k)
 end
 
 function love.keypressed(k)
+    if k == '-' then
+        drumPatternName, gl = drumPatterns.pickExistingPattern(drumgrid, drumkit)
+        grid.columns = gl
+        updateDrumKitData()
+    end
     if (usingMap[k] ~= nil) then
         sendMessageToAudioThread({
             type = "semitonePressed",
@@ -309,17 +396,21 @@ function love.keypressed(k)
 end
 
 function love.update(dt)
-    local msg = getMessageFromAudioThread()
-    if msg then
-        if msg.type == 'beatUpdate' then
-            myBeat = msg.data.beat
-            myBeatInMeasure = msg.data.beatInMeasure
+    repeat
+        local msg = getMessageFromAudioThread()
+        if msg then
+            if msg.type == 'tickUpdate' then
+                myTick = msg.data.tick
+            end
+            if msg.type == 'beatUpdate' then
+                myBeat = msg.data.beat
+                myBeatInMeasure = msg.data.beatInMeasure
+            end
+            if msg.type == 'numPlayingSounds' then
+                myNumPlayingSounds = msg.data.numbers
+            end
         end
-        if msg.type == 'numPlayingSounds' then
-            myNumPlayingSounds = msg.data.numbers
-        end
-        --print(msg.type)
-    end
+    until not msg
 
     if playing then
         --   handlePlayingRecordedData()
@@ -327,52 +418,107 @@ function love.update(dt)
     --cleanPlayingSounds()
 end
 
-function drawDrumMachineGrid()
-    local columns = 32
-    local rows = 6
-    local w, h = love.graphics.getDimensions()
-
-    local font = smallfont
-    love.graphics.setFont(font)
-    local cellW = font:getWidth('X')
-    local cellH = 32
-    local labels = { 'kick', 'snare ', 'hat', 'ohat', 'tom', 'cym', 'clap', 'perc', 'rim', 'guiro', 'clav', 'shake' }
-    --local label = labels[math.ceil(love.math.random() * #labels)]
-    local fw = font:getWidth('WWWW')
-    local startY = 100
-
-    -- first draw the grid
-    for y = 0, #labels - 1 do
-        love.graphics.setColor(1, 1, 1, .3)
+function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
+    love.graphics.setLineWidth(4)
+    for y = 0, rows do
+        love.graphics.setColor(1, 1, 1, .1)
         for i = 0, columns - 1 do
-            love.graphics.rectangle('line', fw + i * cellW, startY + y * cellH, cellW, cellH)
+            love.graphics.rectangle('line', startX + i * cellW, startY + y * cellH, cellW, cellH)
         end
     end
+    love.graphics.setColor(1, 1, 1, .3)
+    love.graphics.line(startX + 4 * cellW, startY, startX + 4 * cellW, startY + cellH * (rows + 1))
+    love.graphics.line(startX + 8 * cellW, startY, startX + 8 * cellW, startY + cellH * (rows + 1))
+    love.graphics.line(startX + 12 * cellW, startY, startX + 12 * cellW, startY + cellH * (rows + 1))
 
-    -- then the labels (also filled in letters)
-    for y = 0, #labels - 1 do
-        love.graphics.setColor(1, 1, 1, .5)
-        for i = 0, columns - 1 do
-            --love.graphics.rectangle('line', fw + i * cellW, startY + y * cellH, cellW, cellH)
-            if (love.math.random() < 0.2) then
-                -- local char = 'k'
-                local chars = { '.', 'k', 'X', 'O', 'b', 'I', ',', '>', '#', '%', '^' }
-                local char = chars[math.ceil(love.math.random() * #chars)]
-                local offX = (cellW - font:getWidth(char)) / 2
-                local offY = (cellH - font:getHeight()) / 2
-                -- love.graphics.print(char, offX + fw + i * cellW, offY + startY + y * cellH)
+    love.graphics.setLineWidth(1)
+end
+
+function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
+    local xOff = (cellW - smallfont:getWidth('x')) / 2
+    for y = 0, rows do
+        for x = 0, columns - 1 do
+            if drumgrid[x + 1][y + 1].on == true then
+                love.graphics.print('x', xOff + startX + x * cellW, startY + y * cellH)
             end
         end
+    end
+end
+
+function drawDrumMachineLabels(startX, startY, cellH, labels)
+    for y = 0, #labels - 1 do
         love.graphics.setColor(1, 1, 1, 0.8)
         love.graphics.print(' ' .. labels[y + 1], 0, startY + y * cellH)
     end
+end
 
-    --local cellW = w/columns
+function drawDrumMachinePlayHead(startX, startY, cellW, cellH, columns, rows)
+    -- i think we are assuming there are 16 columns
+    --if columns ~= 16 then print('something is wrong about amount of columns') end
+    --if myBeatInMeasure ~= 4 then print('kinda has to have 4 beats in a measure i think') end
+
+    local highlightedColumn = ((myBeat % myBeatInMeasure) * 4) + math.floor((myTick / 96) * 4)
+    love.graphics.setLineWidth(4)
+    love.graphics.rectangle('line', startX + highlightedColumn * cellW, startY, cellW, cellH * (rows + 1))
+    love.graphics.setLineWidth(1)
+end
+
+local function getCellUnderPosition(x, y)
+    if x > grid.startX and x < grid.startX + (grid.cellW * grid.columns) then
+        if y > grid.startY and y < grid.startY + (grid.cellH * (#grid.labels)) then
+            return math.ceil((x - grid.startX) / grid.cellW), math.ceil((y - grid.startY) / grid.cellH)
+        end
+    end
+    return -1, -1
+end
+
+
+function drawDrumMachine()
+    -- print(startX, cellW)
+    love.graphics.setFont(smallfont)
+    -- local x, y = love.mouse.getPosition()
+    -- local cx, cy = getCellUnderPosition(x, y)
+    -- if cx > 0 and cy > 0 then
+    drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+    -- end
+
+    drawDrumMachineLabels(grid.startX, grid.startY, grid.cellH, grid.labels)
+    drawDrumOnNotes(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+
+    if playing then
+        drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+    end
+end
+
+function drawMouseOverGrid()
+    local x, y = love.mouse.getPosition()
+    local cx, cy = getCellUnderPosition(x, y)
+    if cx >= 0 and cy >= 0 then
+        love.graphics.setColor(1, 1, 1, 0.2)
+        love.graphics.rectangle('fill', grid.startX + (cx - 1) * grid.cellW, grid.startY + (cy - 1) * grid.cellH,
+            grid.cellW, grid.cellH)
+    end
+end
+
+function love.mousepressed(x, y, button)
+    local cx, cy = getCellUnderPosition(x, y)
+    if cx >= 0 and cy >= 0 then
+        -- print(cx, cy)
+        drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on }
+        updateDrumKitData()
+    end
 end
 
 function love.draw()
     love.graphics.setColor(1, 1, 1)
-    drawDrumMachineGrid()
+
+    drawDrumMachine()
+    drawMouseOverGrid()
+
+
+
+
+    love.graphics.setColor(1, 1, 1)
     if (recording or playing) then
         local font = bigfont
         love.graphics.setFont(font)
@@ -411,6 +557,6 @@ function love.draw()
     local countNotes = string.format("%02i", myNumPlayingSounds)
     local debugstring = mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes
     love.graphics.print(debugstring, 0, h - font:getHeight())
-
+    love.graphics.print(drumPatternName, w - font:getWidth(drumPatternName), font:getHeight())
     -- love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂')
 end

@@ -3,27 +3,38 @@ require('love.sound')
 require('love.audio')
 require('love.math')
 
-local min, max            = ...
-local paused              = true
-local now                 = love.timer.getTime()
-local time                = 0
-local lastTick            = 0
-local lastBeat            = -1
-local beat                = 0
-local tick                = 0
-local beatInMeasure       = 4
-local countInMeasures     = 0
-local bpm                 = 90
+-- Linn often used a timing resolution of 96 parts per quarter note (PPQN),
+-- meaning that each quarter note is subdivided into 96 equal parts.
+-- This high resolution allows for very precise timing and sequencing of musical events,
+local PPQN            = 96
 
-local metronome_click     = love.audio.newSource("samples/cr78/Clave.wav", "static")
+local min, max        = ...
+local paused          = true
+local now             = love.timer.getTime()
+local time            = 0
+local lastTick        = 0
+local lastBeat        = -1
+local beat            = 0
+local tick            = 0
+local beatInMeasure   = 4
+local countInMeasures = 0
+local bpm             = 90
 
-local channel             = {};
-channel.audio2main        = love.thread.getChannel("audio2main"); -- from thread
-channel.main2audio        = love.thread.getChannel("main2audio"); --from main
+local metronome_click = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
 
-local missedTicks         = {}
-local playingSounds       = {}
-local recordedData        = {}
+local channel         = {};
+channel.audio2main    = love.thread.getChannel("audio2main"); -- from thread
+channel.main2audio    = love.thread.getChannel("main2audio"); --from main
+
+local missedTicks     = {}
+local playingSounds   = {}
+local recordedData    = {}
+
+
+local drumkit             = {}
+local drumgrid            = {}
+
+local TODOechoData        = {} -- I will put in extra notes here , this could alos be the place where these trap / flams things can be made
 
 local playing             = false
 local recording           = false
@@ -141,7 +152,7 @@ local function semitoneReleased(semitone)
             if recordedData[i].semitone == semitone and recordedData[i].duration == 0 then
                 local deltaBeats = (math.floor(lastBeat) - recordedData[i].beat)
                 local deltaTicks = (math.floor(lastTick) - recordedData[i].tick) -- this could end up negtive I think, what does that mean ?
-                local totalDeltaTicks = (deltaBeats * 96) + deltaTicks
+                local totalDeltaTicks = (deltaBeats * PPQN) + deltaTicks
 
                 recordedData[i].duration = totalDeltaTicks
 
@@ -149,12 +160,47 @@ local function semitoneReleased(semitone)
                 recordedData[i].tickOff = math.floor(lastTick)
             end
         end
-        print(#recordedData)
+        -- print(#recordedData)
     end
     for i = 1, #playingSounds do
         if (playingSounds[i].semitone == semitone and not playingSounds[i].timeNoteOff) then
             playingSounds[i].timeNoteOff = love.timer.getTime()
         end
+    end
+end
+
+function handlePlayingDrumGrid()
+    local beat = math.floor(lastBeat)
+    local tick = math.floor(lastTick)
+
+    for j = 1, #missedTicks do
+        local t = missedTicks[j]
+        if (t % 24 == 0) then
+            --print('16th hit', tick)
+            local snd = drumkit.AC.source:clone()
+            snd:play()
+            print('played missed tick drum')
+        end
+    end
+
+    -- why % 24 ??
+    -- because the PPQN = 96 so PartsPer16th note is 24!
+    -- drumgrid is subdivided in 16ths
+    if (tick % 24 == 0) then
+        --print('16th hit', beat, tick)
+
+        local column = ((beat % beatInMeasure) * 4) + (tick / 24)
+        --print(column)
+        for i = 1, #drumkit.order do
+            if drumgrid[column + 1][i].on then
+                local key = drumkit.order[i]
+                local snd = drumkit[key].source:clone()
+                snd:play()
+            end
+        end
+        --print(column)
+        --local snd = drumkit.AC.source:clone()
+        --snd:play()
     end
 end
 
@@ -219,7 +265,7 @@ while (true) do
     now = n
     if not paused then
         beat = beat + (delta * (bpm / 60))
-        tick = ((beat % 1) * (96))
+        tick = ((beat % 1) * (PPQN))
 
         if math.floor(tick) - math.floor(lastTick) > 1 then
             for i = math.floor(lastTick) + 1, math.floor(tick) - 1 do
@@ -234,10 +280,15 @@ while (true) do
             end
             channel.audio2main:push({ type = 'beatUpdate', data = { beat = math.floor(beat), beatInMeasure = beatInMeasure } })
         end
-
-        if playing then
-            handlePlayingRecordedData()
+        if (math.floor(tick) ~= math.floor(lastTick)) then
+            channel.audio2main:push({ type = 'tickUpdate', data = { tick = math.floor(tick) } })
+            if playing then
+                handlePlayingRecordedData()
+                handlePlayingDrumGrid()
+            end
         end
+
+
         -- handle the missed ticks here baby
         --
         missedTicks = {}
@@ -249,7 +300,7 @@ while (true) do
     updatePlayingSoundsWithLFO()
 
     local sleepForMultiplier = math.ceil(bpm / 50)
-    local sleepFor = 1.0 / (96 * sleepForMultiplier)
+    local sleepFor = 1.0 / (PPQN * sleepForMultiplier)
     love.timer.sleep(sleepFor)
 
     -- using this i can sleep for a good amount (no missed ticks)
@@ -260,9 +311,16 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'drumkitData' then
+            drumkit = v.data.drumkit
+            drumgrid = v.data.drumgrid
+            beatInMeasure = v.data.beatInMeasure -- math.ceil(#v.data.drumgrid / 4)
+            --print('beatInMeasure', math.ceil(#v.data.drumgrid / 4))
+        end
         if v.type == 'resetBeatsAndTicks' then
             resetBeatsAndTicks()
             channel.audio2main:push({ type = 'beatUpdate', data = { beat = math.floor(beat), beatInMeasure = beatInMeasure } })
+            channel.audio2main:push({ type = 'tickUpdate', data = { tick = math.floor(tick) } })
         end
         if v.type == 'paused' then
             paused = v.data
@@ -298,6 +356,7 @@ while (true) do
                 recording = false
             end
             if v.data == 'record' then
+                recordedData = {}
                 playing = false
                 recording = true
             end
