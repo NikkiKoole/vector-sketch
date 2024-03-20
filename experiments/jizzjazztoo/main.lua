@@ -152,7 +152,9 @@ function love.load()
     for i = 1, #samples do
         sampleTuning[i] = 0
     end
-
+    sendMessageToAudioThread({
+        type = "tuningUpdated", data = sampleTuning })
+    sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
     drumkitFiles = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
         AC = 'cr78/Kick Accent',
@@ -168,6 +170,23 @@ function love.load()
         TB = 'cr78/Guiro 1',
         CPS = 'cr78/Guiro 1',
         CB = 'cr78/Cowbell'
+    }
+
+    drumkitFiles = {
+        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
+        AC = 'jazzkit/JK_BD_02',
+        BD = 'jazzkit/JK_BD_06',
+        SD = 'Minipops/sd1',
+        LT = 'cr78/Conga Low',
+        MT = 'Minipops/bd3',
+        HT = 'cr78/Bongo High',
+        CH = 'jazzkit/JK_HH_01',
+        OH = 'Minipops/hihat2',
+        CY = 'cr78/Cymbal',
+        RS = 'cr78/Rim Shot',
+        CPS = 'cr78/Guiro 1',
+        TB = 'jazzkit/JK_BRSH_01',
+        CB = 'Minipops/wood1',
     }
     drumkitFiles = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
@@ -363,14 +382,19 @@ function love.keypressed(k)
         sampleIndex = (sampleIndex % #samples) + 1
         sample = samples[sampleIndex]
         print('Sample:', sampleIndex, sample.name)
+        sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
     end
 
     if k == 'c' then
-        sampleTuning[sampleIndex] = sampleTuning[sampleIndex] - 1
+        sampleTuning[sampleIndex] = sampleTuning[sampleIndex] + 1
+        sendMessageToAudioThread({
+            type = "tuningUpdated", data = sampleTuning })
         print('Tuning:', sample.name, sampleTuning[sampleIndex])
     end
     if k == 'v' then
-        sampleTuning[sampleIndex] = sampleTuning[sampleIndex] + 1
+        sampleTuning[sampleIndex] = sampleTuning[sampleIndex] - 1
+        sendMessageToAudioThread({
+            type = "tuningUpdated", data = sampleTuning })
         print('Tuning:', sample.name, sampleTuning[sampleIndex])
     end
     if k == 'b' then

@@ -36,6 +36,8 @@ local recordedData    = {}
 
 local drumkit             = {}
 local drumgrid            = {}
+local sampleTuning        = {}
+local sampleIndex         = 1
 
 local TODOechoData        = {} -- I will put in extra notes here , this could alos be the place where these trap / flams things can be made
 
@@ -87,7 +89,8 @@ local function generateSineLFO(time, lfoFrequency)
 end
 
 local function getPitch(semitone)
-    local sampledAtSemitone = 60 + 0 --sampleTuning[sampleIndex]
+    --print(sampleTuning, sampleIndex)
+    local sampledAtSemitone = 60 + sampleTuning[sampleIndex]
     local usingSemitone = (semitone - sampledAtSemitone)
     local result = 2 ^ (usingSemitone / 12)
 
@@ -313,6 +316,12 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'tuningUpdated' then
+            sampleTuning = v.data
+        end
+        if v.type == 'sampleIndex' then
+            sampleIndex = v.data
+        end
         if v.type == 'drumkitData' then
             drumkit = v.data.drumkit
             drumgrid = v.data.drumgrid
