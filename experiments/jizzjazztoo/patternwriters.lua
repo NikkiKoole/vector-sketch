@@ -1,3 +1,8 @@
+package.path = package.path .. ";../../?.lua"
+local inspect = require "vendor.inspect"
+local data260 = require "260"
+local json = require "vendor.json"
+
 local data2 = require 'pocket2'
 function string.starts(String, Start)
     return string.sub(String, 1, string.len(Start)) == Start
@@ -215,6 +220,153 @@ function parseAgain(data)
         print(inspect(v, { newline = ' ', indent = " " }))
     end
     --print(inspect(result, { newline = ' ', indent = " " }))
+end
+
+function toDotsAndX(array)
+    local result = ""
+    for i = 1, #array do
+        if array[i] == 1 then
+            result = result .. "x"
+        else
+            result = result .. "."
+        end
+    end
+    return result
+end
+
+function toDotsAndXAndMore(array)
+    local result = ""
+    for i = 1, #array do
+        if array[i] == "Note" then
+            result = result .. "x"
+        elseif array[i] == "Rest" then
+            result = result .. "."
+        elseif array[i] == "Flam" then
+            result = result .. "f"
+        elseif array[i] == "Accent" then
+            result = result .. "x"
+        else
+            print("ISSUE ", array[i])
+        end
+    end
+    return result
+end
+
+function transformData2()
+    local mapping = {
+        ["BassDrum"] = "BD",
+        ["SnareDrum"] = "SD",
+        ["ClosedHiHat"] = "CH",
+        ["OpenHiHat"] = "OH",
+        ["RimShot"] = "RS",
+        ["HighTom"] = "HT",
+        ["MediumTom"] = "MT",
+        ["LowTom"] = "LT",
+        ["Accent"] = "AC",
+        ["accent"] = "AC",
+        ["Cymbal"] = "CY",
+        ["Cowbell"] = "CB",
+        ["Clap"] = "CPS",
+        ["Tambourine"] = "TB"
+    }
+
+    local js = json.decode(data260)
+    for x = 1, 268 do
+        local thing = js[x]
+
+        for k, v in pairs(thing.tracks) do
+            if k == "accent" then
+                --print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
+                if not mapping[k] then
+                    --    print(k)
+                end
+            end
+        end
+        -- print(inspect(thing))
+        if thing.accent then
+            --print(thing.accent)
+            print(thing.title)
+            -- print('signature= "' .. thing.signature .. '",')
+            print('AC="' .. toDotsAndXAndMore(thing.accent) .. '",')
+            -- for i = 1, #(thing.accents) do
+            --    print(thing.accents[i])
+            --print(k, v)
+            --if k == 'accent' then
+            --    print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
+            --    if not mapping[k] then
+            --        print(k)
+            --    end
+            --end
+            -- end
+        end
+    end
+    if false then
+        for x = 259, 268 do
+            local thing = js[x]
+
+            --print(inspect(thing))
+            print("{")
+            print('name="' .. thing.title .. '",')
+            print("grid={")
+            for k, v in pairs(thing.tracks) do
+                --  print(k)
+                if not mapping[k] then
+                    print(k)
+                end
+                print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
+                --print(inspect(v))
+                --print(k, v)
+            end
+            print("}")
+            print("},")
+        end
+    end
+end
+
+--transformData2()
+function transformData()
+    -- function made to transform teh data from :
+    local mapping = {
+        ["Bass Drum"] = "BD",
+        ["Bass drum"] = "BD",
+        ["Snare Drum"] = "SD",
+        ["Closed hi-hat"] = "CH",
+        ["Open hi-hat"] = "OH",
+        ["Rim shot"] = "RS",
+        ["High tom"] = "HT",
+        ["Medium tom"] = "MT",
+        ["Low tom"] = "LT",
+        ["Accent"] = "AC",
+        ["Cymbal"] = "CY",
+        ["Cowbell"] = "CB"
+    }
+    local js = json.decode(data)
+
+    print("{")
+    for x = 61, 67 do
+        local thing = js[x]
+
+        print('{ name= "' .. thing.title .. '",')
+        --print(inspect(thing.sections))
+        print("sections = {")
+        for i = 1, #thing.sections do
+            print("{")
+            print('name="' .. thing.sections[i].name .. '",')
+            --print(' ')
+            --print(inspect(thing.sections[i]))
+            local parts = thing.sections[i].parts
+            print("grid={")
+            for j = 1, #parts do
+                --if (mapping[parts[j].type] == nil) then
+                --print(parts[j].type)
+                print(mapping[parts[j].type] .. "=" .. '"' .. toDotsAndX(parts[j].beats) .. '",')
+                --end
+            end
+            print("}},")
+        end
+        print("} },")
+    end
+    print("}")
 end
 
 parseAgain(data2)

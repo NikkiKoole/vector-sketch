@@ -14,20 +14,7 @@ RS: Rim Shot
 CPS: Claps
 CB: Cowbell
 ]]
---local data    = require 'data'
---local data260 = require '260'
---local json    = require 'vendor.json'
---local inspect = require 'vendor.inspect'
 
---[[
-
-]]
---
-
-package.path = package.path .. ";../../?.lua"
-local inspect = require "vendor.inspect"
-local data260 = require "260"
-local json = require "vendor.json"
 
 --[[
 {
@@ -109,40 +96,145 @@ local patterns = {
     {
         name = "Afro-Cuban",
         sections = {
-            { grid = { BD = "x..xx..xx..xx..x", CY = "xxxxxxxxxxxxxxxx", RS = "x..x..x...x.x..." }, name = "SON CLAVE" },
-            { grid = { BD = "x..xx..xx..xx..x", CY = "xxxxxxxxxxxxxxxx", RS = "x..x...x..x.x..." }, name = "RUMBA" },
-            { grid = { BD = "x..xx..xx..xx..x", CY = "xxxxxxxxxxxxxxxx", RS = "x..x..x...x..x.." }, name = "BOSSA NOVA" },
-            { grid = { BD = "x.......x.x...x.", CH = "x.xxx.x.x.x.x.x.", RS = "...x..x.....x..." }, name = "BOUTON" },
-            { grid = { BD = "x...x...x...x.x.", CB = "x..x..x...x...x.", RS = "..xx..xx..xx..xx" }, name = "GAHU" },
-            { grid = { BD = "x...x.x.x...x.x.", CB = "x...x.x...x.x...", RS = "..xx..xx..xx..xx" }, name = "SHIKO" },
-            { grid = { BD = "x...x...x...x.x.", CB = "x..x..x..xx.....", RS = "x..x..x.x..x..x." }, name = "SOUKOUS" }
+            {
+                grid = {
+                    BD = "x..xx..xx..xx..x",
+                    CY = "xxxxxxxxxxxxxxxx",
+                    RS = "x..x..x...x.x..."
+                },
+                name = "SON CLAVE"
+            },
+            {
+                grid = {
+                    BD = "x..xx..xx..xx..x",
+                    CY = "xxxxxxxxxxxxxxxx",
+                    RS = "x..x...x..x.x..."
+                },
+                name = "RUMBA"
+            },
+            {
+                grid = {
+                    BD = "x..xx..xx..xx..x",
+                    CY = "xxxxxxxxxxxxxxxx",
+                    RS = "x..x..x...x..x.."
+                },
+                name = "BOSSA NOVA"
+            },
+            {
+                grid = {
+                    BD = "x.......x.x...x.",
+                    CH = "x.xxx.x.x.x.x.x.",
+                    RS = "...x..x.....x..."
+                },
+                name = "BOUTON"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x.x.",
+                    CB = "x..x..x...x...x.",
+                    RS = "..xx..xx..xx..xx"
+                },
+                name = "GAHU"
+            },
+            {
+                grid = {
+                    BD = "x...x.x.x...x.x.",
+                    CB = "x...x.x...x.x...",
+                    RS = "..xx..xx..xx..xx"
+                },
+                name = "SHIKO"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x.x.",
+                    CB = "x..x..x..xx.....",
+                    RS = "x..x..x.x..x..x."
+                },
+                name = "SOUKOUS"
+            }
         }
     },
     {
         name = "Basic Patterns",
         sections = {
-            { grid = { BD = "x.....x.........", SD = "....x.......x..." }, name = "ONE AND SEVEN & FIVE AND THIRTEEN" },
-            { grid = { BD = "x.......x.......", CH = "x.x.x.x.x.x.xx..", SD = "....x.......x..." }, name = "BOOTS N’ CATS" },
-            { grid = { BD = "x...x...x...x...", OH = "..x...x...x...x." }, name = "TINY HOUSE" },
-            { grid = { BD = "x..x..x...x.....", SD = "....x.......x..." }, name = "GOOD TO GO" },
-            { grid = { BD = "x.x...xx......x.", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "HIP HOP" }
+            {
+                grid = {
+                    BD = "x.....x.........",
+                    SD = "....x.......x..."
+                },
+                name = "ONE AND SEVEN & FIVE AND THIRTEEN"
+            },
+            {
+                grid = {
+                    BD = "x.......x.......",
+                    CH = "x.x.x.x.x.x.xx..",
+                    SD = "....x.......x..."
+                },
+                name = "BOOTS N’ CATS"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    OH = "..x...x...x...x."
+                },
+                name = "TINY HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x..x..x...x.....",
+                    SD = "....x.......x..."
+                },
+                name = "GOOD TO GO"
+            },
+            {
+                grid = {
+                    BD = "x.x...xx......x.",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
+                name = "HIP HOP"
+            }
         }
     },
     {
         name = "Miami Bass",
         sections = {
             {
-                grid = { BD = "x.....x.........", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.....x.........",
+                    CH = "x.xxx.xxx.xxx.xx",
+                    SD = "....x.......x..."
+                },
                 name = "MIAMI BASS - A"
             },
             {
-                grid = { BD = "x.....x...x..x..", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.....x...x..x..",
+                    CH = "x.xxx.xxx.xxx.xx",
+                    SD = "....x.......x..."
+                },
                 name = "MIAMI BASS - B"
             },
-            { grid = { BD = "x.....x...x...x.", SD = "....x.......x..." }, name = "SALLY" },
-            { grid = { CH = "x.x.x.x.x.x.x.x.", LT = "x.....x...x...x." }, name = "" },
             {
-                grid = { BD = "x..x..x.........", CH = "x.xxx.xxx.xxxxxx", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.....x...x...x.",
+                    SD = "....x.......x..."
+                },
+                name = "SALLY"
+            },
+            {
+                grid = {
+                    CH = "x.x.x.x.x.x.x.x.",
+                    LT = "x.....x...x...x."
+                },
+                name = ""
+            },
+            {
+                grid = {
+                    BD = "x..x..x.........",
+                    CH = "x.xxx.xxx.xxxxxx",
+                    SD = "....x.......x..."
+                },
                 name = "ROCK THE PLANET"
             }
         }
@@ -150,11 +242,46 @@ local patterns = {
     {
         name = "Dub",
         sections = {
-            { grid = { BD = "x...............", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "HALF DROP" },
-            { grid = { BD = "........x.......", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "ONE DROP" },
-            { grid = { BD = "x.......x.......", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "TWO DROP" },
-            { grid = { BD = "x...x...x...x...", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "STEPPERS" },
-            { grid = { BD = "x...x...x...x...", CH = "x.x.x.x.x.x.x.x.", SD = "...x..x....x..x." }, name = "REGGAETON" }
+            {
+                grid = {
+                    BD = "x...............",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "........x......."
+                },
+                name = "HALF DROP"
+            },
+            {
+                grid = {
+                    BD = "........x.......",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "........x......."
+                },
+                name = "ONE DROP"
+            },
+            {
+                grid = {
+                    BD = "x.......x.......",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "........x......."
+                },
+                name = "TWO DROP"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "........x......."
+                },
+                name = "STEPPERS"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "...x..x....x..x."
+                },
+                name = "REGGAETON"
+            }
         }
     },
     {
@@ -169,7 +296,14 @@ local patterns = {
                 },
                 name = "ROCK 1"
             },
-            { grid = { BD = "x......xx.x.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "ROCK 2" },
+            {
+                grid = {
+                    BD = "x......xx.x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
+                name = "ROCK 2"
+            },
             {
                 grid = {
                     BD = "x......xx.x.....",
@@ -195,19 +329,35 @@ local patterns = {
         name = "Drum and Bass",
         sections = {
             {
-                grid = { BD = "x..x...x.xx....x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x..x...x.xx....x",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "DRUM AND BASS 1 - A"
             },
             {
-                grid = { BD = "x.x....xxxx.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.x....xxxx.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "DRUM AND BASS 1 - B"
             },
             {
-                grid = { BD = "x......x.x.x...x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x......x.x.x...x",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "DRUM AND BASS 2 - A"
             },
             {
-                grid = { BD = "x..........x....", CH = "x.x.x.x.x.x.x.xx", SD = "....x.......x..." },
+                grid = {
+                    BD = "x..........x....",
+                    CH = "x.x.x.x.x.x.x.xx",
+                    SD = "....x.......x..."
+                },
                 name = "DRUM AND BASS 2 - B"
             },
             {
@@ -229,7 +379,11 @@ local patterns = {
                 name = "DRUM AND BASS 4 - A"
             },
             {
-                grid = { BD = "....x.....x.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "....x.....x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "DRUM AND BASS 4 - B"
             },
             {
@@ -241,21 +395,74 @@ local patterns = {
                 },
                 name = "JUNGLE - A"
             },
-            { grid = { BD = ".xx.......x.....", CH = "x.x.x.x.x.x.x.x.", SD = ".x..x..x.x....x." }, name = "JUNGLE - B" }
+            {
+                grid = {
+                    BD = ".xx.......x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = ".x..x..x.x....x."
+                },
+                name = "JUNGLE - B"
+            }
         }
     },
     {
         name = "Electro",
         sections = {
-            { grid = { BD = "x.....x.........", SD = "....x.......x..." }, name = "ELECTRO 1 - A" },
-            { grid = { BD = "x.....x...x...x.", SD = "....x.......x..." }, name = "ELECTRO 1 - B" },
-            { grid = { BD = "x.....x.........", SD = "....x.......x..." }, name = "ELECTRO 2 - A" },
-            { grid = { BD = "x.........x..x..", SD = "....x.......x..." }, name = "ELECTRO 2 - B" },
-            { grid = { BD = "x.....x....x....", SD = "....x.......x..." }, name = "ELECTRO 3 - A" },
-            { grid = { BD = "x.....x....x.x..", SD = "....x.......x..." }, name = "ELECTRO 3 - B" },
-            { grid = { BD = "x.....x...x..x..", SD = "....x.......x..." }, name = "ELECTRO 4" },
             {
-                grid = { BD = "x.....x.........", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.....x.........",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 1 - A"
+            },
+            {
+                grid = {
+                    BD = "x.....x...x...x.",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 1 - B"
+            },
+            {
+                grid = {
+                    BD = "x.....x.........",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 2 - A"
+            },
+            {
+                grid = {
+                    BD = "x.........x..x..",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 2 - B"
+            },
+            {
+                grid = {
+                    BD = "x.....x....x....",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 3 - A"
+            },
+            {
+                grid = {
+                    BD = "x.....x....x.x..",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 3 - B"
+            },
+            {
+                grid = {
+                    BD = "x.....x...x..x..",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 4"
+            },
+            {
+                grid = {
+                    BD = "x.....x.........",
+                    CH = "x.xxx.xxx.xxx.xx",
+                    SD = "....x.......x..."
+                },
                 name = "SIBERIAN NIGHTS"
             },
             {
@@ -268,10 +475,26 @@ local patterns = {
                 },
                 name = "NEW WAVE"
             },
-            { grid = { BD = "x.....x....x.x..", SD = "....x.......x..." }, name = "ELECTRO 3 - B" },
-            { grid = { BD = "x.....x...x..x..", SD = "....x.......x..." }, name = "ELECTRO 4" },
             {
-                grid = { BD = "x.....x.........", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.....x....x.x..",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 3 - B"
+            },
+            {
+                grid = {
+                    BD = "x.....x...x..x..",
+                    SD = "....x.......x..."
+                },
+                name = "ELECTRO 4"
+            },
+            {
+                grid = {
+                    BD = "x.....x.........",
+                    CH = "x.xxx.xxx.xxx.xx",
+                    SD = "....x.......x..."
+                },
                 name = "SIBERIAN NIGHTS"
             },
             {
@@ -290,14 +513,29 @@ local patterns = {
         name = "Standard Breaks",
         sections = {
             {
-                grid = { BD = "x.........x.....", CH = "x.x.x.x.xxx.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.........x.....",
+                    CH = "x.x.x.x.xxx.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "STANDARD BREAK 1"
             },
             {
-                grid = { BD = "x.........x.....", CH = "x.x.x.xxx.x...x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.........x.....",
+                    CH = "x.x.x.xxx.x...x.",
+                    SD = "....x.......x..."
+                },
                 name = "STANDARD BREAK 2"
             },
-            { grid = { BD = "x......x..x.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "ROLLING BREAK" },
+            {
+                grid = {
+                    BD = "x......x..x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
+                name = "ROLLING BREAK"
+            },
             {
                 grid = {
                     AC = "................",
@@ -415,7 +653,11 @@ local patterns = {
         name = "Funk and Soul",
         sections = {
             {
-                grid = { BD = "x.x.......xx....", CH = "x.x.x.x.x.x.x.x.", SD = "....x..x.x..x..x" },
+                grid = {
+                    BD = "x.x.......xx....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x..x.x..x..x"
+                },
                 name = "AMEN BREAK - A"
             },
             {
@@ -464,14 +706,29 @@ local patterns = {
                 name = "IMPEACH THE PRESIDENT"
             },
             {
-                grid = { BD = "xx.....x..xx....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "xx.....x..xx....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "WHEN THE LEVEE BREAKS"
             },
             {
-                grid = { BD = "x.x.......xx...x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.x.......xx...x",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "IT’S A NEW DAY"
             },
-            { grid = { BD = "x..x..x.x.......", HT = "....x.......x...", SD = "....x.......x..." }, name = "THE BIG BEAT" },
+            {
+                grid = {
+                    BD = "x..x..x.x.......",
+                    HT = "....x.......x...",
+                    SD = "....x.......x..."
+                },
+                name = "THE BIG BEAT"
+            },
             {
                 grid = {
                     BD = "x.x...x.xx......",
@@ -491,88 +748,217 @@ local patterns = {
                 },
                 name = "PAPA WAS TOO"
             },
-            { grid = { BD = "x...x...x...x...", CH = "x.x.x.xxxxx.x.xx", SD = "....x.......x..." }, name = "SUPERSTITION" },
             {
-                grid = { BD = "x..x.x...x.xx.x.", CY = "............x.x.", SD = "....x...x.xx...." },
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "x.x.x.xxxxx.x.xx",
+                    SD = "....x.......x..."
+                },
+                name = "SUPERSTITION"
+            },
+            {
+                grid = {
+                    BD = "x..x.x...x.xx.x.",
+                    CY = "............x.x.",
+                    SD = "....x...x.xx...."
+                },
                 name = "CISSY STRUT (B-SECTION) - A"
             },
-            { grid = { BD = "x..x...x.x.xx.x.", SD = "..x..xx.xx......" },                          name = "CISSY STRUT (B-SECTION) - B" },
             {
-                grid = { BD = "x...x..x.x.xx.x.", CY = "............x.x.", SD = "..x.xxx..x......" },
+                grid = {
+                    BD = "x..x...x.x.xx.x.",
+                    SD = "..x..xx.xx......"
+                },
+                name = "CISSY STRUT (B-SECTION) - B"
+            },
+            {
+                grid = {
+                    BD = "x...x..x.x.xx.x.",
+                    CY = "............x.x.",
+                    SD = "..x.xxx..x......"
+                },
                 name = "CISSY STRUT (B-SECTION) - C"
             },
             {
-                grid = { BD = "x...x..x.x.xx.x.", CY = "............x.x.", SD = "x.x..x..xx......" },
+                grid = {
+                    BD = "x...x..x.x.xx.x.",
+                    CY = "............x.x.",
+                    SD = "x.x..x..xx......"
+                },
                 name = "CISSY STRUT (B-SECTION) - D"
             },
             {
-                grid = { BD = "x.x......x...xx.", CY = "x.xx.x..xx.x..x.", SD = "....x.xx..x.x..." },
+                grid = {
+                    BD = "x.x......x...xx.",
+                    CY = "x.xx.x..xx.x..x.",
+                    SD = "....x.xx..x.x..."
+                },
                 name = "HOOK AND SLING - A"
             },
             {
-                grid = { BD = "..............x.", CY = "xx.x..x.xx..x.x.", SD = "x...xx.x..xx..xx" },
+                grid = {
+                    BD = "..............x.",
+                    CY = "xx.x..x.xx..x.x.",
+                    SD = "x...xx.x..xx..xx"
+                },
                 name = "HOOK AND SLING - B"
             },
             {
-                grid = { BD = "xx..........xx.x", CY = "x.x.xx.x.x..xx..", SD = "..x.x.xx..xx..x." },
+                grid = {
+                    BD = "xx..........xx.x",
+                    CY = "x.x.xx.x.x..xx..",
+                    SD = "..x.x.xx..xx..x."
+                },
                 name = "HOOK AND SLING - C"
             },
             {
-                grid = { BD = "x.x..x.....x.xx.", CY = "x.x.xx.x........", SD = "....x..x..x....x" },
+                grid = {
+                    BD = "x.x..x.....x.xx.",
+                    CY = "x.x.xx.x........",
+                    SD = "....x..x..x....x"
+                },
                 name = "HOOK AND SLING - D"
             },
             {
-                grid = { BD = "xx.x.......x..x.", CY = "xxxxxxxxxxxxxxx.", SD = "....x..x.x..x..." },
+                grid = {
+                    BD = "xx.x.......x..x.",
+                    CY = "xxxxxxxxxxxxxxx.",
+                    SD = "....x..x.x..x..."
+                },
                 name = "KISSING MY LOVE - A"
             },
             {
-                grid = { BD = "xx.x.......x.x..", CY = "xxxxxxxxxxxxxxxx", SD = "....x..x.x..x..x" },
+                grid = {
+                    BD = "xx.x.......x.x..",
+                    CY = "xxxxxxxxxxxxxxxx",
+                    SD = "....x..x.x..x..x"
+                },
                 name = "KISSING MY LOVE - B"
             },
             {
-                grid = { BD = "xx.x......x.xx..", CY = "xxxxxxxxxxxxxxxx", SD = "....x..x.x.....x" },
+                grid = {
+                    BD = "xx.x......x.xx..",
+                    CY = "xxxxxxxxxxxxxxxx",
+                    SD = "....x..x.x.....x"
+                },
                 name = "KISSING MY LOVE - C"
             },
             {
-                grid = { BD = "x..x.......x..x.", CY = "xxxxxxxxxxxxxxx.", SD = "....x....x..x..." },
+                grid = {
+                    BD = "x..x.......x..x.",
+                    CY = "xxxxxxxxxxxxxxx.",
+                    SD = "....x....x..x..."
+                },
                 name = "KISSING MY LOVE - D"
             },
             {
-                grid = { BD = "x..........x.x..", CY = "xxxxxxxxxxxxxxx.", SD = "....x..x.x..x..." },
+                grid = {
+                    BD = "x..........x.x..",
+                    CY = "xxxxxxxxxxxxxxx.",
+                    SD = "....x..x.x..x..."
+                },
                 name = "KISSING MY LOVE - E"
             },
-            { grid = { BD = "x.......x..x..x.", CY = "..x...x.........", SD = "....xx.........." }, name = "LADY - A" },
-            { grid = { BD = "x..........x..x.", CY = "..x...x.........", SD = "....xx..x......." }, name = "LADY - B" },
             {
-                grid = { BD = "x.x.x..xx.x.x..x", CY = "x.x...xx.xx...x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.......x..x..x.",
+                    CY = "..x...x.........",
+                    SD = "....xx.........."
+                },
+                name = "LADY - A"
+            },
+            {
+                grid = {
+                    BD = "x..........x..x.",
+                    CY = "..x...x.........",
+                    SD = "....xx..x......."
+                },
+                name = "LADY - B"
+            },
+            {
+                grid = {
+                    BD = "x.x.x..xx.x.x..x",
+                    CY = "x.x...xx.xx...x.",
+                    SD = "....x.......x..."
+                },
                 name = "KNOCKS ME OFF MY FEET - A"
             },
             {
-                grid = { BD = "x.x.x..xx.x.x..x", CY = "x.x...xx.xx...x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.x.x..xx.x.x..x",
+                    CY = "x.x...xx.xx...x.",
+                    SD = "....x.......x..."
+                },
                 name = "KNOCKS ME OFF MY FEET - B"
             },
             {
-                grid = { BD = ".......xxx......", CY = "x.x.x.x.x.x.x.x.", SD = "x...x...x...x..." },
+                grid = {
+                    BD = ".......xxx......",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "x...x...x...x..."
+                },
                 name = "THE THRILL IS GONE"
             },
-            { grid = { BD = "x...............", CY = "x.......x.......", SD = "....x.......x..." }, name = "POP TECH - A" },
-            { grid = { BD = ".x...........xxx", CY = "x.......x.......", SD = "....x.......x..." }, name = "POP TECH - B" },
-            { grid = { BD = "x.......x.......", CY = "....x.......x..." },                          name = "YA MAMA - A" },
-            { grid = { BD = "x......xx.......", CY = "....x.......x..." },                          name = "YA MAMA - B" },
             {
-                grid = { BD = "x.......x.x.....", CY = "x.x.x.x.x.x.x.x.", SD = "....x..x......x." },
+                grid = {
+                    BD = "x...............",
+                    CY = "x.......x.......",
+                    SD = "....x.......x..."
+                },
+                name = "POP TECH - A"
+            },
+            {
+                grid = {
+                    BD = ".x...........xxx",
+                    CY = "x.......x.......",
+                    SD = "....x.......x..."
+                },
+                name = "POP TECH - B"
+            },
+            {
+                grid = {
+                    BD = "x.......x.......",
+                    CY = "....x.......x..."
+                },
+                name = "YA MAMA - A"
+            },
+            {
+                grid = {
+                    BD = "x......xx.......",
+                    CY = "....x.......x..."
+                },
+                name = "YA MAMA - B"
+            },
+            {
+                grid = {
+                    BD = "x.......x.x.....",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x..x......x."
+                },
                 name = "COLD SWEAT - A"
             },
             {
-                grid = { BD = "..x.....x.x...x.", CY = "x.x.x.x.x.x.x.x.", SD = ".x..x..x.x..x..." },
+                grid = {
+                    BD = "..x.....x.x...x.",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = ".x..x..x.x..x..."
+                },
                 name = "COLD SWEAT - B"
             },
             {
-                grid = { BD = "x.........x.....", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "x.........x.....",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "I GOT YOU (I FEEL GOOD) - A"
             },
             {
-                grid = { BD = "..x...x...x...x.", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                grid = {
+                    BD = "..x...x...x...x.",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x.......x..."
+                },
                 name = "I GOT YOU (I FEEL GOOD) - B"
             },
             {
@@ -5687,7 +6073,21 @@ function lib.pickExistingPattern(drumgrid, drumkit)
         totalSections = totalSections + #patterns[i].sections
     end
     -- print(#patterns, totalSections)
-    local patternIndex = math.ceil(love.math.random() * #patterns)
+
+    local index = -1
+    for i = 1, #patterns do
+        --if patterns[i].name == 'Funk and Soul' then
+        --if patterns[i].name == 'Electro' then
+        -- if patterns[i].name == 'Drum and Bass' then
+        --if patterns[i].name == 'House' then
+        if patterns[i].name == 'Miami Bass' then
+            -- if patterns[i].name == 'EDM' then
+            -- if patterns[i].name == 'Afro-Cuban' then
+            --if patterns[i].name == 'Hip Hop' then
+            index = i
+        end
+    end
+    local patternIndex = index --math.ceil(love.math.random() * #patterns)
     local pattern = patterns[patternIndex]
 
     local partIndex = math.ceil(love.math.random() * #pattern.sections)
@@ -5737,153 +6137,6 @@ function lib.pickExistingPattern(drumgrid, drumkit)
 
         return pattern.name .. " : " .. part.name, gridLength
     end
-end
-
-function toDotsAndX(array)
-    local result = ""
-    for i = 1, #array do
-        if array[i] == 1 then
-            result = result .. "x"
-        else
-            result = result .. "."
-        end
-    end
-    return result
-end
-
-function toDotsAndXAndMore(array)
-    local result = ""
-    for i = 1, #array do
-        if array[i] == "Note" then
-            result = result .. "x"
-        elseif array[i] == "Rest" then
-            result = result .. "."
-        elseif array[i] == "Flam" then
-            result = result .. "f"
-        elseif array[i] == "Accent" then
-            result = result .. "x"
-        else
-            print("ISSUE ", array[i])
-        end
-    end
-    return result
-end
-
-function transformData2()
-    local mapping = {
-        ["BassDrum"] = "BD",
-        ["SnareDrum"] = "SD",
-        ["ClosedHiHat"] = "CH",
-        ["OpenHiHat"] = "OH",
-        ["RimShot"] = "RS",
-        ["HighTom"] = "HT",
-        ["MediumTom"] = "MT",
-        ["LowTom"] = "LT",
-        ["Accent"] = "AC",
-        ["accent"] = "AC",
-        ["Cymbal"] = "CY",
-        ["Cowbell"] = "CB",
-        ["Clap"] = "CPS",
-        ["Tambourine"] = "TB"
-    }
-
-    local js = json.decode(data260)
-    for x = 1, 268 do
-        local thing = js[x]
-
-        for k, v in pairs(thing.tracks) do
-            if k == "accent" then
-                --print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
-                if not mapping[k] then
-                    --    print(k)
-                end
-            end
-        end
-        -- print(inspect(thing))
-        if thing.accent then
-            --print(thing.accent)
-            print(thing.title)
-            -- print('signature= "' .. thing.signature .. '",')
-            print('AC="' .. toDotsAndXAndMore(thing.accent) .. '",')
-            -- for i = 1, #(thing.accents) do
-            --    print(thing.accents[i])
-            --print(k, v)
-            --if k == 'accent' then
-            --    print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
-            --    if not mapping[k] then
-            --        print(k)
-            --    end
-            --end
-            -- end
-        end
-    end
-    if false then
-        for x = 259, 268 do
-            local thing = js[x]
-
-            --print(inspect(thing))
-            print("{")
-            print('name="' .. thing.title .. '",')
-            print("grid={")
-            for k, v in pairs(thing.tracks) do
-                --  print(k)
-                if not mapping[k] then
-                    print(k)
-                end
-                print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
-                --print(inspect(v))
-                --print(k, v)
-            end
-            print("}")
-            print("},")
-        end
-    end
-end
-
---transformData2()
-function transformData()
-    -- function made to transform teh data from :
-    local mapping = {
-        ["Bass Drum"] = "BD",
-        ["Bass drum"] = "BD",
-        ["Snare Drum"] = "SD",
-        ["Closed hi-hat"] = "CH",
-        ["Open hi-hat"] = "OH",
-        ["Rim shot"] = "RS",
-        ["High tom"] = "HT",
-        ["Medium tom"] = "MT",
-        ["Low tom"] = "LT",
-        ["Accent"] = "AC",
-        ["Cymbal"] = "CY",
-        ["Cowbell"] = "CB"
-    }
-    local js = json.decode(data)
-
-    print("{")
-    for x = 61, 67 do
-        local thing = js[x]
-
-        print('{ name= "' .. thing.title .. '",')
-        --print(inspect(thing.sections))
-        print("sections = {")
-        for i = 1, #thing.sections do
-            print("{")
-            print('name="' .. thing.sections[i].name .. '",')
-            --print(' ')
-            --print(inspect(thing.sections[i]))
-            local parts = thing.sections[i].parts
-            print("grid={")
-            for j = 1, #parts do
-                --if (mapping[parts[j].type] == nil) then
-                --print(parts[j].type)
-                print(mapping[parts[j].type] .. "=" .. '"' .. toDotsAndX(parts[j].beats) .. '",')
-                --end
-            end
-            print("}},")
-        end
-        print("} },")
-    end
-    print("}")
 end
 
 --transformData()
