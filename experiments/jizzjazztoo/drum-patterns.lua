@@ -23,10 +23,11 @@ CB: Cowbell
 
 ]]
 --
-package.path  = package.path .. ";../../?.lua"
-local inspect = require 'vendor.inspect'
-local data260 = require '260'
-local json    = require 'vendor.json'
+
+package.path = package.path .. ";../../?.lua"
+local inspect = require "vendor.inspect"
+local data260 = require "260"
+local json = require "vendor.json"
 
 --[[
 {
@@ -36,6 +37,799 @@ local json    = require 'vendor.json'
 --]]
 local patterns = {
     {
+        name = "EDM",
+        sections = {
+            {
+                grid = {
+                    BD = "x...x...x...x.x.",
+                    CH = ".........x......",
+                    OH = "..x...x...x...x.",
+                    SD = "....x.......x..."
+                },
+                name = "TECHNO"
+            },
+            {
+                grid = {
+                    BD = "x.........x.....",
+                    CH = ".xx...x....x..x.",
+                    OH = "....x........x..",
+                    SD = "........x......."
+                },
+                name = "DUBSTEP - A"
+            },
+            {
+                grid = {
+                    BD = "x..x..x...x.....",
+                    CH = ".xx...x....x..x.",
+                    OH = "....x........x..",
+                    SD = "........x......."
+                },
+                name = "DUBSTEP - B"
+            },
+            {
+                grid = {
+                    BD = "x..x....x..x....",
+                    CH = "xx...xxxxx.xxx.x",
+                    OH = "......x.........",
+                    SD = "....x.......x..x"
+                },
+                name = "DUBSTEP - RATCHETED"
+            },
+            {
+                grid = {
+                    BD = "x.........x.....",
+                    CH = "..xx..x...x...xx",
+                    CPS = "....x.......x...",
+                    MT = ".....x.....x....",
+                    RS = ".x.....x.....x.."
+                },
+                name = "UK GARAGE - A"
+            },
+            {
+                grid = {
+                    BD = "x.........x.....",
+                    CH = "..x...x...x...x.",
+                    CPS = "....x.......x...",
+                    MT = ".....x.....x....",
+                    RS = ".......x.....x.."
+                },
+                name = "UK GARAGE - B"
+            },
+            {
+                grid = {
+                    BD = "x.......x.......",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    OH = ".............x..",
+                    SD = "....x.......x..."
+                },
+                name = "SYNTH WAVE"
+            }
+        }
+    },
+    {
+        name = "Afro-Cuban",
+        sections = {
+            { grid = { BD = "x..xx..xx..xx..x", CY = "xxxxxxxxxxxxxxxx", RS = "x..x..x...x.x..." }, name = "SON CLAVE" },
+            { grid = { BD = "x..xx..xx..xx..x", CY = "xxxxxxxxxxxxxxxx", RS = "x..x...x..x.x..." }, name = "RUMBA" },
+            { grid = { BD = "x..xx..xx..xx..x", CY = "xxxxxxxxxxxxxxxx", RS = "x..x..x...x..x.." }, name = "BOSSA NOVA" },
+            { grid = { BD = "x.......x.x...x.", CH = "x.xxx.x.x.x.x.x.", RS = "...x..x.....x..." }, name = "BOUTON" },
+            { grid = { BD = "x...x...x...x.x.", CB = "x..x..x...x...x.", RS = "..xx..xx..xx..xx" }, name = "GAHU" },
+            { grid = { BD = "x...x.x.x...x.x.", CB = "x...x.x...x.x...", RS = "..xx..xx..xx..xx" }, name = "SHIKO" },
+            { grid = { BD = "x...x...x...x.x.", CB = "x..x..x..xx.....", RS = "x..x..x.x..x..x." }, name = "SOUKOUS" }
+        }
+    },
+    {
+        name = "Basic Patterns",
+        sections = {
+            { grid = { BD = "x.....x.........", SD = "....x.......x..." }, name = "ONE AND SEVEN & FIVE AND THIRTEEN" },
+            { grid = { BD = "x.......x.......", CH = "x.x.x.x.x.x.xx..", SD = "....x.......x..." }, name = "BOOTS N’ CATS" },
+            { grid = { BD = "x...x...x...x...", OH = "..x...x...x...x." }, name = "TINY HOUSE" },
+            { grid = { BD = "x..x..x...x.....", SD = "....x.......x..." }, name = "GOOD TO GO" },
+            { grid = { BD = "x.x...xx......x.", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "HIP HOP" }
+        }
+    },
+    {
+        name = "Miami Bass",
+        sections = {
+            {
+                grid = { BD = "x.....x.........", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                name = "MIAMI BASS - A"
+            },
+            {
+                grid = { BD = "x.....x...x..x..", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                name = "MIAMI BASS - B"
+            },
+            { grid = { BD = "x.....x...x...x.", SD = "....x.......x..." }, name = "SALLY" },
+            { grid = { CH = "x.x.x.x.x.x.x.x.", LT = "x.....x...x...x." }, name = "" },
+            {
+                grid = { BD = "x..x..x.........", CH = "x.xxx.xxx.xxxxxx", SD = "....x.......x..." },
+                name = "ROCK THE PLANET"
+            }
+        }
+    },
+    {
+        name = "Dub",
+        sections = {
+            { grid = { BD = "x...............", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "HALF DROP" },
+            { grid = { BD = "........x.......", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "ONE DROP" },
+            { grid = { BD = "x.......x.......", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "TWO DROP" },
+            { grid = { BD = "x...x...x...x...", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "STEPPERS" },
+            { grid = { BD = "x...x...x...x...", CH = "x.x.x.x.x.x.x.x.", SD = "...x..x....x..x." }, name = "REGGAETON" }
+        }
+    },
+    {
+        name = "Rock",
+        sections = {
+            {
+                grid = {
+                    BD = "x......xx.x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    CY = "x...............",
+                    SD = "....x.......x..."
+                },
+                name = "ROCK 1"
+            },
+            { grid = { BD = "x......xx.x.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "ROCK 2" },
+            {
+                grid = {
+                    BD = "x......xx.x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    OH = "..............x.",
+                    SD = "....x.......x..."
+                },
+                name = "ROCK 3"
+            },
+            {
+                grid = {
+                    BD = "x......xx.x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    OH = "..............x.",
+                    SD = "....x.......x.xx"
+                },
+                name = "ROCK 4"
+            }
+        }
+    },
+    {
+
+        name = "Drum and Bass",
+        sections = {
+            {
+                grid = { BD = "x..x...x.xx....x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "DRUM AND BASS 1 - A"
+            },
+            {
+                grid = { BD = "x.x....xxxx.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "DRUM AND BASS 1 - B"
+            },
+            {
+                grid = { BD = "x......x.x.x...x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "DRUM AND BASS 2 - A"
+            },
+            {
+                grid = { BD = "x..........x....", CH = "x.x.x.x.x.x.x.xx", SD = "....x.......x..." },
+                name = "DRUM AND BASS 2 - B"
+            },
+            {
+                grid = {
+                    BD = "x.........x.....",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    OH = "......xxxx......",
+                    SD = "....x.......x..."
+                },
+                name = "DRUM AND BASS 3"
+            },
+            {
+                grid = {
+                    BD = "x.....x.........",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    OH = "x...............",
+                    SD = "....x.....x.x..."
+                },
+                name = "DRUM AND BASS 4 - A"
+            },
+            {
+                grid = { BD = "....x.....x.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "DRUM AND BASS 4 - B"
+            },
+            {
+                grid = {
+                    BD = "x.x.......x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    OH = "x...............",
+                    SD = "....x..x.x....x."
+                },
+                name = "JUNGLE - A"
+            },
+            { grid = { BD = ".xx.......x.....", CH = "x.x.x.x.x.x.x.x.", SD = ".x..x..x.x....x." }, name = "JUNGLE - B" }
+        }
+    },
+    {
+        name = "Electro",
+        sections = {
+            { grid = { BD = "x.....x.........", SD = "....x.......x..." }, name = "ELECTRO 1 - A" },
+            { grid = { BD = "x.....x...x...x.", SD = "....x.......x..." }, name = "ELECTRO 1 - B" },
+            { grid = { BD = "x.....x.........", SD = "....x.......x..." }, name = "ELECTRO 2 - A" },
+            { grid = { BD = "x.........x..x..", SD = "....x.......x..." }, name = "ELECTRO 2 - B" },
+            { grid = { BD = "x.....x....x....", SD = "....x.......x..." }, name = "ELECTRO 3 - A" },
+            { grid = { BD = "x.....x....x.x..", SD = "....x.......x..." }, name = "ELECTRO 3 - B" },
+            { grid = { BD = "x.....x...x..x..", SD = "....x.......x..." }, name = "ELECTRO 4" },
+            {
+                grid = { BD = "x.....x.........", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                name = "SIBERIAN NIGHTS"
+            },
+            {
+                grid = {
+                    BD = "x.....x.xx......",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    OH = "..x.............",
+                    SD = "....x.......x...",
+                    TB = "....x.......x..."
+                },
+                name = "NEW WAVE"
+            },
+            { grid = { BD = "x.....x....x.x..", SD = "....x.......x..." }, name = "ELECTRO 3 - B" },
+            { grid = { BD = "x.....x...x..x..", SD = "....x.......x..." }, name = "ELECTRO 4" },
+            {
+                grid = { BD = "x.....x.........", CH = "x.xxx.xxx.xxx.xx", SD = "....x.......x..." },
+                name = "SIBERIAN NIGHTS"
+            },
+            {
+                grid = {
+                    BD = "x.....x.xx......",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    OH = "..x.............",
+                    SD = "....x.......x...",
+                    TB = "....x.......x..."
+                },
+                name = "NEW WAVE"
+            }
+        }
+    },
+    {
+        name = "Standard Breaks",
+        sections = {
+            {
+                grid = { BD = "x.........x.....", CH = "x.x.x.x.xxx.x.x.", SD = "....x.......x..." },
+                name = "STANDARD BREAK 1"
+            },
+            {
+                grid = { BD = "x.........x.....", CH = "x.x.x.xxx.x...x.", SD = "....x.......x..." },
+                name = "STANDARD BREAK 2"
+            },
+            { grid = { BD = "x......x..x.....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "ROLLING BREAK" },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x..x..x...x.....",
+                    CH = ".xx.xx.x.....x..",
+                    OH = "........x.....x.",
+                    SD = ".x..x..x....x..."
+                },
+                name = "THE UNKNOWN DRUMMER"
+            }
+        }
+    },
+    {
+        name = "House",
+        sections = {
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CY = "x...............",
+                    OH = "..x...x...x...x.",
+                    SD = "....x.......x..."
+                },
+                name = "HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    OH = "..x..x....x..x..",
+                    SD = "....x.......x..."
+                },
+                name = "HOUSE 2"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "xx.xxx.xxx.xxx.x",
+                    CPS = "....x.......x...",
+                    CY = "..x...x...x...x.",
+                    OH = "..x...x...x...x."
+                },
+                name = "BRIT HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "xxxxxxxxxxxxxxxx",
+                    CPS = "....x.......x...",
+                    OH = ".x.x.x.x.x.x.x.x",
+                    TB = "xxx.x.xxxxx.x.xx"
+                },
+                name = "FRENCH HOUSE"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x.x.x...x.x.x..x",
+                    CH = "..........x....x",
+                    CPS = "..x.x...x.x.x...",
+                    OH = "..x.......x...x.",
+                    SD = "....x.......x..."
+                },
+                name = "DIRTY HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = ".x.....x.x......",
+                    CPS = "....x.......x...",
+                    OH = "..x...x...x...x."
+                },
+                name = "DEEP HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CPS = ".x.......x......",
+                    MT = "..x....x..x.....",
+                    OH = "..x...x...xx..x.",
+                    TB = "...x....x......."
+                },
+                name = "DEEPER HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x...x...x...x...",
+                    CH = "x...x...x...x...",
+                    CPS = "....x.......x...",
+                    OH = "..xx..xx.xx.x...",
+                    TB = "xxxxxxxxxxxxxxxx"
+                },
+                name = "SLOW DEEP HOUSE"
+            },
+            {
+                grid = {
+                    BD = "x..x..x.x..x..x.",
+                    CH = "..x.......x.....",
+                    CPS = "............x...",
+                    RS = "xxxxxxxxxxxxxxxx"
+                },
+                name = "FOOTWORK - A"
+            },
+            {
+                grid = {
+                    BD = "x..x..x.x..x..x.",
+                    CH = "..x...xx..x...x.",
+                    CPS = "............x...",
+                    RS = "xxxxxxxxxxxxxxxx"
+                },
+                name = "FOOTWORK - B"
+            }
+        }
+    },
+    {
+        name = "Funk and Soul",
+        sections = {
+            {
+                grid = { BD = "x.x.......xx....", CH = "x.x.x.x.x.x.x.x.", SD = "....x..x.x..x..x" },
+                name = "AMEN BREAK - A"
+            },
+            {
+                grid = {
+                    BD = "x.x.......xx....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    RS = "....x...........",
+                    SD = ".......x.x..x..x"
+                },
+                name = "AMEN BREAK - B"
+            },
+            {
+                grid = {
+                    BD = "x.x.......x.....",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    RS = "..............x.",
+                    SD = ".......x.x..x..x"
+                },
+                name = "AMEN BREAK - C"
+            },
+            {
+                grid = {
+                    BD = "x.x.......x.....",
+                    CH = "x.x.x.x.x...x.x.",
+                    CY = "..........x.....",
+                    SD = ".x..x..x.x....x."
+                },
+                name = "AMEN BREAK - D"
+            },
+            {
+                grid = {
+                    BD = "x.x...x...x..x..",
+                    CH = "xxxxxxx.xxxxx.xx",
+                    OH = ".......x.....x..",
+                    SD = "....x..x.x.xx..x"
+                },
+                name = "THE FUNKY DRUMMER"
+            },
+            {
+                grid = {
+                    BD = "x......xx.....x.",
+                    CH = "x.x.x.xxx...x.x.",
+                    OH = "..........x.....",
+                    SD = "....x.......x..."
+                },
+                name = "IMPEACH THE PRESIDENT"
+            },
+            {
+                grid = { BD = "xx.....x..xx....", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "WHEN THE LEVEE BREAKS"
+            },
+            {
+                grid = { BD = "x.x.......xx...x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "IT’S A NEW DAY"
+            },
+            { grid = { BD = "x..x..x.x.......", HT = "....x.......x...", SD = "....x.......x..." }, name = "THE BIG BEAT" },
+            {
+                grid = {
+                    BD = "x.x...x.xx......",
+                    CB = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x...x.x.",
+                    OH = "..........x.....",
+                    SD = "....x.......x..."
+                },
+                name = "ASHLEY’S ROACHCLIP"
+            },
+            {
+                grid = {
+                    BD = "x......xx.x....x",
+                    CH = "....x...x.x.x.xx",
+                    CY = "....x...........",
+                    SD = "....x.......x..."
+                },
+                name = "PAPA WAS TOO"
+            },
+            { grid = { BD = "x...x...x...x...", CH = "x.x.x.xxxxx.x.xx", SD = "....x.......x..." }, name = "SUPERSTITION" },
+            {
+                grid = { BD = "x..x.x...x.xx.x.", CY = "............x.x.", SD = "....x...x.xx...." },
+                name = "CISSY STRUT (B-SECTION) - A"
+            },
+            { grid = { BD = "x..x...x.x.xx.x.", SD = "..x..xx.xx......" },                          name = "CISSY STRUT (B-SECTION) - B" },
+            {
+                grid = { BD = "x...x..x.x.xx.x.", CY = "............x.x.", SD = "..x.xxx..x......" },
+                name = "CISSY STRUT (B-SECTION) - C"
+            },
+            {
+                grid = { BD = "x...x..x.x.xx.x.", CY = "............x.x.", SD = "x.x..x..xx......" },
+                name = "CISSY STRUT (B-SECTION) - D"
+            },
+            {
+                grid = { BD = "x.x......x...xx.", CY = "x.xx.x..xx.x..x.", SD = "....x.xx..x.x..." },
+                name = "HOOK AND SLING - A"
+            },
+            {
+                grid = { BD = "..............x.", CY = "xx.x..x.xx..x.x.", SD = "x...xx.x..xx..xx" },
+                name = "HOOK AND SLING - B"
+            },
+            {
+                grid = { BD = "xx..........xx.x", CY = "x.x.xx.x.x..xx..", SD = "..x.x.xx..xx..x." },
+                name = "HOOK AND SLING - C"
+            },
+            {
+                grid = { BD = "x.x..x.....x.xx.", CY = "x.x.xx.x........", SD = "....x..x..x....x" },
+                name = "HOOK AND SLING - D"
+            },
+            {
+                grid = { BD = "xx.x.......x..x.", CY = "xxxxxxxxxxxxxxx.", SD = "....x..x.x..x..." },
+                name = "KISSING MY LOVE - A"
+            },
+            {
+                grid = { BD = "xx.x.......x.x..", CY = "xxxxxxxxxxxxxxxx", SD = "....x..x.x..x..x" },
+                name = "KISSING MY LOVE - B"
+            },
+            {
+                grid = { BD = "xx.x......x.xx..", CY = "xxxxxxxxxxxxxxxx", SD = "....x..x.x.....x" },
+                name = "KISSING MY LOVE - C"
+            },
+            {
+                grid = { BD = "x..x.......x..x.", CY = "xxxxxxxxxxxxxxx.", SD = "....x....x..x..." },
+                name = "KISSING MY LOVE - D"
+            },
+            {
+                grid = { BD = "x..........x.x..", CY = "xxxxxxxxxxxxxxx.", SD = "....x..x.x..x..." },
+                name = "KISSING MY LOVE - E"
+            },
+            { grid = { BD = "x.......x..x..x.", CY = "..x...x.........", SD = "....xx.........." }, name = "LADY - A" },
+            { grid = { BD = "x..........x..x.", CY = "..x...x.........", SD = "....xx..x......." }, name = "LADY - B" },
+            {
+                grid = { BD = "x.x.x..xx.x.x..x", CY = "x.x...xx.xx...x.", SD = "....x.......x..." },
+                name = "KNOCKS ME OFF MY FEET - A"
+            },
+            {
+                grid = { BD = "x.x.x..xx.x.x..x", CY = "x.x...xx.xx...x.", SD = "....x.......x..." },
+                name = "KNOCKS ME OFF MY FEET - B"
+            },
+            {
+                grid = { BD = ".......xxx......", CY = "x.x.x.x.x.x.x.x.", SD = "x...x...x...x..." },
+                name = "THE THRILL IS GONE"
+            },
+            { grid = { BD = "x...............", CY = "x.......x.......", SD = "....x.......x..." }, name = "POP TECH - A" },
+            { grid = { BD = ".x...........xxx", CY = "x.......x.......", SD = "....x.......x..." }, name = "POP TECH - B" },
+            { grid = { BD = "x.......x.......", CY = "....x.......x..." },                          name = "YA MAMA - A" },
+            { grid = { BD = "x......xx.......", CY = "....x.......x..." },                          name = "YA MAMA - B" },
+            {
+                grid = { BD = "x.......x.x.....", CY = "x.x.x.x.x.x.x.x.", SD = "....x..x......x." },
+                name = "COLD SWEAT - A"
+            },
+            {
+                grid = { BD = "..x.....x.x...x.", CY = "x.x.x.x.x.x.x.x.", SD = ".x..x..x.x..x..." },
+                name = "COLD SWEAT - B"
+            },
+            {
+                grid = { BD = "x.........x.....", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "I GOT YOU (I FEEL GOOD) - A"
+            },
+            {
+                grid = { BD = "..x...x...x...x.", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "I GOT YOU (I FEEL GOOD) - B"
+            },
+            {
+                grid = { BD = "xx......xx......", CY = "x.x.x.xxx.xxx.xx", SD = "...x.xx.....xxx." },
+                name = "THE SAME BLOOD"
+            },
+            { grid = { BD = "x..xx..xxx.x.x.x", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "GROOVE ME" },
+            {
+                grid = { BD = "x..x.x....x..xx.", CY = "x.x.x.x.x.x.x.x.", SD = ".x..x..xx.x...x." },
+                name = "LOOK-KA PY PY - A"
+            },
+            {
+                grid = { BD = "x..x.x.xx.x..xx.", CY = "x.x.x.x.x.x.x.x.", SD = ".x..xx.xx.x...x." },
+                name = "LOOK-KA PY PY - B"
+            },
+            { grid = { BD = "x...x.......x...", CY = "x.x.xxxxxxx.xxxx", SD = "..x.x.xx.xx.x.xx" }, name = "USE ME - A" },
+            { grid = { BD = "....x..x..x.x...", CY = "xxx.xxxxxxx.xxxx", SD = ".xx.x.xx.xx.x.xx" }, name = "USE ME - B" },
+            { grid = { BD = "x.x..x.xx.xx.x.x", CY = "xxxxxxxxxxxxxxxx", SD = "....x..x.x..x..x" }, name = "USE ME - C" },
+            { grid = { BD = "x.x..x..xx.x.x.x", CY = "xxxxxxxxxx.x.x.x", SD = "....x..x.......x" }, name = "USE ME - D" },
+            {
+                grid = { BD = "x..x...x.xx.....", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "FUNKY PRESIDENT"
+            },
+            { grid = { BD = "x.........x...x.", CY = "x.x.x.xxx.x.x.xx", SD = "....x.xx.x..x..x" }, name = "GET UP - A" },
+            { grid = { BD = "x.........x...x.", CY = "x.x.x.xxx.x.x.x.", SD = "....x.xx.x..x..x" }, name = "GET UP - B" },
+            {
+                grid = { BD = "...x..x.......x.", CY = "x.xxx.xxx.xxx.xx", SD = "xx.x.x..xx..xx.." },
+                name = "EXPENSIVE SHIT"
+            },
+            {
+                grid = { BD = "x..x.x.x.x.x..x.", CY = "x.x.xxx.xxx.x.x.", SD = ".xx.x..x.xx.x..." },
+                name = "CHUG CHUG CHUG-A-LUG"
+            },
+            { grid = { BD = "x.......x.......", CY = "..x...x...x...x.", SD = ".x.xxx.x.x.xxx.x" }, name = "THE FEZ - A" },
+            { grid = { BD = "x.......x..x..x.", CY = "..x...x...x...x.", SD = ".x.xxx.x.x.xxx.x" }, name = "THE FEZ - B" },
+            { grid = { BD = "..x.x..x..x.x...", CY = "x.x.x.xxx.x.x.xx", SD = ".x..xx.x.x..xx.x" }, name = "ROCK STEADY" },
+            {
+                grid = { BD = "x.x....x.xxx...x", CY = "x.x.x.x.x.x.x.x.", SD = "....x...x......." },
+                name = "SYNTHETIC SUBSTITUTION - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x.x....x.xxx...x",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x...x......."
+                },
+                name = "SYNTHETIC SUBSTITUTION - B"
+            },
+            {
+                grid = { BD = "x..x..xx..xx.x.x", CB = "x.xxx.xxx.xxx.xx", SD = ".x.xxx.x.x.xxx.x" },
+                name = "COW’D BELL - A"
+            },
+            {
+                grid = { BD = "x.xx...xx.xx.x.x", CB = "x.xxx.xxx.xxx.xx", SD = ".x.xxx.x.x.xxx.x" },
+                name = "COW’D BELL - B"
+            },
+            {
+                grid = { BD = "x.......x......x", CY = "xxxx.xx.x.xx.xx.", SD = "....x..x.x..x..x" },
+                name = "PALM GREASE - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "..x.............",
+                    CY = "x.x.......x.....",
+                    SD = ".x....x.......x."
+                },
+                name = "PALM GREASE - B"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x.x.....x.xx....",
+                    CY = "xxx.xxx.xxx.xxx.",
+                    SD = ".x.xx.xx.x.xxx.x"
+                },
+                name = "O-O-H CHILD - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x.x.....x.xx....",
+                    CY = "xxx.xxx.xxx.xxx.",
+                    SD = ".x.xx.xx.x..x.x."
+                },
+                name = "O-O-H CHILD - B"
+            },
+            {
+                grid = { BD = "x.x...x.x.....x.", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "LADY MARMALADE - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "............x...",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x...x......."
+                },
+                name = "LADY MARMALADE - B"
+            },
+            { grid = { BD = "x.........x.....", CY = "x.x.x.x.x.x.x.x.", SD = "....x..xxx..x.xx" }, name = "HOT SWEAT - A" },
+            { grid = { BD = "..xx......xx..x.", CY = "x.xxx.x.x.xxx.x.", SD = ".x.xxx.x.x.xxx.." }, name = "HOT SWEAT - B" },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "..x.x.....x.x...",
+                    CY = "xxx.xxxxxxx.xxxx",
+                    SD = ".x..x.xx.x..x.xx"
+                },
+                name = "HAITIAN DIVORCE"
+            },
+            {
+                grid = { BD = "x.......xx.....x", CY = "x.x.x.x.x.x.x.x.", SD = ".xx.xxx..xx.xxx." },
+                name = "COME DANCING - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x.x..x.xx......x",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = ".x..xx...x..xxx."
+                },
+                name = "COME DANCING - B"
+            },
+            {
+                grid = { BD = "x...x...x...x...", CY = "x.x.x.x.x.x.x.x.", SD = "....x.....x.x..." },
+                name = "RESPECT YOURSELF - A"
+            },
+            {
+                grid = { BD = "x...x...x...x...", CY = "x.x.x.x.x.x.x.x.", SD = "....x...x.x.x..." },
+                name = "RESPECT YOURSELF - B"
+            },
+            {
+                grid = { BD = "x..x....x..x..x.", CY = "xxxxxxxxxxxxxxxx", SD = "....x..x.x.x.x.x" },
+                name = "EXPRESS YOURSELF - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x..x....x..x..x.",
+                    CY = "xxxxxxxxxxxxxxxx",
+                    SD = "....x..x.x.xx..."
+                },
+                name = "EXPRESS YOURSELF - B"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "..x.....x.xx.xx.",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x..x.xx.xx.."
+                },
+                name = "LET A WOMAN BE A WOMAN"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "..x.......x...x.",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "....x..x.x.xx..."
+                },
+                name = "LET A MAN BE A MAN"
+            },
+            {
+                grid = { BD = "x...x...x..x....", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "BOOKS OF MOSES - A"
+            },
+            {
+                grid = { BD = "x...x...x.......", CY = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." },
+                name = "BOOKS OF MOSES - B"
+            },
+            {
+                grid = { BD = "x.x.......x.....", CY = "x...x...x...x...", SD = "....x..x.x....x." },
+                name = "MOTHER POPCORN - A"
+            },
+            {
+                grid = { BD = "..x...x...x...x.", CY = "x...x...x...x...", SD = ".x.xxx.x.x.xxx.x" },
+                name = "MOTHER POPCORN - B"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x..x..x...x.....",
+                    CY = ".xx.xx.xx....xx.",
+                    SD = ".x..x..x...xx..."
+                },
+                name = "STRT BTS - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x..x..x...x.....",
+                    CY = ".xx.xx.xx....xx.",
+                    SD = ".x..x..x....x..."
+                },
+                name = "STRT BTS - B"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "x.x.......x.....",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = "......x..x....x."
+                },
+                name = "I GOT THE FEELIN’ - A"
+            },
+            {
+                grid = {
+                    AC = "................",
+                    BD = "..x.....x...x.x.",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    SD = ".x..xx.x.xxx.xxx"
+                },
+                name = "I GOT THE FEELIN’ - B"
+            },
+            {
+                grid = {
+                    BD = "x.......xx......",
+                    CH = "..x.x.x.x.x.x.x.",
+                    HT = "....x.......x...",
+                    OH = "x...............",
+                    SD = "....x.......x..."
+                },
+                name = "MORE BOUNCE TO THE OUNCE"
+            }
+        }
+    },
+    {
+        name = "Hip Hop",
+        sections = {
+            { grid = { BD = "x.....xx...x..x.", SD = "....x.......x..." },                          name = "HIP HOP 1 - A" },
+            { grid = { BD = "x......x...x....", SD = "....x.......x..." },                          name = "HIP HOP 1 - B" },
+            { grid = { BD = "x......xxx...x.x", SD = "....x.......x..." },                          name = "HIP HOP 2 - A" },
+            { grid = { BD = "x......xx..x....", SD = "....x....x..x..." },                          name = "HIP HOP 2 - B" },
+            { grid = { BD = "x.x.....x.x.....", SD = "....x.......x..." },                          name = "HIP HOP 3 - A" },
+            { grid = { BD = "x.x.....xx.x....", SD = "....x.......x..." },                          name = "HIP HOP 3 - B" },
+            { grid = { BD = "x..x...x.xx....x", SD = "....x.......x..." },                          name = "HIP HOP 4 - A" },
+            { grid = { BD = "x.x....xxxx.....", SD = "....x.......x..." },                          name = "HIP HOP 4 - B" },
+            { grid = { BD = "x.x....xx.x....x", SD = "....x.......x..." },                          name = "HIP HOP 5" },
+            { grid = { BD = "x.x.......xx...x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "HIP HOP 6" },
+            { grid = { BD = "x......x..x..x.x", CH = "x.x.x.x.x.x.x.x.", SD = "....x.......x..." }, name = "HIP HOP 7" },
+            {
+                grid = {
+                    BD = "x..x....x.xx....",
+                    CH = "xx.xx.xxxx.xx.xx",
+                    OH = ".....x.......x..",
+                    SD = "....x.......x..."
+                },
+                name = "HIP HOP 8"
+            },
+            { grid = { BD = "x.....x.....x...", CH = "x.x.x.x.x.x.x.x.", SD = "........x......." }, name = "TRAP - A" },
+            { grid = { BD = "..x.x...........", CH = "..x.x.x.x.x...x.", SD = "........x......." }, name = "TRAP - B" }
+        }
+    },
+    ---
+    {
         name = "Rock 1",
         sections = {
             {
@@ -44,7 +838,7 @@ local patterns = {
                     BD = "x.....x.x.......",
                     SD = "....x.......x...",
                     CH = "x...x...x...x...",
-                    AC = "....x.......x...",
+                    AC = "....x.......x..."
                 }
             },
             {
@@ -52,7 +846,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.x...x.",
                     SD = "....x.......x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -62,9 +856,9 @@ local patterns = {
                     SD = "..x...x...x.xxxx",
                     HT = "...xx..xx..x....",
                     CH = "x...............",
-                    AC = "x...........x..x",
+                    AC = "x...........x..x"
                 }
-            },
+            }
         }
     },
     {
@@ -77,7 +871,7 @@ local patterns = {
                     SD = "....x.......x...",
                     OH = "...............x",
                     CH = "xxxxxxxxxxxxxxx.",
-                    AC = "x.x.x.x.x.x.x.x.",
+                    AC = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -86,7 +880,7 @@ local patterns = {
                     BD = "x.x..x..x......x",
                     SD = "....x.......x.x.",
                     OH = ".......x.......x",
-                    CH = "xxxxxxx.xxxxxxx.",
+                    CH = "xxxxxxx.xxxxxxx."
                 }
             },
             {
@@ -96,9 +890,9 @@ local patterns = {
                     LT = "........xxxx....",
                     SD = "xxxx............",
                     MT = "....xxxx........",
-                    CY = "............x.x.",
+                    CY = "............x.x."
                 }
-            },
+            }
         }
     },
     {
@@ -109,7 +903,7 @@ local patterns = {
                 grid = {
                     BD = "x.........x...x.",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -117,7 +911,7 @@ local patterns = {
                 grid = {
                     BD = "x.......x.x.....",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -126,9 +920,9 @@ local patterns = {
                     BD = "x.......x.x.....",
                     SD = "..x...x.....x...",
                     OH = "..x...x...x...x.",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
-            },
+            }
         }
     },
     {
@@ -139,7 +933,7 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -148,7 +942,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "x...x...x...x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "....x.......x...",
+                    AC = "....x.......x..."
                 }
             },
             {
@@ -156,9 +950,9 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = "xxxxxxxxxxxxxxxx",
-                    AC = "x..xx..xx..xx..x",
+                    AC = "x..xx..xx..xx..x"
                 }
-            },
+            }
         }
     },
     {
@@ -169,7 +963,7 @@ local patterns = {
                 grid = {
                     BD = "x.......x.x.....",
                     SD = "....x.......x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -177,7 +971,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.......",
                     SD = "....x.......x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -186,9 +980,9 @@ local patterns = {
                     BD = "x...............",
                     SD = "....x..x..x.x...",
                     CH = "x...............",
-                    AC = ".......x..x.x...",
+                    AC = ".......x..x.x..."
                 }
-            },
+            }
         }
     },
     {
@@ -199,7 +993,7 @@ local patterns = {
                 grid = {
                     BD = "x..x......x..x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -208,7 +1002,7 @@ local patterns = {
                     BD = "xx.....x..x..x..",
                     SD = "....x.......x...",
                     OH = "..............x.",
-                    CH = "x.x.x.x.x.x.x...",
+                    CH = "x.x.x.x.x.x.x..."
                 }
             },
             {
@@ -217,9 +1011,9 @@ local patterns = {
                     BD = "x..x..x..x..x...",
                     SD = ".xx.xx.xx.xx..xx",
                     CH = "x..x..x..x..x...",
-                    AC = "x..x........x.xx",
+                    AC = "x..x........x.xx"
                 }
-            },
+            }
         }
     },
     {
@@ -231,7 +1025,7 @@ local patterns = {
                     BD = "x......x.x.x.x..",
                     SD = "....x.......x...",
                     OH = ".......x.x.x....",
-                    CH = "x.x.xxx......x..",
+                    CH = "x.x.xxx......x.."
                 }
             },
             {
@@ -239,7 +1033,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..x..x.......",
                     SD = "...........x....",
-                    CH = "x.xxx.xxx.xxx.xx",
+                    CH = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -248,9 +1042,9 @@ local patterns = {
                     BD = "x...x.x.x....x..",
                     SD = "...x......xxx...",
                     CH = "x...x.x.x....x..",
-                    AC = ".............x..",
+                    AC = ".............x.."
                 }
-            },
+            }
         }
     },
     {
@@ -261,7 +1055,7 @@ local patterns = {
                 grid = {
                     BD = "x......xx.......",
                     CH = "xxxxxxxxxxxxxxxx",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
             },
             {
@@ -269,7 +1063,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..x..x.......",
                     CH = "xxxxxxxxxxxxxxxx",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
             },
             {
@@ -278,9 +1072,9 @@ local patterns = {
                     BD = "x......x........",
                     SD = ".xxxxxx..xxxx.x.",
                     CH = "x......x......x.",
-                    AC = "...x........x.x.",
+                    AC = "...x........x.x."
                 }
-            },
+            }
         }
     },
     {
@@ -291,7 +1085,7 @@ local patterns = {
                 grid = {
                     BD = "x.x....x..x.....",
                     SD = "....x.......x...",
-                    CH = "x.x.xxxx..x.xxx.",
+                    CH = "x.x.xxxx..x.xxx."
                 }
             },
             {
@@ -299,7 +1093,7 @@ local patterns = {
                 grid = {
                     BD = "x.x.....x.......",
                     SD = "....x......x....",
-                    CH = "x.x.xxx.x.x.x.x.",
+                    CH = "x.x.xxx.x.x.x.x."
                 }
             },
             {
@@ -307,9 +1101,9 @@ local patterns = {
                 grid = {
                     BD = ".............x..",
                     SD = "xxxx....xxxxxx..",
-                    HT = "....xxxx........",
+                    HT = "....xxxx........"
                 }
-            },
+            }
         }
     },
     {
@@ -321,7 +1115,7 @@ local patterns = {
                     BD = "x.x.....x.......",
                     SD = "....xx.....xx...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = ".....x......x...",
+                    AC = ".....x......x..."
                 }
             },
             {
@@ -329,7 +1123,7 @@ local patterns = {
                 grid = {
                     BD = "..x..x..x..x....",
                     SD = "....x..x....x...",
-                    CH = "x.x.xxx.x.xxx.xx",
+                    CH = "x.x.xxx.x.xxx.xx"
                 }
             },
             {
@@ -338,9 +1132,9 @@ local patterns = {
                     BD = "x.x..x..........",
                     SD = "....x.......xxxx",
                     HT = "........xxxx....",
-                    CH = "x.x..x..........",
+                    CH = "x.x..x.........."
                 }
-            },
+            }
         }
     },
     {
@@ -352,7 +1146,7 @@ local patterns = {
                     BD = "x.x.....x.......",
                     SD = "....xx.....xx...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = ".....x......x...",
+                    AC = ".....x......x..."
                 }
             },
             {
@@ -360,7 +1154,7 @@ local patterns = {
                 grid = {
                     BD = "..x..x..x..x....",
                     SD = "....x..x....x...",
-                    CH = "x.x.xxx.x.xxx.xx",
+                    CH = "x.x.xxx.x.xxx.xx"
                 }
             },
             {
@@ -369,9 +1163,9 @@ local patterns = {
                     BD = "x.x..x..........",
                     SD = "....x.......xxxx",
                     HT = "........xxxx....",
-                    CH = "x.x..x..........",
+                    CH = "x.x..x.........."
                 }
-            },
+            }
         }
     },
     {
@@ -383,7 +1177,7 @@ local patterns = {
                     BD = "x..x..x.x..x..x.",
                     SD = "..x.xx.x..x.xx.x",
                     CH = "xx.x..x.xx.x..x.",
-                    AC = "....xx......xx..",
+                    AC = "....xx......xx.."
                 }
             },
             {
@@ -394,7 +1188,7 @@ local patterns = {
                     SD = "....xx......xx..",
                     HT = "..x.......x.....",
                     CH = "xx.x..x.xx.x..x.",
-                    AC = "....xx......xx..",
+                    AC = "....xx......xx.."
                 }
             },
             {
@@ -402,9 +1196,9 @@ local patterns = {
                 grid = {
                     LT = "..........xx....",
                     SD = "....x........xx.",
-                    MT = "......xxx.......",
+                    MT = "......xxx......."
                 }
-            },
+            }
         }
     },
     {
@@ -416,7 +1210,7 @@ local patterns = {
                     BD = "x..x...x.......x",
                     SD = "....x.......x...",
                     OH = "...x...x...x...x",
-                    CH = "xxx..xx.xxx..xx.",
+                    CH = "xxx..xx.xxx..xx."
                 }
             },
             {
@@ -426,7 +1220,7 @@ local patterns = {
                     SD = "....x...........",
                     MT = "............x...",
                     OH = "...x...x...x...x",
-                    CH = "xxx..xx.xxx..xx.",
+                    CH = "xxx..xx.xxx..xx."
                 }
             },
             {
@@ -435,9 +1229,9 @@ local patterns = {
                     BD = ".x..x.x.........",
                     SD = "x..x.....x.xxxxx",
                     CH = "....x.x.........",
-                    AC = "......x........x",
+                    AC = "......x........x"
                 }
-            },
+            }
         }
     },
     {
@@ -448,7 +1242,7 @@ local patterns = {
                 grid = {
                     BD = "x..x....x.xx....",
                     SD = "......x.......x.",
-                    OH = "x...x...x...x...",
+                    OH = "x...x...x...x..."
                 }
             },
             {
@@ -456,7 +1250,7 @@ local patterns = {
                 grid = {
                     BD = "x..x....x.xx....",
                     SD = "......x.......xx",
-                    OH = "x...x...x...x...",
+                    OH = "x...x...x...x..."
                 }
             },
             {
@@ -466,9 +1260,9 @@ local patterns = {
                     SD = "x.x.x..xx.......",
                     MT = ".....x...x......",
                     CH = "............x.x.",
-                    AC = ".....x...x..x.x.",
+                    AC = ".....x...x..x.x."
                 }
-            },
+            }
         }
     },
     {
@@ -480,7 +1274,7 @@ local patterns = {
                     BD = "x.......x.x....x",
                     SD = "....x.......x...",
                     OH = "..x.............",
-                    CH = "....xxx.xxx.xxxx",
+                    CH = "....xxx.xxx.xxxx"
                 }
             },
             {
@@ -489,7 +1283,7 @@ local patterns = {
                     BD = "x.xx.x.x.x.x.x..",
                     SD = "....x.......x...",
                     OH = ".....x.x.x.x....",
-                    CH = "x.xxx........x..",
+                    CH = "x.xxx........x.."
                 }
             },
             {
@@ -498,9 +1292,9 @@ local patterns = {
                     BD = "x..x.x...x.x....",
                     SD = ".xx.x..x....x...",
                     CH = "............x...",
-                    AC = "....x.......x...",
+                    AC = "....x.......x..."
                 }
-            },
+            }
         }
     },
     {
@@ -511,7 +1305,7 @@ local patterns = {
                 grid = {
                     BD = "x.x....x........",
                     SD = "....x.......x...",
-                    CH = "xxxx.xxxxxxx.xxx",
+                    CH = "xxxx.xxxxxxx.xxx"
                 }
             },
             {
@@ -519,7 +1313,7 @@ local patterns = {
                 grid = {
                     BD = "..x..x..x.......",
                     SD = "....x.......x...",
-                    CH = "xxxx.xxxxxxx.xxx",
+                    CH = "xxxx.xxxxxxx.xxx"
                 }
             },
             {
@@ -528,9 +1322,9 @@ local patterns = {
                     BD = ".....x....x.....",
                     SD = "xx.xx..xx...xxxx",
                     CH = ".....x....x.....",
-                    AC = ".x...x....x.....",
+                    AC = ".x...x....x....."
                 }
-            },
+            }
         }
     },
     {
@@ -542,7 +1336,7 @@ local patterns = {
                     BD = "x..x..x.x..x....",
                     SD = "....x.......x...",
                     CH = "x.xxx.x.x.x.x.x.",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
             },
             {
@@ -551,7 +1345,7 @@ local patterns = {
                     BD = "xx....x.x..x....",
                     SD = "....x.......x...",
                     CH = "x.xxx.x.x.x.x.x.",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
             },
             {
@@ -560,9 +1354,9 @@ local patterns = {
                     LT = "x......x....x...",
                     SD = "..xxx...xxx...xx",
                     HT = ".....xx....x....",
-                    AC = "...x...x...x...x",
+                    AC = "...x...x...x...x"
                 }
-            },
+            }
         }
     },
     {
@@ -574,7 +1368,7 @@ local patterns = {
                     BD = "x..x...x.x.x...x",
                     SD = "....x.......x...",
                     OH = "...x...x.x.x...x",
-                    CH = "xxx..xx.x.x..xx.",
+                    CH = "xxx..xx.x.x..xx."
                 }
             },
             {
@@ -583,7 +1377,7 @@ local patterns = {
                     BD = "x..x...x...x....",
                     SD = "....x.......x...",
                     OH = "...x...x...x...x",
-                    CH = "xxx..xx.xxx..xx.",
+                    CH = "xxx..xx.xxx..xx."
                 }
             },
             {
@@ -592,9 +1386,9 @@ local patterns = {
                     LT = "............xxxx",
                     SD = ".x.xxxxx........",
                     MT = "........xxxx....",
-                    OH = "x.x.............",
+                    OH = "x.x............."
                 }
-            },
+            }
         }
     },
     {
@@ -606,7 +1400,7 @@ local patterns = {
                     BD = "x..x..x....x....",
                     SD = "............x.x.",
                     OH = "......x.......x.",
-                    CH = "xxx.xx..xxx.xx..",
+                    CH = "xxx.xx..xxx.xx.."
                 }
             },
             {
@@ -615,7 +1409,7 @@ local patterns = {
                     BD = "x..x..x....x....",
                     SD = "............x.xx",
                     OH = "......x.......x.",
-                    CH = "xxx.xx..xxx.xx..",
+                    CH = "xxx.xx..xxx.xx.."
                 }
             },
             {
@@ -623,9 +1417,9 @@ local patterns = {
                 grid = {
                     BD = "x...............",
                     SD = "...xx....x.xx...",
-                    MT = ".....xx......x.x",
+                    MT = ".....xx......x.x"
                 }
-            },
+            }
         }
     },
     {
@@ -636,7 +1430,7 @@ local patterns = {
                 grid = {
                     BD = "xx....xx..x..x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -644,7 +1438,7 @@ local patterns = {
                 grid = {
                     BD = "x..x....xx......",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -653,9 +1447,9 @@ local patterns = {
                     BD = ".....x.......x..",
                     SD = "x..xx...x.x.xx..",
                     CH = ".............x..",
-                    AC = ".............x..",
+                    AC = ".............x.."
                 }
-            },
+            }
         }
     },
     {
@@ -666,7 +1460,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.....",
                     SD = "........x...",
-                    CH = "x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x."
                 }
             },
             {
@@ -674,7 +1468,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.....",
                     SD = "........x..x",
-                    CH = "x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x."
                 }
             },
             {
@@ -683,12 +1477,11 @@ local patterns = {
                     BD = "x.........x.",
                     SD = "..x.x.x.xx..",
                     CH = "x.........x.",
-                    AC = "..........x.",
+                    AC = "..........x."
                 }
-            },
+            }
         }
     },
-
     {
         name = "Rhythm & Blues 1",
         sections = {
@@ -697,7 +1490,7 @@ local patterns = {
                 grid = {
                     BD = "x.x...x...x.....",
                     SD = "....x.......x..x",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -705,7 +1498,7 @@ local patterns = {
                 grid = {
                     BD = "x.x.....x.xx....",
                     SD = "....x..x.x..x..x",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -713,9 +1506,9 @@ local patterns = {
                 grid = {
                     LT = "....x.....x.....",
                     SD = "xx.x.xxx.x.xxxxx",
-                    MT = "..x.....x.......",
+                    MT = "..x.....x......."
                 }
-            },
+            }
         }
     },
     {
@@ -726,7 +1519,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..x.x..xx.x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -734,7 +1527,7 @@ local patterns = {
                 grid = {
                     BD = "...x.xx..x.x.xx.",
                     SD = "x...x...x...x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -743,9 +1536,9 @@ local patterns = {
                     BD = "..xx..xx..xx....",
                     LT = "........xx......",
                     SD = "xx..........xxxx",
-                    MT = "....xx..........",
+                    MT = "....xx.........."
                 }
-            },
+            }
         }
     },
     {
@@ -756,7 +1549,7 @@ local patterns = {
                 grid = {
                     BD = "x..x...x.x.x.x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -764,7 +1557,7 @@ local patterns = {
                 grid = {
                     BD = "x.xx....x..x....",
                     SD = "....x.xx....x...",
-                    CH = "x.xxx.xxx.xxx.xx",
+                    CH = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -774,9 +1567,9 @@ local patterns = {
                     LT = ".....x..........",
                     SD = "..x.....x.xx..x.",
                     HT = "............xx..",
-                    CH = "x..xx..x........",
+                    CH = "x..xx..x........"
                 }
-            },
+            }
         }
     },
     {
@@ -787,7 +1580,7 @@ local patterns = {
                 grid = {
                     BD = "x.x.....x.xx....",
                     SD = "....x..x.x..x..x",
-                    CH = "xxxxxxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxxxxxx"
                 }
             },
             {
@@ -796,7 +1589,7 @@ local patterns = {
                     BD = "x.......x.......",
                     SD = "....x.......x..x",
                     OH = "..x...x...x...x.",
-                    CH = "xx.xxx.xxx.xxx.x",
+                    CH = "xx.xxx.xxx.xxx.x"
                 }
             },
             {
@@ -805,9 +1598,9 @@ local patterns = {
                     BD = "x..x.....x......",
                     SD = ".xx.x.....x.....",
                     MT = "......xxx...x.xx",
-                    CH = "...x......x.....",
+                    CH = "...x......x....."
                 }
-            },
+            }
         }
     },
     {
@@ -818,7 +1611,7 @@ local patterns = {
                 grid = {
                     BD = "x...xx.xx.x.xx.x",
                     SD = "..x...x....x..x.",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -826,7 +1619,7 @@ local patterns = {
                 grid = {
                     BD = "x.xx...xx.xx.x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -836,9 +1629,9 @@ local patterns = {
                     LT = "........xxx.....",
                     SD = ".xx.........x...",
                     MT = "....xxx.........",
-                    CH = "............x...",
+                    CH = "............x..."
                 }
-            },
+            }
         }
     },
     {
@@ -849,7 +1642,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.......",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -857,7 +1650,7 @@ local patterns = {
                 grid = {
                     BD = "x......xx.......",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -868,9 +1661,9 @@ local patterns = {
                     SD = "....x.xx........",
                     MT = "........xxx.....",
                     CH = "x.x.............",
-                    AC = "...............x",
+                    AC = "...............x"
                 }
-            },
+            }
         }
     },
     {
@@ -882,7 +1675,7 @@ local patterns = {
                     BD = "x......xx.x.....",
                     SD = "....x.......x...",
                     OH = "..............x.",
-                    CH = "x.x.x.x.x.x.xx..",
+                    CH = "x.x.x.x.x.x.xx.."
                 }
             },
             {
@@ -890,7 +1683,7 @@ local patterns = {
                 grid = {
                     BD = "xx.....xx.x..x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -901,9 +1694,9 @@ local patterns = {
                     SD = "..xxx.x.........",
                     MT = "........x.x.....",
                     CH = "x...............",
-                    AC = "....x.......x...",
+                    AC = "....x.......x..."
                 }
-            },
+            }
         }
     },
     {
@@ -915,7 +1708,7 @@ local patterns = {
                     BD = "x.....x.........",
                     SD = "........x.....xx",
                     OH = "..x...x...x..x..",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -923,7 +1716,7 @@ local patterns = {
                 grid = {
                     BD = "xx....xx........",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -932,9 +1725,9 @@ local patterns = {
                     BD = "x...xx..xx..xx..",
                     LT = "..........xx....",
                     SD = "..xx..........xx",
-                    HT = "......xx........",
+                    HT = "......xx........"
                 }
-            },
+            }
         }
     },
     {
@@ -946,7 +1739,7 @@ local patterns = {
                     BD = "x.......x.x...x.",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
             },
             {
@@ -955,7 +1748,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
             },
             {
@@ -966,9 +1759,9 @@ local patterns = {
                     SD = "...xx...........",
                     MT = ".xx.......x.xx..",
                     CH = ".....x..x.......",
-                    AC = ".....x.......x..",
+                    AC = ".....x.......x.."
                 }
-            },
+            }
         }
     },
     {
@@ -980,7 +1773,7 @@ local patterns = {
                     BD = "x.........x....x",
                     SD = "....x.......x...",
                     OH = ".......x.......x",
-                    CH = "xxxxxxx.xxxxxxx.",
+                    CH = "xxxxxxx.xxxxxxx."
                 }
             },
             {
@@ -988,7 +1781,7 @@ local patterns = {
                 grid = {
                     BD = "xx.....x..x..x..",
                     SD = "....x.......x...",
-                    CH = "xxxxxxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxxxxxx"
                 }
             },
             {
@@ -1000,12 +1793,11 @@ local patterns = {
                     MT = "..........xx....",
                     HT = "............xx..",
                     OH = ".......x........",
-                    CH = "xxxxxxx.........",
+                    CH = "xxxxxxx........."
                 }
-            },
+            }
         }
     },
-
     {
         name = "Pop 1",
         sections = {
@@ -1015,7 +1807,7 @@ local patterns = {
                     BD = "x.......x.....x.",
                     SD = "....x.x.....x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "....x.......x...",
+                    AC = "....x.......x..."
                 }
             },
             {
@@ -1024,7 +1816,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     SD = "....x.....x.....",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "....x...........",
+                    AC = "....x..........."
                 }
             },
             {
@@ -1034,9 +1826,9 @@ local patterns = {
                     LT = "..x.x.x.x.......",
                     SD = "..x.x.x.x.xxx...",
                     CH = "x...............",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
-            },
+            }
         }
     },
     {
@@ -1047,7 +1839,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x...x..x..",
                     SD = "...x....x...x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -1056,7 +1848,7 @@ local patterns = {
                     BD = "x.....x.....x...",
                     SD = "...x......x..x..",
                     CH = "x...x...x...x...",
-                    AC = ".............x..",
+                    AC = ".............x.."
                 }
             },
             {
@@ -1065,9 +1857,9 @@ local patterns = {
                     BD = "x...x.x...x.....",
                     SD = "..xx........xxxx",
                     MT = "........xx......",
-                    AC = "...x.....x......",
+                    AC = "...x.....x......"
                 }
-            },
+            }
         }
     },
     {
@@ -1078,7 +1870,7 @@ local patterns = {
                 grid = {
                     BD = "....x.xx.x..x...",
                     SD = "x..x....x..x....",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -1086,7 +1878,7 @@ local patterns = {
                 grid = {
                     BD = "x.xx.x..x.xx.x..",
                     SD = "....x.......x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -1097,9 +1889,9 @@ local patterns = {
                     SD = "x.........xx....",
                     MT = "...x............",
                     CH = "............x...",
-                    AC = "...........x....",
+                    AC = "...........x...."
                 }
-            },
+            }
         }
     },
     {
@@ -1110,7 +1902,7 @@ local patterns = {
                 grid = {
                     BD = "x.......x.x.....",
                     SD = "....x..x....x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -1118,7 +1910,7 @@ local patterns = {
                 grid = {
                     BD = "x.x.....x.xx....",
                     SD = "....x..x....x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -1127,9 +1919,9 @@ local patterns = {
                     BD = "x.........x.....",
                     SD = "....x.x.x...x.xx",
                     CH = "x...............",
-                    AC = "x...........x..x",
+                    AC = "x...........x..x"
                 }
-            },
+            }
         }
     },
     {
@@ -1140,7 +1932,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x...x..x..",
                     SD = "...xx.......x...",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
             },
             {
@@ -1149,7 +1941,7 @@ local patterns = {
                     BD = "x.....x......x..",
                     SD = "...x......x.x...",
                     CH = "x...x...x...xx..",
-                    AC = ".............x..",
+                    AC = ".............x.."
                 }
             },
             {
@@ -1157,9 +1949,9 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = ".xxxx.xxxxx.xxxx",
-                    OH = "x...x...x...x...",
+                    OH = "x...x...x...x..."
                 }
-            },
+            }
         }
     },
     {
@@ -1170,7 +1962,7 @@ local patterns = {
                 grid = {
                     BD = "....x.......x...",
                     RS = "....x..x.x..x..x",
-                    CH = "xxxxxxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxxxxxx"
                 }
             },
             {
@@ -1178,7 +1970,7 @@ local patterns = {
                 grid = {
                     BD = "....x.......x...",
                     RS = "..xx..x...xx..x.",
-                    CH = "xxxxxxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxxxxxx"
                 }
             },
             {
@@ -1188,9 +1980,9 @@ local patterns = {
                     SD = "..x.x.x.....xx..",
                     MT = "........x.x.....",
                     CH = "..............x.",
-                    AC = "..............x.",
+                    AC = "..............x."
                 }
-            },
+            }
         }
     },
     {
@@ -1202,7 +1994,7 @@ local patterns = {
                     BD = "....x.......x...",
                     RS = "........x.......",
                     OH = "..............x.",
-                    CH = "..xx..xx..xx....",
+                    CH = "..xx..xx..xx...."
                 }
             },
             {
@@ -1211,7 +2003,7 @@ local patterns = {
                     BD = "....x.......x...",
                     RS = "....x.......x...",
                     OH = "..............x.",
-                    CH = "..xx..xx..xx....",
+                    CH = "..xx..xx..xx...."
                 }
             },
             {
@@ -1222,9 +2014,9 @@ local patterns = {
                     SD = "..xxx...........",
                     MT = "......xxx.......",
                     CH = "..............x.",
-                    AC = "....x...x...x...",
+                    AC = "....x...x...x..."
                 }
-            },
+            }
         }
     },
     {
@@ -1235,7 +2027,7 @@ local patterns = {
                 grid = {
                     BD = "x..x....x...x...",
                     SD = "........x.......",
-                    CH = "x.xxxxx...x...x.",
+                    CH = "x.xxxxx...x...x."
                 }
             },
             {
@@ -1243,7 +2035,7 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = "........x.......",
-                    CH = "x.xx.xx...x...x.",
+                    CH = "x.xx.xx...x...x."
                 }
             },
             {
@@ -1254,9 +2046,9 @@ local patterns = {
                     SD = "x.x.............",
                     MT = "......x.........",
                     OH = "..............x.",
-                    AC = "..............x.",
+                    AC = "..............x."
                 }
-            },
+            }
         }
     },
     {
@@ -1268,7 +2060,7 @@ local patterns = {
                     BD = "......x..x..",
                     RS = "x.....x.....",
                     OH = "...x.....x..",
-                    CH = "x.x...x.x...",
+                    CH = "x.x...x.x..."
                 }
             },
             {
@@ -1277,7 +2069,7 @@ local patterns = {
                     BD = "..x...x.....",
                     RS = "x.....x.....",
                     OH = "...x.....x..",
-                    CH = "x.x...x.x...",
+                    CH = "x.x...x.x..."
                 }
             },
             {
@@ -1286,9 +2078,9 @@ local patterns = {
                     BD = "...x.....x..",
                     SD = "xxx.........",
                     MT = "......xxx...",
-                    CH = "...x.....x..",
+                    CH = "...x.....x.."
                 }
-            },
+            }
         }
     },
     {
@@ -1299,7 +2091,7 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     RS = "..x...x...x...xx",
-                    CH = "x.xxx.xxx.xxx.xx",
+                    CH = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -1308,7 +2100,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     RS = "....x.......x..x",
                     OH = "..xx..xx..xx..xx",
-                    CH = "xx..xx..xx..xx..",
+                    CH = "xx..xx..xx..xx.."
                 }
             },
             {
@@ -1319,12 +2111,11 @@ local patterns = {
                     SD = "x...........x...",
                     MT = "...x.xx.........",
                     CH = "..............x.",
-                    AC = "..............x.",
+                    AC = "..............x."
                 }
-            },
+            }
         }
     },
-
     {
         name = "Disco 1",
         sections = {
@@ -1334,7 +2125,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
                     CH = "xxxxxxxxxxxxxxxx",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
             },
             {
@@ -1343,7 +2134,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "....x......xx...",
                     OH = "..x...x..x....x.",
-                    CH = "xx.xxx.xx.xxxx.x",
+                    CH = "xx.xxx.xx.xxxx.x"
                 }
             },
             {
@@ -1355,9 +2146,9 @@ local patterns = {
                     MT = "......x.........",
                     OH = "..x.............",
                     CH = "xx.x............",
-                    AC = "....x...x...x...",
+                    AC = "....x...x...x..."
                 }
-            },
+            }
         }
     },
     {
@@ -1369,7 +2160,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     CB = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CH = "..x...x...x...x.",
+                    CH = "..x...x...x...x."
                 }
             },
             {
@@ -1378,7 +2169,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     CB = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CH = "x.xx..xx..xx..xx",
+                    CH = "x.xx..xx..xx..xx"
                 }
             },
             {
@@ -1386,9 +2177,9 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = "...xx.x.x.x.xxx.",
-                    CH = "xxx.............",
+                    CH = "xxx............."
                 }
-            },
+            }
         }
     },
     {
@@ -1399,7 +2190,7 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CH = "..xx..xx..xx..xx",
+                    CH = "..xx..xx..xx..xx"
                 }
             },
             {
@@ -1407,7 +2198,7 @@ local patterns = {
                 grid = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CH = "x.xxx.xxx.xxx.xx",
+                    CH = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -1417,9 +2208,9 @@ local patterns = {
                     CB = "............x.xx",
                     SD = "....x.xx.xx.....",
                     MT = "........x..x....",
-                    CH = "xxxx............",
+                    CH = "xxxx............"
                 }
-            },
+            }
         }
     },
     {
@@ -1431,7 +2222,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
                     OH = "...x...x...x...x",
-                    CH = "xxx..xx.xxx..xx.",
+                    CH = "xxx..xx.xxx..xx."
                 }
             },
             {
@@ -1440,7 +2231,7 @@ local patterns = {
                     BD = "x...x...x..xx...",
                     SD = "....x......xx...",
                     OH = "...x...x.......x",
-                    CH = "xxx..xx.xxx..xx.",
+                    CH = "xxx..xx.xxx..xx."
                 }
             },
             {
@@ -1449,9 +2240,9 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "...xx..xx..xx..x",
                     OH = "..x...x...x...x.",
-                    CH = "xx...x...x...x..",
+                    CH = "xx...x...x...x.."
                 }
-            },
+            }
         }
     },
     {
@@ -1463,7 +2254,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
                     OH = "..xx..x...xx..x.",
-                    CH = "xx...x.xxx...x.x",
+                    CH = "xx...x.xxx...x.x"
                 }
             },
             {
@@ -1472,7 +2263,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
                     OH = "...x...........x",
-                    CH = "xxx..xxxxxxx.xx.",
+                    CH = "xxx..xxxxxxx.xx."
                 }
             },
             {
@@ -1483,9 +2274,9 @@ local patterns = {
                     SD = "....xxxx........",
                     MT = "........xxxx....",
                     OH = "..xx............",
-                    CH = "xx..............",
+                    CH = "xx.............."
                 }
-            },
+            }
         }
     },
     {
@@ -1496,7 +2287,7 @@ local patterns = {
                 grid = {
                     BD = "x.......x.......",
                     RS = "......x...x...x.",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1504,7 +2295,7 @@ local patterns = {
                 grid = {
                     BD = "x.......x.x...x.",
                     RS = "......x.....x...",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1515,9 +2306,9 @@ local patterns = {
                     SD = ".xxxx...........",
                     MT = "......xxxxx.....",
                     CH = "x...............",
-                    AC = "....x.......x..x",
+                    AC = "....x.......x..x"
                 }
-            },
+            }
         }
     },
     {
@@ -1530,7 +2321,7 @@ local patterns = {
                     LT = "............x.x.",
                     RS = "...x..x.........",
                     MT = "..........x.....",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1539,7 +2330,7 @@ local patterns = {
                     BD = "x.......x.....x.",
                     RS = "......x.........",
                     MT = "..........x.x...",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1550,9 +2341,9 @@ local patterns = {
                     SD = "xx..........x...",
                     MT = "....x...........",
                     CH = ".............x..",
-                    AC = "............xx..",
+                    AC = "............xx.."
                 }
-            },
+            }
         }
     },
     {
@@ -1565,7 +2356,7 @@ local patterns = {
                     LT = "..............x.",
                     RS = "...x............",
                     MT = "......x...x.....",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1575,7 +2366,7 @@ local patterns = {
                     LT = "............x.x.",
                     SD = "...x............",
                     MT = "......x...x.....",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1585,9 +2376,9 @@ local patterns = {
                     SD = ".x...x.x...x.x..",
                     MT = "..xx....xx....xx",
                     CH = "x...x.x...x.x...",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
-            },
+            }
         }
     },
     {
@@ -1598,7 +2389,7 @@ local patterns = {
                 grid = {
                     BD = "x.......x.x...x.",
                     RS = "......x.....x...",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1608,7 +2399,7 @@ local patterns = {
                     LT = "..............x.",
                     RS = "......x.........",
                     MT = "..........x.....",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1618,9 +2409,9 @@ local patterns = {
                     SD = "x..x........x...",
                     HT = "....x.x.........",
                     CH = "............x...",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
-            },
+            }
         }
     },
     {
@@ -1633,7 +2424,7 @@ local patterns = {
                     LT = "..............x.",
                     RS = "......x.........",
                     HT = "..........x.....",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1641,7 +2432,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.....x.",
                     RS = "....x.....x.....",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -1649,12 +2440,11 @@ local patterns = {
                 grid = {
                     LT = "..............x.",
                     SD = "x.x...x.........",
-                    MT = "..........x.....",
+                    MT = "..........x....."
                 }
-            },
+            }
         }
     },
-
     {
         name = "Blues 1",
         sections = {
@@ -1663,7 +2453,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..xx.x.xx",
                     SD = "...x.....x..",
-                    CH = "xxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxx"
                 }
             },
             {
@@ -1671,7 +2461,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..xx.x.x.",
                     SD = "...x.....x..",
-                    CH = "xxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxx"
                 }
             },
             {
@@ -1679,9 +2469,9 @@ local patterns = {
                 grid = {
                     BD = "xxxxxxxxx...",
                     SD = "xxxxxxxxxxxx",
-                    CH = "xxxxxxxxx...",
+                    CH = "xxxxxxxxx..."
                 }
-            },
+            }
         }
     },
     {
@@ -1692,7 +2482,7 @@ local patterns = {
                 grid = {
                     BD = "x.x.x.x.x.x.",
                     SD = "...x.....x..",
-                    CH = "x.xx.xx.xx.x",
+                    CH = "x.xx.xx.xx.x"
                 }
             },
             {
@@ -1700,7 +2490,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..xx.x..x",
                     SD = "...x.....x..",
-                    CH = "xxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxx"
                 }
             },
             {
@@ -1708,9 +2498,9 @@ local patterns = {
                 grid = {
                     BD = "x..x..x..x..",
                     SD = ".xx.xx.xx.xx",
-                    CH = "x..x..x..x..",
+                    CH = "x..x..x..x.."
                 }
-            },
+            }
         }
     },
     {
@@ -1720,7 +2510,7 @@ local patterns = {
                 name = "Measure A",
                 grid = {
                     BD = "x..x..x..x..",
-                    CH = "x..x..x..x..",
+                    CH = "x..x..x..x.."
                 }
             },
             {
@@ -1728,7 +2518,7 @@ local patterns = {
                 grid = {
                     BD = "x..x..x..x..",
                     SD = "...x.....x..",
-                    CH = "x..x..x..x..",
+                    CH = "x..x..x..x.."
                 }
             },
             {
@@ -1736,9 +2526,9 @@ local patterns = {
                 grid = {
                     BD = "x..x........",
                     SD = "......xxxxxx",
-                    CH = "x..x........",
+                    CH = "x..x........"
                 }
-            },
+            }
         }
     },
     {
@@ -1749,7 +2539,7 @@ local patterns = {
                 grid = {
                     BD = "x..x..x..x..",
                     SD = "...x.....x..",
-                    CH = "x..x.xx..x.x",
+                    CH = "x..x.xx..x.x"
                 }
             },
             {
@@ -1757,7 +2547,7 @@ local patterns = {
                 grid = {
                     BD = "x..x.xx..x..",
                     SD = "...x.....x..",
-                    CH = "x..x.xx..x.x",
+                    CH = "x..x.xx..x.x"
                 }
             },
             {
@@ -1765,9 +2555,9 @@ local patterns = {
                 grid = {
                     BD = "xxx.xxx.x...",
                     SD = "...x...x.xx.",
-                    CH = "..........x.",
+                    CH = "..........x."
                 }
-            },
+            }
         }
     },
     {
@@ -1778,7 +2568,7 @@ local patterns = {
                 grid = {
                     BD = "x....xx.x..x",
                     SD = "...x.....x..",
-                    CY = "x..x..x..x.x",
+                    CY = "x..x..x..x.x"
                 }
             },
             {
@@ -1786,7 +2576,7 @@ local patterns = {
                 grid = {
                     BD = "x.x..xx.x..x",
                     SD = "...x.....x..",
-                    CY = "x..x..x..x..",
+                    CY = "x..x..x..x.."
                 }
             },
             {
@@ -1795,9 +2585,9 @@ local patterns = {
                     BD = "x..x..x..x..",
                     SD = ".xx....xx...",
                     MT = "....xx....xx",
-                    OH = "x..x..x..x..",
+                    OH = "x..x..x..x.."
                 }
-            },
+            }
         }
     },
     {
@@ -1808,7 +2598,7 @@ local patterns = {
                 grid = {
                     BD = "x....xx.....",
                     SD = "...x.....x..",
-                    CH = "x.xx.xx.xx.x",
+                    CH = "x.xx.xx.xx.x"
                 }
             },
             {
@@ -1816,7 +2606,7 @@ local patterns = {
                 grid = {
                     BD = "x....xx.x...",
                     SD = "...x.....x..",
-                    CH = "x.xx.xx.xx.x",
+                    CH = "x.xx.xx.xx.x"
                 }
             },
             {
@@ -1824,9 +2614,9 @@ local patterns = {
                 grid = {
                     BD = "x...xx.xx.xx",
                     SD = "...x..x..x..",
-                    CH = "x...........",
+                    CH = "x..........."
                 }
-            },
+            }
         }
     },
     {
@@ -1837,7 +2627,7 @@ local patterns = {
                 grid = {
                     BD = "x.x...x.x...",
                     SD = "...x.....x..",
-                    CH = "x.xx.xx.xx.x",
+                    CH = "x.xx.xx.xx.x"
                 }
             },
             {
@@ -1845,7 +2635,7 @@ local patterns = {
                 grid = {
                     BD = "x.x...x.x...",
                     SD = "...x.x...x..",
-                    CH = "x.xx.xx.xx.x",
+                    CH = "x.xx.xx.xx.x"
                 }
             },
             {
@@ -1853,9 +2643,9 @@ local patterns = {
                 grid = {
                     BD = "x..x....x..x",
                     SD = ".xx.xxxx.xx.",
-                    CH = "x..x........",
+                    CH = "x..x........"
                 }
-            },
+            }
         }
     },
     {
@@ -1869,7 +2659,7 @@ local patterns = {
                     LT = ".......x.......x",
                     SD = "...........x....",
                     MT = "...x............",
-                    CH = ".xx..xx..xx..xx.",
+                    CH = ".xx..xx..xx..xx."
                 }
             },
             {
@@ -1878,7 +2668,7 @@ local patterns = {
                     BD = "x..xx..xx..xx..x",
                     CB = "x.x.xx.x.xx.xx.x",
                     MT = "...........x....",
-                    CH = ".x.x..x.x.....x.",
+                    CH = ".x.x..x.x.....x."
                 }
             },
             {
@@ -1888,9 +2678,9 @@ local patterns = {
                     SD = "x.xxx.........x.",
                     MT = "......xxx.......",
                     CH = "..............x.",
-                    AC = "..............x.",
+                    AC = "..............x."
                 }
-            },
+            }
         }
     },
     {
@@ -1903,7 +2693,7 @@ local patterns = {
                     LT = "..............xx",
                     RS = "..x..x..x.......",
                     SD = "...........x....",
-                    CH = "x.xxx.xxx.xxx.xx",
+                    CH = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -1914,7 +2704,7 @@ local patterns = {
                     RS = ".x...x...x...x..",
                     SD = "...x.......x....",
                     MT = ".......x........",
-                    CH = "x.xxx.xxx.xxx.xx",
+                    CH = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -1922,9 +2712,9 @@ local patterns = {
                 grid = {
                     LT = "....x.....x.....",
                     SD = ".xx....xx....xx.",
-                    MT = "x..x..x..x..x..x",
+                    MT = "x..x..x..x..x..x"
                 }
-            },
+            }
         }
     },
     {
@@ -1936,7 +2726,7 @@ local patterns = {
                     BD = "x..xx..xx..xx..x",
                     SD = "....x.......x...",
                     CH = "xxxxxxxxxxxxxxxx",
-                    AC = "x...x...x...x...",
+                    AC = "x...x...x...x..."
                 }
             },
             {
@@ -1945,7 +2735,7 @@ local patterns = {
                     BD = "x..xx..xx..xx..x",
                     SD = "x.x.xx.x.xx.xx.x",
                     CH = ".x.x..x.x..x..x.",
-                    AC = ".......x...x....",
+                    AC = ".......x...x...."
                 }
             },
             {
@@ -1957,12 +2747,11 @@ local patterns = {
                     MT = "........x.......",
                     HT = "..x.x...........",
                     OH = "...............x",
-                    CH = "xx....xx..x.x...",
+                    CH = "xx....xx..x.x..."
                 }
-            },
+            }
         }
     },
-
     {
         name = "Bossa Nova 1",
         sections = {
@@ -1971,7 +2760,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.....x.",
                     RS = "x.....x.....x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -1979,7 +2768,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.....x.",
                     RS = "....x.....x.....",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -1990,9 +2779,9 @@ local patterns = {
                     RS = "x...............",
                     MT = "........x.x.....",
                     CH = "..x.............",
-                    CY = "....x...........",
+                    CY = "....x..........."
                 }
-            },
+            }
         }
     },
     {
@@ -2004,7 +2793,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     RS = "..x..x..x..x....",
                     CH = "....x.......x...",
-                    CY = "x.x.x.x.x.x.x.x.",
+                    CY = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -2013,7 +2802,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     RS = "..xx..xx..xx..xx",
                     CH = "....x.......x...",
-                    CY = "x.x.x.x.x.x.x.x.",
+                    CY = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -2021,9 +2810,9 @@ local patterns = {
                 grid = {
                     LT = "..........x.x...",
                     MT = "..x...x.........",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
-            },
+            }
         }
     },
     {
@@ -2036,7 +2825,7 @@ local patterns = {
                     CB = "x...x...x...x...",
                     LT = "............x.x.",
                     HT = "..x...x.........",
-                    CH = "....x.......x...",
+                    CH = "....x.......x..."
                 }
             },
             {
@@ -2046,7 +2835,7 @@ local patterns = {
                     CB = "x...x...x...x...",
                     LT = "......xx......x.",
                     HT = "..xx......xx....",
-                    CH = "....x.......x...",
+                    CH = "....x.......x..."
                 }
             },
             {
@@ -2056,9 +2845,9 @@ local patterns = {
                     SD = "............x...",
                     HT = "..x.....x.......",
                     CH = "............x...",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
-            },
+            }
         }
     },
     {
@@ -2070,7 +2859,7 @@ local patterns = {
                     BD = "x.......x.......",
                     SD = "....x.x.....x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "......x.....x...",
+                    AC = "......x.....x..."
                 }
             },
             {
@@ -2078,7 +2867,7 @@ local patterns = {
                 grid = {
                     BD = "x.....x.x.....x.",
                     SD = "....x.x.....x...",
-                    CH = "x.xxx.x.x.x.x.x.",
+                    CH = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -2087,9 +2876,9 @@ local patterns = {
                     BD = "x.x.....x.x.....",
                     SD = "............xxxx",
                     MT = "....x.x.........",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
-            },
+            }
         }
     },
     {
@@ -2101,7 +2890,7 @@ local patterns = {
                     BD = "x.......x.......",
                     SD = "....x.x.....x...",
                     CH = "x...x.x.x...x...",
-                    AC = "......x.....x...",
+                    AC = "......x.....x..."
                 }
             },
             {
@@ -2110,7 +2899,7 @@ local patterns = {
                     BD = "x.......x.x.....",
                     SD = "....x.x.....x...",
                     CH = "x.xxx.x.x.x.x.x.",
-                    AC = "......x.....x...",
+                    AC = "......x.....x..."
                 }
             },
             {
@@ -2118,9 +2907,9 @@ local patterns = {
                 grid = {
                     BD = "x.......x.......",
                     SD = "....x.x.....xxxx",
-                    MT = "........x.x.....",
+                    MT = "........x.x....."
                 }
-            },
+            }
         }
     },
     {
@@ -2132,7 +2921,7 @@ local patterns = {
                     BD = "x.......x.......",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    AC = "..x...x...x...x.",
+                    AC = "..x...x...x...x."
                 }
             },
             {
@@ -2142,7 +2931,7 @@ local patterns = {
                     SD = "....x.......x...",
                     OH = "..............x.",
                     CH = "x.x.x.x.x.x.x...",
-                    AC = "..x...x...x.....",
+                    AC = "..x...x...x....."
                 }
             },
             {
@@ -2151,9 +2940,9 @@ local patterns = {
                     SD = "x.xx....x.x.x...",
                     MT = "....x.x.........",
                     CH = "............x...",
-                    AC = "............x...",
+                    AC = "............x..."
                 }
-            },
+            }
         }
     },
     {
@@ -2164,7 +2953,7 @@ local patterns = {
                 grid = {
                     BD = "x...............",
                     CY = "x...............",
-                    AC = "x...............",
+                    AC = "x..............."
                 }
             },
             {
@@ -2172,29 +2961,30 @@ local patterns = {
                 grid = {
                     BD = "x...............",
                     CH = "x...............",
-                    AC = "x...............",
+                    AC = "x..............."
                 }
-            },
+            }
         }
     },
     ------ end of book 200 pattersns start with 260 new pattersn
 
     {
-        name = 'Ending',
-        sections = { {
-            name = "Ending1",
-            grid = {
-                CH = "x...............",
-                BD = "x...............",
-            }
-        },
+        name = "Ending",
+        sections = {
+            {
+                name = "Ending1",
+                grid = {
+                    CH = "x...............",
+                    BD = "x..............."
+                }
+            },
             {
                 name = "Ending2",
                 grid = {
                     BD = "........x.......",
                     CY = "........x.......",
                     MT = "....f...........",
-                    SD = "f...............",
+                    SD = "f..............."
                 }
             },
             {
@@ -2204,28 +2994,30 @@ local patterns = {
                     SD = "xx..............",
                     CY = "........x.......",
                     MT = "...xx...........",
-                    LT = "......x.........",
+                    LT = "......x........."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Waltz',
-        sections = { {
-            name = "Waltz1",
-            grid = {
-                CH = "....x...x...",
-                SD = "....x...x...",
-                BD = "x...........",
-                CY = "x...x..xx...",
-            }
-        },
+        name = "Waltz",
+        sections = {
+            {
+                name = "Waltz1",
+                grid = {
+                    CH = "....x...x...",
+                    SD = "....x...x...",
+                    BD = "x...........",
+                    CY = "x...x..xx..."
+                }
+            },
             {
                 name = "Waltz2",
                 grid = {
                     CH = "....x...x...",
                     SD = "....x...x...",
                     BD = "x...........",
-                    CY = "x...........",
+                    CY = "x..........."
                 }
             },
             {
@@ -2234,7 +3026,7 @@ local patterns = {
                     CH = "....x...x...",
                     SD = "....x...x..x",
                     BD = "x...........",
-                    CY = "x...x...x..x",
+                    CY = "x...x...x..x"
                 }
             },
             {
@@ -2243,7 +3035,7 @@ local patterns = {
                     CH = "....x...x...",
                     SD = "....x.x.x.x.",
                     BD = "x...........",
-                    CY = "x...........",
+                    CY = "x..........."
                 }
             },
             {
@@ -2253,7 +3045,7 @@ local patterns = {
                     LT = "........f...",
                     BD = "x...........",
                     SD = "f...........",
-                    CH = "....x...x...",
+                    CH = "....x...x..."
                 }
             },
             {
@@ -2262,29 +3054,31 @@ local patterns = {
                     CH = "....x...x...",
                     LT = "........x.x.",
                     MT = "....x.x.....",
-                    SD = "f...........",
+                    SD = "f..........."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Twist',
-        sections = { {
-            name = "Twist1",
-            grid = {
-                AC = "......x.....x...",
-                SD = "....x.x.....x...",
-                BD = "x.......x.x.....",
-                CY = "x.xxx.x.x.x.x.x.",
-                CH = "x...x...x...x...",
-            }
-        },
+        name = "Twist",
+        sections = {
+            {
+                name = "Twist1",
+                grid = {
+                    AC = "......x.....x...",
+                    SD = "....x.x.....x...",
+                    BD = "x.......x.x.....",
+                    CY = "x.xxx.x.x.x.x.x.",
+                    CH = "x...x...x...x..."
+                }
+            },
             {
                 name = "Twist2",
                 grid = {
                     AC = "......x.....x...",
                     BD = "x.......x.......",
                     CY = "x.x.x.x.x.x.x.x.",
-                    SD = "..x.x.x.....x...",
+                    SD = "..x.x.x.....x..."
                 }
             },
             {
@@ -2294,7 +3088,7 @@ local patterns = {
                     SD = "....x.x.....x...",
                     BD = "x.......x.......",
                     CY = "x...x.x.x...x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -2303,7 +3097,7 @@ local patterns = {
                     AC = "............x.x.",
                     LT = "........x.x.....",
                     SD = "x.x.x.x.....f.f.",
-                    MT = "x.x.x.x.x.x.....",
+                    MT = "x.x.x.x.x.x....."
                 }
             },
             {
@@ -2312,7 +3106,7 @@ local patterns = {
                     AC = "x...........x.x.",
                     LT = "........x.x.....",
                     SD = "f.x.x.x.x.x.xxxx",
-                    MT = "..x.x.x.........",
+                    MT = "..x.x.x........."
                 }
             },
             {
@@ -2321,28 +3115,30 @@ local patterns = {
                     SD = "xx.x.xxx......x.",
                     MT = "........xx.x.x..",
                     CY = "..............x.",
-                    CH = "x...x...x...x...",
+                    CH = "x...x...x...x..."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Swing',
-        sections = { {
-            name = "Swing1",
-            grid = {
-                AC = "...x.....x..",
-                CY = "x..x.xx..x.x",
-                BD = "x....xx....x",
-                SD = "...x.....x..",
-            }
-        },
+        name = "Swing",
+        sections = {
+            {
+                name = "Swing1",
+                grid = {
+                    AC = "...x.....x..",
+                    CY = "x..x.xx..x.x",
+                    BD = "x....xx....x",
+                    SD = "...x.....x.."
+                }
+            },
             {
                 name = "Swing2",
                 grid = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     BD = "x....xx.....",
-                    SD = "...x.....x.x",
+                    SD = "...x.....x.x"
                 }
             },
             {
@@ -2351,7 +3147,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     BD = "x..x..x..x..",
-                    SD = "...x.....x.x",
+                    SD = "...x.....x.x"
                 }
             },
             {
@@ -2360,7 +3156,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     BD = "x.....x....x",
-                    SD = "...x.x...x..",
+                    SD = "...x.x...x.."
                 }
             },
             {
@@ -2369,7 +3165,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     BD = "x.....x.x..x",
-                    SD = "...x.....x..",
+                    SD = "...x.....x.."
                 }
             },
             {
@@ -2378,14 +3174,14 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     BD = "x.x...x.x...",
-                    SD = "...x.x...x..",
+                    SD = "...x.x...x.."
                 }
             },
             {
                 name = "SwingBreak1",
                 grid = {
                     BD = ".x.x.x.x.x.x",
-                    SD = "f.f.f.f.f.f.",
+                    SD = "f.f.f.f.f.f."
                 }
             },
             {
@@ -2396,7 +3192,7 @@ local patterns = {
                     MT = "...xx.......",
                     LT = ".........xx.",
                     BD = "..x..x..x..x",
-                    SD = "xx..........",
+                    SD = "xx.........."
                 }
             },
             {
@@ -2405,26 +3201,28 @@ local patterns = {
                     MT = "..........xx",
                     SD = "...x...xx...",
                     BD = "x.x...x..x..",
-                    CY = "x.xx........",
+                    CY = "x.xx........"
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Slow',
-        sections = { {
-            name = "Slow1",
-            grid = {
-                SD = "....x.......x...",
-                CH = "x.x.x.x.x.x.x.x.",
-                BD = "x.x....xx.x..x..",
-            }
-        },
+        name = "Slow",
+        sections = {
+            {
+                name = "Slow1",
+                grid = {
+                    SD = "....x.......x...",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    BD = "x.x....xx.x..x.."
+                }
+            },
             {
                 name = "Slow2",
                 grid = {
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "xx....xx..x..x..",
+                    BD = "xx....xx..x..x.."
                 }
             },
             {
@@ -2432,7 +3230,7 @@ local patterns = {
                 grid = {
                     SD = "....x.......x...",
                     CH = "x.xxx.x.x.x.xxx.",
-                    BD = "x.....x.x.x.....",
+                    BD = "x.....x.x.x....."
                 }
             },
             {
@@ -2441,7 +3239,7 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "x.x.xxx...x.x...",
                     OH = ".......x......x.",
-                    BD = "x......x........",
+                    BD = "x......x........"
                 }
             },
             {
@@ -2449,7 +3247,7 @@ local patterns = {
                 grid = {
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x.....xx........",
+                    BD = "x.....xx........"
                 }
             },
             {
@@ -2458,7 +3256,7 @@ local patterns = {
                     SD = "........x.......",
                     CH = "x.x.x.x.xx..xx..",
                     OH = "..........x...x.",
-                    BD = "x.....x...x...x.",
+                    BD = "x.....x...x...x."
                 }
             },
             {
@@ -2467,7 +3265,7 @@ local patterns = {
                     SD = "........x.......",
                     CH = "xx..xx..xx..xx..",
                     OH = "..x...x...x...x.",
-                    BD = "x.....x.......x.",
+                    BD = "x.....x.......x."
                 }
             },
             {
@@ -2475,7 +3273,7 @@ local patterns = {
                 grid = {
                     SD = "........x.......",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x...x.x.......x.",
+                    BD = "x...x.x.......x."
                 }
             },
             {
@@ -2484,7 +3282,7 @@ local patterns = {
                     SD = "........x.......",
                     CH = "x.xx..x.x.x.x.x.",
                     OH = "....x...........",
-                    BD = "x.....x...x...x.",
+                    BD = "x.....x...x...x."
                 }
             },
             {
@@ -2493,7 +3291,7 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "x...x...x...x...",
                     OH = "..x.......x.....",
-                    BD = "x......xx....x.x",
+                    BD = "x......xx....x.x"
                 }
             },
             {
@@ -2502,7 +3300,7 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "xxxxxxx.xxxxxxx.",
                     OH = ".......x.......x",
-                    BD = "x.xx...xx.x.....",
+                    BD = "x.xx...xx.x....."
                 }
             },
             {
@@ -2511,7 +3309,7 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "xxxxxx.xxxxxxx.x",
                     OH = "......x.......x.",
-                    BD = "x......xx.x..x..",
+                    BD = "x......xx.x..x.."
                 }
             },
             {
@@ -2519,7 +3317,7 @@ local patterns = {
                 grid = {
                     SD = "....x.......xxxx",
                     CH = "x.x.x.x.x.x.x...",
-                    BD = "x......xx.......",
+                    BD = "x......xx......."
                 }
             },
             {
@@ -2529,7 +3327,7 @@ local patterns = {
                     LT = "............x.xx",
                     BD = "x......xx.......",
                     SD = "....x...........",
-                    CH = "x.x.x.x.........",
+                    CH = "x.x.x.x........."
                 }
             },
             {
@@ -2540,7 +3338,7 @@ local patterns = {
                     LT = ".....f..........",
                     BD = ".x..x..x..x...x.",
                     SD = "f........f..xx..",
-                    OH = "..............x.",
+                    OH = "..............x."
                 }
             },
             {
@@ -2553,7 +3351,7 @@ local patterns = {
                     BD = "x............x.x",
                     SD = "...xx.x.........",
                     CH = "x.x.............",
-                    OH = "..............x.",
+                    OH = "..............x."
                 }
             },
             {
@@ -2564,7 +3362,7 @@ local patterns = {
                     BD = "..x...x.........",
                     SD = "f........x.xx...",
                     CH = "..x.............",
-                    OH = "......x.........",
+                    OH = "......x........."
                 }
             },
             {
@@ -2575,28 +3373,30 @@ local patterns = {
                     BD = "xx......x.......",
                     CY = "xx..............",
                     OH = "........x.......",
-                    SD = "....f.......f...",
+                    SD = "....f.......f..."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Ska',
-        sections = { {
-            name = "Ska1",
-            grid = {
-                SD = "....x.......x...",
-                CH = "..x...x...x.....",
-                OH = "..............x.",
-                BD = "x.......x.......",
-            }
-        },
+        name = "Ska",
+        sections = {
+            {
+                name = "Ska1",
+                grid = {
+                    SD = "....x.......x...",
+                    CH = "..x...x...x.....",
+                    OH = "..............x.",
+                    BD = "x.......x......."
+                }
+            },
             {
                 name = "Ska2",
                 grid = {
                     AC = "x...x...x...x...",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x.......x.......",
+                    BD = "x.......x......."
                 }
             },
             {
@@ -2606,14 +3406,14 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x...",
                     OH = "..............x.",
-                    BD = "x...x...x...x...",
+                    BD = "x...x...x...x..."
                 }
             },
             {
                 name = "SkaBreak1",
                 grid = {
                     AC = "x...x...x...x.x.",
-                    SD = "x.xxx.x.x.xxxxxx",
+                    SD = "x.xxx.x.x.xxxxxx"
                 }
             },
             {
@@ -2622,7 +3422,7 @@ local patterns = {
                     AC = "x...x...x...x...",
                     SD = "..xxx.x...xxxxxx",
                     OH = "x.......x.......",
-                    BD = "x.......x.......",
+                    BD = "x.......x......."
                 }
             },
             {
@@ -2635,28 +3435,30 @@ local patterns = {
                     HT = "..........x.....",
                     MT = "......x.........",
                     LT = "..............x.",
-                    BD = "x...x...x...x...",
+                    BD = "x...x...x...x..."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Shuffle',
-        sections = { {
-            name = "Shuffle1",
-            grid = {
-                AC = "...x.....x..",
-                CY = "x.xx.xx.xx.x",
-                SD = "...x.....x..",
-                BD = "x.x..xx.....",
-            }
-        },
+        name = "Shuffle",
+        sections = {
+            {
+                name = "Shuffle1",
+                grid = {
+                    AC = "...x.....x..",
+                    CY = "x.xx.xx.xx.x",
+                    SD = "...x.....x..",
+                    BD = "x.x..xx....."
+                }
+            },
             {
                 name = "Shuffle2",
                 grid = {
                     AC = "...x.....x..",
                     CY = "x.xx.xx.xx.x",
                     SD = "...x.x...x..",
-                    BD = "x.....x.x...",
+                    BD = "x.....x.x..."
                 }
             },
             {
@@ -2665,7 +3467,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x.xx.xx.xx.x",
                     SD = "...x.x.xxx..",
-                    BD = "x.x...x....x",
+                    BD = "x.x...x....x"
                 }
             },
             {
@@ -2674,7 +3476,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x.xx.xx.xx.x",
                     SD = "...x.....x..",
-                    BD = "x.x..x..x...",
+                    BD = "x.x..x..x..."
                 }
             },
             {
@@ -2683,7 +3485,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x.xx.xx.xx.x",
                     SD = "...x...xxx..",
-                    BD = "x....xx....x",
+                    BD = "x....xx....x"
                 }
             },
             {
@@ -2692,7 +3494,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x.xx.xx.xx.x",
                     SD = "x.xx.xx.xx.x",
-                    BD = "x.xx.xx.xx.x",
+                    BD = "x.xx.xx.xx.x"
                 }
             },
             {
@@ -2703,7 +3505,7 @@ local patterns = {
                     HT = ".........x..",
                     MT = "......xxx...",
                     LT = "..........xx",
-                    BD = "x....xx.....",
+                    BD = "x....xx....."
                 }
             },
             {
@@ -2713,7 +3515,7 @@ local patterns = {
                     HT = ".......x.x.x",
                     MT = "......x.x.x.",
                     SD = ".xxxxx......",
-                    BD = "x.....x.....",
+                    BD = "x.....x....."
                 }
             },
             {
@@ -2722,22 +3524,24 @@ local patterns = {
                     AC = "x.xx.xx.xx.x",
                     SD = ".x.xxx.x....",
                     MT = ".........xxx",
-                    BD = "x.x...x.x...",
+                    BD = "x.x...x.x..."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Samba',
-        sections = { {
-            name = "Samba1",
-            grid = {
-                AC = "..x...x...x...x.",
-                MT = "x.x....x.x......",
-                LT = ".....x.....x.xx.",
-                BD = "x..xx..xx..xx..x",
-                CY = "x.xxx.xxx.xxx.xx",
-            }
-        },
+        name = "Samba",
+        sections = {
+            {
+                name = "Samba1",
+                grid = {
+                    AC = "..x...x...x...x.",
+                    MT = "x.x....x.x......",
+                    LT = ".....x.....x.xx.",
+                    BD = "x..xx..xx..xx..x",
+                    CY = "x.xxx.xxx.xxx.xx"
+                }
+            },
             {
                 name = "Samba2",
                 grid = {
@@ -2745,7 +3549,7 @@ local patterns = {
                     MT = "x.x.....x.......",
                     LT = ".....x.....x.x..",
                     BD = "x..xx..xx..xx..x",
-                    CY = "x.xxx.xxx.xxx.xx",
+                    CY = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -2755,7 +3559,7 @@ local patterns = {
                     MT = "x.x.....x.......",
                     LT = ".....x.....x.x..",
                     BD = "x..xx..xx..xx..x",
-                    CY = "x.xxx.xxx.xxx.xx",
+                    CY = "x.xxx.xxx.xxx.xx"
                 }
             },
             {
@@ -2767,7 +3571,7 @@ local patterns = {
                     MT = "....xx.x........",
                     LT = "............xx.x",
                     BD = "x..xx..xx..xx..x",
-                    SD = ".........xx.....",
+                    SD = ".........xx....."
                 }
             },
             {
@@ -2777,7 +3581,7 @@ local patterns = {
                     RS = "..x.....x..x....",
                     MT = ".....x........xx",
                     BD = "x..xx..xx..xx..x",
-                    CY = "x..xx.xx.xx.xx..",
+                    CY = "x..xx.xx.xx.xx.."
                 }
             },
             {
@@ -2787,7 +3591,7 @@ local patterns = {
                     RS = "x.x....x.x.x....",
                     MT = "..............xx",
                     BD = "x..xx..xx..xx..x",
-                    CY = "x.x.xxxx.x.xx.x.",
+                    CY = "x.x.xxxx.x.xx.x."
                 }
             },
             {
@@ -2798,7 +3602,7 @@ local patterns = {
                     MT = "....x.xx........",
                     LT = "............xxx.",
                     BD = "x..xx..xx..xx..x",
-                    SD = "xxx.............",
+                    SD = "xxx............."
                 }
             },
             {
@@ -2807,7 +3611,7 @@ local patterns = {
                     AC = "x...........x.x.",
                     MT = "........x.x.....",
                     LT = "....x.x.........",
-                    SD = "xxx.........x.x.",
+                    SD = "xxx.........x.x."
                 }
             },
             {
@@ -2818,26 +3622,28 @@ local patterns = {
                     MT = "x.x.............",
                     LT = "......x.x.......",
                     BD = "............x...",
-                    SD = "x.x...x.x...x...",
+                    SD = "x.x...x.x...x..."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'RnB',
-        sections = { {
-            name = "Rnb1",
-            grid = {
-                SD = "....x..xxx..x..x",
-                CH = "x.x.x.x.x.x.x.x.",
-                BD = "x.x.......x..xx.",
-            }
-        },
+        name = "RnB",
+        sections = {
+            {
+                name = "Rnb1",
+                grid = {
+                    SD = "....x..xxx..x..x",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    BD = "x.x.......x..xx."
+                }
+            },
             {
                 name = "Rnb2",
                 grid = {
                     SD = "....x....x....x.",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x.xx.x.x...x.x.x",
+                    BD = "x.xx.x.x...x.x.x"
                 }
             },
             {
@@ -2845,7 +3651,7 @@ local patterns = {
                 grid = {
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x.x....x.x.x.x.x",
+                    BD = "x.x....x.x.x.x.x"
                 }
             },
             {
@@ -2853,7 +3659,7 @@ local patterns = {
                 grid = {
                     SD = "....x..x....x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x.x.....xx.x.xx.",
+                    BD = "x.x.....xx.x.xx."
                 }
             },
             {
@@ -2862,7 +3668,7 @@ local patterns = {
                     AC = "....x.......x...",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "x..x.xx..xx.....",
+                    BD = "x..x.xx..xx....."
                 }
             },
             {
@@ -2871,7 +3677,7 @@ local patterns = {
                     AC = "....x.......x...",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
-                    BD = "..x......x.x.xx.",
+                    BD = "..x......x.x.xx."
                 }
             },
             {
@@ -2880,7 +3686,7 @@ local patterns = {
                     SD = "....x..x....x...",
                     CH = "x.x.x...x.x.x...",
                     OH = "......x.......x.",
-                    BD = "x.xx....x.xx....",
+                    BD = "x.xx....x.xx...."
                 }
             },
             {
@@ -2888,7 +3694,7 @@ local patterns = {
                 grid = {
                     CY = "..x...x...x...x.",
                     SD = "....x.......x...",
-                    BD = "x.x....x..x..x..",
+                    BD = "x.x....x..x..x.."
                 }
             },
             {
@@ -2897,7 +3703,7 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "x...x...x...x...",
                     OH = "..x...x...x...x.",
-                    BD = "xx.x...xx.x.....",
+                    BD = "xx.x...xx.x....."
                 }
             },
             {
@@ -2906,7 +3712,7 @@ local patterns = {
                     AC = "....x.......x...",
                     SD = "....x..x.x..x...",
                     OH = "..x...x...x...x.",
-                    BD = "x.x.....x.xx....",
+                    BD = "x.x.....x.xx...."
                 }
             },
             {
@@ -2915,7 +3721,7 @@ local patterns = {
                     SD = "...x.........x..",
                     CH = "xxxxxxx.xxxxxxx.",
                     OH = ".......x.......x",
-                    BD = "xx.....xx.x.....",
+                    BD = "xx.....xx.x....."
                 }
             },
             {
@@ -2925,7 +3731,7 @@ local patterns = {
                     SD = "....x.......x...",
                     CH = "xx.xxx.xxx.xxx.x",
                     OH = "..x...x...x...x.",
-                    BD = "x.x....xx.x..xx.",
+                    BD = "x.x....xx.x..xx."
                 }
             },
             {
@@ -2936,7 +3742,7 @@ local patterns = {
                     LT = "..............x.",
                     BD = "x.x.............",
                     CY = "x.x.............",
-                    SD = "....xx.x.x..xx..",
+                    SD = "....xx.x.x..xx.."
                 }
             },
             {
@@ -2945,7 +3751,7 @@ local patterns = {
                     AC = "....x.......x...",
                     SD = "....x.xx.xxx..xx",
                     CH = "x.x.x...........",
-                    BD = "x.......x...xx..",
+                    BD = "x.......x...xx.."
                 }
             },
             {
@@ -2956,7 +3762,7 @@ local patterns = {
                     MT = "..........x...xx",
                     BD = "x............x..",
                     CY = "x...............",
-                    SD = "..xxxx.x.x......",
+                    SD = "..xxxx.x.x......"
                 }
             },
             {
@@ -2964,7 +3770,7 @@ local patterns = {
                 grid = {
                     CY = "............x...",
                     SD = "..f..f..f..f..f.",
-                    BD = "xx.xx.xx.xx.x...",
+                    BD = "xx.xx.xx.xx.x..."
                 }
             },
             {
@@ -2974,7 +3780,7 @@ local patterns = {
                     CY = "x...........x.x.",
                     MT = ".......xx.......",
                     SD = "....xx....xx....",
-                    BD = "x...........x.x.",
+                    BD = "x...........x.x."
                 }
             },
             {
@@ -2984,28 +3790,30 @@ local patterns = {
                     CY = "..............x.",
                     MT = "......f.........",
                     SD = "f...........f...",
-                    BD = ".x..x..x..x...x.",
+                    BD = ".x..x..x..x...x."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Rock',
-        sections = { {
-            name = "Rock1",
-            grid = {
-                AC = "x...x.......x...",
-                BD = "x.x...x.x.......",
-                SD = "....x.......x...",
-                CH = "x.x.x.x.x.x.x.x.",
-            }
-        },
+        name = "Rock",
+        sections = {
+            {
+                name = "Rock1",
+                grid = {
+                    AC = "x...x.......x...",
+                    BD = "x.x...x.x.......",
+                    SD = "....x.......x...",
+                    CH = "x.x.x.x.x.x.x.x."
+                }
+            },
             {
                 name = "Rock2",
                 grid = {
                     AC = "....x.......x...",
                     BD = "x.x...x.x.x...x.",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3014,7 +3822,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.....x.x.......",
                     SD = "....x.......x.x.",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3023,7 +3831,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.....x...x...x.",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3032,7 +3840,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.x...x...x...x.",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3041,7 +3849,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.x...x...x.....",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3050,7 +3858,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.....x.x.x...x.",
                     SD = "....x..x.x..x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3059,7 +3867,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.x.....x.x.....",
                     SD = "....x..x.x..x..x",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3068,7 +3876,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.......x.....x.",
                     SD = "....x..x..x....x",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3077,7 +3885,7 @@ local patterns = {
                     AC = "............x...",
                     BD = "x.xx.x..x.xx.x..",
                     SD = "....x.......x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3086,7 +3894,7 @@ local patterns = {
                     AC = "............x...",
                     BD = "x.....x.x.......",
                     SD = "..x.........x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3095,7 +3903,7 @@ local patterns = {
                     AC = "....x.......x...",
                     BD = "x.x...x...x.....",
                     SD = "....x....x..x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3104,7 +3912,7 @@ local patterns = {
                     AC = "x...x...x...x...",
                     BD = "x......xx.......",
                     SD = "....x.......x...",
-                    CH = "xxxxxxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxxxxxx"
                 }
             },
             {
@@ -3113,7 +3921,7 @@ local patterns = {
                     AC = "x...x...x...x...",
                     BD = "x..x..x.x......x",
                     SD = "....x.......x...",
-                    CH = "xxxxxxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxxxxxx"
                 }
             },
             {
@@ -3123,7 +3931,7 @@ local patterns = {
                     BD = "x..x.xx.x.......",
                     SD = "....x.......x...",
                     CH = "x.x.x.x.x.x.x...",
-                    OH = "..............x.",
+                    OH = "..............x."
                 }
             },
             {
@@ -3134,7 +3942,7 @@ local patterns = {
                     SD = "..x.x...........",
                     CH = "x...............",
                     HT = "............xxx.",
-                    MT = "..........x.....",
+                    MT = "..........x....."
                 }
             },
             {
@@ -3146,7 +3954,7 @@ local patterns = {
                     CY = "...............x",
                     HT = "...........x....",
                     MT = "........xx......",
-                    LT = "............xxxx",
+                    LT = "............xxxx"
                 }
             },
             {
@@ -3154,7 +3962,7 @@ local patterns = {
                 grid = {
                     AC = "............x...",
                     LT = "x.x.x.x.x.x.....",
-                    SD = "x.x.x.x.x.x.f...",
+                    SD = "x.x.x.x.x.x.f..."
                 }
             },
             {
@@ -3163,7 +3971,7 @@ local patterns = {
                     AC = "....x...x.....x.",
                     BD = "x.........x...x.",
                     SD = "....f...f.......",
-                    CY = "..............x.",
+                    CY = "..............x."
                 }
             },
             {
@@ -3175,7 +3983,7 @@ local patterns = {
                     CH = "x.x.x...........",
                     OH = "............x...",
                     HT = "............xxx.",
-                    MT = "........x.x.....",
+                    MT = "........x.x....."
                 }
             },
             {
@@ -3187,7 +3995,7 @@ local patterns = {
                     CY = "...............x",
                     HT = ".............x..",
                     MT = "............x...",
-                    LT = "..............x.",
+                    LT = "..............x."
                 }
             },
             {
@@ -3198,7 +4006,7 @@ local patterns = {
                     SD = "..f.........f...",
                     CY = "x...............",
                     MT = "......x.........",
-                    LT = "..........x.....",
+                    LT = "..........x....."
                 }
             },
             {
@@ -3207,7 +4015,7 @@ local patterns = {
                     AC = "....x.x...x.x...",
                     BD = "x...x...x...x...",
                     SD = "....x.x...x.x...",
-                    LT = "x.x.x.x.x.x.x.x.",
+                    LT = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3219,7 +4027,7 @@ local patterns = {
                     CH = "x...............",
                     OH = "..x.............",
                     HT = "............xxx.",
-                    MT = "........xx.x....",
+                    MT = "........xx.x...."
                 }
             },
             {
@@ -3230,7 +4038,7 @@ local patterns = {
                     SD = "....x...x.x...xx",
                     CH = "x.x.x.x.........",
                     OH = "..............x.",
-                    MT = "............xx..",
+                    MT = "............xx.."
                 }
             },
             {
@@ -3240,7 +4048,7 @@ local patterns = {
                     BD = "x.....x.........",
                     CY = "......x.........",
                     CH = "x.x.x...........",
-                    SD = "....x...........",
+                    SD = "....x..........."
                 }
             },
             {
@@ -3250,29 +4058,31 @@ local patterns = {
                     SD = "xx.x............",
                     HT = "........xx.x....",
                     MT = "....xx.x........",
-                    LT = ".............xx.",
+                    LT = ".............xx."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Reggae',
-        sections = { {
-            name = "Reggae1",
-            grid = {
-                AC = "........x.......",
-                OH = "....x...........",
-                BD = "x...x...x...x...",
-                SD = "........x.......",
-                CH = "xx.x....x.x.x.x.",
-            }
-        },
+        name = "Reggae",
+        sections = {
+            {
+                name = "Reggae1",
+                grid = {
+                    AC = "........x.......",
+                    OH = "....x...........",
+                    BD = "x...x...x...x...",
+                    SD = "........x.......",
+                    CH = "xx.x....x.x.x.x."
+                }
+            },
             {
                 name = "Reggae2",
                 grid = {
                     AC = "....x.......x...",
                     RS = "....x.......x.x.",
                     BD = "x.x...x.x.x.....",
-                    CH = "..x...x...x...x.",
+                    CH = "..x...x...x...x."
                 }
             },
             {
@@ -3281,7 +4091,7 @@ local patterns = {
                     AC = "....x.......x...",
                     RS = "....x....x..x...",
                     BD = "x..x....x..x....",
-                    CH = "..x...xx..x...xx",
+                    CH = "..x...xx..x...xx"
                 }
             },
             {
@@ -3289,7 +4099,7 @@ local patterns = {
                 grid = {
                     RS = "....x.......x...",
                     BD = "....x.....x.x...",
-                    CH = "..x...x...x...x.",
+                    CH = "..x...x...x...x."
                 }
             },
             {
@@ -3297,7 +4107,7 @@ local patterns = {
                 grid = {
                     RS = "...x..x...x.x...",
                     BD = "x...x...x...x...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3306,7 +4116,7 @@ local patterns = {
                     AC = "........x.......",
                     RS = "....x.x.....x.x.",
                     BD = "........x.......",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3315,7 +4125,7 @@ local patterns = {
                     AC = "...x.....x..",
                     RS = "x....x...x..",
                     BD = "......x.....",
-                    CH = "x.xx.xx.xx..",
+                    CH = "x.xx.xx.xx.."
                 }
             },
             {
@@ -3324,7 +4134,7 @@ local patterns = {
                     OH = "...x.....x..",
                     RS = "x.....x.....",
                     BD = "..x...x.....",
-                    CH = "x.x...x.x...",
+                    CH = "x.x...x.x..."
                 }
             },
             {
@@ -3332,7 +4142,7 @@ local patterns = {
                 grid = {
                     RS = "...x.....x.x",
                     BD = "x.....x.....",
-                    CH = "x..x.xx..x.x",
+                    CH = "x..x.xx..x.x"
                 }
             },
             {
@@ -3341,7 +4151,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     RS = "..xx..xx........",
                     SD = "...........x..x.",
-                    CH = "x.xxx.xxx.x.x.x.",
+                    CH = "x.xxx.xxx.x.x.x."
                 }
             },
             {
@@ -3350,7 +4160,7 @@ local patterns = {
                     OH = ".x..x.........x.",
                     RS = "........x.......",
                     BD = "........x.......",
-                    CH = "x..x..x.x.xxx...",
+                    CH = "x..x..x.x.xxx..."
                 }
             },
             {
@@ -3358,7 +4168,7 @@ local patterns = {
                 grid = {
                     RS = "........x.......",
                     BD = "x.....x..x.xx...",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -3371,7 +4181,7 @@ local patterns = {
                     LT = "........x.x.....",
                     BD = "x...........x...",
                     SD = "x...............",
-                    CH = "............x...",
+                    CH = "............x..."
                 }
             },
             {
@@ -3382,7 +4192,7 @@ local patterns = {
                     HT = "........x.......",
                     MT = "............xx..",
                     BD = "......x...x...x.",
-                    SD = "....x...........",
+                    SD = "....x..........."
                 }
             },
             {
@@ -3394,7 +4204,7 @@ local patterns = {
                     MT = "..xx............",
                     LT = "....x.....x.....",
                     BD = "..............x.",
-                    SD = "xx....xx....xx..",
+                    SD = "xx....xx....xx.."
                 }
             },
             {
@@ -3404,7 +4214,7 @@ local patterns = {
                     OH = "............x...",
                     BD = "............x...",
                     SD = "f.x...x.x.x.x...",
-                    CH = "....x...........",
+                    CH = "....x..........."
                 }
             },
             {
@@ -3413,7 +4223,7 @@ local patterns = {
                     OH = "....x.....x.....",
                     BD = "..x.x...x.x.....",
                     SD = "f.....f.....f...",
-                    CH = "..x.....x.......",
+                    CH = "..x.....x......."
                 }
             },
             {
@@ -3425,7 +4235,7 @@ local patterns = {
                     MT = "......xx........",
                     LT = "..........x.x...",
                     BD = "x...............",
-                    SD = "x...............",
+                    SD = "x..............."
                 }
             },
             {
@@ -3436,7 +4246,7 @@ local patterns = {
                     MT = "......xxx...",
                     LT = ".........x..",
                     BD = "x..x..x..x..",
-                    SD = "fxxx........",
+                    SD = "fxxx........"
                 }
             },
             {
@@ -3448,7 +4258,7 @@ local patterns = {
                     LT = ".........xxx",
                     BD = "x...........",
                     SD = "x.x.........",
-                    CH = "...........x",
+                    CH = "...........x"
                 }
             },
             {
@@ -3459,28 +4269,30 @@ local patterns = {
                     HT = "..........xx",
                     MT = "..xx..xx....",
                     BD = "x...........",
-                    SD = "....xx..xx..",
+                    SD = "....xx..xx.."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Pop',
-        sections = { {
-            name = "Pop1",
-            grid = {
-                AC = "....x.......x...",
-                CH = "x.x.x.x.x.x.x.x.",
-                BD = "xx.x.x.xxx.x.x.x",
-                SD = "....x.......x...",
-            }
-        },
+        name = "Pop",
+        sections = {
+            {
+                name = "Pop1",
+                grid = {
+                    AC = "....x.......x...",
+                    CH = "x.x.x.x.x.x.x.x.",
+                    BD = "xx.x.x.xxx.x.x.x",
+                    SD = "....x.......x..."
+                }
+            },
             {
                 name = "Pop2",
                 grid = {
                     AC = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
                     BD = "x.x..xxxx.x..xxx",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3490,7 +4302,7 @@ local patterns = {
                     CH = "x.x.x..xx.x.x..x",
                     OH = "......x.......x.",
                     BD = "xx.x.x..xx.x....",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3500,7 +4312,7 @@ local patterns = {
                     CH = "x.x.x.x.x.x.x.x.",
                     OH = ".......x.......x",
                     BD = "x.xx.x.x.x.x.x.x",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3509,7 +4321,7 @@ local patterns = {
                     AC = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
                     BD = "xx.x....xx.x..xx",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3518,7 +4330,7 @@ local patterns = {
                     AC = "....x.......x...",
                     CH = "x.x.x.x.x.x.x.x.",
                     BD = "xx.x....xx.x....",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3527,7 +4339,7 @@ local patterns = {
                     AC = "....x.......x...",
                     CH = "x.x...x.x.x...x.",
                     OH = "....x.......x...",
-                    BD = "x.xx..x...xx..x.",
+                    BD = "x.xx..x...xx..x."
                 }
             },
             {
@@ -3537,7 +4349,7 @@ local patterns = {
                     CH = "x...x...x...x...",
                     OH = "..x...x...x...x.",
                     BD = "x.x...x...x...x.",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3547,7 +4359,7 @@ local patterns = {
                     CH = "x.x.x.x.x...x...",
                     OH = "..........x...x.",
                     BD = "x.x.......x.....",
-                    SD = "......x.....x.x.",
+                    SD = "......x.....x.x."
                 }
             },
             {
@@ -3557,7 +4369,7 @@ local patterns = {
                     CH = "xxxxxxxxxxxx....",
                     OH = ".............x.x",
                     BD = "x.x.....xx.x.x.x",
-                    SD = "....x..x....x...",
+                    SD = "....x..x....x..."
                 }
             },
             {
@@ -3566,7 +4378,7 @@ local patterns = {
                     AC = "....x.......x...",
                     CH = ".xxx.xxx.xxx.xxx",
                     BD = "..x..x.x..x..x.x",
-                    SD = "x...x...x...x...",
+                    SD = "x...x...x...x..."
                 }
             },
             {
@@ -3576,7 +4388,7 @@ local patterns = {
                     CH = "xxxx.x.xxxxx.x.x",
                     OH = "......x.......x.",
                     BD = "x.x....xx.x....x",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -3586,7 +4398,7 @@ local patterns = {
                     MT = "....x..x........",
                     LT = "............xxx.",
                     BD = "xx......x.......",
-                    SD = "xxxx............",
+                    SD = "xxxx............"
                 }
             },
             {
@@ -3597,7 +4409,7 @@ local patterns = {
                     MT = "...f............",
                     LT = ".........f......",
                     BD = ".xx.xx.xx.xx.xxx",
-                    SD = "f...........f...",
+                    SD = "f...........f..."
                 }
             },
             {
@@ -3607,7 +4419,7 @@ local patterns = {
                     MT = "........xx.x....",
                     CY = "x...............",
                     BD = "x.......x.......",
-                    SD = "..f...f.........",
+                    SD = "..f...f........."
                 }
             },
             {
@@ -3615,7 +4427,7 @@ local patterns = {
                 grid = {
                     AC = "....x.......x...",
                     BD = "x.x..x.x...x....",
-                    SD = "....f....xx.f...",
+                    SD = "....f....xx.f..."
                 }
             },
             {
@@ -3625,7 +4437,7 @@ local patterns = {
                     MT = "...f............",
                     LT = "......f.........",
                     BD = "............xx..",
-                    SD = "f........f......",
+                    SD = "f........f......"
                 }
             },
             {
@@ -3637,55 +4449,59 @@ local patterns = {
                     MT = "....xxx.........",
                     LT = "...........xxxx.",
                     SD = "x......x........",
-                    CY = "x...............",
+                    CY = "x..............."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Charleston',
-        sections = { {
-            name = "Charleston1",
-            grid = {
-                SD = "....x.......x...",
-                BD = "x.......x.......",
-                CY = "x...x..xx...x..x",
-                CH = "....x.......x...",
-            }
-        },
+        name = "Charleston",
+        sections = {
+            {
+                name = "Charleston1",
+                grid = {
+                    SD = "....x.......x...",
+                    BD = "x.......x.......",
+                    CY = "x...x..xx...x..x",
+                    CH = "....x.......x..."
+                }
+            },
             {
                 name = "CharlestonBreak1",
                 grid = {
                     BD = "x.......x.......",
                     SD = "..x...x.x...x...",
-                    CH = "....x.......x...",
+                    CH = "....x.......x..."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Paso',
-        sections = { {
-            name = "Paso1",
-            grid = {
-                SD = "..x...x...xx..x.",
-                BD = "x...x...x...x...",
-                CY = "x.x.x.x.x.xxx.x.",
-                CH = "..x...x...x...x.",
-            }
-        },
+        name = "Paso",
+        sections = {
+            {
+                name = "Paso1",
+                grid = {
+                    SD = "..x...x...xx..x.",
+                    BD = "x...x...x...x...",
+                    CY = "x.x.x.x.x.xxx.x.",
+                    CH = "..x...x...x...x."
+                }
+            },
             {
                 name = "Paso2",
                 grid = {
                     SD = "..x...x.x.x.x.x.",
                     BD = "x...x...x...x...",
                     CY = "x.x.x.x.x.x.x.x.",
-                    CH = "..x...x...x...x.",
+                    CH = "..x...x...x...x."
                 }
             },
             {
                 name = "PasoBreak1",
                 grid = {
                     SD = "xx.x.xx.xx.xx.x.",
-                    BD = "x...x...x...x...",
+                    BD = "x...x...x...x..."
                 }
             },
             {
@@ -3695,49 +4511,53 @@ local patterns = {
                     BD = "x...x...x...x...",
                     SD = ".x.x........x.f.",
                     CH = "x...x...x...x...",
-                    MT = ".....xx.........",
+                    MT = ".....xx........."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Tango',
-        sections = { {
-            name = "Tango1",
-            grid = {
-                AC = "..............x.",
-                SD = "x...x...x...x.x.",
-                CH = "....x.......x...",
-                BD = "x...x...x...x...",
-            }
-        },
+        name = "Tango",
+        sections = {
+            {
+                name = "Tango1",
+                grid = {
+                    AC = "..............x.",
+                    SD = "x...x...x...x.x.",
+                    CH = "....x.......x...",
+                    BD = "x...x...x...x..."
+                }
+            },
             {
                 name = "TangoBreak1",
                 grid = {
                     AC = "......x.........",
                     SD = "..x...x.x.x.x.x.",
                     CH = "x...............",
-                    BD = "x.......x.x.x.x.",
+                    BD = "x.......x.x.x.x."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'March',
-        sections = { {
-            name = "March1",
-            grid = {
-                AC = "x...x...x...x...",
-                BD = "x...x...x...x...",
-                SD = "x.x.xx.xx.x.xxxx",
-                CH = "..x...x...x...x.",
-            }
-        },
+        name = "March",
+        sections = {
+            {
+                name = "March1",
+                grid = {
+                    AC = "x...x...x...x...",
+                    BD = "x...x...x...x...",
+                    SD = "x.x.xx.xx.x.xxxx",
+                    CH = "..x...x...x...x."
+                }
+            },
             {
                 name = "March2",
                 grid = {
                     AC = "x...x...x...x...",
                     BD = "x...x...x...x...",
                     SD = "x.xxx.xxx.xxxxxx",
-                    CH = "..x...x...x...x.",
+                    CH = "..x...x...x...x."
                 }
             },
             {
@@ -3749,7 +4569,7 @@ local patterns = {
                     LT = "............f...",
                     BD = "..x...x...x...x.",
                     SD = "f...............",
-                    CY = "..........x...x.",
+                    CY = "..........x...x."
                 }
             },
             {
@@ -3758,12 +4578,13 @@ local patterns = {
                     AC = "......x....x....",
                     BD = "x...x...x...x...",
                     SD = "x.xx..x.xxxx..x.",
-                    CH = "..x...x...x.....",
+                    CH = "..x...x...x....."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'ChaCha',
+        name = "ChaCha",
         sections = {
             {
                 name = "ChaCha1",
@@ -3773,7 +4594,7 @@ local patterns = {
                     RS = "..x.......x.....",
                     MT = "............x.x.",
                     CB = "x...x...x...x...",
-                    BD = "x.....x.x.....x.",
+                    BD = "x.....x.x.....x."
                 }
             },
             {
@@ -3785,7 +4606,7 @@ local patterns = {
                     CB = "x...x...x...x...",
                     MT = "............x...",
                     LT = "..............x.",
-                    BD = "x.....x.x.....x.",
+                    BD = "x.....x.x.....x."
                 }
             },
             {
@@ -3795,7 +4616,7 @@ local patterns = {
                     CH = "x.x.x.x.x.x.x.x.",
                     CB = "x...x...x...x...",
                     LT = "............x.x.",
-                    BD = "x.....x.......x.",
+                    BD = "x.....x.......x."
                 }
             },
             {
@@ -3805,7 +4626,7 @@ local patterns = {
                     CB = "..............x.",
                     MT = "......f.......x.",
                     LT = "..x.....f.......",
-                    BD = "..............x.",
+                    BD = "..............x."
                 }
             },
             {
@@ -3814,7 +4635,7 @@ local patterns = {
                     AC = "....x..x..x..x..",
                     MT = "....xx....xx....",
                     LT = ".......xx....xx.",
-                    CB = "x...............",
+                    CB = "x..............."
                 }
             },
             {
@@ -3823,27 +4644,29 @@ local patterns = {
                     AC = "......x.....x...",
                     SD = "....f...........",
                     MT = "..f...xx........",
-                    LT = "..........x.xx.x",
+                    LT = "..........x.xx.x"
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Jazz',
-        sections = { {
-            name = "Jazz1",
-            grid = {
-                CY = "x..x.xx..x.x",
-                SD = "...x.......x",
-                BD = "x....x......",
-            }
-        },
+        name = "Jazz",
+        sections = {
+            {
+                name = "Jazz1",
+                grid = {
+                    CY = "x..x.xx..x.x",
+                    SD = "...x.......x",
+                    BD = "x....x......"
+                }
+            },
             {
                 name = "Jazz2",
                 grid = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     SD = "..x......x.x",
-                    BD = "x.....x.....",
+                    BD = "x.....x....."
                 }
             },
             {
@@ -3852,7 +4675,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     SD = "...x.x...x..",
-                    BD = "......x....x",
+                    BD = "......x....x"
                 }
             },
             {
@@ -3861,7 +4684,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     SD = "..x.....x..x",
-                    BD = "x....x......",
+                    BD = "x....x......"
                 }
             },
             {
@@ -3869,7 +4692,7 @@ local patterns = {
                 grid = {
                     CY = "x..x.xx..x.x",
                     SD = "...x.....x..",
-                    BD = "x.x...x.x...",
+                    BD = "x.x...x.x..."
                 }
             },
             {
@@ -3878,7 +4701,7 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x..x.xx..x.x",
                     SD = ".....x..x...",
-                    BD = "x.x.........",
+                    BD = "x.x........."
                 }
             },
             {
@@ -3888,7 +4711,7 @@ local patterns = {
                     CY = "x.xx.x......",
                     MT = ".........xxx",
                     SD = "...x..xxx...",
-                    BD = "x....x......",
+                    BD = "x....x......"
                 }
             },
             {
@@ -3898,7 +4721,7 @@ local patterns = {
                     CY = "x...........",
                     MT = "........xxxx",
                     SD = "..xxxxx.....",
-                    BD = "x...........",
+                    BD = "x..........."
                 }
             },
             {
@@ -3907,22 +4730,24 @@ local patterns = {
                     AC = "...x.....x..",
                     CY = "x.xx.xx.....",
                     SD = "...x....xxxx",
-                    BD = "x.x..xx.....",
+                    BD = "x.x..xx....."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Funk',
-        sections = { {
-            name = "Funk1",
-            grid = {
-                AC = "..x......x..x...",
-                CH = "x...x...x...x...",
-                OH = "...............x",
-                BD = "x.....x..x......",
-                SD = "..x.........x...",
-            }
-        },
+        name = "Funk",
+        sections = {
+            {
+                name = "Funk1",
+                grid = {
+                    AC = "..x......x..x...",
+                    CH = "x...x...x...x...",
+                    OH = "...............x",
+                    BD = "x.....x..x......",
+                    SD = "..x.........x..."
+                }
+            },
             {
                 name = "Funk2",
                 grid = {
@@ -3932,7 +4757,7 @@ local patterns = {
                     HT = "..........x.....",
                     LT = "..............x.",
                     BD = "x.x...xx.....x..",
-                    SD = ".....x..........",
+                    SD = ".....x.........."
                 }
             },
             {
@@ -3943,7 +4768,7 @@ local patterns = {
                     OH = "..............x.",
                     HT = "......x.........",
                     BD = "x..xx..xx...x...",
-                    SD = ".x........x.....",
+                    SD = ".x........x....."
                 }
             },
             {
@@ -3954,7 +4779,7 @@ local patterns = {
                     OH = "..............x.",
                     MT = ".........xx.....",
                     BD = "xx....xx...x....",
-                    SD = "...x.........x..",
+                    SD = "...x.........x.."
                 }
             },
             {
@@ -3965,7 +4790,7 @@ local patterns = {
                     OH = ".x..............",
                     MT = "...............x",
                     BD = "xx....xx.xx...x.",
-                    SD = "...x........xx..",
+                    SD = "...x........xx.."
                 }
             },
             {
@@ -3975,7 +4800,7 @@ local patterns = {
                     CH = "x...x...x...x...",
                     OH = ".....x....x.....",
                     BD = "..x...x...x...xx",
-                    SD = ".......x....x...",
+                    SD = ".......x....x..."
                 }
             },
             {
@@ -3984,7 +4809,7 @@ local patterns = {
                     AC = ".........x..x...",
                     CH = "xx.xx..xx.xx.xx.",
                     BD = "x..xx..xx.......",
-                    SD = "..x..xx..x..x..x",
+                    SD = "..x..xx..x..x..x"
                 }
             },
             {
@@ -3993,7 +4818,7 @@ local patterns = {
                     CH = "xxx.x.xxx...x...",
                     OH = "..........x...x.",
                     BD = "x..xx.x.x...x...",
-                    SD = ".....x...x..x...",
+                    SD = ".....x...x..x..."
                 }
             },
             {
@@ -4003,7 +4828,7 @@ local patterns = {
                     CH = "x.x.xx..x..xx...",
                     SD = "...x..xx.xx..x.x",
                     BD = "x...x...x..x....",
-                    HT = "..............x.",
+                    HT = "..............x."
                 }
             },
             {
@@ -4013,7 +4838,7 @@ local patterns = {
                     CH = "......x....xx.xx",
                     OH = "x..x...x.x......",
                     BD = "x..x...x.x.xx..x",
-                    SD = ".xx.x...x.x..x..",
+                    SD = ".xx.x...x.x..x.."
                 }
             },
             {
@@ -4023,7 +4848,7 @@ local patterns = {
                     CH = "x...x....xx.x...",
                     OH = ".....x.x........",
                     BD = "x....x.x.x......",
-                    SD = "..x...x.x..x.x..",
+                    SD = "..x...x.x..x.x.."
                 }
             },
             {
@@ -4033,7 +4858,7 @@ local patterns = {
                     CH = "x..x.xx..x.xx...",
                     OH = "..............x.",
                     BD = "x..x.....x.xx...",
-                    SD = "....x..xx.x..x..",
+                    SD = "....x..xx.x..x.."
                 }
             },
             {
@@ -4043,7 +4868,7 @@ local patterns = {
                     CH = "x.x..xx.x.x.....",
                     OH = "...x........x...",
                     BD = "....x......xx...",
-                    SD = ".......x.x....x.",
+                    SD = ".......x.x....x."
                 }
             },
             {
@@ -4053,7 +4878,7 @@ local patterns = {
                     CH = "x.x..xx.x.x.....",
                     OH = "...x........x...",
                     BD = "....x......xx...",
-                    SD = ".......x.x....x.",
+                    SD = ".......x.x....x."
                 }
             },
             {
@@ -4063,7 +4888,7 @@ local patterns = {
                     CH = "x.x.x...x.xxx...",
                     OH = "......x.......x.",
                     BD = "xx......x.x.x...",
-                    SD = "...x.x.x.x...x..",
+                    SD = "...x.x.x.x...x.."
                 }
             },
             {
@@ -4074,7 +4899,7 @@ local patterns = {
                     MT = "........x.......",
                     LT = "............x...",
                     BD = "x..x.......x....",
-                    SD = ".xx.xxxx.xx..xxx",
+                    SD = ".xx.xxxx.xx..xxx"
                 }
             },
             {
@@ -4085,7 +4910,7 @@ local patterns = {
                     HT = "............xx.x",
                     MT = "........x.......",
                     BD = "x..x.......x....",
-                    SD = "....x.xx........",
+                    SD = "....x.xx........"
                 }
             },
             {
@@ -4097,14 +4922,14 @@ local patterns = {
                     MT = "........xx......",
                     LT = ".............xx.",
                     BD = "xx.x....x.......",
-                    SD = "....x.x.........",
+                    SD = "....x.x........."
                 }
             },
             {
                 name = "FunkBreak4",
                 grid = {
                     BD = "x.x..x.x...x....",
-                    SD = "....f....xx.f...",
+                    SD = "....f....xx.f..."
                 }
             },
             {
@@ -4114,7 +4939,7 @@ local patterns = {
                     MT = "...fx...........",
                     LT = ".........fx.....",
                     SD = "fx..........f.xx",
-                    HT = "......fx........",
+                    HT = "......fx........"
                 }
             },
             {
@@ -4123,7 +4948,7 @@ local patterns = {
                     AC = "x....x.x..x...xx",
                     CH = "x...............",
                     BD = "x........x......",
-                    SD = "....xx.x..f...xx",
+                    SD = "....xx.x..f...xx"
                 }
             },
             {
@@ -4132,7 +4957,7 @@ local patterns = {
                     AC = "..........x..xx.",
                     HT = ".............xx.",
                     BD = "x....x...x......",
-                    SD = ".xxxx.xxx.f.....",
+                    SD = ".xxxx.xxx.f....."
                 }
             },
             {
@@ -4142,7 +4967,7 @@ local patterns = {
                     HT = ".........x......",
                     LT = "..........x.....",
                     BD = ".....x.....x....",
-                    SD = "x..xx...x...f...",
+                    SD = "x..xx...x...f..."
                 }
             },
             {
@@ -4152,7 +4977,7 @@ local patterns = {
                     MT = "......xx........",
                     LT = "............xx..",
                     SD = "xxxx............",
-                    HT = "........xx......",
+                    HT = "........xx......"
                 }
             },
             {
@@ -4163,7 +4988,7 @@ local patterns = {
                     MT = "...f............",
                     LT = "......f.........",
                     BD = "............x...",
-                    SD = "f.........xx....",
+                    SD = "f.........xx...."
                 }
             },
             {
@@ -4174,7 +4999,7 @@ local patterns = {
                     MT = ".............x..",
                     LT = "..............x.",
                     BD = "x...x..xx.x.x...",
-                    SD = "......x.........",
+                    SD = "......x........."
                 }
             },
             {
@@ -4184,7 +5009,7 @@ local patterns = {
                     MT = "............xx..",
                     LT = "..............xx",
                     BD = "x..x....x..x....",
-                    SD = ".xx.xxxx.xx.....",
+                    SD = ".xx.xxxx.xx....."
                 }
             },
             {
@@ -4195,7 +5020,7 @@ local patterns = {
                     MT = "........xxx.....",
                     LT = "..............xx",
                     BD = "x..x.......x....",
-                    SD = "....xxxx........",
+                    SD = "....xxxx........"
                 }
             },
             {
@@ -4203,7 +5028,7 @@ local patterns = {
                 grid = {
                     CH = "x.x.x.x.x.x.....",
                     BD = "x..x.......x.x.x",
-                    SD = "....x..x.x..f.f.",
+                    SD = "....x..x.x..f.f."
                 }
             },
             {
@@ -4211,28 +5036,30 @@ local patterns = {
                 grid = {
                     CH = "x.x.x.x.x.x.....",
                     BD = "x..x.......x....",
-                    SD = "....x..x.x..x..f",
+                    SD = "....x..x.x..x..f"
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Disco',
-        sections = { {
-            name = "Disco1",
-            grid = {
-                OH = "....x.......x...",
-                BD = "x...x...x...x...",
-                SD = "....x.......x...",
-                CH = "x.x...x.x.x...x.",
-            }
-        },
+        name = "Disco",
+        sections = {
+            {
+                name = "Disco1",
+                grid = {
+                    OH = "....x.......x...",
+                    BD = "x...x...x...x...",
+                    SD = "....x.......x...",
+                    CH = "x.x...x.x.x...x."
+                }
+            },
             {
                 name = "Disco1",
                 grid = {
                     OH = "....x.......x...",
                     BD = "x...x...x...x...",
                     CPS = "..x...x...x.x...",
-                    CH = "x.xx..xxxxxx..xx",
+                    CH = "x.xx..xxxxxx..xx"
                 }
             },
             {
@@ -4241,7 +5068,7 @@ local patterns = {
                     OH = "....x.......x...",
                     BD = "x...x...x...x...",
                     CPS = "..x...x...x.x...",
-                    CH = "x.xx..xxxxxx..xx",
+                    CH = "x.xx..xxxxxx..xx"
                 }
             },
             {
@@ -4250,7 +5077,7 @@ local patterns = {
                     OH = "..x.......x.....",
                     BD = "x...x..xx...x...",
                     CPS = "..x.x.......x.x.",
-                    CH = "xx..xxxxxx..xxxx",
+                    CH = "xx..xxxxxx..xxxx"
                 }
             },
             {
@@ -4260,7 +5087,7 @@ local patterns = {
                     TB = "x.xxx.xxx.xxx.xx",
                     BD = "x...x...x...x...",
                     SD = "x...x...x.x.x...",
-                    CH = ".xxx.xxx.x.x.xxx",
+                    CH = ".xxx.xxx.x.x.xxx"
                 }
             },
             {
@@ -4270,7 +5097,7 @@ local patterns = {
                     CPS = "....x.....x.x...",
                     BD = "x...x...x...x...",
                     SD = "....x...........",
-                    CH = "xxxx.xxxx...x...",
+                    CH = "xxxx.xxxx...x..."
                 }
             },
             {
@@ -4280,7 +5107,7 @@ local patterns = {
                     TB = "x.x.x.x.x.x.x.x.",
                     BD = "x...x.x.x...x...",
                     SD = "xxx.x...........",
-                    CH = "....x...x...x...",
+                    CH = "....x...x...x..."
                 }
             },
             {
@@ -4290,7 +5117,7 @@ local patterns = {
                     CH = ".xxx.xxx...x.xxx",
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CB = "x...x...xxx.x...",
+                    CB = "x...x...xxx.x..."
                 }
             },
             {
@@ -4300,7 +5127,7 @@ local patterns = {
                     CPS = "x.x.x.......x...",
                     BD = "x...x...x...x...",
                     SD = "....x......xx...",
-                    CH = "xxx..xx.xxx..xx.",
+                    CH = "xxx..xx.xxx..xx."
                 }
             },
             {
@@ -4310,7 +5137,7 @@ local patterns = {
                     CH = "..xx..x...xx..x.",
                     BD = "x...x...x...x...",
                     SD = "....x.......x...",
-                    CB = "x...x...x...x...",
+                    CB = "x...x...x...x..."
                 }
             },
             {
@@ -4320,7 +5147,7 @@ local patterns = {
                     CPS = "..x.x.....x.x...",
                     BD = "x...x...x...x...",
                     SD = "....x...........",
-                    CH = "xxxx.xx.x.x.....",
+                    CH = "xxxx.xx.x.x....."
                 }
             },
             {
@@ -4330,7 +5157,7 @@ local patterns = {
                     CPS = ".x..x.......x...",
                     BD = "x...x..xx...x..x",
                     SD = "....x.......x...",
-                    CH = "x.x.....x.x.....",
+                    CH = "x.x.....x.x....."
                 }
             },
             {
@@ -4339,7 +5166,7 @@ local patterns = {
                     BD = "x.x.x...x...xx..",
                     TB = "x.xxx.xxx.xxx.xx",
                     SD = "....x..x..x.x..x",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -4349,7 +5176,7 @@ local patterns = {
                     CPS = "..x.x.....x.x...",
                     BD = "x..xx...x..xx...",
                     SD = "......x.........",
-                    CH = "........x...x...",
+                    CH = "........x...x..."
                 }
             },
             {
@@ -4360,7 +5187,7 @@ local patterns = {
                     LT = "............xx..",
                     BD = "........x.x.....",
                     SD = ".........x.x....",
-                    CH = "..x.x...........",
+                    CH = "..x.x..........."
                 }
             },
             {
@@ -4370,7 +5197,7 @@ local patterns = {
                     HT = "..........x.....",
                     MT = "..x.............",
                     BD = "....x.......x...",
-                    SD = "xx......xx......",
+                    SD = "xx......xx......"
                 }
             },
             {
@@ -4378,7 +5205,7 @@ local patterns = {
                 grid = {
                     SD = "..x.....xxxx....",
                     HT = "....x.x.........",
-                    MT = "............xxxx",
+                    MT = "............xxxx"
                 }
             },
             {
@@ -4388,14 +5215,14 @@ local patterns = {
                     MT = "...........xx...",
                     LT = ".............xxx",
                     BD = "....x...........",
-                    SD = "........xxx.....",
+                    SD = "........xxx....."
                 }
             },
             {
                 name = "DiscoBreak6",
                 grid = {
                     SD = "x.x.x.x.x.x.x.x.",
-                    CH = ".x.x.x.x.x.x.x.x",
+                    CH = ".x.x.x.x.x.x.x.x"
                 }
             },
             {
@@ -4405,14 +5232,14 @@ local patterns = {
                     HT = "........x.......",
                     MT = "..x...........x.",
                     BD = "....x.....x.....",
-                    SD = "x.....x.....x...",
+                    SD = "x.....x.....x..."
                 }
             },
             {
                 name = "DiscoBreak8",
                 grid = {
                     SD = "xx.xxx.xxx.xxx.x",
-                    CH = "..x...x...x...x.",
+                    CH = "..x...x...x...x."
                 }
             },
             {
@@ -4422,30 +5249,31 @@ local patterns = {
                     LT = "........xx......",
                     BD = "..x.x...........",
                     SD = "..x.......xx....",
-                    CH = "....x.........x.",
+                    CH = "....x.........x."
                 }
-            }, }
-    },
-
-    {
-        name = 'Bossa',
-        sections = { {
-            name = "Bossa1",
-            grid = {
-                AC = "....x.......x...",
-                BD = "x.....x.x.....x.",
-                RS = "x.....x.....x...",
-                CY = "x.x.x.x.x.x.x.x.",
-                MT = "..x.....x.....x.",
             }
-        },
+        }
+    },
+    {
+        name = "Bossa",
+        sections = {
+            {
+                name = "Bossa1",
+                grid = {
+                    AC = "....x.......x...",
+                    BD = "x.....x.x.....x.",
+                    RS = "x.....x.....x...",
+                    CY = "x.x.x.x.x.x.x.x.",
+                    MT = "..x.....x.....x."
+                }
+            },
             {
                 name = "Bossa2",
                 grid = {
                     AC = "....x.......x...",
                     RS = "..x.x...x.x...x.",
                     BD = "x.....x.x.....x.",
-                    CH = "x.x.x.x.x.x.x.x.",
+                    CH = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -4454,7 +5282,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     RS = "x.x...x...x...x.",
                     CY = "..x...x...x...x.",
-                    CH = "....x.......x...",
+                    CH = "....x.......x..."
                 }
             },
             {
@@ -4463,7 +5291,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     RS = "x.x...x...x...x.",
                     CY = "..x...x...x...x.",
-                    CH = "....x.......x...",
+                    CH = "....x.......x..."
                 }
             },
             {
@@ -4472,7 +5300,7 @@ local patterns = {
                     BD = "x.....x.x.....x.",
                     RS = "x.x...x.x.......",
                     CY = "x...x...x...x...",
-                    CH = "....x.......x...",
+                    CH = "....x.......x..."
                 }
             },
             {
@@ -4483,7 +5311,7 @@ local patterns = {
                     MT = "......x.........",
                     LT = "............x...",
                     RS = "....x.....x.....",
-                    CY = "x.x.x.x.x.x.x.x.",
+                    CY = "x.x.x.x.x.x.x.x."
                 }
             },
             {
@@ -4493,7 +5321,7 @@ local patterns = {
                     CH = "...........x....",
                     LT = "..x...x.x.......",
                     SD = "x.x...x.x..x....",
-                    MT = "x...............",
+                    MT = "x..............."
                 }
             },
             {
@@ -4504,7 +5332,7 @@ local patterns = {
                     SD = "x...x.......x...",
                     LT = "........x.......",
                     HT = "......x.........",
-                    MT = "..x...........x.",
+                    MT = "..x...........x."
                 }
             },
             {
@@ -4515,26 +5343,28 @@ local patterns = {
                     CH = "............x...",
                     LT = "......f.........",
                     HT = "..f.............",
-                    MT = "..........f.....",
+                    MT = "..........f....."
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Boogie',
-        sections = { {
-            name = "Boogie1",
-            grid = {
-                CY = "x...x...x...x...",
-                BD = "x..x...xx..x...x",
-                SD = "....x.......x...",
-            }
-        },
+        name = "Boogie",
+        sections = {
+            {
+                name = "Boogie1",
+                grid = {
+                    CY = "x...x...x...x...",
+                    BD = "x..x...xx..x...x",
+                    SD = "....x.......x..."
+                }
+            },
             {
                 name = "Boogie2",
                 grid = {
                     CY = "x..xx..xx..xx..x",
                     BD = "x.......x..x....",
-                    SD = "....x.......x...",
+                    SD = "....x.......x..."
                 }
             },
             {
@@ -4542,7 +5372,7 @@ local patterns = {
                 grid = {
                     CY = "x..xx..xx..xx..x",
                     BD = "x..x....x..x....",
-                    SD = "....x..x....x..x",
+                    SD = "....x..x....x..x"
                 }
             },
             {
@@ -4552,7 +5382,7 @@ local patterns = {
                     LT = "..........xx",
                     BD = "x..x..x..x..",
                     SD = ".xx....xx...",
-                    CY = "x..x..x..x..",
+                    CY = "x..x..x..x.."
                 }
             },
             {
@@ -4560,7 +5390,7 @@ local patterns = {
                 grid = {
                     MT = "...xxx......",
                     LT = ".........xxx",
-                    SD = "xxx...xxx...",
+                    SD = "xxx...xxx..."
                 }
             },
             {
@@ -4568,19 +5398,20 @@ local patterns = {
                 grid = {
                     MT = "...x.....x..",
                     LT = "x.....x.....",
-                    SD = ".xx.xx.xx.xx",
+                    SD = ".xx.xx.xx.xx"
                 }
-            }, }
+            }
+        }
     },
     {
-        name = 'Blues',
+        name = "Blues",
         sections = {
             {
                 name = "Blues1",
                 grid = {
                     BD = "x.x..xx.x.x.",
                     SD = "...x.....x.x",
-                    CH = "x.xx.xx.xxxx",
+                    CH = "x.xx.xx.xxxx"
                 }
             },
             {
@@ -4588,7 +5419,7 @@ local patterns = {
                 grid = {
                     BD = "x.x...x.x..x",
                     SD = "...x.x...x..",
-                    CH = "xxxxxxxxxxxx",
+                    CH = "xxxxxxxxxxxx"
                 }
             },
             {
@@ -4598,7 +5429,7 @@ local patterns = {
                     OH = "..........x.",
                     BD = "x.x..xx.x.x.",
                     SD = "...x.....x..",
-                    CH = "xxxxxxxxxx.x",
+                    CH = "xxxxxxxxxx.x"
                 }
             },
             {
@@ -4608,14 +5439,14 @@ local patterns = {
                     SD = "...x.....x..",
                     CH = "x..x..x..x.x",
                     OH = "..........x.",
-                    CY = "x.xx.xx.xx..",
+                    CY = "x.xx.xx.xx.."
                 }
             },
             {
                 name = "Blues5",
                 grid = {
                     CY = "x..x.xx..x.x",
-                    CH = "...x........",
+                    CH = "...x........"
                 }
             },
             {
@@ -4624,7 +5455,7 @@ local patterns = {
                     SD = "...x.....x..",
                     BD = "..........xx",
                     CY = "x.xx.xx.xxxx",
-                    CH = "...x.....x..",
+                    CH = "...x.....x.."
                 }
             },
             {
@@ -4635,7 +5466,7 @@ local patterns = {
                     BD = "x...x.x.x.xx",
                     SD = "...f.....f..",
                     CY = "x...........",
-                    MT = ".....f......",
+                    MT = ".....f......"
                 }
             },
             {
@@ -4645,7 +5476,7 @@ local patterns = {
                     SD = ".xxx...x.f..",
                     BD = "x...xxx.x.xx",
                     CY = "...........x",
-                    CH = "x.....x.x...",
+                    CH = "x.....x.x..."
                 }
             },
             {
@@ -4655,9 +5486,9 @@ local patterns = {
                     SD = ".xxxxxxxxf..",
                     BD = "x.........xx",
                     CY = "x...........",
-                    CH = "...x..x.....",
+                    CH = "...x..x....."
                 }
-            },
+            }
         }
     },
     {
@@ -4668,7 +5499,7 @@ local patterns = {
                 grid = {
                     RS = "...x..x.....x...",
                     CH = "x.xxx.x.x.x.x.x.",
-                    BD = "x.......x.x...x.",
+                    BD = "x.......x.x...x."
                 }
             },
             {
@@ -4679,7 +5510,7 @@ local patterns = {
                     RS = "...x........x...",
                     HT = "......x.........",
                     MT = "..........x.....",
-                    LT = "..............x.",
+                    LT = "..............x."
                 }
             },
             {
@@ -4690,7 +5521,7 @@ local patterns = {
                     RS = "......x.........",
                     LT = "..............x.",
                     MT = "..........x.....",
-                    CY = "x.xxx.x.x.x.x.x.",
+                    CY = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -4699,7 +5530,7 @@ local patterns = {
                     RS = "...x..x...x...x.",
                     BD = "x.......x.......",
                     CH = "x.x.x.x.x.x.x.x.",
-                    CY = "x.xxx.x.x.x.x.x.",
+                    CY = "x.xxx.x.x.x.x.x."
                 }
             },
             {
@@ -4711,7 +5542,7 @@ local patterns = {
                     SD = "..xx.xx.........",
                     CH = "..x...x...x...x.",
                     MT = "x.......x.x.....",
-                    LT = "............xxxx",
+                    LT = "............xxxx"
                 }
             },
             {
@@ -4720,7 +5551,7 @@ local patterns = {
                     RS = "x.xx.x.xx.x.xx.x",
                     BD = "x...x...x...x...",
                     CH = "..x...x...x...x.",
-                    CB = "x.xx.x.xx.x.xx.x",
+                    CB = "x.xx.x.xx.x.xx.x"
                 }
             },
             {
@@ -4731,7 +5562,7 @@ local patterns = {
                     RS = "....x...........",
                     LT = "..............x.",
                     MT = "........x.x.....",
-                    CY = "x.xxx.x.x.xxx.x.",
+                    CY = "x.xxx.x.x.xxx.x."
                 }
             },
             {
@@ -4743,7 +5574,7 @@ local patterns = {
                     SD = "..xx.xx.........",
                     CH = "..x...x...x...x.",
                     HT = "........xxx.....",
-                    MT = "x...........xxx.",
+                    MT = "x...........xxx."
                 }
             },
             {
@@ -4757,7 +5588,7 @@ local patterns = {
                     BD = "x...x...x...x...",
                     HT = ".......x........",
                     MT = "...x.......x....",
-                    LT = "...............x",
+                    LT = "...............x"
                 }
             },
             {
@@ -4768,7 +5599,7 @@ local patterns = {
                     BD = "x...............",
                     HT = "............f...",
                     MT = "..........x.....",
-                    LT = "..............x.",
+                    LT = "..............x."
                 }
             },
             {
@@ -4779,7 +5610,7 @@ local patterns = {
                     SD = "..x.x..x..x.x..x",
                     CY = "x...............",
                     MT = "...x.......x....",
-                    LT = "......x.x.....x.",
+                    LT = "......x.x.....x."
                 }
             },
             {
@@ -4789,7 +5620,7 @@ local patterns = {
                     SD = "xx.xx...........",
                     HT = ".........xx.....",
                     MT = "......xx........",
-                    LT = "............xx.x",
+                    LT = "............xx.x"
                 }
             },
             {
@@ -4798,7 +5629,7 @@ local patterns = {
                     CB = "x.xx......xx....",
                     HT = "............x.xx",
                     MT = "....xx.x........",
-                    LT = "........x.......",
+                    LT = "........x......."
                 }
             },
             {
@@ -4807,7 +5638,7 @@ local patterns = {
                     CB = "........x.x.x.x.",
                     SD = "f.xx............",
                     CH = "x...x...x...x...",
-                    MT = "....f.xx........",
+                    MT = "....f.xx........"
                 }
             },
             {
@@ -4816,14 +5647,12 @@ local patterns = {
                     SD = "........xx.x....",
                     HT = "....x.x.........",
                     MT = "xx.x............",
-                    LT = "............x.xx",
+                    LT = "............x.xx"
                 }
-            },
+            }
         }
     }
-
 }
-
 
 function validatePatterns()
     for i = 1, #patterns do
@@ -4871,7 +5700,7 @@ function lib.pickExistingPattern(drumgrid, drumkit)
     local hasEveryThingNeeded = true
     for k, v in pairs(part.grid) do
         if not drumkit[k] then
-            print('failed looking for', k, 'in drumkt')
+            print("failed looking for", k, "in drumkt")
             hasEveryThingNeeded = false
         end
     end
@@ -4888,16 +5717,16 @@ function lib.pickExistingPattern(drumgrid, drumkit)
             end
 
             if string.len(v) ~= #drumgrid then
-                print('failed: issue with length of drumgrid', string.len(v), #drumgrid, pattern.name)
+                print("failed: issue with length of drumgrid", string.len(v), #drumgrid, pattern.name)
             end
             gridLength = string.len(v)
             if index == -1 then
-                print('failed: I could find the correct key but something wrong with order: ', k)
+                print("failed: I could find the correct key but something wrong with order: ", k)
             end
 
             for i = 1, string.len(v) do
                 local c = v:sub(i, i)
-                if (c == 'x') then
+                if (c == "x") then
                     drumgrid[i][index] = { on = true }
                 else
                     drumgrid[i][index] = { on = false }
@@ -4906,35 +5735,35 @@ function lib.pickExistingPattern(drumgrid, drumkit)
             --print(k, drumkit.order, index)
         end
 
-        return pattern.name .. ' : ' .. part.name, gridLength
+        return pattern.name .. " : " .. part.name, gridLength
     end
 end
 
 function toDotsAndX(array)
-    local result = ''
+    local result = ""
     for i = 1, #array do
         if array[i] == 1 then
-            result = result .. 'x'
+            result = result .. "x"
         else
-            result = result .. '.'
+            result = result .. "."
         end
     end
     return result
 end
 
 function toDotsAndXAndMore(array)
-    local result = ''
+    local result = ""
     for i = 1, #array do
-        if array[i] == 'Note' then
-            result = result .. 'x'
-        elseif array[i] == 'Rest' then
-            result = result .. '.'
-        elseif array[i] == 'Flam' then
-            result = result .. 'f'
-        elseif array[i] == 'Accent' then
-            result = result .. 'x'
+        if array[i] == "Note" then
+            result = result .. "x"
+        elseif array[i] == "Rest" then
+            result = result .. "."
+        elseif array[i] == "Flam" then
+            result = result .. "f"
+        elseif array[i] == "Accent" then
+            result = result .. "x"
         else
-            print('ISSUE ', array[i])
+            print("ISSUE ", array[i])
         end
     end
     return result
@@ -4942,7 +5771,6 @@ end
 
 function transformData2()
     local mapping = {
-
         ["BassDrum"] = "BD",
         ["SnareDrum"] = "SD",
         ["ClosedHiHat"] = "CH",
@@ -4959,14 +5787,12 @@ function transformData2()
         ["Tambourine"] = "TB"
     }
 
-
     local js = json.decode(data260)
     for x = 1, 268 do
         local thing = js[x]
 
-
         for k, v in pairs(thing.tracks) do
-            if k == 'accent' then
+            if k == "accent" then
                 --print(mapping[k] .. '="' .. toDotsAndXAndMore(v) .. '",')
                 if not mapping[k] then
                     --    print(k)
@@ -4998,7 +5824,7 @@ function transformData2()
             --print(inspect(thing))
             print("{")
             print('name="' .. thing.title .. '",')
-            print('grid={')
+            print("grid={")
             for k, v in pairs(thing.tracks) do
                 --  print(k)
                 if not mapping[k] then
@@ -5008,7 +5834,7 @@ function transformData2()
                 --print(inspect(v))
                 --print(k, v)
             end
-            print('}')
+            print("}")
             print("},")
         end
     end
@@ -5029,7 +5855,7 @@ function transformData()
         ["Low tom"] = "LT",
         ["Accent"] = "AC",
         ["Cymbal"] = "CY",
-        ["Cowbell"] = "CB",
+        ["Cowbell"] = "CB"
     }
     local js = json.decode(data)
 
@@ -5039,7 +5865,7 @@ function transformData()
 
         print('{ name= "' .. thing.title .. '",')
         --print(inspect(thing.sections))
-        print('sections = {')
+        print("sections = {")
         for i = 1, #thing.sections do
             print("{")
             print('name="' .. thing.sections[i].name .. '",')
@@ -5050,7 +5876,7 @@ function transformData()
             for j = 1, #parts do
                 --if (mapping[parts[j].type] == nil) then
                 --print(parts[j].type)
-                print(mapping[parts[j].type] .. '=' .. '"' .. toDotsAndX(parts[j].beats) .. '",')
+                print(mapping[parts[j].type] .. "=" .. '"' .. toDotsAndX(parts[j].beats) .. '",')
                 --end
             end
             print("}},")

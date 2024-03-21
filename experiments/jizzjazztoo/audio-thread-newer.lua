@@ -197,7 +197,8 @@ function handlePlayingDrumGrid()
     -- 100% is way too much swing, now it will fall
     -- the number we write is the percentage the first (in other words 16th before this gets.)
 
-    local delaySwungNote = math.floor(((swing / 100) * 48) - 24)
+    local delaySwungNote = math.ceil(((swing / 100) * 48) - 24)
+    --print(delaySwungNote)
     local isSwung = (tick % 48 == delaySwungNote)
     local shouldDelayEvenNotes = swing ~= 50
     local isEvenNoteUndelayed = tick % 48 == 0
@@ -207,7 +208,7 @@ function handlePlayingDrumGrid()
         if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
             -- here we do nothing, because even noted should be delayed and whe get here, the undelayed even note
         else
-            --print(math.floor(tick))
+            -- print(math.floor(tick))
             local column = ((beat % beatInMeasure) * 4) + (tick / 24)
             if isSwung then
                 column = ((beat % beatInMeasure) * 4) + ((tick - delaySwungNote) / 24)
@@ -331,6 +332,16 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'decrease_bpm' then
+            bpm = bpm - 5
+            channel.audio2main:push({ type = 'bpmUpdate', data = { bpm = bpm } })
+            --  print(bpm)
+        end
+        if v.type == 'increase_bpm' then
+            bpm = bpm + 5
+            channel.audio2main:push({ type = 'bpmUpdate', data = { bpm = bpm } })
+            -- print(bpm)
+        end
         if v.type == 'swing' then
             swing = v.data
             print('swing', swing)

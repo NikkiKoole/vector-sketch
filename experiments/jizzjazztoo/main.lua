@@ -9,9 +9,6 @@ channel.audio2main = love.thread.getChannel("audio2main")
 channel.main2audio = love.thread.getChannel("main2audio")
 
 
---print(data)
-
-
 getMessageFromAudioThread = function()
     local v = channel.audio2main:pop();
     local error = _thread:getError()
@@ -84,6 +81,7 @@ local function updateDrumKitData()
         }
     })
 end
+
 function love.load()
     myTick = 0
     myBeat = 0
@@ -152,9 +150,9 @@ function love.load()
     for i = 1, #samples do
         sampleTuning[i] = 0
     end
-    sendMessageToAudioThread({
-        type = "tuningUpdated", data = sampleTuning })
+    sendMessageToAudioThread({ type = "tuningUpdated", data = sampleTuning })
     sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
+
     local drumkitCR78 = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
         AC = 'cr78/Kick Accent',
@@ -204,7 +202,7 @@ function love.load()
         TB = 'Minipops/Tambourine',
         CB = 'Minipops/wood1',
     }
-    drumkitFiles = drumkitCR78
+    drumkitFiles = drumkitJazzkit
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
@@ -405,13 +403,28 @@ function love.keypressed(k)
     --  sendMessageToAudioThread({ type = "key", data = k });
 
     if k == 'escape' then love.event.quit() end
+    if k == '[' then
+        sendMessageToAudioThread({
+
+            type = "decrease_bpm" })
+    end
+    if k == ']' then
+        sendMessageToAudioThread({
+
+            type = "increase_bpm" })
+    end
     if k == ',' then
         sendMessageToAudioThread({
             type = "swing", data = math.floor(50 + math.random() * 20) })
     end
+
+    if k == ',' then
+        sendMessageToAudioThread({
+            type = "swing", data = 66 })
+    end
     if k == '.' then
         sendMessageToAudioThread({
-            type = "swing", data = 62 })
+            type = "swing", data = 50 })
     end
     if k == 'space' then
         playing = not playing
@@ -448,6 +461,9 @@ function love.update(dt)
     repeat
         local msg = getMessageFromAudioThread()
         if msg then
+            if msg.type == 'bpmUpdate' then
+                myBpm = msg.data.bpm
+            end
             if msg.type == 'tickUpdate' then
                 myTick = msg.data.tick
             end
