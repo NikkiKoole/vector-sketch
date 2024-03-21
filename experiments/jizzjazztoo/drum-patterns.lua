@@ -1766,7 +1766,7 @@ local patterns = {
         }
     },
     {
-        name = "Funk 5",
+        name = "Funk 5b",
         sections = {
             {
                 name = "Measure A",
@@ -6317,15 +6317,22 @@ function lib.pickExistingPattern(drumgrid, drumkit)
     -- print(#patterns, totalSections)
 
     local index = -1
+    print('**')
     for i = 1, #patterns do
-        --if patterns[i].name == 'Funk and Soul' then
-        --if patterns[i].name == 'Electro' then
-        -- if patterns[i].name == 'Drum and Bass' then
+        print(patterns[i].name)
+        --if patterns[i].name == 'Rock' then
+        -- if patterns[i].name == 'Funk and Soul' then
+        -- if patterns[i].name == 'Electro' then
+        --if patterns[i].name == 'Drum and Bass' then
         --if patterns[i].name == 'House' then
-        --if patterns[i].name == 'Miami Bass' then
-        if patterns[i].name == 'Disco' then
-            -- if patterns[i].name == 'EDM' then
-            -- if patterns[i].name == 'Afro-Cuban' then
+        if patterns[i].name == 'Miami Bass' then
+            --if patterns[i].name == 'Slow' then
+            --if patterns[i].name == 'Basic Patterns' then
+            -- if patterns[i].name == 'Ballad 1' then
+            --if patterns[i].name == 'Pop' then
+            --if patterns[i].name == 'Disco' then
+            --if patterns[i].name == 'EDM' then
+            --if patterns[i].name == 'Afro-Cuban' then
             --if patterns[i].name == 'Hip Hop' then
             index = i
         end
