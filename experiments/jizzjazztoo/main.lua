@@ -155,7 +155,7 @@ function love.load()
     sendMessageToAudioThread({
         type = "tuningUpdated", data = sampleTuning })
     sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
-    drumkitFiles = {
+    local drumkitCR78 = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
         AC = 'cr78/Kick Accent',
         BD = 'cr78/Kick',
@@ -172,7 +172,7 @@ function love.load()
         CB = 'cr78/Cowbell'
     }
 
-    drumkitFiles = {
+    local drumkitJazzkit = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
         AC = 'jazzkit/JK_BD_02',
         BD = 'jazzkit/JK_BD_06',
@@ -188,7 +188,7 @@ function love.load()
         TB = 'jazzkit/JK_BRSH_01',
         CB = 'Minipops/wood1',
     }
-    drumkitFiles = {
+    local drumkitMinipop = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
         AC = 'Minipops/bd2',
         BD = 'Minipops/bd1',
@@ -204,6 +204,7 @@ function love.load()
         TB = 'Minipops/Tambourine',
         CB = 'Minipops/wood1',
     }
+    drumkitFiles = drumkitCR78
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
@@ -404,7 +405,14 @@ function love.keypressed(k)
     --  sendMessageToAudioThread({ type = "key", data = k });
 
     if k == 'escape' then love.event.quit() end
-
+    if k == ',' then
+        sendMessageToAudioThread({
+            type = "swing", data = math.floor(50 + math.random() * 20) })
+    end
+    if k == '.' then
+        sendMessageToAudioThread({
+            type = "swing", data = 62 })
+    end
     if k == 'space' then
         playing = not playing
 

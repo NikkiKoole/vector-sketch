@@ -22,7 +22,7 @@ local tick            = 0
 local beatInMeasure   = 4
 local countInMeasures = 0
 local bpm             = 90
-
+local swing           = 50
 local metronome_click = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
 
 local channel         = {};
@@ -191,21 +191,36 @@ function handlePlayingDrumGrid()
     -- why % 24 ??
     -- because the PPQN = 96 so PartsPer16th note is 24!
     -- drumgrid is subdivided in 16ths
-    if (tick % 24 == 0) then
-        --print('16th hit', beat, tick)
 
-        local column = ((beat % beatInMeasure) * 4) + (tick / 24)
-        --print(column)
-        for i = 1, #drumkit.order do
-            if drumgrid[column + 1][i].on then
-                local key = drumkit.order[i]
-                local snd = drumkit[key].source:clone()
-                snd:play()
+    -- -- how to apply swing?
+    -- 50% is no swing
+    -- 100% is way too much swing, now it will fall
+    -- the number we write is the percentage the first (in other words 16th before this gets.)
+
+    local delaySwungNote = math.floor(((swing / 100) * 48) - 24)
+    local isSwung = (tick % 48 == delaySwungNote)
+    local shouldDelayEvenNotes = swing ~= 50
+    local isEvenNoteUndelayed = tick % 48 == 0
+
+
+    if ((tick % 24 == 0 and isSwung == false) or isSwung) then
+        if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
+            -- here we do nothing, because even noted should be delayed and whe get here, the undelayed even note
+        else
+            --print(math.floor(tick))
+            local column = ((beat % beatInMeasure) * 4) + (tick / 24)
+            if isSwung then
+                column = ((beat % beatInMeasure) * 4) + ((tick - delaySwungNote) / 24)
+            end
+
+            for i = 1, #drumkit.order do
+                if drumgrid[column + 1][i].on then
+                    local key = drumkit.order[i]
+                    local snd = drumkit[key].source:clone()
+                    snd:play()
+                end
             end
         end
-        --print(column)
-        --local snd = drumkit.AC.source:clone()
-        --snd:play()
     end
 end
 
@@ -316,6 +331,10 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'swing' then
+            swing = v.data
+            print('swing', swing)
+        end
         if v.type == 'tuningUpdated' then
             sampleTuning = v.data
         end
