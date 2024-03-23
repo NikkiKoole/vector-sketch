@@ -21,8 +21,8 @@ local beat            = 0
 local tick            = 0
 local beatInMeasure   = 4
 local countInMeasures = 0
-local bpm             = 90
-local swing           = 50
+--local bpm             = 90
+--local swing           = 50
 local metronome_click = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
 
 local channel         = {};
@@ -34,12 +34,14 @@ local playingSounds   = {}
 local recordedData    = {}
 
 
-local drumkit             = {}
-local drumgrid            = {}
-local sampleTuning        = {}
-local sampleIndex         = 1
+local drumkit         = {}
+local drumgrid        = {}
+local sampleTuning    = {}
+local sampleIndex     = 1
+local samples         = {}
+local futureDrumNotes = {} -- this is now just used for FLAMS, but i can see echo notes working similarly
 
-local TODOechoData        = {} -- I will put in extra notes here , this could alos be the place where these trap / flams things can be made
+
 
 local playing             = false
 local recording           = false
@@ -50,6 +52,7 @@ local defaultDecayTime    = 0.1
 local defaultSustainLevel = 0.7
 local defaultReleaseTime  = .03
 
+local uiData              = nil
 
 local function generateADSR(it, now)
     local attackTime = defaultAttackTime
@@ -80,12 +83,28 @@ local function updateADSREnvelopesForPlayingSounds(dt)
     for i = 1, #playingSounds do
         local it = playingSounds[i]
         local value = generateADSR(it, now)
+        value = value * (uiData and uiData.instrumentsVolume or 1)
         it.source:setVolume(value)
     end
 end
 
 local function generateSineLFO(time, lfoFrequency)
     return math.sin(2 * math.pi * lfoFrequency * time)
+end
+
+local function getUntunedPitch(semitone)
+    --print(sampleTuning, sampleIndex)
+    local sampledAtSemitone = 60 --+ sampleTuning[sampleIndex]
+    local usingSemitone = (semitone - sampledAtSemitone)
+    local result = 2 ^ (usingSemitone / 12)
+
+    return result
+end
+local function getUntunedPitchVariationRange(semitone, offsetInSemitones)
+    local oneUp = getUntunedPitch(semitone + 1)
+    local oneDown = getUntunedPitch(semitone - 1)
+    local range = (oneUp - oneDown) * offsetInSemitones
+    return range
 end
 
 local function getPitch(semitone)
@@ -132,10 +151,10 @@ local function cleanPlayingSounds()
 end
 
 
-local function semitoneTriggered(number, sample)
-    local source = sample.source:clone()
+local function semitoneTriggered(number)
+    local source = samples[sampleIndex].source:clone() --sample.source:clone()
     local pitch = getPitch(number)
-    local range = getPitchVariationRange(number, 0) -- PARAMTERIZE THIS
+    local range = getPitchVariationRange(number, 0)    -- PARAMTERIZE THIS
     local pitchOffset = love.math.random() * range - range / 2
     source:setPitch(pitch + pitchOffset)
     source:setVolume(0)
@@ -188,6 +207,22 @@ function handlePlayingDrumGrid()
         end
     end
 
+    for i = #futureDrumNotes, 1, -1 do
+        local f = futureDrumNotes[i]
+        if (f.beat == beat and f.tick == tick) then
+            local volume = f.volume or 1
+            volume = volume * (uiData and uiData.drumVolume or 1)
+            if f.volume then
+                f.snd:setVolume(volume)
+            end
+            if f.pitch then
+                f.snd:setPitch(f.pitch)
+            end
+            f.snd:play()
+            table.remove(futureDrumNotes, i)
+        end
+    end
+
     -- why % 24 ??
     -- because the PPQN = 96 so PartsPer16th note is 24!
     -- drumgrid is subdivided in 16ths
@@ -197,12 +232,11 @@ function handlePlayingDrumGrid()
     -- 100% is way too much swing, now it will fall
     -- the number we write is the percentage the first (in other words 16th before this gets.)
 
+    local swing = uiData and uiData.swing or 50
     local delaySwungNote = math.ceil(((swing / 100) * 48) - 24)
-    --print(delaySwungNote)
     local isSwung = (tick % 48 == delaySwungNote)
     local shouldDelayEvenNotes = swing ~= 50
     local isEvenNoteUndelayed = tick % 48 == 0
-
 
     if ((tick % 24 == 0 and isSwung == false) or isSwung) then
         if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
@@ -218,7 +252,65 @@ function handlePlayingDrumGrid()
                 if drumgrid[column + 1][i].on then
                     local key = drumkit.order[i]
                     local snd = drumkit[key].source:clone()
+                    snd:setVolume((uiData and uiData.drumVolume or 1))
+                    -- + math.ceil(love.math.random() * 20)
+                    local pitch = getUntunedPitch(40)
+                    local range = getUntunedPitchVariationRange(40, 3)
+                    local pitchOffset = 0 -- love.math.random() * range - range / 2
+
+                    pitch = pitch + pitchOffset
+                    snd:setPitch(pitch)
                     snd:play()
+
+                    if drumgrid[column + 1][i].flam == true then
+                        local flamRepeat = 1
+
+                        for j = 1, flamRepeat do
+                            local futureTick = tick + (12 / flamRepeat)
+                            local futureBeat = beat
+
+                            if futureTick >= PPQN then
+                                futureTick = futureTick - PPQN
+                                futureBeat = futureBeat + 1
+                            end
+
+                            local future = {
+                                tick = futureTick,
+                                beat = futureBeat,
+                                snd = drumkit[key].source:clone(),
+                                pitch = pitch,
+                            }
+                            table.insert(futureDrumNotes, future)
+                        end
+                    end
+                    local echo = false
+                    if echo == true then
+                        local volume = 0.75
+                        local echoRepeats = 4
+                        local startDelay = 33
+
+                        for k = 1, echoRepeats do
+                            local delay = startDelay * k
+
+                            local futureTick = tick + (delay)
+                            local futureBeat = beat
+                            if futureTick >= PPQN then
+                                futureTick = futureTick % PPQN
+                                futureBeat = futureBeat + math.ceil(futureTick / PPQN)
+                            end
+                            local future = {
+                                tick = futureTick,
+                                beat = futureBeat,
+                                snd = drumkit[key].source:clone(),
+                                volume = volume / k,
+                                pitch = pitch
+                            }
+                            --     print(futureTick, futureBeat, volume)
+                            table.insert(futureDrumNotes, future)
+
+                            volume = volume / 2
+                        end
+                    end
                 end
             end
         end
@@ -256,7 +348,7 @@ function handlePlayingRecordedData()
                 semitoneReleased(recordedData[i].semitone)
             end
             if recordedData[i].beat == beat and recordedData[i].tick == tick then
-                semitoneTriggered(recordedData[i].semitone, recordedData[i].sample)
+                semitoneTriggered(recordedData[i].semitone)
             end
         end
     end
@@ -281,6 +373,7 @@ end
 
 
 while (true) do
+    local bpm = (uiData and uiData.bpm) or 90
     local n = love.timer.getTime()
     local delta = n - now
     now = n
@@ -332,20 +425,12 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
-        if v.type == 'decrease_bpm' then
-            bpm = bpm - 5
-            channel.audio2main:push({ type = 'bpmUpdate', data = { bpm = bpm } })
+        if v.type == 'samples' then
+            samples = v.data
             --  print(bpm)
         end
-        if v.type == 'increase_bpm' then
-            bpm = bpm + 5
-            channel.audio2main:push({ type = 'bpmUpdate', data = { bpm = bpm } })
-            -- print(bpm)
-        end
-        if v.type == 'swing' then
-            swing = v.data
-            print('swing', swing)
-        end
+
+
         if v.type == 'tuningUpdated' then
             sampleTuning = v.data
         end
@@ -376,20 +461,23 @@ while (true) do
             local channelIndex = v.data.channelIndex
             local sampleIndex = v.data.sampleIndex
             local takeIndex = v.data.takeIndex
-            local sample = v.data.sample
-            semitoneTriggered(semitone, sample)
+            --local sample = v.data.sample
+            semitoneTriggered(semitone)
             if recording == true then
                 table.insert(recordedData, {
                     takeIndex = takeIndex or 0,
                     channelIndex = channelIndex,
                     sampleIndex = sampleIndex,
-                    sample = sample,
+                    --sample = sample,
                     beat = math.floor(lastBeat),
                     tick = math.floor(lastTick),
                     semitone = semitone,
                     duration = 0,
                 })
             end
+        end
+        if v.type == 'updateKnobs' then
+            uiData = v.data
         end
         if v.type == 'mode' then
             if v.data == 'play' then

@@ -1,7 +1,7 @@
 package.path       = package.path .. ";../../?.lua"
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
-
+require 'ui'
 
 local _thread
 local channel      = {};
@@ -83,6 +83,13 @@ local function updateDrumKitData()
 end
 
 function love.load()
+    uiData = {
+        bpm = 90,
+        swing = 50,
+        instrumentsVolume = 1,
+        drumVolume = 1,
+    }
+    sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     myTick = 0
     myBeat = 0
     myBeatInMeasure = 4
@@ -128,10 +135,11 @@ function love.load()
 
     -- sample stuff
     local sampleFiles = {
-        'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi', 'lulla/C4-pitchpedal',
+        'lulla/tubo', 'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi', 'lulla/C4-pitchpedal',
         'lulla/soft sk', 'lulla/rainbows', 'lulla/receiver', 'lulla/C3', 'lulla/lobassy',
         "ac/0x722380", "ac/0x14146A0", "ac/0xC3B760",
-        "ANCR I Mallet 7", "legow/SYNTH-CleanHigh", "legow/Synth-PinkyFlute kopie", "legow/Synth-Bellancholia",
+        "ANCR I Mallet 7", "legow/SYNTH-CleanHigh", "legow/Synth-PinkyFlute kopie",
+        "legow/Synth-Bellancholia",
         "legow/VibraphoneMid-MT70",
         "legow/Synth SineFiltered1", "legow/Bass BoringSimple",
         "legow/Synth SoftTooter", "junopiano",
@@ -152,6 +160,7 @@ function love.load()
         sampleTuning[i] = 0
     end
     sendMessageToAudioThread({ type = "tuningUpdated", data = sampleTuning })
+    sendMessageToAudioThread({ type = 'samples', data = samples })
     sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
 
     local drumkitCR78 = {
@@ -203,7 +212,7 @@ function love.load()
         TB = 'Minipops/Tambourine',
         CB = 'Minipops/wood1',
     }
-    drumkitFiles = drumkitJazzkit
+    drumkitFiles = drumkitCR78
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
@@ -405,29 +414,7 @@ function love.keypressed(k)
     --  sendMessageToAudioThread({ type = "key", data = k });
 
     if k == 'escape' then love.event.quit() end
-    if k == '[' then
-        sendMessageToAudioThread({
 
-            type = "decrease_bpm" })
-    end
-    if k == ']' then
-        sendMessageToAudioThread({
-
-            type = "increase_bpm" })
-    end
-    if k == ',' then
-        sendMessageToAudioThread({
-            type = "swing", data = math.floor(50 + math.random() * 20) })
-    end
-
-    if k == ',' then
-        sendMessageToAudioThread({
-            type = "swing", data = 55 })
-    end
-    if k == '.' then
-        sendMessageToAudioThread({
-            type = "swing", data = 50 })
-    end
     if k == 'space' then
         playing = not playing
 
@@ -463,9 +450,6 @@ function love.update(dt)
     repeat
         local msg = getMessageFromAudioThread()
         if msg then
-            if msg.type == 'bpmUpdate' then
-                myBpm = msg.data.bpm
-            end
             if msg.type == 'tickUpdate' then
                 myTick = msg.data.tick
             end
@@ -506,7 +490,11 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
     for y = 0, rows do
         for x = 0, columns - 1 do
             if drumgrid[x + 1][y + 1].on == true then
-                love.graphics.print('x', xOff + startX + x * cellW, startY + y * cellH)
+                if drumgrid[x + 1][y + 1].flam == true then
+                    love.graphics.print('f', xOff + startX + x * cellW, startY + y * cellH)
+                else
+                    love.graphics.print('x', xOff + startX + x * cellW, startY + y * cellH)
+                end
             end
         end
     end
@@ -538,6 +526,14 @@ local function getCellUnderPosition(x, y)
     end
     return -1, -1
 end
+local function getInstrumentIndexUnderPosition(x, y)
+    if x >= 0 and x <= grid.startX then
+        if y >= grid.startY and y < grid.startY + (grid.cellH * (#grid.labels)) then
+            return math.ceil((y - grid.startY) / grid.cellH)
+        end
+    end
+    return -1
+end
 
 
 function drawDrumMachine()
@@ -565,25 +561,36 @@ function drawMouseOverGrid()
         love.graphics.rectangle('fill', grid.startX + (cx - 1) * grid.cellW, grid.startY + (cy - 1) * grid.cellH,
             grid.cellW, grid.cellH)
     end
+    local labelIndex = getInstrumentIndexUnderPosition(x, y)
+    if labelIndex > 0 then
+        love.graphics.setColor(1, 1, 1, 0.2)
+        love.graphics.rectangle('fill', 0, grid.startY + (labelIndex - 1) * grid.cellH, 100, grid.cellH)
+    end
 end
 
 function love.mousepressed(x, y, button)
     local cx, cy = getCellUnderPosition(x, y)
     if cx >= 0 and cy >= 0 then
         -- print(cx, cy)
-        drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on }
+        local flam = false
+        if love.keyboard.isDown('.') then
+            flam = true
+        end
+        drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on, flam = flam }
         updateDrumKitData()
     end
 end
 
+function love.mousereleased()
+    lastDraggedElement = nil
+end
+
 function love.draw()
+    handleMouseClickStart()
     love.graphics.setColor(1, 1, 1)
 
     drawDrumMachine()
     drawMouseOverGrid()
-
-
-
 
     love.graphics.setColor(1, 1, 1)
     if (recording or playing) then
@@ -625,5 +632,54 @@ function love.draw()
     local debugstring = mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes
     love.graphics.print(debugstring, 0, h - font:getHeight())
     love.graphics.print(drumPatternName, w - font:getWidth(drumPatternName), font:getHeight())
+
+
+
+
+
+    local v = drawLabelledKnob('bpm', 200, 50, uiData.bpm, 10, 200)
+    if v.value then
+        drawLabel(string.format("%.0i", v.value), 200, 50, 1)
+        uiData.bpm = v.value
+        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+    end
+
+    local v = drawLabelledKnob('swing', 300, 50, uiData.swing, 50, 75)
+    if v.value then
+        drawLabel(string.format("%.0i", v.value), 300, 50, 1)
+        uiData.swing = v.value
+        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+    end
+
+    local v = drawLabelledKnob('VD.', 400, 50, uiData.drumVolume, 0.01, 1)
+    if v.value then
+        drawLabel(string.format("%02.1f", v.value), 400, 50, 1)
+        uiData.drumVolume = v.value
+        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+    end
+
+    local v = drawLabelledKnob('VI.', 600, 50, uiData.instrumentsVolume, 0.01, 1)
+    if v.value then
+        drawLabel(string.format("%02.1f", v.value), 600, 50, 1)
+        uiData.instrumentsVolume = v.value
+        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+    end
     -- love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂')
 end
+
+function drawLabelledKnob(label, x, y, value, min, max)
+    drawLabel(label, x, y + 32)
+    local v = draw_knob(label, x, y, value, min, max)
+    return v
+end
+
+function drawLabel(str, x, y, alpha)
+    love.graphics.setColor(1, 1, 1, alpha or .2)
+    local font = smallfont
+    love.graphics.setFont(font)
+    local strW = font:getWidth(str)
+    local strH = font:getHeight()
+    love.graphics.print(str, x - strW / 2, y - strH / 2)
+end
+
+--

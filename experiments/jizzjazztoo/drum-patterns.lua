@@ -6321,11 +6321,12 @@ function lib.pickExistingPattern(drumgrid, drumkit)
     for i = 1, #patterns do
         print(patterns[i].name)
         --if patterns[i].name == 'Rock' then
-        -- if patterns[i].name == 'Funk and Soul' then
-        -- if patterns[i].name == 'Electro' then
-        --if patterns[i].name == 'Drum and Bass' then
-        --if patterns[i].name == 'House' then
-        if patterns[i].name == 'Miami Bass' then
+        if patterns[i].name == 'ChaCha' then
+            --if patterns[i].name == 'Funk and Soul' then
+            --if patterns[i].name == 'Electro' then
+            --if patterns[i].name == 'Drum and Bass' then
+            --if patterns[i].name == 'House' then
+            --if patterns[i].name == 'Miami Bass' then
             --if patterns[i].name == 'Slow' then
             --if patterns[i].name == 'Basic Patterns' then
             -- if patterns[i].name == 'Ballad 1' then
@@ -6337,16 +6338,14 @@ function lib.pickExistingPattern(drumgrid, drumkit)
             index = i
         end
     end
-    local patternIndex = index --math.ceil(love.math.random() * #patterns)
+    local patternIndex = math.ceil(love.math.random() * #patterns)
     local pattern = patterns[patternIndex]
 
     local partIndex = math.ceil(love.math.random() * #pattern.sections)
 
     local part = patterns[patternIndex].sections[partIndex]
-    -- if (part)
-    -- print(pattern.name)
-    -- print(patternIndex, partIndex, part.grid, part.name, pattern.name)
-    -- now we verify that the drumkit has all the keys in the pattern too.
+
+
     local hasEveryThingNeeded = true
     for k, v in pairs(part.grid) do
         if not drumkit[k] then
@@ -6378,11 +6377,12 @@ function lib.pickExistingPattern(drumgrid, drumkit)
                 local c = v:sub(i, i)
                 if (c == "x") then
                     drumgrid[i][index] = { on = true }
+                elseif (c == "f") then
+                    drumgrid[i][index] = { on = true, flam = true }
                 else
                     drumgrid[i][index] = { on = false }
                 end
             end
-            --print(k, drumkit.order, index)
         end
 
         return pattern.name .. " : " .. part.name, gridLength
