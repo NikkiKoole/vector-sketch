@@ -180,7 +180,6 @@ local function semitoneReleased(semitone)
                 local totalDeltaTicks = (deltaBeats * PPQN) + deltaTicks
 
                 recordedData[i].duration = totalDeltaTicks
-
                 recordedData[i].beatOff = math.floor(lastBeat)
                 recordedData[i].tickOff = math.floor(lastTick)
             end

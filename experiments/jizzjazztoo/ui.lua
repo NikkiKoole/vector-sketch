@@ -12,6 +12,12 @@ function distance(x, y, x1, y1)
     return dist
 end
 
+function pointInRect(x, y, rx, ry, rw, rh)
+    if x < rx or y < ry then return false end
+    if x > rx + rw or y > ry + rh then return false end
+    return true
+ end
+
 function pointInCircle(x, y, cx, cy, radius)
     if distance(x, y, cx, cy) < radius then
         return true
@@ -54,6 +60,36 @@ function handleMouseClickStart()
     end
     mouseState.lastDown = mouseState.down
 end
+
+function labelbutton(str, x, y, w, h, border)
+    local mx, my = love.mouse:getPosition()
+    local clicked = false
+    local alpha = 0.1
+
+    if (pointInRect(mx, my, x, y, w, h)) then
+       alpha = 0.5
+       mouseState.hoveredSomething = true
+       if (mouseState.click) then
+          clicked = true
+       end
+    end
+    --print(str, alpha)
+    love.graphics.setColor(1, 1, 1, alpha)
+    love.graphics.rectangle("fill", x, y, w, h)
+    love.graphics.setColor(1, 1, 1, .8)
+    if border then 
+        love.graphics.setLineWidth(4)
+        love.graphics.rectangle("line", x, y, w, h)
+        love.graphics.setLineWidth(1)
+    end 
+
+    love.graphics.print(str,x,y)
+    --shadedText(str, x + margin, y)
+    return {
+        clicked = clicked
+    }
+ end
+
 
 function draw_knob(id, x, y, v, min, max)
     love.graphics.setLineWidth(4)

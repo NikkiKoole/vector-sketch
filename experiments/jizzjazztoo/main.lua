@@ -1,3 +1,11 @@
+--AL lib: (EE) alc_cleanup: 1 device not closed
+
+--AL lib: (EE) alc_cleanup: 1 device not closed
+--love: ./Alc/ALc.c:800: LockLists: Assertion `ret == althrd_success' failed.
+--zsh: IOT instruction (core dumped)  love .
+
+
+
 package.path       = package.path .. ";../../?.lua"
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
@@ -89,6 +97,9 @@ function love.load()
         instrumentsVolume = 1,
         drumVolume = 1,
     }
+    lookinIntoIntrumentAtIndex = 0
+    singleInstrumentJob = nil
+
     sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     myTick = 0
     myBeat = 0
@@ -485,7 +496,29 @@ function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
     love.graphics.setLineWidth(1)
 end
 
+function drawDrumMachineLabelSingleRow(startX, startY, cellH, labels, rowIndex)
+    local y = rowIndex
+    love.graphics.setColor(1, 1, 1, 0.8)
+    love.graphics.print(' ' .. labels[y], 0, startY)
+end
+
+function drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, columns, rowIndex)
+    love.graphics.setColor(1, 1, 1, 0.8)
+    local xOff = (cellW - smallfont:getWidth('x')) / 2
+    local y = rowIndex
+    for x = 0, columns - 1 do
+        if drumgrid[x + 1][y + 1].on == true then
+            if drumgrid[x + 1][y + 1].flam == true then
+                love.graphics.print('f', xOff + startX + x * cellW, startY)
+            else
+                love.graphics.print('x', xOff + startX + x * cellW, startY)
+            end
+        end
+    end
+end
+
 function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
+    love.graphics.setColor(1, 1, 1, 0.8)
     local xOff = (cellW - smallfont:getWidth('x')) / 2
     for y = 0, rows do
         for x = 0, columns - 1 do
@@ -501,9 +534,17 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
 end
 
 function drawDrumMachineLabels(startX, startY, cellH, labels)
+    love.graphics.setColor(1, 1, 1, 0.8)
     for y = 0, #labels - 1 do
-        love.graphics.setColor(1, 1, 1, 0.8)
-        love.graphics.print(' ' .. labels[y + 1], 0, startY + y * cellH)
+        
+        if labelbutton(' '..labels[y + 1], 0, startY +  y*cellH , 100,  grid.cellH).clicked then 
+            --singleInstrumentJob = 'volume'
+            lookinIntoIntrumentAtIndex = y+1
+        end
+
+
+
+        --love.graphics.print(' ' .. labels[y + 1], 0, startY + y * cellH)
     end
 end
 
@@ -514,6 +555,8 @@ function drawDrumMachinePlayHead(startX, startY, cellW, cellH, columns, rows)
 
     local highlightedColumn = ((myBeat % myBeatInMeasure) * 4) + math.floor((myTick / 96) * 4)
     love.graphics.setLineWidth(4)
+    love.graphics.setColor(1,1,1,1)
+    
     love.graphics.rectangle('line', startX + highlightedColumn * cellW, startY, cellW, cellH * (rows + 1))
     love.graphics.setLineWidth(1)
 end
@@ -526,6 +569,7 @@ local function getCellUnderPosition(x, y)
     end
     return -1, -1
 end
+
 local function getInstrumentIndexUnderPosition(x, y)
     if x >= 0 and x <= grid.startX then
         if y >= grid.startY and y < grid.startY + (grid.cellH * (#grid.labels)) then
@@ -537,19 +581,52 @@ end
 
 
 function drawDrumMachine()
-    -- print(startX, cellW)
     love.graphics.setFont(smallfont)
-    -- local x, y = love.mouse.getPosition()
-    -- local cx, cy = getCellUnderPosition(x, y)
-    -- if cx > 0 and cy > 0 then
     drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
-    -- end
-
     drawDrumMachineLabels(grid.startX, grid.startY, grid.cellH, grid.labels)
     drawDrumOnNotes(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
 
     if playing then
         drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
+    end
+end
+
+function drawMoreInfoForInstrument()
+    if lookinIntoIntrumentAtIndex > 0 then
+        drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, 0)
+        drawDrumOnNotesSingleRow(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns,
+            lookinIntoIntrumentAtIndex - 1)
+        
+        if labelbutton( grid.labels[lookinIntoIntrumentAtIndex], 0, grid.startY  , 100,  grid.cellH).clicked then 
+            lookinIntoIntrumentAtIndex = 0
+        end
+       
+        if labelbutton('volume', 0, grid.startY +  grid.cellH*1 , 100,  grid.cellH, singleInstrumentJob=='volume').clicked then 
+            singleInstrumentJob = 'volume'
+        end
+
+        if labelbutton('pitch', 0, grid.startY +  grid.cellH*2 , 100,  grid.cellH,singleInstrumentJob=='pitch').clicked then 
+            singleInstrumentJob = 'pitch'
+        end
+
+        if labelbutton('pan', 0, grid.startY +  grid.cellH*4 , 100,  grid.cellH,singleInstrumentJob=='pan').clicked then 
+            singleInstrumentJob = 'pan'
+        end
+        
+        if labelbutton('micro', 0, grid.startY +  grid.cellH*3 , 100,  grid.cellH,singleInstrumentJob=='micro').clicked then 
+            singleInstrumentJob = 'micro'
+        end
+        
+    else
+        print('shouldnt come here')
+    end
+end
+
+function drawMouseOverMoreInfo()
+    local x, y = love.mouse.getPosition()
+    if x > 0 and x < 100 and y >= grid.startY and y <= grid.startY + grid.cellH then
+        love.graphics.setColor(1, 1, 1, 0.2)
+        love.graphics.rectangle('fill', 0, grid.startY, 100, grid.cellH)
     end
 end
 
@@ -561,24 +638,50 @@ function drawMouseOverGrid()
         love.graphics.rectangle('fill', grid.startX + (cx - 1) * grid.cellW, grid.startY + (cy - 1) * grid.cellH,
             grid.cellW, grid.cellH)
     end
-    local labelIndex = getInstrumentIndexUnderPosition(x, y)
-    if labelIndex > 0 then
-        love.graphics.setColor(1, 1, 1, 0.2)
-        love.graphics.rectangle('fill', 0, grid.startY + (labelIndex - 1) * grid.cellH, 100, grid.cellH)
-    end
+    --local labelIndex = getInstrumentIndexUnderPosition(x, y)
+    --if labelIndex > 0 then
+    --    love.graphics.setColor(1, 1, 1, 0.2)
+    --    love.graphics.rectangle('fill', 0, grid.startY + (labelIndex - 1) * grid.cellH, 100, grid.cellH)
+    --end
 end
 
 function love.mousepressed(x, y, button)
-    local cx, cy = getCellUnderPosition(x, y)
-    if cx >= 0 and cy >= 0 then
-        -- print(cx, cy)
-        local flam = false
-        if love.keyboard.isDown('.') then
-            flam = true
+    if lookinIntoIntrumentAtIndex <= 0 then
+        local cx, cy = getCellUnderPosition(x, y)
+        if cx >= 0 and cy >= 0 then
+            -- print(cx, cy)
+            local flam = false
+            if love.keyboard.isDown('.') then
+                flam = true
+            end
+            drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on, flam = flam }
+            updateDrumKitData()
         end
-        drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on, flam = flam }
-        updateDrumKitData()
+        --local labelIndex = getInstrumentIndexUnderPosition(x, y)
+        --if labelIndex > 0 then
+        --    lookinIntoIntrumentAtIndex = labelIndex
+        --end
+    else
+        if lookinIntoIntrumentAtIndex > 0 then
+            local cx, cy = getCellUnderPosition(x, y)
+            --print(cx, cy)
+            if cx >= 0 and cy == 1 then
+                -- print(cx, cy)
+                local flam = false
+                if love.keyboard.isDown('.') then
+                    flam = true
+                end
+                drumgrid[cx][lookinIntoIntrumentAtIndex] = { on = not drumgrid[cx][lookinIntoIntrumentAtIndex].on, flam = flam }
+                updateDrumKitData()
+            end
+            
+            
+           -- if x > 0 and x < 100 and y >= grid.startY and y <= grid.startY + grid.cellH then
+           --     lookinIntoIntrumentAtIndex = 0
+           -- end
+        end
     end
+    --print(lookinIntoIntrumentAtIndex)
 end
 
 function love.mousereleased()
@@ -589,8 +692,18 @@ function love.draw()
     handleMouseClickStart()
     love.graphics.setColor(1, 1, 1)
 
-    drawDrumMachine()
-    drawMouseOverGrid()
+    if lookinIntoIntrumentAtIndex <= 0 then
+        drawDrumMachine()
+        drawMouseOverGrid()
+    end
+
+    if lookinIntoIntrumentAtIndex > 0 then
+        drawMoreInfoForInstrument()
+        drawMouseOverMoreInfo()
+        if playing then
+            drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, 0)
+        end
+    end
 
     love.graphics.setColor(1, 1, 1)
     if (recording or playing) then
