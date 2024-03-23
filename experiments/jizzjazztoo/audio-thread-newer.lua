@@ -50,7 +50,7 @@ local recording           = false
 local defaultAttackTime   = 0.2
 local defaultDecayTime    = 0.1
 local defaultSustainLevel = 0.7
-local defaultReleaseTime  = .03
+local defaultReleaseTime  = 0.03
 
 local uiData              = nil
 
@@ -93,13 +93,13 @@ local function generateSineLFO(time, lfoFrequency)
 end
 
 local function getUntunedPitch(semitone)
-    --print(sampleTuning, sampleIndex)
     local sampledAtSemitone = 60 --+ sampleTuning[sampleIndex]
     local usingSemitone = (semitone - sampledAtSemitone)
     local result = 2 ^ (usingSemitone / 12)
 
     return result
 end
+
 local function getUntunedPitchVariationRange(semitone, offsetInSemitones)
     local oneUp = getUntunedPitch(semitone + 1)
     local oneDown = getUntunedPitch(semitone - 1)
@@ -134,7 +134,6 @@ local function updatePlayingSoundsWithLFO()
         it.source:setPitch(it.pitch + lfoPitchDelta)
     end
 end
-
 
 local function cleanPlayingSounds()
     local now = love.timer.getTime()
@@ -248,16 +247,26 @@ function handlePlayingDrumGrid()
             end
 
             for i = 1, #drumkit.order do
-                if drumgrid[column + 1][i].on then
+                local cell = drumgrid[column + 1][i]
+                if cell.on then
                     local key = drumkit.order[i]
                     local snd = drumkit[key].source:clone()
-                    snd:setVolume((uiData and uiData.drumVolume or 1))
-                    -- + math.ceil(love.math.random() * 20)
-                    local pitch = getUntunedPitch(40)
-                    local range = getUntunedPitchVariationRange(40, 3)
-                    local pitchOffset = 0 -- love.math.random() * range - range / 2
+                    local cellVolume = cell.volume or 1
+                    local allDrumsVolume = (uiData and uiData.drumVolume or 1)
 
-                    pitch = pitch + pitchOffset
+                    snd:setVolume(cellVolume * allDrumsVolume)
+                    -- + math.ceil(love.math.random() * 20)
+                    --print(cell.semitoneOffset)
+
+                    local afterOffset = getUntunedPitch(60 + (cell and cell.semitoneOffset or 0))
+
+                    local pitch = afterOffset
+
+                    -- local pitch = getUntunedPitch(60)
+                    -- local range = getUntunedPitchVariationRange(60, 3)
+                    -- local pitchOffset = 0 --love.math.random() * range - range / 2
+                    -- print(pitch)
+                    --pitch = pitch --+ pitchOffset
                     snd:setPitch(pitch)
                     snd:play()
 

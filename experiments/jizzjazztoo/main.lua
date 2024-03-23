@@ -223,11 +223,11 @@ function love.load()
         TB = 'Minipops/Tambourine',
         CB = 'Minipops/wood1',
     }
-    drumkitFiles = drumkitCR78
+    drumkitFiles = drumkitJazzkit
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
-        startX = 100, -- smallfont:getWidth('WWWW')
+        startX = 120, -- smallfont:getWidth('WWWW')
         startY = 100,
         cellW = 20,   --smallfont:getWidth('X')
         cellH = 32,
@@ -536,15 +536,9 @@ end
 function drawDrumMachineLabels(startX, startY, cellH, labels)
     love.graphics.setColor(1, 1, 1, 0.8)
     for y = 0, #labels - 1 do
-        
-        if labelbutton(' '..labels[y + 1], 0, startY +  y*cellH , 100,  grid.cellH).clicked then 
-            --singleInstrumentJob = 'volume'
-            lookinIntoIntrumentAtIndex = y+1
+        if labelbutton(' ' .. labels[y + 1], 0, startY + y * cellH, 100, grid.cellH).clicked then
+            lookinIntoIntrumentAtIndex = y + 1
         end
-
-
-
-        --love.graphics.print(' ' .. labels[y + 1], 0, startY + y * cellH)
     end
 end
 
@@ -555,8 +549,8 @@ function drawDrumMachinePlayHead(startX, startY, cellW, cellH, columns, rows)
 
     local highlightedColumn = ((myBeat % myBeatInMeasure) * 4) + math.floor((myTick / 96) * 4)
     love.graphics.setLineWidth(4)
-    love.graphics.setColor(1,1,1,1)
-    
+    love.graphics.setColor(1, 1, 1, 1)
+
     love.graphics.rectangle('line', startX + highlightedColumn * cellW, startY, cellW, cellH * (rows + 1))
     love.graphics.setLineWidth(1)
 end
@@ -596,27 +590,74 @@ function drawMoreInfoForInstrument()
         drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, 0)
         drawDrumOnNotesSingleRow(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns,
             lookinIntoIntrumentAtIndex - 1)
-        
-        if labelbutton( grid.labels[lookinIntoIntrumentAtIndex], 0, grid.startY  , 100,  grid.cellH).clicked then 
+
+        if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], 0, grid.startY, 100, grid.cellH).clicked then
             lookinIntoIntrumentAtIndex = 0
+            singleInstrumentJob = nil
         end
-       
-        if labelbutton('volume', 0, grid.startY +  grid.cellH*1 , 100,  grid.cellH, singleInstrumentJob=='volume').clicked then 
+
+        if labelbutton(' volume', 0, grid.startY + grid.cellH * 1, 100, grid.cellH, singleInstrumentJob == 'volume').clicked then
             singleInstrumentJob = 'volume'
         end
 
-        if labelbutton('pitch', 0, grid.startY +  grid.cellH*2 , 100,  grid.cellH,singleInstrumentJob=='pitch').clicked then 
+        if labelbutton(' pitch', 0, grid.startY + grid.cellH * 2, 100, grid.cellH, singleInstrumentJob == 'pitch').clicked then
             singleInstrumentJob = 'pitch'
         end
 
-        if labelbutton('pan', 0, grid.startY +  grid.cellH*4 , 100,  grid.cellH,singleInstrumentJob=='pan').clicked then 
+        if labelbutton(' pan', 0, grid.startY + grid.cellH * 3, 100, grid.cellH, singleInstrumentJob == 'pan').clicked then
             singleInstrumentJob = 'pan'
         end
-        
-        if labelbutton('micro', 0, grid.startY +  grid.cellH*3 , 100,  grid.cellH,singleInstrumentJob=='micro').clicked then 
-            singleInstrumentJob = 'micro'
+
+        if singleInstrumentJob then
+            if labelbutton('reset', 0, grid.startY + grid.cellH * 4, 100, grid.cellH, singleInstrumentJob == 'pan').clicked then
+                for i = 1, #drumgrid do
+                    local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
+                    if (cell and cell.on) then
+                        if singleInstrumentJob == 'volume' then
+                            cell.volume = 1
+                        end
+                        if singleInstrumentJob == 'pitch' then
+                            cell.semitoneOffset = 0
+                        end
+                        if singleInstrumentJob == 'pan' then
+                            cell.pan = 0
+                        end
+                    end
+                end
+                updateDrumKitData()
+            end
         end
-        
+
+        --  if labelbutton(' micro', 0, grid.startY + grid.cellH * 4, 100, grid.cellH, singleInstrumentJob == 'micro').clicked then
+        --      singleInstrumentJob = 'micro'
+        --  end
+
+
+        --    drumgrid[cx][cy]
+
+        for i = 1, #drumgrid do
+            local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
+            if (cell and cell.on) then
+                if singleInstrumentJob == 'volume' then
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
+                        grid.startY + grid.cellH, 200,
+                        1.0 - (cell.volume or 1), 0, 1)
+                    if v.value then
+                        cell.volume = 1.0 - v.value
+                        updateDrumKitData()
+                    end
+                end
+                if singleInstrumentJob == 'pitch' then
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
+                        grid.startY + grid.cellH, 200,
+                        (cell.semitoneOffset or 0) * -1, -24, 24)
+                    if v.value then
+                        cell.semitoneOffset = math.floor(v.value + 0.5) * -1
+                        updateDrumKitData()
+                    end
+                end
+            end
+        end
     else
         print('shouldnt come here')
     end
@@ -638,11 +679,6 @@ function drawMouseOverGrid()
         love.graphics.rectangle('fill', grid.startX + (cx - 1) * grid.cellW, grid.startY + (cy - 1) * grid.cellH,
             grid.cellW, grid.cellH)
     end
-    --local labelIndex = getInstrumentIndexUnderPosition(x, y)
-    --if labelIndex > 0 then
-    --    love.graphics.setColor(1, 1, 1, 0.2)
-    --    love.graphics.rectangle('fill', 0, grid.startY + (labelIndex - 1) * grid.cellH, 100, grid.cellH)
-    --end
 end
 
 function love.mousepressed(x, y, button)
@@ -657,28 +693,23 @@ function love.mousepressed(x, y, button)
             drumgrid[cx][cy] = { on = not drumgrid[cx][cy].on, flam = flam }
             updateDrumKitData()
         end
-        --local labelIndex = getInstrumentIndexUnderPosition(x, y)
-        --if labelIndex > 0 then
-        --    lookinIntoIntrumentAtIndex = labelIndex
-        --end
     else
         if lookinIntoIntrumentAtIndex > 0 then
             local cx, cy = getCellUnderPosition(x, y)
-            --print(cx, cy)
+
             if cx >= 0 and cy == 1 then
                 -- print(cx, cy)
                 local flam = false
                 if love.keyboard.isDown('.') then
                     flam = true
                 end
-                drumgrid[cx][lookinIntoIntrumentAtIndex] = { on = not drumgrid[cx][lookinIntoIntrumentAtIndex].on, flam = flam }
+                drumgrid[cx][lookinIntoIntrumentAtIndex] = {
+                    on = not drumgrid[cx][lookinIntoIntrumentAtIndex].on,
+                    flam =
+                        flam
+                }
                 updateDrumKitData()
             end
-            
-            
-           -- if x > 0 and x < 100 and y >= grid.startY and y <= grid.startY + grid.cellH then
-           --     lookinIntoIntrumentAtIndex = 0
-           -- end
         end
     end
     --print(lookinIntoIntrumentAtIndex)

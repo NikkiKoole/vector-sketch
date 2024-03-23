@@ -3,7 +3,8 @@ mouseState = {
     down = false,
     lastDown = false,
     click = false,
-    offset = { x = 0, y = 0 }
+    offset = { x = 0, y = 0 },
+    clickedSomething = false,
 }
 function distance(x, y, x1, y1)
     local dx = x - x1
@@ -16,7 +17,7 @@ function pointInRect(x, y, rx, ry, rw, rh)
     if x < rx or y < ry then return false end
     if x > rx + rw or y > ry + rh then return false end
     return true
- end
+end
 
 function pointInCircle(x, y, cx, cy, radius)
     if distance(x, y, cx, cy) < radius then
@@ -47,6 +48,7 @@ function mapInto(x, in_min, in_max, out_min, out_max)
 end
 
 function handleMouseClickStart()
+    mouseState.clickedSomething = false
     mouseState.hoveredSomething = false
     mouseState.down = love.mouse.isDown(1)
     mouseState.click = false
@@ -58,7 +60,63 @@ function handleMouseClickStart()
             mouseState.released = true
         end
     end
+    -- print(mouseState.lastDown, mouseState.down)
     mouseState.lastDown = mouseState.down
+    -- print(mouseState.released)
+end
+
+function v_slider(id, x, y, height, v, min, max)
+    local thumb_size = 16
+    local easy_effect = true
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    love.graphics.rectangle('fill', x + 8, y, 3, height)
+    love.graphics.setColor(0, 0, 0)
+    local yOffset = mapInto(v, min, max, 0, height - thumb_size)
+    love.graphics.rectangle('fill', x, yOffset + y, thumb_size, thumb_size)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.setLineWidth(4)
+    love.graphics.rectangle("line", x, yOffset + y, thumb_size, thumb_size)
+
+    local result = nil
+    local mx, my = love.mouse.getPosition()
+    local hover = false
+    if pointInRect(mx, my, x, (yOffset + y), thumb_size, thumb_size) then
+        hover = true
+    end
+    local hoverTrack = false
+    if pointInRect(mx, my, x, y, thumb_size, height) then
+        hoverTrack = true
+    end
+
+    if hover then
+        mouseState.hoveredSomething = true
+        -- love.mouse.setCursor(cursors.hand)
+        if mouseState.click then
+            lastDraggedElement = { id = id }
+            mouseState.hoveredSomething = true
+            mouseState.offset = { x = x - mx, y = (yOffset + y) - my }
+        end
+    end
+
+    if love.mouse.isDown(1) then
+        if hoverTrack or (lastDraggedElement and lastDraggedElement.id == id) then
+            mouseState.hoveredSomething = true
+            -- love.mouse.setCursor(cursors.hand)
+
+            local mx, my = love.mouse.getPosition()
+            result = mapInto(my + mouseState.offset.y, y, y + height - thumb_size, min, max)
+            if result < min then
+                result = min
+            else
+                result = math.max(result, min)
+                result = math.min(result, max)
+            end
+        end
+    end
+    love.graphics.setLineWidth(1)
+    return {
+        value = result
+    }
 end
 
 function labelbutton(str, x, y, w, h, border)
@@ -66,30 +124,30 @@ function labelbutton(str, x, y, w, h, border)
     local clicked = false
     local alpha = 0.1
 
-    if (pointInRect(mx, my, x, y, w, h)) then
-       alpha = 0.5
-       mouseState.hoveredSomething = true
-       if (mouseState.click) then
-          clicked = true
-       end
+    if (pointInRect(mx, my, x, y, w, h - 1)) then
+        alpha = 0.5
+        mouseState.hoveredSomething = true
+        if (mouseState.released and mouseState.clickedSomething == false) then
+            clicked = true
+            mouseState.clickedSomething = true
+        end
     end
     --print(str, alpha)
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.rectangle("fill", x, y, w, h)
     love.graphics.setColor(1, 1, 1, .8)
-    if border then 
+    if border then
         love.graphics.setLineWidth(4)
         love.graphics.rectangle("line", x, y, w, h)
         love.graphics.setLineWidth(1)
-    end 
+    end
 
-    love.graphics.print(str,x,y)
+    love.graphics.print(str, x, y)
     --shadedText(str, x + margin, y)
     return {
         clicked = clicked
     }
- end
-
+end
 
 function draw_knob(id, x, y, v, min, max)
     love.graphics.setLineWidth(4)
