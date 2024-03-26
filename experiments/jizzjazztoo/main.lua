@@ -1,7 +1,8 @@
-package.path       = package.path .. ";../../?.lua"
+package.path = package.path .. ";../../?.lua"
+require 'ui'
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
-require 'ui'
+
 
 local _thread
 local channel      = {};
@@ -88,7 +89,9 @@ function love.load()
         swing = 50,
         instrumentsVolume = 1,
         drumVolume = 1,
+        allDrumSemitoneOffset = 0
     }
+
     lookinIntoIntrumentAtIndex = 0
     singleInstrumentJob = nil
 
@@ -108,6 +111,11 @@ function love.load()
     -- livelooping
     recording = false
     playing = false
+
+    activeDrumPatternIndex = 1
+    queuedDrumPatternIndex = 0
+
+
 
     -- ok the data structure for recording things:
     -- we have a limited amount of channels in a song (say 1-9)
@@ -150,7 +158,8 @@ function love.load()
         "rhodes", "sf1-015", 'wavparty/melodic-tunedC06',
         'wavparty/bass-tunedC05', 'wavparty/bass-tunedC06', 'wavparty/synth22', 'wavparty/synth36', 'mello/C3-3',
         'ratchet/downstroke (10)', 'ratchet/downstroke (11)', 'ratchet/downstroke (12)',
-        'mt70/top1', 'mt70/top2', 'mt70/top3', 'mt70/Bdrum1'
+        'mt70/top1', 'mt70/top2', 'mt70/top3', 'mt70/Bdrum1',
+        'juno/brass', 'juno/wire', 'juno/flute'
     }
     samples = prepareSamples(sampleFiles)
 
@@ -216,12 +225,12 @@ function love.load()
         CB = 'Minipops/wood1',
     }
 
-    drumkitFiles = drumkitJazzkit
+    drumkitFiles = drumkitCR78
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
         startX = 120, -- smallfont:getWidth('WWWW')
-        startY = 100,
+        startY = 120,
         cellW = 20,   --smallfont:getWidth('X')
         cellH = 32,
         columns = 16,
@@ -366,6 +375,8 @@ function love.keyreleased(k)
     end
 end
 
+local chordIndex = 1
+
 function love.keypressed(k)
     if k == '-' then
         drumPatternName, gl = drumPatterns.pickExistingPattern(drumgrid, drumkit)
@@ -383,6 +394,56 @@ function love.keypressed(k)
                 sampleIndex = sampleIndex
             }
         });
+        if love.keyboard.isDown("lshift") then
+            --local offsets = { 0, 4, 7, 11 } -- major 7th
+            --local offsets = { 3, 5, 7 } -- minor 7th
+            --local offsets = { 0, 4, 7, 10, 14, 21 } -- dominant 13th
+            --local offsets = { 0, 3, 5, 7, 9 } -- minor 9th
+
+
+
+            local chords = {
+                -- { 0, 4, 7, 11 },      --Chord #1 - Major 7th Chord:
+                -- { 0, 4, 7, 10 },      -- Chord #2 - Dominant 7th Chord:
+                -- { 0, 3, 7, 10 }, --Chord #3 - Minor 7th Chord:
+                -- { 0, 3, 6, 9 },       --Chord #4 - Diminished 7th Chord:
+                -- { 0, 4, 7, 11, 14 },  --Chord #5 - Major 9th Chord:
+                -- { 0, 4, 7, 10, 14 },  --Chord #6 - Dominant 9th Chord:
+                { 0,  3, 7, 10, 14 }, --Chord #7 - Minor 9th Chord:
+                { -2, 3, 7, 10, }
+                --{0, 3, 7, 10, 14}
+            }
+
+            local chordsh = {
+                { 0,  3, 7, 10, 14 },
+                { 0,  3, 7, 10 },
+                { 0,  3, 7, 10, 14 },
+                { -2, 3, 7, 10, 0 },
+                { 0,  3, 6, 9 }
+            }
+            local offsets = chords[chordIndex]
+
+            chordIndex = chordIndex + 1
+            if chordIndex > #chords then chordIndex = 1 end
+
+
+
+
+            local root = getSemitone(fitKeyOffsetInScale(usingMap[k], scale))
+            for j = 1, #offsets do
+                local off = offsets[j]
+                sendMessageToAudioThread({
+                    type = "semitonePressed",
+                    data = {
+                        sample = sample,
+                        semitone = root + off,
+                        takeIndex = 0,
+                        channelIndex = 1,
+                        sampleIndex = sampleIndex
+                    }
+                });
+            end
+        end
     end
 
     if k == 'z' then
@@ -618,6 +679,9 @@ function drawMoreInfoForInstrument()
                         if singleInstrumentJob == 'volume' then
                             cell.volume = 1
                         end
+                        if singleInstrumentJob == 'gate' then
+                            cell.gate = 1
+                        end
                         if singleInstrumentJob == 'pitch' then
                             cell.semitoneOffset = 0
                         end
@@ -766,10 +830,53 @@ function love.mousereleased()
     lastDraggedElement = nil
 end
 
+function drawDrumParts(x, y)
+    -- here we have 6 buttons to arm and play various drumparts that are in 1 song (verse choris, fill etc)
+    local font = smallfont
+    love.graphics.setFont(font)
+    local labels = { '1', '2', '3', '4', '5', '6' }
+    local w = font:getWidth('X') + 4
+    local xOff = (w - smallfont:getWidth('x')) / 2
+    local h = font:getHeight()
+    love.graphics.setColor(1, 1, 1, 0.25)
+    love.graphics.setLineWidth(4)
+    for i = 1, 3 do
+        love.graphics.rectangle('line', x + w * (i - 1), y, w, h)
+        love.graphics.print(labels[i], xOff + x + w * (i - 1), y)
+    end
+    for i = 4, 6 do
+        love.graphics.rectangle('line', x + w * (i - 4), y + h, w, h)
+        love.graphics.print(labels[i], xOff + x + w * (i - 4), y + h)
+    end
+end
+
+function drawMeasureCounter(x, y)
+    if (recording or playing) then
+        local font = bigfont
+        love.graphics.setFont(font)
+
+        local str = string.format("%02d", math.floor(myBeat / myBeatInMeasure)) ..
+            '|' .. string.format("%01d", math.floor(myBeat % myBeatInMeasure))
+        local xOff = font:getWidth(str) / 2
+        love.graphics.print(str, x - xOff + font:getHeight(), y + 0)
+        if (math.floor(myBeat / myBeatInMeasure) < 0) then
+            love.graphics.setColor(1, 1, 0)
+        else
+            if recording then
+                love.graphics.setColor(1, 0, 0)
+            else
+                love.graphics.setColor(0, 1, 0)
+            end
+        end
+        love.graphics.circle('fill', x - xOff + font:getHeight() / 2, y + font:getHeight() / 2, font:getHeight() / 3)
+    end
+end
+
 function love.draw()
+    local w, h = love.graphics.getDimensions()
     handleMouseClickStart()
     love.graphics.setColor(1, 1, 1)
-
+    drawDrumParts(4, 4)
     if lookinIntoIntrumentAtIndex <= 0 then
         drawDrumMachine()
         drawMouseOverGrid()
@@ -784,25 +891,7 @@ function love.draw()
     end
 
     love.graphics.setColor(1, 1, 1)
-    if (recording or playing) then
-        local font = bigfont
-        love.graphics.setFont(font)
-
-        local str = string.format("%02d", math.floor(myBeat / myBeatInMeasure)) ..
-            '|' .. string.format("%01d", math.floor(myBeat % myBeatInMeasure))
-
-        love.graphics.print(str, font:getHeight(), 0)
-        if (math.floor(myBeat / myBeatInMeasure) < 0) then
-            love.graphics.setColor(1, 1, 0)
-        else
-            if recording then
-                love.graphics.setColor(1, 0, 0)
-            else
-                love.graphics.setColor(0, 1, 0)
-            end
-        end
-        love.graphics.circle('fill', font:getHeight() / 2, font:getHeight() / 2, font:getHeight() / 3)
-    end
+    drawMeasureCounter(w / 2, 20)
 
 
     local font = smallfont
@@ -826,34 +915,45 @@ function love.draw()
     love.graphics.print(drumPatternName, w - font:getWidth(drumPatternName), font:getHeight())
 
 
+    --local v = v_slider('bpm', grid.startX + grid.cellW * grid.columns, grid.startY + grid.cellH, 100, uiData.bpm, 10, 200)
 
-
-
-    local v = drawLabelledKnob('bpm', 200, 50, uiData.bpm, 10, 200)
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 1
+    local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)
     if v.value then
-        drawLabel(string.format("%.0i", v.value), 200, 50, 1)
+        drawLabel(string.format("%.0i", v.value), bx, by, 1)
         uiData.bpm = v.value
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local v = drawLabelledKnob('swing', 300, 50, uiData.swing, 50, 75)
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 3
+    local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 75)
     if v.value then
-        drawLabel(string.format("%.0i", v.value), 300, 50, 1)
+        drawLabel(string.format("%.0i", v.value), bx, by, 1)
         uiData.swing = v.value
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local v = drawLabelledKnob('VD.', 400, 50, uiData.drumVolume, 0.01, 1)
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 5
+    local v = drawLabelledKnob('drums', bx, by, uiData.drumVolume, 0.01, 1)
     if v.value then
-        drawLabel(string.format("%02.1f", v.value), 400, 50, 1)
+        drawLabel(string.format("%02.1f", v.value), bx, by, 1)
         uiData.drumVolume = v.value
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
 
-    local v = drawLabelledKnob('VI.', 600, 50, uiData.instrumentsVolume, 0.01, 1)
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 7
+    local v = drawLabelledKnob('instr', bx, by, uiData.instrumentsVolume, 0.01, 1)
     if v.value then
-        drawLabel(string.format("%02.1f", v.value), 600, 50, 1)
+        drawLabel(string.format("%02.1f", v.value), bx, by, 1)
         uiData.instrumentsVolume = v.value
+        sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
+    end
+
+    local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 9
+    local v = drawLabelledKnob('sems', bx, by, uiData.allDrumSemitoneOffset, -36, 36)
+    if v.value then
+        drawLabel(string.format("%02.1i", v.value), bx, by, 1)
+        uiData.allDrumSemitoneOffset = v.value
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
     -- love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂')
