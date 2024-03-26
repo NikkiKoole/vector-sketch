@@ -11,35 +11,35 @@ local PPQN = 96
 
 
 
-local min, max        = ...
-local paused          = true
-local now             = love.timer.getTime()
-local time            = 0
-local lastTick        = 0
-local lastBeat        = -1
-local beat            = 0
-local tick            = 0
-local beatInMeasure   = 4
-local countInMeasures = 0
+local min, max          = ...
+local paused            = true
+local now               = love.timer.getTime()
+local time              = 0
+local lastTick          = 0
+local lastBeat          = -1
+local beat              = 0
+local tick              = 0
+local beatInMeasure     = 4
+local countInMeasures   = 0
 --local bpm             = 90
 --local swing           = 50
-local metronome_click = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
+local metronome_click   = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
 
-local channel         = {};
-channel.audio2main    = love.thread.getChannel("audio2main"); -- from thread
-channel.main2audio    = love.thread.getChannel("main2audio"); --from main
+local channel           = {};
+channel.audio2main      = love.thread.getChannel("audio2main"); -- from thread
+channel.main2audio      = love.thread.getChannel("main2audio"); --from main
 
-local missedTicks     = {}
-local playingSounds   = {}
-local recordedData    = {}
+local missedTicks       = {}
+local playingSounds     = {} -- lpayingSounds are just for the melodic sounds.
+local recordedData      = {}
+local playingDrumSounds = {}
 
-
-local drumkit         = {}
-local drumgrid        = {}
-local sampleTuning    = {}
-local sampleIndex     = 1
-local samples         = {}
-local futureDrumNotes = {} -- this is now just used for FLAMS, but i can see echo notes working similarly
+local drumkit           = {}
+local drumgrid          = {}
+local sampleTuning      = {}
+local sampleIndex       = 1
+local samples           = {}
+local futureDrumNotes   = {} -- this is now just used for FLAMS, but i can see echo notes working similarly
 
 
 
@@ -48,10 +48,9 @@ local recording           = false
 
 -- adsr stuff
 local defaultAttackTime   = 0.2
-local defaultDecayTime    = 0.1
+local defaultDecayTime    = 0.01
 local defaultSustainLevel = 0.7
 local defaultReleaseTime  = 0.03
-
 local uiData              = nil
 
 local function generateADSR(it, now)
@@ -190,133 +189,216 @@ local function semitoneReleased(semitone)
         end
     end
 end
+function getGateOffBeatAndTick(snd, pitch, bpm, beat, tick, gateValue)
+    local secondsToFinishAtThisPitch = (snd:getDuration() / pitch) * gateValue
+    local bb = secondsToFinishAtThisPitch * (bpm / 60)
+    local futureTick = math.ceil(tick + (bb * PPQN))
+    local futureBeat = beat
+
+    if futureTick >= PPQN then
+        futureTick = futureTick - PPQN
+        futureBeat = futureBeat + 1
+    end
+    return futureBeat, futureTick
+end
 
 function handlePlayingDrumGrid()
-    local beat = math.floor(lastBeat)
-    local tick = math.floor(lastTick)
+    if uiData then
+        local beat = math.floor(lastBeat)
+        local tick = math.floor(lastTick)
 
-    for j = 1, #missedTicks do
-        local t = missedTicks[j]
-        if (t % 24 == 0) then
-            --print('16th hit', tick)
-            local snd = drumkit.AC.source:clone()
-            snd:play()
-            print('played missed tick drum')
+        if false then
+            for j = 1, #missedTicks do
+                local t = missedTicks[j]
+                if (t % 24 == 0) then
+                    --print('16th hit', tick)
+                    local source = drumkit.AC.source:clone()
+                    source:play()
+                    print('played missed tick drum')
+                end
+            end
         end
-    end
 
-    for i = #futureDrumNotes, 1, -1 do
-        local f = futureDrumNotes[i]
-        if (f.beat == beat and f.tick == tick) then
-            local volume = f.volume or 1
-            volume = volume * (uiData and uiData.drumVolume or 1)
-            if f.volume then
-                f.snd:setVolume(volume)
+
+        -- gate closing for  the already playing drums
+        for i = #playingDrumSounds, 1, -1 do
+            local pd = playingDrumSounds[i]
+            if pd.gateCloseBeat == beat and pd.gateCloseTick == tick then
+                pd.source:setVolume(0)
+                -- print('closing gate', pd.source:tell())
             end
-            if f.pitch then
-                f.snd:setPitch(f.pitch)
+            if not pd.source:isPlaying() then
+                pd.source:release()
+                table.remove(playingDrumSounds, i)
             end
-            f.snd:play()
-            table.remove(futureDrumNotes, i)
         end
-    end
 
-    -- why % 24 ??
-    -- because the PPQN = 96 so PartsPer16th note is 24!
-    -- drumgrid is subdivided in 16ths
+        -- triggering future drum notes (flam/echo) when their time is there.
+        for i = #futureDrumNotes, 1, -1 do
+            local f = futureDrumNotes[i]
+            if (f.beat == beat and f.tick == tick) then
+                local volume = f.volume or 1
+                volume = volume * (uiData and uiData.drumVolume or 1)
+                if f.volume then
+                    f.source:setVolume(volume)
+                end
+                if f.pitch then
+                    f.source:setPitch(f.pitch)
+                end
+                f.source:play()
 
-    -- -- how to apply swing?
-    -- 50% is no swing
-    -- 100% is way too much swing, now it will fall
-    -- the number we write is the percentage the first (in other words 16th before this gets.)
+                table.insert(playingDrumSounds, {
+                    source = f.source,
+                    pitch = f.pitch,
+                    timeOn = love.timer.getTime(),
+                    beatOn = f.beat,
+                    tickOn = f.tick,
+                    -- drumIndex = ?,
+                    gateCloseBeat = f.gateCloseBeat,
+                    gateCloseTick = f.gateCloseTick,
+                    volume = volume
+                })
 
-    local swing = uiData and uiData.swing or 50
-    local delaySwungNote = math.ceil(((swing / 100) * 48) - 24)
-    local isSwung = (tick % 48 == delaySwungNote)
-    local shouldDelayEvenNotes = swing ~= 50
-    local isEvenNoteUndelayed = tick % 48 == 0
 
-    if ((tick % 24 == 0 and isSwung == false) or isSwung) then
-        if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
-            -- here we do nothing, because even noted should be delayed and whe get here, the undelayed even note
-        else
-            -- print(math.floor(tick))
-            local column = ((beat % beatInMeasure) * 4) + (tick / 24)
-            if isSwung then
-                column = ((beat % beatInMeasure) * 4) + ((tick - delaySwungNote) / 24)
+                table.remove(futureDrumNotes, i)
             end
+        end
 
-            for i = 1, #drumkit.order do
-                local cell = drumgrid[column + 1][i]
-                if cell.on then
-                    local key = drumkit.order[i]
-                    local snd = drumkit[key].source:clone()
-                    local cellVolume = cell.volume or 1
-                    local allDrumsVolume = (uiData and uiData.drumVolume or 1)
+        -- why % 24 ??
+        -- because the PPQN = 96 so PartsPer16th note is 24!
+        -- drumgrid is subdivided in 16ths
 
-                    snd:setVolume(cellVolume * allDrumsVolume)
-                    -- + math.ceil(love.math.random() * 20)
-                    --print(cell.semitoneOffset)
+        -- -- how to apply swing?
+        -- 50% is no swing
+        -- 100% is way too much swing, now it will fall
+        -- the number we write is the percentage the first (in other words 16th before this gets.)
 
-                    local afterOffset = getUntunedPitch(60 + (cell and cell.semitoneOffset or 0))
+        local swing = uiData and uiData.swing or 50
+        local delaySwungNote = math.ceil(((swing / 100) * 48) - 24)
+        local isSwung = (tick % 48 == delaySwungNote)
+        local shouldDelayEvenNotes = swing ~= 50
+        local isEvenNoteUndelayed = tick % 48 == 0
 
-                    local pitch = afterOffset
+        if ((tick % 24 == 0 and isSwung == false) or isSwung) then
+            if (shouldDelayEvenNotes and isEvenNoteUndelayed) then
+                -- here we do nothing, because even noted should be delayed and whe get here, the undelayed even note
+            else
+                -- print(math.floor(tick))
+                local column = ((beat % beatInMeasure) * 4) + (tick / 24)
+                if isSwung then
+                    column = ((beat % beatInMeasure) * 4) + ((tick - delaySwungNote) / 24)
+                end
 
-                    -- local pitch = getUntunedPitch(60)
-                    -- local range = getUntunedPitchVariationRange(60, 3)
-                    -- local pitchOffset = 0 --love.math.random() * range - range / 2
-                    -- print(pitch)
-                    --pitch = pitch --+ pitchOffset
-                    snd:setPitch(pitch)
-                    snd:play()
+                for i = 1, #drumkit.order do
+                    local cell = drumgrid[column + 1][i]
+                    if cell.on then
+                        local key = drumkit.order[i]
+                        local source = drumkit[key].source:clone()
+                        local cellVolume = cell.volume or 1
+                        local gate = cell.gate or 1
+                        local allDrumsVolume = (uiData and uiData.drumVolume or 1)
+                        local volume = cellVolume * allDrumsVolume
+                        source:setVolume(volume)
 
-                    if drumgrid[column + 1][i].flam == true then
-                        local flamRepeat = 1
+                        local afterOffset = getUntunedPitch(60 + (cell and cell.semitoneOffset or 0))
+                        local pitch = afterOffset
 
-                        for j = 1, flamRepeat do
-                            local futureTick = tick + (12 / flamRepeat)
-                            local futureBeat = beat
+                        -- local pitch = getUntunedPitch(60)
+                        -- local range = getUntunedPitchVariationRange(60, 3)
+                        -- local pitchOffset = 0 --love.math.random() * range - range / 2
 
-                            if futureTick >= PPQN then
-                                futureTick = futureTick - PPQN
-                                futureBeat = futureBeat + 1
-                            end
 
-                            local future = {
-                                tick = futureTick,
-                                beat = futureBeat,
-                                snd = drumkit[key].source:clone(),
-                                pitch = pitch,
-                            }
-                            table.insert(futureDrumNotes, future)
+                        if source:getChannelCount() == 1 then
+                            source:setPosition(cell.pan or 0, 0, 0)
+                        else
+                            print(key .. ' isnt MONO, so it cant be panned')
                         end
-                    end
-                    local echo = false
-                    if echo == true then
-                        local volume = 0.75
-                        local echoRepeats = 4
-                        local startDelay = 33
 
-                        for k = 1, echoRepeats do
-                            local delay = startDelay * k
 
-                            local futureTick = tick + (delay)
-                            local futureBeat = beat
-                            if futureTick >= PPQN then
-                                futureTick = futureTick % PPQN
-                                futureBeat = futureBeat + math.ceil(futureTick / PPQN)
+                        -- local ratio =  line.sfx:tell("samples") / line.sfx:getDuration('samples')
+                        -- local general_ratio = (line.sfx:tell('samples')/ 48000)
+
+
+                        local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
+                            uiData.bpm, beat, tick, gate)
+                        table.insert(playingDrumSounds, {
+                            source = source,
+                            pitch = pitch,
+                            timeOn = love.timer.getTime(),
+                            beatOn = beat,
+                            tickOn = tick,
+                            drumIndex = i,
+                            gateCloseBeat = gateCloseBeat,
+                            gateCloseTick = gateCloseTick,
+                            volume = volume
+                        })
+
+                        --beat = beat + (delta * (bpm / 60))
+                        --tick = ((beat % 1) * (PPQN))
+
+                        -- howmany ticks is that ?
+                        --
+
+                        source:setPitch(pitch)
+                        source:play()
+
+                        if drumgrid[column + 1][i].flam == true then
+                            local flamRepeat = 1
+
+                            for j = 1, flamRepeat do
+                                local futureTick = tick + (12 / flamRepeat)
+                                local futureBeat = beat
+
+                                if futureTick >= PPQN then
+                                    futureTick = futureTick - PPQN
+                                    futureBeat = futureBeat + 1
+                                end
+                                local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
+                                    uiData.bpm, futureBeat, futureTick, gate)
+                                -- print(gateCloseTick, gateCloseBeat)
+                                local future = {
+                                    tick = futureTick,
+                                    beat = futureBeat,
+                                    source = drumkit[key].source:clone(),
+                                    pitch = pitch,
+                                    volume = volume,
+                                    gateCloseBeat = gateCloseBeat,
+                                    gateCloseTick = gateCloseTick
+                                }
+                                table.insert(futureDrumNotes, future)
                             end
-                            local future = {
-                                tick = futureTick,
-                                beat = futureBeat,
-                                snd = drumkit[key].source:clone(),
-                                volume = volume / k,
-                                pitch = pitch
-                            }
-                            --     print(futureTick, futureBeat, volume)
-                            table.insert(futureDrumNotes, future)
+                        end
+                        --local echo = true
+                        if cell.echo and cell.echo > 0 then
+                            local volume = 0.75
+                            local echoRepeats = cell.echo
+                            local startDelay = 33
 
-                            volume = volume / 2
+                            for k = 1, echoRepeats do
+                                local delay = startDelay * k
+
+                                local futureTick = tick + (delay)
+                                local futureBeat = beat
+                                if futureTick >= PPQN then
+                                    futureTick = futureTick % PPQN
+                                    futureBeat = futureBeat + math.ceil(futureTick / PPQN)
+                                end
+                                local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
+                                    uiData.bpm, futureBeat, futureTick, gate)
+                                local future = {
+                                    tick = futureTick,
+                                    beat = futureBeat,
+                                    source = drumkit[key].source:clone(),
+                                    volume = volume / k,
+                                    pitch = pitch,
+                                    gateCloseBeat = gateCloseBeat,
+                                    gateCloseTick = gateCloseTick
+                                }
+                                --     print(futureTick, futureBeat, volume)
+                                table.insert(futureDrumNotes, future)
+
+                                volume = volume / 2
+                            end
                         end
                     end
                 end

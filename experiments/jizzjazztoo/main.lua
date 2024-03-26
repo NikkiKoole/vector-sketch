@@ -1,11 +1,3 @@
---AL lib: (EE) alc_cleanup: 1 device not closed
-
---AL lib: (EE) alc_cleanup: 1 device not closed
---love: ./Alc/ALc.c:800: LockLists: Assertion `ret == althrd_success' failed.
---zsh: IOT instruction (core dumped)  love .
-
-
-
 package.path       = package.path .. ";../../?.lua"
 local inspect      = require 'vendor.inspect'
 local drumPatterns = require 'drum-patterns'
@@ -193,8 +185,8 @@ function love.load()
 
     local drumkitJazzkit = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
-        AC = 'jazzkit/JK_BD_02',
-        BD = 'jazzkit/JK_BD_06',
+        AC = 'Minipops/bd2',
+        BD = 'Minipops/bd1',
         SD = 'Minipops/sd1',
         LT = 'cr78/Conga Low',
         MT = 'Minipops/bd3',
@@ -223,6 +215,7 @@ function love.load()
         TB = 'Minipops/Tambourine',
         CB = 'Minipops/wood1',
     }
+
     drumkitFiles = drumkitJazzkit
     drumkit = prepareDrumkit(drumkitFiles)
 
@@ -424,7 +417,10 @@ function love.keypressed(k)
 
     --  sendMessageToAudioThread({ type = "key", data = k });
 
-    if k == 'escape' then love.event.quit() end
+    if k == 'escape' then
+        sendMessageToAudioThread({ type = "paused", data = true });
+        love.event.quit()
+    end
 
     if k == 'space' then
         playing = not playing
@@ -593,7 +589,7 @@ function drawMoreInfoForInstrument()
 
         if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], 0, grid.startY, 100, grid.cellH).clicked then
             lookinIntoIntrumentAtIndex = 0
-            singleInstrumentJob = nil
+            --singleInstrumentJob = nil
         end
 
         if labelbutton(' volume', 0, grid.startY + grid.cellH * 1, 100, grid.cellH, singleInstrumentJob == 'volume').clicked then
@@ -607,9 +603,15 @@ function drawMoreInfoForInstrument()
         if labelbutton(' pan', 0, grid.startY + grid.cellH * 3, 100, grid.cellH, singleInstrumentJob == 'pan').clicked then
             singleInstrumentJob = 'pan'
         end
+        if labelbutton(' echo', 0, grid.startY + grid.cellH * 4, 100, grid.cellH, singleInstrumentJob == 'echo').clicked then
+            singleInstrumentJob = 'echo'
+        end
 
+        if labelbutton(' gate', 0, grid.startY + grid.cellH * 5, 100, grid.cellH, singleInstrumentJob == 'gate').clicked then
+            singleInstrumentJob = 'gate'
+        end
         if singleInstrumentJob then
-            if labelbutton('reset', 0, grid.startY + grid.cellH * 4, 100, grid.cellH, singleInstrumentJob == 'pan').clicked then
+            if labelbutton(' reset', 0, grid.startY + grid.cellH * 6, 100, grid.cellH).clicked then
                 for i = 1, #drumgrid do
                     local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
                     if (cell and cell.on) then
@@ -638,6 +640,24 @@ function drawMoreInfoForInstrument()
         for i = 1, #drumgrid do
             local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
             if (cell and cell.on) then
+                if singleInstrumentJob == 'gate' then
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
+                        grid.startY + grid.cellH, 200,
+                        cell.gate or 1, 0, 1)
+                    if v.value then
+                        cell.gate = v.value
+                        updateDrumKitData()
+                    end
+                end
+                if singleInstrumentJob == 'pan' then
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
+                        grid.startY + grid.cellH, 200,
+                        cell.pan or 0, -1, 1)
+                    if v.value then
+                        cell.pan = v.value
+                        updateDrumKitData()
+                    end
+                end
                 if singleInstrumentJob == 'volume' then
                     local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
                         grid.startY + grid.cellH, 200,
@@ -653,6 +673,33 @@ function drawMoreInfoForInstrument()
                         (cell.semitoneOffset or 0) * -1, -24, 24)
                     if v.value then
                         cell.semitoneOffset = math.floor(v.value + 0.5) * -1
+                        updateDrumKitData()
+                    end
+                end
+            end
+        end
+        if singleInstrumentJob == 'echo' then
+            local xOff = (grid.cellW - smallfont:getWidth('x')) / 2
+            drawDrumMachineGrid(grid.startX, grid.startY + grid.cellH, grid.cellW, grid.cellH, #drumgrid, 0)
+            for i = 1, #drumgrid do
+                local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
+
+                if (cell and cell.on) then
+                    if cell.echo then
+                        love.graphics.print(cell.echo .. "", xOff + grid.startX + (i - 1) * grid.cellW,
+                            grid.startY + grid.cellH)
+                    end
+                    local r = getUIRect(grid.startX + (i - 1) * grid.cellW, grid.startY + grid.cellH,
+                        grid.cellW,
+                        grid.cellH)
+                    if r then
+                        if cell.echo == nil or cell.echo == 0 then
+                            cell.echo = 1
+                        elseif cell.echo >= 4 then
+                            cell.echo = 0
+                        else
+                            cell.echo = cell.echo + 1
+                        end
                         updateDrumKitData()
                     end
                 end
@@ -773,7 +820,8 @@ function love.draw()
     local fps = string.format("%03i", love.timer.getFPS()) .. 'fps'
     local draws = stats.drawcalls .. 'draws'
     local countNotes = string.format("%02i", myNumPlayingSounds)
-    local debugstring = mem .. '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes
+    local debugstring = mem ..
+        '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes .. ' ' .. love.audio.getActiveSourceCount()
     love.graphics.print(debugstring, 0, h - font:getHeight())
     love.graphics.print(drumPatternName, w - font:getWidth(drumPatternName), font:getHeight())
 

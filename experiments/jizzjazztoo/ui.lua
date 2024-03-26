@@ -65,6 +65,24 @@ function handleMouseClickStart()
     -- print(mouseState.released)
 end
 
+function getUIRect(x, y, w, h)
+    local result = false
+
+    local mx, my = love.mouse.getPosition()
+    --print(x, y, w, h)
+    if pointInRect(mx, my, x, y, w, h) then
+        mouseState.hoveredSomething = true
+    end
+    --if (mouseState.released and mouseState.clickedSomething == false)
+    if mouseState.click then
+        if pointInRect(mx, my, x, y, w, h) then
+            result = true
+        end
+    end
+
+    return result
+end
+
 function v_slider(id, x, y, height, v, min, max)
     local thumb_size = 16
     local easy_effect = true
@@ -164,13 +182,15 @@ function draw_knob(id, x, y, v, min, max)
     ax, ay = angleAtDistance(x, y, -a, cellHeight / 2)
     bx, by = angleAtDistance(x, y, -a, cellHeight / 4)
     love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.line(x + ax, y + ay, x + bx, y + by)
+    --love.graphics.line(x + ax, y + ay, x + bx, y + by)
     love.graphics.setColor(1, 1, 1, 1)
 
     a = mapInto(v, min, max, 0 + math.pi / 2, math.pi * 2 + math.pi / 2)
     ax, ay = angleAtDistance(x, y, a, cellHeight / 2)
     bx, by = angleAtDistance(x, y, a, cellHeight / 4)
-    love.graphics.setColor(1, 1, 1)
+    love.graphics.setColor(1, 1, 1, 0.2)
+    love.graphics.arc("fill", x, y, 16, math.pi / 2, a, 32)
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.line(x + ax, y + ay, x + bx, y + by)
     love.graphics.setColor(r, g, b, a)
     if mouseState.click then
