@@ -1,14 +1,13 @@
 package.path = package.path .. ";../../?.lua"
+
 require 'ui'
-local inspect      = require 'vendor.inspect'
-local drumPatterns = require 'drum-patterns'
 
-
+local inspect             = require 'vendor.inspect'
+local drumPatterns        = require 'drum-patterns'
 local _thread
-local channel      = {};
-channel.audio2main = love.thread.getChannel("audio2main")
-channel.main2audio = love.thread.getChannel("main2audio")
-
+local channel             = {};
+channel.audio2main        = love.thread.getChannel("audio2main")
+channel.main2audio        = love.thread.getChannel("main2audio")
 
 getMessageFromAudioThread = function()
     local v = channel.audio2main:pop();
@@ -83,6 +82,15 @@ local function updateDrumKitData()
     })
 end
 
+local function hex2rgb(hex)
+    hex = hex:gsub("#", "")
+    return tonumber("0x" .. hex:sub(1, 2)) / 255, tonumber("0x" .. hex:sub(3, 4)) / 255,
+        tonumber("0x" .. hex:sub(5, 6))
+        / 255
+end
+
+
+
 function love.load()
     uiData = {
         bpm = 90,
@@ -91,6 +99,18 @@ function love.load()
         drumVolume = 1,
         allDrumSemitoneOffset = 0
     }
+
+    palette = {
+        ['red'] = '#cc241d',
+        ['green'] = '#98971a',
+        ['yellow'] = '#d79921',
+        ['blue'] = '#458588',
+        ['orange'] = '#d65d0e',
+        ['gray'] = '#a89984',
+    }
+    for k, v in pairs(palette) do
+        palette[k] = { hex2rgb(v) }
+    end
 
     lookinIntoIntrumentAtIndex = 0
     singleInstrumentJob = nil
@@ -113,7 +133,8 @@ function love.load()
     playing = false
 
     activeDrumPatternIndex = 1
-    queuedDrumPatternIndex = 0
+    queuedDrumPatternIndex = 0 --  todo
+
 
 
 
@@ -127,6 +148,8 @@ function love.load()
     -- that implies you want to either start with  nothing and play as long as you want
     -- OR do a predefined set of measures a couple of times/takes until its good enough
     -- OR you could also do a predefined set of measures and when you are done you layer on top.
+
+
 
     channelIndex = 1
     recordedData = {}
@@ -146,34 +169,32 @@ function love.load()
 
     -- sample stuff
     local sampleFiles = {
-        'lulla/tubo', 'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi', 'lulla/C4-pitchpedal',
-        'lulla/soft sk', 'lulla/rainbows', 'lulla/receiver', 'lulla/C3', 'lulla/lobassy',
+        'lulla/rainbows', "mt70/Vibraphone Mid",
+        'legow/Little Blip', 'legow/Little Blip Low', 'legow/Simple', 'legow/Synth Bell 3',
+        "legow/Clean High", "legow/Pinky Flute", "legow/Bellancholia",
+        "legow/Sine Filtered1", "legow/Boring Simple", "legow/Soft Tooter",
         "ac/0x722380", "ac/0x14146A0", "ac/0xC3B760",
-        "ANCR I Mallet 7", "legow/SYNTH-CleanHigh", "legow/Synth-PinkyFlute kopie",
-        "legow/Synth-Bellancholia",
-        "legow/VibraphoneMid-MT70",
-        "legow/Synth SineFiltered1", "legow/Bass BoringSimple",
-        "legow/Synth SoftTooter", "junopiano",
-        "synth03", "4", "decent/chord-organ-decentc2",
-        "rhodes", "sf1-015", 'wavparty/melodic-tunedC06',
-        'wavparty/bass-tunedC05', 'wavparty/bass-tunedC06', 'wavparty/synth22', 'wavparty/synth36', 'mello/C3-3',
-        'ratchet/downstroke (10)', 'ratchet/downstroke (11)', 'ratchet/downstroke (12)',
         'mt70/top1', 'mt70/top2', 'mt70/top3', 'mt70/Bdrum1',
-        'juno/brass', 'juno/wire', 'juno/flute'
+        'lulla/tubo', 'lulla/kiksynth', 'lulla/milkjar', 'lulla/pizzi', 'lulla/C4-pitchpedal',
+        'lulla/soft sk', 'lulla/receiver', 'lulla/C3', 'lulla/lobassy',
+        "misc/junopiano", "misc/synth03", "misc/4", "misc/sf1-015", "misc/ANCR I Mallet 7",
+        'juno/brass', 'juno/wire', 'juno/flute',
+        'wavparty/melodicC06', 'wavparty/bassC05', 'wavparty/bassC06', 'wavparty/synth22', 'wavparty/synth36',
     }
     samples = prepareSamples(sampleFiles)
 
-    sampleIndex = 1
-    sample = samples[sampleIndex]
 
-    -- tuning
-    sampleTuning = {}
-    for i = 1, #samples do
-        sampleTuning[i] = 0
-    end
-    sendMessageToAudioThread({ type = "tuningUpdated", data = sampleTuning })
     sendMessageToAudioThread({ type = 'samples', data = samples })
-    sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
+
+
+    instrumentIndex = 1
+    instruments = {}
+    for i = 1, 5 do
+        instruments[i] = { sampleIndex = 1, tuning = 0 }
+    end
+
+    sendMessageToAudioThread({ type = "instruments", data = instruments })
+    sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
 
     local drumkitCR78 = {
         order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
@@ -229,9 +250,9 @@ function love.load()
     drumkit = prepareDrumkit(drumkitFiles)
 
     grid = {
-        startX = 120, -- smallfont:getWidth('WWWW')
+        startX = 120,
         startY = 120,
-        cellW = 20,   --smallfont:getWidth('X')
+        cellW = 20,
         cellH = 32,
         columns = 16,
         labels = drumkitFiles.order
@@ -317,6 +338,25 @@ function love.load()
     usingMap = mapToOffsetBlackAndWhite
 end
 
+function mapOffsetToNeareastScaleOffset(o, scale)
+    local fullScale = {}
+    local counter = 1
+    for m = -2, 2 do
+        for i = 1, #scale do
+            fullScale[counter] = (m * 12) + scale[i]
+            counter = counter + 1
+        end
+    end
+
+    local bestOne = math.huge
+    for i = 1, #fullScale do
+        if (math.abs(fullScale[i] - o) < math.abs(bestOne - o)) then
+            bestOne = fullScale[i]
+        end
+    end
+    return bestOne
+end
+
 function toggleScale()
     local currentScaleIndex = 1
     local scaleKeys = {}
@@ -361,15 +401,14 @@ end
 local function getSemitone(offset)
     return (octave * 12) + offset
 end
+
 function love.keyreleased(k)
     if (usingMap[k] ~= nil) then
         sendMessageToAudioThread({
             type = "semitoneReleased",
             data = {
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)),
-                takeIndex = 0,
-                channelIndex = 1,
-                sampleIndex = sampleIndex
+
             }
         });
     end
@@ -387,11 +426,7 @@ function love.keypressed(k)
         sendMessageToAudioThread({
             type = "semitonePressed",
             data = {
-                sample = sample,
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)),
-                takeIndex = 0,
-                channelIndex = 1,
-                sampleIndex = sampleIndex
             }
         });
         if love.keyboard.isDown("lshift") then
@@ -425,21 +460,13 @@ function love.keypressed(k)
 
             chordIndex = chordIndex + 1
             if chordIndex > #chords then chordIndex = 1 end
-
-
-
-
             local root = getSemitone(fitKeyOffsetInScale(usingMap[k], scale))
             for j = 1, #offsets do
                 local off = offsets[j]
                 sendMessageToAudioThread({
                     type = "semitonePressed",
                     data = {
-                        sample = sample,
                         semitone = root + off,
-                        takeIndex = 0,
-                        channelIndex = 1,
-                        sampleIndex = sampleIndex
                     }
                 });
             end
@@ -453,30 +480,23 @@ function love.keypressed(k)
         octave = math.min(octave + 1, max_octave)
         print("Octave:", octave)
     end
+
     if k == 'tab' then
-        sampleIndex = (sampleIndex % #samples) + 1
-        sample = samples[sampleIndex]
-        print('Sample:', sampleIndex, sample.name)
-        sendMessageToAudioThread({ type = 'sampleIndex', data = sampleIndex })
+        instruments[instrumentIndex].sampleIndex = (instruments[instrumentIndex].sampleIndex % #samples) + 1
+        sendMessageToAudioThread({ type = "instruments", data = instruments })
     end
 
     if k == 'c' then
-        sampleTuning[sampleIndex] = sampleTuning[sampleIndex] + 1
-        sendMessageToAudioThread({
-            type = "tuningUpdated", data = sampleTuning })
-        print('Tuning:', sample.name, sampleTuning[sampleIndex])
+        instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning + 1
+        sendMessageToAudioThread({ type = "instruments", data = instruments })
     end
     if k == 'v' then
-        sampleTuning[sampleIndex] = sampleTuning[sampleIndex] - 1
-        sendMessageToAudioThread({
-            type = "tuningUpdated", data = sampleTuning })
-        print('Tuning:', sample.name, sampleTuning[sampleIndex])
+        instruments[instrumentIndex].tuning = instruments[instrumentIndex].tuning - 1
+        sendMessageToAudioThread({ type = "instruments", data = instruments })
     end
     if k == 'b' then
         toggleScale()
     end
-
-    --  sendMessageToAudioThread({ type = "key", data = k });
 
     if k == 'escape' then
         sendMessageToAudioThread({ type = "paused", data = true });
@@ -489,7 +509,6 @@ function love.keypressed(k)
         if not playing then
             sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
             sendMessageToAudioThread({ type = "paused", data = true });
-            --resetBeatsAndTicks()
         end
         if playing then
             sendMessageToAudioThread({ type = "mode", data = 'play' });
@@ -500,7 +519,7 @@ function love.keypressed(k)
 
     if k == 'return' then
         sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
-        --resetBeatsAndTicks()
+
         recording = not recording
         if not recording then
             sendMessageToAudioThread({ type = "paused", data = true });
@@ -508,7 +527,9 @@ function love.keypressed(k)
         if recording then
             sendMessageToAudioThread({ type = "mode", data = 'record' });
             sendMessageToAudioThread({ type = "paused", data = false });
+            --if #recordedData > 0 then
             recordedData = {}
+            --end
             playing = false
         end
     end
@@ -530,22 +551,17 @@ function love.update(dt)
             end
         end
     until not msg
-
-    if playing then
-        --   handlePlayingRecordedData()
-    end
-    --cleanPlayingSounds()
 end
 
 function drawDrumMachineGrid(startX, startY, cellW, cellH, columns, rows)
     love.graphics.setLineWidth(4)
     for y = 0, rows do
-        love.graphics.setColor(1, 1, 1, .1)
+        love.graphics.setColor(.15, .15, .15, 1)
         for i = 0, columns - 1 do
             love.graphics.rectangle('line', startX + i * cellW, startY + y * cellH, cellW, cellH)
         end
     end
-    love.graphics.setColor(1, 1, 1, .3)
+    love.graphics.setColor(.3, .3, .3, 1)
     love.graphics.line(startX + 4 * cellW, startY, startX + 4 * cellW, startY + cellH * (rows + 1))
     love.graphics.line(startX + 8 * cellW, startY, startX + 8 * cellW, startY + cellH * (rows + 1))
     love.graphics.line(startX + 12 * cellW, startY, startX + 12 * cellW, startY + cellH * (rows + 1))
@@ -650,7 +666,6 @@ function drawMoreInfoForInstrument()
 
         if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], 0, grid.startY, 100, grid.cellH).clicked then
             lookinIntoIntrumentAtIndex = 0
-            --singleInstrumentJob = nil
         end
 
         if labelbutton(' volume', 0, grid.startY + grid.cellH * 1, 100, grid.cellH, singleInstrumentJob == 'volume').clicked then
@@ -694,12 +709,7 @@ function drawMoreInfoForInstrument()
             end
         end
 
-        --  if labelbutton(' micro', 0, grid.startY + grid.cellH * 4, 100, grid.cellH, singleInstrumentJob == 'micro').clicked then
-        --      singleInstrumentJob = 'micro'
-        --  end
 
-
-        --    drumgrid[cx][cy]
 
         for i = 1, #drumgrid do
             local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
@@ -736,7 +746,11 @@ function drawMoreInfoForInstrument()
                         grid.startY + grid.cellH, 200,
                         (cell.semitoneOffset or 0) * -1, -24, 24)
                     if v.value then
-                        cell.semitoneOffset = math.floor(v.value + 0.5) * -1
+                        local v = math.floor(v.value + 0.5) * -1
+                        if love.keyboard.isDown('lshift') then
+                            v = mapOffsetToNeareastScaleOffset(v, scales['pentatonic_minor'])
+                        end
+                        cell.semitoneOffset = v
                         updateDrumKitData()
                     end
                 end
@@ -809,7 +823,6 @@ function love.mousepressed(x, y, button)
             local cx, cy = getCellUnderPosition(x, y)
 
             if cx >= 0 and cy == 1 then
-                -- print(cx, cy)
                 local flam = false
                 if love.keyboard.isDown('.') then
                     flam = true
@@ -863,20 +876,58 @@ function drawMeasureCounter(x, y)
             love.graphics.setColor(1, 1, 0)
         else
             if recording then
-                love.graphics.setColor(1, 0, 0)
+                love.graphics.setColor(1, 0, 0, 0.8)
             else
-                love.graphics.setColor(0, 1, 0)
+                love.graphics.setColor(0, 1, 0, 0.8)
             end
         end
         love.graphics.circle('fill', x - xOff + font:getHeight() / 2, y + font:getHeight() / 2, font:getHeight() / 3)
     end
 end
 
+function drawInstrumentBanks(x, y)
+    local font = smallfont
+    love.graphics.setFont(font)
+    local rowHeight = smallfont:getHeight() * 2
+    local rowWidth = 300
+    local gray = palette.gray
+    local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
+    local margin = 4
+
+    for i = 1, 5 do
+        love.graphics.setLineWidth(4)
+        love.graphics.setColor(gray[1], gray[2], gray[3], 0.3)
+        local color = rainbow[i]
+        love.graphics.setColor(color[1], color[2], color[3], 0.3)
+        if instrumentIndex == i then
+            love.graphics.setColor(color[1], color[2], color[3], 0.8)
+        end
+
+        love.graphics.rectangle('fill', x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
+        love.graphics.setColor(1, 1, 1, 0.3)
+        love.graphics.setColor(0, 0, 0)
+        if instrumentIndex == i then
+            love.graphics.setColor(1, 1, 1)
+        end
+        local name = samples[instruments[i].sampleIndex].name
+        love.graphics.print(name, x, y + (i - 1) * (rowHeight + margin))
+
+        local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
+        if r then
+            instrumentIndex = i
+
+            sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+        end
+    end
+end
+
 function love.draw()
+    love.graphics.clear(0, 0, 0)
     local w, h = love.graphics.getDimensions()
     handleMouseClickStart()
     love.graphics.setColor(1, 1, 1)
     drawDrumParts(4, 4)
+
     if lookinIntoIntrumentAtIndex <= 0 then
         drawDrumMachine()
         drawMouseOverGrid()
@@ -893,14 +944,10 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     drawMeasureCounter(w / 2, 20)
 
+    drawInstrumentBanks((w / 2) + 64, 120)
 
     local font = smallfont
     love.graphics.setFont(font)
-
-    local instrument = samples[sampleIndex].name .. ' ' .. octave
-    local w, h = love.graphics:getDimensions()
-    love.graphics.setColor(1, 1, 1, 0.3)
-    love.graphics.print(instrument, w - font:getWidth(instrument), 0)
 
     local stats = love.graphics.getStats()
     local memavg = collectgarbage("count") / 1000
@@ -911,11 +958,10 @@ function love.draw()
     local countNotes = string.format("%02i", myNumPlayingSounds)
     local debugstring = mem ..
         '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes .. ' ' .. love.audio.getActiveSourceCount()
+    love.graphics.setColor(1, 1, 1, .5)
     love.graphics.print(debugstring, 0, h - font:getHeight())
     love.graphics.print(drumPatternName, w - font:getWidth(drumPatternName), font:getHeight())
 
-
-    --local v = v_slider('bpm', grid.startX + grid.cellW * grid.columns, grid.startY + grid.cellH, 100, uiData.bpm, 10, 200)
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 1
     local v = drawLabelledKnob('bpm', bx, by, uiData.bpm, 10, 200)
@@ -950,13 +996,12 @@ function love.draw()
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 9
-    local v = drawLabelledKnob('sems', bx, by, uiData.allDrumSemitoneOffset, -36, 36)
+    local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -36, 36)
     if v.value then
         drawLabel(string.format("%02.1i", v.value), bx, by, 1)
         uiData.allDrumSemitoneOffset = v.value
         sendMessageToAudioThread({ type = "updateKnobs", data = uiData });
     end
-    -- love.graphics.print('𝄞𝄵𝆑𝄆 𝄞𝄰 𝅗𝅥𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥 𝄇𝄞𝅘𝅥𝅯 𝄃 𝄞♯ 𝅘𝅥𝄾 𝄀 ♭𝅗𝅥♫ 𝆑𝆏 𝄂')
 end
 
 function drawLabelledKnob(label, x, y, value, min, max)
