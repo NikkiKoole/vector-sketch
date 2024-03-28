@@ -7,59 +7,57 @@ require('love.math')
 -- Linn often used a timing resolution of 96 parts per quarter note (PPQN),
 -- meaning that each quarter note is subdivided into 96 equal parts.
 -- This high resolution allows for very precise timing and sequencing of musical events,
-local PPQN                = 96
+local PPQN              = 96
 
-local min, max            = ...
-local paused              = true
-local now                 = love.timer.getTime()
-local time                = 0
-local lastTick            = 0
-local lastBeat            = -1
-local beat                = 0
-local tick                = 0
-local beatInMeasure       = 4
-local countInMeasures     = 0
+local min, max          = ...
+local paused            = true
+local now               = love.timer.getTime()
+local time              = 0
+local lastTick          = 0
+local lastBeat          = -1
+local beat              = 0
+local tick              = 0
+local beatInMeasure     = 4
+local countInMeasures   = 0
 --local bpm             = 90
 --local swing           = 50
-local metronome_click     = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
+local metronome_click   = love.audio.newSource("samples/cr78/Rim Shot.wav", "static")
 
-local channel             = {};
-channel.audio2main        = love.thread.getChannel("audio2main"); -- from thread
-channel.main2audio        = love.thread.getChannel("main2audio"); --from main
+local channel           = {};
+channel.audio2main      = love.thread.getChannel("audio2main"); -- from thread
+channel.main2audio      = love.thread.getChannel("main2audio"); --from main
 
-local missedTicks         = {}
-local playingSounds       = {} -- lpayingSounds are just for the melodic sounds.
-local recordedData        = {}
-local playingDrumSounds   = {}
+local missedTicks       = {}
+local playingSounds     = {} -- playingSounds are just for the melodic sounds.
 
-local drumkit             = {}
-local drumgrid            = {}
+local playingDrumSounds = {}
 
-local samples             = {}
-local futureDrumNotes     = {}
+local drumkit           = {}
+local drumgrid          = {}
 
-local playing             = false
-local recording           = false
+local samples           = {}
+local futureDrumNotes   = {}
+
+local playing           = false
+local recording         = false
 
 --local sampleTuning        = {}
-local instruments         = {}
-local instrumentIndex     = 1
+local instruments       = {}
+local instrumentIndex   = 1
 
--- adsr stuff
-local defaultAttackTime   = 0.2
-local defaultDecayTime    = 0.01
-local defaultSustainLevel = 0.7
-local defaultReleaseTime  = 0.03
-local uiData              = nil
+local recordedData      = {}
+
+local uiData            = nil
 
 
 
 
 local function generateADSR(it, now)
-    local attackTime = defaultAttackTime
-    local decayTime = defaultDecayTime
-    local sustainLevel = defaultSustainLevel
-    local releaseTime = defaultReleaseTime
+    local adsr = instruments[it.instrumentIndex].adsr
+    local attackTime = adsr.attack    -- defaultAttackTime
+    local decayTime = adsr.decay      --defaultDecayTime
+    local sustainLevel = adsr.sustain --defaultSustainLevel
+    local releaseTime = adsr.release  --defaultReleaseTime
     local startTime = it.timeNoteOn
     local duration = it.source:getDuration('seconds')
     local endTime = it.timeNoteOff or startTime + duration
@@ -125,13 +123,18 @@ end
 
 local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
-        local it = playingSounds[i]
-        local lfoValue = generateSineLFO(time, .15)
-        local tuning = instruments[it.instrumentIndex].tuning             -- PARAMTERIZE THIS
-        local range = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
-        local lfoAmplitude = range
-        local lfoPitchDelta = (lfoValue * lfoAmplitude)
-        it.source:setPitch(it.pitch + lfoPitchDelta)
+        local useLFO = false
+        if useLFO then
+            local it            = playingSounds[i]
+            local timeThis      = love.timer.getTime() - it.timeNoteOn
+            local lfoValue      = generateSineLFO(timeThis, .15)
+            local tuning        = instruments[it.instrumentIndex].tuning              -- PARAMTERIZE THIS
+            local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
+            local lfoAmplitude  = range
+            local lfoPitchDelta = (lfoValue * lfoAmplitude)
+
+            it.source:setPitch(it.pitch + lfoPitchDelta)
+        end
     end
 end
 
@@ -447,21 +450,24 @@ function handlePlayingDrumGrid()
     end
 end
 
+function doReplayRecorded(beat, tick)
+    for i = 1, #recordedData do
+        if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
+            semitoneReleased(recordedData[i].semitone, recordedData[i].instrumentIndex)
+        end
+        if recordedData[i].beat == beat and recordedData[i].tick == tick then
+            semitoneTriggered(recordedData[i].semitone, recordedData[i].instrumentIndex)
+        end
+    end
+end
+
 function handlePlayingRecordedData()
     if true then
-        --print(beatInMeasure)
-        --print(recordedData[#recordedData].beat)
-        -- figure out  what kind of multiple the recordeddata wouldoptially be (1,2,3,4)
         local loopRounder = 1
         if #recordedData > 0 then
-            local lastRecordedBeat = recordedData[#recordedData].beat
+            local lastRecordedBeat = recordedData[#recordedData].beatOff
             loopRounder            = (math.ceil(lastRecordedBeat / beatInMeasure) * beatInMeasure)
-            --print(loopRounder, lastRecordedBeat)
         end
-        -- print(loopRounder)
-
-
-
         local beat = (math.floor(lastBeat) % loopRounder)
         local tick = math.floor(lastTick)
 
@@ -473,27 +479,11 @@ function handlePlayingRecordedData()
                 --print('oh dear, missed tick over the beat boundary', t, tick)
                 b = beat - 1
             end
-            for i = 1, #recordedData do
-                if recordedData[i].beatOff == b and recordedData[i].tickOff == t then
-                    print('triggered a missed release')
-                    semitoneReleased(recordedData[i].semitone, recordedData[i].instrumentIndex)
-                end
-                if recordedData[i].beat == b and recordedData[i].tick == t then
-                    print('triggered a missed tick')
-                    semitoneTriggered(recordedData[i].semitone, recordedData[i].instrumentIndex)
-                end
-            end
+            doReplayRecorded(b, t)
         end
         missedTicks = {}
 
-        for i = 1, #recordedData do
-            if recordedData[i].beatOff == beat and recordedData[i].tickOff == tick then
-                semitoneReleased(recordedData[i].semitone, recordedData[i].instrumentIndex)
-            end
-            if recordedData[i].beat == beat and recordedData[i].tick == tick then
-                semitoneTriggered(recordedData[i].semitone, recordedData[i].instrumentIndex)
-            end
-        end
+        doReplayRecorded(beat, tick)
     end
 end
 
@@ -541,6 +531,9 @@ while (true) do
             channel.audio2main:push({ type = 'tickUpdate', data = { tick = math.floor(tick) } })
             if playing then
                 handlePlayingRecordedData()
+                handlePlayingDrumGrid()
+            end
+            if recording then
                 handlePlayingDrumGrid()
             end
         end

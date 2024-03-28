@@ -187,10 +187,24 @@ function love.load()
     sendMessageToAudioThread({ type = 'samples', data = samples })
 
 
-    instrumentIndex = 1
-    instruments = {}
+    local defaultAttackTime   = 0.2
+    local defaultDecayTime    = 0.01
+    local defaultSustainLevel = 0.7
+    local defaultReleaseTime  = 0.03
+
+    instrumentIndex           = 1
+    instruments               = {}
     for i = 1, 5 do
-        instruments[i] = { sampleIndex = 1, tuning = 0 }
+        instruments[i] = {
+            sampleIndex = 1,
+            tuning = 0,
+            adsr = {
+                attack = defaultAttackTime,
+                decay = defaultDecayTime,
+                sustain = defaultSustainLevel,
+                release = defaultReleaseTime
+            }
+        }
     end
 
     sendMessageToAudioThread({ type = "instruments", data = instruments })
@@ -653,7 +667,7 @@ function drawDrumMachine()
     drawDrumMachineLabels(grid.startX, grid.startY, grid.cellH, grid.labels)
     drawDrumOnNotes(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
 
-    if playing then
+    if playing or recording then
         drawDrumMachinePlayHead(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, #grid.labels - 1)
     end
 end
@@ -885,6 +899,46 @@ function drawMeasureCounter(x, y)
     end
 end
 
+function drawADSRForActiveInstrument(x, y)
+    local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
+
+    local color = rainbow[instrumentIndex]
+    love.graphics.setColor(color[1], color[2], color[3], 0.3)
+    love.graphics.rectangle('line', x - 50, y, 300 + 100, 70)
+    love.graphics.setColor(1, 1, 1)
+    local adsr = instruments[instrumentIndex].adsr
+
+    local bx, by = x, y + 20
+    local v = drawLabelledKnob('attack', bx, by, adsr.attack, 0, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        instruments[instrumentIndex].adsr.attack = v.value
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+    end
+    local bx, by = x + 100, y + 20
+    local v = drawLabelledKnob('decay', bx, by, adsr.decay, 0, 1)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        instruments[instrumentIndex].adsr.decay = v.value
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+    end
+    local bx, by = x + 200, y + 20
+    local v = drawLabelledKnob('sustain', bx, by, adsr.sustain, 0, 1)
+    if v.value then
+        drawLabel(string.format("%.1f", v.value), bx, by, 1)
+        instruments[instrumentIndex].adsr.sustain = v.value
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+    end
+
+    local bx, by = x + 300, y + 20
+    local v = drawLabelledKnob('release', bx, by, adsr.release, 0, 1)
+    if v.value then
+        drawLabel(string.format("%.1f", v.value), bx, by, 1)
+        instruments[instrumentIndex].adsr.release = v.value
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+    end
+end
+
 function drawInstrumentBanks(x, y)
     local font = smallfont
     love.graphics.setFont(font)
@@ -910,7 +964,7 @@ function drawInstrumentBanks(x, y)
             love.graphics.setColor(1, 1, 1)
         end
         local name = samples[instruments[i].sampleIndex].name
-        love.graphics.print(name, x, y + (i - 1) * (rowHeight + margin))
+        love.graphics.print(' ' .. name, x, y + (i - 1) * (rowHeight + margin))
 
         local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
         if r then
@@ -944,7 +998,9 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     drawMeasureCounter(w / 2, 20)
 
-    drawInstrumentBanks((w / 2) + 64, 120)
+    drawInstrumentBanks((w / 2) + 32, 120)
+
+    drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 340)
 
     local font = smallfont
     love.graphics.setFont(font)
