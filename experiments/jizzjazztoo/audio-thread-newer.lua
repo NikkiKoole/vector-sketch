@@ -50,14 +50,12 @@ local recordedData      = {}
 local uiData            = nil
 
 
-
-
 local function generateADSR(it, now)
     local adsr = instruments[it.instrumentIndex].adsr
-    local attackTime = adsr.attack    -- defaultAttackTime
-    local decayTime = adsr.decay      --defaultDecayTime
-    local sustainLevel = adsr.sustain --defaultSustainLevel
-    local releaseTime = adsr.release  --defaultReleaseTime
+    local attackTime = adsr.attack
+    local decayTime = adsr.decay
+    local sustainLevel = adsr.sustain
+    local releaseTime = adsr.release
     local startTime = it.timeNoteOn
     local duration = it.source:getDuration('seconds')
     local endTime = it.timeNoteOff or startTime + duration
@@ -95,7 +93,6 @@ local function getUntunedPitch(semitone)
     local sampledAtSemitone = 60
     local usingSemitone = (semitone - sampledAtSemitone)
     local result = 2 ^ (usingSemitone / 12)
-
     return result
 end
 
@@ -110,7 +107,6 @@ local function getPitch(semitone, tuning)
     local sampledAtSemitone = 60 + tuning
     local usingSemitone = (semitone - sampledAtSemitone)
     local result = 2 ^ (usingSemitone / 12)
-
     return result
 end
 
@@ -152,10 +148,9 @@ local function cleanPlayingSounds()
     end
 end
 
-
 local function semitoneTriggered(number, instrumentIndex)
     local sampleIndex = instruments[instrumentIndex].sampleIndex
-    local source = samples[sampleIndex].source:clone() --sample.source:clone()
+    local source = samples[sampleIndex].source:clone()
     local tuning = instruments[instrumentIndex].tuning
     local pitch = getPitch(number, tuning)
     local range = getPitchVariationRange(number, 0, tuning) -- PARAMTERIZE THIS
@@ -176,7 +171,6 @@ end
 
 local function semitoneReleased(semitone, instrumentIndex)
     if recording then
-        -- print('should record release @', sampleIndex, math.floor(lastBeat), math.floor(lastTick))
         for i = 1, #recordedData do
             if recordedData[i].instrumentIndex == instrumentIndex then
                 if recordedData[i].semitone == semitone and recordedData[i].duration == 0 then
@@ -194,7 +188,6 @@ local function semitoneReleased(semitone, instrumentIndex)
 
     -- use this here..instrumentIndex
     for i = 1, #playingSounds do
-        -- print(playingSounds[i].instrumentIndex, instrumentIndex)
         if (playingSounds[i].instrumentIndex == instrumentIndex) then
             if (playingSounds[i].semitone == semitone and not playingSounds[i].timeNoteOff) then
                 playingSounds[i].timeNoteOff = love.timer.getTime()
@@ -202,6 +195,7 @@ local function semitoneReleased(semitone, instrumentIndex)
         end
     end
 end
+
 function getGateOffBeatAndTick(snd, pitch, bpm, beat, tick, gateValue)
     local secondsToFinishAtThisPitch = (snd:getDuration() / pitch) * gateValue
     local bb = secondsToFinishAtThisPitch * (bpm / 60)
@@ -209,13 +203,14 @@ function getGateOffBeatAndTick(snd, pitch, bpm, beat, tick, gateValue)
     local futureBeat = beat
 
     if (futureBeat == beat and futureTick == tick) then
-        -- print('this gate happens too soon!')
         futureTick = tick + 2
     end
+
     if futureTick >= PPQN then
         futureTick = futureTick - PPQN
         futureBeat = futureBeat + 1
     end
+
     return futureBeat, futureTick
 end
 
@@ -280,11 +275,11 @@ function doHandleDrumNotes(beat, tick, bpm)
     -- why % 24 ??
     -- because the PPQN = 96 so PartsPer16th note is 24!
     -- drumgrid is subdivided in 16ths
-
     -- -- how to apply swing?
     -- 50% is no swing
     -- 100% is way too much swing, now it will fall
     -- the number we write is the percentage the first (in other words 16th before this gets.)
+    --
     local swing = uiData and uiData.swing or 50
     local delaySwungNote = math.ceil(((swing / 100) * 48) - 24)
     local isSwung = (tick % 48 == delaySwungNote)
@@ -313,7 +308,6 @@ function doHandleDrumNotes(beat, tick, bpm)
 
 
                     local semitoneOffset = math.ceil((uiData and uiData.allDrumSemitoneOffset or 0))
-                    -- print(semitoneOffset)
                     local afterOffset = getUntunedPitch(60 + semitoneOffset + (cell and cell.semitoneOffset or 0))
                     local pitch = afterOffset
 
@@ -403,6 +397,7 @@ function doHandleDrumNotes(beat, tick, bpm)
                             end
                             local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
                                 bpm, futureBeat, futureTick, gate)
+
                             local future = {
                                 tick = futureTick,
                                 beat = futureBeat,
@@ -504,7 +499,6 @@ local function playMetronomeSound()
     snd:play()
 end
 
-
 while (true) do
     local bpm = (uiData and uiData.bpm) or 90
     local n = love.timer.getTime()
@@ -563,32 +557,32 @@ while (true) do
     if v then
         if v.type == 'samples' then
             samples = v.data
-            --  print(bpm)
         end
-
 
         if v.type == 'drumkitData' then
             drumkit = v.data.drumkit
             drumgrid = v.data.drumgrid
-            beatInMeasure = v.data.beatInMeasure -- math.ceil(#v.data.drumgrid / 4)
-            --print('beatInMeasure', math.ceil(#v.data.drumgrid / 4))
+            beatInMeasure = v.data.beatInMeasure
         end
+
         if v.type == 'resetBeatsAndTicks' then
             resetBeatsAndTicks()
             channel.audio2main:push({ type = 'beatUpdate', data = { beat = math.floor(beat), beatInMeasure = beatInMeasure } })
             channel.audio2main:push({ type = 'tickUpdate', data = { tick = math.floor(tick) } })
         end
+
         if v.type == 'paused' then
             paused = v.data
             now    = love.timer.getTime()
         end
+
         if v.type == 'semitoneReleased' then
             local semitone = v.data.semitone
             semitoneReleased(semitone, instrumentIndex)
         end
+
         if v.type == 'semitonePressed' then
             local semitone = v.data.semitone
-
             semitoneTriggered(semitone, instrumentIndex)
             if recording == true then
                 table.insert(recordedData, {
@@ -600,17 +594,19 @@ while (true) do
                 })
             end
         end
+
         if v.type == 'instruments' then
             instruments = v.data
         end
+
         if v.type == 'instrumentIndex' then
             instrumentIndex = v.data
-            print('new instrumetn index:', instrumentIndex)
         end
 
         if v.type == 'updateKnobs' then
             uiData = v.data
         end
+
         if v.type == 'mode' then
             if v.data == 'play' then
                 playing = true
