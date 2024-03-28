@@ -83,7 +83,7 @@ function getUIRect(x, y, w, h)
     return result
 end
 
-function v_slider(id, x, y, height, v, min, max)
+function v_slider(id, x, y, height, v, min, max, special)
     local thumb_size = 16
     local easy_effect = true
     love.graphics.setColor(0.3, 0.3, 0.3)
@@ -93,8 +93,16 @@ function v_slider(id, x, y, height, v, min, max)
     love.graphics.rectangle('fill', x, yOffset + y, thumb_size, thumb_size)
     love.graphics.setColor(1, 1, 1)
     love.graphics.setLineWidth(4)
-    love.graphics.rectangle("line", x, yOffset + y, thumb_size, thumb_size)
 
+    if not special then
+        love.graphics.rectangle("line", x, yOffset + y, thumb_size, thumb_size)
+    end
+    if special and special == 'bottom' then
+        love.graphics.arc("fill", x + thumb_size / 2, yOffset + y, thumb_size / 2, 0, math.pi)
+    end
+    if special and special == 'top' then
+        love.graphics.arc("fill", x + thumb_size / 2, yOffset + y + thumb_size, thumb_size / 2, math.pi, math.pi * 2)
+    end
     local result = nil
     local mx, my = love.mouse.getPosition()
     local hover = false

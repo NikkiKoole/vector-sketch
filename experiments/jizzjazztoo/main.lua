@@ -673,35 +673,44 @@ function drawDrumMachine()
 end
 
 function drawMoreInfoForInstrument()
+    local startX = grid.startX
+    local startY = grid.startY
+    local cellW = grid.cellW
+    local cellH = grid.cellH
+
     if lookinIntoIntrumentAtIndex > 0 then
-        drawDrumMachineGrid(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns, 0)
-        drawDrumOnNotesSingleRow(grid.startX, grid.startY, grid.cellW, grid.cellH, grid.columns,
+        drawDrumMachineGrid(startX, startY, cellW, cellH, grid.columns, 0)
+        drawDrumOnNotesSingleRow(startX, startY, cellW, cellH, grid.columns,
             lookinIntoIntrumentAtIndex - 1)
 
-        if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], 0, grid.startY, 100, grid.cellH).clicked then
+        if labelbutton(' ' .. grid.labels[lookinIntoIntrumentAtIndex], 0, startY, 100, cellH).clicked then
             lookinIntoIntrumentAtIndex = 0
         end
 
-        if labelbutton(' volume', 0, grid.startY + grid.cellH * 1, 100, grid.cellH, singleInstrumentJob == 'volume').clicked then
+        if labelbutton(' volume', 0, startY + cellH * 1, 100, cellH, singleInstrumentJob == 'volume').clicked then
             singleInstrumentJob = 'volume'
         end
 
-        if labelbutton(' pitch', 0, grid.startY + grid.cellH * 2, 100, grid.cellH, singleInstrumentJob == 'pitch').clicked then
+        if labelbutton(' pitch', 0, startY + cellH * 2, 100, cellH, singleInstrumentJob == 'pitch').clicked then
             singleInstrumentJob = 'pitch'
         end
 
-        if labelbutton(' pan', 0, grid.startY + grid.cellH * 3, 100, grid.cellH, singleInstrumentJob == 'pan').clicked then
+        if labelbutton(' pan', 0, startY + cellH * 3, 100, cellH, singleInstrumentJob == 'pan').clicked then
             singleInstrumentJob = 'pan'
         end
-        if labelbutton(' echo', 0, grid.startY + grid.cellH * 4, 100, grid.cellH, singleInstrumentJob == 'echo').clicked then
+        if labelbutton(' echo', 0, startY + cellH * 4, 100, cellH, singleInstrumentJob == 'echo').clicked then
             singleInstrumentJob = 'echo'
         end
 
-        if labelbutton(' gate', 0, grid.startY + grid.cellH * 5, 100, grid.cellH, singleInstrumentJob == 'gate').clicked then
+        if labelbutton(' gate', 0, startY + cellH * 5, 100, cellH, singleInstrumentJob == 'gate').clicked then
             singleInstrumentJob = 'gate'
         end
+
+        if labelbutton(' randP', 0, startY + cellH * 6, 100, cellH, singleInstrumentJob == 'rndP').clicked then
+            singleInstrumentJob = 'rndP'
+        end
         if singleInstrumentJob then
-            if labelbutton(' reset', 0, grid.startY + grid.cellH * 6, 100, grid.cellH).clicked then
+            if labelbutton(' reset', 0, startY + cellH * 7, 100, cellH).clicked then
                 for i = 1, #drumgrid do
                     local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
                     if (cell and cell.on) then
@@ -728,9 +737,50 @@ function drawMoreInfoForInstrument()
         for i = 1, #drumgrid do
             local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
             if (cell and cell.on) then
+                if singleInstrumentJob == 'rndP' then
+                    love.graphics.setLineWidth(4)
+                    local circX = startX + (i - 1) * cellW + cellW / 2
+                    local circY = startY + cellH * 1.5
+                    love.graphics.circle('line', circX, circY, cellW / 2)
+                    if cell.useRndP then
+                        love.graphics.circle('fill', circX, circY, cellW / 3)
+                    end
+
+                    local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
+                    if r then
+                        cell.useRndP = not cell.useRndP
+                    end
+
+                    local v = v_slider(singleInstrumentJob .. '1:' .. i, startX + cellW * (i - 1),
+                        startY + cellH * 2, 100,
+                        cell.rndPOctMin or 0, -2, 0, 'top')
+                    if v.value then
+                        cell.rndPOctMin = v.value
+                        updateDrumKitData()
+                    end
+                    local v = v_slider(singleInstrumentJob .. '2:' .. i, startX + cellW * (i - 1),
+                        startY + cellH * 2 + 100, 100,
+                        cell.rndPOctMax or 0, 0, 2, 'bottom')
+                    if v.value then
+                        cell.rndPOctMax = v.value
+                        updateDrumKitData()
+                    end
+
+                    love.graphics.setLineWidth(4)
+                    local circX = startX + (i - 1) * cellW + cellW / 2
+                    local circY = startY + 280
+                    love.graphics.circle('line', circX, circY, cellW / 2)
+                    if cell.useRndPPentatonic then
+                        love.graphics.circle('fill', circX, circY, cellW / 3)
+                    end
+
+                    local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
+                    if r then
+                        cell.useRndPPentatonic = not cell.useRndPPentatonic
+                    end
+                end
                 if singleInstrumentJob == 'gate' then
-                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
-                        grid.startY + grid.cellH, 200,
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1), startY + cellH, 200,
                         cell.gate or 1, 0, 1)
                     if v.value then
                         cell.gate = v.value
@@ -738,8 +788,8 @@ function drawMoreInfoForInstrument()
                     end
                 end
                 if singleInstrumentJob == 'pan' then
-                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
-                        grid.startY + grid.cellH, 200,
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1),
+                        startY + cellH, 200,
                         cell.pan or 0, -1, 1)
                     if v.value then
                         cell.pan = v.value
@@ -747,8 +797,8 @@ function drawMoreInfoForInstrument()
                     end
                 end
                 if singleInstrumentJob == 'volume' then
-                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
-                        grid.startY + grid.cellH, 200,
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1),
+                        startY + cellH, 200,
                         1.0 - (cell.volume or 1), 0, 1)
                     if v.value then
                         cell.volume = 1.0 - v.value
@@ -756,8 +806,8 @@ function drawMoreInfoForInstrument()
                     end
                 end
                 if singleInstrumentJob == 'pitch' then
-                    local v = v_slider(singleInstrumentJob .. ':' .. i, grid.startX + grid.cellW * (i - 1),
-                        grid.startY + grid.cellH, 200,
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1),
+                        startY + cellH, 200,
                         (cell.semitoneOffset or 0) * -1, -24, 24)
                     if v.value then
                         local v = math.floor(v.value + 0.5) * -1
@@ -771,19 +821,19 @@ function drawMoreInfoForInstrument()
             end
         end
         if singleInstrumentJob == 'echo' then
-            local xOff = (grid.cellW - smallfont:getWidth('x')) / 2
-            drawDrumMachineGrid(grid.startX, grid.startY + grid.cellH, grid.cellW, grid.cellH, #drumgrid, 0)
+            local xOff = (cellW - smallfont:getWidth('x')) / 2
+            drawDrumMachineGrid(startX, startY + cellH, cellW, cellH, #drumgrid, 0)
             for i = 1, #drumgrid do
                 local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
 
                 if (cell and cell.on) then
                     if cell.echo then
-                        love.graphics.print(cell.echo .. "", xOff + grid.startX + (i - 1) * grid.cellW,
-                            grid.startY + grid.cellH)
+                        love.graphics.print(cell.echo .. "", xOff + startX + (i - 1) * cellW,
+                            startY + cellH)
                     end
-                    local r = getUIRect(grid.startX + (i - 1) * grid.cellW, grid.startY + grid.cellH,
-                        grid.cellW,
-                        grid.cellH)
+                    local r = getUIRect(startX + (i - 1) * cellW, startY + cellH,
+                        cellW,
+                        cellH)
                     if r then
                         if cell.echo == nil or cell.echo == 0 then
                             cell.echo = 1
