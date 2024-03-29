@@ -57,21 +57,33 @@ local function generateADSR(it, now)
     local sustainLevel = adsr.sustain
     local releaseTime = adsr.release
     local startTime = it.timeNoteOn
-    local duration = it.source:getDuration('seconds')
-    local endTime = it.timeNoteOff or startTime + duration
+
+    local endTime
+
+    if it.source:isLooping() then
+        endTime = it.timeNoteOff
+    else
+        local duration = it.source:getDuration('seconds')
+        endTime = it.timeNoteOff or startTime + duration
+    end
+
     local envelopeValue = 1
 
     if now <= startTime + attackTime then
         envelopeValue = (now - startTime) / attackTime
     elseif now <= startTime + attackTime + decayTime then
         envelopeValue = 1 - (1 - sustainLevel) * ((now - startTime - attackTime) / decayTime)
-    elseif now <= endTime - releaseTime then
+    elseif endTime == nil or now <= (endTime - releaseTime) then
         envelopeValue = sustainLevel
     else
         local releaseDuration = now - endTime
         envelopeValue = sustainLevel * math.exp(-releaseDuration / releaseTime)
+        if it.source:isLooping() and envelopeValue < 0.001 then
+            it.source:stop()
+            print('stoping')
+        end
     end
-
+    --print(envelopeValue)
     return envelopeValue
 end
 
@@ -81,6 +93,7 @@ local function updateADSREnvelopesForPlayingSounds(dt)
         local it = playingSounds[i]
         local value = generateADSR(it, now)
         value = value * (uiData and uiData.instrumentsVolume or 1)
+
         it.source:setVolume(value)
     end
 end
@@ -140,6 +153,7 @@ local function cleanPlayingSounds()
         local it = playingSounds[i]
         if (it.timeNoteOff and it.timeNoteOff < now) then
             if not it.source:isPlaying() then
+                print('removing')
                 it.source:release()
                 table.remove(playingSounds, i)
                 channel.audio2main:push({ type = 'numPlayingSounds', data = { numbers = #playingSounds } })
@@ -155,9 +169,14 @@ local function semitoneTriggered(number, instrumentIndex)
     local pitch = getPitch(number, tuning)
     local range = getPitchVariationRange(number, 0, tuning) -- PARAMTERIZE THIS
     local pitchOffset = love.math.random() * range - range / 2
+    if samples[sampleIndex].cycle then
+        print('triggered a looping sound')
+        source:setLooping(true)
+    end
     source:setPitch(pitch + pitchOffset)
     source:setVolume(0)
     source:play()
+    print('play!')
 
     table.insert(playingSounds, {
         pitch = pitch + pitchOffset,
@@ -298,42 +317,63 @@ function doHandleDrumNotes(beat, tick, bpm)
 
             for i = 1, #drumkit.order do
                 local cell = drumgrid[column + 1][i]
-                if cell.on then
+                local dontTrigger = false
+                if cell.on and cell.trig ~= nil then
+                    if love.math.random() > cell.trig then
+                        dontTrigger = true
+                    end
+                end
+                if cell.on and not dontTrigger then
                     local key = drumkit.order[i]
                     local source = drumkit[key].source:clone()
                     local cellVolume = cell.volume or 1
                     local gate = cell.gate or 1
                     local allDrumsVolume = (uiData and uiData.drumVolume or 1)
                     local volume = cellVolume * allDrumsVolume
-
-
                     local semitoneOffset = math.ceil((uiData and uiData.allDrumSemitoneOffset or 0))
+
+                    if cell.useRndP then
+                        local pentaMinor = { 0, 3, 5, 7, 10 }
+
+                        local scaleToPickFrom = {}
+                        for si = cell.rndPOctMin or 0, cell.rndPOctMax or 0 do
+                            if (cell.useRndPPentatonic) then
+                                for j = 1, #pentaMinor do
+                                    local o = pentaMinor[j] + (12 * si)
+                                    table.insert(scaleToPickFrom, o)
+                                end
+                            else
+                                for j = 0, 11 do
+                                    local o = j + (12 * si)
+                                    table.insert(scaleToPickFrom, o)
+                                end
+                            end
+                        end
+                        local picked = scaleToPickFrom[math.ceil(math.random() * #scaleToPickFrom)]
+                        semitoneOffset = semitoneOffset + picked
+                        -- print(#scaleToPickFrom)
+                    end
+
                     local afterOffset = getUntunedPitch(60 + semitoneOffset + (cell and cell.semitoneOffset or 0))
                     local pitch = afterOffset
 
+
+
+
                     local gateCloseBeat, gateCloseTick = getGateOffBeatAndTick(source, pitch,
                         bpm, beat, tick, gate)
-                    -- local pitch = getUntunedPitch(60)
-                    -- local range = getUntunedPitchVariationRange(60, 3)
-                    -- local pitchOffset = 0 --love.math.random() * range - range / 2
 
-                    source:setVolume(volume)
                     if source:getChannelCount() == 1 then
                         source:setPosition(cell.pan or 0, 0, 0)
                     else
                         print(key .. ' isnt MONO, so it cant be panned')
                     end
+
+                    source:setVolume(volume)
                     source:setPitch(pitch)
-
-                    -- local ratio =  line.sfx:tell("samples") / line.sfx:getDuration('samples')
-                    -- local general_ratio = (line.sfx:tell('samples')/ 48000)
-
-
-
 
                     source:play()
 
-                    -- print('inserting source', source)
                     table.insert(playingDrumSounds, {
                         source = source,
                         pitch = pitch,
@@ -345,12 +385,6 @@ function doHandleDrumNotes(beat, tick, bpm)
                         gateCloseTick = gateCloseTick,
                         volume = volume
                     })
-
-                    --beat = beat + (delta * (bpm / 60))
-                    --tick = ((beat % 1) * (PPQN))
-
-                    -- howmany ticks is that ?
-                    --
 
 
 

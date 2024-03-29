@@ -29,6 +29,21 @@ else
     _thread:start()
 end
 
+local function prepareCycles(names)
+    local result = {}
+    for i = 1, #names do
+        local name = names[i]
+        local path = 'samples/oscillators/' .. name .. ".wav"
+        local info = love.filesystem.getInfo(path)
+        if info then
+            result[i] = { name = name, source = love.audio.newSource(path, 'static'), cycle = true }
+        else
+            print('file not found!', path)
+        end
+    end
+    return result
+end
+
 local function prepareSamples(names)
     local result = {}
     for i = 1, #names do
@@ -89,7 +104,12 @@ local function hex2rgb(hex)
         / 255
 end
 
-
+function TableConcat(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
+    end
+    return t1
+end
 
 function love.load()
     uiData = {
@@ -169,7 +189,7 @@ function love.load()
 
     -- sample stuff
     local sampleFiles = {
-        'lulla/rainbows', "mt70/Vibraphone Mid",
+        'lulla/rainbows', 'lulla/rainbows', "mt70/Vibraphone Mid",
         'legow/Little Blip', 'legow/Little Blip Low', 'legow/Simple', 'legow/Synth Bell 3',
         "legow/Clean High", "legow/Pinky Flute", "legow/Bellancholia",
         "legow/Sine Filtered1", "legow/Boring Simple", "legow/Soft Tooter",
@@ -181,9 +201,14 @@ function love.load()
         'juno/brass', 'juno/wire', 'juno/flute',
         'wavparty/melodicC06', 'wavparty/bassC05', 'wavparty/bassC06', 'wavparty/synth22', 'wavparty/synth36',
     }
+
     samples = prepareSamples(sampleFiles)
-
-
+    local cycles = prepareCycles({
+        'akwf/stringbox/cheeze_0006',
+        'akwf/piano/AKWF_piano_0011',
+        'fr4 odissey/Fr4 - odissey 9'
+    })
+    --samples = TableConcat(cycles, samples)
     sendMessageToAudioThread({ type = 'samples', data = samples })
 
 
@@ -706,7 +731,7 @@ function drawMoreInfoForInstrument()
         for i = 1, #drumgrid do
             local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
             if (cell and cell.on) then
-                if singleInstrumentJob == 'rndP' then
+                if singleInstrumentJob == 'randP' then
                     love.graphics.setLineWidth(4)
                     local circX = startX + (i - 1) * cellW + cellW / 2
                     local circY = startY + cellH * 1.5
@@ -718,6 +743,7 @@ function drawMoreInfoForInstrument()
                     local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
                     if r then
                         cell.useRndP = not cell.useRndP
+                        updateDrumKitData()
                     end
 
                     local v = v_slider(singleInstrumentJob .. '1:' .. i, startX + cellW * (i - 1),
@@ -746,6 +772,7 @@ function drawMoreInfoForInstrument()
                     local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
                     if r then
                         cell.useRndPPentatonic = not cell.useRndPPentatonic
+                        updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'trig' then
