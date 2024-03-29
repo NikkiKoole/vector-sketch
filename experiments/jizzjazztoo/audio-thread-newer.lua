@@ -68,7 +68,6 @@ local function generateADSR(it, now)
     end
 
     local envelopeValue = 1
-
     if now <= startTime + attackTime then
         envelopeValue = (now - startTime) / attackTime
     elseif now <= startTime + attackTime + decayTime then
@@ -80,7 +79,7 @@ local function generateADSR(it, now)
         envelopeValue = sustainLevel * math.exp(-releaseDuration / releaseTime)
         if it.source:isLooping() and envelopeValue < 0.001 then
             it.source:stop()
-            print('stoping')
+            -- print('stoping')
         end
     end
     --print(envelopeValue)
@@ -93,13 +92,15 @@ local function updateADSREnvelopesForPlayingSounds(dt)
         local it = playingSounds[i]
         local value = generateADSR(it, now)
         value = value * (uiData and uiData.instrumentsVolume or 1)
-
         it.source:setVolume(value)
     end
 end
 
 local function generateSineLFO(time, lfoFrequency)
     return math.sin(2 * math.pi * lfoFrequency * time)
+end
+local function generateNoiseLFO(time, lfoFrequency)
+    return love.math.noise(2 * math.pi * lfoFrequency * time)
 end
 
 local function getUntunedPitch(semitone)
@@ -132,12 +133,14 @@ end
 
 local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
-        local useLFO = false
+        local useLFO = true
         if useLFO then
             local it            = playingSounds[i]
             local timeThis      = love.timer.getTime() - it.timeNoteOn
-            local lfoValue      = generateSineLFO(timeThis, .15)
-            local tuning        = instruments[it.instrumentIndex].tuning              -- PARAMTERIZE THIS
+            local lfoValue      = generateSineLFO(timeThis, .15) -- PARAMTERIZE THIS
+            local lfoValue      = generateNoiseLFO(timeThis, .5) -- PARAMTERIZE THIS
+            -- print(lfoValue)
+            local tuning        = instruments[it.instrumentIndex].tuning
             local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
             local lfoAmplitude  = range
             local lfoPitchDelta = (lfoValue * lfoAmplitude)
@@ -153,7 +156,7 @@ local function cleanPlayingSounds()
         local it = playingSounds[i]
         if (it.timeNoteOff and it.timeNoteOff < now) then
             if not it.source:isPlaying() then
-                print('removing')
+                --  print('removing')
                 it.source:release()
                 table.remove(playingSounds, i)
                 channel.audio2main:push({ type = 'numPlayingSounds', data = { numbers = #playingSounds } })
@@ -170,21 +173,43 @@ local function semitoneTriggered(number, instrumentIndex)
     local range = getPitchVariationRange(number, 0, tuning) -- PARAMTERIZE THIS
     local pitchOffset = love.math.random() * range - range / 2
     if samples[sampleIndex].cycle then
-        print('triggered a looping sound')
+        --print('triggered a looping sound')
         source:setLooping(true)
     end
-    source:setPitch(pitch + pitchOffset)
-    source:setVolume(0)
-    source:play()
-    print('play!')
 
-    table.insert(playingSounds, {
-        pitch = pitch + pitchOffset,
-        source = source,
-        semitone = number,
-        instrumentIndex = instrumentIndex,
-        timeNoteOn = love.timer.getTime()
-    })
+    --print('play!')
+    local monophonic = false
+    if monophonic == true then
+        local foundInstrumentSoundAlready = nil
+        for i = 1, #playingSounds do
+            if (playingSounds[i].instrumentIndex == instrumentIndex) then
+                foundInstrumentSoundAlready = playingSounds[i]
+            end
+        end
+        if foundInstrumentSoundAlready then
+            --foundInstrumentSoundAlready.source:stop()
+            foundInstrumentSoundAlready.source:setPitch(pitch + pitchOffset)
+            -- print('found already!', foundInstrumentSoundAlready)
+            foundInstrumentSoundAlready.pitch = pitch + pitchOffset
+            --foundInstrumentSoundAlready.source = source
+            foundInstrumentSoundAlready.semitone = number
+            foundInstrumentSoundAlready.instrumentIndex = instrumentIndex
+            foundInstrumentSoundAlready.timeNoteOn = love.timer.getTime()
+        end
+    end
+    if not foundInstrumentSoundAlready or monophonic == false then
+        -- print('not found already!', foundInstrumentSoundAlready)
+        source:setPitch(pitch + pitchOffset)
+        source:setVolume(0)
+        source:play()
+        table.insert(playingSounds, {
+            pitch = pitch + pitchOffset,
+            source = source,
+            semitone = number,
+            instrumentIndex = instrumentIndex,
+            timeNoteOn = love.timer.getTime()
+        })
+    end
     channel.audio2main:push({ type = 'numPlayingSounds', data = { numbers = #playingSounds } })
 end
 
@@ -200,6 +225,7 @@ local function semitoneReleased(semitone, instrumentIndex)
                     recordedData[i].duration = totalDeltaTicks
                     recordedData[i].beatOff = math.floor(lastBeat)
                     recordedData[i].tickOff = math.floor(lastTick)
+                    -- print('got here!', i, math.floor(lastBeat), math.floor(lastTick))
                 end
             end
         end
@@ -494,7 +520,8 @@ function handlePlayingRecordedData()
     if true then
         local loopRounder = 1
         if #recordedData > 0 then
-            local lastRecordedBeat = recordedData[#recordedData].beatOff
+            --print(#recordedData, recordedData[#recordedData].beatOff, recordedData[#recordedData].tickOff)
+            local lastRecordedBeat = recordedData[#recordedData].beatOff + 1
             if lastRecordedBeat then
                 loopRounder = (math.ceil(lastRecordedBeat / beatInMeasure) * beatInMeasure)
             end
@@ -595,6 +622,31 @@ while (true) do
             samples = v.data
         end
 
+        if v.type == 'stopPlayingSoundsOnIndex' then
+            -- first patch up the recordeddata
+            for i = 1, #recordedData do
+                local it = recordedData[i]
+
+                --print(recordedData[i].beatOff, recordedData[i].tickOff)
+                if it.instrumentIndex ~= v.data then
+                    print('SUHIAUSDH???')
+                end
+                if it.beatOff == nil and it.tickOff == nil then
+                    print('theres an issue with this probably')
+                    semitoneReleased(it.semitone, it.instrumentIndex)
+                    --recordedData[i].beatOff = math.floor(lastBeat)
+                    --recordedData[i].tickOff = math.floor(lastTick)
+                end
+            end
+            local index = v.data
+            for i = 1, #playingSounds do
+                local it = playingSounds[i]
+                --print(it.instrumentIndex, index)
+                if it.instrumentIndex == index then
+                    it.source:stop()
+                end
+            end
+        end
         if v.type == 'drumkitData' then
             drumkit = v.data.drumkit
             drumgrid = v.data.drumgrid

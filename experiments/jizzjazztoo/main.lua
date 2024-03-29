@@ -204,11 +204,28 @@ function love.load()
 
     samples = prepareSamples(sampleFiles)
     local cycles = prepareCycles({
+        '100 Void Vertex SCW/music box',
+        '100 Void Vertex SCW/perc',
+        '100 Void Vertex SCW/twinkle',
+        '100 Void Vertex SCW/voice_04_Mello',
+        '100 Void Vertex SCW/maschine ',
+        '100 Void Vertex SCW/underground',
         'akwf/stringbox/cheeze_0006',
         'akwf/piano/AKWF_piano_0011',
-        'fr4 odissey/Fr4 - odissey 9'
+        'fr4 odissey/Fr4 - odissey 9',
+        'fr4 prophet/Fr4 - Prophet 5 3',
+        'fr4 prophet/Fr4 - Prophet 5 8',
+        'fr4 prophet/Fr4 - Prophet 5 9',
+        'fr4 prophet/Fr4 - Prophet 5 10',
+        'fr4 prophet/Fr4 - Prophet 5 11',
+        'fr4 prophet/Fr4 - Prophet 5 12',
+        'fr4 moog/Fr4 - Polymoog 1',
+        'fr4 moog/Fr4 - Polymoog 2',
+        'fr4 moog/Fr4 - Polymoog 3',
+        'fr4 moog/Fr4 - Polymoog 4',
+        'fr4 moog/Fr4 - Polymoog 5',
     })
-    --samples = TableConcat(cycles, samples)
+    samples = TableConcat(cycles, samples)
     sendMessageToAudioThread({ type = 'samples', data = samples })
 
 
@@ -437,21 +454,27 @@ function fitKeyOffsetInScale(offset, scale)
     return result
 end
 
-local function getSemitone(offset)
-    return (octave * 12) + offset
+local function getSemitone(offset, optionalOctave)
+    if optionalOctave ~= nil then
+        return (optionalOctave * 12) + offset
+    else
+        return (octave * 12) + offset
+    end
 end
 
 function love.keyreleased(k)
     if (usingMap[k] ~= nil) then
         local tuningOffset = instruments[instrumentIndex].tuning
+        local formerOctave = octave
         if pressedKeys[k] then
             tuningOffset = pressedKeys[k].tuning
+            formerOctave = pressedKeys[k].octave
             pressedKeys[k] = nil
         end
         sendMessageToAudioThread({
             type = "semitoneReleased",
             data = {
-                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + tuningOffset,
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale), formerOctave) + tuningOffset,
 
             }
         });
@@ -475,7 +498,7 @@ function love.keypressed(k)
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + instruments[instrumentIndex].tuning,
             }
         });
-        pressedKeys[k] = { tuning = instruments[instrumentIndex].tuning }
+        pressedKeys[k] = { tuning = instruments[instrumentIndex].tuning, octave = octave }
     end
 
     if k == 'z' then
@@ -523,11 +546,11 @@ function love.keypressed(k)
     end
 
     if k == 'return' then
-        sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
-
         recording = not recording
         if not recording then
             sendMessageToAudioThread({ type = "paused", data = true });
+            sendMessageToAudioThread({ type = "checkRecordedDataOnIndex", data = instrumentIndex })
+            sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
         end
         if recording then
             sendMessageToAudioThread({ type = "mode", data = 'record' });
@@ -537,6 +560,7 @@ function love.keypressed(k)
             --end
             playing = false
         end
+        sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
     end
 end
 
