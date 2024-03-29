@@ -151,7 +151,7 @@ end
 local function semitoneTriggered(number, instrumentIndex)
     local sampleIndex = instruments[instrumentIndex].sampleIndex
     local source = samples[sampleIndex].source:clone()
-    local tuning = instruments[instrumentIndex].tuning
+    local tuning = 0                                        --instruments[instrumentIndex].tuning
     local pitch = getPitch(number, tuning)
     local range = getPitchVariationRange(number, 0, tuning) -- PARAMTERIZE THIS
     local pitchOffset = love.math.random() * range - range / 2
@@ -461,7 +461,9 @@ function handlePlayingRecordedData()
         local loopRounder = 1
         if #recordedData > 0 then
             local lastRecordedBeat = recordedData[#recordedData].beatOff
-            loopRounder            = (math.ceil(lastRecordedBeat / beatInMeasure) * beatInMeasure)
+            if lastRecordedBeat then
+                loopRounder = (math.ceil(lastRecordedBeat / beatInMeasure) * beatInMeasure)
+            end
         end
         local beat = (math.floor(lastBeat) % loopRounder)
         local tick = math.floor(lastTick)

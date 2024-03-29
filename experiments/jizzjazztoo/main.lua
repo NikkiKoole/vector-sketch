@@ -154,7 +154,7 @@ function love.load()
     channelIndex = 1
     recordedData = {}
 
-
+    pressedKeys = {}
     -- measure/beat
 
     sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
@@ -418,73 +418,39 @@ end
 
 function love.keyreleased(k)
     if (usingMap[k] ~= nil) then
+        local tuningOffset = instruments[instrumentIndex].tuning
+        if pressedKeys[k] then
+            tuningOffset = pressedKeys[k].tuning
+            pressedKeys[k] = nil
+        end
         sendMessageToAudioThread({
             type = "semitoneReleased",
             data = {
-                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)),
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + tuningOffset,
 
             }
         });
     end
 end
 
-local chordIndex = 1
+--local chordIndex = 1
 
 function love.keypressed(k)
     if k == '-' then
-        drumPatternName, gl = drumPatterns.pickExistingPattern(drumgrid, drumkit)
-        grid.columns = gl
+        local name, gridlength = drumPatterns.pickExistingPattern(drumgrid, drumkit)
+        drumPatternName = name
+        grid.columns = gridlength
         updateDrumKitData()
     end
+
     if (usingMap[k] ~= nil) then
         sendMessageToAudioThread({
             type = "semitonePressed",
             data = {
-                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)),
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + instruments[instrumentIndex].tuning,
             }
         });
-        if love.keyboard.isDown("lshift") then
-            --local offsets = { 0, 4, 7, 11 } -- major 7th
-            --local offsets = { 3, 5, 7 } -- minor 7th
-            --local offsets = { 0, 4, 7, 10, 14, 21 } -- dominant 13th
-            --local offsets = { 0, 3, 5, 7, 9 } -- minor 9th
-
-
-
-            local chords = {
-                -- { 0, 4, 7, 11 },      --Chord #1 - Major 7th Chord:
-                -- { 0, 4, 7, 10 },      -- Chord #2 - Dominant 7th Chord:
-                -- { 0, 3, 7, 10 }, --Chord #3 - Minor 7th Chord:
-                -- { 0, 3, 6, 9 },       --Chord #4 - Diminished 7th Chord:
-                -- { 0, 4, 7, 11, 14 },  --Chord #5 - Major 9th Chord:
-                -- { 0, 4, 7, 10, 14 },  --Chord #6 - Dominant 9th Chord:
-                { 0,  3, 7, 10, 14 }, --Chord #7 - Minor 9th Chord:
-                { -2, 3, 7, 10, }
-                --{0, 3, 7, 10, 14}
-            }
-
-            local chordsh = {
-                { 0,  3, 7, 10, 14 },
-                { 0,  3, 7, 10 },
-                { 0,  3, 7, 10, 14 },
-                { -2, 3, 7, 10, 0 },
-                { 0,  3, 6, 9 }
-            }
-            local offsets = chords[chordIndex]
-
-            chordIndex = chordIndex + 1
-            if chordIndex > #chords then chordIndex = 1 end
-            local root = getSemitone(fitKeyOffsetInScale(usingMap[k], scale))
-            for j = 1, #offsets do
-                local off = offsets[j]
-                sendMessageToAudioThread({
-                    type = "semitonePressed",
-                    data = {
-                        semitone = root + off,
-                    }
-                });
-            end
-        end
+        pressedKeys[k] = { tuning = instruments[instrumentIndex].tuning }
     end
 
     if k == 'z' then
@@ -698,19 +664,22 @@ function drawMoreInfoForInstrument()
         if labelbutton(' pan', 0, startY + cellH * 3, 100, cellH, singleInstrumentJob == 'pan').clicked then
             singleInstrumentJob = 'pan'
         end
-        if labelbutton(' echo', 0, startY + cellH * 4, 100, cellH, singleInstrumentJob == 'echo').clicked then
-            singleInstrumentJob = 'echo'
-        end
 
-        if labelbutton(' gate', 0, startY + cellH * 5, 100, cellH, singleInstrumentJob == 'gate').clicked then
+
+        if labelbutton(' gate', 0, startY + cellH * 4, 100, cellH, singleInstrumentJob == 'gate').clicked then
             singleInstrumentJob = 'gate'
         end
-
-        if labelbutton(' randP', 0, startY + cellH * 6, 100, cellH, singleInstrumentJob == 'rndP').clicked then
-            singleInstrumentJob = 'rndP'
+        if labelbutton(' echo', 0, startY + cellH * 5, 100, cellH, singleInstrumentJob == 'echo').clicked then
+            singleInstrumentJob = 'echo'
+        end
+        if labelbutton(' randP', 0, startY + cellH * 6, 100, cellH, singleInstrumentJob == 'randP').clicked then
+            singleInstrumentJob = 'randP'
+        end
+        if labelbutton(' trig', 0, startY + cellH * 7, 100, cellH, singleInstrumentJob == 'trig').clicked then
+            singleInstrumentJob = 'trig'
         end
         if singleInstrumentJob then
-            if labelbutton(' reset', 0, startY + cellH * 7, 100, cellH).clicked then
+            if labelbutton(' reset', 0, startY + cellH * 8, 100, cellH).clicked then
                 for i = 1, #drumgrid do
                     local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
                     if (cell and cell.on) then
@@ -777,6 +746,14 @@ function drawMoreInfoForInstrument()
                     local r = getUIRect(circX - cellW / 2, circY - cellW / 2, cellW, cellW)
                     if r then
                         cell.useRndPPentatonic = not cell.useRndPPentatonic
+                    end
+                end
+                if singleInstrumentJob == 'trig' then
+                    local v = v_slider(singleInstrumentJob .. ':' .. i, startX + cellW * (i - 1), startY + cellH, 200,
+                        cell.trig or 1, 0, 1)
+                    if v.value then
+                        cell.trig = v.value
+                        updateDrumKitData()
                     end
                 end
                 if singleInstrumentJob == 'gate' then
