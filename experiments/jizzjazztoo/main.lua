@@ -171,8 +171,8 @@ function love.load()
 
 
 
-    channelIndex = 1
-    recordedData = {}
+    --channelIndex = 1
+    --recordedData = {}
 
     pressedKeys = {}
     -- measure/beat
@@ -204,13 +204,23 @@ function love.load()
 
     samples = prepareSamples(sampleFiles)
     local cycles = prepareCycles({
+        'akwf/birds/birds_0001',
+        'akwf/birds/birds_0002',
+        'akwf/birds/birds_0003',
+        'akwf/birds/birds_0004',
+        'akwf/stringbox/cheeze_0001',
+        'akwf/stringbox/cheeze_0002',
+        'akwf/stringbox/cheeze_0003',
+        'akwf/stringbox/cheeze_0004',
+        'akwf/stringbox/cheeze_0005',
+        'akwf/stringbox/cheeze_0006',
         '100 Void Vertex SCW/music box',
         '100 Void Vertex SCW/perc',
         '100 Void Vertex SCW/twinkle',
         '100 Void Vertex SCW/voice_04_Mello',
         '100 Void Vertex SCW/maschine ',
         '100 Void Vertex SCW/underground',
-        'akwf/stringbox/cheeze_0006',
+
         'akwf/piano/AKWF_piano_0011',
         'fr4 odissey/Fr4 - odissey 9',
         'fr4 prophet/Fr4 - Prophet 5 3',
@@ -246,6 +256,14 @@ function love.load()
                 sustain = defaultSustainLevel,
                 release = defaultReleaseTime
             }
+        }
+    end
+
+    -- here we will keep the recorded Data for all instruments, and every instrument can have multiple recorded things, lets call them clip
+    recordedClips = {}
+    for i = 1, 5 do
+        recordedClips[i] = {
+            clips = {}
         }
     end
 
@@ -549,15 +567,13 @@ function love.keypressed(k)
         recording = not recording
         if not recording then
             sendMessageToAudioThread({ type = "paused", data = true });
-            sendMessageToAudioThread({ type = "checkRecordedDataOnIndex", data = instrumentIndex })
+            sendMessageToAudioThread({ type = "finalizeRecordedDataOnIndex", data = instrumentIndex })
             sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
         end
         if recording then
+            sendMessageToAudioThread({ type = "stopPlayingSoundsOnIndex", data = instrumentIndex })
             sendMessageToAudioThread({ type = "mode", data = 'record' });
             sendMessageToAudioThread({ type = "paused", data = false });
-            --if #recordedData > 0 then
-            recordedData = {}
-            --end
             playing = false
         end
         sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
@@ -577,6 +593,13 @@ function love.update(dt)
             end
             if msg.type == 'numPlayingSounds' then
                 myNumPlayingSounds = msg.data.numbers
+            end
+            if msg.type == 'recordedClip' then
+                --print('i want to keep this data around!')
+                local index = msg.data.instrumentIndex
+                local clip = msg.data.clip
+                table.insert(recordedClips[index].clips, clip)
+                print('instrumetn at index', index, 'has', #recordedClips[index].clips, 'clips')
             end
         end
     until not msg
@@ -749,8 +772,6 @@ function drawMoreInfoForInstrument()
                 updateDrumKitData()
             end
         end
-
-
 
         for i = 1, #drumgrid do
             local cell = drumgrid[i][lookinIntoIntrumentAtIndex]
@@ -1047,8 +1068,22 @@ function drawInstrumentBanks(x, y)
         local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
         if r then
             instrumentIndex = i
-
             sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
+        end
+
+
+        local startX = x + rowWidth
+        local startY = y + (i - 1) * (rowHeight + margin)
+        local clipSize = (rowHeight / 2) - 2
+        local maxColumns = 5
+        --print(i, #recordedClips[i].clips)
+        love.graphics.setColor(1, 1, 1, instrumentIndex == i and 1 or 0.5)
+        for j = 1, #recordedClips[i].clips do
+            local columnIndex = (j - 1) % maxColumns
+            local rowIndex = math.floor((j - 1) / maxColumns)
+            local x = startX + (columnIndex * (clipSize + 2))
+            local y = startY + (rowIndex * (clipSize + 2))
+            love.graphics.rectangle('fill', x, y, clipSize, clipSize)
         end
     end
 end

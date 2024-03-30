@@ -137,9 +137,9 @@ local function updatePlayingSoundsWithLFO()
         if useLFO then
             local it            = playingSounds[i]
             local timeThis      = love.timer.getTime() - it.timeNoteOn
-            local lfoValue      = generateSineLFO(timeThis, .15) -- PARAMTERIZE THIS
-            local lfoValue      = generateNoiseLFO(timeThis, .5) -- PARAMTERIZE THIS
-            -- print(lfoValue)
+            --local lfoValue = generateSineLFO(timeThis, 5) -- PARAMTERIZE THIS
+            local lfoValue      = generateNoiseLFO(timeThis, 1) -- PARAMTERIZE THIS
+            --print(lfoValue)
             local tuning        = instruments[it.instrumentIndex].tuning
             local range         = getPitchVariationRange(it.semitone, 1 / 12, tuning) -- PARAMTERIZE THIS
             local lfoAmplitude  = range
@@ -621,9 +621,7 @@ while (true) do
         if v.type == 'samples' then
             samples = v.data
         end
-
-        if v.type == 'stopPlayingSoundsOnIndex' then
-            -- first patch up the recordeddata
+        if v.type == 'finalizeRecordedDataOnIndex' then
             for i = 1, #recordedData do
                 local it = recordedData[i]
 
@@ -632,17 +630,25 @@ while (true) do
                     print('SUHIAUSDH???')
                 end
                 if it.beatOff == nil and it.tickOff == nil then
-                    print('theres an issue with this probably')
+                    -- print('theres an issue with this probably')
                     semitoneReleased(it.semitone, it.instrumentIndex)
                     --recordedData[i].beatOff = math.floor(lastBeat)
                     --recordedData[i].tickOff = math.floor(lastTick)
                 end
             end
+            if #recordedData > 0 then
+                channel.audio2main:push({ type = 'recordedClip', data = { instrumentIndex = instrumentIndex, clip = recordedData } })
+            end
+        end
+        if v.type == 'stopPlayingSoundsOnIndex' then
+            -- first patch up the recordeddata
+
             local index = v.data
             for i = 1, #playingSounds do
                 local it = playingSounds[i]
                 --print(it.instrumentIndex, index)
                 if it.instrumentIndex == index then
+                    --print('stopped a sound!')
                     it.source:stop()
                 end
             end
