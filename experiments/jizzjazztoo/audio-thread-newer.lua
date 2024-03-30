@@ -121,6 +121,7 @@ local function getPitch(semitone, tuning)
     local sampledAtSemitone = 60 + tuning
     local usingSemitone = (semitone - sampledAtSemitone)
     local result = 2 ^ (usingSemitone / 12)
+    --print(result)
     return result
 end
 

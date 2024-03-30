@@ -204,6 +204,29 @@ function love.load()
 
     samples = prepareSamples(sampleFiles)
     local cycles = prepareCycles({
+        'fr4 odissey/Fr4 - odissey 1',
+        'Analog Waveforms in C/Fr4 - TOM - 1501 ',
+        'Analog Waveforms in C/Fr4 - Aetherphon',
+        'Analog Waveforms in C/Fr4 - synthi 1',
+        'fr4 korg/Fr4 - Korg MS-10 1',
+        'fr4 korg/Fr4 - Korg MS-10 2',
+        'fr4 korg/Fr4 - Korg MS-10 3',
+        'fr4 korg/Fr4 - Korg MS-10 4',
+        'akwf/bw_squrounded/rAsymSqu_01',
+        'akwf/bw_squrounded/rAsymSqu_02',
+        'akwf/bw_squrounded/rAsymSqu_03',
+        'akwf/bw_squrounded/rSymSqu_01',
+        'akwf/bw_squrounded/rSymSqu_02',
+        'akwf/bw_squrounded/rSymSqu_03',
+        'akwf/bw_tri/tri_0001',
+        'akwf/bw_tri/tri_0002',
+        'akwf/bw_tri/tri_0003',
+        'akwf/bw_tri/tri_0004',
+        'akwf/bw_sin/sin_0001',
+        'akwf/bw_sin/sin_0002',
+        'akwf/bw_sin/sin_0003',
+        'akwf/bw_sin/sin_0004',
+        'akwf/bw_sin/sin_0005',
         'akwf/birds/birds_0001',
         'akwf/birds/birds_0002',
         'akwf/birds/birds_0003',
@@ -220,7 +243,11 @@ function love.load()
         '100 Void Vertex SCW/voice_04_Mello',
         '100 Void Vertex SCW/maschine ',
         '100 Void Vertex SCW/underground',
-
+        '100 Void Vertex SCW/in a dream',
+        '100 Void Vertex SCW/phase',
+        '100 Void Vertex SCW/operator metal tin',
+        '100 Void Vertex SCW/druqks',
+        '100 Void Vertex SCW/druqks 2',
         'akwf/piano/AKWF_piano_0011',
         'fr4 odissey/Fr4 - odissey 9',
         'fr4 prophet/Fr4 - Prophet 5 3',
@@ -485,14 +512,17 @@ function love.keyreleased(k)
         local tuningOffset = instruments[instrumentIndex].tuning
         local formerOctave = octave
         if pressedKeys[k] then
+            -- we need to know wha the settings were when we started pressing.
+            -- because we need to release THAT button, not the one that would be triggered now.
             tuningOffset = pressedKeys[k].tuning
             formerOctave = pressedKeys[k].octave
+            formerScale = pressedKeys[k].scale
             pressedKeys[k] = nil
         end
         sendMessageToAudioThread({
             type = "semitoneReleased",
             data = {
-                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale), formerOctave) + tuningOffset,
+                semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], formerScale), formerOctave) + tuningOffset,
 
             }
         });
@@ -516,7 +546,7 @@ function love.keypressed(k)
                 semitone = getSemitone(fitKeyOffsetInScale(usingMap[k], scale)) + instruments[instrumentIndex].tuning,
             }
         });
-        pressedKeys[k] = { tuning = instruments[instrumentIndex].tuning, octave = octave }
+        pressedKeys[k] = { tuning = instruments[instrumentIndex].tuning, octave = octave, scale = scale }
     end
 
     if k == 'z' then
@@ -1071,19 +1101,44 @@ function drawInstrumentBanks(x, y)
             sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
         end
 
+        if #recordedClips[i].clips > 0 and instrumentIndex == i then
+            local buttonw = font:getWidth('edit clips')
+            local buttonh = rowHeight / 2
+            local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
+            labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw,
+                buttonh, false)
+        end
 
+
+
+        --- the clips
         local startX = x + rowWidth
         local startY = y + (i - 1) * (rowHeight + margin)
-        local clipSize = (rowHeight / 2) - 2
+        local clipSize = (rowHeight / 2) - 1
         local maxColumns = 5
         --print(i, #recordedClips[i].clips)
-        love.graphics.setColor(1, 1, 1, instrumentIndex == i and 1 or 0.5)
+
         for j = 1, #recordedClips[i].clips do
             local columnIndex = (j - 1) % maxColumns
             local rowIndex = math.floor((j - 1) / maxColumns)
             local x = startX + (columnIndex * (clipSize + 2))
             local y = startY + (rowIndex * (clipSize + 2))
-            love.graphics.rectangle('fill', x, y, clipSize, clipSize)
+
+            if instrumentIndex == i then
+                love.graphics.setColor(1, 1, 1, 0.8)
+                love.graphics.rectangle('fill', x, y, clipSize, clipSize)
+                love.graphics.setColor(color[1], color[2], color[3], 0.8)
+                love.graphics.rectangle('fill', x, y, clipSize, clipSize)
+            else
+                love.graphics.setColor(.1, .1, .1, 0.8)
+                love.graphics.rectangle('fill', x, y, clipSize, clipSize)
+                love.graphics.setColor(color[1], color[2], color[3], 0.3)
+                love.graphics.rectangle('fill', x, y, clipSize, clipSize)
+            end
+            local str = #recordedClips[i].clips[j]
+            local xOff = (clipSize - font:getWidth(str .. '')) / 2
+            love.graphics.setColor(0, 0, 0, 0.8)
+            love.graphics.print(str .. '', x + xOff, y)
         end
     end
 end
@@ -1141,7 +1196,7 @@ function love.draw()
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 3
-    local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 75)
+    local v = drawLabelledKnob('swing', bx, by, uiData.swing, 50, 80)
     if v.value then
         drawLabel(string.format("%.0i", v.value), bx, by, 1)
         uiData.swing = v.value
@@ -1165,7 +1220,7 @@ function love.draw()
     end
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 9
-    local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -36, 36)
+    local v = drawLabelledKnob('semi', bx, by, uiData.allDrumSemitoneOffset, -72, 48)
     if v.value then
         drawLabel(string.format("%02.1i", v.value), bx, by, 1)
         uiData.allDrumSemitoneOffset = v.value
