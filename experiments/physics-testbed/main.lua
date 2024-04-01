@@ -1137,7 +1137,7 @@ function bikeGroundFeelerIsTouchingGround(bike)
 end
 
 local timeSpent = 0
-
+local brrVolume = 0
 function love.update(dt)
     animParticles.updateAnimParticles(dt)
     -- print(dt)
@@ -1160,6 +1160,23 @@ function love.update(dt)
     enableDisableMipos()
     enableDisableBikes()
 
+
+    local t = math.sin(math.abs(love.timer:getTime()))
+
+    if mipoOnVehicle then
+        source:setVolume(brrVolume)
+
+        local p = numbers.mapInto(velX, 0, 10000, .25, 3)
+        if p < 0.0001 then p = 0.0001 end
+        source:setPitch(p)
+
+        --print(velX, velY)
+    else
+        source:setVolume(0.1 * t)
+        local p = numbers.mapInto(velX, 0, 10000, 0.25, 1)
+        if p < 0.0001 then p = 0.0001 end
+        source:setPitch(p)
+    end
 
     --enableDisableObjects(mipos)
     -- enableDisableObjects({bike})  -- wrap the single bike in a table to make it consistent
@@ -1838,6 +1855,10 @@ function love.keypressed(k)
             local body = bike.frame.body
             body:applyLinearImpulse(0, -(mass * 1000))
             body:applyAngularImpulse(-1000)
+
+
+            brrVolume = 0.1
+            Timer.after(3, function() brrVolume = 0 end)
         end
     end
     if k == 'd' then
@@ -2005,8 +2026,13 @@ local function drawNumbersNicely(num, x, y, x2, y2)
     end
 end
 function displayWheelieData()
+    if (frontWheelFromGround > .4) then
+        brrVolume = 0.1
+        Timer.after(3, function() brrVolume = 0 end)
+    end
     if frontWheelFromGround > 1 then
         --contact:getPosition()
+
         if (frontWheelFromGround > 1.4) then
             local w, h = love.graphics.getDimensions()
             local x1 = w / 2 + (love.math.random() * (w / 6)) - w / 12
@@ -2054,6 +2080,8 @@ function displayLoopingData()
                 loopBack = 6,   -- frame where we will start looping again (after reaching end)
                 endFrame = -1,  -- frame where we end playing (-1 for defaul behaviour == end)
             }
+            brrVolume = 0.1
+            Timer.after(3, function() brrVolume = 0 end)
             animParticles.startAnimParticle('looping', 12, frameData, posData, colorData, alphaData,
                 scaleData, rotationData)
             drawNumbersNicely(loops, x1, y1, x1, y2)
@@ -2069,12 +2097,15 @@ function beginContact(a, b, contact)
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'backWheel') then
             backWheelFromGround = -1
             displayLoopingData()
+
             bikeFrameAngleAtJump = 0
         end
         if (a:getUserData().bodyType == 'ground' and b:getUserData().bodyType == 'frontWheel') then
             displayWheelieData()
             frontWheelFromGround = -1
             displayLoopingData()
+
+
             bikeFrameAngleAtJump = 0
             --print('beginning contatc front')
         end
@@ -2100,6 +2131,14 @@ function endContact(a, b, contact)
 end
 
 function love.load()
+    local url = 'assets/sounds/mountainmipo/bikesound.wav'
+    source = love.audio.newSource(url, 'static')
+    source:setLooping(true)
+    source:setPitch(0.05)
+    source:play()
+
+
+    -- s
     local ffont = "WindsorBT-Roman.otf"
     font = love.graphics.newFont(ffont, 24)
     love.graphics.setFont(font)

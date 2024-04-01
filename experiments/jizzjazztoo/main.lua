@@ -3,12 +3,15 @@ package.path = package.path .. ";../../?.lua"
 sone = require 'sone'
 require 'ui'
 
-local inspect             = require 'vendor.inspect'
-local drumPatterns        = require 'drum-patterns'
+local inspect      = require 'vendor.inspect'
+local drumPatterns = require 'drum-patterns'
 local _thread
-local channel             = {};
-channel.audio2main        = love.thread.getChannel("audio2main")
-channel.main2audio        = love.thread.getChannel("main2audio")
+local channel      = {};
+channel.audio2main = love.thread.getChannel("audio2main")
+channel.main2audio = love.thread.getChannel("main2audio")
+
+require 'fileBrowser'
+
 
 getMessageFromAudioThread = function()
     local v = channel.audio2main:pop();
@@ -21,8 +24,8 @@ sendMessageToAudioThread  = function(msg)
     channel.main2audio:push(msg)
 end
 
-local os                  = love.system.getOS()
-if os == 'iOS' or os == 'Android' then
+local sys                 = love.system.getOS()
+if sys == 'iOS' or sys == 'Android' then
     _thread = love.thread.newThread('audio-thread-newer.lua')
     _thread:start()
 else
@@ -30,6 +33,58 @@ else
     _thread:start()
 end
 
+
+function saveJizzJazzFile(song)
+    local str               = os.date("%Y%m%d%H%M")
+    local path              = str .. '.jizzjazz2.txt'
+    local indexToSamplePath = {}
+
+    local drumInstruments   = {}
+    local melodyInstruments = {}
+
+    for k, v in pairs(drumkit) do
+        if k == 'order' then
+            print(inspect(v))
+        else
+            print(k, v.v)
+        end
+    end
+
+    for i = 1, #samples do
+        print(inspect(samples[i]))
+    end
+
+    for i = 1, #instruments do
+        print(instruments[i])
+    end
+
+
+
+
+    --print(drumkit.order)
+
+    -- for i = 1, #song.voices do
+    --     if song.voices[i] then
+    --         indexToSamplePath[i] = {
+    -- index = song.voices[i].voiceIndex,
+    --path = samples[song.voices[i].voiceIndex].p,
+    --         }
+    --     end
+    -- end
+
+    local data = {
+        --index = indexToSamplePath,
+        --voices = song.voices,
+        --pages = optimizeAllPages(song.pages),
+        --tuning = song.tuning,
+        --swing = song.swing,
+        --bpm = song.bpm
+    }
+
+    love.filesystem.write(path, inspect(data, { indent = "" }))
+    local openURL = "file://" .. love.filesystem.getSaveDirectory()
+    love.system.openURL(openURL)
+end
 
 --local cutoffFrequency = 500 -- Adjust this to change the cutoff frequency
 --local resonance = .10       -- Adjust this to change the resonance amount
@@ -89,7 +144,7 @@ local function prepareDrumkit(drumkitFiles)
             local info = love.filesystem.getInfo(path)
             if info then
                 local soundData = love.sound.newSoundData(path)
-                result[k] = { source = love.audio.newSource(soundData), soundData = soundData }
+                result[k] = { path = path, v = v, source = love.audio.newSource(soundData), soundData = soundData }
             else
                 print('drumkit fail: ', k, v)
             end
@@ -184,6 +239,7 @@ function love.load()
 
     sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
 
+    browser = fileBrowser("samples", {}, { "wav", "WAV", "lua" })
 
     max_octave = 8
     octave = 4
@@ -284,12 +340,6 @@ function love.load()
                 sustain = defaultSustainLevel,
                 release = defaultReleaseTime
             },
-            resonanceFilter = {
-                on = false,
-                cutoffFrequency = 500, -- Adjust this to change the cutoff frequency
-                resonance = .10,       -- Adjust this to change the resonance amount
-                filterQ = 0.707,       -- 1 / math.sqrt(2) -- Quality factor
-            }
         }
     end
 
@@ -599,7 +649,9 @@ function love.keypressed(k)
             recording = false
         end
     end
-
+    if k == 'f5' then
+        saveJizzJazzFile()
+    end
     if k == 'return' then
         recording = not recording
         if not recording then
@@ -954,7 +1006,18 @@ function drawMouseOverGrid()
     end
 end
 
+function love.wheelmoved(a, b)
+    handleFileBrowserWheelMoved(browser, a, b)
+end
+
 function love.mousepressed(x, y, button)
+    if handleBrowserClick(browser, x, y, smallfont) then
+        browser = fileBrowser(browser.root, browser.subdirs,
+            browser.allowedExtensions,
+            browser.kind)
+    end
+    -- handleBrowserClick(browser, x, y)
+
     if lookinIntoIntrumentAtIndex <= 0 then
         local cx, cy = getCellUnderPosition(x, y)
         if cx >= 0 and cy >= 0 then
@@ -1030,89 +1093,6 @@ function drawMeasureCounter(x, y)
             end
         end
         love.graphics.circle('fill', x - xOff + font:getHeight() / 2, y + font:getHeight() / 2, font:getHeight() / 3)
-    end
-end
-
-function drawResonanceFilterForActiveInstrument(x, y)
-    resonanceFilter = {
-        on = false,
-        cutoffFrequency = 500, -- Adjust this to change the cutoff frequency
-        resonance = .10,       -- Adjust this to change the resonance amount
-        filterQ = 1            --,0.707,       -- 1 / math.sqrt(2) -- Quality factor
-    }
-    love.graphics.setLineWidth(4)
-    local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
-    local color = rainbow[instrumentIndex]
-    love.graphics.setColor(color[1], color[2], color[3], 0.3)
-    love.graphics.rectangle('line', x - 50, y, 300 + 100, 70)
-    love.graphics.setColor(1, 1, 1)
-    local resonanceFilter = instruments[instrumentIndex].resonanceFilter
-    local bx, by = x, y + 20
-    local r = getUIRect(x, y + 20, 20, 20)
-    if r then
-        instruments[instrumentIndex].resonanceFilter.on = not instruments[instrumentIndex].resonanceFilter.on
-    end
-    love.graphics.rectangle('line', x, y + 20, 20, 20)
-    if (instruments[instrumentIndex].resonanceFilter.on) then
-        love.graphics.circle('fill', x + 10, y + 30, 10, 10)
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
-    end
-
-    local bx, by = x + 100, y + 20
-    local v = drawLabelledKnob('cutoffF', bx, by, resonanceFilter.cutoffFrequency, 50, 10000)
-    if v.value then
-        drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        instruments[instrumentIndex].resonanceFilter.cutoffFrequency = v.value
-
-
-        local path = samples[instruments[instrumentIndex].sampleIndex].path
-        local soundData = love.sound.newSoundData(path)
-
-        --applyResonantFilter(soundData, instruments[instrumentIndex].resonanceFilter.cutoffFrequency,
-        --    instruments[instrumentIndex].resonanceFilter.resonance, 0.5)
-        --samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
-
-
-
-        soundData = sone.filter(sone.copy(soundData), {
-            type = "lowshelf",
-            frequency = v.value,
-            --resonance = resonanceFilter.resonance,
-            Q = resonanceFilter.resonance,
-            gain = 100,
-        })
-        samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
-
-
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
-        sendMessageToAudioThread({ type = 'samples', data = samples })
-        sendMessageToAudioThread({ type = 'updatedSoundDataForInstrument', data = instrumentIndex })
-    end
-    local bx, by = x + 200, y + 20
-    local v = drawLabelledKnob('resonance', bx, by, resonanceFilter.resonance, 0, 100)
-    if v.value then
-        drawLabel(string.format("%.2f", v.value), bx, by, 1)
-        instruments[instrumentIndex].resonanceFilter.resonance = v.value
-        local path = samples[instruments[instrumentIndex].sampleIndex].path
-        local soundData = love.sound.newSoundData(path)
-
-        --        applyResonantFilter(soundData, instruments[instrumentIndex].resonanceFilter.cutoffFrequency,
-        --            instruments[instrumentIndex].resonanceFilter.resonance, 0.5)
-        --        samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
-
-
-        soundData = sone.filter(sone.copy(soundData), {
-            type = "lowshelf",
-            frequency = resonanceFilter.cutoffFrequency,
-            -- resonance = v.value,
-            Q = resonanceFilter.resonance,
-            gain = 100,
-        })
-        samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
-
-        sendMessageToAudioThread({ type = "instruments", data = instruments });
-        sendMessageToAudioThread({ type = 'samples', data = samples })
-        sendMessageToAudioThread({ type = 'updatedSoundDataForInstrument', data = instrumentIndex })
     end
 end
 
@@ -1240,8 +1220,16 @@ function love.draw()
     love.graphics.clear(0, 0, 0)
     local w, h = love.graphics.getDimensions()
     handleMouseClickStart()
+
+
+
+
     love.graphics.setColor(1, 1, 1)
     drawDrumParts(4, 4)
+
+    --    print(inspect(browser))
+
+    renderBrowser(browser, 50, 50, 200, 425, smallfont)
 
     if lookinIntoIntrumentAtIndex <= 0 then
         drawDrumMachine()
@@ -1262,7 +1250,7 @@ function love.draw()
     drawInstrumentBanks((w / 2) + 32, 120)
 
     drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
-    drawResonanceFilterForActiveInstrument((w / 2) + 32 + 50, 120 + 380 + 100)
+
     local font = smallfont
     love.graphics.setFont(font)
 

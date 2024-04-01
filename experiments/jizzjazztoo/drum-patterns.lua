@@ -6321,7 +6321,8 @@ function lib.pickExistingPattern(drumgrid, drumkit)
     for i = 1, #patterns do
         print(patterns[i].name)
         --if patterns[i].name == 'Rock' then
-        if patterns[i].name == 'Standard Breaks' then
+        if patterns[i].name == "Funk and Soul" then
+            -- if patterns[i].name == 'Standard Breaks' then
             --if patterns[i].name == 'ChaCha' then
             --if patterns[i].name == 'Funk and Soul' then
             --if patterns[i].name == 'Electro' then
