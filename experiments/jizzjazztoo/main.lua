@@ -1,5 +1,6 @@
 package.path = package.path .. ";../../?.lua"
 
+sone = require 'sone'
 require 'ui'
 
 local inspect             = require 'vendor.inspect'
@@ -29,6 +30,17 @@ else
     _thread:start()
 end
 
+
+--local cutoffFrequency = 500 -- Adjust this to change the cutoff frequency
+--local resonance = .10       -- Adjust this to change the resonance amount
+--local filterQ = 0.707       -- 1 / math.sqrt(2) -- Quality factor
+
+
+-- Function to apply a resonant low-pass filter to a sound data
+--
+--
+--
+
 local function prepareCycles(names)
     local result = {}
     for i = 1, #names do
@@ -36,7 +48,16 @@ local function prepareCycles(names)
         local path = 'samples/oscillators/' .. name .. ".wav"
         local info = love.filesystem.getInfo(path)
         if info then
-            result[i] = { name = name, source = love.audio.newSource(path, 'static'), cycle = true }
+            local soundData = love.sound.newSoundData(path)
+
+            result[i] = {
+                path = path,
+                name = name,
+                source = love.audio.newSource(soundData),
+                cycle = true,
+                soundData =
+                    soundData
+            }
         else
             print('file not found!', path)
         end
@@ -51,7 +72,8 @@ local function prepareSamples(names)
         local path = 'samples/' .. name .. ".wav"
         local info = love.filesystem.getInfo(path)
         if info then
-            result[i] = { name = name, source = love.audio.newSource(path, 'static') }
+            local soundData = love.sound.newSoundData(path)
+            result[i] = { name = name, source = love.audio.newSource(soundData), soundData = soundData }
         else
             print('file not found!', path)
         end
@@ -66,7 +88,8 @@ local function prepareDrumkit(drumkitFiles)
             local path = 'samples/' .. v .. ".wav"
             local info = love.filesystem.getInfo(path)
             if info then
-                result[k] = { type = k, name = v, source = love.audio.newSource(path, 'static') }
+                local soundData = love.sound.newSoundData(path)
+                result[k] = { source = love.audio.newSource(soundData), soundData = soundData }
             else
                 print('drumkit fail: ', k, v)
             end
@@ -142,6 +165,7 @@ function love.load()
     myNumPlayingSounds = 0
 
     bigfont = love.graphics.newFont('WindsorBT-Roman.otf', 48)
+    smallestfont = love.graphics.newFont('WindsorBT-Roman.otf', 16)
     smallfont = love.graphics.newFont('WindsorBT-Roman.otf', 24)
     musicfont = love.graphics.newFont('NotoMusic-Regular.ttf', 48)
 
@@ -153,37 +177,14 @@ function love.load()
     playing = false
 
     activeDrumPatternIndex = 1
-    queuedDrumPatternIndex = 0 --  todo
-
-
-
-
-    -- ok the data structure for recording things:
-    -- we have a limited amount of channels in a song (say 1-9)
-    -- you can view a channel as an instrument: an instrument is a sample + adsr envelope
-
-    -- when we are recording we are doing that for 1 channel.
-    -- also recoring a loop means we can maybe record multiple takes.
-    -- yeah a take should be a thing
-    -- that implies you want to either start with  nothing and play as long as you want
-    -- OR do a predefined set of measures a couple of times/takes until its good enough
-    -- OR you could also do a predefined set of measures and when you are done you layer on top.
-
-
-
-    --channelIndex = 1
-    --recordedData = {}
+    --queuedDrumPatternIndex = 0 --  todo
 
     pressedKeys = {}
     -- measure/beat
 
     sendMessageToAudioThread({ type = "resetBeatsAndTicks" });
-    --resetBeatsAndTicks()
-
-    -- metronome sounds
 
 
-    -- octave stuff
     max_octave = 8
     octave = 4
 
@@ -265,7 +266,6 @@ function love.load()
     samples = TableConcat(cycles, samples)
     sendMessageToAudioThread({ type = 'samples', data = samples })
 
-
     local defaultAttackTime   = 0.2
     local defaultDecayTime    = 0.01
     local defaultSustainLevel = 0.7
@@ -273,6 +273,7 @@ function love.load()
 
     instrumentIndex           = 1
     instruments               = {}
+
     for i = 1, 5 do
         instruments[i] = {
             sampleIndex = 1,
@@ -282,6 +283,12 @@ function love.load()
                 decay = defaultDecayTime,
                 sustain = defaultSustainLevel,
                 release = defaultReleaseTime
+            },
+            resonanceFilter = {
+                on = false,
+                cutoffFrequency = 500, -- Adjust this to change the cutoff frequency
+                resonance = .10,       -- Adjust this to change the resonance amount
+                filterQ = 0.707,       -- 1 / math.sqrt(2) -- Quality factor
             }
         }
     end
@@ -310,7 +317,7 @@ function love.load()
         CY = 'cr78/Cymbal',
         RS = 'cr78/Rim Shot',
         TB = 'cr78/Guiro 1',
-        CPS = 'cr78/Guiro 1',
+        CPS = 'per01',
         CB = 'cr78/Cowbell'
     }
 
@@ -625,11 +632,9 @@ function love.update(dt)
                 myNumPlayingSounds = msg.data.numbers
             end
             if msg.type == 'recordedClip' then
-                --print('i want to keep this data around!')
                 local index = msg.data.instrumentIndex
                 local clip = msg.data.clip
                 table.insert(recordedClips[index].clips, clip)
-                print('instrumetn at index', index, 'has', #recordedClips[index].clips, 'clips')
             end
         end
     until not msg
@@ -1028,6 +1033,89 @@ function drawMeasureCounter(x, y)
     end
 end
 
+function drawResonanceFilterForActiveInstrument(x, y)
+    resonanceFilter = {
+        on = false,
+        cutoffFrequency = 500, -- Adjust this to change the cutoff frequency
+        resonance = .10,       -- Adjust this to change the resonance amount
+        filterQ = 1            --,0.707,       -- 1 / math.sqrt(2) -- Quality factor
+    }
+    love.graphics.setLineWidth(4)
+    local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
+    local color = rainbow[instrumentIndex]
+    love.graphics.setColor(color[1], color[2], color[3], 0.3)
+    love.graphics.rectangle('line', x - 50, y, 300 + 100, 70)
+    love.graphics.setColor(1, 1, 1)
+    local resonanceFilter = instruments[instrumentIndex].resonanceFilter
+    local bx, by = x, y + 20
+    local r = getUIRect(x, y + 20, 20, 20)
+    if r then
+        instruments[instrumentIndex].resonanceFilter.on = not instruments[instrumentIndex].resonanceFilter.on
+    end
+    love.graphics.rectangle('line', x, y + 20, 20, 20)
+    if (instruments[instrumentIndex].resonanceFilter.on) then
+        love.graphics.circle('fill', x + 10, y + 30, 10, 10)
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+    end
+
+    local bx, by = x + 100, y + 20
+    local v = drawLabelledKnob('cutoffF', bx, by, resonanceFilter.cutoffFrequency, 50, 10000)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        instruments[instrumentIndex].resonanceFilter.cutoffFrequency = v.value
+
+
+        local path = samples[instruments[instrumentIndex].sampleIndex].path
+        local soundData = love.sound.newSoundData(path)
+
+        --applyResonantFilter(soundData, instruments[instrumentIndex].resonanceFilter.cutoffFrequency,
+        --    instruments[instrumentIndex].resonanceFilter.resonance, 0.5)
+        --samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
+
+
+
+        soundData = sone.filter(sone.copy(soundData), {
+            type = "lowshelf",
+            frequency = v.value,
+            --resonance = resonanceFilter.resonance,
+            Q = resonanceFilter.resonance,
+            gain = 100,
+        })
+        samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
+
+
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+        sendMessageToAudioThread({ type = 'samples', data = samples })
+        sendMessageToAudioThread({ type = 'updatedSoundDataForInstrument', data = instrumentIndex })
+    end
+    local bx, by = x + 200, y + 20
+    local v = drawLabelledKnob('resonance', bx, by, resonanceFilter.resonance, 0, 100)
+    if v.value then
+        drawLabel(string.format("%.2f", v.value), bx, by, 1)
+        instruments[instrumentIndex].resonanceFilter.resonance = v.value
+        local path = samples[instruments[instrumentIndex].sampleIndex].path
+        local soundData = love.sound.newSoundData(path)
+
+        --        applyResonantFilter(soundData, instruments[instrumentIndex].resonanceFilter.cutoffFrequency,
+        --            instruments[instrumentIndex].resonanceFilter.resonance, 0.5)
+        --        samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
+
+
+        soundData = sone.filter(sone.copy(soundData), {
+            type = "lowshelf",
+            frequency = resonanceFilter.cutoffFrequency,
+            -- resonance = v.value,
+            Q = resonanceFilter.resonance,
+            gain = 100,
+        })
+        samples[instruments[instrumentIndex].sampleIndex].source = love.audio.newSource(soundData)
+
+        sendMessageToAudioThread({ type = "instruments", data = instruments });
+        sendMessageToAudioThread({ type = 'samples', data = samples })
+        sendMessageToAudioThread({ type = 'updatedSoundDataForInstrument', data = instrumentIndex })
+    end
+end
+
 function drawADSRForActiveInstrument(x, y)
     local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
 
@@ -1061,6 +1149,7 @@ function drawADSRForActiveInstrument(x, y)
 
     local bx, by = x + 300, y + 20
     local v = drawLabelledKnob('release', bx, by, adsr.release, 0, 1)
+
     if v.value then
         drawLabel(string.format("%.1f", v.value), bx, by, 1)
         instruments[instrumentIndex].adsr.release = v.value
@@ -1071,13 +1160,15 @@ end
 function drawInstrumentBanks(x, y)
     local font = smallfont
     love.graphics.setFont(font)
-    local rowHeight = smallfont:getHeight() * 2
+    local rowHeight = smallfont:getHeight() * 2.5
     local rowWidth = 300
     local gray = palette.gray
     local rainbow = { palette.red, palette.orange, palette.yellow, palette.green, palette.blue }
     local margin = 4
 
     for i = 1, 5 do
+        local font = smallfont
+        love.graphics.setFont(font)
         love.graphics.setLineWidth(4)
         love.graphics.setColor(gray[1], gray[2], gray[3], 0.3)
         local color = rainbow[i]
@@ -1092,10 +1183,11 @@ function drawInstrumentBanks(x, y)
         if instrumentIndex == i then
             love.graphics.setColor(1, 1, 1)
         end
+
         local name = samples[instruments[i].sampleIndex].name
         love.graphics.print(' ' .. name, x, y + (i - 1) * (rowHeight + margin))
-
         local r = getUIRect(x, y + (i - 1) * (rowHeight + margin), rowWidth, rowHeight)
+
         if r then
             instrumentIndex = i
             sendMessageToAudioThread({ type = "instrumentIndex", data = instrumentIndex })
@@ -1105,11 +1197,8 @@ function drawInstrumentBanks(x, y)
             local buttonw = font:getWidth('edit clips')
             local buttonh = rowHeight / 2
             local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
-            labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw,
-                buttonh, false)
+            labelbutton('edit clips', x + rowWidth - buttonw, buttony, buttonw, buttonh, false)
         end
-
-
 
         --- the clips
         local startX = x + rowWidth
@@ -1135,7 +1224,11 @@ function drawInstrumentBanks(x, y)
                 love.graphics.setColor(color[1], color[2], color[3], 0.3)
                 love.graphics.rectangle('fill', x, y, clipSize, clipSize)
             end
-            local str = #recordedClips[i].clips[j]
+            local font = smallestfont
+            love.graphics.setFont(smallestfont)
+            local loopRounder = (recordedClips[i].clips[j].meta.loopRounder)
+            local str = #recordedClips[i].clips[j] .. '\n' .. loopRounder
+
             local xOff = (clipSize - font:getWidth(str .. '')) / 2
             love.graphics.setColor(0, 0, 0, 0.8)
             love.graphics.print(str .. '', x + xOff, y)
@@ -1168,8 +1261,8 @@ function love.draw()
 
     drawInstrumentBanks((w / 2) + 32, 120)
 
-    drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 340)
-
+    drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
+    drawResonanceFilterForActiveInstrument((w / 2) + 32 + 50, 120 + 380 + 100)
     local font = smallfont
     love.graphics.setFont(font)
 

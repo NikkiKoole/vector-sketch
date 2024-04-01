@@ -134,7 +134,7 @@ end
 
 local function updatePlayingSoundsWithLFO()
     for i = 1, #playingSounds do
-        local useLFO = true
+        local useLFO = false
         if useLFO then
             local it            = playingSounds[i]
             local timeThis      = love.timer.getTime() - it.timeNoteOn
@@ -519,14 +519,7 @@ end
 
 function handlePlayingRecordedData()
     if true then
-        local loopRounder = 1
-        if #recordedData > 0 then
-            --print(#recordedData, recordedData[#recordedData].beatOff, recordedData[#recordedData].tickOff)
-            local lastRecordedBeat = recordedData[#recordedData].beatOff + 1
-            if lastRecordedBeat then
-                loopRounder = (math.ceil(lastRecordedBeat / beatInMeasure) * beatInMeasure)
-            end
-        end
+        local loopRounder = recordedData.meta and recordedData.meta.loopRounder or 1
         local beat = (math.floor(lastBeat) % loopRounder)
         local tick = math.floor(lastTick)
 
@@ -619,6 +612,31 @@ while (true) do
 
     local v = channel.main2audio:pop();
     if v then
+        if v.type == 'updatedSoundDataForInstrument' then
+            local index = v.data
+            --print('jojo')
+            for i = 1, #playingSounds do
+                local it = playingSounds[i]
+                --print(it.instrumentIndex, index)
+                if it.instrumentIndex == index then
+                    --print('stopped a sound!')
+                    local p = it.source:getPitch()
+                    local v = it.source:getVolume()
+                    -- print(p, v, it.pitch)
+                    it.source:stop()
+                    local seek = it.source:tell('samples')
+
+                    it.source = samples[instruments[index].sampleIndex].source:clone()
+
+                    it.source:setLooping(true)
+                    -- it.source:setVolume(v)
+                    it.source:setPitch(it.pitch)
+                    it.source:play()
+                    -- it.source:seek(seek, 'samples')
+                    --  it.source:setPitch(p)
+                end
+            end
+        end
         if v.type == 'samples' then
             samples = v.data
         end
@@ -636,6 +654,16 @@ while (true) do
                     --recordedData[i].beatOff = math.floor(lastBeat)
                     --recordedData[i].tickOff = math.floor(lastTick)
                 end
+            end
+            if #recordedData > 0 then
+                local lastRecordedBeat = recordedData[#recordedData].beatOff + 1
+                local loopRounder = 1
+                if lastRecordedBeat then
+                    loopRounder = (math.ceil(lastRecordedBeat / beatInMeasure) * beatInMeasure)
+                end
+                recordedData.meta = {
+                    loopRounder = loopRounder
+                }
             end
             if #recordedData > 0 then
                 channel.audio2main:push({ type = 'recordedClip', data = { instrumentIndex = instrumentIndex, clip = recordedData } })
