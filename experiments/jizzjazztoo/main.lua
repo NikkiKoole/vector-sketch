@@ -202,9 +202,14 @@ function love.load()
         ['red'] = '#cc241d',
         ['green'] = '#98971a',
         ['yellow'] = '#d79921',
+        ['yellow2'] = '#fabd2f',
         ['blue'] = '#458588',
         ['orange'] = '#d65d0e',
         ['gray'] = '#a89984',
+        ['fg4'] = '#a89984',
+        ['fg2'] = '#d5c4a1',
+        ['bg2'] = '#504945',
+        ['bg0'] = '#282828'
     }
     for k, v in pairs(palette) do
         palette[k] = { hex2rgb(v) }
@@ -746,7 +751,9 @@ function drawDrumOnNotes(startX, startY, cellW, cellH, columns, rows)
 end
 
 function drawDrumMachineLabels(startX, startY, cellH, labels)
-    love.graphics.setColor(1, 1, 1, 0.8)
+    local col = palette.fg2
+    love.graphics.setColor(col[1], col[2], col[3], 0.3)
+
     for y = 0, #labels - 1 do
         if labelbutton(' ' .. labels[y + 1], 0, startY + y * cellH, 100, grid.cellH).clicked then
             lookinIntoIntrumentAtIndex = y + 1
@@ -1062,7 +1069,8 @@ function drawDrumParts(x, y)
     local w = font:getWidth('X') + 4
     local xOff = (w - smallfont:getWidth('x')) / 2
     local h = font:getHeight()
-    love.graphics.setColor(1, 1, 1, 0.25)
+    local col = palette.fg2
+    love.graphics.setColor(col[1], col[2], col[3], 0.25)
     love.graphics.setLineWidth(4)
     for i = 1, 3 do
         love.graphics.rectangle('line', x + w * (i - 1), y, w, h)
@@ -1229,7 +1237,7 @@ function love.draw()
 
     --    print(inspect(browser))
 
-    renderBrowser(browser, 50, 50, 200, 425, smallfont)
+
 
     if lookinIntoIntrumentAtIndex <= 0 then
         drawDrumMachine()
@@ -1250,6 +1258,9 @@ function love.draw()
     drawInstrumentBanks((w / 2) + 32, 120)
 
     drawADSRForActiveInstrument((w / 2) + 32 + 50, 120 + 380)
+
+    love.graphics.setColor(1, 1, 1)
+    renderBrowser(browser, 50, 50, w / 3, h - 100, smallfont)
 
     local font = smallfont
     love.graphics.setFont(font)
@@ -1316,7 +1327,8 @@ function drawLabelledKnob(label, x, y, value, min, max)
 end
 
 function drawLabel(str, x, y, alpha)
-    love.graphics.setColor(1, 1, 1, alpha or .2)
+    local col = palette.fg2
+    love.graphics.setColor(col[1], col[2], col[3], alpha or .2)
     local font = smallfont
     love.graphics.setFont(font)
     local strW = font:getWidth(str)

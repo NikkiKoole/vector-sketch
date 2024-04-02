@@ -15,11 +15,16 @@ function TableConcat(t1, t2)
     return t1
 end
 
+local verticalCount = 0
 function handleFileBrowserWheelMoved(browser, a, b)
     browser.scrollTop = browser.scrollTop + b
     if browser.scrollTop < 0 then browser.scrollTop = 0 end
-    if browser.scrollTop > #browser.all then browser.scrollTop = #browser.all end
+    print(verticalCount, #browser.all)
+    local maxScrollTop = math.max(#browser.all - verticalCount, 0)
+    print(maxScrollTop)
+    if browser.scrollTop > maxScrollTop then browser.scrollTop = maxScrollTop end
     browser.scrollTop = math.floor(browser.scrollTop)
+    print(browser.scrollTop)
 end
 
 function fileBrowser(rootPath, subdirs, allowedExtensions)
@@ -66,6 +71,7 @@ end
 
 function renderBrowser(browser, x, y, w, h, font)
     --if not browser then return end
+
     local runningX, runningY
 
     browser.x = x
@@ -77,15 +83,27 @@ function renderBrowser(browser, x, y, w, h, font)
     local buttonHeight = font:getHeight()
     local amount = h / buttonHeight
     browser.amount = amount
+    verticalCount = math.floor(h / buttonHeight)
+    h = math.min(h, buttonHeight * #browser.all)
+    love.graphics.setScissor(x, y, w, h)
+    love.graphics.setColor(palette.bg0)
+    love.graphics.rectangle('fill', x, y, w, h)
+
+    local mx, my = love.mouse.getPosition()
 
     for i = 1 + browser.scrollTop, math.min(#browser.all, browser.scrollTop + amount) do
         local thing = browser.all[i]
         --if thing then
+        if mx > x and mx < x + w and my > runningY and my < runningY + buttonHeight then
+            love.graphics.setColor(1, 1, 1, 0.2)
+            love.graphics.rectangle('fill', x, runningY, w, buttonHeight)
+        end
         if thing.type == 'directory' then
-            love.graphics.setColor(palette.red)
-            love.graphics.rectangle('fill', x, runningY, buttonWidth, buttonHeight)
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.print(thing.path, x, runningY)
+            --love.graphics.setColor(palette.red)
+            --love.graphics.rectangle('fill', x, runningY, buttonWidth, buttonHeight)
+
+            love.graphics.setColor(palette.yellow)
+            love.graphics.print(' ' .. thing.path, x, runningY)
         else
             local filename = thing.path
             if browser.allowedExtensions then
@@ -94,16 +112,18 @@ function renderBrowser(browser, x, y, w, h, font)
                 end
             end
             if (browser.lastClickedFile and browser.lastClickedFile == thing.path) then
-                love.graphics.setColor(.5, .1, .1)
+                love.graphics.setColor(palette.orange)
             else
                 love.graphics.setColor(1, 1, 0)
+                love.graphics.setColor(palette.fg2)
             end
 
-            love.graphics.print(filename, x, runningY)
+            love.graphics.print(' ' .. filename, x, runningY)
         end
         --end
         runningY = runningY + buttonHeight
     end
+    love.graphics.setScissor()
 end
 
 function ends_with(str, ending)

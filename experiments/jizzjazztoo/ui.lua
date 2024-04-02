@@ -159,6 +159,7 @@ function labelbutton(str, x, y, w, h, border)
         end
     end
     --print(str, alpha)
+
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.rectangle("fill", x, y, w, h)
     love.graphics.setColor(1, 1, 1, .8)
@@ -167,7 +168,8 @@ function labelbutton(str, x, y, w, h, border)
         love.graphics.rectangle("line", x, y, w, h)
         love.graphics.setLineWidth(1)
     end
-
+    local col = palette.fg2
+    love.graphics.setColor(col[1], col[2], col[3], 0.8)
     love.graphics.print(str, x, y)
     --shadedText(str, x + margin, y)
     return {
