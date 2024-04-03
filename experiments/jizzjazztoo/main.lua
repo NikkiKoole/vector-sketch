@@ -44,9 +44,9 @@ function saveJizzJazzFile(song)
 
     for k, v in pairs(drumkit) do
         if k == 'order' then
-            print(inspect(v))
+            -- print(inspect(v))
         else
-            print(k, v.v)
+            -- print(k, v.v)
         end
     end
 
@@ -92,7 +92,7 @@ function prepareSingleSample(root, pathArray, filePath)
             isCycle = true
         end
     end
-    print('isCycle', isCycle)
+    -- print('isCycle', isCycle)
     fullPath = fullPath .. '/' .. filePath
     local name = filePath:gsub(".wav", ""):gsub(".WAV", "")
     local info = love.filesystem.getInfo(fullPath)
@@ -114,7 +114,7 @@ local function prepareDrumkit(drumkitFiles)
     local result = {}
     for k, v in pairs(drumkitFiles) do
         if k ~= 'order' then
-            print(k)
+            -- print(k)
             local root = 'samples'
             local fullPath = root
             local pathArray = v[1]
@@ -251,7 +251,7 @@ function love.load()
     instruments               = {}
 
     local sample              = prepareSingleSample('samples', { "oscillators", "fr4 arp" }, 'Fr4 - ARP 2600 14.wav')
-    print(inspect(sample))
+
     --prepareSingleSample('samples', {}, 'Triangles 101.wav')
     --prepeareSingleSample('samples', { 'legow' }, 'Little Blip.wav')
     for i = 1, 1 do
@@ -296,39 +296,6 @@ function love.load()
         CB = { { 'cr78' }, 'Cowbell' }
     }
 
-    local drumkitJazzkit = {
-        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
-        AC = 'Minipops/bd2',
-        BD = 'Minipops/bd1',
-        SD = 'Minipops/sd1',
-        LT = 'cr78/Conga Low',
-        MT = 'Minipops/bd3',
-        HT = 'cr78/Bongo High',
-        CH = 'jazzkit/JK_HH_01',
-        OH = 'Minipops/hihat2',
-        CY = 'cr78/Cymbal',
-        RS = 'cr78/Rim Shot',
-        CPS = 'cr78/Guiro 1',
-        TB = 'jazzkit/JK_BRSH_01',
-        CB = 'Minipops/wood1',
-    }
-    local drumkitMinipop = {
-        order = { 'AC', 'BD', 'SD', 'LT', 'MT', 'HT', 'CH', 'OH', 'CY', 'RS', 'CPS', 'TB', 'CB' },
-        AC = 'Minipops/bd2',
-        BD = 'Minipops/bd1',
-        SD = 'Minipops/sd1',
-        LT = 'cr78/Conga Low',
-        MT = 'Minipops/bd3',
-        HT = 'cr78/Bongo High',
-        CH = 'Minipops/hihat1',
-        OH = 'Minipops/hihat2',
-        CY = 'cr78/Cymbal',
-        RS = 'cr78/Rim Shot',
-        CPS = 'cr78/Guiro 1',
-        TB = 'Minipops/Tambourine',
-        CB = 'Minipops/wood1',
-    }
-
     drumkitFiles = drumkitCR78
     drumkit = prepareDrumkit(drumkitFiles)
 
@@ -349,8 +316,15 @@ function love.load()
         end
     end
     drumPatternName = ''
-
+    drummPatternPickData = {
+        scrollLeft = 0,
+        scrollRight = 0,
+        pickedCategoryIndex = 1,
+        pickedItemIndex = 1
+    }
     updateDrumKitData()
+
+
     -- scales
     scales = {
         ['chromatic'] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
@@ -554,6 +528,8 @@ function love.keypressed(k)
     if k == 'escape' then
         if fileBrowserForSound then
             fileBrowserForSound = nil
+        elseif showDrumPatternPicker then
+            showDrumPatternPicker = nil
         else
             sendMessageToAudioThread({ type = "paused", data = true });
             love.event.quit()
@@ -939,7 +915,12 @@ function drawMouseOverGrid()
 end
 
 function love.wheelmoved(a, b)
-    handleFileBrowserWheelMoved(browser, a, b)
+    if showDrumPatternPicker then
+        handleDrumPickerWheelMoved(drummPatternPickData, a, b)
+    end
+    if fileBrowserForSound then
+        handleFileBrowserWheelMoved(browser, a, b)
+    end
 end
 
 function love.mousepressed(x, y, button)
@@ -947,7 +928,7 @@ function love.mousepressed(x, y, button)
         local bclicked, path = handleBrowserClick(browser, x, y, smallfont)
         --print(path)
         if bclicked then
-            --  mouseState.clickedSomething = true
+            mouseState.clickedSomething = true
             browserClicked = true
             --print('mouseState.clickedSomething', mouseState.clickedSomething)
             if bclicked == 'directory' then
@@ -1028,6 +1009,88 @@ function drawDrumParts(x, y)
     for i = 4, 6 do
         love.graphics.rectangle('line', x + w * (i - 4), y + h, w, h)
         love.graphics.print(labels[i], xOff + x + w * (i - 4), y + h)
+    end
+end
+
+function handleDrumPickerWheelMoved(pickData, a, b)
+    local mx, my = love.mouse:getPosition()
+    local columnWidth = 200
+    if mx > 32 and mx < columnWidth + 32 then
+        pickData.scrollLeft = pickData.scrollLeft + b
+    end
+    if mx > columnWidth + 32 and mx < (columnWidth * 2) + 32 then
+        pickData.scrollRight = pickData.scrollRight + b
+    end
+end
+
+function drawDrumPatternPicker(pickData)
+    local leftColumn = {}
+    local yOffset = 100
+    local font = smallfont
+    local fontH = font:getHeight()
+    local w, h = love.graphics.getDimensions()
+    local panelHeight = h - 200
+    local columnWidth = 200
+    local panelWidth = columnWidth * 2
+
+    love.graphics.setColor(palette.bg0)
+    love.graphics.rectangle('fill', 32, 100, panelWidth, panelHeight)
+    local index = pickData.pickedCategoryIndex --pickedDrumCategory
+    local index2 = pickData.pickedItemIndex
+
+    pickData.scrollLeft = math.min(0, pickData.scrollLeft)
+    local inList = #drumPatterns.patterns
+    if panelHeight / fontH < inList then
+        if (pickData.scrollLeft - panelHeight / fontH < inList * -1) then
+            pickData.scrollLeft = (inList - panelHeight / fontH) * -1
+        end
+    end
+
+    --print(pickData.scrollRight)
+
+    local inList = #drumPatterns.patterns[index].sections
+    pickData.scrollRight = math.min(0, pickData.scrollRight)
+    if panelHeight / fontH < inList then
+        if (pickData.scrollRight - panelHeight / fontH < (#drumPatterns.patterns[index].sections) * -1) then
+            pickData.scrollRight = (#drumPatterns.patterns[index].sections - panelHeight / fontH) * -1
+        end
+    else
+        pickData.scrollRight = 0
+    end
+    for i = 1, #drumPatterns.patterns do
+        love.graphics.setColor(palette.fg2)
+
+        local str = drumPatterns.patterns[i].name
+        local buttonW = columnWidth
+        if i == index then
+            love.graphics.setColor(palette.orange)
+            love.graphics.rectangle('fill', 32, (pickData.scrollLeft * fontH) + yOffset + (i - 1) * fontH, buttonW, fontH)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+
+        if labelbutton(str, 32, (pickData.scrollLeft * fontH) + yOffset + (i - 1) * fontH, buttonW, fontH, true).clicked then
+            pickData.pickedCategoryIndex = i
+        end
+    end
+
+    for i = 1, #drumPatterns.patterns[index].sections do
+        local it = drumPatterns.patterns[index].sections[i]
+        love.graphics.setColor(1, 1, 1, 1)
+
+        local str = it.name
+        local buttonW = columnWidth
+
+        if i == index2 then
+            love.graphics.setColor(palette.orange)
+            love.graphics.rectangle('fill', 32 + columnWidth, (pickData.scrollRight * fontH) + yOffset + (i - 1) * fontH,
+                buttonW,
+                fontH)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+        if labelbutton(str, 32 + columnWidth, (pickData.scrollRight * fontH) + yOffset + (i - 1) * fontH, buttonW, fontH, true).clicked then
+            drumPatternName = drumPatterns.pickPatternByIndex(index, i)
+            pickData.pickedItemIndex = i
+        end
     end
 end
 
@@ -1139,7 +1202,7 @@ function drawInstrumentBanks(x, y)
             local buttonh = rowHeight / 2
             local buttony = y + (i - 1) * (rowHeight + margin) + buttonh
             if labelbutton('wav', x, buttony, buttonw, buttonh, false).clicked == true then
-                print('gonna do the wav')
+                --print('gonna do the wav')
 
 
                 print(inspect(instruments[instrumentIndex].sample.pathParts))
@@ -1203,15 +1266,17 @@ function love.draw()
 
 
     love.graphics.setColor(1, 1, 1)
-    drawDrumParts(4, 4)
+    --drawDrumParts(4, 4)
 
     --    print(inspect(browser))
 
 
 
     if lookinIntoIntrumentAtIndex <= 0 then
-        drawDrumMachine()
-        drawMouseOverGrid()
+        if (not showDrumPatternPicker) then
+            drawDrumMachine()
+            drawMouseOverGrid()
+        end
     end
 
     if lookinIntoIntrumentAtIndex > 0 then
@@ -1266,7 +1331,19 @@ function love.draw()
         '  ' .. vmem .. '  ' .. draws .. ' ' .. fps .. ' ' .. countNotes .. ' ' .. love.audio.getActiveSourceCount()
     love.graphics.setColor(1, 1, 1, .5)
     love.graphics.print(debugstring, 0, h - font:getHeight())
-    love.graphics.print(drumPatternName, w - font:getWidth(drumPatternName), font:getHeight())
+
+
+    --print()
+    --drawLabelledKnob(drumPatternName, bx, by, adsr.release, 0, 1)
+
+    if labelbutton(drumPatternName, 0, 32 + font:getHeight(), font:getWidth(drumPatternName),
+            font:getHeight()).clicked then
+        showDrumPatternPicker = not showDrumPatternPicker
+    end
+    if (showDrumPatternPicker) then
+        drawDrumPatternPicker(drummPatternPickData)
+    end
+    --love.graphics.print(drumPatternName, 0, 32 + font:getHeight())
 
 
     local bx, by = grid.startX + grid.cellW * (grid.columns + 2), grid.startY + grid.cellH * 1

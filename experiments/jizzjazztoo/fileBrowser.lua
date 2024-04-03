@@ -17,15 +17,16 @@ end
 
 local verticalCount = 0
 local browserWidth = 0
+
 function handleFileBrowserWheelMoved(browser, a, b)
     browser.scrollTop = browser.scrollTop + b
     if browser.scrollTop < 0 then browser.scrollTop = 0 end
-    print(verticalCount, #browser.all)
+    -- print(verticalCount, #browser.all)
     local maxScrollTop = math.max(#browser.all - verticalCount, 0)
-    print(maxScrollTop)
+    -- print(maxScrollTop)
     if browser.scrollTop > maxScrollTop then browser.scrollTop = maxScrollTop end
     browser.scrollTop = math.floor(browser.scrollTop)
-    print(browser.scrollTop)
+    -- print(browser.scrollTop)
 end
 
 function fileBrowser(rootPath, subdirs, allowedExtensions)
@@ -68,6 +69,12 @@ function fileBrowser(rootPath, subdirs, allowedExtensions)
         -- allowedToUseFolders = allowedToUseFolders,
         scrollTop = 0
     }
+end
+
+function renderDrumPatternBrowser(x, y, w, h)
+    love.graphics.setScissor(x, y, w, h)
+    love.graphics.setColor(palette.bg0)
+    love.graphics.rectangle('fill', x, y, w, h)
 end
 
 function renderBrowser(browser, x, y, w, h, font)
@@ -173,6 +180,7 @@ function handleBrowserClick(browser, x, y, font)
             end
         end
     end
+
     print('restuning', result, clickedPath)
     return result, clickedPath
 end

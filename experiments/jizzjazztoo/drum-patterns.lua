@@ -6291,7 +6291,7 @@ function validatePatterns()
 
             for k, v in pairs(part.grid) do
                 if string.len(v) ~= 16 and string.len(v) ~= 12 then
-                    print(p.name, part.name, k, string.len(v))
+                    -- print(p.name, part.name, k, string.len(v))
                 end
             end
         end
@@ -6300,9 +6300,9 @@ end
 
 --validatePatterns()
 local lib = {}
+lib.patterns = patterns
 
-function lib.pickExistingPattern(drumgrid, drumkit)
-    -- clear it
+local function clear()
     for x = 1, #drumgrid do
         for y = 1, #drumgrid[1] do
             drumgrid[x][y] = { on = false }
@@ -6314,40 +6314,9 @@ function lib.pickExistingPattern(drumgrid, drumkit)
         --   print(patterns[i].name)
         totalSections = totalSections + #patterns[i].sections
     end
-    -- print(#patterns, totalSections)
+end
 
-    local index = -1
-    print('**')
-    for i = 1, #patterns do
-        print(patterns[i].name)
-        --if patterns[i].name == 'Rock' then
-        if patterns[i].name == "Funk and Soul" then
-            -- if patterns[i].name == 'Standard Breaks' then
-            --if patterns[i].name == 'ChaCha' then
-            --if patterns[i].name == 'Funk and Soul' then
-            --if patterns[i].name == 'Electro' then
-            --if patterns[i].name == 'Drum and Bass' then
-            --if patterns[i].name == 'House' then
-            --if patterns[i].name == 'Miami Bass' then
-            --if patterns[i].name == 'Slow' then
-            --if patterns[i].name == 'Basic Patterns' then
-            -- if patterns[i].name == 'Ballad 1' then
-            --if patterns[i].name == 'Pop' then
-            --if patterns[i].name == 'Disco' then
-            --if patterns[i].name == 'EDM' then
-            --if patterns[i].name == 'Afro-Cuban' then
-            --if patterns[i].name == 'Hip Hop' then
-            index = i
-        end
-    end
-    local patternIndex = index --math.ceil(love.math.random() * #patterns)
-    local pattern = patterns[patternIndex]
-
-    local partIndex = math.ceil(love.math.random() * #pattern.sections)
-
-    local part = patterns[patternIndex].sections[partIndex]
-
-
+local function fill(pattern, part)
     local hasEveryThingNeeded = true
     for k, v in pairs(part.grid) do
         if not drumkit[k] then
@@ -6389,6 +6358,60 @@ function lib.pickExistingPattern(drumgrid, drumkit)
 
         return pattern.name .. " : " .. part.name, gridLength
     end
+end
+
+function lib.pickPatternByIndex(index1, index2)
+    -- clear it
+    clear()
+    local patternIndex = index1 --math.ceil(love.math.random() * #patterns)
+    local pattern = patterns[patternIndex]
+
+    local partIndex = index2
+
+    local part = patterns[patternIndex].sections[partIndex]
+
+    return fill(pattern, part)
+end
+
+function lib.pickExistingPattern(drumgrid, drumkit)
+    -- clear it
+    clear()
+    -- print(#patterns, totalSections)
+
+    local index = -1
+    --  print('**')
+    for i = 1, #patterns do
+        --   print(patterns[i].name)
+        --if patterns[i].name == 'Rock' then
+        if patterns[i].name == "Funk and Soul" then
+            -- if patterns[i].name == 'Standard Breaks' then
+            --if patterns[i].name == 'ChaCha' then
+            --if patterns[i].name == 'Funk and Soul' then
+            --if patterns[i].name == 'Electro' then
+            --if patterns[i].name == 'Drum and Bass' then
+            --if patterns[i].name == 'House' then
+            --if patterns[i].name == 'Miami Bass' then
+            --if patterns[i].name == 'Slow' then
+            --if patterns[i].name == 'Basic Patterns' then
+            -- if patterns[i].name == 'Ballad 1' then
+            --if patterns[i].name == 'Pop' then
+            --if patterns[i].name == 'Disco' then
+            --if patterns[i].name == 'EDM' then
+            --if patterns[i].name == 'Afro-Cuban' then
+            --if patterns[i].name == 'Hip Hop' then
+            index = i
+        end
+    end
+    local patternIndex = index --math.ceil(love.math.random() * #patterns)
+    local pattern = patterns[patternIndex]
+
+    local partIndex = math.ceil(love.math.random() * #pattern.sections)
+
+    local part = patterns[patternIndex].sections[partIndex]
+    drummPatternPickData.pickedCategoryIndex = patternIndex
+    drummPatternPickData.pickedItemIndex = partIndex
+
+    return fill(pattern, part)
 end
 
 --transformData()
